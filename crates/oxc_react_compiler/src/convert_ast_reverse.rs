@@ -2404,14 +2404,11 @@ impl<'a> ReverseCtx<'a> {
         pattern: &PatternLike,
     ) -> oxc::AssignmentTarget<'a> {
         match pattern {
-            PatternLike::Identifier(id) => {
-                oxc::SimpleAssignmentTarget::new_assignment_target_identifier(
-                    SPAN,
-                    self.str(&id.name),
-                    self,
-                )
-                .into()
-            }
+            PatternLike::Identifier(id) => oxc::AssignmentTarget::new_assignment_target_identifier(
+                SPAN,
+                self.str(&id.name),
+                self,
+            ),
             PatternLike::MemberExpression(m) => {
                 let object = self.convert_expression(&m.object);
                 if m.computed {
@@ -2478,10 +2475,7 @@ impl<'a> ReverseCtx<'a> {
                 }
 
                 let props_vec = ArenaVec::from_iter_in(properties, self);
-                oxc::AssignmentTargetPattern::new_object_assignment_target(
-                    SPAN, props_vec, rest, self,
-                )
-                .into()
+                oxc::AssignmentTarget::new_object_assignment_target(SPAN, props_vec, rest, self)
             }
             PatternLike::ArrayPattern(arr) => {
                 let mut elements: Vec<Option<oxc::AssignmentTargetMaybeDefault<'a>>> = Vec::new();
@@ -2503,10 +2497,7 @@ impl<'a> ReverseCtx<'a> {
                 }
 
                 let elems_vec = ArenaVec::from_iter_in(elements, self);
-                oxc::AssignmentTargetPattern::new_array_assignment_target(
-                    SPAN, elems_vec, rest, self,
-                )
-                .into()
+                oxc::AssignmentTarget::new_array_assignment_target(SPAN, elems_vec, rest, self)
             }
             PatternLike::AssignmentPattern(ap) => {
                 // For assignment LHS, use the left side
@@ -2526,12 +2517,11 @@ impl<'a> ReverseCtx<'a> {
                 self.convert_ts_type_assertion_to_simple_assignment_target(e).into()
             }
             PatternLike::TypeCastExpression(_) => {
-                oxc::SimpleAssignmentTarget::new_assignment_target_identifier(
+                oxc::AssignmentTarget::new_assignment_target_identifier(
                     SPAN,
                     self.str("__unknown__"),
                     self,
                 )
-                .into()
             }
         }
     }
