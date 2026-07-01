@@ -103,7 +103,13 @@ impl Rule for PreferModernDomApis {
         ) && call_expr
             .arguments
             .iter()
-            .all(|argument| matches!(argument.as_expression(), Some(expr) if !expr.is_undefined()))
+            // Both arguments must be plain (non-`undefined`) identifiers. `is_undefined()` only
+            // rejects the literal `undefined`, not "is an identifier" — so a complex argument
+            // (e.g. a ternary `a ? b : c`) would otherwise be spliced before `.replaceWith`,
+            // breaking precedence. Upstream eslint-plugin-unicorn restricts the fix to identifiers.
+            .all(|argument| {
+                matches!(argument.as_expression(), Some(expr @ Expression::Identifier(_)) if !expr.is_undefined())
+            })
             && matches!(member_expr.object, Expression::Identifier(_))
             && !call_expr.optional
             && let Some(preferred_method) = get_replacement_for_disallowed_method(method)
@@ -210,6 +216,11 @@ fn test() {
         "referenceNode.insertAdjacentElement(...argumentsArray1, ...argumentsArray2);",
         "referenceNode.insertAdjacentText('foo', 'text');",
         "referenceNode.insertAdjacentElement('foo', newNode);",
+        // Non-identifier arguments are not auto-fixable (rewriting them before `.replaceWith`
+        // would break precedence), so they are not reported.
+        "parentNode.replaceChild(newNode, cond ? c : d);",
+        "parentNode.insertBefore(newNode, p || q);",
+        "parentNode.replaceChild(getNode(), oldNode);",
     ];
 
     let fail = vec![
