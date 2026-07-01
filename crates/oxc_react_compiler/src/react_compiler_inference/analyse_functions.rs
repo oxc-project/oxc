@@ -193,7 +193,7 @@ where
 /// Create a placeholder HirFunction for temporarily swapping an inner function
 /// out of `env.functions` via `std::mem::replace`. The placeholder is never
 /// read — the real function is swapped back immediately after processing.
-fn placeholder_function() -> HirFunction {
+fn placeholder_function<'a>() -> HirFunction<'a> {
     HirFunction {
         loc: None,
         id: None,

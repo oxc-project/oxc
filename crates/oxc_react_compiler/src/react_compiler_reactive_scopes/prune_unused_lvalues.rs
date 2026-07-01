@@ -29,7 +29,7 @@ use crate::react_compiler_reactive_scopes::visitors::{self, ReactiveFunctionVisi
 /// takes immutable references, so we cannot modify lvalues during the visit.
 /// The TS version stores mutable instruction references and modifies them
 /// after the visitor completes.
-pub fn prune_unused_lvalues(func: &mut ReactiveFunction, env: &Environment) {
+pub fn prune_unused_lvalues<'a>(func: &mut ReactiveFunction<'a>, env: &Environment<'a>) {
     // Phase 1: Use ReactiveFunctionVisitor to identify unused unnamed lvalues.
     // When we see an unnamed lvalue on an instruction, we add its DeclarationId.
     // When we see a place reference (operand), we remove its DeclarationId.
@@ -51,14 +51,14 @@ pub fn prune_unused_lvalues(func: &mut ReactiveFunction, env: &Environment) {
 type LValues = FxHashSet<DeclarationId>;
 
 /// TS: `class Visitor extends ReactiveFunctionVisitor<LValues>`
-struct Visitor<'a> {
-    env: &'a Environment,
+struct Visitor<'a, 'e> {
+    env: &'e Environment<'a>,
 }
 
-impl ReactiveFunctionVisitor for Visitor<'_> {
+impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
     type State = LValues;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
@@ -71,7 +71,7 @@ impl ReactiveFunctionVisitor for Visitor<'_> {
     /// TS: `visitInstruction(instruction, state)`
     /// Calls traverseInstruction first (visits operands via visitPlace),
     /// then checks if the lvalue is unnamed and adds to map.
-    fn visit_instruction(&self, instruction: &ReactiveInstruction, state: &mut LValues) {
+    fn visit_instruction(&self, instruction: &ReactiveInstruction<'a>, state: &mut LValues) {
         self.traverse_instruction(instruction, state);
         if let Some(lv) = &instruction.lvalue {
             let ident = &self.env.identifiers[lv.identifier.0 as usize];
@@ -84,9 +84,9 @@ impl ReactiveFunctionVisitor for Visitor<'_> {
 
 /// Phase 2: Walk the tree and null out lvalues whose DeclarationId is unused.
 /// This is necessary because Rust's visitor takes immutable references.
-fn null_unused_lvalues(
-    block: &mut Vec<ReactiveStatement>,
-    env: &Environment,
+fn null_unused_lvalues<'a>(
+    block: &mut Vec<ReactiveStatement<'a>>,
+    env: &Environment<'a>,
     unused: &FxHashSet<DeclarationId>,
 ) {
     for stmt in block.iter_mut() {
@@ -107,9 +107,9 @@ fn null_unused_lvalues(
     }
 }
 
-fn null_unused_in_instruction(
-    instr: &mut ReactiveInstruction,
-    env: &Environment,
+fn null_unused_in_instruction<'a>(
+    instr: &mut ReactiveInstruction<'a>,
+    env: &Environment<'a>,
     unused: &FxHashSet<DeclarationId>,
 ) {
     if let Some(lv) = &instr.lvalue {
@@ -121,9 +121,9 @@ fn null_unused_in_instruction(
     null_unused_in_value(&mut instr.value, env, unused);
 }
 
-fn null_unused_in_value(
-    value: &mut ReactiveValue,
-    env: &Environment,
+fn null_unused_in_value<'a>(
+    value: &mut ReactiveValue<'a>,
+    env: &Environment<'a>,
     unused: &FxHashSet<DeclarationId>,
 ) {
     match value {
@@ -149,9 +149,9 @@ fn null_unused_in_value(
     }
 }
 
-fn null_unused_in_terminal(
-    terminal: &mut ReactiveTerminal,
-    env: &Environment,
+fn null_unused_in_terminal<'a>(
+    terminal: &mut ReactiveTerminal<'a>,
+    env: &Environment<'a>,
     unused: &FxHashSet<DeclarationId>,
 ) {
     match terminal {

@@ -28,9 +28,9 @@ use crate::react_compiler_reactive_scopes::visitors::{
 
 /// Collects identifiers that are reactive.
 /// TS: `collectReactiveIdentifiers`
-pub fn collect_reactive_identifiers(
-    func: &ReactiveFunction,
-    env: &Environment,
+pub fn collect_reactive_identifiers<'a>(
+    func: &ReactiveFunction<'a>,
+    env: &Environment<'a>,
 ) -> FxHashSet<IdentifierId> {
     let visitor = CollectVisitor { env };
     let mut state = FxHashSet::default();
@@ -38,14 +38,14 @@ pub fn collect_reactive_identifiers(
     state
 }
 
-struct CollectVisitor<'a> {
-    env: &'a Environment,
+struct CollectVisitor<'a, 'e> {
+    env: &'e Environment<'a>,
 }
 
-impl<'a> ReactiveFunctionVisitor for CollectVisitor<'a> {
+impl<'a, 'e> ReactiveFunctionVisitor<'a> for CollectVisitor<'a, 'e> {
     type State = FxHashSet<IdentifierId>;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
@@ -60,7 +60,7 @@ impl<'a> ReactiveFunctionVisitor for CollectVisitor<'a> {
         }
     }
 
-    fn visit_pruned_scope(&self, scope: &PrunedReactiveScopeBlock, state: &mut Self::State) {
+    fn visit_pruned_scope(&self, scope: &PrunedReactiveScopeBlock<'a>, state: &mut Self::State) {
         self.traverse_pruned_scope(scope, state);
 
         let scope_data = &self.env.scopes[scope.scope.0 as usize];
@@ -123,7 +123,10 @@ fn is_set_optimistic_type(ty: &Type) -> bool {
 
 /// Prunes dependencies that are guaranteed to be non-reactive.
 /// TS: `pruneNonReactiveDependencies`
-pub fn prune_non_reactive_dependencies(func: &mut ReactiveFunction, env: &mut Environment) {
+pub fn prune_non_reactive_dependencies<'a>(
+    func: &mut ReactiveFunction<'a>,
+    env: &mut Environment<'a>,
+) {
     let reactive_ids = collect_reactive_identifiers(func, env);
     let mut visitor = PruneVisitor { env };
     let mut state = reactive_ids;
@@ -131,20 +134,20 @@ pub fn prune_non_reactive_dependencies(func: &mut ReactiveFunction, env: &mut En
         .expect("PruneNonReactiveDependencies should not fail");
 }
 
-struct PruneVisitor<'a> {
-    env: &'a mut Environment,
+struct PruneVisitor<'a, 'e> {
+    env: &'e mut Environment<'a>,
 }
 
-impl<'a> ReactiveFunctionTransform for PruneVisitor<'a> {
+impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneVisitor<'a, 'e> {
     type State = FxHashSet<IdentifierId>;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
     fn visit_instruction(
         &mut self,
-        instruction: &mut ReactiveInstruction,
+        instruction: &mut ReactiveInstruction<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         self.traverse_instruction(instruction, state)?;
@@ -214,7 +217,7 @@ impl<'a> ReactiveFunctionTransform for PruneVisitor<'a> {
 
     fn visit_scope(
         &mut self,
-        scope: &mut ReactiveScopeBlock,
+        scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         self.traverse_scope(scope, state)?;

@@ -1,10 +1,9 @@
 use oxc_allocator::{Allocator, ArenaVec};
 
-pub mod convert_ast;
-pub mod convert_ast_reverse;
 pub mod convert_scope;
 pub mod diagnostics;
 pub mod prefilter;
+pub mod scope;
 
 // Vendored React Compiler core crates (from oxc-project/forked-react-compiler),
 // each crate flattened to a module. Kept near byte-for-byte with upstream for easy
@@ -15,8 +14,6 @@ pub mod prefilter;
 // carry their own targeted `#[allow(dead_code)]`.
 #[allow(clippy::all)]
 pub mod react_compiler;
-#[allow(clippy::all)]
-pub mod react_compiler_ast;
 #[allow(clippy::all)]
 pub mod react_compiler_diagnostics;
 #[allow(clippy::all)]
@@ -40,9 +37,6 @@ pub mod react_compiler_validation;
 
 use crate::react_compiler::entrypoint::compile_result::{CompileResult, LoggerEvent};
 use crate::react_compiler::entrypoint::program::compile_program;
-use crate::react_compiler_ast::File;
-use convert_ast::convert_program;
-use convert_ast_reverse::convert_program_to_oxc_with_source;
 use convert_scope::convert_scope_info;
 use diagnostics::compile_result_to_diagnostics;
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
@@ -135,6 +129,17 @@ fn compile<'a>(
 ) -> (Option<Program<'a>>, Diagnostics, Vec<LoggerEvent>) {
     let source_text = program.source_text;
 
+    // The HIR lowering computes `SourceLocation` line/column from a line-offset
+    // table built off `context.code` (see `pipeline::compile_fn`). The oxc
+    // front-end derives locations on demand from the source text, so the source
+    // must be threaded through. Without it, every loc collapses to
+    // `line = 1, column = byte_offset`, which surfaces as wrong `(line:col)`
+    // suffixes in diagnostics.
+    let mut options = options;
+    if options.source_code.is_none() {
+        options.source_code = Some(source_text.to_string());
+    }
+
     // Skip files with no React-like functions, unless the mode compiles everything.
     if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
         && !has_react_like_functions(program)
@@ -149,9 +154,12 @@ fn compile<'a>(
 
     let semantic = SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
 
-    let file = convert_program(program, source_text);
+    // The codegen back-end builds oxc nodes directly via this `AstBuilder`, and the
+    // compiled program is spliced/returned as an arena-allocated `Program<'a>`.
+    let ast_builder = oxc_ast::builder::AstBuilder::new(allocator);
     let scope_info = convert_scope_info(&semantic, program);
-    let result = compile_program(file, scope_info, options);
+    // Function discovery and lowering both walk the oxc `Program` directly.
+    let result = compile_program(&ast_builder, program, scope_info, options);
 
     let diagnostics = compile_result_to_diagnostics(&result);
     let (program_ast, events) = match result {
@@ -159,8 +167,7 @@ fn compile<'a>(
         CompileResult::Error { events, .. } => (None, events),
     };
 
-    let compiled = program_ast.map(|file: File| {
-        let mut compiled = convert_program_to_oxc_with_source(&file, allocator, source_text);
+    let compiled = program_ast.map(|mut compiled: Program<'a>| {
         compiled.source_type = program.source_type;
         preserve_comments(&mut compiled, program, allocator);
         compiled

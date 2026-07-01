@@ -20,14 +20,14 @@ use crate::react_compiler_hir::{
 // DebugPrinter — thin wrapper around PrintFormatter for reactive-specific logic
 // =============================================================================
 
-pub struct DebugPrinter<'a> {
-    pub fmt: PrintFormatter<'a>,
+pub struct DebugPrinter<'a, 'h> {
+    pub fmt: PrintFormatter<'a, 'h>,
     /// Optional formatter for HIR functions (used for inner functions in FunctionExpression/ObjectMethod)
-    pub hir_formatter: Option<&'a HirFunctionFormatter>,
+    pub hir_formatter: Option<&'a HirFunctionFormatter<'h>>,
 }
 
-impl<'a> DebugPrinter<'a> {
-    pub fn new(env: &'a Environment) -> Self {
+impl<'a, 'h> DebugPrinter<'a, 'h> {
+    pub fn new(env: &'a Environment<'h>) -> Self {
         Self { fmt: PrintFormatter::new(env), hir_formatter: None }
     }
 
@@ -35,7 +35,7 @@ impl<'a> DebugPrinter<'a> {
     // ReactiveFunction
     // =========================================================================
 
-    pub fn format_reactive_function(&mut self, func: &ReactiveFunction) {
+    pub fn format_reactive_function(&mut self, func: &ReactiveFunction<'h>) {
         self.fmt.indent();
         self.fmt.line(&format!(
             "id: {}",
@@ -93,13 +93,13 @@ impl<'a> DebugPrinter<'a> {
     // ReactiveBlock
     // =========================================================================
 
-    fn format_reactive_block(&mut self, block: &ReactiveBlock) {
+    fn format_reactive_block(&mut self, block: &ReactiveBlock<'h>) {
         for stmt in block.iter() {
             self.format_reactive_statement(stmt);
         }
     }
 
-    fn format_reactive_statement(&mut self, stmt: &ReactiveStatement) {
+    fn format_reactive_statement(&mut self, stmt: &ReactiveStatement<'h>) {
         match stmt {
             ReactiveStatement::Instruction(instr) => {
                 self.format_reactive_instruction_block(instr);
@@ -140,7 +140,7 @@ impl<'a> DebugPrinter<'a> {
     // ReactiveInstruction
     // =========================================================================
 
-    fn format_reactive_instruction_block(&mut self, instr: &ReactiveInstruction) {
+    fn format_reactive_instruction_block(&mut self, instr: &ReactiveInstruction<'h>) {
         self.fmt.line("ReactiveInstruction {");
         self.fmt.indent();
         self.format_reactive_instruction(instr);
@@ -148,7 +148,7 @@ impl<'a> DebugPrinter<'a> {
         self.fmt.line("}");
     }
 
-    fn format_reactive_instruction(&mut self, instr: &ReactiveInstruction) {
+    fn format_reactive_instruction(&mut self, instr: &ReactiveInstruction<'h>) {
         self.fmt.line(&format!("id: {}", instr.id.0));
         match &instr.lvalue {
             Some(place) => self.fmt.format_place_field("lvalue", place),
@@ -176,23 +176,24 @@ impl<'a> DebugPrinter<'a> {
     // ReactiveValue
     // =========================================================================
 
-    fn format_reactive_value(&mut self, value: &ReactiveValue) {
+    fn format_reactive_value(&mut self, value: &ReactiveValue<'h>) {
         match value {
             ReactiveValue::Instruction(iv) => {
                 // Build the inner function formatter callback if we have an hir_formatter
                 let hir_formatter = self.hir_formatter;
-                let inner_func_cb: Option<Box<dyn Fn(&mut PrintFormatter, &HirFunction) + '_>> =
-                    hir_formatter.map(|hf| {
-                        Box::new(move |fmt: &mut PrintFormatter, func: &HirFunction| {
-                            hf(fmt, func);
-                        })
-                            as Box<dyn Fn(&mut PrintFormatter, &HirFunction) + '_>
-                    });
+                let inner_func_cb: Option<
+                    Box<dyn Fn(&mut PrintFormatter<'_, 'h>, &HirFunction<'h>) + '_>,
+                > = hir_formatter.map(|hf| {
+                    Box::new(move |fmt: &mut PrintFormatter<'_, 'h>, func: &HirFunction<'h>| {
+                        hf(fmt, func);
+                    })
+                        as Box<dyn Fn(&mut PrintFormatter<'_, 'h>, &HirFunction<'h>) + '_>
+                });
                 self.fmt.format_instruction_value(
                     iv,
-                    inner_func_cb
-                        .as_ref()
-                        .map(|cb| cb.as_ref() as &dyn Fn(&mut PrintFormatter, &HirFunction)),
+                    inner_func_cb.as_ref().map(|cb| {
+                        cb.as_ref() as &dyn Fn(&mut PrintFormatter<'_, 'h>, &HirFunction<'h>)
+                    }),
                 );
             }
             ReactiveValue::LogicalExpression { operator, left, right, loc } => {
@@ -271,7 +272,7 @@ impl<'a> DebugPrinter<'a> {
     // ReactiveTerminal
     // =========================================================================
 
-    fn format_terminal_statement(&mut self, stmt: &ReactiveTerminalStatement) {
+    fn format_terminal_statement(&mut self, stmt: &ReactiveTerminalStatement<'h>) {
         match &stmt.label {
             Some(label) => {
                 self.fmt.line(&format!(
@@ -287,7 +288,7 @@ impl<'a> DebugPrinter<'a> {
         self.fmt.dedent();
     }
 
-    fn format_reactive_terminal(&mut self, terminal: &ReactiveTerminal) {
+    fn format_reactive_terminal(&mut self, terminal: &ReactiveTerminal<'h>) {
         match terminal {
             ReactiveTerminal::Break { target, id, target_kind, loc } => {
                 self.fmt.line("Break {");
@@ -523,16 +524,16 @@ impl<'a> DebugPrinter<'a> {
 
 /// Type alias for a function formatter callback that can print HIR functions.
 /// Used to format inner functions in FunctionExpression/ObjectMethod values.
-pub type HirFunctionFormatter = dyn Fn(&mut PrintFormatter, &HirFunction);
+pub type HirFunctionFormatter<'h> = dyn Fn(&mut PrintFormatter<'_, 'h>, &HirFunction<'h>);
 
-pub fn debug_reactive_function(func: &ReactiveFunction, env: &Environment) -> String {
+pub fn debug_reactive_function<'h>(func: &ReactiveFunction<'h>, env: &Environment<'h>) -> String {
     debug_reactive_function_with_formatter(func, env, None)
 }
 
-pub fn debug_reactive_function_with_formatter(
-    func: &ReactiveFunction,
-    env: &Environment,
-    hir_formatter: Option<&HirFunctionFormatter>,
+pub fn debug_reactive_function_with_formatter<'h>(
+    func: &ReactiveFunction<'h>,
+    env: &Environment<'h>,
+    hir_formatter: Option<&HirFunctionFormatter<'h>>,
 ) -> String {
     let mut printer = DebugPrinter::new(env);
     printer.hir_formatter = hir_formatter;

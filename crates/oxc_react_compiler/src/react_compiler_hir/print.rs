@@ -224,16 +224,16 @@ pub fn format_value_reason(reason: ValueReason) -> &'static str {
 ///
 /// Both `DebugPrinter` structs delegate to this for formatting shared constructs
 /// like Places, Identifiers, Scopes, Types, InstructionValues, etc.
-pub struct PrintFormatter<'a> {
-    pub env: &'a Environment,
+pub struct PrintFormatter<'a, 'h> {
+    pub env: &'a Environment<'h>,
     pub seen_identifiers: FxHashSet<IdentifierId>,
     pub seen_scopes: FxHashSet<ScopeId>,
     pub output: Vec<String>,
     pub indent_level: usize,
 }
 
-impl<'a> PrintFormatter<'a> {
-    pub fn new(env: &'a Environment) -> Self {
+impl<'a, 'h> PrintFormatter<'a, 'h> {
+    pub fn new(env: &'a Environment<'h>) -> Self {
         Self {
             env,
             seen_identifiers: FxHashSet::default(),
@@ -705,8 +705,8 @@ impl<'a> PrintFormatter<'a> {
     /// a placeholder is printed instead.
     pub fn format_instruction_value(
         &mut self,
-        value: &InstructionValue,
-        inner_func_formatter: Option<&dyn Fn(&mut PrintFormatter, &HirFunction)>,
+        value: &InstructionValue<'h>,
+        inner_func_formatter: Option<&dyn Fn(&mut PrintFormatter<'_, 'h>, &HirFunction<'h>)>,
     ) {
         match value {
             InstructionValue::ArrayExpression { elements, loc } => {

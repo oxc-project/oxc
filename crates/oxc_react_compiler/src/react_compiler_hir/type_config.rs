@@ -13,44 +13,30 @@ use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_hir::Effect;
 
 /// Mirrors TS `ValueKind` enum for use in config.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ValueKind {
     Mutable,
     Frozen,
     Primitive,
-    #[serde(rename = "maybefrozen")]
     MaybeFrozen,
     Global,
     Context,
 }
 
 /// Mirrors TS `ValueReason` enum for use in config.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ValueReason {
-    #[serde(rename = "known-return-signature")]
     KnownReturnSignature,
-    #[serde(rename = "state")]
     State,
-    #[serde(rename = "reducer-state")]
     ReducerState,
-    #[serde(rename = "context")]
     Context,
-    #[serde(rename = "effect")]
     Effect,
-    #[serde(rename = "hook-captured")]
     HookCaptured,
-    #[serde(rename = "hook-return")]
     HookReturn,
-    #[serde(rename = "global")]
     Global,
-    #[serde(rename = "jsx-captured")]
     JsxCaptured,
-    #[serde(rename = "store-local")]
     StoreLocal,
-    #[serde(rename = "reactive-function-argument")]
     ReactiveFunctionArgument,
-    #[serde(rename = "other")]
     Other,
 }
 
@@ -58,8 +44,7 @@ pub enum ValueReason {
 // Aliasing effect config types (from TypeSchema.ts)
 // =============================================================================
 
-#[derive(Debug, Clone, serde::Serialize)]
-#[serde(tag = "kind")]
+#[derive(Debug, Clone)]
 pub enum AliasingEffectConfig {
     Freeze {
         value: String,
@@ -102,15 +87,13 @@ pub enum AliasingEffectConfig {
     Apply {
         receiver: String,
         function: String,
-        #[serde(rename = "mutatesFunction")]
         mutates_function: bool,
         args: Vec<ApplyArgConfig>,
         into: String,
     },
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
-#[serde(untagged)]
+#[derive(Debug, Clone)]
 pub enum ApplyArgConfig {
     Place(String),
     Spread {
@@ -125,19 +108,19 @@ pub enum ApplyArgConfig {
 }
 
 /// Helper enum for tagged serde of `ApplyArgConfig::Spread`.
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone)]
 pub enum ApplyArgSpreadKind {
     Spread,
 }
 
 /// Helper enum for tagged serde of `ApplyArgConfig::Hole`.
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone)]
 pub enum ApplyArgHoleKind {
     Hole,
 }
 
 /// Aliasing signature config, the JSON-serializable form.
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone)]
 pub struct AliasingSignatureConfig {
     pub receiver: String,
     pub params: Vec<String>,
@@ -151,26 +134,20 @@ pub struct AliasingSignatureConfig {
 // Type config (from TypeSchema.ts)
 // =============================================================================
 
-#[derive(Debug, Clone, serde::Serialize)]
-#[serde(tag = "kind")]
+#[derive(Debug, Clone)]
 pub enum TypeConfig {
-    #[serde(rename = "object")]
     Object(ObjectTypeConfig),
-    #[serde(rename = "function")]
     Function(FunctionTypeConfig),
-    #[serde(rename = "hook")]
     Hook(HookTypeConfig),
-    #[serde(rename = "type")]
     TypeReference(TypeReferenceConfig),
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone)]
 pub struct ObjectTypeConfig {
     pub properties: Option<FxIndexMap<String, TypeConfig>>,
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
 pub struct FunctionTypeConfig {
     pub positional_params: Vec<Effect>,
     pub rest_param: Option<Effect>,
@@ -185,8 +162,7 @@ pub struct FunctionTypeConfig {
     pub known_incompatible: Option<String>,
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
 pub struct HookTypeConfig {
     pub positional_params: Option<Vec<Effect>>,
     pub rest_param: Option<Effect>,
@@ -197,7 +173,7 @@ pub struct HookTypeConfig {
     pub known_incompatible: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BuiltInTypeRef {
     Any,
     Ref,
@@ -206,7 +182,7 @@ pub enum BuiltInTypeRef {
     MixedReadonly,
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone)]
 pub struct TypeReferenceConfig {
     pub name: BuiltInTypeRef,
 }

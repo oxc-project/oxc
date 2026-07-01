@@ -52,9 +52,9 @@ use crate::react_compiler_reactive_scopes::visitors::visit_reactive_function;
 
 /// Prunes reactive scopes whose outputs don't escape.
 /// TS: `pruneNonEscapingScopes`
-pub fn prune_non_escaping_scopes(
-    func: &mut ReactiveFunction,
-    env: &mut Environment,
+pub fn prune_non_escaping_scopes<'a>(
+    func: &mut ReactiveFunction<'a>,
+    env: &mut Environment<'a>,
 ) -> Result<(), CompilerError> {
     // First build up a map of which instructions are involved in creating which values,
     // and which values are returned.
@@ -173,9 +173,9 @@ impl CollectState {
 
     /// Associates the identifier with its scope, if there is one and it is active for
     /// the given instruction id.
-    fn visit_operand(
+    fn visit_operand<'a>(
         &mut self,
-        env: &Environment,
+        env: &Environment<'a>,
         id: EvaluationOrder,
         place: &Place,
         identifier: DeclarationId,
@@ -228,8 +228,8 @@ struct LValueMemoization {
 // Helper: get_place_scope
 // =============================================================================
 
-fn get_place_scope(
-    env: &Environment,
+fn get_place_scope<'a>(
+    env: &Environment<'a>,
     id: EvaluationOrder,
     identifier_id: IdentifierId,
 ) -> Option<ScopeId> {
@@ -293,13 +293,13 @@ fn compute_pattern_lvalues(pattern: &Pattern) -> Vec<LValueMemoization> {
 // CollectDependenciesVisitor
 // =============================================================================
 
-struct CollectDependenciesVisitor<'a> {
-    env: &'a Environment,
+struct CollectDependenciesVisitor<'a, 'e> {
+    env: &'e Environment<'a>,
     options: MemoizationOptions,
 }
 
-impl<'a> CollectDependenciesVisitor<'a> {
-    fn new(env: &'a Environment) -> Self {
+impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
+    fn new(env: &'e Environment<'a>) -> Self {
         CollectDependenciesVisitor {
             env,
             options: MemoizationOptions {
@@ -314,7 +314,7 @@ impl<'a> CollectDependenciesVisitor<'a> {
     fn compute_memoization_inputs(
         &self,
         id: EvaluationOrder,
-        value: &ReactiveValue,
+        value: &ReactiveValue<'a>,
         lvalue: Option<IdentifierId>,
         state: &mut CollectState,
     ) -> (Vec<LValueMemoization>, Vec<(IdentifierId, EvaluationOrder)>) {
@@ -392,7 +392,7 @@ impl<'a> CollectDependenciesVisitor<'a> {
     fn compute_instruction_memoization_inputs(
         &self,
         id: EvaluationOrder,
-        value: &InstructionValue,
+        value: &InstructionValue<'a>,
         lvalue: Option<IdentifierId>,
     ) -> (Vec<LValueMemoization>, Vec<(IdentifierId, EvaluationOrder)>) {
         let env = self.env;
@@ -782,7 +782,7 @@ impl<'a> CollectDependenciesVisitor<'a> {
     fn visit_value_for_memoization(
         &self,
         id: EvaluationOrder,
-        value: &ReactiveValue,
+        value: &ReactiveValue<'a>,
         lvalue: Option<IdentifierId>,
         state: &mut CollectState,
     ) {
@@ -894,14 +894,14 @@ impl<'a> CollectDependenciesVisitor<'a> {
 // ReactiveFunctionVisitor impl for CollectDependenciesVisitor
 // =============================================================================
 
-impl<'a> ReactiveFunctionVisitor for CollectDependenciesVisitor<'a> {
+impl<'a, 'e> ReactiveFunctionVisitor<'a> for CollectDependenciesVisitor<'a, 'e> {
     type State = (CollectState, Vec<ScopeId>);
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
-    fn visit_instruction(&self, instruction: &ReactiveInstruction, state: &mut Self::State) {
+    fn visit_instruction(&self, instruction: &ReactiveInstruction<'a>, state: &mut Self::State) {
         self.visit_value_for_memoization(
             instruction.id,
             &instruction.value,
@@ -910,7 +910,7 @@ impl<'a> ReactiveFunctionVisitor for CollectDependenciesVisitor<'a> {
         );
     }
 
-    fn visit_terminal(&self, stmt: &ReactiveTerminalStatement, state: &mut Self::State) {
+    fn visit_terminal(&self, stmt: &ReactiveTerminalStatement<'a>, state: &mut Self::State) {
         // Traverse terminal blocks first (TS: this.traverseTerminal(stmt, scopes))
         self.traverse_terminal(stmt, state);
 
@@ -929,7 +929,7 @@ impl<'a> ReactiveFunctionVisitor for CollectDependenciesVisitor<'a> {
         }
     }
 
-    fn visit_scope(&self, scope: &ReactiveScopeBlock, state: &mut Self::State) {
+    fn visit_scope(&self, scope: &ReactiveScopeBlock<'a>, state: &mut Self::State) {
         let env = self.env;
         let scope_id = scope.scope;
         let scope_data = &env.scopes[scope_id.0 as usize];
@@ -1067,24 +1067,24 @@ fn compute_memoized_identifiers(state: &CollectState) -> FxHashSet<DeclarationId
 // PruneScopesTransform
 // =============================================================================
 
-struct PruneScopesTransform<'a> {
-    env: &'a Environment,
+struct PruneScopesTransform<'a, 'e> {
+    env: &'e Environment<'a>,
     pruned_scopes: FxHashSet<ScopeId>,
     reassignments: FxHashMap<DeclarationId, FxHashSet<IdentifierId>>,
 }
 
-impl<'a> ReactiveFunctionTransform for PruneScopesTransform<'a> {
+impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneScopesTransform<'a, 'e> {
     type State = FxHashSet<DeclarationId>;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
     fn transform_scope(
         &mut self,
-        scope: &mut ReactiveScopeBlock,
+        scope: &mut ReactiveScopeBlock<'a>,
         state: &mut FxHashSet<DeclarationId>,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         self.visit_scope(scope, state)?;
 
         let scope_id = scope.scope;
@@ -1116,9 +1116,9 @@ impl<'a> ReactiveFunctionTransform for PruneScopesTransform<'a> {
 
     fn transform_instruction(
         &mut self,
-        instruction: &mut ReactiveInstruction,
+        instruction: &mut ReactiveInstruction<'a>,
         state: &mut FxHashSet<DeclarationId>,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         self.traverse_instruction(instruction, state)?;
 
         match &mut instruction.value {

@@ -1,26 +1,46 @@
 //! Builds an index mapping identifier node-IDs to source locations.
 //!
-//! Walks the function's AST to collect `(node_id, start, SourceLocation, is_jsx)`
-//! for every Identifier and JSXIdentifier node. Keyed by node_id for identity
-//! lookups; each entry also stores `start` (byte offset) for range-containment
-//! checks in `gather_captured_context`.
+//! Walks the function's oxc AST to collect an [`IdentifierLocEntry`] for every
+//! Identifier / JSXIdentifier node (and for identifiers inside TS type
+//! annotations). Keyed by node_id (== `span.start`) for identity lookups; each
+//! entry also stores `start` (byte offset) for range-containment checks in
+//! `gather_captured_context`.
+//!
+//! This is a translation of the original immutable `IdentifierLocVisitor`, which
+//! was driven by the in-tree `AstWalker`/`Visitor`
+//! (`crate::react_compiler_ast::visitor`). That walker deliberately visited only
+//! a NARROW set of identifier positions, and TS type identifiers came from
+//! `collect_type_idents`, which collected only `IdentifierReference` /
+//! `IdentifierName` (never `BindingIdentifier`). The overrides below restrict the
+//! oxc walk to match those positions instead of relying on oxc's default
+//! full-AST traversal. The traversal records:
+//!
+//! * every reference / binding identifier → `is_jsx = false`
+//! * function / class declaration & expression names → `is_declaration_name = true`
+//! * JSX element-name identifiers → `is_jsx = true` plus the enclosing
+//!   `JSXOpeningElement`'s loc as `opening_element_loc`
+//! * identifiers inside TS type subtrees → `in_type_annotation = true`
+//!
+//! Positions deliberately NOT recorded, matching the original walker:
+//!
+//! * non-computed member property names (`a.b` → `b`)
+//! * non-computed object / class member keys (`{ a: 1 }` → `a`)
+//! * JSX attribute names and JSX closing-element names
+//! * label identifiers (`LabeledStatement` / `break` / `continue` targets)
+//! * class `super_class` (`extends Foo`) and class member bodies
+//! * TS declaration statements (type alias / interface / enum / module)
+//! * `BindingIdentifier`s inside TS type subtrees (e.g. type-parameter names)
 
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_ast::common::SourceLocation as AstSourceLocation;
-use crate::react_compiler_ast::expressions::*;
-use crate::react_compiler_ast::jsx::JSXIdentifier;
-use crate::react_compiler_ast::jsx::JSXOpeningElement;
-use crate::react_compiler_ast::scope::ScopeId;
-use crate::react_compiler_ast::scope::ScopeInfo;
-use crate::react_compiler_ast::statements::ClassDeclaration;
-use crate::react_compiler_ast::statements::FunctionDeclaration;
-use crate::react_compiler_ast::visitor::AstWalker;
-use crate::react_compiler_ast::visitor::Visitor;
-use crate::react_compiler_hir::Position;
+use oxc_ast::ast as oxc;
+use oxc_ast_visit::Visit;
+
 use crate::react_compiler_hir::SourceLocation;
+use crate::scope::ScopeInfo;
 
 use crate::react_compiler_lowering::FunctionNode;
+use crate::react_compiler_lowering::source_loc::LineOffsets;
 
 /// Source location and whether the identifier is a JSXIdentifier.
 pub struct IdentifierLocEntry {
@@ -50,261 +70,263 @@ pub struct IdentifierLocEntry {
 /// and JSXIdentifier nodes in a function's AST.
 pub type IdentifierLocIndex = FxHashMap<u32, IdentifierLocEntry>;
 
-struct IdentifierLocVisitor {
+struct IdentifierLocVisitor<'a> {
+    line_offsets: &'a LineOffsets,
     index: IdentifierLocIndex,
     /// Tracks the current JSXOpeningElement's loc while walking its name.
     current_opening_element_loc: Option<SourceLocation>,
+    /// Depth of TS type subtrees currently being walked. Identifiers recorded
+    /// while this is non-zero get `in_type_annotation = true`.
+    type_depth: u32,
 }
 
-fn convert_loc(loc: &AstSourceLocation) -> SourceLocation {
-    SourceLocation {
-        start: Position { line: loc.start.line, column: loc.start.column, index: loc.start.index },
-        end: Position { line: loc.end.line, column: loc.end.column, index: loc.end.index },
+impl<'a> IdentifierLocVisitor<'a> {
+    fn record(&mut self, span: oxc_span::Span, is_jsx: bool, is_declaration_name: bool) {
+        let opening_element_loc =
+            if is_jsx { self.current_opening_element_loc.clone() } else { None };
+        // `or_insert` keeps the richer entry already recorded for a node_id.
+        // Function/class names are recorded as declaration names *before* the
+        // generic binding-identifier walk re-visits them, so the declaration
+        // entry wins, matching the original visitor.
+        self.index.entry(span.start).or_insert(IdentifierLocEntry {
+            start: span.start,
+            loc: self.line_offsets.source_location(span),
+            is_jsx,
+            opening_element_loc,
+            is_declaration_name,
+            in_type_annotation: self.type_depth > 0,
+        });
     }
-}
 
-impl IdentifierLocVisitor {
-    fn insert_identifier(&mut self, node: &Identifier, is_declaration_name: bool) {
-        if let (Some(nid), Some(start), Some(loc)) =
-            (node.base.node_id, node.base.start, &node.base.loc)
-        {
-            self.index.insert(
-                nid,
-                IdentifierLocEntry {
-                    start,
-                    loc: convert_loc(loc),
-                    is_jsx: false,
-                    opening_element_loc: None,
-                    is_declaration_name,
-                    in_type_annotation: false,
-                },
-            );
+    /// Record the JSX element name identifiers (and only those) while the
+    /// `current_opening_element_loc` is set, mirroring the original
+    /// `walk_jsx_element_name` / `walk_jsx_member_expression`.
+    fn record_jsx_element_name(&mut self, name: &oxc::JSXElementName<'a>) {
+        match name {
+            oxc::JSXElementName::Identifier(id) => self.record(id.span, true, false),
+            oxc::JSXElementName::IdentifierReference(id) => self.record(id.span, true, false),
+            oxc::JSXElementName::ThisExpression(t) => self.record(t.span, true, false),
+            oxc::JSXElementName::MemberExpression(m) => self.record_jsx_member_expression(m),
+            // JSXNamespacedName identifiers are not visited by the original walker.
+            oxc::JSXElementName::NamespacedName(_) => {}
         }
     }
 
-    /// Recursively walk a serde_json::Value tree to find and index all Identifier
-    /// and JSXIdentifier nodes. Used for class bodies which are stored as untyped
-    /// JSON and not walked by the typed AstWalker. This matches the TS behavior
-    /// where gatherCapturedContext's Babel traverse walks into class bodies.
-    ///
-    /// `in_annotation` is true once the walk has descended through a type
-    /// annotation container node; identifiers found there are flagged so
-    /// `gather_captured_context` can mirror TS's TypeAnnotation subtree skip.
-    fn walk_json_for_identifiers(&mut self, value: &serde_json::Value, in_annotation: bool) {
-        match value {
-            serde_json::Value::Object(obj) => {
-                let node_in_annotation = in_annotation
-                    || matches!(
-                        obj.get("type").and_then(|t| t.as_str()),
-                        Some(
-                            "TypeAnnotation"
-                                | "TSTypeAnnotation"
-                                | "TypeAlias"
-                                | "TSTypeAliasDeclaration"
-                        )
-                    );
-                if let Some(serde_json::Value::String(ty)) = obj.get("type") {
-                    if ty == "Identifier" || ty == "JSXIdentifier" {
-                        if let (Some(nid), Some(start)) = (
-                            obj.get("_nodeId").and_then(|s| s.as_u64()),
-                            obj.get("start").and_then(|s| s.as_u64()),
-                        ) {
-                            if let Some(loc) = Self::extract_loc_from_json(obj) {
-                                let is_jsx = ty == "JSXIdentifier";
-                                self.index.entry(nid as u32).or_insert(IdentifierLocEntry {
-                                    start: start as u32,
-                                    loc,
-                                    is_jsx,
-                                    opening_element_loc: None,
-                                    is_declaration_name: false,
-                                    in_type_annotation: node_in_annotation,
-                                });
+    fn record_jsx_member_expression(&mut self, expr: &oxc::JSXMemberExpression<'a>) {
+        match &expr.object {
+            oxc::JSXMemberExpressionObject::IdentifierReference(id) => {
+                self.record(id.span, true, false);
+            }
+            oxc::JSXMemberExpressionObject::ThisExpression(t) => self.record(t.span, true, false),
+            oxc::JSXMemberExpressionObject::MemberExpression(inner) => {
+                self.record_jsx_member_expression(inner);
+            }
+        }
+        self.record(expr.property.span, true, false);
+    }
+}
+
+impl<'a> Visit<'a> for IdentifierLocVisitor<'a> {
+    fn visit_identifier_reference(&mut self, it: &oxc::IdentifierReference<'a>) {
+        self.record(it.span, false, false);
+    }
+
+    fn visit_identifier_name(&mut self, it: &oxc::IdentifierName<'a>) {
+        self.record(it.span, false, false);
+    }
+
+    fn visit_binding_identifier(&mut self, it: &oxc::BindingIdentifier<'a>) {
+        // `collect_type_idents` only collected IdentifierReference / IdentifierName,
+        // never BindingIdentifier, so type-parameter declaration names (`<T>`) and
+        // other binding positions inside type subtrees must not be recorded.
+        if self.type_depth > 0 {
+            return;
+        }
+        self.record(it.span, false, false);
+    }
+
+    fn visit_jsx_identifier(&mut self, it: &oxc::JSXIdentifier<'a>) {
+        self.record(it.span, true, false);
+    }
+
+    fn visit_function(&mut self, it: &oxc::Function<'a>, flags: oxc_syntax::scope::ScopeFlags) {
+        // The function's own name is a declaration name, not an expression
+        // reference. Record it first so the generic binding-identifier walk
+        // (via the default traversal below) does not overwrite the flag.
+        if let Some(id) = &it.id {
+            self.record(id.span, false, true);
+        }
+        oxc_ast_visit::walk::walk_function(self, it, flags);
+    }
+
+    fn visit_class(&mut self, it: &oxc::Class<'a>) {
+        // The original immutable walker recorded only the class name and then the
+        // class's type-bearing parts (decorators / implements / type params) as
+        // RawNodes (type idents only). It did NOT walk `super_class` (the extends
+        // clause) nor the class body's method/property members.
+        if let Some(id) = &it.id {
+            self.record(id.span, false, true);
+        }
+        if let Some(type_parameters) = &it.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        if let Some(super_type_arguments) = &it.super_type_arguments {
+            self.visit_ts_type_parameter_instantiation(super_type_arguments);
+        }
+        self.type_depth += 1;
+        self.visit_ts_class_implements_list(&it.implements);
+        self.type_depth -= 1;
+    }
+
+    fn visit_static_member_expression(&mut self, it: &oxc::StaticMemberExpression<'a>) {
+        // Original walked the property only when computed; a static member is
+        // non-computed, so the property name is never recorded.
+        self.visit_expression(&it.object);
+    }
+
+    fn visit_object_property(&mut self, it: &oxc::ObjectProperty<'a>) {
+        // Original walked the key only when computed.
+        if it.computed {
+            self.visit_property_key(&it.key);
+        }
+        self.visit_expression(&it.value);
+    }
+
+    fn visit_jsx_element(&mut self, it: &oxc::JSXElement<'a>) {
+        // Mirror the original walker: the opening element's loc is active only
+        // while walking the element name (and its type arguments); it is cleared
+        // before attributes and children.
+        self.current_opening_element_loc =
+            Some(self.line_offsets.source_location(it.opening_element.span));
+        self.record_jsx_element_name(&it.opening_element.name);
+        if let Some(type_args) = &it.opening_element.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_args);
+        }
+        self.current_opening_element_loc = None;
+
+        // The original walker visited only attribute VALUES and spread arguments,
+        // never attribute names, and had no closing-element handling.
+        for attr in &it.opening_element.attributes {
+            match attr {
+                oxc::JSXAttributeItem::Attribute(a) => {
+                    if let Some(value) = &a.value {
+                        match value {
+                            oxc::JSXAttributeValue::ExpressionContainer(c) => {
+                                self.visit_jsx_expression_container(c);
                             }
+                            oxc::JSXAttributeValue::Element(el) => self.visit_jsx_element(el),
+                            oxc::JSXAttributeValue::Fragment(f) => self.visit_jsx_fragment(f),
+                            oxc::JSXAttributeValue::StringLiteral(_) => {}
                         }
                     }
                 }
-                for (_, v) in obj {
-                    self.walk_json_for_identifiers(v, node_in_annotation);
+                oxc::JSXAttributeItem::SpreadAttribute(a) => {
+                    self.visit_expression(&a.argument);
                 }
             }
-            serde_json::Value::Array(arr) => {
-                for v in arr {
-                    self.walk_json_for_identifiers(v, in_annotation);
-                }
-            }
-            _ => {}
+        }
+        for child in &it.children {
+            self.visit_jsx_child(child);
         }
     }
 
-    fn extract_loc_from_json(
-        obj: &serde_json::Map<String, serde_json::Value>,
-    ) -> Option<SourceLocation> {
-        let loc = obj.get("loc")?.as_object()?;
-        let start = loc.get("start")?.as_object()?;
-        let end = loc.get("end")?.as_object()?;
-        Some(SourceLocation {
-            start: Position {
-                line: start.get("line")?.as_u64()? as u32,
-                column: start.get("column")?.as_u64()? as u32,
-                index: start.get("index").and_then(|i| i.as_u64()).map(|i| i as u32),
-            },
-            end: Position {
-                line: end.get("line")?.as_u64()? as u32,
-                column: end.get("column")?.as_u64()? as u32,
-                index: end.get("index").and_then(|i| i.as_u64()).map(|i| i as u32),
-            },
-        })
-    }
-}
-
-impl<'ast> Visitor<'ast> for IdentifierLocVisitor {
-    fn enter_identifier(&mut self, node: &'ast Identifier, _scope_stack: &[ScopeId]) {
-        self.insert_identifier(node, false);
+    fn visit_ts_type(&mut self, it: &oxc::TSType<'a>) {
+        self.type_depth += 1;
+        oxc_ast_visit::walk::walk_ts_type(self, it);
+        self.type_depth -= 1;
     }
 
-    fn enter_jsx_identifier(&mut self, node: &'ast JSXIdentifier, _scope_stack: &[ScopeId]) {
-        if let (Some(nid), Some(start), Some(loc)) =
-            (node.base.node_id, node.base.start, &node.base.loc)
-        {
-            self.index.insert(
-                nid,
-                IdentifierLocEntry {
-                    start,
-                    loc: convert_loc(loc),
-                    is_jsx: true,
-                    opening_element_loc: self.current_opening_element_loc.clone(),
-                    is_declaration_name: false,
-                    in_type_annotation: false,
-                },
-            );
-        }
+    fn visit_ts_type_annotation(&mut self, it: &oxc::TSTypeAnnotation<'a>) {
+        self.type_depth += 1;
+        oxc_ast_visit::walk::walk_ts_type_annotation(self, it);
+        self.type_depth -= 1;
     }
 
-    fn enter_jsx_opening_element(
+    fn visit_ts_type_parameter_instantiation(
         &mut self,
-        node: &'ast JSXOpeningElement,
-        _scope_stack: &[ScopeId],
+        it: &oxc::TSTypeParameterInstantiation<'a>,
     ) {
-        self.current_opening_element_loc = node.base.loc.as_ref().map(|loc| convert_loc(loc));
+        self.type_depth += 1;
+        oxc_ast_visit::walk::walk_ts_type_parameter_instantiation(self, it);
+        self.type_depth -= 1;
     }
 
-    fn leave_jsx_opening_element(
-        &mut self,
-        _node: &'ast JSXOpeningElement,
-        _scope_stack: &[ScopeId],
-    ) {
-        self.current_opening_element_loc = None;
+    fn visit_ts_type_parameter_declaration(&mut self, it: &oxc::TSTypeParameterDeclaration<'a>) {
+        self.type_depth += 1;
+        oxc_ast_visit::walk::walk_ts_type_parameter_declaration(self, it);
+        self.type_depth -= 1;
     }
 
-    // Visit function/class declaration and expression name identifiers,
-    // which are not walked by the generic walker (to avoid affecting
-    // other Visitor consumers like find_context_identifiers).
-    fn enter_function_declaration(
-        &mut self,
-        node: &'ast FunctionDeclaration,
-        _scope_stack: &[ScopeId],
-    ) {
-        if let Some(id) = &node.id {
-            self.insert_identifier(id, true);
-        }
-    }
+    // The original immutable walker treated these TS declaration statements as
+    // no-ops (nothing inside them was recorded). Override to skip entirely.
+    fn visit_ts_type_alias_declaration(&mut self, _it: &oxc::TSTypeAliasDeclaration<'a>) {}
 
-    fn enter_function_expression(
-        &mut self,
-        node: &'ast FunctionExpression,
-        _scope_stack: &[ScopeId],
-    ) {
-        if let Some(id) = &node.id {
-            self.insert_identifier(id, true);
-        }
-    }
+    fn visit_ts_interface_declaration(&mut self, _it: &oxc::TSInterfaceDeclaration<'a>) {}
 
-    fn enter_class_declaration(&mut self, node: &'ast ClassDeclaration, _scope_stack: &[ScopeId]) {
-        if let Some(id) = &node.id {
-            self.insert_identifier(id, true);
-        }
-        // Walk class body JSON to index identifiers inside class methods.
-        // The typed AstWalker skips class bodies (stored as Vec<serde_json::Value>),
-        // but gatherCapturedContext in TS traverses them via Babel's traverse.
-        for member in &node.body.body {
-            self.walk_json_for_identifiers(&member.parse_value(), false);
-        }
-    }
+    fn visit_ts_enum_declaration(&mut self, _it: &oxc::TSEnumDeclaration<'a>) {}
 
-    fn enter_class_expression(&mut self, node: &'ast ClassExpression, _scope_stack: &[ScopeId]) {
-        if let Some(id) = &node.id {
-            self.insert_identifier(id, true);
-        }
-        // Walk class body JSON to index identifiers inside class methods
-        for member in &node.body.body {
-            self.walk_json_for_identifiers(&member.parse_value(), false);
-        }
-    }
+    fn visit_ts_module_declaration(&mut self, _it: &oxc::TSModuleDeclaration<'a>) {}
 }
 
 /// Build an index of all Identifier and JSXIdentifier positions in a function's AST.
+///
+/// Walks the function's params (`FormalParameters`) and body, mirroring the
+/// original Babel `IdentifierLocVisitor`: the function node itself is not
+/// re-entered (its own name, if any, is recorded explicitly).
 pub fn build_identifier_loc_index(
     func: &FunctionNode<'_>,
     scope_info: &ScopeInfo,
+    line_offsets: &LineOffsets,
 ) -> IdentifierLocIndex {
-    let func_scope =
-        scope_info.resolve_scope_for_node(func.node_id()).unwrap_or(scope_info.program_scope);
+    // The loc index is purely position-driven; scope tracking is not required.
+    let _ = scope_info;
 
-    let mut visitor =
-        IdentifierLocVisitor { index: FxHashMap::default(), current_opening_element_loc: None };
-    let mut walker = AstWalker::with_initial_scope(scope_info, func_scope);
-
-    // Visit the top-level function's own name identifier (if any),
-    // since the walker only walks params + body, not the function node itself.
-    match func {
-        FunctionNode::FunctionDeclaration(d) => {
-            if let Some(id) = &d.id {
-                visitor.enter_identifier(id, &[]);
-            }
-            for param in &d.params {
-                walker.walk_pattern(&mut visitor, param);
-            }
-            walker.walk_block_statement(&mut visitor, &d.body);
-        }
-        FunctionNode::FunctionExpression(e) => {
-            if let Some(id) = &e.id {
-                visitor.enter_identifier(id, &[]);
-            }
-            for param in &e.params {
-                walker.walk_pattern(&mut visitor, param);
-            }
-            walker.walk_block_statement(&mut visitor, &e.body);
-        }
-        FunctionNode::ArrowFunctionExpression(a) => {
-            for param in &a.params {
-                walker.walk_pattern(&mut visitor, param);
-            }
-            match a.body.as_ref() {
-                ArrowFunctionBody::BlockStatement(block) => {
-                    walker.walk_block_statement(&mut visitor, block);
-                }
-                ArrowFunctionBody::Expression(expr) => {
-                    walker.walk_expression(&mut visitor, expr);
-                }
-            }
-        }
-    }
-
-    // Walk type annotations that the AST walker skips.
-    // The walker skips TypeAlias, TSTypeAliasDeclaration, and similar statements,
-    // but Babel's isReferencedIdentifier() returns true for identifiers inside them
-    // (e.g., typeof x in `type T = ReturnType<typeof x>`). The TS compiler's
-    // FindContextIdentifiers includes these via its Identifier visitor. We match by
-    // serializing the function body to JSON and walking the full JSON tree.
-    // The walk_json_for_identifiers method uses entry().or_insert() so it won't
-    // overwrite entries already added by the typed walker above.
-    let body_json: Option<serde_json::Value> = match func {
-        FunctionNode::FunctionDeclaration(d) => serde_json::to_value(&d.body).ok(),
-        FunctionNode::FunctionExpression(e) => serde_json::to_value(&e.body).ok(),
-        FunctionNode::ArrowFunctionExpression(a) => serde_json::to_value(&a.body).ok(),
+    let mut visitor = IdentifierLocVisitor {
+        line_offsets,
+        index: FxHashMap::default(),
+        current_opening_element_loc: None,
+        type_depth: 0,
     };
-    if let Some(json) = body_json {
-        visitor.walk_json_for_identifiers(&json, false);
+
+    match func {
+        FunctionNode::Function(f) => {
+            // The function's own name is a declaration name.
+            if let Some(id) = &f.id {
+                visitor.record(id.span, false, true);
+            }
+            if let Some(type_parameters) = &f.type_parameters {
+                visitor.visit_ts_type_parameter_declaration(type_parameters);
+            }
+            if let Some(this_param) = &f.this_param {
+                visitor.visit_ts_this_parameter(this_param);
+            }
+            visitor.visit_formal_parameters(&f.params);
+            if let Some(return_type) = &f.return_type {
+                visitor.visit_ts_type_annotation(return_type);
+            }
+            if let Some(body) = &f.body {
+                visitor.visit_function_body(body);
+            }
+        }
+        FunctionNode::Arrow(arrow) => {
+            if let Some(type_parameters) = &arrow.type_parameters {
+                visitor.visit_ts_type_parameter_declaration(type_parameters);
+            }
+            visitor.visit_formal_parameters(&arrow.params);
+            if let Some(return_type) = &arrow.return_type {
+                visitor.visit_ts_type_annotation(return_type);
+            }
+            if arrow.expression {
+                if let Some(oxc::Statement::ExpressionStatement(es)) = arrow.body.statements.first()
+                {
+                    visitor.visit_expression(&es.expression);
+                } else {
+                    visitor.visit_function_body(&arrow.body);
+                }
+            } else {
+                visitor.visit_function_body(&arrow.body);
+            }
+        }
     }
 
     visitor.index

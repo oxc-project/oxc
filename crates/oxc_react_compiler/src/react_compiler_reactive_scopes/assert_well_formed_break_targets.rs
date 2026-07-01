@@ -19,26 +19,26 @@ use crate::react_compiler_reactive_scopes::visitors::{
 };
 
 /// Assert that all break/continue targets reference existent labels.
-pub fn assert_well_formed_break_targets(func: &ReactiveFunction, env: &Environment) {
+pub fn assert_well_formed_break_targets<'a>(func: &ReactiveFunction<'a>, env: &Environment<'a>) {
     let visitor = Visitor { env };
     let mut state: FxHashSet<BlockId> = FxHashSet::default();
     visit_reactive_function(func, &visitor, &mut state);
 }
 
-struct Visitor<'a> {
-    env: &'a Environment,
+struct Visitor<'a, 'e> {
+    env: &'e Environment<'a>,
 }
 
-impl<'a> ReactiveFunctionVisitor for Visitor<'a> {
+impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
     type State = FxHashSet<BlockId>;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
     fn visit_terminal(
         &self,
-        stmt: &ReactiveTerminalStatement,
+        stmt: &ReactiveTerminalStatement<'a>,
         seen_labels: &mut FxHashSet<BlockId>,
     ) {
         if let Some(label) = &stmt.label {

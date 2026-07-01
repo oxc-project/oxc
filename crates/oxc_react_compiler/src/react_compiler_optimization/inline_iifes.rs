@@ -58,9 +58,9 @@ use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecut
 
 /// Inline immediately invoked function expressions into the enclosing function's
 /// control flow graph.
-pub fn inline_immediately_invoked_function_expressions(
-    func: &mut HirFunction,
-    env: &mut Environment,
+pub fn inline_immediately_invoked_function_expressions<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
 ) {
     // Track all function expressions that are assigned to a temporary
     let mut functions: FxHashMap<IdentifierId, FunctionId> = FxHashMap::default();
@@ -304,7 +304,7 @@ fn is_statement_block_kind(kind: BlockKind) -> bool {
 }
 
 /// Returns true if the function has a single exit terminal (throw/return) which is a return.
-fn has_single_exit_return_terminal(func: &HirFunction) -> bool {
+fn has_single_exit_return_terminal(func: &HirFunction<'_>) -> bool {
     let mut has_return = false;
     let mut exit_count = 0;
     for block in func.body.blocks.values() {
@@ -325,9 +325,9 @@ fn has_single_exit_return_terminal(func: &HirFunction) -> bool {
 /// Rewrites the block so that all `return` terminals are replaced:
 /// * Add a StoreLocal <return_value> = <terminal.value>
 /// * Replace the terminal with a Goto to <return_target>
-fn rewrite_block(
-    env: &mut Environment,
-    instructions: &mut Vec<Instruction>,
+fn rewrite_block<'a>(
+    env: &mut Environment<'a>,
+    instructions: &mut Vec<Instruction<'a>>,
     block: &mut BasicBlock,
     return_target: BlockId,
     return_value: &Place,
@@ -361,9 +361,9 @@ fn rewrite_block(
 }
 
 /// Emits a DeclareLocal instruction for the result temporary.
-fn declare_temporary(
-    env: &mut Environment,
-    func: &mut HirFunction,
+fn declare_temporary<'a>(
+    env: &mut Environment<'a>,
+    func: &mut HirFunction<'a>,
     block_id: BlockId,
     result: &Place,
 ) {
@@ -385,7 +385,7 @@ fn declare_temporary(
 }
 
 /// Promote a temporary identifier to a named identifier.
-fn promote_temporary(env: &mut Environment, identifier_id: IdentifierId) {
+fn promote_temporary(env: &mut Environment<'_>, identifier_id: IdentifierId) {
     let decl_id = env.identifiers[identifier_id.0 as usize].declaration_id;
     env.identifiers[identifier_id.0 as usize].name =
         Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));

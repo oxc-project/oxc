@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use crate::react_compiler_ast::scope::*;
+use crate::scope::*;
 use indexmap::IndexMap;
 use oxc_ast::AstKind;
 use oxc_ast::ast::{BindingPattern, Program};
@@ -21,7 +21,7 @@ use oxc_syntax::symbol::SymbolId;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
 /// `IndexMap` keyed with the deterministic Fx hasher, matching the `FxIndexMap`
-/// used by `crate::react_compiler_ast::scope` fields (`crate::react_compiler_utils::FxIndexMap`).
+/// used by `crate::scope` fields (`crate::react_compiler_utils::FxIndexMap`).
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
 /// Convert OXC's semantic analysis into React Compiler's ScopeInfo.

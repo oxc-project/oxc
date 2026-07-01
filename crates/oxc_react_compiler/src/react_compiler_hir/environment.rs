@@ -42,7 +42,7 @@ pub enum OutputMode {
     Lint,
 }
 
-pub struct Environment {
+pub struct Environment<'a> {
     // Counters
     pub next_block_id_counter: u32,
     pub next_scope_id_counter: u32,
@@ -52,7 +52,7 @@ pub struct Environment {
     pub identifiers: Vec<Identifier>,
     pub types: Vec<Type>,
     pub scopes: Vec<ReactiveScope>,
-    pub functions: Vec<HirFunction>,
+    pub functions: Vec<HirFunction<'a>>,
 
     // Error accumulation
     pub errors: CompilerError,
@@ -109,7 +109,7 @@ pub struct Environment {
     default_mutating_hook: Option<Global>,
 
     // Outlined functions: functions extracted from the component during outlining passes
-    outlined_functions: Vec<OutlinedFunctionEntry>,
+    outlined_functions: Vec<OutlinedFunctionEntry<'a>>,
 
     // Known names for collision-aware UID generation. Lazily populated from
     // identifiers on first use, then updated with each generated name.
@@ -120,12 +120,12 @@ pub struct Environment {
 /// An outlined function entry, stored on Environment during compilation.
 /// Corresponds to TS `{ fn: HIRFunction, type: ReactFunctionType | null }`.
 #[derive(Debug, Clone)]
-pub struct OutlinedFunctionEntry {
-    pub func: HirFunction,
+pub struct OutlinedFunctionEntry<'a> {
+    pub func: HirFunction<'a>,
     pub fn_type: Option<ReactFunctionType>,
 }
 
-impl Environment {
+impl<'a> Environment<'a> {
     pub fn new() -> Self {
         Self::with_config(EnvironmentConfig::default())
     }
@@ -322,7 +322,7 @@ impl Environment {
         self.next_type_id()
     }
 
-    pub fn add_function(&mut self, func: HirFunction) -> FunctionId {
+    pub fn add_function(&mut self, func: HirFunction<'a>) -> FunctionId {
         let id = FunctionId(self.functions.len() as u32);
         self.functions.push(func);
         id
@@ -892,17 +892,17 @@ impl Environment {
 
     /// Record an outlined function (extracted during outlineFunctions or outlineJSX).
     /// Corresponds to TS `env.outlineFunction(fn, type)`.
-    pub fn outline_function(&mut self, func: HirFunction, fn_type: Option<ReactFunctionType>) {
+    pub fn outline_function(&mut self, func: HirFunction<'a>, fn_type: Option<ReactFunctionType>) {
         self.outlined_functions.push(OutlinedFunctionEntry { func, fn_type });
     }
 
     /// Get the outlined functions accumulated during compilation.
-    pub fn get_outlined_functions(&self) -> &[OutlinedFunctionEntry] {
+    pub fn get_outlined_functions(&self) -> &[OutlinedFunctionEntry<'a>] {
         &self.outlined_functions
     }
 
     /// Take the outlined functions, leaving the vec empty.
-    pub fn take_outlined_functions(&mut self) -> Vec<OutlinedFunctionEntry> {
+    pub fn take_outlined_functions(&mut self) -> Vec<OutlinedFunctionEntry<'a>> {
         take(&mut self.outlined_functions)
     }
 
@@ -976,7 +976,7 @@ impl Environment {
     }
 }
 
-impl Default for Environment {
+impl Default for Environment<'_> {
     fn default() -> Self {
         Self::new()
     }
