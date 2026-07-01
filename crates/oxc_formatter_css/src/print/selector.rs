@@ -61,11 +61,18 @@ pub(super) fn write_selector_list<'a>(
     // everything from the selector containing the first placeholder onwards
     // becomes one garbage token soup whose commas no longer split selectors.
     // Prettier then prints it near-verbatim:
-    // whitespace runs collapse to single spaces and the line never breaks.
+    // - source newlines are preserved (a `,\n` selector-list boundary stays a hardline)
+    // - and only intra-line whitespace runs collapse to a single space
     // Selectors BEFORE the first placeholder still split normally.
     // Only the embedded entry point can contain placeholders;
     // the gate also keeps a literal marker inside
     // (e.g. an attribute value (`[x="@prettier"]`)) in a standalone file from triggering garbage mode.
+    //
+    // NOTE: `oxc-css-parser` types `${...}` as `Token::Placeholder`,
+    // so `SelectorList`'s `,` boundary and each `ComplexSelector` are intact.
+    // A structured print (standard multi-selector "one-per-line" rule, printWidth-aware) is possible
+    // and would restore consistency with the plain-selector path (`.foo, .bar` splits, so `${a}, ${b}` should too).
+    // However, we stay verbatim for Prettier alignment.
     let placeholder_idx = if f.context().template_placeholders() {
         let source = f.context().source_text();
         list.selectors.iter().position(|complex| {
@@ -109,18 +116,23 @@ pub(super) fn write_selector_list<'a>(
                 let source = f.context().source_text();
                 let end = to_span(list.selectors[list.selectors.len() - 1].span()).end;
                 let raw = source.slice_range(start, end);
-                let mut collapsed = oxc_allocator::StringBuilder::new_in(f.allocator());
-                for (k, word) in raw.split_ascii_whitespace().enumerate() {
-                    if k > 0 {
-                        collapsed.push_str(" ");
-                    }
-                    collapsed.push_str(word);
-                }
                 // Comments inside the chunk are part of the verbatim text
                 let _ = f.context().comments().take_before(end);
+                // Emit each source line as a collapsed run of placeholders + text,
+                // joined by `hard_line_break()`.
+                // Source newlines are normalized to `\n` by `parse_stylesheet`,
+                // so splitting on `\n` is enough.
                 // The degraded chunk is printed verbatim,
                 // but the embedded placeholders must stay typed so the host can splice `${expr}` back.
-                write_text_with_placeholders(collapsed.into_str(), f);
+                for (line_idx, line) in raw.split('\n').enumerate() {
+                    if line_idx > 0 {
+                        write!(f, hard_line_break());
+                    }
+                    let joined = normalize_whitespace(line);
+                    if !joined.is_empty() {
+                        write_text_with_placeholders(f.allocator().alloc_str(&joined), f);
+                    }
+                }
                 return;
             }
             write_complex_selector(complex, f);

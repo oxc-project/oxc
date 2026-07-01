@@ -55,7 +55,9 @@ a[data-x=`PLACEHOLDER-6`] {
 /* A placeholder immediately glued to selector content (no space) is a
    compound-selector piece: commas + newlines to the next placeholder
    must NOT split the run into a bare-placeholder statement + separate rule. */
-`PLACEHOLDER-7`:hover &, `PLACEHOLDER-8`:focus-within &, `PLACEHOLDER-9`:after {
+`PLACEHOLDER-7`:hover &,
+`PLACEHOLDER-8`:focus-within &,
+`PLACEHOLDER-9`:after {
   color: red;
 }
 /* But space-separated placeholders (styled-components' `${sanitize} ${fonts}`
@@ -87,7 +89,9 @@ a[data-x=`PLACEHOLDER-6`] {
 /* A placeholder immediately glued to selector content (no space) is a
    compound-selector piece: commas + newlines to the next placeholder
    must NOT split the run into a bare-placeholder statement + separate rule. */
-`PLACEHOLDER-7`:hover &, `PLACEHOLDER-8`:focus-within &, `PLACEHOLDER-9`:after {
+`PLACEHOLDER-7`:hover &,
+`PLACEHOLDER-8`:focus-within &,
+`PLACEHOLDER-9`:after {
   color: red;
 }
 /* But space-separated placeholders (styled-components' `${sanitize} ${fonts}`
