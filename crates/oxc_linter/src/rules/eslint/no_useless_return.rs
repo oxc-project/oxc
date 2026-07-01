@@ -1,5 +1,5 @@
 use oxc_allocator::ArenaVec;
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::Statement};
 use oxc_cfg::{
     BasicBlock, BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
     ReturnInstructionKind,
@@ -352,7 +352,7 @@ impl NoUselessReturn {
                 | InstructionKind::Condition
                 | InstructionKind::Iteration(_) => {
                     if !in_finalizer
-                        && !Self::is_empty_statement_instruction(instruction.node_id, nodes)
+                        && !Self::is_noop_statement_instruction(instruction.node_id, nodes)
                     {
                         return ContinuationState::Meaningful;
                     }
@@ -378,8 +378,20 @@ impl NoUselessReturn {
         ContinuationState::Passthrough
     }
 
-    fn is_empty_statement_instruction(node_id: Option<NodeId>, nodes: &AstNodes) -> bool {
-        node_id.is_some_and(|node_id| matches!(nodes.kind(node_id), AstKind::EmptyStatement(_)))
+    fn is_noop_statement_instruction(node_id: Option<NodeId>, nodes: &AstNodes) -> bool {
+        node_id.is_some_and(|node_id| match nodes.kind(node_id) {
+            AstKind::EmptyStatement(_) => true,
+            AstKind::BlockStatement(block) => block.body.iter().all(Self::is_noop_statement),
+            _ => false,
+        })
+    }
+
+    fn is_noop_statement(stmt: &Statement) -> bool {
+        match stmt {
+            Statement::EmptyStatement(_) => true,
+            Statement::BlockStatement(block) => block.body.iter().all(Self::is_noop_statement),
+            _ => false,
+        }
     }
 }
 
@@ -660,6 +672,7 @@ fn test() {
         "function foo() { switch (bar) { case 1: if (a) { doSomething(); return; } else { doSomething(); } break; default: doSomethingElse(); } }",
         "function foo() { switch (bar) { case 1: if (a) { doSomething(); return; } default: } }",
         "function foo() { switch (bar) { case 1: if (a) return; ; break; default: doSomethingElse(); } }",
+        "function foo() { switch (bar) { case 1: if (a) return; {} break; default: doSomethingElse(); } }",
         // try-catch (useless return in catch)
         "function foo() { try {} catch (err) { return; } }",
         // try with useless return, catch has return value
