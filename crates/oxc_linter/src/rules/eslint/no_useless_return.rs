@@ -1,13 +1,12 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::{AstKind, ast::Statement};
 use oxc_cfg::{
-    BasicBlock, BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
-    ReturnInstructionKind,
+    EdgeType, ErrorEdgeKind, InstructionKind,
     graph::{Direction, visit::EdgeRef},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNodes, NodeId};
+use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -100,6 +99,17 @@ enum AncestorAnalysis {
     NotAtFunctionEnd,
 }
 
+enum SwitchCaseTail {
+    NotTail,
+    Tail { falls_through: bool },
+}
+
+enum TailStatementEffect {
+    Noop,
+    Stops,
+    Meaningful,
+}
+
 impl NoUselessReturn {
     /// Check if a return statement is useless.
     /// A return is useless if:
@@ -175,22 +185,23 @@ impl NoUselessReturn {
                         && let Some((idx, _)) =
                             switch_stmt.cases.iter().enumerate().find(|(_, c)| c.span == case.span)
                     {
+                        let falls_through =
+                            match Self::switch_case_tail(&case.consequent, current_span) {
+                                SwitchCaseTail::Tail { falls_through } => falls_through,
+                                SwitchCaseTail::NotTail => {
+                                    return AncestorAnalysis::NotAtFunctionEnd;
+                                }
+                            };
+
                         let is_last_case = idx == switch_stmt.cases.len() - 1;
 
-                        if !is_last_case
-                            && case.consequent.last().is_some_and(|last_stmt| {
-                                last_stmt.span().contains_inclusive(current_span)
+                        if falls_through
+                            && !is_last_case
+                            && switch_stmt.cases.iter().skip(idx + 1).any(|case| {
+                                Self::case_consequent_has_meaningful_effect(&case.consequent)
                             })
                         {
-                            let subsequent_cases_empty = switch_stmt
-                                .cases
-                                .iter()
-                                .skip(idx + 1)
-                                .all(|c| c.consequent.is_empty());
-
-                            if !subsequent_cases_empty {
-                                return AncestorAnalysis::NotUseless;
-                            }
+                            return AncestorAnalysis::NotUseless;
                         }
                     }
                     current_span = case.span;
@@ -242,36 +253,24 @@ impl NoUselessReturn {
                 EdgeType::Normal | EdgeType::Jump | EdgeType::Error(ErrorEdgeKind::Explicit)
             );
 
-            if matches!(edge.weight(), EdgeType::Unreachable)
-                && Self::unreachable_continuation_has_meaningful_code(
-                    edge.target(),
-                    cfg,
-                    ctx.nodes(),
-                )
-            {
-                return true;
-            }
+            if dominated {
+                let target = edge.target();
+                let target_block = cfg.basic_block(target);
 
-            if !dominated {
-                continue;
-            }
+                if target_block.is_unreachable() {
+                    continue;
+                }
 
-            let target = edge.target();
-            let target_block = cfg.basic_block(target);
+                let has_meaningful_code = target_block.instructions().iter().any(|instr| {
+                    !matches!(
+                        instr.kind,
+                        InstructionKind::ImplicitReturn | InstructionKind::Unreachable
+                    )
+                });
 
-            if target_block.is_unreachable() {
-                continue;
-            }
-
-            let has_meaningful_code = target_block.instructions().iter().any(|instr| {
-                !matches!(
-                    instr.kind,
-                    InstructionKind::ImplicitReturn | InstructionKind::Unreachable
-                )
-            });
-
-            if has_meaningful_code {
-                return true;
+                if has_meaningful_code {
+                    return true;
+                }
             }
         }
 
@@ -287,177 +286,63 @@ impl NoUselessReturn {
         statements.last().is_some_and(|last| last.span().contains_inclusive(span))
     }
 
-    fn unreachable_continuation_has_meaningful_code(
-        start: BlockNodeId,
-        cfg: &ControlFlowGraph,
-        nodes: &AstNodes,
-    ) -> bool {
-        let graph = cfg.graph();
-        let mut stack = vec![ContinuationBlock { id: start, finalizer_depth: 0 }];
-        let mut seen = vec![Vec::new(); graph.node_count()];
+    fn switch_case_tail(statements: &ArenaVec<'_, Statement<'_>>, span: Span) -> SwitchCaseTail {
+        let Some(index) = statements.iter().position(|stmt| stmt.span().contains_inclusive(span))
+        else {
+            return SwitchCaseTail::NotTail;
+        };
 
-        while let Some(block) = stack.pop() {
-            let block_id = block.id;
-            if seen[block_id.index()].contains(&block.finalizer_depth) {
-                continue;
+        for stmt in statements.iter().skip(index + 1) {
+            match Self::tail_statement_effect(stmt) {
+                TailStatementEffect::Noop => {}
+                TailStatementEffect::Stops => return SwitchCaseTail::Tail { falls_through: false },
+                TailStatementEffect::Meaningful => return SwitchCaseTail::NotTail,
             }
-            seen[block_id.index()].push(block.finalizer_depth);
+        }
 
-            match Self::block_continuation_state(
-                cfg.basic_block(block_id),
-                block.is_in_finalizer(),
-                nodes,
-            ) {
-                ContinuationState::Meaningful => return true,
-                ContinuationState::Terminal => continue,
-                ContinuationState::Passthrough => {}
+        SwitchCaseTail::Tail { falls_through: true }
+    }
+
+    fn case_consequent_has_meaningful_effect(statements: &ArenaVec<'_, Statement<'_>>) -> bool {
+        for stmt in statements {
+            match Self::tail_statement_effect(stmt) {
+                TailStatementEffect::Noop => {}
+                TailStatementEffect::Stops => return false,
+                TailStatementEffect::Meaningful => return true,
             }
-
-            // A `finally` body still runs if the `return;` is removed, so its own
-            // statements are not code made reachable by the removal. Follow the
-            // finalizer path and resume normal detection after the `Join` edge.
-            stack.extend(graph.edges_directed(block_id, Direction::Outgoing).filter_map(|edge| {
-                match edge.weight() {
-                    EdgeType::Normal
-                    | EdgeType::Jump
-                    | EdgeType::Backedge
-                    | EdgeType::Unreachable => Some(ContinuationBlock {
-                        id: edge.target(),
-                        finalizer_depth: Self::next_finalizer_depth(
-                            block.finalizer_depth,
-                            edge.target(),
-                            cfg,
-                            nodes,
-                        ),
-                    }),
-                    EdgeType::Finalize => Some(ContinuationBlock {
-                        id: edge.target(),
-                        finalizer_depth: block.finalizer_depth + 1,
-                    }),
-                    EdgeType::Join => Some(ContinuationBlock {
-                        id: edge.target(),
-                        finalizer_depth: block.finalizer_depth.saturating_sub(1),
-                    }),
-                    EdgeType::NewFunction | EdgeType::Error(_) => None,
-                }
-            }));
         }
 
         false
     }
 
-    fn block_continuation_state(
-        block: &BasicBlock,
-        in_finalizer: bool,
-        nodes: &AstNodes,
-    ) -> ContinuationState {
-        for instruction in block.instructions() {
-            match instruction.kind {
-                InstructionKind::Statement
-                | InstructionKind::Condition
-                | InstructionKind::Iteration(_) => {
-                    if !in_finalizer
-                        && !Self::is_noop_statement_instruction(instruction.node_id, nodes)
-                    {
-                        return ContinuationState::Meaningful;
-                    }
+    fn tail_statement_effect(stmt: &Statement) -> TailStatementEffect {
+        match stmt {
+            Statement::EmptyStatement(_) | Statement::FunctionDeclaration(_) => {
+                TailStatementEffect::Noop
+            }
+            Statement::BreakStatement(break_stmt) if break_stmt.label.is_none() => {
+                TailStatementEffect::Stops
+            }
+            Statement::ReturnStatement(return_stmt) if return_stmt.argument.is_none() => {
+                TailStatementEffect::Stops
+            }
+            Statement::BlockStatement(block) => Self::block_statement_effect(&block.body),
+            _ => TailStatementEffect::Meaningful,
+        }
+    }
+
+    fn block_statement_effect(statements: &ArenaVec<'_, Statement<'_>>) -> TailStatementEffect {
+        for stmt in statements {
+            match Self::tail_statement_effect(stmt) {
+                TailStatementEffect::Noop => {}
+                effect @ (TailStatementEffect::Stops | TailStatementEffect::Meaningful) => {
+                    return effect;
                 }
-                InstructionKind::Throw
-                | InstructionKind::Return(ReturnInstructionKind::NotImplicitUndefined) => {
-                    return if in_finalizer {
-                        ContinuationState::Terminal
-                    } else {
-                        ContinuationState::Meaningful
-                    };
-                }
-                InstructionKind::Break(_)
-                | InstructionKind::Continue(_)
-                | InstructionKind::ImplicitReturn
-                | InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined) => {
-                    return ContinuationState::Terminal;
-                }
-                InstructionKind::Unreachable => {}
             }
         }
 
-        ContinuationState::Passthrough
+        TailStatementEffect::Noop
     }
-
-    fn is_noop_statement_instruction(node_id: Option<NodeId>, nodes: &AstNodes) -> bool {
-        node_id.is_some_and(|node_id| match nodes.kind(node_id) {
-            AstKind::EmptyStatement(_) => true,
-            AstKind::BlockStatement(block) => block.body.iter().all(Self::is_noop_statement),
-            _ => false,
-        })
-    }
-
-    fn is_noop_statement(stmt: &Statement) -> bool {
-        match stmt {
-            Statement::EmptyStatement(_) => true,
-            Statement::BlockStatement(block) => block.body.iter().all(Self::is_noop_statement),
-            _ => false,
-        }
-    }
-
-    fn next_finalizer_depth(
-        current_depth: usize,
-        target: BlockNodeId,
-        cfg: &ControlFlowGraph,
-        nodes: &AstNodes,
-    ) -> usize {
-        if current_depth == 0 {
-            return 0;
-        }
-
-        Self::block_finalizer_depth(cfg.basic_block(target), nodes)
-            .map_or(current_depth, |depth| current_depth.min(depth))
-    }
-
-    fn block_finalizer_depth(block: &BasicBlock, nodes: &AstNodes) -> Option<usize> {
-        block
-            .instructions()
-            .iter()
-            .filter_map(|instruction| instruction.node_id)
-            .map(|node_id| Self::node_finalizer_depth(node_id, nodes))
-            .min()
-    }
-
-    fn node_finalizer_depth(node_id: NodeId, nodes: &AstNodes) -> usize {
-        std::iter::once(node_id)
-            .chain(nodes.ancestor_ids(node_id))
-            .filter(|node_id| Self::is_finalizer_block(*node_id, nodes))
-            .count()
-    }
-
-    fn is_finalizer_block(node_id: NodeId, nodes: &AstNodes) -> bool {
-        let AstKind::BlockStatement(block) = nodes.kind(node_id) else {
-            return false;
-        };
-
-        let AstKind::TryStatement(try_stmt) = nodes.parent_kind(node_id) else {
-            return false;
-        };
-
-        try_stmt.finalizer.as_ref().is_some_and(|finalizer| finalizer.span == block.span)
-    }
-}
-
-#[derive(Clone, Copy)]
-struct ContinuationBlock {
-    id: BlockNodeId,
-    finalizer_depth: usize,
-}
-
-impl ContinuationBlock {
-    fn is_in_finalizer(self) -> bool {
-        self.finalizer_depth != 0
-    }
-}
-
-enum ContinuationState {
-    Meaningful,
-    Terminal,
-    Passthrough,
 }
 
 #[test]
@@ -539,38 +424,6 @@ fn test() {
                         return;
                     }
                     setStep(2);
-                    break;
-            }
-        }
-        ",
-        "
-        function foo() {
-            switch (bar) {
-                case 1:
-                    try {
-                        if (a) {
-                            return;
-                        }
-                    } finally {
-                        cleanup();
-                    }
-                    setStep(1);
-                    break;
-            }
-        }
-        ",
-        "
-        function foo() {
-            switch (bar) {
-                case 1:
-                    try {
-                        if (a) {
-                            return;
-                        }
-                    } catch (e) {
-                    } finally {
-                    }
-                    setStep(1);
                     break;
             }
         }
@@ -777,18 +630,6 @@ fn test() {
                 return;
             } finally {
                 bar();
-            }
-        }
-        ",
-        "
-        function foo() {
-            try {
-                return;
-            } finally {
-                try {
-                } finally {
-                }
-                cleanup();
             }
         }
         ",

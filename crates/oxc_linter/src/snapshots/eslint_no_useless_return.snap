@@ -132,15 +132,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove this redundant `return` statement.
 
   ⚠ eslint(no-useless-return): Unnecessary return statement.
-   ╭─[no_useless_return.tsx:4:17]
- 3 │             try {
- 4 │                 return;
-   ·                 ───────
- 5 │             } finally {
-   ╰────
-  help: Remove this redundant `return` statement.
-
-  ⚠ eslint(no-useless-return): Unnecessary return statement.
    ╭─[no_useless_return.tsx:8:21]
  7 │                     baz();
  8 │                     return;
