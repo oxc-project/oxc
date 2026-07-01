@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 use oxc_ast::{
-    AstKind, AstType,
+    AstKind,
     ast::{Expression, Statement},
 };
 use oxc_cfg::{
@@ -17,7 +17,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
-    context::{ContextHost, LintContext},
+    context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::effective_unreachable_blocks,
 };
@@ -50,14 +50,6 @@ enum LoopType {
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 pub struct NoUnreachableLoop(Box<NoUnreachableLoopConfig>);
-
-const LOOP_NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
-    AstType::WhileStatement,
-    AstType::DoWhileStatement,
-    AstType::ForStatement,
-    AstType::ForInStatement,
-    AstType::ForOfStatement,
-]);
 
 // See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
@@ -98,28 +90,7 @@ impl Rule for NoUnreachableLoop {
         serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.semantic().nodes().contains_any(LOOP_NODE_TYPES)
-    }
-
-    fn run_once(&self, ctx: &LintContext) {
-        let natural_next_iteration_paths = collect_natural_next_iteration_paths(ctx);
-
-        for node in ctx.nodes() {
-            if is_loop(node.kind()) {
-                self.run_on_loop(node, ctx, &natural_next_iteration_paths);
-            }
-        }
-    }
-}
-
-impl NoUnreachableLoop {
-    fn run_on_loop<'a>(
-        &self,
-        node: &AstNode<'a>,
-        ctx: &LintContext<'a>,
-        natural_next_iteration_paths: &[usize],
-    ) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (loop_type, body) = match node.kind() {
             AstKind::WhileStatement(statement) => {
                 if is_static_false(&statement.test) {
@@ -148,7 +119,7 @@ impl NoUnreachableLoop {
             return;
         }
 
-        if natural_next_iteration_paths.binary_search(&node.id().index()).is_ok() {
+        if has_natural_next_iteration_path(node.id(), ctx) {
             return;
         }
 
@@ -204,26 +175,22 @@ fn is_unreachable_block(
     )
 }
 
-fn collect_natural_next_iteration_paths(ctx: &LintContext<'_>) -> Vec<usize> {
-    let mut natural_next_iteration_paths = Vec::new();
+fn has_natural_next_iteration_path(loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
+    for edge in ctx.cfg().graph().edges_directed(ctx.nodes().cfg_id(loop_id), Direction::Incoming) {
+        if !matches!(edge.weight(), EdgeType::Backedge) {
+            continue;
+        }
 
-    for edge in ctx
-        .cfg()
-        .graph()
-        .edge_references()
-        .filter(|edge| matches!(edge.weight(), EdgeType::Backedge))
-    {
         let source = edge.source();
         if !ctx.cfg().basic_block(source).is_unreachable()
-            && let Some(loop_id) = nearest_loop_for_block(source, ctx)
+            && nearest_loop_for_block(source, ctx)
+                .is_some_and(|nearest_loop| nearest_loop == loop_id)
         {
-            natural_next_iteration_paths.push(loop_id.index());
+            return true;
         }
     }
 
-    natural_next_iteration_paths.sort_unstable();
-    natural_next_iteration_paths.dedup();
-    natural_next_iteration_paths
+    false
 }
 
 fn is_static_infinite_loop(kind: AstKind<'_>) -> bool {
