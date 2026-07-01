@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 69/69 (100.00%)
 Positive Passed: 69/69 (100.00%)
-Negative Passed: 149/149 (100.00%)
+Negative Passed: 150/150 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -3600,6 +3600,11 @@ Negative Passed: 149/149 (100.00%)
    ╭─[misc/fail/oxc-232.js:1:5]
  1 │ x = (/* a */)
    ·     ─────────
+   ╰────
+
+  × Expected `from` but found `EOF`
+   ╭─[misc/fail/oxc-23673.js:2:1]
+ 1 │ await(E);import
    ╰────
 
   × Expected 'with' in import type options
