@@ -1,7 +1,7 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::{AstKind, ast::Statement};
 use oxc_cfg::{
-    EdgeType, InstructionKind, ReturnInstructionKind,
+    BlockNodeId, ControlFlowGraph, EdgeType, InstructionKind, ReturnInstructionKind,
     graph::{Direction, visit::EdgeRef},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -254,12 +254,22 @@ impl NoUselessReturn {
                 continue;
             }
 
+            let is_switch_case_condition_block =
+                Self::is_switch_case_condition_block(cfg, ctx, block_id);
             stack.extend(graph.edges_directed(block_id, Direction::Outgoing).filter_map(|edge| {
-                matches!(
-                    edge.weight(),
-                    EdgeType::Normal | EdgeType::Jump | EdgeType::Backedge | EdgeType::Unreachable
-                )
-                .then_some(edge.target())
+                let is_continuation_edge = if is_switch_case_condition_block {
+                    matches!(edge.weight(), EdgeType::Jump)
+                } else {
+                    matches!(
+                        edge.weight(),
+                        EdgeType::Normal
+                            | EdgeType::Jump
+                            | EdgeType::Backedge
+                            | EdgeType::Unreachable
+                    )
+                };
+
+                is_continuation_edge.then_some(edge.target())
             }));
         }
 
@@ -293,6 +303,19 @@ impl NoUselessReturn {
             Statement::BlockStatement(block) => block.body.iter().all(Self::is_noop_statement),
             _ => false,
         }
+    }
+
+    fn is_switch_case_condition_block(
+        cfg: &ControlFlowGraph,
+        ctx: &LintContext,
+        block_id: BlockNodeId,
+    ) -> bool {
+        cfg.basic_block(block_id).instructions().iter().any(|instr| {
+            matches!(instr.kind, InstructionKind::Condition)
+                && instr.node_id.is_some_and(|node_id| {
+                    matches!(ctx.nodes().parent_kind(node_id), AstKind::SwitchCase(_))
+                })
+        })
     }
 }
 
@@ -540,6 +563,7 @@ fn test() {
         "function foo() { switch (bar) { case 1: if (a) { doSomething(); return; } default: } }",
         "function foo() { switch (bar) { case 1: if (a) return; ; break; default: doSomethingElse(); } }",
         "function foo() { switch (bar) { case 1: if (a) return; {} break; default: doSomethingElse(); } }",
+        "function foo() { switch (bar) { case 1: if (a) return; case 2: break; default: doSomethingElse(); } }",
         // try-catch (useless return in catch)
         "function foo() { try {} catch (err) { return; } }",
         // try with useless return, catch has return value
