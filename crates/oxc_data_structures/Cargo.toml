@@ -36,6 +36,7 @@ all = [
   "rope",
   "slice_iter",
   "stack",
+  "string_ext",
 ]
 assert_unchecked = []
 box_macros = []
@@ -46,3 +47,4 @@ non_null = []
 rope = ["dep:ropey"]
 slice_iter = ["assert_unchecked"]
 stack = []
+string_ext = ["assert_unchecked"]
