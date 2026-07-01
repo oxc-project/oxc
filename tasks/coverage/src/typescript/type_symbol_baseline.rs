@@ -12,7 +12,7 @@
 //! walk, output format, comparison, snapshot) is wired and ready for a checker to fill in the
 //! type strings. This mirrors the Go `isSymbolBaseline` bool that parameterizes both walks.
 
-use std::{fmt::Write as _, path::Path};
+use std::{borrow::Cow, fmt::Write as _, path::Path};
 
 use oxc::{
     allocator::Allocator,
@@ -42,18 +42,20 @@ enum BaselineKind {
     Types,
 }
 
-/// Port of `typeWriterResult` (symbol fields only).
+/// Port of `typeWriterResult` (symbol fields only). `symbol` is `Cow` so the ubiquitous
+/// `UNRESOLVED` placeholder (every node in `Types` mode) doesn't allocate.
 struct TypeWriterResult {
     line: u32,
     /// Raw node source text (may span lines); line-delimiters are stripped at output time.
     source_text: String,
-    symbol: String,
+    symbol: Cow<'static, str>,
 }
 
 /// Port of `typeWriterWalker`, backed by `oxc_ast_visit::Visit` in place of `forEachASTNode`.
+/// `semantic` is `None` in `Types` mode, which never resolves symbols (see `generate_for_file`).
 struct SymbolWalker<'a> {
     kind: BaselineKind,
-    semantic: &'a Semantic<'a>,
+    semantic: Option<&'a Semantic<'a>>,
     content: &'a str,
     line_starts: &'a [u32],
     token_ends: &'a [u32],
@@ -71,7 +73,7 @@ impl<'a> Visit<'a> for SymbolWalker<'a> {
             AstKind::IdentifierReference(it) if self.kind == BaselineKind::Symbols => self.resolve(
                 it.reference_id
                     .get()
-                    .and_then(|r| self.semantic.scoping().get_reference(r).symbol_id()),
+                    .and_then(|r| self.sema().scoping().get_reference(r).symbol_id()),
             ),
             AstKind::BindingIdentifier(it) if self.kind == BaselineKind::Symbols => {
                 self.resolve(it.symbol_id.get())
@@ -83,7 +85,7 @@ impl<'a> Visit<'a> for SymbolWalker<'a> {
             | AstKind::ComputedMemberExpression(_)
             | AstKind::PrivateFieldExpression(_)
             | AstKind::ThisExpression(_)
-            | AstKind::Super(_) => UNRESOLVED.to_string(),
+            | AstKind::Super(_) => Cow::Borrowed(UNRESOLVED),
             // Literals, calls, binary/array/object/arrow, `TSQualifiedName`, etc. — the Go
             // checker returns nil for these in the symbol walk, so they never appear in a
             // `.symbols` baseline. (`.types` annotates them too, but oxc can't type them, so
@@ -94,14 +96,19 @@ impl<'a> Visit<'a> for SymbolWalker<'a> {
     }
 }
 
-impl SymbolWalker<'_> {
-    fn resolve(&self, symbol_id: Option<SymbolId>) -> String {
-        symbol_id.map_or_else(|| UNRESOLVED.to_string(), |sid| self.format_symbol(sid))
+impl<'a> SymbolWalker<'a> {
+    /// Semantic analysis, present only in `Symbols` mode (built alongside the walker).
+    fn sema(&self) -> &Semantic<'a> {
+        self.semantic.expect("symbol resolution requires semantic analysis")
+    }
+
+    fn resolve(&self, symbol_id: Option<SymbolId>) -> Cow<'static, str> {
+        symbol_id.map_or(Cow::Borrowed(UNRESOLVED), |sid| Cow::Owned(self.format_symbol(sid)))
     }
 
     /// Port of `writeTypeOrSymbol`'s symbol branch: `Symbol(name, Decl(file, line, col), ...)`.
     fn format_symbol(&self, sid: SymbolId) -> String {
-        let scoping = self.semantic.scoping();
+        let scoping = self.sema().scoping();
         let mut s = format!("Symbol({}", scoping.symbol_name(sid));
         let decls: Vec<NodeId> = scoping.symbol_declarations(sid).collect();
         for (i, &nid) in decls.iter().enumerate() {
@@ -121,7 +128,7 @@ impl SymbolWalker<'_> {
     /// choice of declaration node: exported declarations start before `export`, so climb to the
     /// export wrapper (but not for variables, whose declarator starts after `var`/`let`/`const`).
     fn decl_start(&self, nid: NodeId) -> u32 {
-        let nodes = self.semantic.nodes();
+        let nodes = self.sema().nodes();
         let span = nodes.kind(nid).span();
         match nodes.parent_kind(nid) {
             AstKind::ExportNamedDeclaration(export) => export.span().start,
@@ -130,11 +137,17 @@ impl SymbolWalker<'_> {
         }
     }
 
-    fn write(&mut self, span: Span, symbol: String) {
+    fn write(&mut self, span: Span, symbol: Cow<'static, str>) {
         let line = line_of_position(self.line_starts, span.start);
         let source_text = self.content[span.start as usize..span.end as usize].to_string();
         self.results.push(TypeWriterResult { line, source_text, symbol });
     }
+}
+
+/// A source line that a `>` annotation group must not be separated from by a blank line:
+/// a lone `{`/`}` (`bracketLineRegex`) or a whitespace-only line.
+fn is_blank_or_bracket(line: &str) -> bool {
+    BRACKET_LINE.is_match(line) || line.trim().is_empty()
 }
 
 /// Port of the per-file body of `iterateBaseline` (type_symbol_baseline.go:199-252).
@@ -155,10 +168,7 @@ fn iterate_unit(unit_name: &str, content: &str, results: &[TypeWriterResult]) ->
                 out.push_str("\r\n");
             }
             Some(liw) if liw != line => {
-                if !(liw + 1 < code_lines.len()
-                    && (BRACKET_LINE.is_match(code_lines[liw + 1])
-                        || code_lines[liw + 1].trim().is_empty()))
-                {
+                if !(liw + 1 < code_lines.len() && is_blank_or_bracket(code_lines[liw + 1])) {
                     out.push_str("\r\n");
                 }
                 out.push_str(&code_lines[liw + 1..=line].join("\r\n"));
@@ -178,7 +188,7 @@ fn iterate_unit(unit_name: &str, content: &str, results: &[TypeWriterResult]) ->
 
     let next = last_index_written.map_or(0, |l| l + 1);
     if next < code_lines.len() {
-        if !(BRACKET_LINE.is_match(code_lines[next]) || code_lines[next].trim().is_empty()) {
+        if !is_blank_or_bracket(code_lines[next]) {
             out.push_str("\r\n");
         }
         out.push_str(&code_lines[next..].join("\r\n"));
@@ -198,28 +208,55 @@ fn generate_for_file(f: &TypeScriptFile, header: &str, kind: BaselineKind) -> St
     let mut joined = String::new();
     for unit in &f.units {
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, &unit.content, unit.source_type)
-            .with_config(TokensParserConfig)
-            .parse();
-        let token_ends: Vec<u32> = ret.tokens.iter().map(oxc::parser::Token::end).collect();
         let line_starts = scanner::compute_line_starts(&unit.content);
 
-        let results = if ret.panicked {
-            Vec::new()
-        } else {
-            let semantic =
-                SemanticBuilder::new_compiler().with_build_nodes(true).build(&ret.program).semantic;
-            let mut walker = SymbolWalker {
-                kind,
-                semantic: &semantic,
-                content: &unit.content,
-                line_starts: &line_starts,
-                token_ends: &token_ends,
-                unit_name: &unit.name,
-                results: Vec::new(),
-            };
-            walker.visit_program(semantic.nodes().program());
-            walker.results
+        // `Types` mode never resolves symbols, so it needs neither the token stream (for
+        // declaration positions) nor semantic analysis — skip both.
+        let results = match kind {
+            BaselineKind::Symbols => {
+                let ret = Parser::new(&allocator, &unit.content, unit.source_type)
+                    .with_config(TokensParserConfig)
+                    .parse();
+                if ret.panicked {
+                    Vec::new()
+                } else {
+                    let token_ends: Vec<u32> =
+                        ret.tokens.iter().map(oxc::parser::Token::end).collect();
+                    let semantic = SemanticBuilder::new_compiler()
+                        .with_build_nodes(true)
+                        .build(&ret.program)
+                        .semantic;
+                    let mut walker = SymbolWalker {
+                        kind,
+                        semantic: Some(&semantic),
+                        content: &unit.content,
+                        line_starts: &line_starts,
+                        token_ends: &token_ends,
+                        unit_name: &unit.name,
+                        results: Vec::new(),
+                    };
+                    walker.visit_program(semantic.nodes().program());
+                    walker.results
+                }
+            }
+            BaselineKind::Types => {
+                let ret = Parser::new(&allocator, &unit.content, unit.source_type).parse();
+                if ret.panicked {
+                    Vec::new()
+                } else {
+                    let mut walker = SymbolWalker {
+                        kind,
+                        semantic: None,
+                        content: &unit.content,
+                        line_starts: &line_starts,
+                        token_ends: &[],
+                        unit_name: &unit.name,
+                        results: Vec::new(),
+                    };
+                    walker.visit_program(&ret.program);
+                    walker.results
+                }
+            }
         };
 
         joined.push_str(&iterate_unit(&unit.name, &unit.content, &results));
