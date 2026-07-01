@@ -118,10 +118,6 @@ impl Rule for NoUnreachableLoop {
             return;
         }
 
-        if has_natural_next_iteration_path(node.id(), ctx) {
-            return;
-        }
-
         let unreachable =
             is_static_infinite_loop(node.kind()).then(|| ctx.effective_unreachable_blocks());
 
@@ -171,24 +167,6 @@ fn is_unreachable_block(
         || ctx.cfg().basic_block(block_id).is_unreachable(),
         |unreachable| unreachable[block_id.index()],
     )
-}
-
-fn has_natural_next_iteration_path(loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
-    for edge in ctx.cfg().graph().edges_directed(ctx.nodes().cfg_id(loop_id), Direction::Incoming) {
-        if !matches!(edge.weight(), EdgeType::Backedge) {
-            continue;
-        }
-
-        let source = edge.source();
-        if !ctx.cfg().basic_block(source).is_unreachable()
-            && nearest_loop_for_block(source, ctx)
-                .is_some_and(|nearest_loop| nearest_loop == loop_id)
-        {
-            return true;
-        }
-    }
-
-    false
 }
 
 fn is_static_infinite_loop(kind: AstKind<'_>) -> bool {
