@@ -934,7 +934,7 @@ fn lower_inner<'a>(
 }
 
 // =============================================================================
-// lower_expression / lower_statement — Stage 1a skeleton catch-alls.
+// lower_expression / lower_statement — Stage 1a skeleton catch-all arms.
 //
 // Arms are ported incrementally from `git show HEAD:.../build_hir.rs` + the
 // convert-ast reference. Until an arm lands, the catch-all bails to an undefined
