@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicU32, Ordering};
+
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{
@@ -10,8 +12,8 @@ use crate::react_compiler_hir::visitors::{
     each_pattern_operand, each_terminal_operand,
 };
 use crate::react_compiler_hir::{
-    AliasingEffect, BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, Place,
-    PrimitiveValue, PropertyLiteral, Terminal, Type, UnaryOperator,
+    AliasingEffect, BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, ParamPattern,
+    Place, PrimitiveValue, PropertyLiteral, Terminal, Type, UnaryOperator, is_use_ref_type,
 };
 
 const ERROR_DESCRIPTION: &str = "React refs are values that are not needed for rendering. \
@@ -23,10 +25,10 @@ const ERROR_DESCRIPTION: &str = "React refs are values that are not needed for r
 
 type RefId = u32;
 
-static REF_ID_COUNTER: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+static REF_ID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 fn next_ref_id() -> RefId {
-    REF_ID_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+    REF_ID_COUNTER.fetch_add(1, Ordering::Relaxed)
 }
 
 // --- RefAccessType / RefAccessRefType / RefFnType ---
@@ -257,7 +259,7 @@ fn ref_type_of_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]
     let ty = &types[identifier.type_.0 as usize];
     if crate::react_compiler_hir::is_ref_value_type(ty) {
         RefAccessType::RefValue { loc: None, ref_id: None }
-    } else if crate::react_compiler_hir::is_use_ref_type(ty) {
+    } else if is_use_ref_type(ty) {
         RefAccessType::Ref { ref_id: next_ref_id() }
     } else {
         RefAccessType::None
@@ -266,7 +268,7 @@ fn ref_type_of_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]
 
 fn is_ref_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]) -> bool {
     let identifier = &identifiers[id.0 as usize];
-    crate::react_compiler_hir::is_use_ref_type(&types[identifier.type_.0 as usize])
+    is_use_ref_type(&types[identifier.type_.0 as usize])
 }
 
 fn is_ref_value_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]) -> bool {
@@ -529,8 +531,8 @@ fn validate_no_ref_access_in_render_impl(
     // Process params
     for param in &func.params {
         let place = match param {
-            crate::react_compiler_hir::ParamPattern::Place(p) => p,
-            crate::react_compiler_hir::ParamPattern::Spread(s) => &s.place,
+            ParamPattern::Place(p) => p,
+            ParamPattern::Spread(s) => &s.place,
         };
         ref_env.set(place.identifier, ref_type_of_type(place.identifier, identifiers, types));
     }
@@ -1128,7 +1130,7 @@ fn validate_no_ref_access_in_render_impl(
 
     if ref_env.has_changed() {
         errors.push(CompilerDiagnostic::new(
-            crate::react_compiler_diagnostics::ErrorCategory::Invariant,
+            ErrorCategory::Invariant,
             "Ref type environment did not converge",
             None,
         ));

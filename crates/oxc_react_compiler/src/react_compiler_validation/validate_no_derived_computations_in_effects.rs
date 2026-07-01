@@ -16,6 +16,9 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, CompilerErrorDetail, ErrorCategory,
 };
+use crate::react_compiler_hir::BasicBlock;
+use crate::react_compiler_hir::Instruction;
+use crate::react_compiler_hir::Terminal;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{
     each_instruction_lvalue_ids, each_instruction_operand as canonical_each_instruction_operand,
@@ -308,7 +311,7 @@ fn get_root_set_state(
 }
 
 fn maybe_record_set_state_for_instr(
-    instr: &crate::react_compiler_hir::Instruction,
+    instr: &Instruction,
     env: &Environment,
     set_state_loads: &mut FxHashMap<IdentifierId, Option<IdentifierId>>,
     set_state_usages: &mut FxHashMap<IdentifierId, FxHashSet<LocKey>>,
@@ -450,11 +453,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
     Ok(errors)
 }
 
-fn record_phi_derivations(
-    block: &crate::react_compiler_hir::BasicBlock,
-    context: &mut ValidationContext,
-    env: &Environment,
-) {
+fn record_phi_derivations(block: &BasicBlock, context: &mut ValidationContext, env: &Environment) {
     let identifiers = &env.identifiers;
     for phi in &block.phis {
         let mut type_of_value = TypeOfValue::Ignored;
@@ -482,7 +481,7 @@ fn record_phi_derivations(
 }
 
 fn record_instruction_derivations(
-    instr: &crate::react_compiler_hir::Instruction,
+    instr: &Instruction,
     context: &mut ValidationContext,
     is_first_pass: bool,
     _outer_func: &HirFunction,
@@ -527,10 +526,8 @@ fn record_instruction_derivations(
         InstructionValue::CallExpression { callee, args, .. } => {
             let callee_type = &types[identifiers[callee.identifier.0 as usize].type_.0 as usize];
             if is_use_effect_hook_type(callee_type) && args.len() == 2 {
-                if let (
-                    crate::react_compiler_hir::PlaceOrSpread::Place(arg0),
-                    crate::react_compiler_hir::PlaceOrSpread::Place(arg1),
-                ) = (&args[0], &args[1])
+                if let (PlaceOrSpread::Place(arg0), PlaceOrSpread::Place(arg1)) =
+                    (&args[0], &args[1])
                 {
                     let effect_function = context.functions.get(&arg0.identifier).copied();
                     let deps = context.candidate_dependencies.get(&arg1.identifier).cloned();
@@ -560,10 +557,8 @@ fn record_instruction_derivations(
         InstructionValue::MethodCall { property, args, .. } => {
             let prop_type = &types[identifiers[property.identifier.0 as usize].type_.0 as usize];
             if is_use_effect_hook_type(prop_type) && args.len() == 2 {
-                if let (
-                    crate::react_compiler_hir::PlaceOrSpread::Place(arg0),
-                    crate::react_compiler_hir::PlaceOrSpread::Place(arg1),
-                ) = (&args[0], &args[1])
+                if let (PlaceOrSpread::Place(arg0), PlaceOrSpread::Place(arg1)) =
+                    (&args[0], &args[1])
                 {
                     let effect_function = context.functions.get(&arg0.identifier).copied();
                     let deps = context.candidate_dependencies.get(&arg1.identifier).cloned();
@@ -682,7 +677,7 @@ struct OperandWithEffect {
 /// Collects operand (IdentifierId, loc) pairs from an instruction.
 /// Thin wrapper around canonical `each_instruction_operand` that maps Places to (id, loc) pairs.
 fn each_instruction_operand(
-    instr: &crate::react_compiler_hir::Instruction,
+    instr: &Instruction,
     env: &Environment,
 ) -> Vec<(IdentifierId, Option<SourceLocation>)> {
     canonical_each_instruction_operand(instr, env)
@@ -694,7 +689,7 @@ fn each_instruction_operand(
 /// Collects operands with their effects.
 /// Thin wrapper around canonical `each_instruction_operand` that maps Places to OperandWithEffect.
 fn each_instruction_operand_with_effect(
-    instr: &crate::react_compiler_hir::Instruction,
+    instr: &Instruction,
     env: &Environment,
 ) -> Vec<OperandWithEffect> {
     canonical_each_instruction_operand(instr, env)
@@ -882,11 +877,8 @@ fn validate_effect(
 
     for (_block_id, block) in &effect_function.body.blocks {
         // Check for return -> cleanup function
-        if let crate::react_compiler_hir::Terminal::Return {
-            value,
-            return_variant: ReturnVariant::Explicit,
-            ..
-        } = &block.terminal
+        if let Terminal::Return { value, return_variant: ReturnVariant::Explicit, .. } =
+            &block.terminal
         {
             let func_id = context.functions.get(&value.identifier).copied();
             cleanup_function_deps = get_fn_local_deps(func_id, env);
@@ -937,7 +929,7 @@ fn validate_effect(
                     let callee_type =
                         &types[identifiers[callee.identifier.0 as usize].type_.0 as usize];
                     if is_set_state_type(callee_type) && args.len() == 1 {
-                        if let crate::react_compiler_hir::PlaceOrSpread::Place(arg0) = &args[0] {
+                        if let PlaceOrSpread::Place(arg0) = &args[0] {
                             let callee_metadata =
                                 context.derivation_cache.cache.get(&callee.identifier);
 
@@ -1313,19 +1305,17 @@ fn validate_effect_non_exp(
         }
 
         match &block.terminal {
-            crate::react_compiler_hir::Terminal::Return { value, .. }
-            | crate::react_compiler_hir::Terminal::Throw { value, .. } => {
+            Terminal::Return { value, .. } | Terminal::Throw { value, .. } => {
                 if dep_values.contains_key(&value.identifier) {
                     return Vec::new();
                 }
             }
-            crate::react_compiler_hir::Terminal::If { test, .. }
-            | crate::react_compiler_hir::Terminal::Branch { test, .. } => {
+            Terminal::If { test, .. } | Terminal::Branch { test, .. } => {
                 if dep_values.contains_key(&test.identifier) {
                     return Vec::new();
                 }
             }
-            crate::react_compiler_hir::Terminal::Switch { test, .. } => {
+            Terminal::Switch { test, .. } => {
                 if dep_values.contains_key(&test.identifier) {
                     return Vec::new();
                 }

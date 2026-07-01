@@ -7,9 +7,13 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PruneUnusedScopes.ts`.
 
+use std::mem::take;
+
+use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_hir::{
-    PrunedReactiveScopeBlock, ReactiveFunction, ReactiveScopeBlock, ReactiveStatement,
-    ReactiveTerminal, ReactiveTerminalStatement, environment::Environment,
+    PrunedReactiveScopeBlock, ReactiveFunction, ReactiveScope, ReactiveScopeBlock,
+    ReactiveStatement, ReactiveTerminal, ReactiveTerminalStatement, ScopeId,
+    environment::Environment,
 };
 
 use crate::react_compiler_reactive_scopes::visitors::{
@@ -25,7 +29,7 @@ struct State {
 pub fn prune_unused_scopes(
     func: &mut ReactiveFunction,
     env: &Environment,
-) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
+) -> Result<(), CompilerError> {
     let mut transform = Transform { env };
     let mut state = State { has_return_statement: false };
     transform_reactive_function(func, &mut transform, &mut state)
@@ -46,7 +50,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement,
         state: &mut State,
-    ) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
+    ) -> Result<(), CompilerError> {
         self.traverse_terminal(stmt, state)?;
         if matches!(stmt.terminal, ReactiveTerminal::Return { .. }) {
             state.has_return_statement = true;
@@ -58,8 +62,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock,
         _state: &mut State,
-    ) -> Result<Transformed<ReactiveStatement>, crate::react_compiler_diagnostics::CompilerError>
-    {
+    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
         let mut scope_state = State { has_return_statement: false };
         self.visit_scope(scope, &mut scope_state)?;
 
@@ -73,7 +76,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
             // Replace with pruned scope
             Ok(Transformed::Replace(ReactiveStatement::PrunedScope(PrunedReactiveScopeBlock {
                 scope: scope.scope,
-                instructions: std::mem::take(&mut scope.instructions),
+                instructions: take(&mut scope.instructions),
             })))
         } else {
             Ok(Transformed::Keep)
@@ -84,10 +87,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
 /// Does the scope block declare any values of its own?
 /// Returns false if all declarations are propagated from nested scopes.
 /// TS: `hasOwnDeclaration`
-fn has_own_declaration(
-    scope_data: &crate::react_compiler_hir::ReactiveScope,
-    scope_id: crate::react_compiler_hir::ScopeId,
-) -> bool {
+fn has_own_declaration(scope_data: &ReactiveScope, scope_id: ScopeId) -> bool {
     for (_, decl) in &scope_data.declarations {
         if decl.scope == scope_id {
             return true;

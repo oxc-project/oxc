@@ -1,9 +1,12 @@
+use std::mem::take;
+
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
 use crate::react_compiler_diagnostics::CompilerDiagnostic;
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
+use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
 use crate::react_compiler_diagnostics::ErrorCategory;
 
 use crate::react_compiler_hir::default_module_type_provider::default_module_type_provider;
@@ -361,7 +364,7 @@ impl Environment {
     }
 
     pub fn take_errors(&mut self) -> CompilerError {
-        let mut errors = std::mem::take(&mut self.errors);
+        let mut errors = take(&mut self.errors);
         // Mark as not thrown — these are accumulated errors returned at the end
         // of the pipeline, not errors thrown by a pass.
         errors.is_thrown = false;
@@ -384,15 +387,11 @@ impl Environment {
     pub fn take_invariant_errors(&mut self) -> CompilerError {
         let mut invariant = CompilerError::new();
         let mut remaining = CompilerError::new();
-        let old = std::mem::take(&mut self.errors);
+        let old = take(&mut self.errors);
         for detail in old.details {
             let is_invariant = match &detail {
-                crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::Diagnostic(d) => {
-                    d.category == crate::react_compiler_diagnostics::ErrorCategory::Invariant
-                }
-                crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::ErrorDetail(d) => {
-                    d.category == crate::react_compiler_diagnostics::ErrorCategory::Invariant
-                }
+                CompilerErrorOrDiagnostic::Diagnostic(d) => d.category == ErrorCategory::Invariant,
+                CompilerErrorOrDiagnostic::ErrorDetail(d) => d.category == ErrorCategory::Invariant,
             };
             if is_invariant {
                 invariant.details.push(detail);
@@ -408,12 +407,8 @@ impl Environment {
     /// In TS, Todo errors throw immediately via CompilerError.throwTodo().
     pub fn has_todo_errors(&self) -> bool {
         self.errors.details.iter().any(|d| match d {
-            crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::Diagnostic(d) => {
-                d.category == crate::react_compiler_diagnostics::ErrorCategory::Todo
-            }
-            crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::ErrorDetail(d) => {
-                d.category == crate::react_compiler_diagnostics::ErrorCategory::Todo
-            }
+            CompilerErrorOrDiagnostic::Diagnostic(d) => d.category == ErrorCategory::Todo,
+            CompilerErrorOrDiagnostic::ErrorDetail(d) => d.category == ErrorCategory::Todo,
         })
     }
 
@@ -422,16 +417,14 @@ impl Environment {
     pub fn take_thrown_errors(&mut self) -> CompilerError {
         let mut thrown = CompilerError::new();
         let mut remaining = CompilerError::new();
-        let old = std::mem::take(&mut self.errors);
+        let old = take(&mut self.errors);
         for detail in old.details {
             let is_thrown = match &detail {
-                crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::Diagnostic(d) => {
-                    d.category == crate::react_compiler_diagnostics::ErrorCategory::Invariant
-                        || d.category == crate::react_compiler_diagnostics::ErrorCategory::Todo
+                CompilerErrorOrDiagnostic::Diagnostic(d) => {
+                    d.category == ErrorCategory::Invariant || d.category == ErrorCategory::Todo
                 }
-                crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic::ErrorDetail(d) => {
-                    d.category == crate::react_compiler_diagnostics::ErrorCategory::Invariant
-                        || d.category == crate::react_compiler_diagnostics::ErrorCategory::Todo
+                CompilerErrorOrDiagnostic::ErrorDetail(d) => {
+                    d.category == ErrorCategory::Invariant || d.category == ErrorCategory::Todo
                 }
             };
             if is_thrown {
@@ -910,7 +903,7 @@ impl Environment {
 
     /// Take the outlined functions, leaving the vec empty.
     pub fn take_outlined_functions(&mut self) -> Vec<OutlinedFunctionEntry> {
-        std::mem::take(&mut self.outlined_functions)
+        take(&mut self.outlined_functions)
     }
 
     /// Whether memoization is enabled for this compilation.

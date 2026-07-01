@@ -11,11 +11,14 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::cmp;
+use std::mem::replace;
 
+use crate::react_compiler_hir::MutableRangeId;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     EvaluationOrder, HirFunction, IdentifierId, InstructionValue, ObjectPropertyOrSpread, ScopeId,
 };
+use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 use crate::react_compiler_utils::DisjointSet;
 
 // =============================================================================
@@ -84,10 +87,8 @@ pub fn align_object_method_scopes(func: &mut HirFunction, env: &mut Environment)
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
                     let func_id = lowered_func.func;
-                    let mut inner_func = std::mem::replace(
-                        &mut env.functions[func_id.0 as usize],
-                        crate::react_compiler_ssa::enter_ssa::placeholder_function(),
-                    );
+                    let mut inner_func =
+                        replace(&mut env.functions[func_id.0 as usize], placeholder_function());
                     align_object_method_scopes(&mut inner_func, env);
                     env.functions[func_id.0 as usize] = inner_func;
                 }
@@ -118,14 +119,13 @@ pub fn align_object_method_scopes(func: &mut HirFunction, env: &mut Environment)
     });
 
     // Save original scope range IDs before updating
-    let original_range_ids: FxHashMap<ScopeId, crate::react_compiler_hir::MutableRangeId> =
-        range_updates
-            .keys()
-            .map(|&root_id| {
-                let range_id = env.scopes[root_id.0 as usize].range.id;
-                (root_id, range_id)
-            })
-            .collect();
+    let original_range_ids: FxHashMap<ScopeId, MutableRangeId> = range_updates
+        .keys()
+        .map(|&root_id| {
+            let range_id = env.scopes[root_id.0 as usize].range.id;
+            (root_id, range_id)
+        })
+        .collect();
 
     for (root_id, (new_start, new_end)) in &range_updates {
         env.scopes[root_id.0 as usize].range.start = *new_start;

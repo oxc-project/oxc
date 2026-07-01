@@ -14,8 +14,14 @@
 
 use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
 use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_inference::infer_mutation_aliasing_effects::infer_mutation_aliasing_effects;
+use crate::react_compiler_inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges;
+use crate::react_compiler_inference::infer_reactive_scope_variables::infer_reactive_scope_variables;
+use crate::react_compiler_optimization::dead_code_elimination;
+use crate::react_compiler_ssa::rewrite_instruction_kinds_based_on_reassignment;
 use crate::react_compiler_utils::FxIndexMap;
 use rustc_hash::FxHashSet;
+use std::mem::replace;
 
 use crate::react_compiler_hir::{
     AliasingEffect, BlockId, Effect, EvaluationOrder, FunctionId, HIR, HirFunction, IdentifierId,
@@ -61,7 +67,7 @@ where
     for func_id in inner_func_ids {
         // Take the inner function out of the arena to avoid borrow conflicts
         let mut inner_func =
-            std::mem::replace(&mut env.functions[func_id.0 as usize], placeholder_function());
+            replace(&mut env.functions[func_id.0 as usize], placeholder_function());
 
         lower_with_mutation_aliasing(&mut inner_func, env, debug_logger)?;
 
@@ -106,7 +112,7 @@ where
     analyse_functions(func, env, debug_logger)?;
 
     // inferMutationAliasingEffects on the inner function
-    crate::react_compiler_inference::infer_mutation_aliasing_effects::infer_mutation_aliasing_effects(func, env, true)?;
+    infer_mutation_aliasing_effects(func, env, true)?;
 
     // Check for invariant errors (e.g., uninitialized value kind)
     // In TS, these throw from within inferMutationAliasingEffects, aborting
@@ -116,22 +122,19 @@ where
     }
 
     // deadCodeElimination for inner functions
-    crate::react_compiler_optimization::dead_code_elimination(func, env);
+    dead_code_elimination(func, env);
 
     // inferMutationAliasingRanges — returns the externally-visible function effects
-    let function_effects =
-        crate::react_compiler_inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges(func, env, true)?;
+    let function_effects = infer_mutation_aliasing_ranges(func, env, true)?;
 
     // rewriteInstructionKindsBasedOnReassignment
-    if let Err(err) =
-        crate::react_compiler_ssa::rewrite_instruction_kinds_based_on_reassignment(func, env)
-    {
+    if let Err(err) = rewrite_instruction_kinds_based_on_reassignment(func, env) {
         env.errors.merge(err);
         return Ok(());
     }
 
     // inferReactiveScopeVariables on the inner function
-    crate::react_compiler_inference::infer_reactive_scope_variables::infer_reactive_scope_variables(func, env)?;
+    infer_reactive_scope_variables(func, env)?;
 
     func.aliasing_effects = Some(function_effects.clone());
 

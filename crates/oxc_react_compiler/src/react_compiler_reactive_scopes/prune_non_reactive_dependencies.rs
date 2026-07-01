@@ -10,9 +10,10 @@
 
 use rustc_hash::FxHashSet;
 
+use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_hir::{
     EvaluationOrder, IdentifierId, InstructionValue, Place, PrunedReactiveScopeBlock,
-    ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveValue,
+    ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveValue, Type,
     environment::Environment, is_primitive_type, is_use_ref_type, object_shape,
     visitors as hir_visitors,
 };
@@ -33,9 +34,7 @@ pub fn collect_reactive_identifiers(
 ) -> FxHashSet<IdentifierId> {
     let visitor = CollectVisitor { env };
     let mut state = FxHashSet::default();
-    crate::react_compiler_reactive_scopes::visitors::visit_reactive_function(
-        func, &visitor, &mut state,
-    );
+    visitors::visit_reactive_function(func, &visitor, &mut state);
     state
 }
 
@@ -77,7 +76,7 @@ impl<'a> ReactiveFunctionVisitor for CollectVisitor<'a> {
 
 /// TS: `isStableRefType`
 fn is_stable_ref_type(
-    ty: &crate::react_compiler_hir::Type,
+    ty: &Type,
     reactive_identifiers: &FxHashSet<IdentifierId>,
     id: IdentifierId,
 ) -> bool {
@@ -89,7 +88,7 @@ fn is_stable_ref_type(
 // =============================================================================
 
 /// TS: `isStableType`
-fn is_stable_type(ty: &crate::react_compiler_hir::Type) -> bool {
+fn is_stable_type(ty: &Type) -> bool {
     is_set_state_type(ty)
         || is_set_action_state_type(ty)
         || is_dispatcher_type(ty)
@@ -98,24 +97,24 @@ fn is_stable_type(ty: &crate::react_compiler_hir::Type) -> bool {
         || is_set_optimistic_type(ty)
 }
 
-fn is_set_state_type(ty: &crate::react_compiler_hir::Type) -> bool {
-    matches!(ty, crate::react_compiler_hir::Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_STATE_ID)
+fn is_set_state_type(ty: &Type) -> bool {
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_STATE_ID)
 }
 
-fn is_set_action_state_type(ty: &crate::react_compiler_hir::Type) -> bool {
-    matches!(ty, crate::react_compiler_hir::Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_ACTION_STATE_ID)
+fn is_set_action_state_type(ty: &Type) -> bool {
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_ACTION_STATE_ID)
 }
 
-fn is_dispatcher_type(ty: &crate::react_compiler_hir::Type) -> bool {
-    matches!(ty, crate::react_compiler_hir::Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_DISPATCH_ID)
+fn is_dispatcher_type(ty: &Type) -> bool {
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_DISPATCH_ID)
 }
 
-fn is_start_transition_type(ty: &crate::react_compiler_hir::Type) -> bool {
-    matches!(ty, crate::react_compiler_hir::Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_START_TRANSITION_ID)
+fn is_start_transition_type(ty: &Type) -> bool {
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_START_TRANSITION_ID)
 }
 
-fn is_set_optimistic_type(ty: &crate::react_compiler_hir::Type) -> bool {
-    matches!(ty, crate::react_compiler_hir::Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_OPTIMISTIC_ID)
+fn is_set_optimistic_type(ty: &Type) -> bool {
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_OPTIMISTIC_ID)
 }
 
 // =============================================================================
@@ -147,7 +146,7 @@ impl<'a> ReactiveFunctionTransform for PruneVisitor<'a> {
         &mut self,
         instruction: &mut ReactiveInstruction,
         state: &mut Self::State,
-    ) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
+    ) -> Result<(), CompilerError> {
         self.traverse_instruction(instruction, state)?;
 
         let lvalue = &instruction.lvalue;
@@ -217,7 +216,7 @@ impl<'a> ReactiveFunctionTransform for PruneVisitor<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock,
         state: &mut Self::State,
-    ) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
+    ) -> Result<(), CompilerError> {
         self.traverse_scope(scope, state)?;
 
         let scope_id = scope.scope;

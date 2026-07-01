@@ -16,10 +16,14 @@ use crate::react_compiler_diagnostics::{
 };
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
+    ArrayPatternElement, Effect, ObjectPropertyOrSpread, Pattern, PropertyLiteral,
+    PrunedReactiveScopeBlock, ReactiveTerminalStatement,
+};
+use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, Identifier, IdentifierId, IdentifierName, InstructionKind,
     InstructionValue, ManualMemoDependency, ManualMemoDependencyRoot, Place, ReactiveBlock,
-    ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveValue,
-    ScopeId,
+    ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveTerminal,
+    ReactiveValue, ScopeId,
 };
 
 /// State tracked during manual memo validation within a StartMemoize..FinishMemoize range.
@@ -93,11 +97,7 @@ fn visit_statement(stmt: &ReactiveStatement, state: &mut VisitorState) {
     }
 }
 
-fn visit_terminal(
-    terminal: &crate::react_compiler_hir::ReactiveTerminalStatement,
-    state: &mut VisitorState,
-) {
-    use crate::react_compiler_hir::ReactiveTerminal;
+fn visit_terminal(terminal: &ReactiveTerminalStatement, state: &mut VisitorState) {
     match &terminal.terminal {
         ReactiveTerminal::If { consequent, alternate, .. } => {
             visit_block(consequent, state);
@@ -166,10 +166,7 @@ fn visit_scope(scope_block: &ReactiveScopeBlock, state: &mut VisitorState) {
     }
 }
 
-fn visit_pruned_scope(
-    pruned: &crate::react_compiler_hir::PrunedReactiveScopeBlock,
-    state: &mut VisitorState,
-) {
+fn visit_pruned_scope(pruned: &PrunedReactiveScopeBlock, state: &mut VisitorState) {
     visit_block(&pruned.instructions, state);
     state.pruned_scopes.insert(pruned.scope);
 }
@@ -465,29 +462,29 @@ fn start_memoize_operands(deps: &Option<Vec<ManualMemoDependency>>) -> Vec<Place
 }
 
 /// Get lvalue places from a Destructure pattern.
-fn destructure_lvalue_places(pattern: &crate::react_compiler_hir::Pattern) -> Vec<&Place> {
+fn destructure_lvalue_places(pattern: &Pattern) -> Vec<&Place> {
     let mut result = Vec::new();
     match pattern {
-        crate::react_compiler_hir::Pattern::Array(arr) => {
+        Pattern::Array(arr) => {
             for item in &arr.items {
                 match item {
-                    crate::react_compiler_hir::ArrayPatternElement::Place(place) => {
+                    ArrayPatternElement::Place(place) => {
                         result.push(place);
                     }
-                    crate::react_compiler_hir::ArrayPatternElement::Spread(spread) => {
+                    ArrayPatternElement::Spread(spread) => {
                         result.push(&spread.place);
                     }
-                    crate::react_compiler_hir::ArrayPatternElement::Hole => {}
+                    ArrayPatternElement::Hole => {}
                 }
             }
         }
-        crate::react_compiler_hir::Pattern::Object(obj) => {
+        Pattern::Object(obj) => {
             for entry in &obj.properties {
                 match entry {
-                    crate::react_compiler_hir::ObjectPropertyOrSpread::Property(prop) => {
+                    ObjectPropertyOrSpread::Property(prop) => {
                         result.push(&prop.place);
                     }
-                    crate::react_compiler_hir::ObjectPropertyOrSpread::Spread(spread) => {
+                    ObjectPropertyOrSpread::Spread(spread) => {
                         result.push(&spread.place);
                     }
                 }
@@ -553,18 +550,19 @@ fn compare_deps(
     if is_subpath
         && (source.path.len() == inferred.path.len()
             || (inferred.path.len() >= source.path.len()
-                && !inferred.path.iter().any(|t| {
-                    t.property
-                        == crate::react_compiler_hir::PropertyLiteral::String("current".to_string())
-                })))
+                && !inferred
+                    .path
+                    .iter()
+                    .any(|t| t.property == PropertyLiteral::String("current".to_string()))))
     {
         CompareDependencyResult::Ok
     } else if is_subpath {
-        if source.path.iter().any(|t| {
-            t.property == crate::react_compiler_hir::PropertyLiteral::String("current".to_string())
-        }) || inferred.path.iter().any(|t| {
-            t.property == crate::react_compiler_hir::PropertyLiteral::String("current".to_string())
-        }) {
+        if source.path.iter().any(|t| t.property == PropertyLiteral::String("current".to_string()))
+            || inferred
+                .path
+                .iter()
+                .any(|t| t.property == PropertyLiteral::String("current".to_string()))
+        {
             CompareDependencyResult::RefAccessDifference
         } else {
             CompareDependencyResult::Subpath
@@ -578,20 +576,20 @@ fn compare_deps(
 fn pretty_print_scope_dependency(
     dep_id: IdentifierId,
     dep_path: &[DependencyPathEntry],
-    identifiers: &[crate::react_compiler_hir::Identifier],
+    identifiers: &[Identifier],
 ) -> String {
     let ident = &identifiers[dep_id.0 as usize];
     let root_str = match &ident.name {
-        Some(crate::react_compiler_hir::IdentifierName::Named(n)) => n.clone(),
-        Some(crate::react_compiler_hir::IdentifierName::Promoted(n)) => n.clone(),
+        Some(IdentifierName::Named(n)) => n.clone(),
+        Some(IdentifierName::Promoted(n)) => n.clone(),
         None => "[unnamed]".to_string(),
     };
     let path_str: String = dep_path
         .iter()
         .map(|entry| {
             let prop = match &entry.property {
-                crate::react_compiler_hir::PropertyLiteral::String(s) => s.clone(),
-                crate::react_compiler_hir::PropertyLiteral::Number(n) => format!("{}", n),
+                PropertyLiteral::String(s) => s.clone(),
+                PropertyLiteral::Number(n) => format!("{}", n),
             };
             if entry.optional { format!("?.{}", prop) } else { format!(".{}", prop) }
         })
@@ -602,15 +600,15 @@ fn pretty_print_scope_dependency(
 /// Pretty-print a manual memo dependency for error messages.
 fn print_manual_memo_dependency(
     dep: &ManualMemoDependency,
-    identifiers: &[crate::react_compiler_hir::Identifier],
+    identifiers: &[Identifier],
     with_optional: bool,
 ) -> String {
     let root_str = match &dep.root {
         ManualMemoDependencyRoot::NamedLocal { value, .. } => {
             let ident = &identifiers[value.identifier.0 as usize];
             match &ident.name {
-                Some(crate::react_compiler_hir::IdentifierName::Named(n)) => n.clone(),
-                Some(crate::react_compiler_hir::IdentifierName::Promoted(n)) => n.clone(),
+                Some(IdentifierName::Named(n)) => n.clone(),
+                Some(IdentifierName::Promoted(n)) => n.clone(),
                 None => "[unnamed]".to_string(),
             }
         }
@@ -621,8 +619,8 @@ fn print_manual_memo_dependency(
         .iter()
         .map(|entry| {
             let prop = match &entry.property {
-                crate::react_compiler_hir::PropertyLiteral::String(s) => s.clone(),
-                crate::react_compiler_hir::PropertyLiteral::Number(n) => format!("{}", n),
+                PropertyLiteral::String(s) => s.clone(),
+                PropertyLiteral::Number(n) => format!("{}", n),
             };
             if with_optional && entry.optional {
                 format!("?.{}", prop)
@@ -671,7 +669,7 @@ fn validate_inferred_dep(
             root: ManualMemoDependencyRoot::NamedLocal {
                 value: Place {
                     identifier: dep_id,
-                    effect: crate::react_compiler_hir::Effect::Read,
+                    effect: Effect::Read,
                     reactive: false,
                     loc: ident.loc,
                 },

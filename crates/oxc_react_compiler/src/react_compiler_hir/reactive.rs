@@ -11,6 +11,10 @@
 //!
 //! Corresponds to the reactive types in `HIR.ts`.
 
+use std::fmt::Display;
+use std::fmt::Formatter;
+use std::fmt::Result as FmtResult;
+
 use crate::react_compiler_diagnostics::SourceLocation;
 
 use crate::react_compiler_hir::{
@@ -131,8 +135,8 @@ pub enum ReactiveTerminalTargetKind {
     Unlabeled,
 }
 
-impl std::fmt::Display for ReactiveTerminalTargetKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for ReactiveTerminalTargetKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             ReactiveTerminalTargetKind::Implicit => write!(f, "implicit"),
             ReactiveTerminalTargetKind::Labeled => write!(f, "labeled"),

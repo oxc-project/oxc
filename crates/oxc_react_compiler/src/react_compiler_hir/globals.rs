@@ -13,6 +13,7 @@ use std::sync::LazyLock;
 
 use crate::react_compiler_hir::Effect;
 use crate::react_compiler_hir::Type;
+use crate::react_compiler_hir::environment::is_hook_name;
 use crate::react_compiler_hir::object_shape::*;
 use crate::react_compiler_hir::type_config::AliasingEffectConfig;
 use crate::react_compiler_hir::type_config::AliasingSignatureConfig;
@@ -240,7 +241,7 @@ fn install_type_config_inner(
                             );
                             // Validate hook-name vs hook-type consistency (matching TS installTypeConfig)
                             if let Some(errs) = errors {
-                                let expect_hook = crate::react_compiler_hir::environment::is_hook_name(key);
+                                let expect_hook = is_hook_name(key);
                                 let is_hook = match &ty {
                                     Type::Function { shape_id: Some(id), .. } => {
                                         shapes.get(id)

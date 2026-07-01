@@ -9,6 +9,9 @@
 //! (which represents the compiler's Babel-compatible output) and produces OXC AST
 //! nodes allocated in an OXC arena, suitable for code generation via `oxc_codegen`.
 
+use crate::react_compiler_ast::File;
+use crate::react_compiler_ast::Program;
+use crate::react_compiler_ast::SourceType as AstSourceType;
 use crate::react_compiler_ast::common::BaseNode;
 use crate::react_compiler_ast::declarations::*;
 use crate::react_compiler_ast::expressions::*;
@@ -16,17 +19,25 @@ use crate::react_compiler_ast::jsx::*;
 use crate::react_compiler_ast::operators::*;
 use crate::react_compiler_ast::patterns::*;
 use crate::react_compiler_ast::statements::*;
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator};
+use oxc_allocator::{Allocator, ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator};
 use oxc_ast::ast as oxc;
 use oxc_ast::builder::{AstBuilder, GetAstBuilder};
 use oxc_ast_visit::VisitMut;
+use oxc_parser::Parser;
+use oxc_span::GetSpanMut;
 use oxc_span::SPAN;
+use oxc_span::SourceType;
 use oxc_span::Span;
 use oxc_str::Str;
 use oxc_syntax::identifier::is_identifier_name;
+use oxc_syntax::operator::{
+    AssignmentOperator as OxcAssOp, BinaryOperator as OxcBinOp, LogicalOperator as OxcLogOp,
+    UnaryOperator as OxcUnOp, UpdateOperator as OxcUpOp,
+};
+use serde_json::Value;
+use std::iter::once;
 
 fn set_statement_span(stmt: &mut oxc::Statement<'_>, span: Span) {
-    use oxc_span::GetSpanMut;
     match stmt {
         oxc::Statement::ImportDeclaration(d) => *d.span_mut() = span,
         oxc::Statement::VariableDeclaration(d) => *d.span_mut() = span,
@@ -83,17 +94,14 @@ impl VisitMut<'_> for SpanShift {
 }
 
 /// Convert a `crate::react_compiler_ast::File` into an OXC `Program` allocated in the given arena.
-pub fn convert_program_to_oxc<'a>(
-    file: &crate::react_compiler_ast::File,
-    allocator: &'a Allocator,
-) -> oxc::Program<'a> {
+pub fn convert_program_to_oxc<'a>(file: &File, allocator: &'a Allocator) -> oxc::Program<'a> {
     let ctx = ReverseCtx::new(allocator, None);
     ctx.convert_program(&file.program)
 }
 
 /// Convert with source text available for extracting TS declarations.
 pub fn convert_program_to_oxc_with_source<'a>(
-    file: &crate::react_compiler_ast::File,
+    file: &File,
     allocator: &'a Allocator,
     source_text: &str,
 ) -> oxc::Program<'a> {
@@ -125,8 +133,7 @@ impl<'a> ReverseCtx<'a> {
         original_start: usize,
     ) -> Option<oxc::Statement<'a>> {
         let text_ref = self.copy_source_text_to_allocator(text);
-        let parsed =
-            oxc_parser::Parser::new(self.allocator, text_ref, oxc_span::SourceType::tsx()).parse();
+        let parsed = Parser::new(self.allocator, text_ref, SourceType::tsx()).parse();
         if parsed.panicked || parsed.program.body.is_empty() {
             return None;
         }
@@ -152,9 +159,7 @@ impl<'a> ReverseCtx<'a> {
     ) -> Option<oxc::Expression<'a>> {
         let text_ref = self.copy_source_text_to_allocator(text);
         let mut expr =
-            oxc_parser::Parser::new(self.allocator, text_ref, oxc_span::SourceType::tsx())
-                .parse_expression()
-                .ok()?;
+            Parser::new(self.allocator, text_ref, SourceType::tsx()).parse_expression().ok()?;
         if original_start > 0 {
             let mut shifter = SpanShift { offset: original_start as u32 };
             shifter.visit_expression(&mut expr);
@@ -179,12 +184,12 @@ impl<'a> ReverseCtx<'a> {
     }
 
     fn copy_source_text_to_allocator(&self, text: &str) -> &'a str {
-        oxc_allocator::ArenaStringBuilder::from_str_in(text, self.allocator).into_str()
+        ArenaStringBuilder::from_str_in(text, self.allocator).into_str()
     }
 
     fn extract_source_class_expression(
         &self,
-        class: &crate::react_compiler_ast::expressions::ClassExpression,
+        class: &ClassExpression,
     ) -> Option<oxc::Expression<'a>> {
         let expr = self.extract_source_expr(&class.base)?;
         if matches!(expr, oxc::Expression::ClassExpression(_)) { Some(expr) } else { None }
@@ -267,16 +272,12 @@ impl<'a> ReverseCtx<'a> {
         }
     }
 
-    fn extract_source_ts_type_from_json(
-        &self,
-        value: &serde_json::Value,
-    ) -> Option<oxc::TSType<'a>> {
-        let value =
-            if value.get("type").and_then(serde_json::Value::as_str) == Some("TSTypeAnnotation") {
-                value.get("typeAnnotation")?
-            } else {
-                value
-            };
+    fn extract_source_ts_type_from_json(&self, value: &Value) -> Option<oxc::TSType<'a>> {
+        let value = if value.get("type").and_then(Value::as_str) == Some("TSTypeAnnotation") {
+            value.get("typeAnnotation")?
+        } else {
+            value
+        };
         let source = self.source_text.as_deref()?;
         let start = value.get("start")?.as_u64()? as usize;
         let end = value.get("end")?.as_u64()? as usize;
@@ -286,9 +287,9 @@ impl<'a> ReverseCtx<'a> {
         self.parse_source_ts_type_text_at(&source[start..end], start)
     }
 
-    fn span_from_json_value(&self, value: &serde_json::Value) -> Span {
-        let start = value.get("start").and_then(serde_json::Value::as_u64);
-        let end = value.get("end").and_then(serde_json::Value::as_u64);
+    fn span_from_json_value(&self, value: &Value) -> Span {
+        let start = value.get("start").and_then(Value::as_u64);
+        let end = value.get("end").and_then(Value::as_u64);
         match (start, end) {
             (Some(start), Some(end)) => Span::new(start as u32, end as u32),
             (Some(start), None) => Span::new(start as u32, start as u32),
@@ -298,25 +299,24 @@ impl<'a> ReverseCtx<'a> {
 
     fn convert_ts_type_annotation_from_json(
         &self,
-        value: &serde_json::Value,
+        value: &Value,
     ) -> Option<ArenaBox<'a, oxc::TSTypeAnnotation<'a>>> {
-        let ty =
-            if value.get("type").and_then(serde_json::Value::as_str) == Some("TSTypeAnnotation") {
-                let type_annotation = value.get("typeAnnotation")?;
-                self.convert_ts_type_from_json(type_annotation).or_else(|| {
-                    if Self::ts_type_json_contains_type_query(type_annotation) {
-                        None
-                    } else {
-                        self.extract_source_ts_type_from_json(value)
-                    }
-                })?
-            } else {
-                self.convert_ts_type_from_json(value)?
-            };
+        let ty = if value.get("type").and_then(Value::as_str) == Some("TSTypeAnnotation") {
+            let type_annotation = value.get("typeAnnotation")?;
+            self.convert_ts_type_from_json(type_annotation).or_else(|| {
+                if Self::ts_type_json_contains_type_query(type_annotation) {
+                    None
+                } else {
+                    self.extract_source_ts_type_from_json(value)
+                }
+            })?
+        } else {
+            self.convert_ts_type_from_json(value)?
+        };
         Some(oxc::TSTypeAnnotation::boxed(SPAN, ty, self))
     }
 
-    fn convert_ts_type_from_json(&self, value: &serde_json::Value) -> Option<oxc::TSType<'a>> {
+    fn convert_ts_type_from_json(&self, value: &Value) -> Option<oxc::TSType<'a>> {
         if !Self::ts_type_json_contains_type_query(value)
             && let Some(ty) = self.extract_source_ts_type_from_json(value)
         {
@@ -406,10 +406,7 @@ impl<'a> ReverseCtx<'a> {
         }
     }
 
-    fn convert_ts_type_name_from_json(
-        &self,
-        value: &serde_json::Value,
-    ) -> Option<oxc::TSTypeName<'a>> {
+    fn convert_ts_type_name_from_json(&self, value: &Value) -> Option<oxc::TSTypeName<'a>> {
         match value.get("type")?.as_str()? {
             "Identifier" => Some(oxc::TSTypeName::new_identifier_reference(
                 self.span_from_json_value(value),
@@ -440,7 +437,7 @@ impl<'a> ReverseCtx<'a> {
 
     fn convert_ts_type_query_expr_name_from_json(
         &self,
-        value: &serde_json::Value,
+        value: &Value,
     ) -> Option<oxc::TSTypeQueryExprName<'a>> {
         match self.convert_ts_type_name_from_json(value)? {
             oxc::TSTypeName::IdentifierReference(identifier) => {
@@ -457,7 +454,7 @@ impl<'a> ReverseCtx<'a> {
 
     fn convert_ts_type_parameter_instantiation_from_json(
         &self,
-        value: &serde_json::Value,
+        value: &Value,
     ) -> Option<ArenaBox<'a, oxc::TSTypeParameterInstantiation<'a>>> {
         let params = value.get("params")?.as_array()?;
         let params = ArenaVec::from_iter_in(
@@ -467,10 +464,7 @@ impl<'a> ReverseCtx<'a> {
         Some(oxc::TSTypeParameterInstantiation::boxed(SPAN, params, self))
     }
 
-    fn convert_ts_literal_from_json(
-        &self,
-        value: &serde_json::Value,
-    ) -> Option<oxc::TSLiteral<'a>> {
+    fn convert_ts_literal_from_json(&self, value: &Value) -> Option<oxc::TSLiteral<'a>> {
         match value.get("type")?.as_str()? {
             "BooleanLiteral" => Some(oxc::TSLiteral::new_boolean_literal(
                 SPAN,
@@ -501,22 +495,20 @@ impl<'a> ReverseCtx<'a> {
         }
     }
 
-    fn ts_type_json_contains_type_query(value: &serde_json::Value) -> bool {
+    fn ts_type_json_contains_type_query(value: &Value) -> bool {
         match value {
-            serde_json::Value::Object(obj) => {
-                let is_rename_sensitive_type_query =
-                    obj.get("type").and_then(serde_json::Value::as_str) == Some("TSTypeQuery")
-                        && obj
-                            .get("exprName")
-                            .and_then(|expr| expr.get("type"))
-                            .and_then(serde_json::Value::as_str)
-                            != Some("TSImportType");
+            Value::Object(obj) => {
+                let is_rename_sensitive_type_query = obj.get("type").and_then(Value::as_str)
+                    == Some("TSTypeQuery")
+                    && obj
+                        .get("exprName")
+                        .and_then(|expr| expr.get("type"))
+                        .and_then(Value::as_str)
+                        != Some("TSImportType");
                 is_rename_sensitive_type_query
                     || obj.values().any(Self::ts_type_json_contains_type_query)
             }
-            serde_json::Value::Array(values) => {
-                values.iter().any(Self::ts_type_json_contains_type_query)
-            }
+            Value::Array(values) => values.iter().any(Self::ts_type_json_contains_type_query),
             _ => false,
         }
     }
@@ -1006,10 +998,10 @@ impl<'a> ReverseCtx<'a> {
 
     // ===== Program =====
 
-    fn convert_program(&self, program: &crate::react_compiler_ast::Program) -> oxc::Program<'a> {
+    fn convert_program(&self, program: &Program) -> oxc::Program<'a> {
         let source_type = match program.source_type {
-            crate::react_compiler_ast::SourceType::Module => oxc_span::SourceType::mjs(),
-            crate::react_compiler_ast::SourceType::Script => oxc_span::SourceType::cjs(),
+            AstSourceType::Module => SourceType::mjs(),
+            AstSourceType::Script => SourceType::cjs(),
         };
 
         // Use convert_statements_with_spans for the top-level body so that
@@ -1731,7 +1723,7 @@ impl<'a> ReverseCtx<'a> {
                 let left = self.convert_pattern_to_assignment_target(&p.left);
                 oxc::Expression::new_assignment_expression(
                     SPAN,
-                    oxc_syntax::operator::AssignmentOperator::Assign,
+                    OxcAssOp::Assign,
                     left,
                     self.convert_expression(&p.right),
                     self,
@@ -2001,10 +1993,7 @@ impl<'a> ReverseCtx<'a> {
         }
     }
 
-    fn convert_template_literal(
-        &self,
-        tl: &crate::react_compiler_ast::expressions::TemplateLiteral,
-    ) -> oxc::TemplateLiteral<'a> {
+    fn convert_template_literal(&self, tl: &TemplateLiteral) -> oxc::TemplateLiteral<'a> {
         let quasis = ArenaVec::from_iter_in(
             tl.quasis.iter().map(|q| {
                 let raw = self.str(&q.value.raw);
@@ -2079,7 +2068,7 @@ impl<'a> ReverseCtx<'a> {
 
     fn convert_class_to_oxc(
         &self,
-        c: &crate::react_compiler_ast::expressions::ClassExpression,
+        c: &ClassExpression,
         class_type: oxc::ClassType,
     ) -> oxc::Class<'a> {
         let id =
@@ -2183,7 +2172,7 @@ impl<'a> ReverseCtx<'a> {
             ArrowFunctionBody::Expression(expr) => {
                 let oxc_expr = self.convert_expression(expr);
                 let stmt = oxc::Statement::new_expression_statement(SPAN, oxc_expr, self);
-                let stmts = ArenaVec::from_iter_in(std::iter::once(stmt), self);
+                let stmts = ArenaVec::from_iter_in(once(stmt), self);
                 oxc::FunctionBody::new(SPAN, ArenaVec::new_in(self), stmts, self)
             }
         };
@@ -2967,10 +2956,10 @@ impl<'a> ReverseCtx<'a> {
 
     fn convert_import_specifier(
         &self,
-        spec: &crate::react_compiler_ast::declarations::ImportSpecifier,
+        spec: &ImportSpecifier,
     ) -> oxc::ImportDeclarationSpecifier<'a> {
         match spec {
-            crate::react_compiler_ast::declarations::ImportSpecifier::ImportSpecifier(s) => {
+            ImportSpecifier::ImportSpecifier(s) => {
                 let local = oxc::BindingIdentifier::new(SPAN, self.str(&s.local.name), self);
                 let imported = self.convert_module_export_name(&s.imported);
                 let import_kind = match s.import_kind.as_ref() {
@@ -2980,14 +2969,12 @@ impl<'a> ReverseCtx<'a> {
                 let is = oxc::ImportSpecifier::new(SPAN, imported, local, import_kind, self);
                 oxc::ImportDeclarationSpecifier::ImportSpecifier(ArenaBox::new_in(is, self))
             }
-            crate::react_compiler_ast::declarations::ImportSpecifier::ImportDefaultSpecifier(s) => {
+            ImportSpecifier::ImportDefaultSpecifier(s) => {
                 let local = oxc::BindingIdentifier::new(SPAN, self.str(&s.local.name), self);
                 let ids = oxc::ImportDefaultSpecifier::new(SPAN, local, self);
                 oxc::ImportDeclarationSpecifier::ImportDefaultSpecifier(ArenaBox::new_in(ids, self))
             }
-            crate::react_compiler_ast::declarations::ImportSpecifier::ImportNamespaceSpecifier(
-                s,
-            ) => {
+            ImportSpecifier::ImportNamespaceSpecifier(s) => {
                 let local = oxc::BindingIdentifier::new(SPAN, self.str(&s.local.name), self);
                 let ins = oxc::ImportNamespaceSpecifier::new(SPAN, local, self);
                 oxc::ImportDeclarationSpecifier::ImportNamespaceSpecifier(ArenaBox::new_in(
@@ -2997,22 +2984,17 @@ impl<'a> ReverseCtx<'a> {
         }
     }
 
-    fn convert_module_export_name(
-        &self,
-        name: &crate::react_compiler_ast::declarations::ModuleExportName,
-    ) -> oxc::ModuleExportName<'a> {
+    fn convert_module_export_name(&self, name: &ModuleExportName) -> oxc::ModuleExportName<'a> {
         match name {
-            crate::react_compiler_ast::declarations::ModuleExportName::Identifier(id) => {
+            ModuleExportName::Identifier(id) => {
                 oxc::ModuleExportName::new_identifier_name(SPAN, self.str(&id.name), self)
             }
-            crate::react_compiler_ast::declarations::ModuleExportName::StringLiteral(s) => {
-                oxc::ModuleExportName::new_string_literal(
-                    SPAN,
-                    self.str(&s.value.to_string_lossy()),
-                    None,
-                    self,
-                )
-            }
+            ModuleExportName::StringLiteral(s) => oxc::ModuleExportName::new_string_literal(
+                SPAN,
+                self.str(&s.value.to_string_lossy()),
+                None,
+                self,
+            ),
         }
     }
 
@@ -3023,15 +3005,13 @@ impl<'a> ReverseCtx<'a> {
     /// plain name.
     fn convert_module_export_name_local_ref(
         &self,
-        name: &crate::react_compiler_ast::declarations::ModuleExportName,
+        name: &ModuleExportName,
     ) -> oxc::ModuleExportName<'a> {
         match name {
-            crate::react_compiler_ast::declarations::ModuleExportName::Identifier(id) => {
+            ModuleExportName::Identifier(id) => {
                 oxc::ModuleExportName::new_identifier_reference(SPAN, self.str(&id.name), self)
             }
-            crate::react_compiler_ast::declarations::ModuleExportName::StringLiteral(_) => {
-                self.convert_module_export_name(name)
-            }
+            ModuleExportName::StringLiteral(_) => self.convert_module_export_name(name),
         }
     }
 
@@ -3100,11 +3080,11 @@ impl<'a> ReverseCtx<'a> {
 
     fn convert_export_specifier(
         &self,
-        spec: &crate::react_compiler_ast::declarations::ExportSpecifier,
+        spec: &ExportSpecifier,
         local_is_reference: bool,
     ) -> oxc::ExportSpecifier<'a> {
         match spec {
-            crate::react_compiler_ast::declarations::ExportSpecifier::ExportSpecifier(s) => {
+            ExportSpecifier::ExportSpecifier(s) => {
                 let local = if local_is_reference {
                     self.convert_module_export_name_local_ref(&s.local)
                 } else {
@@ -3117,7 +3097,7 @@ impl<'a> ReverseCtx<'a> {
                 };
                 oxc::ExportSpecifier::new(SPAN, local, exported, export_kind, self)
             }
-            crate::react_compiler_ast::declarations::ExportSpecifier::ExportDefaultSpecifier(s) => {
+            ExportSpecifier::ExportDefaultSpecifier(s) => {
                 let name = oxc::ModuleExportName::new_identifier_name(
                     SPAN,
                     self.str(&s.exported.name),
@@ -3133,9 +3113,7 @@ impl<'a> ReverseCtx<'a> {
                     self,
                 )
             }
-            crate::react_compiler_ast::declarations::ExportSpecifier::ExportNamespaceSpecifier(
-                s,
-            ) => {
+            ExportSpecifier::ExportNamespaceSpecifier(s) => {
                 let exported = self.convert_module_export_name(&s.exported);
                 let star = oxc::ModuleExportName::new_identifier_name(SPAN, self.str("*"), self);
                 oxc::ExportSpecifier::new(
@@ -3209,8 +3187,7 @@ impl<'a> ReverseCtx<'a> {
 
     // ===== Operators =====
 
-    fn convert_binary_operator(&self, op: &BinaryOperator) -> oxc_syntax::operator::BinaryOperator {
-        use oxc_syntax::operator::BinaryOperator as OxcBinOp;
+    fn convert_binary_operator(&self, op: &BinaryOperator) -> OxcBinOp {
         match op {
             BinaryOperator::Add => OxcBinOp::Addition,
             BinaryOperator::Sub => OxcBinOp::Subtraction,
@@ -3238,11 +3215,7 @@ impl<'a> ReverseCtx<'a> {
         }
     }
 
-    fn convert_logical_operator(
-        &self,
-        op: &LogicalOperator,
-    ) -> oxc_syntax::operator::LogicalOperator {
-        use oxc_syntax::operator::LogicalOperator as OxcLogOp;
+    fn convert_logical_operator(&self, op: &LogicalOperator) -> OxcLogOp {
         match op {
             LogicalOperator::Or => OxcLogOp::Or,
             LogicalOperator::And => OxcLogOp::And,
@@ -3250,8 +3223,7 @@ impl<'a> ReverseCtx<'a> {
         }
     }
 
-    fn convert_unary_operator(&self, op: &UnaryOperator) -> oxc_syntax::operator::UnaryOperator {
-        use oxc_syntax::operator::UnaryOperator as OxcUnOp;
+    fn convert_unary_operator(&self, op: &UnaryOperator) -> OxcUnOp {
         match op {
             UnaryOperator::Neg => OxcUnOp::UnaryNegation,
             UnaryOperator::Plus => OxcUnOp::UnaryPlus,
@@ -3264,19 +3236,14 @@ impl<'a> ReverseCtx<'a> {
         }
     }
 
-    fn convert_update_operator(&self, op: &UpdateOperator) -> oxc_syntax::operator::UpdateOperator {
-        use oxc_syntax::operator::UpdateOperator as OxcUpOp;
+    fn convert_update_operator(&self, op: &UpdateOperator) -> OxcUpOp {
         match op {
             UpdateOperator::Increment => OxcUpOp::Increment,
             UpdateOperator::Decrement => OxcUpOp::Decrement,
         }
     }
 
-    fn convert_assignment_operator(
-        &self,
-        op: &AssignmentOperator,
-    ) -> oxc_syntax::operator::AssignmentOperator {
-        use oxc_syntax::operator::AssignmentOperator as OxcAssOp;
+    fn convert_assignment_operator(&self, op: &AssignmentOperator) -> OxcAssOp {
         match op {
             AssignmentOperator::Assign => OxcAssOp::Assign,
             AssignmentOperator::AddAssign => OxcAssOp::Addition,

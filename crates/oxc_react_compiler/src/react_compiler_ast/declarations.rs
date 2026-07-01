@@ -5,14 +5,17 @@ use crate::react_compiler_ast::common::RawNode;
 use crate::react_compiler_ast::expressions::Expression;
 use crate::react_compiler_ast::expressions::Identifier;
 use crate::react_compiler_ast::literals::StringLiteral;
+use crate::react_compiler_ast::statements::ClassDeclaration;
+use crate::react_compiler_ast::statements::FunctionDeclaration;
+use crate::react_compiler_ast::statements::VariableDeclaration;
 
 /// Union of Declaration types that can appear in export declarations
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type")]
 pub enum Declaration {
-    FunctionDeclaration(crate::react_compiler_ast::statements::FunctionDeclaration),
-    ClassDeclaration(crate::react_compiler_ast::statements::ClassDeclaration),
-    VariableDeclaration(crate::react_compiler_ast::statements::VariableDeclaration),
+    FunctionDeclaration(FunctionDeclaration),
+    ClassDeclaration(ClassDeclaration),
+    VariableDeclaration(VariableDeclaration),
     TSTypeAliasDeclaration(TSTypeAliasDeclaration),
     TSInterfaceDeclaration(TSInterfaceDeclaration),
     TSEnumDeclaration(TSEnumDeclaration),
@@ -28,8 +31,8 @@ pub enum Declaration {
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type")]
 pub enum ExportDefaultDecl {
-    FunctionDeclaration(crate::react_compiler_ast::statements::FunctionDeclaration),
-    ClassDeclaration(crate::react_compiler_ast::statements::ClassDeclaration),
+    FunctionDeclaration(FunctionDeclaration),
+    ClassDeclaration(ClassDeclaration),
     EnumDeclaration(EnumDeclaration),
     #[serde(untagged)]
     Expression(Box<Expression>),

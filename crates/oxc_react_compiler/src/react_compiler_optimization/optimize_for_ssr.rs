@@ -23,8 +23,9 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
 use crate::react_compiler_hir::{
-    ArrayPatternElement, HirFunction, IdentifierId, InstructionValue, PlaceOrSpread,
-    PrimitiveValue, is_set_state_type, is_start_transition_type,
+    ArrayPatternElement, HirFunction, IdentifierId, InstructionValue, JsxAttribute, JsxTag, LValue,
+    Pattern, Place, PlaceOrSpread, PrimitiveValue, SourceLocation, is_array_type,
+    is_plain_object_type, is_primitive_type, is_set_state_type, is_start_transition_type,
 };
 
 /// Optimizes a function for SSR by inlining state hooks, removing effects,
@@ -52,7 +53,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                 InstructionValue::Destructure { value, lvalue, .. } => {
                     if inlined_state.contains_key(&env.identifiers[value.identifier.0 as usize].id)
                     {
-                        if let crate::react_compiler_hir::Pattern::Array(arr) = &lvalue.pattern {
+                        if let Pattern::Array(arr) = &lvalue.pattern {
                             if !arr.items.is_empty() {
                                 if let ArrayPatternElement::Place(_) = &arr.items[0] {
                                     // Allow destructuring of inlined states
@@ -112,9 +113,9 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                         .type_
                                         .0
                                         as usize];
-                                    if crate::react_compiler_hir::is_primitive_type(arg_type)
-                                        || crate::react_compiler_hir::is_plain_object_type(arg_type)
-                                        || crate::react_compiler_hir::is_array_type(arg_type)
+                                    if is_primitive_type(arg_type)
+                                        || is_plain_object_type(arg_type)
+                                        || is_array_type(arg_type)
                                     {
                                         let lvalue_id =
                                             env.identifiers[instr.lvalue.identifier.0 as usize].id;
@@ -174,7 +175,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                     }
                 }
                 InstructionValue::JsxExpression { tag, .. } => {
-                    if let crate::react_compiler_hir::JsxTag::Builtin(builtin) = tag {
+                    if let JsxTag::Builtin(builtin) = tag {
                         // Only optimize non-custom-element builtin tags
                         if !builtin.name.contains('-') {
                             let tag_name = builtin.name.clone();
@@ -182,13 +183,10 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                             if let InstructionValue::JsxExpression { props, .. } = &mut instr.value
                             {
                                 props.retain(|prop| match prop {
-                                    crate::react_compiler_hir::JsxAttribute::SpreadAttribute {
-                                        ..
-                                    } => true,
-                                    crate::react_compiler_hir::JsxAttribute::Attribute {
-                                        name,
-                                        ..
-                                    } => !is_known_event_handler(&tag_name, name) && name != "ref",
+                                    JsxAttribute::SpreadAttribute { .. } => true,
+                                    JsxAttribute::Attribute { name, .. } => {
+                                        !is_known_event_handler(&tag_name, name) && name != "ref"
+                                    }
                                 });
                             }
                         }
@@ -198,16 +196,13 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                     let value_id = env.identifiers[value.identifier.0 as usize].id;
                     if inlined_state.contains_key(&value_id) {
                         // Invariant: destructuring pattern must be ArrayPattern with at least one Identifier item
-                        if let crate::react_compiler_hir::Pattern::Array(arr) = &lvalue.pattern {
+                        if let Pattern::Array(arr) = &lvalue.pattern {
                             if !arr.items.is_empty() {
                                 if let ArrayPatternElement::Place(first_place) = &arr.items[0] {
                                     let loc = *loc;
                                     let kind = lvalue.kind;
                                     let store = InstructionValue::StoreLocal {
-                                        lvalue: crate::react_compiler_hir::LValue {
-                                            place: first_place.clone(),
-                                            kind,
-                                        },
+                                        lvalue: LValue { place: first_place.clone(), kind },
                                         value: value.clone(),
                                         type_annotation: None,
                                         loc,
@@ -278,16 +273,9 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
 #[derive(Debug, Clone)]
 enum InlinedStateReplacement {
     /// Replace with `LoadLocal { place }` — used for useState and useReducer(reducer, initialArg)
-    LoadLocal {
-        place: crate::react_compiler_hir::Place,
-        loc: Option<crate::react_compiler_hir::SourceLocation>,
-    },
+    LoadLocal { place: Place, loc: Option<SourceLocation> },
     /// Replace with `CallExpression { callee, args: [arg] }` — used for useReducer(reducer, initialArg, init)
-    CallExpression {
-        callee: crate::react_compiler_hir::Place,
-        arg: crate::react_compiler_hir::Place,
-        loc: Option<crate::react_compiler_hir::SourceLocation>,
-    },
+    CallExpression { callee: Place, arg: Place, loc: Option<SourceLocation> },
 }
 
 /// Returns true if the function body contains a call to setState or startTransition.

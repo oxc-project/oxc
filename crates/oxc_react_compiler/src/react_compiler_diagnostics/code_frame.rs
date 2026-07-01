@@ -4,6 +4,10 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
+use std::cmp::min;
+
+use rustc_hash::FxHashMap;
+
 use crate::react_compiler_diagnostics::{
     CompilerDiagnosticDetail, CompilerError, CompilerErrorOrDiagnostic,
 };
@@ -83,7 +87,7 @@ fn get_marker_lines(
     } else {
         0
     };
-    let end = std::cmp::min(source_line_count, end_line + lines_below as usize);
+    let end = min(source_line_count, end_line + lines_below as usize);
 
     let line_diff = end_line - start_line;
     let mut marker_lines: Vec<(usize, MarkerEntry)> = Vec::new();
@@ -158,8 +162,7 @@ pub fn code_frame_columns(
     let number_max_width = format!("{}", end).len();
 
     // Build a lookup map for marker lines
-    let mut marker_map: rustc_hash::FxHashMap<usize, MarkerEntry> =
-        rustc_hash::FxHashMap::default();
+    let mut marker_map: FxHashMap<usize, MarkerEntry> = FxHashMap::default();
     let line_diff = end_line as usize - start_line as usize;
     for (line_number, entry) in marker_lines_raw {
         // Resolve placeholder lengths using actual source lines
@@ -226,7 +229,7 @@ pub fn code_frame_columns(
                 MarkerEntry::Range(col, len) => {
                     // Build marker spacing: replace non-tab chars with spaces
                     let max_col = if *col > 0 { col - 1 } else { 0 };
-                    let byte_end = std::cmp::min(max_col, line.len());
+                    let byte_end = min(max_col, line.len());
                     // Ensure we don't slice in the middle of a multi-byte UTF-8 character
                     let safe_end = if byte_end < line.len() && !line.is_char_boundary(byte_end) {
                         line.floor_char_boundary(byte_end)

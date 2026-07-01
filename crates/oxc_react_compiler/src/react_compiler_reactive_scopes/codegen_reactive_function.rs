@@ -10,8 +10,16 @@
 //!
 //! Corresponds to `src/ReactiveScopes/CodegenReactiveFunction.ts` in the TS compiler.
 
+use std::cmp::Ordering;
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::mem::discriminant;
+use std::mem::replace;
+
+use hmac_sha256::HMAC;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
+use serde_json::Value;
 
 use crate::react_compiler_ast::OriginalNode;
 use crate::react_compiler_ast::common::BaseNode;
@@ -55,6 +63,7 @@ use crate::react_compiler_ast::operators::LogicalOperator as AstLogicalOperator;
 use crate::react_compiler_ast::operators::UnaryOperator as AstUnaryOperator;
 use crate::react_compiler_ast::operators::UpdateOperator as AstUpdateOperator;
 use crate::react_compiler_ast::patterns::ArrayPattern as AstArrayPattern;
+use crate::react_compiler_ast::patterns::ObjectPattern as AstObjectPattern;
 use crate::react_compiler_ast::patterns::ObjectPatternProp;
 use crate::react_compiler_ast::patterns::ObjectPatternProperty;
 use crate::react_compiler_ast::patterns::PatternLike;
@@ -69,6 +78,7 @@ use crate::react_compiler_ast::statements::DirectiveLiteral;
 use crate::react_compiler_ast::statements::DoWhileStatement;
 use crate::react_compiler_ast::statements::EmptyStatement;
 use crate::react_compiler_ast::statements::ExpressionStatement;
+use crate::react_compiler_ast::statements::ForInOfLeft;
 use crate::react_compiler_ast::statements::ForInStatement;
 use crate::react_compiler_ast::statements::ForInit;
 use crate::react_compiler_ast::statements::ForOfStatement;
@@ -91,18 +101,23 @@ use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
 use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::react_compiler_diagnostics::Position;
 use crate::react_compiler_diagnostics::SourceLocation as DiagSourceLocation;
 use crate::react_compiler_hir::ArrayElement;
 use crate::react_compiler_hir::ArrayPattern;
+use crate::react_compiler_hir::ArrayPatternElement;
+use crate::react_compiler_hir::BinaryOperator;
 use crate::react_compiler_hir::BlockId;
 use crate::react_compiler_hir::DeclarationId;
 use crate::react_compiler_hir::FunctionExpressionType;
 use crate::react_compiler_hir::IdentifierId;
+use crate::react_compiler_hir::IdentifierName;
 use crate::react_compiler_hir::InstructionKind;
 use crate::react_compiler_hir::InstructionValue;
 use crate::react_compiler_hir::JsxAttribute;
 use crate::react_compiler_hir::JsxTag;
 use crate::react_compiler_hir::LogicalOperator;
+use crate::react_compiler_hir::LoweredFunction;
 use crate::react_compiler_hir::ObjectPattern;
 use crate::react_compiler_hir::ObjectPropertyKey;
 use crate::react_compiler_hir::ObjectPropertyOrSpread;
@@ -113,9 +128,16 @@ use crate::react_compiler_hir::Place;
 use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PrimitiveValue;
 use crate::react_compiler_hir::PropertyLiteral;
+use crate::react_compiler_hir::ReactFunctionType;
+use crate::react_compiler_hir::ReactiveScopeDeclaration;
+use crate::react_compiler_hir::ReactiveScopeDependency;
 use crate::react_compiler_hir::ScopeId;
 use crate::react_compiler_hir::SpreadPattern;
+use crate::react_compiler_hir::UnaryOperator;
+use crate::react_compiler_hir::UpdateOperator;
+use crate::react_compiler_hir::environment::BindingRename;
 use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::environment::OutputMode;
 use crate::react_compiler_hir::reactive::PrunedReactiveScopeBlock;
 use crate::react_compiler_hir::reactive::ReactiveBlock;
 use crate::react_compiler_hir::reactive::ReactiveFunction;
@@ -125,6 +147,7 @@ use crate::react_compiler_hir::reactive::ReactiveStatement;
 use crate::react_compiler_hir::reactive::ReactiveTerminal;
 use crate::react_compiler_hir::reactive::ReactiveTerminalTargetKind;
 use crate::react_compiler_hir::reactive::ReactiveValue;
+use crate::react_compiler_hir::visitors::each_pattern_operand;
 
 use crate::react_compiler_reactive_scopes::build_reactive_function::build_reactive_function;
 use crate::react_compiler_reactive_scopes::prune_hoisted_contexts::prune_hoisted_contexts;
@@ -161,8 +184,8 @@ pub struct CodegenFunction {
     pub outlined: Vec<OutlinedFunction>,
 }
 
-impl std::fmt::Debug for CodegenFunction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for CodegenFunction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("CodegenFunction")
             .field("memo_slots_used", &self.memo_slots_used)
             .field("memo_blocks", &self.memo_blocks)
@@ -176,7 +199,7 @@ impl std::fmt::Debug for CodegenFunction {
 /// An outlined function extracted during compilation.
 pub struct OutlinedFunction {
     pub func: CodegenFunction,
-    pub fn_type: Option<crate::react_compiler_hir::ReactFunctionType>,
+    pub fn_type: Option<ReactFunctionType>,
 }
 
 /// Top-level entry point: generates code for a reactive function.
@@ -185,7 +208,7 @@ pub struct OutlinedFunction {
 /// `createHmac('sha256', code).digest('hex')`: an HMAC-SHA256 keyed by the
 /// source code, hashing empty data.
 fn source_file_hash(code: &str) -> String {
-    hmac_sha256::HMAC::mac(b"", code.as_bytes()).iter().map(|b| format!("{b:02x}")).collect()
+    HMAC::mac(b"", code.as_bytes()).iter().map(|b| format!("{b:02x}")).collect()
 }
 
 pub fn codegen_function(
@@ -216,11 +239,9 @@ pub fn codegen_function(
     // enableEmitHookGuards: wrap entire function body in try/finally with
     // $dispatcherGuard(PushHookGuard=0) / $dispatcherGuard(PopHookGuard=1).
     // Per-hook-call wrapping is done inline during codegen (CallExpression/MethodCall).
-    if cx.env.hook_guard_name.is_some()
-        && cx.env.output_mode == crate::react_compiler_hir::environment::OutputMode::Client
-    {
+    if cx.env.hook_guard_name.is_some() && cx.env.output_mode == OutputMode::Client {
         let guard_name = cx.env.hook_guard_name.as_ref().unwrap().clone();
-        let body_stmts = std::mem::replace(&mut compiled.body.body, Vec::new());
+        let body_stmts = replace(&mut compiled.body.body, Vec::new());
         compiled.body.body = vec![create_function_body_hook_guard(&guard_name, body_stmts, 0, 1)];
     }
 
@@ -436,9 +457,7 @@ pub fn codegen_function(
     // Instrument forget: emit instrumentation call at the top of the function body
     let emit_instrument_forget = cx.env.config.enable_emit_instrument_forget.clone();
     if let Some(ref instrument_config) = emit_instrument_forget {
-        if func.id.is_some()
-            && cx.env.output_mode == crate::react_compiler_hir::environment::OutputMode::Client
-        {
+        if func.id.is_some() && cx.env.output_mode == OutputMode::Client {
             // Use pre-resolved import names from environment (set by program-level code)
             let instrument_fn_local = cx
                 .env
@@ -553,10 +572,7 @@ struct Context<'env> {
     next_cache_index: u32,
     declarations: FxHashSet<DeclarationId>,
     temp: Temporaries,
-    object_methods: FxHashMap<
-        IdentifierId,
-        (InstructionValue, Option<crate::react_compiler_diagnostics::SourceLocation>),
-    >,
+    object_methods: FxHashMap<IdentifierId, (InstructionValue, Option<DiagSourceLocation>)>,
     unique_identifiers: FxHashSet<String>,
     fbt_operands: FxHashSet<IdentifierId>,
     synthesized_names: FxHashMap<String, String>,
@@ -981,8 +997,8 @@ fn codegen_reactive_scope(
     if let Some(ref early_return) = early_return_value {
         let early_ident = &cx.env.identifiers[early_return.value.0 as usize];
         let name = match &early_ident.name {
-            Some(crate::react_compiler_hir::IdentifierName::Named(n)) => n.clone(),
-            Some(crate::react_compiler_hir::IdentifierName::Promoted(n)) => n.clone(),
+            Some(IdentifierName::Named(n)) => n.clone(),
+            Some(IdentifierName::Promoted(n)) => n.clone(),
             None => {
                 return Err(invariant_err(
                     "Expected early return value to be promoted to a named variable",
@@ -1217,19 +1233,17 @@ fn codegen_for_in(
     let body = codegen_block(cx, loop_block)?;
     Ok(Some(Statement::ForInStatement(ForInStatement {
         base: base_node_with_loc("ForInStatement", loc),
-        left: Box::new(crate::react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(
-            VariableDeclaration {
-                base: BaseNode::typed("VariableDeclaration"),
-                declarations: vec![VariableDeclarator {
-                    base: BaseNode::typed("VariableDeclarator"),
-                    id: lval,
-                    init: None,
-                    definite: None,
-                }],
-                kind: var_decl_kind,
-                declare: None,
-            },
-        )),
+        left: Box::new(ForInOfLeft::VariableDeclaration(VariableDeclaration {
+            base: BaseNode::typed("VariableDeclaration"),
+            declarations: vec![VariableDeclarator {
+                base: BaseNode::typed("VariableDeclarator"),
+                id: lval,
+                init: None,
+                definite: None,
+            }],
+            kind: var_decl_kind,
+            declare: None,
+        })),
         right: Box::new(right),
         body: Box::new(Statement::BlockStatement(body)),
     })))
@@ -1280,19 +1294,17 @@ fn codegen_for_of(
     let body = codegen_block(cx, loop_block)?;
     Ok(Some(Statement::ForOfStatement(ForOfStatement {
         base: base_node_with_loc("ForOfStatement", loc),
-        left: Box::new(crate::react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(
-            VariableDeclaration {
-                base: BaseNode::typed("VariableDeclaration"),
-                declarations: vec![VariableDeclarator {
-                    base: BaseNode::typed("VariableDeclarator"),
-                    id: lval,
-                    init: None,
-                    definite: None,
-                }],
-                kind: var_decl_kind,
-                declare: None,
-            },
-        )),
+        left: Box::new(ForInOfLeft::VariableDeclaration(VariableDeclaration {
+            base: BaseNode::typed("VariableDeclaration"),
+            declarations: vec![VariableDeclarator {
+                base: BaseNode::typed("VariableDeclarator"),
+                id: lval,
+                init: None,
+                definite: None,
+            }],
+            kind: var_decl_kind,
+            declare: None,
+        })),
         right: Box::new(right),
         body: Box::new(Statement::BlockStatement(body)),
         is_await: false,
@@ -1331,7 +1343,7 @@ fn extract_for_in_of_lval(
                 &format!(
                     "Expected a StoreLocal or Destructure in {} collection, found {:?}",
                     context_name,
-                    std::mem::discriminant(instr_value)
+                    discriminant(instr_value)
                 ),
                 None,
             ));
@@ -1550,8 +1562,7 @@ fn codegen_store_or_declare(
         InstructionValue::Destructure { lvalue, value: val, .. } => {
             let kind = lvalue.kind;
             // Register temporaries for unnamed pattern operands
-            for place in crate::react_compiler_hir::visitors::each_pattern_operand(&lvalue.pattern)
-            {
+            for place in each_pattern_operand(&lvalue.pattern) {
                 let ident = &cx.env.identifiers[place.identifier.0 as usize];
                 if kind != InstructionKind::Reassign && ident.name.is_none() {
                     cx.temp.insert(ident.declaration_id, None);
@@ -1893,7 +1904,7 @@ fn codegen_instruction_value(
                 other => Err(invariant_err(
                     &format!(
                         "Expected optional value to resolve to call or member expression, got {:?}",
-                        std::mem::discriminant(&other)
+                        discriminant(&other)
                     ),
                     None,
                 )),
@@ -2362,7 +2373,7 @@ fn codegen_base_instruction_value(
         | InstructionValue::Destructure { .. }
         | InstructionValue::ObjectMethod { .. }
         | InstructionValue::StoreContext { .. } => Err(invariant_err(
-            &format!("Unexpected {:?} in codegenInstructionValue", std::mem::discriminant(iv)),
+            &format!("Unexpected {:?} in codegenInstructionValue", discriminant(iv)),
             None,
         )),
     }
@@ -2376,7 +2387,7 @@ fn codegen_function_expression(
     cx: &mut Context,
     name: &Option<String>,
     name_hint: &Option<String>,
-    lowered_func: &crate::react_compiler_hir::LoweredFunction,
+    lowered_func: &LoweredFunction,
     expr_type: &FunctionExpressionType,
 ) -> Result<ExpressionOrJsxText, CompilerError> {
     let func = &cx.env.functions[lowered_func.func.0 as usize];
@@ -2934,13 +2945,13 @@ fn codegen_array_pattern(
         .items
         .iter()
         .map(|item| match item {
-            crate::react_compiler_hir::ArrayPatternElement::Place(place) => {
+            ArrayPatternElement::Place(place) => {
                 Ok(Some(codegen_lvalue(cx, &LvalueRef::Place(place))?))
             }
-            crate::react_compiler_hir::ArrayPatternElement::Spread(spread) => {
+            ArrayPatternElement::Spread(spread) => {
                 Ok(Some(codegen_lvalue(cx, &LvalueRef::Spread(spread))?))
             }
-            crate::react_compiler_hir::ArrayPatternElement::Hole => Ok(None),
+            ArrayPatternElement::Hole => Ok(None),
         })
         .collect::<Result<_, CompilerError>>()?;
     Ok(PatternLike::ArrayPattern(AstArrayPattern {
@@ -2985,7 +2996,7 @@ fn codegen_object_pattern(
             }
         })
         .collect::<Result<_, CompilerError>>()?;
-    Ok(PatternLike::ObjectPattern(crate::react_compiler_ast::patterns::ObjectPattern {
+    Ok(PatternLike::ObjectPattern(AstObjectPattern {
         base: base_node_with_loc("ObjectPattern", pattern.loc),
         properties,
         type_annotation: None,
@@ -3042,8 +3053,8 @@ fn convert_identifier(
 ) -> Result<AstIdentifier, CompilerError> {
     let ident = &env.identifiers[identifier_id.0 as usize];
     let name = match &ident.name {
-        Some(crate::react_compiler_hir::IdentifierName::Named(n)) => n.clone(),
-        Some(crate::react_compiler_hir::IdentifierName::Promoted(n)) => n.clone(),
+        Some(IdentifierName::Named(n)) => n.clone(),
+        Some(IdentifierName::Promoted(n)) => n.clone(),
         None => {
             // Use CompilerDiagnostic (with details array) to match TS CompilerError.invariant()
             // which creates a CompilerDiagnostic with details: [{kind: "error", loc, message}].
@@ -3089,7 +3100,7 @@ fn codegen_argument(cx: &mut Context, arg: &PlaceOrSpread) -> Result<Expression,
 
 fn codegen_dependency(
     cx: &mut Context,
-    dep: &crate::react_compiler_hir::ReactiveScopeDependency,
+    dep: &ReactiveScopeDependency,
 ) -> Result<Expression, CompilerError> {
     let mut object: Expression =
         Expression::Identifier(convert_identifier(dep.identifier, cx.env)?);
@@ -3177,41 +3188,41 @@ fn count_memo_blocks(func: &ReactiveFunction, env: &Environment) -> (u32, u32, u
 // Operator conversions
 // =============================================================================
 
-fn convert_binary_operator(op: &crate::react_compiler_hir::BinaryOperator) -> AstBinaryOperator {
+fn convert_binary_operator(op: &BinaryOperator) -> AstBinaryOperator {
     match op {
-        crate::react_compiler_hir::BinaryOperator::Equal => AstBinaryOperator::Eq,
-        crate::react_compiler_hir::BinaryOperator::NotEqual => AstBinaryOperator::Neq,
-        crate::react_compiler_hir::BinaryOperator::StrictEqual => AstBinaryOperator::StrictEq,
-        crate::react_compiler_hir::BinaryOperator::StrictNotEqual => AstBinaryOperator::StrictNeq,
-        crate::react_compiler_hir::BinaryOperator::LessThan => AstBinaryOperator::Lt,
-        crate::react_compiler_hir::BinaryOperator::LessEqual => AstBinaryOperator::Lte,
-        crate::react_compiler_hir::BinaryOperator::GreaterThan => AstBinaryOperator::Gt,
-        crate::react_compiler_hir::BinaryOperator::GreaterEqual => AstBinaryOperator::Gte,
-        crate::react_compiler_hir::BinaryOperator::ShiftLeft => AstBinaryOperator::Shl,
-        crate::react_compiler_hir::BinaryOperator::ShiftRight => AstBinaryOperator::Shr,
-        crate::react_compiler_hir::BinaryOperator::UnsignedShiftRight => AstBinaryOperator::UShr,
-        crate::react_compiler_hir::BinaryOperator::Add => AstBinaryOperator::Add,
-        crate::react_compiler_hir::BinaryOperator::Subtract => AstBinaryOperator::Sub,
-        crate::react_compiler_hir::BinaryOperator::Multiply => AstBinaryOperator::Mul,
-        crate::react_compiler_hir::BinaryOperator::Divide => AstBinaryOperator::Div,
-        crate::react_compiler_hir::BinaryOperator::Modulo => AstBinaryOperator::Rem,
-        crate::react_compiler_hir::BinaryOperator::Exponent => AstBinaryOperator::Exp,
-        crate::react_compiler_hir::BinaryOperator::BitwiseOr => AstBinaryOperator::BitOr,
-        crate::react_compiler_hir::BinaryOperator::BitwiseXor => AstBinaryOperator::BitXor,
-        crate::react_compiler_hir::BinaryOperator::BitwiseAnd => AstBinaryOperator::BitAnd,
-        crate::react_compiler_hir::BinaryOperator::In => AstBinaryOperator::In,
-        crate::react_compiler_hir::BinaryOperator::InstanceOf => AstBinaryOperator::Instanceof,
+        BinaryOperator::Equal => AstBinaryOperator::Eq,
+        BinaryOperator::NotEqual => AstBinaryOperator::Neq,
+        BinaryOperator::StrictEqual => AstBinaryOperator::StrictEq,
+        BinaryOperator::StrictNotEqual => AstBinaryOperator::StrictNeq,
+        BinaryOperator::LessThan => AstBinaryOperator::Lt,
+        BinaryOperator::LessEqual => AstBinaryOperator::Lte,
+        BinaryOperator::GreaterThan => AstBinaryOperator::Gt,
+        BinaryOperator::GreaterEqual => AstBinaryOperator::Gte,
+        BinaryOperator::ShiftLeft => AstBinaryOperator::Shl,
+        BinaryOperator::ShiftRight => AstBinaryOperator::Shr,
+        BinaryOperator::UnsignedShiftRight => AstBinaryOperator::UShr,
+        BinaryOperator::Add => AstBinaryOperator::Add,
+        BinaryOperator::Subtract => AstBinaryOperator::Sub,
+        BinaryOperator::Multiply => AstBinaryOperator::Mul,
+        BinaryOperator::Divide => AstBinaryOperator::Div,
+        BinaryOperator::Modulo => AstBinaryOperator::Rem,
+        BinaryOperator::Exponent => AstBinaryOperator::Exp,
+        BinaryOperator::BitwiseOr => AstBinaryOperator::BitOr,
+        BinaryOperator::BitwiseXor => AstBinaryOperator::BitXor,
+        BinaryOperator::BitwiseAnd => AstBinaryOperator::BitAnd,
+        BinaryOperator::In => AstBinaryOperator::In,
+        BinaryOperator::InstanceOf => AstBinaryOperator::Instanceof,
     }
 }
 
-fn convert_unary_operator(op: &crate::react_compiler_hir::UnaryOperator) -> AstUnaryOperator {
+fn convert_unary_operator(op: &UnaryOperator) -> AstUnaryOperator {
     match op {
-        crate::react_compiler_hir::UnaryOperator::Minus => AstUnaryOperator::Neg,
-        crate::react_compiler_hir::UnaryOperator::Plus => AstUnaryOperator::Plus,
-        crate::react_compiler_hir::UnaryOperator::Not => AstUnaryOperator::Not,
-        crate::react_compiler_hir::UnaryOperator::BitwiseNot => AstUnaryOperator::BitNot,
-        crate::react_compiler_hir::UnaryOperator::TypeOf => AstUnaryOperator::TypeOf,
-        crate::react_compiler_hir::UnaryOperator::Void => AstUnaryOperator::Void,
+        UnaryOperator::Minus => AstUnaryOperator::Neg,
+        UnaryOperator::Plus => AstUnaryOperator::Plus,
+        UnaryOperator::Not => AstUnaryOperator::Not,
+        UnaryOperator::BitwiseNot => AstUnaryOperator::BitNot,
+        UnaryOperator::TypeOf => AstUnaryOperator::TypeOf,
+        UnaryOperator::Void => AstUnaryOperator::Void,
     }
 }
 
@@ -3223,10 +3234,10 @@ fn convert_logical_operator(op: &LogicalOperator) -> AstLogicalOperator {
     }
 }
 
-fn convert_update_operator(op: &crate::react_compiler_hir::UpdateOperator) -> AstUpdateOperator {
+fn convert_update_operator(op: &UpdateOperator) -> AstUpdateOperator {
     match op {
-        crate::react_compiler_hir::UpdateOperator::Increment => AstUpdateOperator::Increment,
-        crate::react_compiler_hir::UpdateOperator::Decrement => AstUpdateOperator::Decrement,
+        UpdateOperator::Increment => AstUpdateOperator::Increment,
+        UpdateOperator::Decrement => AstUpdateOperator::Decrement,
     }
 }
 
@@ -3551,16 +3562,12 @@ fn invariant_err_with_detail_message(
     loc: Option<DiagSourceLocation>,
 ) -> CompilerError {
     let mut err = CompilerError::new();
-    let diagnostic = crate::react_compiler_diagnostics::CompilerDiagnostic::new(
-        ErrorCategory::Invariant,
-        reason,
-        None::<String>,
-    )
-    .with_detail(crate::react_compiler_diagnostics::CompilerDiagnosticDetail::Error {
-        loc,
-        message: Some(message.to_string()),
-        identifier_name: None,
-    });
+    let diagnostic = CompilerDiagnostic::new(ErrorCategory::Invariant, reason, None::<String>)
+        .with_detail(CompilerDiagnosticDetail::Error {
+            loc,
+            message: Some(message.to_string()),
+            identifier_name: None,
+        });
     err.push_diagnostic(diagnostic);
     err
 }
@@ -3614,37 +3621,26 @@ fn get_statement_loc(stmt: &Statement) -> Option<DiagSourceLocation> {
         _ => return None,
     };
     base.loc.as_ref().map(|loc| DiagSourceLocation {
-        start: crate::react_compiler_diagnostics::Position {
-            line: loc.start.line,
-            column: loc.start.column,
-            index: loc.start.index,
-        },
-        end: crate::react_compiler_diagnostics::Position {
-            line: loc.end.line,
-            column: loc.end.column,
-            index: loc.end.index,
-        },
+        start: Position { line: loc.start.line, column: loc.start.column, index: loc.start.index },
+        end: Position { line: loc.end.line, column: loc.end.column, index: loc.end.index },
     })
 }
 
 fn compare_scope_dependency(
-    a: &crate::react_compiler_hir::ReactiveScopeDependency,
-    b: &crate::react_compiler_hir::ReactiveScopeDependency,
+    a: &ReactiveScopeDependency,
+    b: &ReactiveScopeDependency,
     env: &Environment,
-) -> std::cmp::Ordering {
+) -> Ordering {
     let a_name = dep_to_sort_key(a, env);
     let b_name = dep_to_sort_key(b, env);
     a_name.cmp(&b_name)
 }
 
-fn dep_to_sort_key(
-    dep: &crate::react_compiler_hir::ReactiveScopeDependency,
-    env: &Environment,
-) -> String {
+fn dep_to_sort_key(dep: &ReactiveScopeDependency, env: &Environment) -> String {
     let ident = &env.identifiers[dep.identifier.0 as usize];
     let base = match &ident.name {
-        Some(crate::react_compiler_hir::IdentifierName::Named(n)) => n.clone(),
-        Some(crate::react_compiler_hir::IdentifierName::Promoted(n)) => n.clone(),
+        Some(IdentifierName::Named(n)) => n.clone(),
+        Some(IdentifierName::Promoted(n)) => n.clone(),
         None => format!("_t{}", dep.identifier.0),
     };
     let mut parts = vec![base];
@@ -3660,10 +3656,10 @@ fn dep_to_sort_key(
 }
 
 fn compare_scope_declaration(
-    a: &crate::react_compiler_hir::ReactiveScopeDeclaration,
-    b: &crate::react_compiler_hir::ReactiveScopeDeclaration,
+    a: &ReactiveScopeDeclaration,
+    b: &ReactiveScopeDeclaration,
     env: &Environment,
-) -> std::cmp::Ordering {
+) -> Ordering {
     let a_name = ident_sort_key(a.identifier, env);
     let b_name = ident_sort_key(b.identifier, env);
     a_name.cmp(&b_name)
@@ -3672,8 +3668,8 @@ fn compare_scope_declaration(
 fn ident_sort_key(id: IdentifierId, env: &Environment) -> String {
     let ident = &env.identifiers[id.0 as usize];
     match &ident.name {
-        Some(crate::react_compiler_hir::IdentifierName::Named(n)) => n.clone(),
-        Some(crate::react_compiler_hir::IdentifierName::Promoted(n)) => n.clone(),
+        Some(IdentifierName::Named(n)) => n.clone(),
+        Some(IdentifierName::Promoted(n)) => n.clone(),
         None => format!("_t{}", id.0),
     }
 }
@@ -3693,9 +3689,7 @@ fn maybe_wrap_hook_call(
     callee_id: IdentifierId,
 ) -> Expression {
     if let Some(ref guard_name) = cx.env.hook_guard_name {
-        if cx.env.output_mode == crate::react_compiler_hir::environment::OutputMode::Client
-            && is_hook_identifier(cx, callee_id)
-        {
+        if cx.env.output_mode == OutputMode::Client && is_hook_identifier(cx, callee_id) {
             return wrap_hook_call_with_guard(guard_name, call_expr, 2, 3);
         }
     }
@@ -3828,24 +3822,24 @@ fn create_function_body_hook_guard(
 }
 
 fn apply_renames_to_json(
-    value: &mut serde_json::Value,
-    renames: &[crate::react_compiler_hir::environment::BindingRename],
-    reference_node_ids: &rustc_hash::FxHashSet<u32>,
+    value: &mut Value,
+    renames: &[BindingRename],
+    reference_node_ids: &FxHashSet<u32>,
 ) {
     apply_renames_to_json_inner(value, renames, reference_node_ids, false);
 }
 
 fn apply_renames_to_json_inner(
-    value: &mut serde_json::Value,
-    renames: &[crate::react_compiler_hir::environment::BindingRename],
-    reference_node_ids: &rustc_hash::FxHashSet<u32>,
+    value: &mut Value,
+    renames: &[BindingRename],
+    reference_node_ids: &FxHashSet<u32>,
     is_property_key: bool,
 ) {
     if renames.is_empty() {
         return;
     }
     match value {
-        serde_json::Value::Object(map) => {
+        Value::Object(map) => {
             let node_type = map.get("type").and_then(|v| v.as_str()).unwrap_or("").to_string();
             // Rename Identifier nodes that are NOT object property keys.
             // Property keys in object type annotations (e.g., `id: string`)
@@ -3875,7 +3869,7 @@ fn apply_renames_to_json_inner(
                     None
                 };
                 if let Some(renamed) = maybe_rename {
-                    map.insert("name".to_string(), serde_json::Value::String(renamed));
+                    map.insert("name".to_string(), Value::String(renamed));
                 }
                 if let Some(id) = map.get_mut("id") {
                     apply_renames_to_json_inner(id, renames, reference_node_ids, false);
@@ -3888,7 +3882,7 @@ fn apply_renames_to_json_inner(
                 apply_renames_to_json_inner(val, renames, reference_node_ids, child_is_key);
             }
         }
-        serde_json::Value::Array(arr) => {
+        Value::Array(arr) => {
             for item in arr {
                 apply_renames_to_json_inner(item, renames, reference_node_ids, false);
             }
@@ -3899,13 +3893,14 @@ fn apply_renames_to_json_inner(
 
 #[cfg(test)]
 mod tests {
+    use super::source_file_hash;
+
     /// The Fast Refresh source hash must match Node's
     /// `createHmac('sha256', code).digest('hex')` byte-for-byte, or hot-reload
     /// cache invalidation would diverge from the TS compiler. Reference values
     /// were computed with Node's `crypto` module.
     #[test]
     fn source_file_hash_matches_node_create_hmac() {
-        use super::source_file_hash;
         assert_eq!(
             source_file_hash("hello world"),
             "0de8bee5d7f9c5d209f8c6fabed0ea84cb3fca1244e8ed38079a61b599a84c47"

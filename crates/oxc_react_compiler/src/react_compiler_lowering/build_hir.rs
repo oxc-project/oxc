@@ -1,10 +1,36 @@
+use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
+use crate::react_compiler_ast::OriginalNode;
+use crate::react_compiler_ast::common::RawNode;
+use crate::react_compiler_ast::common::SourceLocation as AstSourceLocation;
+use crate::react_compiler_ast::expressions::{ArrowFunctionBody, Expression, ObjectMethodKind};
+use crate::react_compiler_ast::expressions::{
+    MemberExpression, ObjectExpressionProperty, ObjectMethod, OptionalCallExpression,
+    OptionalMemberExpression,
+};
+use crate::react_compiler_ast::jsx::{
+    JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElementName,
+    JSXExpressionContainerExpr, JSXMemberExprObject,
+};
+use crate::react_compiler_ast::jsx::{JSXElement, JSXMemberExpression};
+use crate::react_compiler_ast::operators::{
+    AssignmentOperator, BinaryOperator as AstBinaryOperator, UnaryOperator as AstUnaryOperator,
+};
+use crate::react_compiler_ast::operators::{
+    LogicalOperator as AstLogicalOperator, UpdateOperator as AstUpdateOperator,
+};
+use crate::react_compiler_ast::patterns::{ObjectPatternProperty, PatternLike};
+use crate::react_compiler_ast::scope::BindingData;
 use crate::react_compiler_ast::scope::BindingId;
 use crate::react_compiler_ast::scope::BindingKind as AstBindingKind;
 use crate::react_compiler_ast::scope::ScopeId;
 use crate::react_compiler_ast::scope::ScopeInfo;
 use crate::react_compiler_ast::scope::ScopeKind;
+use crate::react_compiler_ast::statements::{
+    BlockStatement, ForInOfLeft, ForInit, FunctionDeclaration,
+};
+use crate::react_compiler_ast::statements::{Statement, VariableDeclarationKind};
 use crate::react_compiler_diagnostics::CompilerDiagnostic;
 use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
 use crate::react_compiler_diagnostics::CompilerError;
@@ -16,8 +42,10 @@ use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
 
 use crate::react_compiler_lowering::FunctionNode;
+use crate::react_compiler_lowering::convert_binding_kind;
 use crate::react_compiler_lowering::find_context_identifiers::find_context_identifiers;
 use crate::react_compiler_lowering::hir_builder::HirBuilder;
+use crate::react_compiler_lowering::hir_builder::create_temporary_place;
 use crate::react_compiler_lowering::hir_builder::is_always_reserved_word;
 use crate::react_compiler_lowering::hir_builder::reserved_identifier_diagnostic;
 use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
@@ -28,7 +56,7 @@ use crate::react_compiler_lowering::identifier_loc_index::build_identifier_loc_i
 // =============================================================================
 
 /// Convert an AST SourceLocation to an HIR SourceLocation.
-fn convert_loc(loc: &crate::react_compiler_ast::common::SourceLocation) -> SourceLocation {
+fn convert_loc(loc: &AstSourceLocation) -> SourceLocation {
     SourceLocation {
         start: Position { line: loc.start.line, column: loc.start.column, index: loc.start.index },
         end: Position { line: loc.end.line, column: loc.end.column, index: loc.end.index },
@@ -36,9 +64,7 @@ fn convert_loc(loc: &crate::react_compiler_ast::common::SourceLocation) -> Sourc
 }
 
 /// Convert an optional AST SourceLocation to an optional HIR SourceLocation.
-fn convert_opt_loc(
-    loc: &Option<crate::react_compiler_ast::common::SourceLocation>,
-) -> Option<SourceLocation> {
+fn convert_opt_loc(loc: &Option<AstSourceLocation>) -> Option<SourceLocation> {
     loc.as_ref().map(convert_loc)
 }
 
@@ -47,32 +73,23 @@ fn convert_opt_loc(
 /// before deciding to create an `UnsupportedNode`.
 ///
 /// [`OriginalNode`]: crate::react_compiler_ast::OriginalNode
-fn original_expression(
-    expr: &crate::react_compiler_ast::expressions::Expression,
-) -> Option<crate::react_compiler_ast::OriginalNode> {
-    Some(crate::react_compiler_ast::OriginalNode::Expression(Box::new(expr.clone())))
+fn original_expression(expr: &Expression) -> Option<OriginalNode> {
+    Some(OriginalNode::Expression(Box::new(expr.clone())))
 }
 
-/// Wrap a statement as an [`OriginalNode`](crate::react_compiler_ast::OriginalNode)
+/// Wrap a statement as an [`OriginalNode`]
 /// for `UnsupportedNode`'s `original_node`.
-fn original_statement(
-    stmt: &crate::react_compiler_ast::statements::Statement,
-) -> Option<crate::react_compiler_ast::OriginalNode> {
-    Some(crate::react_compiler_ast::OriginalNode::Statement(Box::new(stmt.clone())))
+fn original_statement(stmt: &Statement) -> Option<OriginalNode> {
+    Some(OriginalNode::Statement(Box::new(stmt.clone())))
 }
 
-/// Wrap a pattern as an [`OriginalNode`](crate::react_compiler_ast::OriginalNode) for
+/// Wrap a pattern as an [`OriginalNode`] for
 /// `UnsupportedNode`'s `original_node`.
-fn original_pattern(
-    pat: &crate::react_compiler_ast::patterns::PatternLike,
-) -> Option<crate::react_compiler_ast::OriginalNode> {
-    Some(crate::react_compiler_ast::OriginalNode::Pattern(Box::new(pat.clone())))
+fn original_pattern(pat: &PatternLike) -> Option<OriginalNode> {
+    Some(OriginalNode::Pattern(Box::new(pat.clone())))
 }
 
-fn pattern_like_loc(
-    pattern: &crate::react_compiler_ast::patterns::PatternLike,
-) -> Option<crate::react_compiler_ast::common::SourceLocation> {
-    use crate::react_compiler_ast::patterns::PatternLike;
+fn pattern_like_loc(pattern: &PatternLike) -> Option<AstSourceLocation> {
     match pattern {
         PatternLike::Identifier(id) => id.base.loc.clone(),
         PatternLike::ObjectPattern(p) => p.base.loc.clone(),
@@ -89,10 +106,7 @@ fn pattern_like_loc(
 }
 
 /// Extract the HIR SourceLocation from an Expression AST node.
-fn expression_loc(
-    expr: &crate::react_compiler_ast::expressions::Expression,
-) -> Option<SourceLocation> {
-    use crate::react_compiler_ast::expressions::Expression;
+fn expression_loc(expr: &Expression) -> Option<SourceLocation> {
     let loc = match expr {
         Expression::Identifier(e) => e.base.loc.clone(),
         Expression::StringLiteral(e) => e.base.loc.clone(),
@@ -203,8 +217,7 @@ fn validate_ts_this_parameters_in_function_range(
 }
 
 /// Get the Babel-style type name of an Expression node (e.g. "Identifier", "NumericLiteral").
-fn expression_type_name(expr: &crate::react_compiler_ast::expressions::Expression) -> &'static str {
-    use crate::react_compiler_ast::expressions::Expression;
+fn expression_type_name(expr: &Expression) -> &'static str {
     match expr {
         Expression::Identifier(_) => "Identifier",
         Expression::StringLiteral(_) => "StringLiteral",
@@ -258,9 +271,7 @@ fn expression_type_name(expr: &crate::react_compiler_ast::expressions::Expressio
 /// { "type": "TSTypeAnnotation", "typeAnnotation": { "type": "TSTypeReference", ... } }
 /// or { "type": "TypeAnnotation", "typeAnnotation": { "type": "GenericTypeAnnotation", ... } }
 /// We extract the inner typeAnnotation's `type` field name.
-fn extract_type_annotation_name(
-    type_annotation: &Option<crate::react_compiler_ast::common::RawNode>,
-) -> Option<String> {
+fn extract_type_annotation_name(type_annotation: &Option<RawNode>) -> Option<String> {
     let val = type_annotation.as_ref()?.parse_value();
     // Navigate: typeAnnotation.typeAnnotation.type
     let inner = val.get("typeAnnotation")?;
@@ -311,7 +322,7 @@ fn lower_value_to_temporary(
 
 fn lower_expression_to_temporary(
     builder: &mut HirBuilder,
-    expr: &crate::react_compiler_ast::expressions::Expression,
+    expr: &Expression,
 ) -> Result<Place, CompilerError> {
     let value = lower_expression(builder, expr)?;
     Ok(lower_value_to_temporary(builder, value)?)
@@ -321,51 +332,47 @@ fn lower_expression_to_temporary(
 // Operator conversion
 // =============================================================================
 
-fn convert_binary_operator(
-    op: &crate::react_compiler_ast::operators::BinaryOperator,
-) -> BinaryOperator {
-    use crate::react_compiler_ast::operators::BinaryOperator as AstOp;
+fn convert_binary_operator(op: &AstBinaryOperator) -> BinaryOperator {
     match op {
-        AstOp::Add => BinaryOperator::Add,
-        AstOp::Sub => BinaryOperator::Subtract,
-        AstOp::Mul => BinaryOperator::Multiply,
-        AstOp::Div => BinaryOperator::Divide,
-        AstOp::Rem => BinaryOperator::Modulo,
-        AstOp::Exp => BinaryOperator::Exponent,
-        AstOp::Eq => BinaryOperator::Equal,
-        AstOp::StrictEq => BinaryOperator::StrictEqual,
-        AstOp::Neq => BinaryOperator::NotEqual,
-        AstOp::StrictNeq => BinaryOperator::StrictNotEqual,
-        AstOp::Lt => BinaryOperator::LessThan,
-        AstOp::Lte => BinaryOperator::LessEqual,
-        AstOp::Gt => BinaryOperator::GreaterThan,
-        AstOp::Gte => BinaryOperator::GreaterEqual,
-        AstOp::Shl => BinaryOperator::ShiftLeft,
-        AstOp::Shr => BinaryOperator::ShiftRight,
-        AstOp::UShr => BinaryOperator::UnsignedShiftRight,
-        AstOp::BitOr => BinaryOperator::BitwiseOr,
-        AstOp::BitXor => BinaryOperator::BitwiseXor,
-        AstOp::BitAnd => BinaryOperator::BitwiseAnd,
-        AstOp::In => BinaryOperator::In,
-        AstOp::Instanceof => BinaryOperator::InstanceOf,
-        AstOp::Pipeline => {
+        AstBinaryOperator::Add => BinaryOperator::Add,
+        AstBinaryOperator::Sub => BinaryOperator::Subtract,
+        AstBinaryOperator::Mul => BinaryOperator::Multiply,
+        AstBinaryOperator::Div => BinaryOperator::Divide,
+        AstBinaryOperator::Rem => BinaryOperator::Modulo,
+        AstBinaryOperator::Exp => BinaryOperator::Exponent,
+        AstBinaryOperator::Eq => BinaryOperator::Equal,
+        AstBinaryOperator::StrictEq => BinaryOperator::StrictEqual,
+        AstBinaryOperator::Neq => BinaryOperator::NotEqual,
+        AstBinaryOperator::StrictNeq => BinaryOperator::StrictNotEqual,
+        AstBinaryOperator::Lt => BinaryOperator::LessThan,
+        AstBinaryOperator::Lte => BinaryOperator::LessEqual,
+        AstBinaryOperator::Gt => BinaryOperator::GreaterThan,
+        AstBinaryOperator::Gte => BinaryOperator::GreaterEqual,
+        AstBinaryOperator::Shl => BinaryOperator::ShiftLeft,
+        AstBinaryOperator::Shr => BinaryOperator::ShiftRight,
+        AstBinaryOperator::UShr => BinaryOperator::UnsignedShiftRight,
+        AstBinaryOperator::BitOr => BinaryOperator::BitwiseOr,
+        AstBinaryOperator::BitXor => BinaryOperator::BitwiseXor,
+        AstBinaryOperator::BitAnd => BinaryOperator::BitwiseAnd,
+        AstBinaryOperator::In => BinaryOperator::In,
+        AstBinaryOperator::Instanceof => BinaryOperator::InstanceOf,
+        AstBinaryOperator::Pipeline => {
             unreachable!("Pipeline operator is checked before calling convert_binary_operator")
         }
     }
 }
 
-fn convert_unary_operator(
-    op: &crate::react_compiler_ast::operators::UnaryOperator,
-) -> UnaryOperator {
-    use crate::react_compiler_ast::operators::UnaryOperator as AstOp;
+fn convert_unary_operator(op: &AstUnaryOperator) -> UnaryOperator {
     match op {
-        AstOp::Neg => UnaryOperator::Minus,
-        AstOp::Plus => UnaryOperator::Plus,
-        AstOp::Not => UnaryOperator::Not,
-        AstOp::BitNot => UnaryOperator::BitwiseNot,
-        AstOp::TypeOf => UnaryOperator::TypeOf,
-        AstOp::Void => UnaryOperator::Void,
-        AstOp::Delete | AstOp::Throw => unreachable!("delete/throw handled separately"),
+        AstUnaryOperator::Neg => UnaryOperator::Minus,
+        AstUnaryOperator::Plus => UnaryOperator::Plus,
+        AstUnaryOperator::Not => UnaryOperator::Not,
+        AstUnaryOperator::BitNot => UnaryOperator::BitwiseNot,
+        AstUnaryOperator::TypeOf => UnaryOperator::TypeOf,
+        AstUnaryOperator::Void => UnaryOperator::Void,
+        AstUnaryOperator::Delete | AstUnaryOperator::Throw => {
+            unreachable!("delete/throw handled separately")
+        }
     }
 }
 
@@ -430,9 +437,8 @@ fn lower_identifier(
 
 fn lower_arguments(
     builder: &mut HirBuilder,
-    args: &[crate::react_compiler_ast::expressions::Expression],
+    args: &[Expression],
 ) -> Result<Vec<PlaceOrSpread>, CompilerError> {
-    use crate::react_compiler_ast::expressions::Expression;
     let mut result = Vec::new();
     for arg in args {
         match arg {
@@ -449,16 +455,10 @@ fn lower_arguments(
     Ok(result)
 }
 
-fn convert_update_operator(
-    op: &crate::react_compiler_ast::operators::UpdateOperator,
-) -> UpdateOperator {
+fn convert_update_operator(op: &AstUpdateOperator) -> UpdateOperator {
     match op {
-        crate::react_compiler_ast::operators::UpdateOperator::Increment => {
-            UpdateOperator::Increment
-        }
-        crate::react_compiler_ast::operators::UpdateOperator::Decrement => {
-            UpdateOperator::Decrement
-        }
+        AstUpdateOperator::Increment => UpdateOperator::Increment,
+        AstUpdateOperator::Decrement => UpdateOperator::Decrement,
     }
 }
 
@@ -479,18 +479,17 @@ struct LoweredMemberExpression {
 
 fn lower_member_expression(
     builder: &mut HirBuilder,
-    member: &crate::react_compiler_ast::expressions::MemberExpression,
+    member: &MemberExpression,
 ) -> Result<LoweredMemberExpression, CompilerError> {
     Ok(lower_member_expression_impl(builder, member, None)?)
 }
 
 fn lower_member_expression_with_object(
     builder: &mut HirBuilder,
-    member: &crate::react_compiler_ast::expressions::OptionalMemberExpression,
+    member: &OptionalMemberExpression,
     lowered_object: Place,
 ) -> Result<LoweredMemberExpression, CompilerError> {
     // OptionalMemberExpression has the same shape as MemberExpression for property access
-    use crate::react_compiler_ast::expressions::Expression;
     let loc = convert_opt_loc(&member.base.loc);
     let object = lowered_object;
 
@@ -516,11 +515,9 @@ fn lower_member_expression_with_object(
                     property: MemberProperty::Literal(PropertyLiteral::String("".to_string())),
                     value: InstructionValue::UnsupportedNode {
                         node_type: Some("OptionalMemberExpression".to_string()),
-                        original_node: original_expression(
-                            &crate::react_compiler_ast::expressions::Expression::OptionalMemberExpression(
-                                member.clone(),
-                            ),
-                        ),
+                        original_node: original_expression(&Expression::OptionalMemberExpression(
+                            member.clone(),
+                        )),
                         loc,
                     },
                 });
@@ -562,10 +559,9 @@ fn lower_member_expression_with_object(
 
 fn lower_member_expression_impl(
     builder: &mut HirBuilder,
-    member: &crate::react_compiler_ast::expressions::MemberExpression,
+    member: &MemberExpression,
     lowered_object: Option<Place>,
 ) -> Result<LoweredMemberExpression, CompilerError> {
-    use crate::react_compiler_ast::expressions::Expression;
     let loc = convert_opt_loc(&member.base.loc);
     let object = match lowered_object {
         Some(obj) => obj,
@@ -595,11 +591,9 @@ fn lower_member_expression_impl(
                     property: MemberProperty::Literal(PropertyLiteral::String("".to_string())),
                     value: InstructionValue::UnsupportedNode {
                         node_type: Some("MemberExpression".to_string()),
-                        original_node: original_expression(
-                            &crate::react_compiler_ast::expressions::Expression::MemberExpression(
-                                member.clone(),
-                            ),
-                        ),
+                        original_node: original_expression(&Expression::MemberExpression(
+                            member.clone(),
+                        )),
                         loc,
                     },
                 });
@@ -647,10 +641,8 @@ fn lower_member_expression_impl(
 
 fn lower_expression(
     builder: &mut HirBuilder,
-    expr: &crate::react_compiler_ast::expressions::Expression,
+    expr: &Expression,
 ) -> Result<InstructionValue, CompilerError> {
-    use crate::react_compiler_ast::expressions::Expression;
-
     match expr {
         Expression::Identifier(ident) => {
             let loc = convert_opt_loc(&ident.base.loc);
@@ -689,10 +681,7 @@ fn lower_expression(
         Expression::BinaryExpression(bin) => {
             let loc = convert_opt_loc(&bin.base.loc);
             // Check for pipeline operator before lowering operands
-            if matches!(
-                bin.operator,
-                crate::react_compiler_ast::operators::BinaryOperator::Pipeline
-            ) {
+            if matches!(bin.operator, AstBinaryOperator::Pipeline) {
                 builder.record_error(CompilerErrorDetail {
                     category: ErrorCategory::Todo,
                     reason: "(BuildHIR::lowerExpression) Pipe operator not supported".to_string(),
@@ -714,7 +703,7 @@ fn lower_expression(
         Expression::UnaryExpression(unary) => {
             let loc = convert_opt_loc(&unary.base.loc);
             match &unary.operator {
-                crate::react_compiler_ast::operators::UnaryOperator::Delete => {
+                AstUnaryOperator::Delete => {
                     // Delete can be on member expressions or identifiers
                     let loc = convert_opt_loc(&unary.base.loc);
                     match &*unary.argument {
@@ -767,7 +756,7 @@ fn lower_expression(
                         }
                     }
                 }
-                crate::react_compiler_ast::operators::UnaryOperator::Throw => {
+                AstUnaryOperator::Throw => {
                     // throw as unary operator (Babel-specific)
                     let loc = convert_opt_loc(&unary.base.loc);
                     builder.record_error(CompilerErrorDetail {
@@ -865,11 +854,9 @@ fn lower_expression(
             });
 
             let hir_op = match expr.operator {
-                crate::react_compiler_ast::operators::LogicalOperator::And => LogicalOperator::And,
-                crate::react_compiler_ast::operators::LogicalOperator::Or => LogicalOperator::Or,
-                crate::react_compiler_ast::operators::LogicalOperator::NullishCoalescing => {
-                    LogicalOperator::NullishCoalescing
-                }
+                AstLogicalOperator::And => LogicalOperator::And,
+                AstLogicalOperator::Or => LogicalOperator::Or,
+                AstLogicalOperator::NullishCoalescing => LogicalOperator::NullishCoalescing,
             };
 
             builder.terminate_with_continuation(
@@ -912,12 +899,8 @@ fn lower_expression(
             match update.argument.as_ref() {
                 Expression::MemberExpression(member) => {
                     let binary_op = match &update.operator {
-                        crate::react_compiler_ast::operators::UpdateOperator::Increment => {
-                            BinaryOperator::Add
-                        }
-                        crate::react_compiler_ast::operators::UpdateOperator::Decrement => {
-                            BinaryOperator::Subtract
-                        }
+                        AstUpdateOperator::Increment => BinaryOperator::Add,
+                        AstUpdateOperator::Decrement => BinaryOperator::Subtract,
                     };
                     // Use the member expression's loc (not the update expression's)
                     // to match TS behavior where the inner operations use leftExpr.node.loc
@@ -1160,13 +1143,12 @@ fn lower_expression(
             Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc.clone() })
         }
         Expression::AssignmentExpression(expr) => {
-            use crate::react_compiler_ast::operators::AssignmentOperator;
             let loc = convert_opt_loc(&expr.base.loc);
 
             if matches!(expr.operator, AssignmentOperator::Assign) {
                 // Simple `=` assignment
                 match &*expr.left {
-                    crate::react_compiler_ast::patterns::PatternLike::Identifier(ident) => {
+                    PatternLike::Identifier(ident) => {
                         // Handle simple identifier assignment directly
                         let start = ident.base.start.unwrap_or(0);
                         let right = lower_expression_to_temporary(builder, &expr.right)?;
@@ -1262,22 +1244,16 @@ fn lower_expression(
                             }
                         }
                     }
-                    crate::react_compiler_ast::patterns::PatternLike::MemberExpression(member) => {
+                    PatternLike::MemberExpression(member) => {
                         // Member expression assignment: a.b = value or a[b] = value
                         let right = lower_expression_to_temporary(builder, &expr.right)?;
                         let left_loc = convert_opt_loc(&member.base.loc);
                         let object = lower_expression_to_temporary(builder, &member.object)?;
                         let temp = if !member.computed
-                            || matches!(
-                                &*member.property,
-                                crate::react_compiler_ast::expressions::Expression::NumericLiteral(
-                                    _
-                                )
-                            ) {
+                            || matches!(&*member.property, Expression::NumericLiteral(_))
+                        {
                             match &*member.property {
-                                crate::react_compiler_ast::expressions::Expression::Identifier(
-                                    prop_id,
-                                ) => lower_value_to_temporary(
+                                Expression::Identifier(prop_id) => lower_value_to_temporary(
                                     builder,
                                     InstructionValue::PropertyStore {
                                         object,
@@ -1286,9 +1262,7 @@ fn lower_expression(
                                         loc: left_loc,
                                     },
                                 )?,
-                                crate::react_compiler_ast::expressions::Expression::NumericLiteral(
-                                    num,
-                                ) => lower_value_to_temporary(
+                                Expression::NumericLiteral(num) => lower_value_to_temporary(
                                     builder,
                                     InstructionValue::PropertyStore {
                                         object,
@@ -1403,13 +1377,11 @@ fn lower_expression(
                 };
 
                 match &*expr.left {
-                    crate::react_compiler_ast::patterns::PatternLike::Identifier(ident) => {
+                    PatternLike::Identifier(ident) => {
                         let start = ident.base.start.unwrap_or(0);
                         let left_place = lower_expression_to_temporary(
                             builder,
-                            &crate::react_compiler_ast::expressions::Expression::Identifier(
-                                ident.clone(),
-                            ),
+                            &Expression::Identifier(ident.clone()),
                         )?;
                         let right = lower_expression_to_temporary(builder, &expr.right)?;
                         let binary_place = lower_value_to_temporary(
@@ -1487,7 +1459,7 @@ fn lower_expression(
                             }
                         }
                     }
-                    crate::react_compiler_ast::patterns::PatternLike::MemberExpression(member) => {
+                    PatternLike::MemberExpression(member) => {
                         // a.b += right: read, compute, store
                         // Match TS behavior: return the PropertyStore/ComputedStore value
                         // directly (let the caller lower it to a temporary)
@@ -1617,9 +1589,7 @@ fn lower_expression(
             let mut properties: Vec<ObjectPropertyOrSpread> = Vec::new();
             for prop in &obj.properties {
                 match prop {
-                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::ObjectProperty(
-                        p,
-                    ) => {
+                    ObjectExpressionProperty::ObjectProperty(p) => {
                         let key = lower_object_property_key(builder, &p.key, p.computed)?;
                         let key = match key {
                             Some(k) => k,
@@ -1632,15 +1602,11 @@ fn lower_expression(
                             place: value,
                         }));
                     }
-                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::SpreadElement(
-                        spread,
-                    ) => {
+                    ObjectExpressionProperty::SpreadElement(spread) => {
                         let place = lower_expression_to_temporary(builder, &spread.argument)?;
                         properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern { place }));
                     }
-                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::ObjectMethod(
-                        method,
-                    ) => {
+                    ObjectExpressionProperty::ObjectMethod(method) => {
                         if let Some(prop) = lower_object_method(builder, method)? {
                             properties.push(ObjectPropertyOrSpread::Property(prop));
                         }
@@ -1875,9 +1841,6 @@ fn lower_expression(
             // Lower attributes (props)
             let mut props: Vec<JsxAttribute> = Vec::new();
             for attr_item in &jsx_element.opening_element.attributes {
-                use crate::react_compiler_ast::jsx::JSXAttributeItem;
-                use crate::react_compiler_ast::jsx::JSXAttributeName;
-                use crate::react_compiler_ast::jsx::JSXAttributeValue;
                 match attr_item {
                     JSXAttributeItem::JSXSpreadAttribute(spread) => {
                         let argument = lower_expression_to_temporary(builder, &spread.argument)?;
@@ -1920,7 +1883,6 @@ fn lower_expression(
                                 )?
                             }
                             Some(JSXAttributeValue::JSXExpressionContainer(container)) => {
-                                use crate::react_compiler_ast::jsx::JSXExpressionContainerExpr;
                                 match &container.expression {
                                     JSXExpressionContainerExpr::JSXEmptyExpression(_) => {
                                         // Empty expression container - skip this attribute
@@ -1932,20 +1894,14 @@ fn lower_expression(
                                 }
                             }
                             Some(JSXAttributeValue::JSXElement(el)) => {
-                                let val = lower_expression(
-                                    builder,
-                                    &crate::react_compiler_ast::expressions::Expression::JSXElement(
-                                        el.clone(),
-                                    ),
-                                )?;
+                                let val =
+                                    lower_expression(builder, &Expression::JSXElement(el.clone()))?;
                                 lower_value_to_temporary(builder, val)?
                             }
                             Some(JSXAttributeValue::JSXFragment(frag)) => {
                                 let val = lower_expression(
                                     builder,
-                                    &crate::react_compiler_ast::expressions::Expression::JSXFragment(
-                                        frag.clone(),
-                                    ),
+                                    &Expression::JSXFragment(frag.clone()),
                                 )?;
                                 lower_value_to_temporary(builder, val)?
                             }
@@ -1978,9 +1934,7 @@ fn lower_expression(
                     _ => "fbt".to_string(),
                 };
                 // Get the opening element's name identifier and check if it's a local binding
-                if let crate::react_compiler_ast::jsx::JSXElementName::JSXIdentifier(jsx_id) =
-                    &jsx_element.opening_element.name
-                {
+                if let JSXElementName::JSXIdentifier(jsx_id) = &jsx_element.opening_element.name {
                     let id_loc = convert_opt_loc(&jsx_id.base.loc);
                     // Check if fbt/fbs tag name resolves to a local binding.
                     // JSX identifiers may not be in our position-based reference map,
@@ -2028,7 +1982,6 @@ fn lower_expression(
                     [("enum", &enum_locs), ("plural", &plural_locs), ("pronoun", &pronoun_locs)]
                 {
                     if locations.len() > 1 {
-                        use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
                         let details: Vec<CompilerDiagnosticDetail> = locations
                             .iter()
                             .map(|loc| CompilerDiagnosticDetail::Error {
@@ -2040,7 +1993,7 @@ fn lower_expression(
                                 identifier_name: None,
                             })
                             .collect();
-                        let mut diag = crate::react_compiler_diagnostics::CompilerDiagnostic::new(
+                        let mut diag = CompilerDiagnostic::new(
                             ErrorCategory::Todo,
                             "Support duplicate fbt tags",
                             Some(format!(
@@ -2214,11 +2167,7 @@ fn lower_expression(
 /// ClassDeclaration statements. This avoids false positives when two bindings
 /// share the same name but are declared in different scopes (e.g., `const x`
 /// inside an if-branch and `const x` after it).
-fn is_binding_in_block_direct_statements(
-    binding: &crate::react_compiler_ast::scope::BindingData,
-    stmts: &[crate::react_compiler_ast::statements::Statement],
-) -> bool {
-    use crate::react_compiler_ast::statements::Statement;
+fn is_binding_in_block_direct_statements(binding: &BindingData, stmts: &[Statement]) -> bool {
     let decl_start = match binding.declaration_start {
         Some(pos) => pos,
         None => return false,
@@ -2253,20 +2202,12 @@ fn is_binding_in_block_direct_statements(
 }
 
 #[allow(dead_code)]
-fn pattern_declares_name(
-    pattern: &crate::react_compiler_ast::patterns::PatternLike,
-    name: &str,
-) -> bool {
-    use crate::react_compiler_ast::patterns::PatternLike;
+fn pattern_declares_name(pattern: &PatternLike, name: &str) -> bool {
     match pattern {
         PatternLike::Identifier(id) => id.name == name,
         PatternLike::ObjectPattern(op) => op.properties.iter().any(|prop| match prop {
-            crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(p) => {
-                pattern_declares_name(&p.value, name)
-            }
-            crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
-                pattern_declares_name(&r.argument, name)
-            }
+            ObjectPatternProperty::ObjectProperty(p) => pattern_declares_name(&p.value, name),
+            ObjectPatternProperty::RestElement(r) => pattern_declares_name(&r.argument, name),
         }),
         PatternLike::ArrayPattern(ap) => ap
             .elements
@@ -2287,8 +2228,7 @@ fn pattern_declares_name(
 // Statement position helpers
 // =============================================================================
 
-fn statement_start(stmt: &crate::react_compiler_ast::statements::Statement) -> Option<u32> {
-    use crate::react_compiler_ast::statements::Statement;
+fn statement_start(stmt: &Statement) -> Option<u32> {
     match stmt {
         Statement::BlockStatement(s) => s.base.start,
         Statement::ReturnStatement(s) => s.base.start,
@@ -2338,8 +2278,7 @@ fn statement_start(stmt: &crate::react_compiler_ast::statements::Statement) -> O
     }
 }
 
-fn statement_end(stmt: &crate::react_compiler_ast::statements::Statement) -> Option<u32> {
-    use crate::react_compiler_ast::statements::Statement;
+fn statement_end(stmt: &Statement) -> Option<u32> {
     match stmt {
         Statement::BlockStatement(s) => s.base.end,
         Statement::ReturnStatement(s) => s.base.end,
@@ -2390,10 +2329,7 @@ fn statement_end(stmt: &crate::react_compiler_ast::statements::Statement) -> Opt
 }
 
 /// Extract the HIR SourceLocation from a Statement AST node.
-fn statement_loc(
-    stmt: &crate::react_compiler_ast::statements::Statement,
-) -> Option<SourceLocation> {
-    use crate::react_compiler_ast::statements::Statement;
+fn statement_loc(stmt: &Statement) -> Option<SourceLocation> {
     let loc = match stmt {
         Statement::BlockStatement(s) => s.base.loc.clone(),
         Statement::ReturnStatement(s) => s.base.loc.clone(),
@@ -2446,12 +2382,11 @@ fn statement_loc(
 
 /// Collect binding names from a pattern that are declared in the given scope.
 fn collect_binding_names_from_pattern(
-    pattern: &crate::react_compiler_ast::patterns::PatternLike,
-    scope_id: crate::react_compiler_ast::scope::ScopeId,
+    pattern: &PatternLike,
+    scope_id: ScopeId,
     scope_info: &ScopeInfo,
     out: &mut FxHashSet<BindingId>,
 ) {
-    use crate::react_compiler_ast::patterns::PatternLike;
     match pattern {
         PatternLike::Identifier(id) => {
             if let Some(&binding_id) = scope_info.scopes[scope_id.0 as usize].bindings.get(&id.name)
@@ -2462,12 +2397,10 @@ fn collect_binding_names_from_pattern(
         PatternLike::ObjectPattern(obj) => {
             for prop in &obj.properties {
                 match prop {
-                    crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(
-                        p,
-                    ) => {
+                    ObjectPatternProperty::ObjectProperty(p) => {
                         collect_binding_names_from_pattern(&p.value, scope_id, scope_info, out);
                     }
-                    crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
+                    ObjectPatternProperty::RestElement(r) => {
                         collect_binding_names_from_pattern(&r.argument, scope_id, scope_info, out);
                     }
                 }
@@ -2505,8 +2438,8 @@ fn collect_binding_names_from_pattern(
 /// block-scoped bindings and emits DeclareContext instructions to hoist them.
 fn lower_block_statement(
     builder: &mut HirBuilder,
-    block: &crate::react_compiler_ast::statements::BlockStatement,
-    parent_scope: Option<crate::react_compiler_ast::scope::ScopeId>,
+    block: &BlockStatement,
+    parent_scope: Option<ScopeId>,
 ) -> Result<(), CompilerError> {
     let _ = lower_block_statement_inner(builder, block, None, parent_scope);
     Ok(())
@@ -2514,8 +2447,8 @@ fn lower_block_statement(
 
 fn lower_block_statement_with_scope(
     builder: &mut HirBuilder,
-    block: &crate::react_compiler_ast::statements::BlockStatement,
-    scope_override: crate::react_compiler_ast::scope::ScopeId,
+    block: &BlockStatement,
+    scope_override: ScopeId,
 ) -> Result<(), CompilerError> {
     let _ = lower_block_statement_inner(builder, block, Some(scope_override), None);
     Ok(())
@@ -2523,13 +2456,10 @@ fn lower_block_statement_with_scope(
 
 fn lower_block_statement_inner(
     builder: &mut HirBuilder,
-    block: &crate::react_compiler_ast::statements::BlockStatement,
-    scope_override: Option<crate::react_compiler_ast::scope::ScopeId>,
-    parent_scope: Option<crate::react_compiler_ast::scope::ScopeId>,
+    block: &BlockStatement,
+    scope_override: Option<ScopeId>,
+    parent_scope: Option<ScopeId>,
 ) -> Result<(), CompilerDiagnostic> {
-    use crate::react_compiler_ast::scope::BindingKind as AstBindingKind;
-    use crate::react_compiler_ast::statements::Statement;
-
     // Look up the block's scope to identify hoistable bindings.
     // Use the scope override if provided (for function body blocks that share the function's scope).
     let block_scope_id = scope_override.or_else(|| {
@@ -2543,8 +2473,7 @@ fn lower_block_statement_inner(
         for stmt in &block.body {
             if let Statement::VariableDeclaration(vd) = stmt {
                 for d in &vd.declarations {
-                    if let crate::react_compiler_ast::patterns::PatternLike::Identifier(id) = &d.id
-                    {
+                    if let PatternLike::Identifier(id) = &d.id {
                         decl_names.push(id.name.as_str());
                     }
                 }
@@ -2876,12 +2805,10 @@ fn lower_block_statement_inner(
 
 fn lower_statement(
     builder: &mut HirBuilder,
-    stmt: &crate::react_compiler_ast::statements::Statement,
+    stmt: &Statement,
     label: Option<&str>,
-    parent_scope: Option<crate::react_compiler_ast::scope::ScopeId>,
+    parent_scope: Option<ScopeId>,
 ) -> Result<(), CompilerDiagnostic> {
-    use crate::react_compiler_ast::statements::Statement;
-
     match stmt {
         Statement::EmptyStatement(_) => {
             // no-op
@@ -2941,8 +2868,6 @@ fn lower_statement(
             lower_block_statement(builder, block, parent_scope)?;
         }
         Statement::VariableDeclaration(var_decl) => {
-            use crate::react_compiler_ast::patterns::PatternLike;
-            use crate::react_compiler_ast::statements::VariableDeclarationKind;
             if matches!(var_decl.kind, VariableDeclarationKind::Var) {
                 builder.record_error(CompilerErrorDetail {
                     reason: "(BuildHIR::lowerStatement) Handle var kinds in VariableDeclaration"
@@ -2987,9 +2912,7 @@ fn lower_statement(
                             .scope_info()
                             .find_binding_id_in_descendants(&id.name, builder.function_scope())
                         {
-                            let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
-                                &binding_data.kind,
-                            );
+                            let binding_kind = convert_binding_kind(&binding_data.kind);
                             let identifier = builder.resolve_binding_with_loc(
                                 &id.name,
                                 binding_id,
@@ -3166,12 +3089,12 @@ fn lower_statement(
                     }
                     Some(init) => {
                         match init.as_ref() {
-                            crate::react_compiler_ast::statements::ForInit::VariableDeclaration(var_decl) => {
+                            ForInit::VariableDeclaration(var_decl) => {
                                 let init_loc = convert_opt_loc(&var_decl.base.loc);
                                 lower_statement(builder, &Statement::VariableDeclaration(var_decl.clone()), None, parent_scope)?;
                                 init_loc
                             }
-                            crate::react_compiler_ast::statements::ForInit::Expression(expr) => {
+                            ForInit::Expression(expr) => {
                                 let init_loc = expression_loc(expr);
                                 builder.record_error(CompilerErrorDetail {
                                     category: ErrorCategory::Todo,
@@ -3433,12 +3356,10 @@ fn lower_statement(
 
             // Lower the init: NextPropertyOf + assignment
             let left_loc = match for_in.left.as_ref() {
-                crate::react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(
-                    var_decl,
-                ) => convert_opt_loc(&var_decl.base.loc).or(loc.clone()),
-                crate::react_compiler_ast::statements::ForInOfLeft::Pattern(pat) => {
-                    pattern_like_hir_loc(pat).or(loc.clone())
+                ForInOfLeft::VariableDeclaration(var_decl) => {
+                    convert_opt_loc(&var_decl.base.loc).or(loc.clone())
                 }
+                ForInOfLeft::Pattern(pat) => pattern_like_hir_loc(pat).or(loc.clone()),
             };
             let next_property = lower_value_to_temporary(
                 builder,
@@ -3446,9 +3367,7 @@ fn lower_statement(
             )?;
 
             let assign_result = match for_in.left.as_ref() {
-                crate::react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(
-                    var_decl,
-                ) => {
+                ForInOfLeft::VariableDeclaration(var_decl) => {
                     if var_decl.declarations.len() != 1 {
                         builder.record_error(CompilerErrorDetail {
                             category: ErrorCategory::Invariant,
@@ -3474,16 +3393,14 @@ fn lower_statement(
                         None
                     }
                 }
-                crate::react_compiler_ast::statements::ForInOfLeft::Pattern(pattern) => {
-                    lower_assignment(
-                        builder,
-                        left_loc.clone(),
-                        InstructionKind::Reassign,
-                        pattern,
-                        next_property.clone(),
-                        AssignmentStyle::Assignment,
-                    )?
-                }
+                ForInOfLeft::Pattern(pattern) => lower_assignment(
+                    builder,
+                    left_loc.clone(),
+                    InstructionKind::Reassign,
+                    pattern,
+                    next_property.clone(),
+                    AssignmentStyle::Assignment,
+                )?,
             };
             // Use the assign result (StoreLocal temp) as the test, matching TS behavior
             let test_value = assign_result.unwrap_or(next_property);
@@ -3571,12 +3488,10 @@ fn lower_statement(
 
             // Test block: IteratorNext, assign, branch
             let left_loc = match for_of.left.as_ref() {
-                crate::react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(
-                    var_decl,
-                ) => convert_opt_loc(&var_decl.base.loc).or(loc.clone()),
-                crate::react_compiler_ast::statements::ForInOfLeft::Pattern(pat) => {
-                    pattern_like_hir_loc(pat).or(loc.clone())
+                ForInOfLeft::VariableDeclaration(var_decl) => {
+                    convert_opt_loc(&var_decl.base.loc).or(loc.clone())
                 }
+                ForInOfLeft::Pattern(pat) => pattern_like_hir_loc(pat).or(loc.clone()),
             };
             let advance_iterator = lower_value_to_temporary(
                 builder,
@@ -3588,9 +3503,7 @@ fn lower_statement(
             )?;
 
             let assign_result = match for_of.left.as_ref() {
-                crate::react_compiler_ast::statements::ForInOfLeft::VariableDeclaration(
-                    var_decl,
-                ) => {
+                ForInOfLeft::VariableDeclaration(var_decl) => {
                     if var_decl.declarations.len() != 1 {
                         builder.record_error(CompilerErrorDetail {
                             category: ErrorCategory::Invariant,
@@ -3616,16 +3529,14 @@ fn lower_statement(
                         None
                     }
                 }
-                crate::react_compiler_ast::statements::ForInOfLeft::Pattern(pattern) => {
-                    lower_assignment(
-                        builder,
-                        left_loc.clone(),
-                        InstructionKind::Reassign,
-                        pattern,
-                        advance_iterator.clone(),
-                        AssignmentStyle::Assignment,
-                    )?
-                }
+                ForInOfLeft::Pattern(pattern) => lower_assignment(
+                    builder,
+                    left_loc.clone(),
+                    InstructionKind::Reassign,
+                    pattern,
+                    advance_iterator.clone(),
+                    AssignmentStyle::Assignment,
+                )?,
             };
             // Use the assign result (StoreLocal temp) as the test, matching TS behavior
             let test_value = assign_result.unwrap_or(advance_iterator);
@@ -3752,43 +3663,37 @@ fn lower_statement(
             }
 
             // Set up handler binding if catch has a param
-            let handler_binding_info: Option<(
-                Place,
-                crate::react_compiler_ast::patterns::PatternLike,
-            )> = if let Some(param) = &handler_clause.param {
+            let handler_binding_info: Option<(Place, PatternLike)> = if let Some(param) =
+                &handler_clause.param
+            {
                 // Check for destructuring in catch clause params.
                 // Match TS behavior: Babel doesn't register destructured catch bindings
                 // in its scope, so resolveIdentifier fails and records an invariant error.
-                let is_destructuring = matches!(
-                    param,
-                    crate::react_compiler_ast::patterns::PatternLike::ObjectPattern(_)
-                        | crate::react_compiler_ast::patterns::PatternLike::ArrayPattern(_)
-                );
+                let is_destructuring =
+                    matches!(param, PatternLike::ObjectPattern(_) | PatternLike::ArrayPattern(_));
                 if is_destructuring {
                     // Iterate the pattern to find all identifier locs for error reporting
                     fn collect_identifier_locs(
-                        pat: &crate::react_compiler_ast::patterns::PatternLike,
+                        pat: &PatternLike,
                         locs: &mut Vec<Option<SourceLocation>>,
                     ) {
                         match pat {
-                            crate::react_compiler_ast::patterns::PatternLike::Identifier(id) => {
+                            PatternLike::Identifier(id) => {
                                 locs.push(convert_opt_loc(&id.base.loc));
                             }
-                            crate::react_compiler_ast::patterns::PatternLike::ObjectPattern(
-                                obj,
-                            ) => {
+                            PatternLike::ObjectPattern(obj) => {
                                 for prop in &obj.properties {
                                     match prop {
-                                            crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(p) => {
-                                                collect_identifier_locs(&p.value, locs);
-                                            }
-                                            crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
-                                                collect_identifier_locs(&r.argument, locs);
-                                            }
+                                        ObjectPatternProperty::ObjectProperty(p) => {
+                                            collect_identifier_locs(&p.value, locs);
                                         }
+                                        ObjectPatternProperty::RestElement(r) => {
+                                            collect_identifier_locs(&r.argument, locs);
+                                        }
+                                    }
                                 }
                             }
-                            crate::react_compiler_ast::patterns::PatternLike::ArrayPattern(arr) => {
+                            PatternLike::ArrayPattern(arr) => {
                                 for elem in &arr.elements {
                                     if let Some(e) = elem {
                                         collect_identifier_locs(e, locs);
@@ -4039,9 +3944,7 @@ fn lower_statement(
         // TypeScript/Flow declarations are type-only, skip them
         Statement::TSEnumDeclaration(e) => {
             let loc = convert_opt_loc(&e.base.loc);
-            let original_node = original_statement(
-                &crate::react_compiler_ast::statements::Statement::TSEnumDeclaration(e.clone()),
-            );
+            let original_node = original_statement(&Statement::TSEnumDeclaration(e.clone()));
             lower_value_to_temporary(
                 builder,
                 InstructionValue::UnsupportedNode {
@@ -4053,9 +3956,7 @@ fn lower_statement(
         }
         Statement::EnumDeclaration(e) => {
             let loc = convert_opt_loc(&e.base.loc);
-            let original_node = original_statement(
-                &crate::react_compiler_ast::statements::Statement::EnumDeclaration(e.clone()),
-            );
+            let original_node = original_statement(&Statement::EnumDeclaration(e.clone()));
             lower_value_to_temporary(
                 builder,
                 InstructionValue::UnsupportedNode {
@@ -4101,9 +4002,7 @@ fn lower_statement(
                 builder,
                 InstructionValue::UnsupportedNode {
                     node_type: Some(node_type),
-                    original_node: original_statement(
-                        &crate::react_compiler_ast::statements::Statement::Unknown(unknown.clone()),
-                    ),
+                    original_node: original_statement(&Statement::Unknown(unknown.clone())),
                     loc,
                 },
             )?;
@@ -4117,8 +4016,8 @@ fn lower_statement(
 // =============================================================================
 
 enum FunctionBody<'a> {
-    Block(&'a crate::react_compiler_ast::statements::BlockStatement),
-    Expression(&'a crate::react_compiler_ast::expressions::Expression),
+    Block(&'a BlockStatement),
+    Expression(&'a Expression),
 }
 
 /// Main entry point: lower a function AST node into HIR.
@@ -4159,12 +4058,8 @@ pub fn lower(
         ),
         FunctionNode::ArrowFunctionExpression(arrow) => {
             let body = match arrow.body.as_ref() {
-                crate::react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(
-                    block,
-                ) => FunctionBody::Block(block),
-                crate::react_compiler_ast::expressions::ArrowFunctionBody::Expression(expr) => {
-                    FunctionBody::Expression(expr)
-                }
+                ArrowFunctionBody::BlockStatement(block) => FunctionBody::Block(block),
+                ArrowFunctionBody::Expression(expr) => FunctionBody::Expression(expr),
             };
             (
                 &arrow.params[..],
@@ -4191,10 +4086,7 @@ pub fn lower(
     let context_identifiers = find_context_identifiers(func, scope_info, env, &identifier_locs)?;
 
     // For top-level functions, context is empty (no captured refs)
-    let context_map: FxIndexMap<
-        crate::react_compiler_ast::scope::BindingId,
-        Option<SourceLocation>,
-    > = FxIndexMap::default();
+    let context_map: FxIndexMap<BindingId, Option<SourceLocation>> = FxIndexMap::default();
 
     let (hir_func, _used_names, _child_bindings) = lower_inner(
         params,
@@ -4246,7 +4138,7 @@ fn lower_identifier_for_assignment(
         if let Some((binding_id, binding_data)) =
             builder.scope_info().find_binding_id_in_descendants(name, builder.function_scope())
         {
-            let bk = crate::react_compiler_lowering::convert_binding_kind(&binding_data.kind);
+            let bk = convert_binding_kind(&binding_data.kind);
             let identifier =
                 builder.resolve_binding_with_loc(name, binding_id, ident_loc.clone())?;
             binding = VariableBinding::Identifier { identifier, binding_kind: bk };
@@ -4312,12 +4204,10 @@ fn lower_assignment(
     builder: &mut HirBuilder,
     loc: Option<SourceLocation>,
     kind: InstructionKind,
-    target: &crate::react_compiler_ast::patterns::PatternLike,
+    target: &PatternLike,
     value: Place,
     assignment_style: AssignmentStyle,
 ) -> Result<Option<Place>, CompilerError> {
-    use crate::react_compiler_ast::patterns::PatternLike;
-
     match target {
         PatternLike::Identifier(id) => {
             let id_loc = convert_opt_loc(&id.base.loc);
@@ -4424,35 +4314,27 @@ fn lower_assignment(
             }
             let object = lower_expression_to_temporary(builder, &member.object)?;
             let temp = if !member.computed
-                || matches!(
-                    &*member.property,
-                    crate::react_compiler_ast::expressions::Expression::NumericLiteral(_)
-                ) {
+                || matches!(&*member.property, Expression::NumericLiteral(_))
+            {
                 match &*member.property {
-                    crate::react_compiler_ast::expressions::Expression::Identifier(prop_id) => {
-                        lower_value_to_temporary(
-                            builder,
-                            InstructionValue::PropertyStore {
-                                object,
-                                property: PropertyLiteral::String(prop_id.name.clone()),
-                                value,
-                                loc,
-                            },
-                        )?
-                    }
-                    crate::react_compiler_ast::expressions::Expression::NumericLiteral(num) => {
-                        lower_value_to_temporary(
-                            builder,
-                            InstructionValue::PropertyStore {
-                                object,
-                                property: PropertyLiteral::Number(FloatValue::new(
-                                    num.precise_value(),
-                                )),
-                                value,
-                                loc,
-                            },
-                        )?
-                    }
+                    Expression::Identifier(prop_id) => lower_value_to_temporary(
+                        builder,
+                        InstructionValue::PropertyStore {
+                            object,
+                            property: PropertyLiteral::String(prop_id.name.clone()),
+                            value,
+                            loc,
+                        },
+                    )?,
+                    Expression::NumericLiteral(num) => lower_value_to_temporary(
+                        builder,
+                        InstructionValue::PropertyStore {
+                            object,
+                            property: PropertyLiteral::Number(FloatValue::new(num.precise_value())),
+                            value,
+                            loc,
+                        },
+                    )?,
                     _ => {
                         builder.record_error(CompilerErrorDetail {
                             reason: format!("(BuildHIR::lowerAssignment) Handle {} properties in MemberExpression", expression_type_name(&member.property)),
@@ -4472,10 +4354,7 @@ fn lower_assignment(
                     }
                 }
             } else {
-                if matches!(
-                    &*member.property,
-                    crate::react_compiler_ast::expressions::Expression::PrivateName(_)
-                ) {
+                if matches!(&*member.property, Expression::PrivateName(_)) {
                     builder.record_error(CompilerErrorDetail {
                         reason: "(BuildHIR::lowerAssignment) Expected private name to appear as a non-computed property".to_string(),
                         category: ErrorCategory::Todo,
@@ -4699,7 +4578,6 @@ fn lower_assignment(
 
             // Compute forceTemporaries for ObjectPattern
             let force_temporaries = if kind == InstructionKind::Reassign {
-                use crate::react_compiler_ast::patterns::ObjectPatternProperty;
                 let mut found = false;
                 for prop in &pattern.properties {
                     match prop {
@@ -4738,9 +4616,7 @@ fn lower_assignment(
 
             for prop in &pattern.properties {
                 match prop {
-                    crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(
-                        rest,
-                    ) => match &*rest.argument {
+                    ObjectPatternProperty::RestElement(rest) => match &*rest.argument {
                         PatternLike::Identifier(id) => {
                             let start = id.base.start.unwrap_or(0);
                             let is_context =
@@ -4801,9 +4677,7 @@ fn lower_assignment(
                                 })?;
                         }
                     },
-                    crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(
-                        obj_prop,
-                    ) => {
+                    ObjectPatternProperty::ObjectProperty(obj_prop) => {
                         if obj_prop.computed {
                             builder.record_error(CompilerErrorDetail {
                                 reason: "(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern".to_string(),
@@ -5028,15 +4902,13 @@ fn lower_assignment(
 }
 
 /// Helper to extract HIR loc from a PatternLike (converts AST loc)
-fn pattern_like_hir_loc(
-    pat: &crate::react_compiler_ast::patterns::PatternLike,
-) -> Option<SourceLocation> {
+fn pattern_like_hir_loc(pat: &PatternLike) -> Option<SourceLocation> {
     convert_opt_loc(&pattern_like_loc(pat))
 }
 
 fn lower_optional_member_expression(
     builder: &mut HirBuilder,
-    expr: &crate::react_compiler_ast::expressions::OptionalMemberExpression,
+    expr: &OptionalMemberExpression,
 ) -> Result<InstructionValue, CompilerError> {
     let place = lower_optional_member_expression_impl(builder, expr, None)?.1;
     Ok(InstructionValue::LoadLocal { loc: place.loc.clone(), place })
@@ -5047,10 +4919,9 @@ fn lower_optional_member_expression(
 /// via LoadLocal for the top-level call.
 fn lower_optional_member_expression_impl(
     builder: &mut HirBuilder,
-    expr: &crate::react_compiler_ast::expressions::OptionalMemberExpression,
+    expr: &OptionalMemberExpression,
     parent_alternate: Option<BlockId>,
 ) -> Result<(Place, Place), CompilerError> {
-    use crate::react_compiler_ast::expressions::Expression;
     let optional = expr.optional;
     let loc = convert_opt_loc(&expr.base.loc);
     let place = build_temporary_place(builder, loc.clone());
@@ -5154,17 +5025,16 @@ fn lower_optional_member_expression_impl(
 
 fn lower_optional_call_expression(
     builder: &mut HirBuilder,
-    expr: &crate::react_compiler_ast::expressions::OptionalCallExpression,
+    expr: &OptionalCallExpression,
 ) -> Result<InstructionValue, CompilerError> {
     Ok(lower_optional_call_expression_impl(builder, expr, None)?)
 }
 
 fn lower_optional_call_expression_impl(
     builder: &mut HirBuilder,
-    expr: &crate::react_compiler_ast::expressions::OptionalCallExpression,
+    expr: &OptionalCallExpression,
     parent_alternate: Option<BlockId>,
 ) -> Result<InstructionValue, CompilerError> {
-    use crate::react_compiler_ast::expressions::Expression;
     let optional = expr.optional;
     let loc = convert_opt_loc(&expr.base.loc);
     let place = build_temporary_place(builder, loc.clone());
@@ -5317,10 +5187,9 @@ fn lower_optional_call_expression_impl(
 
 fn lower_function_to_value(
     builder: &mut HirBuilder,
-    expr: &crate::react_compiler_ast::expressions::Expression,
+    expr: &Expression,
     expr_type: FunctionExpressionType,
 ) -> Result<InstructionValue, CompilerDiagnostic> {
-    use crate::react_compiler_ast::expressions::Expression;
     let loc = match expr {
         Expression::ArrowFunctionExpression(arrow) => convert_opt_loc(&arrow.base.loc),
         Expression::FunctionExpression(func) => convert_opt_loc(&func.base.loc),
@@ -5336,21 +5205,15 @@ fn lower_function_to_value(
 
 fn lower_function(
     builder: &mut HirBuilder,
-    expr: &crate::react_compiler_ast::expressions::Expression,
+    expr: &Expression,
 ) -> Result<LoweredFunction, CompilerDiagnostic> {
-    use crate::react_compiler_ast::expressions::Expression;
-
     // Extract function parts from the AST node
     let (params, body, id, generator, is_async, func_start, func_end, func_loc, func_node_id) =
         match expr {
             Expression::ArrowFunctionExpression(arrow) => {
                 let body = match arrow.body.as_ref() {
-                    crate::react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(
-                        block,
-                    ) => FunctionBody::Block(block),
-                    crate::react_compiler_ast::expressions::ArrowFunctionBody::Expression(expr) => {
-                        FunctionBody::Expression(expr)
-                    }
+                    ArrowFunctionBody::BlockStatement(block) => FunctionBody::Block(block),
+                    ArrowFunctionBody::Expression(expr) => FunctionBody::Expression(expr),
                 };
                 (
                     &arrow.params[..],
@@ -5386,65 +5249,61 @@ fn lower_function(
 
     // Find the function's scope. For synthetic zero-width functions (e.g., desugared
     // match IIFEs from Hermes with start=end=0), node_id_to_scope won't have an entry.
-    let function_scope =
-        if let Some(scope) = builder.scope_info().resolve_scope_for_node(func_node_id) {
-            scope
-        } else if func_start < func_end {
-            builder.scope_info().program_scope
-        } else {
-            let parent = builder.function_scope();
-            let scope_info = builder.scope_info();
-            let mapped: rustc_hash::FxHashSet<crate::react_compiler_ast::scope::ScopeId> =
-                scope_info.node_id_to_scope.values().copied().collect();
-            let param_names: Vec<String> = params
-                .iter()
-                .filter_map(|p| {
-                    if let crate::react_compiler_ast::patterns::PatternLike::Identifier(id) = p {
-                        Some(id.name.clone())
-                    } else {
-                        None
-                    }
-                })
-                .collect();
-            let mut descendants = rustc_hash::FxHashSet::default();
-            descendants.insert(parent);
-            let mut changed = true;
-            while changed {
-                changed = false;
-                for (i, scope) in scope_info.scopes.iter().enumerate() {
-                    let sid = crate::react_compiler_ast::scope::ScopeId(i as u32);
-                    if let Some(p) = scope.parent {
-                        if descendants.contains(&p) && !descendants.contains(&sid) {
-                            descendants.insert(sid);
-                            changed = true;
-                        }
-                    }
-                }
-            }
-            let mut found = scope_info.program_scope;
+    let function_scope = if let Some(scope) =
+        builder.scope_info().resolve_scope_for_node(func_node_id)
+    {
+        scope
+    } else if func_start < func_end {
+        builder.scope_info().program_scope
+    } else {
+        let parent = builder.function_scope();
+        let scope_info = builder.scope_info();
+        let mapped: FxHashSet<ScopeId> = scope_info.node_id_to_scope.values().copied().collect();
+        let param_names: Vec<String> = params
+            .iter()
+            .filter_map(|p| {
+                if let PatternLike::Identifier(id) = p { Some(id.name.clone()) } else { None }
+            })
+            .collect();
+        let mut descendants = FxHashSet::default();
+        descendants.insert(parent);
+        let mut changed = true;
+        while changed {
+            changed = false;
             for (i, scope) in scope_info.scopes.iter().enumerate() {
-                let sid = crate::react_compiler_ast::scope::ScopeId(i as u32);
+                let sid = ScopeId(i as u32);
                 if let Some(p) = scope.parent {
-                    if descendants.contains(&p)
-                        && matches!(scope.kind, ScopeKind::Function)
-                        && !mapped.contains(&sid)
-                        && !builder.is_synthetic_scope_claimed(sid)
-                    {
-                        if !param_names.is_empty() {
-                            let all_match =
-                                param_names.iter().all(|name| scope.bindings.contains_key(name));
-                            if !all_match {
-                                continue;
-                            }
-                        }
-                        found = sid;
-                        break;
+                    if descendants.contains(&p) && !descendants.contains(&sid) {
+                        descendants.insert(sid);
+                        changed = true;
                     }
                 }
             }
-            builder.claim_synthetic_scope(found);
-            found
-        };
+        }
+        let mut found = scope_info.program_scope;
+        for (i, scope) in scope_info.scopes.iter().enumerate() {
+            let sid = ScopeId(i as u32);
+            if let Some(p) = scope.parent {
+                if descendants.contains(&p)
+                    && matches!(scope.kind, ScopeKind::Function)
+                    && !mapped.contains(&sid)
+                    && !builder.is_synthetic_scope_claimed(sid)
+                {
+                    if !param_names.is_empty() {
+                        let all_match =
+                            param_names.iter().all(|name| scope.bindings.contains_key(name));
+                        if !all_match {
+                            continue;
+                        }
+                    }
+                    found = sid;
+                    break;
+                }
+            }
+        }
+        builder.claim_synthetic_scope(found);
+        found
+    };
 
     let component_scope = builder.component_scope();
     let scope_info = builder.scope_info();
@@ -5472,10 +5331,7 @@ fn lower_function(
         ident_locs,
         ref_override.as_ref(),
     );
-    let merged_context: FxIndexMap<
-        crate::react_compiler_ast::scope::BindingId,
-        Option<SourceLocation>,
-    > = {
+    let merged_context: FxIndexMap<BindingId, Option<SourceLocation>> = {
         let parent_context = builder.context().clone();
         let mut merged = parent_context;
         for (k, v) in captured_context {
@@ -5515,7 +5371,7 @@ fn lower_function(
 /// Lower a function declaration statement to a FunctionExpression + StoreLocal.
 fn lower_function_declaration(
     builder: &mut HirBuilder,
-    func_decl: &crate::react_compiler_ast::statements::FunctionDeclaration,
+    func_decl: &FunctionDeclaration,
 ) -> Result<(), CompilerError> {
     let loc = convert_opt_loc(&func_decl.base.loc);
     let func_start = func_decl.base.start.unwrap_or(0);
@@ -5547,10 +5403,7 @@ fn lower_function_declaration(
         ident_locs,
         None,
     );
-    let merged_context: FxIndexMap<
-        crate::react_compiler_ast::scope::BindingId,
-        Option<SourceLocation>,
-    > = {
+    let merged_context: FxIndexMap<BindingId, Option<SourceLocation>> = {
         let parent_context = builder.context().clone();
         let mut merged = parent_context;
         for (k, v) in captured_context {
@@ -5613,7 +5466,7 @@ fn lower_function_declaration(
             let binding = match scope_binding {
                 Some(binding_id) => {
                     is_context = builder.is_context_binding(binding_id);
-                    let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
+                    let binding_kind = convert_binding_kind(
                         &builder.scope_info().bindings[binding_id.0 as usize].kind,
                     );
                     let identifier =
@@ -5714,7 +5567,7 @@ fn lower_function_declaration(
 /// Lower a function expression used as an object method.
 fn lower_function_for_object_method(
     builder: &mut HirBuilder,
-    method: &crate::react_compiler_ast::expressions::ObjectMethod,
+    method: &ObjectMethod,
 ) -> Result<LoweredFunction, CompilerError> {
     let func_start = method.base.start.unwrap_or(0);
     let func_end = method.base.end.unwrap_or(0);
@@ -5742,10 +5595,7 @@ fn lower_function_for_object_method(
         ident_locs,
         None,
     );
-    let merged_context: FxIndexMap<
-        crate::react_compiler_ast::scope::BindingId,
-        Option<SourceLocation>,
-    > = {
+    let merged_context: FxIndexMap<BindingId, Option<SourceLocation>> = {
         let parent_context = builder.context().clone();
         let mut merged = parent_context;
         for (k, v) in captured_context {
@@ -5784,7 +5634,7 @@ fn lower_function_for_object_method(
 /// Internal helper: lower a function given its extracted parts.
 /// Used by both the top-level `lower()` and nested `lower_function()`.
 fn lower_inner(
-    params: &[crate::react_compiler_ast::patterns::PatternLike],
+    params: &[PatternLike],
     body: FunctionBody<'_>,
     id: Option<&str>,
     generator: bool,
@@ -5792,20 +5642,16 @@ fn lower_inner(
     loc: Option<SourceLocation>,
     scope_info: &ScopeInfo,
     env: &mut Environment,
-    parent_bindings: Option<FxIndexMap<crate::react_compiler_ast::scope::BindingId, IdentifierId>>,
-    parent_used_names: Option<FxIndexMap<String, crate::react_compiler_ast::scope::BindingId>>,
-    context_map: FxIndexMap<crate::react_compiler_ast::scope::BindingId, Option<SourceLocation>>,
-    function_scope: crate::react_compiler_ast::scope::ScopeId,
-    component_scope: crate::react_compiler_ast::scope::ScopeId,
-    context_identifiers: &FxHashSet<crate::react_compiler_ast::scope::BindingId>,
+    parent_bindings: Option<FxIndexMap<BindingId, IdentifierId>>,
+    parent_used_names: Option<FxIndexMap<String, BindingId>>,
+    context_map: FxIndexMap<BindingId, Option<SourceLocation>>,
+    function_scope: ScopeId,
+    component_scope: ScopeId,
+    context_identifiers: &FxHashSet<BindingId>,
     is_top_level: bool,
     identifier_locs: &IdentifierLocIndex,
 ) -> Result<
-    (
-        HirFunction,
-        FxIndexMap<String, crate::react_compiler_ast::scope::BindingId>,
-        FxIndexMap<crate::react_compiler_ast::scope::BindingId, IdentifierId>,
-    ),
+    (HirFunction, FxIndexMap<String, BindingId>, FxIndexMap<BindingId, IdentifierId>),
     CompilerError,
 > {
     validate_ts_this_parameter(scope_info, function_scope)?;
@@ -5840,7 +5686,7 @@ fn lower_inner(
     let mut hir_params: Vec<ParamPattern> = Vec::new();
     for param in params {
         match param {
-            crate::react_compiler_ast::patterns::PatternLike::Identifier(ident) => {
+            PatternLike::Identifier(ident) => {
                 if is_always_reserved_word(&ident.name) {
                     return Err(CompilerError::from(reserved_identifier_diagnostic(&ident.name)));
                 }
@@ -5860,9 +5706,7 @@ fn lower_inner(
                         .scope_info()
                         .find_binding_id_in_descendants(&ident.name, builder.function_scope())
                     {
-                        let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
-                            &binding_data.kind,
-                        );
+                        let binding_kind = convert_binding_kind(&binding_data.kind);
                         let identifier = builder.resolve_binding_with_loc(
                             &ident.name,
                             binding_id,
@@ -5903,7 +5747,7 @@ fn lower_inner(
                     }
                 }
             }
-            crate::react_compiler_ast::patterns::PatternLike::RestElement(rest) => {
+            PatternLike::RestElement(rest) => {
                 let rest_loc = convert_opt_loc(&rest.base.loc);
                 // Create a temporary place for the spread param
                 let place = build_temporary_place(&mut builder, rest_loc.clone());
@@ -5918,9 +5762,9 @@ fn lower_inner(
                     AssignmentStyle::Assignment,
                 )?;
             }
-            crate::react_compiler_ast::patterns::PatternLike::ObjectPattern(_)
-            | crate::react_compiler_ast::patterns::PatternLike::ArrayPattern(_)
-            | crate::react_compiler_ast::patterns::PatternLike::AssignmentPattern(_) => {
+            PatternLike::ObjectPattern(_)
+            | PatternLike::ArrayPattern(_)
+            | PatternLike::AssignmentPattern(_) => {
                 let param_loc = convert_opt_loc(&pattern_like_loc(param));
                 let place = build_temporary_place(&mut builder, param_loc.clone());
                 promote_temporary(&mut builder, place.identifier);
@@ -5934,7 +5778,7 @@ fn lower_inner(
                     AssignmentStyle::Assignment,
                 )?;
             }
-            crate::react_compiler_ast::patterns::PatternLike::MemberExpression(member) => {
+            PatternLike::MemberExpression(member) => {
                 builder.record_diagnostic(
                     CompilerDiagnostic::new(
                         ErrorCategory::Todo,
@@ -5948,11 +5792,11 @@ fn lower_inner(
                     }),
                 );
             }
-            crate::react_compiler_ast::patterns::PatternLike::TSAsExpression(_)
-            | crate::react_compiler_ast::patterns::PatternLike::TSSatisfiesExpression(_)
-            | crate::react_compiler_ast::patterns::PatternLike::TSNonNullExpression(_)
-            | crate::react_compiler_ast::patterns::PatternLike::TSTypeAssertion(_)
-            | crate::react_compiler_ast::patterns::PatternLike::TypeCastExpression(_) => {}
+            PatternLike::TSAsExpression(_)
+            | PatternLike::TSSatisfiesExpression(_)
+            | PatternLike::TSNonNullExpression(_)
+            | PatternLike::TSTypeAssertion(_)
+            | PatternLike::TypeCastExpression(_) => {}
         }
     }
 
@@ -6001,8 +5845,7 @@ fn lower_inner(
     let (hir_body, instructions, used_names, child_bindings) = builder.build()?;
 
     // Create the returns place
-    let returns =
-        crate::react_compiler_lowering::hir_builder::create_temporary_place(env, loc.clone());
+    let returns = create_temporary_place(env, loc.clone());
 
     Ok((
         HirFunction {
@@ -6028,9 +5871,8 @@ fn lower_inner(
 
 fn lower_jsx_element_name(
     builder: &mut HirBuilder,
-    name: &crate::react_compiler_ast::jsx::JSXElementName,
+    name: &JSXElementName,
 ) -> Result<JsxTag, CompilerError> {
-    use crate::react_compiler_ast::jsx::JSXElementName;
     match name {
         JSXElementName::JSXIdentifier(id) => {
             let tag = &id.name;
@@ -6084,9 +5926,8 @@ fn lower_jsx_element_name(
 
 fn lower_jsx_member_expression(
     builder: &mut HirBuilder,
-    expr: &crate::react_compiler_ast::jsx::JSXMemberExpression,
+    expr: &JSXMemberExpression,
 ) -> Result<Place, CompilerError> {
-    use crate::react_compiler_ast::jsx::JSXMemberExprObject;
     // Use the full member expression's loc for instruction locs (matching TS: exprPath.node.loc)
     let expr_loc = convert_opt_loc(&expr.base.loc);
     let object = match &*expr.object {
@@ -6117,10 +5958,8 @@ fn lower_jsx_member_expression(
 
 fn lower_jsx_element(
     builder: &mut HirBuilder,
-    child: &crate::react_compiler_ast::jsx::JSXChild,
+    child: &JSXChild,
 ) -> Result<Option<Place>, CompilerError> {
-    use crate::react_compiler_ast::jsx::JSXChild;
-    use crate::react_compiler_ast::jsx::JSXExpressionContainerExpr;
     match child {
         JSXChild::JSXText(text) => {
             // FBT whitespace normalization differs from standard JSX.
@@ -6144,17 +5983,11 @@ fn lower_jsx_element(
             }
         }
         JSXChild::JSXElement(element) => {
-            let value = lower_expression(
-                builder,
-                &crate::react_compiler_ast::expressions::Expression::JSXElement(element.clone()),
-            )?;
+            let value = lower_expression(builder, &Expression::JSXElement(element.clone()))?;
             Ok(Some(lower_value_to_temporary(builder, value)?))
         }
         JSXChild::JSXFragment(fragment) => {
-            let value = lower_expression(
-                builder,
-                &crate::react_compiler_ast::expressions::Expression::JSXFragment(fragment.clone()),
-            )?;
+            let value = lower_expression(builder, &Expression::JSXFragment(fragment.clone()))?;
             Ok(Some(lower_value_to_temporary(builder, value)?))
         }
         JSXChild::JSXExpressionContainer(container) => match &container.expression {
@@ -6245,9 +6078,8 @@ fn trim_jsx_text(original: &str) -> Option<String> {
 
 fn lower_object_method(
     builder: &mut HirBuilder,
-    method: &crate::react_compiler_ast::expressions::ObjectMethod,
+    method: &ObjectMethod,
 ) -> Result<Option<ObjectProperty>, CompilerError> {
-    use crate::react_compiler_ast::expressions::ObjectMethodKind;
     if !matches!(method.kind, ObjectMethodKind::Method) {
         let kind_str = match method.kind {
             ObjectMethodKind::Get => "get",
@@ -6280,10 +6112,9 @@ fn lower_object_method(
 
 fn lower_object_property_key(
     builder: &mut HirBuilder,
-    key: &crate::react_compiler_ast::expressions::Expression,
+    key: &Expression,
     computed: bool,
 ) -> Result<Option<ObjectPropertyKey>, CompilerError> {
-    use crate::react_compiler_ast::expressions::Expression;
     match key {
         // Property keys stay String-typed; the marker wire form preserves the
         // pre-JsString behavior for pathological surrogate keys end to end.
@@ -6319,7 +6150,7 @@ fn lower_object_property_key(
 
 fn lower_reorderable_expression(
     builder: &mut HirBuilder,
-    expr: &crate::react_compiler_ast::expressions::Expression,
+    expr: &Expression,
 ) -> Result<Place, CompilerError> {
     if !is_reorderable_expression(builder, expr, true) {
         builder.record_error(CompilerErrorDetail {
@@ -6338,10 +6169,9 @@ fn lower_reorderable_expression(
 
 fn is_reorderable_expression(
     builder: &HirBuilder,
-    expr: &crate::react_compiler_ast::expressions::Expression,
+    expr: &Expression,
     allow_local_identifiers: bool,
 ) -> bool {
-    use crate::react_compiler_ast::expressions::Expression;
     match expr {
         Expression::Identifier(ident) => {
             let binding = builder.scope_info().resolve_reference_for_node(ident.base.node_id);
@@ -6367,9 +6197,10 @@ fn is_reorderable_expression(
         | Expression::BooleanLiteral(_)
         | Expression::BigIntLiteral(_) => true,
         Expression::UnaryExpression(unary) => {
-            use crate::react_compiler_ast::operators::UnaryOperator;
-            matches!(unary.operator, UnaryOperator::Not | UnaryOperator::Plus | UnaryOperator::Neg)
-                && is_reorderable_expression(builder, &unary.argument, allow_local_identifiers)
+            matches!(
+                unary.operator,
+                AstUnaryOperator::Not | AstUnaryOperator::Plus | AstUnaryOperator::Neg
+            ) && is_reorderable_expression(builder, &unary.argument, allow_local_identifiers)
         }
         Expression::LogicalExpression(logical) => {
             is_reorderable_expression(builder, &logical.left, allow_local_identifiers)
@@ -6389,7 +6220,7 @@ fn is_reorderable_expression(
             })
         }
         Expression::ObjectExpression(obj) => obj.properties.iter().all(|prop| match prop {
-            crate::react_compiler_ast::expressions::ObjectExpressionProperty::ObjectProperty(p) => {
+            ObjectExpressionProperty::ObjectProperty(p) => {
                 !p.computed && is_reorderable_expression(builder, &p.value, allow_local_identifiers)
             }
             _ => false,
@@ -6412,15 +6243,12 @@ fn is_reorderable_expression(
                 false
             }
         }
-        Expression::ArrowFunctionExpression(arrow) => {
-            use crate::react_compiler_ast::expressions::ArrowFunctionBody;
-            match arrow.body.as_ref() {
-                ArrowFunctionBody::BlockStatement(block) => block.body.is_empty(),
-                ArrowFunctionBody::Expression(body_expr) => {
-                    is_reorderable_expression(builder, body_expr, false)
-                }
+        Expression::ArrowFunctionExpression(arrow) => match arrow.body.as_ref() {
+            ArrowFunctionBody::BlockStatement(block) => block.body.is_empty(),
+            ArrowFunctionBody::Expression(body_expr) => {
+                is_reorderable_expression(builder, body_expr, false)
             }
-        }
+        },
         Expression::CallExpression(call) => {
             is_reorderable_expression(builder, &call.callee, allow_local_identifiers)
                 && call
@@ -6525,13 +6353,13 @@ fn lower_type_annotation(val: &serde_json::Value, builder: &mut HirBuilder) -> T
 /// and the component scope. These are "free variables" that become the function's `context`.
 fn gather_captured_context(
     scope_info: &ScopeInfo,
-    function_scope: crate::react_compiler_ast::scope::ScopeId,
-    component_scope: crate::react_compiler_ast::scope::ScopeId,
+    function_scope: ScopeId,
+    component_scope: ScopeId,
     func_start: u32,
     func_end: u32,
     identifier_locs: &IdentifierLocIndex,
     ref_node_ids_override: Option<&FxIndexSet<u32>>,
-) -> FxIndexMap<crate::react_compiler_ast::scope::BindingId, Option<SourceLocation>> {
+) -> FxIndexMap<BindingId, Option<SourceLocation>> {
     let parent_scope = scope_info.scopes[function_scope.0 as usize].parent;
     let pure_scopes = match parent_scope {
         Some(parent) => capture_scopes(scope_info, parent, component_scope),
@@ -6542,10 +6370,10 @@ fn gather_captured_context(
     // captured binding. Using the minimum position makes the result independent of
     // ref_node_id_to_binding iteration order, matching the behavior the TS compiler
     // gets from Babel's position-ordered traversal.
-    let mut captured: rustc_hash::FxHashMap<
-        crate::react_compiler_ast::scope::BindingId,
+    let mut captured: FxHashMap<
+        BindingId,
         (u32, Option<SourceLocation>), // (min_position, loc)
-    > = rustc_hash::FxHashMap::default();
+    > = FxHashMap::default();
 
     for (&ref_nid, &binding_id) in &scope_info.ref_node_id_to_binding {
         if let Some(allowed) = ref_node_ids_override {
@@ -6625,11 +6453,7 @@ fn gather_captured_context(
     sorted.into_iter().map(|(bid, (_, loc))| (bid, loc)).collect()
 }
 
-fn capture_scopes(
-    scope_info: &ScopeInfo,
-    from: crate::react_compiler_ast::scope::ScopeId,
-    to: crate::react_compiler_ast::scope::ScopeId,
-) -> FxIndexSet<crate::react_compiler_ast::scope::ScopeId> {
+fn capture_scopes(scope_info: &ScopeInfo, from: ScopeId, to: ScopeId) -> FxIndexSet<ScopeId> {
     let mut result = FxIndexSet::default();
     let mut current = Some(from);
     while let Some(scope_id) = current {
@@ -6654,13 +6478,12 @@ pub enum AssignmentStyle {
 /// Collect locations of fbt:enum, fbt:plural, fbt:pronoun sub-tags
 /// within the children of an fbt/fbs JSX element.
 fn collect_fbt_sub_tags(
-    children: &[crate::react_compiler_ast::jsx::JSXChild],
+    children: &[JSXChild],
     tag_name: &str,
     enum_locs: &mut Vec<Option<SourceLocation>>,
     plural_locs: &mut Vec<Option<SourceLocation>>,
     pronoun_locs: &mut Vec<Option<SourceLocation>>,
 ) {
-    use crate::react_compiler_ast::jsx::JSXChild;
     for child in children {
         match child {
             JSXChild::JSXElement(el) => {
@@ -6682,10 +6505,7 @@ fn collect_fbt_sub_tags(
                 );
             }
             JSXChild::JSXExpressionContainer(container) => {
-                if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(
-                    expr,
-                ) = &container.expression
-                {
+                if let JSXExpressionContainerExpr::Expression(expr) = &container.expression {
                     collect_fbt_sub_tags_from_expr(
                         expr,
                         tag_name,
@@ -6701,13 +6521,12 @@ fn collect_fbt_sub_tags(
 }
 
 fn collect_fbt_sub_tags_from_element(
-    el: &crate::react_compiler_ast::jsx::JSXElement,
+    el: &JSXElement,
     tag_name: &str,
     enum_locs: &mut Vec<Option<SourceLocation>>,
     plural_locs: &mut Vec<Option<SourceLocation>>,
     pronoun_locs: &mut Vec<Option<SourceLocation>>,
 ) {
-    use crate::react_compiler_ast::jsx::JSXElementName;
     if let JSXElementName::JSXNamespacedName(ns) = &el.opening_element.name {
         if ns.namespace.name == tag_name {
             let loc = convert_opt_loc(&ns.base.loc);
@@ -6722,16 +6541,10 @@ fn collect_fbt_sub_tags_from_element(
     collect_fbt_sub_tags(&el.children, tag_name, enum_locs, plural_locs, pronoun_locs);
     // Also traverse JSX attributes (matching TS expr.traverse which visits all nodes)
     for attr in &el.opening_element.attributes {
-        if let crate::react_compiler_ast::jsx::JSXAttributeItem::JSXAttribute(a) = attr {
+        if let JSXAttributeItem::JSXAttribute(a) = attr {
             if let Some(val) = &a.value {
-                if let crate::react_compiler_ast::jsx::JSXAttributeValue::JSXExpressionContainer(
-                    container,
-                ) = val
-                {
-                    if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(
-                        expr,
-                    ) = &container.expression
-                    {
+                if let JSXAttributeValue::JSXExpressionContainer(container) = val {
+                    if let JSXExpressionContainerExpr::Expression(expr) = &container.expression {
                         collect_fbt_sub_tags_from_expr(
                             expr,
                             tag_name,
@@ -6740,10 +6553,7 @@ fn collect_fbt_sub_tags_from_element(
                             pronoun_locs,
                         );
                     }
-                } else if let crate::react_compiler_ast::jsx::JSXAttributeValue::JSXElement(
-                    nested,
-                ) = val
-                {
+                } else if let JSXAttributeValue::JSXElement(nested) = val {
                     collect_fbt_sub_tags_from_element(
                         nested,
                         tag_name,
@@ -6758,13 +6568,12 @@ fn collect_fbt_sub_tags_from_element(
 }
 
 fn collect_fbt_sub_tags_from_expr(
-    expr: &crate::react_compiler_ast::expressions::Expression,
+    expr: &Expression,
     tag_name: &str,
     enum_locs: &mut Vec<Option<SourceLocation>>,
     plural_locs: &mut Vec<Option<SourceLocation>>,
     pronoun_locs: &mut Vec<Option<SourceLocation>>,
 ) {
-    use crate::react_compiler_ast::expressions::Expression;
     match expr {
         Expression::JSXElement(el) => {
             collect_fbt_sub_tags_from_element(el, tag_name, enum_locs, plural_locs, pronoun_locs);
@@ -6814,7 +6623,7 @@ fn collect_fbt_sub_tags_from_expr(
             );
         }
         Expression::ArrowFunctionExpression(arrow) => match arrow.body.as_ref() {
-            crate::react_compiler_ast::expressions::ArrowFunctionBody::Expression(body_expr) => {
+            ArrowFunctionBody::Expression(body_expr) => {
                 collect_fbt_sub_tags_from_expr(
                     body_expr,
                     tag_name,
@@ -6823,7 +6632,7 @@ fn collect_fbt_sub_tags_from_expr(
                     pronoun_locs,
                 );
             }
-            crate::react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(block) => {
+            ArrowFunctionBody::BlockStatement(block) => {
                 collect_fbt_sub_tags_from_stmts(
                     &block.body,
                     tag_name,
@@ -6843,21 +6652,18 @@ fn collect_fbt_sub_tags_from_expr(
 }
 
 fn collect_fbt_sub_tags_from_stmts(
-    stmts: &[crate::react_compiler_ast::statements::Statement],
+    stmts: &[Statement],
     tag_name: &str,
     enum_locs: &mut Vec<Option<SourceLocation>>,
     plural_locs: &mut Vec<Option<SourceLocation>>,
     pronoun_locs: &mut Vec<Option<SourceLocation>>,
 ) {
     for stmt in stmts {
-        if let crate::react_compiler_ast::statements::Statement::ReturnStatement(ret) = stmt {
+        if let Statement::ReturnStatement(ret) = stmt {
             if let Some(arg) = &ret.argument {
                 collect_fbt_sub_tags_from_expr(arg, tag_name, enum_locs, plural_locs, pronoun_locs);
             }
-        } else if let crate::react_compiler_ast::statements::Statement::ExpressionStatement(
-            expr_stmt,
-        ) = stmt
-        {
+        } else if let Statement::ExpressionStatement(expr_stmt) = stmt {
             collect_fbt_sub_tags_from_expr(
                 &expr_stmt.expression,
                 tag_name,
@@ -6884,11 +6690,7 @@ fn collect_identifier_node_ids_from_body(body: &FunctionBody) -> FxIndexSet<u32>
     positions
 }
 
-fn collect_identifier_node_ids_from_stmt(
-    stmt: &crate::react_compiler_ast::statements::Statement,
-    positions: &mut FxIndexSet<u32>,
-) {
-    use crate::react_compiler_ast::statements::Statement;
+fn collect_identifier_node_ids_from_stmt(stmt: &Statement, positions: &mut FxIndexSet<u32>) {
     match stmt {
         Statement::ExpressionStatement(s) => {
             collect_identifier_node_ids_from_expr(&s.expression, positions)
@@ -6924,11 +6726,7 @@ fn collect_identifier_node_ids_from_stmt(
     }
 }
 
-fn collect_identifier_node_ids_from_expr(
-    expr: &crate::react_compiler_ast::expressions::Expression,
-    positions: &mut FxIndexSet<u32>,
-) {
-    use crate::react_compiler_ast::expressions::Expression;
+fn collect_identifier_node_ids_from_expr(expr: &Expression, positions: &mut FxIndexSet<u32>) {
     match expr {
         Expression::Identifier(id) => {
             if let Some(nid) = id.base.node_id {
@@ -6984,30 +6782,29 @@ fn collect_identifier_node_ids_from_expr(
             collect_identifier_node_ids_from_expr(&e.expression, positions);
         }
         Expression::ArrowFunctionExpression(arrow) => match arrow.body.as_ref() {
-            crate::react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(block) => {
+            ArrowFunctionBody::BlockStatement(block) => {
                 for stmt in &block.body {
                     collect_identifier_node_ids_from_stmt(stmt, positions);
                 }
             }
-            crate::react_compiler_ast::expressions::ArrowFunctionBody::Expression(e) => {
+            ArrowFunctionBody::Expression(e) => {
                 collect_identifier_node_ids_from_expr(e, positions);
             }
         },
         Expression::JSXElement(el) => {
-            if let crate::react_compiler_ast::jsx::JSXElementName::JSXIdentifier(id) =
-                &el.opening_element.name
-            {
+            if let JSXElementName::JSXIdentifier(id) = &el.opening_element.name {
                 if let Some(nid) = id.base.node_id {
                     positions.insert(nid);
                 }
             }
             for attr in &el.opening_element.attributes {
                 match attr {
-                    crate::react_compiler_ast::jsx::JSXAttributeItem::JSXAttribute(a) => {
+                    JSXAttributeItem::JSXAttribute(a) => {
                         if let Some(val) = &a.value {
                             match val {
-                                crate::react_compiler_ast::jsx::JSXAttributeValue::JSXExpressionContainer(c) => {
-                                    if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(e) = &c.expression {
+                                JSXAttributeValue::JSXExpressionContainer(c) => {
+                                    if let JSXExpressionContainerExpr::Expression(e) = &c.expression
+                                    {
                                         collect_identifier_node_ids_from_expr(e, positions);
                                     }
                                 }
@@ -7015,27 +6812,25 @@ fn collect_identifier_node_ids_from_expr(
                             }
                         }
                     }
-                    crate::react_compiler_ast::jsx::JSXAttributeItem::JSXSpreadAttribute(a) => {
+                    JSXAttributeItem::JSXSpreadAttribute(a) => {
                         collect_identifier_node_ids_from_expr(&a.argument, positions);
                     }
                 }
             }
             for child in &el.children {
                 match child {
-                    crate::react_compiler_ast::jsx::JSXChild::JSXExpressionContainer(c) => {
-                        if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(e) =
-                            &c.expression
-                        {
+                    JSXChild::JSXExpressionContainer(c) => {
+                        if let JSXExpressionContainerExpr::Expression(e) = &c.expression {
                             collect_identifier_node_ids_from_expr(e, positions);
                         }
                     }
-                    crate::react_compiler_ast::jsx::JSXChild::JSXElement(child_el) => {
+                    JSXChild::JSXElement(child_el) => {
                         collect_identifier_node_ids_from_expr(
                             &Expression::JSXElement(child_el.clone()),
                             positions,
                         );
                     }
-                    crate::react_compiler_ast::jsx::JSXChild::JSXSpreadChild(s) => {
+                    JSXChild::JSXSpreadChild(s) => {
                         collect_identifier_node_ids_from_expr(&s.expression, positions);
                     }
                     _ => {}
@@ -7045,14 +6840,12 @@ fn collect_identifier_node_ids_from_expr(
         Expression::JSXFragment(frag) => {
             for child in &frag.children {
                 match child {
-                    crate::react_compiler_ast::jsx::JSXChild::JSXExpressionContainer(c) => {
-                        if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(e) =
-                            &c.expression
-                        {
+                    JSXChild::JSXExpressionContainer(c) => {
+                        if let JSXExpressionContainerExpr::Expression(e) = &c.expression {
                             collect_identifier_node_ids_from_expr(e, positions);
                         }
                     }
-                    crate::react_compiler_ast::jsx::JSXChild::JSXElement(child_el) => {
+                    JSXChild::JSXElement(child_el) => {
                         collect_identifier_node_ids_from_expr(
                             &Expression::JSXElement(child_el.clone()),
                             positions,
@@ -7072,12 +6865,10 @@ fn collect_identifier_node_ids_from_expr(
         Expression::ObjectExpression(obj) => {
             for prop in &obj.properties {
                 match prop {
-                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::ObjectProperty(
-                        p,
-                    ) => {
+                    ObjectExpressionProperty::ObjectProperty(p) => {
                         collect_identifier_node_ids_from_expr(&p.value, positions);
                     }
-                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::SpreadElement(s) => {
+                    ObjectExpressionProperty::SpreadElement(s) => {
                         collect_identifier_node_ids_from_expr(&s.argument, positions);
                     }
                     _ => {}

@@ -24,19 +24,23 @@
 //!
 //! Analogous to TS `Optimization/ConstantPropagation.ts`.
 
+use std::mem::replace;
+
 use rustc_hash::FxHashMap;
 
 use crate::react_compiler_diagnostics::JsString;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BinaryOperator, BlockKind, FloatValue, FunctionId, GotoVariant, HirFunction, IdentifierId,
-    InstructionValue, NonLocalBinding, Phi, Place, PrimitiveValue, PropertyLiteral, SourceLocation,
-    Terminal, UnaryOperator, UpdateOperator, format_js_number,
+    InstructionId, InstructionValue, ManualMemoDependencyRoot, NonLocalBinding, Phi, Place,
+    PrimitiveValue, PropertyLiteral, SourceLocation, Terminal, UnaryOperator, UpdateOperator,
+    format_js_number,
 };
 use crate::react_compiler_lowering::{
     get_reverse_postordered_blocks, mark_instruction_ids, mark_predecessors,
     remove_dead_do_while_statements, remove_unnecessary_try_catch, remove_unreachable_for_updates,
 };
+use crate::react_compiler_ssa::eliminate_redundant_phi;
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 
 use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecutive_blocks;
@@ -107,7 +111,7 @@ fn constant_propagation_impl(
          * By removing some phi operands, there may be phis that were not previously
          * redundant but now are
          */
-        crate::react_compiler_ssa::eliminate_redundant_phi(func, env);
+        eliminate_redundant_phi(func, env);
 
         /*
          * Finally, merge together any blocks that are now guaranteed to execute
@@ -260,7 +264,7 @@ fn evaluate_instruction(
     constants: &mut Constants,
     func: &mut HirFunction,
     env: &mut Environment,
-    instr_id: crate::react_compiler_hir::InstructionId,
+    instr_id: InstructionId,
 ) -> Option<Constant> {
     let instr = &func.instructions[instr_id.0 as usize];
     match &instr.value {
@@ -569,11 +573,7 @@ fn evaluate_instruction(
                     .iter()
                     .enumerate()
                     .filter_map(|(i, dep)| {
-                        if let crate::react_compiler_hir::ManualMemoDependencyRoot::NamedLocal {
-                            value,
-                            ..
-                        } = &dep.root
-                        {
+                        if let ManualMemoDependencyRoot::NamedLocal { value, .. } = &dep.root {
                             let pv = read(constants, value);
                             if matches!(pv, Some(Constant::Primitive { .. })) {
                                 return Some(i);
@@ -586,10 +586,8 @@ fn evaluate_instruction(
                     if let InstructionValue::StartMemoize { deps: Some(ref mut deps), .. } =
                         func.instructions[instr_id.0 as usize].value
                     {
-                        if let crate::react_compiler_hir::ManualMemoDependencyRoot::NamedLocal {
-                            constant,
-                            ..
-                        } = &mut deps[idx].root
+                        if let ManualMemoDependencyRoot::NamedLocal { constant, .. } =
+                            &mut deps[idx].root
                         {
                             *constant = true;
                         }
@@ -635,8 +633,7 @@ fn evaluate_instruction(
 // =============================================================================
 
 fn process_inner_function(func_id: FunctionId, env: &mut Environment, constants: &mut Constants) {
-    let mut inner =
-        std::mem::replace(&mut env.functions[func_id.0 as usize], placeholder_function());
+    let mut inner = replace(&mut env.functions[func_id.0 as usize], placeholder_function());
     constant_propagation_impl(&mut inner, env, constants);
     env.functions[func_id.0 as usize] = inner;
 }
@@ -775,9 +772,7 @@ fn evaluate_binary_op(
                 // halves split across the operands.
                 let mut units = l.code_units();
                 units.extend(r.code_units());
-                Some(PrimitiveValue::String(
-                    crate::react_compiler_diagnostics::JsString::from_code_units(units),
-                ))
+                Some(PrimitiveValue::String(JsString::from_code_units(units)))
             }
             _ => None,
         },

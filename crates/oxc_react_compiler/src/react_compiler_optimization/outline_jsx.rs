@@ -11,6 +11,7 @@
 use crate::react_compiler_utils::FxIndexSet;
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use crate::react_compiler_hir::Effect;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BasicBlock, BlockId, BlockKind, EvaluationOrder, FunctionId, HIR, HirFunction, IdentifierId,
@@ -19,7 +20,9 @@ use crate::react_compiler_hir::{
     ObjectPropertyOrSpread, ObjectPropertyType, ParamPattern, Pattern, Place, ReactFunctionType,
     ReturnVariant, Terminal,
 };
+use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 use crate::react_compiler_utils::FxIndexMap;
+use std::mem::replace;
 
 /// Outline JSX expressions in inner functions into separate outlined components.
 ///
@@ -127,10 +130,8 @@ fn outline_jsx_impl(
                     globals.insert(lvalue_id, instr_idx);
                 }
                 InstrAction::FunctionExpr { func_id } => {
-                    let mut inner_func = std::mem::replace(
-                        &mut env.functions[func_id.0 as usize],
-                        crate::react_compiler_ssa::enter_ssa::placeholder_function(),
-                    );
+                    let mut inner_func =
+                        replace(&mut env.functions[func_id.0 as usize], placeholder_function());
                     outline_jsx_impl(&mut inner_func, env, outlined_fns);
                     env.functions[func_id.0 as usize] = inner_func;
                 }
@@ -335,12 +336,8 @@ fn emit_outlined_jsx(
     env.identifiers[load_id.0 as usize].name =
         Some(IdentifierName::Promoted(format!("#T{}", decl_id.0)));
 
-    let load_place = Place {
-        identifier: load_id,
-        effect: crate::react_compiler_hir::Effect::Unknown,
-        reactive: false,
-        loc: None,
-    };
+    let load_place =
+        Place { identifier: load_id, effect: Effect::Unknown, reactive: false, loc: None };
 
     let load_jsx = Instruction {
         id: EvaluationOrder(0),
@@ -388,12 +385,8 @@ fn emit_outlined_fn(
     let decl_id = env.identifiers[props_obj_id.0 as usize].declaration_id;
     env.identifiers[props_obj_id.0 as usize].name =
         Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
-    let props_obj = Place {
-        identifier: props_obj_id,
-        effect: crate::react_compiler_hir::Effect::Unknown,
-        reactive: false,
-        loc: None,
-    };
+    let props_obj =
+        Place { identifier: props_obj_id, effect: Effect::Unknown, reactive: false, loc: None };
 
     // Create destructure instruction
     let destructure_instr = emit_destructure_props(env, &props_obj, &old_to_new_props);
@@ -424,12 +417,8 @@ fn emit_outlined_fn(
 
     // Create return place
     let returns_id = env.next_identifier_id();
-    let returns_place = Place {
-        identifier: returns_id,
-        effect: crate::react_compiler_hir::Effect::Unknown,
-        reactive: false,
-        loc: None,
-    };
+    let returns_place =
+        Place { identifier: returns_id, effect: Effect::Unknown, reactive: false, loc: None };
 
     let block = BasicBlock {
         kind: BlockKind::Block,
@@ -580,12 +569,8 @@ fn create_old_to_new_props_mapping(
         env.identifiers[new_id.0 as usize].name =
             Some(IdentifierName::Named(old_prop.new_name.clone()));
 
-        let new_place = Place {
-            identifier: new_id,
-            effect: crate::react_compiler_hir::Effect::Unknown,
-            reactive: false,
-            loc: None,
-        };
+        let new_place =
+            Place { identifier: new_id, effect: Effect::Unknown, reactive: false, loc: None };
 
         old_to_new.insert(
             old_prop.place.identifier,
@@ -615,12 +600,8 @@ fn emit_destructure_props(
     }
 
     let lvalue_id = env.next_identifier_id();
-    let lvalue = Place {
-        identifier: lvalue_id,
-        effect: crate::react_compiler_hir::Effect::Unknown,
-        reactive: false,
-        loc: None,
-    };
+    let lvalue =
+        Place { identifier: lvalue_id, effect: Effect::Unknown, reactive: false, loc: None };
 
     Instruction {
         id: EvaluationOrder(0),

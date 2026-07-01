@@ -16,8 +16,11 @@
 //! Ported from TypeScript `src/HIR/MergeOverlappingReactiveScopesHIR.ts`.
 
 use rustc_hash::FxHashMap;
+use rustc_hash::FxHashSet;
 use std::cmp;
 
+use crate::react_compiler_hir::Instruction;
+use crate::react_compiler_hir::MutableRangeId;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::visitors::{each_instruction_lvalue_ids, each_terminal_operand_ids};
@@ -137,7 +140,7 @@ fn collect_scope_info(func: &HirFunction, env: &Environment) -> ScopeInfo {
     // We must NOT sort by ScopeId here — the insertion order determines which scope
     // becomes the root in the disjoint set union.
     fn dedup_preserve_order(scopes: &mut Vec<ScopeId>) {
-        let mut seen = rustc_hash::FxHashSet::default();
+        let mut seen = FxHashSet::default();
         scopes.retain(|s| seen.insert(*s));
     }
     for scopes in scope_starts_map.values_mut() {
@@ -331,8 +334,7 @@ pub fn merge_overlapping_reactive_scopes_hir(func: &mut HirFunction, env: &mut E
     // When scope.range is updated, ALL identifiers referencing that range object
     // automatically see the new values. We use MutableRangeId to identify which
     // identifiers share the same logical range as a root scope.
-    let mut original_root_range_ids: FxHashMap<ScopeId, crate::react_compiler_hir::MutableRangeId> =
-        FxHashMap::default();
+    let mut original_root_range_ids: FxHashMap<ScopeId, MutableRangeId> = FxHashMap::default();
     for (_, root_id) in &scope_groups {
         if !original_root_range_ids.contains_key(root_id) {
             let range_id = env.scopes[root_id.0 as usize].range.id;
@@ -383,7 +385,7 @@ pub fn merge_overlapping_reactive_scopes_hir(func: &mut HirFunction, env: &mut E
 /// Collect operand IdentifierIds with their types from an instruction value.
 /// Used to check for Primitive type on FunctionExpression/ObjectMethod operands.
 fn each_instruction_operand_ids_with_types(
-    instr: &crate::react_compiler_hir::Instruction,
+    instr: &Instruction,
     env: &Environment,
 ) -> Vec<(IdentifierId, Type)> {
     visitors::each_instruction_operand(instr, env)

@@ -10,6 +10,9 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PropagateEarlyReturns.ts`.
 
+use std::mem::take;
+
+use crate::react_compiler_diagnostics::{CompilerError, SourceLocation};
 use crate::react_compiler_hir::{
     BlockId, Effect, EvaluationOrder, IdentifierId, IdentifierName, InstructionKind,
     InstructionValue, LValue, NonLocalBinding, Place, PlaceOrSpread, PrimitiveValue,
@@ -17,7 +20,6 @@ use crate::react_compiler_hir::{
     ReactiveScopeDeclaration, ReactiveScopeEarlyReturn, ReactiveStatement, ReactiveTerminal,
     ReactiveTerminalStatement, ReactiveTerminalTargetKind, ReactiveValue, environment::Environment,
 };
-
 use crate::react_compiler_reactive_scopes::visitors::{
     ReactiveFunctionTransform, Transformed, transform_reactive_function,
 };
@@ -46,7 +48,7 @@ pub fn propagate_early_returns(func: &mut ReactiveFunction, env: &mut Environmen
 #[derive(Debug, Clone)]
 struct EarlyReturnInfo {
     value: IdentifierId,
-    loc: Option<crate::react_compiler_diagnostics::SourceLocation>,
+    loc: Option<SourceLocation>,
     label: BlockId,
 }
 
@@ -76,7 +78,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         scope_block: &mut ReactiveScopeBlock,
         parent_state: &mut State,
-    ) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
+    ) -> Result<(), CompilerError> {
         let scope_id = scope_block.scope;
 
         // Exit early if an earlier pass has already created an early return
@@ -108,8 +110,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement,
         state: &mut State,
-    ) -> Result<Transformed<ReactiveStatement>, crate::react_compiler_diagnostics::CompilerError>
-    {
+    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
         if state.within_reactive_scope {
             if let ReactiveTerminal::Return { value, .. } = &stmt.terminal {
                 let loc = value.loc;
@@ -201,7 +202,7 @@ fn apply_early_return_to_scope(
     let for_temp = create_temporary_place_id(env, loc);
     let arg_temp = create_temporary_place_id(env, loc);
 
-    let original_instructions = std::mem::take(&mut scope_block.instructions);
+    let original_instructions = take(&mut scope_block.instructions);
 
     scope_block.instructions = vec![
         // LoadGlobal Symbol
@@ -333,10 +334,7 @@ fn apply_early_return_to_scope(
 // Helper: create a temporary place identifier
 // =============================================================================
 
-fn create_temporary_place_id(
-    env: &mut Environment,
-    loc: Option<crate::react_compiler_diagnostics::SourceLocation>,
-) -> IdentifierId {
+fn create_temporary_place_id(env: &mut Environment, loc: Option<SourceLocation>) -> IdentifierId {
     let id = env.next_identifier_id();
     env.identifiers[id.0 as usize].loc = loc;
     id

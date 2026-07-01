@@ -1,3 +1,5 @@
+use std::mem::{replace, take};
+
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{
@@ -309,7 +311,7 @@ fn enter_ssa_impl(
                     None,
                 ));
             }
-            let params = std::mem::take(&mut func.params);
+            let params = take(&mut func.params);
             let mut new_params = Vec::with_capacity(params.len());
             for param in params {
                 new_params.push(match param {
@@ -342,7 +344,7 @@ fn enter_ssa_impl(
 
             // Map context places for function expressions before other operands
             if let Some(fid) = func_expr_id {
-                let context = std::mem::take(&mut env.functions[fid.0 as usize].context);
+                let context = take(&mut env.functions[fid.0 as usize].context);
                 env.functions[fid.0 as usize].context =
                     context.into_iter().map(|place| builder.get_place(&place, env)).collect();
             }
@@ -397,7 +399,7 @@ fn enter_ssa_impl(
                 let saved_current = builder.current;
 
                 // Map inner function params
-                let inner_params = std::mem::take(&mut env.functions[fid.0 as usize].params);
+                let inner_params = take(&mut env.functions[fid.0 as usize].params);
                 let mut new_inner_params = Vec::with_capacity(inner_params.len());
                 for param in inner_params {
                     new_inner_params.push(match param {
@@ -413,7 +415,7 @@ fn enter_ssa_impl(
 
                 // Take the inner function out of the arena to process it
                 let mut inner_func =
-                    std::mem::replace(&mut env.functions[fid.0 as usize], placeholder_function());
+                    replace(&mut env.functions[fid.0 as usize], placeholder_function());
 
                 enter_ssa_impl(&mut inner_func, builder, env, root_entry)?;
 
