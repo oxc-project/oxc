@@ -78,9 +78,10 @@ pub fn default_plugin_options() -> PluginOptions {
 }
 
 #[derive(Default)]
-pub struct TransformResult<'a> {
-    /// Compiled, ready-to-codegen OXC AST; `None` if the compiler made no changes.
-    pub program: Option<oxc_ast::ast::Program<'a>>,
+pub struct TransformResult {
+    /// Whether `program` was rewritten. `false` means the compiler made no
+    /// changes — no React-like functions, a bail-out, or nothing to memoize.
+    pub changed: bool,
     /// Errors and warnings produced by the compile. Errors (e.g. Rules of Hooks
     /// violations) are hard problems in the source; the program is still left
     /// valid. Warnings include bail-outs where the compiler declined to optimize.
@@ -96,28 +97,45 @@ pub struct LintResult {
     pub diagnostics: oxc_diagnostics::Diagnostics,
 }
 
-/// Run the React Compiler on a pre-parsed program, building the semantic model
-/// internally and returning the result. `program` in the result is `None` when
-/// nothing was compiled (no React-like functions, a bail-out, or no changes).
+/// Run the React Compiler on a pre-parsed program, rewriting `program` in place
+/// when it memoizes something. Builds the semantic model internally.
 ///
 /// Must run **first**, on the pristine AST, before any other transform.
 pub fn transform<'a>(
+    program: &mut oxc_ast::ast::Program<'a>,
+    allocator: &'a oxc_allocator::Allocator,
+    options: PluginOptions,
+) -> TransformResult {
+    let (compiled, diagnostics, events) = compile(program, allocator, options);
+    let changed = compiled.is_some();
+    if let Some(compiled) = compiled {
+        *program = compiled;
+    }
+    TransformResult { changed, diagnostics, events }
+}
+
+/// Shared compile pipeline behind [`transform`] and [`lint`]. Borrows `program`
+/// (so `lint` can stay read-only) and returns the compiled OXC program — `None`
+/// when nothing was compiled — together with diagnostics and logger events.
+/// Containing the semantic borrow inside this call is what lets `transform`
+/// write the result back into its `&mut program` afterwards.
+fn compile<'a>(
     program: &oxc_ast::ast::Program<'a>,
     allocator: &'a oxc_allocator::Allocator,
     options: PluginOptions,
-) -> TransformResult<'a> {
+) -> (Option<oxc_ast::ast::Program<'a>>, oxc_diagnostics::Diagnostics, Vec<LoggerEvent>) {
     let source_text = program.source_text;
 
     // Skip files with no React-like functions, unless the mode compiles everything.
     if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
         && !has_react_like_functions(program)
     {
-        return TransformResult::default();
+        return (None, oxc_diagnostics::Diagnostics::default(), Vec::new());
     }
 
     // `using`/`await using` disposal semantics aren't preserved yet — skip the file.
     if has_resource_management_declarations(program) {
-        return TransformResult::default();
+        return (None, oxc_diagnostics::Diagnostics::default(), Vec::new());
     }
 
     let semantic =
@@ -140,7 +158,7 @@ pub fn transform<'a>(
         } => (None, events),
     };
 
-    let compiled_program = program_ast.map(|file: crate::react_compiler_ast::File| {
+    let compiled = program_ast.map(|file: crate::react_compiler_ast::File| {
         let mut compiled =
             convert_ast_reverse::convert_program_to_oxc_with_source(&file, allocator, source_text);
         compiled.source_type = program.source_type;
@@ -148,7 +166,7 @@ pub fn transform<'a>(
         compiled
     });
 
-    TransformResult { program: compiled_program, diagnostics, events }
+    (compiled, diagnostics, events)
 }
 
 /// Carry over the comments attached to top-level statements of the compiled
@@ -186,26 +204,29 @@ fn preserve_comments<'a>(
     compiled.source_text = source.source_text;
 }
 
-/// Convenience wrapper — parses source text, runs semantic analysis, then transforms.
+/// Convenience wrapper — parses source text then transforms it in place, returning
+/// the (possibly rewritten) program together with the result.
 pub fn transform_source<'a>(
     source_text: &'a str,
     source_type: oxc_span::SourceType,
     allocator: &'a oxc_allocator::Allocator,
     options: PluginOptions,
-) -> TransformResult<'a> {
-    let parsed = oxc_parser::Parser::new(allocator, source_text, source_type).parse();
-    transform(&parsed.program, allocator, options)
+) -> (oxc_ast::ast::Program<'a>, TransformResult) {
+    let mut program = oxc_parser::Parser::new(allocator, source_text, source_type).parse().program;
+    let result = transform(&mut program, allocator, options);
+    (program, result)
 }
 
-/// Lint a pre-parsed program — like [`transform`] but only collects diagnostics.
+/// Lint a pre-parsed program — like [`transform`] but read-only: it collects
+/// diagnostics without rewriting the program.
 pub fn lint(program: &oxc_ast::ast::Program, options: PluginOptions) -> LintResult {
-    let mut opts = options;
-    opts.no_emit = true;
+    let mut options = options;
+    options.no_emit = true;
 
-    // `no_emit` yields `program: None`; a local arena for the conversion suffices.
+    // `no_emit` produces no program; a local arena for the conversion suffices.
     let allocator = oxc_allocator::Allocator::default();
-    let result = transform(program, &allocator, opts);
-    LintResult { diagnostics: result.diagnostics }
+    let (_program, diagnostics, _events) = compile(program, &allocator, options);
+    LintResult { diagnostics }
 }
 
 /// Convenience wrapper — parses source text, runs semantic analysis, then lints.
@@ -242,7 +263,8 @@ mod tests {
             return <div onClick={() => props.onClick()}>{props.text}</div>;\n}\n";
 
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        let (program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
 
         assert!(!result.diagnostics.has_errors(), "unexpected errors: {:?}", result.diagnostics);
         assert!(
@@ -250,7 +272,7 @@ mod tests {
             "unexpected warnings: {:?}",
             result.diagnostics
         );
-        let program = result.program.expect("React Compiler should have transformed the component");
+        assert!(result.changed, "React Compiler should have transformed the component");
 
         let output = oxc_codegen::Codegen::new().build(&program).code;
 
@@ -268,8 +290,9 @@ mod tests {
     fn skips_non_react_code() {
         let source = "function add(a, b) {\n  return a + b;\n}\n";
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
-        assert!(result.program.is_none(), "non-React code must not be transformed");
+        let (_program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        assert!(!result.changed, "non-React code must not be transformed");
     }
 
     /// TypeScript-only constructs (`declare global`, `import =`, `export =`,
@@ -289,10 +312,13 @@ function Component(props) {\n  return <div>{props.text}</div>;\n}\n\
 export = legacy;\n";
 
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
-        let program = result.program.unwrap_or_else(|| {
-            panic!("component should be compiled; diagnostics: {:?}", result.diagnostics)
-        });
+        let (program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        assert!(
+            result.changed,
+            "component should be compiled; diagnostics: {:?}",
+            result.diagnostics
+        );
         let output = oxc_codegen::Codegen::new().build(&program).code;
         assert!(
             output.contains("react/compiler-runtime"),
@@ -337,8 +363,9 @@ export = legacy;\n";
 class Store {\n  count = 0;\n  increment() {\n    this.count++;\n  }\n}\n\
 function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
-        let program = result.program.expect("component should be compiled");
+        let (program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        assert!(result.changed, "component should be compiled");
         let output = oxc_codegen::Codegen::new().build(&program).code;
         assert!(output.contains("react/compiler-runtime"), "component should memoize:\n{output}");
         assert!(output.contains("count = 0"), "class field lost:\n{output}");
@@ -362,8 +389,9 @@ function Component(props) {\n\
   return <div>{props.text}</div>;\n\
 }\n";
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
-        let program = result.program.expect("component should be compiled");
+        let (program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        assert!(result.changed, "component should be compiled");
         let output = oxc_codegen::Codegen::new().build(&program).code;
 
         assert!(output.contains("react/compiler-runtime"), "component should memoize:\n{output}");
@@ -415,10 +443,9 @@ function Component(props: Props): JSX.Element {\n\
 }\n";
 
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
-        let program = result.program.unwrap_or_else(|| {
-            panic!("component should compile; diagnostics: {:?}", result.diagnostics)
-        });
+        let (program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        assert!(result.changed, "component should compile; diagnostics: {:?}", result.diagnostics);
         let output = oxc_codegen::Codegen::new().build(&program).code;
 
         assert!(output.contains("react/compiler-runtime"), "component should memoize:\n{output}");
@@ -464,8 +491,9 @@ function Component({ fields }: { fields: Field[] }) {\n\
 }\n";
 
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
-        let program = result.program.expect("component should be compiled");
+        let (program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        assert!(result.changed, "component should be compiled");
         let output = oxc_codegen::Codegen::new().build(&program).code;
 
         assert!(output.contains("react/compiler-runtime"), "component should memoize:\n{output}");
@@ -487,8 +515,9 @@ function Component(props) {\n\
 }\n";
 
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
-        let program = result.program.expect("component should be compiled");
+        let (program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        assert!(result.changed, "component should be compiled");
         let output = oxc_codegen::Codegen::new().build(&program).code;
 
         assert!(output.contains("react/compiler-runtime"), "component should memoize:\n{output}");
@@ -513,10 +542,10 @@ async function Component(props) {\n  await using x = sideEffect();\n  return <di
 
         for source in cases {
             let allocator = oxc_allocator::Allocator::default();
-            let result =
+            let (_program, result) =
                 transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
 
-            assert!(result.program.is_none(), "resource management should skip React Compiler");
+            assert!(!result.changed, "resource management should skip React Compiler");
             assert!(
                 result.diagnostics.is_empty(),
                 "unexpected diagnostics: {:?}",
@@ -532,8 +561,9 @@ export enum E { A }\n\
 export namespace N {\n  export const value = E.A;\n}\n\
 function Component(props) {\n  return <div>{E.A}{N.value}{props.text}</div>;\n}\n";
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
-        let program = result.program.expect("component should be compiled");
+        let (program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        assert!(result.changed, "component should be compiled");
         let output = oxc_codegen::Codegen::new().build(&program).code;
 
         assert!(output.contains("export enum E"), "exported enum lost:\n{output}");
@@ -559,8 +589,9 @@ import { Foo } from './foo';\n\
 export { Foo };\n\
 function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
-        let program = result.program.expect("component should be compiled");
+        let (program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        assert!(result.changed, "component should be compiled");
 
         let export = program
             .body
@@ -595,8 +626,9 @@ function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
     fn memo_wrapped_component_compiles() {
         let source = "React.memo((props) => {\n  return <div>{props.text}</div>;\n});\n";
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
-        let program = result.program.expect("memo-wrapped component should compile");
+        let (program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        assert!(result.changed, "memo-wrapped component should compile");
         let output = oxc_codegen::Codegen::new().build(&program).code;
         assert!(output.contains("react/compiler-runtime"), "should memoize:\n{output}");
         assert!(output.contains("_c("), "expected memo cache reads:\n{output}");
@@ -608,7 +640,8 @@ function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
         // A Rules of Hooks violation is an `Error`-severity diagnostic.
         let source = "function Component(props) {\n  if (props.cond) {\n    useState(0);\n  }\n  return <div>{props.text}</div>;\n}\n";
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        let (_program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
         assert!(
             result.diagnostics.has_errors(),
             "Rules of Hooks violation should be reported as an error: {:?}",
@@ -618,7 +651,8 @@ function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
         // A local named `fbt` is an unsupported-syntax bail-out — a warning, not an error.
         let source = "function Component() {\n  const fbt = \"span\";\n  return <fbt desc=\"label\">Hello</fbt>;\n}\n";
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        let (_program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
         assert!(
             result.diagnostics.has_warnings(),
             "fbt bail-out should be reported as a warning: {:?}",
@@ -648,8 +682,9 @@ function Component(props) {\n\
 export default Component;\n";
 
         let allocator = oxc_allocator::Allocator::default();
-        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
-        let program = result.program.expect("component should be compiled");
+        let (program, result) =
+            transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        assert!(result.changed, "component should be compiled");
         let output = oxc_codegen::Codegen::new().build(&program).code;
 
         assert!(output.contains("react/compiler-runtime"), "component should memoize:\n{output}");
