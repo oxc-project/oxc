@@ -461,29 +461,21 @@ impl AppArgs {
         runtime::run(self.filter.as_deref(), self.detail);
     }
 
-    /// Run TypeScript `.symbols` baseline conformance (symbol resolution vs TypeScript).
-    pub fn run_symbols(&self, data: &TestData) {
+    /// Run the TypeScript baseline conformance suites against the `.symbols`, `.errors.txt`,
+    /// and `.types` baselines. `.types` is a scaffold (reports ~0%) until oxc has a type checker.
+    pub fn run_types(&self, data: &TestData) {
         self.run_tool(
             "symbols_typescript",
             TYPESCRIPT_PATH,
             &data.typescript,
             typescript::type_symbol_baseline::run_symbols_typescript,
         );
-    }
-
-    /// Run TypeScript `.errors.txt` baseline conformance (parser diagnostics vs TypeScript).
-    pub fn run_errors(&self, data: &TestData) {
         self.run_tool(
             "errors_typescript",
             TYPESCRIPT_PATH,
             &data.typescript,
             typescript::error_baseline::run_errors_typescript,
         );
-    }
-
-    /// Run TypeScript `.types` baseline conformance. Scaffold only until oxc has a type checker
-    /// (reports 0%); the runner is wired and ready.
-    pub fn run_types(&self, data: &TestData) {
         self.run_tool(
             "types_typescript",
             TYPESCRIPT_PATH,

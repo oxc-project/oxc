@@ -46,8 +46,6 @@ fn main() {
         "runtime" => app_args.run_runtime(),
         "estree" => app_args.run_estree(&data),
         "estree_tokens" => app_args.run_estree_tokens(&data),
-        "symbols" => app_args.run_symbols(&data),
-        "errors" => app_args.run_errors(&data),
         "types" => app_args.run_types(&data),
         "all" => {
             app_args.run_all();
