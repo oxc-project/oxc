@@ -112,6 +112,67 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/infer-function-return-type
             ]
           }
         ]
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(0x0)",
+        "id": 7,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(TsConditional)",
+            "id": 9,
+            "node": "TSConditionalType",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 11,
+                "name": "U",
+                "node": "TSTypeParameter(U)",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Type)",
+                    "id": 5,
+                    "name": "U",
+                    "node_id": 59,
+                    "scope_id": 9
+                  },
+                  {
+                    "flags": "ReferenceFlags(Type)",
+                    "id": 6,
+                    "name": "U",
+                    "node_id": 61,
+                    "scope_id": 9
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(0x0)",
+        "id": 8,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeParameter)",
+            "id": 10,
+            "name": "T",
+            "node": "TSTypeParameter(T)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 4,
+                "name": "T",
+                "node_id": 54,
+                "scope_id": 8
+              }
+            ]
+          }
+        ]
       }
     ],
     "flags": "ScopeFlags(Top)",
@@ -129,6 +190,20 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/infer-function-return-type
         "flags": "SymbolFlags(TypeAlias)",
         "id": 4,
         "name": "MyType2",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 8,
+        "name": "U",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 9,
+        "name": "MyType3",
         "node": "TSTypeAliasDeclaration",
         "references": []
       }

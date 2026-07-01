@@ -2684,12 +2684,38 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         param.bind(self);
         self.visit_span(&param.span);
         self.visit_binding_identifier(&param.name);
+
+        // `infer` type parameters are declared before their constraints are resolved, and the
+        // constraint is allowed to see that just-declared type parameter.
+        //
+        // ```ts
+        // type Outer = string;
+        // type C<T> = T extends infer U extends U ? U : never;
+        // //                       ^^^^^^^ ^         ^
+        // //                       declare |         |
+        // //                               |         true_type sees `infer U`
+        // //                               constraint also sees `infer U`, not `Outer`
+        // ```
+        //
+        // TypeScript resolves the constraint `U` to the inferred `U`; the checker then reports
+        // "Type parameter 'U' has a circular constraint." If we kept resolving the constraint from
+        // the parent scope used for the surrounding `extends_type`, it would incorrectly bind to an
+        // outer `U` (or remain unresolved). Temporarily resolving the constraint/default from the
+        // active conditional scope preserves that self-reference while the rest of `extends_type`
+        // remains unable to see conditional `infer` locals.
+        let saved_scope_id = self.current_scope_id;
+        if matches!(self.ancestry().parent_kind(), AstKind::TSInferType(_))
+            && let Some(scope_id) = self.active_ts_conditional_scope_id()
+        {
+            self.current_scope_id = scope_id;
+        }
         if let Some(constraint) = &param.constraint {
             self.visit_ts_type(constraint);
         }
         if let Some(default) = &param.default {
             self.visit_ts_type(default);
         }
+        self.current_scope_id = saved_scope_id;
         self.leave_node(kind);
     }
 
