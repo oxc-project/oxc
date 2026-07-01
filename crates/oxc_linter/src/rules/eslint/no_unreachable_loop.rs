@@ -19,7 +19,6 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::effective_unreachable_blocks,
 };
 
 fn no_unreachable_loop_diagnostic(span: Span) -> OxcDiagnostic {
@@ -124,8 +123,7 @@ impl Rule for NoUnreachableLoop {
         }
 
         let unreachable =
-            is_static_infinite_loop(node.kind()).then(|| effective_unreachable_blocks(ctx));
-        let unreachable = unreachable.as_deref();
+            is_static_infinite_loop(node.kind()).then(|| ctx.effective_unreachable_blocks());
 
         if is_unreachable_node(node.id(), ctx, unreachable)
             || body_is_unreachable(body, ctx, unreachable)
@@ -210,6 +208,8 @@ fn has_next_iteration_path(
     ctx: &LintContext<'_>,
     unreachable: Option<&[bool]>,
 ) -> bool {
+    let cfg = ctx.cfg();
+    let graph = cfg.graph();
     let mut stack = vec![start];
     let mut seen = Vec::new();
 
@@ -219,7 +219,11 @@ fn has_next_iteration_path(
         }
         seen.push(source);
 
-        for edge in ctx.cfg().graph().edges_directed(source, Direction::Outgoing) {
+        // Same for every outgoing edge of `source`, so compute it at most once
+        // per block rather than once per `Normal` edge.
+        let mut source_is_infinite_loop_exit = None;
+
+        for edge in graph.edges_directed(source, Direction::Outgoing) {
             match edge.weight() {
                 EdgeType::Backedge => {
                     if owns_block(source, loop_id, ctx)
@@ -231,7 +235,7 @@ fn has_next_iteration_path(
                 }
                 EdgeType::Jump => {
                     let mut has_break = false;
-                    for instruction in ctx.cfg().basic_block(source).instructions() {
+                    for instruction in cfg.basic_block(source).instructions() {
                         match instruction.kind {
                             InstructionKind::Continue(LabeledInstruction::Unlabeled)
                                 if can_continue_loop_from(source, loop_id, ctx, unreachable) =>
@@ -258,7 +262,9 @@ fn has_next_iteration_path(
                     }
                 }
                 EdgeType::Normal => {
-                    if !is_static_infinite_loop_exit(source, ctx) {
+                    let is_exit = *source_is_infinite_loop_exit
+                        .get_or_insert_with(|| is_static_infinite_loop_exit(source, ctx));
+                    if !is_exit {
                         stack.push(edge.target());
                     }
                 }
@@ -305,7 +311,9 @@ fn is_synthetic_continuation(
     ctx: &LintContext<'_>,
     unreachable: Option<&[bool]>,
 ) -> bool {
-    if !ctx.cfg().basic_block(block_id).instructions().is_empty() {
+    let cfg = ctx.cfg();
+    let graph = cfg.graph();
+    if !cfg.basic_block(block_id).instructions().is_empty() {
         return false;
     }
 
@@ -317,9 +325,7 @@ fn is_synthetic_continuation(
         }
         seen.push(current);
 
-        for edge in ctx
-            .cfg()
-            .graph()
+        for edge in graph
             .edges_directed(current, Direction::Incoming)
             .filter(|edge| matches!(edge.weight(), EdgeType::Normal | EdgeType::Jump))
         {
@@ -335,7 +341,7 @@ fn is_synthetic_continuation(
                 return true;
             }
 
-            if ctx.cfg().basic_block(source).instructions().is_empty() {
+            if cfg.basic_block(source).instructions().is_empty() {
                 stack.push(source);
             }
         }

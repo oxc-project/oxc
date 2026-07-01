@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    cell::{Cell, RefCell},
+    cell::{Cell, OnceCell, RefCell},
     ffi::OsStr,
     path::Path,
     rc::Rc,
@@ -46,6 +46,11 @@ pub struct ContextSubHost<'a> {
     pub(super) parser_tokens: ArenaBox<'a, [Token]>,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
+    /// Lazily-computed per-block reachability map for this entry's control flow
+    /// graph, corrected for infinite loops (see `effective_unreachable_blocks`).
+    /// Computed at most once per entry and shared across all rules/nodes that
+    /// need it.
+    pub(super) unreachable_blocks: OnceCell<Box<[bool]>>,
 }
 
 impl<'a> ContextSubHost<'a> {
@@ -79,6 +84,7 @@ impl<'a> ContextSubHost<'a> {
             disable_directives,
             framework_options: options.framework_options,
             parser_tokens: options.parser_tokens,
+            unreachable_blocks: OnceCell::new(),
         }
     }
 
