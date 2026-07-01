@@ -2618,6 +2618,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_type_checker"
+version = "0.138.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_ast_visit",
+ "oxc_diagnostics",
+ "oxc_parser",
+ "oxc_semantic",
+ "oxc_span",
+]
+
+[[package]]
 name = "oxfmt"
 version = "0.57.0"
 dependencies = [
