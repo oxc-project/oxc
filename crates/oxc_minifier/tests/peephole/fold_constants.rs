@@ -1260,6 +1260,15 @@ fn test_fold_invalid_typeof_comparison() {
     fold("typeof foo != undefined", "!0");
     fold("typeof foo === 'string'", "typeof foo == 'string'");
     fold("typeof foo === 'number'", "typeof foo == 'number'");
+
+    // Operands with side effects must NOT be dropped by the fold-to-boolean.
+    fold_same("typeof foo === [bar()]");
+    fold_same("typeof foo === {[k()]: 1}");
+    fold_same("typeof bar() === 123");
+    fold("typeof bar() === 'asd'", "typeof bar() == 'asd'");
+    // `typeof <identifier>` reads no value (no ReferenceError), so it is side-effect free and
+    // an invalid string comparison still folds.
+    fold("typeof foo === 'asd'", "!1");
 }
 
 #[test]
