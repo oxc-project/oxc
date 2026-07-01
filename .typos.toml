@@ -60,3 +60,8 @@ writeable = "writeable"
 IIFEs = "IIFEs"
 allowIIFEs = "allowIIFEs"
 TAGS_PEV_FORMATE_DESCRIPTION = "TAGS_PEV_FORMATE_DESCRIPTION"
+# Vendored react_compiler local-variable abbreviations (PrivateName, Optional{Call,Member}Expression, plural of `from`)
+pn = "pn"
+oce = "oce"
+ome = "ome"
+froms = "froms"

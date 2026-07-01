@@ -1,3 +1,20 @@
+use crate::react_compiler_ast::File;
+use crate::react_compiler_ast::InterpreterDirective;
+use crate::react_compiler_ast::Program;
+use crate::react_compiler_ast::SourceType;
+use crate::react_compiler_ast::common::BaseNode;
+use crate::react_compiler_ast::common::Comment;
+use crate::react_compiler_ast::common::CommentData;
+use crate::react_compiler_ast::common::Position;
+use crate::react_compiler_ast::common::RawNode;
+use crate::react_compiler_ast::common::SourceLocation;
+use crate::react_compiler_ast::declarations::*;
+use crate::react_compiler_ast::expressions::*;
+use crate::react_compiler_ast::jsx::*;
+use crate::react_compiler_ast::literals::*;
+use crate::react_compiler_ast::operators::*;
+use crate::react_compiler_ast::patterns::*;
+use crate::react_compiler_ast::statements::*;
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
@@ -7,23 +24,6 @@
 use oxc_ast::ast as oxc;
 use oxc_span::GetSpan;
 use oxc_span::Span;
-use react_compiler_ast::File;
-use react_compiler_ast::InterpreterDirective;
-use react_compiler_ast::Program;
-use react_compiler_ast::SourceType;
-use react_compiler_ast::common::BaseNode;
-use react_compiler_ast::common::Comment;
-use react_compiler_ast::common::CommentData;
-use react_compiler_ast::common::Position;
-use react_compiler_ast::common::RawNode;
-use react_compiler_ast::common::SourceLocation;
-use react_compiler_ast::declarations::*;
-use react_compiler_ast::expressions::*;
-use react_compiler_ast::jsx::*;
-use react_compiler_ast::literals::*;
-use react_compiler_ast::operators::*;
-use react_compiler_ast::patterns::*;
-use react_compiler_ast::statements::*;
 
 /// Decode XML/HTML entities in JSX text (`&amp;` → `&`, `&gt;` → `>`, `&#123;`
 /// → `{`, `&#x1F600;` → emoji, …) so the Babel `JSXText.value` is the decoded
