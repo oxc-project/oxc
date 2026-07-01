@@ -460,6 +460,26 @@ impl AppArgs {
     pub fn run_runtime(&self) {
         runtime::run(self.filter.as_deref(), self.detail);
     }
+
+    /// Run TypeScript `.symbols` baseline conformance (symbol resolution vs TypeScript).
+    pub fn run_symbols(&self, data: &TestData) {
+        self.run_tool(
+            "symbols_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            typescript::type_symbol_baseline::run_symbols_typescript,
+        );
+    }
+
+    /// Run TypeScript `.errors.txt` baseline conformance (parser diagnostics vs TypeScript).
+    pub fn run_errors(&self, data: &TestData) {
+        self.run_tool(
+            "errors_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            typescript::error_baseline::run_errors_typescript,
+        );
+    }
 }
 
 #[test]
