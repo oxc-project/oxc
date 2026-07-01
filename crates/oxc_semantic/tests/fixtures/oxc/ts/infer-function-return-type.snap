@@ -139,7 +139,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/infer-function-return-type
                     "id": 5,
                     "name": "U",
                     "node_id": 59,
-                    "scope_id": 9
+                    "scope_id": 8
                   },
                   {
                     "flags": "ReferenceFlags(Type)",
@@ -169,6 +169,60 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/infer-function-return-type
                 "name": "T",
                 "node_id": 54,
                 "scope_id": 8
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(TsConditional)",
+            "id": 11,
+            "node": "TSConditionalType",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 14,
+                "name": "A",
+                "node": "TSTypeParameter(A)",
+                "references": []
+              },
+              {
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 15,
+                "name": "B",
+                "node": "TSTypeParameter(B)",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Type)",
+                    "id": 9,
+                    "name": "B",
+                    "node_id": 81,
+                    "scope_id": 11
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(0x0)",
+        "id": 10,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeParameter)",
+            "id": 13,
+            "name": "T",
+            "node": "TSTypeParameter(T)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 7,
+                "name": "T",
+                "node_id": 70,
+                "scope_id": 10
               }
             ]
           }
@@ -204,6 +258,13 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/infer-function-return-type
         "flags": "SymbolFlags(TypeAlias)",
         "id": 9,
         "name": "MyType3",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 12,
+        "name": "MyType4",
         "node": "TSTypeAliasDeclaration",
         "references": []
       }
