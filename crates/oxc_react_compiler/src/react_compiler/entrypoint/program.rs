@@ -26,9 +26,9 @@ use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
+use crate::react_compiler_reactive_scopes::old_builder_ext::OldBuilderExt;
 use crate::scope::ScopeId;
 use crate::scope::ScopeInfo;
-use crate::react_compiler_reactive_scopes::old_builder_ext::OldBuilderExt;
 use oxc_allocator::GetAllocator;
 
 use super::compile_result::BindingRenameInfo;
@@ -2824,8 +2824,7 @@ fn ox_splice_program<'a>(
 
     for replacement in replacements {
         let mut sibling_outlined_decls: Vec<oxc_ast::ast::Statement<'a>> = Vec::new();
-        let insert_as_sibling =
-            replacement.original_kind == OriginalFnKind::FunctionDeclaration;
+        let insert_as_sibling = replacement.original_kind == OriginalFnKind::FunctionDeclaration;
         for outlined in &replacement.codegen_fn.outlined {
             let func = ox_build_function(
                 ast,
@@ -3055,7 +3054,6 @@ fn ox_is_non_namespaced_import(import: &oxc_ast::ast::ImportDeclaration) -> bool
             .all(|s| matches!(s, oxc_ast::ast::ImportDeclarationSpecifier::ImportSpecifier(_))),
     }
 }
-
 
 /// Main entry point for the React Compiler.
 ///

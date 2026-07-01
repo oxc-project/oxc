@@ -1,7 +1,3 @@
-use crate::scope::BindingId;
-use crate::scope::ImportBindingKind;
-use crate::scope::ScopeId;
-use crate::scope::ScopeInfo;
 use crate::react_compiler_diagnostics::CompilerDiagnostic;
 use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
 use crate::react_compiler_diagnostics::CompilerError;
@@ -13,6 +9,10 @@ use crate::react_compiler_hir::visitors::terminal_fallthrough;
 use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
+use crate::scope::BindingId;
+use crate::scope::ImportBindingKind;
+use crate::scope::ScopeId;
+use crate::scope::ScopeInfo;
 
 use oxc_span::Span;
 

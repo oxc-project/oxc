@@ -100,7 +100,13 @@ pub fn codegen_function<'a, 'h>(
     // Outlined functions reuse the same `fbtOperands` set as the main function
     // (see TS `codegenFunction`), so keep a copy before it is moved into the context.
     let fbt_operands_for_outlined = fbt_operands.clone();
-    let mut cx = OxcContext::new(oxc_ast::builder::AstBuilder::new(ast.allocator()), env, fn_name.to_string(), unique_identifiers, fbt_operands);
+    let mut cx = OxcContext::new(
+        oxc_ast::builder::AstBuilder::new(ast.allocator()),
+        env,
+        fn_name.to_string(),
+        unique_identifiers,
+        fbt_operands,
+    );
 
     // The value-emission port covers most instruction kinds, but a few sub-emitters
     // (function/object/JSX expressions, hook-guard wrapping, TS-type reparse) are
@@ -220,7 +226,8 @@ fn ox_codegen_outlined<'a>(
 
         let identifiers = rename_variables(&mut reactive_function, env);
 
-        let func = codegen_function(ast, &reactive_function, env, identifiers, fbt_operands.clone())?;
+        let func =
+            codegen_function(ast, &reactive_function, env, identifiers, fbt_operands.clone())?;
         outlined.push(OxcOutlinedFunction { func, fn_type: entry.fn_type });
     }
     Ok(outlined)
@@ -233,11 +240,11 @@ fn ox_codegen_outlined<'a>(
 // HIR-driven control flow mirrors the TS compiler's `CodegenReactiveFunction`.
 // =============================================================================
 
+use crate::react_compiler_reactive_scopes::old_builder_ext::OldBuilderExt;
+use oxc_allocator::GetAllocator;
 use oxc_ast::ast as oxc;
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
-use oxc_allocator::GetAllocator;
-use crate::react_compiler_reactive_scopes::old_builder_ext::OldBuilderExt;
 
 // Temp value tracking. Maps a temporary's declaration to its emitted oxc value
 // (`None` for params/catch bindings that are declared but have no inlinable value).
@@ -1663,70 +1670,65 @@ fn ox_make_optional<'a>(
     expr: oxc::Expression<'a>,
     optional: bool,
 ) -> Result<OxValue<'a>, CompilerError> {
-    let chain_element: oxc::ChainElement<'a> =
-        match expr {
-            oxc::Expression::ChainExpression(chain) => {
-                // Already a chain; update the optional flag on the head element.
-                let chain = chain.unbox();
-                match chain.expression {
-                    oxc::ChainElement::CallExpression(call) => {
-                        let mut call = call.unbox();
-                        call.optional = optional;
-                        oxc::ChainElement::CallExpression(cx.ast.alloc(call))
-                    }
-                    oxc::ChainElement::ComputedMemberExpression(m) => {
-                        let mut m = m.unbox();
-                        m.optional = optional;
-                        oxc::ChainElement::ComputedMemberExpression(cx.ast.alloc(m))
-                    }
-                    oxc::ChainElement::StaticMemberExpression(m) => {
-                        let mut m = m.unbox();
-                        m.optional = optional;
-                        oxc::ChainElement::StaticMemberExpression(cx.ast.alloc(m))
-                    }
-                    other => other,
+    let chain_element: oxc::ChainElement<'a> = match expr {
+        oxc::Expression::ChainExpression(chain) => {
+            // Already a chain; update the optional flag on the head element.
+            let chain = chain.unbox();
+            match chain.expression {
+                oxc::ChainElement::CallExpression(call) => {
+                    let mut call = call.unbox();
+                    call.optional = optional;
+                    oxc::ChainElement::CallExpression(cx.ast.alloc(call))
                 }
+                oxc::ChainElement::ComputedMemberExpression(m) => {
+                    let mut m = m.unbox();
+                    m.optional = optional;
+                    oxc::ChainElement::ComputedMemberExpression(cx.ast.alloc(m))
+                }
+                oxc::ChainElement::StaticMemberExpression(m) => {
+                    let mut m = m.unbox();
+                    m.optional = optional;
+                    oxc::ChainElement::StaticMemberExpression(cx.ast.alloc(m))
+                }
+                other => other,
             }
-            oxc::Expression::CallExpression(call) => {
-                let mut call = call.unbox();
-                call.callee = ox_unwrap_chain(call.callee);
-                oxc::ChainElement::CallExpression(cx.ast.alloc_call_expression(
-                    SPAN,
-                    call.callee,
-                    call.type_arguments,
-                    call.arguments,
-                    optional,
-                ))
-            }
-            oxc::Expression::ComputedMemberExpression(m) => {
-                let m = m.unbox();
-                oxc::ChainElement::ComputedMemberExpression(
-                    cx.ast.alloc_computed_member_expression(
-                        SPAN,
-                        ox_unwrap_chain(m.object),
-                        m.expression,
-                        optional,
-                    ),
-                )
-            }
-            oxc::Expression::StaticMemberExpression(m) => {
-                let m = m.unbox();
-                oxc::ChainElement::StaticMemberExpression(
-                    cx.ast.alloc_static_member_expression(
-                        SPAN,
-                        ox_unwrap_chain(m.object),
-                        m.property,
-                        optional,
-                    ),
-                )
-            }
-            _ => {
-                return Err(invariant_err(
-                    "Expected optional value to resolve to call or member expression",
-                    None,
-                ));
-            }
-        };
+        }
+        oxc::Expression::CallExpression(call) => {
+            let mut call = call.unbox();
+            call.callee = ox_unwrap_chain(call.callee);
+            oxc::ChainElement::CallExpression(cx.ast.alloc_call_expression(
+                SPAN,
+                call.callee,
+                call.type_arguments,
+                call.arguments,
+                optional,
+            ))
+        }
+        oxc::Expression::ComputedMemberExpression(m) => {
+            let m = m.unbox();
+            oxc::ChainElement::ComputedMemberExpression(cx.ast.alloc_computed_member_expression(
+                SPAN,
+                ox_unwrap_chain(m.object),
+                m.expression,
+                optional,
+            ))
+        }
+        oxc::Expression::StaticMemberExpression(m) => {
+            let m = m.unbox();
+            oxc::ChainElement::StaticMemberExpression(cx.ast.alloc_static_member_expression(
+                SPAN,
+                ox_unwrap_chain(m.object),
+                m.property,
+                optional,
+            ))
+        }
+        _ => {
+            return Err(invariant_err(
+                "Expected optional value to resolve to call or member expression",
+                None,
+            ));
+        }
+    };
     Ok(OxValue::Expression(cx.ast.expression_chain(SPAN, chain_element)))
 }
 
@@ -2001,7 +2003,10 @@ fn ox_codegen_base_instruction_value<'a>(
             Ok(OxValue::Expression(oxc::Expression::TemplateLiteral(cx.ast.alloc(template))))
         }
         InstructionValue::TypeCastExpression {
-            value, type_annotation_kind, type_annotation, ..
+            value,
+            type_annotation_kind,
+            type_annotation,
+            ..
         } => {
             let expr = ox_codegen_place_to_expression(cx, value)?;
             // Re-emit the stored TS type into the output allocator (cloning in the
@@ -3006,7 +3011,10 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CountMemoBlockVisitor<'a, 'e> {
     }
 }
 
-fn count_memo_blocks<'a>(func: &ReactiveFunction<'a>, env: &Environment<'a>) -> (u32, u32, u32, u32) {
+fn count_memo_blocks<'a>(
+    func: &ReactiveFunction<'a>,
+    env: &Environment<'a>,
+) -> (u32, u32, u32, u32) {
     let visitor = CountMemoBlockVisitor { env };
     let mut state = CountMemoBlockState {
         memo_blocks: 0,

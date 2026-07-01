@@ -8,7 +8,6 @@
 //! Analogous to TS `Pipeline.ts` (`compileFn` → `run` → `runWithEnvironment`).
 //! Currently runs BuildHIR (lowering) and PruneMaybeThrows.
 
-use crate::scope::*;
 use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
@@ -85,6 +84,7 @@ use crate::react_compiler_validation::validate_no_set_state_in_render;
 use crate::react_compiler_validation::validate_preserved_manual_memoization;
 use crate::react_compiler_validation::validate_static_components;
 use crate::react_compiler_validation::validate_use_memo;
+use crate::scope::*;
 
 use super::compile_result::CodegenFunction;
 use super::compile_result::CompilerErrorDetailInfo;

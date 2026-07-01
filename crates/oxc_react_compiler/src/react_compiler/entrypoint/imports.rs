@@ -6,9 +6,9 @@
  */
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::scope::ScopeInfo;
 use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
 use crate::react_compiler_hir::environment::BindingRename;
+use crate::scope::ScopeInfo;
 
 use super::compile_result::{DebugLogEntry, LoggerEvent, OrderedLogItem};
 use super::plugin_options::{CompilerTarget, PluginOptions};

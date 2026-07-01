@@ -35,15 +35,15 @@ use oxc_ast_visit::Visit;
 use oxc_span::Span;
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::scope::BindingId;
-use crate::scope::ScopeId;
-use crate::scope::ScopeInfo;
-use crate::scope::ScopeKind;
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
 use crate::react_compiler_diagnostics::ErrorCategory;
 use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_hir::environment::Environment;
+use crate::scope::BindingId;
+use crate::scope::ScopeId;
+use crate::scope::ScopeInfo;
+use crate::scope::ScopeKind;
 
 use crate::react_compiler_lowering::FunctionNode;
 use crate::react_compiler_lowering::source_loc::LineOffsets;
@@ -309,11 +309,7 @@ impl<'a, 'b> Visit<'a> for ContextIdentifierVisitor<'a, 'b> {
     ) {
     }
 
-    fn visit_ts_type_parameter_declaration(
-        &mut self,
-        _it: &oxc::TSTypeParameterDeclaration<'a>,
-    ) {
-    }
+    fn visit_ts_type_parameter_declaration(&mut self, _it: &oxc::TSTypeParameterDeclaration<'a>) {}
 
     fn visit_ts_type_alias_declaration(&mut self, _it: &oxc::TSTypeAliasDeclaration<'a>) {}
 
@@ -508,8 +504,7 @@ pub fn find_context_identifiers(
         FunctionNode::Arrow(arrow) => {
             visitor.visit_formal_parameters(&arrow.params);
             if arrow.expression {
-                if let Some(oxc::Statement::ExpressionStatement(es)) =
-                    arrow.body.statements.first()
+                if let Some(oxc::Statement::ExpressionStatement(es)) = arrow.body.statements.first()
                 {
                     visitor.visit_expression(&es.expression);
                 } else {
