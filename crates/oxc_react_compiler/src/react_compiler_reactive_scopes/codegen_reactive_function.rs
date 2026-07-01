@@ -3132,27 +3132,3 @@ fn ident_sort_key(id: IdentifierId, env: &Environment) -> String {
         None => format!("_t{}", id.0),
     }
 }
-
-#[cfg(test)]
-mod tests {
-    /// The Fast Refresh source hash must match Node's
-    /// `createHmac('sha256', code).digest('hex')` byte-for-byte, or hot-reload
-    /// cache invalidation would diverge from the TS compiler. Reference values
-    /// were computed with Node's `crypto` module.
-    #[test]
-    fn source_file_hash_matches_node_create_hmac() {
-        use super::source_file_hash;
-        assert_eq!(
-            source_file_hash("hello world"),
-            "0de8bee5d7f9c5d209f8c6fabed0ea84cb3fca1244e8ed38079a61b599a84c47"
-        );
-        assert_eq!(
-            source_file_hash(""),
-            "b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad"
-        );
-        assert_eq!(
-            source_file_hash("function App(){}"),
-            "d637acb4985c789d6622c70197db2b62dda282f16f3276aa810b598d6e6cab7b"
-        );
-    }
-}

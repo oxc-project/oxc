@@ -30,7 +30,6 @@ doctest = false
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
-oxc_codegen = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
@@ -45,6 +44,10 @@ indexmap = { workspace = true }
 rustc-hash = { workspace = true }
 
 [dev-dependencies]
+# Only the example and integration tests print the compiled program; the library itself
+# builds the oxc AST but never codegens it.
+oxc_codegen = { workspace = true }
+
 # Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
 # If we enabled `disable_old_builder` feature in main dependency, feature unification would
 # cause it to be activated for `oxc_ast` for the user too.
