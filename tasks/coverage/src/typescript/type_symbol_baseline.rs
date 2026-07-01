@@ -1,12 +1,16 @@
-//! Line-by-line port of typescript-go's symbol baseline harness
+//! Line-by-line port of typescript-go's symbol/type baseline harness
 //! `internal/testutil/tsbaseline/type_symbol_baseline.go`.
 //!
-//! Only the `.symbols` half is ported: `.types` needs a type checker, which oxc does not
-//! have. The walker visits the same nodes as the Go `forEachASTNode` (via `oxc_ast_visit`),
-//! resolves the two lexically-resolvable kinds through `oxc_semantic`, and emits an
-//! `<<unresolved>>` marker for member / `this` / lib nodes (which need a checker) so the
-//! output stays line-aligned with the shipped baseline. Scoring is a line-diff against the
-//! baseline counting matching `>` annotation lines.
+//! The walker visits the same nodes as the Go `forEachASTNode` (via `oxc_ast_visit`) and,
+//! for the `.symbols` baseline, resolves the two lexically-resolvable kinds through
+//! `oxc_semantic`, emitting an `<<unresolved>>` marker for member / `this` / lib nodes (which
+//! need a checker) so the output stays line-aligned with the shipped baseline. Scoring is a
+//! line-diff against the baseline counting matching `>` annotation lines.
+//!
+//! The `.types` baseline is a **scaffold**: oxc has no type checker, so every type payload is
+//! `<<unresolved>>` and the suite reports 0% — but the full runner (baseline discovery, AST
+//! walk, output format, comparison, snapshot) is wired and ready for a checker to fill in the
+//! type strings. This mirrors the Go `isSymbolBaseline` bool that parameterizes both walks.
 
 use std::{fmt::Write as _, path::Path};
 
@@ -27,9 +31,16 @@ use super::scanner::{
 };
 use crate::{CoverageResult, TestResult, TypeScriptFile, workspace_root};
 
-/// Emitted for nodes oxc cannot resolve to a symbol (members, `this`/`super`, lib globals).
-/// Must never be equal to a real `Symbol(...)` string.
+/// Emitted for nodes oxc cannot resolve (members, `this`/`super`, lib globals) and for every
+/// node in the `.types` scaffold. Must never equal a real `Symbol(...)` or type string.
 const UNRESOLVED: &str = "<<unresolved>>";
+
+/// Which baseline to generate. Mirrors typescript-go's `isSymbolBaseline` bool.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum BaselineKind {
+    Symbols,
+    Types,
+}
 
 /// Port of `typeWriterResult` (symbol fields only).
 struct TypeWriterResult {
@@ -41,6 +52,7 @@ struct TypeWriterResult {
 
 /// Port of `typeWriterWalker`, backed by `oxc_ast_visit::Visit` in place of `forEachASTNode`.
 struct SymbolWalker<'a> {
+    kind: BaselineKind,
     semantic: &'a Semantic<'a>,
     content: &'a str,
     line_starts: &'a [u32],
@@ -52,26 +64,33 @@ struct SymbolWalker<'a> {
 impl<'a> Visit<'a> for SymbolWalker<'a> {
     // Port of `visitNode`'s filter (`IsExpressionNode || KindIdentifier || IsDeclarationName`)
     // fused with `writeTypeOrSymbol`. `enter_node` fires pre-order in source order, matching
-    // the Go depth-first `forEachASTNode` walk.
+    // the Go depth-first `forEachASTNode` walk. In `Types` mode every payload is the
+    // `UNRESOLVED` placeholder (no type checker); in `Symbols` mode identifiers resolve.
     fn enter_node(&mut self, kind: AstKind<'a>) {
-        let symbol = match kind {
-            AstKind::IdentifierReference(it) => self.resolve(
+        let payload = match kind {
+            AstKind::IdentifierReference(it) if self.kind == BaselineKind::Symbols => self.resolve(
                 it.reference_id
                     .get()
                     .and_then(|r| self.semantic.scoping().get_reference(r).symbol_id()),
             ),
-            AstKind::BindingIdentifier(it) => self.resolve(it.symbol_id.get()),
-            AstKind::IdentifierName(_)
+            AstKind::BindingIdentifier(it) if self.kind == BaselineKind::Symbols => {
+                self.resolve(it.symbol_id.get())
+            }
+            AstKind::IdentifierReference(_)
+            | AstKind::BindingIdentifier(_)
+            | AstKind::IdentifierName(_)
             | AstKind::StaticMemberExpression(_)
             | AstKind::ComputedMemberExpression(_)
             | AstKind::PrivateFieldExpression(_)
             | AstKind::ThisExpression(_)
             | AstKind::Super(_) => UNRESOLVED.to_string(),
             // Literals, calls, binary/array/object/arrow, `TSQualifiedName`, etc. — the Go
-            // checker returns nil for these, so they never appear in a `.symbols` baseline.
+            // checker returns nil for these in the symbol walk, so they never appear in a
+            // `.symbols` baseline. (`.types` annotates them too, but oxc can't type them, so
+            // the scaffold leaves them out; a checker would broaden this arm.)
             _ => return,
         };
-        self.write(kind.span(), symbol);
+        self.write(kind.span(), payload);
     }
 }
 
@@ -175,7 +194,7 @@ fn header_path(path: &Path) -> String {
 }
 
 /// Port of `generateBaseline`: walk every unit, emit the `//// [path] ////` header + sections.
-fn generate_for_file(f: &TypeScriptFile, header: &str) -> String {
+fn generate_for_file(f: &TypeScriptFile, header: &str, kind: BaselineKind) -> String {
     let mut joined = String::new();
     for unit in &f.units {
         let allocator = Allocator::default();
@@ -191,6 +210,7 @@ fn generate_for_file(f: &TypeScriptFile, header: &str) -> String {
             let semantic =
                 SemanticBuilder::new_compiler().with_build_nodes(true).build(&ret.program).semantic;
             let mut walker = SymbolWalker {
+                kind,
                 semantic: &semantic,
                 content: &unit.content,
                 line_starts: &line_starts,
@@ -235,10 +255,12 @@ fn score(baseline: &str, oxc: &str) -> (usize, usize) {
 
 /// Conformance runner in the shared `CoverageResult` form (mirrors `run_semantic_typescript`),
 /// so `AppArgs::run_tool` prints and snapshots it exactly like the other suites. A file passes
-/// when oxc reproduces every `>` symbol line in the baseline; the remaining gap is the
-/// type-checker surface (members, `this`, qualified names, lib globals). Use `--diff` to inspect
-/// a mismatch.
-pub fn run_symbols_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
+/// when oxc reproduces every `>` line in the baseline. Use `--diff` to inspect a mismatch.
+fn run_baseline(files: &[TypeScriptFile], kind: BaselineKind) -> Vec<CoverageResult> {
+    let (ext, case) = match kind {
+        BaselineKind::Symbols => ("symbols", "Symbol Mismatch"),
+        BaselineKind::Types => ("types", "Type Mismatch"),
+    };
     files
         .par_iter()
         .filter_map(|f| {
@@ -248,27 +270,40 @@ pub fn run_symbols_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
             let stem = Path::new(&f.path).file_stem()?.to_string_lossy().into_owned();
             let baseline_path = workspace_root()
                 .join("typescript/tests/baselines/reference")
-                .join(format!("{stem}.symbols"));
-            // Only score files that ship a `.symbols` baseline.
+                .join(format!("{stem}.{ext}"));
+            // Only score files that ship a baseline of this kind.
             let baseline = std::fs::read_to_string(&baseline_path).ok()?;
 
             let header = header_path(&f.path);
             let result = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                generate_for_file(f, &header)
+                generate_for_file(f, &header, kind)
             })) {
                 Err(_) => {
-                    TestResult::ParseError("Panicked while generating symbols".to_string(), true)
+                    TestResult::ParseError("Panicked while generating baseline".to_string(), true)
                 }
                 Ok(generated) => {
                     let (matched, total) = score(&baseline, &generated);
                     if matched == total {
                         TestResult::Passed
                     } else {
-                        TestResult::Mismatch("Symbol Mismatch", generated, baseline)
+                        TestResult::Mismatch(case, generated, baseline)
                     }
                 }
             };
             Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
         })
         .collect()
+}
+
+/// `.symbols` conformance: does oxc's symbol resolution match TypeScript's? The remaining gap
+/// is the type-checker surface (members, `this`, qualified names, lib globals).
+pub fn run_symbols_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
+    run_baseline(files, BaselineKind::Symbols)
+}
+
+/// `.types` conformance — **scaffold**. oxc has no type checker, so every type is
+/// `<<unresolved>>` and this reports 0% until a checker is wired into the walker's `Types` arm.
+/// The runner itself (baseline discovery, walk, output, comparison, snapshot) is complete.
+pub fn run_types_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
+    run_baseline(files, BaselineKind::Types)
 }

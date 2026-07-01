@@ -48,6 +48,7 @@ fn main() {
         "estree_tokens" => app_args.run_estree_tokens(&data),
         "symbols" => app_args.run_symbols(&data),
         "errors" => app_args.run_errors(&data),
+        "types" => app_args.run_types(&data),
         "all" => {
             app_args.run_all();
             app_args.run_runtime();

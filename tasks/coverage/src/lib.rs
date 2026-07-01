@@ -480,6 +480,17 @@ impl AppArgs {
             typescript::error_baseline::run_errors_typescript,
         );
     }
+
+    /// Run TypeScript `.types` baseline conformance. Scaffold only until oxc has a type checker
+    /// (reports 0%); the runner is wired and ready.
+    pub fn run_types(&self, data: &TestData) {
+        self.run_tool(
+            "types_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            typescript::type_symbol_baseline::run_types_typescript,
+        );
+    }
 }
 
 #[test]
