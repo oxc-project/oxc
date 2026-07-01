@@ -2595,15 +2595,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_scope(ScopeFlags::TsConditional, &ty.scope_id);
         let conditional_scope_id = self.current_scope_id;
 
-        // Match TypeScript's resolver: `infer` declarations are collected on the conditional type
+        // `infer` declarations are collected on the conditional type
         // node, but those locals are visible only from the true branch.
         //
         // ```ts
         // type C<T> = T extends (a: infer B) => B ? B : never;
-        // //                         ^^^^^^^    ^   ^
-        // //                         declare    |   |
-        // //                                    |   visible: true_type sees `infer B`
-        // //                                    not visible: still inside extends_type
+        // //                        ─┬─────     ┬   ┬   ─┬───
+        // //                         │          │   │    ╰ not visible
+        // //                         │          │   ╰ visible: true_type sees `infer B`
+        // //                         │          ╰ not visible: still inside extends_type
+        // //                         ╰ `B` declared here
         // ```
         //
         // Operationally this means the conditional scope has two roles:
