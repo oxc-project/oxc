@@ -618,6 +618,20 @@ fn preserve_iife_in_dce_mode() {
     test_same("export const x = (() => 42)();");
     test_same("export const x = (() => { foo(); })();");
     test_same("export const x = (() => { return foo(); })();");
+
+    // A non-pure IIFE with a provably side-effect-free body is also preserved
+    // in DCE-only mode even when its result is unused. The body analysis that
+    // proves it droppable runs only under full minification.
+    // https://github.com/oxc-project/oxc/issues/23777
+    test_same("(function () { function t() {} return t })();");
+    test_same("(function () { return 1 })();");
+    // The unused binding is still dropped, but its side-effect-free IIFE
+    // initializer survives as a statement (structure preserved).
+    test("var u = (function () { return 1 })();", "(function () { return 1 })();");
+    // Nested in a sequence — still preserved (routes through the same path).
+    test_same("(function () { return 1 })(), foo();");
+    // `for`-init declarator removal must preserve the IIFE too.
+    test_same("for (var u = (function () { return 1 })(); cond;) bar();");
 }
 
 #[test]
