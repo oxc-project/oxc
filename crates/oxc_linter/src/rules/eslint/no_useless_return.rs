@@ -293,20 +293,19 @@ impl NoUselessReturn {
         nodes: &AstNodes,
     ) -> bool {
         let graph = cfg.graph();
-        let mut stack = vec![ContinuationBlock { id: start, in_finalizer: false }];
-        let mut seen = vec![[false; 2]; graph.node_count()];
+        let mut stack = vec![ContinuationBlock { id: start, finalizer_depth: 0 }];
+        let mut seen = vec![Vec::new(); graph.node_count()];
 
         while let Some(block) = stack.pop() {
             let block_id = block.id;
-            let seen_index = usize::from(block.in_finalizer);
-            if seen[block_id.index()][seen_index] {
+            if seen[block_id.index()].contains(&block.finalizer_depth) {
                 continue;
             }
-            seen[block_id.index()][seen_index] = true;
+            seen[block_id.index()].push(block.finalizer_depth);
 
             match Self::block_continuation_state(
                 cfg.basic_block(block_id),
-                block.in_finalizer,
+                block.is_in_finalizer(),
                 nodes,
             ) {
                 ContinuationState::Meaningful => return true,
@@ -324,14 +323,16 @@ impl NoUselessReturn {
                     | EdgeType::Backedge
                     | EdgeType::Unreachable => Some(ContinuationBlock {
                         id: edge.target(),
-                        in_finalizer: block.in_finalizer,
+                        finalizer_depth: block.finalizer_depth,
                     }),
-                    EdgeType::Finalize => {
-                        Some(ContinuationBlock { id: edge.target(), in_finalizer: true })
-                    }
-                    EdgeType::Join => {
-                        Some(ContinuationBlock { id: edge.target(), in_finalizer: false })
-                    }
+                    EdgeType::Finalize => Some(ContinuationBlock {
+                        id: edge.target(),
+                        finalizer_depth: block.finalizer_depth + 1,
+                    }),
+                    EdgeType::Join => Some(ContinuationBlock {
+                        id: edge.target(),
+                        finalizer_depth: block.finalizer_depth.saturating_sub(1),
+                    }),
                     EdgeType::NewFunction | EdgeType::Error(_) => None,
                 }
             }));
@@ -385,7 +386,13 @@ impl NoUselessReturn {
 #[derive(Clone, Copy)]
 struct ContinuationBlock {
     id: BlockNodeId,
-    in_finalizer: bool,
+    finalizer_depth: usize,
+}
+
+impl ContinuationBlock {
+    fn is_in_finalizer(self) -> bool {
+        self.finalizer_depth != 0
+    }
 }
 
 enum ContinuationState {
@@ -694,6 +701,18 @@ fn test() {
                 return;
             } finally {
                 bar();
+            }
+        }
+        ",
+        "
+        function foo() {
+            try {
+                return;
+            } finally {
+                try {
+                } finally {
+                }
+                cleanup();
             }
         }
         ",
