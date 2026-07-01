@@ -85,12 +85,15 @@ impl<'a> PeepholeOptimizations {
                 Self::prune_tail_exit_in_statement_list(&mut s.body, flags, ctx);
             }
             Statement::IfStatement(s) => {
+                // "if (x) { return; } else { return; }"
                 Self::prune_tail_exit_in_child_statement(&mut s.consequent, flags, ctx);
                 if let Some(alternate) = s.alternate.as_mut() {
                     Self::prune_tail_exit_in_child_statement(alternate, flags, ctx);
                 }
             }
             Statement::TryStatement(s) => {
+                // If there is a finalizer, we cannot remove exit statements in the try or catch blocks
+                // "try { return; } catch { return; } finally { return; }"
                 let nested_flags = if s.finalizer.is_none() { flags } else { RemoveFlag::empty() };
                 Self::prune_tail_exit_in_statement_list(&mut s.block.body, nested_flags, ctx);
                 if let Some(handler) = s.handler.as_mut() {
@@ -109,26 +112,33 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Statement::WhileStatement(s) => {
+                // "while (true) { continue; }"
                 Self::prune_tail_exit_in_child_statement(&mut s.body, RemoveFlag::CONTINUE, ctx);
             }
             Statement::ForStatement(s) => {
+                // "for (;;) { continue; }"
                 Self::prune_tail_exit_in_child_statement(&mut s.body, RemoveFlag::CONTINUE, ctx);
             }
             Statement::DoWhileStatement(s) => {
+                // "do { continue; } while (false)"
                 let mut body_flags = RemoveFlag::CONTINUE;
                 if s.test.evaluate_value_to_boolean(ctx) == Some(false) {
+                    // "do { break; } while (false)"
                     body_flags |= RemoveFlag::BREAK;
                 }
                 Self::prune_tail_exit_in_child_statement(&mut s.body, body_flags, ctx);
             }
             Statement::ForInStatement(s) => {
+                // "for (var x in y) { continue; }"
                 Self::prune_tail_exit_in_child_statement(&mut s.body, RemoveFlag::CONTINUE, ctx);
             }
             Statement::ForOfStatement(s) => {
+                // "for (var x of y) { continue; }"
                 Self::prune_tail_exit_in_child_statement(&mut s.body, RemoveFlag::CONTINUE, ctx);
             }
             Statement::SwitchStatement(s) => {
                 if let Some(last_case) = s.cases.last_mut() {
+                    // "switch (x) { case 1: break; }"
                     Self::prune_tail_exit_in_statement_list(
                         &mut last_case.consequent,
                         flags | RemoveFlag::BREAK,
