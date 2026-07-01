@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{Reference, SymbolFlags};
@@ -246,10 +246,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
             .retain(|elem| !matches!(elem, ClassElement::PropertyDefinition(prop) if prop.declare));
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
         if expr.is_typescript_syntax() {
-            let inner_expr = expr.get_inner_expression_mut();
-            *expr = inner_expr.take_in(ctx);
+            expr.replace_with(Expression::into_inner_expression);
         }
     }
 
@@ -412,8 +411,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 _ => None,
             };
             if let Some(span) = consequent_span {
-                let consequent = stmt.consequent.take_in(ctx);
-                stmt.consequent = Self::create_block_with_statement(consequent, span, ctx);
+                stmt.consequent.replace_with(|consequent| {
+                    Self::create_block_with_statement(consequent, span, ctx)
+                });
             }
 
             let alternate_span = match &stmt.alternate {
