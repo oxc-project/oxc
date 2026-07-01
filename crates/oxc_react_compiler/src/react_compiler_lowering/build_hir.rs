@@ -77,13 +77,13 @@ fn original_expression(expr: &Expression) -> Option<OriginalNode> {
     Some(OriginalNode::Expression(Box::new(expr.clone())))
 }
 
-/// Wrap a statement as an [`OriginalNode`](crate::react_compiler_ast::OriginalNode)
+/// Wrap a statement as an [`OriginalNode`]
 /// for `UnsupportedNode`'s `original_node`.
 fn original_statement(stmt: &Statement) -> Option<OriginalNode> {
     Some(OriginalNode::Statement(Box::new(stmt.clone())))
 }
 
-/// Wrap a pattern as an [`OriginalNode`](crate::react_compiler_ast::OriginalNode) for
+/// Wrap a pattern as an [`OriginalNode`] for
 /// `UnsupportedNode`'s `original_node`.
 fn original_pattern(pat: &PatternLike) -> Option<OriginalNode> {
     Some(OriginalNode::Pattern(Box::new(pat.clone())))
