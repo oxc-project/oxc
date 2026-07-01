@@ -10,15 +10,12 @@
 use crate::react_compiler_utils::FxIndexMap;
 use rustc_hash::FxHashMap;
 
-use serde::Serialize;
-
 use crate::react_compiler_hir::Effect;
 use crate::react_compiler_hir::type_config::{TypeConfig, ValueKind};
 
 /// External function reference (source module + import name).
 /// Corresponds to TS `ExternalFunction`.
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
 pub struct ExternalFunctionConfig {
     pub source: String,
     pub import_specifier_name: String,
@@ -26,38 +23,27 @@ pub struct ExternalFunctionConfig {
 
 /// Instrumentation configuration.
 /// Corresponds to TS `InstrumentationSchema`.
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
 pub struct InstrumentationConfig {
-    #[serde(rename = "fn")]
     pub fn_: ExternalFunctionConfig,
-    #[serde(default)]
     pub gating: Option<ExternalFunctionConfig>,
-    #[serde(default)]
     pub global_gating: Option<String>,
 }
 
 /// Custom hook configuration, ported from TS `HookSchema`.
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
 pub struct HookConfig {
     pub effect_kind: Effect,
     pub value_kind: ValueKind,
-    #[serde(default)]
     pub no_alias: bool,
-    #[serde(default)]
     pub transitive_mixed_data: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExhaustiveEffectDepsMode {
-    #[serde(rename = "off")]
     Off,
-    #[serde(rename = "all")]
     All,
-    #[serde(rename = "missing-only")]
     MissingOnly,
-    #[serde(rename = "extra-only")]
     ExtraOnly,
 }
 
@@ -72,97 +58,66 @@ impl Default for ExhaustiveEffectDepsMode {
 /// Fields that would require passing JS functions across the JS/Rust boundary
 /// are omitted with TODO comments. The Rust port uses hardcoded defaults for
 /// these (e.g., `defaultModuleTypeProvider`).
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
 pub struct EnvironmentConfig {
     /// Custom hook type definitions, keyed by hook name.
-    #[serde(default)]
     pub custom_hooks: FxHashMap<String, HookConfig>,
 
     /// Pre-resolved module type provider results.
     /// Map from module name to TypeConfig, computed by the JS shim.
-    #[serde(default)]
     pub module_type_provider: Option<FxIndexMap<String, TypeConfig>>,
 
     /// Custom macro-like function names that should have their operands
     /// memoized in the same scope (similar to fbt).
-    #[serde(default)]
     pub custom_macros: Option<Vec<String>>,
 
     /// If true, emit code to reset the memo cache on source file changes (HMR/fast refresh).
     /// If null (None), HMR detection is conditionally enabled based on NODE_ENV/__DEV__.
-    #[serde(default)]
     pub enable_reset_cache_on_source_file_changes: Option<bool>,
 
     pub enable_preserve_existing_memoization_guarantees: bool,
     pub validate_preserve_existing_memoization_guarantees: bool,
     pub validate_exhaustive_memoization_dependencies: bool,
-    #[serde(default)]
     pub validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode,
 
     // TODO: flowTypeProvider — requires JS function callback.
     pub enable_optional_dependencies: bool,
-    #[serde(default)]
     pub enable_name_anonymous_functions: bool,
     pub validate_hooks_usage: bool,
     pub validate_ref_access_during_render: bool,
     pub validate_no_set_state_in_render: bool,
-    #[serde(default)]
     pub enable_use_keyed_state: bool,
-    #[serde(default)]
     pub validate_no_set_state_in_effects: bool,
-    #[serde(default)]
     pub validate_no_derived_computations_in_effects: bool,
-    #[serde(default)]
-    #[serde(alias = "validateNoDerivedComputationsInEffects_exp")]
     pub validate_no_derived_computations_in_effects_exp: bool,
-    #[serde(default)]
-    #[serde(alias = "validateNoJSXInTryStatements")]
     pub validate_no_jsx_in_try_statements: bool,
-    #[serde(default)]
     pub validate_static_components: bool,
-    #[serde(default)]
     pub validate_no_capitalized_calls: Option<Vec<String>>,
-    #[serde(default)]
-    #[serde(alias = "restrictedImports")]
     pub validate_blocklisted_imports: Option<Vec<String>>,
-    #[serde(default)]
     pub validate_source_locations: bool,
-    #[serde(default)]
     pub validate_no_impure_functions_in_render: bool,
-    #[serde(default)]
     pub validate_no_freezing_known_mutable_functions: bool,
     pub enable_assume_hooks_follow_rules_of_react: bool,
     pub enable_transitively_freeze_function_expressions: bool,
 
     /// Hook guard configuration. When set, wraps hook calls with dispatcher guard calls.
-    #[serde(default)]
     pub enable_emit_hook_guards: Option<ExternalFunctionConfig>,
 
     /// Instrumentation configuration. When set, emits calls to instrument functions.
-    #[serde(default)]
     pub enable_emit_instrument_forget: Option<InstrumentationConfig>,
 
     pub enable_function_outlining: bool,
-    #[serde(default)]
     pub enable_jsx_outlining: bool,
-    #[serde(default)]
     pub assert_valid_mutable_ranges: bool,
-    #[serde(default)]
-    #[serde(alias = "throwUnknownException__testonly")]
     pub throw_unknown_exception_testonly: bool,
-    #[serde(default)]
     pub enable_custom_type_definition_for_reanimated: bool,
     pub enable_treat_ref_like_identifiers_as_refs: bool,
-    #[serde(default)]
     pub enable_treat_set_identifiers_as_state_setters: bool,
     pub validate_no_void_use_memo: bool,
     pub enable_allow_set_state_from_refs_in_effects: bool,
-    #[serde(default)]
     pub enable_verbose_no_set_state_in_effect: bool,
 
     // 🌲
-    #[serde(default)]
     pub enable_forest: bool,
 }
 

@@ -7,17 +7,14 @@
 
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_ast::common::SourceLocation as AstSourceLocation;
 use crate::react_compiler_ast::expressions::*;
 use crate::react_compiler_ast::jsx::JSXIdentifier;
 use crate::react_compiler_ast::jsx::JSXOpeningElement;
 use crate::react_compiler_ast::scope::ScopeId;
 use crate::react_compiler_ast::scope::ScopeInfo;
-use crate::react_compiler_ast::statements::ClassDeclaration;
 use crate::react_compiler_ast::statements::FunctionDeclaration;
 use crate::react_compiler_ast::visitor::AstWalker;
 use crate::react_compiler_ast::visitor::Visitor;
-use crate::react_compiler_hir::Position;
 use crate::react_compiler_hir::SourceLocation;
 
 use crate::react_compiler_lowering::FunctionNode;
@@ -56,10 +53,18 @@ struct IdentifierLocVisitor {
     current_opening_element_loc: Option<SourceLocation>,
 }
 
-fn convert_loc(loc: &AstSourceLocation) -> SourceLocation {
+fn convert_loc(loc: &crate::react_compiler_ast::common::SourceLocation) -> SourceLocation {
     SourceLocation {
-        start: Position { line: loc.start.line, column: loc.start.column, index: loc.start.index },
-        end: Position { line: loc.end.line, column: loc.end.column, index: loc.end.index },
+        start: crate::react_compiler_hir::Position {
+            line: loc.start.line,
+            column: loc.start.column,
+            index: loc.start.index,
+        },
+        end: crate::react_compiler_hir::Position {
+            line: loc.end.line,
+            column: loc.end.column,
+            index: loc.end.index,
+        },
     }
 }
 
@@ -80,80 +85,6 @@ impl IdentifierLocVisitor {
                 },
             );
         }
-    }
-
-    /// Recursively walk a serde_json::Value tree to find and index all Identifier
-    /// and JSXIdentifier nodes. Used for class bodies which are stored as untyped
-    /// JSON and not walked by the typed AstWalker. This matches the TS behavior
-    /// where gatherCapturedContext's Babel traverse walks into class bodies.
-    ///
-    /// `in_annotation` is true once the walk has descended through a type
-    /// annotation container node; identifiers found there are flagged so
-    /// `gather_captured_context` can mirror TS's TypeAnnotation subtree skip.
-    fn walk_json_for_identifiers(&mut self, value: &serde_json::Value, in_annotation: bool) {
-        match value {
-            serde_json::Value::Object(obj) => {
-                let node_in_annotation = in_annotation
-                    || matches!(
-                        obj.get("type").and_then(|t| t.as_str()),
-                        Some(
-                            "TypeAnnotation"
-                                | "TSTypeAnnotation"
-                                | "TypeAlias"
-                                | "TSTypeAliasDeclaration"
-                        )
-                    );
-                if let Some(serde_json::Value::String(ty)) = obj.get("type") {
-                    if ty == "Identifier" || ty == "JSXIdentifier" {
-                        if let (Some(nid), Some(start)) = (
-                            obj.get("_nodeId").and_then(|s| s.as_u64()),
-                            obj.get("start").and_then(|s| s.as_u64()),
-                        ) {
-                            if let Some(loc) = Self::extract_loc_from_json(obj) {
-                                let is_jsx = ty == "JSXIdentifier";
-                                self.index.entry(nid as u32).or_insert(IdentifierLocEntry {
-                                    start: start as u32,
-                                    loc,
-                                    is_jsx,
-                                    opening_element_loc: None,
-                                    is_declaration_name: false,
-                                    in_type_annotation: node_in_annotation,
-                                });
-                            }
-                        }
-                    }
-                }
-                for (_, v) in obj {
-                    self.walk_json_for_identifiers(v, node_in_annotation);
-                }
-            }
-            serde_json::Value::Array(arr) => {
-                for v in arr {
-                    self.walk_json_for_identifiers(v, in_annotation);
-                }
-            }
-            _ => {}
-        }
-    }
-
-    fn extract_loc_from_json(
-        obj: &serde_json::Map<String, serde_json::Value>,
-    ) -> Option<SourceLocation> {
-        let loc = obj.get("loc")?.as_object()?;
-        let start = loc.get("start")?.as_object()?;
-        let end = loc.get("end")?.as_object()?;
-        Some(SourceLocation {
-            start: Position {
-                line: start.get("line")?.as_u64()? as u32,
-                column: start.get("column")?.as_u64()? as u32,
-                index: start.get("index").and_then(|i| i.as_u64()).map(|i| i as u32),
-            },
-            end: Position {
-                line: end.get("line")?.as_u64()? as u32,
-                column: end.get("column")?.as_u64()? as u32,
-                index: end.get("index").and_then(|i| i.as_u64()).map(|i| i as u32),
-            },
-        })
     }
 }
 
@@ -219,25 +150,44 @@ impl<'ast> Visitor<'ast> for IdentifierLocVisitor {
         }
     }
 
-    fn enter_class_declaration(&mut self, node: &'ast ClassDeclaration, _scope_stack: &[ScopeId]) {
+    fn enter_class_declaration(
+        &mut self,
+        node: &'ast crate::react_compiler_ast::statements::ClassDeclaration,
+        _scope_stack: &[ScopeId],
+    ) {
         if let Some(id) = &node.id {
             self.insert_identifier(id, true);
         }
-        // Walk class body JSON to index identifiers inside class methods.
-        // The typed AstWalker skips class bodies (stored as Vec<serde_json::Value>),
-        // but gatherCapturedContext in TS traverses them via Babel's traverse.
-        for member in &node.body.body {
-            self.walk_json_for_identifiers(&member.parse_value(), false);
+        // Class body identifiers are indexed via `visit_raw_node` (the walker
+        // visits each `body.body` member's pre-extracted metadata).
+    }
+
+    fn enter_class_expression(
+        &mut self,
+        node: &'ast crate::react_compiler_ast::expressions::ClassExpression,
+        _scope_stack: &[ScopeId],
+    ) {
+        if let Some(id) = &node.id {
+            self.insert_identifier(id, true);
         }
     }
 
-    fn enter_class_expression(&mut self, node: &'ast ClassExpression, _scope_stack: &[ScopeId]) {
-        if let Some(id) = &node.id {
-            self.insert_identifier(id, true);
-        }
-        // Walk class body JSON to index identifiers inside class methods
-        for member in &node.body.body {
-            self.walk_json_for_identifiers(&member.parse_value(), false);
+    /// Index identifiers inside unmodeled (`RawNode`) subtrees — type annotations,
+    /// class bodies, decorators — from their pre-extracted metadata. The typed
+    /// walker skips these, so this is where type-annotation identifiers (and the
+    /// `in_type_annotation` flag) enter the index. `or_insert` keeps any richer
+    /// entry already recorded by the typed walker.
+    fn visit_raw_node(&mut self, raw: &'ast crate::react_compiler_ast::common::RawNode) {
+        for id in &raw.idents {
+            let Some(loc) = &id.loc else { continue };
+            self.index.entry(id.node_id).or_insert(IdentifierLocEntry {
+                start: id.start,
+                loc: convert_loc(loc),
+                is_jsx: id.is_jsx,
+                opening_element_loc: None,
+                is_declaration_name: false,
+                in_type_annotation: id.in_type_annotation,
+            });
         }
     }
 }
@@ -290,22 +240,8 @@ pub fn build_identifier_loc_index(
         }
     }
 
-    // Walk type annotations that the AST walker skips.
-    // The walker skips TypeAlias, TSTypeAliasDeclaration, and similar statements,
-    // but Babel's isReferencedIdentifier() returns true for identifiers inside them
-    // (e.g., typeof x in `type T = ReturnType<typeof x>`). The TS compiler's
-    // FindContextIdentifiers includes these via its Identifier visitor. We match by
-    // serializing the function body to JSON and walking the full JSON tree.
-    // The walk_json_for_identifiers method uses entry().or_insert() so it won't
-    // overwrite entries already added by the typed walker above.
-    let body_json: Option<serde_json::Value> = match func {
-        FunctionNode::FunctionDeclaration(d) => serde_json::to_value(&d.body).ok(),
-        FunctionNode::FunctionExpression(e) => serde_json::to_value(&e.body).ok(),
-        FunctionNode::ArrowFunctionExpression(a) => serde_json::to_value(&a.body).ok(),
-    };
-    if let Some(json) = body_json {
-        visitor.walk_json_for_identifiers(&json, false);
-    }
-
+    // Type-annotation and class-body identifiers (which the typed walker skips)
+    // are indexed via the walker's `visit_raw_node` hook from each RawNode's
+    // pre-extracted `idents`, so no separate JSON walk is needed.
     visitor.index
 }

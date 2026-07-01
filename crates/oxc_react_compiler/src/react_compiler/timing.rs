@@ -8,11 +8,10 @@
 //! Uses `std::time::Instant` unconditionally (cheap when not storing results).
 //! Controlled by the `__profiling` flag in plugin options.
 
-use serde::Serialize;
 use std::time::{Duration, Instant};
 
 /// A single timing entry recording how long a named phase took.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct TimingEntry {
     pub name: String,
     pub duration_us: u64,

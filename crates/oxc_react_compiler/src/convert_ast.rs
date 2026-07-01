@@ -6,7 +6,9 @@ use crate::react_compiler_ast::common::BaseNode;
 use crate::react_compiler_ast::common::Comment;
 use crate::react_compiler_ast::common::CommentData;
 use crate::react_compiler_ast::common::Position;
+use crate::react_compiler_ast::common::RawIdent;
 use crate::react_compiler_ast::common::RawNode;
+use crate::react_compiler_ast::common::RawTypeCategory;
 use crate::react_compiler_ast::common::SourceLocation;
 use crate::react_compiler_ast::declarations::*;
 use crate::react_compiler_ast::expressions::*;
@@ -22,6 +24,7 @@ use crate::react_compiler_ast::statements::*;
  * LICENSE file in the root directory of this source tree.
  */
 use oxc_ast::ast as oxc;
+use oxc_ast_visit::Visit;
 use oxc_span::GetSpan;
 use oxc_span::Span;
 use oxc_syntax::xml_entities::XML_ENTITIES;
@@ -77,6 +80,71 @@ fn decode_jsx_entities(s: &str) -> String {
     }
     out.push_str(&s[prev..]);
     out
+}
+
+/// Babel/ESTree node-type name for an oxc TS type.
+fn babel_ts_type_name(ty: &oxc::TSType) -> &'static str {
+    match ty {
+        oxc::TSType::TSAnyKeyword(_) => "TSAnyKeyword",
+        oxc::TSType::TSBigIntKeyword(_) => "TSBigIntKeyword",
+        oxc::TSType::TSBooleanKeyword(_) => "TSBooleanKeyword",
+        oxc::TSType::TSIntrinsicKeyword(_) => "TSIntrinsicKeyword",
+        oxc::TSType::TSNeverKeyword(_) => "TSNeverKeyword",
+        oxc::TSType::TSNullKeyword(_) => "TSNullKeyword",
+        oxc::TSType::TSNumberKeyword(_) => "TSNumberKeyword",
+        oxc::TSType::TSObjectKeyword(_) => "TSObjectKeyword",
+        oxc::TSType::TSStringKeyword(_) => "TSStringKeyword",
+        oxc::TSType::TSSymbolKeyword(_) => "TSSymbolKeyword",
+        oxc::TSType::TSThisType(_) => "TSThisType",
+        oxc::TSType::TSUndefinedKeyword(_) => "TSUndefinedKeyword",
+        oxc::TSType::TSUnknownKeyword(_) => "TSUnknownKeyword",
+        oxc::TSType::TSVoidKeyword(_) => "TSVoidKeyword",
+        oxc::TSType::TSArrayType(_) => "TSArrayType",
+        oxc::TSType::TSUnionType(_) => "TSUnionType",
+        oxc::TSType::TSParenthesizedType(_) => "TSParenthesizedType",
+        oxc::TSType::TSLiteralType(_) => "TSLiteralType",
+        oxc::TSType::TSTypeReference(_) => "TSTypeReference",
+        oxc::TSType::TSTypeOperatorType(_) => "TSTypeOperator",
+        oxc::TSType::TSTupleType(_) => "TSTupleType",
+        oxc::TSType::TSIntersectionType(_) => "TSIntersectionType",
+        oxc::TSType::TSTypeLiteral(_) => "TSTypeLiteral",
+        oxc::TSType::TSTypeQuery(_) => "TSTypeQuery",
+        oxc::TSType::TSFunctionType(_) => "TSFunctionType",
+        oxc::TSType::TSConstructorType(_) => "TSConstructorType",
+        oxc::TSType::TSConditionalType(_) => "TSConditionalType",
+        oxc::TSType::TSIndexedAccessType(_) => "TSIndexedAccessType",
+        oxc::TSType::TSInferType(_) => "TSInferType",
+        oxc::TSType::TSImportType(_) => "TSImportType",
+        oxc::TSType::TSMappedType(_) => "TSMappedType",
+        oxc::TSType::TSNamedTupleMember(_) => "TSNamedTupleMember",
+        oxc::TSType::TSTemplateLiteralType(_) => "TSTemplateLiteralType",
+        oxc::TSType::TSTypePredicate(_) => "TSTypePredicate",
+        oxc::TSType::JSDocNullableType(_) => "JSDocNullableType",
+        oxc::TSType::JSDocNonNullableType(_) => "JSDocNonNullableType",
+        oxc::TSType::JSDocUnknownType(_) => "JSDocUnknownType",
+    }
+}
+
+/// Coarse classification mirroring HIR `lower_type_annotation` (array / primitive
+/// / everything else).
+fn classify_oxc_type(ty: &oxc::TSType) -> RawTypeCategory {
+    match ty {
+        oxc::TSType::TSArrayType(_) => RawTypeCategory::Array,
+        oxc::TSType::TSTypeReference(r) => match &r.type_name {
+            oxc::TSTypeName::IdentifierReference(id) if id.name == "Array" => {
+                RawTypeCategory::Array
+            }
+            _ => RawTypeCategory::Other,
+        },
+        oxc::TSType::TSBooleanKeyword(_)
+        | oxc::TSType::TSNullKeyword(_)
+        | oxc::TSType::TSNumberKeyword(_)
+        | oxc::TSType::TSStringKeyword(_)
+        | oxc::TSType::TSSymbolKeyword(_)
+        | oxc::TSType::TSUndefinedKeyword(_)
+        | oxc::TSType::TSVoidKeyword(_) => RawTypeCategory::Primitive,
+        _ => RawTypeCategory::Other,
+    }
 }
 
 /// Converts an OXC AST to the React compiler's Babel-compatible AST.
@@ -148,278 +216,73 @@ impl<'a> ConvertCtx<'a> {
         }
     }
 
-    fn make_typed_json_base(
-        &self,
-        type_name: &str,
-        span: Span,
-    ) -> serde_json::Map<String, serde_json::Value> {
-        let mut obj = serde_json::Map::new();
-        obj.insert("type".to_string(), serde_json::Value::String(type_name.to_string()));
-        obj.insert("start".to_string(), serde_json::Value::from(span.start));
-        obj.insert("end".to_string(), serde_json::Value::from(span.end));
-        obj.insert(
-            "loc".to_string(),
-            serde_json::to_value(self.source_location(span)).unwrap_or(serde_json::Value::Null),
-        );
-        obj.insert("_nodeId".to_string(), serde_json::Value::from(span.start));
-        obj
+    /// Build the identifier metadata for a TS type. Codegen re-parses the type
+    /// from source, so the only metadata the compiler needs from here is the set
+    /// of referenced identifiers (for the loc index and for renaming `typeof`
+    /// queries), plus the type's tag/span/classification.
+    fn collect_type_idents(&self, ty: &oxc::TSType, out: &mut Vec<RawIdent>) {
+        struct Collector<'c, 'ctx> {
+            ctx: &'c ConvertCtx<'ctx>,
+            out: &'c mut Vec<RawIdent>,
+        }
+        impl<'a> oxc_ast_visit::Visit<'a> for Collector<'_, '_> {
+            fn visit_identifier_reference(&mut self, it: &oxc::IdentifierReference<'a>) {
+                self.out.push(self.ctx.type_ident(it.name.as_str(), it.span));
+            }
+            fn visit_identifier_name(&mut self, it: &oxc::IdentifierName<'a>) {
+                self.out.push(self.ctx.type_ident(it.name.as_str(), it.span));
+            }
+        }
+        Collector { ctx: self, out }.visit_ts_type(ty);
+    }
+
+    fn type_ident(&self, name: &str, span: Span) -> RawIdent {
+        RawIdent {
+            name: name.to_string(),
+            node_id: span.start,
+            start: span.start,
+            loc: Some(self.source_location(span)),
+            is_jsx: false,
+            in_type_annotation: true,
+            renamed_to: None,
+        }
+    }
+
+    fn raw_type_node(&self, ty: &oxc::TSType) -> RawNode {
+        let mut idents = Vec::new();
+        self.collect_type_idents(ty, &mut idents);
+        RawNode::type_node(
+            Some(babel_ts_type_name(ty).to_string()),
+            Some(ty.span().start),
+            Some(ty.span().end),
+            classify_oxc_type(ty),
+            idents,
+        )
     }
 
     fn convert_ts_type_annotation_json(&self, type_annotation: &oxc::TSTypeAnnotation) -> RawNode {
-        let mut obj = self.make_typed_json_base("TSTypeAnnotation", type_annotation.span);
-        obj.insert(
-            "typeAnnotation".to_string(),
-            self.convert_ts_type_json_value(&type_annotation.type_annotation),
-        );
-        RawNode::from_value(&serde_json::Value::Object(obj))
+        self.raw_type_node(&type_annotation.type_annotation)
     }
 
     fn convert_ts_type_parameter_instantiation_json(
         &self,
         type_arguments: &oxc::TSTypeParameterInstantiation,
     ) -> RawNode {
-        let mut obj =
-            self.make_typed_json_base("TSTypeParameterInstantiation", type_arguments.span);
-        obj.insert(
-            "params".to_string(),
-            serde_json::Value::Array(
-                type_arguments
-                    .params
-                    .iter()
-                    .map(|ty| self.convert_ts_type_json_value(ty))
-                    .collect(),
-            ),
-        );
-        RawNode::from_value(&serde_json::Value::Object(obj))
+        let mut idents = Vec::new();
+        for ty in &type_arguments.params {
+            self.collect_type_idents(ty, &mut idents);
+        }
+        RawNode::type_node(
+            Some("TSTypeParameterInstantiation".to_string()),
+            Some(type_arguments.span.start),
+            Some(type_arguments.span.end),
+            RawTypeCategory::Other,
+            idents,
+        )
     }
 
     fn convert_ts_type_json(&self, ty: &oxc::TSType) -> RawNode {
-        RawNode::from_value(&self.convert_ts_type_json_value(ty))
-    }
-
-    fn convert_ts_type_json_value(&self, ty: &oxc::TSType) -> serde_json::Value {
-        let type_name = match ty {
-            oxc::TSType::TSAnyKeyword(_) => "TSAnyKeyword",
-            oxc::TSType::TSBigIntKeyword(_) => "TSBigIntKeyword",
-            oxc::TSType::TSBooleanKeyword(_) => "TSBooleanKeyword",
-            oxc::TSType::TSIntrinsicKeyword(_) => "TSIntrinsicKeyword",
-            oxc::TSType::TSNeverKeyword(_) => "TSNeverKeyword",
-            oxc::TSType::TSNullKeyword(_) => "TSNullKeyword",
-            oxc::TSType::TSNumberKeyword(_) => "TSNumberKeyword",
-            oxc::TSType::TSObjectKeyword(_) => "TSObjectKeyword",
-            oxc::TSType::TSStringKeyword(_) => "TSStringKeyword",
-            oxc::TSType::TSSymbolKeyword(_) => "TSSymbolKeyword",
-            oxc::TSType::TSThisType(_) => "TSThisType",
-            oxc::TSType::TSUndefinedKeyword(_) => "TSUndefinedKeyword",
-            oxc::TSType::TSUnknownKeyword(_) => "TSUnknownKeyword",
-            oxc::TSType::TSVoidKeyword(_) => "TSVoidKeyword",
-            oxc::TSType::TSArrayType(_) => "TSArrayType",
-            oxc::TSType::TSUnionType(_) => "TSUnionType",
-            oxc::TSType::TSParenthesizedType(_) => "TSParenthesizedType",
-            oxc::TSType::TSLiteralType(_) => "TSLiteralType",
-            oxc::TSType::TSTypeReference(_) => "TSTypeReference",
-            oxc::TSType::TSTypeOperatorType(_) => "TSTypeOperator",
-            oxc::TSType::TSTupleType(_) => "TSTupleType",
-            oxc::TSType::TSIntersectionType(_) => "TSIntersectionType",
-            oxc::TSType::TSTypeLiteral(_) => "TSTypeLiteral",
-            oxc::TSType::TSTypeQuery(_) => "TSTypeQuery",
-            oxc::TSType::TSFunctionType(_) => "TSFunctionType",
-            oxc::TSType::TSConstructorType(_) => "TSConstructorType",
-            oxc::TSType::TSConditionalType(_) => "TSConditionalType",
-            oxc::TSType::TSIndexedAccessType(_) => "TSIndexedAccessType",
-            oxc::TSType::TSInferType(_) => "TSInferType",
-            oxc::TSType::TSImportType(_) => "TSImportType",
-            oxc::TSType::TSMappedType(_) => "TSMappedType",
-            oxc::TSType::TSNamedTupleMember(_) => "TSNamedTupleMember",
-            oxc::TSType::TSTemplateLiteralType(_) => "TSTemplateLiteralType",
-            oxc::TSType::TSTypePredicate(_) => "TSTypePredicate",
-            oxc::TSType::JSDocNullableType(_) => "JSDocNullableType",
-            oxc::TSType::JSDocNonNullableType(_) => "JSDocNonNullableType",
-            oxc::TSType::JSDocUnknownType(_) => "JSDocUnknownType",
-        };
-
-        let mut obj = self.make_typed_json_base(type_name, ty.span());
-        match ty {
-            oxc::TSType::TSArrayType(array) => {
-                obj.insert(
-                    "elementType".to_string(),
-                    self.convert_ts_type_json_value(&array.element_type),
-                );
-            }
-            oxc::TSType::TSUnionType(union) => {
-                obj.insert(
-                    "types".to_string(),
-                    serde_json::Value::Array(
-                        union.types.iter().map(|ty| self.convert_ts_type_json_value(ty)).collect(),
-                    ),
-                );
-            }
-            oxc::TSType::TSParenthesizedType(parenthesized) => {
-                obj.insert(
-                    "typeAnnotation".to_string(),
-                    self.convert_ts_type_json_value(&parenthesized.type_annotation),
-                );
-            }
-            oxc::TSType::TSTypeReference(reference) => {
-                obj.insert(
-                    "typeName".to_string(),
-                    self.convert_ts_type_name_json_value(&reference.type_name),
-                );
-                if let Some(type_arguments) = &reference.type_arguments {
-                    obj.insert(
-                        "typeParameters".to_string(),
-                        self.convert_ts_type_parameter_instantiation_json(type_arguments)
-                            .parse_value(),
-                    );
-                }
-            }
-            oxc::TSType::TSTypeQuery(query) => {
-                obj.insert(
-                    "exprName".to_string(),
-                    self.convert_ts_type_query_expr_name_json_value(&query.expr_name),
-                );
-                if let Some(type_arguments) = &query.type_arguments {
-                    obj.insert(
-                        "typeParameters".to_string(),
-                        self.convert_ts_type_parameter_instantiation_json(type_arguments)
-                            .parse_value(),
-                    );
-                }
-            }
-            oxc::TSType::TSIndexedAccessType(indexed) => {
-                obj.insert(
-                    "objectType".to_string(),
-                    self.convert_ts_type_json_value(&indexed.object_type),
-                );
-                obj.insert(
-                    "indexType".to_string(),
-                    self.convert_ts_type_json_value(&indexed.index_type),
-                );
-            }
-            oxc::TSType::TSTypeOperatorType(operator) => {
-                let operator_name = match operator.operator {
-                    oxc::TSTypeOperatorOperator::Keyof => "keyof",
-                    oxc::TSTypeOperatorOperator::Unique => "unique",
-                    oxc::TSTypeOperatorOperator::Readonly => "readonly",
-                };
-                obj.insert(
-                    "operator".to_string(),
-                    serde_json::Value::String(operator_name.to_string()),
-                );
-                obj.insert(
-                    "typeAnnotation".to_string(),
-                    self.convert_ts_type_json_value(&operator.type_annotation),
-                );
-            }
-            oxc::TSType::TSLiteralType(literal) => {
-                obj.insert(
-                    "literal".to_string(),
-                    self.convert_ts_literal_json_value(&literal.literal),
-                );
-            }
-            _ => {}
-        }
-        serde_json::Value::Object(obj)
-    }
-
-    fn convert_ts_type_name_json_value(&self, type_name: &oxc::TSTypeName) -> serde_json::Value {
-        match type_name {
-            oxc::TSTypeName::IdentifierReference(identifier) => {
-                let mut obj = self.make_typed_json_base("Identifier", identifier.span);
-                obj.insert(
-                    "name".to_string(),
-                    serde_json::Value::String(identifier.name.to_string()),
-                );
-                serde_json::Value::Object(obj)
-            }
-            oxc::TSTypeName::QualifiedName(qualified) => {
-                let mut obj = self.make_typed_json_base("TSQualifiedName", qualified.span);
-                obj.insert(
-                    "left".to_string(),
-                    self.convert_ts_type_name_json_value(&qualified.left),
-                );
-                let mut right = self.make_typed_json_base("Identifier", qualified.right.span);
-                right.insert(
-                    "name".to_string(),
-                    serde_json::Value::String(qualified.right.name.to_string()),
-                );
-                obj.insert("right".to_string(), serde_json::Value::Object(right));
-                serde_json::Value::Object(obj)
-            }
-            oxc::TSTypeName::ThisExpression(this) => {
-                serde_json::Value::Object(self.make_typed_json_base("TSThisType", this.span))
-            }
-        }
-    }
-
-    fn convert_ts_type_query_expr_name_json_value(
-        &self,
-        expr_name: &oxc::TSTypeQueryExprName,
-    ) -> serde_json::Value {
-        match expr_name {
-            oxc::TSTypeQueryExprName::IdentifierReference(identifier) => {
-                let mut obj = self.make_typed_json_base("Identifier", identifier.span);
-                obj.insert(
-                    "name".to_string(),
-                    serde_json::Value::String(identifier.name.to_string()),
-                );
-                serde_json::Value::Object(obj)
-            }
-            oxc::TSTypeQueryExprName::QualifiedName(qualified) => {
-                let mut obj = self.make_typed_json_base("TSQualifiedName", qualified.span);
-                obj.insert(
-                    "left".to_string(),
-                    self.convert_ts_type_name_json_value(&qualified.left),
-                );
-                let mut right = self.make_typed_json_base("Identifier", qualified.right.span);
-                right.insert(
-                    "name".to_string(),
-                    serde_json::Value::String(qualified.right.name.to_string()),
-                );
-                obj.insert("right".to_string(), serde_json::Value::Object(right));
-                serde_json::Value::Object(obj)
-            }
-            oxc::TSTypeQueryExprName::ThisExpression(this) => {
-                serde_json::Value::Object(self.make_typed_json_base("TSThisType", this.span))
-            }
-            oxc::TSTypeQueryExprName::TSImportType(import) => {
-                serde_json::Value::Object(self.make_typed_json_base("TSImportType", import.span))
-            }
-        }
-    }
-
-    fn convert_ts_literal_json_value(&self, literal: &oxc::TSLiteral) -> serde_json::Value {
-        match literal {
-            oxc::TSLiteral::BooleanLiteral(literal) => {
-                let mut obj = self.make_typed_json_base("BooleanLiteral", literal.span);
-                obj.insert("value".to_string(), serde_json::Value::Bool(literal.value));
-                serde_json::Value::Object(obj)
-            }
-            oxc::TSLiteral::NumericLiteral(literal) => {
-                let mut obj = self.make_typed_json_base("NumericLiteral", literal.span);
-                obj.insert("value".to_string(), serde_json::Value::from(literal.value));
-                serde_json::Value::Object(obj)
-            }
-            oxc::TSLiteral::StringLiteral(literal) => {
-                let mut obj = self.make_typed_json_base("StringLiteral", literal.span);
-                obj.insert(
-                    "value".to_string(),
-                    serde_json::Value::String(literal.value.to_string()),
-                );
-                serde_json::Value::Object(obj)
-            }
-            oxc::TSLiteral::BigIntLiteral(literal) => {
-                let mut obj = self.make_typed_json_base("BigIntLiteral", literal.span);
-                obj.insert(
-                    "value".to_string(),
-                    serde_json::Value::String(literal.value.to_string()),
-                );
-                serde_json::Value::Object(obj)
-            }
-            other => {
-                serde_json::Value::Object(self.make_typed_json_base("TSLiteral", other.span()))
-            }
-        }
+        self.raw_type_node(ty)
     }
 
     fn position(&self, offset: u32) -> Position {
@@ -900,11 +763,7 @@ impl<'a> ConvertCtx<'a> {
             params: self
                 .convert_formal_parameters(&func.params)
                 .into_iter()
-                .map(|param| {
-                    RawNode::from_value(
-                        &serde_json::to_value(param).unwrap_or(serde_json::Value::Null),
-                    )
-                })
+                .map(|_param| RawNode::empty())
                 .collect(),
             is_async: if func.r#async { Some(true) } else { None },
             declare: if func.declare { Some(true) } else { None },
@@ -2941,7 +2800,7 @@ impl<'a> ConvertCtx<'a> {
     // ============================================================
     // Helper methods for converting Expression-inheriting enums
     // These handle the case where OXC enums inherit from Expression
-    // via `INHERIT(...)` and each variant has a differently-typed Box.
+    // via @inherit and each variant has a differently-typed Box.
     // ============================================================
 
     /// Convert Argument expression variants (not SpreadElement) to Expression
@@ -2990,7 +2849,7 @@ trait ExpressionLike {
     fn convert_with(&self, ctx: &ConvertCtx) -> Expression;
 }
 
-/// Macro to implement ExpressionLike for enums that inherit Expression (via `INHERIT(...)`).
+/// Macro to implement ExpressionLike for enums that @inherit Expression.
 /// Each variant name matches the Expression variant name, so we can
 /// deref the inner Box and call the appropriate convert method.
 macro_rules! impl_expression_like {
@@ -3108,36 +2967,36 @@ macro_rules! impl_expression_like {
     };
 }
 
-// ForStatementInit: VariableDeclaration + INHERIT(Expression<'a>)
+// ForStatementInit: VariableDeclaration + @inherit Expression
 impl_expression_like!(oxc::ForStatementInit<'a>, [
     Self::VariableDeclaration(_) => unreachable!("handled separately")
 ]);
 
-// Argument: SpreadElement + INHERIT(Expression<'a>)
+// Argument: SpreadElement + @inherit Expression
 impl_expression_like!(oxc::Argument<'a>, [
     Self::SpreadElement(_) => unreachable!("handled separately")
 ]);
 
-// ArrayExpressionElement: SpreadElement + Elision + INHERIT(Expression<'a>)
+// ArrayExpressionElement: SpreadElement + Elision + @inherit Expression
 impl_expression_like!(oxc::ArrayExpressionElement<'a>, [
     Self::SpreadElement(_) => unreachable!("handled separately"),
     Self::Elision(_) => unreachable!("handled separately")
 ]);
 
-// ExportDefaultDeclarationKind: FunctionDeclaration + ClassDeclaration + TSInterfaceDeclaration + INHERIT(Expression<'a>)
+// ExportDefaultDeclarationKind: FunctionDeclaration + ClassDeclaration + TSInterfaceDeclaration + @inherit Expression
 impl_expression_like!(oxc::ExportDefaultDeclarationKind<'a>, [
     Self::FunctionDeclaration(_) => unreachable!("handled separately"),
     Self::ClassDeclaration(_) => unreachable!("handled separately"),
     Self::TSInterfaceDeclaration(_) => unreachable!("handled separately")
 ]);
 
-// PropertyKey: StaticIdentifier + PrivateIdentifier + INHERIT(Expression<'a>)
+// PropertyKey: StaticIdentifier + PrivateIdentifier + @inherit Expression
 impl_expression_like!(oxc::PropertyKey<'a>, [
     Self::StaticIdentifier(_) => unreachable!("handled separately"),
     Self::PrivateIdentifier(_) => unreachable!("handled separately")
 ]);
 
-// JSXExpression: EmptyExpression + INHERIT(Expression<'a>)
+// JSXExpression: EmptyExpression + @inherit Expression
 impl_expression_like!(oxc::JSXExpression<'a>, [
     Self::EmptyExpression(_) => unreachable!("handled separately")
 ]);

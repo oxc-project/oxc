@@ -1,18 +1,16 @@
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
 use crate::react_compiler_utils::FxIndexMap;
-use serde::Serialize;
 
 /// Identifies a scope in the scope table. Copy-able, used as an index.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ScopeId(pub u32);
 
 /// Identifies a binding (variable declaration) in the binding table. Copy-able, used as an index.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BindingId(pub u32);
 
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
 pub struct ScopeData {
     pub id: ScopeId,
     pub parent: Option<ScopeId>,
@@ -22,21 +20,18 @@ pub struct ScopeData {
     pub bindings: FxHashMap<String, BindingId>,
 }
 
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone)]
 pub enum ScopeKind {
     Program,
     Function,
     Block,
-    #[serde(rename = "for")]
     For,
     Class,
     Switch,
     Catch,
 }
 
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
 pub struct BindingData {
     pub id: BindingId,
     pub name: String,
@@ -49,20 +44,16 @@ pub struct BindingData {
     pub declaration_type: String,
     /// The start offset of the binding's declaration identifier.
     /// Used to distinguish declaration sites from references in `reference_to_binding`.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub declaration_start: Option<u32>,
     /// The node-ID of the binding's declaration identifier.
     /// Preferred over `declaration_start` for distinguishing declarations from
     /// references, as positions can collide for synthetic nodes at position 0.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub declaration_node_id: Option<u32>,
     /// For import bindings: the source module and import details.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub import: Option<ImportBindingData>,
 }
 
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone)]
 pub enum BindingKind {
     Var,
     Let,
@@ -78,19 +69,17 @@ pub enum BindingKind {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct ImportBindingData {
     /// The module specifier string (e.g., "react" in `import {useState} from 'react'`).
     pub source: String,
     pub kind: ImportBindingKind,
     /// For named imports: the imported name (e.g., "bar" in `import {bar as baz} from 'foo'`).
     /// None for default and namespace imports.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub imported: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone)]
 pub enum ImportBindingKind {
     Default,
     Named,
@@ -99,8 +88,7 @@ pub enum ImportBindingKind {
 
 /// Complete scope information for a program. Stored separately from the AST
 /// and linked via position-based lookup maps.
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
 pub struct ScopeInfo {
     /// All scopes, indexed by ScopeId. scopes[id.0] gives the ScopeData for that scope.
     pub scopes: Vec<ScopeData>,
@@ -116,23 +104,19 @@ pub struct ScopeInfo {
 
     /// Maps an AST node's start offset to the node's end offset.
     /// Parallel to `node_to_scope` — used for position-range containment checks.
-    #[serde(default, skip_serializing_if = "FxHashMap::is_empty")]
     pub node_to_scope_end: FxHashMap<u32, u32>,
 
     /// **DEPRECATED** — retained only for Babel bridge JSON deserialization.
     /// All backends pass empty maps; only the Babel bridge populates this.
     /// Use `ref_node_id_to_binding` for all lookups and iteration.
-    #[serde(default)]
     pub reference_to_binding: FxIndexMap<u32, BindingId>,
 
     /// Maps an identifier reference's node-ID to the binding it resolves to.
     /// Only present for identifiers that resolve to a binding (not globals).
     /// Uses FxIndexMap to preserve insertion order.
-    #[serde(default, skip_serializing_if = "FxIndexMap::is_empty", rename = "refNodeIdToBinding")]
     pub ref_node_id_to_binding: FxIndexMap<u32, BindingId>,
 
     /// Maps a scope-creating AST node's node-ID to the scope it creates.
-    #[serde(default, skip_serializing_if = "FxHashMap::is_empty", rename = "nodeIdToScope")]
     pub node_id_to_scope: FxHashMap<u32, ScopeId>,
 
     /// The program-level (module) scope. Always scopes[0].
@@ -197,7 +181,7 @@ impl ScopeInfo {
         name: &str,
         ancestor: ScopeId,
     ) -> Option<&BindingData> {
-        let mut descendants = FxHashSet::default();
+        let mut descendants = rustc_hash::FxHashSet::default();
         descendants.insert(ancestor);
         let mut changed = true;
         while changed {
@@ -228,7 +212,7 @@ impl ScopeInfo {
         name: &str,
         ancestor: ScopeId,
     ) -> Option<(BindingId, &BindingData)> {
-        let mut descendants = FxHashSet::default();
+        let mut descendants = rustc_hash::FxHashSet::default();
         descendants.insert(ancestor);
         let mut changed = true;
         while changed {
@@ -291,7 +275,7 @@ impl ScopeInfo {
         ancestor: ScopeId,
         is_claimed: impl Fn(ScopeId) -> bool,
     ) -> Option<ScopeId> {
-        let mut descendants = FxHashSet::default();
+        let mut descendants = rustc_hash::FxHashSet::default();
         descendants.insert(ancestor);
         let mut changed = true;
         while changed {
