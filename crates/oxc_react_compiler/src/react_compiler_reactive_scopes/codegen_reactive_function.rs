@@ -3899,13 +3899,14 @@ fn apply_renames_to_json_inner(
 
 #[cfg(test)]
 mod tests {
+    use super::source_file_hash;
+
     /// The Fast Refresh source hash must match Node's
     /// `createHmac('sha256', code).digest('hex')` byte-for-byte, or hot-reload
     /// cache invalidation would diverge from the TS compiler. Reference values
     /// were computed with Node's `crypto` module.
     #[test]
     fn source_file_hash_matches_node_create_hmac() {
-        use super::source_file_hash;
         assert_eq!(
             source_file_hash("hello world"),
             "0de8bee5d7f9c5d209f8c6fabed0ea84cb3fca1244e8ed38079a61b599a84c47"

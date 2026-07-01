@@ -8,33 +8,34 @@ pub mod prefilter;
 
 // Vendored React Compiler core crates (from oxc-project/forked-react-compiler),
 // each crate flattened to a module. Kept near byte-for-byte with upstream for easy
-// re-syncing, so lints are relaxed here rather than editing the vendored code. They
-// are `pub` so the public API may name types that originate inside them (e.g.
-// `TransformResult::events`), which also keeps `dead_code` quiet on the parts the
-// conversion layer doesn't reach.
-#[allow(clippy::all, dead_code, unused)]
+// re-syncing, so `clippy::all` is relaxed here rather than editing the vendored code.
+// They are `pub` so the public API may name types that originate inside them (e.g.
+// `TransformResult::events`); being `pub` also keeps `dead_code` quiet on the parts
+// the conversion layer doesn't reach, so only the few genuinely-dead private items
+// carry their own targeted `#[allow(dead_code)]`.
+#[allow(clippy::all)]
 pub mod react_compiler;
-#[allow(clippy::all, dead_code, unused)]
+#[allow(clippy::all)]
 pub mod react_compiler_ast;
-#[allow(clippy::all, dead_code, unused)]
+#[allow(clippy::all)]
 pub mod react_compiler_diagnostics;
-#[allow(clippy::all, dead_code, unused)]
+#[allow(clippy::all)]
 pub mod react_compiler_hir;
-#[allow(clippy::all, dead_code, unused)]
+#[allow(clippy::all)]
 pub mod react_compiler_inference;
-#[allow(clippy::all, dead_code, unused)]
+#[allow(clippy::all)]
 pub mod react_compiler_lowering;
-#[allow(clippy::all, dead_code, unused)]
+#[allow(clippy::all)]
 pub mod react_compiler_optimization;
-#[allow(clippy::all, dead_code, unused)]
+#[allow(clippy::all)]
 pub mod react_compiler_reactive_scopes;
-#[allow(clippy::all, dead_code, unused)]
+#[allow(clippy::all)]
 pub mod react_compiler_ssa;
-#[allow(clippy::all, dead_code, unused)]
+#[allow(clippy::all)]
 pub mod react_compiler_typeinference;
-#[allow(clippy::all, dead_code, unused)]
+#[allow(clippy::all)]
 pub mod react_compiler_utils;
-#[allow(clippy::all, dead_code, unused)]
+#[allow(clippy::all)]
 pub mod react_compiler_validation;
 
 use crate::react_compiler::entrypoint::compile_result::LoggerEvent;
@@ -49,6 +50,7 @@ pub use crate::react_compiler::entrypoint::plugin_options::{
 };
 pub use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 
+use oxc_span::GetSpan;
 use rustc_hash::FxHashSet;
 
 /// [`PluginOptions`] with the compiler's standard defaults (it has no `Default`).
@@ -183,7 +185,6 @@ fn preserve_comments<'a>(
     let mut top_level_starts = FxHashSet::default();
     top_level_starts.insert(0u32);
     for stmt in &compiled.body {
-        use oxc_span::GetSpan;
         let start = stmt.span().start;
         if start > 0 {
             top_level_starts.insert(start);
@@ -245,6 +246,7 @@ pub fn lint_source(
 #[cfg(test)]
 mod tests {
     use crate::react_compiler::entrypoint::plugin_options::PluginOptions;
+    use oxc_ast::ast::{ModuleExportName, Statement};
 
     use super::transform_source;
 
@@ -582,8 +584,6 @@ function Component(props) {\n  return <div>{E.A}{N.value}{props.text}</div>;\n}\
     /// keeps the import alive instead of leaving a dangling export.
     #[test]
     fn local_reexport_keeps_its_import_binding() {
-        use oxc_ast::ast::{ModuleExportName, Statement};
-
         let source = "\
 import { Foo } from './foo';\n\
 export { Foo };\n\

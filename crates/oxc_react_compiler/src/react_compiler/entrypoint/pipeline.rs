@@ -8,7 +8,12 @@
 //! Analogous to TS `Pipeline.ts` (`compileFn` → `run` → `runWithEnvironment`).
 //! Currently runs BuildHIR (lowering) and PruneMaybeThrows.
 
-use crate::react_compiler_ast::scope::ScopeInfo;
+use rustc_hash::FxHashMap;
+
+use crate::react_compiler_ast::expressions::*;
+use crate::react_compiler_ast::patterns::PatternLike;
+use crate::react_compiler_ast::scope::*;
+use crate::react_compiler_ast::statements::Statement;
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment::Environment;
@@ -1101,10 +1106,6 @@ pub fn compile_outlined_fn(
 fn build_outlined_scope_info(
     func: &mut crate::react_compiler_ast::statements::FunctionDeclaration,
 ) -> crate::react_compiler_ast::scope::ScopeInfo {
-    use rustc_hash::FxHashMap;
-
-    use crate::react_compiler_ast::scope::*;
-
     let mut pos: u32 = 1; // reserve 0 for the function itself
     func.base.start = Some(0);
 
@@ -1206,9 +1207,6 @@ fn outlined_assign_pattern_positions(
     bindings_list: &mut Vec<crate::react_compiler_ast::scope::BindingData>,
     ref_to_binding: &mut FxIndexMap<u32, crate::react_compiler_ast::scope::BindingId>,
 ) {
-    use crate::react_compiler_ast::patterns::PatternLike;
-    use crate::react_compiler_ast::scope::*;
-
     match pattern {
         PatternLike::Identifier(id) => {
             let p = *pos;
@@ -1307,8 +1305,6 @@ fn outlined_assign_stmt_positions(
     bindings_list: &mut Vec<crate::react_compiler_ast::scope::BindingData>,
     ref_to_binding: &mut FxIndexMap<u32, crate::react_compiler_ast::scope::BindingId>,
 ) {
-    use crate::react_compiler_ast::statements::Statement;
-
     match stmt {
         Statement::VariableDeclaration(decl) => {
             for declarator in &mut decl.declarations {
@@ -1351,8 +1347,6 @@ fn outlined_assign_expr_positions(
     fn_bindings: &rustc_hash::FxHashMap<String, crate::react_compiler_ast::scope::BindingId>,
     ref_to_binding: &mut FxIndexMap<u32, crate::react_compiler_ast::scope::BindingId>,
 ) {
-    use crate::react_compiler_ast::expressions::*;
-
     match expr {
         Expression::Identifier(id) => {
             let p = *pos;

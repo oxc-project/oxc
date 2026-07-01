@@ -3295,12 +3295,7 @@ fn insert_after_fn_in_block(
     false
 }
 
-fn insert_after_fn_in_expr(
-    expr: &mut crate::react_compiler_ast::expressions::Expression,
-    node_id: u32,
-    new_stmt: &Statement,
-) -> bool {
-    use crate::react_compiler_ast::expressions::Expression;
+fn insert_after_fn_in_expr(expr: &mut Expression, node_id: u32, new_stmt: &Statement) -> bool {
     match expr {
         Expression::ObjectExpression(obj) => {
             for prop in &mut obj.properties {

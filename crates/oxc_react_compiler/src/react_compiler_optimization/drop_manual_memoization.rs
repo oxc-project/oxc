@@ -35,6 +35,7 @@ use crate::react_compiler_hir::Place;
 use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PropertyLiteral;
 use crate::react_compiler_hir::SourceLocation;
+use crate::react_compiler_hir::Terminal;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_lowering::create_temporary_place;
 use crate::react_compiler_lowering::mark_instruction_ids;
@@ -614,8 +615,6 @@ fn extract_manual_memoization_args(
 // =============================================================================
 
 fn find_optional_places(func: &HirFunction) -> Result<FxHashSet<IdentifierId>, CompilerDiagnostic> {
-    use crate::react_compiler_hir::Terminal;
-
     let mut optionals = FxHashSet::default();
     for block in func.body.blocks.values() {
         if let Terminal::Optional { optional: true, test, fallthrough, .. } = &block.terminal {

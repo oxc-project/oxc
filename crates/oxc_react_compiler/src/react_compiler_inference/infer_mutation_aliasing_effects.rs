@@ -35,6 +35,7 @@ use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PlaceOrSpreadOrHole;
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::SourceLocation;
+use crate::react_compiler_hir::Terminal;
 use crate::react_compiler_hir::Type;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::BUILT_IN_ARRAY_ID;
@@ -3182,8 +3183,7 @@ fn create_temp_place(env: &mut Environment, loc: Option<SourceLocation>) -> Plac
 /// successors but NOT pseudo-successors (fallthroughs). Fallthroughs for
 /// Logical/Ternary/Optional and Try/Scope/PrunedScope are reached naturally
 /// via the block iteration order (blocks are stored in topological order).
-fn terminal_successors(terminal: &crate::react_compiler_hir::Terminal) -> Vec<BlockId> {
-    use crate::react_compiler_hir::Terminal;
+fn terminal_successors(terminal: &Terminal) -> Vec<BlockId> {
     match terminal {
         Terminal::Goto { block, .. } => vec![*block],
         Terminal::If { consequent, alternate, .. } => vec![*consequent, *alternate],

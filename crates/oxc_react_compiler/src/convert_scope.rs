@@ -6,7 +6,7 @@
 use crate::react_compiler_ast::scope::*;
 use indexmap::IndexMap;
 use oxc_ast::AstKind;
-use oxc_ast::ast::Program;
+use oxc_ast::ast::{BindingPattern, Program};
 use oxc_semantic::Semantic;
 use oxc_span::GetSpan;
 use oxc_syntax::symbol::SymbolFlags;
@@ -412,9 +412,7 @@ fn find_binding_identifier_start(kind: AstKind, name: &str) -> Option<u32> {
 }
 
 /// Recursively find a binding identifier within a binding pattern.
-fn find_identifier_in_pattern(pattern: &oxc_ast::ast::BindingPattern, name: &str) -> Option<u32> {
-    use oxc_ast::ast::BindingPattern;
-
+fn find_identifier_in_pattern(pattern: &BindingPattern, name: &str) -> Option<u32> {
     match pattern {
         BindingPattern::BindingIdentifier(ident) => {
             if ident.name.as_str() == name {

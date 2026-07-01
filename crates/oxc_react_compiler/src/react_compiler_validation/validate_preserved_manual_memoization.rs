@@ -18,8 +18,8 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, Identifier, IdentifierId, IdentifierName, InstructionKind,
     InstructionValue, ManualMemoDependency, ManualMemoDependencyRoot, Place, ReactiveBlock,
-    ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveValue,
-    ScopeId,
+    ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveTerminal,
+    ReactiveValue, ScopeId,
 };
 
 /// State tracked during manual memo validation within a StartMemoize..FinishMemoize range.
@@ -97,7 +97,6 @@ fn visit_terminal(
     terminal: &crate::react_compiler_hir::ReactiveTerminalStatement,
     state: &mut VisitorState,
 ) {
-    use crate::react_compiler_hir::ReactiveTerminal;
     match &terminal.terminal {
         ReactiveTerminal::If { consequent, alternate, .. } => {
             visit_block(consequent, state);

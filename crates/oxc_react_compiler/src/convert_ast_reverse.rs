@@ -20,13 +20,17 @@ use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::ast as oxc;
 use oxc_ast::builder::{AstBuilder, GetAstBuilder};
 use oxc_ast_visit::VisitMut;
+use oxc_span::GetSpanMut;
 use oxc_span::SPAN;
 use oxc_span::Span;
 use oxc_str::Str;
 use oxc_syntax::identifier::is_identifier_name;
+use oxc_syntax::operator::{
+    AssignmentOperator as OxcAssOp, BinaryOperator as OxcBinOp, LogicalOperator as OxcLogOp,
+    UnaryOperator as OxcUnOp, UpdateOperator as OxcUpOp,
+};
 
 fn set_statement_span(stmt: &mut oxc::Statement<'_>, span: Span) {
-    use oxc_span::GetSpanMut;
     match stmt {
         oxc::Statement::ImportDeclaration(d) => *d.span_mut() = span,
         oxc::Statement::VariableDeclaration(d) => *d.span_mut() = span,
@@ -3210,7 +3214,6 @@ impl<'a> ReverseCtx<'a> {
     // ===== Operators =====
 
     fn convert_binary_operator(&self, op: &BinaryOperator) -> oxc_syntax::operator::BinaryOperator {
-        use oxc_syntax::operator::BinaryOperator as OxcBinOp;
         match op {
             BinaryOperator::Add => OxcBinOp::Addition,
             BinaryOperator::Sub => OxcBinOp::Subtraction,
@@ -3242,7 +3245,6 @@ impl<'a> ReverseCtx<'a> {
         &self,
         op: &LogicalOperator,
     ) -> oxc_syntax::operator::LogicalOperator {
-        use oxc_syntax::operator::LogicalOperator as OxcLogOp;
         match op {
             LogicalOperator::Or => OxcLogOp::Or,
             LogicalOperator::And => OxcLogOp::And,
@@ -3251,7 +3253,6 @@ impl<'a> ReverseCtx<'a> {
     }
 
     fn convert_unary_operator(&self, op: &UnaryOperator) -> oxc_syntax::operator::UnaryOperator {
-        use oxc_syntax::operator::UnaryOperator as OxcUnOp;
         match op {
             UnaryOperator::Neg => OxcUnOp::UnaryNegation,
             UnaryOperator::Plus => OxcUnOp::UnaryPlus,
@@ -3265,7 +3266,6 @@ impl<'a> ReverseCtx<'a> {
     }
 
     fn convert_update_operator(&self, op: &UpdateOperator) -> oxc_syntax::operator::UpdateOperator {
-        use oxc_syntax::operator::UpdateOperator as OxcUpOp;
         match op {
             UpdateOperator::Increment => OxcUpOp::Increment,
             UpdateOperator::Decrement => OxcUpOp::Decrement,
@@ -3276,7 +3276,6 @@ impl<'a> ReverseCtx<'a> {
         &self,
         op: &AssignmentOperator,
     ) -> oxc_syntax::operator::AssignmentOperator {
-        use oxc_syntax::operator::AssignmentOperator as OxcAssOp;
         match op {
             AssignmentOperator::Assign => OxcAssOp::Assign,
             AssignmentOperator::AddAssign => OxcAssOp::Addition,

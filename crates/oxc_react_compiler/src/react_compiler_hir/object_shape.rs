@@ -8,6 +8,8 @@
 //! Defines the shape registry used by Environment to resolve property types
 //! and function call signatures for built-in objects, hooks, and user-defined types.
 
+use std::sync::atomic::{AtomicU32, Ordering};
+
 use rustc_hash::FxHashMap;
 
 use crate::react_compiler_hir::Effect;
@@ -178,7 +180,6 @@ impl Clone for ShapeRegistry {
 /// Thread-local counter for generating unique anonymous shape IDs.
 /// Mirrors TS `nextAnonId` in ObjectShape.ts.
 fn next_anon_id() -> String {
-    use std::sync::atomic::{AtomicU32, Ordering};
     static COUNTER: AtomicU32 = AtomicU32::new(0);
     let id = COUNTER.fetch_add(1, Ordering::Relaxed);
     format!("<generated_{}>", id)
