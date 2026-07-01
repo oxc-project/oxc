@@ -24,6 +24,7 @@ use crate::react_compiler_ast::statements::*;
 use oxc_ast::ast as oxc;
 use oxc_span::GetSpan;
 use oxc_span::Span;
+use oxc_syntax::xml_entities::XML_ENTITIES;
 
 /// Decode XML/HTML entities in JSX text (`&amp;` → `&`, `&gt;` → `>`, `&#123;`
 /// → `{`, `&#x1F600;` → emoji, …) so the Babel `JSXText.value` is the decoded
@@ -62,7 +63,7 @@ fn decode_jsx_entities(s: &str) -> String {
                 num.parse::<u32>().ok().and_then(char::from_u32)
             }
         } else {
-            oxc_syntax::xml_entities::XML_ENTITIES.get(word).copied()
+            XML_ENTITIES.get(word).copied()
         };
         match decoded {
             Some(c) => out.push(c),

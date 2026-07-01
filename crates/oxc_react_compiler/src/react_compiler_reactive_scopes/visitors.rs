@@ -7,7 +7,12 @@
 //!
 //! Corresponds to `src/ReactiveScopes/visitors.ts` in the TypeScript compiler.
 
+use std::mem::replace;
+
 use crate::react_compiler_diagnostics::CompilerError;
+use crate::react_compiler_hir::visitors::{
+    each_instruction_value_lvalue, each_instruction_value_operand, each_terminal_operand,
+};
 use crate::react_compiler_hir::{
     EvaluationOrder, FunctionId, InstructionValue, ParamPattern, Place, PrunedReactiveScopeBlock,
     ReactiveBlock, ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement,
@@ -57,8 +62,7 @@ pub trait ReactiveFunctionVisitor {
             let inner_func = &self.env().functions[func_id.0 as usize];
             let block = &inner_func.body.blocks[&block_id];
             let instr_ids: Vec<_> = block.instructions.clone();
-            let terminal_operands: Vec<Place> =
-                crate::react_compiler_hir::visitors::each_terminal_operand(&block.terminal);
+            let terminal_operands: Vec<Place> = each_terminal_operand(&block.terminal);
             let terminal_id = block.terminal.evaluation_order();
 
             for instr_id in &instr_ids {
@@ -115,10 +119,7 @@ pub trait ReactiveFunctionVisitor {
                 self.visit_value(*seq_id, inner, state);
             }
             ReactiveValue::Instruction(instr_value) => {
-                let operands = crate::react_compiler_hir::visitors::each_instruction_value_operand(
-                    instr_value,
-                    self.env(),
-                );
+                let operands = each_instruction_value_operand(instr_value, self.env());
                 for place in &operands {
                     self.visit_place(id, place, state);
                 }
@@ -138,7 +139,7 @@ pub trait ReactiveFunctionVisitor {
         }
         // Visit value-level lvalues (TS: eachInstructionValueLValue)
         if let ReactiveValue::Instruction(iv) = &instruction.value {
-            for place in crate::react_compiler_hir::visitors::each_instruction_value_lvalue(iv) {
+            for place in each_instruction_value_lvalue(iv) {
                 self.visit_lvalue(instruction.id, &place, state);
             }
         }
@@ -394,10 +395,7 @@ pub trait ReactiveFunctionTransform {
             ReactiveValue::Instruction(instr_value) => {
                 // Collect operands before visiting to avoid borrow conflict
                 // (self.env() borrows self immutably, self.visit_place() needs &mut self).
-                let operands = crate::react_compiler_hir::visitors::each_instruction_value_operand(
-                    instr_value,
-                    self.env(),
-                );
+                let operands = each_instruction_value_operand(instr_value, self.env());
                 for place in &operands {
                     self.visit_place(id, place, state)?;
                 }
@@ -436,7 +434,7 @@ pub trait ReactiveFunctionTransform {
         }
         // Visit value-level lvalues (TS: eachInstructionValueLValue)
         if let ReactiveValue::Instruction(iv) = &instruction.value {
-            for place in crate::react_compiler_hir::visitors::each_instruction_value_lvalue(iv) {
+            for place in each_instruction_value_lvalue(iv) {
                 self.visit_lvalue(instruction.id, &place, state)?;
             }
         }
@@ -644,15 +642,13 @@ pub trait ReactiveFunctionTransform {
         let len = block.len();
         for i in 0..len {
             // Take the statement out temporarily
-            let mut stmt = std::mem::replace(
+            let mut stmt = replace(
                 &mut block[i],
                 // Placeholder — will be overwritten or discarded
                 ReactiveStatement::Instruction(ReactiveInstruction {
                     id: EvaluationOrder(0),
                     lvalue: None,
-                    value: ReactiveValue::Instruction(
-                        crate::react_compiler_hir::InstructionValue::Debugger { loc: None },
-                    ),
+                    value: ReactiveValue::Instruction(InstructionValue::Debugger { loc: None }),
                     effects: None,
                     loc: None,
                 }),

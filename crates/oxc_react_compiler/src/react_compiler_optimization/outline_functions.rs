@@ -11,6 +11,8 @@
 //!
 //! Conditional on `env.config.enable_function_outlining`.
 
+use std::mem::replace;
+
 use rustc_hash::FxHashSet;
 
 use crate::react_compiler_hir::environment::Environment;
@@ -78,19 +80,15 @@ pub fn outline_functions(
     for action in actions {
         match action {
             Action::Recurse(function_id) => {
-                let mut inner_func = std::mem::replace(
-                    &mut env.functions[function_id.0 as usize],
-                    placeholder_function(),
-                );
+                let mut inner_func =
+                    replace(&mut env.functions[function_id.0 as usize], placeholder_function());
                 outline_functions(&mut inner_func, env, fbt_operands);
                 env.functions[function_id.0 as usize] = inner_func;
             }
             Action::RecurseAndOutline { instr_idx, function_id } => {
                 // First recurse into the inner function (depth-first)
-                let mut inner_func = std::mem::replace(
-                    &mut env.functions[function_id.0 as usize],
-                    placeholder_function(),
-                );
+                let mut inner_func =
+                    replace(&mut env.functions[function_id.0 as usize], placeholder_function());
                 outline_functions(&mut inner_func, env, fbt_operands);
                 env.functions[function_id.0 as usize] = inner_func;
 

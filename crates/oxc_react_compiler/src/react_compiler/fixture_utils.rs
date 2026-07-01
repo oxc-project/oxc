@@ -1,6 +1,7 @@
 use crate::react_compiler_ast::File;
 use crate::react_compiler_ast::declarations::{Declaration, ExportDefaultDecl};
 use crate::react_compiler_ast::expressions::Expression;
+use crate::react_compiler_ast::patterns::PatternLike;
 use crate::react_compiler_ast::statements::Statement;
 use crate::react_compiler_lowering::FunctionNode;
 
@@ -105,9 +106,7 @@ pub fn extract_function(
                             Expression::FunctionExpression(func) => {
                                 if index == function_index {
                                     let name = match &declarator.id {
-                                        crate::react_compiler_ast::patterns::PatternLike::Identifier(
-                                            ident,
-                                        ) => Some(ident.name.as_str()),
+                                        PatternLike::Identifier(ident) => Some(ident.name.as_str()),
                                         _ => func.id.as_ref().map(|id| id.name.as_str()),
                                     };
                                     return Some((FunctionNode::FunctionExpression(func), name));
@@ -117,9 +116,7 @@ pub fn extract_function(
                             Expression::ArrowFunctionExpression(arrow) => {
                                 if index == function_index {
                                     let name = match &declarator.id {
-                                        crate::react_compiler_ast::patterns::PatternLike::Identifier(
-                                            ident,
-                                        ) => Some(ident.name.as_str()),
+                                        PatternLike::Identifier(ident) => Some(ident.name.as_str()),
                                         _ => None,
                                     };
                                     return Some((
@@ -151,8 +148,12 @@ pub fn extract_function(
                                         Expression::FunctionExpression(func) => {
                                             if index == function_index {
                                                 let name = match &declarator.id {
-                                                    crate::react_compiler_ast::patterns::PatternLike::Identifier(ident) => Some(ident.name.as_str()),
-                                                    _ => func.id.as_ref().map(|id| id.name.as_str()),
+                                                    PatternLike::Identifier(ident) => {
+                                                        Some(ident.name.as_str())
+                                                    }
+                                                    _ => {
+                                                        func.id.as_ref().map(|id| id.name.as_str())
+                                                    }
                                                 };
                                                 return Some((
                                                     FunctionNode::FunctionExpression(func),
@@ -164,7 +165,9 @@ pub fn extract_function(
                                         Expression::ArrowFunctionExpression(arrow) => {
                                             if index == function_index {
                                                 let name = match &declarator.id {
-                                                    crate::react_compiler_ast::patterns::PatternLike::Identifier(ident) => Some(ident.name.as_str()),
+                                                    PatternLike::Identifier(ident) => {
+                                                        Some(ident.name.as_str())
+                                                    }
                                                     _ => None,
                                                 };
                                                 return Some((

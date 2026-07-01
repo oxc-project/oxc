@@ -14,6 +14,7 @@ use crate::react_compiler_diagnostics::{
 };
 use crate::react_compiler_hir::dominator::compute_unconditional_blocks;
 use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::is_set_state_type;
 use crate::react_compiler_hir::{
     BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, Type,
 };
@@ -46,7 +47,7 @@ fn is_set_state_id(
 ) -> bool {
     let ident = &identifiers[identifier_id.0 as usize];
     let ty = &types[ident.type_.0 as usize];
-    crate::react_compiler_hir::is_set_state_type(ty)
+    is_set_state_type(ty)
 }
 
 fn validate_impl(

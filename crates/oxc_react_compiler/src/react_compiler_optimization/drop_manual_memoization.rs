@@ -12,6 +12,8 @@
 //!
 //! Analogous to TS `Inference/DropManualMemoization.ts`.
 
+use std::mem::discriminant;
+
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
@@ -656,7 +658,7 @@ fn find_optional_places(func: &HirFunction) -> Result<FxHashSet<IdentifierId>, C
                             ErrorCategory::Invariant,
                             format!(
                                 "Unexpected terminal kind in optional: {:?}",
-                                std::mem::discriminant(other)
+                                discriminant(other)
                             ),
                             None,
                         ));

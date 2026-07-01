@@ -1,4 +1,6 @@
 use rustc_hash::FxHashMap;
+use std::fmt::Display;
+use std::fmt::Formatter;
 
 use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory,
@@ -17,8 +19,8 @@ enum VarRefKind {
     Destructure,
 }
 
-impl std::fmt::Display for VarRefKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for VarRefKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             VarRefKind::Local => write!(f, "local"),
             VarRefKind::Context => write!(f, "context"),

@@ -30,6 +30,7 @@ use crate::react_compiler_hir::BlockKind;
 use crate::react_compiler_hir::EvaluationOrder;
 use crate::react_compiler_hir::HirFunction;
 use crate::react_compiler_hir::IdentifierId;
+use crate::react_compiler_hir::InstructionId;
 use crate::react_compiler_hir::MutableRange;
 use crate::react_compiler_hir::ScopeId;
 use crate::react_compiler_hir::Terminal;
@@ -38,6 +39,8 @@ use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::visitors::each_instruction_lvalue_ids;
 use crate::react_compiler_hir::visitors::each_instruction_value_operand_ids;
 use crate::react_compiler_hir::visitors::each_terminal_operand_ids;
+use std::cmp::max;
+use std::cmp::min;
 
 // =============================================================================
 // ValueBlockNode — stores the valueRange for scope alignment in value blocks
@@ -119,7 +122,7 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
                 // extend their start to include the range start.
                 for &scope_id in &active_scopes {
                     let scope = &mut env.scopes[scope_id.0 as usize];
-                    scope.range.start = std::cmp::min(scope.range.start, top.range.start);
+                    scope.range.start = min(scope.range.start, top.range.start);
                 }
             }
         }
@@ -128,8 +131,7 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
 
         // Visit instruction lvalues and operands
         let block = func.body.blocks.get(&block_id).unwrap();
-        let instr_ids: Vec<crate::react_compiler_hir::InstructionId> =
-            block.instructions.iter().copied().collect();
+        let instr_ids: Vec<InstructionId> = block.instructions.iter().copied().collect();
         for &instr_id in &instr_ids {
             let instr = &func.instructions[instr_id.0 as usize];
             let eval_order = instr.id;
@@ -182,7 +184,7 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
                 for &scope_id in &active_scopes {
                     let scope = &mut env.scopes[scope_id.0 as usize];
                     if scope.range.end > terminal_eval_order {
-                        scope.range.end = std::cmp::max(scope.range.end, next_id);
+                        scope.range.end = max(scope.range.end, next_id);
                     }
                 }
 
@@ -218,9 +220,8 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
                         if scope.range.end <= terminal_eval_order {
                             continue;
                         }
-                        scope.range.start =
-                            std::cmp::min(start_range.range.start, scope.range.start);
-                        scope.range.end = std::cmp::max(first_id, scope.range.end);
+                        scope.range.start = min(start_range.range.start, scope.range.start);
+                        scope.range.end = max(first_id, scope.range.end);
                     }
                 }
             }
@@ -308,8 +309,8 @@ fn record_place_id(
 
         if let Some(n) = node {
             let scope = &mut env.scopes[scope_id.0 as usize];
-            scope.range.start = std::cmp::min(n.value_range.start, scope.range.start);
-            scope.range.end = std::cmp::max(n.value_range.end, scope.range.end);
+            scope.range.start = min(n.value_range.start, scope.range.start);
+            scope.range.end = max(n.value_range.end, scope.range.end);
         }
     }
 }

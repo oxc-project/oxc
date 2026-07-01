@@ -2,6 +2,12 @@ use serde::Serialize;
 
 use crate::react_compiler_ast::common::BaseNode;
 use crate::react_compiler_ast::common::RawNode;
+use crate::react_compiler_ast::expressions::MemberExpression;
+use crate::react_compiler_ast::expressions::TSAsExpression;
+use crate::react_compiler_ast::expressions::TSNonNullExpression;
+use crate::react_compiler_ast::expressions::TSSatisfiesExpression;
+use crate::react_compiler_ast::expressions::TSTypeAssertion;
+use crate::react_compiler_ast::expressions::TypeCastExpression;
 use crate::react_compiler_ast::expressions::{Expression, Identifier};
 
 /// Covers assignment targets and patterns.
@@ -16,13 +22,13 @@ pub enum PatternLike {
     AssignmentPattern(AssignmentPattern),
     RestElement(RestElement),
     // Expressions can appear in pattern positions (e.g., MemberExpression as LVal)
-    MemberExpression(crate::react_compiler_ast::expressions::MemberExpression),
-    TSAsExpression(crate::react_compiler_ast::expressions::TSAsExpression),
-    TSSatisfiesExpression(crate::react_compiler_ast::expressions::TSSatisfiesExpression),
-    TSNonNullExpression(crate::react_compiler_ast::expressions::TSNonNullExpression),
-    TSTypeAssertion(crate::react_compiler_ast::expressions::TSTypeAssertion),
+    MemberExpression(MemberExpression),
+    TSAsExpression(TSAsExpression),
+    TSSatisfiesExpression(TSSatisfiesExpression),
+    TSNonNullExpression(TSNonNullExpression),
+    TSTypeAssertion(TSTypeAssertion),
     // Flow's analogue of the TS cast wrappers: `(expr: SomeType)`.
-    TypeCastExpression(crate::react_compiler_ast::expressions::TypeCastExpression),
+    TypeCastExpression(TypeCastExpression),
 }
 
 impl PatternLike {

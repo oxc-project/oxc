@@ -3,6 +3,31 @@ use serde::Serializer;
 
 use crate::react_compiler_ast::common::BaseNode;
 use crate::react_compiler_ast::common::RawNode;
+use crate::react_compiler_ast::common::from_json_str_unbounded;
+use crate::react_compiler_ast::declarations::DeclareClass;
+use crate::react_compiler_ast::declarations::DeclareExportAllDeclaration;
+use crate::react_compiler_ast::declarations::DeclareExportDeclaration;
+use crate::react_compiler_ast::declarations::DeclareFunction;
+use crate::react_compiler_ast::declarations::DeclareInterface;
+use crate::react_compiler_ast::declarations::DeclareModule;
+use crate::react_compiler_ast::declarations::DeclareModuleExports;
+use crate::react_compiler_ast::declarations::DeclareOpaqueType;
+use crate::react_compiler_ast::declarations::DeclareTypeAlias;
+use crate::react_compiler_ast::declarations::DeclareVariable;
+use crate::react_compiler_ast::declarations::EnumDeclaration;
+use crate::react_compiler_ast::declarations::ExportAllDeclaration;
+use crate::react_compiler_ast::declarations::ExportDefaultDeclaration;
+use crate::react_compiler_ast::declarations::ExportNamedDeclaration;
+use crate::react_compiler_ast::declarations::ImportDeclaration;
+use crate::react_compiler_ast::declarations::InterfaceDeclaration;
+use crate::react_compiler_ast::declarations::OpaqueType;
+use crate::react_compiler_ast::declarations::TSDeclareFunction;
+use crate::react_compiler_ast::declarations::TSEnumDeclaration;
+use crate::react_compiler_ast::declarations::TSInterfaceDeclaration;
+use crate::react_compiler_ast::declarations::TSModuleDeclaration;
+use crate::react_compiler_ast::declarations::TSTypeAliasDeclaration;
+use crate::react_compiler_ast::declarations::TypeAlias;
+use crate::react_compiler_ast::expressions::ClassBody;
 use crate::react_compiler_ast::expressions::Expression;
 use crate::react_compiler_ast::expressions::Identifier;
 use crate::react_compiler_ast::patterns::PatternLike;
@@ -38,33 +63,31 @@ pub enum Statement {
     FunctionDeclaration(FunctionDeclaration),
     ClassDeclaration(ClassDeclaration),
     // Import/export declarations
-    ImportDeclaration(crate::react_compiler_ast::declarations::ImportDeclaration),
-    ExportNamedDeclaration(crate::react_compiler_ast::declarations::ExportNamedDeclaration),
-    ExportDefaultDeclaration(crate::react_compiler_ast::declarations::ExportDefaultDeclaration),
-    ExportAllDeclaration(crate::react_compiler_ast::declarations::ExportAllDeclaration),
+    ImportDeclaration(ImportDeclaration),
+    ExportNamedDeclaration(ExportNamedDeclaration),
+    ExportDefaultDeclaration(ExportDefaultDeclaration),
+    ExportAllDeclaration(ExportAllDeclaration),
     // TypeScript declarations
-    TSTypeAliasDeclaration(crate::react_compiler_ast::declarations::TSTypeAliasDeclaration),
-    TSInterfaceDeclaration(crate::react_compiler_ast::declarations::TSInterfaceDeclaration),
-    TSEnumDeclaration(crate::react_compiler_ast::declarations::TSEnumDeclaration),
-    TSModuleDeclaration(crate::react_compiler_ast::declarations::TSModuleDeclaration),
-    TSDeclareFunction(crate::react_compiler_ast::declarations::TSDeclareFunction),
+    TSTypeAliasDeclaration(TSTypeAliasDeclaration),
+    TSInterfaceDeclaration(TSInterfaceDeclaration),
+    TSEnumDeclaration(TSEnumDeclaration),
+    TSModuleDeclaration(TSModuleDeclaration),
+    TSDeclareFunction(TSDeclareFunction),
     // Flow declarations
-    TypeAlias(crate::react_compiler_ast::declarations::TypeAlias),
-    OpaqueType(crate::react_compiler_ast::declarations::OpaqueType),
-    InterfaceDeclaration(crate::react_compiler_ast::declarations::InterfaceDeclaration),
-    DeclareVariable(crate::react_compiler_ast::declarations::DeclareVariable),
-    DeclareFunction(crate::react_compiler_ast::declarations::DeclareFunction),
-    DeclareClass(crate::react_compiler_ast::declarations::DeclareClass),
-    DeclareModule(crate::react_compiler_ast::declarations::DeclareModule),
-    DeclareModuleExports(crate::react_compiler_ast::declarations::DeclareModuleExports),
-    DeclareExportDeclaration(crate::react_compiler_ast::declarations::DeclareExportDeclaration),
-    DeclareExportAllDeclaration(
-        crate::react_compiler_ast::declarations::DeclareExportAllDeclaration,
-    ),
-    DeclareInterface(crate::react_compiler_ast::declarations::DeclareInterface),
-    DeclareTypeAlias(crate::react_compiler_ast::declarations::DeclareTypeAlias),
-    DeclareOpaqueType(crate::react_compiler_ast::declarations::DeclareOpaqueType),
-    EnumDeclaration(crate::react_compiler_ast::declarations::EnumDeclaration),
+    TypeAlias(TypeAlias),
+    OpaqueType(OpaqueType),
+    InterfaceDeclaration(InterfaceDeclaration),
+    DeclareVariable(DeclareVariable),
+    DeclareFunction(DeclareFunction),
+    DeclareClass(DeclareClass),
+    DeclareModule(DeclareModule),
+    DeclareModuleExports(DeclareModuleExports),
+    DeclareExportDeclaration(DeclareExportDeclaration),
+    DeclareExportAllDeclaration(DeclareExportAllDeclaration),
+    DeclareInterface(DeclareInterface),
+    DeclareTypeAlias(DeclareTypeAlias),
+    DeclareOpaqueType(DeclareOpaqueType),
+    EnumDeclaration(EnumDeclaration),
     /// Catch-all for statement `type`s the typed AST does not model, e.g. the
     /// TypeScript module-interop statements `import x = require(...)`,
     /// `export = x`, and `export as namespace X`. Carries the complete raw
@@ -99,10 +122,8 @@ impl UnknownStatement {
             Some(_) => {
                 // Parsing into BaseNode reads only the fields BaseNode declares,
                 // not the whole (arbitrarily large) unknown subtree.
-                let base = crate::react_compiler_ast::common::from_json_str_unbounded::<BaseNode>(
-                    raw.get(),
-                )
-                .map_err(|err| format!("failed to read unknown statement base: {err}"))?;
+                let base = from_json_str_unbounded::<BaseNode>(raw.get())
+                    .map_err(|err| format!("failed to read unknown statement base: {err}"))?;
                 Ok(Self { raw, base })
             }
             None => Err("unknown statement is missing a string `type` field".to_string()),
@@ -130,8 +151,7 @@ impl UnknownStatement {
             self.raw = saved;
             return Err("unknown statement mutation removed the string `type` field".to_string());
         }
-        match crate::react_compiler_ast::common::from_json_str_unbounded::<BaseNode>(self.raw.get())
-        {
+        match from_json_str_unbounded::<BaseNode>(self.raw.get()) {
             Ok(base) => {
                 self.base = base;
                 Ok(result)
@@ -410,7 +430,7 @@ pub struct ClassDeclaration {
     pub id: Option<Identifier>,
     #[serde(rename = "superClass")]
     pub super_class: Option<Box<Expression>>,
-    pub body: crate::react_compiler_ast::expressions::ClassBody,
+    pub body: ClassBody,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub decorators: Option<Vec<RawNode>>,
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "abstract")]

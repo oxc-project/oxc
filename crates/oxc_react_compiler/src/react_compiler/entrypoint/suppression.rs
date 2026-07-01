@@ -7,7 +7,7 @@
 use crate::react_compiler_ast::common::{Comment, CommentData};
 use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, CompilerSuggestion,
-    CompilerSuggestionOperation, ErrorCategory,
+    CompilerSuggestionOperation, ErrorCategory, Position, SourceLocation,
 };
 
 #[derive(Debug, Clone)]
@@ -258,19 +258,9 @@ pub fn suppressions_to_compiler_error(suppressions: &[SuppressionRange]) -> Comp
         }]);
 
         // Add error detail with location info
-        let loc = suppression.disable_comment.loc.as_ref().map(|l| {
-            crate::react_compiler_diagnostics::SourceLocation {
-                start: crate::react_compiler_diagnostics::Position {
-                    line: l.start.line,
-                    column: l.start.column,
-                    index: l.start.index,
-                },
-                end: crate::react_compiler_diagnostics::Position {
-                    line: l.end.line,
-                    column: l.end.column,
-                    index: l.end.index,
-                },
-            }
+        let loc = suppression.disable_comment.loc.as_ref().map(|l| SourceLocation {
+            start: Position { line: l.start.line, column: l.start.column, index: l.start.index },
+            end: Position { line: l.end.line, column: l.end.column, index: l.end.index },
         });
 
         diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Error {

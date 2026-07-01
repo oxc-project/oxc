@@ -5,20 +5,21 @@ pub mod identifier_loc_index;
 
 use crate::react_compiler_ast::expressions::ArrowFunctionExpression;
 use crate::react_compiler_ast::expressions::FunctionExpression;
+use crate::react_compiler_ast::scope::BindingKind as AstBindingKind;
 use crate::react_compiler_ast::statements::FunctionDeclaration;
 use crate::react_compiler_hir::BindingKind;
 
 /// Convert AST binding kind to HIR binding kind.
-pub fn convert_binding_kind(kind: &crate::react_compiler_ast::scope::BindingKind) -> BindingKind {
+pub fn convert_binding_kind(kind: &AstBindingKind) -> BindingKind {
     match kind {
-        crate::react_compiler_ast::scope::BindingKind::Var => BindingKind::Var,
-        crate::react_compiler_ast::scope::BindingKind::Let => BindingKind::Let,
-        crate::react_compiler_ast::scope::BindingKind::Const => BindingKind::Const,
-        crate::react_compiler_ast::scope::BindingKind::Param => BindingKind::Param,
-        crate::react_compiler_ast::scope::BindingKind::Module => BindingKind::Module,
-        crate::react_compiler_ast::scope::BindingKind::Hoisted => BindingKind::Hoisted,
-        crate::react_compiler_ast::scope::BindingKind::Local => BindingKind::Local,
-        crate::react_compiler_ast::scope::BindingKind::Unknown => BindingKind::Unknown,
+        AstBindingKind::Var => BindingKind::Var,
+        AstBindingKind::Let => BindingKind::Let,
+        AstBindingKind::Const => BindingKind::Const,
+        AstBindingKind::Param => BindingKind::Param,
+        AstBindingKind::Module => BindingKind::Module,
+        AstBindingKind::Hoisted => BindingKind::Hoisted,
+        AstBindingKind::Local => BindingKind::Local,
+        AstBindingKind::Unknown => BindingKind::Unknown,
     }
 }
 

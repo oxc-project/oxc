@@ -1,3 +1,6 @@
+use std::cmp::Ordering;
+use std::mem::{replace, take};
+
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{
@@ -11,7 +14,7 @@ use crate::react_compiler_hir::visitors::{
     each_terminal_operand,
 };
 use crate::react_compiler_hir::{
-    ArrayElement, BlockId, DependencyPathEntry, HirFunction, Identifier, IdentifierId,
+    ArrayElement, BlockId, DependencyPathEntry, Effect, HirFunction, Identifier, IdentifierId,
     InstructionKind, InstructionValue, ManualMemoDependency, ManualMemoDependencyRoot,
     NonLocalBinding, ParamPattern, Place, PlaceOrSpread, PropertyLiteral, Terminal, Type,
 };
@@ -729,9 +732,9 @@ fn collect_dependencies(
                         });
                         // Save current state and clear, matching TS which clears the shared
                         // dependencies/locals sets on StartMemoize
-                        saved_dependencies = Some(std::mem::take(&mut dependencies));
-                        saved_dep_keys = Some(std::mem::take(&mut dep_keys));
-                        saved_locals = Some(std::mem::take(&mut locals));
+                        saved_dependencies = Some(take(&mut dependencies));
+                        saved_dep_keys = Some(take(&mut dep_keys));
+                        saved_locals = Some(take(&mut locals));
                     }
                 }
                 InstructionValue::FinishMemoize { manual_memo_id, decl, .. } => {
@@ -779,8 +782,8 @@ fn collect_dependencies(
                             // We restore instead of just clearing because we need the outer deps back
                             if let Some(saved) = saved_dependencies.take() {
                                 // Merge current memo-block deps into the restored outer deps
-                                let memo_deps = std::mem::replace(&mut dependencies, saved);
-                                let _memo_keys = std::mem::replace(
+                                let memo_deps = replace(&mut dependencies, saved);
+                                let _memo_keys = replace(
                                     &mut dep_keys,
                                     saved_dep_keys.take().unwrap_or_default(),
                                 );
@@ -878,18 +881,18 @@ fn collect_dependencies(
                                                         loc,
                                                         ..
                                                     } => ManualMemoDependency {
-                                                        root: ManualMemoDependencyRoot::NamedLocal {
-                                                            value: Place {
-                                                                identifier: *identifier,
-                                                                effect:
-                                                                    crate::react_compiler_hir::Effect::Read,
-                                                                reactive: cb
-                                                                    .reactive
-                                                                    .contains(identifier),
-                                                                loc: *loc,
+                                                        root:
+                                                            ManualMemoDependencyRoot::NamedLocal {
+                                                                value: Place {
+                                                                    identifier: *identifier,
+                                                                    effect: Effect::Read,
+                                                                    reactive: cb
+                                                                        .reactive
+                                                                        .contains(identifier),
+                                                                    loc: *loc,
+                                                                },
+                                                                constant: false,
                                                             },
-                                                            constant: false,
-                                                        },
                                                         path: path.clone(),
                                                         loc: *loc,
                                                     },
@@ -987,18 +990,18 @@ fn collect_dependencies(
                                                         loc,
                                                         ..
                                                     } => ManualMemoDependency {
-                                                        root: ManualMemoDependencyRoot::NamedLocal {
-                                                            value: Place {
-                                                                identifier: *identifier,
-                                                                effect:
-                                                                    crate::react_compiler_hir::Effect::Read,
-                                                                reactive: cb
-                                                                    .reactive
-                                                                    .contains(identifier),
-                                                                loc: *loc,
+                                                        root:
+                                                            ManualMemoDependencyRoot::NamedLocal {
+                                                                value: Place {
+                                                                    identifier: *identifier,
+                                                                    effect: Effect::Read,
+                                                                    reactive: cb
+                                                                        .reactive
+                                                                        .contains(identifier),
+                                                                    loc: *loc,
+                                                                },
+                                                                constant: false,
                                                             },
-                                                            constant: false,
-                                                        },
                                                         path: path.clone(),
                                                         loc: *loc,
                                                     },
@@ -1141,14 +1144,14 @@ fn validate_dependencies(
                                 }
                                 let prop_cmp =
                                     ap.property.to_string().cmp(&bp.property.to_string());
-                                if prop_cmp != std::cmp::Ordering::Equal {
+                                if prop_cmp != Ordering::Equal {
                                     return prop_cmp;
                                 }
                             }
-                            std::cmp::Ordering::Equal
+                            Ordering::Equal
                         }
                     }
-                    _ => std::cmp::Ordering::Equal,
+                    _ => Ordering::Equal,
                 }
             }
             (
@@ -1159,7 +1162,7 @@ fn validate_dependencies(
                 let b_name = get_identifier_name(*b_id, identifiers);
                 match b_name.as_deref() {
                     Some(bn) => a_name.cmp(bn),
-                    None => std::cmp::Ordering::Equal,
+                    None => Ordering::Equal,
                 }
             }
             (
@@ -1170,7 +1173,7 @@ fn validate_dependencies(
                 let b_name = bb.name();
                 match a_name.as_deref() {
                     Some(an) => an.cmp(b_name),
-                    None => std::cmp::Ordering::Equal,
+                    None => Ordering::Equal,
                 }
             }
         }

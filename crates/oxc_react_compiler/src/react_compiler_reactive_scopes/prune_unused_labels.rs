@@ -8,8 +8,11 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PruneUnusedLabels.ts`.
 
+use std::mem::take;
+
 use rustc_hash::FxHashSet;
 
+use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_hir::{
     BlockId, ReactiveFunction, ReactiveStatement, ReactiveTerminal, ReactiveTerminalStatement,
     ReactiveTerminalTargetKind, environment::Environment,
@@ -23,7 +26,7 @@ use crate::react_compiler_reactive_scopes::visitors::{
 pub fn prune_unused_labels(
     func: &mut ReactiveFunction,
     env: &Environment,
-) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
+) -> Result<(), CompilerError> {
     let mut transform = Transform { env };
     let mut labels: FxHashSet<BlockId> = FxHashSet::default();
     transform_reactive_function(func, &mut transform, &mut labels)
@@ -44,8 +47,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement,
         state: &mut FxHashSet<BlockId>,
-    ) -> Result<Transformed<ReactiveStatement>, crate::react_compiler_diagnostics::CompilerError>
-    {
+    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
         // Traverse children first
         self.traverse_terminal(stmt, state)?;
 
@@ -76,7 +78,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
                 // Note: In TS, there's a check for `last.terminal.target === null`
                 // to pop a trailing break, but since target is always a BlockId (number),
                 // that check is always false, so the trailing break is never removed.
-                let flattened = std::mem::take(block);
+                let flattened = take(block);
                 return Ok(Transformed::ReplaceMany(flattened));
             }
         }

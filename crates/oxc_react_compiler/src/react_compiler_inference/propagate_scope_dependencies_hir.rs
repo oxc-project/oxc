@@ -15,14 +15,17 @@
 use crate::react_compiler_utils::FxIndexMap;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeSet;
+use std::ptr::eq;
 
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{ScopeBlockInfo, ScopeBlockTraversal};
 use crate::react_compiler_hir::{
     BasicBlock, BlockId, DeclarationId, DependencyPathEntry, EvaluationOrder, FunctionId,
     GotoVariant, HirFunction, IdentifierId, Instruction, InstructionId, InstructionKind,
-    InstructionValue, MutableRange, ParamPattern, Place, PlaceOrSpread, PropertyLiteral,
-    ReactFunctionType, ReactiveScopeDependency, ScopeId, Terminal, Type, visitors,
+    InstructionValue, JsxAttribute, ManualMemoDependencyRoot, MutableRange, ParamPattern, Place,
+    PlaceOrSpread, PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration,
+    ReactiveScopeDependency, ScopeId, SourceLocation, Terminal, Type, is_ref_value_type,
+    is_use_ref_type, visitors,
 };
 
 // =============================================================================
@@ -341,7 +344,7 @@ fn get_property(
     object: &Place,
     property_name: &PropertyLiteral,
     optional: bool,
-    loc: Option<crate::react_compiler_hir::SourceLocation>,
+    loc: Option<SourceLocation>,
     temporaries: &FxHashMap<IdentifierId, ReactiveScopeDependency>,
     _env: &Environment,
 ) -> ReactiveScopeDependency {
@@ -441,7 +444,7 @@ struct MatchConsequentResult {
     property_id: IdentifierId,
     store_local_lvalue_id: IdentifierId,
     consequent_goto: BlockId,
-    property_load_loc: Option<crate::react_compiler_hir::SourceLocation>,
+    property_load_loc: Option<SourceLocation>,
 }
 
 fn match_optional_test_block(
@@ -697,7 +700,7 @@ fn traverse_optional_block(
             // This is O(n) but only happens for optional chains.
             let mut found_block = BlockId(0);
             for (bid, blk) in &func.body.blocks {
-                if std::ptr::eq(&blk.terminal, test_terminal) {
+                if eq(&blk.terminal, test_terminal) {
                     found_block = *bid;
                     break;
                 }
@@ -742,7 +745,7 @@ impl PropertyPathRegistry {
         &mut self,
         identifier_id: IdentifierId,
         reactive: bool,
-        loc: Option<crate::react_compiler_hir::SourceLocation>,
+        loc: Option<SourceLocation>,
     ) -> usize {
         if let Some(&idx) = self.roots.get(&identifier_id) {
             return idx;
@@ -1052,10 +1055,7 @@ fn get_assumed_invoked_functions_impl(
                 InstructionValue::JsxExpression { props, children, .. } => {
                     // Assume JSX attributes and children are safe to invoke
                     for prop in props {
-                        if let crate::react_compiler_hir::JsxAttribute::Attribute {
-                            place, ..
-                        } = prop
-                        {
+                        if let JsxAttribute::Attribute { place, .. } = prop {
                             if let Some(entry) = temporaries.get(&place.identifier) {
                                 hoistable.insert(entry.0);
                             }
@@ -1167,11 +1167,7 @@ fn collect_non_nulls_in_blocks(
             if env.enable_preserve_existing_memoization_guarantees {
                 if let InstructionValue::StartMemoize { deps: Some(deps), .. } = &instr.value {
                     for dep in deps {
-                        if let crate::react_compiler_hir::ManualMemoDependencyRoot::NamedLocal {
-                            value: val,
-                            ..
-                        } = &dep.root
-                        {
+                        if let ManualMemoDependencyRoot::NamedLocal { value: val, .. } = &dep.root {
                             if !is_immutable_at_instr(val.identifier, instr.id, env, ctx) {
                                 continue;
                             }
@@ -1500,7 +1496,7 @@ struct HoistableNodeEntry {
 struct DependencyNode {
     properties: FxIndexMap<PropertyLiteral, Box<DependencyNodeEntry>>,
     access_type: PropertyAccessType,
-    loc: Option<crate::react_compiler_hir::SourceLocation>,
+    loc: Option<SourceLocation>,
 }
 
 struct DependencyNodeEntry {
@@ -1758,7 +1754,7 @@ impl<'a> DependencyCollectionContext<'a> {
     fn check_valid_dependency(&self, dep: &ReactiveScopeDependency, env: &Environment) -> bool {
         // Ref value is not a valid dep
         let ty = &env.types[env.identifiers[dep.identifier.0 as usize].type_.0 as usize];
-        if crate::react_compiler_hir::is_ref_value_type(ty) {
+        if is_ref_value_type(ty) {
             return false;
         }
         // Object methods are not deps
@@ -1798,7 +1794,7 @@ impl<'a> DependencyCollectionContext<'a> {
         object: &Place,
         property: &PropertyLiteral,
         optional: bool,
-        loc: Option<crate::react_compiler_hir::SourceLocation>,
+        loc: Option<SourceLocation>,
         env: &mut Environment,
     ) {
         let dep = get_property(object, property, optional, loc, self.temporaries, env);
@@ -1822,7 +1818,7 @@ impl<'a> DependencyCollectionContext<'a> {
                         });
                         if !already_declared {
                             let orig_scope_id = *orig_scope_stack.last().unwrap();
-                            let new_decl = crate::react_compiler_hir::ReactiveScopeDeclaration {
+                            let new_decl = ReactiveScopeDeclaration {
                                 identifier: dep.identifier,
                                 scope: orig_scope_id,
                             };
@@ -1836,7 +1832,7 @@ impl<'a> DependencyCollectionContext<'a> {
         }
 
         // Handle ref.current access
-        let dep = if crate::react_compiler_hir::is_use_ref_type(
+        let dep = if is_use_ref_type(
             &env.types[env.identifiers[dep.identifier.0 as usize].type_.0 as usize],
         ) && dep
             .path

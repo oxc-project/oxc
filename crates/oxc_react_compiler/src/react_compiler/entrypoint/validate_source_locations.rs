@@ -18,7 +18,7 @@ use crate::react_compiler_ast::expressions::{
     ArrowFunctionBody, ArrowFunctionExpression, Expression, FunctionExpression,
     ObjectExpressionProperty,
 };
-use crate::react_compiler_ast::patterns::PatternLike;
+use crate::react_compiler_ast::patterns::{ObjectPatternProperty, PatternLike};
 use crate::react_compiler_ast::statements::{ForInOfLeft, ForInit, Statement, VariableDeclaration};
 use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, Position as DiagPosition,
@@ -696,9 +696,7 @@ fn collect_original_pattern(
         PatternLike::ObjectPattern(op) => {
             for prop in &op.properties {
                 match prop {
-                    crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(
-                        p,
-                    ) => {
+                    ObjectPatternProperty::ObjectProperty(p) => {
                         if p.computed {
                             collect_original_expression(&p.key, locations);
                         } else if let Expression::Identifier(id) = p.key.as_ref() {
@@ -706,7 +704,7 @@ fn collect_original_pattern(
                         }
                         collect_original_pattern(&p.value, locations);
                     }
-                    crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
+                    ObjectPatternProperty::RestElement(r) => {
                         collect_original_pattern(&r.argument, locations);
                     }
                 }
@@ -1189,14 +1187,12 @@ fn collect_generated_pattern(
             record_generated("ObjectPattern", &op.base.loc, locations);
             for prop in &op.properties {
                 match prop {
-                    crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(
-                        p,
-                    ) => {
+                    ObjectPatternProperty::ObjectProperty(p) => {
                         record_generated("ObjectProperty", &p.base.loc, locations);
                         collect_generated_expression(&p.key, locations);
                         collect_generated_pattern(&p.value, locations);
                     }
-                    crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
+                    ObjectPatternProperty::RestElement(r) => {
                         record_generated("RestElement", &r.base.loc, locations);
                         collect_generated_pattern(&r.argument, locations);
                     }

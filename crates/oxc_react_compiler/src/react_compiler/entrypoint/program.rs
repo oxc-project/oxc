@@ -16,17 +16,22 @@
 
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
+use serde_json::Value;
 
 use crate::react_compiler_ast::File;
 use crate::react_compiler_ast::Program;
 use crate::react_compiler_ast::common::BaseNode;
+use crate::react_compiler_ast::common::SourceLocation as AstSourceLocation;
 use crate::react_compiler_ast::declarations::Declaration;
 use crate::react_compiler_ast::declarations::ExportDefaultDecl;
 use crate::react_compiler_ast::declarations::ExportDefaultDeclaration;
+use crate::react_compiler_ast::declarations::ExportSpecifier;
 use crate::react_compiler_ast::declarations::ImportSpecifier;
 use crate::react_compiler_ast::declarations::ModuleExportName;
 use crate::react_compiler_ast::expressions::*;
+use crate::react_compiler_ast::patterns::ObjectPatternProperty;
 use crate::react_compiler_ast::patterns::PatternLike;
+use crate::react_compiler_ast::patterns::RestElement;
 use crate::react_compiler_ast::scope::ScopeId;
 use crate::react_compiler_ast::scope::ScopeInfo;
 use crate::react_compiler_ast::statements::*;
@@ -35,12 +40,19 @@ use crate::react_compiler_ast::visitor::MutVisitor;
 use crate::react_compiler_ast::visitor::VisitResult;
 use crate::react_compiler_ast::visitor::Visitor;
 use crate::react_compiler_ast::visitor::walk_program_mut;
+use crate::react_compiler_diagnostics::CompilerDiagnostic;
+use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
 use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
+use crate::react_compiler_diagnostics::CompilerSuggestion;
+use crate::react_compiler_diagnostics::CompilerSuggestionOperation;
 use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::react_compiler_diagnostics::Position;
 use crate::react_compiler_diagnostics::SourceLocation;
+use crate::react_compiler_diagnostics::code_frame::format_compiler_error;
 use crate::react_compiler_hir::ReactFunctionType;
+use crate::react_compiler_hir::environment::BindingRename;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
 
@@ -96,7 +108,7 @@ struct CompileSource<'a> {
     fn_name: Option<String>,
     fn_loc: Option<SourceLocation>,
     /// Original AST source location (with index and filename) for logger events.
-    fn_ast_loc: Option<crate::react_compiler_ast::common::SourceLocation>,
+    fn_ast_loc: Option<AstSourceLocation>,
     fn_start: Option<u32>,
     fn_end: Option<u32>,
     fn_node_id: Option<u32>,
@@ -766,17 +778,15 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &Expression) -> bool {
 /// We search the JSON tree, skipping nested function nodes (matching TS behavior where
 /// Babel's traverse skips ArrowFunctionExpression, FunctionExpression, FunctionDeclaration
 /// but recurses into class methods).
-fn calls_hooks_or_creates_jsx_in_class_body(
-    body: &crate::react_compiler_ast::expressions::ClassBody,
-) -> bool {
+fn calls_hooks_or_creates_jsx_in_class_body(body: &ClassBody) -> bool {
     body.body.iter().any(|member| calls_hooks_or_creates_jsx_in_json(&member.parse_value()))
 }
 
-fn calls_hooks_or_creates_jsx_in_json(value: &serde_json::Value) -> bool {
+fn calls_hooks_or_creates_jsx_in_json(value: &Value) -> bool {
     match value {
-        serde_json::Value::Object(obj) => {
+        Value::Object(obj) => {
             // Check the node type
-            if let Some(serde_json::Value::String(node_type)) = obj.get("type") {
+            if let Some(Value::String(node_type)) = obj.get("type") {
                 match node_type.as_str() {
                     // JSX nodes
                     "JSXElement" | "JSXFragment" => return true,
@@ -798,7 +808,7 @@ fn calls_hooks_or_creates_jsx_in_json(value: &serde_json::Value) -> bool {
             // Recurse into all values of the object
             obj.values().any(|v| calls_hooks_or_creates_jsx_in_json(v))
         }
-        serde_json::Value::Array(arr) => arr.iter().any(|v| calls_hooks_or_creates_jsx_in_json(v)),
+        Value::Array(arr) => arr.iter().any(|v| calls_hooks_or_creates_jsx_in_json(v)),
         _ => false,
     }
 }
@@ -807,11 +817,11 @@ fn calls_hooks_or_creates_jsx_in_json(value: &serde_json::Value) -> bool {
 /// Handles both Identifier (e.g. `useState`) and MemberExpression
 /// (e.g. `React.useState`) patterns, reusing `is_hook_name` for
 /// consistent naming checks.
-fn json_expr_is_hook(callee: &serde_json::Value) -> bool {
-    if let serde_json::Value::Object(obj) = callee {
-        if let Some(serde_json::Value::String(node_type)) = obj.get("type") {
+fn json_expr_is_hook(callee: &Value) -> bool {
+    if let Value::Object(obj) = callee {
+        if let Some(Value::String(node_type)) = obj.get("type") {
             if node_type == "Identifier" {
-                if let Some(serde_json::Value::String(name)) = obj.get("name") {
+                if let Some(Value::String(name)) = obj.get("name") {
                     return is_hook_name(name);
                 }
             } else if node_type == "MemberExpression" {
@@ -821,14 +831,14 @@ fn json_expr_is_hook(callee: &serde_json::Value) -> bool {
                     return false;
                 }
                 // Property must be a hook name
-                if let Some(serde_json::Value::Object(prop)) = obj.get("property") {
+                if let Some(Value::Object(prop)) = obj.get("property") {
                     if prop.get("type").and_then(|v| v.as_str()) == Some("Identifier") {
                         if let Some(name) = prop.get("name").and_then(|v| v.as_str()) {
                             if !is_hook_name(name) {
                                 return false;
                             }
                             // Object must be PascalCase identifier
-                            if let Some(serde_json::Value::Object(obj_node)) = obj.get("object") {
+                            if let Some(Value::Object(obj_node)) = obj.get("object") {
                                 if obj_node.get("type").and_then(|v| v.as_str())
                                     == Some("Identifier")
                                 {
@@ -878,10 +888,10 @@ fn calls_hooks_or_creates_jsx_in_pattern(pattern: &PatternLike) -> bool {
                 || calls_hooks_or_creates_jsx_in_pattern(&assign.left)
         }
         PatternLike::ObjectPattern(obj) => obj.properties.iter().any(|prop| match prop {
-            crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(p) => {
+            ObjectPatternProperty::ObjectProperty(p) => {
                 calls_hooks_or_creates_jsx_in_pattern(&p.value)
             }
-            crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(rest) => {
+            ObjectPatternProperty::RestElement(rest) => {
                 calls_hooks_or_creates_jsx_in_pattern(&rest.argument)
             }
         }),
@@ -1154,18 +1164,10 @@ fn get_callee_name_if_react_api(callee: &Expression) -> Option<&str> {
 // -----------------------------------------------------------------------
 
 /// Convert an AST SourceLocation to a diagnostics SourceLocation
-fn convert_loc(loc: &crate::react_compiler_ast::common::SourceLocation) -> SourceLocation {
+fn convert_loc(loc: &AstSourceLocation) -> SourceLocation {
     SourceLocation {
-        start: crate::react_compiler_diagnostics::Position {
-            line: loc.start.line,
-            column: loc.start.column,
-            index: loc.start.index,
-        },
-        end: crate::react_compiler_diagnostics::Position {
-            line: loc.end.line,
-            column: loc.end.column,
-            index: loc.end.index,
-        },
+        start: Position { line: loc.start.line, column: loc.start.column, index: loc.start.index },
+        end: Position { line: loc.end.line, column: loc.end.column, index: loc.end.index },
     }
 }
 
@@ -1179,33 +1181,29 @@ fn base_node_loc(base: &BaseNode) -> Option<SourceLocation> {
 
 /// Convert CompilerDiagnostic details into serializable CompilerErrorItemInfo items.
 fn diagnostic_details_to_items(
-    d: &crate::react_compiler_diagnostics::CompilerDiagnostic,
+    d: &CompilerDiagnostic,
     filename: Option<&str>,
 ) -> Option<Vec<CompilerErrorItemInfo>> {
     let items: Vec<CompilerErrorItemInfo> = d
         .details
         .iter()
         .map(|item| match item {
-            crate::react_compiler_diagnostics::CompilerDiagnosticDetail::Error {
-                loc,
-                message,
-                identifier_name,
-            } => CompilerErrorItemInfo {
-                kind: "error".to_string(),
-                loc: loc.as_ref().map(|l| {
-                    let mut logger_loc = diag_loc_to_logger_loc(l, filename);
-                    logger_loc.identifier_name = identifier_name.clone();
-                    logger_loc
-                }),
-                message: message.clone(),
-            },
-            crate::react_compiler_diagnostics::CompilerDiagnosticDetail::Hint { message } => {
+            CompilerDiagnosticDetail::Error { loc, message, identifier_name } => {
                 CompilerErrorItemInfo {
-                    kind: "hint".to_string(),
-                    loc: None,
-                    message: Some(message.clone()),
+                    kind: "error".to_string(),
+                    loc: loc.as_ref().map(|l| {
+                        let mut logger_loc = diag_loc_to_logger_loc(l, filename);
+                        logger_loc.identifier_name = identifier_name.clone();
+                        logger_loc
+                    }),
+                    message: message.clone(),
                 }
             }
+            CompilerDiagnosticDetail::Hint { message } => CompilerErrorItemInfo {
+                kind: "hint".to_string(),
+                loc: None,
+                message: Some(message.clone()),
+            },
         })
         .collect();
     if items.is_empty() { None } else { Some(items) }
@@ -1213,7 +1211,7 @@ fn diagnostic_details_to_items(
 
 /// Convert an optional AST SourceLocation to a LoggerSourceLocation with filename.
 fn to_logger_loc(
-    ast_loc: Option<&crate::react_compiler_ast::common::SourceLocation>,
+    ast_loc: Option<&AstSourceLocation>,
     filename: Option<&str>,
 ) -> Option<LoggerSourceLocation> {
     ast_loc.map(|loc| LoggerSourceLocation {
@@ -1244,25 +1242,17 @@ fn diag_loc_to_logger_loc(loc: &SourceLocation, filename: Option<&str>) -> Logge
 
 /// Convert diagnostic suggestions to logger suggestion infos.
 fn suggestions_to_logger(
-    suggestions: &Option<Vec<crate::react_compiler_diagnostics::CompilerSuggestion>>,
+    suggestions: &Option<Vec<CompilerSuggestion>>,
 ) -> Option<Vec<LoggerSuggestionInfo>> {
     suggestions.as_ref().map(|suggestions| {
         suggestions
             .iter()
             .map(|s| {
                 let op = match s.op {
-                    crate::react_compiler_diagnostics::CompilerSuggestionOperation::InsertBefore => {
-                        LoggerSuggestionOp::InsertBefore
-                    }
-                    crate::react_compiler_diagnostics::CompilerSuggestionOperation::InsertAfter => {
-                        LoggerSuggestionOp::InsertAfter
-                    }
-                    crate::react_compiler_diagnostics::CompilerSuggestionOperation::Remove => {
-                        LoggerSuggestionOp::Remove
-                    }
-                    crate::react_compiler_diagnostics::CompilerSuggestionOperation::Replace => {
-                        LoggerSuggestionOp::Replace
-                    }
+                    CompilerSuggestionOperation::InsertBefore => LoggerSuggestionOp::InsertBefore,
+                    CompilerSuggestionOperation::InsertAfter => LoggerSuggestionOp::InsertAfter,
+                    CompilerSuggestionOperation::Remove => LoggerSuggestionOp::Remove,
+                    CompilerSuggestionOperation::Replace => LoggerSuggestionOp::Replace,
                 };
                 LoggerSuggestionInfo {
                     description: s.description.clone(),
@@ -1278,7 +1268,7 @@ fn suggestions_to_logger(
 /// Log an error as LoggerEvent(s) directly onto the ProgramContext.
 fn log_error(
     err: &CompilerError,
-    fn_ast_loc: Option<&crate::react_compiler_ast::common::SourceLocation>,
+    fn_ast_loc: Option<&AstSourceLocation>,
     context: &mut ProgramContext,
 ) {
     // Use the filename from the AST node's loc (set by parser's sourceFilename option),
@@ -1342,7 +1332,7 @@ fn log_error(
 /// otherwise returns None (error was logged only).
 fn handle_error(
     err: &CompilerError,
-    fn_ast_loc: Option<&crate::react_compiler_ast::common::SourceLocation>,
+    fn_ast_loc: Option<&AstSourceLocation>,
     context: &mut ProgramContext,
 ) -> Option<CompileResult> {
     // Log the error
@@ -1384,11 +1374,7 @@ fn handle_error(
         if error_info.raw_message.is_none() {
             if let Some(ref source) = context.code {
                 error_info.formatted_message =
-                    Some(crate::react_compiler_diagnostics::code_frame::format_compiler_error(
-                        err,
-                        source,
-                        source_fn.as_deref(),
-                    ));
+                    Some(format_compiler_error(err, source, source_fn.as_deref()));
             }
         }
 
@@ -1944,11 +1930,7 @@ impl<'a, 'ast> Visitor<'ast> for FunctionDiscoveryVisitor<'a, 'ast> {
         }
     }
 
-    fn enter_object_method(
-        &mut self,
-        _node: &'ast crate::react_compiler_ast::expressions::ObjectMethod,
-        _scope_stack: &[ScopeId],
-    ) {
+    fn enter_object_method(&mut self, _node: &'ast ObjectMethod, _scope_stack: &[ScopeId]) {
         self.skip_body = false;
     }
 }
@@ -2093,10 +2075,7 @@ fn stmt_references_identifier_at_top_level(stmt: &Statement, name: &str) -> bool
             } else {
                 // export { Name } - check specifiers
                 export.specifiers.iter().any(|s| {
-                    if let crate::react_compiler_ast::declarations::ExportSpecifier::ExportSpecifier(
-                        spec,
-                    ) = s
-                    {
+                    if let ExportSpecifier::ExportSpecifier(spec) = s {
                         match &spec.local {
                             ModuleExportName::Identifier(id) => id.name == name,
                             _ => false,
@@ -2129,19 +2108,17 @@ fn stmt_references_identifier_at_top_level(stmt: &Statement, name: &str) -> bool
 
 /// Conservatively detect an `Identifier` node with the given name anywhere in
 /// a raw unmodeled subtree.
-fn raw_node_references_identifier(value: &serde_json::Value, name: &str) -> bool {
+fn raw_node_references_identifier(value: &Value, name: &str) -> bool {
     match value {
-        serde_json::Value::Object(map) => {
-            if map.get("type").and_then(serde_json::Value::as_str) == Some("Identifier")
-                && map.get("name").and_then(serde_json::Value::as_str) == Some(name)
+        Value::Object(map) => {
+            if map.get("type").and_then(Value::as_str) == Some("Identifier")
+                && map.get("name").and_then(Value::as_str) == Some(name)
             {
                 return true;
             }
             map.values().any(|v| raw_node_references_identifier(v, name))
         }
-        serde_json::Value::Array(items) => {
-            items.iter().any(|v| raw_node_references_identifier(v, name))
-        }
+        Value::Array(items) => items.iter().any(|v| raw_node_references_identifier(v, name)),
         _ => false,
     }
 }
@@ -3019,20 +2996,18 @@ fn apply_gated_function_hoisted(
         let is_rest = matches!(&original_params[i], PatternLike::RestElement(_));
 
         if is_rest {
-            new_params.push(PatternLike::RestElement(
-                crate::react_compiler_ast::patterns::RestElement {
-                    base: BaseNode::typed("RestElement"),
-                    argument: Box::new(PatternLike::Identifier(Identifier {
-                        base: BaseNode::typed("Identifier"),
-                        name: arg_name.clone(),
-                        type_annotation: None,
-                        optional: None,
-                        decorators: None,
-                    })),
+            new_params.push(PatternLike::RestElement(RestElement {
+                base: BaseNode::typed("RestElement"),
+                argument: Box::new(PatternLike::Identifier(Identifier {
+                    base: BaseNode::typed("Identifier"),
+                    name: arg_name.clone(),
                     type_annotation: None,
+                    optional: None,
                     decorators: None,
-                },
-            ));
+                })),
+                type_annotation: None,
+                decorators: None,
+            }));
             optimized_args.push(Expression::SpreadElement(SpreadElement {
                 base: BaseNode::typed("SpreadElement"),
                 argument: Box::new(Expression::Identifier(Identifier {
@@ -3279,7 +3254,7 @@ fn insert_after_fn_in_stmt(stmt: &mut Statement, node_id: u32, new_stmt: &Statem
 }
 
 fn insert_after_fn_in_block(
-    block: &mut crate::react_compiler_ast::statements::BlockStatement,
+    block: &mut BlockStatement,
     node_id: u32,
     new_stmt: &Statement,
 ) -> bool {
@@ -3300,14 +3275,12 @@ fn insert_after_fn_in_expr(expr: &mut Expression, node_id: u32, new_stmt: &State
         Expression::ObjectExpression(obj) => {
             for prop in &mut obj.properties {
                 match prop {
-                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::ObjectMethod(m) => {
+                    ObjectExpressionProperty::ObjectMethod(m) => {
                         if insert_after_fn_in_block(&mut m.body, node_id, new_stmt) {
                             return true;
                         }
                     }
-                    crate::react_compiler_ast::expressions::ObjectExpressionProperty::ObjectProperty(
-                        p,
-                    ) => {
+                    ObjectExpressionProperty::ObjectProperty(p) => {
                         if insert_after_fn_in_expr(&mut p.value, node_id, new_stmt) {
                             return true;
                         }
@@ -3326,12 +3299,10 @@ fn insert_after_fn_in_expr(expr: &mut Expression, node_id: u32, new_stmt: &State
             false
         }
         Expression::ArrowFunctionExpression(arrow) => match arrow.body.as_mut() {
-            crate::react_compiler_ast::expressions::ArrowFunctionBody::BlockStatement(block) => {
+            ArrowFunctionBody::BlockStatement(block) => {
                 insert_after_fn_in_block(block, node_id, new_stmt)
             }
-            crate::react_compiler_ast::expressions::ArrowFunctionBody::Expression(e) => {
-                insert_after_fn_in_expr(e, node_id, new_stmt)
-            }
+            ArrowFunctionBody::Expression(e) => insert_after_fn_in_expr(e, node_id, new_stmt),
         },
         Expression::FunctionExpression(f) => {
             insert_after_fn_in_block(&mut f.body, node_id, new_stmt)
@@ -3713,15 +3684,9 @@ pub fn compile_program(mut file: File, scope: ScopeInfo, options: PluginOptions)
             // Fallback: try the first statement's loc
             program.body.first().and_then(|stmt| {
                 let base = match stmt {
-                    crate::react_compiler_ast::statements::Statement::ExpressionStatement(s) => {
-                        &s.base
-                    }
-                    crate::react_compiler_ast::statements::Statement::VariableDeclaration(s) => {
-                        &s.base
-                    }
-                    crate::react_compiler_ast::statements::Statement::FunctionDeclaration(s) => {
-                        &s.base
-                    }
+                    Statement::ExpressionStatement(s) => &s.base,
+                    Statement::VariableDeclaration(s) => &s.base,
+                    Statement::FunctionDeclaration(s) => &s.base,
                     _ => return None,
                 };
                 base.loc.as_ref().and_then(|loc| loc.filename.clone())
@@ -3923,9 +3888,7 @@ pub fn compile_program(mut file: File, scope: ScopeInfo, options: PluginOptions)
 }
 
 /// Convert internal BindingRename structs to the serializable BindingRenameInfo format.
-fn convert_renames(
-    renames: &[crate::react_compiler_hir::environment::BindingRename],
-) -> Vec<BindingRenameInfo> {
+fn convert_renames(renames: &[BindingRename]) -> Vec<BindingRenameInfo> {
     renames
         .iter()
         .map(|r| BindingRenameInfo {

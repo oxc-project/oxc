@@ -1,3 +1,5 @@
+use std::mem::replace;
+
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_hir::environment::Environment;
@@ -131,10 +133,8 @@ fn eliminate_redundant_phi_impl(
                     }
 
                     // Take inner function out, process it, put it back
-                    let mut inner_func = std::mem::replace(
-                        &mut env.functions[fid.0 as usize],
-                        placeholder_function(),
-                    );
+                    let mut inner_func =
+                        replace(&mut env.functions[fid.0 as usize], placeholder_function());
 
                     eliminate_redundant_phi_impl(&mut inner_func, env, rewrites);
 

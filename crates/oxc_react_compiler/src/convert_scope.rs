@@ -7,9 +7,17 @@ use crate::react_compiler_ast::scope::*;
 use indexmap::IndexMap;
 use oxc_ast::AstKind;
 use oxc_ast::ast::{BindingPattern, Program};
+use oxc_ast::ast::{
+    ExportDefaultDeclarationKind, ImportDeclaration, ModuleExportName, PropertyKind, Statement,
+    TSModuleDeclarationName,
+};
+use oxc_semantic::NodeId;
 use oxc_semantic::Semantic;
 use oxc_span::GetSpan;
+use oxc_syntax::scope::ScopeFlags;
+use oxc_syntax::scope::ScopeId as OxcScopeId;
 use oxc_syntax::symbol::SymbolFlags;
+use oxc_syntax::symbol::SymbolId;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
 /// `IndexMap` keyed with the deterministic Fx hasher, matching the `FxIndexMap`
@@ -29,8 +37,7 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
     let mut node_id_to_scope: FxHashMap<u32, ScopeId> = FxHashMap::default();
     let mut ref_node_id_to_binding: FxIndexMap<u32, BindingId> = FxIndexMap::default();
 
-    let mut symbol_to_binding: FxHashMap<oxc_syntax::symbol::SymbolId, BindingId> =
-        FxHashMap::default();
+    let mut symbol_to_binding: FxHashMap<SymbolId, BindingId> = FxHashMap::default();
 
     // First pass: Create all bindings from symbols
     for symbol_id in scoping.symbol_ids() {
@@ -96,10 +103,7 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
                 match parent_node.kind() {
                     AstKind::ObjectProperty(prop)
                         if prop.method
-                            || matches!(
-                                prop.kind,
-                                oxc_ast::ast::PropertyKind::Get | oxc_ast::ast::PropertyKind::Set
-                            ) =>
+                            || matches!(prop.kind, PropertyKind::Get | PropertyKind::Set) =>
                     {
                         let prop_start = parent_node.kind().span().start;
                         if prop_start != start {
@@ -154,10 +158,8 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
     // as a reference to the function's binding. OXC doesn't create a reference for
     // the export itself, so we add one at the export statement's start position.
     for stmt in &_program.body {
-        if let oxc_ast::ast::Statement::ExportDefaultDeclaration(export) = stmt {
-            if let oxc_ast::ast::ExportDefaultDeclarationKind::FunctionDeclaration(func) =
-                &export.declaration
-            {
+        if let Statement::ExportDefaultDeclaration(export) = stmt {
+            if let ExportDefaultDeclarationKind::FunctionDeclaration(func) = &export.declaration {
                 if let Some(id) = &func.id {
                     let name = id.name.as_str();
                     if let Some(symbol_id) = id.symbol_id.get() {
@@ -184,10 +186,8 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
     // as a reference to the function's binding. OXC doesn't create a reference for
     // the export itself, so we add one at the export statement's start position.
     for stmt in &_program.body {
-        if let oxc_ast::ast::Statement::ExportDefaultDeclaration(export) = stmt {
-            if let oxc_ast::ast::ExportDefaultDeclarationKind::FunctionDeclaration(func) =
-                &export.declaration
-            {
+        if let Statement::ExportDefaultDeclaration(export) = stmt {
+            if let ExportDefaultDeclarationKind::FunctionDeclaration(func) = &export.declaration {
                 if let Some(id) = &func.id {
                     let name = id.name.as_str();
                     if let Some(symbol_id) = id.symbol_id.get() {
@@ -225,24 +225,20 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
 }
 
 /// Map OXC ScopeFlags to our ScopeKind.
-fn get_scope_kind(
-    flags: oxc_syntax::scope::ScopeFlags,
-    semantic: &Semantic,
-    scope_id: oxc_syntax::scope::ScopeId,
-) -> ScopeKind {
-    if flags.contains(oxc_syntax::scope::ScopeFlags::Top) {
+fn get_scope_kind(flags: ScopeFlags, semantic: &Semantic, scope_id: OxcScopeId) -> ScopeKind {
+    if flags.contains(ScopeFlags::Top) {
         return ScopeKind::Program;
     }
 
-    if flags.intersects(oxc_syntax::scope::ScopeFlags::Function) {
+    if flags.intersects(ScopeFlags::Function) {
         return ScopeKind::Function;
     }
 
-    if flags.contains(oxc_syntax::scope::ScopeFlags::CatchClause) {
+    if flags.contains(ScopeFlags::CatchClause) {
         return ScopeKind::Catch;
     }
 
-    if flags.contains(oxc_syntax::scope::ScopeFlags::ClassStaticBlock) {
+    if flags.contains(ScopeFlags::ClassStaticBlock) {
         return ScopeKind::Class;
     }
 
@@ -260,11 +256,7 @@ fn get_scope_kind(
 }
 
 /// Map OXC SymbolFlags to our BindingKind.
-fn get_binding_kind(
-    flags: SymbolFlags,
-    semantic: &Semantic,
-    symbol_id: oxc_syntax::symbol::SymbolId,
-) -> BindingKind {
+fn get_binding_kind(flags: SymbolFlags, semantic: &Semantic, symbol_id: SymbolId) -> BindingKind {
     if flags.contains(SymbolFlags::Import) {
         return BindingKind::Module;
     }
@@ -314,7 +306,7 @@ fn get_binding_kind(
 /// Get the declaration type string and start position for a binding.
 fn get_declaration_info(
     semantic: &Semantic,
-    symbol_id: oxc_syntax::symbol::SymbolId,
+    symbol_id: SymbolId,
     name: &str,
 ) -> (String, Option<u32>) {
     let decl_node = semantic.symbol_declaration(symbol_id);
@@ -399,14 +391,16 @@ fn find_binding_identifier_start(kind: AstKind, name: &str) -> Option<u32> {
                 None
             }
         }
-        AstKind::TSModuleDeclaration(decl) => {
-            match &decl.id {
-                oxc_ast::ast::TSModuleDeclarationName::Identifier(id) => {
-                    if id.name.as_str() == name { Some(id.span.start) } else { None }
+        AstKind::TSModuleDeclaration(decl) => match &decl.id {
+            TSModuleDeclarationName::Identifier(id) => {
+                if id.name.as_str() == name {
+                    Some(id.span.start)
+                } else {
+                    None
                 }
-                _ => None,
             }
-        }
+            _ => None,
+        },
         _ => None,
     }
 }
@@ -452,10 +446,7 @@ fn find_identifier_in_pattern(pattern: &BindingPattern, name: &str) -> Option<u3
 }
 
 /// Extract import data for a module binding.
-fn get_import_data(
-    semantic: &Semantic,
-    symbol_id: oxc_syntax::symbol::SymbolId,
-) -> Option<ImportBindingData> {
+fn get_import_data(semantic: &Semantic, symbol_id: SymbolId) -> Option<ImportBindingData> {
     let decl_node = semantic.symbol_declaration(symbol_id);
 
     match decl_node.kind() {
@@ -478,11 +469,9 @@ fn get_import_data(
         AstKind::ImportSpecifier(spec) => {
             let import_decl = find_import_declaration(semantic, decl_node.id())?;
             let imported_name = match &spec.imported {
-                oxc_ast::ast::ModuleExportName::IdentifierName(ident) => ident.name.to_string(),
-                oxc_ast::ast::ModuleExportName::IdentifierReference(ident) => {
-                    ident.name.to_string()
-                }
-                oxc_ast::ast::ModuleExportName::StringLiteral(lit) => lit.value.to_string(),
+                ModuleExportName::IdentifierName(ident) => ident.name.to_string(),
+                ModuleExportName::IdentifierReference(ident) => ident.name.to_string(),
+                ModuleExportName::StringLiteral(lit) => lit.value.to_string(),
             };
             Some(ImportBindingData {
                 source: import_decl.source.value.to_string(),
@@ -497,8 +486,8 @@ fn get_import_data(
 /// Find the ImportDeclaration node that contains the given import specifier.
 fn find_import_declaration<'a>(
     semantic: &'a Semantic,
-    specifier_node_id: oxc_semantic::NodeId,
-) -> Option<&'a oxc_ast::ast::ImportDeclaration<'a>> {
+    specifier_node_id: NodeId,
+) -> Option<&'a ImportDeclaration<'a>> {
     let mut current_id = specifier_node_id;
     // Walk up the parent chain (max 10 levels to avoid infinite loop)
     for _ in 0..10 {

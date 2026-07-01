@@ -11,6 +11,8 @@
 //!
 //! Ported from TypeScript `src/HIR/BuildReactiveScopeTerminalsHIR.ts`.
 
+use std::cmp::Ordering;
+
 use crate::react_compiler_utils::FxIndexSet;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
@@ -21,6 +23,7 @@ use crate::react_compiler_hir::EvaluationOrder;
 use crate::react_compiler_hir::GotoVariant;
 use crate::react_compiler_hir::HirFunction;
 use crate::react_compiler_hir::IdentifierId;
+use crate::react_compiler_hir::MutableRange;
 use crate::react_compiler_hir::ScopeId;
 use crate::react_compiler_hir::Terminal;
 use crate::react_compiler_hir::environment::Environment;
@@ -111,7 +114,7 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
         let a_range = &env.scopes[a.0 as usize].range;
         let b_range = &env.scopes[b.0 as usize].range;
         let start_diff = a_range.start.0.cmp(&b_range.start.0);
-        if start_diff != std::cmp::Ordering::Equal {
+        if start_diff != Ordering::Equal {
             return start_diff;
         }
         b_range.end.0.cmp(&a_range.end.0)
@@ -354,7 +357,7 @@ fn fix_scope_and_identifier_ranges(func: &HirFunction, env: &mut Environment) {
     // reference as scope.range see the update automatically. We simulate
     // this by only syncing identifiers whose mutableRange matches the
     // scope's pre-update range.
-    let original_scope_ranges: Vec<crate::react_compiler_hir::MutableRange> =
+    let original_scope_ranges: Vec<MutableRange> =
         env.scopes.iter().map(|s| s.range.clone()).collect();
 
     for (_block_id, block) in &func.body.blocks {

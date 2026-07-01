@@ -10,6 +10,8 @@
 //! and not called dynamically. Also validates that hooks are not
 //! called inside function expressions.
 
+use std::iter::once;
+
 use rustc_hash::FxHashMap;
 
 use crate::react_compiler_diagnostics::{
@@ -21,7 +23,7 @@ use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors::{each_pattern_operand, each_terminal_operand};
 use crate::react_compiler_hir::{
     FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue, ParamPattern, Place,
-    PropertyLiteral, Type, visitors,
+    PlaceOrSpread, PropertyLiteral, Type, visitors,
 };
 use crate::react_compiler_utils::FxIndexMap;
 
@@ -193,7 +195,7 @@ fn record_dynamic_hook_usage_error(
 pub fn validate_hooks_usage(
     func: &HirFunction,
     env: &mut Environment,
-) -> Result<(), crate::react_compiler_diagnostics::CompilerDiagnostic> {
+) -> Result<(), CompilerDiagnostic> {
     let unconditional_blocks = compute_unconditional_blocks(func, env.next_block_id().0)?;
     let mut errors_by_loc: FxIndexMap<SourceLocation, CompilerErrorDetail> = FxIndexMap::default();
     let mut value_kinds: FxHashMap<IdentifierId, Kind> = FxHashMap::default();
@@ -312,8 +314,8 @@ pub fn validate_hooks_usage(
                     // Visit all operands except callee
                     for arg in args {
                         let place = match arg {
-                            crate::react_compiler_hir::PlaceOrSpread::Place(p) => p,
-                            crate::react_compiler_hir::PlaceOrSpread::Spread(s) => &s.place,
+                            PlaceOrSpread::Place(p) => p,
+                            PlaceOrSpread::Spread(s) => &s.place,
                         };
                         visit_place(place, &value_kinds, &mut errors_by_loc, env)?;
                     }
@@ -336,8 +338,8 @@ pub fn validate_hooks_usage(
                     visit_place(receiver, &value_kinds, &mut errors_by_loc, env)?;
                     for arg in args {
                         let place = match arg {
-                            crate::react_compiler_hir::PlaceOrSpread::Place(p) => p,
-                            crate::react_compiler_hir::PlaceOrSpread::Spread(s) => &s.place,
+                            PlaceOrSpread::Place(p) => p,
+                            PlaceOrSpread::Spread(s) => &s.place,
                         };
                         visit_place(place, &value_kinds, &mut errors_by_loc, env)?;
                     }
@@ -347,8 +349,7 @@ pub fn validate_hooks_usage(
                     let object_kind = get_kind_for_place(value, &value_kinds, &env.identifiers);
                     // Process instr.lvalue and all pattern operands (matching TS eachInstructionLValue)
                     let pattern_places = each_pattern_operand(&lvalue.pattern);
-                    let all_lvalues =
-                        std::iter::once(instr.lvalue.clone()).chain(pattern_places.into_iter());
+                    let all_lvalues = once(instr.lvalue.clone()).chain(pattern_places.into_iter());
                     for place in all_lvalues {
                         let is_hook_property =
                             ident_is_hook_name(place.identifier, &env.identifiers);

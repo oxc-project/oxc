@@ -8,6 +8,9 @@
 //! Defines the shape registry used by Environment to resolve property types
 //! and function call signatures for built-in objects, hooks, and user-defined types.
 
+use std::fmt::Display;
+use std::fmt::Formatter;
+use std::fmt::Result as FmtResult;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 use rustc_hash::FxHashMap;
@@ -76,8 +79,8 @@ pub enum HookKind {
     Custom,
 }
 
-impl std::fmt::Display for HookKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for HookKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             HookKind::UseContext => write!(f, "useContext"),
             HookKind::UseState => write!(f, "useState"),
