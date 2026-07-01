@@ -11,6 +11,8 @@
 //!
 //! Conditional on `env.config.enable_name_anonymous_functions`.
 
+use std::mem::take;
+
 use rustc_hash::FxHashMap;
 
 use crate::react_compiler_hir::environment::Environment;
@@ -77,7 +79,7 @@ pub fn name_anonymous_functions(func: &mut HirFunction, env: &mut Environment) {
     // Update name_hint on FunctionExpression instruction values in all arena functions
     for i in 0..env.functions.len() {
         // We need to temporarily take the instructions to avoid borrow issues
-        let mut instructions = std::mem::take(&mut env.functions[i].instructions);
+        let mut instructions = take(&mut env.functions[i].instructions);
         apply_name_hints_to_instructions(&mut instructions, &update_map);
         env.functions[i].instructions = instructions;
     }

@@ -13,7 +13,7 @@ use rustc_hash::FxHashSet;
 
 use crate::react_compiler_hir::{
     DeclarationId, EvaluationOrder, Place, ReactiveFunction, ReactiveInstruction,
-    ReactiveStatement, ReactiveValue, environment::Environment,
+    ReactiveStatement, ReactiveTerminal, ReactiveValue, environment::Environment,
 };
 
 use crate::react_compiler_reactive_scopes::visitors::{self, ReactiveFunctionVisitor};
@@ -150,11 +150,10 @@ fn null_unused_in_value(
 }
 
 fn null_unused_in_terminal(
-    terminal: &mut crate::react_compiler_hir::ReactiveTerminal,
+    terminal: &mut ReactiveTerminal,
     env: &Environment,
     unused: &FxHashSet<DeclarationId>,
 ) {
-    use crate::react_compiler_hir::ReactiveTerminal;
     match terminal {
         ReactiveTerminal::Break { .. } | ReactiveTerminal::Continue { .. } => {}
         ReactiveTerminal::Return { .. } | ReactiveTerminal::Throw { .. } => {}

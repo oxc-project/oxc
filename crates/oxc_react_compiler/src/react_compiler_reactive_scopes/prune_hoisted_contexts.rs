@@ -8,7 +8,7 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PruneHoistedContexts.ts`.
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
 use crate::react_compiler_hir::{
@@ -48,7 +48,7 @@ enum UninitializedKind {
 }
 
 struct VisitorState {
-    active_scopes: Vec<rustc_hash::FxHashSet<IdentifierId>>,
+    active_scopes: Vec<FxHashSet<IdentifierId>>,
     uninitialized: FxHashMap<IdentifierId, UninitializedKind>,
 }
 
@@ -80,7 +80,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         state: &mut VisitorState,
     ) -> Result<(), CompilerError> {
         let scope_data = &self.env.scopes[scope.scope.0 as usize];
-        let decl_ids: rustc_hash::FxHashSet<IdentifierId> =
+        let decl_ids: FxHashSet<IdentifierId> =
             scope_data.declarations.iter().map(|(id, _)| *id).collect();
 
         // Add declared but not initialized variables

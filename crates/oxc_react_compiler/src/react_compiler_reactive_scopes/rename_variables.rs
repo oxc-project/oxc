@@ -14,6 +14,7 @@ use rustc_hash::FxHashSet;
 use crate::react_compiler_hir::DeclarationId;
 use crate::react_compiler_hir::EvaluationOrder;
 use crate::react_compiler_hir::FunctionId;
+use crate::react_compiler_hir::IdentifierId;
 use crate::react_compiler_hir::IdentifierName;
 use crate::react_compiler_hir::InstructionValue;
 use crate::react_compiler_hir::ParamPattern;
@@ -22,6 +23,9 @@ use crate::react_compiler_hir::PrunedReactiveScopeBlock;
 use crate::react_compiler_hir::ReactiveBlock;
 use crate::react_compiler_hir::ReactiveFunction;
 use crate::react_compiler_hir::ReactiveScopeBlock;
+use crate::react_compiler_hir::ReactiveStatement;
+use crate::react_compiler_hir::ReactiveTerminal;
+use crate::react_compiler_hir::ReactiveTerminalStatement;
 use crate::react_compiler_hir::ReactiveValue;
 use crate::react_compiler_hir::environment::Environment;
 
@@ -49,11 +53,7 @@ impl Scopes {
         }
     }
 
-    fn visit_identifier(
-        &mut self,
-        identifier_id: crate::react_compiler_hir::IdentifierId,
-        env: &Environment,
-    ) {
+    fn visit_identifier(&mut self, identifier_id: IdentifierId, env: &Environment) {
         let identifier = &env.identifiers[identifier_id.0 as usize];
         let original_name = match &identifier.name {
             Some(name) => name.clone(),
@@ -166,7 +166,7 @@ impl ReactiveFunctionVisitor for Visitor<'_> {
     /// TS: `visitScope(scope, state) { for (const [_, decl] of scope.scope.declarations) state.visit(decl.identifier); this.traverseScope(scope, state) }`
     fn visit_scope(&self, scope: &ReactiveScopeBlock, state: &mut Scopes) {
         let scope_data = &self.env.scopes[scope.scope.0 as usize];
-        let decl_ids: Vec<crate::react_compiler_hir::IdentifierId> =
+        let decl_ids: Vec<IdentifierId> =
             scope_data.declarations.iter().map(|(_, d)| d.identifier).collect();
         for id in decl_ids {
             state.visit_identifier(id, self.env);
@@ -270,16 +270,16 @@ fn collect_globals_block(
 ) {
     for stmt in block {
         match stmt {
-            crate::react_compiler_hir::ReactiveStatement::Instruction(instr) => {
+            ReactiveStatement::Instruction(instr) => {
                 collect_globals_value(&instr.value, globals, env);
             }
-            crate::react_compiler_hir::ReactiveStatement::Scope(scope) => {
+            ReactiveStatement::Scope(scope) => {
                 collect_globals_block(&scope.instructions, globals, env);
             }
-            crate::react_compiler_hir::ReactiveStatement::PrunedScope(scope) => {
+            ReactiveStatement::PrunedScope(scope) => {
                 collect_globals_block(&scope.instructions, globals, env);
             }
-            crate::react_compiler_hir::ReactiveStatement::Terminal(terminal) => {
+            ReactiveStatement::Terminal(terminal) => {
                 collect_globals_terminal(terminal, globals, env);
             }
         }
@@ -355,18 +355,14 @@ fn collect_globals_hir_function(
 }
 
 fn collect_globals_terminal(
-    stmt: &crate::react_compiler_hir::ReactiveTerminalStatement,
+    stmt: &ReactiveTerminalStatement,
     globals: &mut FxHashSet<String>,
     env: &Environment,
 ) {
     match &stmt.terminal {
-        crate::react_compiler_hir::ReactiveTerminal::Break { .. }
-        | crate::react_compiler_hir::ReactiveTerminal::Continue { .. } => {}
-        crate::react_compiler_hir::ReactiveTerminal::Return { .. }
-        | crate::react_compiler_hir::ReactiveTerminal::Throw { .. } => {}
-        crate::react_compiler_hir::ReactiveTerminal::For {
-            init, test, update, loop_block, ..
-        } => {
+        ReactiveTerminal::Break { .. } | ReactiveTerminal::Continue { .. } => {}
+        ReactiveTerminal::Return { .. } | ReactiveTerminal::Throw { .. } => {}
+        ReactiveTerminal::For { init, test, update, loop_block, .. } => {
             collect_globals_value(init, globals, env);
             collect_globals_value(test, globals, env);
             collect_globals_block(loop_block, globals, env);
@@ -374,40 +370,40 @@ fn collect_globals_terminal(
                 collect_globals_value(update, globals, env);
             }
         }
-        crate::react_compiler_hir::ReactiveTerminal::ForOf { init, test, loop_block, .. } => {
+        ReactiveTerminal::ForOf { init, test, loop_block, .. } => {
             collect_globals_value(init, globals, env);
             collect_globals_value(test, globals, env);
             collect_globals_block(loop_block, globals, env);
         }
-        crate::react_compiler_hir::ReactiveTerminal::ForIn { init, loop_block, .. } => {
+        ReactiveTerminal::ForIn { init, loop_block, .. } => {
             collect_globals_value(init, globals, env);
             collect_globals_block(loop_block, globals, env);
         }
-        crate::react_compiler_hir::ReactiveTerminal::DoWhile { loop_block, test, .. } => {
+        ReactiveTerminal::DoWhile { loop_block, test, .. } => {
             collect_globals_block(loop_block, globals, env);
             collect_globals_value(test, globals, env);
         }
-        crate::react_compiler_hir::ReactiveTerminal::While { test, loop_block, .. } => {
+        ReactiveTerminal::While { test, loop_block, .. } => {
             collect_globals_value(test, globals, env);
             collect_globals_block(loop_block, globals, env);
         }
-        crate::react_compiler_hir::ReactiveTerminal::If { consequent, alternate, .. } => {
+        ReactiveTerminal::If { consequent, alternate, .. } => {
             collect_globals_block(consequent, globals, env);
             if let Some(alt) = alternate {
                 collect_globals_block(alt, globals, env);
             }
         }
-        crate::react_compiler_hir::ReactiveTerminal::Switch { cases, .. } => {
+        ReactiveTerminal::Switch { cases, .. } => {
             for case in cases {
                 if let Some(block) = &case.block {
                     collect_globals_block(block, globals, env);
                 }
             }
         }
-        crate::react_compiler_hir::ReactiveTerminal::Label { block, .. } => {
+        ReactiveTerminal::Label { block, .. } => {
             collect_globals_block(block, globals, env);
         }
-        crate::react_compiler_hir::ReactiveTerminal::Try { block, handler, .. } => {
+        ReactiveTerminal::Try { block, handler, .. } => {
             collect_globals_block(block, globals, env);
             collect_globals_block(handler, globals, env);
         }

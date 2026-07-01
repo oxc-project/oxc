@@ -8,6 +8,8 @@
 //! Generates type equations from the HIR, unifies them, and applies the
 //! resolved types back to identifiers. Analogous to TS `InferTypes.ts`.
 
+use std::mem::replace;
+
 use rustc_hash::FxHashMap;
 
 use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
@@ -18,11 +20,11 @@ use crate::react_compiler_hir::object_shape::{
     BUILT_IN_USE_REF_ID, ShapeRegistry,
 };
 use crate::react_compiler_hir::{
-    ArrayPatternElement, BinaryOperator, FunctionId, HirFunction, Identifier, IdentifierId,
-    IdentifierName, InstructionId, InstructionKind, InstructionValue, JsxAttribute,
-    LoweredFunction, ManualMemoDependencyRoot, NonLocalBinding, ObjectPropertyKey,
-    ObjectPropertyOrSpread, ParamPattern, Pattern, PropertyLiteral, PropertyNameKind,
-    ReactFunctionType, SourceLocation, Terminal, Type, TypeId,
+    ArrayElement, ArrayPatternElement, BinaryOperator, FunctionId, HirFunction, Identifier,
+    IdentifierId, IdentifierName, Instruction, InstructionId, InstructionKind, InstructionValue,
+    JsxAttribute, JsxTag, LoweredFunction, ManualMemoDependencyRoot, NonLocalBinding,
+    ObjectPropertyKey, ObjectPropertyOrSpread, ParamPattern, Pattern, PlaceOrSpread,
+    PropertyLiteral, PropertyNameKind, ReactFunctionType, SourceLocation, Terminal, Type, TypeId,
 };
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 
@@ -385,7 +387,7 @@ fn generate_for_function_id(
     unifier: &mut Unifier,
 ) -> Result<(), CompilerDiagnostic> {
     // Take the function out temporarily to avoid borrow conflicts
-    let inner = std::mem::replace(&mut functions[func_id.0 as usize], placeholder_function());
+    let inner = replace(&mut functions[func_id.0 as usize], placeholder_function());
 
     // Process params for component inner functions
     if inner.fn_type == ReactFunctionType::Component {
@@ -458,7 +460,7 @@ fn generate_for_function_id(
 }
 
 fn generate_instruction_types(
-    instr: &crate::react_compiler_hir::Instruction,
+    instr: &Instruction,
     instr_id: InstructionId,
     function_key: u32,
     identifiers: &[Identifier],
@@ -1011,10 +1013,10 @@ fn apply_instruction_operands(
             resolve_identifier(callee.identifier, identifiers, types, unifier);
             for arg in args {
                 match arg {
-                    crate::react_compiler_hir::PlaceOrSpread::Place(p) => {
+                    PlaceOrSpread::Place(p) => {
                         resolve_identifier(p.identifier, identifiers, types, unifier);
                     }
-                    crate::react_compiler_hir::PlaceOrSpread::Spread(s) => {
+                    PlaceOrSpread::Spread(s) => {
                         resolve_identifier(s.place.identifier, identifiers, types, unifier);
                     }
                 }
@@ -1025,10 +1027,10 @@ fn apply_instruction_operands(
             resolve_identifier(property.identifier, identifiers, types, unifier);
             for arg in args {
                 match arg {
-                    crate::react_compiler_hir::PlaceOrSpread::Place(p) => {
+                    PlaceOrSpread::Place(p) => {
                         resolve_identifier(p.identifier, identifiers, types, unifier);
                     }
-                    crate::react_compiler_hir::PlaceOrSpread::Spread(s) => {
+                    PlaceOrSpread::Spread(s) => {
                         resolve_identifier(s.place.identifier, identifiers, types, unifier);
                     }
                 }
@@ -1038,10 +1040,10 @@ fn apply_instruction_operands(
             resolve_identifier(callee.identifier, identifiers, types, unifier);
             for arg in args {
                 match arg {
-                    crate::react_compiler_hir::PlaceOrSpread::Place(p) => {
+                    PlaceOrSpread::Place(p) => {
                         resolve_identifier(p.identifier, identifiers, types, unifier);
                     }
-                    crate::react_compiler_hir::PlaceOrSpread::Spread(s) => {
+                    PlaceOrSpread::Spread(s) => {
                         resolve_identifier(s.place.identifier, identifiers, types, unifier);
                     }
                 }
@@ -1094,18 +1096,18 @@ fn apply_instruction_operands(
         InstructionValue::ArrayExpression { elements, .. } => {
             for elem in elements {
                 match elem {
-                    crate::react_compiler_hir::ArrayElement::Place(p) => {
+                    ArrayElement::Place(p) => {
                         resolve_identifier(p.identifier, identifiers, types, unifier);
                     }
-                    crate::react_compiler_hir::ArrayElement::Spread(s) => {
+                    ArrayElement::Spread(s) => {
                         resolve_identifier(s.place.identifier, identifiers, types, unifier);
                     }
-                    crate::react_compiler_hir::ArrayElement::Hole => {}
+                    ArrayElement::Hole => {}
                 }
             }
         }
         InstructionValue::JsxExpression { tag, props, children, .. } => {
-            if let crate::react_compiler_hir::JsxTag::Place(p) = tag {
+            if let JsxTag::Place(p) = tag {
                 resolve_identifier(p.identifier, identifiers, types, unifier);
             }
             for attr in props {

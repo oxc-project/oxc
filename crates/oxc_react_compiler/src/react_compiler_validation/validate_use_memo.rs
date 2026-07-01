@@ -9,7 +9,7 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     FunctionId, HirFunction, IdentifierId, InstructionValue, ParamPattern, Place, PlaceOrSpread,
-    ReturnVariant, Terminal,
+    PropertyLiteral, ReturnVariant, Terminal,
 };
 
 /// Validates useMemo() usage patterns.
@@ -68,9 +68,7 @@ fn validate_use_memo_impl(
                 }
                 InstructionValue::PropertyLoad { object, property, .. } => {
                     if react.contains(&object.identifier) {
-                        if let crate::react_compiler_hir::PropertyLiteral::String(prop_name) =
-                            property
-                        {
+                        if let PropertyLiteral::String(prop_name) = property {
                             if prop_name == "useMemo" {
                                 use_memos.insert(lvalue.identifier);
                             }

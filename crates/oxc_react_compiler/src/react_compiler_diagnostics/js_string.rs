@@ -12,8 +12,9 @@
 //! JS side of the bridge unchanged.
 
 use std::fmt;
+use std::str::from_utf8;
 
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 /// Invariant: `Repr::Utf8` holds every well-formed value and `Repr::Wtf16`
 /// only ill-formed ones (at least one unpaired surrogate). The derived
@@ -114,7 +115,7 @@ impl JsString {
                     .iter()
                     .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_lowercase());
             if well_formed {
-                let hex = std::str::from_utf8(&tail[PREFIX.len()..PREFIX.len() + 4])
+                let hex = from_utf8(&tail[PREFIX.len()..PREFIX.len() + 4])
                     .expect("ascii hex is valid utf8");
                 let unit = u16::from_str_radix(hex, 16).expect("validated hex digits");
                 units.extend(s[segment_start..idx].encode_utf16());
@@ -241,7 +242,7 @@ impl fmt::Display for JsString {
 }
 
 impl Serialize for JsString {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_str(&self.to_marker_string())
     }
 }

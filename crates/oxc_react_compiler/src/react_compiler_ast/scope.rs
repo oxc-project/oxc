@@ -1,4 +1,4 @@
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_utils::FxIndexMap;
 use serde::Serialize;
@@ -197,7 +197,7 @@ impl ScopeInfo {
         name: &str,
         ancestor: ScopeId,
     ) -> Option<&BindingData> {
-        let mut descendants = rustc_hash::FxHashSet::default();
+        let mut descendants = FxHashSet::default();
         descendants.insert(ancestor);
         let mut changed = true;
         while changed {
@@ -228,7 +228,7 @@ impl ScopeInfo {
         name: &str,
         ancestor: ScopeId,
     ) -> Option<(BindingId, &BindingData)> {
-        let mut descendants = rustc_hash::FxHashSet::default();
+        let mut descendants = FxHashSet::default();
         descendants.insert(ancestor);
         let mut changed = true;
         while changed {
@@ -291,7 +291,7 @@ impl ScopeInfo {
         ancestor: ScopeId,
         is_claimed: impl Fn(ScopeId) -> bool,
     ) -> Option<ScopeId> {
-        let mut descendants = rustc_hash::FxHashSet::default();
+        let mut descendants = FxHashSet::default();
         descendants.insert(ancestor);
         let mut changed = true;
         while changed {

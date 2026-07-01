@@ -8,9 +8,11 @@
 //!
 //! Corresponds to `src/ReactiveScopes/MergeReactiveScopesThatInvalidateTogether.ts`.
 
+use std::mem::take;
+
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::CompilerError;
+use crate::react_compiler_diagnostics::{CompilerDiagnostic, CompilerError, ErrorCategory};
 use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, EvaluationOrder, InstructionKind, InstructionValue, Place,
     ReactiveBlock, ReactiveFunction, ReactiveScopeBlock, ReactiveScopeDependency,
@@ -105,7 +107,7 @@ impl<'a> ReactiveFunctionTransform for MergeTransform<'a> {
         // If parent has deps and they match, flatten the inner scope
         if let Some(parent_deps) = state.as_ref() {
             if are_equal_dependencies(parent_deps, &scope_deps, self.env) {
-                let instructions = std::mem::take(&mut scope.instructions);
+                let instructions = take(&mut scope.instructions);
                 return Ok(Transformed::ReplaceMany(instructions));
             }
         }
@@ -335,7 +337,7 @@ impl<'a> MergeTransform<'a> {
 
         let mut next_instructions: Vec<ReactiveStatement> = Vec::new();
         let mut index = 0;
-        let all_stmts: Vec<ReactiveStatement> = std::mem::take(block);
+        let all_stmts: Vec<ReactiveStatement> = take(block);
 
         for entry in &merged {
             // Push everything before the merge range
@@ -347,8 +349,8 @@ impl<'a> MergeTransform<'a> {
             let mut merged_scope = match &all_stmts[entry.from] {
                 ReactiveStatement::Scope(s) => s.clone(),
                 _ => {
-                    return Err(crate::react_compiler_diagnostics::CompilerDiagnostic::new(
-                        crate::react_compiler_diagnostics::ErrorCategory::Invariant,
+                    return Err(CompilerDiagnostic::new(
+                        ErrorCategory::Invariant,
                         "MergeConsecutiveScopes: Expected scope at starting index",
                         None,
                     )

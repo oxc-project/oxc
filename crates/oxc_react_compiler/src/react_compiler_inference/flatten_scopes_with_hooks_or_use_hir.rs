@@ -28,7 +28,9 @@
 
 use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
 use crate::react_compiler_hir::environment::Environment;
-use crate::react_compiler_hir::{BlockId, HirFunction, InstructionValue, Terminal, Type};
+use crate::react_compiler_hir::{
+    BlockId, HirFunction, InstructionValue, Terminal, Type, is_use_operator_type,
+};
 
 /// Flattens reactive scopes that contain hook calls or `use()` calls.
 ///
@@ -124,6 +126,5 @@ struct ActiveScope {
 }
 
 fn is_hook_or_use(env: &Environment, ty: &Type) -> Result<bool, CompilerDiagnostic> {
-    Ok(env.get_hook_kind_for_type(ty)?.is_some()
-        || crate::react_compiler_hir::is_use_operator_type(ty))
+    Ok(env.get_hook_kind_for_type(ty)?.is_some() || is_use_operator_type(ty))
 }

@@ -8,9 +8,12 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PruneNonEscapingScopes.ts`.
 
+use std::mem::take;
+
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
+use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::DeclarationId;
 use crate::react_compiler_hir::Effect;
@@ -21,6 +24,7 @@ use crate::react_compiler_hir::InstructionValue;
 use crate::react_compiler_hir::JsxAttribute;
 use crate::react_compiler_hir::JsxTag;
 use crate::react_compiler_hir::ObjectPropertyOrSpread;
+use crate::react_compiler_hir::ParamPattern;
 use crate::react_compiler_hir::Pattern;
 use crate::react_compiler_hir::Place;
 use crate::react_compiler_hir::PlaceOrSpread;
@@ -51,14 +55,14 @@ use crate::react_compiler_reactive_scopes::visitors::visit_reactive_function;
 pub fn prune_non_escaping_scopes(
     func: &mut ReactiveFunction,
     env: &mut Environment,
-) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
+) -> Result<(), CompilerError> {
     // First build up a map of which instructions are involved in creating which values,
     // and which values are returned.
     let mut state = CollectState::new();
     for param in &func.params {
         let place = match param {
-            crate::react_compiler_hir::ParamPattern::Place(p) => p,
-            crate::react_compiler_hir::ParamPattern::Spread(s) => &s.place,
+            ParamPattern::Place(p) => p,
+            ParamPattern::Spread(s) => &s.place,
         };
         let identifier = &env.identifiers[place.identifier.0 as usize];
         state.declare(identifier.declaration_id);
@@ -1080,8 +1084,7 @@ impl<'a> ReactiveFunctionTransform for PruneScopesTransform<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock,
         state: &mut FxHashSet<DeclarationId>,
-    ) -> Result<Transformed<ReactiveStatement>, crate::react_compiler_diagnostics::CompilerError>
-    {
+    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
         self.visit_scope(scope, state)?;
 
         let scope_id = scope.scope;
@@ -1107,7 +1110,7 @@ impl<'a> ReactiveFunctionTransform for PruneScopesTransform<'a> {
             Ok(Transformed::Keep)
         } else {
             self.pruned_scopes.insert(scope_id);
-            Ok(Transformed::ReplaceMany(std::mem::take(&mut scope.instructions)))
+            Ok(Transformed::ReplaceMany(take(&mut scope.instructions)))
         }
     }
 
@@ -1115,8 +1118,7 @@ impl<'a> ReactiveFunctionTransform for PruneScopesTransform<'a> {
         &mut self,
         instruction: &mut ReactiveInstruction,
         state: &mut FxHashSet<DeclarationId>,
-    ) -> Result<Transformed<ReactiveStatement>, crate::react_compiler_diagnostics::CompilerError>
-    {
+    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
         self.traverse_instruction(instruction, state)?;
 
         match &mut instruction.value {

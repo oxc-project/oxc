@@ -9,14 +9,23 @@ pub mod reactive;
 pub mod type_config;
 pub mod visitors;
 
+use crate::react_compiler_ast::OriginalNode;
 pub use crate::react_compiler_diagnostics::CompilerDiagnostic;
 pub use crate::react_compiler_diagnostics::ErrorCategory;
 pub use crate::react_compiler_diagnostics::GENERATED_SOURCE;
+use crate::react_compiler_diagnostics::JsString;
 pub use crate::react_compiler_diagnostics::Position;
 pub use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
 pub use reactive::*;
+use serde::Serialize;
+use serde_json::Value;
+use std::fmt::Display;
+use std::fmt::Formatter;
+use std::fmt::Result as FmtResult;
+use std::hash::Hash;
+use std::hash::Hasher;
 
 // =============================================================================
 // ID newtypes
@@ -91,14 +100,14 @@ impl PartialEq for FloatValue {
 
 impl Eq for FloatValue {}
 
-impl std::hash::Hash for FloatValue {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+impl Hash for FloatValue {
+    fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.hash(state);
     }
 }
 
-impl std::fmt::Display for FloatValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for FloatValue {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "{}", format_js_number(self.value()))
     }
 }
@@ -199,8 +208,8 @@ pub enum BlockKind {
     Catch,
 }
 
-impl std::fmt::Display for BlockKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for BlockKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             BlockKind::Block => write!(f, "block"),
             BlockKind::Value => write!(f, "value"),
@@ -498,8 +507,8 @@ pub enum LogicalOperator {
     NullishCoalescing,
 }
 
-impl std::fmt::Display for LogicalOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for LogicalOperator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             LogicalOperator::And => write!(f, "&&"),
             LogicalOperator::Or => write!(f, "||"),
@@ -633,7 +642,7 @@ pub enum InstructionValue {
         /// The original AST type annotation node, preserved for codegen.
         /// For Flow: the inner type from TypeAnnotation.typeAnnotation
         /// For TS: the TSType node from TSAsExpression/TSSatisfiesExpression
-        type_annotation: Option<Box<serde_json::Value>>,
+        type_annotation: Option<Box<Value>>,
         loc: Option<SourceLocation>,
     },
     JsxExpression {
@@ -781,7 +790,7 @@ pub enum InstructionValue {
     UnsupportedNode {
         node_type: Option<String>,
         /// The original AST node, preserved verbatim so codegen can re-emit it.
-        original_node: Option<crate::react_compiler_ast::OriginalNode>,
+        original_node: Option<OriginalNode>,
         loc: Option<SourceLocation>,
     },
 }
@@ -846,7 +855,7 @@ pub enum PrimitiveValue {
     Undefined,
     Boolean(bool),
     Number(FloatValue),
-    String(crate::react_compiler_diagnostics::JsString),
+    String(JsString),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -875,8 +884,8 @@ pub enum BinaryOperator {
     InstanceOf,
 }
 
-impl std::fmt::Display for BinaryOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for BinaryOperator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             BinaryOperator::Equal => write!(f, "=="),
             BinaryOperator::NotEqual => write!(f, "!="),
@@ -914,8 +923,8 @@ pub enum UnaryOperator {
     Void,
 }
 
-impl std::fmt::Display for UnaryOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for UnaryOperator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             UnaryOperator::Minus => write!(f, "-"),
             UnaryOperator::Plus => write!(f, "+"),
@@ -933,8 +942,8 @@ pub enum UpdateOperator {
     Decrement,
 }
 
-impl std::fmt::Display for UpdateOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for UpdateOperator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             UpdateOperator::Increment => write!(f, "++"),
             UpdateOperator::Decrement => write!(f, "--"),
@@ -1037,7 +1046,7 @@ impl IdentifierName {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum Effect {
     #[serde(rename = "<unknown>")]
     Unknown,
@@ -1073,8 +1082,8 @@ impl Effect {
     }
 }
 
-impl std::fmt::Display for Effect {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for Effect {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             Effect::Unknown => write!(f, "<unknown>"),
             Effect::Freeze => write!(f, "freeze"),
@@ -1144,8 +1153,8 @@ pub enum ObjectPropertyType {
     Method,
 }
 
-impl std::fmt::Display for ObjectPropertyType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for ObjectPropertyType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             ObjectPropertyType::Property => write!(f, "property"),
             ObjectPropertyType::Method => write!(f, "method"),
@@ -1159,8 +1168,8 @@ pub enum PropertyLiteral {
     Number(FloatValue),
 }
 
-impl std::fmt::Display for PropertyLiteral {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for PropertyLiteral {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             PropertyLiteral::String(s) => write!(f, "{}", s),
             PropertyLiteral::Number(n) => write!(f, "{}", n),

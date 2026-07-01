@@ -1,8 +1,10 @@
+use std::mem::take;
+
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::print::{self, PrintFormatter};
 use crate::react_compiler_hir::{
-    BasicBlock, BlockId, HirFunction, Instruction, ParamPattern, Place, Terminal,
+    BasicBlock, BlockId, HirFunction, Instruction, ParamPattern, Phi, Place, Terminal,
 };
 
 // =============================================================================
@@ -162,7 +164,7 @@ impl<'a> DebugPrinter<'a> {
     // Phi
     // =========================================================================
 
-    fn format_phi(&mut self, phi: &crate::react_compiler_hir::Phi) {
+    fn format_phi(&mut self, phi: &Phi) {
         self.fmt.line("Phi {");
         self.fmt.indent();
         self.fmt.format_place_field("place", &phi.place);
@@ -199,8 +201,8 @@ impl<'a> DebugPrinter<'a> {
                 let mut inner = DebugPrinter {
                     fmt: PrintFormatter {
                         env: fmt.env,
-                        seen_identifiers: std::mem::take(&mut fmt.seen_identifiers),
-                        seen_scopes: std::mem::take(&mut fmt.seen_scopes),
+                        seen_identifiers: take(&mut fmt.seen_identifiers),
+                        seen_scopes: take(&mut fmt.seen_scopes),
                         output: Vec::new(),
                         indent_level: fmt.indent_level,
                     },
@@ -571,8 +573,8 @@ pub fn format_hir_function_into(reactive_fmt: &mut PrintFormatter, func: &HirFun
     let mut printer = DebugPrinter {
         fmt: PrintFormatter {
             env: reactive_fmt.env,
-            seen_identifiers: std::mem::take(&mut reactive_fmt.seen_identifiers),
-            seen_scopes: std::mem::take(&mut reactive_fmt.seen_scopes),
+            seen_identifiers: take(&mut reactive_fmt.seen_identifiers),
+            seen_scopes: take(&mut reactive_fmt.seen_scopes),
             output: Vec::new(),
             indent_level: reactive_fmt.indent_level,
         },

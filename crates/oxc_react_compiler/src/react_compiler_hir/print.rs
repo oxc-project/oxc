@@ -15,18 +15,32 @@ use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
 use crate::react_compiler_diagnostics::SourceLocation;
 
 use crate::react_compiler_hir::AliasingEffect;
+use crate::react_compiler_hir::ArrayElement;
+use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::HirFunction;
 use crate::react_compiler_hir::IdentifierId;
 use crate::react_compiler_hir::IdentifierName;
 use crate::react_compiler_hir::InstructionValue;
+use crate::react_compiler_hir::JsxAttribute;
+use crate::react_compiler_hir::JsxTag;
 use crate::react_compiler_hir::LValue;
+use crate::react_compiler_hir::ManualMemoDependencyRoot;
 use crate::react_compiler_hir::MutationReason;
+use crate::react_compiler_hir::NonLocalBinding;
+use crate::react_compiler_hir::ObjectPropertyKey;
+use crate::react_compiler_hir::ObjectPropertyOrSpread;
 use crate::react_compiler_hir::Pattern;
 use crate::react_compiler_hir::Place;
+use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PlaceOrSpreadOrHole;
+use crate::react_compiler_hir::PrimitiveValue;
+use crate::react_compiler_hir::PropertyLiteral;
+use crate::react_compiler_hir::PropertyNameKind;
 use crate::react_compiler_hir::ScopeId;
 use crate::react_compiler_hir::Type;
+use crate::react_compiler_hir::TypeId;
 use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::format_js_number;
 use crate::react_compiler_hir::type_config::ValueKind;
 use crate::react_compiler_hir::type_config::ValueReason;
 
@@ -71,15 +85,13 @@ pub fn format_js_string(s: &str) -> String {
     result
 }
 
-pub fn format_primitive(prim: &crate::react_compiler_hir::PrimitiveValue) -> String {
+pub fn format_primitive(prim: &PrimitiveValue) -> String {
     match prim {
-        crate::react_compiler_hir::PrimitiveValue::Null => "null".to_string(),
-        crate::react_compiler_hir::PrimitiveValue::Undefined => "undefined".to_string(),
-        crate::react_compiler_hir::PrimitiveValue::Boolean(b) => format!("{}", b),
-        crate::react_compiler_hir::PrimitiveValue::Number(n) => {
-            crate::react_compiler_hir::format_js_number(n.value())
-        }
-        crate::react_compiler_hir::PrimitiveValue::String(s) => match s.as_str() {
+        PrimitiveValue::Null => "null".to_string(),
+        PrimitiveValue::Undefined => "undefined".to_string(),
+        PrimitiveValue::Boolean(b) => format!("{}", b),
+        PrimitiveValue::Number(n) => format_js_number(n.value()),
+        PrimitiveValue::String(s) => match s.as_str() {
             Some(utf8) => format_js_string(utf8),
             // Ill-formed strings: escape the well-formed segments exactly like
             // format_js_string and render each unpaired surrogate as \uXXXX,
@@ -129,47 +141,45 @@ pub fn format_primitive(prim: &crate::react_compiler_hir::PrimitiveValue) -> Str
     }
 }
 
-pub fn format_property_literal(prop: &crate::react_compiler_hir::PropertyLiteral) -> String {
+pub fn format_property_literal(prop: &PropertyLiteral) -> String {
     match prop {
-        crate::react_compiler_hir::PropertyLiteral::String(s) => s.clone(),
-        crate::react_compiler_hir::PropertyLiteral::Number(n) => {
-            crate::react_compiler_hir::format_js_number(n.value())
-        }
+        PropertyLiteral::String(s) => s.clone(),
+        PropertyLiteral::Number(n) => format_js_number(n.value()),
     }
 }
 
-pub fn format_object_property_key(key: &crate::react_compiler_hir::ObjectPropertyKey) -> String {
+pub fn format_object_property_key(key: &ObjectPropertyKey) -> String {
     match key {
-        crate::react_compiler_hir::ObjectPropertyKey::String { name } => {
+        ObjectPropertyKey::String { name } => {
             format!("String(\"{}\")", name)
         }
-        crate::react_compiler_hir::ObjectPropertyKey::Identifier { name } => {
+        ObjectPropertyKey::Identifier { name } => {
             format!("Identifier(\"{}\")", name)
         }
-        crate::react_compiler_hir::ObjectPropertyKey::Computed { name } => {
+        ObjectPropertyKey::Computed { name } => {
             format!("Computed({})", name.identifier.0)
         }
-        crate::react_compiler_hir::ObjectPropertyKey::Number { name } => {
-            format!("Number({})", crate::react_compiler_hir::format_js_number(name.value()))
+        ObjectPropertyKey::Number { name } => {
+            format!("Number({})", format_js_number(name.value()))
         }
     }
 }
 
-pub fn format_non_local_binding(binding: &crate::react_compiler_hir::NonLocalBinding) -> String {
+pub fn format_non_local_binding(binding: &NonLocalBinding) -> String {
     match binding {
-        crate::react_compiler_hir::NonLocalBinding::Global { name } => {
+        NonLocalBinding::Global { name } => {
             format!("Global {{ name: \"{}\" }}", name)
         }
-        crate::react_compiler_hir::NonLocalBinding::ModuleLocal { name } => {
+        NonLocalBinding::ModuleLocal { name } => {
             format!("ModuleLocal {{ name: \"{}\" }}", name)
         }
-        crate::react_compiler_hir::NonLocalBinding::ImportDefault { name, module } => {
+        NonLocalBinding::ImportDefault { name, module } => {
             format!("ImportDefault {{ name: \"{}\", module: \"{}\" }}", name, module)
         }
-        crate::react_compiler_hir::NonLocalBinding::ImportNamespace { name, module } => {
+        NonLocalBinding::ImportNamespace { name, module } => {
             format!("ImportNamespace {{ name: \"{}\", module: \"{}\" }}", name, module)
         }
-        crate::react_compiler_hir::NonLocalBinding::ImportSpecifier { name, module, imported } => {
+        NonLocalBinding::ImportSpecifier { name, module, imported } => {
             format!(
                 "ImportSpecifier {{ name: \"{}\", module: \"{}\", imported: \"{}\" }}",
                 name, module, imported
@@ -471,10 +481,8 @@ impl<'a> PrintFormatter<'a> {
                         .iter()
                         .map(|p| {
                             let prop = match &p.property {
-                                crate::react_compiler_hir::PropertyLiteral::String(s) => s.clone(),
-                                crate::react_compiler_hir::PropertyLiteral::Number(n) => {
-                                    crate::react_compiler_hir::format_js_number(n.value())
-                                }
+                                PropertyLiteral::String(s) => s.clone(),
+                                PropertyLiteral::Number(n) => format_js_number(n.value()),
                             };
                             format!("{}{}", if p.optional { "?." } else { "." }, prop)
                         })
@@ -536,7 +544,7 @@ impl<'a> PrintFormatter<'a> {
     // Type
     // =========================================================================
 
-    pub fn format_type(&self, type_id: crate::react_compiler_hir::TypeId) -> String {
+    pub fn format_type(&self, type_id: TypeId) -> String {
         if let Some(ty) = self.env.types.get(type_id.0 as usize) {
             self.format_type_value(ty)
         } else {
@@ -576,10 +584,10 @@ impl<'a> PrintFormatter<'a> {
             }
             Type::Property { object_type, object_name, property_name } => {
                 let prop_str = match property_name {
-                    crate::react_compiler_hir::PropertyNameKind::Literal { value } => {
+                    PropertyNameKind::Literal { value } => {
                         format!("\"{}\"", format_property_literal(value))
                     }
-                    crate::react_compiler_hir::PropertyNameKind::Computed { value } => {
+                    PropertyNameKind::Computed { value } => {
                         format!("computed({})", self.format_type_value(value))
                     }
                 };
@@ -619,13 +627,13 @@ impl<'a> PrintFormatter<'a> {
                 self.indent();
                 for (i, item) in arr.items.iter().enumerate() {
                     match item {
-                        crate::react_compiler_hir::ArrayPatternElement::Hole => {
+                        ArrayPatternElement::Hole => {
                             self.line(&format!("[{}] Hole", i));
                         }
-                        crate::react_compiler_hir::ArrayPatternElement::Place(p) => {
+                        ArrayPatternElement::Place(p) => {
                             self.format_place_field(&format!("[{}]", i), p);
                         }
-                        crate::react_compiler_hir::ArrayPatternElement::Spread(s) => {
+                        ArrayPatternElement::Spread(s) => {
                             self.line(&format!("[{}] Spread:", i));
                             self.indent();
                             self.format_place_field("place", &s.place);
@@ -645,7 +653,7 @@ impl<'a> PrintFormatter<'a> {
                 self.indent();
                 for (i, prop) in obj.properties.iter().enumerate() {
                     match prop {
-                        crate::react_compiler_hir::ObjectPropertyOrSpread::Property(p) => {
+                        ObjectPropertyOrSpread::Property(p) => {
                             self.line(&format!("[{}] ObjectProperty {{", i));
                             self.indent();
                             self.line(&format!("key: {}", format_object_property_key(&p.key)));
@@ -654,7 +662,7 @@ impl<'a> PrintFormatter<'a> {
                             self.dedent();
                             self.line("}");
                         }
-                        crate::react_compiler_hir::ObjectPropertyOrSpread::Spread(s) => {
+                        ObjectPropertyOrSpread::Spread(s) => {
                             self.line(&format!("[{}] Spread:", i));
                             self.indent();
                             self.format_place_field("place", &s.place);
@@ -674,16 +682,12 @@ impl<'a> PrintFormatter<'a> {
     // Arguments
     // =========================================================================
 
-    pub fn format_argument(
-        &mut self,
-        arg: &crate::react_compiler_hir::PlaceOrSpread,
-        index: usize,
-    ) {
+    pub fn format_argument(&mut self, arg: &PlaceOrSpread, index: usize) {
         match arg {
-            crate::react_compiler_hir::PlaceOrSpread::Place(p) => {
+            PlaceOrSpread::Place(p) => {
                 self.format_place_field(&format!("[{}]", index), p);
             }
-            crate::react_compiler_hir::PlaceOrSpread::Spread(s) => {
+            PlaceOrSpread::Spread(s) => {
                 self.line(&format!("[{}] Spread:", index));
                 self.indent();
                 self.format_place_field("place", &s.place);
@@ -712,13 +716,13 @@ impl<'a> PrintFormatter<'a> {
                 self.indent();
                 for (i, elem) in elements.iter().enumerate() {
                     match elem {
-                        crate::react_compiler_hir::ArrayElement::Place(p) => {
+                        ArrayElement::Place(p) => {
                             self.format_place_field(&format!("[{}]", i), p);
                         }
-                        crate::react_compiler_hir::ArrayElement::Hole => {
+                        ArrayElement::Hole => {
                             self.line(&format!("[{}] Hole", i));
                         }
-                        crate::react_compiler_hir::ArrayElement::Spread(s) => {
+                        ArrayElement::Spread(s) => {
                             self.line(&format!("[{}] Spread:", i));
                             self.indent();
                             self.format_place_field("place", &s.place);
@@ -738,7 +742,7 @@ impl<'a> PrintFormatter<'a> {
                 self.indent();
                 for (i, prop) in properties.iter().enumerate() {
                     match prop {
-                        crate::react_compiler_hir::ObjectPropertyOrSpread::Property(p) => {
+                        ObjectPropertyOrSpread::Property(p) => {
                             self.line(&format!("[{}] ObjectProperty {{", i));
                             self.indent();
                             self.line(&format!("key: {}", format_object_property_key(&p.key)));
@@ -747,7 +751,7 @@ impl<'a> PrintFormatter<'a> {
                             self.dedent();
                             self.line("}");
                         }
-                        crate::react_compiler_hir::ObjectPropertyOrSpread::Spread(s) => {
+                        ObjectPropertyOrSpread::Spread(s) => {
                             self.line(&format!("[{}] Spread:", i));
                             self.indent();
                             self.format_place_field("place", &s.place);
@@ -869,10 +873,10 @@ impl<'a> PrintFormatter<'a> {
                 self.line("JsxExpression {");
                 self.indent();
                 match tag {
-                    crate::react_compiler_hir::JsxTag::Place(p) => {
+                    JsxTag::Place(p) => {
                         self.format_place_field("tag", p);
                     }
-                    crate::react_compiler_hir::JsxTag::Builtin(b) => {
+                    JsxTag::Builtin(b) => {
                         self.line(&format!("tag: BuiltinTag(\"{}\")", b.name));
                     }
                 }
@@ -880,7 +884,7 @@ impl<'a> PrintFormatter<'a> {
                 self.indent();
                 for (i, prop) in props.iter().enumerate() {
                     match prop {
-                        crate::react_compiler_hir::JsxAttribute::Attribute { name, place } => {
+                        JsxAttribute::Attribute { name, place } => {
                             self.line(&format!("[{}] JsxAttribute {{", i));
                             self.indent();
                             self.line(&format!("name: \"{}\"", name));
@@ -888,7 +892,7 @@ impl<'a> PrintFormatter<'a> {
                             self.dedent();
                             self.line("}");
                         }
-                        crate::react_compiler_hir::JsxAttribute::SpreadAttribute { argument } => {
+                        JsxAttribute::SpreadAttribute { argument } => {
                             self.line(&format!("[{}] JsxSpreadAttribute:", i));
                             self.indent();
                             self.format_place_field("argument", argument);
@@ -1300,13 +1304,10 @@ impl<'a> PrintFormatter<'a> {
                         self.indent();
                         for (i, dep) in d.iter().enumerate() {
                             let root_str = match &dep.root {
-                                crate::react_compiler_hir::ManualMemoDependencyRoot::Global { identifier_name } => {
+                                ManualMemoDependencyRoot::Global { identifier_name } => {
                                     format!("Global(\"{}\")", identifier_name)
                                 }
-                                crate::react_compiler_hir::ManualMemoDependencyRoot::NamedLocal {
-                                    value: val,
-                                    constant,
-                                } => {
+                                ManualMemoDependencyRoot::NamedLocal { value: val, constant } => {
                                     format!(
                                         "NamedLocal({}, constant={})",
                                         val.identifier.0, constant

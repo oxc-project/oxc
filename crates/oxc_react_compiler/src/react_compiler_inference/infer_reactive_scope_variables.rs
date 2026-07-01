@@ -22,7 +22,7 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
     DeclarationId, EvaluationOrder, HirFunction, IdentifierId, InstructionValue, Pattern, Position,
-    SourceLocation,
+    ScopeId, SourceLocation, is_primitive_type,
 };
 use crate::react_compiler_utils::DisjointSet;
 
@@ -133,7 +133,7 @@ pub fn infer_reactive_scope_variables(
 }
 
 struct ScopeState {
-    scope_id: crate::react_compiler_hir::ScopeId,
+    scope_id: ScopeId,
     loc: Option<SourceLocation>,
 }
 
@@ -314,8 +314,7 @@ pub(crate) fn find_disjoint_mutable_values(
             let lvalue_id = instr.lvalue.identifier;
             let lvalue_range = &env.identifiers[lvalue_id.0 as usize].mutable_range;
             let lvalue_type = &env.types[env.identifiers[lvalue_id.0 as usize].type_.0 as usize];
-            let lvalue_type_is_primitive =
-                crate::react_compiler_hir::is_primitive_type(lvalue_type);
+            let lvalue_type_is_primitive = is_primitive_type(lvalue_type);
 
             if lvalue_range.end.0 > lvalue_range.start.0 + 1
                 || may_allocate(&instr.value, lvalue_type_is_primitive)

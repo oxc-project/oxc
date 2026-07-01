@@ -11,8 +11,11 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PruneAlwaysInvalidatingScopes.ts`.
 
+use std::mem::take;
+
 use rustc_hash::FxHashSet;
 
+use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_hir::{
     IdentifierId, InstructionValue, PrunedReactiveScopeBlock, ReactiveFunction,
     ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveValue,
@@ -29,7 +32,7 @@ use crate::react_compiler_reactive_scopes::visitors::{
 pub fn prune_always_invalidating_scopes(
     func: &mut ReactiveFunction,
     env: &Environment,
-) -> Result<(), crate::react_compiler_diagnostics::CompilerError> {
+) -> Result<(), CompilerError> {
     let mut transform = Transform {
         env,
         always_invalidating_values: FxHashSet::default(),
@@ -56,8 +59,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         instruction: &mut ReactiveInstruction,
         within_scope: &mut bool,
-    ) -> Result<Transformed<ReactiveStatement>, crate::react_compiler_diagnostics::CompilerError>
-    {
+    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
         self.visit_instruction(instruction, within_scope)?;
 
         let lvalue = &instruction.lvalue;
@@ -107,8 +109,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock,
         _within_scope: &mut bool,
-    ) -> Result<Transformed<ReactiveStatement>, crate::react_compiler_diagnostics::CompilerError>
-    {
+    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
         let mut within_scope = true;
         self.visit_scope(scope, &mut within_scope)?;
 
@@ -137,7 +138,7 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
                 return Ok(Transformed::Replace(ReactiveStatement::PrunedScope(
                     PrunedReactiveScopeBlock {
                         scope: scope.scope,
-                        instructions: std::mem::take(&mut scope.instructions),
+                        instructions: take(&mut scope.instructions),
                     },
                 )));
             }

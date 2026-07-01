@@ -17,8 +17,8 @@ use crate::react_compiler_hir::environment::{Environment, OutputMode};
 use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
-    ArrayPatternElement, BlockId, BlockKind, HirFunction, IdentifierId, InstructionKind,
-    InstructionValue, ObjectPropertyOrSpread, Pattern,
+    ArrayPatternElement, BlockId, BlockKind, HirFunction, Identifier, IdentifierId, InstructionId,
+    InstructionKind, InstructionValue, ObjectPropertyOrSpread, Pattern,
 };
 
 /// Implements dead-code elimination, eliminating instructions whose values are unused.
@@ -32,7 +32,7 @@ pub fn dead_code_elimination(func: &mut HirFunction, env: &Environment) {
 
     // Phase 2: Prune / sweep unreferenced identifiers and instructions
     // Collect instructions to rewrite (two-phase: collect then apply to avoid borrow conflicts)
-    let mut instructions_to_rewrite: Vec<crate::react_compiler_hir::InstructionId> = Vec::new();
+    let mut instructions_to_rewrite: Vec<InstructionId> = Vec::new();
 
     for (_block_id, block) in &mut func.body.blocks {
         // Remove unused phi nodes
@@ -82,11 +82,7 @@ impl State {
 }
 
 /// Mark an identifier as being referenced (not dead code).
-fn reference(
-    state: &mut State,
-    identifiers: &[crate::react_compiler_hir::Identifier],
-    identifier_id: IdentifierId,
-) {
+fn reference(state: &mut State, identifiers: &[Identifier], identifier_id: IdentifierId) {
     state.identifiers.insert(identifier_id);
     let ident = &identifiers[identifier_id.0 as usize];
     if let Some(ref name) = ident.name {
@@ -98,7 +94,7 @@ fn reference(
 /// Checks both the specific SSA id and (for named identifiers) any usage of that name.
 fn is_id_or_name_used(
     state: &State,
-    identifiers: &[crate::react_compiler_hir::Identifier],
+    identifiers: &[Identifier],
     identifier_id: IdentifierId,
 ) -> bool {
     if state.identifiers.contains(&identifier_id) {
@@ -189,7 +185,7 @@ fn find_referenced_identifiers(func: &HirFunction, env: &Environment) -> State {
 /// Rewrite a retained instruction (destructuring cleanup, StoreLocal -> DeclareLocal).
 fn rewrite_instruction(
     func: &mut HirFunction,
-    instr_id: crate::react_compiler_hir::InstructionId,
+    instr_id: InstructionId,
     state: &State,
     env: &Environment,
 ) {

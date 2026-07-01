@@ -17,6 +17,9 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory,
 };
+use crate::react_compiler_hir::ArrayPatternElement;
+use crate::react_compiler_hir::ObjectPropertyOrSpread;
+use crate::react_compiler_hir::Pattern;
 use crate::react_compiler_hir::dominator::{compute_post_dominator_tree, post_dominator_frontier};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
@@ -242,31 +245,28 @@ fn push_error(errors: &mut CompilerError, info: &SetStateInfo, enable_verbose: b
 }
 
 /// Recursively collect all Place identifiers from a destructure pattern.
-fn collect_destructure_places(
-    pattern: &crate::react_compiler_hir::Pattern,
-    ref_derived_values: &mut FxHashSet<IdentifierId>,
-) {
+fn collect_destructure_places(pattern: &Pattern, ref_derived_values: &mut FxHashSet<IdentifierId>) {
     match pattern {
-        crate::react_compiler_hir::Pattern::Array(arr) => {
+        Pattern::Array(arr) => {
             for item in &arr.items {
                 match item {
-                    crate::react_compiler_hir::ArrayPatternElement::Place(p) => {
+                    ArrayPatternElement::Place(p) => {
                         ref_derived_values.insert(p.identifier);
                     }
-                    crate::react_compiler_hir::ArrayPatternElement::Spread(s) => {
+                    ArrayPatternElement::Spread(s) => {
                         ref_derived_values.insert(s.place.identifier);
                     }
-                    crate::react_compiler_hir::ArrayPatternElement::Hole => {}
+                    ArrayPatternElement::Hole => {}
                 }
             }
         }
-        crate::react_compiler_hir::Pattern::Object(obj) => {
+        Pattern::Object(obj) => {
             for prop in &obj.properties {
                 match prop {
-                    crate::react_compiler_hir::ObjectPropertyOrSpread::Property(p) => {
+                    ObjectPropertyOrSpread::Property(p) => {
                         ref_derived_values.insert(p.place.identifier);
                     }
-                    crate::react_compiler_hir::ObjectPropertyOrSpread::Spread(s) => {
+                    ObjectPropertyOrSpread::Spread(s) => {
                         ref_derived_values.insert(s.place.identifier);
                     }
                 }

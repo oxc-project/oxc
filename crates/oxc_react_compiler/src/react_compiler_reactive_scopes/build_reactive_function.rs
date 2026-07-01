@@ -7,6 +7,8 @@
 //!
 //! Corresponds to `src/ReactiveScopes/BuildReactiveFunction.ts`.
 
+use std::mem::discriminant;
+
 use rustc_hash::FxHashSet;
 
 use crate::react_compiler_diagnostics::{
@@ -14,10 +16,11 @@ use crate::react_compiler_diagnostics::{
 };
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
-    BasicBlock, BlockId, EvaluationOrder, GotoVariant, HirFunction, InstructionValue, Place,
-    PrunedReactiveScopeBlock, ReactiveBlock, ReactiveFunction, ReactiveInstruction, ReactiveLabel,
-    ReactiveScopeBlock, ReactiveStatement, ReactiveSwitchCase, ReactiveTerminal,
-    ReactiveTerminalStatement, ReactiveTerminalTargetKind, ReactiveValue, Terminal,
+    BasicBlock, BlockId, EvaluationOrder, GotoVariant, HirFunction, InstructionId,
+    InstructionValue, Place, PrimitiveValue, PrunedReactiveScopeBlock, ReactiveBlock,
+    ReactiveFunction, ReactiveInstruction, ReactiveLabel, ReactiveScopeBlock, ReactiveStatement,
+    ReactiveSwitchCase, ReactiveTerminal, ReactiveTerminalStatement, ReactiveTerminalTargetKind,
+    ReactiveValue, Terminal,
 };
 
 /// Convert the HIR CFG into a tree-structured ReactiveFunction.
@@ -1094,7 +1097,7 @@ impl<'a, 'b> Driver<'a, 'b> {
                 format!(
                     "Expected a branch terminal for {} test block, got {:?}",
                     terminal_kind,
-                    std::mem::discriminant(other)
+                    discriminant(other)
                 ),
                 None,
             )),
@@ -1211,7 +1214,7 @@ impl<'a, 'b> Driver<'a, 'b> {
 
     fn extract_value_block_result(
         &self,
-        instructions: &[crate::react_compiler_hir::InstructionId],
+        instructions: &[InstructionId],
         block_id: BlockId,
         loc: Option<SourceLocation>,
     ) -> ValueBlockResult {
@@ -1275,7 +1278,7 @@ impl<'a, 'b> Driver<'a, 'b> {
 
     fn wrap_with_sequence(
         &self,
-        instructions: &[crate::react_compiler_hir::InstructionId],
+        instructions: &[InstructionId],
         continuation: ValueBlockResult,
         loc: Option<SourceLocation>,
     ) -> ValueBlockResult {
@@ -1361,7 +1364,7 @@ impl<'a, 'b> Driver<'a, 'b> {
             instructions,
             id: result.id,
             value: Box::new(ReactiveValue::Instruction(InstructionValue::Primitive {
-                value: crate::react_compiler_hir::PrimitiveValue::Undefined,
+                value: PrimitiveValue::Undefined,
                 loc,
             })),
             loc,

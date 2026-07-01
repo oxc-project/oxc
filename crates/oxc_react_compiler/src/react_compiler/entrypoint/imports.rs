@@ -23,6 +23,7 @@ use crate::react_compiler_ast::{Program, SourceType};
 use crate::react_compiler_diagnostics::{
     CompilerError, CompilerErrorDetail, ErrorCategory, Position, SourceLocation,
 };
+use crate::react_compiler_hir::environment::BindingRename;
 
 use super::compile_result::{DebugLogEntry, LoggerEvent, OrderedLogItem};
 use super::plugin_options::{CompilerTarget, PluginOptions};
@@ -63,7 +64,7 @@ pub struct ProgramContext {
     pub hook_guard_name: Option<String>,
 
     // Variable renames from lowering, to be applied back to the Babel AST
-    pub renames: Vec<crate::react_compiler_hir::environment::BindingRename>,
+    pub renames: Vec<BindingRename>,
 
     /// Timing data for profiling. Accumulates across all function compilations.
     pub timing: TimingData,

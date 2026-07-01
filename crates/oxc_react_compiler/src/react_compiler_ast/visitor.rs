@@ -68,11 +68,7 @@ pub trait Visitor<'ast> {
         _scope_stack: &[ScopeId],
     ) {
     }
-    fn enter_class_declaration(
-        &mut self,
-        _node: &'ast crate::react_compiler_ast::statements::ClassDeclaration,
-        _scope_stack: &[ScopeId],
-    ) {
+    fn enter_class_declaration(&mut self, _node: &'ast ClassDeclaration, _scope_stack: &[ScopeId]) {
     }
     fn enter_class_expression(&mut self, _node: &'ast ClassExpression, _scope_stack: &[ScopeId]) {}
     fn enter_object_method(&mut self, _node: &'ast ObjectMethod, _scope_stack: &[ScopeId]) {}
@@ -1340,17 +1336,16 @@ pub fn walk_expression_mut(v: &mut impl MutVisitor, expr: &mut Expression) -> Vi
 
 fn walk_jsx_mut(
     v: &mut impl MutVisitor,
-    attrs: &mut [crate::react_compiler_ast::jsx::JSXAttributeItem],
-    children: &mut [crate::react_compiler_ast::jsx::JSXChild],
+    attrs: &mut [JSXAttributeItem],
+    children: &mut [JSXChild],
 ) -> VisitResult {
     for attr in attrs.iter_mut() {
         match attr {
-            crate::react_compiler_ast::jsx::JSXAttributeItem::JSXAttribute(a) => {
+            JSXAttributeItem::JSXAttribute(a) => {
                 if let Some(ref mut val) = a.value {
                     match val {
-                        crate::react_compiler_ast::jsx::JSXAttributeValue::JSXExpressionContainer(c) => {
-                            if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(ref mut e) =
-                                c.expression
+                        JSXAttributeValue::JSXExpressionContainer(c) => {
+                            if let JSXExpressionContainerExpr::Expression(ref mut e) = c.expression
                             {
                                 if walk_expression_mut(v, e).is_stop() {
                                     return VisitResult::Stop;
@@ -1361,7 +1356,7 @@ fn walk_jsx_mut(
                     }
                 }
             }
-            crate::react_compiler_ast::jsx::JSXAttributeItem::JSXSpreadAttribute(s) => {
+            JSXAttributeItem::JSXSpreadAttribute(s) => {
                 if walk_expression_mut(v, &mut s.argument).is_stop() {
                     return VisitResult::Stop;
                 }
@@ -1371,33 +1366,27 @@ fn walk_jsx_mut(
     walk_jsx_children_mut(v, children)
 }
 
-fn walk_jsx_children_mut(
-    v: &mut impl MutVisitor,
-    children: &mut [crate::react_compiler_ast::jsx::JSXChild],
-) -> VisitResult {
+fn walk_jsx_children_mut(v: &mut impl MutVisitor, children: &mut [JSXChild]) -> VisitResult {
     for child in children.iter_mut() {
         match child {
-            crate::react_compiler_ast::jsx::JSXChild::JSXElement(el) => {
+            JSXChild::JSXElement(el) => {
                 if walk_jsx_mut(v, &mut el.opening_element.attributes, &mut el.children).is_stop() {
                     return VisitResult::Stop;
                 }
             }
-            crate::react_compiler_ast::jsx::JSXChild::JSXFragment(f) => {
+            JSXChild::JSXFragment(f) => {
                 if walk_jsx_children_mut(v, &mut f.children).is_stop() {
                     return VisitResult::Stop;
                 }
             }
-            crate::react_compiler_ast::jsx::JSXChild::JSXExpressionContainer(c) => {
-                if let crate::react_compiler_ast::jsx::JSXExpressionContainerExpr::Expression(
-                    ref mut e,
-                ) = c.expression
-                {
+            JSXChild::JSXExpressionContainer(c) => {
+                if let JSXExpressionContainerExpr::Expression(ref mut e) = c.expression {
                     if walk_expression_mut(v, e).is_stop() {
                         return VisitResult::Stop;
                     }
                 }
             }
-            crate::react_compiler_ast::jsx::JSXChild::JSXSpreadChild(s) => {
+            JSXChild::JSXSpreadChild(s) => {
                 if walk_expression_mut(v, &mut s.expression).is_stop() {
                     return VisitResult::Stop;
                 }

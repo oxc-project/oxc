@@ -17,13 +17,15 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
-use crate::react_compiler_hir::dominator::post_dominator_frontier;
+use crate::react_compiler_hir::dominator::{
+    PostDominator, compute_post_dominator_tree, post_dominator_frontier,
+};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
-    BlockId, Effect, FunctionId, HirFunction, IdentifierId, InstructionValue, ParamPattern,
-    Terminal, Type,
+    BlockId, Effect, FunctionId, HirFunction, IdentifierId, Instruction, InstructionId,
+    InstructionValue, ParamPattern, Terminal, Type,
 };
 
 use crate::react_compiler_utils::DisjointSet;
@@ -55,11 +57,7 @@ pub fn infer_reactive_places(
     }
 
     // Compute control dominators
-    let post_dominators = crate::react_compiler_hir::dominator::compute_post_dominator_tree(
-        func,
-        env.next_block_id().0,
-        false,
-    )?;
+    let post_dominators = compute_post_dominator_tree(func, env.next_block_id().0, false)?;
 
     // Collect block IDs for iteration
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
@@ -277,11 +275,7 @@ impl StableSidemap {
         StableSidemap { map: FxHashMap::default() }
     }
 
-    fn handle_instruction(
-        &mut self,
-        instr: &crate::react_compiler_hir::Instruction,
-        env: &Environment,
-    ) {
+    fn handle_instruction(&mut self, instr: &Instruction, env: &Environment) {
         let lvalue_id = instr.lvalue.identifier;
         let value = &instr.value;
 
@@ -368,7 +362,7 @@ impl StableSidemap {
 fn is_reactive_controlled_block(
     block_id: BlockId,
     func: &HirFunction,
-    post_dominators: &crate::react_compiler_hir::dominator::PostDominator,
+    post_dominators: &PostDominator,
     reactive_map: &mut ReactivityMap,
 ) -> bool {
     let frontier = post_dominator_frontier(func, post_dominators, block_id);
@@ -573,7 +567,7 @@ fn apply_reactive_flags_replay(
 
         // 2b. Instructions
         let block = func.body.blocks.get(block_id).unwrap();
-        let instr_ids: Vec<crate::react_compiler_hir::InstructionId> = block.instructions.clone();
+        let instr_ids: Vec<InstructionId> = block.instructions.clone();
 
         for instr_id in &instr_ids {
             let instr = &func.instructions[instr_id.0 as usize];

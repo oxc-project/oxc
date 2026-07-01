@@ -3,6 +3,9 @@ pub mod js_string;
 
 pub use js_string::JsString;
 
+use std::error::Error;
+use std::fmt::{Display, Formatter, Result};
+
 use serde::{Deserialize, Serialize};
 
 /// Error categories matching the TS ErrorCategory enum
@@ -404,8 +407,8 @@ impl From<CompilerDiagnostic> for CompilerError {
     }
 }
 
-impl std::fmt::Display for CompilerError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for CompilerError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         for detail in &self.details {
             match detail {
                 CompilerErrorOrDiagnostic::Diagnostic(d) => {
@@ -427,7 +430,7 @@ impl std::fmt::Display for CompilerError {
     }
 }
 
-impl std::error::Error for CompilerError {}
+impl Error for CompilerError {}
 
 pub fn format_category_heading(category: ErrorCategory) -> &'static str {
     match category {

@@ -27,7 +27,8 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     AliasingEffect, BlockId, Effect, EvaluationOrder, FunctionId, HirFunction, IdentifierId,
-    InstructionValue, MutationReason, Place, SourceLocation, is_jsx_type, is_primitive_type,
+    InstructionValue, MutationReason, ParamPattern, Place, SourceLocation, Terminal, is_jsx_type,
+    is_primitive_type,
 };
 
 // =============================================================================
@@ -466,8 +467,8 @@ pub fn infer_mutation_aliasing_ranges(
     // Create nodes for params, context vars, and return
     for param in &func.params {
         let place = match param {
-            crate::react_compiler_hir::ParamPattern::Place(p) => p,
-            crate::react_compiler_hir::ParamPattern::Spread(s) => &s.place,
+            ParamPattern::Place(p) => p,
+            ParamPattern::Spread(s) => &s.place,
         };
         state.create(place, NodeValue::Object);
     }
@@ -619,15 +620,16 @@ pub fn infer_mutation_aliasing_ranges(
 
         // Handle return terminal
         let terminal = &block.terminal;
-        if let crate::react_compiler_hir::Terminal::Return { value, .. } = terminal {
+        if let Terminal::Return { value, .. } = terminal {
             state.assign(index, value, &func.returns);
             index += 1;
         }
 
         // Handle terminal effects (MaybeThrow and Return)
         let terminal_effects = match terminal {
-            crate::react_compiler_hir::Terminal::MaybeThrow { effects, .. }
-            | crate::react_compiler_hir::Terminal::Return { effects, .. } => effects.clone(),
+            Terminal::MaybeThrow { effects, .. } | Terminal::Return { effects, .. } => {
+                effects.clone()
+            }
             _ => None,
         };
         if let Some(effects) = terminal_effects {
@@ -678,8 +680,8 @@ pub fn infer_mutation_aliasing_ranges(
     }
     for param in &func.params {
         let place = match param {
-            crate::react_compiler_hir::ParamPattern::Place(p) => p,
-            crate::react_compiler_hir::ParamPattern::Spread(s) => &s.place,
+            ParamPattern::Place(p) => p,
+            ParamPattern::Spread(s) => &s.place,
         };
         collect_param_effects(&state, place, &mut function_effects);
     }
@@ -690,8 +692,8 @@ pub fn infer_mutation_aliasing_ranges(
     let mut captured_params: FxHashSet<IdentifierId> = FxHashSet::default();
     for param in &func.params {
         let place = match param {
-            crate::react_compiler_hir::ParamPattern::Place(p) => p,
-            crate::react_compiler_hir::ParamPattern::Spread(s) => &s.place,
+            ParamPattern::Place(p) => p,
+            ParamPattern::Spread(s) => &s.place,
         };
         if let Some(node) = state.nodes.get(&place.identifier) {
             if node.local.is_some() || node.transitive.is_some() {
@@ -710,8 +712,8 @@ pub fn infer_mutation_aliasing_ranges(
     // Now mutate the effects on params/context in place
     for param in &mut func.params {
         let place = match param {
-            crate::react_compiler_hir::ParamPattern::Place(p) => p,
-            crate::react_compiler_hir::ParamPattern::Spread(s) => &mut s.place,
+            ParamPattern::Place(p) => p,
+            ParamPattern::Spread(s) => &mut s.place,
         };
         if captured_params.contains(&place.identifier) {
             place.effect = Effect::Capture;
@@ -966,7 +968,7 @@ pub fn infer_mutation_aliasing_ranges(
         // Set terminal operand effects
         let block = func.body.blocks.get_mut(&block_id).unwrap();
         match &mut block.terminal {
-            crate::react_compiler_hir::Terminal::Return { value, .. } => {
+            Terminal::Return { value, .. } => {
                 value.effect = if is_function_expression { Effect::Read } else { Effect::Freeze };
             }
             terminal => {
@@ -1001,8 +1003,8 @@ pub fn infer_mutation_aliasing_ranges(
     let mut tracked: Vec<Place> = Vec::new();
     for param in &func.params {
         let place = match param {
-            crate::react_compiler_hir::ParamPattern::Place(p) => p.clone(),
-            crate::react_compiler_hir::ParamPattern::Spread(s) => s.place.clone(),
+            ParamPattern::Place(p) => p.clone(),
+            ParamPattern::Spread(s) => s.place.clone(),
         };
         tracked.push(place);
     }

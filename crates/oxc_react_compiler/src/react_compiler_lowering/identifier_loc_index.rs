@@ -7,14 +7,17 @@
 
 use rustc_hash::FxHashMap;
 
+use crate::react_compiler_ast::common::SourceLocation as AstSourceLocation;
 use crate::react_compiler_ast::expressions::*;
 use crate::react_compiler_ast::jsx::JSXIdentifier;
 use crate::react_compiler_ast::jsx::JSXOpeningElement;
 use crate::react_compiler_ast::scope::ScopeId;
 use crate::react_compiler_ast::scope::ScopeInfo;
+use crate::react_compiler_ast::statements::ClassDeclaration;
 use crate::react_compiler_ast::statements::FunctionDeclaration;
 use crate::react_compiler_ast::visitor::AstWalker;
 use crate::react_compiler_ast::visitor::Visitor;
+use crate::react_compiler_hir::Position;
 use crate::react_compiler_hir::SourceLocation;
 
 use crate::react_compiler_lowering::FunctionNode;
@@ -53,18 +56,10 @@ struct IdentifierLocVisitor {
     current_opening_element_loc: Option<SourceLocation>,
 }
 
-fn convert_loc(loc: &crate::react_compiler_ast::common::SourceLocation) -> SourceLocation {
+fn convert_loc(loc: &AstSourceLocation) -> SourceLocation {
     SourceLocation {
-        start: crate::react_compiler_hir::Position {
-            line: loc.start.line,
-            column: loc.start.column,
-            index: loc.start.index,
-        },
-        end: crate::react_compiler_hir::Position {
-            line: loc.end.line,
-            column: loc.end.column,
-            index: loc.end.index,
-        },
+        start: Position { line: loc.start.line, column: loc.start.column, index: loc.start.index },
+        end: Position { line: loc.end.line, column: loc.end.column, index: loc.end.index },
     }
 }
 
@@ -148,12 +143,12 @@ impl IdentifierLocVisitor {
         let start = loc.get("start")?.as_object()?;
         let end = loc.get("end")?.as_object()?;
         Some(SourceLocation {
-            start: crate::react_compiler_hir::Position {
+            start: Position {
                 line: start.get("line")?.as_u64()? as u32,
                 column: start.get("column")?.as_u64()? as u32,
                 index: start.get("index").and_then(|i| i.as_u64()).map(|i| i as u32),
             },
-            end: crate::react_compiler_hir::Position {
+            end: Position {
                 line: end.get("line")?.as_u64()? as u32,
                 column: end.get("column")?.as_u64()? as u32,
                 index: end.get("index").and_then(|i| i.as_u64()).map(|i| i as u32),
@@ -224,11 +219,7 @@ impl<'ast> Visitor<'ast> for IdentifierLocVisitor {
         }
     }
 
-    fn enter_class_declaration(
-        &mut self,
-        node: &'ast crate::react_compiler_ast::statements::ClassDeclaration,
-        _scope_stack: &[ScopeId],
-    ) {
+    fn enter_class_declaration(&mut self, node: &'ast ClassDeclaration, _scope_stack: &[ScopeId]) {
         if let Some(id) = &node.id {
             self.insert_identifier(id, true);
         }
@@ -240,11 +231,7 @@ impl<'ast> Visitor<'ast> for IdentifierLocVisitor {
         }
     }
 
-    fn enter_class_expression(
-        &mut self,
-        node: &'ast crate::react_compiler_ast::expressions::ClassExpression,
-        _scope_stack: &[ScopeId],
-    ) {
+    fn enter_class_expression(&mut self, node: &'ast ClassExpression, _scope_stack: &[ScopeId]) {
         if let Some(id) = &node.id {
             self.insert_identifier(id, true);
         }
