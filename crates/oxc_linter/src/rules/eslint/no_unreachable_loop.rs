@@ -19,6 +19,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::effective_unreachable_blocks,
 };
 
 fn no_unreachable_loop_diagnostic(span: Span) -> OxcDiagnostic {
@@ -118,19 +119,35 @@ impl Rule for NoUnreachableLoop {
             return;
         }
 
-        let unreachable =
-            is_static_infinite_loop(node.kind()).then(|| ctx.effective_unreachable_blocks());
-
-        if is_unreachable_node(node.id(), ctx, unreachable)
-            || body_is_unreachable(body, ctx, unreachable)
-        {
+        // First pass uses the control flow graph's own reachability. The
+        // next-iteration search prunes infinite loops itself, so this alone
+        // decides every case except one: a loop that is dead code *after* an
+        // infinite loop is reported as reachable here (the CFG does not
+        // propagate unreachability past an infinite loop).
+        if is_unreachable_node(node.id(), ctx, None) || body_is_unreachable(body, ctx, None) {
             return;
         }
 
-        if !has_next_iteration_path(node.id(), ctx.nodes().cfg_id(body.node_id()), ctx, unreachable)
-        {
-            ctx.diagnostic(no_unreachable_loop_diagnostic(node.kind().span()));
+        if has_next_iteration_path(node.id(), ctx.nodes().cfg_id(body.node_id()), ctx, None) {
+            return;
         }
+
+        // This loop looks like a violation. Before reporting, rule out the
+        // dead-code case above: only a static infinite loop can render a
+        // following loop unreachable, so the corrected reachability map is built
+        // only here — a rare path. `effective_unreachable_blocks` only ever marks
+        // *more* blocks unreachable than the CFG, so it can only turn a report
+        // into a non-report, never the other way around.
+        if is_static_infinite_loop(node.kind()) {
+            let unreachable = effective_unreachable_blocks(ctx);
+            if is_unreachable_node(node.id(), ctx, Some(&unreachable))
+                || body_is_unreachable(body, ctx, Some(&unreachable))
+            {
+                return;
+            }
+        }
+
+        ctx.diagnostic(no_unreachable_loop_diagnostic(node.kind().span()));
     }
 }
 
