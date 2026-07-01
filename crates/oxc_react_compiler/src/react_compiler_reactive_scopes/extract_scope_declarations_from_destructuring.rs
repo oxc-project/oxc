@@ -28,9 +28,9 @@ use crate::react_compiler_reactive_scopes::visitors::{
 /// Extracts scope declarations from destructuring patterns where some bindings
 /// are scope declarations and others aren't.
 /// TS: `extractScopeDeclarationsFromDestructuring`
-pub fn extract_scope_declarations_from_destructuring(
-    func: &mut ReactiveFunction,
-    env: &mut Environment,
+pub fn extract_scope_declarations_from_destructuring<'a>(
+    func: &mut ReactiveFunction<'a>,
+    env: &mut Environment<'a>,
 ) -> Result<(), CompilerError> {
     let mut declared: FxHashSet<DeclarationId> = FxHashSet::default();
     for param in &func.params {
@@ -50,20 +50,20 @@ struct ExtractState {
     declared: FxHashSet<DeclarationId>,
 }
 
-struct Transform<'a> {
-    env: &'a mut Environment,
+struct Transform<'a, 'e> {
+    env: &'e mut Environment<'a>,
 }
 
-impl<'a> ReactiveFunctionTransform for Transform<'a> {
+impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
     type State = ExtractState;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
     fn visit_scope(
         &mut self,
-        scope: &mut ReactiveScopeBlock,
+        scope: &mut ReactiveScopeBlock<'a>,
         state: &mut ExtractState,
     ) -> Result<(), CompilerError> {
         let scope_data = &self.env.scopes[scope.scope.0 as usize];
@@ -83,12 +83,12 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
 
     fn transform_instruction(
         &mut self,
-        instruction: &mut ReactiveInstruction,
+        instruction: &mut ReactiveInstruction<'a>,
         state: &mut ExtractState,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         self.visit_instruction(instruction, state)?;
 
-        let mut extra_instructions: Option<Vec<ReactiveInstruction>> = None;
+        let mut extra_instructions: Option<Vec<ReactiveInstruction<'a>>> = None;
 
         if let ReactiveValue::Instruction(InstructionValue::Destructure {
             lvalue,
@@ -192,9 +192,9 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
     }
 }
 
-fn update_declared_from_instruction(
-    instr: &ReactiveInstruction,
-    env: &Environment,
+fn update_declared_from_instruction<'a>(
+    instr: &ReactiveInstruction<'a>,
+    env: &Environment<'a>,
     state: &mut ExtractState,
 ) {
     if let ReactiveValue::Instruction(iv) = &instr.value {

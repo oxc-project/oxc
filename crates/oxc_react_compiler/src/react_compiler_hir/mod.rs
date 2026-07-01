@@ -17,6 +17,7 @@ pub use crate::react_compiler_diagnostics::Position;
 pub use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
+use oxc_ast::ast as oxc;
 pub use raw::{RawIdent, RawNode, RawTypeCategory};
 pub use reactive::*;
 
@@ -154,7 +155,7 @@ pub fn format_js_number(n: f64) -> String {
 
 /// A function lowered to HIR form
 #[derive(Debug, Clone)]
-pub struct HirFunction {
+pub struct HirFunction<'a> {
     pub loc: Option<SourceLocation>,
     pub id: Option<String>,
     pub name_hint: Option<String>,
@@ -164,7 +165,7 @@ pub struct HirFunction {
     pub returns: Place,
     pub context: Vec<Place>,
     pub body: HIR,
-    pub instructions: Vec<Instruction>,
+    pub instructions: Vec<Instruction<'a>>,
     pub generator: bool,
     pub is_async: bool,
     pub directives: Vec<String>,
@@ -515,10 +516,10 @@ impl std::fmt::Display for LogicalOperator {
 // =============================================================================
 
 #[derive(Debug, Clone)]
-pub struct Instruction {
+pub struct Instruction<'a> {
     pub id: EvaluationOrder,
     pub lvalue: Place,
-    pub value: InstructionValue,
+    pub value: InstructionValue<'a>,
     pub loc: Option<SourceLocation>,
     pub effects: Option<Vec<AliasingEffect>>,
 }
@@ -558,7 +559,7 @@ pub enum Pattern {
 // =============================================================================
 
 #[derive(Debug, Clone)]
-pub enum InstructionValue {
+pub enum InstructionValue<'a> {
     LoadLocal {
         place: Place,
         loc: Option<SourceLocation>,
@@ -632,10 +633,10 @@ pub enum InstructionValue {
         type_: Type,
         type_annotation_name: Option<String>,
         type_annotation_kind: Option<String>,
-        /// The original AST type annotation subtree, preserved for codegen, which
-        /// re-emits it by re-parsing its source span (and applying any identifier
-        /// renames recorded on its metadata).
-        type_annotation: Option<crate::react_compiler_hir::RawNode>,
+        /// The original oxc AST type annotation subtree, preserved for codegen,
+        /// which re-emits it by cloning into the output allocator (and applying any
+        /// identifier renames via the environment for the rare rename case).
+        type_annotation: Option<&'a oxc::TSType<'a>>,
         loc: Option<SourceLocation>,
     },
     JsxExpression {
@@ -782,15 +783,15 @@ pub enum InstructionValue {
     },
     UnsupportedNode {
         node_type: Option<String>,
-        /// Byte span `(start, end)` of the original source statement, preserved so
-        /// codegen can re-parse and re-emit it verbatim (e.g. an inline TS `enum`,
+        /// The borrowed oxc statement node preserved verbatim, so codegen can clone
+        /// it into the output allocator and re-emit it (e.g. an inline TS `enum`,
         /// which has runtime semantics but no HIR representation).
-        original_span: Option<(u32, u32)>,
+        stmt: &'a oxc::Statement<'a>,
         loc: Option<SourceLocation>,
     },
 }
 
-impl InstructionValue {
+impl<'a> InstructionValue<'a> {
     pub fn loc(&self) -> Option<&SourceLocation> {
         match self {
             InstructionValue::LoadLocal { loc, .. }

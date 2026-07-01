@@ -732,9 +732,9 @@ pub fn compile_fn<'a>(
     let mut reactive_fn = build_reactive_function(&hir, &env)?;
     context.timing.stop();
 
-    let hir_formatter = |fmt: &mut PrintFormatter, func: &HirFunction| {
+    fn hir_formatter<'h>(fmt: &mut PrintFormatter<'_, 'h>, func: &HirFunction<'h>) {
         debug_print::format_hir_function_into(fmt, func);
-    };
+    }
 
     if context.debug_enabled {
         context.timing.start("debug_print:BuildReactiveFunction");

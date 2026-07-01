@@ -26,29 +26,29 @@ struct State {
 
 /// Converts scopes without outputs into pruned-scopes (regular blocks).
 /// TS: `pruneUnusedScopes`
-pub fn prune_unused_scopes(
-    func: &mut ReactiveFunction,
-    env: &Environment,
+pub fn prune_unused_scopes<'a>(
+    func: &mut ReactiveFunction<'a>,
+    env: &Environment<'a>,
 ) -> Result<(), CompilerError> {
     let mut transform = Transform { env };
     let mut state = State { has_return_statement: false };
     transform_reactive_function(func, &mut transform, &mut state)
 }
 
-struct Transform<'a> {
-    env: &'a Environment,
+struct Transform<'a, 'e> {
+    env: &'e Environment<'a>,
 }
 
-impl<'a> ReactiveFunctionTransform for Transform<'a> {
+impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
     type State = State;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
     fn visit_terminal(
         &mut self,
-        stmt: &mut ReactiveTerminalStatement,
+        stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut State,
     ) -> Result<(), CompilerError> {
         self.traverse_terminal(stmt, state)?;
@@ -60,9 +60,9 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
 
     fn transform_scope(
         &mut self,
-        scope: &mut ReactiveScopeBlock,
+        scope: &mut ReactiveScopeBlock<'a>,
         _state: &mut State,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         let mut scope_state = State { has_return_statement: false };
         self.visit_scope(scope, &mut scope_state)?;
 

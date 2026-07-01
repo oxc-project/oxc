@@ -24,9 +24,9 @@ use crate::react_compiler_reactive_scopes::visitors::{
 /// Two-pass visitor:
 /// 1. Collect all scope IDs
 /// 2. Check that places referencing those scopes are within active scope blocks
-pub fn assert_scope_instructions_within_scopes(
-    func: &ReactiveFunction,
-    env: &Environment,
+pub fn assert_scope_instructions_within_scopes<'a>(
+    func: &ReactiveFunction<'a>,
+    env: &Environment<'a>,
 ) -> Result<(), CompilerDiagnostic> {
     // Pass 1: Collect all scope IDs
     let mut existing_scopes: FxHashSet<ScopeId> = FxHashSet::default();
@@ -48,18 +48,18 @@ pub fn assert_scope_instructions_within_scopes(
 // Pass 1: Find all scopes
 // =============================================================================
 
-struct FindAllScopesVisitor<'a> {
-    env: &'a Environment,
+struct FindAllScopesVisitor<'a, 'e> {
+    env: &'e Environment<'a>,
 }
 
-impl<'a> ReactiveFunctionVisitor for FindAllScopesVisitor<'a> {
+impl<'a, 'e> ReactiveFunctionVisitor<'a> for FindAllScopesVisitor<'a, 'e> {
     type State = FxHashSet<ScopeId>;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
-    fn visit_scope(&self, scope: &ReactiveScopeBlock, state: &mut FxHashSet<ScopeId>) {
+    fn visit_scope(&self, scope: &ReactiveScopeBlock<'a>, state: &mut FxHashSet<ScopeId>) {
         self.traverse_scope(scope, state);
         state.insert(scope.scope);
     }
@@ -75,14 +75,14 @@ struct CheckState {
     error: Option<CompilerDiagnostic>,
 }
 
-struct CheckInstructionsAgainstScopesVisitor<'a> {
-    env: &'a Environment,
+struct CheckInstructionsAgainstScopesVisitor<'a, 'e> {
+    env: &'e Environment<'a>,
 }
 
-impl<'a> ReactiveFunctionVisitor for CheckInstructionsAgainstScopesVisitor<'a> {
+impl<'a, 'e> ReactiveFunctionVisitor<'a> for CheckInstructionsAgainstScopesVisitor<'a, 'e> {
     type State = CheckState;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
@@ -111,7 +111,7 @@ impl<'a> ReactiveFunctionVisitor for CheckInstructionsAgainstScopesVisitor<'a> {
         }
     }
 
-    fn visit_scope(&self, scope: &ReactiveScopeBlock, state: &mut CheckState) {
+    fn visit_scope(&self, scope: &ReactiveScopeBlock<'a>, state: &mut CheckState) {
         state.active_scopes.insert(scope.scope);
         self.traverse_scope(scope, state);
         state.active_scopes.remove(&scope.scope);

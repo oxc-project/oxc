@@ -32,9 +32,9 @@ use crate::react_compiler_reactive_scopes::visitors::{
 
 /// Merges adjacent reactive scopes that share dependencies (invalidate together).
 /// TS: `mergeReactiveScopesThatInvalidateTogether`
-pub fn merge_reactive_scopes_that_invalidate_together(
-    func: &mut ReactiveFunction,
-    env: &mut Environment,
+pub fn merge_reactive_scopes_that_invalidate_together<'a>(
+    func: &mut ReactiveFunction<'a>,
+    env: &mut Environment<'a>,
 ) -> Result<(), CompilerError> {
     // Pass 1: find last usage of each declaration
     let visitor = FindLastUsageVisitor { env: &*env };
@@ -52,14 +52,14 @@ pub fn merge_reactive_scopes_that_invalidate_together(
 // =============================================================================
 
 /// TS: `class FindLastUsageVisitor extends ReactiveFunctionVisitor<void>`
-struct FindLastUsageVisitor<'a> {
-    env: &'a Environment,
+struct FindLastUsageVisitor<'a, 'e> {
+    env: &'e Environment<'a>,
 }
 
-impl<'a> ReactiveFunctionVisitor for FindLastUsageVisitor<'a> {
+impl<'a, 'e> ReactiveFunctionVisitor<'a> for FindLastUsageVisitor<'a, 'e> {
     type State = FxHashMap<DeclarationId, EvaluationOrder>;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
@@ -77,25 +77,25 @@ impl<'a> ReactiveFunctionVisitor for FindLastUsageVisitor<'a> {
 // =============================================================================
 
 /// TS: `class Transform extends ReactiveFunctionTransform<ReactiveScopeDependencies | null>`
-struct MergeTransform<'a> {
-    env: &'a mut Environment,
+struct MergeTransform<'a, 'e> {
+    env: &'e mut Environment<'a>,
     last_usage: FxHashMap<DeclarationId, EvaluationOrder>,
     temporaries: FxHashMap<DeclarationId, DeclarationId>,
 }
 
-impl<'a> ReactiveFunctionTransform for MergeTransform<'a> {
+impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
     type State = Option<Vec<ReactiveScopeDependency>>;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
     /// TS: `override transformScope(scopeBlock, state)`
     fn transform_scope(
         &mut self,
-        scope: &mut ReactiveScopeBlock,
+        scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         let scope_deps = self.env.scopes[scope.scope.0 as usize].dependencies.clone();
         // Save parent state and recurse with this scope's deps as state
         let parent_state = state.take();
@@ -117,7 +117,7 @@ impl<'a> ReactiveFunctionTransform for MergeTransform<'a> {
     /// TS: `override visitBlock(block, state)`
     fn visit_block(
         &mut self,
-        block: &mut ReactiveBlock,
+        block: &mut ReactiveBlock<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         // Pass 1: traverse nested (scope flattening handled by transform_scope)
@@ -128,9 +128,12 @@ impl<'a> ReactiveFunctionTransform for MergeTransform<'a> {
     }
 }
 
-impl<'a> MergeTransform<'a> {
+impl<'a, 'e> MergeTransform<'a, 'e> {
     /// Identify and merge consecutive scopes that invalidate together.
-    fn merge_scopes_in_block(&mut self, block: &mut ReactiveBlock) -> Result<(), CompilerError> {
+    fn merge_scopes_in_block(
+        &mut self,
+        block: &mut ReactiveBlock<'a>,
+    ) -> Result<(), CompilerError> {
         // Pass 2: identify scopes for merging
         struct MergedScope {
             scope_id: ScopeId,
@@ -335,7 +338,7 @@ impl<'a> MergeTransform<'a> {
             return Ok(());
         }
 
-        let mut next_instructions: Vec<ReactiveStatement> = Vec::new();
+        let mut next_instructions: Vec<ReactiveStatement<'a>> = Vec::new();
         let mut index = 0;
         let all_stmts: Vec<ReactiveStatement> = take(block);
 
@@ -391,10 +394,10 @@ impl<'a> MergeTransform<'a> {
 // =============================================================================
 
 /// Updates scope declarations to remove any that are not used after the scope.
-fn update_scope_declarations(
+fn update_scope_declarations<'a>(
     scope_id: ScopeId,
     last_usage: &FxHashMap<DeclarationId, EvaluationOrder>,
-    env: &mut Environment,
+    env: &mut Environment<'a>,
 ) {
     let range_end = env.scopes[scope_id.0 as usize].range.end;
     env.scopes[scope_id.0 as usize].declarations.retain(|(_id, decl)| {
@@ -408,11 +411,11 @@ fn update_scope_declarations(
 }
 
 /// Returns whether all lvalues are last used at or before the given scope.
-fn are_lvalues_last_used_by_scope(
+fn are_lvalues_last_used_by_scope<'a>(
     scope_id: ScopeId,
     lvalues: &FxHashSet<DeclarationId>,
     last_usage: &FxHashMap<DeclarationId, EvaluationOrder>,
-    env: &Environment,
+    env: &Environment<'a>,
 ) -> bool {
     let range_end = env.scopes[scope_id.0 as usize].range.end;
     for lvalue in lvalues {
@@ -426,10 +429,10 @@ fn are_lvalues_last_used_by_scope(
 }
 
 /// Check if two scopes can be merged.
-fn can_merge_scopes(
+fn can_merge_scopes<'a>(
     current_id: ScopeId,
     next_id: ScopeId,
-    env: &Environment,
+    env: &Environment<'a>,
     temporaries: &FxHashMap<DeclarationId, DeclarationId>,
 ) -> bool {
     let current = &env.scopes[current_id.0 as usize];
@@ -509,10 +512,10 @@ pub fn is_always_invalidating_type(ty: &Type) -> bool {
 }
 
 /// Check if two dependency lists are equal.
-fn are_equal_dependencies(
+fn are_equal_dependencies<'a>(
     a: &[ReactiveScopeDependency],
     b: &[ReactiveScopeDependency],
-    env: &Environment,
+    env: &Environment<'a>,
 ) -> bool {
     if a.len() != b.len() {
         return false;
@@ -539,7 +542,7 @@ fn are_equal_paths(a: &[DependencyPathEntry], b: &[DependencyPathEntry]) -> bool
 }
 
 /// Check if a scope is eligible for merging with subsequent scopes.
-fn scope_is_eligible_for_merging(scope_id: ScopeId, env: &Environment) -> bool {
+fn scope_is_eligible_for_merging<'a>(scope_id: ScopeId, env: &Environment<'a>) -> bool {
     let scope = &env.scopes[scope_id.0 as usize];
     if scope.dependencies.is_empty() {
         // No dependencies means output never changes — eligible

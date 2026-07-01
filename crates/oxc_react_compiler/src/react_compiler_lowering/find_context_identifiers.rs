@@ -55,10 +55,10 @@ struct BindingInfo {
     referenced_by_inner_fn: bool,
 }
 
-struct ContextIdentifierVisitor<'a> {
+struct ContextIdentifierVisitor<'a, 'b> {
     scope_info: &'a ScopeInfo,
     line_offsets: &'a LineOffsets,
-    env: &'a mut Environment,
+    env: &'a mut Environment<'b>,
     /// The active scope stack. Initialized with the function-being-compiled's
     /// scope and pushed/popped for every scope-creating node, mirroring the
     /// original `AstWalker`.
@@ -70,7 +70,7 @@ struct ContextIdentifierVisitor<'a> {
     error: Option<CompilerError>,
 }
 
-impl<'a> ContextIdentifierVisitor<'a> {
+impl<'a, 'b> ContextIdentifierVisitor<'a, 'b> {
     fn current_scope(&self) -> ScopeId {
         self.scope_stack.last().copied().unwrap_or(self.scope_info.program_scope)
     }
@@ -147,7 +147,7 @@ impl<'a> ContextIdentifierVisitor<'a> {
     }
 }
 
-impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
+impl<'a, 'b> Visit<'a> for ContextIdentifierVisitor<'a, 'b> {
     // ---- function scopes (push BOTH the generic scope and the function stack) ----
 
     fn visit_function(&mut self, it: &oxc::Function<'a>, _flags: ScopeFlags) {
@@ -324,7 +324,7 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
     fn visit_ts_module_declaration(&mut self, _it: &oxc::TSModuleDeclaration<'a>) {}
 }
 
-impl<'a> ContextIdentifierVisitor<'a> {
+impl<'a, 'b> ContextIdentifierVisitor<'a, 'b> {
     /// Recursively walk an assignment target to find all reassignment target
     /// identifiers, mirroring the original `walk_lval_for_reassignment`.
     fn walk_assignment_target_for_reassignment(

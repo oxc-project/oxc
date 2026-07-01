@@ -29,14 +29,14 @@ use crate::react_compiler_hir::{
 /// Tree representation of a compiled function, converted from the CFG-based HIR.
 /// TS: ReactiveFunction in HIR.ts
 #[derive(Debug, Clone)]
-pub struct ReactiveFunction {
+pub struct ReactiveFunction<'a> {
     pub loc: Option<SourceLocation>,
     pub id: Option<String>,
     pub name_hint: Option<String>,
     pub params: Vec<ParamPattern>,
     pub generator: bool,
     pub is_async: bool,
-    pub body: ReactiveBlock,
+    pub body: ReactiveBlock<'a>,
     pub directives: Vec<String>,
     // No env field — passed separately per established Rust convention
 }
@@ -46,15 +46,15 @@ pub struct ReactiveFunction {
 // =============================================================================
 
 /// TS: ReactiveBlock = Array<ReactiveStatement>
-pub type ReactiveBlock = Vec<ReactiveStatement>;
+pub type ReactiveBlock<'a> = Vec<ReactiveStatement<'a>>;
 
 /// TS: ReactiveStatement (discriminated union with 'kind' field)
 #[derive(Debug, Clone)]
-pub enum ReactiveStatement {
-    Instruction(ReactiveInstruction),
-    Terminal(ReactiveTerminalStatement),
-    Scope(ReactiveScopeBlock),
-    PrunedScope(PrunedReactiveScopeBlock),
+pub enum ReactiveStatement<'a> {
+    Instruction(ReactiveInstruction<'a>),
+    Terminal(ReactiveTerminalStatement<'a>),
+    Scope(ReactiveScopeBlock<'a>),
+    PrunedScope(PrunedReactiveScopeBlock<'a>),
 }
 
 // =============================================================================
@@ -63,10 +63,10 @@ pub enum ReactiveStatement {
 
 /// TS: ReactiveInstruction
 #[derive(Debug, Clone)]
-pub struct ReactiveInstruction {
+pub struct ReactiveInstruction<'a> {
     pub id: EvaluationOrder,
     pub lvalue: Option<Place>,
-    pub value: ReactiveValue,
+    pub value: ReactiveValue<'a>,
     pub effects: Option<Vec<AliasingEffect>>,
     pub loc: Option<SourceLocation>,
 }
@@ -75,38 +75,38 @@ pub struct ReactiveInstruction {
 /// separate blocks+terminals in HIR but become nested expressions here.
 /// TS: ReactiveValue = InstructionValue | ReactiveLogicalValue | ...
 #[derive(Debug, Clone)]
-pub enum ReactiveValue {
+pub enum ReactiveValue<'a> {
     /// All ~35 base instruction value kinds
-    Instruction(InstructionValue),
+    Instruction(InstructionValue<'a>),
 
     /// TS: ReactiveLogicalValue
     LogicalExpression {
         operator: LogicalOperator,
-        left: Box<ReactiveValue>,
-        right: Box<ReactiveValue>,
+        left: Box<ReactiveValue<'a>>,
+        right: Box<ReactiveValue<'a>>,
         loc: Option<SourceLocation>,
     },
 
     /// TS: ReactiveTernaryValue
     ConditionalExpression {
-        test: Box<ReactiveValue>,
-        consequent: Box<ReactiveValue>,
-        alternate: Box<ReactiveValue>,
+        test: Box<ReactiveValue<'a>>,
+        consequent: Box<ReactiveValue<'a>>,
+        alternate: Box<ReactiveValue<'a>>,
         loc: Option<SourceLocation>,
     },
 
     /// TS: ReactiveSequenceValue
     SequenceExpression {
-        instructions: Vec<ReactiveInstruction>,
+        instructions: Vec<ReactiveInstruction<'a>>,
         id: EvaluationOrder,
-        value: Box<ReactiveValue>,
+        value: Box<ReactiveValue<'a>>,
         loc: Option<SourceLocation>,
     },
 
     /// TS: ReactiveOptionalCallValue
     OptionalExpression {
         id: EvaluationOrder,
-        value: Box<ReactiveValue>,
+        value: Box<ReactiveValue<'a>>,
         optional: bool,
         loc: Option<SourceLocation>,
     },
@@ -117,8 +117,8 @@ pub enum ReactiveValue {
 // =============================================================================
 
 #[derive(Debug, Clone)]
-pub struct ReactiveTerminalStatement {
-    pub terminal: ReactiveTerminal,
+pub struct ReactiveTerminalStatement<'a> {
+    pub terminal: ReactiveTerminal<'a>,
     pub label: Option<ReactiveLabel>,
 }
 
@@ -146,7 +146,7 @@ impl Display for ReactiveTerminalTargetKind {
 }
 
 #[derive(Debug, Clone)]
-pub enum ReactiveTerminal {
+pub enum ReactiveTerminal<'a> {
     Break {
         target: BlockId,
         id: EvaluationOrder,
@@ -171,68 +171,68 @@ pub enum ReactiveTerminal {
     },
     Switch {
         test: Place,
-        cases: Vec<ReactiveSwitchCase>,
+        cases: Vec<ReactiveSwitchCase<'a>>,
         id: EvaluationOrder,
         loc: Option<SourceLocation>,
     },
     DoWhile {
-        loop_block: ReactiveBlock,
-        test: ReactiveValue,
+        loop_block: ReactiveBlock<'a>,
+        test: ReactiveValue<'a>,
         id: EvaluationOrder,
         loc: Option<SourceLocation>,
     },
     While {
-        test: ReactiveValue,
-        loop_block: ReactiveBlock,
+        test: ReactiveValue<'a>,
+        loop_block: ReactiveBlock<'a>,
         id: EvaluationOrder,
         loc: Option<SourceLocation>,
     },
     For {
-        init: ReactiveValue,
-        test: ReactiveValue,
-        update: Option<ReactiveValue>,
-        loop_block: ReactiveBlock,
+        init: ReactiveValue<'a>,
+        test: ReactiveValue<'a>,
+        update: Option<ReactiveValue<'a>>,
+        loop_block: ReactiveBlock<'a>,
         id: EvaluationOrder,
         loc: Option<SourceLocation>,
     },
     ForOf {
-        init: ReactiveValue,
-        test: ReactiveValue,
-        loop_block: ReactiveBlock,
+        init: ReactiveValue<'a>,
+        test: ReactiveValue<'a>,
+        loop_block: ReactiveBlock<'a>,
         id: EvaluationOrder,
         loc: Option<SourceLocation>,
     },
     ForIn {
-        init: ReactiveValue,
-        loop_block: ReactiveBlock,
+        init: ReactiveValue<'a>,
+        loop_block: ReactiveBlock<'a>,
         id: EvaluationOrder,
         loc: Option<SourceLocation>,
     },
     If {
         test: Place,
-        consequent: ReactiveBlock,
-        alternate: Option<ReactiveBlock>,
+        consequent: ReactiveBlock<'a>,
+        alternate: Option<ReactiveBlock<'a>>,
         id: EvaluationOrder,
         loc: Option<SourceLocation>,
     },
     Label {
-        block: ReactiveBlock,
+        block: ReactiveBlock<'a>,
         id: EvaluationOrder,
         loc: Option<SourceLocation>,
     },
     Try {
-        block: ReactiveBlock,
+        block: ReactiveBlock<'a>,
         handler_binding: Option<Place>,
-        handler: ReactiveBlock,
+        handler: ReactiveBlock<'a>,
         id: EvaluationOrder,
         loc: Option<SourceLocation>,
     },
 }
 
 #[derive(Debug, Clone)]
-pub struct ReactiveSwitchCase {
+pub struct ReactiveSwitchCase<'a> {
     pub test: Option<Place>,
-    pub block: Option<ReactiveBlock>,
+    pub block: Option<ReactiveBlock<'a>>,
 }
 
 // =============================================================================
@@ -240,13 +240,13 @@ pub struct ReactiveSwitchCase {
 // =============================================================================
 
 #[derive(Debug, Clone)]
-pub struct ReactiveScopeBlock {
+pub struct ReactiveScopeBlock<'a> {
     pub scope: ScopeId,
-    pub instructions: ReactiveBlock,
+    pub instructions: ReactiveBlock<'a>,
 }
 
 #[derive(Debug, Clone)]
-pub struct PrunedReactiveScopeBlock {
+pub struct PrunedReactiveScopeBlock<'a> {
     pub scope: ScopeId,
-    pub instructions: ReactiveBlock,
+    pub instructions: ReactiveBlock<'a>,
 }

@@ -23,31 +23,31 @@ use crate::react_compiler_reactive_scopes::visitors::{
 };
 
 /// Prune unused labels from a reactive function.
-pub fn prune_unused_labels(
-    func: &mut ReactiveFunction,
-    env: &Environment,
+pub fn prune_unused_labels<'a>(
+    func: &mut ReactiveFunction<'a>,
+    env: &Environment<'a>,
 ) -> Result<(), CompilerError> {
     let mut transform = Transform { env };
     let mut labels: FxHashSet<BlockId> = FxHashSet::default();
     transform_reactive_function(func, &mut transform, &mut labels)
 }
 
-struct Transform<'a> {
-    env: &'a Environment,
+struct Transform<'a, 'e> {
+    env: &'e Environment<'a>,
 }
 
-impl<'a> ReactiveFunctionTransform for Transform<'a> {
+impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
     type State = FxHashSet<BlockId>;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
     fn transform_terminal(
         &mut self,
-        stmt: &mut ReactiveTerminalStatement,
+        stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut FxHashSet<BlockId>,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         // Traverse children first
         self.traverse_terminal(stmt, state)?;
 

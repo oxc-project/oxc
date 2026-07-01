@@ -26,7 +26,7 @@ use crate::react_compiler_reactive_scopes::visitors::{
 
 /// Rewrites block IDs to sequential values.
 /// TS: `stabilizeBlockIds`
-pub fn stabilize_block_ids(func: &mut ReactiveFunction, env: &mut Environment) {
+pub fn stabilize_block_ids<'a>(func: &mut ReactiveFunction<'a>, env: &mut Environment<'a>) {
     // Pass 1: Collect referenced labels (preserving insertion order to match TS Set behavior)
     let mut referenced: FxIndexSet<BlockId> = FxIndexSet::default();
     let collector = CollectReferencedLabels { env: &*env };
@@ -48,18 +48,18 @@ pub fn stabilize_block_ids(func: &mut ReactiveFunction, env: &mut Environment) {
 // Pass 1: CollectReferencedLabels
 // =============================================================================
 
-struct CollectReferencedLabels<'a> {
-    env: &'a Environment,
+struct CollectReferencedLabels<'a, 'e> {
+    env: &'e Environment<'a>,
 }
 
-impl<'a> ReactiveFunctionVisitor for CollectReferencedLabels<'a> {
+impl<'a, 'e> ReactiveFunctionVisitor<'a> for CollectReferencedLabels<'a, 'e> {
     type State = FxIndexSet<BlockId>;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
-    fn visit_scope(&self, scope: &ReactiveScopeBlock, state: &mut Self::State) {
+    fn visit_scope(&self, scope: &ReactiveScopeBlock<'a>, state: &mut Self::State) {
         let scope_data = &self.env.scopes[scope.scope.0 as usize];
         if let Some(ref early_return) = scope_data.early_return_value {
             state.insert(early_return.label);
@@ -67,7 +67,7 @@ impl<'a> ReactiveFunctionVisitor for CollectReferencedLabels<'a> {
         self.traverse_scope(scope, state);
     }
 
-    fn visit_terminal(&self, stmt: &ReactiveTerminalStatement, state: &mut Self::State) {
+    fn visit_terminal(&self, stmt: &ReactiveTerminalStatement<'a>, state: &mut Self::State) {
         if let Some(ref label) = stmt.label {
             if !label.implicit {
                 state.insert(label.id);
@@ -87,20 +87,20 @@ fn get_or_insert_mapping(mappings: &mut FxHashMap<BlockId, BlockId>, id: BlockId
 }
 
 /// TS: `class RewriteBlockIds extends ReactiveFunctionVisitor<Map<BlockId, BlockId>>`
-struct RewriteBlockIds<'a> {
-    env: &'a mut Environment,
+struct RewriteBlockIds<'a, 'e> {
+    env: &'e mut Environment<'a>,
 }
 
-impl<'a> ReactiveFunctionTransform for RewriteBlockIds<'a> {
+impl<'a, 'e> ReactiveFunctionTransform<'a> for RewriteBlockIds<'a, 'e> {
     type State = FxHashMap<BlockId, BlockId>;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
     fn visit_scope(
         &mut self,
-        scope: &mut ReactiveScopeBlock,
+        scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         let scope_data = &mut self.env.scopes[scope.scope.0 as usize];
@@ -112,7 +112,7 @@ impl<'a> ReactiveFunctionTransform for RewriteBlockIds<'a> {
 
     fn visit_terminal(
         &mut self,
-        stmt: &mut ReactiveTerminalStatement,
+        stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut Self::State,
     ) -> Result<(), CompilerError> {
         if let Some(ref mut label) = stmt.label {

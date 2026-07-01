@@ -29,9 +29,9 @@ use crate::react_compiler_reactive_scopes::visitors::{
 /// Prunes scopes that always invalidate because they depend on unmemoized
 /// always-invalidating values.
 /// TS: `pruneAlwaysInvalidatingScopes`
-pub fn prune_always_invalidating_scopes(
-    func: &mut ReactiveFunction,
-    env: &Environment,
+pub fn prune_always_invalidating_scopes<'a>(
+    func: &mut ReactiveFunction<'a>,
+    env: &Environment<'a>,
 ) -> Result<(), CompilerError> {
     let mut transform = Transform {
         env,
@@ -42,24 +42,24 @@ pub fn prune_always_invalidating_scopes(
     transform_reactive_function(func, &mut transform, &mut state)
 }
 
-struct Transform<'a> {
-    env: &'a Environment,
+struct Transform<'a, 'e> {
+    env: &'e Environment<'a>,
     always_invalidating_values: FxHashSet<IdentifierId>,
     unmemoized_values: FxHashSet<IdentifierId>,
 }
 
-impl<'a> ReactiveFunctionTransform for Transform<'a> {
+impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
     type State = bool; // withinScope
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
     fn transform_instruction(
         &mut self,
-        instruction: &mut ReactiveInstruction,
+        instruction: &mut ReactiveInstruction<'a>,
         within_scope: &mut bool,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         self.visit_instruction(instruction, within_scope)?;
 
         let lvalue = &instruction.lvalue;
@@ -107,9 +107,9 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
 
     fn transform_scope(
         &mut self,
-        scope: &mut ReactiveScopeBlock,
+        scope: &mut ReactiveScopeBlock<'a>,
         _within_scope: &mut bool,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         let mut within_scope = true;
         self.visit_scope(scope, &mut within_scope)?;
 
