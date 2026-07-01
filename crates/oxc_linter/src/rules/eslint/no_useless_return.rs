@@ -1,13 +1,14 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::{AstKind, ast::Statement};
 use oxc_cfg::{
-    EdgeType, ErrorEdgeKind, InstructionKind,
+    EdgeType, InstructionKind, ReturnInstructionKind,
     graph::{Direction, visit::EdgeRef},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashSet;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -99,17 +100,6 @@ enum AncestorAnalysis {
     NotAtFunctionEnd,
 }
 
-enum SwitchCaseTail {
-    NotTail,
-    Tail { falls_through: bool },
-}
-
-enum TailStatementEffect {
-    Noop,
-    Stops,
-    Meaningful,
-}
-
 impl NoUselessReturn {
     /// Check if a return statement is useless.
     /// A return is useless if:
@@ -180,30 +170,6 @@ impl NoUselessReturn {
                 }
 
                 AstKind::SwitchCase(case) => {
-                    let parent_kind = nodes.parent_kind(ancestor_id);
-                    if let AstKind::SwitchStatement(switch_stmt) = parent_kind
-                        && let Some((idx, _)) =
-                            switch_stmt.cases.iter().enumerate().find(|(_, c)| c.span == case.span)
-                    {
-                        let falls_through =
-                            match Self::switch_case_tail(&case.consequent, current_span) {
-                                SwitchCaseTail::Tail { falls_through } => falls_through,
-                                SwitchCaseTail::NotTail => {
-                                    return AncestorAnalysis::NotAtFunctionEnd;
-                                }
-                            };
-
-                        let is_last_case = idx == switch_stmt.cases.len() - 1;
-
-                        if falls_through
-                            && !is_last_case
-                            && switch_stmt.cases.iter().skip(idx + 1).any(|case| {
-                                Self::case_consequent_has_meaningful_effect(&case.consequent)
-                            })
-                        {
-                            return AncestorAnalysis::NotUseless;
-                        }
-                    }
                     current_span = case.span;
                 }
 
@@ -240,38 +206,61 @@ impl NoUselessReturn {
         AncestorAnalysis::NotAtFunctionEnd
     }
 
-    /// Check if removing this return would make code after it reachable.
-    /// Returns true if the return prevents reachable code from executing.
+    /// Check if removing this return would make later code execute.
     fn has_reachable_code_after(return_node: &AstNode, ctx: &LintContext) -> bool {
         let cfg = ctx.cfg();
         let graph = cfg.graph();
         let return_block_id = ctx.nodes().cfg_id(return_node.id());
+        let mut stack = graph
+            .edges_directed(return_block_id, Direction::Outgoing)
+            .filter_map(|edge| {
+                matches!(edge.weight(), EdgeType::Unreachable).then_some(edge.target())
+            })
+            .collect::<Vec<_>>();
+        let mut visited = FxHashSet::default();
 
-        for edge in graph.edges_directed(return_block_id, Direction::Outgoing) {
-            let dominated = matches!(
-                edge.weight(),
-                EdgeType::Normal | EdgeType::Jump | EdgeType::Error(ErrorEdgeKind::Explicit)
-            );
+        while let Some(block_id) = stack.pop() {
+            if !visited.insert(block_id) {
+                continue;
+            }
 
-            if dominated {
-                let target = edge.target();
-                let target_block = cfg.basic_block(target);
-
-                if target_block.is_unreachable() {
-                    continue;
-                }
-
-                let has_meaningful_code = target_block.instructions().iter().any(|instr| {
-                    !matches!(
-                        instr.kind,
-                        InstructionKind::ImplicitReturn | InstructionKind::Unreachable
-                    )
-                });
-
-                if has_meaningful_code {
-                    return true;
+            let mut path_stopped = false;
+            for instr in cfg.basic_block(block_id).instructions() {
+                match instr.kind {
+                    InstructionKind::Statement
+                        if Self::is_meaningful_statement(instr.node_id, ctx) =>
+                    {
+                        return true;
+                    }
+                    InstructionKind::Statement => {}
+                    InstructionKind::Throw
+                    | InstructionKind::Iteration(_)
+                    | InstructionKind::Return(ReturnInstructionKind::NotImplicitUndefined) => {
+                        return true;
+                    }
+                    InstructionKind::Break(_)
+                    | InstructionKind::Continue(_)
+                    | InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined) => {
+                        path_stopped = true;
+                        break;
+                    }
+                    InstructionKind::Condition
+                    | InstructionKind::ImplicitReturn
+                    | InstructionKind::Unreachable => {}
                 }
             }
+
+            if path_stopped {
+                continue;
+            }
+
+            stack.extend(graph.edges_directed(block_id, Direction::Outgoing).filter_map(|edge| {
+                matches!(
+                    edge.weight(),
+                    EdgeType::Normal | EdgeType::Jump | EdgeType::Backedge | EdgeType::Unreachable
+                )
+                .then_some(edge.target())
+            }));
         }
 
         false
@@ -286,62 +275,24 @@ impl NoUselessReturn {
         statements.last().is_some_and(|last| last.span().contains_inclusive(span))
     }
 
-    fn switch_case_tail(statements: &ArenaVec<'_, Statement<'_>>, span: Span) -> SwitchCaseTail {
-        let Some(index) = statements.iter().position(|stmt| stmt.span().contains_inclusive(span))
-        else {
-            return SwitchCaseTail::NotTail;
+    fn is_meaningful_statement(node_id: Option<NodeId>, ctx: &LintContext) -> bool {
+        let Some(node_id) = node_id else {
+            return true;
         };
 
-        for stmt in statements.iter().skip(index + 1) {
-            match Self::tail_statement_effect(stmt) {
-                TailStatementEffect::Noop => {}
-                TailStatementEffect::Stops => return SwitchCaseTail::Tail { falls_through: false },
-                TailStatementEffect::Meaningful => return SwitchCaseTail::NotTail,
-            }
+        match ctx.nodes().kind(node_id) {
+            AstKind::EmptyStatement(_) | AstKind::Function(_) => false,
+            AstKind::BlockStatement(block) => !block.body.iter().all(Self::is_noop_statement),
+            _ => true,
         }
-
-        SwitchCaseTail::Tail { falls_through: true }
     }
 
-    fn case_consequent_has_meaningful_effect(statements: &ArenaVec<'_, Statement<'_>>) -> bool {
-        for stmt in statements {
-            match Self::tail_statement_effect(stmt) {
-                TailStatementEffect::Noop => {}
-                TailStatementEffect::Stops => return false,
-                TailStatementEffect::Meaningful => return true,
-            }
-        }
-
-        false
-    }
-
-    fn tail_statement_effect(stmt: &Statement) -> TailStatementEffect {
+    fn is_noop_statement(stmt: &Statement) -> bool {
         match stmt {
-            Statement::EmptyStatement(_) | Statement::FunctionDeclaration(_) => {
-                TailStatementEffect::Noop
-            }
-            Statement::BreakStatement(break_stmt) if break_stmt.label.is_none() => {
-                TailStatementEffect::Stops
-            }
-            Statement::ReturnStatement(return_stmt) if return_stmt.argument.is_none() => {
-                TailStatementEffect::Stops
-            }
-            Statement::BlockStatement(block) => Self::block_statement_effect(&block.body),
-            _ => TailStatementEffect::Meaningful,
+            Statement::EmptyStatement(_) | Statement::FunctionDeclaration(_) => true,
+            Statement::BlockStatement(block) => block.body.iter().all(Self::is_noop_statement),
+            _ => false,
         }
-    }
-
-    fn block_statement_effect(statements: &ArenaVec<'_, Statement<'_>>) -> TailStatementEffect {
-        for stmt in statements {
-            match Self::tail_statement_effect(stmt) {
-                TailStatementEffect::Noop => {}
-                effect @ (TailStatementEffect::Stops | TailStatementEffect::Meaningful) => {
-                    return effect;
-                }
-            }
-        }
-
-        TailStatementEffect::Noop
     }
 }
 
