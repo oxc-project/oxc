@@ -1,5 +1,4 @@
 pub mod compile_result;
-pub mod gating;
 pub mod imports;
 pub mod pipeline;
 pub mod plugin_options;

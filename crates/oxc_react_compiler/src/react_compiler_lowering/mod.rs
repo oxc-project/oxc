@@ -9,16 +9,16 @@ use oxc_ast::ast as oxc;
 use crate::react_compiler_hir::BindingKind;
 
 /// Convert AST binding kind to HIR binding kind.
-pub fn convert_binding_kind(kind: &crate::react_compiler_ast::scope::BindingKind) -> BindingKind {
+pub fn convert_binding_kind(kind: &crate::scope::BindingKind) -> BindingKind {
     match kind {
-        crate::react_compiler_ast::scope::BindingKind::Var => BindingKind::Var,
-        crate::react_compiler_ast::scope::BindingKind::Let => BindingKind::Let,
-        crate::react_compiler_ast::scope::BindingKind::Const => BindingKind::Const,
-        crate::react_compiler_ast::scope::BindingKind::Param => BindingKind::Param,
-        crate::react_compiler_ast::scope::BindingKind::Module => BindingKind::Module,
-        crate::react_compiler_ast::scope::BindingKind::Hoisted => BindingKind::Hoisted,
-        crate::react_compiler_ast::scope::BindingKind::Local => BindingKind::Local,
-        crate::react_compiler_ast::scope::BindingKind::Unknown => BindingKind::Unknown,
+        crate::scope::BindingKind::Var => BindingKind::Var,
+        crate::scope::BindingKind::Let => BindingKind::Let,
+        crate::scope::BindingKind::Const => BindingKind::Const,
+        crate::scope::BindingKind::Param => BindingKind::Param,
+        crate::scope::BindingKind::Module => BindingKind::Module,
+        crate::scope::BindingKind::Hoisted => BindingKind::Hoisted,
+        crate::scope::BindingKind::Local => BindingKind::Local,
+        crate::scope::BindingKind::Unknown => BindingKind::Unknown,
     }
 }
 

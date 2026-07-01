@@ -159,6 +159,9 @@ pub(crate) trait OldBuilderExt<'a> {
     fn formal_parameter_rest<T1>(&self, span: Span, decorators: ArenaVec<'a, Decorator<'a>>, rest: BindingRestElement<'a>, type_annotation: T1) -> FormalParameterRest<'a>
         where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>;
+    fn formal_parameters<T1>(&self, span: Span, kind: FormalParameterKind, items: ArenaVec<'a, FormalParameter<'a>>, rest: T1) -> FormalParameters<'a>
+        where
+        T1: IntoIn<'a, Option<ArenaBox<'a, FormalParameterRest<'a>>>>;
     fn binding_rest_element(&self, span: Span, argument: BindingPattern<'a>) -> BindingRestElement<'a>;
     fn function<T1, T2, T3, T4, T5>(&self, span: Span, r#type: FunctionType, id: Option<BindingIdentifier<'a>>, generator: bool, r#async: bool, declare: bool, type_parameters: T1, this_param: T2, params: T3, return_type: T4, body: T5) -> Function<'a>
         where
@@ -375,6 +378,9 @@ impl<'a> OldBuilderExt<'a> for AstBuilder<'a> {
     fn formal_parameter_rest<T1>(&self, span: Span, decorators: ArenaVec<'a, Decorator<'a>>, rest: BindingRestElement<'a>, type_annotation: T1) -> FormalParameterRest<'a>
         where
         T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>> { FormalParameterRest::new(span, decorators, rest, type_annotation, self) }
+    fn formal_parameters<T1>(&self, span: Span, kind: FormalParameterKind, items: ArenaVec<'a, FormalParameter<'a>>, rest: T1) -> FormalParameters<'a>
+        where
+        T1: IntoIn<'a, Option<ArenaBox<'a, FormalParameterRest<'a>>>> { FormalParameters::new(span, kind, items, rest, self) }
     fn binding_rest_element(&self, span: Span, argument: BindingPattern<'a>) -> BindingRestElement<'a> { BindingRestElement::new(span, argument, self) }
     fn function<T1, T2, T3, T4, T5>(&self, span: Span, r#type: FunctionType, id: Option<BindingIdentifier<'a>>, generator: bool, r#async: bool, declare: bool, type_parameters: T1, this_param: T2, params: T3, return_type: T4, body: T5) -> Function<'a>
         where

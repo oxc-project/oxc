@@ -35,10 +35,10 @@ use oxc_ast_visit::Visit;
 use oxc_span::Span;
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::react_compiler_ast::scope::BindingId;
-use crate::react_compiler_ast::scope::ScopeId;
-use crate::react_compiler_ast::scope::ScopeInfo;
-use crate::react_compiler_ast::scope::ScopeKind;
+use crate::scope::BindingId;
+use crate::scope::ScopeId;
+use crate::scope::ScopeInfo;
+use crate::scope::ScopeKind;
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
 use crate::react_compiler_diagnostics::ErrorCategory;

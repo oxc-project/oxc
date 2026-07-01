@@ -396,7 +396,7 @@ fn ox_str<'a>(ast: &oxc_ast::builder::AstBuilder<'a>, s: &str) -> &'a str {
 /// source slice. Returns `None` if the source / span is unavailable or unparsable.
 fn ox_reparse_ts_type<'a>(
     cx: &OxcContext<'a, '_>,
-    raw: &crate::react_compiler_ast::common::RawNode,
+    raw: &crate::react_compiler_hir::RawNode,
 ) -> Option<oxc::TSType<'a>> {
     let source = cx.env.code.as_deref()?;
     let start = raw.type_start? as usize;
@@ -456,7 +456,7 @@ fn ox_reparse_ts_type<'a>(
 /// rename (largest `declaration_start` not past the use site) wins. Mirrors the
 /// baseline (Babel-path) `set_raw_type_renames`.
 fn set_raw_type_renames(
-    raw: &mut crate::react_compiler_ast::common::RawNode,
+    raw: &mut crate::react_compiler_hir::RawNode,
     renames: &[crate::react_compiler_hir::environment::BindingRename],
     reference_node_ids: &rustc_hash::FxHashSet<u32>,
 ) {
@@ -477,16 +477,16 @@ fn set_raw_type_renames(
     }
 }
 
-/// Re-parse a full statement from its original source span. Used to re-emit
+/// Re-parse a full statement from its original source byte span. Used to re-emit
 /// statement-position `UnsupportedNode`s (e.g. inline TS `enum` declarations)
-/// verbatim, mirroring `convert_ast_reverse`'s `extract_source_stmt`.
+/// verbatim, mirroring the former Babel path's `return node`.
 fn ox_reparse_source_stmt<'a>(
     cx: &OxcContext<'a, '_>,
-    base: &crate::react_compiler_ast::common::BaseNode,
+    start: u32,
+    end: u32,
 ) -> Option<oxc::Statement<'a>> {
     let source = cx.env.code.as_deref()?;
-    let start = base.start? as usize;
-    let end = base.end? as usize;
+    let (start, end) = (start as usize, end as usize);
     if start >= source.len() || end > source.len() || start >= end {
         return None;
     }
@@ -498,61 +498,6 @@ fn ox_reparse_source_stmt<'a>(
         return None;
     }
     parsed.program.body.into_iter().next()
-}
-
-/// Byte-offset span source for a Babel-shaped statement, used to re-parse
-/// statement-position `UnsupportedNode`s from the original source.
-fn ox_statement_base(
-    stmt: &crate::react_compiler_ast::statements::Statement,
-) -> &crate::react_compiler_ast::common::BaseNode {
-    use crate::react_compiler_ast::statements::Statement as S;
-    match stmt {
-        S::BlockStatement(s) => &s.base,
-        S::ReturnStatement(s) => &s.base,
-        S::IfStatement(s) => &s.base,
-        S::ForStatement(s) => &s.base,
-        S::WhileStatement(s) => &s.base,
-        S::DoWhileStatement(s) => &s.base,
-        S::ForInStatement(s) => &s.base,
-        S::ForOfStatement(s) => &s.base,
-        S::SwitchStatement(s) => &s.base,
-        S::ThrowStatement(s) => &s.base,
-        S::TryStatement(s) => &s.base,
-        S::BreakStatement(s) => &s.base,
-        S::ContinueStatement(s) => &s.base,
-        S::LabeledStatement(s) => &s.base,
-        S::ExpressionStatement(s) => &s.base,
-        S::EmptyStatement(s) => &s.base,
-        S::DebuggerStatement(s) => &s.base,
-        S::WithStatement(s) => &s.base,
-        S::VariableDeclaration(s) => &s.base,
-        S::FunctionDeclaration(s) => &s.base,
-        S::ClassDeclaration(s) => &s.base,
-        S::ImportDeclaration(s) => &s.base,
-        S::ExportNamedDeclaration(s) => &s.base,
-        S::ExportDefaultDeclaration(s) => &s.base,
-        S::ExportAllDeclaration(s) => &s.base,
-        S::TSTypeAliasDeclaration(s) => &s.base,
-        S::TSInterfaceDeclaration(s) => &s.base,
-        S::TSEnumDeclaration(s) => &s.base,
-        S::TSModuleDeclaration(s) => &s.base,
-        S::TSDeclareFunction(s) => &s.base,
-        S::TypeAlias(s) => &s.base,
-        S::OpaqueType(s) => &s.base,
-        S::InterfaceDeclaration(s) => &s.base,
-        S::DeclareVariable(s) => &s.base,
-        S::DeclareFunction(s) => &s.base,
-        S::DeclareClass(s) => &s.base,
-        S::DeclareModule(s) => &s.base,
-        S::DeclareModuleExports(s) => &s.base,
-        S::DeclareExportDeclaration(s) => &s.base,
-        S::DeclareExportAllDeclaration(s) => &s.base,
-        S::DeclareInterface(s) => &s.base,
-        S::DeclareTypeAlias(s) => &s.base,
-        S::DeclareOpaqueType(s) => &s.base,
-        S::EnumDeclaration(s) => &s.base,
-        S::Unknown(s) => s.base(),
-    }
 }
 
 /// Build `Symbol.for("<name>")`.
@@ -1387,15 +1332,12 @@ fn ox_codegen_instruction_nullable<'a>(
                 cx.object_methods.insert(lvalue.identifier, (value.clone(), *loc));
                 return Ok(None);
             }
-            InstructionValue::UnsupportedNode {
-                original_node: Some(crate::react_compiler_ast::OriginalNode::Statement(stmt)),
-                ..
-            } => {
+            InstructionValue::UnsupportedNode { original_span: Some((start, end)), .. } => {
                 // Statement-position unsupported node (e.g. an inline TS `enum`
                 // declaration): re-emit it verbatim by re-parsing its original
                 // source span into an oxc statement, mirroring the Babel path's
                 // `return node` for non-expression original nodes.
-                let reparsed = ox_reparse_source_stmt(cx, ox_statement_base(stmt));
+                let reparsed = ox_reparse_source_stmt(cx, *start, *end);
                 return match reparsed {
                     Some(oxc_stmt) => Ok(Some(oxc_stmt)),
                     None => Err(invariant_err(

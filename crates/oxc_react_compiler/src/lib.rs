@@ -1,9 +1,9 @@
 use oxc_allocator::{Allocator, ArenaVec};
 
-pub mod convert_ast;
 pub mod convert_scope;
 pub mod diagnostics;
 pub mod prefilter;
+pub mod scope;
 
 // Vendored React Compiler core crates (from oxc-project/forked-react-compiler),
 // each crate flattened to a module. Kept near byte-for-byte with upstream for easy
@@ -14,8 +14,6 @@ pub mod prefilter;
 // carry their own targeted `#[allow(dead_code)]`.
 #[allow(clippy::all)]
 pub mod react_compiler;
-#[allow(clippy::all)]
-pub mod react_compiler_ast;
 #[allow(clippy::all)]
 pub mod react_compiler_diagnostics;
 #[allow(clippy::all)]
@@ -39,7 +37,6 @@ pub mod react_compiler_validation;
 
 use crate::react_compiler::entrypoint::compile_result::{CompileResult, LoggerEvent};
 use crate::react_compiler::entrypoint::program::compile_program;
-use convert_ast::convert_program;
 use convert_scope::convert_scope_info;
 use diagnostics::compile_result_to_diagnostics;
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
@@ -120,33 +117,6 @@ pub fn transform<'a>(
     TransformResult { changed, diagnostics, events }
 }
 
-/// Index every function in the program by `node_id` (== `span.start`) to its oxc
-/// `FunctionNode`. Lowering consumes the oxc AST, but the function discovery still
-/// walks the Babel-shaped AST; this lets it map a discovered function back to the
-/// oxc node to lower. Uses `oxc_semantic`'s nodes, whose `AstKind` references carry
-/// the arena lifetime `'a` (a `Visit` walk would yield too-short borrows).
-fn build_fn_node_map<'a>(
-    semantic: &oxc_semantic::Semantic<'a>,
-) -> rustc_hash::FxHashMap<u32, crate::react_compiler_lowering::FunctionNode<'a>> {
-    use oxc_ast::AstKind;
-
-    use crate::react_compiler_lowering::FunctionNode;
-
-    let mut map = rustc_hash::FxHashMap::default();
-    for node in semantic.nodes() {
-        match node.kind() {
-            AstKind::Function(func) => {
-                map.insert(func.span.start, FunctionNode::Function(func));
-            }
-            AstKind::ArrowFunctionExpression(arrow) => {
-                map.insert(arrow.span.start, FunctionNode::Arrow(arrow));
-            }
-            _ => {}
-        }
-    }
-    map
-}
-
 /// Shared compile pipeline behind [`transform`] and [`lint`]. Borrows `program`
 /// (so `lint` can stay read-only) and returns the compiled OXC program — `None`
 /// when nothing was compiled — together with diagnostics and logger events.
@@ -187,12 +157,9 @@ fn compile<'a>(
     // The codegen back-end builds oxc nodes directly via this `AstBuilder`, and the
     // compiled program is spliced/returned as an arena-allocated `Program<'a>`.
     let ast_builder = oxc_ast::builder::AstBuilder::new(allocator);
-    let file = convert_program(program, source_text);
     let scope_info = convert_scope_info(&semantic, program);
-    // Map each function's node_id (== span.start) to its oxc node, so the
-    // (still Babel-shaped) discovery can hand the oxc `FunctionNode` to lowering.
-    let fn_map = build_fn_node_map(&semantic);
-    let result = compile_program(&ast_builder, program, file, scope_info, options, &fn_map);
+    // Function discovery and lowering both walk the oxc `Program` directly.
+    let result = compile_program(&ast_builder, program, scope_info, options);
 
     let diagnostics = compile_result_to_diagnostics(&result);
     let (program_ast, events) = match result {

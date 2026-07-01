@@ -36,7 +36,7 @@ use rustc_hash::FxHashMap;
 use oxc_ast::ast as oxc;
 use oxc_ast_visit::Visit;
 
-use crate::react_compiler_ast::scope::ScopeInfo;
+use crate::scope::ScopeInfo;
 use crate::react_compiler_hir::SourceLocation;
 
 use crate::react_compiler_lowering::FunctionNode;

@@ -1,10 +1,10 @@
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_ast::scope::BindingId;
-use crate::react_compiler_ast::scope::BindingKind as AstBindingKind;
-use crate::react_compiler_ast::scope::ScopeId;
-use crate::react_compiler_ast::scope::ScopeInfo;
-use crate::react_compiler_ast::scope::ScopeKind;
+use crate::scope::BindingId;
+use crate::scope::BindingKind as AstBindingKind;
+use crate::scope::ScopeId;
+use crate::scope::ScopeInfo;
+use crate::scope::ScopeKind;
 use crate::react_compiler_diagnostics::CompilerDiagnostic;
 use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
 use crate::react_compiler_diagnostics::CompilerError;
@@ -138,7 +138,7 @@ fn lower_expression_to_temporary(
 // =============================================================================
 
 fn is_binding_in_block_direct_statements(
-    binding: &crate::react_compiler_ast::scope::BindingData,
+    binding: &crate::scope::BindingData,
     stmts: &[oxc::Statement],
 ) -> bool {
     let decl_start = match binding.declaration_start {
@@ -178,7 +178,7 @@ fn statement_end(stmt: &oxc::Statement) -> Option<u32> {
 /// Collect binding names from a pattern that are declared in the given scope.
 fn collect_binding_names_from_pattern(
     pattern: &oxc::BindingPattern,
-    scope_id: crate::react_compiler_ast::scope::ScopeId,
+    scope_id: crate::scope::ScopeId,
     scope_info: &ScopeInfo,
     out: &mut FxHashSet<BindingId>,
 ) {
@@ -224,7 +224,7 @@ fn lower_block_statement(
     builder: &mut HirBuilder,
     statements: &[oxc::Statement],
     block_node_id: u32,
-    parent_scope: Option<crate::react_compiler_ast::scope::ScopeId>,
+    parent_scope: Option<crate::scope::ScopeId>,
 ) -> Result<(), CompilerError> {
     let _ = lower_block_statement_inner(builder, statements, block_node_id, None, parent_scope);
     Ok(())
@@ -234,7 +234,7 @@ fn lower_block_statement_with_scope(
     builder: &mut HirBuilder,
     statements: &[oxc::Statement],
     block_node_id: u32,
-    scope_override: crate::react_compiler_ast::scope::ScopeId,
+    scope_override: crate::scope::ScopeId,
 ) -> Result<(), CompilerError> {
     let _ = lower_block_statement_inner(
         builder,
@@ -250,10 +250,10 @@ fn lower_block_statement_inner(
     builder: &mut HirBuilder,
     statements: &[oxc::Statement],
     block_node_id: u32,
-    scope_override: Option<crate::react_compiler_ast::scope::ScopeId>,
-    parent_scope: Option<crate::react_compiler_ast::scope::ScopeId>,
+    scope_override: Option<crate::scope::ScopeId>,
+    parent_scope: Option<crate::scope::ScopeId>,
 ) -> Result<(), CompilerDiagnostic> {
-    use crate::react_compiler_ast::scope::BindingKind as AstBindingKind;
+    use crate::scope::BindingKind as AstBindingKind;
 
     // Look up the block's scope to identify hoistable bindings.
     // Use the scope override if provided (for function body blocks that share the function's scope).
@@ -672,7 +672,7 @@ pub fn lower(
 
     // For top-level functions, context is empty (no captured refs)
     let context_map: FxIndexMap<
-        crate::react_compiler_ast::scope::BindingId,
+        crate::scope::BindingId,
         Option<SourceLocation>,
     > = FxIndexMap::default();
 
@@ -713,20 +713,20 @@ fn lower_inner(
     loc: Option<SourceLocation>,
     scope_info: &ScopeInfo,
     env: &mut Environment,
-    parent_bindings: Option<FxIndexMap<crate::react_compiler_ast::scope::BindingId, IdentifierId>>,
-    parent_used_names: Option<FxIndexMap<String, crate::react_compiler_ast::scope::BindingId>>,
-    context_map: FxIndexMap<crate::react_compiler_ast::scope::BindingId, Option<SourceLocation>>,
-    function_scope: crate::react_compiler_ast::scope::ScopeId,
-    component_scope: crate::react_compiler_ast::scope::ScopeId,
-    context_identifiers: &FxHashSet<crate::react_compiler_ast::scope::BindingId>,
+    parent_bindings: Option<FxIndexMap<crate::scope::BindingId, IdentifierId>>,
+    parent_used_names: Option<FxIndexMap<String, crate::scope::BindingId>>,
+    context_map: FxIndexMap<crate::scope::BindingId, Option<SourceLocation>>,
+    function_scope: crate::scope::ScopeId,
+    component_scope: crate::scope::ScopeId,
+    context_identifiers: &FxHashSet<crate::scope::BindingId>,
     is_top_level: bool,
     identifier_locs: &IdentifierLocIndex,
     line_offsets: &LineOffsets,
 ) -> Result<
     (
         HirFunction,
-        FxIndexMap<String, crate::react_compiler_ast::scope::BindingId>,
-        FxIndexMap<crate::react_compiler_ast::scope::BindingId, IdentifierId>,
+        FxIndexMap<String, crate::scope::BindingId>,
+        FxIndexMap<crate::scope::BindingId, IdentifierId>,
     ),
     CompilerError,
 > {
@@ -1243,8 +1243,8 @@ fn ts_type_node_type(ty: &oxc::TSType) -> &'static str {
 
 /// Coarse classification of an oxc TS type, mirroring `lower_type_annotation`
 /// (array / primitive / everything else).
-fn classify_ts_type(ty: &oxc::TSType) -> crate::react_compiler_ast::common::RawTypeCategory {
-    use crate::react_compiler_ast::common::RawTypeCategory;
+fn classify_ts_type(ty: &oxc::TSType) -> crate::react_compiler_hir::RawTypeCategory {
+    use crate::react_compiler_hir::RawTypeCategory;
     match ty {
         oxc::TSType::TSArrayType(_) => RawTypeCategory::Array,
         oxc::TSType::TSTypeReference(r) => match &r.type_name {
@@ -1267,7 +1267,7 @@ fn classify_ts_type(ty: &oxc::TSType) -> crate::react_compiler_ast::common::RawT
 /// Lower the HIR `Type` for a TS type annotation from its coarse classification,
 /// mirroring `lower_type_annotation`.
 fn lower_ts_type(builder: &mut HirBuilder, ty: &oxc::TSType) -> Type {
-    use crate::react_compiler_ast::common::RawTypeCategory;
+    use crate::react_compiler_hir::RawTypeCategory;
     match classify_ts_type(ty) {
         RawTypeCategory::Array => Type::Object { shape_id: Some("BuiltInArray".to_string()) },
         RawTypeCategory::Primitive => Type::Primitive,
@@ -1286,8 +1286,8 @@ fn lower_ts_type(builder: &mut HirBuilder, ty: &oxc::TSType) -> Type {
 /// source (`typeof x` -> `typeof x_0`). Over-collected idents (type labels,
 /// object-type property keys) are harmless — they are dropped by the
 /// `reference_node_ids` filter in codegen.
-fn collect_type_idents(ty: &oxc::TSType) -> Vec<crate::react_compiler_ast::common::RawIdent> {
-    use crate::react_compiler_ast::common::RawIdent;
+fn collect_type_idents(ty: &oxc::TSType) -> Vec<crate::react_compiler_hir::RawIdent> {
+    use crate::react_compiler_hir::RawIdent;
     struct Collector {
         out: Vec<RawIdent>,
     }
@@ -1331,7 +1331,7 @@ fn lower_type_cast_expression(
     let value = lower_expression_to_temporary(builder, expression)?;
     let type_ = lower_ts_type(builder, type_annotation);
     let type_annotation_name = Some(ts_type_node_type(type_annotation).to_string());
-    let raw = crate::react_compiler_ast::common::RawNode::type_node(
+    let raw = crate::react_compiler_hir::RawNode::type_node(
         type_annotation_name.clone(),
         Some(type_annotation.span().start),
         Some(type_annotation.span().end),
@@ -3409,7 +3409,7 @@ fn lower_function(
         } else {
             let parent = builder.function_scope();
             let scope_info = builder.scope_info();
-            let mapped: rustc_hash::FxHashSet<crate::react_compiler_ast::scope::ScopeId> =
+            let mapped: rustc_hash::FxHashSet<crate::scope::ScopeId> =
                 scope_info.node_to_scope.values().copied().collect();
             let param_names: Vec<String> = params
                 .items
@@ -3428,7 +3428,7 @@ fn lower_function(
             while changed {
                 changed = false;
                 for (i, scope) in scope_info.scopes.iter().enumerate() {
-                    let sid = crate::react_compiler_ast::scope::ScopeId(i as u32);
+                    let sid = crate::scope::ScopeId(i as u32);
                     if let Some(p) = scope.parent {
                         if descendants.contains(&p) && !descendants.contains(&sid) {
                             descendants.insert(sid);
@@ -3439,7 +3439,7 @@ fn lower_function(
             }
             let mut found = scope_info.program_scope;
             for (i, scope) in scope_info.scopes.iter().enumerate() {
-                let sid = crate::react_compiler_ast::scope::ScopeId(i as u32);
+                let sid = crate::scope::ScopeId(i as u32);
                 if let Some(p) = scope.parent {
                     if descendants.contains(&p)
                         && matches!(scope.kind, ScopeKind::Function)
@@ -3490,7 +3490,7 @@ fn lower_function(
         ref_override.as_ref(),
     );
     let merged_context: FxIndexMap<
-        crate::react_compiler_ast::scope::BindingId,
+        crate::scope::BindingId,
         Option<SourceLocation>,
     > = {
         let parent_context = builder.context().clone();
@@ -3567,7 +3567,7 @@ fn lower_function_declaration(
         None,
     );
     let merged_context: FxIndexMap<
-        crate::react_compiler_ast::scope::BindingId,
+        crate::scope::BindingId,
         Option<SourceLocation>,
     > = {
         let parent_context = builder.context().clone();
@@ -3769,7 +3769,7 @@ fn lower_function_for_object_method(
         None,
     );
     let merged_context: FxIndexMap<
-        crate::react_compiler_ast::scope::BindingId,
+        crate::scope::BindingId,
         Option<SourceLocation>,
     > = {
         let parent_context = builder.context().clone();
@@ -3810,13 +3810,13 @@ fn lower_function_for_object_method(
 
 fn gather_captured_context(
     scope_info: &ScopeInfo,
-    function_scope: crate::react_compiler_ast::scope::ScopeId,
-    component_scope: crate::react_compiler_ast::scope::ScopeId,
+    function_scope: crate::scope::ScopeId,
+    component_scope: crate::scope::ScopeId,
     func_start: u32,
     func_end: u32,
     identifier_locs: &IdentifierLocIndex,
     ref_node_ids_override: Option<&FxIndexSet<u32>>,
-) -> FxIndexMap<crate::react_compiler_ast::scope::BindingId, Option<SourceLocation>> {
+) -> FxIndexMap<crate::scope::BindingId, Option<SourceLocation>> {
     let parent_scope = scope_info.scopes[function_scope.0 as usize].parent;
     let pure_scopes = match parent_scope {
         Some(parent) => capture_scopes(scope_info, parent, component_scope),
@@ -3828,7 +3828,7 @@ fn gather_captured_context(
     // ref_node_id_to_binding iteration order, matching the behavior the TS compiler
     // gets from Babel's position-ordered traversal.
     let mut captured: rustc_hash::FxHashMap<
-        crate::react_compiler_ast::scope::BindingId,
+        crate::scope::BindingId,
         (u32, Option<SourceLocation>), // (min_position, loc)
     > = rustc_hash::FxHashMap::default();
 
@@ -3912,9 +3912,9 @@ fn gather_captured_context(
 
 fn capture_scopes(
     scope_info: &ScopeInfo,
-    from: crate::react_compiler_ast::scope::ScopeId,
-    to: crate::react_compiler_ast::scope::ScopeId,
-) -> FxIndexSet<crate::react_compiler_ast::scope::ScopeId> {
+    from: crate::scope::ScopeId,
+    to: crate::scope::ScopeId,
+) -> FxIndexSet<crate::scope::ScopeId> {
     let mut result = FxIndexSet::default();
     let mut current = Some(from);
     while let Some(scope_id) = current {
@@ -6406,7 +6406,7 @@ fn lower_statement(
     builder: &mut HirBuilder,
     stmt: &oxc::Statement,
     _label: Option<&str>,
-    parent_scope: Option<crate::react_compiler_ast::scope::ScopeId>,
+    parent_scope: Option<crate::scope::ScopeId>,
 ) -> Result<(), CompilerDiagnostic> {
     match stmt {
         oxc::Statement::EmptyStatement(_) => {}
@@ -7279,41 +7279,15 @@ fn lower_statement(
         }
         oxc::Statement::TSEnumDeclaration(e) => {
             // Inline TS `enum` has runtime semantics, so preserve it: emit an
-            // `UnsupportedNode` carrying a Babel enum node whose span lets the
-            // back-end re-parse it verbatim from source (matching the original
+            // `UnsupportedNode` carrying the enum's source byte span so the
+            // back-end can re-parse it verbatim from source (matching the original
             // Babel front-end, which wrapped the enum the same way).
             let loc = builder.source_location(e.span);
-            // The back-end re-parses the enum from `start`/`end`, so the Babel
-            // `loc` (a distinct `SourceLocation` type) is unused here.
-            let base = crate::react_compiler_ast::common::BaseNode {
-                node_type: Some("TSEnumDeclaration".to_string()),
-                start: Some(e.span.start),
-                end: Some(e.span.end),
-                loc: None,
-                node_id: Some(e.span.start),
-                ..Default::default()
-            };
-            let babel_enum = crate::react_compiler_ast::declarations::TSEnumDeclaration {
-                base,
-                id: crate::react_compiler_ast::expressions::Identifier {
-                    base: crate::react_compiler_ast::common::BaseNode::default(),
-                    name: e.id.name.to_string(),
-                    type_annotation: None,
-                    optional: None,
-                    decorators: None,
-                },
-                members: Vec::new(),
-                declare: if e.declare { Some(true) } else { None },
-                is_const: if e.r#const { Some(true) } else { None },
-            };
-            let original_node = Some(crate::react_compiler_ast::OriginalNode::Statement(Box::new(
-                crate::react_compiler_ast::statements::Statement::TSEnumDeclaration(babel_enum),
-            )));
             lower_value_to_temporary(
                 builder,
                 InstructionValue::UnsupportedNode {
                     node_type: Some("TSEnumDeclaration".to_string()),
-                    original_node,
+                    original_span: Some((e.span.start, e.span.end)),
                     loc,
                 },
             )?;

@@ -5,6 +5,7 @@ pub mod environment_config;
 pub mod globals;
 pub mod object_shape;
 pub mod print;
+pub mod raw;
 pub mod reactive;
 pub mod type_config;
 pub mod visitors;
@@ -16,6 +17,7 @@ pub use crate::react_compiler_diagnostics::Position;
 pub use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
+pub use raw::{RawIdent, RawNode, RawTypeCategory};
 pub use reactive::*;
 
 // =============================================================================
@@ -633,7 +635,7 @@ pub enum InstructionValue {
         /// The original AST type annotation subtree, preserved for codegen, which
         /// re-emits it by re-parsing its source span (and applying any identifier
         /// renames recorded on its metadata).
-        type_annotation: Option<crate::react_compiler_ast::common::RawNode>,
+        type_annotation: Option<crate::react_compiler_hir::RawNode>,
         loc: Option<SourceLocation>,
     },
     JsxExpression {
@@ -780,8 +782,10 @@ pub enum InstructionValue {
     },
     UnsupportedNode {
         node_type: Option<String>,
-        /// The original AST node, preserved verbatim so codegen can re-emit it.
-        original_node: Option<crate::react_compiler_ast::OriginalNode>,
+        /// Byte span `(start, end)` of the original source statement, preserved so
+        /// codegen can re-parse and re-emit it verbatim (e.g. an inline TS `enum`,
+        /// which has runtime semantics but no HIR representation).
+        original_span: Option<(u32, u32)>,
         loc: Option<SourceLocation>,
     },
 }

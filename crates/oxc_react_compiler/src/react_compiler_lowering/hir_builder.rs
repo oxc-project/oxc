@@ -1,7 +1,7 @@
-use crate::react_compiler_ast::scope::BindingId;
-use crate::react_compiler_ast::scope::ImportBindingKind;
-use crate::react_compiler_ast::scope::ScopeId;
-use crate::react_compiler_ast::scope::ScopeInfo;
+use crate::scope::BindingId;
+use crate::scope::ImportBindingKind;
+use crate::scope::ScopeId;
+use crate::scope::ScopeInfo;
 use crate::react_compiler_diagnostics::CompilerDiagnostic;
 use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
 use crate::react_compiler_diagnostics::CompilerError;
