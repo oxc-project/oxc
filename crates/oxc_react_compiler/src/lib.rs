@@ -58,6 +58,12 @@ pub struct TransformResult<'a> {
     /// success/skip/error with memoization stats), for tooling and profiling.
     /// Unlike `diagnostics`, these are not meant for user-facing reporting.
     pub events: Vec<LoggerEvent>,
+    /// `true` when the compile failed fatally (`CompileResult::Error`), which the
+    /// compiler only returns when `panicThreshold` escalates an error to fatal.
+    /// With the default `panicThreshold: 'none'` the compiler instead skips the
+    /// offending function and succeeds, so this stays `false`. Callers can keep
+    /// emitting code (compiled, or the untouched original) when this is `false`.
+    pub fatal: bool,
 }
 
 pub struct LintResult {
@@ -97,6 +103,8 @@ pub fn transform<'a>(
     let result = react_compiler::entrypoint::program::compile_program(file, scope_info, options);
 
     let diagnostics = compile_result_to_diagnostics(&result);
+    let fatal =
+        matches!(result, react_compiler::entrypoint::compile_result::CompileResult::Error { .. });
     let (program_ast, events) = match result {
         react_compiler::entrypoint::compile_result::CompileResult::Success {
             ast, events, ..
@@ -114,7 +122,7 @@ pub fn transform<'a>(
         compiled
     });
 
-    TransformResult { program: compiled_program, diagnostics, events }
+    TransformResult { program: compiled_program, diagnostics, events, fatal }
 }
 
 /// Carry over the comments attached to top-level statements of the compiled
