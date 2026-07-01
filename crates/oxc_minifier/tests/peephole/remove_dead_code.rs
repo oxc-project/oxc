@@ -178,7 +178,9 @@ fn remove_unreachable() {
     test("while(true) { throw a; unreachable;}", "for(;;) throw a");
     test("while(true) { return a; unreachable;}", "for(;;) return a");
 
-    test("(function () { return; var a })()", "(function () { return; var a })()");
+    // A kept function declaration (not a dead IIFE) so the unreachable `var a`
+    // after `return` is preserved under `unused: Keep`.
+    test("function f() { return; var a }", "function f() { return; var a }");
     test_unused("(function () { return; var a })()", "");
 }
 

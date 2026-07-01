@@ -31,11 +31,11 @@ use crate::{
 use super::define_generator;
 
 /// Generator for memory layout assertions.
-pub struct AssertLayouts;
+pub struct AssertLayoutsGenerator;
 
-define_generator!(AssertLayouts);
+define_generator!(AssertLayoutsGenerator);
 
-impl Generator for AssertLayouts {
+impl Generator for AssertLayoutsGenerator {
     /// Calculate layouts of all types.
     fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
         LayoutCalculator::calculate(schema);

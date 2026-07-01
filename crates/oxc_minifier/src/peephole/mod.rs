@@ -606,6 +606,13 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Tree-shaking mode: fewer passes than full minify below. Only the ones
+        // that remove code, plus the constant folds those removals need. The
+        // folds stay on because the removal passes don't evaluate compound
+        // conditions themselves: `if ('production' === 'production')` must fold
+        // to `true` before the dead branch can be dropped. Passes that only
+        // shrink code (`substitute_*`, `minimize_*`) are left out. See the `dce`
+        // docs in `state.rs`.
         if ctx.state.dce {
             match expr {
                 Expression::TemplateLiteral(t) => {

@@ -460,6 +460,29 @@ impl AppArgs {
     pub fn run_runtime(&self) {
         runtime::run(self.filter.as_deref(), self.detail);
     }
+
+    /// Run the TypeScript baseline conformance suites against the `.symbols`, `.errors.txt`,
+    /// and `.types` baselines. `.types` is a scaffold (reports ~0%) until oxc has a type checker.
+    pub fn run_types(&self, data: &TestData) {
+        self.run_tool(
+            "symbols_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            typescript::type_symbol_baseline::run_symbols_typescript,
+        );
+        self.run_tool(
+            "errors_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            typescript::error_baseline::run_errors_typescript,
+        );
+        self.run_tool(
+            "types_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            typescript::type_symbol_baseline::run_types_typescript,
+        );
+    }
 }
 
 #[test]

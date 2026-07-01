@@ -1,0 +1,5 @@
+.demo {
+  color: $primary;
+  padding: $padding;
+  border: 1px solid $border-color;
+}

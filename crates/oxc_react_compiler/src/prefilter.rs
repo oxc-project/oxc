@@ -4,9 +4,11 @@
 // LICENSE file in the root directory of this source tree.
 
 use oxc_ast::ast::{
-    AssignmentTarget, CallExpression, Expression, Function, Program, VariableDeclarator,
+    ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, BindingPattern,
+    CallExpression, Class, Expression, Function, Program, VariableDeclaration, VariableDeclarator,
 };
 use oxc_ast_visit::{Visit, walk};
+use oxc_semantic::ScopeFlags;
 
 /// Whether the program contains a component (Uppercase name) or hook (`use[A-Z0-9]`).
 pub fn has_react_like_functions(program: &Program) -> bool {
@@ -21,7 +23,7 @@ pub fn has_resource_management_declarations(program: &Program) -> bool {
     visitor.found
 }
 
-use react_compiler_hir::environment::is_react_like_name;
+use crate::react_compiler_hir::environment::is_react_like_name;
 
 /// `memo`/`forwardRef` (optionally `React.`-qualified): their callback is a
 /// component even when anonymous, so such files must not be skipped.
@@ -44,7 +46,7 @@ struct ResourceManagementVisitor {
 }
 
 impl<'a> Visit<'a> for ResourceManagementVisitor {
-    fn visit_variable_declaration(&mut self, decl: &oxc_ast::ast::VariableDeclaration<'a>) {
+    fn visit_variable_declaration(&mut self, decl: &VariableDeclaration<'a>) {
         if self.found {
             return;
         }
@@ -63,7 +65,7 @@ impl<'a> Visit<'a> for ReactLikeVisitor<'a> {
         }
 
         let name = match &decl.id {
-            oxc_ast::ast::BindingPattern::BindingIdentifier(ident) => Some(ident.name.as_str()),
+            BindingPattern::BindingIdentifier(ident) => Some(ident.name.as_str()),
             _ => None,
         };
 
@@ -77,7 +79,7 @@ impl<'a> Visit<'a> for ReactLikeVisitor<'a> {
         self.current_name = prev_name;
     }
 
-    fn visit_assignment_expression(&mut self, expr: &oxc_ast::ast::AssignmentExpression<'a>) {
+    fn visit_assignment_expression(&mut self, expr: &AssignmentExpression<'a>) {
         if self.found {
             return;
         }
@@ -95,7 +97,7 @@ impl<'a> Visit<'a> for ReactLikeVisitor<'a> {
         self.current_name = prev_name;
     }
 
-    fn visit_function(&mut self, func: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {
+    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
         if self.found {
             return;
         }
@@ -119,10 +121,7 @@ impl<'a> Visit<'a> for ReactLikeVisitor<'a> {
         // Don't traverse into the function body
     }
 
-    fn visit_arrow_function_expression(
-        &mut self,
-        _expr: &oxc_ast::ast::ArrowFunctionExpression<'a>,
-    ) {
+    fn visit_arrow_function_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {
         if self.found {
             return;
         }
@@ -159,7 +158,7 @@ impl<'a> Visit<'a> for ReactLikeVisitor<'a> {
         walk::walk_call_expression(self, call);
     }
 
-    fn visit_class(&mut self, _class: &oxc_ast::ast::Class<'a>) {
+    fn visit_class(&mut self, _class: &Class<'a>) {
         // Skip class bodies entirely
     }
 }

@@ -1536,7 +1536,17 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
             let span = to_span(&interpolation.span);
             write!(f, text(f.context().source_text().text_for(&span)));
         }
+        // W3C `<general-enclosed>` forward-compat fallback: any prelude oxc-css-parser
+        // can't structure (e.g. `(max-width: $bp)` without `allow_postcss_simple_vars`)
+        // is preserved as a verbatim `TokenSeq` inside its own parens.
+        MediaInParensKind::GeneralEnclosed(seq) => write_general_enclosed(&seq.span, f),
     }
+}
+
+/// `<general-enclosed>` prints its `TokenSeq` verbatim inside its own parens.
+fn write_general_enclosed(span: &oxc_css_parser::Span, f: &mut CssFormatter<'_, '_>) {
+    let span = to_span(span);
+    write!(f, [text("("), text(f.context().source_text().text_for(&span)), text(")")]);
 }
 
 fn write_media_feature_name<'a>(name: &MediaFeatureName<'a>, f: &mut CssFormatter<'_, 'a>) {
@@ -1544,7 +1554,9 @@ fn write_media_feature_name<'a>(name: &MediaFeatureName<'a>, f: &mut CssFormatte
     let span = to_span(name.span());
     match name {
         MediaFeatureName::Ident(_) => write_maybe_lowercase(source.text_for(&span), f),
-        MediaFeatureName::SassVariable(_) => write!(f, text(source.text_for(&span))),
+        MediaFeatureName::SassVariable(_) | MediaFeatureName::PostcssSimpleVar(_) => {
+            write!(f, text(source.text_for(&span)));
+        }
     }
 }
 
@@ -1676,6 +1688,7 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
         SupportsInParensKind::Function(func) => {
             value::write_function(func, ValueContext::default(), f);
         }
+        SupportsInParensKind::GeneralEnclosed(seq) => write_general_enclosed(&seq.span, f),
     }
 }
 
