@@ -323,7 +323,12 @@ impl NoUselessReturn {
                     | EdgeType::Backedge
                     | EdgeType::Unreachable => Some(ContinuationBlock {
                         id: edge.target(),
-                        finalizer_depth: block.finalizer_depth,
+                        finalizer_depth: Self::next_finalizer_depth(
+                            block.finalizer_depth,
+                            edge.target(),
+                            cfg,
+                            nodes,
+                        ),
                     }),
                     EdgeType::Finalize => Some(ContinuationBlock {
                         id: edge.target(),
@@ -392,6 +397,48 @@ impl NoUselessReturn {
             Statement::BlockStatement(block) => block.body.iter().all(Self::is_noop_statement),
             _ => false,
         }
+    }
+
+    fn next_finalizer_depth(
+        current_depth: usize,
+        target: BlockNodeId,
+        cfg: &ControlFlowGraph,
+        nodes: &AstNodes,
+    ) -> usize {
+        if current_depth == 0 {
+            return 0;
+        }
+
+        Self::block_finalizer_depth(cfg.basic_block(target), nodes)
+            .map_or(current_depth, |depth| current_depth.min(depth))
+    }
+
+    fn block_finalizer_depth(block: &BasicBlock, nodes: &AstNodes) -> Option<usize> {
+        block
+            .instructions()
+            .iter()
+            .filter_map(|instruction| instruction.node_id)
+            .map(|node_id| Self::node_finalizer_depth(node_id, nodes))
+            .min()
+    }
+
+    fn node_finalizer_depth(node_id: NodeId, nodes: &AstNodes) -> usize {
+        std::iter::once(node_id)
+            .chain(nodes.ancestor_ids(node_id))
+            .filter(|node_id| Self::is_finalizer_block(*node_id, nodes))
+            .count()
+    }
+
+    fn is_finalizer_block(node_id: NodeId, nodes: &AstNodes) -> bool {
+        let AstKind::BlockStatement(block) = nodes.kind(node_id) else {
+            return false;
+        };
+
+        let AstKind::TryStatement(try_stmt) = nodes.parent_kind(node_id) else {
+            return false;
+        };
+
+        try_stmt.finalizer.as_ref().is_some_and(|finalizer| finalizer.span == block.span)
     }
 }
 
@@ -506,6 +553,22 @@ fn test() {
                         }
                     } finally {
                         cleanup();
+                    }
+                    setStep(1);
+                    break;
+            }
+        }
+        ",
+        "
+        function foo() {
+            switch (bar) {
+                case 1:
+                    try {
+                        if (a) {
+                            return;
+                        }
+                    } catch (e) {
+                    } finally {
                     }
                     setStep(1);
                     break;
