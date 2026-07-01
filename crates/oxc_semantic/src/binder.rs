@@ -732,10 +732,7 @@ fn get_module_instance_state_for_alias_target<'a>(
 impl<'a> Binder<'a> for TSTypeParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let scope_id = if matches!(builder.ancestry().parent_kind(), AstKind::TSInferType(_)) {
-            builder
-                .scoping
-                .scope_ancestors(builder.current_scope_id)
-                .find(|scope_id| builder.scoping.scope_flags(*scope_id).is_ts_conditional())
+            builder.active_ts_conditional_scope_id()
         } else {
             None
         };

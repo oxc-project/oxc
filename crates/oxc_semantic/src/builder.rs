@@ -102,6 +102,9 @@ pub struct SemanticBuilder<'a> {
     /// Tracks the start index in the flat unresolved references list.
     unresolved_references_checkpoint: usize,
 
+    /// Conditional scopes that should receive `infer T` bindings while walking an `extends` type.
+    active_ts_conditional_scope_ids: SmallVec<[ScopeId; 2]>,
+
     unused_labels: UnusedLabels<'a>,
     #[cfg(feature = "jsdoc")]
     jsdoc: JSDocBuilder<'a>,
@@ -161,6 +164,7 @@ impl<'a> SemanticBuilder<'a> {
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unresolved_references_checkpoint: 0,
+            active_ts_conditional_scope_ids: SmallVec::new(),
             unused_labels: UnusedLabels::default(),
             #[cfg(feature = "jsdoc")]
             jsdoc: JSDocBuilder::default(),
@@ -734,6 +738,10 @@ impl<'a> SemanticBuilder<'a> {
             }
         }
         self.unresolved_references.truncate(write_idx);
+    }
+
+    pub(crate) fn active_ts_conditional_scope_id(&self) -> Option<ScopeId> {
+        self.active_ts_conditional_scope_ids.last().copied()
     }
 
     pub(crate) fn add_redeclare_variable(
@@ -2574,6 +2582,56 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.visit_ts_type(&decl.type_annotation);
         self.leave_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_conditional_type(&mut self, ty: &TSConditionalType<'a>) {
+        let kind = AstKind::TSConditionalType(self.alloc(ty));
+        self.enter_node(kind);
+        self.visit_span(&ty.span);
+        self.visit_ts_type(&ty.check_type);
+
+        let parent_scope_id = self.current_scope_id;
+        self.enter_scope(ScopeFlags::TsConditional, &ty.scope_id);
+        let conditional_scope_id = self.current_scope_id;
+
+        // Match TypeScript's resolver: `infer` declarations are collected on the conditional type
+        // node, but those locals are visible only from the true branch.
+        //
+        // ```ts
+        // type C<T> = T extends (a: infer B) => B ? B : never;
+        // //                         ^^^^^^^    ^   ^
+        // //                         declare    |   |
+        // //                                    |   visible: true_type sees `infer B`
+        // //                                    not visible: still inside extends_type
+        // ```
+        //
+        // Operationally this means the conditional scope has two roles:
+        //
+        // ```text
+        // parent scope
+        //   |- extends_type        references start here
+        //   |    \- infer B  --->  declarations are deposited in conditional scope
+        //   |
+        //   \- conditional scope   true_type references start here
+        //        \- B
+        // ```
+        //
+        // So we create the conditional scope now, keep it on
+        // `active_ts_conditional_scope_ids` as the binding target for `infer`, but restore
+        // `current_scope_id` to the parent while walking `extends_type`. After that, walking
+        // `true_type` from the conditional scope makes normal reference resolution find `infer B`.
+        // `false_type` is visited after leaving the conditional scope, so it cannot see `B`.
+        self.current_scope_id = parent_scope_id;
+        self.active_ts_conditional_scope_ids.push(conditional_scope_id);
+        self.visit_ts_type(&ty.extends_type);
+        let popped = self.active_ts_conditional_scope_ids.pop();
+        debug_assert_eq!(popped, Some(conditional_scope_id));
+
+        self.current_scope_id = conditional_scope_id;
+        self.visit_ts_type(&ty.true_type);
+        self.leave_scope();
+        self.visit_ts_type(&ty.false_type);
         self.leave_node(kind);
     }
 
