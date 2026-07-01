@@ -227,7 +227,7 @@ pico-args = "0.5.0" # Minimal argument parser
 prettyplease = "0.2.37" # Rust code formatting
 project-root = "0.2.2" # Project root detection
 quickcheck = "1.1.0" # Property-based testing
-oxc-css-parser = "0.0.1" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `template_placeholder` typed placeholders for css-in-js + valid-syntax coverage fixes (see crates/oxc_formatter_css/AGENTS.md))
+oxc-css-parser = "0.0.3" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `template_placeholder` typed placeholders for css-in-js + valid-syntax coverage fixes (see crates/oxc_formatter_css/AGENTS.md))
 rand = "0.10.0" # Random number generation
 rayon = "1.11.0" # Data parallelism
 ropey = "1.6.1" # Rope text structure
@@ -260,6 +260,14 @@ website_common = { path = "tasks/website_common" }
 
 [workspace.metadata.cargo-shear]
 ignored = ["oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi"]
+
+# `oxc_allocator` is both dogfooded here (workspace path) and published to crates.io.
+# External workspace-dependencies (e.g. `oxc-css-parser`) pull it from the registry,
+# and cargo treats `oxc_allocator (path)` and `oxc_allocator (registry)` as separate crate instances
+# even at the same version.
+# Force the registry request to resolve to the workspace copy so there's a single instance.
+[patch.crates-io]
+oxc_allocator = { path = "crates/oxc_allocator" }
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

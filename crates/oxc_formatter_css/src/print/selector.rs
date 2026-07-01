@@ -39,7 +39,7 @@ pub(super) fn is_icss_selector(list: &SelectorList<'_>) -> bool {
         return false;
     };
     let InterpolableIdent::Literal(ident) = &pseudo.name else { return false };
-    matches!(ident.name.as_ref(), "import" | "export")
+    matches!(ident.name, "import" | "export")
 }
 
 /// How a selector list separates its selectors.
@@ -355,7 +355,9 @@ fn write_attribute_selector<'a>(attribute: &AttributeSelector<'a>, f: &mut CssFo
                 write!(f, "~");
                 value::write_str(&escaped.str, f);
             }
-            AttributeSelectorValue::Percentage(_) => {
+            AttributeSelectorValue::Percentage(_)
+            | AttributeSelectorValue::Number(_)
+            | AttributeSelectorValue::Dimension(_) => {
                 let span = to_span(value.span());
                 write!(f, text(source.text_for(&span)));
             }

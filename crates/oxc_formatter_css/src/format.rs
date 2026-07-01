@@ -13,7 +13,7 @@ use crate::{
     TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX,
     comments::CssComment,
     context::CssFormatContext,
-    options::CssFormatOptions,
+    options::{CssFormatOptions, CssVariant},
     print::{self, CssFormatter},
 };
 
@@ -154,8 +154,7 @@ fn parse_stylesheet<'a>(
         None => source,
     };
 
-    let mut comments = vec![];
-    let mut parser = ParserBuilder::new(parse_source)
+    let mut parser = ParserBuilder::new(allocator, parse_source)
         .syntax(options.variant.to_css_syntax())
         .options(ParserOptions {
             // Derive the affix from the host sentinel (single source of truth),
@@ -168,9 +167,13 @@ fn parse_stylesheet<'a>(
                     .expect("placeholder prefix starts with a backtick"),
             }),
             try_parsing_value_in_custom_property: true,
+            // `.css` files in real projects routinely flow through `postcss-simple-vars`
+            // (Mantine, Vite/Next templates, etc), so accept its `$var` syntax in `CssVariant::Css`.
+            // Scss/Less already handle `$variable` natively.
+            allow_postcss_simple_vars: matches!(options.variant, CssVariant::Css),
             ..ParserOptions::default()
         })
-        .comments(&mut comments)
+        .comments()
         .build();
 
     let stylesheet = parser.parse::<Stylesheet>().map_err(|error| to_diagnostic(&error))?;
@@ -183,10 +186,9 @@ fn parse_stylesheet<'a>(
     }) {
         return Err(to_diagnostic(error));
     }
-    drop(parser);
 
     let comments: &'a [CssComment] = ArenaVec::from_iter_in(
-        comments.iter().map(|c| CssComment {
+        parser.comments().iter().map(|c| CssComment {
             span: to_span(&c.span),
             inline: matches!(c.kind, oxc_css_parser::token::CommentKind::Line),
         }),

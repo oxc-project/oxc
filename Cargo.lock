@@ -1132,12 +1132,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "heck"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
-
-[[package]]
 name = "hmac-sha1-compact"
 version = "1.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1743,23 +1737,11 @@ dependencies = [
 
 [[package]]
 name = "oxc-css-parser"
-version = "0.0.1"
+version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c26a7ada942216acafa6d6a10b269b23f5d9b58902ee99898c6d287b196d660c"
+checksum = "0519caca3ae35ba72f2c14054ea24697dfcb55c3b4d5834c9a879e6e55280e65"
 dependencies = [
- "oxc-css-parser-macro",
- "smallvec",
-]
-
-[[package]]
-name = "oxc-css-parser-macro"
-version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b840f0d8e8f12de73ef70c0d63108499a36264e71fc3901da94030252d004c7b"
-dependencies = [
- "heck",
- "quote",
- "syn",
+ "oxc_allocator",
 ]
 
 [[package]]
