@@ -368,7 +368,7 @@ importers:
   npm/oxlint:
     dependencies:
       oxlint-tsgolint:
-        specifier: '>=0.22.1'
+        specifier: '>=0.24.0'
         version: 0.24.0
       vite-plus:
         specifier: '*'
