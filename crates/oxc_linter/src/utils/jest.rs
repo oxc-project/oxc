@@ -319,9 +319,20 @@ pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {
         || matcher.is_name_equal("toStrictEqual")
 }
 
-/// Checks if node names returned by getNodeName matches any of the given star patterns
-pub fn matches_assert_function_name(name: &str, patterns: &[CompactStr]) -> bool {
-    patterns.iter().any(|pattern| Regex::new(pattern).unwrap().is_match(name))
+/// Compile assert-function-name patterns once, ahead of linting.
+///
+/// Invalid regular expressions (e.g. a user-supplied pattern that expands to a
+/// malformed regex) are skipped rather than triggering a panic.
+pub fn compile_assert_function_name_patterns(patterns: &[CompactStr]) -> Vec<Regex> {
+    patterns.iter().filter_map(|pattern| Regex::new(pattern).ok()).collect()
+}
+
+/// Checks if node names returned by getNodeName matches any of the given star patterns.
+///
+/// `patterns` must be pre-compiled with [`compile_assert_function_name_patterns`] so the
+/// regexes are built once rather than on every call.
+pub fn matches_assert_function_name(name: &str, patterns: &[Regex]) -> bool {
+    patterns.iter().any(|pattern| pattern.is_match(name))
 }
 
 pub fn convert_pattern(pattern: &str) -> CompactStr {

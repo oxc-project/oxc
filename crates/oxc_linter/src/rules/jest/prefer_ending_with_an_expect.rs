@@ -1,3 +1,4 @@
+use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, FunctionBody, Statement},
@@ -14,8 +15,8 @@ use crate::{
     rule::Rule,
     rules::PossibleJestNode,
     utils::{
-        JestGeneralFnKind, convert_pattern, get_node_name, matches_assert_function_name,
-        parse_expect_jest_fn_call, parse_general_jest_fn_call,
+        JestGeneralFnKind, compile_assert_function_name_patterns, convert_pattern, get_node_name,
+        matches_assert_function_name, parse_expect_jest_fn_call, parse_general_jest_fn_call,
     },
 };
 
@@ -35,6 +36,11 @@ pub struct PreferEndingWithAnExpectConfig {
     additional_test_block_functions: Vec<CompactStr>,
     /// A list of function names that should be treated as assertion functions.
     assert_function_names: Vec<CompactStr>,
+    /// `assert_function_names` pre-compiled to regexes once, so the patterns are not
+    /// recompiled on every node visited.
+    #[serde(skip)]
+    #[schemars(skip)]
+    assert_function_name_patterns: Vec<Regex>,
 }
 
 impl std::ops::Deref for PreferEndingWithAnExpect {
@@ -47,8 +53,12 @@ impl std::ops::Deref for PreferEndingWithAnExpect {
 
 impl Default for PreferEndingWithAnExpectConfig {
     fn default() -> Self {
+        let assert_function_names = vec![CompactStr::from("expect")];
         Self {
-            assert_function_names: vec!["expect".into()],
+            assert_function_name_patterns: compile_assert_function_name_patterns(
+                &assert_function_names,
+            ),
+            assert_function_names,
             additional_test_block_functions: vec![],
         }
     }
@@ -179,6 +189,9 @@ impl Rule for PreferEndingWithAnExpect {
 
         Ok(Self(Box::new(PreferEndingWithAnExpectConfig {
             additional_test_block_functions,
+            assert_function_name_patterns: compile_assert_function_name_patterns(
+                &assert_function_names,
+            ),
             assert_function_names,
         })))
     }
@@ -274,7 +287,7 @@ impl PreferEndingWithAnExpect {
 
         let node_name = get_node_name(&call_expression.callee);
 
-        matches_assert_function_name(&node_name, &self.assert_function_names)
+        matches_assert_function_name(&node_name, &self.assert_function_name_patterns)
     }
 }
 
@@ -309,6 +322,11 @@ fn test() {
         (
             r#"it("should return undefined",() => expectSaga(mySaga).returns());"#,
             Some(serde_json::json!([{ "assertFunctionNames": ["expectSaga"] }])),
+        ),
+        // A malformed pattern is skipped without affecting the valid sibling pattern.
+        (
+            r#"it("should return undefined",() => expectSaga(mySaga).returns());"#,
+            Some(serde_json::json!([{ "assertFunctionNames": ["expectSaga", "["] }])),
         ),
         (
             "test('verifies expect method call', () => expect$(123));",
@@ -491,6 +509,12 @@ fn test() {
         (
             r#"test("should fail", () => { foo(true).toBe(true); })"#,
             Some(serde_json::json!([{ "assertFunctionNames": ["expect"] }])),
+        ),
+        // A malformed pattern (`[` expands to an invalid regex) must be skipped rather
+        // than panicking; with no valid assert function name, the block still fails.
+        (
+            r#"test("should fail", () => { foo(true).toBe(true); })"#,
+            Some(serde_json::json!([{ "assertFunctionNames": ["["] }])),
         ),
         (
             r#"it("should also fail",() => expectSaga(mySaga).returns());"#,
