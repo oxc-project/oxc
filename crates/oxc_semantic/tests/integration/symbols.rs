@@ -1,4 +1,4 @@
-use oxc_semantic::{Reference, SymbolFlags};
+use oxc_semantic::{Reference, ScopeFlags, SymbolFlags};
 
 use crate::util::SemanticTester;
 
@@ -261,6 +261,43 @@ fn test_ts_infer_type() {
 
     // type C is not referenced
     tester.has_symbol("C").has_number_of_references(0).test();
+}
+
+#[test]
+fn test_ts_conditional_infer_visibility() {
+    SemanticTester::ts("type T<A> = A extends (a: infer B) => B ? [] : [];")
+        .has_some_symbol("B")
+        .has_number_of_references(0)
+        .test();
+
+    SemanticTester::ts("type T<A> = A extends (...a: infer B) => B ? [] : [];")
+        .has_some_symbol("B")
+        .has_number_of_references(0)
+        .test();
+
+    let tester = SemanticTester::ts(
+        "
+        type U = string;
+        type T<A> = A extends infer U extends U ? U : never;
+        ",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let outer_u = scoping.get_binding(scoping.root_scope_id(), "U".into()).unwrap();
+    assert_eq!(scoping.get_resolved_references(outer_u).count(), 0);
+
+    let infer_u_symbols = scoping
+        .iter_bindings()
+        .filter(|(scope_id, _)| scoping.scope_flags(*scope_id).contains(ScopeFlags::TsConditional))
+        .filter_map(|(_, bindings)| bindings.get("U").copied())
+        .collect::<Vec<_>>();
+    assert_eq!(infer_u_symbols.len(), 1);
+    assert_eq!(scoping.get_resolved_references(infer_u_symbols[0]).count(), 2);
+
+    let tester =
+        SemanticTester::ts("type T<T> = T extends [infer A, infer B extends A] ? B : never;");
+    tester.has_symbol("A").has_number_of_references(0).test();
+    tester.has_symbol("B").has_number_of_references(1).test();
 }
 
 #[test]

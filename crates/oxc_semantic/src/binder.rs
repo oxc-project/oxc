@@ -731,19 +731,20 @@ fn get_module_instance_state_for_alias_target<'a>(
 
 impl<'a> Binder<'a> for TSTypeParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let scope_id = if matches!(builder.ancestry().parent_kind(), AstKind::TSInferType(_)) {
-            builder.active_ts_conditional_scope_id()
+        let symbol_id = if matches!(builder.ancestry().parent_kind(), AstKind::TSInferType(_))
+            && let Some(symbol_id) =
+                builder.declare_ts_infer_type_parameter(self.name.span, self.name.name)
+        {
+            symbol_id
         } else {
-            None
+            builder.declare_symbol(
+                self.name.span,
+                self.name.name,
+                SymbolFlags::TypeParameter,
+                SymbolFlags::TypeParameterExcludes,
+            )
         };
 
-        let symbol_id = builder.declare_symbol_on_scope(
-            self.name.span,
-            self.name.name,
-            scope_id.unwrap_or(builder.current_scope_id),
-            SymbolFlags::TypeParameter,
-            SymbolFlags::TypeParameterExcludes,
-        );
         self.name.symbol_id.set(Some(symbol_id));
     }
 }
