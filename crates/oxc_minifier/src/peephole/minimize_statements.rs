@@ -974,7 +974,10 @@ impl<'a> PeepholeOptimizations {
             let old_len = var_decl.declarations.len();
             var_decl.declarations.retain_mut(|decl| {
                 let should_keep = !Self::should_remove_unused_declarator(decl, ctx)
-                    || decl.init.as_ref().is_some_and(|init| init.may_have_side_effects(ctx));
+                    || decl
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| Self::has_side_effects_or_preserved_iife(init, ctx));
                 if !should_keep {
                     // Same leak hazard as `remove_unused_variable_declaration`:
                     // the `retain` silently drops the declarator, so its refs

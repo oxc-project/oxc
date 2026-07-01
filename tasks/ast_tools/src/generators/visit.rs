@@ -567,9 +567,8 @@ impl VisitBuilder<'_> {
             .unzip();
 
         let (inherits_match_arms, inherits_match_arms_mut): (TokenStream, TokenStream) = enum_def
-            .inherits_types(self.schema)
+            .inherits_enums(self.schema)
             .map(|inherits_type| {
-                let inherits_type = inherits_type.as_enum().unwrap();
                 let inner_visit_fn_ident = inherits_type.visit.visitor_ident();
                 let Some(inner_visit_fn_ident) = inner_visit_fn_ident else {
                     panic!(

@@ -229,10 +229,9 @@ impl<'a> Transformer<'a> {
             return (scoping, Diagnostics::new());
         };
         let result = react_compiler_transform(program, self.allocator, options);
-        let Some(compiled) = result.program else {
+        if !result.changed {
             return (scoping, result.diagnostics);
-        };
-        *program = compiled;
+        }
         let scoping =
             SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
         (scoping, result.diagnostics)

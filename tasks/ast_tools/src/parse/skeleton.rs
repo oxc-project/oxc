@@ -5,7 +5,7 @@ use crate::schema::FileId;
 /// "Skeleton" parsed from type definition in source file.
 ///
 /// Contains only very basic information - type name, [`syn`]'s parsed AST for the type,
-/// [`FileId`] of the file this type is defined in, and names of any enums this enum inherits.
+/// and [`FileId`] of the file this type is defined in.
 ///
 /// [`Skeleton`]s are created in first parsing pass, is contains the bare minimum required
 /// to be able to link up the types in the 2nd pass.
@@ -52,5 +52,4 @@ pub struct EnumSkeleton {
     pub is_foreign: bool,
     pub is_meta: bool,
     pub item: ItemEnum,
-    pub inherits: Vec<String>,
 }

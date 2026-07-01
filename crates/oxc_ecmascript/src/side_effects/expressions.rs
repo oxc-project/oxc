@@ -530,11 +530,54 @@ fn get_array_minimum_length(arr: &ArrayExpression) -> usize {
         .sum()
 }
 
+/// Whether invoking an IIFE — `(function () { ... })(args)` / `(() => { ...
+/// })(args)` — may have side effects. `None` when the callee is not a plain
+/// function/arrow literal, so the caller falls through to its other checks.
+///
+/// Calling it binds the parameters and runs the body once; the result is the
+/// caller's concern, not a side effect. So the call is side-effect-free when
+/// its arguments, parameters, and every body statement are. Conservative
+/// (`Some(true)`) for an `async`/generator callee, whose invocation differs,
+/// and for parameters that aren't bare identifiers (defaults and destructuring
+/// run user code when bound).
+fn iife_call_may_have_side_effects<'a>(
+    call: &CallExpression<'a>,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> Option<bool> {
+    let (params, body) = match &call.callee {
+        Expression::FunctionExpression(f) if !f.r#async && !f.generator => {
+            (&f.params, f.body.as_deref()?)
+        }
+        Expression::ArrowFunctionExpression(f) if !f.r#async => (&f.params, &*f.body),
+        _ => return None,
+    };
+
+    // Arguments are evaluated before the call; binding the parameters must run
+    // no user code — every one a bare identifier with no default (a rest
+    // binding to an identifier is fine, it just collects an array).
+    let params_simple = params
+        .items
+        .iter()
+        .all(|item| item.pattern.is_binding_identifier() && item.initializer.is_none())
+        && params.rest.as_ref().is_none_or(|r| r.rest.argument.is_binding_identifier());
+    if !params_simple || call.arguments.iter().any(|arg| arg.may_have_side_effects(ctx)) {
+        return Some(true);
+    }
+
+    Some(body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)))
+}
+
 // `PF` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
 impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+        }
+
+        // An IIFE is side-effect-free when its arguments, parameters, and body
+        // are. (A `/* @__PURE__ */` IIFE was already handled above.)
+        if let Some(side_effects) = iife_call_may_have_side_effects(self, ctx) {
+            return side_effects;
         }
 
         if let Expression::Identifier(ident) = &self.callee
@@ -614,19 +657,15 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             // except that a `Proxy` target makes them fire observable traps, and a
             // `null`/`undefined` target makes them throw. They introspect their first
             // argument via internal methods a Proxy can trap (`[[OwnPropertyKeys]]`,
-            // `[[GetOwnProperty]]`, `[[GetPrototypeOf]]`, `[[IsExtensible]]`) but,
-            // unlike `Object.values`/`entries`, never invoke `[[Get]]`, so they run no
-            // getter on a plain object. Side-effect-free only when the target is
-            // provably neither a Proxy nor nullish.
+            // `[[GetOwnProperty]]`, `[[GetPrototypeOf]]`) but, unlike `Object.values`/
+            // `entries`, never invoke `[[Get]]`, so they run no getter on a plain object.
+            // Side-effect-free only when the target is provably neither a Proxy nor nullish.
             "getOwnPropertyDescriptor"
             | "getOwnPropertyDescriptors"
             | "getOwnPropertyNames"
             | "getOwnPropertySymbols"
             | "getPrototypeOf"
             | "hasOwn"
-            | "isExtensible"
-            | "isFrozen"
-            | "isSealed"
             | "keys" => {
                 // An argument with its own side effects (e.g. inline `new Proxy(...)`) — keep.
                 if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
@@ -649,6 +688,32 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
                 // literal object/array, or a primitive `ToObject` wraps without user code).
                 // An undetermined value could be a Proxy whose trap is observable.
                 value_type.is_undetermined()
+            }
+            // `isExtensible`/`isFrozen`/`isSealed` differ from the introspection methods
+            // above: they never `ToObject` their target, so a non-object receiver (missing,
+            // `null`, `undefined`, or any primitive) returns a primitive (`false`/`true`)
+            // without throwing. They still fire `[[IsExtensible]]` (and, for `isFrozen`/
+            // `isSealed`, `[[OwnPropertyKeys]]`/`[[GetOwnProperty]]`) on an object target,
+            // so a Proxy target stays observable; `[[Get]]` is never invoked.
+            "isExtensible" | "isFrozen" | "isSealed" => {
+                // An argument with its own side effects (e.g. inline `new Proxy(...)`) — keep.
+                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                    return true;
+                }
+                // No first expression argument: either no arguments (`undefined` receiver →
+                // a primitive result, pure) or a leading spread that could place a Proxy
+                // here (keep).
+                let Some(arg) = self.arguments.first().and_then(Argument::as_expression) else {
+                    return !self.arguments.is_empty();
+                };
+                // With property reads assumed pure, the Proxy-trap concern is waived.
+                if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
+                    return false;
+                }
+                // Pure for a determined target: a non-object primitive returns without a
+                // trap, and a literal object/array cannot be a Proxy. An undetermined value
+                // could be a Proxy whose trap is observable.
+                arg.value_type(ctx).is_undetermined()
             }
             // `Object.create(proto)` allocates an object with prototype `proto`; it runs
             // no user code and is pure when `proto` is provably an object or `null`

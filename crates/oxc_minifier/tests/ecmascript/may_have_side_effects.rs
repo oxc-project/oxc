@@ -1187,10 +1187,12 @@ fn test_call_expressions() {
     test("Object.getPrototypeOf()", true);
     test("Object.hasOwn()", true);
     test("Object.is()", false);
-    test("Object.isExtensible()", true);
-    test("Object.isFrozen()", true);
-    test("Object.isSealed()", true);
     test("Object.keys()", true);
+    // `isExtensible`/`isFrozen`/`isSealed` return a primitive for a non-object receiver
+    // (`Object.isExtensible(undefined)` -> `false`) instead of throwing, so they are pure.
+    test("Object.isExtensible()", false);
+    test("Object.isFrozen()", false);
+    test("Object.isSealed()", false);
 
     test("String.fromCharCode()", false);
     test("String.fromCodePoint()", false);
@@ -1239,6 +1241,18 @@ fn test_proxy_sensitive_object_methods() {
     test("Object.isExtensible({})", false);
     test("Object.isFrozen({})", false);
     test("Object.isSealed({})", false);
+
+    // `isExtensible`/`isFrozen`/`isSealed` never `ToObject` their target: a non-object
+    // (missing/null/undefined/primitive) yields a primitive result without throwing, so
+    // they stay pure where `keys`/`getOwnPropertyDescriptor`/... must be kept.
+    test("Object.isExtensible(null)", false);
+    test("Object.isFrozen(undefined)", false);
+    test("Object.isSealed(42)", false);
+    // A Proxy target still fires the `[[IsExtensible]]`/`[[OwnPropertyKeys]]` traps, so an
+    // undetermined target (could be a Proxy) or an inline Proxy is kept.
+    test("Object.isExtensible(x)", true);
+    test("Object.isFrozen(new Proxy({}, {}))", true);
+    test("Object.isSealed(...x)", true);
 
     // Kept when the target could be a Proxy (undetermined) or would throw (null/undefined).
     test("Object.keys(x)", true);

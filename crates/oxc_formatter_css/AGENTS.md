@@ -118,40 +118,39 @@ Ports prettier-plugin-tailwindcss's `transformCss`: with the option on, `@apply`
 
 See `write_apply_prelude` in `at_rule.rs` (collection + `!important` / Less `~"..."` extraction) and `format.rs` (sorter dispatch).
 
-### Intentionally unsupported: postcss plugin syntax
+### postcss plugin syntax
 
-These syntax that only "works" in Prettier because `postcss` parses without validation and a build-time plugin interprets it later is mostly NOT supported.
-(`postcss` is permissive with any syntax it doesn't understand, while we parse strictly with `oxc-css-parser`.)
+`postcss` parses everything permissively and lets plugins interpret syntax at runtime; `oxc-css-parser` parses strictly, so plugin-specific syntax is rejected by default. Failures emit a LOUD diagnostic.
 
-These plugins were once common but are now mostly legacy. Representative examples we do NOT support:
+However, some plugin-flavored constructs work anyway, because:
 
-- `postcss-simple-vars`: `$blue: #056ef0;` declarations, value-position `$blue`, `$(dir)` interpolation
-- `postcss-mixins`: parametered `@define-mixin x $a, $b` and `$var` inside body
-  - Plain `@define-mixin icon {}` / `@mixin icon;` / `@mixin icon a, b;` DO parse fine
-- `postcss-nested-props` (`font: { ... }`), ICSS nested `:export { nest: {} }`, `--element(...)` (CSS Extensions, zero implementations)
+- 1: Now standard CSS
+  - CSS nesting
+  - Tailwind v3/v4 at-rules (`@tailwind`, `@apply`, `@layer`, `@theme`, `@utility`, `@variant`, `@config`, `@custom-media`)
+  - CSS Modules (`@value` incl. `from`, `:global`/`:local`, `composes`, plain `:import`/`:export`)
+- 2: CSS forward-compat
+  - Unknown at-rules (`postcss-mixins`'s `@define-mixin`, `@mixin`, etc.) round-trip as `UnknownAtRule` with the prelude held as a verbatim `TokenSeq`
+  - `@media`/`@supports` preludes `oxc-css-parser` can't structure fall through to `<general-enclosed>` as a verbatim `TokenSeq`
 
-Failures emit a LOUD diagnostic; ignore-listing is the escape hatch.
+Beyond those, we add support per-plugin when there's real demand.
 
-We DO support, however, the following popular plugin-flavored syntaxes:
+#### Supported: postcss-simple-vars (auto-enabled for `CssVariant::Css`)
 
-- Tailwind v3/v4 at-rules: `@tailwind`, `@apply`, `@layer`, `@theme`, `@utility`, `@variant`, `@config`, `@custom-media`
-- CSS Modules constructs: `@value` (incl. `from`), `:global`/`:local`, `composes`, plain `:import`/`:export`
-- Standard CSS nesting
+Covered:
 
-Less also rejects (matching `lessc`):
+- `$var: value !important;` declarations (top-level and inside rules)
+- `$var` references in property values
+- `$var` references inside `@media`/at-rule preludes
 
-- Value-position `@{var}` interpolation
-- Whitespace inside a Less lookup (`@config   [   option1]`)
-
-If there is high demand, we can also consider making some parts acceptable by updating the `oxc-css-parser` parser side.
+NOT covered: `$(var)` interpolation (`margin-$(dir): 10px`, `.icon.is-$(network)`), selector-position bare `$var` (`.$prefix`), comment substitutions (`<<$(var)>>`).
 
 ### Known divergences
 
 Deliberate divergences from Prettier (impact does not justify the matching cost):
 
-- Less `func(x, + 20px)` unary gluing
+- Less: `func(x, + 20px)` unary gluing
   - Prettier prints `+20px`; `oxc-css-parser` ASTs `, +` as a comma-left binary operation, so matching is ad-hoc for a torture-test-only shape
-- Nested Less math in a function arg / multi-value shorthand
+- Less: Nested math in a function arg / multi-value shorthand
   - Prettier's fill fit-check breaks INSIDE the wide chunk; our core `fill` (biome semantics) breaks the SEPARATOR instead.
   - Principled fix is the shared core-fill fit-check change (needs JS-conformance impact experiment first)
 - Broken `:not(...)` selector args indent at +2
@@ -169,6 +168,19 @@ Deliberate divergences from Prettier (impact does not justify the matching cost)
 - A declaration swallowed by a `;`-less css-in-js placeholder (`${m}\ncolor: red`)
   - We parse it structurally and FORMAT it (spacing/hex/number normalization)
   - Prettier keeps it verbatim, postcss swallows the run as an opaque prelude string it can't format, so `color   :   red` / `#FFFFFF` survive unformatted
+- SCSS: A `;`-less custom-property rule block followed by another declaration (`--p: {color:red;} /* <- no semi */ --q: blue;`)
+  - SCSS output: we treat it as two separate declarations: format the inner block, add the missing `;`, and format `--q` normally
+  - Prettier behavior: keeps the whole run verbatim, postcss swallows everything past the `}` as an opaque prelude string until a source `;`
+  - Why SCSS only: It falls out of the AST shape `oxc-css-parser` produces
+    - SCSS parses `{...}` declaration values as `SassNestingDeclaration`, so the formatter handles them like any other nested block
+    - CSS/Less do NOT structure `{...}` in declaration value position so the token-soup fallback runs, the formatter emits verbatim, and the output incidentally matches Prettier
+    - Each mode is internally consistent with what its parser produces
+  - The value syntax `--p: { ... }` itself is valid CSS, but its only intended consumer was the `@apply --p;` at-rule from the dropped CSS Apply Rule proposal
+    - With no consumer, real-world usage is near zero, so the cross-mode behavior difference is theoretical
+- Less: Value-position `@{var}` interpolation
+  - `oxc-css-parser` rejects it matching `lessc`; Prettier (postcss) accepts and prints verbatim
+- Less: Lookup with whitespace inside (`@config   [   option1]`)
+  - `oxc-css-parser` rejects matching `lessc`; Prettier accepts
 
 ## Verification
 
