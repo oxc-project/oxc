@@ -53,7 +53,7 @@ working directory: fixtures/suppression/fixed_violations_are_reported
   help: Consider removing this declaration.
 
 Found 3 warnings and 3 errors.
-Finished in <variable>ms on 2 files with 87 rules using 1 threads.
+Finished in <variable>ms on 2 files with 86 rules using 1 threads.
 ----------
 CLI result: LintUnprunedSuppressions
 ----------
