@@ -20,6 +20,7 @@ mod dummy;
 pub mod estree;
 mod get_address;
 mod get_span;
+mod replace_with;
 mod take_in;
 mod unstable_address;
 
@@ -29,6 +30,7 @@ pub use dummy::DeriveDummy;
 pub use estree::DeriveESTree;
 pub use get_address::DeriveGetAddress;
 pub use get_span::{DeriveGetSpan, DeriveGetSpanMut};
+pub use replace_with::DeriveReplaceWith;
 pub use take_in::DeriveTakeIn;
 pub use unstable_address::DeriveUnstableAddress;
 
