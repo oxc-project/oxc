@@ -10,6 +10,7 @@ use base54::base54;
 use oxc_allocator::{Allocator, ArenaHashSet, ArenaVec, BitSet};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
+use oxc_ecmascript::BoundNames;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, Stats, SymbolId};
 use oxc_span::SourceType;
 use oxc_str::{CompactStr, Ident, Str};
@@ -19,7 +20,7 @@ mod keep_names;
 
 pub use keep_names::MangleOptionsKeepNames;
 
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone)]
 pub struct MangleOptions {
     /// Pass true to mangle names declared in the top level scope.
     ///
@@ -32,6 +33,19 @@ pub struct MangleOptions {
     /// Keep function / class names
     pub keep_names: MangleOptionsKeepNames,
 
+    /// Names that bindings must not be renamed to, and that bindings already
+    /// carrying them keep. Equivalent to terser / swc `mangle.reserved`.
+    ///
+    /// The main use case is `["exports", "module"]` when minifying prebuilt
+    /// CommonJS / UMD files that Node consumers `import` directly: Node's
+    /// cjs-module-lexer detects a CommonJS module's named exports by lexically
+    /// scanning for `exports.<name> =` / `module.exports` token patterns with no
+    /// scope analysis, so renaming an `exports` / `module` wrapper parameter
+    /// erases every named export it can see.
+    ///
+    /// Default: empty.
+    pub reserved: FxHashSet<CompactStr>,
+
     /// Use more readable mangled names
     /// (e.g. `slot_0`, `slot_1`, `slot_2`, ...) for debugging.
     ///
@@ -40,7 +54,7 @@ pub struct MangleOptions {
 }
 
 impl MangleOptions {
-    fn top_level(self, source_type: SourceType) -> bool {
+    fn top_level(&self, source_type: SourceType) -> bool {
         self.top_level.unwrap_or(source_type.is_module() || source_type.is_commonjs())
     }
 }
@@ -375,7 +389,7 @@ impl<'t> Mangler<'t> {
 
         // ── Phase 1: collect constraints — names we must not reuse or shadow. ──
         let constraints =
-            Constraints::collect(allocator, scoping, ast_nodes, program, self.options);
+            Constraints::collect(allocator, scoping, ast_nodes, program, &self.options);
         // ── Phase 2: assign slots — give bindings that can share a name the same slot. ──
         let slots = SlotAssignment::compute(allocator, scoping, ast_nodes, &constraints);
         // ── Phase 3: rank slots by reference frequency (hottest first). ──
@@ -476,6 +490,9 @@ impl<'t> SlotFrequency<'t> {
 struct Constraints<'a, 's> {
     /// Whether top-level (module / CommonJS) bindings may be mangled at all.
     top_level: bool,
+    /// User-reserved names — never used as mangled names, and bindings carrying
+    /// them keep them (see [`MangleOptions::reserved`]).
+    reserved: &'s FxHashSet<CompactStr>,
     /// Names of top-level exports — kept when `top_level` so importers still resolve.
     exported_names: ArenaHashSet<'a, Str<'a>>,
     exported_symbols: Option<BitSet<'a>>,
@@ -510,7 +527,7 @@ impl<'a, 's> Constraints<'a, 's> {
         scoping: &'s Scoping,
         ast_nodes: &AstNodes,
         program: &'a Program<'a>,
-        options: MangleOptions,
+        options: &'s MangleOptions,
     ) -> Self {
         let top_level = options.top_level(program.source_type);
         let (exported_names, exported_symbols) = if top_level && program.source_type.is_module() {
@@ -520,7 +537,25 @@ impl<'a, 's> Constraints<'a, 's> {
         };
         let (keep_name_names, keep_name_symbols) =
             collect_keep_name_symbols(options.keep_names, allocator, scoping, ast_nodes);
-        Self { top_level, exported_names, exported_symbols, keep_name_names, keep_name_symbols }
+        Self {
+            top_level,
+            reserved: &options.reserved,
+            exported_names,
+            exported_symbols,
+            keep_name_names,
+            keep_name_symbols,
+        }
+    }
+
+    /// Whether a binding with this name must keep it.
+    ///
+    /// `inline(always)`: called per symbol in `SlotRanking::tally`'s hot loop — the
+    /// empty-`reserved` fast path must compile down to the plain `is_special_name`
+    /// check plus one predictable branch.
+    #[expect(clippy::inline_always, reason = "hot path")]
+    #[inline(always)]
+    fn is_kept_name(&self, name: &str) -> bool {
+        is_special_name(name) || (!self.reserved.is_empty() && self.reserved.contains(name))
     }
 }
 
@@ -723,7 +758,7 @@ impl<'a> SlotRanking<'a> {
             if scoping.scope_flags(symbol_scope_id).contains_direct_eval() {
                 continue;
             }
-            if is_special_name(scoping.symbol_name(symbol_id)) {
+            if constraints.is_kept_name(scoping.symbol_name(symbol_id)) {
                 continue;
             }
             if keep_name_symbols.is_some_and(|keep| keep.has_bit(symbol_id.index())) {
@@ -761,7 +796,7 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
         let root_bindings = scoping.get_bindings(scoping.root_scope_id());
         let is_reserved = |name: &str| {
             oxc_syntax::keyword::is_reserved_keyword(name)
-                || is_special_name(name)
+                || constraints.is_kept_name(name)
                 || root_unresolved_references.contains_key(name)
                 || (root_bindings.contains_key(name)
                     && (!constraints.top_level || constraints.exported_names.contains(name)))
@@ -843,12 +878,13 @@ fn collect_exported_symbols<'a>(
         let Statement::ExportNamedDeclaration(v) = statement else { continue };
         let Some(decl) = &v.declaration else { continue };
         if let Declaration::VariableDeclaration(decl) = decl {
-            for decl in &decl.declarations {
-                if let Some(id) = decl.id.get_binding_identifier() {
-                    exported_names.insert(id.name.as_arena_str());
-                    exported_symbols.set_bit(id.symbol_id().index());
-                }
-            }
+            // Use `bound_names` rather than `get_binding_identifier`: a destructuring
+            // pattern (`export const { find } = x`) exports every bound name, and
+            // renaming any of them would rename the export.
+            decl.bound_names(&mut |id| {
+                exported_names.insert(id.name.as_arena_str());
+                exported_symbols.set_bit(id.symbol_id().index());
+            });
         } else if let Some(id) = decl.id() {
             exported_names.insert(id.name.as_arena_str());
             exported_symbols.set_bit(id.symbol_id().index());

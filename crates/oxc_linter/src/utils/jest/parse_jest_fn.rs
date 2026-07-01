@@ -32,6 +32,40 @@ pub fn parse_jest_fn_call<'a>(
     // If bailed out, we're not jest function
 
     let resolved = resolve_to_jest_fn(call_expr, original)?;
+    let name = resolved.original.unwrap_or(resolved.local);
+
+    // Avoid building a node chain for unknown bare calls in non-test files.
+    // The slow path would return:
+    //   `setTimeout(...)` -> `Some(GeneralJest { kind: Unknown, members: [] })`
+    //   `setTimeout(...).foo` -> `None`
+    //
+    // Test files still need the slow path because unknown roots are rejected by
+    // `is_valid_jest_call` / `is_valid_vitest_call`. For example, `setTimeout`
+    // should not be treated as a Vitest call just because it wraps an `expect`.
+    // Leave `each` on the slow path so its special outer-call handling stays
+    // centralized.
+    if !ctx.frameworks().is_jest()
+        && !ctx.frameworks().is_vitest()
+        && matches!(callee, Expression::Identifier(_))
+        && name != "each"
+        && JestFnKind::from(name) == JestFnKind::Unknown
+        && !super::JEST_METHOD_NAMES.contains(&name)
+    {
+        if matches!(
+            ctx.nodes().parent_kind(node.id()),
+            AstKind::CallExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::ComputedMemberExpression(_)
+        ) {
+            return None;
+        }
+        return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
+            kind: JestFnKind::Unknown,
+            members: Vec::new(),
+            name: Cow::Borrowed(name),
+            local: Cow::Borrowed(resolved.local),
+        }));
+    }
 
     let params = NodeChainParams {
         expr: callee,
@@ -61,16 +95,11 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        let name = resolved.original.unwrap_or(resolved.local);
         let kind = JestFnKind::from(name);
 
-        // every member node must have a member expression as their parent
-        // in order to be part of the call chain we're parsing
-        let (head, members) = {
-            let rest = chain.split_off(1);
-            let head = chain.into_iter().next().unwrap();
-            (head, rest)
-        };
+        // Reuse the chain allocation for the remaining members.
+        let head = chain.remove(0);
+        let members = chain;
 
         if matches!(kind, JestFnKind::Expect | JestFnKind::ExpectTypeOf) {
             let options = ExpectFnCallOptions {
@@ -107,35 +136,43 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        let mut call_chains = Vec::from([Cow::Borrowed(name)]);
-        call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
+        // Only test files need the string chain:
+        //   `test.only(...)` validates as Jest/Vitest.
+        //   `setTimeout(...)` is rejected as an unknown test-file root.
+        // Non-test files do not consult the chain after this point.
+        let is_jest = ctx.frameworks().is_jest();
+        let is_vitest = ctx.frameworks().is_vitest();
+        if is_jest || is_vitest {
+            let mut call_chains = Vec::from([Cow::Borrowed(name)]);
+            call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
 
-        match (ctx.frameworks().is_jest(), ctx.frameworks().is_vitest()) {
-            (true, true) => {
-                if !is_valid_jest_call(&call_chains) && !is_valid_vitest_call(&call_chains) {
-                    return None;
+            match (is_jest, is_vitest) {
+                (true, true) => {
+                    if !is_valid_jest_call(&call_chains) && !is_valid_vitest_call(&call_chains) {
+                        return None;
+                    }
                 }
-            }
-            (true, false) => {
-                if !is_valid_jest_call(&call_chains) {
-                    return None;
+                (true, false) => {
+                    if !is_valid_jest_call(&call_chains) {
+                        return None;
+                    }
                 }
-            }
-            (false, true) => {
-                if !is_valid_vitest_call(&call_chains) {
-                    return None;
+                (false, true) => {
+                    if !is_valid_vitest_call(&call_chains) {
+                        return None;
+                    }
                 }
+                (false, false) => unreachable!(),
             }
-            (false, false) => {}
-        }
 
-        if ctx.frameworks().is_vitest() && is_extend_fixture(&call_chains[1..]) {
-            return Some(ParsedJestFnCall::Fixture(ParsedGeneralJestFnCall {
-                kind: JestFnKind::VitestFixture,
-                members,
-                name: Cow::Borrowed(name),
-                local: Cow::Borrowed(resolved.local),
-            }));
+            if is_vitest && is_extend_fixture(&call_chains[1..]) {
+                return Some(ParsedJestFnCall::Fixture(ParsedGeneralJestFnCall {
+                    kind: JestFnKind::VitestFixture,
+                    members,
+                    name: Cow::Borrowed(name),
+                    local: Cow::Borrowed(resolved.local),
+                }));
+            }
         }
         return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
             kind,

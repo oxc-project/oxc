@@ -468,7 +468,7 @@ fn enter_ssa_impl(
 /// Create a placeholder HirFunction for temporarily swapping an inner function
 /// out of `env.functions` via `std::mem::replace`. The placeholder is never
 /// read — the real function is swapped back immediately after processing.
-pub fn placeholder_function() -> HirFunction {
+pub fn placeholder_function<'a>() -> HirFunction<'a> {
     HirFunction {
         loc: None,
         id: None,

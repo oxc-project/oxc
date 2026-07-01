@@ -5,251 +5,323 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a == b == c) { console.log('foo') }
-   ·     ───────────
+   ·     ───┬──    ┬
+   ·        │      ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a == b == c == d) { console.log('foo') }
-   ·     ────────────────
+   ·     ─────┬─────    ┬
+   ·          │         ╰── That boolean is then compared with this operand
+   ·          ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:6]
  1 │ if ((a == b == c) == d) { console.log('foo') }
-   ·      ───────────
+   ·      ───┬──    ┬
+   ·         │      ╰── That boolean is then compared with this operand
+   ·         ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if ((a == b == c) == d == e == f) { console.log('foo') }
-   ·     ────────────────────────────
+   ·     ───────────┬───────────    ┬
+   ·                │               ╰── That boolean is then compared with this operand
+   ·                ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:6]
  1 │ if ((a == b == c) == d == e == f) { console.log('foo') }
-   ·      ───────────
+   ·      ───┬──    ┬
+   ·         │      ╰── That boolean is then compared with this operand
+   ·         ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a == b === c) { console.log('foo') }
-   ·     ────────────
+   ·     ───┬──     ┬
+   ·        │       ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a == b != c) { console.log('foo') }
-   ·     ───────────
+   ·     ───┬──    ┬
+   ·        │      ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a == b !== c) { console.log('foo') }
-   ·     ────────────
+   ·     ───┬──     ┬
+   ·        │       ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a === b == c) { console.log('foo') }
-   ·     ────────────
+   ·     ───┬───    ┬
+   ·        │       ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a === b === c) { console.log('foo') }
-   ·     ─────────────
+   ·     ───┬───     ┬
+   ·        │        ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a === b != c) { console.log('foo') }
-   ·     ────────────
+   ·     ───┬───    ┬
+   ·        │       ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a === b !== c) { console.log('foo') }
-   ·     ─────────────
+   ·     ───┬───     ┬
+   ·        │        ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a != b == c) { console.log('foo') }
-   ·     ───────────
+   ·     ───┬──    ┬
+   ·        │      ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a != b === c) { console.log('foo') }
-   ·     ────────────
+   ·     ───┬──     ┬
+   ·        │       ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a != b != c) { console.log('foo') }
-   ·     ───────────
+   ·     ───┬──    ┬
+   ·        │      ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a != b !== c) { console.log('foo') }
-   ·     ────────────
+   ·     ───┬──     ┬
+   ·        │       ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a !== b == c) { console.log('foo') }
-   ·     ────────────
+   ·     ───┬───    ┬
+   ·        │       ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a !== b === c) { console.log('foo') }
-   ·     ─────────────
+   ·     ───┬───     ┬
+   ·        │        ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a !== b != c) { console.log('foo') }
-   ·     ────────────
+   ·     ───┬───    ┬
+   ·        │       ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a !== b !== c) { console.log('foo') }
-   ·     ─────────────
+   ·     ───┬───     ┬
+   ·        │        ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a > b > c) { console.log('foo') }
-   ·     ─────────
+   ·     ──┬──   ┬
+   ·       │     ╰── That boolean is then compared with this operand
+   ·       ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a > b < c) { console.log('foo') }
-   ·     ─────────
+   ·     ──┬──   ┬
+   ·       │     ╰── That boolean is then compared with this operand
+   ·       ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a > b >= c) { console.log('foo') }
-   ·     ──────────
+   ·     ──┬──    ┬
+   ·       │      ╰── That boolean is then compared with this operand
+   ·       ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a > b <= c) { console.log('foo') }
-   ·     ──────────
+   ·     ──┬──    ┬
+   ·       │      ╰── That boolean is then compared with this operand
+   ·       ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a < b > c) { console.log('foo') }
-   ·     ─────────
+   ·     ──┬──   ┬
+   ·       │     ╰── That boolean is then compared with this operand
+   ·       ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a < b < c) { console.log('foo') }
-   ·     ─────────
+   ·     ──┬──   ┬
+   ·       │     ╰── That boolean is then compared with this operand
+   ·       ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a < b >= c) { console.log('foo') }
-   ·     ──────────
+   ·     ──┬──    ┬
+   ·       │      ╰── That boolean is then compared with this operand
+   ·       ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a < b <= c) { console.log('foo') }
-   ·     ──────────
+   ·     ──┬──    ┬
+   ·       │      ╰── That boolean is then compared with this operand
+   ·       ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a >= b > c) { console.log('foo') }
-   ·     ──────────
+   ·     ───┬──   ┬
+   ·        │     ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a >= b < c) { console.log('foo') }
-   ·     ──────────
+   ·     ───┬──   ┬
+   ·        │     ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a >= b >= c) { console.log('foo') }
-   ·     ───────────
+   ·     ───┬──    ┬
+   ·        │      ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a >= b <= c) { console.log('foo') }
-   ·     ───────────
+   ·     ───┬──    ┬
+   ·        │      ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a <= b > c) { console.log('foo') }
-   ·     ──────────
+   ·     ───┬──   ┬
+   ·        │     ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a <= b < c) { console.log('foo') }
-   ·     ──────────
+   ·     ───┬──   ┬
+   ·        │     ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a <= b >= c) { console.log('foo') }
-   ·     ───────────
+   ·     ───┬──    ┬
+   ·        │      ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a <= b <= c) { console.log('foo') }
-   ·     ───────────
+   ·     ───┬──    ┬
+   ·        │      ╰── That boolean is then compared with this operand
+   ·        ╰── This comparison expression produces a boolean
    ╰────
   help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)

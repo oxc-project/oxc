@@ -508,7 +508,7 @@ pub struct StaticMemberExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
-/// `c.#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
+/// `this.#a` in `class C { #a = 1; getA() { return this.#a; } }`
 ///
 /// Represents a private field access expression, which can include an object and a private identifier.
 #[ast(visit)]

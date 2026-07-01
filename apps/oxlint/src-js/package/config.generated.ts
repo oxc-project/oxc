@@ -4378,20 +4378,20 @@ export interface ForbidItemObject {
    * Component names for which this prop is **allowed** (all others are
    * forbidden).
    */
-  allowedFor: string[];
+  allowedFor?: string[];
   /**
    * Glob patterns for component names where the prop is **allowed**.
    */
-  allowedForPatterns: string[];
+  allowedForPatterns?: string[];
   /**
    * Component names for which this prop is **disallowed** (all others are
    * allowed).
    */
-  disallowedFor: string[];
+  disallowedFor?: string[];
   /**
    * Glob patterns for component names where the prop is **disallowed**.
    */
-  disallowedForPatterns: string[];
+  disallowedForPatterns?: string[];
   /**
    * Custom message to display.
    */
@@ -6098,6 +6098,16 @@ export interface NoArrayReverse {
   allowExpressionStatement?: boolean;
 }
 export interface NoArraySort {
+  /**
+   * When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.
+   * This avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.
+   *
+   * Example of **correct** code for this rule with `allowAfterSpread` set to `true`:
+   * ```js
+   * const sorted = [...mySet].sort();
+   * ```
+   */
+  allowAfterSpread?: boolean;
   /**
    * When set to `true` (default), allows `array.sort()` as an expression statement.
    * Set to `false` to forbid `Array#sort()` even if it's an expression statement.

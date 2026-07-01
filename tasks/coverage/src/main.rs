@@ -31,26 +31,25 @@ fn main() {
         .build_global()
         .unwrap();
 
-    // Load all test data once
-    let data = TestData::load(app_args.filter.as_deref());
+    // Load test data lazily: `runtime` and `transpiler` load their own inputs,
+    // so they must not require every fixture suite to be checked out
+    // (`run_all` also loads internally).
+    let load = || TestData::load(app_args.filter.as_deref());
 
     let task = command.as_deref().unwrap_or("default");
     match task {
-        "parser" => app_args.run_parser(&data),
-        "semantic" => app_args.run_semantic(&data),
-        "codegen" => app_args.run_codegen(&data),
-        "formatter" => app_args.run_formatter(&data),
-        "transformer" => app_args.run_transformer(&data),
+        "parser" => app_args.run_parser(&load()),
+        "semantic" => app_args.run_semantic(&load()),
+        "codegen" => app_args.run_codegen(&load()),
+        "formatter" => app_args.run_formatter(&load()),
+        "transformer" => app_args.run_transformer(&load()),
         "transpiler" => app_args.run_transpiler(),
-        "minifier" => app_args.run_minifier(&data),
+        "minifier" => app_args.run_minifier(&load()),
         "runtime" => app_args.run_runtime(),
-        "estree" => app_args.run_estree(&data),
-        "estree_tokens" => app_args.run_estree_tokens(&data),
-        "types" => app_args.run_types(&data),
-        "all" => {
-            app_args.run_all();
-            app_args.run_runtime();
-        }
+        "estree" => app_args.run_estree(&load()),
+        "estree_tokens" => app_args.run_estree_tokens(&load()),
+        "types" => app_args.run_types(&load()),
+        "all" => app_args.run_all_with(&load()),
         _ => app_args.run_all(),
     }
 }

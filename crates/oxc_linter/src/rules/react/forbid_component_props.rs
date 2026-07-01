@@ -93,13 +93,17 @@ pub struct ForbidItemObject {
     prop_name_pattern: Option<CompactStr>,
     /// Component names for which this prop is **allowed** (all others are
     /// forbidden).
+    #[serde(default)]
     allowed_for: Vec<CompactStr>,
     /// Glob patterns for component names where the prop is **allowed**.
+    #[serde(default)]
     allowed_for_patterns: Vec<CompactStr>,
     /// Component names for which this prop is **disallowed** (all others are
     /// allowed).
+    #[serde(default)]
     disallowed_for: Vec<CompactStr>,
     /// Glob patterns for component names where the prop is **disallowed**.
+    #[serde(default)]
     disallowed_for_patterns: Vec<CompactStr>,
     /// Custom message to display.
     message: Option<String>,

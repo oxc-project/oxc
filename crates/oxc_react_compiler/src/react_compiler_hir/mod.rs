@@ -5,27 +5,21 @@ pub mod environment_config;
 pub mod globals;
 pub mod object_shape;
 pub mod print;
+pub mod raw;
 pub mod reactive;
 pub mod type_config;
 pub mod visitors;
 
-use crate::react_compiler_ast::OriginalNode;
 pub use crate::react_compiler_diagnostics::CompilerDiagnostic;
 pub use crate::react_compiler_diagnostics::ErrorCategory;
 pub use crate::react_compiler_diagnostics::GENERATED_SOURCE;
-use crate::react_compiler_diagnostics::JsString;
 pub use crate::react_compiler_diagnostics::Position;
 pub use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
+use oxc_ast::ast as oxc;
+pub use raw::{RawIdent, RawNode, RawTypeCategory};
 pub use reactive::*;
-use serde::Serialize;
-use serde_json::Value;
-use std::fmt::Display;
-use std::fmt::Formatter;
-use std::fmt::Result as FmtResult;
-use std::hash::Hash;
-use std::hash::Hasher;
 
 // =============================================================================
 // ID newtypes
@@ -100,14 +94,14 @@ impl PartialEq for FloatValue {
 
 impl Eq for FloatValue {}
 
-impl Hash for FloatValue {
-    fn hash<H: Hasher>(&self, state: &mut H) {
+impl std::hash::Hash for FloatValue {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.0.hash(state);
     }
 }
 
-impl Display for FloatValue {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl std::fmt::Display for FloatValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", format_js_number(self.value()))
     }
 }
@@ -161,7 +155,7 @@ pub fn format_js_number(n: f64) -> String {
 
 /// A function lowered to HIR form
 #[derive(Debug, Clone)]
-pub struct HirFunction {
+pub struct HirFunction<'a> {
     pub loc: Option<SourceLocation>,
     pub id: Option<String>,
     pub name_hint: Option<String>,
@@ -171,7 +165,7 @@ pub struct HirFunction {
     pub returns: Place,
     pub context: Vec<Place>,
     pub body: HIR,
-    pub instructions: Vec<Instruction>,
+    pub instructions: Vec<Instruction<'a>>,
     pub generator: bool,
     pub is_async: bool,
     pub directives: Vec<String>,
@@ -208,8 +202,8 @@ pub enum BlockKind {
     Catch,
 }
 
-impl Display for BlockKind {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl std::fmt::Display for BlockKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             BlockKind::Block => write!(f, "block"),
             BlockKind::Value => write!(f, "value"),
@@ -507,8 +501,8 @@ pub enum LogicalOperator {
     NullishCoalescing,
 }
 
-impl Display for LogicalOperator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl std::fmt::Display for LogicalOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             LogicalOperator::And => write!(f, "&&"),
             LogicalOperator::Or => write!(f, "||"),
@@ -522,10 +516,10 @@ impl Display for LogicalOperator {
 // =============================================================================
 
 #[derive(Debug, Clone)]
-pub struct Instruction {
+pub struct Instruction<'a> {
     pub id: EvaluationOrder,
     pub lvalue: Place,
-    pub value: InstructionValue,
+    pub value: InstructionValue<'a>,
     pub loc: Option<SourceLocation>,
     pub effects: Option<Vec<AliasingEffect>>,
 }
@@ -565,7 +559,7 @@ pub enum Pattern {
 // =============================================================================
 
 #[derive(Debug, Clone)]
-pub enum InstructionValue {
+pub enum InstructionValue<'a> {
     LoadLocal {
         place: Place,
         loc: Option<SourceLocation>,
@@ -639,10 +633,10 @@ pub enum InstructionValue {
         type_: Type,
         type_annotation_name: Option<String>,
         type_annotation_kind: Option<String>,
-        /// The original AST type annotation node, preserved for codegen.
-        /// For Flow: the inner type from TypeAnnotation.typeAnnotation
-        /// For TS: the TSType node from TSAsExpression/TSSatisfiesExpression
-        type_annotation: Option<Box<Value>>,
+        /// The original oxc AST type annotation subtree, preserved for codegen,
+        /// which re-emits it by cloning into the output allocator (and applying any
+        /// identifier renames via the environment for the rare rename case).
+        type_annotation: Option<&'a oxc::TSType<'a>>,
         loc: Option<SourceLocation>,
     },
     JsxExpression {
@@ -789,13 +783,15 @@ pub enum InstructionValue {
     },
     UnsupportedNode {
         node_type: Option<String>,
-        /// The original AST node, preserved verbatim so codegen can re-emit it.
-        original_node: Option<OriginalNode>,
+        /// The borrowed oxc statement node preserved verbatim, so codegen can clone
+        /// it into the output allocator and re-emit it (e.g. an inline TS `enum`,
+        /// which has runtime semantics but no HIR representation).
+        stmt: &'a oxc::Statement<'a>,
         loc: Option<SourceLocation>,
     },
 }
 
-impl InstructionValue {
+impl<'a> InstructionValue<'a> {
     pub fn loc(&self) -> Option<&SourceLocation> {
         match self {
             InstructionValue::LoadLocal { loc, .. }
@@ -855,7 +851,7 @@ pub enum PrimitiveValue {
     Undefined,
     Boolean(bool),
     Number(FloatValue),
-    String(JsString),
+    String(crate::react_compiler_diagnostics::JsString),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -884,8 +880,8 @@ pub enum BinaryOperator {
     InstanceOf,
 }
 
-impl Display for BinaryOperator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl std::fmt::Display for BinaryOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             BinaryOperator::Equal => write!(f, "=="),
             BinaryOperator::NotEqual => write!(f, "!="),
@@ -923,8 +919,8 @@ pub enum UnaryOperator {
     Void,
 }
 
-impl Display for UnaryOperator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl std::fmt::Display for UnaryOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             UnaryOperator::Minus => write!(f, "-"),
             UnaryOperator::Plus => write!(f, "+"),
@@ -942,8 +938,8 @@ pub enum UpdateOperator {
     Decrement,
 }
 
-impl Display for UpdateOperator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl std::fmt::Display for UpdateOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             UpdateOperator::Increment => write!(f, "++"),
             UpdateOperator::Decrement => write!(f, "--"),
@@ -1046,23 +1042,15 @@ impl IdentifierName {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Effect {
-    #[serde(rename = "<unknown>")]
     Unknown,
-    #[serde(rename = "freeze")]
     Freeze,
-    #[serde(rename = "read")]
     Read,
-    #[serde(rename = "capture")]
     Capture,
-    #[serde(rename = "mutate-iterator?")]
     ConditionallyMutateIterator,
-    #[serde(rename = "mutate?")]
     ConditionallyMutate,
-    #[serde(rename = "mutate")]
     Mutate,
-    #[serde(rename = "store")]
     Store,
 }
 
@@ -1082,8 +1070,8 @@ impl Effect {
     }
 }
 
-impl Display for Effect {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl std::fmt::Display for Effect {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Effect::Unknown => write!(f, "<unknown>"),
             Effect::Freeze => write!(f, "freeze"),
@@ -1153,8 +1141,8 @@ pub enum ObjectPropertyType {
     Method,
 }
 
-impl Display for ObjectPropertyType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl std::fmt::Display for ObjectPropertyType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ObjectPropertyType::Property => write!(f, "property"),
             ObjectPropertyType::Method => write!(f, "method"),
@@ -1168,8 +1156,8 @@ pub enum PropertyLiteral {
     Number(FloatValue),
 }
 
-impl Display for PropertyLiteral {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl std::fmt::Display for PropertyLiteral {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             PropertyLiteral::String(s) => write!(f, "{}", s),
             PropertyLiteral::Number(n) => write!(f, "{}", n),
@@ -1530,46 +1518,4 @@ pub fn is_plain_object_type(ty: &Type) -> bool {
 /// Returns true if the type is a startTransition function (BuiltInStartTransition).
 pub fn is_start_transition_type(ty: &Type) -> bool {
     matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_START_TRANSITION_ID)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_format_js_number() {
-        // Scientific notation for large numbers (>= 1e21)
-        assert_eq!(format_js_number(1e21), "1e+21");
-        assert_eq!(format_js_number(1.5e21), "1.5e+21");
-        assert_eq!(format_js_number(2.18739127891275e22), "2.18739127891275e+22");
-        assert_eq!(format_js_number(1e100), "1e+100");
-        assert_eq!(format_js_number(-1e21), "-1e+21");
-        assert_eq!(format_js_number(-1e100), "-1e+100");
-
-        // Scientific notation for small numbers (< 1e-6)
-        assert_eq!(format_js_number(1e-7), "1e-7");
-        assert_eq!(format_js_number(5e-7), "5e-7");
-        assert_eq!(format_js_number(1.5e-8), "1.5e-8");
-        assert_eq!(format_js_number(-1.5e-8), "-1.5e-8");
-
-        // Non-scientific large numbers (< 1e21)
-        assert_eq!(format_js_number(1e20), "100000000000000000000");
-        assert_eq!(format_js_number(1e-6), "0.000001");
-
-        // Integers
-        assert_eq!(format_js_number(0.0), "0");
-        assert_eq!(format_js_number(-0.0), "0");
-        assert_eq!(format_js_number(1.0), "1");
-        assert_eq!(format_js_number(100.0), "100");
-
-        // Regular floats
-        assert_eq!(format_js_number(1.5), "1.5");
-        assert_eq!(format_js_number(0.5), "0.5");
-        assert_eq!(format_js_number(0.1), "0.1");
-
-        // Special values
-        assert_eq!(format_js_number(f64::NAN), "NaN");
-        assert_eq!(format_js_number(f64::INFINITY), "Infinity");
-        assert_eq!(format_js_number(f64::NEG_INFINITY), "-Infinity");
-    }
 }

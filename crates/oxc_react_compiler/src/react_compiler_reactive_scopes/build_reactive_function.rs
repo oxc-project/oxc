@@ -24,10 +24,10 @@ use crate::react_compiler_hir::{
 };
 
 /// Convert the HIR CFG into a tree-structured ReactiveFunction.
-pub fn build_reactive_function(
-    hir: &HirFunction,
-    env: &Environment,
-) -> Result<ReactiveFunction, CompilerDiagnostic> {
+pub fn build_reactive_function<'a>(
+    hir: &HirFunction<'a>,
+    env: &Environment<'a>,
+) -> Result<ReactiveFunction<'a>, CompilerDiagnostic> {
     let mut ctx = Context::new(hir);
     let mut driver = Driver { cx: &mut ctx, hir, env };
 
@@ -104,8 +104,8 @@ impl ControlFlowTarget {
 // Context
 // =============================================================================
 
-struct Context<'a> {
-    ir: &'a HirFunction,
+struct Context<'a, 'h> {
+    ir: &'h HirFunction<'a>,
     next_schedule_id: u32,
     emitted: FxHashSet<BlockId>,
     scope_fallthroughs: FxHashSet<BlockId>,
@@ -114,8 +114,8 @@ struct Context<'a> {
     control_flow_stack: Vec<ControlFlowTarget>,
 }
 
-impl<'a> Context<'a> {
-    fn new(ir: &'a HirFunction) -> Self {
+impl<'a, 'h> Context<'a, 'h> {
+    fn new(ir: &'h HirFunction<'a>) -> Self {
         Self {
             ir,
             next_schedule_id: 0,
@@ -298,15 +298,18 @@ impl<'a> Context<'a> {
 // Driver
 // =============================================================================
 
-struct Driver<'a, 'b> {
-    cx: &'b mut Context<'a>,
-    hir: &'a HirFunction,
+struct Driver<'a, 'b, 'h> {
+    cx: &'b mut Context<'a, 'h>,
+    hir: &'h HirFunction<'a>,
     #[allow(dead_code)]
-    env: &'a Environment,
+    env: &'h Environment<'a>,
 }
 
-impl<'a, 'b> Driver<'a, 'b> {
-    fn traverse_block(&mut self, block_id: BlockId) -> Result<ReactiveBlock, CompilerDiagnostic> {
+impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
+    fn traverse_block(
+        &mut self,
+        block_id: BlockId,
+    ) -> Result<ReactiveBlock<'a>, CompilerDiagnostic> {
         let mut block_value = Vec::new();
         self.visit_block(block_id, &mut block_value)?;
         Ok(block_value)
@@ -315,7 +318,7 @@ impl<'a, 'b> Driver<'a, 'b> {
     fn visit_block(
         &mut self,
         mut block_id: BlockId,
-        block_value: &mut ReactiveBlock,
+        block_value: &mut ReactiveBlock<'a>,
     ) -> Result<(), CompilerDiagnostic> {
         // Use a loop to avoid deep recursion for fallthrough chains.
         // Each terminal that would tail-call visit_block(fallthrough, block_value)
@@ -960,7 +963,7 @@ impl<'a, 'b> Driver<'a, 'b> {
         block_id: BlockId,
         loc: Option<SourceLocation>,
         fallthrough: Option<BlockId>,
-    ) -> Result<ValueBlockResult, CompilerDiagnostic> {
+    ) -> Result<ValueBlockResult<'a>, CompilerDiagnostic> {
         let block = &self.hir.body.blocks[&block_id];
         let block_id_val = block.id;
         let terminal = block.terminal.clone();
@@ -1041,7 +1044,7 @@ impl<'a, 'b> Driver<'a, 'b> {
                 let final_result = self.visit_value_block(init_fallthrough, loc, None)?;
 
                 // Combine block instructions + init instruction, then wrap
-                let mut all_instrs: Vec<ReactiveInstruction> = instructions
+                let mut all_instrs: Vec<ReactiveInstruction<'a>> = instructions
                     .iter()
                     .map(|iid| {
                         let instr = &self.hir.instructions[iid.0 as usize];
@@ -1080,7 +1083,7 @@ impl<'a, 'b> Driver<'a, 'b> {
         test_block_id: BlockId,
         loc: Option<SourceLocation>,
         terminal_kind: &str,
-    ) -> Result<TestBlockResult, CompilerDiagnostic> {
+    ) -> Result<TestBlockResult<'a>, CompilerDiagnostic> {
         let test = self.visit_value_block(test_block_id, loc, None)?;
         let test_block = &self.hir.body.blocks[&test.block];
         match &test_block.terminal {
@@ -1107,7 +1110,7 @@ impl<'a, 'b> Driver<'a, 'b> {
     fn visit_value_block_terminal(
         &mut self,
         terminal: &Terminal,
-    ) -> Result<ValueTerminalResult, CompilerDiagnostic> {
+    ) -> Result<ValueTerminalResult<'a>, CompilerDiagnostic> {
         match terminal {
             Terminal::Sequence { block, fallthrough, id, loc } => {
                 let block_result = self.visit_value_block(*block, *loc, Some(*fallthrough))?;
@@ -1217,11 +1220,11 @@ impl<'a, 'b> Driver<'a, 'b> {
         instructions: &[InstructionId],
         block_id: BlockId,
         loc: Option<SourceLocation>,
-    ) -> ValueBlockResult {
+    ) -> ValueBlockResult<'a> {
         let last_id = instructions.last().expect("Expected non-empty instructions");
         let last_instr = &self.hir.instructions[last_id.0 as usize];
 
-        let remaining: Vec<ReactiveInstruction> = instructions[..instructions.len() - 1]
+        let remaining: Vec<ReactiveInstruction<'a>> = instructions[..instructions.len() - 1]
             .iter()
             .map(|iid| {
                 let instr = &self.hir.instructions[iid.0 as usize];
@@ -1279,14 +1282,14 @@ impl<'a, 'b> Driver<'a, 'b> {
     fn wrap_with_sequence(
         &self,
         instructions: &[InstructionId],
-        continuation: ValueBlockResult,
+        continuation: ValueBlockResult<'a>,
         loc: Option<SourceLocation>,
-    ) -> ValueBlockResult {
+    ) -> ValueBlockResult<'a> {
         if instructions.is_empty() {
             return continuation;
         }
 
-        let reactive_instrs: Vec<ReactiveInstruction> = instructions
+        let reactive_instrs: Vec<ReactiveInstruction<'a>> = instructions
             .iter()
             .map(|iid| {
                 let instr = &self.hir.instructions[iid.0 as usize];
@@ -1323,11 +1326,11 @@ impl<'a, 'b> Driver<'a, 'b> {
     /// TS: valueBlockResultToSequence()
     fn value_block_result_to_sequence(
         &self,
-        result: ValueBlockResult,
+        result: ValueBlockResult<'a>,
         loc: Option<SourceLocation>,
-    ) -> ReactiveValue {
+    ) -> ReactiveValue<'a> {
         // Collect all instructions from potentially nested SequenceExpressions
-        let mut instructions: Vec<ReactiveInstruction> = Vec::new();
+        let mut instructions: Vec<ReactiveInstruction<'a>> = Vec::new();
         let mut inner_value = result.value;
 
         // Flatten nested SequenceExpressions
@@ -1376,7 +1379,7 @@ impl<'a, 'b> Driver<'a, 'b> {
         block: BlockId,
         id: EvaluationOrder,
         loc: Option<SourceLocation>,
-    ) -> Result<Option<ReactiveStatement>, CompilerDiagnostic> {
+    ) -> Result<Option<ReactiveStatement<'a>>, CompilerDiagnostic> {
         let (target_block, target_kind) = self.cx.get_break_target(block)?;
         if self.cx.scope_fallthroughs.contains(&target_block) {
             if target_kind != ReactiveTerminalTargetKind::Implicit {
@@ -1399,7 +1402,7 @@ impl<'a, 'b> Driver<'a, 'b> {
         block: BlockId,
         id: EvaluationOrder,
         loc: Option<SourceLocation>,
-    ) -> Result<ReactiveStatement, CompilerDiagnostic> {
+    ) -> Result<ReactiveStatement<'a>, CompilerDiagnostic> {
         let (target_block, target_kind) = match self.cx.get_continue_target(block) {
             Some(result) => result,
             None => {
@@ -1422,22 +1425,22 @@ impl<'a, 'b> Driver<'a, 'b> {
 // Helper types
 // =============================================================================
 
-struct ValueBlockResult {
+struct ValueBlockResult<'a> {
     block: BlockId,
     place: Place,
-    value: ReactiveValue,
+    value: ReactiveValue<'a>,
     id: EvaluationOrder,
 }
 
-struct TestBlockResult {
-    test: ValueBlockResult,
+struct TestBlockResult<'a> {
+    test: ValueBlockResult<'a>,
     consequent: BlockId,
     alternate: BlockId,
     branch_loc: Option<SourceLocation>,
 }
 
-struct ValueTerminalResult {
-    value: ReactiveValue,
+struct ValueTerminalResult<'a> {
+    value: ReactiveValue<'a>,
     place: Place,
     fallthrough: BlockId,
     id: EvaluationOrder,

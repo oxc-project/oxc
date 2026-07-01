@@ -6,29 +6,15 @@
  */
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_ast::common::BaseNode;
-use crate::react_compiler_ast::declarations::{
-    ImportDeclaration, ImportKind, ImportSpecifier, ImportSpecifierData, ModuleExportName,
-};
-use crate::react_compiler_ast::expressions::{CallExpression, Expression, Identifier};
-use crate::react_compiler_ast::literals::StringLiteral;
-use crate::react_compiler_ast::patterns::{
-    ObjectPattern, ObjectPatternProp, ObjectPatternProperty, PatternLike,
-};
-use crate::react_compiler_ast::scope::ScopeInfo;
-use crate::react_compiler_ast::statements::{
-    Statement, VariableDeclaration, VariableDeclarationKind, VariableDeclarator,
-};
-use crate::react_compiler_ast::{Program, SourceType};
-use crate::react_compiler_diagnostics::{
-    CompilerError, CompilerErrorDetail, ErrorCategory, Position, SourceLocation,
-};
+use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
 use crate::react_compiler_hir::environment::BindingRename;
+use crate::scope::ScopeInfo;
 
-use super::compile_result::{DebugLogEntry, LoggerEvent, OrderedLogItem};
+use oxc_diagnostics::Diagnostics;
+
+use super::compile_result::{DebugLogEntry, OrderedLogItem};
 use super::plugin_options::{CompilerTarget, PluginOptions};
 use super::suppression::SuppressionRange;
-use crate::react_compiler::timing::TimingData;
 
 /// An import specifier tracked by ProgramContext.
 /// Corresponds to NonLocalImportSpecifier in the TS compiler.
@@ -44,18 +30,14 @@ pub struct NonLocalImportSpecifier {
 /// Equivalent to ProgramContext class in Imports.ts.
 pub struct ProgramContext {
     pub opts: PluginOptions,
-    pub filename: Option<String>,
-    /// The source filename from the parser's sourceFilename option.
-    /// This is the filename stored on AST node `loc.filename` fields,
-    /// which may differ from `filename` (e.g., no path prefix).
-    source_filename: Option<String>,
     pub code: Option<String>,
     pub react_runtime_module: String,
     pub suppressions: Vec<SuppressionRange>,
     pub has_module_scope_opt_out: bool,
-    pub events: Vec<LoggerEvent>,
-    /// Unified ordered log that interleaves events and debug entries
-    /// in the order they were emitted during compilation.
+    /// Diagnostics (errors/warnings) accumulated during compilation. Fatality is
+    /// decided separately by `panicThreshold`.
+    pub diagnostics: Diagnostics,
+    /// Debug-log entries (HIR dumps) emitted when the `debug` feature is enabled.
     pub ordered_log: Vec<OrderedLogItem>,
 
     // Pre-resolved import local names for codegen
@@ -65,9 +47,6 @@ pub struct ProgramContext {
 
     // Variable renames from lowering, to be applied back to the Babel AST
     pub renames: Vec<BindingRename>,
-
-    /// Timing data for profiling. Accumulates across all function compilations.
-    pub timing: TimingData,
 
     /// Whether debug logging is enabled (HIR formatting after each pass).
     pub debug_enabled: bool,
@@ -81,46 +60,29 @@ pub struct ProgramContext {
 impl ProgramContext {
     pub fn new(
         opts: PluginOptions,
-        filename: Option<String>,
         code: Option<String>,
         suppressions: Vec<SuppressionRange>,
         has_module_scope_opt_out: bool,
     ) -> Self {
         let react_runtime_module = get_react_compiler_runtime_module(&opts.target);
-        let profiling = opts.profiling;
         let debug_enabled = opts.debug;
         Self {
             opts,
-            filename,
-            source_filename: None,
             code,
             react_runtime_module,
             suppressions,
             has_module_scope_opt_out,
-            events: Vec::new(),
+            diagnostics: Diagnostics::new(),
             ordered_log: Vec::new(),
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
             renames: Vec::new(),
-            timing: TimingData::new(profiling),
             debug_enabled,
             already_compiled: FxHashSet::default(),
             known_referenced_names: FxHashSet::default(),
             imports: FxHashMap::default(),
         }
-    }
-
-    /// Set the source filename (from AST node loc.filename).
-    pub fn set_source_filename(&mut self, filename: Option<String>) {
-        if self.source_filename.is_none() {
-            self.source_filename = filename;
-        }
-    }
-
-    /// Get the source filename for logger events.
-    pub fn source_filename(&self) -> Option<String> {
-        self.source_filename.clone()
     }
 
     /// Check if a function at the given start position has already been compiled.
@@ -241,12 +203,6 @@ impl ProgramContext {
         self.known_referenced_names.extend(names.iter().cloned());
     }
 
-    /// Log a compilation event.
-    pub fn log_event(&mut self, event: LoggerEvent) {
-        self.ordered_log.push(OrderedLogItem::Event { event: event.clone() });
-        self.events.push(event);
-    }
-
     /// Log a debug entry (for debugLogIRs support).
     pub fn log_debug(&mut self, entry: DebugLogEntry) {
         self.ordered_log.push(OrderedLogItem::Debug { entry });
@@ -266,7 +222,7 @@ impl ProgramContext {
 /// Check for blocklisted import modules.
 /// Returns a CompilerError if any blocklisted imports are found.
 pub fn validate_restricted_imports(
-    program: &Program,
+    program: &oxc_ast::ast::Program,
     blocklisted: &Option<Vec<String>>,
 ) -> Option<CompilerError> {
     let blocklisted = match blocklisted {
@@ -277,193 +233,19 @@ pub fn validate_restricted_imports(
     let mut error = CompilerError::new();
 
     for stmt in &program.body {
-        if let Statement::ImportDeclaration(import) = stmt {
-            if import.source.value.as_str().is_some_and(|v| restricted.contains(v)) {
-                let mut detail = CompilerErrorDetail::new(
+        if let oxc_ast::ast::Statement::ImportDeclaration(import) = stmt {
+            if restricted.contains(import.source.value.as_str()) {
+                let detail = CompilerErrorDetail::new(
                     ErrorCategory::Todo,
                     "Bailing out due to blocklisted import",
                 )
                 .with_description(format!("Import from module {}", import.source.value));
-                detail.loc = import.base.loc.as_ref().map(|loc| SourceLocation {
-                    start: Position {
-                        line: loc.start.line,
-                        column: loc.start.column,
-                        index: loc.start.index,
-                    },
-                    end: Position {
-                        line: loc.end.line,
-                        column: loc.end.column,
-                        index: loc.end.index,
-                    },
-                });
                 error.push_error_detail(detail);
             }
         }
     }
 
     if error.has_any_errors() { Some(error) } else { None }
-}
-
-/// Insert import declarations into the program body.
-/// Handles both ESM imports and CommonJS require.
-///
-/// For existing imports of the same module (non-namespaced, value imports),
-/// new specifiers are merged into the existing declaration. Otherwise,
-/// new import/require statements are prepended to the program body.
-pub fn add_imports_to_program(program: &mut Program, context: &ProgramContext) {
-    if context.imports.is_empty() {
-        return;
-    }
-
-    // Collect existing non-namespaced imports by module name
-    let existing_import_indices: FxHashMap<String, usize> = program
-        .body
-        .iter()
-        .enumerate()
-        .filter_map(|(idx, stmt)| {
-            if let Statement::ImportDeclaration(import) = stmt {
-                if is_non_namespaced_import(import) {
-                    return Some((import.source.value.to_marker_string(), idx));
-                }
-            }
-            None
-        })
-        .collect();
-
-    let mut stmts: Vec<Statement> = Vec::new();
-    let mut sorted_modules: Vec<_> = context.imports.iter().collect();
-    sorted_modules.sort_by(|(a, _), (b, _)| a.to_lowercase().cmp(&b.to_lowercase()));
-
-    for (module_name, imports_map) in sorted_modules {
-        let sorted_imports = {
-            let mut sorted: Vec<_> = imports_map.values().collect();
-            sorted.sort_by_key(|s| &s.imported);
-            sorted
-        };
-
-        let import_specifiers: Vec<ImportSpecifier> =
-            sorted_imports.iter().map(|spec| make_import_specifier(spec)).collect();
-
-        // If an existing import of this module exists, merge into it
-        if let Some(&idx) = existing_import_indices.get(module_name.as_str()) {
-            if let Statement::ImportDeclaration(ref mut import) = program.body[idx] {
-                import.specifiers.extend(import_specifiers);
-            }
-        } else if matches!(program.source_type, SourceType::Module) {
-            // ESM: import { ... } from 'module'
-            stmts.push(Statement::ImportDeclaration(ImportDeclaration {
-                base: BaseNode::typed("ImportDeclaration"),
-                specifiers: import_specifiers,
-                source: StringLiteral {
-                    base: BaseNode::typed("StringLiteral"),
-                    value: module_name.clone().into(),
-                },
-                import_kind: None,
-                assertions: None,
-                attributes: None,
-            }));
-        } else {
-            // CommonJS: const { imported: local, ... } = require('module')
-            let properties: Vec<ObjectPatternProperty> = sorted_imports
-                .iter()
-                .map(|spec| {
-                    ObjectPatternProperty::ObjectProperty(ObjectPatternProp {
-                        base: BaseNode::typed("ObjectProperty"),
-                        key: Box::new(Expression::Identifier(Identifier {
-                            base: BaseNode::typed("Identifier"),
-                            name: spec.imported.clone(),
-                            type_annotation: None,
-                            optional: None,
-                            decorators: None,
-                        })),
-                        value: Box::new(PatternLike::Identifier(Identifier {
-                            base: BaseNode::typed("Identifier"),
-                            name: spec.name.clone(),
-                            type_annotation: None,
-                            optional: None,
-                            decorators: None,
-                        })),
-                        computed: false,
-                        shorthand: false,
-                        decorators: None,
-                        method: None,
-                    })
-                })
-                .collect();
-
-            stmts.push(Statement::VariableDeclaration(VariableDeclaration {
-                base: BaseNode::typed("VariableDeclaration"),
-                kind: VariableDeclarationKind::Const,
-                declarations: vec![VariableDeclarator {
-                    base: BaseNode::typed("VariableDeclarator"),
-                    id: PatternLike::ObjectPattern(ObjectPattern {
-                        base: BaseNode::typed("ObjectPattern"),
-                        properties,
-                        type_annotation: None,
-                        decorators: None,
-                    }),
-                    init: Some(Box::new(Expression::CallExpression(CallExpression {
-                        base: BaseNode::typed("CallExpression"),
-                        callee: Box::new(Expression::Identifier(Identifier {
-                            base: BaseNode::typed("Identifier"),
-                            name: "require".to_string(),
-                            type_annotation: None,
-                            optional: None,
-                            decorators: None,
-                        })),
-                        arguments: vec![Expression::StringLiteral(StringLiteral {
-                            base: BaseNode::typed("StringLiteral"),
-                            value: module_name.clone().into(),
-                        })],
-                        type_parameters: None,
-                        type_arguments: None,
-                        optional: None,
-                    }))),
-                    definite: None,
-                }],
-                declare: None,
-            }));
-        }
-    }
-
-    // Prepend new import statements to the program body
-    if !stmts.is_empty() {
-        let mut new_body = stmts;
-        new_body.append(&mut program.body);
-        program.body = new_body;
-    }
-}
-
-/// Create an ImportSpecifier AST node from a NonLocalImportSpecifier.
-fn make_import_specifier(spec: &NonLocalImportSpecifier) -> ImportSpecifier {
-    ImportSpecifier::ImportSpecifier(ImportSpecifierData {
-        base: BaseNode::typed("ImportSpecifier"),
-        local: Identifier {
-            base: BaseNode::typed("Identifier"),
-            name: spec.name.clone(),
-            type_annotation: None,
-            optional: None,
-            decorators: None,
-        },
-        imported: ModuleExportName::Identifier(Identifier {
-            base: BaseNode::typed("Identifier"),
-            name: spec.imported.clone(),
-            type_annotation: None,
-            optional: None,
-            decorators: None,
-        }),
-        import_kind: None,
-    })
-}
-
-/// Check if an import declaration is a non-namespaced value import.
-/// Matches `import { ... } from 'module'` but NOT:
-///   - `import * as Foo from 'module'` (namespace)
-///   - `import type { Foo } from 'module'` (type import)
-///   - `import typeof { Foo } from 'module'` (typeof import)
-fn is_non_namespaced_import(import: &ImportDeclaration) -> bool {
-    import.specifiers.iter().all(|s| matches!(s, ImportSpecifier::ImportSpecifier(_)))
-        && import.import_kind.as_ref().map_or(true, |k| matches!(k, ImportKind::Value))
 }
 
 /// Check if a name follows the React hook naming convention (use[A-Z0-9]...).

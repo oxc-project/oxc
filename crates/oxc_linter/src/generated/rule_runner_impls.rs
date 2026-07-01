@@ -3550,8 +3550,9 @@ impl RuleRunner for crate::rules::unicorn::prefer_dom_node_remove::PreferDomNode
 
 impl RuleRunner for crate::rules::unicorn::prefer_dom_node_text_content::PreferDomNodeTextContent {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::IdentifierName,
-        AstType::IdentifierReference,
+        AstType::AssignmentTargetPropertyIdentifier,
+        AstType::AssignmentTargetPropertyProperty,
+        AstType::BindingProperty,
         AstType::StaticMemberExpression,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;

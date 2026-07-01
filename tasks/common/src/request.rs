@@ -24,3 +24,13 @@ pub fn agent() -> Agent {
         .build();
     Agent::new_with_config(config)
 }
+
+/// Build an agent for talking to servers on localhost.
+///
+/// No proxy (proxy env vars must not reroute loopback traffic) and a generous
+/// timeout — the server bounds its own per-request work, but on a loaded
+/// machine requests can queue well past `agent()`'s 10 second global timeout.
+pub fn local_agent() -> Agent {
+    let config = Agent::config_builder().timeout_global(Some(Duration::from_mins(1))).build();
+    Agent::new_with_config(config)
+}

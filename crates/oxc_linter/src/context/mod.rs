@@ -4,6 +4,7 @@ use std::{borrow::Cow, ffi::OsStr, ops::Deref, path::Path, rc::Rc};
 
 use javascript_globals::{GLOBALS, GLOBALS_BUILTIN, GLOBALS_ES2026};
 
+use oxc_allocator::Allocator;
 use oxc_ast::ast::IdentifierReference;
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
@@ -106,6 +107,12 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn semantic(&self) -> &Semantic<'a> {
         self.parent.semantic()
+    }
+
+    /// Allocator that owns the parsed AST and semantic data.
+    #[inline]
+    pub fn allocator(&self) -> &'a Allocator {
+        self.parent.allocator()
     }
 
     #[inline]

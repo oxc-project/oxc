@@ -618,7 +618,18 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
                 || is_pure_callable_constructor(name)
                 || (name == "RegExp" && is_valid_regexp(&self.arguments))
             {
-                return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                    return true;
+                }
+                // `isNaN`/`isFinite` coerce their argument via `ToNumber`, which throws a
+                // TypeError on a BigInt. (The other pure globals — `parseInt`, `decodeURI`,
+                // `String()`, ... — `ToString`, which accepts BigInt.)
+                if matches!(name, "isNaN" | "isFinite")
+                    && any_arg_throws_to_number(&self.arguments, ctx)
+                {
+                    return true;
+                }
+                return false;
             }
         }
 
@@ -643,7 +654,36 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
         }
 
         if is_pure_global_method_call(object.name.as_str(), name) {
-            return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+            if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                return true;
+            }
+            let object = object.name.as_str();
+            // `ToNumber`-coercing methods throw a TypeError on a BigInt argument.
+            let coerces_to_number = match object {
+                "Math" => true,
+                "Date" => name == "UTC",
+                "String" => matches!(name, "fromCharCode" | "fromCodePoint"),
+                _ => false,
+            };
+            if coerces_to_number && any_arg_throws_to_number(&self.arguments, ctx) {
+                return true;
+            }
+            // `String.fromCodePoint(cp)` additionally throws a RangeError unless every
+            // `cp` is an integer in `[0, 0x10FFFF]`.
+            if object == "String"
+                && name == "fromCodePoint"
+                && self
+                    .arguments
+                    .iter()
+                    .any(|arg| arg.as_expression().is_some_and(is_invalid_code_point_literal))
+            {
+                return true;
+            }
+            // `URL.canParse(url)` has a required first argument; with none it throws.
+            if object == "URL" && name == "canParse" && self.arguments.is_empty() {
+                return true;
+            }
+            return false;
         }
 
         if object.name != "Object" {
@@ -734,6 +774,38 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             _ => true,
         }
     }
+}
+
+/// Whether any argument is provably a BigInt, for which `ToNumber` throws a `TypeError`.
+///
+/// A Symbol argument also throws, but oxc can never prove a value is a Symbol (there is
+/// no `ValueType::Symbol`), so — like esbuild — that case is left droppable to avoid
+/// keeping every `Math.abs(x)` / `isNaN(x)` on an undetermined argument.
+fn any_arg_throws_to_number<'a>(
+    args: &[Argument<'a>],
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    args.iter().any(|arg| arg.as_expression().is_some_and(|e| e.value_type(ctx).is_bigint()))
+}
+
+/// Whether `expr` is a numeric literal (optionally negated) that is not a valid Unicode
+/// code point — i.e. not an integer in `[0, 0x10FFFF]` — for which
+/// `String.fromCodePoint` throws a `RangeError`.
+///
+/// Non-literal arguments return `false` (left droppable, matching how other undetermined
+/// coercions are treated); a BigInt literal is handled by [`any_arg_throws_to_number`].
+fn is_invalid_code_point_literal(expr: &Expression) -> bool {
+    let value = match expr {
+        Expression::NumericLiteral(n) => n.value,
+        Expression::UnaryExpression(u) if u.operator == UnaryOperator::UnaryNegation => {
+            match &u.argument {
+                Expression::NumericLiteral(n) => -n.value,
+                _ => return false,
+            }
+        }
+        _ => return false,
+    };
+    !(value.fract() == 0.0 && (0.0..=1_114_111.0).contains(&value))
 }
 
 /// Check that the first argument won't produce a Symbol from `ToPrimitive`.

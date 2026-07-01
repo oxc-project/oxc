@@ -367,7 +367,8 @@ impl Linter {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
-        let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
+        let mut ctx_host =
+            Rc::new(ContextHost::new(path, context_sub_hosts, allocator, self.options, config));
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;

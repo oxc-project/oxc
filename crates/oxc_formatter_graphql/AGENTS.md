@@ -33,26 +33,31 @@ For Prettier(v3.9)'s graphql-js v17.x syntax support, see the Roadmap below.
 
 `format()` / `format_to_ir()` return `Err` whenever they cannot produce output they can stand behind:
 
-- oxc-graphql-parser is error-tolerant (returns a CST even for invalid input),
-  but any parse error bails out; never format a broken CST
-- print-stage internal errors are also `Err`
+- `oxc-graphql-parser` is error-tolerant (returns an AST even for invalid input), but any parse error bails out; never format a broken AST.
+  - Several printer shortcuts (e.g. `close_delim_start`) are sound only under this guarantee
 - The caller (oxfmt) decides what happens next
-  (diagnostics for standalone files, template-as-is for embedded)
+  - Diagnostics for standalone files, template-as-is for embedded
 
 ### Comments
 
 `graphql-js` does not attach comments to the AST;
 Prettier collects them from the token stream and attaches leading/trailing/dangling per node.
 
-This crate instead collects `COMMENT` trivia tokens from the CST into a positional cursor (`src/comments.rs`, mirrors `oxc_formatter_json`) and flushes them at sequence items, closing delimiters, and document tail.
+This crate instead collects comment spans into a positional cursor and flushes them at sequence items, closing delimiters, and document tail.
 
-`oxc-graphql-parser` attaches pending trivia to whichever node is open when the next significant token is consumed, so node ranges may start at a preceding comment.
-All layout decisions use significant-token positions (`sig_start` / `sig_end` in `src/print/mod.rs`), never `text_range()` directly.
+Node spans are significant-token spans (trivia is never included), so layout decisions use them directly.
+
+All span bridging lives in `src/print/span.rs`:
+
+- the usize→u32 conversion (`to_span`), the crate-local `Spanned` trait
+  - (the `oxc_span::Span` facade over the parser's own `span` fields / `span()` accessors)
+- and closing-delimiter derivation: `close_delim_start` for containers whose span ends one past their `}` / `]`
+- `find_close_after` for paren lists that have no wrapper node
 
 ### Strings
 
 Prettier prints `StringValue` from `graphql-js`'s _cooked_ value and re-encodes it.
-`oxc-graphql-parser` hands us raw source, so `src/print/value.rs` reimplements:
+`oxc-graphql-parser`'s `StringValue.value` is cooked but not to spec (no block-string dedent / blank-line trimming, no surrogate pairing), so `src/print/string.rs` cooks from `raw` itself:
 
 - the GraphQL spec `BlockStringValue` algorithm (dedent + blank-line trimming)
 - escape decoding for regular strings (incl. surrogate pairs)
@@ -83,7 +88,7 @@ Run `clippy` and resolve all warnings.
 
 ### Fixtures tests
 
-Snapshot tests driven by fixture files under `tests/fixtures/format/`,
+Snapshot tests driven by fixture files under `tests/fixtures/graphql/`,
 covering what the Prettier conformance suite does not:
 `# oxfmt-ignore` suppression, blank-line runs inside block strings,
 string escape re-encoding (incl. the `\r` divergence), empty `[]` / `{}` values,
@@ -139,7 +144,7 @@ npx prettier --parser=graphql [filename]
 
 A good large real-world stress input is GitHub's public GraphQL schema (~72k lines).
 It is too large and third-party to commit as a fixture,
-bug-catching shapes are distilled into `tests/fixtures/format/implements-width.graphql`):
+bug-catching shapes are distilled into `tests/fixtures/graphql/implements-width.graphql`):
 
 ```sh
 curl -sL https://docs.github.com/public/fpt/schema.docs.graphql -o /tmp/github-schema.graphql
@@ -159,7 +164,7 @@ These are in Prettier's unreleased changelog (main has them, next stable will).
 
 - [#18582](https://github.com/prettier/prettier/blob/main/changelog_unreleased/graphql/18582.md):
   allow `implements` lists to break. We currently implement never break
-  (see `tests/fixtures/format/implements-width.graphql`),
+  (see `tests/fixtures/graphql/implements-width.graphql`),
   so this is a layout divergence that will become incompatible, not a new-syntax item, lands sooner.
 - [#19171](https://github.com/prettier/prettier/blob/main/changelog_unreleased/graphql/19171.md):
   directives on directive definitions (`directive @a @b on QUERY`) + `extend directive`.

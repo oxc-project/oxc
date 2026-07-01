@@ -92,9 +92,9 @@ struct ExtractedMemoArgs {
 
 /// Drop manual memoization (useMemo/useCallback calls), replacing them
 /// with direct invocations/references.
-pub fn drop_manual_memoization(
-    func: &mut HirFunction,
-    env: &mut Environment,
+pub fn drop_manual_memoization<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
 ) -> Result<(), CompilerDiagnostic> {
     let is_validation_enabled = env.validate_preserve_existing_memoization_guarantees
         || env.validate_no_set_state_in_render
@@ -116,7 +116,7 @@ pub fn drop_manual_memoization(
     // - (if validation is enabled) collect manual memoization markers
     //
     // queued_inserts maps InstructionId -> new Instruction to insert after that instruction
-    let mut queued_inserts: FxHashMap<InstructionId, Instruction> = FxHashMap::default();
+    let mut queued_inserts: FxHashMap<InstructionId, Instruction<'a>> = FxHashMap::default();
 
     // Collect all block instruction lists up front to avoid borrowing func immutably
     // while needing to mutate it
@@ -193,15 +193,15 @@ pub fn drop_manual_memoization(
 // =============================================================================
 
 #[allow(clippy::too_many_arguments)]
-fn process_manual_memo_call(
-    func: &mut HirFunction,
-    env: &mut Environment,
+fn process_manual_memo_call<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
     instr_id: InstructionId,
     manual_memo: &ManualMemoCallee,
     sidemap: &mut IdentifierSidemap,
     is_validation_enabled: bool,
     next_manual_memo_id: &mut u32,
-    queued_inserts: &mut FxHashMap<InstructionId, Instruction>,
+    queued_inserts: &mut FxHashMap<InstructionId, Instruction<'a>>,
 ) {
     let instr = &func.instructions[instr_id.0 as usize];
 
@@ -269,8 +269,8 @@ fn process_manual_memo_call(
 }
 
 fn collect_temporaries(
-    func: &HirFunction,
-    env: &Environment,
+    func: &HirFunction<'_>,
+    env: &Environment<'_>,
     instr_id: InstructionId,
     sidemap: &mut IdentifierSidemap,
 ) {
@@ -369,10 +369,10 @@ fn collect_temporaries(
 /// Collect loads from named variables and property reads into `maybe_deps`.
 /// Returns the variable + property reads represented by the instruction value.
 pub fn collect_maybe_memo_dependencies(
-    value: &InstructionValue,
+    value: &InstructionValue<'_>,
     maybe_deps: &FxHashMap<IdentifierId, ManualMemoDependency>,
     optional: bool,
-    env: &Environment,
+    env: &Environment<'_>,
 ) -> Option<ManualMemoDependency> {
     match value {
         InstructionValue::LoadGlobal { binding, loc, .. } => Some(ManualMemoDependency {
@@ -442,11 +442,11 @@ pub fn collect_maybe_memo_dependencies(
 // Replacement helpers
 // =============================================================================
 
-fn get_manual_memoization_replacement(
+fn get_manual_memoization_replacement<'a>(
     fn_place: &Place,
     loc: Option<SourceLocation>,
     kind: ManualMemoKind,
-) -> InstructionValue {
+) -> InstructionValue<'a> {
     if kind == ManualMemoKind::UseMemo {
         // Replace with Call fn() - invoke the memo function directly
         InstructionValue::CallExpression { callee: fn_place.clone(), args: vec![], loc }
@@ -464,14 +464,14 @@ fn get_manual_memoization_replacement(
     }
 }
 
-fn make_manual_memoization_markers(
+fn make_manual_memoization_markers<'a>(
     fn_expr: &Place,
-    env: &mut Environment,
+    env: &mut Environment<'a>,
     deps_list: Option<Vec<ManualMemoDependency>>,
     deps_loc: Option<SourceLocation>,
     memo_decl: &Place,
     manual_memo_id: u32,
-) -> (Instruction, Instruction) {
+) -> (Instruction<'a>, Instruction<'a>) {
     let start = Instruction {
         id: EvaluationOrder(0),
         lvalue: create_temporary_place(env, fn_expr.loc.clone()),

@@ -12,9 +12,6 @@
 //! JS side of the bridge unchanged.
 
 use std::fmt;
-use std::str::from_utf8;
-
-use serde::{Serialize, Serializer};
 
 /// Invariant: `Repr::Utf8` holds every well-formed value and `Repr::Wtf16`
 /// only ill-formed ones (at least one unpaired surrogate). The derived
@@ -115,7 +112,7 @@ impl JsString {
                     .iter()
                     .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_lowercase());
             if well_formed {
-                let hex = from_utf8(&tail[PREFIX.len()..PREFIX.len() + 4])
+                let hex = std::str::from_utf8(&tail[PREFIX.len()..PREFIX.len() + 4])
                     .expect("ascii hex is valid utf8");
                 let unit = u16::from_str_radix(hex, 16).expect("validated hex digits");
                 units.extend(s[segment_start..idx].encode_utf16());
@@ -238,85 +235,5 @@ impl PartialEq<&str> for JsString {
 impl fmt::Display for JsString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(&self.to_escaped_string())
-    }
-}
-
-impl Serialize for JsString {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(&self.to_marker_string())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::JsString;
-    use super::JsStringRef;
-
-    #[test]
-    fn as_ref_views_match_well_formedness() {
-        assert!(matches!(JsString::from("plain").as_ref(), JsStringRef::Utf8("plain")));
-        assert!(matches!(
-            JsString::from_code_units(vec![0xD83E]).as_ref(),
-            JsStringRef::Wtf16(&[0xD83E])
-        ));
-        // Well-formed code units normalize to the Utf8 representation, so
-        // equal logical strings are equal values regardless of how they
-        // were constructed.
-        assert_eq!(
-            JsString::from_code_units("plain".encode_utf16().collect()),
-            JsString::from("plain")
-        );
-    }
-
-    #[test]
-    fn marker_round_trip_preserves_lone_surrogates() {
-        let js = JsString::from_marker_string("__SURROGATE_D83E__");
-        assert_eq!(js.code_units(), vec![0xD83E]);
-        assert_eq!(js.to_marker_string(), "__SURROGATE_D83E__");
-        assert_eq!(js.to_escaped_string(), "\\ud83e");
-    }
-
-    #[test]
-    fn paired_halves_render_as_the_supplementary_character() {
-        let js = JsString::from_code_units(vec![0xD83E, 0xDD21]);
-        assert_eq!(js.as_str(), Some("\u{1F921}"));
-    }
-
-    #[test]
-    fn plain_strings_stay_utf8_and_compare_with_str() {
-        let js = JsString::from("use memo");
-        assert!(js == "use memo");
-        assert_eq!(js.to_marker_string(), "use memo");
-    }
-
-    #[test]
-    fn malformed_marker_text_is_kept_literally() {
-        let js = JsString::from_marker_string("__SURROGATE_XYZ__");
-        assert_eq!(js.as_str(), Some("__SURROGATE_XYZ__"));
-    }
-
-    #[test]
-    fn multibyte_text_after_marker_prefix_does_not_panic() {
-        let input = "__SURROGATE_\u{20AC}\u{20AC}";
-        let js = JsString::from_marker_string(input);
-        assert_eq!(js.as_str(), Some(input));
-
-        let truncated = "__SURROGATE_D8";
-        assert_eq!(JsString::from_marker_string(truncated).as_str(), Some(truncated));
-
-        let mixed = "a\u{20AC}__SURROGATE_D83E__b\u{20AC}";
-        let js = JsString::from_marker_string(mixed);
-        let mut expected: Vec<u16> = "a\u{20AC}".encode_utf16().collect();
-        expected.push(0xD83E);
-        expected.extend("b\u{20AC}".encode_utf16());
-        assert_eq!(js.code_units(), expected);
-    }
-
-    #[test]
-    fn lowercase_hex_markers_are_not_decoded() {
-        // The bridge emits uppercase hex only; lowercase marker-shaped text is
-        // user text and must survive verbatim.
-        let input = "__SURROGATE_d83e__";
-        assert_eq!(JsString::from_marker_string(input).as_str(), Some(input));
     }
 }

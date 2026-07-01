@@ -1,7 +1,8 @@
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::{Parser, ParserReturn};
-use oxc_react_compiler::{default_plugin_options, transform};
+use oxc_react_compiler::{PluginOptions, transform};
+use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::TestFiles;
 
 fn bench_react_compiler(criterion: &mut Criterion) {
@@ -12,7 +13,7 @@ fn bench_react_compiler(criterion: &mut Criterion) {
         let source_text = &file.source_text;
         let source_type = file.source_type;
 
-        let options = default_plugin_options();
+        let options = PluginOptions::default();
 
         // Create `Allocator` outside of `bench_function`, so the same allocator is
         // used for both the warmup and measurement phases.
@@ -28,7 +29,17 @@ fn bench_react_compiler(criterion: &mut Criterion) {
                 let ParserReturn { mut program, .. } =
                     Parser::new(&allocator, source_text, source_type).parse();
 
-                runner.run(|| transform(&mut program, &allocator, options.clone()));
+                runner.run(|| {
+                    let mut result = {
+                        let semantic =
+                            SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
+                        transform(&program, &semantic, &allocator, options.clone())
+                    };
+                    if let Some(compiled) = result.program.take() {
+                        program = compiled;
+                    }
+                    result
+                });
             });
         });
     }

@@ -42,7 +42,7 @@ pub enum OutputMode {
     Lint,
 }
 
-pub struct Environment {
+pub struct Environment<'a> {
     // Counters
     pub next_block_id_counter: u32,
     pub next_scope_id_counter: u32,
@@ -52,7 +52,7 @@ pub struct Environment {
     pub identifiers: Vec<Identifier>,
     pub types: Vec<Type>,
     pub scopes: Vec<ReactiveScope>,
-    pub functions: Vec<HirFunction>,
+    pub functions: Vec<HirFunction<'a>>,
 
     // Error accumulation
     pub errors: CompilerError,
@@ -65,9 +65,6 @@ pub struct Environment {
 
     // Source file code (for fast refresh hash computation)
     pub code: Option<String>,
-
-    // Source file name (for instrumentation)
-    pub filename: Option<String>,
 
     // Pre-resolved import local names for instrumentation/hook guards.
     // Set by the program-level code before compilation.
@@ -109,7 +106,7 @@ pub struct Environment {
     default_mutating_hook: Option<Global>,
 
     // Outlined functions: functions extracted from the component during outlining passes
-    outlined_functions: Vec<OutlinedFunctionEntry>,
+    outlined_functions: Vec<OutlinedFunctionEntry<'a>>,
 
     // Known names for collision-aware UID generation. Lazily populated from
     // identifiers on first use, then updated with each generated name.
@@ -120,12 +117,12 @@ pub struct Environment {
 /// An outlined function entry, stored on Environment during compilation.
 /// Corresponds to TS `{ fn: HIRFunction, type: ReactFunctionType | null }`.
 #[derive(Debug, Clone)]
-pub struct OutlinedFunctionEntry {
-    pub func: HirFunction,
+pub struct OutlinedFunctionEntry<'a> {
+    pub func: HirFunction<'a>,
     pub fn_type: Option<ReactFunctionType>,
 }
 
-impl Environment {
+impl<'a> Environment<'a> {
     pub fn new() -> Self {
         Self::with_config(EnvironmentConfig::default())
     }
@@ -184,7 +181,6 @@ impl Environment {
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
             code: None,
-            filename: None,
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
@@ -231,7 +227,6 @@ impl Environment {
             fn_type,
             output_mode: self.output_mode,
             code: self.code.clone(),
-            filename: self.filename.clone(),
             instrument_fn_name: self.instrument_fn_name.clone(),
             instrument_gating_name: self.instrument_gating_name.clone(),
             hook_guard_name: self.hook_guard_name.clone(),
@@ -322,7 +317,7 @@ impl Environment {
         self.next_type_id()
     }
 
-    pub fn add_function(&mut self, func: HirFunction) -> FunctionId {
+    pub fn add_function(&mut self, func: HirFunction<'a>) -> FunctionId {
         let id = FunctionId(self.functions.len() as u32);
         self.functions.push(func);
         id
@@ -892,17 +887,17 @@ impl Environment {
 
     /// Record an outlined function (extracted during outlineFunctions or outlineJSX).
     /// Corresponds to TS `env.outlineFunction(fn, type)`.
-    pub fn outline_function(&mut self, func: HirFunction, fn_type: Option<ReactFunctionType>) {
+    pub fn outline_function(&mut self, func: HirFunction<'a>, fn_type: Option<ReactFunctionType>) {
         self.outlined_functions.push(OutlinedFunctionEntry { func, fn_type });
     }
 
     /// Get the outlined functions accumulated during compilation.
-    pub fn get_outlined_functions(&self) -> &[OutlinedFunctionEntry] {
+    pub fn get_outlined_functions(&self) -> &[OutlinedFunctionEntry<'a>] {
         &self.outlined_functions
     }
 
     /// Take the outlined functions, leaving the vec empty.
-    pub fn take_outlined_functions(&mut self) -> Vec<OutlinedFunctionEntry> {
+    pub fn take_outlined_functions(&mut self) -> Vec<OutlinedFunctionEntry<'a>> {
         take(&mut self.outlined_functions)
     }
 
@@ -976,7 +971,7 @@ impl Environment {
     }
 }
 
-impl Default for Environment {
+impl Default for Environment<'_> {
     fn default() -> Self {
         Self::new()
     }
@@ -1006,85 +1001,4 @@ pub fn is_react_like_name(name: &str) -> bool {
         return true;
     }
     is_hook_name(name)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_is_hook_name() {
-        assert!(is_hook_name("useState"));
-        assert!(is_hook_name("useEffect"));
-        assert!(is_hook_name("useMyHook"));
-        assert!(is_hook_name("use3rdParty"));
-        assert!(!is_hook_name("use"));
-        assert!(!is_hook_name("used"));
-        assert!(!is_hook_name("useless"));
-        assert!(!is_hook_name("User"));
-        assert!(!is_hook_name("foo"));
-    }
-
-    #[test]
-    fn test_environment_has_globals() {
-        let env = Environment::new();
-        assert!(env.globals().contains_key("useState"));
-        assert!(env.globals().contains_key("useEffect"));
-        assert!(env.globals().contains_key("useRef"));
-        assert!(env.globals().contains_key("Math"));
-        assert!(env.globals().contains_key("console"));
-        assert!(env.globals().contains_key("Array"));
-        assert!(env.globals().contains_key("Object"));
-    }
-
-    #[test]
-    fn test_get_property_type_array() {
-        let mut env = Environment::new();
-        let array_type = Type::Object { shape_id: Some("BuiltInArray".to_string()) };
-        let map_type = env.get_property_type(&array_type, "map").unwrap();
-        assert!(map_type.is_some());
-        let push_type = env.get_property_type(&array_type, "push").unwrap();
-        assert!(push_type.is_some());
-        let nonexistent = env.get_property_type(&array_type, "nonExistentMethod").unwrap();
-        assert!(nonexistent.is_none());
-    }
-
-    #[test]
-    fn test_get_function_signature() {
-        let env = Environment::new();
-        let use_state_type = env.globals().get("useState").unwrap();
-        let sig = env.get_function_signature(use_state_type).unwrap();
-        assert!(sig.is_some());
-        let sig = sig.unwrap();
-        assert!(sig.hook_kind.is_some());
-        assert_eq!(sig.hook_kind.as_ref().unwrap(), &HookKind::UseState);
-    }
-
-    #[test]
-    fn test_get_global_declaration() {
-        let mut env = Environment::new();
-        // Global binding
-        let binding = NonLocalBinding::Global { name: "Math".to_string() };
-        let result = env.get_global_declaration(&binding, None).unwrap();
-        assert!(result.is_some());
-
-        // Import from react
-        let binding = NonLocalBinding::ImportSpecifier {
-            name: "useState".to_string(),
-            module: "react".to_string(),
-            imported: "useState".to_string(),
-        };
-        let result = env.get_global_declaration(&binding, None).unwrap();
-        assert!(result.is_some());
-
-        // Unknown global
-        let binding = NonLocalBinding::Global { name: "unknownThing".to_string() };
-        let result = env.get_global_declaration(&binding, None).unwrap();
-        assert!(result.is_none());
-
-        // Hook-like name gets default hook type
-        let binding = NonLocalBinding::Global { name: "useCustom".to_string() };
-        let result = env.get_global_declaration(&binding, None).unwrap();
-        assert!(result.is_some());
-    }
 }

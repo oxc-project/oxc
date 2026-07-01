@@ -1,15 +1,9 @@
-pub mod code_frame;
 pub mod js_string;
 
 pub use js_string::JsString;
 
-use std::error::Error;
-use std::fmt::{Display, Formatter, Result};
-
-use serde::{Deserialize, Serialize};
-
 /// Error categories matching the TS ErrorCategory enum
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorCategory {
     Hooks,
     CapitalizedCalls,
@@ -40,7 +34,7 @@ pub enum ErrorCategory {
 }
 
 /// Error severity levels
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorSeverity {
     Error,
     Warning,
@@ -79,7 +73,7 @@ impl ErrorCategory {
 }
 
 /// Suggestion operations for auto-fixes
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub enum CompilerSuggestionOperation {
     InsertBefore,
     InsertAfter,
@@ -88,7 +82,7 @@ pub enum CompilerSuggestionOperation {
 }
 
 /// A compiler suggestion for fixing an error
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct CompilerSuggestion {
     pub op: CompilerSuggestionOperation,
     pub range: (usize, usize),
@@ -99,18 +93,17 @@ pub struct CompilerSuggestion {
 /// Source location (matches Babel's SourceLocation format)
 /// This is the HIR source location, separate from AST's BaseNode location.
 /// GeneratedSource is represented as None.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SourceLocation {
     pub start: Position,
     pub end: Position,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Position {
     pub line: u32,
     pub column: u32,
     /// Byte offset in the source file. Preserved for logger event serialization.
-    #[serde(default, skip_serializing)]
     pub index: Option<u32>,
 }
 
@@ -118,7 +111,7 @@ pub struct Position {
 pub const GENERATED_SOURCE: Option<SourceLocation> = None;
 
 /// Detail for a diagnostic
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub enum CompilerDiagnosticDetail {
     Error {
         loc: Option<SourceLocation>,
@@ -126,7 +119,6 @@ pub enum CompilerDiagnosticDetail {
         /// The identifier name from the AST source location, if this error
         /// points to an identifier node. Preserved for logger event serialization
         /// to match Babel's SourceLocation.identifierName field.
-        #[serde(skip)]
         identifier_name: Option<String>,
     },
     Hint {
@@ -204,7 +196,7 @@ impl CompilerDiagnostic {
 }
 
 /// Legacy-style error detail (matches CompilerErrorDetail in TS)
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct CompilerErrorDetail {
     pub category: ErrorCategory,
     pub reason: String,
@@ -407,8 +399,8 @@ impl From<CompilerDiagnostic> for CompilerError {
     }
 }
 
-impl Display for CompilerError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl std::fmt::Display for CompilerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for detail in &self.details {
             match detail {
                 CompilerErrorOrDiagnostic::Diagnostic(d) => {
@@ -430,7 +422,7 @@ impl Display for CompilerError {
     }
 }
 
-impl Error for CompilerError {}
+impl std::error::Error for CompilerError {}
 
 pub fn format_category_heading(category: ErrorCategory) -> &'static str {
     match category {

@@ -34,7 +34,7 @@ const EARLY_RETURN_SENTINEL: &str = "react.early_return_sentinel";
 
 /// Propagate early return semantics through reactive scopes.
 /// TS: `propagateEarlyReturns`
-pub fn propagate_early_returns(func: &mut ReactiveFunction, env: &mut Environment) {
+pub fn propagate_early_returns<'a>(func: &mut ReactiveFunction<'a>, env: &mut Environment<'a>) {
     let mut transform = Transform { env };
     let mut state = State { within_reactive_scope: false, early_return_value: None };
     // The TS version doesn't produce errors from this pass, so we ignore the Result.
@@ -62,21 +62,21 @@ struct State {
 // =============================================================================
 
 /// TS: `class Transform extends ReactiveFunctionTransform<State>`
-struct Transform<'a> {
-    env: &'a mut Environment,
+struct Transform<'a, 'e> {
+    env: &'e mut Environment<'a>,
 }
 
-impl<'a> ReactiveFunctionTransform for Transform<'a> {
+impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
     type State = State;
 
-    fn env(&self) -> &Environment {
+    fn env(&self) -> &Environment<'a> {
         self.env
     }
 
     /// TS: `override visitScope`
     fn visit_scope(
         &mut self,
-        scope_block: &mut ReactiveScopeBlock,
+        scope_block: &mut ReactiveScopeBlock<'a>,
         parent_state: &mut State,
     ) -> Result<(), CompilerError> {
         let scope_id = scope_block.scope;
@@ -108,9 +108,9 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
     /// TS: `override transformTerminal`
     fn transform_terminal(
         &mut self,
-        stmt: &mut ReactiveTerminalStatement,
+        stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut State,
-    ) -> Result<Transformed<ReactiveStatement>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         if state.within_reactive_scope {
             if let ReactiveTerminal::Return { value, .. } = &stmt.terminal {
                 let loc = value.loc;
@@ -175,9 +175,9 @@ impl<'a> ReactiveFunctionTransform for Transform<'a> {
 // Apply early return transformation to the outermost scope
 // =============================================================================
 
-fn apply_early_return_to_scope(
-    scope_block: &mut ReactiveScopeBlock,
-    env: &mut Environment,
+fn apply_early_return_to_scope<'a>(
+    scope_block: &mut ReactiveScopeBlock<'a>,
+    env: &mut Environment<'a>,
     early_return: &EarlyReturnInfo,
 ) {
     let scope_id = scope_block.scope;
@@ -340,7 +340,7 @@ fn create_temporary_place_id(env: &mut Environment, loc: Option<SourceLocation>)
     id
 }
 
-fn promote_temporary(env: &mut Environment, identifier_id: IdentifierId) {
+fn promote_temporary<'a>(env: &mut Environment<'a>, identifier_id: IdentifierId) {
     let decl_id = env.identifiers[identifier_id.0 as usize].declaration_id;
     env.identifiers[identifier_id.0 as usize].name =
         Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
