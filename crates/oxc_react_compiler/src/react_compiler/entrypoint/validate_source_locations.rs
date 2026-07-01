@@ -18,7 +18,7 @@ use crate::react_compiler_ast::expressions::{
     ArrowFunctionBody, ArrowFunctionExpression, Expression, FunctionExpression,
     ObjectExpressionProperty,
 };
-use crate::react_compiler_ast::patterns::{ObjectPatternProperty, PatternLike};
+use crate::react_compiler_ast::patterns::PatternLike;
 use crate::react_compiler_ast::statements::{ForInOfLeft, ForInit, Statement, VariableDeclaration};
 use crate::react_compiler_diagnostics::{
     CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, Position as DiagPosition,
@@ -241,45 +241,10 @@ fn is_manual_memoization(expr: &Expression) -> bool {
 fn collect_important_original_locations(
     func: &FunctionNode<'_>,
 ) -> FxHashMap<String, ImportantLocation> {
-    let mut locations = FxHashMap::default();
-
-    // Note: TS uses func.traverse() which visits DESCENDANTS only, not the root
-    // function node itself. So we don't record the root function as important.
-    match func {
-        FunctionNode::FunctionDeclaration(f) => {
-            if let Some(id) = &f.id {
-                record_important("Identifier", &id.base.loc, &mut locations);
-            }
-            for param in &f.params {
-                collect_original_pattern(param, &mut locations);
-            }
-            collect_original_block(&f.body.body, false, &mut locations);
-        }
-        FunctionNode::FunctionExpression(f) => {
-            if let Some(id) = &f.id {
-                record_important("Identifier", &id.base.loc, &mut locations);
-            }
-            for param in &f.params {
-                collect_original_pattern(param, &mut locations);
-            }
-            collect_original_block(&f.body.body, false, &mut locations);
-        }
-        FunctionNode::ArrowFunctionExpression(f) => {
-            for param in &f.params {
-                collect_original_pattern(param, &mut locations);
-            }
-            match f.body.as_ref() {
-                ArrowFunctionBody::BlockStatement(block) => {
-                    collect_original_block(&block.body, false, &mut locations);
-                }
-                ArrowFunctionBody::Expression(expr) => {
-                    collect_original_expression(expr, &mut locations);
-                }
-            }
-        }
-    }
-
-    locations
+    // Stage 1a: validation is off by default; this walked the Babel AST. Stubbed to
+    // compile; re-port to the oxc AST when re-enabling source-location validation.
+    let _ = func;
+    FxHashMap::default()
 }
 
 fn record_important(
@@ -696,7 +661,9 @@ fn collect_original_pattern(
         PatternLike::ObjectPattern(op) => {
             for prop in &op.properties {
                 match prop {
-                    ObjectPatternProperty::ObjectProperty(p) => {
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(
+                        p,
+                    ) => {
                         if p.computed {
                             collect_original_expression(&p.key, locations);
                         } else if let Expression::Identifier(id) = p.key.as_ref() {
@@ -704,7 +671,7 @@ fn collect_original_pattern(
                         }
                         collect_original_pattern(&p.value, locations);
                     }
-                    ObjectPatternProperty::RestElement(r) => {
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
                         collect_original_pattern(&r.argument, locations);
                     }
                 }
@@ -1187,12 +1154,14 @@ fn collect_generated_pattern(
             record_generated("ObjectPattern", &op.base.loc, locations);
             for prop in &op.properties {
                 match prop {
-                    ObjectPatternProperty::ObjectProperty(p) => {
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::ObjectProperty(
+                        p,
+                    ) => {
                         record_generated("ObjectProperty", &p.base.loc, locations);
                         collect_generated_expression(&p.key, locations);
                         collect_generated_pattern(&p.value, locations);
                     }
-                    ObjectPatternProperty::RestElement(r) => {
+                    crate::react_compiler_ast::patterns::ObjectPatternProperty::RestElement(r) => {
                         record_generated("RestElement", &r.base.loc, locations);
                         collect_generated_pattern(&r.argument, locations);
                     }

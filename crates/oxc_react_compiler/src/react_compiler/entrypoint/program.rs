@@ -89,9 +89,9 @@ const OPT_OUT_DIRECTIVES: &[&str] = &["use no forget", "use no memo"];
 
 /// A function found in the program that should be compiled
 #[allow(dead_code)]
-struct CompileSource<'a> {
+struct CompileSource {
     kind: CompileSourceKind,
-    fn_node: FunctionNode<'a>,
+    original_kind: OriginalFnKind,
     /// Location of this function in the AST for logging
     fn_name: Option<String>,
     fn_loc: Option<SourceLocation>,
@@ -1352,11 +1352,12 @@ fn compiler_error_to_info(err: &CompilerError, filename: Option<&str>) -> Compil
 /// Returns `CodegenFunction` on success or `CompilerError` on failure.
 /// Debug log entries are accumulated on `context.debug_logs`.
 fn try_compile_function(
-    source: &CompileSource<'_>,
+    source: &CompileSource,
     scope_info: &ScopeInfo,
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
+    fn_map: &FxHashMap<u32, FunctionNode<'_>>,
 ) -> Result<CodegenFunction, CompilerError> {
     // Check for suppressions that affect this function
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
@@ -1371,9 +1372,13 @@ fn try_compile_function(
         }
     }
 
-    // Run the compilation pipeline
+    // Run the compilation pipeline. The discovery records the function's
+    // node_id; map it back to the oxc FunctionNode for lowering.
+    let fn_node = *fn_map
+        .get(&source.fn_node_id.expect("compiled function has a node id"))
+        .expect("oxc FunctionNode for discovered function");
     pipeline::compile_fn(
-        &source.fn_node,
+        &fn_node,
         source.fn_name.as_deref(),
         scope_info,
         source.fn_type,
@@ -1389,11 +1394,12 @@ fn try_compile_function(
 /// `Ok(None)` when the function was skipped or lint-only,
 /// or `Err(CompileResult)` if a fatal error should short-circuit the program.
 fn process_fn(
-    source: &CompileSource<'_>,
+    source: &CompileSource,
     scope_info: &ScopeInfo,
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
+    fn_map: &FxHashMap<u32, FunctionNode<'_>>,
 ) -> Result<Option<CodegenFunction>, CompileResult> {
     // Parse directives from the function body
     let opt_in_result =
@@ -1413,7 +1419,8 @@ fn process_fn(
     };
 
     // Attempt compilation
-    let compile_result = try_compile_function(source, scope_info, output_mode, env_config, context);
+    let compile_result =
+        try_compile_function(source, scope_info, output_mode, env_config, context, fn_map);
 
     match compile_result {
         Err(err) => {
@@ -1530,7 +1537,7 @@ fn should_skip_compilation(program: &Program, options: &PluginOptions) -> bool {
 /// Information about an expression that might be a function to compile
 struct FunctionInfo<'a> {
     name: Option<String>,
-    fn_node: FunctionNode<'a>,
+    original_kind: OriginalFnKind,
     params: &'a [PatternLike],
     body: FunctionBody<'a>,
     body_directives: Vec<Directive>,
@@ -1546,7 +1553,7 @@ struct FunctionInfo<'a> {
 fn fn_info_from_decl(decl: &FunctionDeclaration) -> FunctionInfo<'_> {
     FunctionInfo {
         name: get_function_name_from_id(decl.id.as_ref()),
-        fn_node: FunctionNode::FunctionDeclaration(decl),
+        original_kind: OriginalFnKind::FunctionDeclaration,
         params: &decl.params,
         body: FunctionBody::Block(&decl.body),
         body_directives: decl.body.directives.clone(),
@@ -1565,7 +1572,7 @@ fn fn_info_from_func_expr<'a>(
 ) -> FunctionInfo<'a> {
     FunctionInfo {
         name: inferred_name,
-        fn_node: FunctionNode::FunctionExpression(expr),
+        original_kind: OriginalFnKind::FunctionExpression,
         params: &expr.params,
         body: FunctionBody::Block(&expr.body),
         body_directives: expr.body.directives.clone(),
@@ -1590,7 +1597,7 @@ fn fn_info_from_arrow<'a>(
     };
     FunctionInfo {
         name: inferred_name,
-        fn_node: FunctionNode::ArrowFunctionExpression(expr),
+        original_kind: OriginalFnKind::ArrowFunctionExpression,
         params: &expr.params,
         body,
         body_directives: directives,
@@ -1606,7 +1613,7 @@ fn try_make_compile_source<'a>(
     info: FunctionInfo<'a>,
     opts: &PluginOptions,
     context: &mut ProgramContext,
-) -> Option<CompileSource<'a>> {
+) -> Option<CompileSource> {
     // Skip if already compiled (identified by node_id)
     if let Some(nid) = info.base.node_id {
         if context.is_already_compiled(nid) {
@@ -1633,7 +1640,7 @@ fn try_make_compile_source<'a>(
 
     Some(CompileSource {
         kind: CompileSourceKind::Original,
-        fn_node: info.fn_node,
+        original_kind: info.original_kind,
         fn_name: info.name,
         fn_loc: base_node_loc(info.base),
         fn_ast_loc: info.base.loc.clone(),
@@ -1676,10 +1683,10 @@ fn get_declarator_name(decl: &VariableDeclarator) -> Option<String> {
 /// nested scopes for for/switch/etc. — so `len() > 1` means the function
 /// is inside a nested scope (not at program level), matching Babel's
 /// `fn.scope.getProgramParent() !== fn.scope.parent` check.
-struct FunctionDiscoveryVisitor<'a, 'ast> {
+struct FunctionDiscoveryVisitor<'a> {
     opts: &'a PluginOptions,
     context: &'a mut ProgramContext,
-    queue: Vec<CompileSource<'ast>>,
+    queue: Vec<CompileSource>,
     /// The inferred name from the current VariableDeclarator, if any.
     current_declarator_name: Option<String>,
     /// Stack tracking callee names of enclosing CallExpressions.
@@ -1695,7 +1702,7 @@ struct FunctionDiscoveryVisitor<'a, 'ast> {
     skip_body: bool,
 }
 
-impl<'a, 'ast> FunctionDiscoveryVisitor<'a, 'ast> {
+impl<'a> FunctionDiscoveryVisitor<'a> {
     fn new(opts: &'a PluginOptions, context: &'a mut ProgramContext) -> Self {
         Self {
             opts,
@@ -1726,7 +1733,7 @@ impl<'a, 'ast> FunctionDiscoveryVisitor<'a, 'ast> {
     }
 }
 
-impl<'a, 'ast> Visitor<'ast> for FunctionDiscoveryVisitor<'a, 'ast> {
+impl<'a, 'ast> Visitor<'ast> for FunctionDiscoveryVisitor<'a> {
     fn traverse_function_bodies(&self) -> bool {
         // Dynamic: only skip the body of functions that were queued for compilation.
         // Non-queued functions have their bodies traversed to find nested declarations
@@ -1877,7 +1884,7 @@ fn find_functions_to_compile<'a>(
     opts: &PluginOptions,
     context: &mut ProgramContext,
     scope: &ScopeInfo,
-) -> Vec<CompileSource<'a>> {
+) -> Vec<CompileSource> {
     let mut visitor = FunctionDiscoveryVisitor::new(opts, context);
     let mut walker = AstWalker::new(scope);
     walker.walk_program(&mut visitor, program);
@@ -1893,7 +1900,7 @@ struct CompiledFunction<'a> {
     #[allow(dead_code)]
     kind: CompileSourceKind,
     #[allow(dead_code)]
-    source: &'a CompileSource<'a>,
+    source: &'a CompileSource,
     codegen_fn: CodegenFunction,
 }
 
@@ -3516,7 +3523,12 @@ impl MutVisitor for RenameIdentifierVisitor<'_> {
 /// - findFunctionsToCompile: traverse program to find components and hooks
 /// - processFn: per-function compilation with directive and suppression handling
 /// - applyCompiledFunctions: replace original functions with compiled versions
-pub fn compile_program(mut file: File, scope: ScopeInfo, options: PluginOptions) -> CompileResult {
+pub fn compile_program(
+    mut file: File,
+    scope: ScopeInfo,
+    options: PluginOptions,
+    fn_map: &FxHashMap<u32, FunctionNode<'_>>,
+) -> CompileResult {
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
@@ -3686,7 +3698,7 @@ pub fn compile_program(mut file: File, scope: ScopeInfo, options: PluginOptions)
     let mut compiled_fns: Vec<CompiledFunction<'_>> = Vec::new();
 
     for source in &queue {
-        match process_fn(source, &scope, output_mode, &env_config, &mut context) {
+        match process_fn(source, &scope, output_mode, &env_config, &mut context, fn_map) {
             Ok(Some(codegen_fn)) => {
                 compiled_fns.push(CompiledFunction { kind: source.kind, source, codegen_fn });
             }
@@ -3748,11 +3760,7 @@ pub fn compile_program(mut file: File, scope: ScopeInfo, options: PluginOptions)
     let replacements: Vec<CompiledFnForReplacement> = compiled_fns
         .into_iter()
         .map(|cf| {
-            let original_kind = match cf.source.fn_node {
-                FunctionNode::FunctionDeclaration(_) => OriginalFnKind::FunctionDeclaration,
-                FunctionNode::FunctionExpression(_) => OriginalFnKind::FunctionExpression,
-                FunctionNode::ArrowFunctionExpression(_) => OriginalFnKind::ArrowFunctionExpression,
-            };
+            let original_kind = cf.source.original_kind;
             // Determine per-function gating: dynamic gating from directives OR plugin-level gating.
             // Dynamic gating (from `use memo if(identifier)`) takes precedence.
             let gating = if cf.kind == CompileSourceKind::Original {

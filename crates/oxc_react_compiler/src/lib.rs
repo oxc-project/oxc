@@ -123,6 +123,33 @@ pub fn transform<'a>(
     TransformResult { changed, diagnostics, events }
 }
 
+/// Index every function in the program by `node_id` (== `span.start`) to its oxc
+/// `FunctionNode`. Lowering consumes the oxc AST, but the function discovery still
+/// walks the Babel-shaped AST; this lets it map a discovered function back to the
+/// oxc node to lower. Uses `oxc_semantic`'s nodes, whose `AstKind` references carry
+/// the arena lifetime `'a` (a `Visit` walk would yield too-short borrows).
+fn build_fn_node_map<'a>(
+    semantic: &oxc_semantic::Semantic<'a>,
+) -> rustc_hash::FxHashMap<u32, crate::react_compiler_lowering::FunctionNode<'a>> {
+    use oxc_ast::AstKind;
+
+    use crate::react_compiler_lowering::FunctionNode;
+
+    let mut map = rustc_hash::FxHashMap::default();
+    for node in semantic.nodes() {
+        match node.kind() {
+            AstKind::Function(func) => {
+                map.insert(func.span.start, FunctionNode::Function(func));
+            }
+            AstKind::ArrowFunctionExpression(arrow) => {
+                map.insert(arrow.span.start, FunctionNode::Arrow(arrow));
+            }
+            _ => {}
+        }
+    }
+    map
+}
+
 /// Shared compile pipeline behind [`transform`] and [`lint`]. Borrows `program`
 /// (so `lint` can stay read-only) and returns the compiled OXC program — `None`
 /// when nothing was compiled — together with diagnostics and logger events.
@@ -134,6 +161,17 @@ fn compile<'a>(
     options: PluginOptions,
 ) -> (Option<Program<'a>>, Diagnostics, Vec<LoggerEvent>) {
     let source_text = program.source_text;
+
+    // The HIR lowering computes `SourceLocation` line/column from a line-offset
+    // table built off `context.code` (see `pipeline::compile_fn`). The oxc
+    // front-end derives locations on demand from the source text, so the source
+    // must be threaded through. Without it, every loc collapses to
+    // `line = 1, column = byte_offset`, which surfaces as wrong `(line:col)`
+    // suffixes in diagnostics.
+    let mut options = options;
+    if options.source_code.is_none() {
+        options.source_code = Some(source_text.to_string());
+    }
 
     // Skip files with no React-like functions, unless the mode compiles everything.
     if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
@@ -151,7 +189,10 @@ fn compile<'a>(
 
     let file = convert_program(program, source_text);
     let scope_info = convert_scope_info(&semantic, program);
-    let result = compile_program(file, scope_info, options);
+    // Map each function's node_id (== span.start) to its oxc node, so the
+    // (still Babel-shaped) discovery can hand the oxc `FunctionNode` to lowering.
+    let fn_map = build_fn_node_map(&semantic);
+    let result = compile_program(file, scope_info, options, &fn_map);
 
     let diagnostics = compile_result_to_diagnostics(&result);
     let (program_ast, events) = match result {

@@ -7,7 +7,6 @@ use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
 use crate::react_compiler_diagnostics::ErrorCategory;
-use crate::react_compiler_hir::environment::BindingRename;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::each_terminal_successor;
 use crate::react_compiler_hir::visitors::terminal_fallthrough;
@@ -15,13 +14,10 @@ use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
 
-use crate::react_compiler_lowering::convert_binding_kind;
+use oxc_span::Span;
+
 use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
-
-use rustc_hash::FxHashSet;
-
-use std::mem::replace;
-use std::mem::take;
+use crate::react_compiler_lowering::source_loc::LineOffsets;
 
 // ---------------------------------------------------------------------------
 // Reserved word check (matches TS isReservedWord)
@@ -159,12 +155,16 @@ pub struct HirBuilder<'a> {
     /// Set of BindingIds for variables declared in scopes between component_scope
     /// and any inner function scope, that are referenced from an inner function scope.
     /// These need StoreContext/LoadContext instead of StoreLocal/LoadLocal.
-    context_identifiers: FxHashSet<BindingId>,
+    context_identifiers: rustc_hash::FxHashSet<BindingId>,
     /// Set of ScopeIds that have been matched to synthetic blocks/functions.
     /// Prevents the same scope from being reused for different synthetic nodes.
-    claimed_synthetic_scopes: FxHashSet<ScopeId>,
+    claimed_synthetic_scopes: rustc_hash::FxHashSet<ScopeId>,
     /// Index mapping identifier byte offsets to source locations and JSX status.
     identifier_locs: &'a IdentifierLocIndex,
+    /// Line-offset table for computing `SourceLocation`s from oxc byte spans.
+    /// Built once per file and shared; replaces the Babel `base.loc` the
+    /// front-end used to read off the now-removed Babel-shaped AST.
+    line_offsets: &'a LineOffsets,
 }
 
 impl<'a> HirBuilder<'a> {
@@ -185,12 +185,13 @@ impl<'a> HirBuilder<'a> {
         scope_info: &'a ScopeInfo,
         function_scope: ScopeId,
         component_scope: ScopeId,
-        context_identifiers: FxHashSet<BindingId>,
+        context_identifiers: rustc_hash::FxHashSet<BindingId>,
         bindings: Option<FxIndexMap<BindingId, IdentifierId>>,
         context: Option<FxIndexMap<BindingId, Option<SourceLocation>>>,
         entry_block_kind: Option<BlockKind>,
         used_names: Option<FxIndexMap<String, BindingId>>,
         identifier_locs: &'a IdentifierLocIndex,
+        line_offsets: &'a LineOffsets,
     ) -> Self {
         let entry = env.next_block_id();
         let kind = entry_block_kind.unwrap_or(BlockKind::Block);
@@ -210,9 +211,16 @@ impl<'a> HirBuilder<'a> {
             function_scope,
             component_scope,
             context_identifiers,
-            claimed_synthetic_scopes: FxHashSet::default(),
+            claimed_synthetic_scopes: rustc_hash::FxHashSet::default(),
             identifier_locs,
+            line_offsets,
         }
+    }
+
+    /// Compute the HIR `SourceLocation` for an oxc byte span. Always `Some`
+    /// (oxc nodes always have a span), matching what `convert_ast` produced.
+    pub fn source_location(&self, span: Span) -> Option<SourceLocation> {
+        Some(self.line_offsets.source_location(span))
     }
 
     /// Check if a scope is the component scope or a descendant of it.
@@ -284,7 +292,7 @@ impl<'a> HirBuilder<'a> {
     }
 
     /// Access the pre-computed context identifiers set.
-    pub fn context_identifiers(&self) -> &FxHashSet<BindingId> {
+    pub fn context_identifiers(&self) -> &rustc_hash::FxHashSet<BindingId> {
         &self.context_identifiers
     }
 
@@ -312,6 +320,12 @@ impl<'a> HirBuilder<'a> {
     /// Returns the 'a reference to avoid conflicts with mutable borrows on self.
     pub fn identifier_locs(&self) -> &'a IdentifierLocIndex {
         self.identifier_locs
+    }
+
+    /// Access the line-offset table.
+    /// Returns the 'a reference to avoid conflicts with mutable borrows on self.
+    pub fn line_offsets(&self) -> &'a LineOffsets {
+        self.line_offsets
     }
 
     /// Access the bindings map.
@@ -379,7 +393,8 @@ impl<'a> HirBuilder<'a> {
         // next_block_kind is None, meaning this is the final terminate() call.
         // It will never be read or completed because build() consumes self
         // immediately after, and no further operations should occur on the builder.
-        let wip = replace(&mut self.current, new_block(BlockId(u32::MAX), BlockKind::Block));
+        let wip =
+            std::mem::replace(&mut self.current, new_block(BlockId(u32::MAX), BlockKind::Block));
         let block_id = wip.id;
 
         self.completed.insert(
@@ -404,7 +419,7 @@ impl<'a> HirBuilder<'a> {
     /// Terminate the current block with the given terminal, and set
     /// a previously reserved block as the new current block.
     pub fn terminate_with_continuation(&mut self, terminal: Terminal, continuation: WipBlock) {
-        let wip = replace(&mut self.current, continuation);
+        let wip = std::mem::replace(&mut self.current, continuation);
         let block_id = wip.id;
         self.completed.insert(
             block_id,
@@ -447,9 +462,9 @@ impl<'a> HirBuilder<'a> {
     /// it and obtain its terminal, then completes the block and restores the
     /// previous current block.
     pub fn enter_reserved(&mut self, wip: WipBlock, f: impl FnOnce(&mut Self) -> Terminal) {
-        let prev = replace(&mut self.current, wip);
+        let prev = std::mem::replace(&mut self.current, wip);
         let terminal = f(self);
-        let completed_wip = replace(&mut self.current, prev);
+        let completed_wip = std::mem::replace(&mut self.current, prev);
         self.completed.insert(
             completed_wip.id,
             BasicBlock {
@@ -469,9 +484,9 @@ impl<'a> HirBuilder<'a> {
         wip: WipBlock,
         f: impl FnOnce(&mut Self) -> Result<Terminal, CompilerDiagnostic>,
     ) -> Result<(), CompilerDiagnostic> {
-        let prev = replace(&mut self.current, wip);
+        let prev = std::mem::replace(&mut self.current, wip);
         let terminal = f(self)?;
-        let completed_wip = replace(&mut self.current, prev);
+        let completed_wip = std::mem::replace(&mut self.current, prev);
         self.completed.insert(
             completed_wip.id,
             BasicBlock {
@@ -721,9 +736,9 @@ impl<'a> HirBuilder<'a> {
         (HIR, Vec<Instruction>, FxIndexMap<String, BindingId>, FxIndexMap<BindingId, IdentifierId>),
         CompilerError,
     > {
-        let mut hir = HIR { blocks: take(&mut self.completed), entry: self.entry };
+        let mut hir = HIR { blocks: std::mem::take(&mut self.completed), entry: self.entry };
 
-        let mut instructions = take(&mut self.instruction_table);
+        let mut instructions = std::mem::take(&mut self.instruction_table);
 
         let rpo_blocks = get_reverse_postordered_blocks(&hir, &instructions);
 
@@ -860,7 +875,7 @@ impl<'a> HirBuilder<'a> {
         if candidate != name {
             let binding = &self.scope_info.bindings[binding_id.0 as usize];
             if let Some(decl_start) = binding.declaration_start {
-                self.env.renames.push(BindingRename {
+                self.env.renames.push(crate::react_compiler_hir::environment::BindingRename {
                     original: name.to_string(),
                     renamed: candidate.clone(),
                     declaration_start: decl_start,
@@ -963,7 +978,8 @@ impl<'a> HirBuilder<'a> {
                     Ok(VariableBinding::ModuleLocal { name: name.to_string() })
                 } else {
                     let binding_id = binding.id;
-                    let binding_kind = convert_binding_kind(&binding.kind);
+                    let binding_kind =
+                        crate::react_compiler_lowering::convert_binding_kind(&binding.kind);
                     let identifier_id = self.resolve_binding_with_loc(name, binding_id, loc)?;
                     Ok(VariableBinding::Identifier { identifier: identifier_id, binding_kind })
                 }
@@ -1188,7 +1204,7 @@ pub fn remove_dead_do_while_statements(hir: &mut HIR) {
             false
         };
         if should_replace {
-            if let Terminal::DoWhile { loop_block, id, loc, .. } = replace(
+            if let Terminal::DoWhile { loop_block, id, loc, .. } = std::mem::replace(
                 &mut block.terminal,
                 Terminal::Unreachable { id: EvaluationOrder(0), loc: None },
             ) {

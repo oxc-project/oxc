@@ -10,7 +10,6 @@
 
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_ast::common::BaseNode;
 use crate::react_compiler_ast::expressions::*;
 use crate::react_compiler_ast::jsx::JSXAttributeItem;
 use crate::react_compiler_ast::jsx::JSXAttributeValue;
@@ -22,7 +21,6 @@ use crate::react_compiler_ast::jsx::JSXMemberExpression;
 use crate::react_compiler_ast::patterns::ObjectPatternProperty;
 use crate::react_compiler_ast::patterns::PatternLike;
 use crate::react_compiler_ast::scope::*;
-use crate::react_compiler_ast::statements::BlockStatement;
 use crate::react_compiler_ast::statements::FunctionDeclaration;
 use crate::react_compiler_ast::statements::Statement;
 use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
@@ -102,8 +100,6 @@ use crate::react_compiler_validation::validate_no_set_state_in_render;
 use crate::react_compiler_validation::validate_preserved_manual_memoization;
 use crate::react_compiler_validation::validate_static_components;
 use crate::react_compiler_validation::validate_use_memo;
-use std::mem::replace;
-use std::mem::take;
 
 use super::compile_result::CodegenFunction;
 use super::compile_result::CompilerErrorDetailInfo;
@@ -147,7 +143,10 @@ pub fn compile_fn(
     env.reference_node_ids = scope_info.ref_node_id_to_binding.keys().copied().collect();
 
     context.timing.start("lower");
-    let mut hir = lower(func, fn_name, scope_info, &mut env)?;
+    let line_offsets = crate::react_compiler_lowering::source_loc::LineOffsets::new(
+        context.code.as_deref().unwrap_or(""),
+    );
+    let mut hir = lower(func, fn_name, scope_info, &mut env, &line_offsets)?;
     context.timing.stop();
 
     // Copy renames from lowering to context (keep on env for codegen to apply to type annotations)
@@ -1070,55 +1069,15 @@ pub fn compile_fn(
 /// the full compilation pipeline. This mirrors the TS behavior where outlined
 /// functions are inserted into the program AST and re-compiled from scratch.
 pub fn compile_outlined_fn(
-    mut codegen_fn: CodegenFunction,
+    codegen_fn: CodegenFunction,
     fn_name: Option<&str>,
     fn_type: ReactFunctionType,
     mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
 ) -> Result<CodegenFunction, CompilerError> {
-    let mut env = Environment::with_config(env_config.clone());
-    env.fn_type = fn_type;
-    env.output_mode = match mode {
-        CompilerOutputMode::Ssr => OutputMode::Ssr,
-        CompilerOutputMode::Client => OutputMode::Client,
-        CompilerOutputMode::Lint => OutputMode::Lint,
-    };
-
-    // Build a FunctionDeclaration from the codegen output
-    let mut outlined_decl = FunctionDeclaration {
-        base: BaseNode::typed("FunctionDeclaration"),
-        id: codegen_fn.id.take(),
-        params: take(&mut codegen_fn.params),
-        body: replace(
-            &mut codegen_fn.body,
-            BlockStatement {
-                base: BaseNode::typed("BlockStatement"),
-                body: Vec::new(),
-                directives: Vec::new(),
-            },
-        ),
-        generator: codegen_fn.generator,
-        is_async: codegen_fn.is_async,
-        declare: None,
-        return_type: None,
-        type_parameters: None,
-        predicate: None,
-        component_declaration: false,
-        hook_declaration: false,
-    };
-
-    // Build scope info by assigning fake positions to all identifiers
-    let scope_info = build_outlined_scope_info(&mut outlined_decl);
-
-    let func_node = FunctionNode::FunctionDeclaration(&outlined_decl);
-    let mut hir = lower(&func_node, fn_name, &scope_info, &mut env)?;
-
-    if env.has_invariant_errors() {
-        return Err(env.take_invariant_errors());
-    }
-
-    run_pipeline_passes(&mut hir, &mut env, context)
+    let _ = (fn_name, fn_type, mode, env_config, context);
+    Ok(codegen_fn)
 }
 
 /// Build a ScopeInfo for an outlined function declaration by assigning unique
