@@ -1,7 +1,3 @@
-use crate::react_compiler_ast::File;
-use crate::react_compiler_ast::expressions::Identifier as AstIdentifier;
-use crate::react_compiler_ast::patterns::PatternLike;
-use crate::react_compiler_ast::statements::BlockStatement;
 use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_hir::ReactFunctionType;
 
@@ -64,17 +60,16 @@ pub struct BindingRenameInfo {
 }
 
 /// Main result type returned by the compile function.
-/// Serialized to JSON and returned to the JS shim.
+///
+/// Stage 2: the compiled program is an arena-allocated oxc
+/// [`oxc_ast::ast::Program`] (lifetime `'a` of the arena), built directly by the
+/// codegen back-end (see `compile_program`) instead of the former Babel `File`.
 #[derive(Debug)]
-pub enum CompileResult {
+pub enum CompileResult<'a> {
     /// Compilation succeeded (or no functions needed compilation).
     /// `ast` is None if no changes were made to the program.
-    /// The compiled Babel AST is returned by value so in-process Rust consumers
-    /// (the oxc/swc frontends) use it directly instead of round-tripping through
-    /// JSON. CompileResult still derives Serialize, so the napi consumer
-    /// serializes the whole result (inlining the File) as before.
     Success {
-        ast: Option<File>,
+        ast: Option<oxc_ast::ast::Program<'a>>,
         events: Vec<LoggerEvent>,
         /// Unified ordered log interleaving events and debug entries.
         /// Items appear in the order they were emitted during compilation.
@@ -178,14 +173,18 @@ impl DebugLogEntry {
 }
 
 /// Codegen output for a single compiled function.
-/// Carries the generated AST fields needed to replace the original function.
-#[derive(Debug, Clone)]
-pub struct CodegenFunction {
+///
+/// Stage 2: the generated AST fields are now arena-allocated oxc nodes (lifetime
+/// `'a`) instead of the former Babel-shaped `Identifier`/`PatternLike`/
+/// `BlockStatement`. This is the type the back-end (`codegen_function`) produces
+/// and the pipeline threads up to `compile_program`.
+#[derive(Debug)]
+pub struct CodegenFunction<'a> {
     pub loc: Option<SourceLocation>,
-    pub id: Option<AstIdentifier>,
+    pub id: Option<oxc_ast::ast::BindingIdentifier<'a>>,
     pub name_hint: Option<String>,
-    pub params: Vec<PatternLike>,
-    pub body: BlockStatement,
+    pub params: oxc_allocator::Box<'a, oxc_ast::ast::FormalParameters<'a>>,
+    pub body: oxc_allocator::Box<'a, oxc_ast::ast::FunctionBody<'a>>,
     pub generator: bool,
     pub is_async: bool,
     pub memo_slots_used: u32,
@@ -193,13 +192,13 @@ pub struct CodegenFunction {
     pub memo_values: u32,
     pub pruned_memo_blocks: u32,
     pub pruned_memo_values: u32,
-    pub outlined: Vec<OutlinedFunction>,
+    pub outlined: Vec<OutlinedFunction<'a>>,
 }
 
 /// An outlined function extracted during compilation.
-#[derive(Debug, Clone)]
-pub struct OutlinedFunction {
-    pub func: CodegenFunction,
+#[derive(Debug)]
+pub struct OutlinedFunction<'a> {
+    pub func: CodegenFunction<'a>,
     pub fn_type: Option<ReactFunctionType>,
 }
 

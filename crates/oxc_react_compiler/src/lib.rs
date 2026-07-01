@@ -40,9 +40,7 @@ pub mod react_compiler_validation;
 
 use crate::react_compiler::entrypoint::compile_result::{CompileResult, LoggerEvent};
 use crate::react_compiler::entrypoint::program::compile_program;
-use crate::react_compiler_ast::File;
 use convert_ast::convert_program;
-use convert_ast_reverse::convert_program_to_oxc_with_source;
 use convert_scope::convert_scope_info;
 use diagnostics::compile_result_to_diagnostics;
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
@@ -187,12 +185,15 @@ fn compile<'a>(
 
     let semantic = SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
 
+    // The codegen back-end builds oxc nodes directly via this `AstBuilder`, and the
+    // compiled program is spliced/returned as an arena-allocated `Program<'a>`.
+    let ast_builder = oxc_ast::builder::AstBuilder::new(allocator);
     let file = convert_program(program, source_text);
     let scope_info = convert_scope_info(&semantic, program);
     // Map each function's node_id (== span.start) to its oxc node, so the
     // (still Babel-shaped) discovery can hand the oxc `FunctionNode` to lowering.
     let fn_map = build_fn_node_map(&semantic);
-    let result = compile_program(file, scope_info, options, &fn_map);
+    let result = compile_program(&ast_builder, program, file, scope_info, options, &fn_map);
 
     let diagnostics = compile_result_to_diagnostics(&result);
     let (program_ast, events) = match result {
@@ -200,8 +201,7 @@ fn compile<'a>(
         CompileResult::Error { events, .. } => (None, events),
     };
 
-    let compiled = program_ast.map(|file: File| {
-        let mut compiled = convert_program_to_oxc_with_source(&file, allocator, source_text);
+    let compiled = program_ast.map(|mut compiled: Program<'a>| {
         compiled.source_type = program.source_type;
         preserve_comments(&mut compiled, program, allocator);
         compiled
