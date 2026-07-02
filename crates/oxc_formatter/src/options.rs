@@ -173,49 +173,30 @@ impl Default for JsdocOptions {
     }
 }
 
-/// Options for Tailwind CSS class sorting.
-/// Based on options from `prettier-plugin-tailwindcss`.
+/// Tailwind class sorting options that affect Rust-side collection.
 ///
-/// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
+/// The actual class ordering is performed by the host (Oxfmt)-supplied JS sorter
+/// (`prettier-plugin-tailwindcss/sorter`), so the JS-only payload is NOT carried here.
+///
+/// This struct only carries fields the Rust formatter needs while
+/// - detecting classes (`functions`, `attributes`)
+/// - or preserving original whitespace (`preserve_whitespace`)
 #[derive(Debug, Default, Clone)]
 pub struct SortTailwindcssOptions {
-    /// Path to your Tailwind CSS configuration file (v3).
-    ///
-    /// Note: Paths are resolved relative to the Oxfmt configuration file.
-    ///
-    /// Default: `"./tailwind.config.js"`
-    pub config: Option<String>,
-
-    /// Path to your Tailwind CSS stylesheet (v4).
-    ///
-    /// Note: Paths are resolved relative to the Oxfmt configuration file.
-    ///
-    /// Example: `"./src/app.css"`
-    pub stylesheet: Option<String>,
-
     /// List of custom function names that contain Tailwind CSS classes.
     ///
     /// Example: `["clsx", "cn", "cva", "tw"]`
-    ///
     /// Default: `[]`
     pub functions: Vec<String>,
-
     /// List of additional attributes to sort (beyond `class` and `className`).
     ///
     /// Example: `["myClassProp", ":class"]`
-    ///
     /// Default: `[]`
     pub attributes: Vec<String>,
-
     /// Preserve whitespace around classes.
     ///
     /// Default: `false`
     pub preserve_whitespace: bool,
-
-    /// Preserve duplicate classes.
-    ///
-    /// Default: `false`
-    pub preserve_duplicates: bool,
 }
 
 impl JsFormatOptions {

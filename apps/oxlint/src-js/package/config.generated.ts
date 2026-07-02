@@ -4373,20 +4373,20 @@ export interface ForbidItemObject {
    * Component names for which this prop is **allowed** (all others are
    * forbidden).
    */
-  allowedFor: string[];
+  allowedFor?: string[];
   /**
    * Glob patterns for component names where the prop is **allowed**.
    */
-  allowedForPatterns: string[];
+  allowedForPatterns?: string[];
   /**
    * Component names for which this prop is **disallowed** (all others are
    * allowed).
    */
-  disallowedFor: string[];
+  disallowedFor?: string[];
   /**
    * Glob patterns for component names where the prop is **disallowed**.
    */
-  disallowedForPatterns: string[];
+  disallowedForPatterns?: string[];
   /**
    * Custom message to display.
    */
@@ -4408,7 +4408,7 @@ export interface ForbidDomPropsConfig {
    * An array of prop names or objects that are forbidden on DOM elements.
    *
    * Each array element can be a string with the property name, or an object
-   * with `propName`, an optional `disallowedFor` array of DOM node names,
+   * with `propName`, optional `disallowedFor` and `disallowedValues` arrays,
    * and an optional custom `message`.
    *
    * Examples:
@@ -4416,11 +4416,13 @@ export interface ForbidDomPropsConfig {
    * - `["error", { "forbid": ["id", "style"] }]`
    * - `["error", { "forbid": [{ "propName": "className", "message": "Use class instead" }] }]`
    * - `["error", { "forbid": [{ "propName": "style", "disallowedFor": ["div", "span"] }] }]`
+   * - `["error", { "forbid": [{ "propName": "type", "disallowedValues": ["button"] }] }]`
    */
   forbid?: ForbidDomPropsItem[];
 }
 /**
- * A prop with optional `disallowedFor` DOM node list and custom `message`.
+ * A prop with optional `disallowedFor` DOM node list, optional `disallowedValues`
+ * value list, and custom `message`.
  */
 export interface PropWithOptions {
   /**
@@ -4429,6 +4431,11 @@ export interface PropWithOptions {
    * DOM elements.
    */
   disallowedFor?: string[];
+  /**
+   * A list of string literal values for which this prop is forbidden. If
+   * omitted, the prop is forbidden for all values.
+   */
+  disallowedValues?: string[];
   /**
    * A custom message to display when this prop is used.
    */
@@ -6086,6 +6093,16 @@ export interface NoArrayReverse {
   allowExpressionStatement?: boolean;
 }
 export interface NoArraySort {
+  /**
+   * When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.
+   * This avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.
+   *
+   * Example of **correct** code for this rule with `allowAfterSpread` set to `true`:
+   * ```js
+   * const sorted = [...mySet].sort();
+   * ```
+   */
+  allowAfterSpread?: boolean;
   /**
    * When set to `true` (default), allows `array.sort()` as an expression statement.
    * Set to `false` to forbid `Array#sort()` even if it's an expression statement.

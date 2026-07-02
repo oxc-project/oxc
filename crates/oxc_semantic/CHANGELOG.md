@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.138.0] - 2026-06-29
+
+### 🐛 Bug Fixes
+
+- 8c07cad all: Enable `disable_old_builder` Cargo feature for `oxc_ast` crate in tests (#23888) (overlookmotel)
+- 869ac20 semantic/cfg: Connect for update exit to loop test (#23791) (camc314)
+- d3e92d5 semantic/cfg: Connect while branches from condition exit (#23790) (camc314)
+
+### ⚡ Performance
+
+- d5c916a semantic: Flatten hoisting_variables to avoid per-scope map allocation (#23927) (Lawrence Lin)
+- 0b07c4c semantic: Avoid heap alloc for catch-clause binding ids (#23911) (Lawrence Lin)
+
 ## [0.137.0] - 2026-06-18
 
 ### ⚡ Performance

@@ -681,7 +681,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                 self.error(fatal_error.error);
             }
 
-            program = Program::dummy(self.ast.allocator);
+            program = Program::dummy(self.allocator());
             program.source_type = self.source_type;
             program.source_text = self.source_text;
         }

@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, CloneIn};
+use oxc_allocator::{ArenaBox, CloneIn, GetAllocator};
 use oxc_ast::ast::{
     ArrowFunctionExpression, Expression, FormalParameter, Function, Statement, TSType,
     TSTypeAnnotation, UnaryExpression,
@@ -18,15 +18,15 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub(crate) fn infer_type_from_expression(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
         match expr {
-            Expression::BooleanLiteral(_) => Some(self.ast.ts_type_boolean_keyword(SPAN)),
-            Expression::NullLiteral(_) => Some(self.ast.ts_type_null_keyword(SPAN)),
-            Expression::NumericLiteral(_) => Some(self.ast.ts_type_number_keyword(SPAN)),
-            Expression::BigIntLiteral(_) => Some(self.ast.ts_type_big_int_keyword(SPAN)),
+            Expression::BooleanLiteral(_) => Some(TSType::new_ts_boolean_keyword(SPAN, self)),
+            Expression::NullLiteral(_) => Some(TSType::new_ts_null_keyword(SPAN, self)),
+            Expression::NumericLiteral(_) => Some(TSType::new_ts_number_keyword(SPAN, self)),
+            Expression::BigIntLiteral(_) => Some(TSType::new_ts_big_int_keyword(SPAN, self)),
             Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
-                Some(self.ast.ts_type_string_keyword(SPAN))
+                Some(TSType::new_ts_string_keyword(SPAN, self))
             }
             Expression::Identifier(ident) => match ident.name.as_str() {
-                "undefined" => Some(self.ast.ts_type_undefined_keyword(SPAN)),
+                "undefined" => Some(TSType::new_ts_undefined_keyword(SPAN, self)),
                 _ => None,
             },
             Expression::FunctionExpression(func) => self.transform_function_to_ts_type(func),
@@ -38,25 +38,25 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Expression::ArrayExpression(expr) => {
                 self.error(array_inferred(expr.span));
-                Some(self.ast.ts_type_unknown_keyword(expr.span))
+                Some(TSType::new_ts_unknown_keyword(expr.span, self))
             }
             Expression::TSAsExpression(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
                     self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
-                    Some(expr.type_annotation.clone_in(self.ast.allocator))
+                    Some(expr.type_annotation.clone_in(self.allocator()))
                 }
             }
             Expression::TSTypeAssertion(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
                     self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
-                    Some(expr.type_annotation.clone_in(self.ast.allocator))
+                    Some(expr.type_annotation.clone_in(self.allocator()))
                 }
             }
             Expression::ClassExpression(expr) => {
                 self.error(inferred_type_of_class_expression(expr.span));
-                Some(self.ast.ts_type_unknown_keyword(SPAN))
+                Some(TSType::new_ts_unknown_keyword(SPAN, self))
             }
             Expression::ParenthesizedExpression(expr) => {
                 self.infer_type_from_expression(&expr.expression)
@@ -91,7 +91,7 @@ impl<'a> IsolatedDeclarations<'a> {
         function: &Function<'a>,
     ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
         if function.return_type.is_some() {
-            return function.return_type.clone_in(self.ast.allocator);
+            return function.return_type.clone_in(self.allocator());
         }
 
         if function.r#async || function.generator {
@@ -100,7 +100,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         function.body.as_ref().and_then(|body| {
             FunctionReturnType::infer(self, body)
-                .map(|type_annotation| self.ast.alloc_ts_type_annotation(SPAN, type_annotation))
+                .map(|type_annotation| TSTypeAnnotation::boxed(SPAN, type_annotation, self))
         })
     }
 
@@ -109,7 +109,7 @@ impl<'a> IsolatedDeclarations<'a> {
         function: &ArrowFunctionExpression<'a>,
     ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
         if function.return_type.is_some() {
-            return function.return_type.clone_in(self.ast.allocator);
+            return function.return_type.clone_in(self.allocator());
         }
 
         if function.r#async {
@@ -121,11 +121,11 @@ impl<'a> IsolatedDeclarations<'a> {
         {
             return self
                 .infer_type_from_expression(&stmt.expression)
-                .map(|type_annotation| self.ast.alloc_ts_type_annotation(SPAN, type_annotation));
+                .map(|type_annotation| TSTypeAnnotation::boxed(SPAN, type_annotation, self));
         }
 
         FunctionReturnType::infer(self, &function.body)
-            .map(|type_annotation| self.ast.alloc_ts_type_annotation(SPAN, type_annotation))
+            .map(|type_annotation| TSTypeAnnotation::boxed(SPAN, type_annotation, self))
     }
 
     pub(crate) fn is_need_to_infer_type_from_expression(expr: &Expression<'a>) -> bool {

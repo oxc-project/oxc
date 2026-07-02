@@ -21,10 +21,10 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// There are some disadvantages of using .innerText.
-    /// - `.innerText` is much more performance-heavy as it requires layout information to return the result.
+    /// There are some disadvantages of using `.innerText`.
+    /// - `.innerText` returns rendered text and ignores hidden content, while `.textContent` returns the node's full text content.
+    /// - `.innerText` can trigger reflow because it takes CSS styles into account.
     /// - `.innerText` is defined only for HTMLElement objects, while `.textContent` is defined for all Node objects.
-    /// - `.innerText` is not standard, for example, it is not present in Firefox.
     ///
     /// ### Examples
     ///

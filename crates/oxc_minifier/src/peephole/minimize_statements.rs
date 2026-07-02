@@ -10,6 +10,7 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut};
+use oxc_syntax::symbol::SymbolId;
 
 use crate::{TraverseCtx, keep_var::KeepVar};
 
@@ -50,7 +51,7 @@ impl<'a> PeepholeOptimizations {
     pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let mut old_stmts = stmts.take_in(ctx);
         let mut is_control_flow_dead = false;
-        let mut keep_var = KeepVar::new(ctx.ast);
+        let mut keep_var = KeepVar::new();
         let mut identity_drops = 0u32;
         for i in 0..old_stmts.len() {
             let stmt = old_stmts[i].take_in(ctx);
@@ -86,7 +87,7 @@ impl<'a> PeepholeOptimizations {
                 break;
             }
         }
-        if let Some(stmt) = keep_var.get_variable_declaration_statement() {
+        if let Some(stmt) = keep_var.get_variable_declaration_statement(&ctx.ast) {
             match Self::remove_unused_variable_declaration(stmt, ctx) {
                 // Multiple identity-dropped `var x;`s coalesce into a single
                 // `var x, y;`. The individual drops looked byte-identical, but
@@ -160,7 +161,7 @@ impl<'a> PeepholeOptimizations {
                             let argument = Self::join_sequence(&mut expr_stmt.expression, b, ctx);
                             let right_span = last_return.span;
                             let last_return_stmt =
-                                ctx.ast.statement_return(right_span, Some(argument));
+                                Statement::new_return_statement(right_span, Some(argument), ctx);
                             stmts.push(last_return_stmt);
                         }
                         // Merge the last two statements
@@ -198,12 +199,12 @@ impl<'a> PeepholeOptimizations {
                             let mut left = prev_return
                                 .unbox()
                                 .argument
-                                .unwrap_or_else(|| ctx.ast.void_0(left_span));
+                                .unwrap_or_else(|| Expression::new_void_0(left_span, ctx));
                             // "if (a) return a; return;" => "return a ? b : void 0;"
                             let mut right = last_return
                                 .unbox()
                                 .argument
-                                .unwrap_or_else(|| ctx.ast.void_0(right_span));
+                                .unwrap_or_else(|| Expression::new_void_0(right_span, ctx));
 
                             // "if (!a) return b; return c;" => "return a ? c : b;"
                             if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
@@ -237,7 +238,7 @@ impl<'a> PeepholeOptimizations {
                                 )
                             };
                             let last_return_stmt =
-                                ctx.ast.statement_return(right_span, Some(argument));
+                                Statement::new_return_statement(right_span, Some(argument), ctx);
                             stmts.push(last_return_stmt);
                         }
                         _ => break 'return_loop,
@@ -265,7 +266,8 @@ impl<'a> PeepholeOptimizations {
                                 ctx,
                             );
                             let right_span = last_throw.span;
-                            let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
+                            let last_throw_stmt =
+                                Statement::new_throw_statement(right_span, argument, ctx);
                             stmts.push(last_throw_stmt);
                         }
                         // Merge the last two statements
@@ -331,7 +333,8 @@ impl<'a> PeepholeOptimizations {
                                     ctx,
                                 )
                             };
-                            let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
+                            let last_throw_stmt =
+                                Statement::new_throw_statement(right_span, argument, ctx);
                             stmts.push(last_throw_stmt);
                         }
                         _ => break 'throw_loop,
@@ -427,12 +430,12 @@ impl<'a> PeepholeOptimizations {
         let span = a.span();
         let exprs = if let Expression::SequenceExpression(sequence_expr) = b {
             // `a; (b, c)`
-            ctx.ast.vec_from_iter(std::iter::once(a).chain(sequence_expr.unbox().expressions))
+            ArenaVec::from_iter_in(std::iter::once(a).chain(sequence_expr.unbox().expressions), ctx)
         } else {
             // `a; b`
-            ctx.ast.vec_from_array([a, b])
+            ArenaVec::from_array_in([a, b], ctx)
         };
-        ctx.ast.expression_sequence(span, exprs)
+        Expression::new_sequence_expression(span, exprs, ctx)
     }
 
     fn jump_stmts_look_the_same(left: &Statement<'a>, right: &Statement<'a>) -> bool {
@@ -487,7 +490,7 @@ impl<'a> PeepholeOptimizations {
                     if Self::remove_unused_expression(&mut init, ctx) {
                         ctx.drop_expression(&init);
                     } else {
-                        result.push(ctx.ast.statement_expression(init.span(), init));
+                        result.push(Statement::new_expression_statement(init.span(), init, ctx));
                     }
                 }
                 // Walk the rest of the dropped declarator (binding pattern +
@@ -501,8 +504,8 @@ impl<'a> PeepholeOptimizations {
                     prev_var_decl.declarations.push(decl);
                     continue;
                 }
-                let decls = ctx.ast.vec1(decl);
-                let new_decl = ctx.ast.alloc_variable_declaration(span, kind, decls, declare);
+                let decls = ArenaVec::from_value_in(decl, ctx);
+                let new_decl = VariableDeclaration::boxed(span, kind, decls, declare, ctx);
                 result.push(Statement::VariableDeclaration(new_decl));
             }
         }
@@ -595,7 +598,11 @@ impl<'a> PeepholeOptimizations {
                     Some(val) if val == sequence_len - 1 => {
                         // all elements are merged except for the last expression
                         let last_expr = sequence_expr.expressions.pop().unwrap();
-                        result.push(ctx.ast.statement_expression(last_expr.span(), last_expr));
+                        result.push(Statement::new_expression_statement(
+                            last_expr.span(),
+                            last_expr,
+                            ctx,
+                        ));
                         let dropped = Statement::ExpressionStatement(expr_stmt);
                         ctx.drop_statement(&dropped);
                         return;
@@ -816,9 +823,9 @@ impl<'a> PeepholeOptimizations {
                     if can_move_branch_condition_outside_scope {
                         let drained_stmts = stmts.drain(i + 1..);
                         let mut body = if let Some(alternate) = if_stmt.alternate.take() {
-                            ctx.ast.vec_from_iter(iter::once(alternate).chain(drained_stmts))
+                            ArenaVec::from_iter_in(iter::once(alternate).chain(drained_stmts), ctx)
                         } else {
-                            ctx.ast.vec_from_iter(drained_stmts)
+                            ArenaVec::from_iter_in(drained_stmts, ctx)
                         };
 
                         Self::minimize_statements(&mut body, ctx);
@@ -834,11 +841,14 @@ impl<'a> PeepholeOptimizations {
                             body.remove(0)
                         } else {
                             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-                            ctx.ast.statement_block_with_scope_id(span, body, scope_id)
+                            Statement::new_block_statement_with_scope_id(span, body, scope_id, ctx)
                         };
-                        let mut if_stmt = ctx.ast.if_statement(test.span(), test, consequent, None);
-                        let if_stmt = Self::try_minimize_if(&mut if_stmt, ctx)
-                            .unwrap_or_else(|| Statement::IfStatement(ctx.ast.alloc(if_stmt)));
+                        let mut if_stmt =
+                            IfStatement::new(test.span(), test, consequent, None, ctx);
+                        let if_stmt =
+                            Self::try_minimize_if(&mut if_stmt, ctx).unwrap_or_else(|| {
+                                Statement::IfStatement(ArenaBox::new_in(if_stmt, ctx))
+                            });
                         result.push(if_stmt);
                         ctx.notice_change();
                         return ControlFlow::Break(());
@@ -895,8 +905,11 @@ impl<'a> PeepholeOptimizations {
                     let a = &mut prev_expr_stmt.expression;
                     prev_expr_stmt.expression = Self::join_sequence(a, argument, ctx);
                 } else {
-                    result
-                        .push(ctx.ast.statement_expression(argument.span(), argument.take_in(ctx)));
+                    result.push(Statement::new_expression_statement(
+                        argument.span(),
+                        argument.take_in(ctx),
+                        ctx,
+                    ));
                 }
             }
             if let Some(old) = ret_stmt.argument.take() {
@@ -987,7 +1000,10 @@ impl<'a> PeepholeOptimizations {
             let old_len = var_decl.declarations.len();
             var_decl.declarations.retain_mut(|decl| {
                 let should_keep = !Self::should_remove_unused_declarator(decl, ctx)
-                    || decl.init.as_ref().is_some_and(|init| init.may_have_side_effects(ctx));
+                    || decl
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| Self::has_side_effects_or_preserved_iife(init, ctx));
                 if !should_keep {
                     // Same leak hazard as `remove_unused_variable_declaration`:
                     // the `retain` silently drops the declarator, so its refs
@@ -1384,6 +1400,40 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Whether reordering this read before a side-effecting replacement could
+    /// observe `symbol_id` in its Temporal Dead Zone.
+    ///
+    /// The hazard is a block-scoped binding (`let`/`const`/`using`/`class`/`enum`)
+    /// closed over from an enclosing function: the function can suspend at an
+    /// `await`/`yield` while outer code initializes the binding, so the earlier
+    /// (reordered) read hits the TDZ where the original would not. A same-function
+    /// binding can't be initialized mid-suspension, so it stays inlinable.
+    ///
+    /// <https://github.com/rolldown/rolldown/issues/9959>
+    fn is_tdz_closed_over_read(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        ctx.scoping().symbol_flags(symbol_id).is_block_scoped()
+            && Self::read_crosses_function_boundary(
+                ctx.current_scope_id(),
+                ctx.scoping().symbol_scope_id(symbol_id),
+                ctx,
+            )
+    }
+
+    /// Whether reordering a side-effecting replacement past this member
+    /// assignment-target object is unsafe. The object is evaluated before the
+    /// replacement, so it is unsafe if its reference may change, or if it reads
+    /// a closed-over lexical that could be in its TDZ (e.g. `v.x = await f()`
+    /// reading `v` before the await). See [`Self::is_tdz_closed_over_read`].
+    fn member_object_blocks_reorder(object: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        Self::is_expression_that_reference_may_change(object, ctx)
+            || matches!(object, Expression::Identifier(id)
+                if ctx
+                    .scoping()
+                    .get_reference(id.reference_id())
+                    .symbol_id()
+                    .is_some_and(|symbol_id| Self::is_tdz_closed_over_read(symbol_id, ctx)))
+    }
+
     /// Returns Some(true) when the expression is successfully replaced.
     /// Returns Some(false) when the expression is not replaced, and cannot try the subsequent expressions.
     /// Return None when the expression is not replaced, and can try the subsequent expressions.
@@ -1412,8 +1462,17 @@ impl<'a> PeepholeOptimizations {
                 }
                 // If the identifier is not a getter and the identifier is read-only,
                 // we know that the value is same even if we reordered the expression.
+                //
+                // But a lexical binding that is closed over from an enclosing
+                // function/module scope may still be in its Temporal Dead Zone
+                // when this function runs (e.g. the function is called before the
+                // binding's declaration executes). Reordering its read earlier —
+                // in particular before a side-effecting replacement such as an
+                // `await` — can surface a `ReferenceError` that the original order
+                // avoids. https://github.com/rolldown/rolldown/issues/9959
                 if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
                     && !Self::is_symbol_mutated(symbol_id, ctx)
+                    && !Self::is_tdz_closed_over_read(symbol_id, ctx)
                 {
                     return None;
                 }
@@ -1540,13 +1599,13 @@ impl<'a> PeepholeOptimizations {
                     let may_depend_on_side_effect = match &assign_expr.left {
                         AssignmentTarget::AssignmentTargetIdentifier(_) => false,
                         AssignmentTarget::ComputedMemberExpression(member_expr) => {
-                            Self::is_expression_that_reference_may_change(&member_expr.object, ctx)
+                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
                         }
                         AssignmentTarget::PrivateFieldExpression(member_expr) => {
-                            Self::is_expression_that_reference_may_change(&member_expr.object, ctx)
+                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
                         }
                         AssignmentTarget::StaticMemberExpression(member_expr) => {
-                            Self::is_expression_that_reference_may_change(&member_expr.object, ctx)
+                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
                         }
                         AssignmentTarget::ArrayAssignmentTarget(_)
                         | AssignmentTarget::ObjectAssignmentTarget(_)
@@ -1850,12 +1909,7 @@ impl<'a> PeepholeOptimizations {
                                 if prop.shorthand && prop.key.is_specific_id("__proto__") {
                                     // { __proto__ } -> { ['__proto__']: value }
                                     prop.computed = true;
-                                    prop.key =
-                                        PropertyKey::from(ctx.ast.expression_string_literal(
-                                            prop.key.span(),
-                                            "__proto__",
-                                            None,
-                                        ));
+                                    prop.key = PropertyKey::new_string_literal(prop.key.span(), "__proto__", None, ctx);
                                 }
                                 prop.shorthand = false;
                                 return Some(changed);

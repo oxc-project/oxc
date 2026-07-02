@@ -157,6 +157,14 @@ impl SymbolFlags {
         self.contains(Self::Class)
     }
 
+    /// Returns `true` if this symbol is a block-scoped lexical declaration
+    /// (`let`/`const`, `class`, or `enum`), i.e. a binding that has a Temporal
+    /// Dead Zone.
+    #[inline]
+    pub fn is_block_scoped(self) -> bool {
+        self.intersects(Self::BlockScoped)
+    }
+
     #[inline]
     pub fn is_interface(self) -> bool {
         self.contains(Self::Interface)

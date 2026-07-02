@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{ArenaVec, CloneIn};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::{TSMethodSignatureKind, TSSignature};
 use oxc_span::GetSpan;
 
@@ -48,7 +48,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 && let (Some(Some(annotation)), Some(option))
                 | (Some(option), Some(Some(annotation))) = (param, return_type)
             {
-                option.replace(annotation.clone_in(self.ast.allocator));
+                option.replace(annotation.clone_in(self.allocator()));
             }
         }
     }

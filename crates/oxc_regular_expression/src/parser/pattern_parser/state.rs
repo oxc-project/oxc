@@ -33,7 +33,23 @@ impl<'a> State<'a> {
         &mut self,
         reader: &mut Reader<'a>,
     ) -> Result<(), DuplicatedNamedCapturingGroupOffsets> {
+        // PERF: Fast path, no `(` in the decoded units.
+        // Provably no capturing group (named or unnamed) and no duplicate name.
+        // `Self::new`'s defaults apply except `named_capture_groups`,
+        // which for a group-free pattern depends solely on the `u`/`v` flag.
+        //
+        // `Reader::initialize`'s decode does NOT collapse regex-level escapes
+        // (only string/template literal escapes), so `\(`, `[(]`, `(?:…)` etc.
+        // still leave a literal `(` unit and fall into the slow path below.
+        // Conservative over-approximation: only provably group-free patterns skip the pre-parse.
+        if !reader.contains('(') {
+            self.named_capture_groups = self.unicode_mode || self.unicode_sets_mode;
+            return Ok(());
+        }
+
+        let checkpoint = reader.checkpoint();
         let (num_of_left_capturing_parens, capturing_group_names) = parse_capturing_groups(reader)?;
+        reader.rewind(checkpoint);
 
         // In Annex B, this is `false` by default.
         // It is `true`

@@ -1,0 +1,12 @@
+{
+  // Some comment that breaks pure JSON.parse
+  "semi": true,
+  "overrides": [
+    {
+      "files": "*.md",
+      "options": {
+        "tabWidth": 4
+      }
+    }
+  ]
+}

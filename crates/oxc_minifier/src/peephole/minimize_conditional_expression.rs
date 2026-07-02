@@ -1,6 +1,6 @@
 use crate::TraverseCtx;
-use oxc_allocator::TakeIn;
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
@@ -24,7 +24,8 @@ impl<'a> PeepholeOptimizations {
         // the slot wrapping, refs left in untouched slots of the discarded
         // transient `ConditionalExpression` (e.g. the leftover `b` in
         // `b == null ? c : b` -> `b ?? c`) would never reach `PassDirty`.
-        let mut as_expr = ctx.ast.expression_conditional(span, test, consequent, alternate);
+        let mut as_expr =
+            Expression::new_conditional_expression(span, test, consequent, alternate, ctx);
         let Expression::ConditionalExpression(cond_box) = &mut as_expr else { unreachable!() };
         let folded = Self::minimize_conditional_expression(cond_box, ctx);
         if let Some(new_expr) = folded {
@@ -115,7 +116,7 @@ impl<'a> PeepholeOptimizations {
         if let Expression::ConditionalExpression(consequent) = &mut expr.consequent
             && ctx.expr_eq(&consequent.alternate, &expr.alternate)
         {
-            return Some(ctx.ast.expression_conditional(
+            return Some(Expression::new_conditional_expression(
                 expr.span,
                 Self::join_with_left_associative_op(
                     expr.test.span(),
@@ -126,6 +127,7 @@ impl<'a> PeepholeOptimizations {
                 ),
                 consequent.consequent.take_in(ctx),
                 consequent.alternate.take_in(ctx),
+                ctx,
             ));
         }
 
@@ -133,7 +135,7 @@ impl<'a> PeepholeOptimizations {
         if let Expression::ConditionalExpression(alternate) = &mut expr.alternate
             && ctx.expr_eq(&alternate.consequent, &expr.consequent)
         {
-            return Some(ctx.ast.expression_conditional(
+            return Some(Expression::new_conditional_expression(
                 expr.span,
                 Self::join_with_left_associative_op(
                     expr.test.span(),
@@ -144,6 +146,7 @@ impl<'a> PeepholeOptimizations {
                 ),
                 expr.consequent.take_in(ctx),
                 alternate.alternate.take_in(ctx),
+                ctx,
             ));
         }
 
@@ -152,18 +155,22 @@ impl<'a> PeepholeOptimizations {
             && alternate.expressions.len() == 2
             && ctx.expr_eq(&alternate.expressions[1], &expr.consequent)
         {
-            return Some(ctx.ast.expression_sequence(
+            return Some(Expression::new_sequence_expression(
                 expr.span,
-                ctx.ast.vec_from_array([
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::Or,
-                        expr.test.take_in(ctx),
-                        alternate.expressions[0].take_in(ctx),
-                        ctx,
-                    ),
-                    expr.consequent.take_in(ctx),
-                ]),
+                ArenaVec::from_array_in(
+                    [
+                        Self::join_with_left_associative_op(
+                            expr.test.span(),
+                            LogicalOperator::Or,
+                            expr.test.take_in(ctx),
+                            alternate.expressions[0].take_in(ctx),
+                            ctx,
+                        ),
+                        expr.consequent.take_in(ctx),
+                    ],
+                    ctx,
+                ),
+                ctx,
             ));
         }
 
@@ -172,18 +179,22 @@ impl<'a> PeepholeOptimizations {
             && consequent.expressions.len() == 2
             && ctx.expr_eq(&consequent.expressions[1], &expr.alternate)
         {
-            return Some(ctx.ast.expression_sequence(
+            return Some(Expression::new_sequence_expression(
                 expr.span,
-                ctx.ast.vec_from_array([
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::And,
-                        expr.test.take_in(ctx),
-                        consequent.expressions[0].take_in(ctx),
-                        ctx,
-                    ),
-                    expr.alternate.take_in(ctx),
-                ]),
+                ArenaVec::from_array_in(
+                    [
+                        Self::join_with_left_associative_op(
+                            expr.test.span(),
+                            LogicalOperator::And,
+                            expr.test.take_in(ctx),
+                            consequent.expressions[0].take_in(ctx),
+                            ctx,
+                        ),
+                        expr.alternate.take_in(ctx),
+                    ],
+                    ctx,
+                ),
+                ctx,
             ));
         }
 
@@ -192,7 +203,7 @@ impl<'a> PeepholeOptimizations {
             && logical_expr.operator.is_or()
             && ctx.expr_eq(&logical_expr.right, &expr.alternate)
         {
-            return Some(ctx.ast.expression_logical(
+            return Some(Expression::new_logical_expression(
                 expr.span,
                 Self::join_with_left_associative_op(
                     expr.test.span(),
@@ -203,6 +214,7 @@ impl<'a> PeepholeOptimizations {
                 ),
                 LogicalOperator::Or,
                 expr.alternate.take_in(ctx),
+                ctx,
             ));
         }
 
@@ -211,7 +223,7 @@ impl<'a> PeepholeOptimizations {
             && logical_expr.operator == LogicalOperator::And
             && ctx.expr_eq(&logical_expr.right, &expr.consequent)
         {
-            return Some(ctx.ast.expression_logical(
+            return Some(Expression::new_logical_expression(
                 expr.span,
                 Self::join_with_left_associative_op(
                     expr.test.span(),
@@ -222,6 +234,7 @@ impl<'a> PeepholeOptimizations {
                 ),
                 LogicalOperator::And,
                 expr.consequent.take_in(ctx),
+                ctx,
             ));
         }
 
@@ -262,17 +275,22 @@ impl<'a> PeepholeOptimizations {
                         };
                         el.argument.take_in(ctx)
                     };
-                    let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
-                    args[0] = ctx.ast.argument_spread_element(
+                    let mut args =
+                        std::mem::replace(&mut consequent.arguments, ArenaVec::new_in(ctx));
+                    args[0] = Argument::new_spread_element(
                         expr.span,
-                        ctx.ast.expression_conditional(
+                        Expression::new_conditional_expression(
                             expr.test.span(),
                             expr.test.take_in(ctx),
                             consequent_first_arg,
                             alternate_first_arg,
+                            ctx,
                         ),
+                        ctx,
                     );
-                    return Some(ctx.ast.expression_call(expr.span, callee, NONE, args, false));
+                    return Some(Expression::new_call_expression(
+                        expr.span, callee, NONE, args, false, ctx,
+                    ));
                 }
                 // `a ? b(c) : b(e)` -> `b(a ? c : e)`
                 if !matches!(consequent.arguments[0], Argument::SpreadElement(_))
@@ -284,7 +302,8 @@ impl<'a> PeepholeOptimizations {
                         consequent.arguments[0].to_expression_mut().take_in(ctx);
                     let alternate_first_arg =
                         alternate.arguments[0].to_expression_mut().take_in(ctx);
-                    let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
+                    let mut args =
+                        std::mem::replace(&mut consequent.arguments, ArenaVec::new_in(ctx));
                     let cond_expr = Self::minimize_conditional(
                         expr.test.span(),
                         expr.test.take_in(ctx),
@@ -293,7 +312,9 @@ impl<'a> PeepholeOptimizations {
                         ctx,
                     );
                     args[0] = Argument::from(cond_expr);
-                    return Some(ctx.ast.expression_call(expr.span, callee, NONE, args, false));
+                    return Some(Expression::new_call_expression(
+                        expr.span, callee, NONE, args, false, ctx,
+                    ));
                 }
             }
         }
@@ -342,7 +363,7 @@ impl<'a> PeepholeOptimizations {
                     let maybe_same_id_expr =
                         if is_negate { &mut expr.consequent } else { &mut expr.alternate };
                     if maybe_same_id_expr.is_specific_id(&target_id_name) {
-                        return Some(ctx.ast.expression_logical(
+                        return Some(Expression::new_logical_expression(
                             expr.span,
                             value_expr.take_in(ctx),
                             LogicalOperator::Coalesce,
@@ -351,6 +372,7 @@ impl<'a> PeepholeOptimizations {
                             } else {
                                 expr.consequent.take_in(ctx)
                             },
+                            ctx,
                         ));
                     }
                 }
@@ -429,11 +451,9 @@ impl<'a> PeepholeOptimizations {
                 if is_boolean {
                     // Known boolean: +a (saves 3 chars: "a?1:0" => "+a")
                     let test = expr.test.take_in(ctx);
-                    return Some(ctx.ast.expression_unary(
-                        expr.span,
-                        UnaryOperator::UnaryPlus,
-                        test,
-                    ));
+                    return Some(Expression::new_unary_expression(expr.span,
+                    UnaryOperator::UnaryPlus,
+                    test, ctx));
                 }
                 // Unknown type: +!!a (saves 1 char: "a?1:0" => "+!!a")
                 // But skip if parens would be needed (e.g., "a+b?1:0" => "+!!(a+b)" is longer)
@@ -441,11 +461,9 @@ impl<'a> PeepholeOptimizations {
                     let test = expr.test.take_in(ctx);
                     let test = Self::minimize_not(expr.span, test, ctx);
                     let test = Self::minimize_not(expr.span, test, ctx);
-                    return Some(ctx.ast.expression_unary(
-                        expr.span,
-                        UnaryOperator::UnaryPlus,
-                        test,
-                    ));
+                    return Some(Expression::new_unary_expression(expr.span,
+                    UnaryOperator::UnaryPlus,
+                    test, ctx));
                 }
             }
             (Some(0.0), Some(1.0))
@@ -454,11 +472,9 @@ impl<'a> PeepholeOptimizations {
                 if !Self::test_needs_parens(&expr.test) => {
                     let test = expr.test.take_in(ctx);
                     let test = Self::minimize_not(expr.span, test, ctx);
-                    return Some(ctx.ast.expression_unary(
-                        expr.span,
-                        UnaryOperator::UnaryPlus,
-                        test,
-                    ));
+                    return Some(Expression::new_unary_expression(expr.span,
+                    UnaryOperator::UnaryPlus,
+                    test, ctx));
                 }
             _ => {}
         }
@@ -476,9 +492,11 @@ impl<'a> PeepholeOptimizations {
             }
 
             // "a ? b : b" => "a, b"
-            let expressions =
-                ctx.ast.vec_from_array([expr.test.take_in(ctx), expr.consequent.take_in(ctx)]);
-            return Some(ctx.ast.expression_sequence(expr.span, expressions));
+            let expressions = ArenaVec::from_array_in(
+                [expr.test.take_in(ctx), expr.consequent.take_in(ctx)],
+                ctx,
+            );
+            return Some(Expression::new_sequence_expression(expr.span, expressions, ctx));
         }
 
         None
@@ -519,11 +537,12 @@ impl<'a> PeepholeOptimizations {
             alternate.right.take_in(ctx),
             ctx,
         );
-        Some(ctx.ast.expression_assignment(
+        Some(Expression::new_assignment_expression(
             expr.span,
             consequent.operator,
             alternate.left.take_in(ctx),
             cond_expr,
+            ctx,
         ))
     }
 
@@ -543,9 +562,11 @@ impl<'a> PeepholeOptimizations {
             ctx,
         ) {
             if !matches!(expr, Expression::ChainExpression(_)) {
-                let new_expr = ctx
-                    .ast
-                    .expression_chain(expr.span(), expr.take_in(ctx).into_chain_element().unwrap());
+                let new_expr = Expression::new_chain_expression(
+                    expr.span(),
+                    expr.take_in(ctx).into_chain_element().unwrap(),
+                    ctx,
+                );
                 ctx.replace_expression(expr, new_expr);
             }
             true

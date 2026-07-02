@@ -5,8 +5,8 @@ use rayon::prelude::*;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstBuilder,
     ast::{Expression, Program, UnaryOperator},
+    builder::AstBuilder,
 };
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_codegen::Codegen;
@@ -378,7 +378,7 @@ impl<'a> VisitMut<'a> for BooleanUnminifier<'a> {
             && unary_expr.operator == UnaryOperator::LogicalNot
             && let Expression::NumericLiteral(lit) = &unary_expr.argument
         {
-            *expr = self.ast.expression_boolean_literal(unary_expr.span, lit.value == 0.0);
+            *expr = Expression::new_boolean_literal(unary_expr.span, lit.value == 0.0, &self.ast);
             return;
         }
         walk_mut::walk_expression(self, expr);

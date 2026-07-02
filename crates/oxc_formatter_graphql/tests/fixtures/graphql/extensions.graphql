@@ -1,0 +1,23 @@
+extend scalar Date @directive
+
+extend type User implements Node @directive {
+  field: String
+}
+
+extend interface Node @directive
+
+extend union Result = A | B
+
+extend enum Role {
+  EXTRA
+}
+
+extend input Filter {
+  extra: String
+}
+
+extend schema @directive
+
+extend schema {
+  mutation: Mutation
+}

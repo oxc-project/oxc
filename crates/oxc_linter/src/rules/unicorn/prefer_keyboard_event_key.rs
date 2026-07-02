@@ -1,18 +1,17 @@
 use phf::{Map, phf_map};
 
-use oxc_allocator::{Allocator, GetAddress, UnstableAddress};
+use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{
     AstKind,
     ast::{
         Argument, BindingPattern, BindingProperty, CallExpression, Expression, Function,
-        MemberExpression, PropertyKey, Str,
+        MemberExpression, PropertyKey,
     },
-    builder::AstBuilder,
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{SPAN, Span};
+use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -419,14 +418,7 @@ impl PreferKeyboardEventKey {
                 let mut codegen = fixer
                     .codegen()
                     .with_options(CodegenOptions { single_quote: true, ..Default::default() });
-                let alloc = Allocator::default();
-                let ast = AstBuilder::new(&alloc);
-                codegen.print_expression(&Expression::new_string_literal(
-                    SPAN,
-                    Str::from_str_in(&key_name, &ast),
-                    None,
-                    &ast,
-                ));
+                codegen.print_string(&key_name);
                 let key_str = codegen.into_source_text();
 
                 let mut fix = fixer.new_fix_with_capacity(2);

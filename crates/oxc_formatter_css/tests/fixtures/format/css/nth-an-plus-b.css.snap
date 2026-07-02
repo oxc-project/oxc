@@ -1,0 +1,148 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+a:nth-child(n+3) { color: red; }
+b:nth-child(2n+1) { color: red; }
+c:nth-child(-n+3) { color: red; }
+d:nth-child(2n-1) { color: red; }
+e:nth-child(odd) { color: red; }
+f:nth-child(2n) { color: red; }
+g:nth-child( +3n - 2 ) { color: red; }
+h:nth-child(5) { color: red; }
+i:nth-of-type(2N+1) { color: red; }
+j:nth-child(2n + 1 of li.important) { color: red; }
+k:nth-child(2n - 1) { color: red; }
+l:nth-child(2n -1) { color: red; }
+m:nth-child(2n- 1) { color: red; }
+n:nth-child(ODD) { color: red; }
+o:nth-child(N) { color: red; }
+p:nth-child(2N) { color: red; }
+q:nth-last-child(N+3) { color: red; }
+r:nth-child(0n+5) { color: red; }
+s:nth-child(2n+1   of   LI.foo) { color: red; }
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+a:nth-child(n + 3) {
+  color: red;
+}
+b:nth-child(2n + 1) {
+  color: red;
+}
+c:nth-child(-n + 3) {
+  color: red;
+}
+d:nth-child(2n-1) {
+  color: red;
+}
+e:nth-child(odd) {
+  color: red;
+}
+f:nth-child(2n) {
+  color: red;
+}
+g:nth-child(+ 3n - 2) {
+  color: red;
+}
+h:nth-child(5) {
+  color: red;
+}
+i:nth-of-type(2n + 1) {
+  color: red;
+}
+j:nth-child(2n + 1 of li.important) {
+  color: red;
+}
+k:nth-child(2n - 1) {
+  color: red;
+}
+l:nth-child(2n -1) {
+  color: red;
+}
+m:nth-child(2n- 1) {
+  color: red;
+}
+n:nth-child(ODD) {
+  color: red;
+}
+o:nth-child(N) {
+  color: red;
+}
+p:nth-child(2n) {
+  color: red;
+}
+q:nth-last-child(N + 3) {
+  color: red;
+}
+r:nth-child(0n + 5) {
+  color: red;
+}
+s:nth-child(2n + 1 of LI.foo) {
+  color: red;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+a:nth-child(n + 3) {
+  color: red;
+}
+b:nth-child(2n + 1) {
+  color: red;
+}
+c:nth-child(-n + 3) {
+  color: red;
+}
+d:nth-child(2n-1) {
+  color: red;
+}
+e:nth-child(odd) {
+  color: red;
+}
+f:nth-child(2n) {
+  color: red;
+}
+g:nth-child(+ 3n - 2) {
+  color: red;
+}
+h:nth-child(5) {
+  color: red;
+}
+i:nth-of-type(2n + 1) {
+  color: red;
+}
+j:nth-child(2n + 1 of li.important) {
+  color: red;
+}
+k:nth-child(2n - 1) {
+  color: red;
+}
+l:nth-child(2n -1) {
+  color: red;
+}
+m:nth-child(2n- 1) {
+  color: red;
+}
+n:nth-child(ODD) {
+  color: red;
+}
+o:nth-child(N) {
+  color: red;
+}
+p:nth-child(2n) {
+  color: red;
+}
+q:nth-last-child(N + 3) {
+  color: red;
+}
+r:nth-child(0n + 5) {
+  color: red;
+}
+s:nth-child(2n + 1 of LI.foo) {
+  color: red;
+}
+
+===================== End =====================

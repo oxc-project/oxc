@@ -1,4 +1,4 @@
-use oxc_allocator::TakeIn;
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 
 use oxc_semantic::ScopeFlags;
@@ -28,7 +28,7 @@ impl<'a> PeepholeOptimizations {
                 let a = e.take_in(ctx);
                 let b = expr_stmt.expression.take_in(ctx);
                 let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
-                return Some(ctx.ast.statement_expression(if_stmt.span, expr));
+                return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
             } else if let Some(Statement::ExpressionStatement(alternate_expr_stmt)) =
                 &mut if_stmt.alternate
             {
@@ -38,7 +38,7 @@ impl<'a> PeepholeOptimizations {
                 let alternate = alternate_expr_stmt.expression.take_in(ctx);
                 let expr =
                     Self::minimize_conditional(if_stmt.span, test, consequent, alternate, ctx);
-                return Some(ctx.ast.statement_expression(if_stmt.span, expr));
+                return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
             }
         } else if Self::is_statement_empty(&if_stmt.consequent) {
             if if_stmt.alternate.is_none()
@@ -47,7 +47,7 @@ impl<'a> PeepholeOptimizations {
                 // "if (a) {}" => "a;"
                 let mut expr = if_stmt.test.take_in(ctx);
                 Self::remove_unused_expression(&mut expr, ctx);
-                return Some(ctx.ast.statement_expression(if_stmt.span, expr));
+                return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
             } else if let Some(Statement::ExpressionStatement(expr_stmt)) = &mut if_stmt.alternate {
                 let (op, e) = match &mut if_stmt.test {
                     // "if (!a) {} else b();" => "a && b();"
@@ -60,7 +60,7 @@ impl<'a> PeepholeOptimizations {
                 let a = e.take_in(ctx);
                 let b = expr_stmt.expression.take_in(ctx);
                 let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
-                return Some(ctx.ast.statement_expression(if_stmt.span, expr));
+                return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
             } else if let Some(stmt) = &mut if_stmt.alternate {
                 // "yes" is missing and "no" is not missing (and is not an expression)
                 match &mut if_stmt.test {
@@ -132,10 +132,11 @@ impl<'a> PeepholeOptimizations {
             && if2.alternate.is_some()
         {
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-            let new_consequent = ctx.ast.statement_block_with_scope_id(
+            let new_consequent = Statement::new_block_statement_with_scope_id(
                 if_stmt.consequent.span(),
-                ctx.ast.vec1(if_stmt.consequent.take_in(ctx)),
+                ArenaVec::from_value_in(if_stmt.consequent.take_in(ctx), ctx),
                 scope_id,
+                ctx,
             );
             ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
         }

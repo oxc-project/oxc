@@ -1,4 +1,4 @@
-use oxc_allocator::TakeIn;
+use oxc_allocator::{ArenaBox, TakeIn};
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -52,9 +52,10 @@ impl<'a> PeepholeOptimizations {
             if let Some(test) = &mut for_stmt.test {
                 let left = test.take_in(ctx);
                 let mut logical_expr =
-                    ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
-                let new_test = Self::try_fold_and_or(&mut logical_expr, ctx)
-                    .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
+                    LogicalExpression::new(test.span(), left, LogicalOperator::And, expr, ctx);
+                let new_test = Self::try_fold_and_or(&mut logical_expr, ctx).unwrap_or_else(|| {
+                    Expression::LogicalExpression(ArenaBox::new_in(logical_expr, ctx))
+                });
                 ctx.replace_expression(test, new_test);
             } else {
                 for_stmt.test = Some(expr);
@@ -90,9 +91,10 @@ impl<'a> PeepholeOptimizations {
             if let Some(test) = &mut for_stmt.test {
                 let left = test.take_in(ctx);
                 let mut logical_expr =
-                    ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
-                let new_test = Self::try_fold_and_or(&mut logical_expr, ctx)
-                    .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
+                    LogicalExpression::new(test.span(), left, LogicalOperator::And, expr, ctx);
+                let new_test = Self::try_fold_and_or(&mut logical_expr, ctx).unwrap_or_else(|| {
+                    Expression::LogicalExpression(ArenaBox::new_in(logical_expr, ctx))
+                });
                 ctx.replace_expression(test, new_test);
             } else {
                 for_stmt.test = Some(expr);
@@ -123,7 +125,7 @@ impl<'a> PeepholeOptimizations {
                 }
                 Statement::BlockStatement(block_stmt)
             }
-            _ => replace.unwrap_or_else(|| ctx.ast.statement_empty(span)),
+            _ => replace.unwrap_or_else(|| Statement::new_empty_statement(span, ctx)),
         }
     }
 }

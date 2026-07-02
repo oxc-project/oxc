@@ -1,4 +1,4 @@
-use std::{iter::FusedIterator, ops::Range};
+use std::{iter::FusedIterator, ops::Range, slice};
 
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
@@ -39,8 +39,18 @@ pub struct EnumDef {
     pub derives: Vec<String>,
     pub generated_derives: Derives,
     pub variants: Vec<VariantDef>,
-    /// For `@inherits` inherited enum variants
+    /// Enums whose variants this enum inherits (declared with `INHERIT(EnumName<'a>)` marker variants)
     pub inherits: Vec<TypeId>,
+    /// Enums which inherit this enum's variants. This is the reverse of [`inherits`].
+    ///
+    /// e.g. `Expression` is inherited by `ArrayExpressionElement`, `Argument`, and others, so all of
+    /// those appear in `Expression`'s `inherited_by`.
+    ///
+    /// Populated after all types are parsed (see `Parser::set_inherited_by`), so is empty during
+    /// parsing of attributes.
+    ///
+    /// [`inherits`]: EnumDef::inherits
+    pub inherited_by: Vec<TypeId>,
     pub builder: AstBuilderType,
     pub visit: VisitEnum,
     pub layout: Layout,
@@ -78,6 +88,7 @@ impl EnumDef {
             generated_derives,
             variants,
             inherits,
+            inherited_by: vec![],
             builder: AstBuilderType::default(),
             visit: VisitEnum::default(),
             layout: Layout::default(),
@@ -103,9 +114,29 @@ impl EnumDef {
         AllVariantsIter::new(self, schema)
     }
 
-    /// Get own enum variants (not including inherited).
-    pub fn inherits_types<'s>(&'s self, schema: &'s Schema) -> impl Iterator<Item = &'s TypeDef> {
-        self.inherits.iter().map(|&type_id| &schema.types[type_id])
+    /// Get iterator over enums this enum inherits from directly.
+    ///
+    /// To get all enums this enum inherits from, including transitively, use [`all_inherits`].
+    ///
+    /// [`all_inherits`]: Self::all_inherits
+    pub fn inherits_enums<'s>(&'s self, schema: &'s Schema) -> impl Iterator<Item = &'s EnumDef> {
+        self.inherits.iter().map(|&type_id| schema.enum_def(type_id))
+    }
+
+    /// Get iterator over all enums this enum inherits variants from, transitively, in depth-first pre-order.
+    ///
+    /// e.g.:
+    ///
+    /// * `AssignmentTarget` inherits `SimpleAssignmentTarget` and `AssignmentTargetPattern`.
+    /// * `SimpleAssignmentTarget` inherits `MemberExpression`.
+    ///
+    /// The iterator yields: `SimpleAssignmentTarget`, `MemberExpression`, `AssignmentTargetPattern`.
+    ///
+    /// Unlike [`inherits_enums`], which yields only the directly-inherited enums.
+    ///
+    /// [`inherits_enums`]: Self::inherits_enums
+    pub fn all_inherits<'s>(&'s self, schema: &'s Schema) -> AllInheritsIter<'s> {
+        AllInheritsIter::new(self, schema)
     }
 
     /// Get whether all variants are fieldless.
@@ -233,19 +264,24 @@ impl VariantDef {
 }
 
 /// Iterator over all variants of an enum (including inherited).
+///
+/// Yields the enum's own variants first, then the own variants of each inherited enum in turn
+/// (in the order produced by [`AllInheritsIter`]).
 pub struct AllVariantsIter<'s> {
-    schema: &'s Schema,
-    variants_iter: std::slice::Iter<'s, VariantDef>,
-    inherits_iter: std::slice::Iter<'s, TypeId>,
-    inner_iter: Option<Box<AllVariantsIter<'s>>>,
+    /// Iterator over the current enum's own variants.
+    /// Starts as the enum's own variants, then advances to each inherited enum's own variants.
+    variants_iter: slice::Iter<'s, VariantDef>,
+    /// Iterator over all inherited enums.
+    inherits_iter: AllInheritsIter<'s>,
 }
 
 impl<'s> AllVariantsIter<'s> {
     /// Create new [`AllVariantsIter`].
     fn new(enum_def: &'s EnumDef, schema: &'s Schema) -> Self {
-        let variants_iter = enum_def.variants.iter();
-        let inherits_iter = enum_def.inherits.iter();
-        Self { schema, variants_iter, inherits_iter, inner_iter: None }
+        Self {
+            variants_iter: enum_def.variants.iter(),
+            inherits_iter: enum_def.all_inherits(schema),
+        }
     }
 }
 
@@ -253,29 +289,59 @@ impl<'s> Iterator for AllVariantsIter<'s> {
     type Item = &'s VariantDef;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // Yield own variants first
-        if let Some(variant) = self.variants_iter.next() {
-            return Some(variant);
-        }
-
-        // Yield from inner iterator (iterating over inherited type's variants)
-        if let Some(inner_iter) = &mut self.inner_iter {
-            if let Some(variant) = inner_iter.next() {
+        loop {
+            // Yield from current enum's own variants
+            if let Some(variant) = self.variants_iter.next() {
                 return Some(variant);
             }
-            self.inner_iter = None;
-        }
-
-        // No current inner iterator. Start iterating over next inherited type.
-        if let Some(&inherits_type_id) = self.inherits_iter.next() {
-            let inherited = self.schema.enum_def(inherits_type_id);
-            let inner_iter = inherited.all_variants(self.schema);
-            self.inner_iter = Some(Box::new(inner_iter));
-            Some(self.inner_iter.as_mut().unwrap().next().unwrap())
-        } else {
-            None
+            // Current enum's variants exhausted - move on to next inherited enum's own variants
+            self.variants_iter = self.inherits_iter.next()?.variants.iter();
         }
     }
 }
 
 impl FusedIterator for AllVariantsIter<'_> {}
+
+/// Iterator over all enums this enum inherits variants from, transitively.
+///
+/// Yields in depth-first pre-order.
+///
+/// No enum is yielded more than once - the inheritance graph is a tree (no diamonds),
+/// so the same enum cannot be reached via 2 different paths.
+///
+/// Created by [`EnumDef::all_inherits`].
+pub struct AllInheritsIter<'s> {
+    schema: &'s Schema,
+    /// Stack of iterators over `inherits` lists, one per level of the depth-first traversal.
+    stack: Vec<slice::Iter<'s, TypeId>>,
+}
+
+impl<'s> AllInheritsIter<'s> {
+    /// Create new [`AllInheritsIter`].
+    fn new(enum_def: &'s EnumDef, schema: &'s Schema) -> Self {
+        Self { schema, stack: vec![enum_def.inherits.iter()] }
+    }
+}
+
+impl<'s> Iterator for AllInheritsIter<'s> {
+    type Item = &'s EnumDef;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // Get next inherited `TypeId` from top of stack, popping iterators which are exhausted.
+        // Returns `None` when the stack is empty (traversal complete).
+        let type_id = loop {
+            let iter = self.stack.last_mut()?;
+            if let Some(&type_id) = iter.next() {
+                break type_id;
+            }
+            self.stack.pop();
+        };
+
+        // Descend into this enum's own inherits next, for depth-first pre-order
+        let enum_def = self.schema.enum_def(type_id);
+        self.stack.push(enum_def.inherits.iter());
+        Some(enum_def)
+    }
+}
+
+impl FusedIterator for AllInheritsIter<'_> {}

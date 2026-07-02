@@ -17,6 +17,7 @@ name = "oxc_compat_data"
 test = false
 
 [dependencies]
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 oxc_tasks_common = { workspace = true }
 oxc_transformer = { workspace = true }
 
@@ -26,3 +27,7 @@ quote = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 syn = { workspace = true, features = ["parsing"] }
+
+# `oxc_ast` is a feature-only dependency, to enable its `disable_old_builder` feature
+[package.metadata.cargo-shear]
+ignored = ["oxc_ast"]
