@@ -199,7 +199,7 @@ impl std::fmt::Debug for Token {
 /// Creates a text from a dynamic string and a range of the input source
 pub fn text(text: &str) -> Text<'_> {
     debug_assert_no_cr_line_break(text);
-    Text { text, width: None }
+    Text { text, width: None, expand_parent: true }
 }
 
 /// Creates a text from a dynamic string that contains no whitespace characters
@@ -208,13 +208,27 @@ pub fn text_without_whitespace(text: &str) -> Text<'_> {
         text.as_bytes().iter().all(|&b| !b.is_ascii_whitespace()),
         "The content '{text}' contains whitespace characters but text must not contain any whitespace characters."
     );
-    Text { text, width: Some(TextWidth::from_non_whitespace_str(text)) }
+    Text { text, width: Some(TextWidth::from_non_whitespace_str(text)), expand_parent: true }
 }
 
 #[derive(Eq, PartialEq)]
 pub struct Text<'a> {
+    #[expect(clippy::struct_field_names)] // Keep the name the same as it is in the original source
     text: &'a str,
     width: Option<TextWidth>,
+    expand_parent: bool,
+}
+
+impl Text<'_> {
+    /// Prints embedded newlines literally but does NOT force enclosing groups to expand
+    /// (Prettier's `replaceEndOfLine(..., literallineWithoutBreakParent)`).
+    ///
+    /// Fits measurement still only counts the first line, and each newline resets the line width.
+    #[must_use]
+    pub fn without_expand_parent(mut self) -> Self {
+        self.expand_parent = false;
+        self
+    }
 }
 
 impl<'a, C> Format<'a, C> for Text<'a>
@@ -222,12 +236,11 @@ where
     C: FormatContext,
 {
     fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
-        f.write_element(FormatElement::Text {
-            text: self.text,
-            width: self
-                .width
-                .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width())),
-        });
+        let width = self
+            .width
+            .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width()));
+        let width = if self.expand_parent { width } else { width.without_expand_parent() };
+        f.write_element(FormatElement::Text { text: self.text, width });
     }
 }
 

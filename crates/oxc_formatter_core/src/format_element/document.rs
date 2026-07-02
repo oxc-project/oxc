@@ -54,7 +54,8 @@ impl<'a> Document<'a> {
 impl Document<'_> {
     /// Sets [`expand`](tag::Group::expand) to [`GroupMode::Propagated`] if the group contains any of:
     /// * a group with [`expand`](tag::Group::expand) set to [GroupMode::Propagated] or [GroupMode::Expand].
-    /// * a non-soft [line break](FormatElement::Line) with mode [LineMode::Hard], [LineMode::Empty], or [LineMode::Literal].
+    /// * a non-soft [line break](FormatElement::Line) with mode [LineMode::Hard] or [LineMode::Empty].
+    /// * a multiline [FormatElement::Text] whose `TextWidth` is not marked `without_expand_parent`.
     /// * a [FormatElement::ExpandParent]
     ///
     /// [`BestFitting`] elements act as expand boundaries, meaning that the fact that a
@@ -146,7 +147,7 @@ impl Document<'_> {
                         false
                     }
                     // `FormatElement::Token` cannot contain line breaks
-                    FormatElement::Text { text: _, width } => width.is_multiline(),
+                    FormatElement::Text { text: _, width } => width.propagates_expand(),
                     FormatElement::ExpandParent
                     | FormatElement::Line(LineMode::Hard | LineMode::Empty) => true,
                     _ => false,
