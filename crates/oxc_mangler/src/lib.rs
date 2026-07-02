@@ -10,6 +10,7 @@ use base54::base54;
 use oxc_allocator::{Allocator, ArenaHashSet, ArenaVec, BitSet};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
+use oxc_ecmascript::BoundNames;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, Stats, SymbolId};
 use oxc_span::SourceType;
 use oxc_str::{CompactStr, Ident, Str};
@@ -843,12 +844,13 @@ fn collect_exported_symbols<'a>(
         let Statement::ExportNamedDeclaration(v) = statement else { continue };
         let Some(decl) = &v.declaration else { continue };
         if let Declaration::VariableDeclaration(decl) = decl {
-            for decl in &decl.declarations {
-                if let Some(id) = decl.id.get_binding_identifier() {
-                    exported_names.insert(id.name.as_arena_str());
-                    exported_symbols.set_bit(id.symbol_id().index());
-                }
-            }
+            // Use `bound_names` rather than `get_binding_identifier`: a destructuring
+            // pattern (`export const { find } = x`) exports every bound name, and
+            // renaming any of them would rename the export.
+            decl.bound_names(&mut |id| {
+                exported_names.insert(id.name.as_arena_str());
+                exported_symbols.set_bit(id.symbol_id().index());
+            });
         } else if let Some(id) = decl.id() {
             exported_names.insert(id.name.as_arena_str());
             exported_symbols.set_bit(id.symbol_id().index());

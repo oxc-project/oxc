@@ -276,6 +276,40 @@ fn shadowed_fn_expr_mangle_is_idempotent() {
     }
 }
 
+/// Destructured bindings in `export const/let/var` define the module's export names —
+/// they must never be renamed (`export const { find } = x` exports `find`; renaming the
+/// binding renames the export). Surfaced by monitor-oxc: mangled `css-tree` lost its
+/// `find` export and broke `import { find } from "css-tree"` at runtime.
+#[test]
+fn destructured_exports_keep_names() {
+    let options = MangleOptions::default();
+
+    test(
+        "import syntax from 's';
+         export const { tokenize, parse, find } = syntax;",
+        "import e from 's';
+         export const { tokenize, parse, find } = e;",
+        options,
+    );
+
+    test(
+        "import syntax from 's';
+         export const [first, second, ...rest] = syntax;",
+        "import e from 's';
+         export const [first, second, ...rest] = e;",
+        options,
+    );
+
+    // Renamed destructuring and nested patterns: only the bound names are exported.
+    test(
+        "import syntax from 's';
+         export const { a: renamed, b: { nested = 1 } } = syntax;",
+        "import e from 's';
+         export const { a: renamed, b: { nested = 1 } } = e;",
+        options,
+    );
+}
+
 /// Annex B.3.2.1: In sloppy mode, function declarations inside blocks have var-like hoisting.
 /// The mangler must not assign the same name to such a function and an outer `var` binding.
 #[test]
