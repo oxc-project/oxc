@@ -148,6 +148,7 @@ export type AllowKind =
 export type NoInnerDeclarationsConfig = "functions" | "both";
 export type BlockScopedFunctions = "allow" | "disallow";
 export type NoMagicNumbersNumber = number | string;
+export type RestrictedGlobal = string | RestrictedGlobalConfig;
 export type NoRestrictedImportsConfigEnum = string | RestrictedPath | NoRestrictedImportsConfig;
 export type PossiblePaths = string | RestrictedPath;
 export type PossiblePatterns = string | RestrictedPattern;
@@ -1182,7 +1183,9 @@ export interface DummyRuleMap {
   "no-redeclare"?: RuleNoConfig | [AllowWarnDeny, NoRedeclare];
   "no-regex-spaces"?: RuleNoConfig;
   "no-restricted-exports"?: RuleNoConfig | [AllowWarnDeny, NoRestrictedExportsConfig];
-  "no-restricted-globals"?: DummyRule;
+  "no-restricted-globals"?:
+    | RuleNoConfig
+    | ([AllowWarnDeny, RestrictedGlobal, ...RestrictedGlobal[]] | [AllowWarnDeny, NoRestrictedGlobalsOptions]);
   "no-restricted-imports"?:
     | RuleNoConfig
     | [AllowWarnDeny, NoRestrictedImportsConfigEnum, ...NoRestrictedImportsConfigEnum[]];
@@ -3428,6 +3431,30 @@ export interface RestrictDefaultExports {
    * ```
    */
   namespaceFrom?: boolean;
+}
+export interface RestrictedGlobalConfig {
+  /**
+   * A custom message to display.
+   */
+  message?: string;
+  /**
+   * The restricted global variable name.
+   */
+  name: string;
+}
+export interface NoRestrictedGlobalsOptions {
+  /**
+   * Whether to check restricted globals accessed through global objects.
+   */
+  checkGlobalObject?: boolean;
+  /**
+   * Additional global object names to check when `checkGlobalObject` is enabled.
+   */
+  globalObjects?: string[];
+  /**
+   * Globals that are restricted from use.
+   */
+  globals: RestrictedGlobal[];
 }
 export interface RestrictedPath {
   allowImportNames?: string[];
