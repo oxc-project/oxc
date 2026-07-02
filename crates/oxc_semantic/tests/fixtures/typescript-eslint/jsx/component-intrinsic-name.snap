@@ -6,7 +6,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/component-i
   {
     "children": [
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(FunctionBody)",
+            "id": 2,
+            "node": "FunctionBody",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(Function)",
         "id": 1,
         "node": "Function(div)",

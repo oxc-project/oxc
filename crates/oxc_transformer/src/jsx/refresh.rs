@@ -649,8 +649,11 @@ impl<'a> ReactRefresh<'a> {
                 NONE,
                 ctx,
             );
-            let function_body = FunctionBody::new(
+            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
+            let body_scope_id = ctx.create_child_scope(scope_id, ScopeFlags::FunctionBody);
+            let function_body = FunctionBody::new_with_scope_id(
                 SPAN,
+                body_scope_id,
                 ArenaVec::new_in(ctx),
                 ArenaVec::from_value_in(
                     Statement::new_return_statement(
@@ -662,7 +665,6 @@ impl<'a> ReactRefresh<'a> {
                 ),
                 ctx,
             );
-            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
             let function = Argument::new_function_expression_with_scope_id_and_pure_and_pife(
                 SPAN,
                 FunctionType::FunctionExpression,

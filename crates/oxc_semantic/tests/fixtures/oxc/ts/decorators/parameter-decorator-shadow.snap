@@ -23,7 +23,15 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/decorators/parameter-decor
       {
         "children": [
           {
-            "children": [],
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode | FunctionBody)",
+                "id": 4,
+                "node": "FunctionBody",
+                "symbols": []
+              }
+            ],
             "flags": "ScopeFlags(StrictMode | Function | Constructor)",
             "id": 3,
             "node": "Function(<anonymous>)",
@@ -46,9 +54,17 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/decorators/parameter-decor
       {
         "children": [
           {
-            "children": [],
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode | FunctionBody)",
+                "id": 7,
+                "node": "FunctionBody",
+                "symbols": []
+              }
+            ],
             "flags": "ScopeFlags(StrictMode | Function | Constructor)",
-            "id": 5,
+            "id": 6,
             "node": "Function(<anonymous>)",
             "symbols": [
               {
@@ -69,7 +85,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/decorators/parameter-decor
           }
         ],
         "flags": "ScopeFlags(StrictMode)",
-        "id": 4,
+        "id": 5,
         "node": "Class(D)",
         "symbols": []
       }
@@ -96,7 +112,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/decorators/parameter-decor
             "id": 4,
             "name": "foo",
             "node_id": 54,
-            "scope_id": 4
+            "scope_id": 5
           }
         ]
       },
@@ -118,7 +134,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/decorators/parameter-decor
             "id": 3,
             "name": "Inject",
             "node_id": 52,
-            "scope_id": 4
+            "scope_id": 5
           }
         ]
       },

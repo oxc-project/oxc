@@ -6,7 +6,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
   {
     "children": [
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(FunctionBody)",
+            "id": 2,
+            "node": "FunctionBody",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(Function)",
         "id": 1,
         "node": "Function(f)",
@@ -17,13 +25,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
           {
             "children": [],
             "flags": "ScopeFlags(StrictMode | ClassStaticBlock)",
-            "id": 3,
+            "id": 4,
             "node": "StaticBlock",
             "symbols": []
           }
         ],
         "flags": "ScopeFlags(StrictMode)",
-        "id": 2,
+        "id": 3,
         "node": "Class(A)",
         "symbols": []
       }
@@ -43,7 +51,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
             "id": 0,
             "name": "f",
             "node_id": 11,
-            "scope_id": 3
+            "scope_id": 4
           }
         ]
       },

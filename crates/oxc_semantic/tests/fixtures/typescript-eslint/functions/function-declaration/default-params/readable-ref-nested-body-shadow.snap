@@ -8,11 +8,34 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
       {
         "children": [
           {
-            "children": [],
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(FunctionBody)",
+                "id": 3,
+                "node": "FunctionBody",
+                "symbols": []
+              }
+            ],
             "flags": "ScopeFlags(Function)",
             "id": 2,
             "node": "Function(<anonymous>)",
             "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(FunctionBody)",
+            "id": 4,
+            "node": "FunctionBody",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(BlockScopedVariable)",
+                "id": 3,
+                "name": "a",
+                "node": "VariableDeclarator(a)",
+                "references": []
+              }
+            ]
           }
         ],
         "flags": "ScopeFlags(Function)",
@@ -24,13 +47,6 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
             "id": 2,
             "name": "b",
             "node": "FormalParameter(b)",
-            "references": []
-          },
-          {
-            "flags": "SymbolFlags(BlockScopedVariable)",
-            "id": 3,
-            "name": "a",
-            "node": "VariableDeclarator(a)",
             "references": []
           }
         ]
@@ -51,7 +67,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
             "id": 0,
             "name": "a",
             "node_id": 13,
-            "scope_id": 2
+            "scope_id": 3
           }
         ]
       },

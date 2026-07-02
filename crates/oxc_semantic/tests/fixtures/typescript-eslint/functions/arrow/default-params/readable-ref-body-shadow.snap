@@ -6,7 +6,23 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
   {
     "children": [
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(FunctionBody)",
+            "id": 2,
+            "node": "FunctionBody",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(BlockScopedVariable)",
+                "id": 3,
+                "name": "a",
+                "node": "VariableDeclarator(a)",
+                "references": []
+              }
+            ]
+          }
+        ],
         "flags": "ScopeFlags(Function | Arrow)",
         "id": 1,
         "node": "ArrowFunctionExpression",
@@ -16,13 +32,6 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
             "id": 2,
             "name": "b",
             "node": "FormalParameter(b)",
-            "references": []
-          },
-          {
-            "flags": "SymbolFlags(BlockScopedVariable)",
-            "id": 3,
-            "name": "a",
-            "node": "VariableDeclarator(a)",
             "references": []
           }
         ]

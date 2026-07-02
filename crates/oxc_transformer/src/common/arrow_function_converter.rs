@@ -976,7 +976,14 @@ impl<'a> ArrowFunctionConverter<'a> {
         );
         let statements =
             ArenaVec::from_value_in(Statement::new_expression_statement(SPAN, init, ctx), ctx);
-        let body = FunctionBody::new(SPAN, ArenaVec::new_in(ctx), statements, ctx);
+        let body_scope_id = ctx.create_child_scope(scope_id, ScopeFlags::FunctionBody);
+        let body = FunctionBody::new_with_scope_id(
+            SPAN,
+            body_scope_id,
+            ArenaVec::new_in(ctx),
+            statements,
+            ctx,
+        );
         let init = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
             SPAN, true, false, NONE, params, NONE, body, scope_id, false, false, ctx,
         );

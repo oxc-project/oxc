@@ -164,8 +164,10 @@ impl<'a> NullishCoalescingOperator {
                 NONE,
                 ctx,
             );
-            let body = FunctionBody::new(
+            let body_scope_id = ctx.create_child_scope(current_scope_id, ScopeFlags::FunctionBody);
+            let body = FunctionBody::new_with_scope_id(
                 SPAN,
+                body_scope_id,
                 ArenaVec::new_in(ctx),
                 ArenaVec::from_value_in(
                     Statement::new_expression_statement(SPAN, new_expr, ctx),

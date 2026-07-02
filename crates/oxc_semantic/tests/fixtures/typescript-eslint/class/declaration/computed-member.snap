@@ -8,7 +8,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
       {
         "children": [
           {
-            "children": [],
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode | FunctionBody)",
+                "id": 3,
+                "node": "FunctionBody",
+                "symbols": []
+              }
+            ],
             "flags": "ScopeFlags(StrictMode | Function)",
             "id": 2,
             "node": "Function(<anonymous>)",
