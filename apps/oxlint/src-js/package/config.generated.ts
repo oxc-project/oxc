@@ -156,6 +156,7 @@ export type NoReturnAssignMode = "always" | "except-parens";
  * Controls how hoisting is handled when checking for shadowing.
  */
 export type HoistOption = "all" | "functions" | "functions-and-types" | "never" | "types";
+export type LoopType = "WhileStatement" | "DoWhileStatement" | "ForStatement" | "ForInStatement" | "ForOfStatement";
 export type NoUnusedVarsConfig = VarsOption | NoUnusedVarsOptions;
 export type VarsOption = "all" | "local";
 export type ArgsOption = "after-used" | "all" | "none";
@@ -1208,6 +1209,7 @@ export interface DummyRuleMap {
   "no-unmodified-loop-condition"?: RuleNoConfig;
   "no-unneeded-ternary"?: RuleNoConfig | [AllowWarnDeny, NoUnneededTernary];
   "no-unreachable"?: RuleNoConfig;
+  "no-unreachable-loop"?: RuleNoConfig | [AllowWarnDeny, NoUnreachableLoopConfig];
   "no-unsafe-finally"?: RuleNoConfig;
   "no-unsafe-negation"?: RuleNoConfig | [AllowWarnDeny, NoUnsafeNegation];
   "no-unsafe-optional-chaining"?: RuleNoConfig | [AllowWarnDeny, NoUnsafeOptionalChaining];
@@ -3591,6 +3593,9 @@ export interface NoUnneededTernary {
    * are allowed and not reported.
    */
   defaultAssignment?: boolean;
+}
+export interface NoUnreachableLoopConfig {
+  ignore?: LoopType[];
 }
 export interface NoUnsafeNegation {
   /**

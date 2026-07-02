@@ -175,6 +175,7 @@ pub(crate) mod eslint {
     pub mod no_unmodified_loop_condition;
     pub mod no_unneeded_ternary;
     pub mod no_unreachable;
+    pub mod no_unreachable_loop;
     pub mod no_unsafe_finally;
     pub mod no_unsafe_negation;
     pub mod no_unsafe_optional_chaining;
