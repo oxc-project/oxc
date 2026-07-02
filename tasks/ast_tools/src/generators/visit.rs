@@ -144,6 +144,7 @@ fn parse_scope_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             exit_before_index: struct_def.fields.len(),
             flags: "ScopeFlags::empty()".to_string(),
             strict_if: None,
+            optional: false,
         }))
     }
 
@@ -161,6 +162,11 @@ fn parse_scope_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         (AttrPart::String("strict_if", value), AttrLocation::Struct(struct_def)) => {
             let scope = get_or_create_scope(struct_def)?;
             scope.strict_if = Some(value);
+        }
+        // `#[scope(optional)]` on struct
+        (AttrPart::Tag("optional"), AttrLocation::Struct(struct_def)) => {
+            let scope = get_or_create_scope(struct_def)?;
+            scope.optional = true;
         }
         // `#[scope(enter_before)]` on struct field
         (AttrPart::Tag("enter_before"), AttrLocation::StructField(struct_def, field_index)) => {
@@ -384,7 +390,9 @@ impl VisitBuilder<'_> {
 
         // Generate `enter_scope` and `leave_scope` calls (if this struct has a scope).
         // They will be inserted before the relevant fields.
-        let (mut scope_entry, mut scope_exit) = if let Some(scope) = &struct_def.visit.scope {
+        let (mut scope_entry, mut scope_exit) = if let Some(scope) =
+            struct_def.visit.scope.as_ref().filter(|scope| !scope.optional)
+        {
             let mut flags = parse_str::<Expr>(&scope.flags).unwrap().to_token_stream();
             if let Some(strict_if) = &scope.strict_if {
                 let strict_if = parse_str::<Expr>(&strict_if.cow_replace("self", "it")).unwrap();

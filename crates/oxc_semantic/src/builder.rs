@@ -768,8 +768,9 @@ impl<'a> SemanticBuilder<'a> {
     }
 }
 
-/// `hasParameterExpressions` from the spec's `FunctionDeclarationInstantiation`:
-/// whether any parameter contains an initializer or a computed property key.
+/// `hasParameterExpressions` from the spec's `FunctionDeclarationInstantiation`.
+///
+/// True when any parameter contains an initializer or a computed property key.
 /// When true, the function body gets its own var environment, so parameter
 /// initializers cannot see body declarations.
 pub fn has_parameter_expressions(params: &FormalParameters) -> bool {
@@ -2056,11 +2057,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             // param / return types) never see body declarations: references in them
             // resolve past the function scope naturally.
             if has_parameter_expressions(&func.params) {
-                let scope_id = Cell::new(None);
-                self.enter_scope(ScopeFlags::FunctionBody, &scope_id);
+                self.enter_scope(ScopeFlags::FunctionBody, &body.scope_id);
                 self.visit_function_body(body);
                 self.leave_scope();
             } else {
+                body.scope_id.set(None);
                 self.visit_function_body(body);
             }
         }
@@ -2142,11 +2143,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // see body declarations. An expression body declares nothing, so it never
         // needs the extra scope.
         if !expr.expression && has_parameter_expressions(&expr.params) {
-            let scope_id = Cell::new(None);
-            self.enter_scope(ScopeFlags::FunctionBody, &scope_id);
+            self.enter_scope(ScopeFlags::FunctionBody, &expr.body.scope_id);
             self.visit_function_body(&expr.body);
             self.leave_scope();
         } else {
+            expr.body.scope_id.set(None);
             self.visit_function_body(&expr.body);
         }
 

@@ -403,7 +403,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             let block_scope_id = ctx.create_child_scope(catch_scope_id, ScopeFlags::empty());
             let err_ident = ctx.generate_binding(
                 static_ident!("err"),
-                block_scope_id,
+                catch_scope_id,
                 SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
             );
             Some(CatchClause::new_with_scope_id(

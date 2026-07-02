@@ -639,6 +639,15 @@ impl<'a> Visit<'a> for SemanticIdsCollector<'a, '_> {
         walk::walk_function(self, func, flags);
     }
 
+    fn visit_function_body(&mut self, body: &FunctionBody<'a>) {
+        // A function body's scope is optional (present only when the parameters
+        // contain expressions), so `Visit` walks don't enter it — collect its id
+        // here. `None` is legitimate and must still be pushed to keep the
+        // after-transform / rebuilt lists positionally aligned.
+        self.scope_ids.push(body.scope_id.get());
+        walk::walk_function_body(self, body);
+    }
+
     fn visit_declaration(&mut self, it: &Declaration<'a>) {
         if it.is_typescript_syntax() {
             return;
