@@ -291,3 +291,245 @@ fn non_redeclared_pure_function_still_folds() {
     // un-redeclared pure function must still fold as before.
     test("const foo = (u) => {}; foo(1)", "const foo = (u) => {};");
 }
+
+// ── drop dead trailing arguments to functions that ignore them (#23866) ──
+
+#[test]
+fn drop_dead_args_issue_repro() {
+    // The declared argument is never read, so the call keeps `await`/the call
+    // itself but drops the object argument.
+    test(
+        "const foo = async (assets) => ({}); export default await foo({ bar: 'baz' })",
+        "const foo = async (assets) => ({}); export default await foo()",
+    );
+}
+
+#[test]
+fn drop_dead_args_multi_use() {
+    // Side-effectful body keeps both calls; the unused param is dropped at each.
+    // (The minifier then merges the two statements into a comma sequence.)
+    test(
+        "const foo = (a) => { bar() }; foo(1); foo(2)",
+        "const foo = (a) => { bar() }; foo(), foo()",
+    );
+}
+
+#[test]
+fn drop_dead_args_extra_beyond_params_and_used_param_kept() {
+    // `a` is used, so arg 0 stays; args beyond the single param are dropped.
+    test(
+        "const foo = (a) => { bar(a) }; foo(1, 2, 3); foo(4)",
+        "const foo = (a) => { bar(a) }; foo(1), foo(4)",
+    );
+}
+
+#[test]
+fn drop_dead_args_zero_params() {
+    test(
+        "const foo = () => { bar() }; foo(1, 2); foo(3)",
+        "const foo = () => { bar() }; foo(), foo()",
+    );
+}
+
+#[test]
+fn drop_dead_args_stops_at_side_effect() {
+    // The side-effectful arg must still run, so the pop stops there.
+    test(
+        "const foo = (a, b) => { bar() }; foo(baz(), 1); foo(2)",
+        "const foo = (a, b) => { bar() }; foo(baz()), foo()",
+    );
+}
+
+#[test]
+fn drop_dead_args_async_effectful_unused_result_not_deleted() {
+    // Consumer-2 regression: the entry carries only a `dead_arg_prefix` fact, so
+    // the unused-result calls must NOT be treated as pure and deleted. Two call
+    // sites keep `foo` from being inlined so the calls remain observable here.
+    test(
+        "const foo = async (u) => { g() }; foo(1); foo(2)",
+        "const foo = async (u) => { g() }; foo(), foo()",
+    );
+}
+
+#[test]
+fn drop_dead_args_generator() {
+    // Function expressions are strict in a module, so the non-arrow gate passes.
+    test(
+        "const foo = function* (u) { yield g() }; foo(1).next(); foo(2).next()",
+        "const foo = function* (u) { yield g() }; foo().next(), foo().next()",
+    );
+}
+
+#[test]
+fn drop_dead_args_arrow_with_nested_non_arrow_arguments() {
+    // The inner `arguments` belongs to the nested non-arrow, not the arrow callee.
+    test(
+        "const foo = (u) => function() { return arguments.length }; g(foo(1)); g(foo(2))",
+        "const foo = (u) => function() { return arguments.length }; g(foo()), g(foo())",
+    );
+}
+
+#[test]
+fn drop_dead_args_arrow_reads_enclosing_arguments() {
+    // The program mentions `arguments`, but the callee is an arrow so the gate is
+    // skipped: the `arguments` belongs to `outer`.
+    test(
+        "function outer() { const foo = (u) => arguments.length; return foo(1) + foo(2) }",
+        "function outer() { let foo = (u) => arguments.length; return foo() + foo() }",
+    );
+}
+
+#[test]
+fn drop_dead_args_frees_dropped_ref_same_run() {
+    // Dropping the `x` args must free `x` so its declaration is removed too (needs
+    // `unused: Remove` to observe the declaration removal).
+    test_unused(
+        "const foo = (u) => { bar() }; const x = 1; foo(x); foo(x)",
+        "const foo = (u) => { bar() }; foo(), foo()",
+    );
+}
+
+#[test]
+fn drop_dead_args_hoisted_decl_call_before_definition() {
+    // The call precedes the hoisted definition, so the callee is only recorded
+    // after the call is first visited; the drop lands on the next fixed-point
+    // pass via map persistence. The dead `if (0)` guarantees a first-pass
+    // mutation so that second pass runs.
+    test("if (0) dead(); foo(1); function foo(u) { bar() }", "foo(); function foo(u) { bar() }");
+}
+
+#[test]
+fn drop_dead_args_export_named_after_decl() {
+    test(
+        "const foo = (u) => { bar() }; export { foo }; foo(1); foo(2)",
+        "const foo = (u) => { bar() }; export { foo }; foo(), foo()",
+    );
+}
+
+// Negatives: the bail must hold. Each is written with `test` (not `test_same`)
+// because the minifier merges the two call statements into a comma sequence;
+// the point is that the ARGUMENTS are unchanged.
+
+#[test]
+fn drop_dead_args_middle_dead_arg_kept() {
+    // `a` precedes the used `b`, so it cannot be dropped from the middle.
+    test(
+        "const foo = (a, b) => { bar(b) }; foo(1, 2); foo(3, 4)",
+        "const foo = (a, b) => { bar(b) }; foo(1, 2), foo(3, 4)",
+    );
+}
+
+#[test]
+fn drop_dead_args_side_effectful_sole_arg_kept() {
+    test(
+        "const foo = (u) => { bar() }; foo(baz()); foo(2)",
+        "const foo = (u) => { bar() }; foo(baz()), foo()",
+    );
+}
+
+#[test]
+fn drop_dead_args_default_param_not_dropped() {
+    // A parameter default runs on `undefined`; dropping args here could change it.
+    test(
+        "const foo = (u = g()) => { bar() }; foo(1); foo(2)",
+        "const foo = (u = g()) => { bar() }; foo(1), foo(2)",
+    );
+}
+
+#[test]
+fn drop_dead_args_destructuring_param_not_dropped() {
+    test(
+        "const foo = ({ u }) => { bar() }; foo(x); foo(y)",
+        "const foo = ({ u }) => { bar() }; foo(x), foo(y)",
+    );
+}
+
+#[test]
+fn drop_dead_args_rest_param_not_dropped() {
+    test(
+        "const foo = (...args) => { console.log(args) }; foo(1); foo(2)",
+        "const foo = (...args) => { console.log(args) }; foo(1), foo(2)",
+    );
+}
+
+#[test]
+fn drop_dead_args_non_arrow_own_arguments_not_dropped() {
+    test(
+        "const foo = function(u) { return arguments.length }; g(foo(1)); g(foo(1, 2))",
+        "const foo = function(u) { return arguments.length }; g(foo(1)), g(foo(1, 2))",
+    );
+}
+
+#[test]
+fn drop_dead_args_spread_before_trailing_not_dropped() {
+    // A spread shifts later argument positions, so trailing pop is unsound.
+    test(
+        "const foo = (a, b) => { console.log(a) }; foo(...xs, 1); foo(...xs, 2)",
+        "const foo = (a, b) => { console.log(a) }; foo(...xs, 1), foo(...xs, 2)",
+    );
+}
+
+#[test]
+fn drop_dead_args_trailing_spread_not_dropped() {
+    test(
+        "const foo = (u) => { bar() }; foo(...xs); foo(...ys)",
+        "const foo = (u) => { bar() }; foo(...xs), foo(...ys)",
+    );
+}
+
+#[test]
+fn drop_dead_args_reassigned_binding_not_dropped() {
+    // A writable binding may hold a different function at the call site.
+    test(
+        "let foo = (u) => { bar() }; foo(1); foo = g",
+        "let foo = (u) => { bar() }; foo(1), foo = g",
+    );
+}
+
+#[test]
+fn drop_dead_args_exported_decl_not_dropped() {
+    // The recorder has no `export const` arm; documents current behavior.
+    test_same("export const foo = (u) => { bar() }; foo(1)");
+}
+
+#[test]
+fn drop_dead_args_direct_eval_not_dropped() {
+    test(
+        "const foo = (u) => { bar() }; foo(1); foo(2); eval('x')",
+        "const foo = (u) => { bar() }; foo(1), foo(2), eval('x')",
+    );
+}
+
+#[test]
+fn drop_dead_args_script_root_scope_not_dropped() {
+    // A root-scope binding in a script is aliased on `globalThis`.
+    test_same_options_source_type(
+        "function foo(u) { bar() } foo(1)",
+        SourceType::cjs().with_script(true),
+        &default_options(),
+    );
+}
+
+#[test]
+fn drop_dead_args_sloppy_var_arguments_not_dropped() {
+    // A top-level script function bails on the script-root gate before the
+    // `arguments` gate is even reached; still, no drop.
+    test_same_options_source_type(
+        "function foo(u) { var arguments; return arguments.length } g(foo(1))",
+        SourceType::cjs().with_script(true),
+        &default_options(),
+    );
+}
+
+#[test]
+fn drop_dead_args_nested_sloppy_var_arguments_not_dropped() {
+    // A nested (non-root) sloppy `function foo` with `var arguments`: the
+    // `var arguments` binds a real symbol, so `arguments` is NOT an unresolved
+    // reference and the program-wide lookup would miss it — the strict-mode gate
+    // is what closes the hole (a sloppy scope is not strict, so it bails).
+    test_same_options_source_type(
+        "function outer() { function foo(u) { var arguments; return arguments } return g(foo(1)) + g(foo(1, 2)) } outer()",
+        SourceType::cjs().with_script(true),
+        &default_options(),
+    );
+}
