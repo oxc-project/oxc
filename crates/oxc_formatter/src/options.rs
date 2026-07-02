@@ -56,6 +56,9 @@ pub struct JsFormatOptions {
     /// Whether to expand object and array literals to multiple lines. Defaults to "auto".
     pub expand: Expand,
 
+    /// Whether to expand array literals to multiple lines. Defaults to "auto".
+    pub array_expand: ArrayExpand,
+
     /// Controls the position of operators in binary expressions. [**NOT SUPPORTED YET**]
     ///
     /// Accepted values are:
@@ -216,6 +219,7 @@ impl JsFormatOptions {
             bracket_same_line: BracketSameLine::default(),
             attribute_position: AttributePosition::default(),
             expand: Expand::default(),
+            array_expand: ArrayExpand::default(),
             experimental_operator_position: OperatorPosition::default(),
             experimental_ternaries: false,
             html_whitespace_sensitivity_ignore: false,
@@ -714,6 +718,41 @@ impl FromStr for BracketSameLine {
             Err(_) => Err(
                 "Value not supported for BracketSameLine. Supported values are 'true' and 'false'.",
             ),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum ArrayExpand {
+    #[default]
+    Auto,
+    /// Arrays are never expanded if they are shorter than the line width.
+    Never,
+    ForceAboveThreshold(u32),
+}
+
+impl FromStr for ArrayExpand {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "auto" => Ok(Self::Auto),
+            "never" => Ok(Self::Never),
+            _ => Err(std::format!("unknown array expand literal: {s}")),
+        }
+    }
+}
+
+impl fmt::Display for ArrayExpand {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ArrayExpand::Auto => f.write_str("Auto"),
+            ArrayExpand::Never => f.write_str("Never"),
+            ArrayExpand::ForceAboveThreshold(n) => {
+                f.write_str("ForceAboveThreshold(")?;
+                fmt::Display::fmt(n, f)?;
+                f.write_str(")")
+            }
         }
     }
 }

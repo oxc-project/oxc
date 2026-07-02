@@ -1,18 +1,18 @@
 use rustc_hash::FxHashSet;
 
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    EmbeddedLanguageFormatting, Expand, GroupEntry, ImportModifier, ImportSelector,
-    JsFormatOptions, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
-    SortTailwindcssOptions, TrailingCommas,
+    ArrayExpand, ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
+    CustomGroupDefinition, EmbeddedLanguageFormatting, Expand, GroupEntry, ImportModifier,
+    ImportSelector, JsFormatOptions, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions,
+    SortOrder, SortTailwindcssOptions, TrailingCommas,
 };
 
 use super::{
     super::oxfmtrc::{
-        ArrowParensConfig, CustomGroupItemConfig, EmbeddedLanguageFormattingConfig, FormatConfig,
-        HtmlWhitespaceSensitivityConfig, JsdocUserConfig, ObjectWrapConfig, QuotePropsConfig,
-        SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig, SortTailwindcssUserConfig,
-        TrailingCommaConfig,
+        ArrayWrapConfig, ArrayWrapMode, ArrowParensConfig, CustomGroupItemConfig,
+        EmbeddedLanguageFormattingConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
+        JsdocUserConfig, ObjectWrapConfig, QuotePropsConfig, SortGroupItemConfig,
+        SortImportsUserConfig, SortOrderConfig, SortTailwindcssUserConfig, TrailingCommaConfig,
     },
     to_core_options::to_core_options,
 };
@@ -122,6 +122,16 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String
     }
 
     // Below are our own extensions
+
+    if let Some(array_wrap) = config.array_wrap {
+        format_options.array_expand = match array_wrap {
+            ArrayWrapConfig::Mode(ArrayWrapMode::Preserve) => ArrayExpand::Auto,
+            ArrayWrapConfig::Mode(ArrayWrapMode::Collapse) => ArrayExpand::Never,
+            ArrayWrapConfig::Threshold(t) => {
+                ArrayExpand::ForceAboveThreshold(t.min_elements_to_wrap)
+            }
+        };
+    }
 
     format_options.sort_imports = to_sort_imports(config)?;
 
@@ -435,6 +445,25 @@ mod tests {
         let config: FormatConfig = serde_json::from_str(r#"{"objectWrap": "collapse"}"#).unwrap();
         let format_options = to_oxc_formatter(&config).unwrap();
         assert_eq!(format_options.expand, Expand::Never);
+    }
+
+    #[test]
+    fn test_array_wrap_normalization() {
+        // Test "preserve" -> Auto
+        let config: FormatConfig = serde_json::from_str(r#"{"arrayWrap": "preserve"}"#).unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::Auto);
+
+        // Test "collapse" -> Never
+        let config: FormatConfig = serde_json::from_str(r#"{"arrayWrap": "collapse"}"#).unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::Never);
+
+        // Test { minElementsToWrap: 2 } -> ForceAboveThreshold(2)
+        let config: FormatConfig =
+            serde_json::from_str(r#"{"arrayWrap": {"minElementsToWrap": 2}}"#).unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::ForceAboveThreshold(2));
     }
 
     #[test]

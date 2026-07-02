@@ -7,8 +7,8 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, JsFormatOptions,
-    OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
+    ArrayExpand, ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand,
+    JsFormatOptions, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_formatter_css::{CssFormatOptions, CssVariant};
@@ -308,6 +308,14 @@ impl VisitMut<'_> for SpecParser {
                                             _ => s,
                                         },
                                     )
+                                    .unwrap_or_default();
+                                }
+                                "arrayWrap" => {
+                                    js_options.array_expand = ArrayExpand::from_str(match s {
+                                        "preserve" => "auto",
+                                        "collapse" => "never",
+                                        _ => s,
+                                    })
                                     .unwrap_or_default();
                                 }
                                 "arrowParens" => {

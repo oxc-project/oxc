@@ -29,10 +29,10 @@ use oxc::{
     transformer::{TransformOptions, Transformer},
 };
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions, QuoteProperties,
-    QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas, default_groups,
-    default_internal_patterns,
+    ArrayExpand, ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
+    CustomGroupDefinition, Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
+    QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas,
+    default_groups, default_internal_patterns,
 };
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_linter::{
@@ -513,6 +513,17 @@ impl Oxc {
             };
             if let Ok(expand) = normalized.parse::<Expand>() {
                 format_options.expand = expand;
+            }
+        }
+
+        if let Some(ref array_wrap) = options.array_wrap {
+            let normalized = match array_wrap.as_str() {
+                "preserve" => "auto",
+                "collapse" => "never",
+                _ => array_wrap.as_str(),
+            };
+            if let Ok(array_expand) = normalized.parse::<ArrayExpand>() {
+                format_options.array_expand = array_expand;
             }
         }
 
