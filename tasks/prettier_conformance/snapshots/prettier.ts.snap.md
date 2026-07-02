@@ -1,10 +1,9 @@
-ts compatibility: 591/601 (98.34%), 19 files skipped
+ts compatibility: 592/601 (98.50%), 19 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/arrow/comments/issue-11100.ts | 💥 | 84.00% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/comments/mapped_types.ts | 💥 | 96.77% |
