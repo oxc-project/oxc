@@ -511,6 +511,7 @@ impl<'a> Visit<'a> for FunctionBodyScopeCollector {
         {
             self.add_binding(id);
         }
+        self.visit_decorators(&it.decorators);
         self.add_scope(&it.scope_id);
     }
 
@@ -558,7 +559,7 @@ impl<'a> Visit<'a> for FunctionBodyScopeCollector {
 
     fn visit_ts_enum_declaration(&mut self, it: &TSEnumDeclaration<'a>) {
         self.add_binding(&it.id);
-        self.visit_ts_enum_body(&it.body);
+        self.add_scope(&it.body.scope_id);
     }
 
     fn visit_ts_module_declaration(&mut self, it: &TSModuleDeclaration<'a>) {
