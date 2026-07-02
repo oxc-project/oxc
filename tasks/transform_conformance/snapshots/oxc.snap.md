@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 239/397
+Passed: 231/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -8,10 +8,7 @@ Passed: 239/397
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-chaining
-* babel-plugin-transform-optional-catch-binding
-* babel-plugin-transform-async-generator-functions
 * babel-plugin-transform-object-rest-spread
-* babel-plugin-transform-async-to-generator
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 * babel-preset-typescript
@@ -21,17 +18,83 @@ Passed: 239/397
 * plugin-tagged-template-transform
 
 
-# babel-plugin-transform-explicit-resource-management (3/4)
+# babel-plugin-transform-explicit-resource-management (0/4)
 * export-class-name/input.js
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(4): ["_"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_"]
+rebuilt        : ScopeId(5): []
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(7)]
 rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(5), ReferenceId(6)]
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(3): []
 rebuilt        : SymbolId(3): [ReferenceId(4)]
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(5): ScopeId(5)
+rebuilt        : SymbolId(5): ScopeId(4)
 Reference symbol mismatch for "C":
 after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
+
+* for-of-no-block/input.js
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(5): ["_"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(3): ScopeId(6)
+rebuilt        : SymbolId(3): ScopeId(5)
+
+* function-with-scopes-in-params/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "a", "b"]
+rebuilt        : ScopeId(1): ["a", "b"]
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(5): ["x", "y"]
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(1))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Bindings mismatch:
+after transform: ScopeId(7): []
+rebuilt        : ScopeId(7): ["_"]
+Scope parent mismatch:
+after transform: ScopeId(7): Some(ScopeId(1))
+rebuilt        : ScopeId(7): Some(ScopeId(4))
+Bindings mismatch:
+after transform: ScopeId(8): ["_"]
+rebuilt        : ScopeId(8): []
+Scope parent mismatch:
+after transform: ScopeId(9): Some(ScopeId(1))
+rebuilt        : ScopeId(9): Some(ScopeId(4))
+Symbol scope ID mismatch for "_usingCtx":
+after transform: SymbolId(5): ScopeId(1)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(3): ScopeId(4)
+rebuilt        : SymbolId(4): ScopeId(5)
+Symbol scope ID mismatch for "y":
+after transform: SymbolId(4): ScopeId(4)
+rebuilt        : SymbolId(5): ScopeId(5)
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(6): ScopeId(8)
+rebuilt        : SymbolId(6): ScopeId(7)
+
+* try-catch/input.js
+Bindings mismatch:
+after transform: ScopeId(7): []
+rebuilt        : ScopeId(5): ["_"]
+Bindings mismatch:
+after transform: ScopeId(8): ["_"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(3): ScopeId(8)
+rebuilt        : SymbolId(3): ScopeId(5)
 
 
 # babel-plugin-transform-class-properties (26/33)
@@ -61,6 +124,61 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(8), R
 Symbol reference IDs mismatch for "X":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(9), ReferenceId(12)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
+
+
+# babel-plugin-transform-optional-catch-binding (0/1)
+* try-catch-shadow/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["_unused2"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_unused2"]
+rebuilt        : ScopeId(3): []
+Symbol scope ID mismatch for "_unused2":
+after transform: SymbolId(1): ScopeId(3)
+rebuilt        : SymbolId(1): ScopeId(2)
+
+
+# babel-plugin-transform-async-generator-functions (1/4)
+* for-await/single-statement-body/input.js
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(7): ["err"]
+Bindings mismatch:
+after transform: ScopeId(6): ["err"]
+rebuilt        : ScopeId(8): []
+Symbol scope ID mismatch for "err":
+after transform: SymbolId(8): ScopeId(6)
+rebuilt        : SymbolId(10): ScopeId(7)
+
+* for-await/with-if-statement/input.js
+Bindings mismatch:
+after transform: ScopeId(10): []
+rebuilt        : ScopeId(12): ["err"]
+Bindings mismatch:
+after transform: ScopeId(11): ["err"]
+rebuilt        : ScopeId(13): []
+Symbol scope ID mismatch for "err":
+after transform: SymbolId(8): ScopeId(11)
+rebuilt        : SymbolId(10): ScopeId(12)
+
+* for-await/with-labeled-statement/input.js
+Bindings mismatch:
+after transform: ScopeId(9): []
+rebuilt        : ScopeId(11): ["err"]
+Bindings mismatch:
+after transform: ScopeId(10): ["err"]
+rebuilt        : ScopeId(12): []
+Symbol scope ID mismatch for "err":
+after transform: SymbolId(8): ScopeId(10)
+rebuilt        : SymbolId(10): ScopeId(11)
+
+
+# babel-plugin-transform-async-to-generator (27/28)
+* class/computed-key-binding/input.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
 
 
 # babel-plugin-transform-typescript (23/60)
@@ -784,7 +902,7 @@ rebuilt        : ["Ambient", "Object", "babelHelpers", "dec"]
 
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
-after transform: SymbolId(0): [ReferenceId(3), ReferenceId(1), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
 rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(7), ReferenceId(9)]
 Symbol span mismatch for "Example":
 after transform: SymbolId(1): Span { start: 87, end: 94 }
@@ -911,7 +1029,7 @@ Symbol flags mismatch for "StringEnum":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "StringEnum":
-after transform: SymbolId(0): [ReferenceId(21), ReferenceId(5), ReferenceId(27)]
+after transform: SymbolId(0): [ReferenceId(5), ReferenceId(21), ReferenceId(27)]
 rebuilt        : SymbolId(0): [ReferenceId(3)]
 Symbol flags mismatch for "TemplateStringEnum":
 after transform: SymbolId(3): SymbolFlags(RegularEnum)
@@ -923,7 +1041,7 @@ Symbol flags mismatch for "NumberEnum":
 after transform: SymbolId(6): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "NumberEnum":
-after transform: SymbolId(6): [ReferenceId(22), ReferenceId(9), ReferenceId(23), ReferenceId(37)]
+after transform: SymbolId(6): [ReferenceId(9), ReferenceId(22), ReferenceId(23), ReferenceId(37)]
 rebuilt        : SymbolId(4): [ReferenceId(13), ReferenceId(53)]
 Symbol flags mismatch for "UnaryEnum":
 after transform: SymbolId(9): SymbolFlags(RegularEnum)
@@ -1125,7 +1243,7 @@ Bindings mismatch:
 after transform: ScopeId(3): ["Cls2"]
 rebuilt        : ScopeId(4): []
 Symbol reference IDs mismatch for "dec":
-after transform: SymbolId(0): [ReferenceId(4), ReferenceId(0), ReferenceId(1), ReferenceId(3)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4)]
 rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(10)]
 Symbol span mismatch for "Cls":
 after transform: SymbolId(4): Span { start: 0, end: 0 }

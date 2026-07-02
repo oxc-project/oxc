@@ -808,13 +808,18 @@ fn optional_catch_binding() {
     );
 
     // Regression tests for https://github.com/oxc-project/oxc/issues/17307
+    // The inner `var e` merges with the *inner* catch parameter (bindings stay in
+    // their own catch scope), so the unused outer parameter can also be dropped.
     test(
         "try {} catch (e) { try {} catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
-        "try {} catch (e) { var e } console.log(e === void 0)",
+        "try {} catch { var e } console.log(e === void 0)",
     );
     test(
+        // The outer parameter is unreferenced (every `e` inside resolves to the
+        // inner catch parameter) and the inner `var e` merges with the inner
+        // parameter, so the outer parameter can be dropped.
         "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
-        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
+        "try { throw 1 } catch { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
     );
 
     test_target_same("try { foo } catch(e) {}", "chrome65");
