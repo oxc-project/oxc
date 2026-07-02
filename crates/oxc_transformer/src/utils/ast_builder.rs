@@ -71,7 +71,8 @@ pub fn wrap_statements_in_arrow_function_iife<'a>(
 ) -> Expression<'a> {
     let kind = FormalParameterKind::ArrowFormalParameters;
     let params = FormalParameters::boxed(SPAN, kind, ArenaVec::new_in(ctx), NONE, ctx);
-    let body_scope_id = ctx.create_child_scope(scope_id, ScopeFlags::FunctionBody);
+    let body_scope_id =
+        ctx.insert_scope_below_statements_from_scope_id(&stmts, scope_id, ScopeFlags::FunctionBody);
     let body =
         FunctionBody::boxed_with_scope_id(SPAN, body_scope_id, ArenaVec::new_in(ctx), stmts, ctx);
     let arrow = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
@@ -237,7 +238,8 @@ pub fn create_class_method<'a>(
     scope_id: ScopeId,
     ctx: &mut TraverseCtx<'a>,
 ) -> ClassElement<'a> {
-    let body_scope_id = ctx.create_child_scope(scope_id, ScopeFlags::FunctionBody);
+    let body_scope_id =
+        ctx.insert_scope_below_statements_from_scope_id(&stmts, scope_id, ScopeFlags::FunctionBody);
     ClassElement::new_method_definition(
         SPAN,
         MethodDefinitionType::MethodDefinition,

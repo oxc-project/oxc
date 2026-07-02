@@ -328,10 +328,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         call_expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let current_scope_id = ctx.current_scope_id();
-        if !ctx.scoping().scope_flags(current_scope_id).is_function() {
-            return;
-        }
+        let Some(function_scope_id) = Self::current_function_scope_id(ctx) else { return };
 
         let hook_name: Str = match &call_expr.callee {
             Expression::Identifier(ident) => ident.name.into(),
@@ -370,10 +367,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             };
 
             if let Some(binding_name) = binding_name {
-                self.non_builtin_hooks_callee.entry(current_scope_id).or_default().push(
+                self.non_builtin_hooks_callee.entry(function_scope_id).or_default().push(
                     ctx.scoping()
                         .find_binding(
-                            ctx.scoping().scope_parent_id(ctx.current_scope_id()).unwrap(),
+                            ctx.scoping().scope_parent_id(function_scope_id).unwrap(),
                             binding_name,
                         )
                         .map(|symbol_id| {
@@ -430,7 +427,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 
         key_len += hook_name.len() + declarator_id.len();
 
-        let string = match self.function_signature_keys.entry(current_scope_id) {
+        let string = match self.function_signature_keys.entry(function_scope_id) {
             Entry::Occupied(entry) => {
                 let string = entry.into_mut();
                 string.reserve(key_len + 2);
@@ -459,6 +456,21 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 
 // Internal Methods
 impl<'a> ReactRefresh<'a> {
+    fn current_function_scope_id(ctx: &TraverseCtx<'a>) -> Option<ScopeId> {
+        let current_scope_id = ctx.current_scope_id();
+        let flags = ctx.scoping().scope_flags(current_scope_id);
+        if flags.is_function() {
+            return Some(current_scope_id);
+        }
+        if flags.is_function_body()
+            && let Some(parent_scope_id) = ctx.scoping().scope_parent_id(current_scope_id)
+            && ctx.scoping().scope_flags(parent_scope_id).is_function()
+        {
+            return Some(parent_scope_id);
+        }
+        None
+    }
+
     fn create_registration(
         &mut self,
         persistent_id: Str<'a>,
@@ -650,19 +662,24 @@ impl<'a> ReactRefresh<'a> {
                 ctx,
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
-            let body_scope_id = ctx.create_child_scope(scope_id, ScopeFlags::FunctionBody);
+            let statements = ArenaVec::from_value_in(
+                Statement::new_return_statement(
+                    SPAN,
+                    Some(Expression::new_array_expression(SPAN, custom_hooks_in_scope, ctx)),
+                    ctx,
+                ),
+                ctx,
+            );
+            let body_scope_id = ctx.insert_scope_below_statements_from_scope_id(
+                &statements,
+                scope_id,
+                ScopeFlags::FunctionBody,
+            );
             let function_body = FunctionBody::new_with_scope_id(
                 SPAN,
                 body_scope_id,
                 ArenaVec::new_in(ctx),
-                ArenaVec::from_value_in(
-                    Statement::new_return_statement(
-                        SPAN,
-                        Some(Expression::new_array_expression(SPAN, custom_hooks_in_scope, ctx)),
-                        ctx,
-                    ),
-                    ctx,
-                ),
+                statements,
                 ctx,
             );
             let function = Argument::new_function_expression_with_scope_id_and_pure_and_pife(

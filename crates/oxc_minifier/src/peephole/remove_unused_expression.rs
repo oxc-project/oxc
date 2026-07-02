@@ -44,7 +44,7 @@ impl<'a> PeepholeOptimizations {
     pub(crate) fn this_is_inside_derived_constructor(ctx: &TraverseCtx<'a>) -> bool {
         for scope_id in ctx.ancestor_scopes() {
             let flags = ctx.scoping().scope_flags(scope_id);
-            if flags.is_block() || flags.is_arrow() {
+            if flags.is_block() || flags.is_arrow() || flags.is_function_body() {
                 continue;
             }
             if !flags.is_constructor() {
