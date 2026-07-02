@@ -680,7 +680,9 @@ enum MutationResult {
 
 struct Context {
     interned_effects: FxHashMap<EffectKey, AliasingEffect>,
-    instruction_signature_cache: FxHashMap<u32, InstructionSignature>,
+    /// `Rc` so `apply_signature` can hold the signature while passing the
+    /// context on mutably, without deep-cloning the effect list every time.
+    instruction_signature_cache: FxHashMap<u32, Rc<InstructionSignature>>,
     catch_handlers: FxHashMap<BlockId, Place>,
     is_function_expression: bool,
     hoisted_context_declarations: FxHashMap<DeclarationId, Option<Place>>,
@@ -1156,7 +1158,7 @@ fn infer_block(
         if !context.instruction_signature_cache.contains_key(instr_idx) {
             let sig =
                 compute_signature_for_instruction(context, env, &func.instructions[instr_index]);
-            context.instruction_signature_cache.insert(*instr_idx, sig);
+            context.instruction_signature_cache.insert(*instr_idx, Rc::new(sig));
         }
 
         // Apply signature
@@ -1308,10 +1310,9 @@ fn apply_signature(
     let mut initialized: FxHashSet<IdentifierId> = FxHashSet::default();
 
     // Get the cached signature effects
-    let sig = context.instruction_signature_cache.get(&instr_idx).unwrap();
-    let sig_effects: Vec<AliasingEffect> = sig.effects.clone();
+    let sig = Rc::clone(context.instruction_signature_cache.get(&instr_idx).unwrap());
 
-    for effect in &sig_effects {
+    for effect in &sig.effects {
         apply_effect(context, state, effect.clone(), &mut initialized, &mut effects, env)?;
     }
 
