@@ -531,6 +531,7 @@ pub(crate) mod unicorn {
     pub mod no_null;
     pub mod no_object_as_default_parameter;
     pub mod no_process_exit;
+    pub mod no_return_array_push;
     pub mod no_single_promise_in_promise_methods;
     pub mod no_static_only_class;
     pub mod no_thenable;
