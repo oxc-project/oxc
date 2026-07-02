@@ -244,7 +244,3 @@ cargo run -p oxc_formatter_css --example embedded_debug file.scss               
 ## Roadmap (TODO: Follow Prettier main)
 
 The guiding axis is Prettier compatibility, matching what is in Prettier's unreleased changelog (main has them, next stable will).
-
-- [#18605](https://github.com/prettier/prettier/blob/main/changelog_unreleased/css/18605.md):
-  Don't break a selector when its attribute value contains an escaped literal newline (`foo="long\\<newline>continuation"`).
-  We currently break before the long span; Prettier main keeps the selector on one line.

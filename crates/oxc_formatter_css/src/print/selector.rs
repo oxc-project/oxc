@@ -352,7 +352,7 @@ fn write_attribute_selector<'a>(attribute: &AttributeSelector<'a>, f: &mut CssFo
                 write!(f, [text(quote), text(source.text_for(&span)), text(quote)]);
             }
             AttributeSelectorValue::Str(InterpolableStr::Literal(str)) => {
-                value::write_str(str, f);
+                value::write_attribute_str(str, f);
             }
             // Interpolated string (`[x="#{$v}"]`):
             // re-quote the outer quotes per `singleQuote`, keep the `#{}` content verbatim.
@@ -365,7 +365,7 @@ fn write_attribute_selector<'a>(attribute: &AttributeSelector<'a>, f: &mut CssFo
             // so it re-quotes per `singleQuote` like the value-position handler.
             AttributeSelectorValue::LessEscapedStr(escaped) => {
                 write!(f, "~");
-                value::write_str(&escaped.str, f);
+                value::write_attribute_str(&escaped.str, f);
             }
             AttributeSelectorValue::Percentage(_)
             | AttributeSelectorValue::Number(_)
