@@ -68,7 +68,7 @@ js compatibility: 737/808 (91.21%), 23 files skipped
 | js/no-semi/while-statement.js | 💥💥 | 61.11% |
 | js/no-semi/with-statement.js | 💥💥 | 61.11% |
 | js/return/comment.js | 💥 | 94.64% |
-| js/sequence-expression/parenthesized-trailing-comment.js | 💥 | 45.71% |
+| js/sequence-expression/parenthesized-trailing-comment.js | 💥 | 51.43% |
 | js/template-literals/expression-break.js | 💥 | 80.00% |
 | js/template-literals/expressions.js | 💥 | 97.64% |
 | js/test-declarations/jest-each.js | 💥💥 | 95.71% |

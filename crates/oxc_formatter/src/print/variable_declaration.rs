@@ -11,6 +11,7 @@ use crate::{
         Buffer, Format, JsFormatContext, JsFormatter, prelude::*, separated::FormatSeparatedIter,
     },
     options::TrailingSeparator,
+    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };
 
@@ -76,7 +77,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, VariableDe
             {
                 write!(f, indent(&first_declarator));
             } else {
-                write!(f, &first_declarator);
+                // Prettier lets `VariableDeclaration` print the semicolon after the single
+                // declarator, so leave end-trailing comments for the declaration node.
+                // https://github.com/prettier/prettier/blob/1c6ba5539141552e0e8e22d401ea620d8fdff468/src/language-js/print/estree.js#L313-L337
+                write!(f, FormatNodeWithoutTrailingComments(&first_declarator));
             };
         }
 

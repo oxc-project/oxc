@@ -1,4 +1,4 @@
-ts compatibility: 594/662 (89.73%), 19 files skipped
+ts compatibility: 595/662 (89.88%), 19 files skipped
 
 # Failed
 
@@ -6,7 +6,6 @@ ts compatibility: 594/662 (89.73%), 19 files skipped
 | :-------- | :--------------: | :---------: |
 | jsx/attribute-blank-lines/attribute-blank-lines.js | 💥💥 | 62.82% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 89.47% |
-| typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/arrow/return-type/18588.ts | 💥 | 58.82% |
 | typescript/as/as.ts | 💥 | 97.74% |
 | typescript/as/as-const/as-const.ts | 💥 | 90.91% |

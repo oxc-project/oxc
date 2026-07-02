@@ -1,15 +1,14 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, SPAN};
 
 use crate::{
     FormatTrailingCommas,
-    ast_nodes::AstNode,
+    ast_nodes::{AstNode, AstNodes},
     formatter::{
         Buffer, Format, GroupId, JsFormatContext, JsFormatter, prelude::*,
         separated::FormatSeparatedIter,
     },
-    utils::array::write_array_node,
     write,
 };
 
@@ -66,12 +65,54 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
 
                 filler.finish();
             }
-            ArrayLayout::OnePerLine => write_array_node(
-                self.elements.len(),
-                self.elements.iter().map(|e| if e.is_elision() { None } else { Some(e) }),
-                f,
-            ),
+            ArrayLayout::OnePerLine => write_array_expression_elements(self.elements, f),
         }
+    }
+}
+
+fn write_array_expression_elements<'a>(
+    elements: &AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    let last_index = elements.len() - 1;
+    let mut join = f.join_nodes_with_soft_line();
+    let mut has_seen_elision = false;
+
+    for (index, element) in elements.iter().enumerate() {
+        let span = if has_seen_elision { SPAN } else { element.span() };
+        has_seen_elision = element.is_elision();
+
+        join.entry(
+            span,
+            &format_once(|f| {
+                if let AstNodes::Elision(elision) = element.as_ast_nodes() {
+                    write!(f, ",");
+                    let leading_comment_should_break = {
+                        let mut comments = f.comments().comments_before_iter(elision.span().start);
+                        comments
+                            .next()
+                            .map(|comment| comment.is_line() || comment.preceded_by_newline())
+                    };
+                    if let Some(should_break) = leading_comment_should_break {
+                        if should_break {
+                            write!(f, hard_line_break());
+                        } else {
+                            write!(f, space());
+                        }
+                        elision.format_leading_comments(f);
+                    }
+                    elision.format_trailing_comments(f);
+                } else {
+                    write!(f, group(&element));
+
+                    if index == last_index {
+                        write!(f, FormatTrailingCommas::ES5);
+                    } else {
+                        write!(f, ",");
+                    }
+                }
+            }),
+        );
     }
 }
 
