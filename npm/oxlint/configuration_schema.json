@@ -13185,6 +13185,12 @@
     "NoArraySort": {
       "type": "object",
       "properties": {
+        "allowAfterSpread": {
+          "description": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```"
+        },
         "allowExpressionStatement": {
           "description": "When set to `true` (default), allows `array.sort()` as an expression statement.\nSet to `false` to forbid `Array#sort()` even if it's an expression statement.\n\nExample of **incorrect** code for this rule with `allowExpressionStatement` set to `false`:\n```js\narray.sort();\n```",
           "default": true,

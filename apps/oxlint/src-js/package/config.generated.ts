@@ -6094,6 +6094,16 @@ export interface NoArrayReverse {
 }
 export interface NoArraySort {
   /**
+   * When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.
+   * This avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.
+   *
+   * Example of **correct** code for this rule with `allowAfterSpread` set to `true`:
+   * ```js
+   * const sorted = [...mySet].sort();
+   * ```
+   */
+  allowAfterSpread?: boolean;
+  /**
    * When set to `true` (default), allows `array.sort()` as an expression statement.
    * Set to `false` to forbid `Array#sort()` even if it's an expression statement.
    *
