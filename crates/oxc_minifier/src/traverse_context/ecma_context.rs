@@ -1,4 +1,5 @@
-use oxc_ast::{AstBuilder, ast::*};
+use oxc_allocator::GetAllocator;
+use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     GlobalContext,
@@ -148,23 +149,7 @@ impl<'a> MayHaveSideEffectsContext<'a> for &mut TraverseCtx<'a, MinifierState<'a
     }
 }
 
-impl<'a> ConstantEvaluationCtx<'a> for TraverseCtx<'a, MinifierState<'a>> {
-    fn ast(&self) -> AstBuilder<'a> {
-        self.ast
-    }
-}
-
-impl<'a> ConstantEvaluationCtx<'a> for &TraverseCtx<'a, MinifierState<'a>> {
-    fn ast(&self) -> AstBuilder<'a> {
-        (*self).ast()
-    }
-}
-
-impl<'a> ConstantEvaluationCtx<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
-    fn ast(&self) -> AstBuilder<'a> {
-        (**self).ast()
-    }
-}
+impl<'a> ConstantEvaluationCtx<'a> for TraverseCtx<'a, MinifierState<'a>> {}
 
 impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     pub fn options(&self) -> &CompressOptions {
@@ -220,18 +205,18 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             ConstantValue::Number(n) => {
                 let number_base =
                     if is_exact_int64(n) { NumberBase::Decimal } else { NumberBase::Float };
-                self.ast.expression_numeric_literal(span, n, None, number_base)
+                Expression::new_numeric_literal(span, n, None, number_base, self)
             }
             ConstantValue::BigInt(bigint) => {
-                let value = format_str!(self.ast.allocator, "{bigint}");
-                self.ast.expression_big_int_literal(span, value, None, BigintBase::Decimal)
+                let value = format_str!(self.allocator(), "{bigint}");
+                Expression::new_big_int_literal(span, value, None, BigintBase::Decimal, self)
             }
             ConstantValue::String(s) => {
-                self.ast.expression_string_literal(span, self.ast.str_from_cow(&s), None)
+                Expression::new_string_literal(span, Str::from_cow_in(&s, self), None, self)
             }
-            ConstantValue::Boolean(b) => self.ast.expression_boolean_literal(span, b),
-            ConstantValue::Undefined => self.ast.void_0(span),
-            ConstantValue::Null => self.ast.expression_null_literal(span),
+            ConstantValue::Boolean(b) => Expression::new_boolean_literal(span, b, self),
+            ConstantValue::Undefined => Expression::new_void_0(span, self),
+            ConstantValue::Null => Expression::new_null_literal(span, self),
         }
     }
 
@@ -258,6 +243,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         symbol_id: SymbolId,
         constant: Option<ConstantValue<'a>>,
         is_fresh_value: bool,
+        falsy_init: bool,
     ) {
         let mut exported = false;
         if self.scoping.current_scope_id() == self.scoping().root_scope_id() {
@@ -289,8 +275,21 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         let scope_id = self.scoping().symbol_scope_id(symbol_id);
         let scope_flags = self.scoping().scope_flags(scope_id);
 
+        // `constant` is the value-context value, `None` when withheld (e.g. a hoisted
+        // `var` past a dirty prelude). Capture before it's moved just below.
+        let value_withheld = constant.is_none();
         let initialized_constant =
             if scope_flags.contains(ScopeFlags::DirectEval) { None } else { constant };
+
+        // `boolean_falsy` (see `SymbolValue::boolean_falsy`) gated to a sound subset:
+        // write-once, outside a direct-`eval` scope, and not a script's top-level
+        // global (another script could reassign it, so a 0 in-module write count
+        // doesn't prove write-once).
+        let boolean_falsy = falsy_init
+            && value_withheld
+            && write_references_count == 0
+            && !scope_flags.contains(ScopeFlags::DirectEval)
+            && !(self.source_type().is_script() && scope_id == self.scoping().root_scope_id());
 
         let symbol_value = SymbolValue {
             initialized_constant,
@@ -299,6 +298,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             write_references_count,
             member_write_target_read_count,
             is_fresh_value,
+            boolean_falsy,
         };
         self.state.symbol_values.init_value(symbol_id, symbol_value);
     }

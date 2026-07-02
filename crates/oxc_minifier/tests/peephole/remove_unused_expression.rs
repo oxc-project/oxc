@@ -450,7 +450,7 @@ fn test_fold_iife() {
     test("(() => a())()", "a();");
     test("(() => { a() })()", "a();");
     test("(() => { return a() })()", "a();");
-    test_same("(a => {})()");
+    test("(a => {})()", "");
     test_same("((a = foo()) => {})()");
     test_same("(a => { a() })()");
     test("((...a) => {})()", "");
@@ -534,6 +534,43 @@ fn test_fold_iife() {
     // Directive-only body: in module source the redundant `'use strict'` is
     // stripped upstream, then the empty-body path drops the wrapper.
     test("(function() { 'use strict' })(a)", "a;");
+}
+
+#[test]
+fn test_remove_side_effect_free_iife() {
+    // https://github.com/oxc-project/oxc/issues/23777
+    // Calling a function/arrow literal in place runs its body once; when the
+    // body (and the args + params) are side-effect-free, the whole call is too,
+    // so a discarded result drops entirely — even with a non-trivial body.
+    test("(function () { function test() {} return test })()", "");
+    test("(function () { return 1 })()", "");
+    test("(function () { var x = 1; return x })()", "");
+    test("(function () { let a = 1, b = 2; return a + b })()", "");
+    test("(function () { return new.target })()", "");
+    test("(function () { if (1) { return 2 } else { return 3 } })()", "");
+    test("(function foo() { return foo })()", "");
+    // Args that are themselves side-effect-free drop with the call.
+    test("(function (a, b) { return a })(1, 2)", "");
+    test("(function (...rest) { return rest })()", "");
+    // The exact issue reproduction: an unused `var` initialized by the IIFE.
+    let remove = CompressOptions { unused: CompressOptionsUnused::Remove, ..default_options() };
+    test_options("var unused = (function () { function test() {} return test })()", "", &remove);
+
+    // Negative cases — the call has real side effects and must be kept.
+    test_same("(function () { sideEffect() })()"); // global call in body
+    test_same("(function () { return sideEffect() })()"); // global call in return
+    test_same("(function () { globalRead })()"); // global read can throw ReferenceError
+    test_same("(function () { throw 1 })()"); // throws
+    test_same("(function () { for (;;) sideEffect() })()"); // loop body
+    test_same("(function (a) { return a })(sideEffect())"); // side-effect-bearing argument
+    test_same("(function (a = sideEffect()) { })()"); // param default runs user code
+    test_same("(function ({ x }) { })(obj)"); // destructuring param reads properties
+    test_same("(function* () { return 1 })()"); // generator: kept conservatively
+    test_same("(async function () { return 1 })()"); // async: kept conservatively
+    // `this` / `arguments` reads are kept conservatively: the shared
+    // side-effect analysis treats them as potentially effectful.
+    test_same("(function () { return this })()");
+    test_same("(function () { return arguments })()");
 }
 
 #[test]

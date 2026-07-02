@@ -13,7 +13,8 @@ impl<'a> PeepholeOptimizations {
         expr: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut unary = ctx.ast.expression_unary(span, UnaryOperator::LogicalNot, expr);
+        let mut unary =
+            Expression::new_unary_expression(span, UnaryOperator::LogicalNot, expr, ctx);
         Self::minimize_unary(&mut unary, ctx);
         unary
     }
@@ -31,7 +32,7 @@ impl<'a> PeepholeOptimizations {
             Expression::UnaryExpression(e)
                 if e.operator.is_not() && e.argument.value_type(ctx).is_boolean() =>
             {
-                let new_expr = e.argument.take_in(ctx.ast);
+                let new_expr = e.argument.take_in(ctx);
                 ctx.replace_expression(expr, new_expr);
             }
             // `!(a == b)` => `a != b`
@@ -40,16 +41,16 @@ impl<'a> PeepholeOptimizations {
             // `!(a !== b)` => `a === b`
             Expression::BinaryExpression(binary_expr) if binary_expr.operator.is_equality() => {
                 binary_expr.operator = binary_expr.operator.equality_inverse_operator().unwrap();
-                let new_expr = e.argument.take_in(ctx.ast);
+                let new_expr = e.argument.take_in(ctx);
                 ctx.replace_expression(expr, new_expr);
             }
             // "!(a, b)" => "a, !b"
             Expression::SequenceExpression(sequence_expr) => {
                 if let Some(last_expr) = sequence_expr.expressions.last_mut() {
                     let new_last =
-                        Self::minimize_not(last_expr.span(), last_expr.take_in(ctx.ast), ctx);
+                        Self::minimize_not(last_expr.span(), last_expr.take_in(ctx), ctx);
                     ctx.replace_expression(last_expr, new_last);
-                    let new_expr = e.argument.take_in(ctx.ast);
+                    let new_expr = e.argument.take_in(ctx);
                     ctx.replace_expression(expr, new_expr);
                 }
             }

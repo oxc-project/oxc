@@ -1,0 +1,959 @@
+# externals/gitlab/stylesheets/page_bundles/environments.scss
+
+> Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)
+
+## Option 1
+
+`````json
+{"printWidth":80}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -57,9 +57,9 @@
+ .folder-row {
+   border-left: 0;
+   border-right: 0;
+ 
+-  @media (min-width: map-get($grid-breakpoints, md)-1) {
++  @media (min-width: map-get($grid-breakpoints, md) - 1) {
+     border-top: 0;
+   }
+ }
+ 
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+@import "page_bundles/mixins_and_variables_and_functions";
+
+.environments-container {
+  .ci-table {
+    .commit-title {
+      margin: 0;
+    }
+
+    .external-url,
+    .dropdown-new {
+      color: var(--gray-500, $gray-500);
+    }
+
+    .build-link,
+    .ref-name {
+      color: var(--gray-900, $gray-900);
+    }
+
+    .folder-icon {
+      margin-right: 3px;
+      color: var(--gray-500, $gray-500);
+      display: inline-block;
+      vertical-align: text-top;
+    }
+
+    .folder-name {
+      cursor: pointer;
+      color: var(--gray-500, $gray-500);
+      display: inline-block;
+    }
+
+    .icon-container {
+      width: 20px;
+      text-align: center;
+    }
+
+    .no-btn {
+      border: 0;
+      background: none;
+      outline: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .environment-child-row {
+      padding-left: 20px;
+    }
+  }
+}
+
+.gl-responsive-table-row {
+  .branch-commit {
+    max-width: 100%;
+  }
+}
+
+.folder-row {
+  border-left: 0;
+  border-right: 0;
+
+  @media (min-width: map-get($grid-breakpoints, md) - 1) {
+    border-top: 0;
+  }
+}
+
+.x-axis path,
+.y-axis path,
+.label-x-axis-line,
+.label-y-axis-line {
+  fill: none;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.x-axis path,
+.y-axis path {
+  stroke: var(--gray-300, $gray-300);
+}
+
+.label-x-axis-line,
+.label-y-axis-line {
+  stroke: var(--gray-100, $gray-100);
+}
+
+.y-axis {
+  line {
+    stroke: var(--gray-300, $gray-300);
+    stroke-width: 1;
+  }
+}
+
+.metric-area {
+  opacity: 0.25;
+}
+
+.rect-text-metric {
+  fill: var(--white, $white);
+  stroke-width: 1;
+  stroke: var(--gray-600, $gray-600);
+}
+
+.rect-axis-text {
+  fill: var(--white, $white);
+}
+
+.text-metric {
+  font-size: 12px;
+}
+
+.selected-metric-line {
+  stroke: var(--gray-900, $gray-900);
+  stroke-width: 1;
+}
+
+.deployment-line {
+  stroke: var(--white, $white);
+  stroke-width: 1;
+}
+
+.divider-line {
+  stroke-width: 1;
+  stroke: var(--gray-600, $gray-600);
+}
+
+.environments-actions {
+  .external-url,
+  .monitoring-url,
+  .terminal-button {
+    width: 38px;
+  }
+}
+
+/**
+ * Deploy boards
+*/
+.deploy-board {
+  background-color: var(--gray-50, $gray-50);
+  min-height: 20px;
+
+  > .loading-icon,
+  > .deploy-board-empty,
+  > .deploy-board-information {
+    padding: 10px;
+  }
+
+  .deploy-board-information {
+    display: flex;
+    justify-content: space-between;
+
+    .deploy-board-status {
+      order: 1;
+      display: flex;
+      width: 70px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 20px 0 0 5px;
+    }
+
+    .deploy-board-instances {
+      order: 2;
+      margin-left: 20px;
+      width: 100%;
+    }
+
+    .deploy-board-canary-ingress {
+      order: 7;
+    }
+
+    .deploy-board-actions {
+      order: 3;
+      align-self: center;
+      min-width: 150px;
+      margin-left: 10px;
+    }
+
+    &.deploy-board-error-message {
+      justify-content: center;
+    }
+
+    .deploy-board-empty-state-svg {
+      order: 1;
+      width: 90px;
+      margin: auto 0 auto 20px;
+    }
+
+    .deploy-board-empty-state-text {
+      order: 2;
+      flex-wrap: wrap;
+      margin: auto auto 15px 0;
+    }
+
+    .deploy-board-empty-state-title {
+      order: 1;
+      font-size: 17px;
+      line-height: 40px;
+    }
+  }
+
+  .deploy-board-legend .legend-text {
+    color: var(--gray-900, $gray-900);
+    font-size: $gl-font-size-small;
+    font-weight: $gl-font-weight-bold;
+    line-height: $gl-line-height-14;
+  }
+}
+
+.deploy-board-icon {
+  display: none;
+
+  @include media-breakpoint-up(md) {
+    float: left;
+    display: block;
+  }
+
+  i {
+    cursor: pointer;
+    color: var(--gray-200, $gray-200);
+    padding-right: 10px;
+  }
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+@import "page_bundles/mixins_and_variables_and_functions";
+
+.environments-container {
+  .ci-table {
+    .commit-title {
+      margin: 0;
+    }
+
+    .external-url,
+    .dropdown-new {
+      color: var(--gray-500, $gray-500);
+    }
+
+    .build-link,
+    .ref-name {
+      color: var(--gray-900, $gray-900);
+    }
+
+    .folder-icon {
+      margin-right: 3px;
+      color: var(--gray-500, $gray-500);
+      display: inline-block;
+      vertical-align: text-top;
+    }
+
+    .folder-name {
+      cursor: pointer;
+      color: var(--gray-500, $gray-500);
+      display: inline-block;
+    }
+
+    .icon-container {
+      width: 20px;
+      text-align: center;
+    }
+
+    .no-btn {
+      border: 0;
+      background: none;
+      outline: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .environment-child-row {
+      padding-left: 20px;
+    }
+  }
+}
+
+.gl-responsive-table-row {
+  .branch-commit {
+    max-width: 100%;
+  }
+}
+
+.folder-row {
+  border-left: 0;
+  border-right: 0;
+
+  @media (min-width: map-get($grid-breakpoints, md)-1) {
+    border-top: 0;
+  }
+}
+
+.x-axis path,
+.y-axis path,
+.label-x-axis-line,
+.label-y-axis-line {
+  fill: none;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.x-axis path,
+.y-axis path {
+  stroke: var(--gray-300, $gray-300);
+}
+
+.label-x-axis-line,
+.label-y-axis-line {
+  stroke: var(--gray-100, $gray-100);
+}
+
+.y-axis {
+  line {
+    stroke: var(--gray-300, $gray-300);
+    stroke-width: 1;
+  }
+}
+
+.metric-area {
+  opacity: 0.25;
+}
+
+.rect-text-metric {
+  fill: var(--white, $white);
+  stroke-width: 1;
+  stroke: var(--gray-600, $gray-600);
+}
+
+.rect-axis-text {
+  fill: var(--white, $white);
+}
+
+.text-metric {
+  font-size: 12px;
+}
+
+.selected-metric-line {
+  stroke: var(--gray-900, $gray-900);
+  stroke-width: 1;
+}
+
+.deployment-line {
+  stroke: var(--white, $white);
+  stroke-width: 1;
+}
+
+.divider-line {
+  stroke-width: 1;
+  stroke: var(--gray-600, $gray-600);
+}
+
+.environments-actions {
+  .external-url,
+  .monitoring-url,
+  .terminal-button {
+    width: 38px;
+  }
+}
+
+/**
+ * Deploy boards
+*/
+.deploy-board {
+  background-color: var(--gray-50, $gray-50);
+  min-height: 20px;
+
+  > .loading-icon,
+  > .deploy-board-empty,
+  > .deploy-board-information {
+    padding: 10px;
+  }
+
+  .deploy-board-information {
+    display: flex;
+    justify-content: space-between;
+
+    .deploy-board-status {
+      order: 1;
+      display: flex;
+      width: 70px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 20px 0 0 5px;
+    }
+
+    .deploy-board-instances {
+      order: 2;
+      margin-left: 20px;
+      width: 100%;
+    }
+
+    .deploy-board-canary-ingress {
+      order: 7;
+    }
+
+    .deploy-board-actions {
+      order: 3;
+      align-self: center;
+      min-width: 150px;
+      margin-left: 10px;
+    }
+
+    &.deploy-board-error-message {
+      justify-content: center;
+    }
+
+    .deploy-board-empty-state-svg {
+      order: 1;
+      width: 90px;
+      margin: auto 0 auto 20px;
+    }
+
+    .deploy-board-empty-state-text {
+      order: 2;
+      flex-wrap: wrap;
+      margin: auto auto 15px 0;
+    }
+
+    .deploy-board-empty-state-title {
+      order: 1;
+      font-size: 17px;
+      line-height: 40px;
+    }
+  }
+
+  .deploy-board-legend .legend-text {
+    color: var(--gray-900, $gray-900);
+    font-size: $gl-font-size-small;
+    font-weight: $gl-font-weight-bold;
+    line-height: $gl-line-height-14;
+  }
+}
+
+.deploy-board-icon {
+  display: none;
+
+  @include media-breakpoint-up(md) {
+    float: left;
+    display: block;
+  }
+
+  i {
+    cursor: pointer;
+    color: var(--gray-200, $gray-200);
+    padding-right: 10px;
+  }
+}
+
+`````
+
+## Option 2
+
+`````json
+{"printWidth":100}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -57,9 +57,9 @@
+ .folder-row {
+   border-left: 0;
+   border-right: 0;
+ 
+-  @media (min-width: map-get($grid-breakpoints, md)-1) {
++  @media (min-width: map-get($grid-breakpoints, md) - 1) {
+     border-top: 0;
+   }
+ }
+ 
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+@import "page_bundles/mixins_and_variables_and_functions";
+
+.environments-container {
+  .ci-table {
+    .commit-title {
+      margin: 0;
+    }
+
+    .external-url,
+    .dropdown-new {
+      color: var(--gray-500, $gray-500);
+    }
+
+    .build-link,
+    .ref-name {
+      color: var(--gray-900, $gray-900);
+    }
+
+    .folder-icon {
+      margin-right: 3px;
+      color: var(--gray-500, $gray-500);
+      display: inline-block;
+      vertical-align: text-top;
+    }
+
+    .folder-name {
+      cursor: pointer;
+      color: var(--gray-500, $gray-500);
+      display: inline-block;
+    }
+
+    .icon-container {
+      width: 20px;
+      text-align: center;
+    }
+
+    .no-btn {
+      border: 0;
+      background: none;
+      outline: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .environment-child-row {
+      padding-left: 20px;
+    }
+  }
+}
+
+.gl-responsive-table-row {
+  .branch-commit {
+    max-width: 100%;
+  }
+}
+
+.folder-row {
+  border-left: 0;
+  border-right: 0;
+
+  @media (min-width: map-get($grid-breakpoints, md) - 1) {
+    border-top: 0;
+  }
+}
+
+.x-axis path,
+.y-axis path,
+.label-x-axis-line,
+.label-y-axis-line {
+  fill: none;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.x-axis path,
+.y-axis path {
+  stroke: var(--gray-300, $gray-300);
+}
+
+.label-x-axis-line,
+.label-y-axis-line {
+  stroke: var(--gray-100, $gray-100);
+}
+
+.y-axis {
+  line {
+    stroke: var(--gray-300, $gray-300);
+    stroke-width: 1;
+  }
+}
+
+.metric-area {
+  opacity: 0.25;
+}
+
+.rect-text-metric {
+  fill: var(--white, $white);
+  stroke-width: 1;
+  stroke: var(--gray-600, $gray-600);
+}
+
+.rect-axis-text {
+  fill: var(--white, $white);
+}
+
+.text-metric {
+  font-size: 12px;
+}
+
+.selected-metric-line {
+  stroke: var(--gray-900, $gray-900);
+  stroke-width: 1;
+}
+
+.deployment-line {
+  stroke: var(--white, $white);
+  stroke-width: 1;
+}
+
+.divider-line {
+  stroke-width: 1;
+  stroke: var(--gray-600, $gray-600);
+}
+
+.environments-actions {
+  .external-url,
+  .monitoring-url,
+  .terminal-button {
+    width: 38px;
+  }
+}
+
+/**
+ * Deploy boards
+*/
+.deploy-board {
+  background-color: var(--gray-50, $gray-50);
+  min-height: 20px;
+
+  > .loading-icon,
+  > .deploy-board-empty,
+  > .deploy-board-information {
+    padding: 10px;
+  }
+
+  .deploy-board-information {
+    display: flex;
+    justify-content: space-between;
+
+    .deploy-board-status {
+      order: 1;
+      display: flex;
+      width: 70px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 20px 0 0 5px;
+    }
+
+    .deploy-board-instances {
+      order: 2;
+      margin-left: 20px;
+      width: 100%;
+    }
+
+    .deploy-board-canary-ingress {
+      order: 7;
+    }
+
+    .deploy-board-actions {
+      order: 3;
+      align-self: center;
+      min-width: 150px;
+      margin-left: 10px;
+    }
+
+    &.deploy-board-error-message {
+      justify-content: center;
+    }
+
+    .deploy-board-empty-state-svg {
+      order: 1;
+      width: 90px;
+      margin: auto 0 auto 20px;
+    }
+
+    .deploy-board-empty-state-text {
+      order: 2;
+      flex-wrap: wrap;
+      margin: auto auto 15px 0;
+    }
+
+    .deploy-board-empty-state-title {
+      order: 1;
+      font-size: 17px;
+      line-height: 40px;
+    }
+  }
+
+  .deploy-board-legend .legend-text {
+    color: var(--gray-900, $gray-900);
+    font-size: $gl-font-size-small;
+    font-weight: $gl-font-weight-bold;
+    line-height: $gl-line-height-14;
+  }
+}
+
+.deploy-board-icon {
+  display: none;
+
+  @include media-breakpoint-up(md) {
+    float: left;
+    display: block;
+  }
+
+  i {
+    cursor: pointer;
+    color: var(--gray-200, $gray-200);
+    padding-right: 10px;
+  }
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+@import "page_bundles/mixins_and_variables_and_functions";
+
+.environments-container {
+  .ci-table {
+    .commit-title {
+      margin: 0;
+    }
+
+    .external-url,
+    .dropdown-new {
+      color: var(--gray-500, $gray-500);
+    }
+
+    .build-link,
+    .ref-name {
+      color: var(--gray-900, $gray-900);
+    }
+
+    .folder-icon {
+      margin-right: 3px;
+      color: var(--gray-500, $gray-500);
+      display: inline-block;
+      vertical-align: text-top;
+    }
+
+    .folder-name {
+      cursor: pointer;
+      color: var(--gray-500, $gray-500);
+      display: inline-block;
+    }
+
+    .icon-container {
+      width: 20px;
+      text-align: center;
+    }
+
+    .no-btn {
+      border: 0;
+      background: none;
+      outline: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .environment-child-row {
+      padding-left: 20px;
+    }
+  }
+}
+
+.gl-responsive-table-row {
+  .branch-commit {
+    max-width: 100%;
+  }
+}
+
+.folder-row {
+  border-left: 0;
+  border-right: 0;
+
+  @media (min-width: map-get($grid-breakpoints, md)-1) {
+    border-top: 0;
+  }
+}
+
+.x-axis path,
+.y-axis path,
+.label-x-axis-line,
+.label-y-axis-line {
+  fill: none;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.x-axis path,
+.y-axis path {
+  stroke: var(--gray-300, $gray-300);
+}
+
+.label-x-axis-line,
+.label-y-axis-line {
+  stroke: var(--gray-100, $gray-100);
+}
+
+.y-axis {
+  line {
+    stroke: var(--gray-300, $gray-300);
+    stroke-width: 1;
+  }
+}
+
+.metric-area {
+  opacity: 0.25;
+}
+
+.rect-text-metric {
+  fill: var(--white, $white);
+  stroke-width: 1;
+  stroke: var(--gray-600, $gray-600);
+}
+
+.rect-axis-text {
+  fill: var(--white, $white);
+}
+
+.text-metric {
+  font-size: 12px;
+}
+
+.selected-metric-line {
+  stroke: var(--gray-900, $gray-900);
+  stroke-width: 1;
+}
+
+.deployment-line {
+  stroke: var(--white, $white);
+  stroke-width: 1;
+}
+
+.divider-line {
+  stroke-width: 1;
+  stroke: var(--gray-600, $gray-600);
+}
+
+.environments-actions {
+  .external-url,
+  .monitoring-url,
+  .terminal-button {
+    width: 38px;
+  }
+}
+
+/**
+ * Deploy boards
+*/
+.deploy-board {
+  background-color: var(--gray-50, $gray-50);
+  min-height: 20px;
+
+  > .loading-icon,
+  > .deploy-board-empty,
+  > .deploy-board-information {
+    padding: 10px;
+  }
+
+  .deploy-board-information {
+    display: flex;
+    justify-content: space-between;
+
+    .deploy-board-status {
+      order: 1;
+      display: flex;
+      width: 70px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 20px 0 0 5px;
+    }
+
+    .deploy-board-instances {
+      order: 2;
+      margin-left: 20px;
+      width: 100%;
+    }
+
+    .deploy-board-canary-ingress {
+      order: 7;
+    }
+
+    .deploy-board-actions {
+      order: 3;
+      align-self: center;
+      min-width: 150px;
+      margin-left: 10px;
+    }
+
+    &.deploy-board-error-message {
+      justify-content: center;
+    }
+
+    .deploy-board-empty-state-svg {
+      order: 1;
+      width: 90px;
+      margin: auto 0 auto 20px;
+    }
+
+    .deploy-board-empty-state-text {
+      order: 2;
+      flex-wrap: wrap;
+      margin: auto auto 15px 0;
+    }
+
+    .deploy-board-empty-state-title {
+      order: 1;
+      font-size: 17px;
+      line-height: 40px;
+    }
+  }
+
+  .deploy-board-legend .legend-text {
+    color: var(--gray-900, $gray-900);
+    font-size: $gl-font-size-small;
+    font-weight: $gl-font-weight-bold;
+    line-height: $gl-line-height-14;
+  }
+}
+
+.deploy-board-icon {
+  display: none;
+
+  @include media-breakpoint-up(md) {
+    float: left;
+    display: block;
+  }
+
+  i {
+    cursor: pointer;
+    color: var(--gray-200, $gray-200);
+    padding-right: 10px;
+  }
+}
+
+`````

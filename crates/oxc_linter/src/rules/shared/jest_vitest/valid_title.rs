@@ -1,7 +1,7 @@
 use std::hash::Hash;
 
-use cow_utils::CowUtils;
-use lazy_regex::Regex;
+use itertools::Itertools;
+use lazy_regex::{Regex, regex};
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{
@@ -408,12 +408,10 @@ fn validate_title(
     }
 
     if !config.disallowed_words.is_empty() {
-        let Ok(disallowed_words_reg) = Regex::new(&format!(
-            r"(?iu)\b(?:{})\b",
-            config.disallowed_words.join("|").cow_replace('.', r"\.")
-        )) else {
-            return;
-        };
+        let disallowed_words_pattern =
+            config.disallowed_words.iter().map(|word| regex::escape(word)).join("|");
+        let disallowed_words_reg = Regex::new(&format!(r"(?iu)\b(?:{disallowed_words_pattern})\b"))
+            .expect("escaped disallowed words should form a valid regex");
 
         if let Some(matched) = disallowed_words_reg.find(title) {
             ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));

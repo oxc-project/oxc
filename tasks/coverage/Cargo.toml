@@ -24,6 +24,7 @@ doctest = false
 [dependencies]
 cow-utils = { workspace = true }
 oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize", "conformance"] }
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 oxc_estree_tokens = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_formatter_core = { workspace = true }
@@ -42,3 +43,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 similar = { workspace = true }
 walkdir = { workspace = true }
+
+# `oxc_ast` is a feature-only dependency, to enable its `disable_old_builder` feature
+[package.metadata.cargo-shear]
+ignored = ["oxc_ast"]

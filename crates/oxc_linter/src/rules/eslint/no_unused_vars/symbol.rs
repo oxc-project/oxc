@@ -1,5 +1,7 @@
 use std::{cell::OnceCell, fmt, iter};
 
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -172,21 +174,32 @@ impl<'s, 'a> Symbol<'s, 'a> {
 }
 
 impl<'a> Symbol<'_, 'a> {
+    /// Collect local names that are re-exported, for O(1) export checks per symbol.
+    pub fn collect_exported_local_names(module_record: &ModuleRecord) -> FxHashSet<&str> {
+        let mut names = FxHashSet::default();
+        for entry in &module_record.local_export_entries {
+            match &entry.local_name {
+                ExportLocalName::Name(name) | ExportLocalName::Default(name) => {
+                    names.insert(name.name());
+                }
+                ExportLocalName::Null => {}
+            }
+        }
+        names
+    }
+
     /// Is this [`Symbol`] exported?
     ///
     /// NOTE: does not support CJS right now.
-    pub fn is_exported(&self) -> bool {
+    pub fn is_exported(&self, exported_names: &FxHashSet<&str>) -> bool {
         let is_in_exportable_scope = self.is_root() || self.is_in_ts_namespace();
-        is_in_exportable_scope && (self.is_local_exported_binding() || self.in_export_node())
+        is_in_exportable_scope && (exported_names.contains(self.name()) || self.in_export_node())
     }
 
-    fn is_local_exported_binding(&self) -> bool {
-        self.module_record.local_export_entries.iter().any(|entry| match &entry.local_name {
-            ExportLocalName::Name(name) | ExportLocalName::Default(name) => {
-                name.name() == self.name()
-            }
-            ExportLocalName::Null => false,
-        })
+    /// Convenience wrapper that builds the export set (for call sites that check one symbol).
+    pub fn is_exported_binding(&self) -> bool {
+        let names = Self::collect_exported_local_names(self.module_record);
+        self.is_exported(&names)
     }
 
     #[inline]

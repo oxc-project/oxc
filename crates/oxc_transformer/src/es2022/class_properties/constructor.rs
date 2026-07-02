@@ -101,10 +101,10 @@
 
 use std::iter;
 
-use oxc_allocator::TakeIn;
+use oxc_allocator::{ArenaVec, TakeIn};
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_span::SPAN;
 use oxc_str::Ident;
@@ -227,7 +227,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Create statements to go in function body
-        let mut stmts = ctx.ast.vec_with_capacity(inits.len() + usize::from(has_super_class));
+        let mut stmts = ArenaVec::with_capacity_in(inits.len() + usize::from(has_super_class), ctx);
 
         // Add `super(..._args);` statement and `..._args` param if class has a super class.
         // `constructor(..._args) { super(..._args); /* prop initialization */ }`
@@ -236,19 +236,29 @@ impl<'a> ClassProperties<'a> {
             let args_binding =
                 ctx.generate_uid("args", constructor_scope_id, SymbolFlags::FunctionScopedVariable);
             let rest_element =
-                ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
-            params_rest =
-                Some(ctx.ast.alloc_formal_parameter_rest(SPAN, ctx.ast.vec(), rest_element, NONE));
-            stmts.push(ctx.ast.statement_expression(SPAN, create_super_call(&args_binding, ctx)));
+                BindingRestElement::new(SPAN, args_binding.create_binding_pattern(ctx), ctx);
+            params_rest = Some(FormalParameterRest::boxed(
+                SPAN,
+                ArenaVec::new_in(ctx),
+                rest_element,
+                NONE,
+                ctx,
+            ));
+            stmts.push(Statement::new_expression_statement(
+                SPAN,
+                create_super_call(&args_binding, ctx),
+                ctx,
+            ));
         }
         // TODO: Should these have the span of the original `PropertyDefinition`s?
-        stmts.extend(exprs_into_stmts(inits, ctx.ast));
+        stmts.extend(exprs_into_stmts(inits, &ctx.ast));
 
-        let params = ctx.ast.alloc_formal_parameters(
+        let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::FormalParameter,
-            ctx.ast.vec(),
+            ArenaVec::new_in(ctx),
             params_rest,
+            ctx,
         );
 
         let ctor = create_class_constructor_with_params(stmts, params, constructor_scope_id, ctx);
@@ -270,7 +280,7 @@ impl<'a> ClassProperties<'a> {
 
         // Insert inits into constructor body
         let body_stmts = &mut constructor.body.as_mut().unwrap().statements;
-        body_stmts.splice(insertion_index..insertion_index, exprs_into_stmts(inits, ctx.ast));
+        body_stmts.splice(insertion_index..insertion_index, exprs_into_stmts(inits, &ctx.ast));
     }
 
     /// Create `_super` function containing instance property initializers,
@@ -297,52 +307,71 @@ impl<'a> ClassProperties<'a> {
         let args_binding =
             ctx.generate_uid("args", super_func_scope_id, SymbolFlags::FunctionScopedVariable);
         let super_call = create_super_call(&args_binding, ctx);
-        let this_expr = ctx.ast.expression_this(SPAN);
-        let body_exprs = ctx.ast.expression_sequence(
+        let this_expr = Expression::new_this_expression(SPAN, ctx);
+        let body_exprs = Expression::new_sequence_expression(
             SPAN,
-            ctx.ast.vec_from_iter(iter::once(super_call).chain(inits).chain(iter::once(this_expr))),
+            ArenaVec::from_iter_in(
+                iter::once(super_call).chain(inits).chain(iter::once(this_expr)),
+                ctx,
+            ),
+            ctx,
         );
-        let body = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, body_exprs));
+        let body = ArenaVec::from_value_in(
+            Statement::new_expression_statement(SPAN, body_exprs, ctx),
+            ctx,
+        );
 
         // `(..._args) => (super(..._args), <inits>, this)`
-        let super_func = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
+        let super_func = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
             SPAN,
             true,
             false,
             NONE,
             {
                 let rest_element =
-                    ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
-                let rest =
-                    ctx.ast.alloc_formal_parameter_rest(SPAN, ctx.ast.vec(), rest_element, NONE);
-                ctx.ast.alloc_formal_parameters(
+                    BindingRestElement::new(SPAN, args_binding.create_binding_pattern(ctx), ctx);
+                let rest = FormalParameterRest::boxed(
+                    SPAN,
+                    ArenaVec::new_in(ctx),
+                    rest_element,
+                    NONE,
+                    ctx,
+                );
+                FormalParameters::boxed(
                     SPAN,
                     FormalParameterKind::ArrowFormalParameters,
-                    ctx.ast.vec(),
+                    ArenaVec::new_in(ctx),
                     Some(rest),
+                    ctx,
                 )
             },
             NONE,
-            ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), body),
+            FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), body, ctx),
             super_func_scope_id,
             false,
             false,
+            ctx,
         );
 
         // `var _super = (..._args) => ( ... );`
-        let super_func_decl = Statement::from(ctx.ast.declaration_variable(
+        let super_func_decl = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ctx.ast.vec1(ctx.ast.variable_declarator(
-                SPAN,
-                VariableDeclarationKind::Var,
-                super_binding.create_binding_pattern(ctx),
-                NONE,
-                Some(super_func),
-                false,
-            )),
+            ArenaVec::from_value_in(
+                VariableDeclarator::new(
+                    SPAN,
+                    VariableDeclarationKind::Var,
+                    super_binding.create_binding_pattern(ctx),
+                    NONE,
+                    Some(super_func),
+                    false,
+                    ctx,
+                ),
+                ctx,
+            ),
             false,
-        ));
+            ctx,
+        );
 
         // Insert at top of function
         let body_stmts = &mut constructor.body.as_mut().unwrap().statements;
@@ -363,18 +392,22 @@ impl<'a> ClassProperties<'a> {
         // TODO: This should be parent scope if insert `_super` function as expression before class expression.
         let outer_scope_id = ctx.current_block_scope_id();
         let directives = if ctx.scoping().scope_flags(outer_scope_id).is_strict_mode() {
-            ctx.ast.vec()
+            ArenaVec::new_in(ctx)
         } else {
-            ctx.ast.vec1(ctx.ast.use_strict_directive())
+            ArenaVec::from_value_in(Directive::new_use_strict(ctx), ctx)
         };
 
         // `return this;`
-        let return_stmt = ctx.ast.statement_return(SPAN, Some(ctx.ast.expression_this(SPAN)));
+        let return_stmt = Statement::new_return_statement(
+            SPAN,
+            Some(Expression::new_this_expression(SPAN, ctx)),
+            ctx,
+        );
         // `<inits>; return this;`
         let body_stmts =
-            ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx.ast).chain([return_stmt]));
+            ArenaVec::from_iter_in(exprs_into_stmts(inits, &ctx.ast).chain([return_stmt]), ctx);
         // `function() { <inits>; return this; }`
-        let super_func = ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
+        let super_func = Expression::new_function_expression_with_scope_id_and_pure_and_pife(
             SPAN,
             FunctionType::FunctionExpression,
             None,
@@ -383,17 +416,19 @@ impl<'a> ClassProperties<'a> {
             false,
             NONE,
             NONE,
-            ctx.ast.alloc_formal_parameters(
+            FormalParameters::boxed(
                 SPAN,
                 FormalParameterKind::FormalParameter,
-                ctx.ast.vec(),
+                ArenaVec::new_in(ctx),
                 NONE,
+                ctx,
             ),
             NONE,
-            Some(ctx.ast.alloc_function_body(SPAN, directives, body_stmts)),
+            Some(FunctionBody::boxed(SPAN, directives, body_stmts, ctx)),
             super_func_scope_id,
             false,
             false,
+            ctx,
         );
 
         // Insert `_super` function after class.
@@ -412,7 +447,7 @@ impl<'a> ClassProperties<'a> {
             self.insert_after_exprs.push(assignment);
             None
         };
-        ctx.state.var_declarations.insert_let(super_binding, init, ctx.ast);
+        ctx.state.var_declarations.insert_let(super_binding, init, &ctx.ast);
     }
 
     /// Rename any symbols in constructor which clash with symbols used in initializers
@@ -577,18 +612,20 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
         });
 
         let ctx = &mut *self.ctx;
-        let super_call = expr.take_in(ctx.ast);
-        *expr = ctx.ast.expression_call(
+        let super_call = expr.take_in(ctx);
+        *expr = Expression::new_call_expression(
             span,
-            Expression::from(ctx.ast.member_expression_static(
+            Expression::new_static_member_expression(
                 SPAN,
                 super_binding.create_read_expression(ctx),
-                ctx.ast.identifier_name(SPAN, Str::from("call")),
+                IdentifierName::new(SPAN, "call", ctx),
                 false,
-            )),
+                ctx,
+            ),
             NONE,
-            ctx.ast.vec1(Argument::from(super_call)),
+            ArenaVec::from_value_in(Argument::from(super_call), ctx),
             false,
+            ctx,
         );
     }
 }

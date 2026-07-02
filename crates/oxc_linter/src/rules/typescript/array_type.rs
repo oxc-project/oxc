@@ -308,11 +308,11 @@ fn check_and_report_error_generic(
     if matches!(config, ArrayOption::ArraySimple) && is_simple_type(type_param) {
         return;
     }
-    let source_text = ctx.source_text().to_string();
+    let source_text = ctx.source_text();
 
     let readonly_prefix = if is_readonly { "readonly " } else { "" };
     let class_name = if is_readonly { "ReadonlyArray" } else { "Array" };
-    let message_type = get_message_type(type_param, &source_text);
+    let message_type = get_message_type(type_param, source_text);
 
     let diagnostic = match config {
         ArrayOption::Generic => {

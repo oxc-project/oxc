@@ -7,9 +7,10 @@ use oxc_syntax::class::ClassId;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use base54::base54;
-use oxc_allocator::{Allocator, BitSet, HashSet, Vec};
+use oxc_allocator::{Allocator, ArenaHashSet, ArenaVec, BitSet};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
+use oxc_ecmascript::BoundNames;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, Stats, SymbolId};
 use oxc_span::SourceType;
 use oxc_str::{CompactStr, Ident, Str};
@@ -19,7 +20,7 @@ mod keep_names;
 
 pub use keep_names::MangleOptionsKeepNames;
 
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone)]
 pub struct MangleOptions {
     /// Pass true to mangle names declared in the top level scope.
     ///
@@ -32,6 +33,19 @@ pub struct MangleOptions {
     /// Keep function / class names
     pub keep_names: MangleOptionsKeepNames,
 
+    /// Names that bindings must not be renamed to, and that bindings already
+    /// carrying them keep. Equivalent to terser / swc `mangle.reserved`.
+    ///
+    /// The main use case is `["exports", "module"]` when minifying prebuilt
+    /// CommonJS / UMD files that Node consumers `import` directly: Node's
+    /// cjs-module-lexer detects a CommonJS module's named exports by lexically
+    /// scanning for `exports.<name> =` / `module.exports` token patterns with no
+    /// scope analysis, so renaming an `exports` / `module` wrapper parameter
+    /// erases every named export it can see.
+    ///
+    /// Default: empty.
+    pub reserved: FxHashSet<CompactStr>,
+
     /// Use more readable mangled names
     /// (e.g. `slot_0`, `slot_1`, `slot_2`, ...) for debugging.
     ///
@@ -40,7 +54,7 @@ pub struct MangleOptions {
 }
 
 impl MangleOptions {
-    fn top_level(self, source_type: SourceType) -> bool {
+    fn top_level(&self, source_type: SourceType) -> bool {
         self.top_level.unwrap_or(source_type.is_module() || source_type.is_commonjs())
     }
 }
@@ -375,7 +389,7 @@ impl<'t> Mangler<'t> {
 
         // ── Phase 1: collect constraints — names we must not reuse or shadow. ──
         let constraints =
-            Constraints::collect(allocator, scoping, ast_nodes, program, self.options);
+            Constraints::collect(allocator, scoping, ast_nodes, program, &self.options);
         // ── Phase 2: assign slots — give bindings that can share a name the same slot. ──
         let slots = SlotAssignment::compute(allocator, scoping, ast_nodes, &constraints);
         // ── Phase 3: rank slots by reference frequency (hottest first). ──
@@ -456,12 +470,12 @@ fn is_special_name(name: &str) -> bool {
 struct SlotFrequency<'a> {
     pub slot: Slot,
     pub frequency: usize,
-    pub symbol_ids: Vec<'a, SymbolId>,
+    pub symbol_ids: ArenaVec<'a, SymbolId>,
 }
 
 impl<'t> SlotFrequency<'t> {
     fn new(temp_allocator: &'t Allocator) -> Self {
-        Self { slot: 0, frequency: 0, symbol_ids: Vec::new_in(temp_allocator) }
+        Self { slot: 0, frequency: 0, symbol_ids: ArenaVec::new_in(&temp_allocator) }
     }
 }
 
@@ -476,8 +490,11 @@ impl<'t> SlotFrequency<'t> {
 struct Constraints<'a, 's> {
     /// Whether top-level (module / CommonJS) bindings may be mangled at all.
     top_level: bool,
+    /// User-reserved names — never used as mangled names, and bindings carrying
+    /// them keep them (see [`MangleOptions::reserved`]).
+    reserved: &'s FxHashSet<CompactStr>,
     /// Names of top-level exports — kept when `top_level` so importers still resolve.
-    exported_names: HashSet<'a, Str<'a>>,
+    exported_names: ArenaHashSet<'a, Str<'a>>,
     exported_symbols: Option<BitSet<'a>>,
     /// Names preserved by the `keep_names` option (function / class names).
     keep_name_names: FxHashSet<&'s str>,
@@ -487,7 +504,7 @@ struct Constraints<'a, 's> {
 /// Phase 2 output — each symbol's slot, plus the names a direct `eval` can see.
 struct SlotAssignment<'a, 's> {
     /// `slots[symbol] == slot`, or `SLOT_UNASSIGNED` for symbols that keep their name.
-    slots: Vec<'a, Slot>,
+    slots: ArenaVec<'a, Slot>,
     total_slots: usize,
     /// Names of bindings in direct-`eval` scopes — they keep their names, nothing may shadow them.
     eval_reserved_names: FxHashSet<&'s str>,
@@ -495,12 +512,12 @@ struct SlotAssignment<'a, 's> {
 
 /// Phase 3 output — slots ranked by reference count, hottest first.
 struct SlotRanking<'a> {
-    frequencies: Vec<'a, SlotFrequency<'a>>,
+    frequencies: ArenaVec<'a, SlotFrequency<'a>>,
 }
 
 /// Phase 4 output — the short names to hand out, shortest first.
 struct NameTable<'a, const CAPACITY: usize> {
-    names: Vec<'a, InlineString<CAPACITY, u8>>,
+    names: ArenaVec<'a, InlineString<CAPACITY, u8>>,
 }
 
 impl<'a, 's> Constraints<'a, 's> {
@@ -510,17 +527,35 @@ impl<'a, 's> Constraints<'a, 's> {
         scoping: &'s Scoping,
         ast_nodes: &AstNodes,
         program: &'a Program<'a>,
-        options: MangleOptions,
+        options: &'s MangleOptions,
     ) -> Self {
         let top_level = options.top_level(program.source_type);
         let (exported_names, exported_symbols) = if top_level && program.source_type.is_module() {
             collect_exported_symbols(program, allocator, scoping.symbols_len())
         } else {
-            (HashSet::new_in(allocator), None)
+            (ArenaHashSet::new_in(allocator), None)
         };
         let (keep_name_names, keep_name_symbols) =
             collect_keep_name_symbols(options.keep_names, allocator, scoping, ast_nodes);
-        Self { top_level, exported_names, exported_symbols, keep_name_names, keep_name_symbols }
+        Self {
+            top_level,
+            reserved: &options.reserved,
+            exported_names,
+            exported_symbols,
+            keep_name_names,
+            keep_name_symbols,
+        }
+    }
+
+    /// Whether a binding with this name must keep it.
+    ///
+    /// `inline(always)`: called per symbol in `SlotRanking::tally`'s hot loop — the
+    /// empty-`reserved` fast path must compile down to the plain `is_special_name`
+    /// check plus one predictable branch.
+    #[expect(clippy::inline_always, reason = "hot path")]
+    #[inline(always)]
+    fn is_kept_name(&self, name: &str) -> bool {
+        is_special_name(name) || (!self.reserved.is_empty() && self.reserved.contains(name))
     }
 }
 
@@ -545,14 +580,16 @@ impl<'a, 's> SlotAssignment<'a, 's> {
         let mut eval_reserved_names: FxHashSet<&'s str> = FxHashSet::default();
 
         // All symbols with their assigned slots. Keyed by symbol id.
-        let mut slots =
-            Vec::from_iter_in(iter::repeat_n(SLOT_UNASSIGNED, scoping.symbols_len()), allocator);
+        let mut slots = ArenaVec::from_iter_in(
+            iter::repeat_n(SLOT_UNASSIGNED, scoping.symbols_len()),
+            &allocator,
+        );
         // Stores the lived scope ids for each slot. Keyed by slot number. Symbol count is the
         // upper bound on slots.
-        let mut slot_liveness: Vec<BitSet> =
-            Vec::with_capacity_in(scoping.symbols_len(), allocator);
-        let mut tmp_bindings = Vec::with_capacity_in(100, allocator);
-        let mut reusable_slots = Vec::new_in(allocator);
+        let mut slot_liveness =
+            ArenaVec::<BitSet>::with_capacity_in(scoping.symbols_len(), &allocator);
+        let mut tmp_bindings = ArenaVec::with_capacity_in(100, &allocator);
+        let mut reusable_slots = ArenaVec::new_in(&allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
 
@@ -701,9 +738,9 @@ impl<'a> SlotRanking<'a> {
         let exported_symbols = constraints.exported_symbols.as_ref();
         let keep_name_symbols = constraints.keep_name_symbols.as_ref();
         let root_scope_id = scoping.root_scope_id();
-        let mut frequencies = Vec::from_iter_in(
+        let mut frequencies = ArenaVec::from_iter_in(
             repeat_with(|| SlotFrequency::new(allocator)).take(slots.total_slots),
-            allocator,
+            &allocator,
         );
 
         for (symbol_id, &slot) in slots.slots.iter().enumerate() {
@@ -721,7 +758,7 @@ impl<'a> SlotRanking<'a> {
             if scoping.scope_flags(symbol_scope_id).contains_direct_eval() {
                 continue;
             }
-            if is_special_name(scoping.symbol_name(symbol_id)) {
+            if constraints.is_kept_name(scoping.symbol_name(symbol_id)) {
                 continue;
             }
             if keep_name_symbols.is_some_and(|keep| keep.has_bit(symbol_id.index())) {
@@ -759,7 +796,7 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
         let root_bindings = scoping.get_bindings(scoping.root_scope_id());
         let is_reserved = |name: &str| {
             oxc_syntax::keyword::is_reserved_keyword(name)
-                || is_special_name(name)
+                || constraints.is_kept_name(name)
                 || root_unresolved_references.contains_key(name)
                 || (root_bindings.contains_key(name)
                     && (!constraints.top_level || constraints.exported_names.contains(name)))
@@ -769,7 +806,7 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
         };
 
         let count = ranking.frequencies.len();
-        let mut names = Vec::with_capacity_in(count, allocator);
+        let mut names = ArenaVec::with_capacity_in(count, &allocator);
         let mut candidate = 0;
         for _ in 0..count {
             let name = loop {
@@ -794,8 +831,8 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
         // Yields slots hottest-first as we consume each length bucket.
         let mut freq_iter = ranking.frequencies.iter();
         // Scratch buffers in the temp arena (reused/reset across files via `new_with_temp_allocator`).
-        let mut symbols_renamed_in_this_batch = Vec::with_capacity_in(100, allocator);
-        let mut slice_of_same_len_strings = Vec::with_capacity_in(100, allocator);
+        let mut symbols_renamed_in_this_batch = ArenaVec::with_capacity_in(100, &allocator);
+        let mut slice_of_same_len_strings = ArenaVec::with_capacity_in(100, &allocator);
         // Names are generated shortest-first, so each `chunk_by(len)` group is one name length.
         for (_, group) in &self.names.into_iter().chunk_by(InlineString::len) {
             // Take the N hottest remaining slots to receive the N names of this length...
@@ -834,19 +871,20 @@ fn collect_exported_symbols<'a>(
     program: &Program<'a>,
     allocator: &'a Allocator,
     symbols_len: usize,
-) -> (HashSet<'a, Str<'a>>, Option<BitSet<'a>>) {
+) -> (ArenaHashSet<'a, Str<'a>>, Option<BitSet<'a>>) {
     let mut exported_symbols = BitSet::new_in(symbols_len, allocator);
-    let mut exported_names = HashSet::new_in(allocator);
+    let mut exported_names = ArenaHashSet::new_in(allocator);
     for statement in &program.body {
         let Statement::ExportNamedDeclaration(v) = statement else { continue };
         let Some(decl) = &v.declaration else { continue };
         if let Declaration::VariableDeclaration(decl) = decl {
-            for decl in &decl.declarations {
-                if let Some(id) = decl.id.get_binding_identifier() {
-                    exported_names.insert(id.name.as_arena_str());
-                    exported_symbols.set_bit(id.symbol_id().index());
-                }
-            }
+            // Use `bound_names` rather than `get_binding_identifier`: a destructuring
+            // pattern (`export const { find } = x`) exports every bound name, and
+            // renaming any of them would rename the export.
+            decl.bound_names(&mut |id| {
+                exported_names.insert(id.name.as_arena_str());
+                exported_symbols.set_bit(id.symbol_id().index());
+            });
         } else if let Some(id) = decl.id() {
             exported_names.insert(id.name.as_arena_str());
             exported_symbols.set_bit(id.symbol_id().index());

@@ -1,3 +1,4 @@
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -127,7 +128,7 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
 }
 
 fn process_statements<'a>(
-    statements: &'a oxc_allocator::Vec<'a, Statement<'a>>,
+    statements: &'a ArenaVec<'a, Statement<'a>>,
     pending_promises: &mut FxHashMap<CompactStr, Span>,
     return_found: &mut bool,
     ctx: &LintContext<'a>,
@@ -229,7 +230,7 @@ fn ident_name_of<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
 /// the arguments of the innermost `expect(...)` call.
 fn find_expect_args<'a>(
     call_expr: &'a CallExpression<'a>,
-) -> Option<&'a oxc_allocator::Vec<'a, Argument<'a>>> {
+) -> Option<&'a ArenaVec<'a, Argument<'a>>> {
     if let Expression::Identifier(ident) = &call_expr.callee
         && ident.name == "expect"
     {
@@ -238,9 +239,7 @@ fn find_expect_args<'a>(
     find_inner_expect(&call_expr.callee)
 }
 
-fn find_inner_expect<'a>(
-    expr: &'a Expression<'a>,
-) -> Option<&'a oxc_allocator::Vec<'a, Argument<'a>>> {
+fn find_inner_expect<'a>(expr: &'a Expression<'a>) -> Option<&'a ArenaVec<'a, Argument<'a>>> {
     match expr {
         Expression::CallExpression(call) => find_expect_args(call),
         _ => find_inner_expect(expr.as_member_expression()?.object()),

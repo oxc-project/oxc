@@ -3,7 +3,7 @@ use std::path::Path;
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
-use oxc_react_compiler::default_plugin_options;
+use oxc_react_compiler::PluginOptions;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer::{TransformOptions, Transformer};
@@ -16,7 +16,7 @@ fn memoizes_component_through_transformer() {
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
 
     let options =
-        TransformOptions { react_compiler: Some(default_plugin_options()), ..Default::default() };
+        TransformOptions { react_compiler: Some(PluginOptions::default()), ..Default::default() };
     let ret = Transformer::new(&allocator, Path::new("greeting.jsx"), &options)
         .build_with_scoping(scoping, &mut program);
     assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
@@ -42,7 +42,7 @@ fn keeps_import_used_only_as_computed_key() {
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
 
     let options =
-        TransformOptions { react_compiler: Some(default_plugin_options()), ..Default::default() };
+        TransformOptions { react_compiler: Some(PluginOptions::default()), ..Default::default() };
     let ret = Transformer::new(&allocator, Path::new("box.tsx"), &options)
         .build_with_scoping(scoping, &mut program);
     assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);

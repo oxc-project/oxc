@@ -15,7 +15,7 @@ use std::{
     string::ToString,
 };
 
-use oxc_allocator::{Allocator, AllocatorPool, CloneIn, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, AllocatorPool, ArenaVec, CloneIn, TakeIn};
 use oxc_ast::{
     ast::{Comment, CommentContent, CommentKind, Program},
     ast_kind::AST_TYPE_MAX,
@@ -367,7 +367,8 @@ impl Linter {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
-        let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
+        let mut ctx_host =
+            Rc::new(ContextHost::new(path, context_sub_hosts, allocator, self.options, config));
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;
@@ -495,9 +496,16 @@ impl Linter {
 
         let result = (diagnostics, disable_directives);
         if TIMINGS {
-            rule_timing_store
-                .expect("missing rule timing store")
-                .merge(timing_recorder.expect("missing rule timing recorder"));
+            let timing_recorder = timing_recorder.expect("missing rule timing recorder");
+            rule_timing_store.expect("missing rule timing store").merge(
+                timing_recorder.into_timings().into_iter().map(|(key, stat)| RuleTimingRecord {
+                    source: key.source,
+                    plugin_name: key.plugin_name.into_owned(),
+                    rule_name: key.rule_name.into_owned(),
+                    duration: stat.duration,
+                    calls: stat.calls,
+                }),
+            );
         }
         result
     }
@@ -562,7 +570,7 @@ impl Linter {
         }
 
         // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
-        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_arena_slice_mut();
+        let tokens = ctx_host.parser_tokens_mut().take_in(&allocator).into_arena_slice_mut();
 
         // If file has a hashbang, add it to comments.
         // It will be converted to a `Shebang` comment on JS side.
@@ -608,7 +616,8 @@ impl Linter {
         original_program: &mut Program<'_>,
         js_allocator_pool: &AllocatorPool,
     ) {
-        let js_allocator = js_allocator_pool.get();
+        let js_allocator_guard = js_allocator_pool.get();
+        let js_allocator = &*js_allocator_guard;
 
         // Get the original source text from the `Program`, and replace it with an empty string.
         // This avoids cloning the original source text, which can be large.
@@ -644,7 +653,7 @@ impl Linter {
         // We need to allocate the `Program` struct ITSELF in the allocator, not just its contents.
         // `clone_in` returns a value on the stack, but we need it in the allocator for raw transfer.
         let program = {
-            let mut program = original_program.clone_in(&js_allocator);
+            let mut program = original_program.clone_in(js_allocator);
             program.source_text = new_source_text;
             js_allocator.alloc(program)
         };
@@ -663,10 +672,10 @@ impl Linter {
             ctx_host,
             program,
             tokens,
-            &js_allocator,
+            js_allocator,
         );
 
-        // The `AllocatorGuard` (`js_allocator`) is dropped here, returning the allocator to the pool.
+        // The `AllocatorGuard` (`js_allocator_guard`) is dropped here, returning the allocator to the pool.
         // This ensures that we never have too many allocators in play at once, avoiding OOM.
     }
 

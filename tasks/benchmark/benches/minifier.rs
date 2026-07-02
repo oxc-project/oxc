@@ -120,7 +120,7 @@ fn bench_mangler(criterion: &mut Criterion) {
                         .with_options(MangleOptions {
                             top_level: None,
                             keep_names: MangleOptionsKeepNames::all_true(),
-                            debug: false,
+                            ..MangleOptions::default()
                         })
                         .build_with_semantic(&mut semantic, &program);
                 });

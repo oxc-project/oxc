@@ -21,7 +21,7 @@ impl<'a> PeepholeOptimizations {
                 if let Expression::UnaryExpression(u2) = &mut u1.argument
                     && u2.operator.is_not()
                 {
-                    let mut e = u2.argument.take_in(ctx.ast);
+                    let mut e = u2.argument.take_in(ctx);
                     Self::minimize_expression_in_boolean_context(&mut e, ctx);
                     ctx.replace_expression(expr, e);
                 }
@@ -31,7 +31,7 @@ impl<'a> PeepholeOptimizations {
                     && e.right.is_number_0()
                     && e.left.is_int32_or_uint32(ctx) =>
             {
-                let argument = e.left.take_in(ctx.ast);
+                let argument = e.left.take_in(ctx);
                 let new_expr = if matches!(
                     e.operator,
                     BinaryOperator::StrictInequality | BinaryOperator::Inequality
@@ -40,7 +40,12 @@ impl<'a> PeepholeOptimizations {
                     argument
                 } else {
                     // `if ((a | b) === 0);", "if (!(a | b));")`
-                    ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
+                    Expression::new_unary_expression(
+                        e.span,
+                        UnaryOperator::LogicalNot,
+                        argument,
+                        ctx,
+                    )
                 };
                 ctx.replace_expression(expr, new_expr);
             }
@@ -50,7 +55,7 @@ impl<'a> PeepholeOptimizations {
                 Self::minimize_expression_in_boolean_context(&mut e.right, ctx);
                 // "if (anything && truthyNoSideEffects)" => "if (anything)"
                 if e.right.get_side_free_boolean_value(ctx) == Some(true) {
-                    let new_expr = e.left.take_in(ctx.ast);
+                    let new_expr = e.left.take_in(ctx);
                     ctx.replace_expression(expr, new_expr);
                 }
             }
@@ -60,7 +65,7 @@ impl<'a> PeepholeOptimizations {
                 Self::minimize_expression_in_boolean_context(&mut e.right, ctx);
                 // "if (anything || falsyNoSideEffects)" => "if (anything)"
                 if e.right.get_side_free_boolean_value(ctx) == Some(false) {
-                    let new_expr = e.left.take_in(ctx.ast);
+                    let new_expr = e.left.take_in(ctx);
                     ctx.replace_expression(expr, new_expr);
                 }
             }
@@ -69,8 +74,8 @@ impl<'a> PeepholeOptimizations {
                 Self::minimize_expression_in_boolean_context(&mut e.consequent, ctx);
                 Self::minimize_expression_in_boolean_context(&mut e.alternate, ctx);
                 if let Some(boolean) = e.consequent.get_side_free_boolean_value(ctx) {
-                    let right = e.alternate.take_in(ctx.ast);
-                    let left = e.test.take_in(ctx.ast);
+                    let right = e.alternate.take_in(ctx);
+                    let left = e.test.take_in(ctx);
                     let span = e.span;
                     let (op, left) = if boolean {
                         // "if (anything1 ? truthyNoSideEffects : anything2)" => "if (anything1 || anything2)"
@@ -84,8 +89,8 @@ impl<'a> PeepholeOptimizations {
                     return;
                 }
                 if let Some(boolean) = e.alternate.get_side_free_boolean_value(ctx) {
-                    let left = e.test.take_in(ctx.ast);
-                    let right = e.consequent.take_in(ctx.ast);
+                    let left = e.test.take_in(ctx);
+                    let right = e.consequent.take_in(ctx);
                     let span = e.span;
                     let (op, left) = if boolean {
                         // "if (anything1 ? anything2 : truthyNoSideEffects)" => "if (!anything1 || anything2)"
@@ -101,6 +106,25 @@ impl<'a> PeepholeOptimizations {
             Expression::SequenceExpression(seq_expr) => {
                 if let Some(last) = seq_expr.expressions.last_mut() {
                     Self::minimize_expression_in_boolean_context(last, ctx);
+                }
+            }
+            // A binding that is provably falsy in boolean context (a write-once
+            // falsy `var` whose constant was withheld from value-context folding,
+            // e.g. a bundled `var hydrating = false` flag) folds to `false` here,
+            // where `undefined`-before-init is indistinguishable from the falsy
+            // init. The existing `if (false)` dead-code pass removes the branch.
+            Expression::Identifier(ident) => {
+                let reference_id = ident.reference_id();
+                let span = ident.span;
+                if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
+                    && ctx
+                        .state
+                        .symbol_values
+                        .get_symbol_value(symbol_id)
+                        .is_some_and(|sv| sv.boolean_falsy)
+                {
+                    let new_expr = Expression::new_boolean_literal(span, false, ctx);
+                    ctx.replace_expression(expr, new_expr);
                 }
             }
             _ => {}

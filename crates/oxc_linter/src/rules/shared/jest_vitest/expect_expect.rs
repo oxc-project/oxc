@@ -179,7 +179,15 @@ impl ExpectExpectConfig {
         jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        run(self, jest_node, ctx);
+        run(self, jest_node, ctx, ctx.frameworks().is_vitest());
+    }
+
+    pub fn run_on_vitest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        run(self, jest_node, ctx, true);
     }
 }
 
@@ -187,6 +195,7 @@ fn run<'a>(
     rule: &ExpectExpectConfig,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
+    use_vitest_assertions: bool,
 ) {
     let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
@@ -205,12 +214,12 @@ fn run<'a>(
                 if property_name == "todo" {
                     return;
                 }
-                if property_name == "skip" && ctx.frameworks().is_vitest() {
+                if property_name == "skip" && use_vitest_assertions {
                     return;
                 }
             }
 
-            let assert_function_matchers = if ctx.frameworks().is_vitest() {
+            let assert_function_matchers = if use_vitest_assertions {
                 &rule.assert_function_matchers_vitest
             } else {
                 &rule.assert_function_matchers_jest

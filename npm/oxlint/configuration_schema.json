@@ -1138,6 +1138,14 @@
       },
       "additionalProperties": false
     },
+    "CallbackReturn": {
+      "description": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`."
+    },
     "CapitalizedCommentsOptions": {
       "description": "Configuration for the capitalized-comments rule.\n\nThe first element specifies whether comments should `\"always\"` or `\"never\"`\nbegin with a capital letter. The second element is an optional object\ncontaining additional options.",
       "type": "array",
@@ -1479,6 +1487,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "ComplexityConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/ComplexityConfig"
+        }
+      ]
     },
     "Config": {
       "type": "array",
@@ -2278,34 +2298,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/ComplexityConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/ComplexityConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -2605,7 +2608,57 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "import/extensions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ExtensionRule"
+                    },
+                    {
+                      "$ref": "#/definitions/ImportExtensionsObject"
+                    }
+                  ],
+                  "maxItems": 3,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ExtensionRule"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ImportExtensionsObject"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              ]
+            }
+          ]
         },
         "import/first": {
           "anyOf": [
@@ -4083,34 +4136,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxClassesPerFileConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxClassesPerFileConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4120,34 +4156,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxDepth"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxDepthConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4157,34 +4176,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxLinesConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxLinesConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4194,34 +4196,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxLinesPerFunctionConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxLinesPerFunctionConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4231,34 +4216,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxNestedCallbacks"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxNestedCallbacksConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4268,34 +4236,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxParamsConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxParamsConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -4305,34 +4256,17 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "anyOf": [
+              "type": "array",
+              "items": [
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "array",
-                  "items": [
-                    {
-                      "$ref": "#/definitions/AllowWarnDeny"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxStatementsConfig"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/MaxStatementsConfigEnum"
                 }
-              ]
+              ],
+              "maxItems": 2,
+              "minItems": 2
             }
           ]
         },
@@ -5150,10 +5084,46 @@
           "$ref": "#/definitions/DummyRule"
         },
         "no-restricted-imports": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
+                }
+              ],
+              "additionalItems": {
+                "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
+              },
+              "minItems": 2
+            }
+          ]
         },
         "no-restricted-properties": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PropertyDetails"
+                }
+              ],
+              "additionalItems": {
+                "$ref": "#/definitions/PropertyDetails"
+              },
+              "minItems": 2
+            }
+          ]
         },
         "no-return-assign": {
           "anyOf": [
@@ -5591,7 +5561,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "node/callback-return": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CallbackReturn"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "node/global-require": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -10711,6 +10698,16 @@
       },
       "additionalProperties": false
     },
+    "ExtensionRule": {
+      "description": "Extension rule configuration; Copy to avoid extra indirection.",
+      "type": "string",
+      "enum": [
+        "always",
+        "never",
+        "ignorePackages"
+      ],
+      "markdownDescription": "Extension rule configuration; Copy to avoid extra indirection."
+    },
     "ExternalPluginEntry": {
       "anyOf": [
         {
@@ -10822,12 +10819,12 @@
       "type": "object",
       "properties": {
         "forbid": {
-          "description": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, an optional `disallowedFor` array of DOM node names,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`",
+          "description": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, optional `disallowedFor` and `disallowedValues` arrays,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"type\", \"disallowedValues\": [\"button\"] }] }]`",
           "type": "array",
           "items": {
             "$ref": "#/definitions/ForbidDomPropsItem"
           },
-          "markdownDescription": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, an optional `disallowedFor` array of DOM node names,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`"
+          "markdownDescription": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, optional `disallowedFor` and `disallowedValues` arrays,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"type\", \"disallowedValues\": [\"button\"] }] }]`"
         }
       },
       "additionalProperties": false,
@@ -10842,13 +10839,13 @@
           "markdownDescription": "A prop name to forbid on all DOM elements."
         },
         {
-          "description": "A prop with optional `disallowedFor` DOM node list and custom `message`.",
+          "description": "A prop with optional `disallowedFor` DOM node list, optional\n`disallowedValues` value list, and custom `message`.",
           "allOf": [
             {
               "$ref": "#/definitions/PropWithOptions"
             }
           ],
-          "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+          "markdownDescription": "A prop with optional `disallowedFor` DOM node list, optional\n`disallowedValues` value list, and custom `message`."
         }
       ],
       "markdownDescription": "A forbidden prop, either as a plain prop name string or with options."
@@ -10917,15 +10914,10 @@
     },
     "ForbidItemObject": {
       "type": "object",
-      "required": [
-        "allowedFor",
-        "allowedForPatterns",
-        "disallowedFor",
-        "disallowedForPatterns"
-      ],
       "properties": {
         "allowedFor": {
           "description": "Component names for which this prop is **allowed** (all others are\nforbidden).",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10934,6 +10926,7 @@
         },
         "allowedForPatterns": {
           "description": "Glob patterns for component names where the prop is **allowed**.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10942,6 +10935,7 @@
         },
         "disallowedFor": {
           "description": "Component names for which this prop is **disallowed** (all others are\nallowed).",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10950,6 +10944,7 @@
         },
         "disallowedForPatterns": {
           "description": "Glob patterns for component names where the prop is **disallowed**.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -11172,9 +11167,9 @@
       "additionalProperties": false
     },
     "HandleCallbackErrConfig": {
-      "description": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\n\nDefault: `\"err\"`.",
+      "description": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\nInvalid regexp patterns are rejected during configuration parsing.\n\nDefault: `\"err\"`.",
       "type": "string",
-      "markdownDescription": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\n\nDefault: `\"err\"`."
+      "markdownDescription": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\nInvalid regexp patterns are rejected during configuration parsing.\n\nDefault: `\"err\"`."
     },
     "HeadingHasContentConfig": {
       "type": "object",
@@ -11472,6 +11467,53 @@
         }
       },
       "additionalProperties": false
+    },
+    "ImportExtensionsConfig": {
+      "type": "object",
+      "properties": {
+        "checkTypeImports": {
+          "description": "Whether to check type imports when enforcing extension rules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check type imports when enforcing extension rules."
+        },
+        "ignorePackages": {
+          "description": "Whether to ignore package imports when enforcing extension rules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore package imports when enforcing extension rules."
+        },
+        "pathGroupOverrides": {
+          "description": "Path group overrides for bespoke import specifiers.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PathGroupOverrideConfig"
+          },
+          "markdownDescription": "Path group overrides for bespoke import specifiers."
+        },
+        "pattern": {
+          "description": "Per-extension rules.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ExtensionRule"
+          },
+          "markdownDescription": "Per-extension rules."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ImportExtensionsObject": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ImportExtensionsConfig"
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ExtensionRule"
+          }
+        }
+      ]
     },
     "ImportKind": {
       "type": "string",
@@ -12351,6 +12393,18 @@
       },
       "additionalProperties": false
     },
+    "MaxClassesPerFileConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxClassesPerFileConfig"
+        }
+      ]
+    },
     "MaxDependenciesConfig": {
       "type": "object",
       "properties": {
@@ -12397,6 +12451,18 @@
       },
       "additionalProperties": false
     },
+    "MaxDepthConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxDepth"
+        }
+      ]
+    },
     "MaxExpectsConfig": {
       "type": "object",
       "properties": {
@@ -12437,6 +12503,18 @@
       },
       "additionalProperties": false
     },
+    "MaxLinesConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxLinesConfig"
+        }
+      ]
+    },
     "MaxLinesPerFunctionConfig": {
       "type": "object",
       "properties": {
@@ -12469,6 +12547,18 @@
       },
       "additionalProperties": false
     },
+    "MaxLinesPerFunctionConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxLinesPerFunctionConfig"
+        }
+      ]
+    },
     "MaxNestedCallbacks": {
       "type": "object",
       "properties": {
@@ -12482,6 +12572,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "MaxNestedCallbacksConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxNestedCallbacks"
+        }
+      ]
     },
     "MaxNestedCalls": {
       "type": "object",
@@ -12540,6 +12642,18 @@
       },
       "additionalProperties": false
     },
+    "MaxParamsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxParamsConfig"
+        }
+      ]
+    },
     "MaxProps": {
       "type": "object",
       "properties": {
@@ -12573,6 +12687,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "MaxStatementsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxStatementsConfig"
+        }
+      ]
     },
     "MediaHasCaptionConfig": {
       "type": "object",
@@ -13059,6 +13185,12 @@
     "NoArraySort": {
       "type": "object",
       "properties": {
+        "allowAfterSpread": {
+          "description": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```"
+        },
         "allowExpressionStatement": {
           "description": "When set to `true` (default), allows `array.sort()` as an expression statement.\nSet to `false` to forbid `Array#sort()` even if it's an expression statement.\n\nExample of **incorrect** code for this rule with `allowExpressionStatement` set to `false`:\n```js\narray.sort();\n```",
           "default": true,
@@ -14711,6 +14843,42 @@
         }
       },
       "additionalProperties": false
+    },
+    "NoRestrictedImportsConfig": {
+      "type": "object",
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PossiblePaths"
+          }
+        },
+        "patterns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PossiblePatterns"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoRestrictedImportsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedPath"
+        },
+        {
+          "$ref": "#/definitions/NoRestrictedImportsConfig"
+        }
+      ]
+    },
+    "NoRestrictedImportsConfigValue": {
+      "additionalItems": {
+        "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
+      }
     },
     "NoRestrictedMatchersConfig": {
       "type": "object",
@@ -16382,6 +16550,52 @@
       },
       "additionalProperties": false
     },
+    "PathGroupAction": {
+      "description": "Action to take for path group overrides.\n\nDetermines how import extensions are validated for matching bespoke import specifiers.",
+      "oneOf": [
+        {
+          "description": "Enforce extension validation for matching imports (require extensions based on config).",
+          "type": "string",
+          "enum": [
+            "enforce"
+          ],
+          "markdownDescription": "Enforce extension validation for matching imports (require extensions based on config)."
+        },
+        {
+          "description": "Ignore matching imports entirely (skip all extension validation).",
+          "type": "string",
+          "enum": [
+            "ignore"
+          ],
+          "markdownDescription": "Ignore matching imports entirely (skip all extension validation)."
+        }
+      ],
+      "markdownDescription": "Action to take for path group overrides.\n\nDetermines how import extensions are validated for matching bespoke import specifiers."
+    },
+    "PathGroupOverrideConfig": {
+      "type": "object",
+      "required": [
+        "action",
+        "pattern"
+      ],
+      "properties": {
+        "action": {
+          "description": "Action to take when pattern matches.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PathGroupAction"
+            }
+          ],
+          "markdownDescription": "Action to take when pattern matches."
+        },
+        "pattern": {
+          "description": "Glob pattern to match import specifiers.",
+          "type": "string",
+          "markdownDescription": "Glob pattern to match import specifiers."
+        }
+      },
+      "additionalProperties": false
+    },
     "PathOption": {
       "oneOf": [
         {
@@ -16399,6 +16613,26 @@
             "never"
           ],
           "markdownDescription": "Disallow triple-slash `path` references."
+        }
+      ]
+    },
+    "PossiblePaths": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedPath"
+        }
+      ]
+    },
+    "PossiblePatterns": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedPattern"
         }
       ]
     },
@@ -17091,7 +17325,7 @@
       "additionalProperties": false
     },
     "PropWithOptions": {
-      "description": "A prop with optional `disallowedFor` DOM node list and custom `message`.",
+      "description": "A prop with optional `disallowedFor` DOM node list, optional `disallowedValues`\nvalue list, and custom `message`.",
       "type": "object",
       "required": [
         "propName"
@@ -17105,6 +17339,14 @@
           },
           "markdownDescription": "A list of DOM element names (e.g. `[\"div\", \"span\"]`) on which this\nprop is forbidden. If empty or omitted, the prop is forbidden on all\nDOM elements."
         },
+        "disallowedValues": {
+          "description": "A list of string literal values for which this prop is forbidden. If\nomitted, the prop is forbidden for all values.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of string literal values for which this prop is forbidden. If\nomitted, the prop is forbidden for all values."
+        },
         "message": {
           "description": "A custom message to display when this prop is used.",
           "type": "string",
@@ -17117,7 +17359,54 @@
         }
       },
       "additionalProperties": false,
-      "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+      "markdownDescription": "A prop with optional `disallowedFor` DOM node list, optional `disallowedValues`\nvalue list, and custom `message`."
+    },
+    "PropertyDetails": {
+      "type": "object",
+      "properties": {
+        "allowObjects": {
+          "description": "Objects where property access should be allowed. This must be used with `property` and\ncannot be used with `object`.",
+          "default": null,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Objects where property access should be allowed. This must be used with `property` and\ncannot be used with `object`."
+        },
+        "allowProperties": {
+          "description": "Properties where property access should be allowed. This must be used with `object` and\ncannot be used with `property`.",
+          "default": null,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Properties where property access should be allowed. This must be used with `object` and\ncannot be used with `property`."
+        },
+        "message": {
+          "description": "A custom message to display.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "A custom message to display."
+        },
+        "object": {
+          "description": "The object on which the property is being accessed.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "The object on which the property is being accessed."
+        },
+        "property": {
+          "description": "The property being accessed. If `object` is not specified, this applies to the named\nproperty on all objects.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "The property being accessed. If `object` is not specified, this applies to the named\nproperty on all objects."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PropertyDetailsList": {
+      "additionalItems": {
+        "$ref": "#/definitions/PropertyDetails"
+      }
     },
     "RadixType": {
       "oneOf": [
@@ -17598,6 +17887,78 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "Whether to allow RegExp values in template expressions."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RestrictedPath": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "allowImportNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowTypeImports": {
+          "type": "boolean"
+        },
+        "importNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RestrictedPattern": {
+      "type": "object",
+      "properties": {
+        "allowImportNamePattern": {
+          "type": "string"
+        },
+        "allowImportNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowTypeImports": {
+          "type": "boolean"
+        },
+        "caseSensitive": {
+          "type": "boolean"
+        },
+        "group": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "importNamePattern": {
+          "type": "string"
+        },
+        "importNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string"
         }
       },
       "additionalProperties": false

@@ -73,7 +73,7 @@ impl NoUnusedVars {
                 Symbol::new(ctx, ctx.module_record(), specifier.local().symbol_id());
             !Self::should_skip_symbol(&specifier_symbol)
                 && self.is_ignored(&specifier_symbol).is_none()
-                && !specifier_symbol.is_exported()
+                && !specifier_symbol.is_exported_binding()
                 && !specifier_symbol.has_usages(self)
         })
     }

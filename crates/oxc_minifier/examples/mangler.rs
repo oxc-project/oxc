@@ -14,6 +14,7 @@
 //! ## Options
 //!
 //! - `--keep-names`: Preserve function and class names
+//! - `--reserve-exports`: Reserve `exports` / `module` binding names (cjs-module-lexer)
 //! - `--debug`: Enable debug output
 //! - `--twice`: Test idempotency by running twice
 
@@ -25,6 +26,7 @@ use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use pico_args::Arguments;
+use rustc_hash::FxHashSet;
 
 // Instruction:
 // create a `test.js`,
@@ -34,6 +36,7 @@ fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
 
     let keep_names = args.contains("--keep-names");
+    let reserve_exports = args.contains("--reserve-exports");
     let debug = args.contains("--debug");
     let twice = args.contains("--twice");
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
@@ -45,9 +48,14 @@ fn main() -> std::io::Result<()> {
     let options = MangleOptions {
         top_level: None,
         keep_names: MangleOptionsKeepNames { function: keep_names, class: keep_names },
+        reserved: if reserve_exports {
+            ["exports", "module"].into_iter().map(Into::into).collect()
+        } else {
+            FxHashSet::default()
+        },
         debug,
     };
-    let printed = mangler(&source_text, source_type, options);
+    let printed = mangler(&source_text, source_type, options.clone());
     println!("{printed}");
 
     if twice {

@@ -479,11 +479,12 @@ impl CliRunner {
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
             .with_type_check_only(type_check_only)
+            .with_timings(debug_timings)
             .build()
         {
             Ok(runner) => runner,
             Err(err) => {
-                print_and_flush_stdout(stdout, &err);
+                print_and_flush_stdout(stdout, &format!("{err}\n"));
                 return CliRunResult::TsGoLintError;
             }
         };
@@ -507,7 +508,7 @@ impl CliRunner {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }
             Err(err) => {
-                print_and_flush_stdout(stdout, &err);
+                print_and_flush_stdout(stdout, &format!("{err}\n"));
                 return CliRunResult::TsGoLintError;
             }
         }

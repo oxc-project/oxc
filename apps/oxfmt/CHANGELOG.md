@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.57.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 259e0cd oxfmt,formatter_graphql: [**BREAKING**] Support draft syntax with removing prettier fallback (#23326) (leaysgur)
+- accbc49 oxfmt: [**BREAKING**] Format `parser:css,less,scss` files + css-in-js by `oxc_formatter_css` (#23321) (leaysgur)
+
+### 🚀 Features
+
+- 01de9ec oxfmt: Format `parser:graphql` files by `oxc_formatter_graphql` (#23318) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 48e2d78 formatter_css: Improve major prettier diffs (#23327) (leaysgur)
+- f7d1f50 oxlint, oxfmt: Enable `disable_old_builder` Cargo feature for `oxc_ast` crate (#23886) (overlookmotel)
+- d86f60b lsp: Normalize user config path to watch pattern (#23723) (Sysix)
+
+### 📚 Documentation
+
+- b4d0dc9 oxfmt,formatter,formatter_css,formatter_core: Update AGENTS.md (#23814) (leaysgur)
+
+## [0.56.0] - 2026-06-22
+
+### 🐛 Bug Fixes
+
+- 37a34a1 oxfmt/lsp: Avoid newlines line ending changes (#23463) (Sysix)
+
 ## [0.55.0] - 2026-06-15
 
 ### 🚀 Features
