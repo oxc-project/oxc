@@ -451,60 +451,230 @@ fn is_loop(kind: AstKind<'_>) -> bool {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::tester::{TestCase, Tester};
 
-    let pass = vec![
-        ("while (false) { foo(); }", None),
-        ("while (bar) { foo(); if (true) { break; } }", None),
-        ("do foo(); while (false)", None),
-        ("for (x = 1; x < 10; i++) { if (x > 0) { foo(); throw err; } }", None),
-        ("for (x of []);", None),
-        ("for (x of [1]);", None),
-        ("function foo() { return; while (a); }", None),
-        ("function foo() { return; while (a) break; }", None),
-        ("while(true); while(true);", None),
-        ("while(true); while(true) break;", None),
-        ("while (a) break;", Some(serde_json::json!([{ "ignore": ["WhileStatement"] }]))),
-        ("do break; while (a)", Some(serde_json::json!([{ "ignore": ["DoWhileStatement"] }]))),
-        ("for (a; b; c) break;", Some(serde_json::json!([{ "ignore": ["ForStatement"] }]))),
-        ("for (a in b) break;", Some(serde_json::json!([{ "ignore": ["ForInStatement"] }]))),
-        ("for (a of b) break;", Some(serde_json::json!([{ "ignore": ["ForOfStatement"] }]))),
+    let loop_templates: &[&[&str]] = &[
+        &["while (a) <body>", "while (a && b) <body>"],
+        &["do <body> while (a)", "do <body> while (a && b)"],
+        &[
+            "for (a; b; c) <body>",
+            "for (var i = 0; i < a.length; i++) <body>",
+            "for (; b; c) <body>",
+            "for (; b < foo; c++) <body>",
+            "for (a; ; c) <body>",
+            "for (a = 0; ; c++) <body>",
+            "for (a; b;) <body>",
+            "for (a = 0; b < foo; ) <body>",
+            "for (; ; c) <body>",
+            "for (; ; c++) <body>",
+            "for (; b;) <body>",
+            "for (; b < foo; ) <body>",
+            "for (a; ;) <body>",
+            "for (a = 0; ;) <body>",
+            "for (;;) <body>",
+        ],
+        &[
+            "for (a in b) <body>",
+            "for (a in f(b)) <body>",
+            "for (var a in b) <body>",
+            "for (let a in f(b)) <body>",
+        ],
+        &[
+            "for (a of b) <body>",
+            "for (a of f(b)) <body>",
+            "for ({ a, b } of c) <body>",
+            "for (var a of f(b)) <body>",
+            "async function foo() { for await (const a of b) <body> }",
+        ],
+    ];
+
+    let valid_loop_bodies = &[
+        ";",
+        "{}",
+        "{ bar(); }",
+        "continue;",
+        "{ continue; }",
+        "{ if (foo) break; }",
+        "{ if (foo) { return; } bar(); }",
+        "{ if (foo) { bar(); } else { break; } }",
+        "{ if (foo) { continue; } return; }",
+        "{ switch (foo) { case 1: return; } }",
+        "{ switch (foo) { case 1: break; default: return; } }",
+        "{ switch (foo) { case 1: continue; default: return; } throw err; }",
+        "{ try { return bar(); } catch (e) {} }",
+        "{ continue; break; }",
+        "() => a;",
+        "{ () => a }",
+        "(() => a)();",
+        "{ (() => a)() }",
+        "while (a);",
+        "do ; while (a)",
+        "for (a; b; c);",
+        "for (; b;);",
+        "for (; ; c) if (foo) break;",
+        "for (;;) if (foo) break;",
+        "while (true) if (foo) break;",
+        "while (foo) if (bar) return;",
+        "for (a in b);",
+        "for (a of b);",
+    ];
+
+    let invalid_loop_bodies = &[
+        "break;",
+        "{ break; }",
+        "return;",
+        "{ return; }",
+        "throw err;",
+        "{ throw err; }",
+        "{ foo(); break; }",
+        "{ break; foo(); }",
+        "if (foo) break; else return;",
+        "{ if (foo) { return; } else { break; } bar(); }",
+        "{ if (foo) { return; } throw err; }",
+        "{ switch (foo) { default: throw err; } }",
+        "{ switch (foo) { case 1: throw err; default: return; } }",
+        "{ switch (foo) { case 1: something(); default: return; } }",
+        "{ try { return bar(); } catch (e) { break; } }",
+        "{ break; continue; }",
+        "{ () => a; break; }",
+        "{ (() => a)(); break; }",
+        "{ while (a); break; }",
+        "{ do ; while (a) break; }",
+        "{ for (a; b; c); break; }",
+        "{ for (; b;); break; }",
+        "{ for (; ; c) if (foo) break; break; }",
+        "{ for(;;) if (foo) break; break; }",
+        "{ for (a in b); break; }",
+        "{ for (a of b); break; }",
+        "for (;;);",
+        "{ for (var i = 0; ; i< 10) { foo(); } }",
+        "while (true);",
+    ];
+
+    let source_code = |template: &str, body: &str| {
+        let loop_source = template.replace("<body>", body);
+        if body.contains("return") && !template.contains("function") {
+            format!("function someFunc() {{ {loop_source} }}")
+        } else {
+            loop_source
+        }
+    };
+
+    let mut pass = Vec::<TestCase>::new();
+    for templates in loop_templates {
+        for template in *templates {
+            for body in valid_loop_bodies {
+                pass.push(source_code(template, body).into());
+            }
+        }
+    }
+    pass.extend([
+        ("while (false) { foo(); }", None).into(),
+        ("while (bar) { foo(); if (true) { break; } }", None).into(),
+        ("do foo(); while (false)", None).into(),
+        ("for (x = 1; x < 10; i++) { if (x > 0) { foo(); throw err; } }", None).into(),
+        ("for (x of []);", None).into(),
+        ("for (x of [1]);", None).into(),
+        ("function foo() { return; while (a); }", None).into(),
+        ("function foo() { return; while (a) break; }", None).into(),
+        ("while(true); while(true);", None).into(),
+        ("while(true); while(true) break;", None).into(),
+        (
+            "while (a) break;",
+            Some(serde_json::json!([{ "ignore": ["WhileStatement"] }])),
+        )
+            .into(),
+        (
+            "do break; while (a)",
+            Some(serde_json::json!([{ "ignore": ["DoWhileStatement"] }])),
+        )
+            .into(),
+        (
+            "for (a; b; c) break;",
+            Some(serde_json::json!([{ "ignore": ["ForStatement"] }])),
+        )
+            .into(),
+        (
+            "for (a in b) break;",
+            Some(serde_json::json!([{ "ignore": ["ForInStatement"] }])),
+        )
+            .into(),
+        (
+            "for (a of b) break;",
+            Some(serde_json::json!([{ "ignore": ["ForOfStatement"] }])),
+        )
+            .into(),
         (
             "for (var key in obj) { hasEnumerableProperties = true; break; } for (const a of b) break;",
             Some(serde_json::json!([{ "ignore": ["ForInStatement", "ForOfStatement"] }])),
-        ),
-    ];
+        )
+            .into(),
+    ]);
 
-    let fail = vec![
-        ("while (foo) { for (a of b) { if (baz) { break; } else { throw err; } } }", None),
+    let mut fail = Vec::<TestCase>::new();
+    for templates in loop_templates {
+        for template in *templates {
+            for body in invalid_loop_bodies {
+                fail.push(source_code(template, body).into());
+            }
+        }
+    }
+    fail.extend([
+        ("while (foo) { for (a of b) { if (baz) { break; } else { throw err; } } }", None)
+            .into(),
         (
             "lbl: for (var i = 0; i < 10; i++) { while (foo) break lbl; } /* outer is valid because inner can have 0 iterations */",
             None,
-        ),
-        ("for (a in b) { while (foo) { if(baz) { break; } else { break; } } break; }", None),
-        ("function foo() { for (var i = 0; i < 10; i++) { do { return; } while(i) } }", None),
-        ("lbl: while(foo) { do { break lbl; } while(baz) }", None),
-        ("lbl: for (a in b) { while(foo) { continue lbl; } }", None),
-        ("for (a of b) { for(;;) { if (foo) { throw err; } } }", None),
-        ("function foo () { for (a in b) { while (true) { if (bar) { return; } } } }", None),
-        ("do for (var i = 1; i < 10; i++) break; while(foo)", None),
-        ("do { for (var i = 1; i < 10; i++) continue; break; } while(foo)", None),
-        ("for (;;) { for (var i = 1; i < 10; i ++) break; if (foo) break; continue; }", None),
+        )
+            .into(),
+        (
+            "for (a in b) { while (foo) { if(baz) { break; } else { break; } } break; }",
+            None,
+        )
+            .into(),
+        (
+            "function foo() { for (var i = 0; i < 10; i++) { do { return; } while(i) } }",
+            None,
+        )
+            .into(),
+        ("lbl: while(foo) { do { break lbl; } while(baz) }", None).into(),
+        ("lbl: for (a in b) { while(foo) { continue lbl; } }", None).into(),
+        ("for (a of b) { for(;;) { if (foo) { throw err; } } }", None).into(),
+        (
+            "function foo () { for (a in b) { while (true) { if (bar) { return; } } } }",
+            None,
+        )
+            .into(),
+        ("do for (var i = 1; i < 10; i++) break; while(foo)", None).into(),
+        ("do { for (var i = 1; i < 10; i++) continue; break; } while(foo)", None).into(),
+        ("for (;;) { for (var i = 1; i < 10; i ++) break; if (foo) break; continue; }", None)
+            .into(),
         (
             "while (a) break; do break; while (b); for (;;) break; for (c in d) break; for (e of f) break;",
             Some(serde_json::json!([{ "ignore": [] }])),
-        ),
-        ("while (a) break;", Some(serde_json::json!([{ "ignore": ["DoWhileStatement"] }]))),
-        ("do break; while (a)", Some(serde_json::json!([{ "ignore": ["WhileStatement"] }]))),
+        )
+            .into(),
+        (
+            "while (a) break;",
+            Some(serde_json::json!([{ "ignore": ["DoWhileStatement"] }])),
+        )
+            .into(),
+        (
+            "do break; while (a)",
+            Some(serde_json::json!([{ "ignore": ["WhileStatement"] }])),
+        )
+            .into(),
         (
             "for (a in b) break; for (c of d) break;",
             Some(serde_json::json!([{ "ignore": ["ForStatement"] }])),
-        ),
+        )
+            .into(),
         (
             "for (a in b) break; for (;;) break; for (c of d) break;",
             Some(serde_json::json!([{ "ignore": ["ForInStatement", "ForOfStatement"] }])),
-        ),
-    ];
+        )
+            .into(),
+    ]);
 
     Tester::new(NoUnreachableLoop::NAME, NoUnreachableLoop::PLUGIN, pass, fail).test_and_snapshot();
 }
