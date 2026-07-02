@@ -149,6 +149,12 @@ impl Rule for NoDuplicates {
             // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
             let mut import_entries_maps: FxHashMap<u8, Vec<&RequestedModule>> =
                 FxHashMap::default();
+            // Track bucket-0 makeup so a type-only import isn't flagged as a duplicate of a bare
+            // side-effect import: a top-level `import type` is erased at runtime, so the
+            // side-effect import isn't redundant. Only relevant under `prefer_inline`.
+            let mut key0_side_effect_count = 0usize;
+            let mut key0_value_count = 0usize;
+            let mut key0_type_only_count = 0usize;
             for requested_module in requested_modules {
                 let imports = module_record
                     .import_entries
@@ -157,9 +163,16 @@ impl Rule for NoDuplicates {
                     .collect::<Vec<_>>();
                 if imports.is_empty() {
                     import_entries_maps.entry(0).or_default().push(requested_module);
+                    key0_side_effect_count += 1;
                     continue;
                 }
+                // A runtime (value) binding: a non-type import that isn't a namespace import.
+                let has_value_binding = imports.iter().any(|entry| {
+                    !entry.is_type
+                        && !matches!(entry.import_name, ImportImportName::NamespaceObject)
+                });
                 let mut flags = [true; 4];
+                let mut pushed_to_key0 = false;
                 for imports in imports {
                     let key = if imports.is_type {
                         match imports.import_name {
@@ -177,11 +190,29 @@ impl Rule for NoDuplicates {
                     if flags[key as usize] {
                         flags[key as usize] = false;
                         import_entries_maps.entry(key).or_default().push(requested_module);
+                        if key == 0 {
+                            pushed_to_key0 = true;
+                        }
+                    }
+                }
+                if pushed_to_key0 {
+                    if has_value_binding {
+                        key0_value_count += 1;
+                    } else {
+                        key0_type_only_count += 1;
                     }
                 }
             }
 
             for i in 0..4 {
+                // A lone type-only import + a lone side-effect import is not a duplicate.
+                if i == 0
+                    && key0_value_count == 0
+                    && key0_side_effect_count == 1
+                    && key0_type_only_count == 1
+                {
+                    continue;
+                }
                 check_duplicates(ctx, import_entries_maps.get(&i));
             }
         }
@@ -259,6 +290,16 @@ fn test() {
         (r"import type * as something from './foo'; import { y } from './foo';", None),
         (r"import y from './foo'; import type * as something from './foo';", None),
         (r"import { y } from './foo'; import type * as something from './foo';", None),
+        // A type-only import is not a duplicate of a bare side-effect import.
+        (r"import type { Foo } from './foo'; import './foo';", None),
+        (
+            r"import type { Foo } from './foo'; import './foo';",
+            Some(json!([{ "preferInline": true }])),
+        ),
+        (
+            r"import './foo'; import type { Foo } from './foo';",
+            Some(json!([{ "prefer-inline": true }])),
+        ),
         (r"import { RouterModule, Routes } from '@angular/router';", None),
     ];
 
@@ -479,6 +520,16 @@ fn test() {
         (
             r"import {AValue} from './foo'; import type {AType} from './foo'",
             Some(json!([{ "prefer-inline": true }])),
+        ),
+        // Genuine duplicates still reported (two type-only imports merge under prefer-inline).
+        (
+            r"import type {x} from './foo'; import type {y} from './foo'",
+            Some(json!([{ "preferInline": true }])),
+        ),
+        // A side-effect import is still redundant when a value import also exists.
+        (
+            r"import './foo'; import { Bar } from './foo'; import type { Foo } from './foo'",
+            Some(json!([{ "preferInline": true }])),
         ),
     ];
 
