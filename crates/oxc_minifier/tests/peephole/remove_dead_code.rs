@@ -1,6 +1,8 @@
+use oxc_span::SourceType;
+
 use crate::{
     CompressOptions, CompressOptionsUnused, default_options, test, test_options, test_same,
-    test_same_options,
+    test_same_options, test_same_options_source_type,
 };
 
 #[track_caller]
@@ -260,4 +262,32 @@ fn remove_empty_function() {
 
     test_same_options("function* foo({}) {} foo()", &options);
     test_options("var foo = function*({}) {}; foo()", "(function*({}) {})()", &options);
+}
+
+#[test]
+fn redeclared_pure_function_is_not_folded_var() {
+    // `var foo` redeclarations are span-only in oxc_semantic and create no references,
+    // so the read-only-refs gate on the first declarator can't see the second one.
+    // Whichever declaration wins at runtime (here, the `if` branch, when truthy) may
+    // be impure, so a stale "pure" fact recorded for an earlier declarator must not
+    // survive to fold the call.
+    test_same("var foo = (u) => {}; if (g) var foo = (a) => { console.log(a); }; foo('x');");
+}
+
+#[test]
+fn redeclared_pure_function_is_not_folded_function_declaration() {
+    // Duplicate `function` declarations are legal in sloppy scripts (SyntaxError in
+    // modules); the second declaration wins at runtime.
+    test_same_options_source_type(
+        "function foo(u) {} function foo(a) { console.log(a); } foo('x');",
+        SourceType::cjs().with_script(true),
+        &default_options(),
+    );
+}
+
+#[test]
+fn non_redeclared_pure_function_still_folds() {
+    // Regression guard for `redeclared_pure_function_is_not_folded`: a single,
+    // un-redeclared pure function must still fold as before.
+    test("const foo = (u) => {}; foo(1)", "const foo = (u) => {};");
 }
