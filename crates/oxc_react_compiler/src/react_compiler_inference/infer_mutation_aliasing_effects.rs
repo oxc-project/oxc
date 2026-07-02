@@ -3181,9 +3181,9 @@ fn is_builtin_collection_type(ty: &Type) -> bool {
 fn get_function_call_signature(
     env: &Environment,
     callee_id: IdentifierId,
-) -> Result<Option<FunctionSignature>, OxcDiagnostic> {
+) -> Result<Option<Rc<FunctionSignature>>, OxcDiagnostic> {
     let ty = &env.types[env.identifiers[callee_id].type_];
-    Ok(env.get_function_signature(ty)?.cloned())
+    Ok(env.get_function_signature(ty)?.map(|s| Rc::new(s.clone())))
 }
 
 fn is_ref_or_ref_value_for_id(env: &Environment, id: IdentifierId) -> bool {
