@@ -170,6 +170,7 @@ serde = "1" # Serialization framework
 serde_json = "1" # JSON serialization
 syn = { version = "2", default-features = false } # Rust parser for macros
 unicode-id-start = "1" # Unicode identifier validation
+unicode-segmentation = "1.12.0" # Unicode grapheme segmentation
 
 #
 javascript-globals = "1.5.0" # JavaScript global definitions
@@ -181,7 +182,7 @@ oxc_sourcemap = "8.0.2" # Source map generation
 
 #
 allocator-api2 = "=0.2.21" # Allocator trait
-oxc-graphql-parser = "0.0.1" # GraphQL parser (lossless CST; apollo-parser 0.8.6 fork with opt-in 2025 descriptions + legacy fragment variables)
+oxc-graphql-parser = "0.0.4" # GraphQL parser (direct AST; apollo-parser 0.8.6 fork with opt-in 2025 descriptions + legacy fragment variables)
 base64 = "0.22.1" # Base64 encoding
 bitflags = "2.10.0" # Bitflag types
 bpaf = "0.9.20" # CLI parser
@@ -200,8 +201,8 @@ futures = "0.3.31" # Async utilities
 handlebars = "6.4.0" # Template engine
 hashbrown = { version = "0.17.0", default-features = false } # Fast hash map
 hmac-sha1-compact = "1.1.7" # Self-contained, zero-dependency SHA-1
+hmac-sha256 = "1" # Self-contained, zero-dependency SHA-256 (react_compiler reactive-scope cache keys)
 humansize = "2.1.3" # Human-readable sizes
-icu_segmenter = "2.1.2" # Unicode segmentation
 ignore = "0.4.25" # Gitignore matching
 insta = "1.43.2" # Snapshot testing
 itertools = "0.15.0" # Iterator utilities
@@ -227,7 +228,7 @@ pico-args = "0.5.0" # Minimal argument parser
 prettyplease = "0.2.37" # Rust code formatting
 project-root = "0.2.2" # Project root detection
 quickcheck = "1.1.0" # Property-based testing
-oxc-css-parser = "0.0.1" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `template_placeholder` typed placeholders for css-in-js + valid-syntax coverage fixes (see crates/oxc_formatter_css/AGENTS.md))
+oxc-css-parser = "0.0.3" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `template_placeholder` typed placeholders for css-in-js + valid-syntax coverage fixes (see crates/oxc_formatter_css/AGENTS.md))
 rand = "0.10.0" # Random number generation
 rayon = "1.11.0" # Data parallelism
 ropey = "1.6.1" # Rope text structure
@@ -260,6 +261,14 @@ website_common = { path = "tasks/website_common" }
 
 [workspace.metadata.cargo-shear]
 ignored = ["oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi"]
+
+# `oxc_allocator` is both dogfooded here (workspace path) and published to crates.io.
+# External workspace-dependencies (e.g. `oxc-css-parser`) pull it from the registry,
+# and cargo treats `oxc_allocator (path)` and `oxc_allocator (registry)` as separate crate instances
+# even at the same version.
+# Force the registry request to resolve to the workspace copy so there's a single instance.
+[patch.crates-io]
+oxc_allocator = { path = "crates/oxc_allocator" }
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

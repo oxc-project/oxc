@@ -134,6 +134,8 @@ pub enum LineMode {
     Hard,
     /// See [crate::builders::empty_line] for documentation.
     Empty,
+    /// See [crate::builders::literal_line_break] for documentation.
+    Literal,
 }
 
 impl LineMode {
@@ -142,7 +144,7 @@ impl LineMode {
     }
 
     pub const fn will_break(self) -> bool {
-        matches!(self, LineMode::Hard | LineMode::Empty)
+        matches!(self, LineMode::Hard | LineMode::Empty | LineMode::Literal)
     }
 }
 
@@ -276,7 +278,7 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => line_mode.will_break(),
-            FormatElement::Text { text: _, width } => width.is_multiline(),
+            FormatElement::Text { text: _, width } => width.propagates_expand(),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even
             // the most flat version contains some content that forces a break.
@@ -423,13 +425,14 @@ pub trait FormatElements {
 ///
 /// ## Representation
 ///
-/// Uses a single `u32` to efficiently store both the width value and a multiline flag:
+/// Uses a single `u32` to efficiently store the width value and two flags:
 ///
 /// - Bit 31: Multiline flag (1 = multiline, 0 = single line)
-/// - Bits 0-30: Width value (stored directly)
+/// - Bit 30: No-expand flag (1 = multiline text that does not expand enclosing groups)
+/// - Bits 0-29: Width value (stored directly)
 ///
 /// This encoding allows `TextWidth` to fit in 4 bytes while supporting both a width value
-/// and a boolean flag. The maximum representable width is 2^31 - 1 (0x7FFFFFFF).
+/// and boolean flags. The maximum representable width is 2^30 - 1 (0x3FFFFFFF).
 ///
 /// The maximum value is sufficient in practice as texts that long would exceed any
 /// reasonable line width configuration (typically < 500 columns).
@@ -446,8 +449,13 @@ impl TextWidth {
     /// Bit mask for the multiline flag (highest bit)
     const MULTILINE_MASK: u32 = 1 << 31;
 
-    /// Bit mask for extracting the width value (all bits except the highest)
-    const WIDTH_MASK: u32 = Self::MULTILINE_MASK - 1;
+    /// Bit mask for the "multiline but does not expand enclosing groups" flag.
+    /// Equivalent to Prettier's `literallineWithoutBreakParent`: the newlines still
+    /// print literally, but `Document::propagate_expand` / `will_break` ignore them.
+    const NO_EXPAND_MASK: u32 = 1 << 30;
+
+    /// Bit mask for extracting the width value (all bits except the flags)
+    const WIDTH_MASK: u32 = Self::NO_EXPAND_MASK - 1;
 
     /// Encodes width and multiline flag into a single u32.
     const fn encode(width: u32, multiline: bool) -> u32 {
@@ -525,6 +533,19 @@ impl TextWidth {
     pub const fn is_multiline(self) -> bool {
         (self.0 & Self::MULTILINE_MASK) != 0
     }
+
+    /// Marks a multiline width so its newlines do NOT expand enclosing groups
+    /// (Prettier's `literallineWithoutBreakParent`). No-op for single-line widths.
+    #[must_use]
+    pub const fn without_expand_parent(self) -> Self {
+        if self.is_multiline() { Self(self.0 | Self::NO_EXPAND_MASK) } else { self }
+    }
+
+    /// Returns true if the text forces enclosing groups to expand:
+    /// it contains newlines and is not marked [`Self::without_expand_parent`].
+    pub const fn propagates_expand(self) -> bool {
+        (self.0 & (Self::MULTILINE_MASK | Self::NO_EXPAND_MASK)) == Self::MULTILINE_MASK
+    }
 }
 
 #[cfg(test)]
@@ -578,6 +599,24 @@ mod tests {
 
         let multi = TextWidth::multiline(10);
         debug_assert!(multi.is_multiline());
+    }
+
+    #[test]
+    fn without_expand_parent_disables_propagation_keeping_width() {
+        let multi = TextWidth::multiline(3);
+        debug_assert!(multi.propagates_expand());
+
+        let no_expand = multi.without_expand_parent();
+        debug_assert!(no_expand.is_multiline());
+        debug_assert!(!no_expand.propagates_expand());
+        debug_assert_eq!(no_expand.value(), 3);
+    }
+
+    #[test]
+    fn without_expand_parent_is_noop_for_single_line() {
+        let single = TextWidth::single(3);
+        debug_assert!(!single.propagates_expand());
+        debug_assert_eq!(single.without_expand_parent(), single);
     }
 
     #[test]

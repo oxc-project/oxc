@@ -46,7 +46,7 @@
     "./package.json": "./package.json"
   },
   "peerDependencies": {
-    "oxlint-tsgolint": ">=0.22.1",
+    "oxlint-tsgolint": ">=0.24.0",
     "vite-plus": "*"
   },
   "peerDependenciesMeta": {

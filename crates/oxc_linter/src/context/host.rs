@@ -7,7 +7,7 @@ use std::{
     sync::Arc,
 };
 
-use oxc_allocator::ArenaBox;
+use oxc_allocator::{Allocator, ArenaBox};
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_parser::Token;
 use oxc_semantic::Semantic;
@@ -146,6 +146,8 @@ pub struct ContextHost<'a> {
     /// A file can have multiple script entries.
     /// Some rules (like vue) need the information of the other entries.
     pub(super) sub_hosts: Vec<ContextSubHost<'a>>,
+    /// Allocator that owns the parsed AST and related semantic data.
+    pub(super) allocator: &'a Allocator,
     /// The current index which will be linted.
     current_sub_host_index: Cell<usize>,
     /// Diagnostics reported by the linter.
@@ -181,6 +183,7 @@ impl<'a> ContextHost<'a> {
     pub fn new<P: AsRef<Path>>(
         file_path: P,
         sub_hosts: Vec<ContextSubHost<'a>>,
+        allocator: &'a Allocator,
         options: LintOptions,
         config: Arc<LintConfig>,
     ) -> Self {
@@ -196,6 +199,7 @@ impl<'a> ContextHost<'a> {
 
         Self {
             sub_hosts,
+            allocator,
             current_sub_host_index: Cell::new(0),
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             fix: options.fix,
@@ -210,6 +214,12 @@ impl<'a> ContextHost<'a> {
     /// The current [`ContextSubHost`]
     pub fn current_sub_host(&self) -> &ContextSubHost<'a> {
         &self.sub_hosts[self.current_sub_host_index.get()]
+    }
+
+    /// Allocator that owns the parsed AST and semantic data.
+    #[inline]
+    pub fn allocator(&self) -> &'a Allocator {
+        self.allocator
     }
 
     /// Get mutable reference to the current [`ContextSubHost`]

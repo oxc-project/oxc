@@ -8,7 +8,7 @@ use oxc_ast::{
     ast::{
         Argument, AssignmentTarget, BinaryOperator, CallExpression, ChainElement,
         ComputedMemberExpression, Expression, MemberExpression, StaticMemberExpression,
-        UnaryOperator,
+        UnaryOperator, VariableDeclarationKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -161,6 +161,7 @@ impl PreferAt {
             }
         } else if self.check_all_index_access
             && let Some(index) = get_positive_index(&computed.expression)
+            && !is_obviously_non_array_receiver(&computed.object, ctx)
         {
             ctx.diagnostic_with_fix(prefer_at_diagnostic(computed.span(), "[index]"), |fixer| {
                 if is_arguments_object(&computed.object) {
@@ -169,7 +170,9 @@ impl PreferAt {
 
                 create_at_fix(&fixer, computed.object.span(), computed.span(), index)
             });
-        } else if self.check_all_index_access && is_addition_index_expression(&computed.expression)
+        } else if self.check_all_index_access
+            && is_addition_index_expression(&computed.expression)
+            && !is_obviously_non_array_receiver(&computed.object, ctx)
         {
             if is_static_positive_index_expression(&computed.expression) {
                 ctx.diagnostic_with_fix(
@@ -537,6 +540,58 @@ fn get_positive_index(expr: &Expression) -> Option<i64> {
     }
 }
 
+/// Returns `true` for an (already unwrapped) expression that cannot be an
+/// `Array`, `String`, or `TypedArray`, so calling `.at()` on it would be
+/// invalid. Object literals, non-string literals, and function/class
+/// expressions have no `.at()` method. String literals are intentionally
+/// excluded — strings do have `.at()`.
+fn is_unsupported_at_receiver(expr: &Expression) -> bool {
+    matches!(
+        expr,
+        Expression::ObjectExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ClassExpression(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::BooleanLiteral(_)
+            | Expression::NullLiteral(_)
+            | Expression::RegExpLiteral(_)
+    )
+}
+
+/// Returns `true` if `expr` is obviously not an array-like receiver, so
+/// `prefer-at` must not rewrite `expr[index]` into `expr.at(index)` (e.g.
+/// numeric-key access on a plain object, which has no `.at()` method).
+///
+/// Mirrors `isObviouslyNonArrayReceiver` from `eslint-plugin-unicorn`
+/// (sindresorhus/eslint-plugin-unicorn#2999): the receiver itself is an
+/// unsupported `.at()` target, or it is an identifier bound to a `const`
+/// whose initializer is one.
+fn is_obviously_non_array_receiver(expr: &Expression, ctx: &LintContext) -> bool {
+    let inner = expr.get_inner_expression();
+    if is_unsupported_at_receiver(inner) {
+        return true;
+    }
+
+    let Expression::Identifier(ident) = inner else {
+        return false;
+    };
+    let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    let AstKind::VariableDeclarator(declarator) = ctx.symbol_declaration(symbol_id).kind() else {
+        return false;
+    };
+    if declarator.kind != VariableDeclarationKind::Const {
+        return false;
+    }
+    declarator
+        .init
+        .as_ref()
+        .is_some_and(|init| is_unsupported_at_receiver(init.get_inner_expression()))
+}
+
 fn is_addition_index_expression(expr: &Expression) -> bool {
     let Expression::BinaryExpression(binary) = expr.get_inner_expression() else { return false };
     binary.operator == BinaryOperator::Addition
@@ -749,6 +804,37 @@ fn test() {
         ("array[-1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         ("array[1.5]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         ("array[1n]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // https://github.com/oxc-project/oxc/issues/23870
+        // Numeric-key access on a plain object must not be reported/fixed:
+        // objects have no `.at()` method, so the autofix produces broken code.
+        (
+            "const tokens = { 60: '#666666', 10: '#F8F8F8' }; tokens[60]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("({ 1: 1 })[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        (
+            "const object = { 1: 1, a: 2 }; object[1]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        (
+            "const object = { 1: 1 } as const; object[1]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        (
+            "const object = { 1: 1 }; (object as Record<number, number>)[1]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        (
+            "const object = { 1: 1 }; object![1]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        (
+            "const object = { 1: 1 }; object[0 + 1]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("(5)[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("(() => {})[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("(class {})[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
     ];
 
     let fail = vec![
@@ -866,6 +952,8 @@ fn test() {
             Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
         ),
         ("foo.charAt(bar.length - 1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // Strings have `.at()`, so a string-literal receiver is still reported (#23870).
+        ("\"abc\"[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
     ];
 
     let fix = vec![
@@ -907,6 +995,8 @@ fn test() {
             "string.at(9)",
             Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
         ),
+        // Strings have `.at()`, so a string-literal receiver is still fixed (#23870).
+        ("\"abc\"[1]", "\"abc\".at(1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         ("_.last([] as [])", "([] as []).at(-1)", None),
         ("_.last([1, 2, 3] as const)", "([1, 2, 3] as const).at(-1)", None),
         // `arguments` is not an Array, so `.at()` is not guaranteed to exist.

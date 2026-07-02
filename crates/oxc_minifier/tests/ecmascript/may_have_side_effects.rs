@@ -1196,12 +1196,15 @@ fn test_call_expressions() {
 
     test("String.fromCharCode()", false);
     test("String.fromCodePoint()", false);
-    test("String.raw()", false);
+    // `String.raw(undefined)` reads `undefined.raw` -> throws TypeError.
+    test("String.raw()", true);
 
     test("Symbol.for()", false);
-    test("Symbol.keyFor()", false);
+    // `Symbol.keyFor(undefined)` requires a Symbol argument -> throws TypeError.
+    test("Symbol.keyFor()", true);
 
-    test("URL.canParse()", false);
+    // `URL.canParse()` has a required first argument -> throws TypeError with none.
+    test("URL.canParse()", true);
 
     test("BigInt64Array.of()", false);
     test("BigUint64Array.of()", false);
@@ -1284,6 +1287,64 @@ fn test_proxy_sensitive_object_methods() {
     test("Object.create(undefined)", true); // throws
     test("Object.create({}, x)", true); // properties read via [[OwnPropertyKeys]]/[[Get]]
     test("Object.create({}, {})", true);
+}
+
+/// Known-pure global functions/methods that nonetheless *throw* for some arguments,
+/// so the call is not side-effect-free and must not be dropped. Cross-checked against
+/// terser and esbuild, which both keep these.
+#[test]
+fn test_throwing_global_calls() {
+    // Tier 1: missing/invalid required argument always throws a TypeError.
+    // `String.raw(template)` reads `template.raw`; `undefined`/non-template throws.
+    test("String.raw()", true);
+    test("String.raw({})", true);
+    test("String.raw(x)", true);
+    // `Symbol.keyFor(sym)` requires a Symbol argument; anything else throws.
+    test("Symbol.keyFor()", true);
+    test("Symbol.keyFor(42)", true);
+    test("Symbol.keyFor(x)", true);
+    // `URL.canParse(url)` has a required first argument; with none it throws.
+    test("URL.canParse()", true);
+    test("URL.canParse('x')", false); // a string argument is fine
+    test("URL.canParse(x)", false);
+
+    // Tier 2: `String.fromCodePoint(cp)` throws RangeError unless every `cp` is an
+    // integer in [0, 0x10FFFF]. `fromCharCode` truncates via ToUint16 and never
+    // RangeErrors.
+    test("String.fromCodePoint(-1)", true);
+    test("String.fromCodePoint(1.5)", true);
+    test("String.fromCodePoint(0x110000)", true);
+    test("String.fromCodePoint(65)", false);
+    test("String.fromCodePoint(0, 0x10FFFF)", false);
+    test("String.fromCodePoint(0, -1)", true);
+    test("String.fromCodePoint(x)", false); // undetermined -> stay droppable
+    test("String.fromCharCode(-1)", false);
+    test("String.fromCharCode(1.5)", false);
+
+    // Tier 3: `ToNumber` coercion throws a TypeError on a BigInt argument (provable).
+    // A Symbol also throws, but oxc can never prove a value is a Symbol, so — like
+    // esbuild — those stay droppable; only the BigInt cases are guarded.
+    test("Math.abs(10n)", true);
+    test("Math.floor(10n)", true);
+    test("Math.max(1, 10n)", true);
+    test("Date.UTC(10n)", true);
+    test("String.fromCharCode(10n)", true);
+    test("String.fromCodePoint(10n)", true);
+    test("isNaN(10n)", true);
+    test("isFinite(10n)", true);
+    // Non-BigInt arguments remain pure/droppable.
+    test("Math.abs(1)", false);
+    test("Math.floor(1.5)", false);
+    test("Math.max(1, 2)", false);
+    test("Date.UTC(2020, 0)", false);
+    // `ToString` coercers (parseInt/parseFloat/decodeURI/.../Date.parse/Symbol.for)
+    // accept BigInt (`ToString(10n)` -> "10"); only a Symbol throws (not provable).
+    test("parseInt(10n)", false);
+    test("parseFloat(10n)", false);
+    test("decodeURI(10n)", false);
+    test("Number.parseInt(10n)", false);
+    test("Date.parse(10n)", false);
+    test("Symbol.for(10n)", false);
 }
 
 #[test]

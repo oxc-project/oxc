@@ -11,7 +11,6 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 const GLOBAL_THIS: &str = "globalThis";
-const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Reflect"];
 
 fn no_obj_calls_diagnostic(obj_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{obj_name}` is not a function and cannot be called"))
@@ -70,7 +69,7 @@ declare_oxc_lint!(
 );
 
 fn is_global_obj(s: &str) -> bool {
-    NON_CALLABLE_GLOBALS.contains(&s)
+    matches!(s, "Atomics" | "Intl" | "JSON" | "Math" | "Reflect")
 }
 
 fn global_this_member<'a>(expr: &'a MemberExpression<'_>) -> Option<&'a str> {
@@ -82,14 +81,11 @@ fn resolve_global_binding<'a, 'b: 'a>(
     scope_id: ScopeId,
     ctx: &LintContext<'a>,
 ) -> Option<&'a str> {
-    let scope = ctx.scoping();
-    let nodes = ctx.nodes();
-    let symbols = ctx.scoping();
-
     if ctx.is_reference_to_global_variable(ident) {
         return Some(ident.name.as_str());
     }
 
+    let scope = ctx.scoping();
     let Some(binding_id) = scope.find_binding(scope_id, ident.name) else {
         // Panic in debug builds, but fail gracefully in release builds.
         debug_assert!(
@@ -101,7 +97,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
         return None;
     };
 
-    let decl = nodes.get_node(symbols.symbol_declaration(binding_id));
+    let decl = ctx.nodes().get_node(scope.symbol_declaration(binding_id));
     match decl.kind() {
         AstKind::VariableDeclarator(parent_decl) => {
             if !parent_decl.id.is_binding_identifier() {

@@ -342,7 +342,7 @@ impl Oxc {
             options.mangle.map(|o| MangleOptions {
                 top_level: Some(o.top_level),
                 keep_names: MangleOptionsKeepNames { function: o.keep_names, class: o.keep_names },
-                debug: false,
+                ..MangleOptions::default()
             })
         } else {
             None

@@ -1,7 +1,8 @@
-//! Format a CSS/SCSS/Less fragment through the embedded entry point
+//! Format an SCSS fragment through the embedded entry point
 //! (`format_to_ir`), the dispatcher path oxfmt uses for css-in-js.
-//! Unlike `css_formatter`, this tolerates `` `PLACEHOLDER-N` ``
-//! markers in value/selector position.
+//! The dispatcher always parses as SCSS, so this example is hardcoded
+//! to `CssVariant::Scss`. Unlike `css_formatter`, this tolerates
+//! `` `PLACEHOLDER-N` `` markers in value/selector position.
 //!
 //! ```sh
 //! cargo run -p oxc_formatter_css --example embedded_debug -- [filename]
@@ -22,14 +23,11 @@ fn main() {
     let source_text = std::fs::read_to_string(path)
         .unwrap_or_else(|err| panic!("Failed to read {}: {err}", path.display()));
 
-    let variant = match path.extension().and_then(|e| e.to_str()) {
-        Some("less") => CssVariant::Less,
-        // The css-in-js dispatcher always parses as SCSS, mirror it.
-        _ => CssVariant::Scss,
-    };
     // Match Prettier's default print width for side-by-side comparison.
     let line_width = oxc_formatter_core::LineWidth::try_from(80).unwrap();
-    let options = CssFormatOptions { variant, line_width, ..CssFormatOptions::default() };
+    // The css-in-js dispatcher always parses as SCSS.
+    let options =
+        CssFormatOptions { variant: CssVariant::Scss, line_width, ..CssFormatOptions::default() };
 
     let allocator = Allocator::new();
     let group_id_builder = UniqueGroupIdBuilder::default();

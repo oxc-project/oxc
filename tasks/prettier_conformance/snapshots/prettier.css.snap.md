@@ -1,4 +1,4 @@
-css compatibility: 114/114 (100.00%), 24 files skipped
+css compatibility: 113/113 (100.00%), 23 files skipped
 
 # Failed
 
@@ -9,7 +9,6 @@ css compatibility: 114/114 (100.00%), 24 files skipped
 
 - css/atrule/charset.css
 - css/atrule/extend.css
-- css/atrule/if-else.css
 - css/atrule/import.css
 - css/atrule/supports.css
 - css/attribute/quotes.css

@@ -1384,6 +1384,10 @@ pub(super) fn write_component_value<'a>(
         ComponentValue::Placeholder(placeholder) => {
             super::write_placeholder(placeholder, f);
         }
+        // postcss-simple-vars `$name` reference (Css mode with the opt-in)
+        ComponentValue::PostcssSimpleVar(variable) => {
+            super::postcss_simple_vars::write_postcss_simple_var(variable, f);
+        }
         // Everything else (Sass/Less constructs, interpolations, token fallbacks):
         // print the source verbatim until ported structurally.
         _ => {

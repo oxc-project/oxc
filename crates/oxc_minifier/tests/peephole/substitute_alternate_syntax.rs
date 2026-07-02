@@ -43,8 +43,9 @@ fn test_undefined() {
     test("for (undefined in {}) {}", "for(undefined in {});");
     test("undefined++;", "undefined++");
     test("undefined += undefined;", "undefined+=void 0");
-    // shadowed
-    test_same("(function(undefined) { let x = typeof undefined; })()");
+    // shadowed: a parameter named `undefined` must not be substituted with
+    // `void 0`. `foo()` keeps the IIFE from being dropped as dead code.
+    test_same("(function(undefined) { foo(typeof undefined); })()");
     // destructuring throw error side effect
     test_same("var {} = void 0");
     test_same("var [] = void 0");
@@ -788,10 +789,9 @@ fn optional_catch_binding() {
 
     // var inside a function does NOT interact with the catch parameter;
     // var doesn't hoist out of functions, so the catch param can be removed.
-    test(
-        "try { foo } catch(e) { (function() { var e = 2 })() }",
-        "try { foo } catch { (function() { var e = 2;})();}",
-    );
+    // The side-effect-free IIFE itself is then dropped; the empty `catch`
+    // still proves the param was safely removed.
+    test("try { foo } catch(e) { (function() { var e = 2 })() }", "try { foo } catch {}");
     test(
         "try { foo } catch(e) { function f() { var e = 2 } }",
         "try { foo } catch { function f() { var e = 2 } }",

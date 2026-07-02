@@ -68,7 +68,7 @@ impl CompilerInterface for PipelineCompiler {
     }
 
     fn mangle_options(&self) -> Option<MangleOptions> {
-        Some(self.mangle)
+        Some(self.mangle.clone())
     }
 
     fn codegen_options(&self) -> Option<CodegenOptions> {

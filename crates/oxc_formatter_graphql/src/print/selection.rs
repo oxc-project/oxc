@@ -1,27 +1,26 @@
 //! Selection set printers: fields, fragment spreads, inline fragments.
 
-use oxc_graphql_parser::{cst, cst::CstNode};
-
 use oxc_formatter_core::{
     Buffer,
     builders::{block_indent, group, space},
     write,
 };
+use oxc_graphql_parser::ast::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet};
 
 use crate::comments::flush_trailing_inside_comments;
 
 use super::{
     GraphqlFormatter, SeparatorKind, common, common::DirectivesStyle, format_with,
-    sig::closing_token_start, write_sequence,
+    span::close_delim_start, write_sequence,
 };
 
 /// `{ selections... }`, always multi-line.
-pub fn write_selection_set<'a>(
-    selection_set: &cst::SelectionSet,
+pub(super) fn write_selection_set<'a>(
+    selection_set: &'a SelectionSet<'a>,
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    let selections: Vec<cst::Selection> = selection_set.selections().collect();
-    let r_curly = closing_token_start(selection_set.r_curly_token(), selection_set.syntax());
+    let selections = selection_set.selections.as_slice();
+    let r_curly = close_delim_start(selection_set.span);
 
     write!(f, "{");
     if selections.is_empty() {
@@ -31,7 +30,7 @@ pub fn write_selection_set<'a>(
     }
 
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
-        let last_end = write_sequence(f, &selections, SeparatorKind::Hard, true, |i, f| {
+        let last_end = write_sequence(f, selections, SeparatorKind::Hard, true, |i, f| {
             write_selection(&selections[i], f);
         });
         if let Some(last_end) = last_end {
@@ -41,56 +40,46 @@ pub fn write_selection_set<'a>(
     write!(f, [block_indent(&body), "}"]);
 }
 
-fn write_selection(selection: &cst::Selection, f: &mut GraphqlFormatter<'_, '_>) {
+fn write_selection<'a>(selection: &'a Selection<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     match selection {
-        cst::Selection::Field(field) => write_field(field, f),
-        cst::Selection::FragmentSpread(spread) => write_fragment_spread(spread, f),
-        cst::Selection::InlineFragment(inline) => write_inline_fragment(inline, f),
+        Selection::Field(field) => write_field(field, f),
+        Selection::FragmentSpread(spread) => write_fragment_spread(spread, f),
+        Selection::InlineFragment(inline) => write_inline_fragment(inline, f),
     }
 }
 
-fn write_field<'a>(field: &cst::Field, f: &mut GraphqlFormatter<'_, 'a>) {
+fn write_field<'a>(field: &'a Field<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     let content = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
-        if let Some(alias) = field.alias()
-            && let Some(name) = alias.name()
-        {
-            common::write_name(&name, f);
+        if let Some(alias) = field.alias.as_ref() {
+            common::write_name(alias, f);
             write!(f, ": ");
         }
-        if let Some(name) = field.name() {
-            common::write_name(&name, f);
-        }
-        common::write_arguments(field.arguments(), f);
-        common::write_directives(field.directives(), DirectivesStyle::Attached, f);
-        if let Some(selection_set) = field.selection_set() {
+        common::write_name(&field.name, f);
+        common::write_arguments(&field.arguments, f);
+        common::write_directives(&field.directives, DirectivesStyle::Attached, f);
+        if let Some(selection_set) = field.selection_set.as_ref() {
             write!(f, space());
-            write_selection_set(&selection_set, f);
+            write_selection_set(selection_set, f);
         }
     });
     write!(f, group(&content));
 }
 
-fn write_fragment_spread(spread: &cst::FragmentSpread, f: &mut GraphqlFormatter<'_, '_>) {
+fn write_fragment_spread<'a>(spread: &'a FragmentSpread<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     write!(f, "...");
-    if let Some(fragment_name) = spread.fragment_name()
-        && let Some(name) = fragment_name.name()
-    {
-        common::write_name(&name, f);
-    }
-    common::write_directives(spread.directives(), DirectivesStyle::Attached, f);
+    common::write_name(&spread.name, f);
+    common::write_directives(&spread.directives, DirectivesStyle::Attached, f);
 }
 
-fn write_inline_fragment(inline: &cst::InlineFragment, f: &mut GraphqlFormatter<'_, '_>) {
+fn write_inline_fragment<'a>(inline: &'a InlineFragment<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     write!(f, "...");
-    if let Some(type_condition) = inline.type_condition()
-        && let Some(named) = type_condition.named_type()
-    {
+    if let Some(type_condition) = inline.type_condition.as_ref() {
         write!(f, " on ");
-        common::write_named_type(&named, f);
+        common::write_named_type(type_condition, f);
     }
-    common::write_directives(inline.directives(), DirectivesStyle::Attached, f);
-    if let Some(selection_set) = inline.selection_set() {
+    common::write_directives(&inline.directives, DirectivesStyle::Attached, f);
+    if let Some(selection_set) = inline.selection_set.as_ref() {
         write!(f, space());
-        write_selection_set(&selection_set, f);
+        write_selection_set(selection_set, f);
     }
 }

@@ -674,7 +674,28 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        !e.may_have_side_effects(ctx)
+        !Self::has_side_effects_or_preserved_iife(e, ctx)
+    }
+
+    /// `Expression::may_have_side_effects`, except that in DCE-only mode an IIFE
+    /// call (`(function () {...})()` / `(() => {...})()`) is reported as
+    /// effectful so its structure survives — matching Rollup / esbuild
+    /// tree-shaking (see `preserve_iife_in_dce_mode`). Full minification still
+    /// drops a pure-bodied IIFE, just as it inlines IIFE bodies. Every
+    /// unused-removal site that can face an IIFE call routes through here, so
+    /// the policy lives in one place.
+    pub(super) fn has_side_effects_or_preserved_iife(
+        e: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        // Check the cheap DCE-preservation case first: in DCE-only mode an IIFE
+        // call is always kept, so its (potentially deep) body walk is skipped.
+        if ctx.state.dce
+            && matches!(e, Expression::CallExpression(call) if call.callee.is_function())
+        {
+            return true;
+        }
+        e.may_have_side_effects(ctx)
     }
 
     pub fn fold_arguments_into_needed_expressions(

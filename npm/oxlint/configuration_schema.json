@@ -10819,12 +10819,12 @@
       "type": "object",
       "properties": {
         "forbid": {
-          "description": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, an optional `disallowedFor` array of DOM node names,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`",
+          "description": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, optional `disallowedFor` and `disallowedValues` arrays,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"type\", \"disallowedValues\": [\"button\"] }] }]`",
           "type": "array",
           "items": {
             "$ref": "#/definitions/ForbidDomPropsItem"
           },
-          "markdownDescription": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, an optional `disallowedFor` array of DOM node names,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`"
+          "markdownDescription": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, optional `disallowedFor` and `disallowedValues` arrays,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"type\", \"disallowedValues\": [\"button\"] }] }]`"
         }
       },
       "additionalProperties": false,
@@ -10839,13 +10839,13 @@
           "markdownDescription": "A prop name to forbid on all DOM elements."
         },
         {
-          "description": "A prop with optional `disallowedFor` DOM node list and custom `message`.",
+          "description": "A prop with optional `disallowedFor` DOM node list, optional\n`disallowedValues` value list, and custom `message`.",
           "allOf": [
             {
               "$ref": "#/definitions/PropWithOptions"
             }
           ],
-          "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+          "markdownDescription": "A prop with optional `disallowedFor` DOM node list, optional\n`disallowedValues` value list, and custom `message`."
         }
       ],
       "markdownDescription": "A forbidden prop, either as a plain prop name string or with options."
@@ -10914,15 +10914,10 @@
     },
     "ForbidItemObject": {
       "type": "object",
-      "required": [
-        "allowedFor",
-        "allowedForPatterns",
-        "disallowedFor",
-        "disallowedForPatterns"
-      ],
       "properties": {
         "allowedFor": {
           "description": "Component names for which this prop is **allowed** (all others are\nforbidden).",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10931,6 +10926,7 @@
         },
         "allowedForPatterns": {
           "description": "Glob patterns for component names where the prop is **allowed**.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10939,6 +10935,7 @@
         },
         "disallowedFor": {
           "description": "Component names for which this prop is **disallowed** (all others are\nallowed).",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10947,6 +10944,7 @@
         },
         "disallowedForPatterns": {
           "description": "Glob patterns for component names where the prop is **disallowed**.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -13187,6 +13185,12 @@
     "NoArraySort": {
       "type": "object",
       "properties": {
+        "allowAfterSpread": {
+          "description": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```"
+        },
         "allowExpressionStatement": {
           "description": "When set to `true` (default), allows `array.sort()` as an expression statement.\nSet to `false` to forbid `Array#sort()` even if it's an expression statement.\n\nExample of **incorrect** code for this rule with `allowExpressionStatement` set to `false`:\n```js\narray.sort();\n```",
           "default": true,
@@ -17321,7 +17325,7 @@
       "additionalProperties": false
     },
     "PropWithOptions": {
-      "description": "A prop with optional `disallowedFor` DOM node list and custom `message`.",
+      "description": "A prop with optional `disallowedFor` DOM node list, optional `disallowedValues`\nvalue list, and custom `message`.",
       "type": "object",
       "required": [
         "propName"
@@ -17335,6 +17339,14 @@
           },
           "markdownDescription": "A list of DOM element names (e.g. `[\"div\", \"span\"]`) on which this\nprop is forbidden. If empty or omitted, the prop is forbidden on all\nDOM elements."
         },
+        "disallowedValues": {
+          "description": "A list of string literal values for which this prop is forbidden. If\nomitted, the prop is forbidden for all values.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of string literal values for which this prop is forbidden. If\nomitted, the prop is forbidden for all values."
+        },
         "message": {
           "description": "A custom message to display when this prop is used.",
           "type": "string",
@@ -17347,7 +17359,7 @@
         }
       },
       "additionalProperties": false,
-      "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+      "markdownDescription": "A prop with optional `disallowedFor` DOM node list, optional `disallowedValues`\nvalue list, and custom `message`."
     },
     "PropertyDetails": {
       "type": "object",

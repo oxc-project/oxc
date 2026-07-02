@@ -53,7 +53,6 @@ constcat = { workspace = true }
 convert_case = { workspace = true }
 cow-utils = { workspace = true }
 fast-glob = { workspace = true }
-icu_segmenter = { workspace = true }
 ignore = { workspace = true }
 indexmap = { workspace = true, features = ["rayon"] }
 itertools = { workspace = true }
@@ -76,6 +75,7 @@ serde_json = { workspace = true, features = [
 ] } # preserve_order: print config with ordered keys.
 simdutf8 = { workspace = true }
 smallvec = { workspace = true }
+unicode-segmentation = { workspace = true }
 url = { workspace = true }
 
 [dev-dependencies]

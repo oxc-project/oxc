@@ -50,7 +50,21 @@ pub struct MinifierState<'a> {
 
     pub options: CompressOptions,
 
-    /// When true, only run dead code elimination passes (subset of full peephole optimizations).
+    /// Two modes: tree-shaking only (`true`), or full minify (`false`).
+    /// `Compressor::dead_code_elimination` uses `true`; `Compressor::build`
+    /// uses `false`.
+    ///
+    /// "DCE" here does not mean "removes dead code" (full minify does that
+    /// too). It means tree-shaking: remove code that nothing imports, without
+    /// making the rest smaller. Rolldown runs this on every tree-shaking build,
+    /// with or without `minify`, so users can see this output directly.
+    ///
+    /// In this mode `exit_*` only runs the passes that remove code, plus the
+    /// constant folds those removals need. For example, `fold_binary_expr`
+    /// folds `'production' === 'production'` to `true` so the dead `else`
+    /// branch can be dropped (this is how `define` values remove branches). The
+    /// passes that only shrink code (`substitute_*`, `minimize_*`) are left
+    /// out. See the `if ctx.state.dce` branch in `peephole/mod.rs`.
     pub dce: bool,
 
     /// The return value of function declarations that are pure

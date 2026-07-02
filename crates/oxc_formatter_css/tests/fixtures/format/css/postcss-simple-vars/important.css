@@ -1,0 +1,6 @@
+$primary: red !important;
+$padding: 10px !important;
+
+.demo {
+  color: $primary;
+}
