@@ -27,7 +27,7 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-object-rest-spread>
 //! * Object rest/spread TC39 proposal: <https://github.com/tc39/proposal-object-rest-spread>
 
-use std::mem;
+use std::{iter, mem};
 
 use serde::Deserialize;
 
@@ -384,8 +384,7 @@ impl<'a> ObjectRestSpread<'a> {
         let mut exprs = vec![];
         Self::recursive_walk_assignment_target(&mut assign_expr.left, &mut decls, &mut exprs, ctx);
         Self::insert_var_declaration_before_containing_statement(decls, ctx);
-        let mut expressions = ArenaVec::from_value_in(expr.take_in(ctx), ctx);
-        expressions.extend(exprs);
+        let expressions = ArenaVec::from_iter_in(iter::chain([expr.take_in(ctx)], exprs), ctx);
         *expr = Expression::new_sequence_expression(SPAN, expressions, ctx);
     }
 
