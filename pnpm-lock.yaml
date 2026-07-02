@@ -72,14 +72,14 @@ importers:
   apps/oxfmt:
     dependencies:
       prettier:
-        specifier: 3.8.4
-        version: 3.8.4
+        specifier: 3.9.1
+        version: 3.9.1
       prettier-plugin-svelte:
         specifier: 4.1.1
-        version: 4.1.1(prettier@3.8.4)(svelte@5.56.4(@typescript-eslint/types@8.62.0))
+        version: 4.1.1(prettier@3.9.1)(svelte@5.56.4(@typescript-eslint/types@8.62.0))
       prettier-plugin-tailwindcss:
         specifier: 0.0.0-insiders.2b6f3c2
-        version: 0.0.0-insiders.2b6f3c2(prettier-plugin-svelte@4.1.1(prettier@3.8.4)(svelte@5.56.4(@typescript-eslint/types@8.62.0)))(prettier@3.8.4)
+        version: 0.0.0-insiders.2b6f3c2(prettier-plugin-svelte@4.1.1(prettier@3.9.1)(svelte@5.56.4(@typescript-eslint/types@8.62.0)))(prettier@3.9.1)
       tinypool:
         specifier: 2.1.0
         version: 2.1.0
@@ -4853,6 +4853,11 @@ packages:
     engines: {node: '>=14'}
     hasBin: true
 
+  prettier@3.9.1:
+    resolution: {integrity: sha512-ppiDo2CSwexck1eyZUwJHg/N3nf1+6IRCv7W/VJ5vaLnVCmB7+3CdRfMwoCHBBX6xTrREDTksZ4OZl5SSf4zXA==}
+    engines: {node: '>=14'}
+    hasBin: true
+
   pretty-format@27.5.1:
     resolution: {integrity: sha512-Qb1gy5OrP5+zDf2Bvnzdl3jsTf1qXVMazbvCoKhtKqVs4/YK4ozX4gKQJJVyNe+cajNPn0KoC0MC3FUmaHWEmQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -9495,18 +9500,20 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-svelte@4.1.1(prettier@3.8.4)(svelte@5.56.4(@typescript-eslint/types@8.62.0)):
+  prettier-plugin-svelte@4.1.1(prettier@3.9.1)(svelte@5.56.4(@typescript-eslint/types@8.62.0)):
     dependencies:
-      prettier: 3.8.4
+      prettier: 3.9.1
       svelte: 5.56.4(@typescript-eslint/types@8.62.0)
 
-  prettier-plugin-tailwindcss@0.0.0-insiders.2b6f3c2(prettier-plugin-svelte@4.1.1(prettier@3.8.4)(svelte@5.56.4(@typescript-eslint/types@8.62.0)))(prettier@3.8.4):
+  prettier-plugin-tailwindcss@0.0.0-insiders.2b6f3c2(prettier-plugin-svelte@4.1.1(prettier@3.9.1)(svelte@5.56.4(@typescript-eslint/types@8.62.0)))(prettier@3.9.1):
     dependencies:
-      prettier: 3.8.4
+      prettier: 3.9.1
     optionalDependencies:
-      prettier-plugin-svelte: 4.1.1(prettier@3.8.4)(svelte@5.56.4(@typescript-eslint/types@8.62.0))
+      prettier-plugin-svelte: 4.1.1(prettier@3.9.1)(svelte@5.56.4(@typescript-eslint/types@8.62.0))
 
   prettier@3.8.4: {}
+
+  prettier@3.9.1: {}
 
   pretty-format@27.5.1:
     dependencies:
