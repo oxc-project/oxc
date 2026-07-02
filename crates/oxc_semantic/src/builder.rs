@@ -600,8 +600,9 @@ impl<'a> SemanticBuilder<'a> {
         name: Ident<'a>,
         reference: Reference,
     ) -> ReferenceId {
+        let scope_id = reference.scope_id();
         let reference_id = self.scoping.create_reference(reference);
-        self.unresolved_references.push(name, reference_id);
+        self.unresolved_references.push(name, reference_id, scope_id);
         reference_id
     }
 
@@ -631,24 +632,55 @@ impl<'a> SemanticBuilder<'a> {
     /// and reference creation is a simple Vec push instead of a hashmap insert.
     fn resolve_all_references(&mut self) {
         let refs = self.unresolved_references.take();
-        for (name, reference_id) in refs {
-            if !self.walk_up_resolve_reference(name, reference_id) {
+        for (name, reference_id, start_scope_id) in refs {
+            if !self.walk_up_resolve_reference(name, reference_id, start_scope_id) {
                 self.scoping.add_root_unresolved_reference(name, reference_id);
             }
         }
     }
 
-    /// Walk up the scope chain trying to resolve a reference.
+    /// Walk up the scope chain from `start_scope_id` trying to resolve a reference.
     /// Returns `true` if resolved.
     #[expect(clippy::inline_always, reason = "Hot path — called for every reference resolution")]
     #[inline(always)]
-    fn walk_up_resolve_reference(&mut self, name: Ident<'a>, reference_id: ReferenceId) -> bool {
-        let mut scope_id = Some(self.scoping.references[reference_id].scope_id());
+    fn walk_up_resolve_reference(
+        &mut self,
+        name: Ident<'a>,
+        reference_id: ReferenceId,
+        start_scope_id: ScopeId,
+    ) -> bool {
+        let mut scope_id = Some(start_scope_id);
         while let Some(sid) = scope_id {
             if let Some(symbol_id) = self.scoping.get_binding(sid, name)
                 && self.try_resolve_reference(reference_id, symbol_id)
             {
                 return true;
+            }
+            scope_id = self.scoping.scope_parent_id(sid);
+        }
+        false
+    }
+
+    /// Walk the scope chain trying to resolve a reference, checking the scopes from
+    /// `start` up to and including `last`. Returns `true` if resolved. Cold path —
+    /// only used for references in function / catch parameter regions; the hot path
+    /// is [`Self::walk_up_resolve_reference`].
+    fn resolve_reference_in_scope_range(
+        &mut self,
+        name: Ident<'a>,
+        reference_id: ReferenceId,
+        start: ScopeId,
+        last: ScopeId,
+    ) -> bool {
+        let mut scope_id = Some(start);
+        while let Some(sid) = scope_id {
+            if let Some(symbol_id) = self.scoping.get_binding(sid, name)
+                && self.try_resolve_reference(reference_id, symbol_id)
+            {
+                return true;
+            }
+            if sid == last {
+                return false;
             }
             scope_id = self.scoping.scope_parent_id(sid);
         }
@@ -704,32 +736,50 @@ impl<'a> SemanticBuilder<'a> {
         true
     }
 
-    /// Early-resolve references collected since the checkpoint by walking up the
-    /// full scope chain. Used for function parameters and catch parameters where
-    /// references must be resolved before entering the function body, to avoid
-    /// binding to variables declared inside the body (which share the same scope).
+    /// Early-resolve references collected since the checkpoint against the scopes
+    /// *inside* the current parameter region only — from each reference's walk-start
+    /// scope up to and including the current (function / catch) scope. Used for
+    /// function parameters and catch parameters where references must be resolved
+    /// before entering the body, to avoid binding to variables declared inside the
+    /// body (which share the same scope as the parameters).
     ///
-    /// Resolved references are removed. Unresolved references stay in the flat
-    /// list for later resolution by `resolve_all_references` (which handles
-    /// forward references to declarations not yet visited).
+    /// These scopes are complete at this point: nested scopes in parameter
+    /// initializers are fully visited, and the current scope holds exactly the
+    /// bindings a parameter reference may see (parameters, type parameters).
+    /// Ancestor scopes are NOT checked here — they are still being built, so a
+    /// binding that appears later in the source (a hoisted function, a `let` after
+    /// this statement) would be missed and the reference would wrongly bind to an
+    /// outer shadowed symbol.
+    ///
+    /// Instead, an unresolved reference's walk-start is bumped to the *parent*
+    /// scope: the final `resolve_all_references` walk then starts above this scope,
+    /// once every binding exists, keeping body bindings (added to the current scope
+    /// later) invisible to it. An enclosing parameter region re-processes it here
+    /// the same way (nested initializers do see the enclosing function's
+    /// parameters). The reference's own `scope_id` is never touched.
     fn resolve_references_for_current_scope(&mut self) {
-        // Process in-place using a retain-style write-cursor — no temporary
-        // `Vec`. Reads each `(name, reference_id)` by value out of the flat
-        // list (both fields are `Copy`), so calling `walk_up_resolve_reference`
-        // (which takes `&mut self`) doesn't conflict with the index read.
+        let Some(parent_scope_id) = self.scoping.scope_parent_id(self.current_scope_id) else {
+            return; // Unreachable: function / catch scopes always have a parent.
+        };
+
+        // Process in-place using a retain-style write-cursor, reading each entry by
+        // value out of the flat list (all fields are `Copy`), so calling
+        // `resolve_reference_in_scope_range` (which takes `&mut self`) doesn't
+        // conflict with the index read.
         let checkpoint = self.unresolved_references_checkpoint;
         let end = self.unresolved_references.len();
-        if end <= checkpoint {
-            return;
-        }
         let mut write_idx = checkpoint;
         for read_idx in checkpoint..end {
-            let (name, reference_id) = self.unresolved_references.get(read_idx);
-            if !self.walk_up_resolve_reference(name, reference_id) {
-                // Keep in the flat list — may resolve later via forward declarations.
-                if write_idx != read_idx {
-                    self.unresolved_references.set(write_idx, name, reference_id);
-                }
+            let (name, reference_id, start_scope_id) = self.unresolved_references.get(read_idx);
+            if !self.resolve_reference_in_scope_range(
+                name,
+                reference_id,
+                start_scope_id,
+                self.current_scope_id,
+            ) {
+                // Not visible in the parameter region — the final walk-up restarts
+                // from the parent scope.
+                self.unresolved_references.set(write_idx, name, reference_id, parent_scope_id);
                 write_idx += 1;
             }
         }

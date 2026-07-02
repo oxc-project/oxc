@@ -176,7 +176,7 @@ Symbol reference IDs mismatch for "InMemoryTestWorkingCopyBackupService":
 after transform: SymbolId(19): [ReferenceId(43), ReferenceId(46), ReferenceId(165)]
 rebuilt        : SymbolId(15): [ReferenceId(75), ReferenceId(205)]
 Symbol reference IDs mismatch for "TestServiceAccessor":
-after transform: SymbolId(21): [ReferenceId(40), ReferenceId(155), ReferenceId(1), ReferenceId(71), ReferenceId(188)]
+after transform: SymbolId(21): [ReferenceId(1), ReferenceId(40), ReferenceId(71), ReferenceId(155), ReferenceId(188)]
 rebuilt        : SymbolId(17): [ReferenceId(99), ReferenceId(227)]
 Symbol reference IDs mismatch for "IWorkingCopyEditorService":
 after transform: SymbolId(32): [ReferenceId(21), ReferenceId(22), ReferenceId(355), ReferenceId(356)]
@@ -185,7 +185,7 @@ Symbol span mismatch for "TestWorkingCopyBackupTracker":
 after transform: SymbolId(39): Span { start: 3208, end: 3236 }
 rebuilt        : SymbolId(38): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "TestWorkingCopyBackupTracker":
-after transform: SymbolId(39): [ReferenceId(42), ReferenceId(154), ReferenceId(74), ReferenceId(215), ReferenceId(376), ReferenceId(378)]
+after transform: SymbolId(39): [ReferenceId(42), ReferenceId(74), ReferenceId(154), ReferenceId(215), ReferenceId(376), ReferenceId(378)]
 rebuilt        : SymbolId(38): [ReferenceId(23), ReferenceId(66), ReferenceId(102), ReferenceId(254)]
 Symbol span mismatch for "TestWorkingCopyBackupTracker":
 after transform: SymbolId(136): Span { start: 0, end: 0 }
