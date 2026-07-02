@@ -31,9 +31,12 @@ oxc_napi = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_sourcemap = { workspace = true, features = ["napi"] }
 oxc_span = { workspace = true }
+oxc_str = { workspace = true }
 
+lazy-regex = { workspace = true }
 napi = { workspace = true }
 napi-derive = { workspace = true }
+rustc-hash = { workspace = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }

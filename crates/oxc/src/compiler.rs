@@ -6,7 +6,7 @@ use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_diagnostics::Diagnostics;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
-use oxc_minifier::{CompressOptions, Compressor};
+use oxc_minifier::{CompressOptions, Compressor, ManglePropertiesOptions, PropertyMangler};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn, Stats};
 use oxc_span::SourceType;
@@ -83,6 +83,14 @@ pub trait CompilerInterface {
     }
 
     fn mangle_options(&self) -> Option<MangleOptions> {
+        None
+    }
+
+    /// Opt-in property-name mangling (`obj.longName` -> `obj.a`). Off by default.
+    ///
+    /// Runs around compress + variable mangle: candidates are collected on the
+    /// original (pre-compress) program and rewritten after variable mangling.
+    fn mangle_properties_options(&self) -> Option<ManglePropertiesOptions> {
         None
     }
 
@@ -208,6 +216,15 @@ pub trait CompilerInterface {
             scoping_dirty |= ret.changed;
         }
 
+        /* Property mangling (collect) */
+
+        // Collect candidates/reserved names on the original program, before compress
+        // un-quotes keys. The driver is held until after variable mangling, where the
+        // in-place rewrite runs (mirrors `Minifier::build`).
+        let property_mangler = self
+            .mangle_properties_options()
+            .map(|options| self.property_mangle_collect(options, &allocator, &mut program));
+
         /* Compress / DCE */
 
         // Both consumers need in-sync scoping; only rebuild when a preceding step
@@ -234,6 +251,13 @@ pub trait CompilerInterface {
 
         let mangler =
             self.mangle_options().map(|options| self.mangle(&mut program, options, stats));
+
+        /* Property mangling (rewrite) */
+
+        // Rewrite property names in place, after variable mangling.
+        if let Some(property_mangler) = property_mangler {
+            self.property_mangle_rewrite(property_mangler, &allocator, &mut program);
+        }
 
         /* Codegen */
 
@@ -303,6 +327,30 @@ pub trait CompilerInterface {
         options: CompressOptions,
     ) {
         Compressor::new(allocator).build_with_scoping(program, scoping, options);
+    }
+
+    /// Collect property-mangling candidates on the original (pre-compress) program and
+    /// rename `@__KEY__`-annotated literals, returning the driver to finish after mangling.
+    fn property_mangle_collect<'a>(
+        &self,
+        options: ManglePropertiesOptions,
+        allocator: &'a Allocator,
+        program: &mut Program<'a>,
+    ) -> PropertyMangler {
+        let mut property_mangler = PropertyMangler::new(options);
+        property_mangler.collect(program);
+        property_mangler.rename_annotated_literals(program, allocator);
+        property_mangler
+    }
+
+    /// Rewrite property names in place, after compress and variable mangling.
+    fn property_mangle_rewrite<'a>(
+        &self,
+        property_mangler: PropertyMangler,
+        allocator: &'a Allocator,
+        program: &mut Program<'a>,
+    ) {
+        property_mangler.rewrite(program, allocator);
     }
 
     /// `stats` from a prior semantic build size the mangler's internal semantic

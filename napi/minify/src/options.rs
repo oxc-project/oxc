@@ -1,7 +1,10 @@
 use napi::Either;
 use napi_derive::napi;
+use rustc_hash::FxHashSet;
 
 use oxc_compat::EngineTargets;
+use oxc_minifier::ManglePropertiesOptions;
+use oxc_str::CompactStr;
 
 #[napi(object)]
 pub struct TreeShakeOptions {
@@ -353,6 +356,50 @@ pub struct MinifyOptions {
     pub codegen: Option<Either<bool, CodegenOptions>>,
 
     pub sourcemap: Option<bool>,
+
+    /// Mangle (rename) property names matching this regular expression.
+    ///
+    /// Property mangling is **off by default** and **unsafe**: it can break
+    /// reflection, JSON serialization, dynamic property access, and DOM APIs.
+    /// Only enable it when you control all the properties being renamed (the
+    /// common convention is to prefix such properties with `_` and pass
+    /// `mangleProps: "^_"`).
+    ///
+    /// The value is a regular expression **source string** (not a `RegExp`).
+    ///
+    /// Aligned with esbuild's `mangleProps`.
+    pub mangle_props: Option<String>,
+
+    /// Do not mangle property names matching this regular expression, even if
+    /// they match {@link MinifyOptions#mangleProps mangleProps}.
+    ///
+    /// The value is a regular expression **source string** (not a `RegExp`).
+    ///
+    /// Aligned with esbuild's `reserveProps`.
+    pub reserve_props: Option<String>,
+
+    /// A list of literal property names that must never be mangled.
+    ///
+    /// These are added to (never replace) the always-reserved set.
+    ///
+    /// Terser-style `reserved` list.
+    pub reserved_props: Option<Vec<String>>,
+
+    /// Also mangle quoted property names that match
+    /// {@link MinifyOptions#mangleProps mangleProps}.
+    ///
+    /// When `false` (default), a quoted property occurrence (`x['_foo']`,
+    /// `{ '_foo': 1 }`, `'_foo' in x`) reserves that name program-wide, so it is
+    /// never mangled. When `true`, such quoted keys become mangle candidates and
+    /// are renamed consistently with their unquoted siblings (computed string
+    /// indices are un-quoted to dot access where possible).
+    ///
+    /// Has no effect unless {@link MinifyOptions#mangleProps mangleProps} is set.
+    ///
+    /// Aligned with esbuild's `mangleQuoted`.
+    ///
+    /// @default false
+    pub mangle_quoted: Option<bool>,
 }
 
 impl TryFrom<&MinifyOptions> for oxc_minifier::MinifierOptions {
@@ -369,6 +416,39 @@ impl TryFrom<&MinifyOptions> for oxc_minifier::MinifierOptions {
             None | Some(Either::A(true)) => Some(oxc_minifier::MangleOptions::default()),
             Some(Either::B(o)) => Some(oxc_minifier::MangleOptions::from(o)),
         };
-        Ok(oxc_minifier::MinifierOptions { compress, mangle })
+        let mangle_properties = build_mangle_properties(o)?;
+        Ok(oxc_minifier::MinifierOptions { compress, mangle, mangle_properties })
     }
+}
+
+/// Build [`ManglePropertiesOptions`] from the N-API options.
+///
+/// Returns `Ok(None)` when property mangling is disabled (no `mangleProps` regex).
+///
+/// # Errors
+///
+/// Returns an error string if a regex fails to compile.
+fn build_mangle_properties(o: &MinifyOptions) -> Result<Option<ManglePropertiesOptions>, String> {
+    // Off by default: only enabled by a user-supplied `mangleProps` regex.
+    let Some(mangle_props) = &o.mangle_props else {
+        return Ok(None);
+    };
+
+    let mangle = Some(lazy_regex::Regex::new(mangle_props).map_err(|e| e.to_string())?);
+
+    let reserve = match &o.reserve_props {
+        Some(s) => Some(lazy_regex::Regex::new(s).map_err(|e| e.to_string())?),
+        None => None,
+    };
+
+    let reserved: FxHashSet<CompactStr> =
+        o.reserved_props.iter().flatten().map(|s| CompactStr::from(s.as_str())).collect();
+
+    Ok(Some(ManglePropertiesOptions {
+        mangle,
+        reserve,
+        reserved,
+        mangle_quoted: o.mangle_quoted.unwrap_or(false),
+        debug: false,
+    }))
 }

@@ -38,6 +38,7 @@ oxc_traverse = { workspace = true }
 
 cow-utils = { workspace = true }
 itoa = { workspace = true }
+lazy-regex = { workspace = true }
 rustc-hash = { workspace = true }
 
 [dev-dependencies]
@@ -52,4 +53,5 @@ oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 
 insta = { workspace = true }
 javascript-globals = { workspace = true }
+lazy-regex = { workspace = true }
 pico-args = { workspace = true }

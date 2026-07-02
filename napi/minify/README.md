@@ -67,6 +67,108 @@ console.log(result.code);
 console.log(result.map);
 ```
 
+## Property mangling
+
+`oxc-minify` can rename object property names (`obj.longName` → `obj.e`) to
+shrink output further. This is controlled by four options:
+
+| Option          | Type                        | Meaning                                                                                                                                                                                                                                                             |
+| --------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mangleProps`   | `string` (regex source)     | Only properties whose name matches this regular expression are renamed. **Setting this is what enables property mangling.**                                                                                                                                         |
+| `reserveProps`  | `string` (regex source)     | Properties whose name matches this regular expression are never renamed, even if they also match `mangleProps`.                                                                                                                                                     |
+| `reservedProps` | `string[]`                  | A literal list of property names that must never be renamed. Added to (never replaces) the built-in reserved set.                                                                                                                                                   |
+| `mangleQuoted`  | `boolean` (default `false`) | Also mangle quoted property names (`obj["_x"]`, `{ "_x": 1 }`) that match `mangleProps`. While off (the default) a quoted occurrence instead **reserves** that name program-wide, so quoting is a way to opt a property out. Aligned with esbuild's `mangleQuoted`. |
+
+Both `mangleProps` and `reserveProps` take a regular expression **source
+string** (e.g. `"^_"`), not a `RegExp` object.
+
+### Off by default
+
+Property mangling is **off unless you set `mangleProps`**. `mangle: true` alone
+renames **zero** properties — it only mangles variable/function names. Nothing
+is renamed until you supply a `mangleProps` regex.
+
+### Unsafe — it can silently break your code
+
+Unlike variable mangling, property mangling is **not safe in general**. The
+minifier cannot see every place a property name is referenced, so renaming one
+can silently break working code. Breakage modes include:
+
+- **Computed / dynamic access** — `obj[expr]`, `obj["name"]`: the string is not
+  renamed, so it no longer matches the renamed property.
+- **Reflection** — `Object.keys`, `Object.entries`, `for…in`, and
+  `JSON.stringify` / `JSON.parse` observe or produce the original names.
+- **Strings outside JS** — names referenced from HTML, CSS, or framework
+  templates (Vue/Angular/Svelte/etc.) are invisible to the minifier.
+- **String-argument APIs** — `Object.defineProperty(obj, "name", …)`,
+  `obj.hasOwnProperty("name")`, `"name" in obj`: the name is a string literal
+  that is not renamed in sync with the property.
+- **DOM / built-in names** — renaming `addEventListener`, `length`,
+  `textContent`, etc. breaks calls into the host. The built-in reserved set is
+  small (see limits below), so a broad regex **can** rename these.
+- **Code split across files / chunks** — names are assigned per `minify` call,
+  so a property renamed in one file will not match the same property in a
+  separately-minified file. Multi-file projects should mangle through their
+  bundler instead.
+
+### The safe convention
+
+Only mangle properties **you own and never serialize or reflect over**. The
+common idiom is to give such properties a leading underscore and mangle only
+those:
+
+```javascript
+import { minifySync } from "oxc-minify";
+
+const code = `
+  class Counter {
+    constructor() { this._count = 0; }
+    _increment() { this._count++; }
+    value() { return this._count; }
+  }
+`;
+
+const result = minifySync("counter.js", code, {
+  mangleProps: "^_", // only rename properties starting with "_"
+});
+
+console.log(result.code);
+// `_count` and `_increment` become single-letter names (e, t, n, …);
+// `value` and `constructor` are left untouched.
+```
+
+Mangled property names come out as `e`, `t`, `n`, … (ordered by frequency for
+better gzip), **not** `a`, `b`, `c`.
+
+To reserve specific names or carve exceptions out of a broad regex:
+
+```javascript
+minifySync("file.js", code, {
+  mangleProps: "^_",
+  reserveProps: "^_public", // keep anything starting with "_public"
+  reservedProps: ["_legacyApi"], // keep this exact name
+});
+```
+
+Names are assigned per `minify` call and are **not** stable across separate
+calls or files: a property renamed in one call will not match the same property
+renamed in another. Multi-file projects should mangle through their bundler
+(e.g. Rolldown), which coordinates names across the whole module graph.
+
+### v1 limitations
+
+- **Single self-contained program only.** Names are assigned per `minify` call
+  and are **not** kept consistent across separate `minify` calls or files.
+  Multi-file consistency is a bundler concern.
+- **Small built-in reserved set, not the full DOM list.** Only a short protocol
+  list is always reserved (`then`, `toJSON`, `toString`, `valueOf`, `length`,
+  `name`, `message`, `constructor`, `prototype`, `__proto__`). This is **not**
+  the full DOM/built-in name list, so a broad regex such as `"."` **can** rename
+  DOM names like `addEventListener`. Prefer the underscore convention over a
+  broad regex.
+- Property mangling is **disabled for the whole input** if it contains `with` or
+  a direct `eval` / `Function` constructor.
+
 ## Assumptions
 
 `oxc-minify` makes some assumptions about the source code.

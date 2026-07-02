@@ -1717,6 +1717,7 @@ version = "0.0.0"
 dependencies = [
  "cow-utils",
  "criterion2",
+ "lazy-regex",
  "oxc",
  "oxc_allocator",
  "oxc_ast",
@@ -2142,6 +2143,7 @@ dependencies = [
  "insta",
  "itoa",
  "javascript-globals",
+ "lazy-regex",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
@@ -2167,6 +2169,7 @@ dependencies = [
 name = "oxc_minify_napi"
 version = "0.138.0"
 dependencies = [
+ "lazy-regex",
  "mimalloc-safe",
  "napi",
  "napi-build",
@@ -2180,6 +2183,8 @@ dependencies = [
  "oxc_parser",
  "oxc_sourcemap",
  "oxc_span",
+ "oxc_str",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -2189,6 +2194,7 @@ dependencies = [
  "cow-utils",
  "flate2",
  "humansize",
+ "lazy-regex",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",

@@ -50,6 +50,7 @@ mod keep_var;
 mod minifier_traverse;
 mod options;
 mod peephole;
+mod property;
 mod state;
 mod symbol_value;
 mod traverse_context;
@@ -64,6 +65,9 @@ use oxc_syntax::class::ClassId;
 use rustc_hash::FxHashMap;
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
+pub use property::{
+    ManglePropertiesOptions, PropertyMangleBail, PropertyMangleBailKind, PropertyMangler,
+};
 
 pub(crate) use crate::generated::traverse::Traverse;
 #[doc(hidden)]
@@ -75,11 +79,17 @@ pub use crate::{compressor::Compressor, options::*};
 pub struct MinifierOptions {
     pub mangle: Option<MangleOptions>,
     pub compress: Option<CompressOptions>,
+    /// Opt-in property-name mangling. `None` (the default) leaves all property names intact.
+    pub mangle_properties: Option<ManglePropertiesOptions>,
 }
 
 impl Default for MinifierOptions {
     fn default() -> Self {
-        Self { mangle: Some(MangleOptions::default()), compress: Some(CompressOptions::default()) }
+        Self {
+            mangle: Some(MangleOptions::default()),
+            compress: Some(CompressOptions::default()),
+            mangle_properties: None,
+        }
     }
 }
 
@@ -89,6 +99,12 @@ pub struct MinifierReturn {
     /// A vector where each element corresponds to a class in declaration order.
     /// Each element is a mapping from original private member names to their mangled names.
     pub class_private_mappings: Option<IndexVec<ClassId, FxHashMap<String, CompactStr>>>,
+
+    /// Set when property mangling bailed out for the whole program (a `with` statement,
+    /// a direct `eval`, or the `Function` constructor was found), meaning **no** property
+    /// name was renamed. Carries the reason and the triggering span so callers can warn.
+    /// `None` when property mangling did not run or found no hazard.
+    pub property_mangle_bail: Option<PropertyMangleBail>,
 
     /// Total number of iterations ran. Useful for debugging performance issues.
     pub iterations: u8,
@@ -107,6 +123,9 @@ impl<'a> Minifier {
         self.build(false, allocator, program)
     }
 
+    /// Dead-code-elimination-only mode. `dce` only swaps in the DCE compress options; the
+    /// opt-in manglers (variable mangling and property mangling) still run when their options
+    /// are set, exactly as in [`Self::minify`].
     pub fn dce(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
         self.build(true, allocator, program)
     }
@@ -117,9 +136,21 @@ impl<'a> Minifier {
         allocator: &'a Allocator,
         program: &mut Program<'a>,
     ) -> MinifierReturn {
-        let (stats, iterations) = self
-            .options
-            .compress
+        let MinifierOptions { mangle, compress, mangle_properties } = self.options;
+
+        // Collect property-mangling candidates/reserved names on the ORIGINAL (pre-compress)
+        // program: compress later un-quotes keys, so the reserved set must be captured first.
+        // Key-annotated string/template literals are also renamed here (before compress), so
+        // annotated strings inside template interpolations survive — the compressor would
+        // otherwise fold them into the surrounding quasi before the post-mangle rewrite runs.
+        let prop_mangler = mangle_properties.map(|options| {
+            let mut mangler = PropertyMangler::new(options);
+            mangler.collect(program);
+            mangler.rename_annotated_literals(program, allocator);
+            mangler
+        });
+
+        let (stats, iterations) = compress
             .map(|options| {
                 let semantic = SemanticBuilder::new().build(program).semantic;
                 let stats = semantic.stats();
@@ -138,9 +169,7 @@ impl<'a> Minifier {
                 (Some(stats), iterations)
             })
             .unwrap_or_default();
-        let (scoping, class_private_mappings) = self
-            .options
-            .mangle
+        let (scoping, class_private_mappings) = mangle
             .map(|options| {
                 let mut builder =
                     SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
@@ -154,6 +183,15 @@ impl<'a> Minifier {
                 (semantic.into_scoping(), class_private_mappings)
             })
             .map_or((None, None), |(scoping, mappings)| (Some(scoping), Some(mappings)));
-        MinifierReturn { scoping, class_private_mappings, iterations }
+
+        // Capture the whole-program bail (if any) before `rewrite` consumes the mangler, so a
+        // caller can surface a diagnostic even though `rewrite` is a silent no-op on bail.
+        let property_mangle_bail = prop_mangler.as_ref().and_then(PropertyMangler::bail);
+        // Rewrite property names in place AFTER variable mangling.
+        if let Some(mangler) = prop_mangler {
+            mangler.rewrite(program, allocator);
+        }
+
+        MinifierReturn { scoping, class_private_mappings, property_mangle_bail, iterations }
     }
 }

@@ -15,7 +15,9 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
+use oxc_minifier::{
+    CompressOptions, MangleOptions, ManglePropertiesOptions, Minifier, MinifierOptions,
+};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -117,8 +119,10 @@ pub fn run() -> Result<(), io::Error> {
 
     let save_path = Path::new("./target/minifier").join(marker);
 
+    // Main table: the default minify pipeline (property mangling OFF), so the Oxc columns stay
+    // directly comparable to the ESBuild `targets`/`gzip_targets` and to pre-existing history.
     for file in files.files() {
-        let (minified, iterations) = minify_twice(file, options);
+        let (minified, iterations) = minify_twice(file, options, false);
 
         fs::create_dir_all(&save_path).unwrap();
         fs::write(save_path.join(&file.file_name), &minified).unwrap();
@@ -137,6 +141,44 @@ pub fn run() -> Result<(), io::Error> {
         out.push_str(&s);
     }
 
+    // Secondary table: the same corpus minified with opt-in property mangling (`^_`, mangleQuoted).
+    // This keeps the property mangler exercised over real-world code (it has surfaced real bugs)
+    // while keeping it out of the ESBuild comparison above (no comparable ESBuild targets exist).
+    // Skipped in `--compress-only` mode, where mangling is disabled and the snapshot is not written.
+    if !options.compress_only {
+        out.push_str("\nwith property mangling (`^_`, mangleQuoted)\n");
+        writeln!(out, "{:width$} | {:width$} | {:width$} |", "", "Oxc", "Oxc", width = width)
+            .unwrap();
+        writeln!(
+            out,
+            "{:width$} | {:width$} | {:width$} | {:width$} | {:width$}",
+            "Original",
+            "minified",
+            "gzip",
+            "Iterations",
+            "File",
+            width = width,
+        )
+        .unwrap();
+        out.push_str(&str::repeat("-", width * 4 + fixture_width + 12));
+        out.push('\n');
+
+        for file in files.files() {
+            let (minified, iterations) = minify_twice(file, options, true);
+
+            let s = format!(
+                "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} \n\n",
+                format_size(file.source_text.len(), DECIMAL),
+                format_size(minified.len(), DECIMAL),
+                format_size(gzip_size(&minified), DECIMAL),
+                iterations,
+                &file.file_name,
+                width = width
+            );
+            out.push_str(&s);
+        }
+    }
+
     println!("{out}");
 
     if !options.compress_only {
@@ -147,15 +189,24 @@ pub fn run() -> Result<(), io::Error> {
     Ok(())
 }
 
-fn minify_twice(file: &TestFile, options: Options) -> (String, u8) {
+fn minify_twice(file: &TestFile, options: Options, enable_props: bool) -> (String, u8) {
     let source_type = SourceType::cjs().with_script(true);
-    let (code1, iterations) = minify(&file.source_text, source_type, options);
-    let (code2, _) = minify(&code1, source_type, options);
+    let (code1, iterations) = minify(&file.source_text, source_type, options, enable_props);
+    // The second pass checks minification is a fixed point. Property mangling is intentionally
+    // NOT re-applied here: re-minifying already-mangled output is not a real workflow, and oxc's
+    // compress un-quotes formerly-quoted keys between passes. Pass 1's mangled property names are
+    // already in `code1` and are left untouched.
+    let (code2, _) = minify(&code1, source_type, options, false);
     assert_eq_minified_code(&code1, &code2, &file.file_name);
     (code2, iterations)
 }
 
-fn minify(source_text: &str, source_type: SourceType, options: Options) -> (String, u8) {
+fn minify(
+    source_text: &str,
+    source_type: SourceType,
+    options: Options,
+    enable_props: bool,
+) -> (String, u8) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.diagnostics.is_empty());
@@ -166,9 +217,20 @@ fn minify(source_text: &str, source_type: SourceType, options: Options) -> (Stri
         ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "'development'")]).unwrap(),
     )
     .build(scoping, &mut program);
+    // Mangle properties prefixed with `_` (esbuild's conventional opt-in). Off in
+    // `--compress-only` mode (like `mangle`) and off on the idempotency pass (see `minify_twice`).
+    // `^_` is intentional (esbuild's convention), so `trivial_regex` is a false positive.
+    #[expect(clippy::trivial_regex)]
     let ret = Minifier::new(MinifierOptions {
         mangle: (!options.compress_only).then(MangleOptions::default),
         compress: Some(CompressOptions::default()),
+        mangle_properties: (enable_props && !options.compress_only).then(|| {
+            ManglePropertiesOptions {
+                mangle: Some(lazy_regex::Regex::new("^_").unwrap()),
+                mangle_quoted: true,
+                ..Default::default()
+            }
+        }),
     })
     .minify(&allocator, &mut program);
     let code = Codegen::new()

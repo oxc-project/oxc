@@ -140,6 +140,7 @@ pub fn run() -> Result<(), io::Error> {
     let minifier_options = MinifierOptions {
         mangle: Some(MangleOptions::default()),
         compress: Some(CompressOptions::smallest()),
+        mangle_properties: None,
     };
 
     // Warm-up by parsing each file first, and then measuring the actual allocations. This reduces variance

@@ -170,6 +170,54 @@ export interface MinifyOptions {
   mangle?: boolean | MangleOptions
   codegen?: boolean | CodegenOptions
   sourcemap?: boolean
+  /**
+   * Mangle (rename) property names matching this regular expression.
+   *
+   * Property mangling is **off by default** and **unsafe**: it can break
+   * reflection, JSON serialization, dynamic property access, and DOM APIs.
+   * Only enable it when you control all the properties being renamed (the
+   * common convention is to prefix such properties with `_` and pass
+   * `mangleProps: "^_"`).
+   *
+   * The value is a regular expression **source string** (not a `RegExp`).
+   *
+   * Aligned with esbuild's `mangleProps`.
+   */
+  mangleProps?: string
+  /**
+   * Do not mangle property names matching this regular expression, even if
+   * they match {@link MinifyOptions#mangleProps mangleProps}.
+   *
+   * The value is a regular expression **source string** (not a `RegExp`).
+   *
+   * Aligned with esbuild's `reserveProps`.
+   */
+  reserveProps?: string
+  /**
+   * A list of literal property names that must never be mangled.
+   *
+   * These are added to (never replace) the always-reserved set.
+   *
+   * Terser-style `reserved` list.
+   */
+  reservedProps?: Array<string>
+  /**
+   * Also mangle quoted property names that match
+   * {@link MinifyOptions#mangleProps mangleProps}.
+   *
+   * When `false` (default), a quoted property occurrence (`x['_foo']`,
+   * `{ '_foo': 1 }`, `'_foo' in x`) reserves that name program-wide, so it is
+   * never mangled. When `true`, such quoted keys become mangle candidates and
+   * are renamed consistently with their unquoted siblings (computed string
+   * indices are un-quoted to dot access where possible).
+   *
+   * Has no effect unless {@link MinifyOptions#mangleProps mangleProps} is set.
+   *
+   * Aligned with esbuild's `mangleQuoted`.
+   *
+   * @default false
+   */
+  mangleQuoted?: boolean
 }
 
 export interface MinifyResult {
