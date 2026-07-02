@@ -1,3 +1,4 @@
+use crate::{AstNode, context::LintContext};
 use oxc_ast::AstKind;
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, EvalConstConditionResult, Instruction, InstructionKind,
@@ -7,9 +8,6 @@ use oxc_cfg::{
         visit::{Control, DfsEvent, EdgeRef, set_depth_first_search},
     },
 };
-use oxc_semantic::NodeId;
-
-use crate::{AstNode, context::LintContext};
 
 /// Whether every code path inside the given function definitely reaches a
 /// `return` (or `throw`) before falling off the end.

@@ -615,7 +615,7 @@ fn test() {
         "{ () => a; break; }",
         "{ (() => a)(); break; }",
         "{ while (a); break; }",
-        "{ do ; while (a) break; }",
+        "{ do ; while (a); break; }",
         "{ for (a; b; c); break; }",
         "{ for (; b;); break; }",
         "{ for (; ; c) if (foo) break; break; }",
