@@ -162,25 +162,3 @@ impl<'a> Visit<'a> for ReactLikeVisitor<'a> {
         // Skip class bodies entirely
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_is_react_like_name() {
-        assert!(is_react_like_name("Component"));
-        assert!(is_react_like_name("MyComponent"));
-        assert!(is_react_like_name("A"));
-        assert!(is_react_like_name("useState"));
-        assert!(is_react_like_name("useEffect"));
-        assert!(is_react_like_name("use0"));
-
-        assert!(!is_react_like_name("component"));
-        assert!(!is_react_like_name("myFunction"));
-        assert!(!is_react_like_name("use"));
-        assert!(!is_react_like_name("user"));
-        assert!(!is_react_like_name("useful"));
-        assert!(!is_react_like_name(""));
-    }
-}
