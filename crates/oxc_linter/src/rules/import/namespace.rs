@@ -132,7 +132,7 @@ impl Rule for Namespace {
                 ImportImportName::NamespaceObject => {
                     let source = entry.module_request.name();
                     let Some(module) = module_record.get_loaded_module(source) else {
-                        return;
+                        continue;
                     };
                     (source.to_string(), module)
                 }
@@ -140,31 +140,31 @@ impl Rule for Namespace {
                     let Some(loaded_module) =
                         module_record.get_loaded_module(entry.module_request.name())
                     else {
-                        return;
+                        continue;
                     };
                     let Some(source) = get_module_request_name(name.name(), &loaded_module) else {
-                        return;
+                        continue;
                     };
                     let Some(loaded_module_for_source) =
                         loaded_module.get_loaded_module(source.as_str())
                     else {
-                        return;
+                        continue;
                     };
                     (source, loaded_module_for_source)
                 }
                 ImportImportName::Default(_) => {
                     // TODO: Hard to confirm if it's a namespace object
-                    return;
+                    continue;
                 }
             };
 
             if !module.has_module_syntax {
-                return;
+                continue;
             }
 
             let Some(symbol_id) = ctx.scoping().get_root_binding(entry.local_name.name().into())
             else {
-                return;
+                continue;
             };
 
             ctx.scoping().get_resolved_references(symbol_id).for_each(|reference| {
@@ -523,6 +523,16 @@ fn test() {
         (r#"import { b } from "./deep-es7/a"; console.log(b.c.e)"#, None),
         (r#"import * as a from "./deep-es7/a"; var {b:{ e }} = a"#, None),
         (r#"import * as a from "./deep-es7/a"; var {b:{c:{ e }, e: { c }}} = a"#, None),
+        // Issue: <https://github.com/oxc-project/oxc/issues/24073>
+        (r#"import { lib } from "./issue-24073/module"; console.log(lib["~unstable"]);"#, None),
+        (
+            concat!(
+                r#"import { otherExport } from "./issue-24073/module"; console.log(otherExport);"#,
+                "\n",
+                r#"import { lib } from "./issue-24073/module"; console.log(lib["~unstable"]);"#,
+            ),
+            None,
+        ),
     ];
 
     Tester::new(Namespace::NAME, Namespace::PLUGIN, pass, fail)
