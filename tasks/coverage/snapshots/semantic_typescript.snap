@@ -2431,9 +2431,6 @@ rebuilt        : ScopeId(3): ["e"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(0x0)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -3550,9 +3547,6 @@ rebuilt        : ScopeId(3): ["ConstFooEnum"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 Symbol flags mismatch for "ConstEnumOnlyModule":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -3588,9 +3582,6 @@ rebuilt        : ScopeId(5): ["A"]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(0x0)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(2))
-rebuilt        : ScopeId(5): Some(ScopeId(4))
 Bindings mismatch:
 after transform: ScopeId(4): ["_B", "x", "y"]
 rebuilt        : ScopeId(7): ["O", "_B", "x", "y"]
@@ -5198,9 +5189,6 @@ rebuilt        : ScopeId(4): ["e"]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(0x0)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(4): Some(ScopeId(2))
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -6020,9 +6008,6 @@ rebuilt        : ScopeId(10): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(8): ScopeFlags(0x0)
 rebuilt        : ScopeId(12): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(8): Some(ScopeId(3))
-rebuilt        : ScopeId(12): Some(ScopeId(6))
 Scope flags mismatch:
 after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(14): ScopeFlags(Function)
@@ -6116,9 +6101,6 @@ rebuilt        : ScopeId(23): ["D"]
 Scope flags mismatch:
 after transform: ScopeId(18): ScopeFlags(0x0)
 rebuilt        : ScopeId(23): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(18): Some(ScopeId(13))
-rebuilt        : ScopeId(23): Some(ScopeId(18))
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -7713,9 +7695,6 @@ rebuilt        : ScopeId(3): ["MyEnum"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(0x0)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -7725,9 +7704,6 @@ rebuilt        : ScopeId(7): ["MyEnum"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(0x0)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(7): Some(ScopeId(6))
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -8247,36 +8223,24 @@ rebuilt        : ScopeId(7): ["e3"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(7): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(7): Some(ScopeId(6))
 Bindings mismatch:
 after transform: ScopeId(5): ["e4", "x", "y", "z"]
 rebuilt        : ScopeId(9): ["e4"]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(9): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(3))
-rebuilt        : ScopeId(9): Some(ScopeId(6))
 Bindings mismatch:
 after transform: ScopeId(7): ["a", "b", "c", "e5"]
 rebuilt        : ScopeId(13): ["e5"]
 Scope flags mismatch:
 after transform: ScopeId(7): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(13): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(7): Some(ScopeId(6))
-rebuilt        : ScopeId(13): Some(ScopeId(12))
 Bindings mismatch:
 after transform: ScopeId(8): ["e6", "x", "y", "z"]
 rebuilt        : ScopeId(15): ["e6"]
 Scope flags mismatch:
 after transform: ScopeId(8): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(15): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(8): Some(ScopeId(6))
-rebuilt        : ScopeId(15): Some(ScopeId(12))
 Symbol flags mismatch for "e1":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -8327,36 +8291,24 @@ rebuilt        : ScopeId(7): ["e3"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(7): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(7): Some(ScopeId(6))
 Bindings mismatch:
 after transform: ScopeId(5): ["e4", "x", "y", "z"]
 rebuilt        : ScopeId(9): ["e4"]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(9): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(3))
-rebuilt        : ScopeId(9): Some(ScopeId(6))
 Bindings mismatch:
 after transform: ScopeId(7): ["a", "b", "c", "e5"]
 rebuilt        : ScopeId(13): ["e5"]
 Scope flags mismatch:
 after transform: ScopeId(7): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(13): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(7): Some(ScopeId(6))
-rebuilt        : ScopeId(13): Some(ScopeId(12))
 Bindings mismatch:
 after transform: ScopeId(8): ["e6", "x", "y", "z"]
 rebuilt        : ScopeId(15): ["e6"]
 Scope flags mismatch:
 after transform: ScopeId(8): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(15): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(8): Some(ScopeId(6))
-rebuilt        : ScopeId(15): Some(ScopeId(12))
 Symbol flags mismatch for "e1":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -8407,36 +8359,24 @@ rebuilt        : ScopeId(7): ["e3"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(7): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(7): Some(ScopeId(6))
 Bindings mismatch:
 after transform: ScopeId(5): ["e4", "x", "y", "z"]
 rebuilt        : ScopeId(9): ["e4"]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(9): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(3))
-rebuilt        : ScopeId(9): Some(ScopeId(6))
 Bindings mismatch:
 after transform: ScopeId(7): ["a", "b", "c", "e5"]
 rebuilt        : ScopeId(13): ["e5"]
 Scope flags mismatch:
 after transform: ScopeId(7): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(13): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(7): Some(ScopeId(6))
-rebuilt        : ScopeId(13): Some(ScopeId(12))
 Bindings mismatch:
 after transform: ScopeId(8): ["e6", "x", "y", "z"]
 rebuilt        : ScopeId(15): ["e6"]
 Scope flags mismatch:
 after transform: ScopeId(8): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(15): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(8): Some(ScopeId(6))
-rebuilt        : ScopeId(15): Some(ScopeId(12))
 Symbol flags mismatch for "e1":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10661,9 +10601,6 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(0x0)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -11618,9 +11555,6 @@ rebuilt        : ScopeId(3): ["weekend"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(0x0)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 Bindings mismatch:
 after transform: ScopeId(3): ["_c", "bVal"]
 rebuilt        : ScopeId(5): ["_c", "b", "bVal"]
@@ -11660,9 +11594,6 @@ rebuilt        : ScopeId(3): ["weekend"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 Bindings mismatch:
 after transform: ScopeId(3): ["_c", "bVal"]
 rebuilt        : ScopeId(5): ["_c", "b", "bVal"]
@@ -11699,9 +11630,6 @@ rebuilt        : ScopeId(3): ["weekend"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 Bindings mismatch:
 after transform: ScopeId(3): ["_c", "bVal"]
 rebuilt        : ScopeId(5): ["_c", "b", "bVal"]
@@ -12131,27 +12059,18 @@ rebuilt        : ScopeId(6): ["A"]
 Scope flags mismatch:
 after transform: ScopeId(28): ScopeFlags(0x0)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(28): Some(ScopeId(27))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
 Bindings mismatch:
 after transform: ScopeId(29): ["B", "b1", "b2", "b86", "b87"]
 rebuilt        : ScopeId(8): ["B"]
 Scope flags mismatch:
 after transform: ScopeId(29): ScopeFlags(0x0)
 rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(29): Some(ScopeId(27))
-rebuilt        : ScopeId(8): Some(ScopeId(5))
 Bindings mismatch:
 after transform: ScopeId(30): ["C", "c1", "c2", "c210", "c211"]
 rebuilt        : ScopeId(10): ["C"]
 Scope flags mismatch:
 after transform: ScopeId(30): ScopeFlags(0x0)
 rebuilt        : ScopeId(10): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(30): Some(ScopeId(27))
-rebuilt        : ScopeId(10): Some(ScopeId(5))
 Symbol flags mismatch for "enums":
 after transform: SymbolId(27): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
@@ -12764,9 +12683,6 @@ rebuilt        : ScopeId(3): ["Key"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(0x0)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 Bindings mismatch:
 after transform: ScopeId(3): ["_App", "foo"]
 rebuilt        : ScopeId(5): ["Key", "_App", "foo"]
@@ -13288,9 +13204,6 @@ rebuilt        : ScopeId(15): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(16): ScopeFlags(0x0)
 rebuilt        : ScopeId(22): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(16): Some(ScopeId(10))
-rebuilt        : ScopeId(22): Some(ScopeId(16))
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -14307,9 +14220,6 @@ rebuilt        : ScopeId(15): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(11): ScopeFlags(0x0)
 rebuilt        : ScopeId(15): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(11): Some(ScopeId(7))
-rebuilt        : ScopeId(15): Some(ScopeId(10))
 Scope flags mismatch:
 after transform: ScopeId(30): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(35): ScopeFlags(Function)
@@ -16508,9 +16418,6 @@ rebuilt        : ScopeId(4): ["e_private"]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(4): Some(ScopeId(2))
 Bindings mismatch:
 after transform: ScopeId(11): ["_m_public", "mu_public", "v_public"]
 rebuilt        : ScopeId(11): ["_m_public", "v_public"]
@@ -16520,9 +16427,6 @@ rebuilt        : ScopeId(14): ["e_public"]
 Scope flags mismatch:
 after transform: ScopeId(13): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(14): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(13): Some(ScopeId(11))
-rebuilt        : ScopeId(14): Some(ScopeId(12))
 Bindings mismatch:
 after transform: ScopeId(21): ["_import_public", "privateUse_im_public_c_private", "privateUse_im_public_c_public", "privateUse_im_public_e_private", "privateUse_im_public_e_public", "privateUse_im_public_f_private", "privateUse_im_public_f_public", "privateUse_im_public_i_private", "privateUse_im_public_i_public", "privateUse_im_public_mi_private", "privateUse_im_public_mi_public", "privateUse_im_public_mu_private", "privateUse_im_public_mu_public", "privateUse_im_public_v_private", "privateUse_im_public_v_public", "publicUse_im_public_c_private", "publicUse_im_public_c_public", "publicUse_im_public_e_private", "publicUse_im_public_e_public", "publicUse_im_public_f_private", "publicUse_im_public_f_public", "publicUse_im_public_i_private", "publicUse_im_public_i_public", "publicUse_im_public_mi_private", "publicUse_im_public_mi_public", "publicUse_im_public_mu_private", "publicUse_im_public_mu_public", "publicUse_im_public_v_private", "publicUse_im_public_v_public"]
 rebuilt        : ScopeId(21): ["_import_public", "im_public_c_private", "im_public_c_public", "im_public_e_private", "im_public_e_public", "im_public_f_private", "im_public_f_public", "im_public_i_private", "im_public_i_public", "im_public_mi_private", "im_public_mi_public", "im_public_mu_private", "im_public_mu_public", "im_public_v_private", "im_public_v_public", "privateUse_im_public_c_private", "privateUse_im_public_c_public", "privateUse_im_public_e_private", "privateUse_im_public_e_public", "privateUse_im_public_f_private", "privateUse_im_public_f_public", "privateUse_im_public_i_private", "privateUse_im_public_i_public", "privateUse_im_public_mi_private", "privateUse_im_public_mi_public", "privateUse_im_public_mu_private", "privateUse_im_public_mu_public", "privateUse_im_public_v_private", "privateUse_im_public_v_public", "publicUse_im_public_c_private", "publicUse_im_public_c_public", "publicUse_im_public_e_private", "publicUse_im_public_e_public", "publicUse_im_public_f_private", "publicUse_im_public_f_public", "publicUse_im_public_i_private", "publicUse_im_public_i_public", "publicUse_im_public_mi_private", "publicUse_im_public_mi_public", "publicUse_im_public_mu_private", "publicUse_im_public_mu_public", "publicUse_im_public_v_private", "publicUse_im_public_v_public"]
@@ -24318,36 +24222,24 @@ rebuilt        : ScopeId(3): ["EImpl1"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(0x0)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 Bindings mismatch:
 after transform: ScopeId(3): ["D", "E", "EImpl1", "F"]
 rebuilt        : ScopeId(5): ["EImpl1"]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(0x0)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(5): Some(ScopeId(2))
 Bindings mismatch:
 after transform: ScopeId(4): ["A", "B", "C", "EConst1"]
 rebuilt        : ScopeId(7): ["EConst1"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(0x0)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(1))
-rebuilt        : ScopeId(7): Some(ScopeId(2))
 Bindings mismatch:
 after transform: ScopeId(5): ["D", "E", "EConst1", "F"]
 rebuilt        : ScopeId(9): ["EConst1"]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(0x0)
 rebuilt        : ScopeId(9): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(1))
-rebuilt        : ScopeId(9): Some(ScopeId(2))
 Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(11): ScopeFlags(Function)
@@ -24357,18 +24249,12 @@ rebuilt        : ScopeId(13): ["EComp2"]
 Scope flags mismatch:
 after transform: ScopeId(7): ScopeFlags(0x0)
 rebuilt        : ScopeId(13): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(7): Some(ScopeId(6))
-rebuilt        : ScopeId(13): Some(ScopeId(12))
 Bindings mismatch:
 after transform: ScopeId(8): ["D", "E", "EComp2", "F"]
 rebuilt        : ScopeId(15): ["EComp2"]
 Scope flags mismatch:
 after transform: ScopeId(8): ScopeFlags(0x0)
 rebuilt        : ScopeId(15): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(8): Some(ScopeId(6))
-rebuilt        : ScopeId(15): Some(ScopeId(12))
 Scope flags mismatch:
 after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(17): ScopeFlags(Function)
@@ -24378,18 +24264,12 @@ rebuilt        : ScopeId(19): ["EInit"]
 Scope flags mismatch:
 after transform: ScopeId(10): ScopeFlags(0x0)
 rebuilt        : ScopeId(19): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(10): Some(ScopeId(9))
-rebuilt        : ScopeId(19): Some(ScopeId(18))
 Bindings mismatch:
 after transform: ScopeId(11): ["C", "D", "E", "EInit"]
 rebuilt        : ScopeId(21): ["EInit"]
 Scope flags mismatch:
 after transform: ScopeId(11): ScopeFlags(0x0)
 rebuilt        : ScopeId(21): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(11): Some(ScopeId(9))
-rebuilt        : ScopeId(21): Some(ScopeId(18))
 Scope flags mismatch:
 after transform: ScopeId(12): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(23): ScopeFlags(Function)
@@ -24399,9 +24279,6 @@ rebuilt        : ScopeId(25): ["Color"]
 Scope flags mismatch:
 after transform: ScopeId(13): ScopeFlags(0x0)
 rebuilt        : ScopeId(25): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(13): Some(ScopeId(12))
-rebuilt        : ScopeId(25): Some(ScopeId(24))
 Scope flags mismatch:
 after transform: ScopeId(14): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(27): ScopeFlags(Function)
@@ -24411,9 +24288,6 @@ rebuilt        : ScopeId(29): ["Color"]
 Scope flags mismatch:
 after transform: ScopeId(15): ScopeFlags(0x0)
 rebuilt        : ScopeId(29): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(15): Some(ScopeId(14))
-rebuilt        : ScopeId(29): Some(ScopeId(28))
 Scope flags mismatch:
 after transform: ScopeId(16): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(31): ScopeFlags(Function)
@@ -24426,9 +24300,6 @@ rebuilt        : ScopeId(35): ["Color"]
 Scope flags mismatch:
 after transform: ScopeId(18): ScopeFlags(0x0)
 rebuilt        : ScopeId(35): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(18): Some(ScopeId(17))
-rebuilt        : ScopeId(35): Some(ScopeId(34))
 Scope flags mismatch:
 after transform: ScopeId(19): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(37): ScopeFlags(Function)
@@ -24441,9 +24312,6 @@ rebuilt        : ScopeId(41): ["Color"]
 Scope flags mismatch:
 after transform: ScopeId(21): ScopeFlags(0x0)
 rebuilt        : ScopeId(41): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(21): Some(ScopeId(20))
-rebuilt        : ScopeId(41): Some(ScopeId(40))
 Symbol flags mismatch for "M1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)

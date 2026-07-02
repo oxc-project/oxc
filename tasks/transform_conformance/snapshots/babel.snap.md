@@ -2610,9 +2610,6 @@ rebuilt        : ScopeId(8): []
 Scope flags mismatch:
 after transform: ScopeId(18): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(16): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(18): Some(ScopeId(17))
-rebuilt        : ScopeId(16): Some(ScopeId(15))
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2735,18 +2732,12 @@ rebuilt        : ScopeId(15): ["H"]
 Scope flags mismatch:
 after transform: ScopeId(11): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(15): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(11): Some(ScopeId(10))
-rebuilt        : ScopeId(15): Some(ScopeId(14))
 Bindings mismatch:
 after transform: ScopeId(15): ["L", "M"]
 rebuilt        : ScopeId(22): ["L"]
 Scope flags mismatch:
 after transform: ScopeId(15): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(22): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(15): Some(ScopeId(2))
-rebuilt        : ScopeId(22): Some(ScopeId(3))
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(Class | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
@@ -2800,9 +2791,6 @@ rebuilt        : ScopeId(3): ["G"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2855,9 +2843,6 @@ rebuilt        : SymbolId(11): Span { start: 0, end: 0 }
 Scope flags mismatch:
 after transform: ScopeId(9): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(14): ScopeFlags(StrictMode | Function)
-Scope parent mismatch:
-after transform: ScopeId(9): Some(ScopeId(8))
-rebuilt        : ScopeId(14): Some(ScopeId(13))
 Symbol flags mismatch for "N":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
