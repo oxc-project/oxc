@@ -243,13 +243,11 @@ pub(super) fn write_input_value_definition<'a>(
     write_directives(&input_value.directives, DirectivesStyle::Attached, f);
 }
 
-/// ` implements A & B`, mirroring Prettier 3.8.4's `printInterfaces`:
-/// names joined by plain `" & "` — the list NEVER breaks on line width (no group, no indent).
-/// TODO: We will revisit this once Prettier 3.9.x released, as it changed the behavior.
+/// ` implements A & B`, mirroring Prettier's  `printInterfaces`:
+/// `indent(group(join([" &", line], names)))`.
 ///
-/// A `line` replaces the space only when a comment sits between two names;
-/// outside any group it always prints as a newline,
-/// so the list breaks exactly at the comment position (at zero extra indentation).
+/// The whole list is one group so it breaks together on width overflow.
+/// A leading comment between two names emits a `hard_line_break` which forces the group to expand.
 pub(super) fn write_implements_interfaces<'a>(
     interfaces: &'a [NamedType<'a>],
     f: &mut GraphqlFormatter<'_, 'a>,
@@ -258,20 +256,15 @@ pub(super) fn write_implements_interfaces<'a>(
         return;
     }
     write!(f, " implements ");
-    for (i, named) in interfaces.iter().enumerate() {
-        let start = to_span(named.name.span).start;
-        if i > 0 {
-            write!(f, " &");
-            // Pending comments before this name = comments between the two names
-            // (Prettier checks `textBetween.includes("#")`).
-            let has_comment = f.context().comments().iter_before(start).next().is_some();
-            if has_comment {
-                write!(f, soft_line_break_or_space());
-            } else {
-                write!(f, space());
+    let joined = format_with(move |f: &mut GraphqlFormatter<'_, 'a>| {
+        for (i, named) in interfaces.iter().enumerate() {
+            let start = to_span(named.name.span).start;
+            if i > 0 {
+                write!(f, [" &", soft_line_break_or_space()]);
             }
+            flush_leading_comments(start, f);
+            write_named_type(named, f);
         }
-        flush_leading_comments(start, f);
-        write_named_type(named, f);
-    }
+    });
+    write!(f, group(&indent(&joined)));
 }
