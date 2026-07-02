@@ -170,9 +170,10 @@ function migrateDeprecatedLooseOptions(options) {
       if (pluginOptions.loose) {
         options.assumptions ??= {};
         options.assumptions.setPublicClassFields ??= true;
+        options.assumptions.constantSuper ??= true;
         if (
-          !options.assumptions.privateFieldsAsProperties &&
-          !options.assumptions.privateFieldsAsSymbols
+          !Object.hasOwn(options.assumptions, "privateFieldsAsProperties") &&
+          !Object.hasOwn(options.assumptions, "privateFieldsAsSymbols")
         ) {
           options.assumptions.privateFieldsAsProperties = true;
         }
