@@ -35,6 +35,7 @@ const CLASS_PLUGINS = [
   "transform-private-methods",
   "transform-private-property-in-object",
 ];
+const OPTIONAL_CHAINING_PLUGIN = "transform-optional-chaining";
 
 const PACKAGES_PATH = pathJoin(import.meta.dirname, "../coverage/babel/packages");
 
@@ -137,8 +138,60 @@ function updateOptions(options) {
   }
 
   filter("presets", FILTER_OUT_PRESETS);
+  if (migrateDeprecatedLooseOptions(options)) {
+    hasChangedOptions = true;
+  }
   filter("plugins", FILTER_OUT_PLUGINS);
   if (ensureAllClassPluginsEnabled(options)) {
+    hasChangedOptions = true;
+  }
+
+  return hasChangedOptions;
+}
+
+// Babel 8 deprecates plugin-level `loose` options in favor of top-level assumptions.
+// Keep these generated fixture updates aligned with Babel's migration docs:
+// https://babeljs.io/docs/assumptions/
+function migrateDeprecatedLooseOptions(options) {
+  const { plugins } = options;
+  if (!plugins) return false;
+
+  let hasChangedOptions = false;
+
+  for (let index = 0; index < plugins.length; index++) {
+    const plugin = plugins[index];
+    if (!Array.isArray(plugin)) continue;
+
+    const pluginName = getName(plugin);
+    const pluginOptions = plugin[1];
+    if (!pluginOptions || !Object.hasOwn(pluginOptions, "loose")) continue;
+
+    if (CLASS_PLUGINS.includes(pluginName)) {
+      if (pluginOptions.loose) {
+        options.assumptions ??= {};
+        options.assumptions.setPublicClassFields ??= true;
+        options.assumptions.constantSuper ??= true;
+        if (
+          !Object.hasOwn(options.assumptions, "privateFieldsAsProperties") &&
+          !Object.hasOwn(options.assumptions, "privateFieldsAsSymbols")
+        ) {
+          options.assumptions.privateFieldsAsProperties = true;
+        }
+      }
+    } else if (pluginName === OPTIONAL_CHAINING_PLUGIN) {
+      if (pluginOptions.loose) {
+        options.assumptions ??= {};
+        options.assumptions.noDocumentAll ??= true;
+        options.assumptions.pureGetters ??= true;
+      }
+    } else {
+      continue;
+    }
+
+    delete pluginOptions.loose;
+    if (Object.keys(pluginOptions).length === 0) {
+      plugins[index] = pluginName;
+    }
     hasChangedOptions = true;
   }
 
