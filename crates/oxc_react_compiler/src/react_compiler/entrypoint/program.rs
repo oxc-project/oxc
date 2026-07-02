@@ -26,7 +26,6 @@ use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
-use crate::react_compiler_reactive_scopes::old_builder_ext::OldBuilderExt;
 use crate::scope::ScopeId;
 use crate::scope::ScopeInfo;
 use oxc_allocator::GetAllocator;
@@ -2368,7 +2367,7 @@ fn ox_build_function<'a>(
 ) -> oxc_allocator::Box<'a, oxc_ast::ast::Function<'a>> {
     use oxc_allocator::CloneIn;
     use oxc_span::SPAN;
-    ast.alloc_function(
+    oxc_ast::ast::Function::boxed(
         SPAN,
         fn_type,
         codegen.id.clone_in(ast.allocator()),
@@ -2380,6 +2379,7 @@ fn ox_build_function<'a>(
         codegen.params.clone_in(ast.allocator()),
         None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
         Some(codegen.body.clone_in(ast.allocator())),
+        ast,
     )
 }
 
@@ -2394,15 +2394,18 @@ fn ox_build_compiled_expression<'a>(
     use oxc_span::SPAN;
     match original_kind {
         OriginalFnKind::ArrowFunctionExpression => {
-            oxc_ast::ast::Expression::ArrowFunctionExpression(ast.alloc_arrow_function_expression(
-                SPAN,
-                false,
-                codegen.is_async,
-                None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterDeclaration>>,
-                codegen.params.clone_in(ast.allocator()),
-                None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
-                codegen.body.clone_in(ast.allocator()),
-            ))
+            oxc_ast::ast::Expression::ArrowFunctionExpression(
+                oxc_ast::ast::ArrowFunctionExpression::boxed(
+                    SPAN,
+                    false,
+                    codegen.is_async,
+                    None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterDeclaration>>,
+                    codegen.params.clone_in(ast.allocator()),
+                    None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
+                    codegen.body.clone_in(ast.allocator()),
+                    ast,
+                ),
+            )
         }
         _ => oxc_ast::ast::Expression::FunctionExpression(ox_build_function(
             ast,
@@ -2501,19 +2504,25 @@ impl<'a, 'b> OxcReplaceWithGatedVisitor<'a, 'b> {
     fn build_const_decl(&self, name: &str) -> oxc_ast::ast::Statement<'a> {
         use oxc_allocator::CloneIn;
         use oxc_span::SPAN;
-        let declarator = self.ast.variable_declarator(
+        let declarator = oxc_ast::ast::VariableDeclarator::new(
             SPAN,
             oxc_ast::ast::VariableDeclarationKind::Const,
-            self.ast.binding_pattern_binding_identifier(SPAN, ox_atom(self.ast, name)),
+            oxc_ast::ast::BindingPattern::new_binding_identifier(
+                SPAN,
+                ox_atom(self.ast, name),
+                self.ast,
+            ),
             None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
             Some(self.gating_expression.clone_in(self.ast.allocator())),
             false,
+            self.ast,
         );
-        oxc_ast::ast::Statement::VariableDeclaration(self.ast.alloc_variable_declaration(
+        oxc_ast::ast::Statement::VariableDeclaration(oxc_ast::ast::VariableDeclaration::boxed(
             SPAN,
             oxc_ast::ast::VariableDeclarationKind::Const,
-            self.ast.vec1(declarator),
+            oxc_allocator::ArenaVec::from_value_in(declarator, self.ast),
             false,
+            self.ast,
         ))
     }
 }
@@ -2557,13 +2566,14 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
                         _ => unreachable!(),
                     };
                     stmts[i] = oxc_ast::ast::Statement::ExportNamedDeclaration(
-                        self.ast.alloc_export_named_declaration(
+                        oxc_ast::ast::ExportNamedDeclaration::boxed(
                             SPAN,
                             Some(decl),
-                            self.ast.vec(),
+                            oxc_allocator::ArenaVec::new_in(self.ast),
                             None,
                             oxc_ast::ast::ImportOrExportKind::Value,
                             None::<oxc_allocator::Box<oxc_ast::ast::WithClause>>,
+                            self.ast,
                         ),
                     );
                 } else {
@@ -2585,11 +2595,12 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
                             use oxc_allocator::CloneIn;
                             use oxc_span::SPAN;
                             stmts[i] = oxc_ast::ast::Statement::ExportDefaultDeclaration(
-                                self.ast.alloc_export_default_declaration(
+                                oxc_ast::ast::ExportDefaultDeclaration::boxed(
                                     SPAN,
                                     oxc_ast::ast::ExportDefaultDeclarationKind::from(
                                         self.gating_expression.clone_in(self.ast.allocator()),
                                     ),
+                                    self.ast,
                                 ),
                             );
                         }
@@ -2605,11 +2616,13 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
         // Insert `export default Name;` right after the replaced declaration.
         if let Some(name) = self.export_default_name.take() {
             use oxc_span::SPAN;
-            let ident = self.ast.expression_identifier(SPAN, ox_atom(self.ast, &name));
+            let ident =
+                oxc_ast::ast::Expression::new_identifier(SPAN, ox_atom(self.ast, &name), self.ast);
             let export = oxc_ast::ast::Statement::ExportDefaultDeclaration(
-                self.ast.alloc_export_default_declaration(
+                oxc_ast::ast::ExportDefaultDeclaration::boxed(
                     SPAN,
                     oxc_ast::ast::ExportDefaultDeclarationKind::from(ident),
+                    self.ast,
                 ),
             );
             // Find the const decl we just inserted (it has name `name`); insert after.
@@ -2673,12 +2686,13 @@ fn ox_gating_call<'a>(
     callee_name: &str,
 ) -> oxc_ast::ast::Expression<'a> {
     use oxc_span::SPAN;
-    ast.expression_call(
+    oxc_ast::ast::Expression::new_call_expression(
         SPAN,
-        ast.expression_identifier(SPAN, ox_atom(ast, callee_name)),
+        oxc_ast::ast::Expression::new_identifier(SPAN, ox_atom(ast, callee_name), ast),
         None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterInstantiation>>,
-        ast.vec(),
+        oxc_allocator::ArenaVec::new_in(ast),
         false,
+        ast,
     )
 }
 
@@ -2716,11 +2730,12 @@ fn ox_apply_gated_conditional<'a>(
 
     // gating() ? compiled : original
     use oxc_span::SPAN;
-    let gating_expression = ast.expression_conditional(
+    let gating_expression = oxc_ast::ast::Expression::new_conditional_expression(
         SPAN,
         ox_gating_call(ast, &gating_callee_name),
         compiled_expr,
         original_expr,
+        ast,
     );
 
     let mut visitor = OxcReplaceWithGatedVisitor {
@@ -2760,7 +2775,7 @@ fn ox_clone_original_fn_as_expression<'a>(
             if func.span.start == self.node_id {
                 use oxc_allocator::CloneIn;
                 use oxc_span::SPAN;
-                let f = self.ast.alloc_function(
+                let f = oxc_ast::ast::Function::boxed(
                     SPAN,
                     oxc_ast::ast::FunctionType::FunctionExpression,
                     func.id.clone_in(self.ast.allocator()),
@@ -2772,6 +2787,7 @@ fn ox_clone_original_fn_as_expression<'a>(
                     func.params.clone_in(self.ast.allocator()),
                     None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
                     func.body.clone_in(self.ast.allocator()),
+                    self.ast,
                 );
                 self.found = Some(oxc_ast::ast::Expression::FunctionExpression(f));
                 return;
@@ -2787,7 +2803,7 @@ fn ox_clone_original_fn_as_expression<'a>(
             }
             if arrow.span.start == self.node_id {
                 self.found = Some(oxc_ast::ast::Expression::ArrowFunctionExpression(
-                    self.ast.alloc(arrow.clone_in(self.ast.allocator())),
+                    oxc_allocator::ArenaBox::new_in(arrow.clone_in(self.ast.allocator()), self.ast),
                 ));
                 return;
             }
@@ -2953,71 +2969,90 @@ fn ox_add_imports_to_program<'a>(
         if let Some(&idx) = existing_import_indices.get(module_name) {
             // Merge into the existing import declaration.
             if let oxc_ast::ast::Statement::ImportDeclaration(import) = &mut program.body[idx] {
-                let specifiers = import.specifiers.get_or_insert_with(|| ast.vec());
+                let specifiers =
+                    import.specifiers.get_or_insert_with(|| oxc_allocator::ArenaVec::new_in(ast));
                 for spec in &sorted_imports {
                     specifiers.push(ox_make_import_specifier(ast, spec));
                 }
             }
         } else if is_module {
             // ESM: import { imported as local, ... } from 'module'
-            let mut specifiers = ast.vec();
+            let mut specifiers = oxc_allocator::ArenaVec::new_in(ast);
             for spec in &sorted_imports {
                 specifiers.push(ox_make_import_specifier(ast, spec));
             }
-            let source = ast.string_literal(SPAN, ox_atom(ast, module_name), None);
-            let import = ast.alloc_import_declaration(
+            let source =
+                oxc_ast::ast::StringLiteral::new(SPAN, ox_atom(ast, module_name), None, ast);
+            let import = oxc_ast::ast::ImportDeclaration::boxed(
                 SPAN,
                 Some(specifiers),
                 source,
                 None,
                 None::<oxc_allocator::Box<oxc_ast::ast::WithClause>>,
                 oxc_ast::ast::ImportOrExportKind::Value,
+                ast,
             );
             new_stmts.push(oxc_ast::ast::Statement::ImportDeclaration(import));
         } else {
             // CommonJS: const { imported: local, ... } = require('module')
-            let mut props = ast.vec();
+            let mut props = oxc_allocator::ArenaVec::new_in(ast);
             for spec in &sorted_imports {
-                let key = ast.property_key_static_identifier(SPAN, ox_atom(ast, &spec.imported));
-                let value = ast.binding_pattern_binding_identifier(SPAN, ox_atom(ast, &spec.name));
-                props.push(ast.binding_property(SPAN, key, value, false, false));
+                let key = oxc_ast::ast::PropertyKey::new_static_identifier(
+                    SPAN,
+                    ox_atom(ast, &spec.imported),
+                    ast,
+                );
+                let value = oxc_ast::ast::BindingPattern::new_binding_identifier(
+                    SPAN,
+                    ox_atom(ast, &spec.name),
+                    ast,
+                );
+                props.push(oxc_ast::ast::BindingProperty::new(SPAN, key, value, false, false, ast));
             }
-            let object_pattern = ast.binding_pattern_object_pattern(
+            let object_pattern = oxc_ast::ast::BindingPattern::new_object_pattern(
                 SPAN,
                 props,
                 None::<oxc_allocator::Box<oxc_ast::ast::BindingRestElement>>,
+                ast,
             );
-            let require_call = ast.expression_call(
+            let require_call = oxc_ast::ast::Expression::new_call_expression(
                 SPAN,
-                ast.expression_identifier(SPAN, "require"),
+                oxc_ast::ast::Expression::new_identifier(SPAN, "require", ast),
                 None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterInstantiation>>,
-                ast.vec1(oxc_ast::ast::Argument::from(ast.expression_string_literal(
-                    SPAN,
-                    ox_atom(ast, module_name),
-                    None,
-                ))),
+                oxc_allocator::ArenaVec::from_value_in(
+                    oxc_ast::ast::Argument::from(oxc_ast::ast::Expression::new_string_literal(
+                        SPAN,
+                        ox_atom(ast, module_name),
+                        None,
+                        ast,
+                    )),
+                    ast,
+                ),
                 false,
+                ast,
             );
-            let declarator = ast.variable_declarator(
+            let declarator = oxc_ast::ast::VariableDeclarator::new(
                 SPAN,
                 oxc_ast::ast::VariableDeclarationKind::Const,
                 object_pattern,
                 None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
                 Some(require_call),
                 false,
+                ast,
             );
-            let decl = ast.alloc_variable_declaration(
+            let decl = oxc_ast::ast::VariableDeclaration::boxed(
                 SPAN,
                 oxc_ast::ast::VariableDeclarationKind::Const,
-                ast.vec1(declarator),
+                oxc_allocator::ArenaVec::from_value_in(declarator, ast),
                 false,
+                ast,
             );
             new_stmts.push(oxc_ast::ast::Statement::VariableDeclaration(decl));
         }
     }
 
     if !new_stmts.is_empty() {
-        let old_body = std::mem::replace(&mut program.body, ast.vec());
+        let old_body = std::mem::replace(&mut program.body, oxc_allocator::ArenaVec::new_in(ast));
         program.body.extend(new_stmts);
         program.body.extend(old_body);
     }
@@ -3030,14 +3065,15 @@ fn ox_make_import_specifier<'a>(
 ) -> oxc_ast::ast::ImportDeclarationSpecifier<'a> {
     use oxc_span::SPAN;
     let imported = oxc_ast::ast::ModuleExportName::IdentifierName(
-        ast.identifier_name(SPAN, ox_atom(ast, &spec.imported)),
+        oxc_ast::ast::IdentifierName::new(SPAN, ox_atom(ast, &spec.imported), ast),
     );
-    let local = ast.binding_identifier(SPAN, ox_atom(ast, &spec.name));
-    oxc_ast::ast::ImportDeclarationSpecifier::ImportSpecifier(ast.alloc_import_specifier(
+    let local = oxc_ast::ast::BindingIdentifier::new(SPAN, ox_atom(ast, &spec.name), ast);
+    oxc_ast::ast::ImportDeclarationSpecifier::ImportSpecifier(oxc_ast::ast::ImportSpecifier::boxed(
         SPAN,
         imported,
         local,
         oxc_ast::ast::ImportOrExportKind::Value,
+        ast,
     ))
 }
 
