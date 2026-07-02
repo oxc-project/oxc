@@ -206,13 +206,13 @@ fn has_next_iteration_path(
     let cfg = ctx.cfg();
     let graph = cfg.graph();
     let mut stack = vec![start];
-    let mut seen = Vec::new();
+    let mut seen = vec![false; cfg.basic_blocks.len()];
 
     while let Some(source) = stack.pop() {
-        if seen.contains(&source) || is_unreachable_block(source, ctx, unreachable) {
+        if seen[source.index()] || is_unreachable_block(source, ctx, unreachable) {
             continue;
         }
-        seen.push(source);
+        seen[source.index()] = true;
 
         // Same for every outgoing edge of `source`, so compute it at most once
         // per block rather than once per `Normal` edge.
