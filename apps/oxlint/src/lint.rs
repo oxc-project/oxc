@@ -2,7 +2,8 @@ use std::{
     env,
     ffi::OsStr,
     fmt::Debug,
-    io::{ErrorKind, Write},
+    fs::File,
+    io::{BufWriter, ErrorKind, Write},
     path::{Path, PathBuf, absolute},
     sync::Arc,
     time::Instant,
@@ -75,6 +76,7 @@ impl CliRunner {
         let format_str = self.options.output_options.format;
         let debug_files = self.options.output_options.debug.contains(DebugOption::Files);
         let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
+        let output_file = self.options.output_options.output_file.clone();
         let output_formatter = OutputFormatter::new(format_str);
 
         let LintCommand {
@@ -518,7 +520,27 @@ impl CliRunner {
 
         drop(tx_error);
 
-        let diagnostic_result = diagnostic_service.run(stdout);
+        // When `--output-file` is set, write the formatter report to the file instead of
+        // stdout. Status and error messages still go to stdout.
+        let mut output_file_writer = match output_file.as_ref() {
+            Some(path) => match File::create(path) {
+                Ok(file) => Some(BufWriter::new(file)),
+                Err(err) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!("Failed to create output file {}: {err}\n", path.display()),
+                    );
+                    return CliRunResult::OutputFileWriteFailed;
+                }
+            },
+            None => None,
+        };
+        let report_writer: &mut dyn Write = match output_file_writer.as_mut() {
+            Some(writer) => writer,
+            None => stdout,
+        };
+
+        let diagnostic_result = diagnostic_service.run(&mut *report_writer);
 
         let oxlint_suppression_file_action = if let Err(report_suppression_error) = result {
             OxlintSuppressionFileAction::UnableToPerformFsOperation(report_suppression_error)
@@ -539,7 +561,7 @@ impl CliRunner {
             oxlint_suppression_file_action,
             rule_timings: rule_timing_store.as_ref().map(RuleTimingStore::collect),
         }) {
-            print_and_flush_stdout(stdout, &end);
+            print_and_flush_stdout(&mut *report_writer, &end);
         }
 
         // When --suppress-all is used and the file was written successfully,
@@ -740,6 +762,58 @@ mod test {
     fn multi_files() {
         let args = &["fixtures/cli/linter/debugger.js", "fixtures/cli/linter/nan.js"];
         Tester::new().test_and_snapshot(args);
+    }
+
+    // `--output-file`/`-o` writes the SARIF report to the file (via the reporter's `finish`
+    // channel) instead of stdout.
+    #[test]
+    fn output_file_writes_sarif_report_to_file() {
+        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
+        let report_path = temp_dir.path().join("report.sarif");
+        let report_path_str = report_path.to_str().unwrap();
+
+        let stdout = Tester::new()
+            .with_cwd("fixtures/cli/output_formatter_diagnostic".into())
+            .test_output_verbose(&[
+                "--format",
+                "sarif",
+                "--output-file",
+                report_path_str,
+                "test.js",
+            ]);
+
+        let file_contents = fs::read_to_string(&report_path).expect("output file should exist");
+        assert!(
+            file_contents.contains("\"runs\"") && file_contents.contains("sarif-schema"),
+            "output file should contain the SARIF report, got: {file_contents}"
+        );
+        assert!(
+            !stdout.contains("\"runs\""),
+            "stdout should not contain the SARIF report, got: {stdout}"
+        );
+    }
+
+    // `-o` also works for formats whose report is emitted via the `lint_command_info` channel
+    // (e.g. `json`).
+    #[test]
+    fn output_file_writes_json_report_to_file() {
+        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
+        let report_path = temp_dir.path().join("report.json");
+        let report_path_str = report_path.to_str().unwrap();
+
+        let stdout = Tester::new()
+            .with_cwd("fixtures/cli/output_formatter_diagnostic".into())
+            .test_output_verbose(&["-f", "json", "-o", report_path_str, "test.js"]);
+
+        let file_contents = fs::read_to_string(&report_path).expect("output file should exist");
+        assert!(
+            file_contents.contains("\"diagnostics\""),
+            "output file should contain the JSON report, got: {file_contents}"
+        );
+        assert!(
+            !stdout.contains("\"diagnostics\""),
+            "stdout should not contain the JSON report, got: {stdout}"
+        );
     }
 
     #[test]
