@@ -46,6 +46,14 @@ pub fn config_file_names() -> Vec<&'static str> {
     config_discovery().config_file_names()
 }
 
+/// Whether `path` is located inside a `node_modules` directory.
+///
+/// Dependency directories (including pnpm-symlinked workspace packages) are not
+/// part of the lintable project tree, so their config files must be ignored.
+fn is_inside_node_modules(path: &Path) -> bool {
+    path.components().any(|component| component.as_os_str() == OsStr::new(NODE_MODULES_DIR))
+}
+
 /// Discover config files by walking UP from each file's directory to ancestors.
 ///
 /// Used by CLI where we have specific files to lint and need to find configs
@@ -84,6 +92,13 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
             let inserted = visited_dirs.insert(dir.to_path_buf());
             if !inserted {
                 break;
+            }
+            // Skip `node_modules` directories, mirroring the down-walk in
+            // `discover_configs_in_tree`. Dependency configs (e.g. pnpm-symlinked
+            // packages) must not be picked up as nested configs.
+            if is_inside_node_modules(dir) {
+                current = dir.parent();
+                continue;
             }
             match discovery.find_unique_config_by_readdir(dir, true) {
                 Ok(Some(config)) => {
@@ -1342,6 +1357,54 @@ mod test {
         assert!(
             path.starts_with(nested_dir),
             "Expected config in packages/foo, got: {}",
+            path.display()
+        );
+    }
+
+    #[test]
+    fn test_discover_configs_in_ancestors_skips_node_modules() {
+        use super::discover_configs_in_ancestors;
+
+        let root_dir = tempfile::tempdir().unwrap();
+        let root = root_dir.path();
+
+        // Root/base config.
+        let base_config = root.join(".oxlintrc.json");
+        std::fs::write(&base_config, r#"{ "rules": {} }"#).unwrap();
+
+        // A pnpm-style dependency config inside `node_modules` using a root-only
+        // option that would raise an error if discovered as a nested config.
+        let dep_dir = root.join("node_modules").join("some-pkg");
+        std::fs::create_dir_all(&dep_dir).unwrap();
+        std::fs::write(dep_dir.join(".oxlintrc.json"), r#"{ "options": { "typeAware": true } }"#)
+            .unwrap();
+        let dep_file = dep_dir.join("index.js");
+        std::fs::write(&dep_file, "").unwrap();
+
+        // A legitimate nested config (outside `node_modules`).
+        let pkg_dir = root.join("packages").join("foo");
+        std::fs::create_dir_all(&pkg_dir).unwrap();
+        std::fs::write(pkg_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+        let pkg_file = pkg_dir.join("index.js");
+        std::fs::write(&pkg_file, "").unwrap();
+
+        let (configs, conflicts) =
+            discover_configs_in_ancestors(&[dep_file, pkg_file], &base_config);
+
+        assert!(conflicts.is_empty(), "unexpected conflicts: {conflicts:?}");
+        // Only the non-`node_modules` nested config is discovered.
+        assert_eq!(
+            configs.len(),
+            1,
+            "expected only the non-node_modules nested config, got: {configs:?}"
+        );
+        let path = match configs.iter().next().unwrap() {
+            DiscoveredConfigFile::Json(p) => p.clone(),
+            other => panic!("expected Json config, got: {other:?}"),
+        };
+        assert!(
+            path.starts_with(&pkg_dir),
+            "expected config under packages/foo, got: {}",
             path.display()
         );
     }
