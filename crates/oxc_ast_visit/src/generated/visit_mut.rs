@@ -2598,7 +2598,7 @@ pub mod walk_mut {
     pub fn walk_function_body<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut FunctionBody<'a>) {
         let kind = AstType::FunctionBody;
         visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        visitor.enter_scope(ScopeFlags::FunctionBody, &it.scope_id);
         visitor.visit_span(&mut it.span);
         visitor.visit_directives(&mut it.directives);
         visitor.visit_statements(&mut it.statements);

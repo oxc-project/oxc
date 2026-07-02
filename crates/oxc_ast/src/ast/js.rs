@@ -1854,7 +1854,7 @@ pub struct FormalParameterRest<'a> {
 
 /// <https://tc39.es/ecma262/#prod-FunctionBody>
 #[ast(visit)]
-#[scope(flags = ScopeFlags::empty())]
+#[scope(flags = ScopeFlags::FunctionBody)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "BlockStatement")]
