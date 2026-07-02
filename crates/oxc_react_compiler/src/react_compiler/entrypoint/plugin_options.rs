@@ -25,18 +25,9 @@ pub struct DynamicGatingConfig {
     pub source: String,
 }
 
-/// Serializable plugin options, pre-resolved by the JS shim.
-/// JS-only values (sources function, logger, etc.) are resolved before
-/// being sent to Rust.
+/// Serializable plugin options.
 #[derive(Debug, Clone)]
 pub struct PluginOptions {
-    // Pre-resolved by JS
-    pub should_compile: bool,
-    pub enable_reanimated: bool,
-    pub is_dev: bool,
-    pub filename: Option<String>,
-
-    // Pass-through options
     pub compilation_mode: String,
     pub panic_threshold: String,
     pub target: CompilerTarget,

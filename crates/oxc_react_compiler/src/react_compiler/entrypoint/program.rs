@@ -2875,16 +2875,6 @@ pub fn compile_program<'a, 'p>(
         });
     }
 
-    // Check if we should compile this file at all (pre-resolved by JS shim)
-    if !options.should_compile {
-        return CompileResult::Success {
-            ast: None,
-            diagnostics: Diagnostics::new(),
-            ordered_log: early_ordered_log,
-            renames: Vec::new(),
-        };
-    }
-
     let program = oxc_program;
 
     // Check for existing runtime imports (file already compiled)
@@ -2931,18 +2921,12 @@ pub fn compile_program<'a, 'p>(
     // Create program context
     let mut context = ProgramContext::new(
         options.clone(),
-        options.filename.clone(),
         // Source text feeds the line-offset table (diagnostic line/col) and the fast
         // refresh hash. The oxc front-end derives locations from it on demand.
         Some(program.source_text.to_string()),
         suppressions,
         has_module_scope_opt_out,
     );
-
-    // The source filename only fed logger event source locations. The oxc AST
-    // carries no per-node filename (the Babel bridge set it to `None` too), so
-    // leave it unset; it never affects compiled output or diagnostics.
-    context.set_source_filename(None);
 
     // Initialize known referenced names from scope bindings for UID collision detection
     context.init_from_scope(&scope);

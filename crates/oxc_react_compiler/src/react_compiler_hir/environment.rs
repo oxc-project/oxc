@@ -66,9 +66,6 @@ pub struct Environment<'a> {
     // Source file code (for fast refresh hash computation)
     pub code: Option<String>,
 
-    // Source file name (for instrumentation)
-    pub filename: Option<String>,
-
     // Pre-resolved import local names for instrumentation/hook guards.
     // Set by the program-level code before compilation.
     pub instrument_fn_name: Option<String>,
@@ -184,7 +181,6 @@ impl<'a> Environment<'a> {
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
             code: None,
-            filename: None,
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
@@ -231,7 +227,6 @@ impl<'a> Environment<'a> {
             fn_type,
             output_mode: self.output_mode,
             code: self.code.clone(),
-            filename: self.filename.clone(),
             instrument_fn_name: self.instrument_fn_name.clone(),
             instrument_gating_name: self.instrument_gating_name.clone(),
             hook_guard_name: self.hook_guard_name.clone(),

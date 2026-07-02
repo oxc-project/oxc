@@ -114,7 +114,6 @@ pub fn compile_fn<'a>(
         CompilerOutputMode::Lint => OutputMode::Lint,
     };
     env.code = context.code.clone();
-    env.filename = context.filename.clone();
     env.instrument_fn_name = context.instrument_fn_name.clone();
     env.instrument_gating_name = context.instrument_gating_name.clone();
     env.hook_guard_name = context.hook_guard_name.clone();

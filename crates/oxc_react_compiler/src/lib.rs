@@ -57,10 +57,6 @@ impl Default for PluginOptions {
     /// `PluginOptions { ..Default::default() }`.
     fn default() -> Self {
         PluginOptions {
-            should_compile: true,
-            enable_reanimated: false,
-            is_dev: false,
-            filename: None,
             compilation_mode: "infer".to_string(),
             panic_threshold: "none".to_string(),
             target: CompilerTarget::Version("19".to_string()),

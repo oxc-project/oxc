@@ -14,9 +14,8 @@ use crate::{
 /// The compiler options `eslint-plugin-react-compiler` lints with — `lint`
 /// output mode plus validations that are off by default in the compiler.
 /// Mirrors `COMPILER_OPTIONS` in the plugin's `src/shared/RunReactCompiler.ts`.
-fn react_compiler_options(filename: Option<String>) -> PluginOptions {
+fn react_compiler_options() -> PluginOptions {
     PluginOptions {
-        filename,
         output_mode: Some("lint".to_string()),
         // Don't emit errors on Flow suppressions — Flow already gave a signal.
         // Suppressed lines are filtered in `run_once` instead (like the eslint
@@ -122,7 +121,7 @@ impl Rule for ReactCompiler {
 
     fn run_once(&self, ctx: &LintContext) {
         let program = ctx.nodes().program();
-        let options = react_compiler_options(ctx.file_path().to_str().map(ToString::to_string));
+        let options = react_compiler_options();
 
         let result = oxc_react_compiler::lint(program, ctx.semantic(), ctx.allocator(), options);
 
