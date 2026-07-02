@@ -31,7 +31,7 @@ use std::{iter, mem};
 
 use serde::Deserialize;
 
-use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, GetAllocator, TakeIn};
+use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
@@ -384,8 +384,10 @@ impl<'a> ObjectRestSpread<'a> {
         let mut exprs = vec![];
         Self::recursive_walk_assignment_target(&mut assign_expr.left, &mut decls, &mut exprs, ctx);
         Self::insert_var_declaration_before_containing_statement(decls, ctx);
-        let expressions = ArenaVec::from_iter_in(iter::chain([expr.take_in(ctx)], exprs), ctx);
-        *expr = Expression::new_sequence_expression(SPAN, expressions, ctx);
+        expr.replace_with(|expr| {
+            let expressions = ArenaVec::from_iter_in(iter::chain([expr], exprs), ctx);
+            Expression::new_sequence_expression(SPAN, expressions, ctx)
+        });
     }
 
     // Insert `var _foo` before the statement that contains the transformed assignment.
@@ -715,13 +717,15 @@ impl<'a> ObjectRestSpread<'a> {
             return block.scope_id();
         }
         let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-        let span = stmt.span();
-        let stmts = if matches!(stmt, Statement::EmptyStatement(_)) {
-            ArenaVec::new_in(ctx)
-        } else {
-            ArenaVec::from_value_in(stmt.take_in(ctx), ctx)
-        };
-        *stmt = Statement::new_block_statement_with_scope_id(span, stmts, scope_id, ctx);
+        stmt.replace_with(|stmt| {
+            let span = stmt.span();
+            let stmts = if matches!(stmt, Statement::EmptyStatement(_)) {
+                ArenaVec::new_in(ctx)
+            } else {
+                ArenaVec::from_value_in(stmt, ctx)
+            };
+            Statement::new_block_statement_with_scope_id(span, stmts, scope_id, ctx)
+        });
         scope_id
     }
 

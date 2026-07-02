@@ -50,7 +50,7 @@ use std::iter;
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, TakeIn};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
@@ -245,26 +245,28 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// Transform `import(source, ...arguments)` to `__vite_ssr_dynamic_import__(source, ...arguments)`.
     #[inline]
     fn transform_dynamic_import(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::ImportExpression(import_expr) = expr.take_in(ctx) else {
-            unreachable!();
-        };
+        expr.replace_with(|expr| {
+            let Expression::ImportExpression(import_expr) = expr else {
+                unreachable!();
+            };
 
-        let ImportExpression { span, source, options, .. } = import_expr.unbox();
+            let ImportExpression { span, source, options, .. } = import_expr.unbox();
 
-        if let Expression::StringLiteral(source) = &source {
-            self.dynamic_deps.insert(source.value.to_string());
-        }
+            if let Expression::StringLiteral(source) = &source {
+                self.dynamic_deps.insert(source.value.to_string());
+            }
 
-        let flags = ReferenceFlags::Read;
-        let callee = ctx.create_unbound_ident_expr(
-            SPAN,
-            static_ident!("__vite_ssr_dynamic_import__"),
-            flags,
-        );
-        let arguments = options.into_iter().map(Argument::from);
-        let arguments =
-            ArenaVec::from_iter_in(iter::once(Argument::from(source)).chain(arguments), ctx);
-        *expr = Expression::new_call_expression(span, callee, NONE, arguments, false, ctx);
+            let flags = ReferenceFlags::Read;
+            let callee = ctx.create_unbound_ident_expr(
+                SPAN,
+                static_ident!("__vite_ssr_dynamic_import__"),
+                flags,
+            );
+            let arguments = options.into_iter().map(Argument::from);
+            let arguments =
+                ArenaVec::from_iter_in(iter::once(Argument::from(source)).chain(arguments), ctx);
+            Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
+        });
     }
 
     /// Transform `import.meta` to `__vite_ssr_import_meta__`.

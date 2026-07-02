@@ -32,7 +32,7 @@
 //! * Exponentiation operator TC39 proposal: <https://github.com/tc39/proposal-exponentiation-operator>
 //! * Exponentiation operator specification: <https://tc39.es/ecma262/#sec-exp-operator>
 
-use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{SPAN, Span};
@@ -109,11 +109,13 @@ impl<'a> ExponentiationOperator<'a> {
     // `#[inline]` so compiler knows `expr` is a `BinaryExpression`
     #[inline]
     fn convert_binary_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let binary_expr = match expr.take_in(ctx) {
-            Expression::BinaryExpression(binary_expr) => binary_expr.unbox(),
-            _ => unreachable!(),
-        };
-        *expr = Self::math_pow(binary_expr.span, binary_expr.left, binary_expr.right, ctx);
+        expr.replace_with(|expr| {
+            let binary_expr = match expr {
+                Expression::BinaryExpression(binary_expr) => binary_expr.unbox(),
+                _ => unreachable!(),
+            };
+            Self::math_pow(binary_expr.span, binary_expr.left, binary_expr.right, ctx)
+        });
     }
 
     /// Convert `AssignmentExpression` where assignee is an identifier.
@@ -515,8 +517,7 @@ impl<'a> ExponentiationOperator<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let span = assign_expr.span;
-        let pow_right = assign_expr.right.take_in(ctx);
-        assign_expr.right = Self::math_pow(span, pow_left, pow_right, ctx);
+        assign_expr.right.replace_with(|pow_right| Self::math_pow(span, pow_left, pow_right, ctx));
         assign_expr.operator = AssignmentOperator::Assign;
     }
 
@@ -529,8 +530,10 @@ impl<'a> ExponentiationOperator<'a> {
     ) {
         if !temp_var_inits.is_empty() {
             temp_var_inits.reserve_exact(1);
-            temp_var_inits.push(expr.take_in(ctx));
-            *expr = Expression::new_sequence_expression(span, temp_var_inits, ctx);
+            expr.replace_with(|expr| {
+                temp_var_inits.push(expr);
+                Expression::new_sequence_expression(span, temp_var_inits, ctx)
+            });
         }
     }
 

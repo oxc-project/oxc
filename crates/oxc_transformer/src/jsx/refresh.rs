@@ -8,7 +8,8 @@ use hmac_sha1_compact::Hash as Sha1;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{
-    ArenaStringBuilder, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn, UnstableAddress,
+    ArenaStringBuilder, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn,
+    UnstableAddress,
 };
 use oxc_ast::{
     ast::*,
@@ -271,15 +272,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         }
 
         let span = expr.span();
-        arguments.insert(0, Argument::from(expr.take_in(ctx)));
-        *expr = Expression::new_call_expression(
-            span,
-            binding.create_read_expression(ctx),
-            NONE,
-            arguments,
-            false,
-            ctx,
-        );
+        expr.replace_with(|expr| {
+            arguments.insert(0, Argument::from(expr));
+            Expression::new_call_expression(
+                span,
+                binding.create_read_expression(ctx),
+                NONE,
+                arguments,
+                false,
+                ctx,
+            )
+        });
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -544,13 +547,15 @@ impl<'a> ReactRefresh<'a> {
         }
 
         if !is_variable_declarator {
-            *expr = Expression::new_assignment_expression(
-                SPAN,
-                AssignmentOperator::Assign,
-                self.create_registration(Str::from_str_in(inferred_name, ctx), ctx),
-                expr.take_in(ctx),
-                ctx,
-            );
+            expr.replace_with(|expr| {
+                Expression::new_assignment_expression(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    self.create_registration(Str::from_str_in(inferred_name, ctx), ctx),
+                    expr,
+                    ctx,
+                )
+            });
         }
 
         true
