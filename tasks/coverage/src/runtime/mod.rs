@@ -13,7 +13,6 @@
 mod test262_status;
 
 use std::{
-    path::Path,
     process::{Child, Command, Stdio},
     thread,
     time::Duration,
@@ -33,9 +32,7 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::{
-    CoverageResult, TEST262_PATH, Test262File, TestResult,
-    load::load_test262,
-    print_coverage, snapshot_results,
+    CoverageResult, Test262File, TestResult,
     test262::{Phase, TestFlag},
     workspace_root,
 };
@@ -109,7 +106,7 @@ struct RunRequest<'a> {
     is_async: bool,
     is_module: bool,
     is_raw: bool,
-    import_dir: String,
+    import_dir: &'a str,
 }
 
 /// Ensures every Node.js server subprocess is killed even if a test panics.
@@ -124,13 +121,15 @@ impl Drop for ServerGuard {
     }
 }
 
-/// Run runtime tests.
+/// Run the runtime suite over the given test262 files.
+///
+/// A standard `run_tool` runner: it owns the Node.js server lifecycle (spawn,
+/// readiness, graceful shutdown) and returns per-case results; printing and
+/// snapshotting are handled by the caller (`AppArgs::run_tool`).
 ///
 /// # Panics
 /// Panics if a Node.js runtime server fails to start or never becomes ready.
-pub fn run(filter: Option<&str>, detail: bool) {
-    let files = load_test262(filter);
-
+pub fn run(files: &[Test262File]) -> Vec<CoverageResult> {
     // Warm the V8 status list once (it may fetch over the network) before entering
     // the parallel skip filter, so any failure surfaces deterministically.
     let _ = get_v8_test262_failure_paths();
@@ -175,10 +174,7 @@ pub fn run(filter: Option<&str>, detail: bool) {
     // (`snapshot_results` sorts internally, so the snapshot is stable regardless.)
     results.sort_by(|a, b| a.path.cmp(&b.path));
 
-    print_coverage("runtime", &results, detail || filter.is_some());
-    if filter.is_none() {
-        snapshot_results("runtime", Path::new(TEST262_PATH), &results);
-    }
+    results
 }
 
 /// Port for the `index`-th server. The count is bounded by the core count, so it
@@ -207,7 +203,7 @@ fn wait_for_server(send: &impl Fn(u16, &RunRequest) -> Result<String, String>, p
         is_async: false,
         is_module: false,
         is_raw: true,
-        import_dir: String::new(),
+        import_dir: "",
     };
     for _ in 0..300 {
         if send(port, &probe).is_ok() {
@@ -223,24 +219,29 @@ fn run_case(
     port: u16,
     send: &impl Fn(u16, &RunRequest) -> Result<String, String>,
 ) -> CoverageResult {
-    let result = run_variants(file, port, send);
+    // Compute the import dir once per file, rather than per variant (it calls
+    // `workspace_root()`, which walks the filesystem to find the project root).
+    let import_dir =
+        workspace_root().join(file.path.parent().unwrap()).to_string_lossy().into_owned();
+    let result = run_variants(file, &import_dir, port, send);
     CoverageResult { path: file.path.clone(), should_fail: false, result }
 }
 
 /// Run the three code-production variants in order, stopping at the first failure.
 fn run_variants(
     file: &Test262File,
+    import_dir: &str,
     port: u16,
     send: &impl Fn(u16, &RunRequest) -> Result<String, String>,
 ) -> TestResult {
     let code = get_code(file, false, false);
-    let result = run_test_code(file, "codegen", code, port, send);
+    let result = run_test_code(file, "codegen", code, import_dir, port, send);
     if result != TestResult::Passed {
         return result;
     }
 
     let code = get_code(file, true, false);
-    let result = run_test_code(file, "transform", code, port, send);
+    let result = run_test_code(file, "transform", code, import_dir, port, send);
     if result != TestResult::Passed {
         return result;
     }
@@ -268,19 +269,18 @@ fn run_variants(
     }
 
     let code = get_code(file, false, true);
-    run_test_code(file, "minify", code, port, send)
+    run_test_code(file, "minify", code, import_dir, port, send)
 }
 
 fn run_test_code(
     file: &Test262File,
     case: &'static str,
     code: String,
+    import_dir: &str,
     port: u16,
     send: &impl Fn(u16, &RunRequest) -> Result<String, String>,
 ) -> TestResult {
     let flags = &file.meta.flags;
-    let import_dir =
-        workspace_root().join(file.path.parent().unwrap()).to_string_lossy().into_owned();
 
     let request = RunRequest {
         code,

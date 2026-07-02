@@ -49,10 +49,7 @@ fn main() {
         "estree" => app_args.run_estree(&load()),
         "estree_tokens" => app_args.run_estree_tokens(&load()),
         "types" => app_args.run_types(&load()),
-        "all" => {
-            app_args.run_all();
-            app_args.run_runtime();
-        }
+        "all" => app_args.run_all_with(&load()),
         _ => app_args.run_all(),
     }
 }

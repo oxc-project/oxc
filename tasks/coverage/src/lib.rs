@@ -310,15 +310,26 @@ const ESTREE_ACORN_JSX_PATH: &str = "estree-conformance/tests/acorn-jsx";
 impl AppArgs {
     pub fn run_all(&self) {
         let data = TestData::load(self.filter.as_deref());
+        self.run_conformance_suites(&data);
+    }
 
-        self.run_parser(&data);
-        self.run_semantic(&data);
-        self.run_codegen(&data);
-        self.run_formatter(&data);
-        self.run_transformer(&data);
-        self.run_minifier(&data);
-        self.run_estree(&data);
-        self.run_estree_tokens(&data);
+    /// Like [`run_all`](Self::run_all) but also runs the runtime suite, reusing the
+    /// already-loaded `data` so test262 is not read twice (once by the suites, once
+    /// by runtime).
+    pub fn run_all_with(&self, data: &TestData) {
+        self.run_conformance_suites(data);
+        self.run_tool("runtime", TEST262_PATH, &data.test262, runtime::run);
+    }
+
+    fn run_conformance_suites(&self, data: &TestData) {
+        self.run_parser(data);
+        self.run_semantic(data);
+        self.run_codegen(data);
+        self.run_formatter(data);
+        self.run_transformer(data);
+        self.run_minifier(data);
+        self.run_estree(data);
+        self.run_estree_tokens(data);
     }
 
     fn run_tool<T>(
@@ -456,9 +467,13 @@ impl AppArgs {
         typescript::transpile_runner::run(self.filter.as_deref(), self.detail);
     }
 
-    /// Run runtime tests (requires Node.js subprocess)
+    /// Run runtime tests (requires Node.js subprocess).
+    ///
+    /// Loads only test262 (not the other fixture suites), so it works in a checkout
+    /// that has only the test262 submodule — load-bearing for monitor-oxc CI.
     pub fn run_runtime(&self) {
-        runtime::run(self.filter.as_deref(), self.detail);
+        let files = load::load_test262(self.filter.as_deref());
+        self.run_tool("runtime", TEST262_PATH, &files, runtime::run);
     }
 
     /// Run the TypeScript baseline conformance suites against the `.symbols`, `.errors.txt`,
