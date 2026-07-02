@@ -307,6 +307,20 @@ fn test() {
         ("function foo() { this.eval('foo'); }", None, None, None),
         ("var obj = {foo: function() { this.eval('foo'); }}", None, None, None),
         ("var obj = {}; obj.foo = function() { this.eval('foo'); }", None, None, None),
+        // A function returned from an immediately-invoked function and assigned to a
+        // member is not bound to the global object, so `this.eval` is not indirect eval.
+        (
+            "obj.foo = (function() { return function() { this.eval('foo'); }; })()",
+            allow_indirect_with_false(),
+            None,
+            Some(PathBuf::from("foo.cjs")),
+        ),
+        (
+            "obj.foo = (() => function() { this.eval('foo'); })()",
+            allow_indirect_with_false(),
+            None,
+            Some(PathBuf::from("foo.cjs")),
+        ),
         ("() => { this.eval('foo') }", None, None, None), // { "ecmaVersion": 6, "sourceType": "module" },
         ("function f() { 'use strict'; () => { this.eval('foo') } }", None, None, None), // { "ecmaVersion": 6 },
         ("(function f() { 'use strict'; () => { this.eval('foo') } })", None, None, None), // { "ecmaVersion": 6 },
