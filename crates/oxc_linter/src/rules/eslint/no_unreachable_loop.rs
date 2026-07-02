@@ -215,31 +215,36 @@ fn has_next_iteration_path(
                     }
                 }
                 EdgeType::Jump => {
-                    let mut has_break = false;
+                    let mut has_abrupt_jump = false;
+                    let continue_can_complete =
+                        continue_can_complete_after_finalizer(source, ctx, unreachable);
                     for instruction in cfg.basic_block(source).instructions() {
                         match instruction.kind {
                             InstructionKind::Continue(LabeledInstruction::Unlabeled)
-                                if can_continue_loop_from(
-                                    source,
-                                    loop_id,
-                                    start,
-                                    ctx,
-                                    unreachable,
-                                ) =>
+                                if continue_can_complete
+                                    && can_continue_loop_from(
+                                        source,
+                                        loop_id,
+                                        start,
+                                        ctx,
+                                        unreachable,
+                                    ) =>
                             {
                                 return true;
                             }
                             InstructionKind::Continue(LabeledInstruction::Labeled)
-                                if can_continue_loop_from(
-                                    edge.target(),
-                                    loop_id,
-                                    start,
-                                    ctx,
-                                    unreachable,
-                                ) =>
+                                if continue_can_complete
+                                    && can_continue_loop_from(
+                                        edge.target(),
+                                        loop_id,
+                                        start,
+                                        ctx,
+                                        unreachable,
+                                    ) =>
                             {
                                 return true;
                             }
+                            InstructionKind::Continue(_) => has_abrupt_jump = true,
                             InstructionKind::Break(_)
                                 if reaches_next_iteration_target(
                                     edge.target(),
@@ -251,12 +256,12 @@ fn has_next_iteration_path(
                             {
                                 return true;
                             }
-                            InstructionKind::Break(_) => has_break = true,
+                            InstructionKind::Break(_) => has_abrupt_jump = true,
                             _ => {}
                         }
                     }
 
-                    if !has_break {
+                    if !has_abrupt_jump {
                         stack.push(edge.target());
                     }
                 }
@@ -269,10 +274,83 @@ fn has_next_iteration_path(
                 }
                 EdgeType::Unreachable
                 | EdgeType::NewFunction
-                | EdgeType::Finalize
                 | EdgeType::Join
                 | EdgeType::Error(ErrorEdgeKind::Implicit) => {}
+                EdgeType::Finalize => {
+                    if cfg
+                        .basic_block(source)
+                        .instructions()
+                        .iter()
+                        .any(|instruction| matches!(instruction.kind, InstructionKind::Continue(_)))
+                    {
+                        stack.push(edge.target());
+                    }
+                }
                 EdgeType::Error(ErrorEdgeKind::Explicit) => stack.push(edge.target()),
+            }
+        }
+    }
+
+    false
+}
+
+fn continue_can_complete_after_finalizer(
+    block_id: BlockNodeId,
+    ctx: &LintContext<'_>,
+    unreachable: Option<&[bool]>,
+) -> bool {
+    let cfg = ctx.cfg();
+    let graph = cfg.graph();
+    let mut finalizers = graph
+        .edges_directed(block_id, Direction::Outgoing)
+        .filter(|edge| matches!(edge.weight(), EdgeType::Finalize))
+        .map(|edge| edge.target())
+        .peekable();
+
+    if finalizers.peek().is_none() {
+        return true;
+    }
+
+    finalizers.any(|finalizer| finalizer_can_complete_without_override(finalizer, ctx, unreachable))
+}
+
+fn finalizer_can_complete_without_override(
+    start: BlockNodeId,
+    ctx: &LintContext<'_>,
+    unreachable: Option<&[bool]>,
+) -> bool {
+    let cfg = ctx.cfg();
+    let graph = cfg.graph();
+    let mut stack = vec![start];
+    let mut seen = vec![false; cfg.basic_blocks.len()];
+
+    while let Some(current) = stack.pop() {
+        if seen[current.index()] || is_unreachable_block(current, ctx, unreachable) {
+            continue;
+        }
+        seen[current.index()] = true;
+
+        if cfg.basic_block(current).instructions().iter().any(|instruction| {
+            matches!(
+                instruction.kind,
+                InstructionKind::Break(_)
+                    | InstructionKind::Continue(_)
+                    | InstructionKind::Return(_)
+                    | InstructionKind::Throw
+            )
+        }) {
+            continue;
+        }
+
+        for edge in graph.edges_directed(current, Direction::Outgoing) {
+            match edge.weight() {
+                EdgeType::Normal
+                | EdgeType::Jump
+                | EdgeType::Backedge
+                | EdgeType::Finalize
+                | EdgeType::Error(ErrorEdgeKind::Explicit) => stack.push(edge.target()),
+                EdgeType::Unreachable | EdgeType::Join => return true,
+                EdgeType::NewFunction | EdgeType::Error(ErrorEdgeKind::Implicit) => {}
             }
         }
     }
@@ -637,6 +715,7 @@ fn test() {
         ("while(true); while(true);", None).into(),
         ("while(true); while(true) break;", None).into(),
         ("while (true) {} while (foo) break;", None).into(),
+        ("while (a) { try { continue; } finally {} }", None).into(),
         (
             "while (a) break;",
             Some(serde_json::json!([{ "ignore": ["WhileStatement"] }])),
@@ -714,6 +793,8 @@ fn test() {
             .into(),
         ("do { break; } while (false)", None).into(),
         ("function foo() { do { return; } while (false) }", None).into(),
+        ("while (a) { try { continue; } finally { break; } }", None).into(),
+        ("function foo() { while (a) { try { continue; } finally { return; } } }", None).into(),
         (
             "while (a) break;",
             Some(serde_json::json!([{ "ignore": ["DoWhileStatement"] }])),

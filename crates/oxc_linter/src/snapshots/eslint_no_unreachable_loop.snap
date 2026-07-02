@@ -5835,6 +5835,20 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
    ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ while (a) { try { continue; } finally { break; } }
+   · ──────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:18]
+ 1 │ function foo() { while (a) { try { continue; } finally { return; } } }
+   ·                  ───────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
  1 │ while (a) break;
    · ────────────────
    ╰────
