@@ -3,8 +3,8 @@ mod esbuild;
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_minifier::{
-    CompressOptions, ManglePropertiesOptions, Minifier, MinifierOptions, PropertyMangleCache,
-    PropertyMangler,
+    CompressOptions, ManglePropertiesOptions, Minifier, MinifierOptions, PropertyMangleBailKind,
+    PropertyMangleCache, PropertyMangler,
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -280,6 +280,38 @@ fn eval_bails() {
 }
 
 #[test]
+fn bail_is_surfaced_through_minifier_return() {
+    // A bailing input (direct `eval`) disables property mangling for the whole file. The bail
+    // must be observable on `MinifierReturn` (kind + span) so callers can warn instead of
+    // silently shipping unmangled property names in a shared-cache build.
+    let alloc = Allocator::default();
+    let mut program = Parser::new(&alloc, "eval('x'); o._foo;", SourceType::mjs()).parse().program;
+    let options = MinifierOptions {
+        mangle: None,
+        compress: Some(CompressOptions::default()),
+        mangle_properties: Some(opts("^_")),
+    };
+    let bail = Minifier::new(options)
+        .minify(&alloc, &mut program)
+        .property_mangle_bail
+        .expect("a direct `eval` must surface a bail");
+    assert_eq!(bail.kind, PropertyMangleBailKind::DirectEval);
+    assert_eq!(bail.span.start, 0, "the bail span points at the `eval(...)` call");
+
+    // A non-bailing input reports `None`.
+    let mut clean = Parser::new(&alloc, "o._foo;", SourceType::mjs()).parse().program;
+    let options = MinifierOptions {
+        mangle: None,
+        compress: Some(CompressOptions::default()),
+        mangle_properties: Some(opts("^_")),
+    };
+    assert!(
+        Minifier::new(options).minify(&alloc, &mut clean).property_mangle_bail.is_none(),
+        "a clean program must not report a bail"
+    );
+}
+
+#[test]
 fn reserve_regex_carves_out() {
     // `mangle: ^_` plus `reserve: _keep$`: `_keep` stays, `_foo` -> `e`.
     let got = mangle_with_reserve("o._keep; o._foo;", "^_", "_keep$");
@@ -356,4 +388,177 @@ fn template_member_reserved_through_full_minify() {
         "globalThis.o[`_foo`]; globalThis.o._foo;",
         "^_",
     );
+}
+
+// ---------------------------------------------------------------------------
+// Apply-once semantics: the rename map must be applied at most ONCE per position.
+// A `Candidate` original name (e.g. `e`) may itself be handed out as another
+// candidate's new name, so a position that is un-quoted (or renamed via an
+// annotation) must never be re-visited and re-looked-up in the map.
+// ---------------------------------------------------------------------------
+
+/// PropertyMangler run mirroring the full `Minifier` ordering (collect ->
+/// rename_annotated_literals -> rewrite), but WITHOUT compress, so the two-pass
+/// annotated-literal handling is exercised deterministically.
+fn mangle_pipeline(src: &str, regex: &str, quoted: bool) -> String {
+    let alloc = Allocator::default();
+    let mut program = Parser::new(&alloc, src, SourceType::mjs()).parse().program;
+    let mut o = opts(regex);
+    o.mangle_quoted = quoted;
+    let mut m = PropertyMangler::new(o);
+    m.collect(&program);
+    m.rename_annotated_literals(&mut program, &alloc);
+    m.rewrite(&mut program, &alloc);
+    Codegen::new().build(&program).code
+}
+
+#[test]
+fn unquote_member_not_double_renamed() {
+    // `_a` -> `e` (un-quoted) and `e` -> `t`. Un-quoting `x['_a']` to `x.e` must NOT then
+    // re-look-up `e` in the map and turn it into `x.t`.
+    let got = mangle_quoted("x.e; x['_a'];", "^(_a|e)$");
+    let want = codegen("x.t; x.e;", SourceType::mjs());
+    assert_eq!(got, want, "\nexpect {want}\ngot {got}");
+}
+
+#[test]
+fn unquote_object_key_not_double_renamed() {
+    // Un-quoting `'_a'` (-> `e`) as an object key must not then rename the fresh `e` to `t`.
+    let got = mangle_quoted("({ e: 1, '_a': 2 });", "^(_a|e)$");
+    let want = codegen("({ t: 1, e: 2 });", SourceType::mjs());
+    assert_eq!(got, want, "\nexpect {want}\ngot {got}");
+}
+
+#[test]
+fn annotated_literal_not_double_renamed() {
+    // `rename_annotated_literals` renames `'_a'` (-> `e`) pre-compress; the later `rewrite`
+    // pass must NOT re-visit that span and rename the fresh `e` to `t`.
+    let got = mangle_pipeline("f(/* @__KEY__ */ '_a'); x.e;", "^(_a|e)$", false);
+    let want = codegen("f(/* @__KEY__ */ 'e'); x.t;", SourceType::mjs());
+    assert_eq!(got, want, "\nexpect {want}\ngot {got}");
+}
+
+#[test]
+fn unquote_avoids_reserved_nonmatching_member() {
+    // Only `_a` matches `^_`; the seen member `e` is a NON-matching property, so it is reserved
+    // program-wide. `_a` must mangle to `t` (avoiding the reserved `e`), and `x.e` stays `x.e`.
+    let got = mangle_quoted("x.e; x['_a'];", "^_");
+    let want = codegen("x.e; x.t;", SourceType::mjs());
+    assert_eq!(got, want, "\nexpect {want}\ngot {got}");
+}
+
+// ---------------------------------------------------------------------------
+// A TRAILING `/* @__KEY__ */` comment has `attached_to == 0` (trailing attachment is
+// never computed), so it must not falsely annotate a literal that happens to start at
+// offset 0.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn trailing_key_annotation_does_not_annotate_offset_zero() {
+    // The program-leading `'_x'` is at span.start == 0. A TRAILING `@__KEY__` (attached_to == 0)
+    // must NOT mark it as a property name: it stays a reserved quoted `in`-LHS string.
+    let src = "'_x' in o ? f() : g();\nh(); /* @__KEY__ */\nq();";
+    let got = mangle(src, "^_", SourceType::mjs());
+    assert!(got.contains("\"_x\" in o"), "`_x` must survive: {got}");
+    assert!(!got.contains("\"e\" in"), "`_x` must not be mangled: {got}");
+}
+
+#[test]
+fn leading_key_annotation_still_renames() {
+    // Control: a genuine LEADING `@__KEY__` still marks the string as a property name.
+    let got = mangle("f(/* @__KEY__ */ '_x');", "^_", SourceType::mjs());
+    assert!(got.contains("\"e\""), "annotated `_x` should mangle to `e`: {got}");
+    assert!(!got.contains("_x"), "{got}");
+}
+
+// ---------------------------------------------------------------------------
+// Numeric property keys: `obj['0']` / `obj[0]` / `{ 0: 1 }` all address the SAME
+// property, so a numeric-looking string must be reserved (never mangled), and a
+// numeric key/index must reserve its canonical JS string spelling.
+// ---------------------------------------------------------------------------
+
+/// Full `Minifier` (compress on) with `mangle_quoted` enabled.
+fn minify_with_props_quoted(src: &str, regex: &str) -> String {
+    let alloc = Allocator::default();
+    let mut program = Parser::new(&alloc, src, SourceType::mjs()).parse().program;
+    let mut o = opts(regex);
+    o.mangle_quoted = true;
+    let options = MinifierOptions {
+        mangle: None,
+        compress: Some(CompressOptions::default()),
+        mangle_properties: Some(o),
+    };
+    let ret = Minifier::new(options).minify(&alloc, &mut program);
+    Codegen::new().with_scoping(ret.scoping).build(&program).code
+}
+
+#[test]
+fn numeric_string_reserved_vs_numeric_index() {
+    // `x['0']` aliases `x[0]`, so `'0'` must be reserved even under `mangle_quoted`.
+    let got = mangle_quoted("x['0'] = 1; y = x[0];", "^0$");
+    let want = codegen("x['0'] = 1; y = x[0];", SourceType::mjs());
+    assert_eq!(got, want, "\nexpect {want}\ngot {got}");
+}
+
+#[test]
+fn numeric_in_operator_and_index_reserved() {
+    let got = mangle_quoted("'0' in x; y = x[0];", "^0$");
+    let want = codegen("'0' in x; y = x[0];", SourceType::mjs());
+    assert_eq!(got, want, "\nexpect {want}\ngot {got}");
+}
+
+#[test]
+fn numeric_key_uses_js_spelling() {
+    // `{ 1e21: 1 }` addresses property "1e+21" (JS ToString), so the quoted `x['1e+21']`
+    // aliases it and must be reserved; neither is mangled even with `.` (mangle everything).
+    let got = mangle_quoted("x = { 1e21: 1 }; y = x['1e+21'];", ".");
+    let want = codegen("x = { 1e21: 1 }; y = x['1e+21'];", SourceType::mjs());
+    assert_eq!(got, want, "\nexpect {want}\ngot {got}");
+}
+
+#[test]
+fn non_numeric_quoted_still_mangles() {
+    // Control: a normal (non-numeric) quoted key is still mangled under `mangle_quoted`.
+    let got = mangle_quoted("x['_a'];", "^_");
+    let want = codegen("x.e;", SourceType::mjs());
+    assert_eq!(got, want, "\nexpect {want}\ngot {got}");
+}
+
+#[test]
+fn numeric_reserved_through_full_minify() {
+    // Through the full pipeline (compress un-quotes accesses), the numeric alias `'0'`/`[0]`
+    // must stay reserved. `globalThis` keeps the reads observable so they survive DCE.
+    let got =
+        minify_with_props_quoted("'0' in globalThis.x; globalThis.y = globalThis.x[0];", "^0$");
+    assert!(!got.contains("\"e\""), "numeric `'0'` must not be mangled: {got}");
+    assert!(got.contains("\"0\" in"), "the `in`-LHS \"0\" must survive: {got}");
+    assert!(got.contains("[0]"), "numeric index must survive: {got}");
+}
+
+// ---------------------------------------------------------------------------
+// JSX member expressions (`<ns._comp/>`): the property is a props key, so the
+// collector must reserve it (esbuild-style), keeping the plain-JS `ns._comp` write
+// consistent with the JSX usage.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn jsx_member_expression_reserved() {
+    let st = SourceType::jsx();
+    let src = "ns._comp = X; export const a = <ns._comp/>;";
+    let got = mangle(src, "^_", st);
+    let want = codegen(src, st);
+    assert_eq!(got, want, "\nJSX member property must be reserved\nexpect {want}\ngot {got}");
+    assert!(got.contains("_comp"), "`_comp` must survive: {got}");
+}
+
+#[test]
+fn jsx_member_reserved_but_other_prop_mangles() {
+    let st = SourceType::jsx();
+    // `_comp` is reserved (JSX member) so its plain-JS write stays; the unrelated `_other`
+    // member is the only candidate and still mangles to `e`.
+    let src = "ns._comp = X; o._other; export const a = <ns._comp/>;";
+    let got = mangle(src, "^_", st);
+    assert!(got.contains("ns._comp = X"), "`_comp` write must be reserved: {got}");
+    assert!(!got.contains("_other"), "`_other` should be mangled: {got}");
+    assert!(got.contains("o.e"), "`_other` should mangle to `e`: {got}");
 }

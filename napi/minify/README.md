@@ -70,14 +70,15 @@ console.log(result.map);
 ## Property mangling
 
 `oxc-minify` can rename object property names (`obj.longName` → `obj.e`) to
-shrink output further. This is controlled by four options:
+shrink output further. This is controlled by five options:
 
-| Option          | Type                           | Meaning                                                                                                                             |
-| --------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `mangleProps`   | `string` (regex source)        | Only properties whose name matches this regular expression are renamed. **Setting this is what enables property mangling.**         |
-| `reserveProps`  | `string` (regex source)        | Properties whose name matches this regular expression are never renamed, even if they also match `mangleProps`.                     |
-| `reservedProps` | `string[]`                     | A literal list of property names that must never be renamed. Added to (never replaces) the built-in reserved set.                   |
-| `mangleCache`   | `Record<string, string⎮false>` | A name cache for stable names across builds. Pass it in and read it back off the result. A value of `false` reserves that property. |
+| Option          | Type                           | Meaning                                                                                                                                                                                                                                                             |
+| --------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mangleProps`   | `string` (regex source)        | Only properties whose name matches this regular expression are renamed. **Setting this is what enables property mangling.**                                                                                                                                         |
+| `reserveProps`  | `string` (regex source)        | Properties whose name matches this regular expression are never renamed, even if they also match `mangleProps`.                                                                                                                                                     |
+| `reservedProps` | `string[]`                     | A literal list of property names that must never be renamed. Added to (never replaces) the built-in reserved set.                                                                                                                                                   |
+| `mangleCache`   | `Record<string, string⎮false>` | A name cache for stable names across builds. Pass it in and read it back off the result. A value of `false` reserves that property.                                                                                                                                 |
+| `mangleQuoted`  | `boolean` (default `false`)    | Also mangle quoted property names (`obj["_x"]`, `{ "_x": 1 }`) that match `mangleProps`. While off (the default) a quoted occurrence instead **reserves** that name program-wide, so quoting is a way to opt a property out. Aligned with esbuild's `mangleQuoted`. |
 
 Both `mangleProps` and `reserveProps` take a regular expression **source
 string** (e.g. `"^_"`), not a `RegExp` object.
@@ -165,8 +166,6 @@ const b = minifySync("b.js", codeB, {
 - **Single self-contained program only.** Names are assigned per `minify` call.
   Without a shared `mangleCache`, names are **not** kept consistent across
   separate `minify` calls.
-- **No `mangleQuoted`.** Any property seen quoted (`obj["_x"]`, `{ "_x": 1 }`)
-  is reserved program-wide, so quoting a property is a way to opt it out.
 - **Small built-in reserved set, not the full DOM list.** Only a short protocol
   list is always reserved (`then`, `toJSON`, `toString`, `valueOf`, `length`,
   `name`, `message`, `constructor`, `prototype`, `__proto__`). This is **not**

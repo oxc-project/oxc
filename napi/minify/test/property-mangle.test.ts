@@ -76,4 +76,26 @@ describe("property mangling", () => {
     });
     expect(r.errors.length).toBe(1);
   });
+
+  it("rejects a mangleCache value that is not a valid identifier", () => {
+    // A cache value is written verbatim into an identifier position, so a non-identifier
+    // must be rejected up front: `a-b` would emit `x.a-b` (parses as `x.a - b`), and
+    // `""` / `a b` are outright invalid syntax.
+    for (const bad of ["a-b", "", "a b"]) {
+      const r = minifySync("t.js", "x._foo", {
+        mangleProps: "^_",
+        mangleCache: { _foo: bad },
+      });
+      expect(r.errors.length).toBe(1);
+    }
+  });
+
+  it("warns (does not silently skip) when property mangling bails on the whole file", () => {
+    // A direct `eval` disables property mangling program-wide. The N-API must surface a
+    // warning so a shared-cache multi-file build does not silently ship mismatched names.
+    const r = minifySync("t.js", "eval('x'); o._foo;", { mangleProps: "^_" });
+    expect(r.errors.some((e) => e.severity === "Warning")).toBe(true);
+    // The property was left unmangled.
+    expect(r.code).toContain("_foo");
+  });
 });

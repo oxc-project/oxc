@@ -32,6 +32,7 @@ oxc_parser = { workspace = true }
 oxc_sourcemap = { workspace = true, features = ["napi"] }
 oxc_span = { workspace = true }
 oxc_str = { workspace = true }
+oxc_syntax = { workspace = true }
 
 lazy-regex = { workspace = true }
 napi = { workspace = true }
