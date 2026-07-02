@@ -10914,15 +10914,10 @@
     },
     "ForbidItemObject": {
       "type": "object",
-      "required": [
-        "allowedFor",
-        "allowedForPatterns",
-        "disallowedFor",
-        "disallowedForPatterns"
-      ],
       "properties": {
         "allowedFor": {
           "description": "Component names for which this prop is **allowed** (all others are\nforbidden).",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10931,6 +10926,7 @@
         },
         "allowedForPatterns": {
           "description": "Glob patterns for component names where the prop is **allowed**.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10939,6 +10935,7 @@
         },
         "disallowedFor": {
           "description": "Component names for which this prop is **disallowed** (all others are\nallowed).",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10947,6 +10944,7 @@
         },
         "disallowedForPatterns": {
           "description": "Glob patterns for component names where the prop is **disallowed**.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"

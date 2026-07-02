@@ -4373,20 +4373,20 @@ export interface ForbidItemObject {
    * Component names for which this prop is **allowed** (all others are
    * forbidden).
    */
-  allowedFor: string[];
+  allowedFor?: string[];
   /**
    * Glob patterns for component names where the prop is **allowed**.
    */
-  allowedForPatterns: string[];
+  allowedForPatterns?: string[];
   /**
    * Component names for which this prop is **disallowed** (all others are
    * allowed).
    */
-  disallowedFor: string[];
+  disallowedFor?: string[];
   /**
    * Glob patterns for component names where the prop is **disallowed**.
    */
-  disallowedForPatterns: string[];
+  disallowedForPatterns?: string[];
   /**
    * Custom message to display.
    */
