@@ -33,8 +33,10 @@ fn bench_minifier(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Strip TypeScript / lower to esnext in setup — the minifier only runs on esnext
-                // JS — so the measured block is the full `Minifier::minify` pipeline (compress +
-                // variable mangle + property mangle).
+                // JS — so the measured block is the full `Minifier::minify` pipeline: the internal
+                // `SemanticBuilder` pass, compress, and the property-mangling collect/rewrite
+                // passes. Variable mangling is deliberately off (`mangle: None`); it is measured
+                // separately by the `bench_mangler` group below.
                 let mut program = transform_to_js(&allocator, source_text, source_type, path);
                 let options = MinifierOptions {
                     compress: Some(CompressOptions::smallest()),

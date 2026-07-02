@@ -65,7 +65,10 @@ use oxc_syntax::class::ClassId;
 use rustc_hash::FxHashMap;
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
-pub use property::{CacheValue, ManglePropertiesOptions, PropertyMangleCache, PropertyMangler};
+pub use property::{
+    CacheValue, ManglePropertiesOptions, PropertyMangleBail, PropertyMangleBailKind,
+    PropertyMangleCache, PropertyMangler,
+};
 
 pub(crate) use crate::generated::traverse::Traverse;
 #[doc(hidden)]
@@ -102,6 +105,12 @@ pub struct MinifierReturn {
     /// `None` unless property mangling ran.
     pub property_mappings: Option<PropertyMangleCache>,
 
+    /// Set when property mangling bailed out for the whole program (a `with` statement,
+    /// a direct `eval`, or the `Function` constructor was found), meaning **no** property
+    /// name was renamed. Carries the reason and the triggering span so callers can warn.
+    /// `None` when property mangling did not run or found no hazard.
+    pub property_mangle_bail: Option<PropertyMangleBail>,
+
     /// Total number of iterations ran. Useful for debugging performance issues.
     pub iterations: u8,
 }
@@ -119,6 +128,9 @@ impl<'a> Minifier {
         self.build(false, allocator, program)
     }
 
+    /// Dead-code-elimination-only mode. `dce` only swaps in the DCE compress options; the
+    /// opt-in manglers (variable mangling and property mangling) still run when their options
+    /// are set, exactly as in [`Self::minify`].
     pub fn dce(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
         self.build(true, allocator, program)
     }
@@ -177,9 +189,19 @@ impl<'a> Minifier {
             })
             .map_or((None, None), |(scoping, mappings)| (Some(scoping), Some(mappings)));
 
+        // Capture the whole-program bail (if any) before `rewrite` consumes the mangler, so a
+        // caller can surface a diagnostic even though `rewrite` silently returns the cache
+        // unchanged on bail.
+        let property_mangle_bail = prop_mangler.as_ref().and_then(PropertyMangler::bail);
         // Rewrite property names in place AFTER variable mangling, returning the updated cache.
         let property_mappings = prop_mangler.map(|mangler| mangler.rewrite(program, allocator));
 
-        MinifierReturn { scoping, class_private_mappings, property_mappings, iterations }
+        MinifierReturn {
+            scoping,
+            class_private_mappings,
+            property_mappings,
+            property_mangle_bail,
+            iterations,
+        }
     }
 }

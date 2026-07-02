@@ -24,7 +24,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_minifier::{CacheValue, Minifier};
+use oxc_minifier::{CacheValue, Minifier, PropertyMangleBail, PropertyMangleBailKind};
 use oxc_napi::OxcError;
 use oxc_parser::Parser;
 use oxc_sourcemap::napi::SourceMap;
@@ -82,6 +82,9 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
 
     let minifier_ret = Minifier::new(minifier_options).minify(&allocator, &mut program);
     let scoping = minifier_ret.scoping;
+    // When property mangling bailed for the whole file, no property name was renamed; surface a
+    // warning so a shared-cache multi-file build does not silently ship mismatched names.
+    let property_mangle_bail = minifier_ret.property_mangle_bail;
     let mangle_cache = minifier_ret.property_mappings.map(|cache| {
         cache
             .map
@@ -124,13 +127,33 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
     let legal_comments =
         ret.legal_comments.iter().map(|c| c.span.source_text(source_text).to_string()).collect();
 
+    // Report parser diagnostics plus a property-mangling bail warning (if any).
+    let mut diagnostics = parser_ret.diagnostics;
+    if let Some(bail) = property_mangle_bail {
+        diagnostics.push(property_mangle_bail_warning(bail));
+    }
+
     MinifyResult {
         code: ret.code,
         map: ret.map.map(oxc_sourcemap::napi::SourceMap::from),
-        errors: OxcError::from_diagnostics(filename, source_text, parser_ret.diagnostics),
+        errors: OxcError::from_diagnostics(filename, source_text, diagnostics),
         legal_comments,
         mangle_cache,
     }
+}
+
+/// Build a warning diagnostic for a whole-file property-mangling bail.
+fn property_mangle_bail_warning(bail: PropertyMangleBail) -> OxcDiagnostic {
+    let reason = match bail.kind {
+        PropertyMangleBailKind::With => "a `with` statement",
+        PropertyMangleBailKind::DirectEval => "a direct `eval(...)` call",
+        PropertyMangleBailKind::FunctionConstructor => "the `Function` constructor",
+    };
+    OxcDiagnostic::warn(format!(
+        "Property mangling was skipped for the whole file because it contains {reason}, \
+         which can reference property names dynamically."
+    ))
+    .with_label(bail.span)
 }
 
 /// Minify synchronously.

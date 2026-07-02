@@ -5,6 +5,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_compat::EngineTargets;
 use oxc_minifier::{CacheValue, ManglePropertiesOptions, PropertyMangleCache};
 use oxc_str::CompactStr;
+use oxc_syntax::identifier::is_identifier_name;
 
 #[napi(object)]
 pub struct TreeShakeOptions {
@@ -464,6 +465,15 @@ fn build_mangle_properties(o: &MinifyOptions) -> Result<Option<ManglePropertiesO
                 Either::A(s) => {
                     if s == "__proto__" {
                         return Err("mangleCache values must not be `__proto__`".into());
+                    }
+                    // The value is written verbatim into an identifier position, so it must be a
+                    // valid `IdentifierName` (keywords are fine — they are legal property keys and
+                    // after `.`). Anything else (`a-b`, `""`, `a b`) would silently corrupt the
+                    // output or produce invalid syntax.
+                    if !is_identifier_name(s) {
+                        return Err(format!(
+                            "mangleCache values must be valid identifier names, got `{s}`"
+                        ));
                     }
                     CacheValue::Name(CompactStr::from(s.as_str()))
                 }

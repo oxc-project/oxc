@@ -119,8 +119,10 @@ pub fn run() -> Result<(), io::Error> {
 
     let save_path = Path::new("./target/minifier").join(marker);
 
+    // Main table: the default minify pipeline (property mangling OFF), so the Oxc columns stay
+    // directly comparable to the ESBuild `targets`/`gzip_targets` and to pre-existing history.
     for file in files.files() {
-        let (minified, iterations) = minify_twice(file, options);
+        let (minified, iterations) = minify_twice(file, options, false);
 
         fs::create_dir_all(&save_path).unwrap();
         fs::write(save_path.join(&file.file_name), &minified).unwrap();
@@ -139,6 +141,44 @@ pub fn run() -> Result<(), io::Error> {
         out.push_str(&s);
     }
 
+    // Secondary table: the same corpus minified with opt-in property mangling (`^_`, mangleQuoted).
+    // This keeps the property mangler exercised over real-world code (it has surfaced real bugs)
+    // while keeping it out of the ESBuild comparison above (no comparable ESBuild targets exist).
+    // Skipped in `--compress-only` mode, where mangling is disabled and the snapshot is not written.
+    if !options.compress_only {
+        out.push_str("\nwith property mangling (`^_`, mangleQuoted)\n");
+        writeln!(out, "{:width$} | {:width$} | {:width$} |", "", "Oxc", "Oxc", width = width)
+            .unwrap();
+        writeln!(
+            out,
+            "{:width$} | {:width$} | {:width$} | {:width$} | {:width$}",
+            "Original",
+            "minified",
+            "gzip",
+            "Iterations",
+            "File",
+            width = width,
+        )
+        .unwrap();
+        out.push_str(&str::repeat("-", width * 4 + fixture_width + 12));
+        out.push('\n');
+
+        for file in files.files() {
+            let (minified, iterations) = minify_twice(file, options, true);
+
+            let s = format!(
+                "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} \n\n",
+                format_size(file.source_text.len(), DECIMAL),
+                format_size(minified.len(), DECIMAL),
+                format_size(gzip_size(&minified), DECIMAL),
+                iterations,
+                &file.file_name,
+                width = width
+            );
+            out.push_str(&s);
+        }
+    }
+
     println!("{out}");
 
     if !options.compress_only {
@@ -149,9 +189,9 @@ pub fn run() -> Result<(), io::Error> {
     Ok(())
 }
 
-fn minify_twice(file: &TestFile, options: Options) -> (String, u8) {
+fn minify_twice(file: &TestFile, options: Options, enable_props: bool) -> (String, u8) {
     let source_type = SourceType::cjs().with_script(true);
-    let (code1, iterations) = minify(&file.source_text, source_type, options, true);
+    let (code1, iterations) = minify(&file.source_text, source_type, options, enable_props);
     // The second pass checks minification is a fixed point. Property mangling is intentionally
     // NOT re-applied here: re-minifying already-mangled output is not a real workflow, and oxc's
     // compress un-quotes formerly-quoted keys between passes. Pass 1's mangled property names are

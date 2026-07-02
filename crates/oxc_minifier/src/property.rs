@@ -12,9 +12,9 @@ use oxc_allocator::{Allocator, TakeIn};
 use oxc_ast::{
     ast::{
         AssignmentTargetPropertyIdentifier, AssignmentTargetPropertyProperty, BinaryExpression,
-        BinaryOperator, CallExpression, Comment, ComputedMemberExpression, Expression,
-        IdentifierName, JSXAttributeName, NewExpression, Program, PropertyKey,
-        StaticMemberExpression, StringLiteral, TemplateLiteral, WithStatement,
+        BinaryOperator, CallExpression, Comment, CommentPosition, ComputedMemberExpression,
+        Expression, IdentifierName, JSXAttributeName, JSXMemberExpression, NewExpression, Program,
+        PropertyKey, StaticMemberExpression, StringLiteral, TemplateLiteral, WithStatement,
     },
     builder::AstBuilder,
 };
@@ -23,13 +23,17 @@ use oxc_ast_visit::{
     walk::{
         walk_assignment_target_property_identifier, walk_assignment_target_property_property,
         walk_binary_expression, walk_call_expression, walk_computed_member_expression,
-        walk_jsx_attribute_name, walk_new_expression, walk_property_key,
-        walk_static_member_expression, walk_template_literal, walk_with_statement,
+        walk_jsx_attribute_name, walk_jsx_member_expression, walk_new_expression,
+        walk_property_key, walk_static_member_expression, walk_template_literal,
+        walk_with_statement,
     },
     walk_mut,
 };
+use oxc_ecmascript::StringToNumber;
 use oxc_mangler::base54;
+use oxc_span::Span;
 use oxc_str::{CompactStr, Ident, Str};
+use oxc_syntax::number::ToJsString;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 /// Property names that are always reserved regardless of the user's regex.
@@ -70,9 +74,19 @@ pub struct PropertyMangleCache {
 }
 
 /// A cached decision for a property name.
+///
+/// # Contract
+///
+/// A [`CacheValue::Name`] is written verbatim into identifier positions (member accesses,
+/// object/class keys) by the rewrite pass, so it **must** be a valid ECMAScript
+/// `IdentifierName`. This engine does **not** validate cache values it is handed — callers
+/// that populate the cache from untrusted input (e.g. the N-API `mangleCache` option) are
+/// responsible for rejecting non-identifier names first. Names the engine generates itself
+/// (via `base54`) are always valid, so a cache built solely by prior runs is always sound.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum CacheValue {
-    /// The name was mangled to this new name.
+    /// The name was mangled to this new name. Must be a valid `IdentifierName` (see the
+    /// type-level contract; not validated here).
     Name(CompactStr),
     /// The name is reserved and must never be mangled.
     Reserved,
@@ -81,6 +95,31 @@ pub enum CacheValue {
 /// Whether `name` is always reserved, regardless of the user's regex.
 fn is_always_reserved(name: &str) -> bool {
     matches!(name, "__proto__" | "constructor" | "prototype") || PROTOCOL_DENYLIST.contains(&name)
+}
+
+/// The canonical JS string form of a number used as a property key.
+///
+/// `ToPropertyKey` coerces a numeric key/index with `ToString`, so `{ 1e21: 1 }`, `obj[1e21]`
+/// and `obj['1e+21']` all address the property named `"1e+21"`. Rust's `f64::to_string`
+/// (`Display`) is NOT JS `ToString` — it spells `1e21` as `1000000000000000000000` — so use
+/// the ECMAScript number-to-string algorithm.
+fn numeric_key_string(value: f64) -> String {
+    if value == 0.0 { "0".to_string() } else { value.to_js_string() }
+}
+
+/// Whether `name` is the canonical JS string form of some number, i.e. `ToString(ToNumber(name))
+/// == name`. Such a string aliases a numeric key/index (`obj['0']` <-> `obj[0]`, `obj['1e+21']`
+/// <-> `obj[1e21]`), so it must never be mangled — a numeric-literal access elsewhere would no
+/// longer resolve to the renamed property. Mirrors esbuild, which reserves every numeric-looking
+/// property string.
+fn is_canonical_numeric_string(name: &str) -> bool {
+    let value = name.string_to_number();
+    if value.is_nan() {
+        // Only the literal "NaN" round-trips to the string "NaN"; anything else that parses to
+        // NaN (e.g. "abc") is not a numeric spelling.
+        return name == "NaN";
+    }
+    numeric_key_string(value) == name
 }
 
 /// Whether `comment`'s text is exactly a `/* @__KEY__ */` or `/* #__KEY__ */` annotation.
@@ -99,11 +138,18 @@ fn is_key_annotation(comment: &Comment, source_text: &str) -> bool {
 /// which for an annotated literal is exactly that literal's `span.start`. So the set
 /// of `attached_to` offsets of all key-annotation comments is the set of annotated
 /// literal spans.
+///
+/// Only **leading** comments are considered: trailing comment attachment is never computed,
+/// so a trailing `/* @__KEY__ */` has `attached_to == 0` and would otherwise falsely annotate
+/// whatever literal begins the program.
 fn key_annotated_spans(program: &Program) -> FxHashSet<u32> {
     program
         .comments
         .iter()
-        .filter(|comment| is_key_annotation(comment, program.source_text))
+        .filter(|comment| {
+            comment.position == CommentPosition::Leading
+                && is_key_annotation(comment, program.source_text)
+        })
         .map(|comment| comment.attached_to)
         .collect()
 }
@@ -114,6 +160,7 @@ fn eligible(opts: &ManglePropertiesOptions, name: &str) -> bool {
         && !opts.reserve.as_ref().is_some_and(|re| re.is_match(name))
         && !opts.reserved.contains(name)
         && !is_always_reserved(name)
+        && !is_canonical_numeric_string(name)
 }
 
 /// Assign final mangled names.
@@ -224,19 +271,46 @@ pub enum Class {
     Reserved,
 }
 
+/// What made the whole program bail out of property mangling.
+///
+/// Each of these can reference property names dynamically (by string), so mangling any
+/// property becomes unsafe program-wide.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PropertyMangleBailKind {
+    /// A `with (obj) { ... }` statement.
+    With,
+    /// A direct `eval(...)` call.
+    DirectEval,
+    /// The `Function` constructor (`Function(...)` or `new Function(...)`).
+    FunctionConstructor,
+}
+
+/// A whole-program bail: property mangling was disabled and no name was renamed.
+///
+/// Carries the node that triggered the bail so callers can surface an actionable
+/// diagnostic. The **first** trigger encountered during collect wins.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PropertyMangleBail {
+    /// Which construct forced the bail.
+    pub kind: PropertyMangleBailKind,
+    /// Span of the triggering node.
+    pub span: Span,
+}
+
 /// The result of the read-only collect pass over the original (pre-compress) program.
 ///
 /// `names` classifies every distinct property name seen exactly once (see [`Class`]).
 /// Folding the candidate/reserved split into one map keeps the per-occurrence hot path
 /// to a single hash lookup (a property name repeats many times in a real bundle), instead
-/// of probing two separate sets. `bail` is set when the program contains `with` or a direct
+/// of probing two separate sets. `bail` is `Some` when the program contains `with` or a direct
 /// `eval` / `Function` constructor, which makes property mangling unsafe for the whole program.
 #[derive(Default)]
 pub struct PropertyCollectState {
     /// Every distinct property name, classified once. `Reserved` wins over `Candidate`.
     pub names: FxHashMap<CompactStr, Class>,
-    /// `with` or direct `eval` / `Function` present anywhere => disable mangling.
-    pub bail: bool,
+    /// `with` or direct `eval` / `Function` present anywhere => disable mangling. Holds the
+    /// first trigger (kind + span) so the reason can be reported; `None` means no bail.
+    pub bail: Option<PropertyMangleBail>,
 }
 
 #[cfg(test)]
@@ -292,6 +366,14 @@ impl<'o> PropertyCollector<'o> {
         }
     }
 
+    /// Record a whole-program bail. The first trigger wins, so a later hazard never
+    /// overwrites the reported reason/span.
+    fn bail(&mut self, kind: PropertyMangleBailKind, span: Span) {
+        if self.state.bail.is_none() {
+            self.state.bail = Some(PropertyMangleBail { kind, span });
+        }
+    }
+
     /// Reserve a name program-wide, regardless of `mangle_quoted`.
     fn reserve(&mut self, name: &str) {
         // `Reserved` wins: overwrite an existing `Candidate` (downgrade) or `Reserved` (no-op)
@@ -336,6 +418,10 @@ impl<'o> PropertyCollector<'o> {
                     self.classify_key_expression(last);
                 }
             }
+            // A numeric computed index (`x[0]`, `x[1e21]`) addresses the property whose name is
+            // the number's JS string form; reserve that spelling so a quoted `x['0']` / `x['1e+21']`
+            // sibling stays aligned with it.
+            Expression::NumericLiteral(lit) => self.reserve(&numeric_key_string(lit.value)),
             _ => {}
         }
     }
@@ -352,7 +438,7 @@ impl<'o> PropertyCollector<'o> {
     fn classify_property_key(&mut self, key: &PropertyKey<'_>) {
         match key {
             PropertyKey::StaticIdentifier(ident) => self.candidate(ident.name.as_str()),
-            PropertyKey::NumericLiteral(lit) => self.reserve(&lit.value.to_string()),
+            PropertyKey::NumericLiteral(lit) => self.reserve(&numeric_key_string(lit.value)),
             PropertyKey::PrivateIdentifier(_) => {}
             // A bare string key, or a wrapped computed key (sequence / conditional). Both are
             // classified through the key-expression recursion, which handles the string
@@ -413,6 +499,14 @@ impl<'a> Visit<'a> for PropertyCollector<'_> {
         walk_jsx_attribute_name(self, it);
     }
 
+    fn visit_jsx_member_expression(&mut self, it: &JSXMemberExpression<'a>) {
+        // `<ns._comp/>` uses `_comp` as a member of the element name; reserve it (esbuild does the
+        // same) so a plain-JS `ns._comp` access is not mangled out of alignment. JSX members are
+        // never renamed, only reserved.
+        self.reserve(it.property.name.as_str());
+        walk_jsx_member_expression(self, it);
+    }
+
     fn visit_binary_expression(&mut self, it: &BinaryExpression<'a>) {
         // `'foo' in obj`, plus the wrapped forms `(y ? '_a' : z) in obj` / `(y, '_a') in obj`.
         if it.operator == BinaryOperator::In {
@@ -422,15 +516,17 @@ impl<'a> Visit<'a> for PropertyCollector<'_> {
     }
 
     fn visit_with_statement(&mut self, it: &WithStatement<'a>) {
-        self.state.bail = true;
+        self.bail(PropertyMangleBailKind::With, it.span);
         walk_with_statement(self, it);
     }
 
     fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
-        if let Expression::Identifier(ident) = &it.callee
-            && matches!(ident.name.as_str(), "eval" | "Function")
-        {
-            self.state.bail = true;
+        if let Expression::Identifier(ident) = &it.callee {
+            match ident.name.as_str() {
+                "eval" => self.bail(PropertyMangleBailKind::DirectEval, it.span),
+                "Function" => self.bail(PropertyMangleBailKind::FunctionConstructor, it.span),
+                _ => {}
+            }
         }
         walk_call_expression(self, it);
     }
@@ -439,7 +535,7 @@ impl<'a> Visit<'a> for PropertyCollector<'_> {
         if let Expression::Identifier(ident) = &it.callee
             && ident.name.as_str() == "Function"
         {
-            self.state.bail = true;
+            self.bail(PropertyMangleBailKind::FunctionConstructor, it.span);
         }
         walk_new_expression(self, it);
     }
@@ -618,6 +714,13 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
                 &self.ast,
             );
             *it = Expression::StaticMemberExpression(new_member);
+            // Apply-once: the fresh property identifier must never be re-looked-up in `map`
+            // (a `Candidate` original like `e` can be another candidate's NEW name). Visit only
+            // the object subtree instead of re-dispatching the walk on the replacement.
+            if let Expression::StaticMemberExpression(new_member) = it {
+                self.visit_expression(&mut new_member.object);
+            }
+            return;
         }
         walk_mut::walk_expression(self, it);
     }
@@ -641,49 +744,52 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     }
 
     fn visit_object_property(&mut self, it: &mut oxc_ast::ast::ObjectProperty<'a>) {
+        // Apply-once: walk children FIRST (which renames a real `StaticIdentifier` key and the
+        // value), THEN un-quote the string key. Un-quoting produces a fresh identifier whose name
+        // may itself be another candidate's original; re-visiting it would rename it a second time.
         // A shorthand string key cannot exist, so un-quoting the key is always safe.
+        walk_mut::walk_object_property(self, it);
         if !self.rename_annotated_only && self.mangle_quoted {
             self.rewrite_key_position(&mut it.key, &mut it.computed);
         }
-        walk_mut::walk_object_property(self, it);
     }
 
     fn visit_property_definition(&mut self, it: &mut oxc_ast::ast::PropertyDefinition<'a>) {
+        walk_mut::walk_property_definition(self, it);
         if !self.rename_annotated_only && self.mangle_quoted {
             self.rewrite_key_position(&mut it.key, &mut it.computed);
         }
-        walk_mut::walk_property_definition(self, it);
     }
 
     fn visit_accessor_property(&mut self, it: &mut oxc_ast::ast::AccessorProperty<'a>) {
+        walk_mut::walk_accessor_property(self, it);
         if !self.rename_annotated_only && self.mangle_quoted {
             self.rewrite_key_position(&mut it.key, &mut it.computed);
         }
-        walk_mut::walk_accessor_property(self, it);
     }
 
     fn visit_method_definition(&mut self, it: &mut oxc_ast::ast::MethodDefinition<'a>) {
+        walk_mut::walk_method_definition(self, it);
         if !self.rename_annotated_only && self.mangle_quoted {
             self.rewrite_key_position(&mut it.key, &mut it.computed);
         }
-        walk_mut::walk_method_definition(self, it);
     }
 
     fn visit_binding_property(&mut self, it: &mut oxc_ast::ast::BindingProperty<'a>) {
+        walk_mut::walk_binding_property(self, it);
         if !self.rename_annotated_only && self.mangle_quoted {
             self.rewrite_key_position(&mut it.key, &mut it.computed);
         }
-        walk_mut::walk_binding_property(self, it);
     }
 
     fn visit_assignment_target_property_property(
         &mut self,
         it: &mut AssignmentTargetPropertyProperty<'a>,
     ) {
+        walk_mut::walk_assignment_target_property_property(self, it);
         if !self.rename_annotated_only && self.mangle_quoted {
             self.rewrite_key_position(&mut it.name, &mut it.computed);
         }
-        walk_mut::walk_assignment_target_property_property(self, it);
     }
 
     fn visit_binary_expression(&mut self, it: &mut BinaryExpression<'a>) {
@@ -766,6 +872,16 @@ impl PropertyMangler {
         }
     }
 
+    /// The whole-program bail recorded during [`Self::collect`], if any.
+    ///
+    /// `Some` means property mangling was disabled for the entire program (a `with`
+    /// statement, a direct `eval`, or the `Function` constructor was found) and no name
+    /// was renamed; the [`PropertyMangleBail`] carries the reason and the triggering span.
+    /// Read this after `collect` to surface a diagnostic.
+    pub fn bail(&self) -> Option<PropertyMangleBail> {
+        self.state.bail
+    }
+
     /// Run the read-only collect pass over the **original** (pre-compress) program.
     ///
     /// Call this before compress un-quotes any keys, so the reserved set captures the
@@ -783,14 +899,16 @@ impl PropertyMangler {
     /// quasi — after which the annotated string node no longer exists to rewrite. Renaming an
     /// annotated literal's value in place is position-independent and safe to do this early.
     ///
-    /// Does nothing when collect bailed or nothing is mangled. Idempotent w.r.t. `rewrite`:
-    /// the renamed literals now hold the new name, which is not a key in `map`.
+    /// Does nothing when collect bailed or nothing is mangled. After renaming, the annotated
+    /// spans are dropped from `key_annotated` so the later `rewrite` pass leaves the (already
+    /// renamed) literals untouched: a renamed value can itself be an old-name key in `map`, so
+    /// re-checking the span there would rename it a second time.
     pub fn rename_annotated_literals<'a>(
         &mut self,
         program: &mut Program<'a>,
         allocator: &'a Allocator,
     ) {
-        if self.state.bail || self.key_annotated.is_empty() {
+        if self.state.bail.is_some() || self.key_annotated.is_empty() {
             return;
         }
         let map = assign(&self.state.names, &mut self.opts.cache);
@@ -798,14 +916,22 @@ impl PropertyMangler {
             self.map = Some(map);
             return;
         }
-        let mut rewriter = PropertyRewriter {
-            map: &map,
-            mangle_quoted: self.opts.mangle_quoted,
-            key_annotated: &self.key_annotated,
-            rename_annotated_only: true,
-            ast: AstBuilder::new(allocator),
-        };
-        rewriter.visit_program(program);
+        {
+            let mut rewriter = PropertyRewriter {
+                map: &map,
+                mangle_quoted: self.opts.mangle_quoted,
+                key_annotated: &self.key_annotated,
+                rename_annotated_only: true,
+                ast: AstBuilder::new(allocator),
+            };
+            rewriter.visit_program(program);
+        }
+        // Every annotated literal with a mapping has now been renamed in place, so its value
+        // holds a NEW name — which may itself be an old-name key in `map`. The later `rewrite`
+        // pass must not revisit these spans (that would rename them a second time), so drop
+        // them. The direct collect+rewrite API never calls this method, so it keeps
+        // `key_annotated` intact and renames each annotated literal exactly once there.
+        self.key_annotated.clear();
         self.map = Some(map);
     }
 
@@ -819,7 +945,7 @@ impl PropertyMangler {
         program: &mut Program<'a>,
         allocator: &'a Allocator,
     ) -> PropertyMangleCache {
-        if self.state.bail {
+        if self.state.bail.is_some() {
             return self.opts.cache;
         }
         // `map` is already assigned if `rename_annotated_literals` ran; otherwise assign now.
@@ -977,14 +1103,16 @@ mod tests {
         assert!(s.is_reserved("_y")); // quoted member (mangle_quoted off)
         assert!(s.is_candidate("_z")); // identifier key matching regex
         assert!(s.is_reserved("q")); // identifier key not matching => reserved
-        assert!(!s.bail);
+        assert!(s.bail.is_none());
     }
 
     #[test]
     fn collect_bails_on_with_and_eval() {
         let alloc = oxc_allocator::Allocator::default();
-        assert!(collect_src(&alloc, &opts("^_"), "with (o) { a._x }").bail);
-        assert!(collect_src(&alloc, &opts("^_"), "eval('a._x')").bail);
+        let with = collect_src(&alloc, &opts("^_"), "with (o) { a._x }").bail;
+        assert_eq!(with.map(|b| b.kind), Some(PropertyMangleBailKind::With));
+        let eval = collect_src(&alloc, &opts("^_"), "eval('a._x')").bail;
+        assert_eq!(eval.map(|b| b.kind), Some(PropertyMangleBailKind::DirectEval));
     }
 
     #[test]
