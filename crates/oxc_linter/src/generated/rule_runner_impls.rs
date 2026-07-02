@@ -4518,6 +4518,12 @@ impl RuleRunner for crate::rules::promise::no_multiple_resolved::NoMultipleResol
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::promise::no_native::NoNative {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::IdentifierReference]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::promise::no_nesting::NoNesting {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));

@@ -748,6 +748,7 @@ pub(crate) mod promise {
     pub mod catch_or_return;
     pub mod no_callback_in_promise;
     pub mod no_multiple_resolved;
+    pub mod no_native;
     pub mod no_nesting;
     pub mod no_new_statics;
     pub mod no_promise_in_callback;

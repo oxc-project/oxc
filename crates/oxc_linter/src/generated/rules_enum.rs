@@ -406,6 +406,7 @@ pub use crate::rules::promise::avoid_new::AvoidNew as PromiseAvoidNew;
 pub use crate::rules::promise::catch_or_return::CatchOrReturn as PromiseCatchOrReturn;
 pub use crate::rules::promise::no_callback_in_promise::NoCallbackInPromise as PromiseNoCallbackInPromise;
 pub use crate::rules::promise::no_multiple_resolved::NoMultipleResolved as PromiseNoMultipleResolved;
+pub use crate::rules::promise::no_native::NoNative as PromiseNoNative;
 pub use crate::rules::promise::no_nesting::NoNesting as PromiseNoNesting;
 pub use crate::rules::promise::no_new_statics::NoNewStatics as PromiseNoNewStatics;
 pub use crate::rules::promise::no_promise_in_callback::NoPromiseInCallback as PromiseNoPromiseInCallback;
@@ -1564,6 +1565,7 @@ pub enum RuleEnum {
     PromiseCatchOrReturn(PromiseCatchOrReturn),
     PromiseNoCallbackInPromise(PromiseNoCallbackInPromise),
     PromiseNoMultipleResolved(PromiseNoMultipleResolved),
+    PromiseNoNative(PromiseNoNative),
     PromiseNoNesting(PromiseNoNesting),
     PromiseNoNewStatics(PromiseNoNewStatics),
     PromiseNoPromiseInCallback(PromiseNoPromiseInCallback),
@@ -2498,7 +2500,8 @@ const PROMISE_AVOID_NEW_ID: usize = PROMISE_ALWAYS_RETURN_ID + 1usize;
 const PROMISE_CATCH_OR_RETURN_ID: usize = PROMISE_AVOID_NEW_ID + 1usize;
 const PROMISE_NO_CALLBACK_IN_PROMISE_ID: usize = PROMISE_CATCH_OR_RETURN_ID + 1usize;
 const PROMISE_NO_MULTIPLE_RESOLVED_ID: usize = PROMISE_NO_CALLBACK_IN_PROMISE_ID + 1usize;
-const PROMISE_NO_NESTING_ID: usize = PROMISE_NO_MULTIPLE_RESOLVED_ID + 1usize;
+const PROMISE_NO_NATIVE_ID: usize = PROMISE_NO_MULTIPLE_RESOLVED_ID + 1usize;
+const PROMISE_NO_NESTING_ID: usize = PROMISE_NO_NATIVE_ID + 1usize;
 const PROMISE_NO_NEW_STATICS_ID: usize = PROMISE_NO_NESTING_ID + 1usize;
 const PROMISE_NO_PROMISE_IN_CALLBACK_ID: usize = PROMISE_NO_NEW_STATICS_ID + 1usize;
 const PROMISE_NO_RETURN_IN_FINALLY_ID: usize = PROMISE_NO_PROMISE_IN_CALLBACK_ID + 1usize;
@@ -3472,6 +3475,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(_) => PROMISE_CATCH_OR_RETURN_ID,
             Self::PromiseNoCallbackInPromise(_) => PROMISE_NO_CALLBACK_IN_PROMISE_ID,
             Self::PromiseNoMultipleResolved(_) => PROMISE_NO_MULTIPLE_RESOLVED_ID,
+            Self::PromiseNoNative(_) => PROMISE_NO_NATIVE_ID,
             Self::PromiseNoNesting(_) => PROMISE_NO_NESTING_ID,
             Self::PromiseNoNewStatics(_) => PROMISE_NO_NEW_STATICS_ID,
             Self::PromiseNoPromiseInCallback(_) => PROMISE_NO_PROMISE_IN_CALLBACK_ID,
@@ -4432,6 +4436,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::NAME,
             Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::NAME,
             Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::NAME,
+            Self::PromiseNoNative(_) => PromiseNoNative::NAME,
             Self::PromiseNoNesting(_) => PromiseNoNesting::NAME,
             Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::NAME,
             Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::NAME,
@@ -5432,6 +5437,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::CATEGORY,
             Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::CATEGORY,
             Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::CATEGORY,
+            Self::PromiseNoNative(_) => PromiseNoNative::CATEGORY,
             Self::PromiseNoNesting(_) => PromiseNoNesting::CATEGORY,
             Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::CATEGORY,
             Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::CATEGORY,
@@ -6403,6 +6409,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::FIX,
             Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::FIX,
             Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::FIX,
+            Self::PromiseNoNative(_) => PromiseNoNative::FIX,
             Self::PromiseNoNesting(_) => PromiseNoNesting::FIX,
             Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::FIX,
             Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::FIX,
@@ -7578,6 +7585,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::documentation(),
             Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::documentation(),
             Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::documentation(),
+            Self::PromiseNoNative(_) => PromiseNoNative::documentation(),
             Self::PromiseNoNesting(_) => PromiseNoNesting::documentation(),
             Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::documentation(),
             Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::documentation(),
@@ -9795,6 +9803,8 @@ impl RuleEnum {
                 PromiseNoMultipleResolved::config_schema(generator)
                     .or_else(|| PromiseNoMultipleResolved::schema(generator))
             }
+            Self::PromiseNoNative(_) => PromiseNoNative::config_schema(generator)
+                .or_else(|| PromiseNoNative::schema(generator)),
             Self::PromiseNoNesting(_) => PromiseNoNesting::config_schema(generator)
                 .or_else(|| PromiseNoNesting::schema(generator)),
             Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::config_schema(generator)
@@ -10887,6 +10897,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(_) => "promise",
             Self::PromiseNoCallbackInPromise(_) => "promise",
             Self::PromiseNoMultipleResolved(_) => "promise",
+            Self::PromiseNoNative(_) => "promise",
             Self::PromiseNoNesting(_) => "promise",
             Self::PromiseNoNewStatics(_) => "promise",
             Self::PromiseNoPromiseInCallback(_) => "promise",
@@ -13290,6 +13301,9 @@ impl RuleEnum {
             Self::PromiseNoMultipleResolved(_) => Ok(Self::PromiseNoMultipleResolved(
                 PromiseNoMultipleResolved::from_configuration(value)?,
             )),
+            Self::PromiseNoNative(_) => {
+                Ok(Self::PromiseNoNative(PromiseNoNative::from_configuration(value)?))
+            }
             Self::PromiseNoNesting(_) => {
                 Ok(Self::PromiseNoNesting(PromiseNoNesting::from_configuration(value)?))
             }
@@ -14436,6 +14450,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(rule) => rule.to_configuration(),
             Self::PromiseNoCallbackInPromise(rule) => rule.to_configuration(),
             Self::PromiseNoMultipleResolved(rule) => rule.to_configuration(),
+            Self::PromiseNoNative(rule) => rule.to_configuration(),
             Self::PromiseNoNesting(rule) => rule.to_configuration(),
             Self::PromiseNoNewStatics(rule) => rule.to_configuration(),
             Self::PromiseNoPromiseInCallback(rule) => rule.to_configuration(),
@@ -15281,6 +15296,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(rule) => rule.run(node, ctx),
             Self::PromiseNoCallbackInPromise(rule) => rule.run(node, ctx),
             Self::PromiseNoMultipleResolved(rule) => rule.run(node, ctx),
+            Self::PromiseNoNative(rule) => rule.run(node, ctx),
             Self::PromiseNoNesting(rule) => rule.run(node, ctx),
             Self::PromiseNoNewStatics(rule) => rule.run(node, ctx),
             Self::PromiseNoPromiseInCallback(rule) => rule.run(node, ctx),
@@ -16136,6 +16152,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(rule) => rule.run_once(ctx),
             Self::PromiseNoCallbackInPromise(rule) => rule.run_once(ctx),
             Self::PromiseNoMultipleResolved(rule) => rule.run_once(ctx),
+            Self::PromiseNoNative(rule) => rule.run_once(ctx),
             Self::PromiseNoNesting(rule) => rule.run_once(ctx),
             Self::PromiseNoNewStatics(rule) => rule.run_once(ctx),
             Self::PromiseNoPromiseInCallback(rule) => rule.run_once(ctx),
@@ -17100,6 +17117,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::PromiseNoCallbackInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::PromiseNoMultipleResolved(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::PromiseNoNative(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::PromiseNoNesting(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::PromiseNoNewStatics(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::PromiseNoPromiseInCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17964,6 +17982,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(rule) => rule.should_run(ctx),
             Self::PromiseNoCallbackInPromise(rule) => rule.should_run(ctx),
             Self::PromiseNoMultipleResolved(rule) => rule.should_run(ctx),
+            Self::PromiseNoNative(rule) => rule.should_run(ctx),
             Self::PromiseNoNesting(rule) => rule.should_run(ctx),
             Self::PromiseNoNewStatics(rule) => rule.should_run(ctx),
             Self::PromiseNoPromiseInCallback(rule) => rule.should_run(ctx),
@@ -19130,6 +19149,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::IS_TSGOLINT_RULE,
             Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::IS_TSGOLINT_RULE,
             Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::IS_TSGOLINT_RULE,
+            Self::PromiseNoNative(_) => PromiseNoNative::IS_TSGOLINT_RULE,
             Self::PromiseNoNesting(_) => PromiseNoNesting::IS_TSGOLINT_RULE,
             Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::IS_TSGOLINT_RULE,
             Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::IS_TSGOLINT_RULE,
@@ -20178,6 +20198,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::VERSION,
             Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::VERSION,
             Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::VERSION,
+            Self::PromiseNoNative(_) => PromiseNoNative::VERSION,
             Self::PromiseNoNesting(_) => PromiseNoNesting::VERSION,
             Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::VERSION,
             Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::VERSION,
@@ -21223,6 +21244,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::HAS_CONFIG,
             Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::HAS_CONFIG,
             Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::HAS_CONFIG,
+            Self::PromiseNoNative(_) => PromiseNoNative::HAS_CONFIG,
             Self::PromiseNoNesting(_) => PromiseNoNesting::HAS_CONFIG,
             Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::HAS_CONFIG,
             Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::HAS_CONFIG,
@@ -22203,6 +22225,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::INFO,
             Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::INFO,
             Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::INFO,
+            Self::PromiseNoNative(_) => PromiseNoNative::INFO,
             Self::PromiseNoNesting(_) => PromiseNoNesting::INFO,
             Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::INFO,
             Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::INFO,
@@ -23058,6 +23081,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(rule) => rule.types_info(),
             Self::PromiseNoCallbackInPromise(rule) => rule.types_info(),
             Self::PromiseNoMultipleResolved(rule) => rule.types_info(),
+            Self::PromiseNoNative(rule) => rule.types_info(),
             Self::PromiseNoNesting(rule) => rule.types_info(),
             Self::PromiseNoNewStatics(rule) => rule.types_info(),
             Self::PromiseNoPromiseInCallback(rule) => rule.types_info(),
@@ -23900,6 +23924,7 @@ impl RuleEnum {
             Self::PromiseCatchOrReturn(rule) => rule.run_info(),
             Self::PromiseNoCallbackInPromise(rule) => rule.run_info(),
             Self::PromiseNoMultipleResolved(rule) => rule.run_info(),
+            Self::PromiseNoNative(rule) => rule.run_info(),
             Self::PromiseNoNesting(rule) => rule.run_info(),
             Self::PromiseNoNewStatics(rule) => rule.run_info(),
             Self::PromiseNoPromiseInCallback(rule) => rule.run_info(),
@@ -24870,6 +24895,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::PromiseCatchOrReturn(PromiseCatchOrReturn::default()),
         RuleEnum::PromiseNoCallbackInPromise(PromiseNoCallbackInPromise::default()),
         RuleEnum::PromiseNoMultipleResolved(PromiseNoMultipleResolved::default()),
+        RuleEnum::PromiseNoNative(PromiseNoNative::default()),
         RuleEnum::PromiseNoNesting(PromiseNoNesting::default()),
         RuleEnum::PromiseNoNewStatics(PromiseNoNewStatics::default()),
         RuleEnum::PromiseNoPromiseInCallback(PromiseNoPromiseInCallback::default()),
