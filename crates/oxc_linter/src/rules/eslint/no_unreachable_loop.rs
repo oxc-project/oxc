@@ -65,15 +65,16 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// while (foo) {
+    /// for (const item of items) {
+    ///   console.log(item);
     ///   break;
     /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// while (foo) {
-    ///   continue;
+    /// for (const item of items) {
+    ///   console.log(item);
     /// }
     /// ```
     NoUnreachableLoop,
