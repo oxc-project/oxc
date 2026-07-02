@@ -48,7 +48,7 @@ pub use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 
 use oxc_ast::ast::Program;
 use oxc_diagnostics::Diagnostics;
-use oxc_semantic::SemanticBuilder;
+use oxc_semantic::Semantic;
 use oxc_span::GetSpan;
 use rustc_hash::FxHashSet;
 
@@ -79,9 +79,16 @@ impl Default for PluginOptions {
 }
 
 #[derive(Default)]
-pub struct TransformResult {
-    /// Whether `program` was rewritten. `false` means the compiler made no
-    /// changes — no React-like functions, a bail-out, or nothing to memoize.
+pub struct TransformResult<'a> {
+    /// The rewritten program, when the compiler memoized something.
+    ///
+    /// Callers that want in-place behavior should replace their original
+    /// `Program` with this value after the borrowed `Semantic` has gone out of
+    /// scope.
+    pub program: Option<Program<'a>>,
+    /// Whether `program` contains a rewritten program. `false` means the
+    /// compiler made no changes — no React-like functions, a bail-out, or
+    /// nothing to memoize.
     pub changed: bool,
     /// Errors and warnings produced by the compile. Errors (e.g. Rules of Hooks
     /// violations) are hard problems in the source; the program is still left
@@ -94,30 +101,29 @@ pub struct LintResult {
     pub diagnostics: Diagnostics,
 }
 
-/// Run the React Compiler on a pre-parsed program, rewriting `program` in place
-/// when it memoizes something. Builds the semantic model internally.
+/// Run the React Compiler on a pre-parsed program, returning a rewritten
+/// program when it memoizes something.
 ///
-/// Must run **first**, on the pristine AST, before any other transform.
+/// Must run **first**, on the pristine AST, before any other transform. The
+/// borrowed `semantic` must have been built from that same pristine AST with
+/// `SemanticBuilder::with_build_nodes(true)`.
 pub fn transform<'a>(
-    program: &mut Program<'a>,
+    program: &Program<'a>,
+    semantic: &Semantic<'_>,
     allocator: &'a Allocator,
     options: PluginOptions,
-) -> TransformResult {
-    let (compiled, diagnostics) = compile(program, allocator, options);
-    let changed = compiled.is_some();
-    if let Some(compiled) = compiled {
-        *program = compiled;
-    }
-    TransformResult { changed, diagnostics }
+) -> TransformResult<'a> {
+    let (program, diagnostics) = compile(program, semantic, allocator, options);
+    let changed = program.is_some();
+    TransformResult { program, changed, diagnostics }
 }
 
 /// Shared compile pipeline behind [`transform`] and [`lint`]. Borrows `program`
 /// (so `lint` can stay read-only) and returns the compiled OXC program — `None`
 /// when nothing was compiled — together with diagnostics and logger events.
-/// Containing the semantic borrow inside this call is what lets `transform`
-/// write the result back into its `&mut program` afterwards.
 fn compile<'a>(
     program: &Program<'a>,
+    semantic: &Semantic<'_>,
     allocator: &'a Allocator,
     options: PluginOptions,
 ) -> (Option<Program<'a>>, Diagnostics) {
@@ -133,12 +139,10 @@ fn compile<'a>(
         return (None, Diagnostics::default());
     }
 
-    let semantic = SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
-
     // The codegen back-end builds oxc nodes directly via this `AstBuilder`, and the
     // compiled program is spliced/returned as an arena-allocated `Program<'a>`.
     let ast_builder = oxc_ast::builder::AstBuilder::new(allocator);
-    let scope_info = convert_scope_info(&semantic, program);
+    let scope_info = convert_scope_info(semantic, program);
     // Function discovery and lowering both walk the oxc `Program` directly.
     let result = compile_program(&ast_builder, program, scope_info, options);
 
@@ -192,12 +196,18 @@ fn preserve_comments<'a>(
 
 /// Lint a pre-parsed program — like [`transform`] but read-only: it collects
 /// diagnostics without rewriting the program.
-pub fn lint(program: &Program, options: PluginOptions) -> LintResult {
+///
+/// The borrowed `semantic` must have been built from `program` with
+/// `SemanticBuilder::with_build_nodes(true)`.
+pub fn lint<'a>(
+    program: &Program<'a>,
+    semantic: &Semantic<'_>,
+    allocator: &'a Allocator,
+    options: PluginOptions,
+) -> LintResult {
     let mut options = options;
     options.no_emit = true;
 
-    // `no_emit` produces no program; a local arena for the conversion suffices.
-    let allocator = Allocator::default();
-    let (_program, diagnostics) = compile(program, &allocator, options);
+    let (_program, diagnostics) = compile(program, semantic, allocator, options);
     LintResult { diagnostics }
 }

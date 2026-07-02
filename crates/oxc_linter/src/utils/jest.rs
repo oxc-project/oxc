@@ -377,6 +377,7 @@ mod test {
                     0,
                     ContextSubHostOptions::default(),
                 )],
+                &allocator,
                 LintOptions::default(),
                 Arc::default(),
             ))

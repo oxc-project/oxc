@@ -124,7 +124,7 @@ impl Rule for ReactCompiler {
         let program = ctx.nodes().program();
         let options = react_compiler_options(ctx.file_path().to_str().map(ToString::to_string));
 
-        let result = oxc_react_compiler::lint(program, options);
+        let result = oxc_react_compiler::lint(program, ctx.semantic(), ctx.allocator(), options);
 
         let diagnostics = result.diagnostics.into_vec();
         let diagnostics = if self.report_all_bailouts {

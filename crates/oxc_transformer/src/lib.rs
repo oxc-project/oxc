@@ -228,10 +228,14 @@ impl<'a> Transformer<'a> {
         let Some(options) = self.react_compiler.take() else {
             return (scoping, Diagnostics::new());
         };
-        let result = react_compiler_transform(program, self.allocator, options);
+        let mut result = {
+            let semantic = SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
+            react_compiler_transform(program, &semantic, self.allocator, options)
+        };
         if !result.changed {
             return (scoping, result.diagnostics);
         }
+        *program = result.program.take().expect("changed result should include a program");
         let scoping =
             SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
         (scoping, result.diagnostics)

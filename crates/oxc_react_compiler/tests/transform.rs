@@ -22,9 +22,15 @@ fn transform_source<'a>(
     source_type: SourceType,
     allocator: &'a Allocator,
     options: PluginOptions,
-) -> (Program<'a>, TransformResult) {
+) -> (Program<'a>, TransformResult<'a>) {
     let mut program = Parser::new(allocator, source_text, source_type).parse().program;
-    let result = transform(&mut program, allocator, options);
+    let mut result = {
+        let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
+        transform(&program, &semantic, allocator, options)
+    };
+    if let Some(compiled) = result.program.take() {
+        program = compiled;
+    }
     (program, result)
 }
 
