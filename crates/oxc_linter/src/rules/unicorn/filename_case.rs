@@ -224,10 +224,21 @@ enum CaseCheck {
 impl CaseCheck {
     fn convert(self, name: &str) -> String {
         match self {
-            CaseCheck::Convert(case) => Converter::new()
-                .remove_boundaries(&[Boundary::LowerDigit, Boundary::DigitLower])
-                .to_case(case)
-                .convert(name),
+            CaseCheck::Convert(case) => {
+                // SCREAMING_SNAKE_CASE keeps digits attached to their word (e.g. `V2_API`,
+                // `FOO2BAR`), so drop the upper/digit boundaries too.
+                let boundaries: &[Boundary] = if case == Case::UpperSnake {
+                    &[
+                        Boundary::LowerDigit,
+                        Boundary::DigitLower,
+                        Boundary::UpperDigit,
+                        Boundary::DigitUpper,
+                    ]
+                } else {
+                    &[Boundary::LowerDigit, Boundary::DigitLower]
+                };
+                Converter::new().remove_boundaries(boundaries).to_case(case).convert(name)
+            }
             CaseCheck::Lowercase => name.cow_to_lowercase().into_owned(),
         }
     }
@@ -461,6 +472,9 @@ fn test() {
         test_case("src/foo/FOO_BAR.test.js", "screamingSnakeCase"),
         test_case("src/foo/FOO_BAR.test_utils.js", "screamingSnakeCase"),
         test_case("src/foo/_FOO_BAR.js", "screamingSnakeCase"),
+        // digits stay attached to their word
+        test_case("src/foo/V2_API.js", "screamingSnakeCase"),
+        test_case("src/foo/FOO2BAR.js", "screamingSnakeCase"),
         test_case("", "lowercase"),
         test_case("", "screamingSnakeCase"),
         test_case("", "camelCase"),
