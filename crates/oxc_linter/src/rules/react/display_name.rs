@@ -1761,11 +1761,49 @@ fn test() {
         ),
         (
             "
+                const createHandler = () => () => {
+                  someGlobalFunc(<div />);
+                };
+                ",
+            None,
+            None,
+        ),
+        (
+            "
+                const createHandler = () => () => someGlobalFunc(<div />);
+                ",
+            None,
+            None,
+        ),
+        (
+            "
+                const createHandler = () => () => {
+                  const x = wrap(<div />);
+                  return x;
+                };
+                ",
+            None,
+            None,
+        ),
+        (
+            "
+                const createHandler = () => () => {
+                  if (cond) {
+                    log(<div />);
+                  }
+                  return null;
+                };
+                ",
+            None,
+            None,
+        ),
+        (
+            "
                     export default function Hello() {
                       return <div>Hello {this.props.name}</div>;
                     }
                     Hello.displayName = 'Hello';
-                  ",
+            ",
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,
         ),
@@ -2145,6 +2183,23 @@ fn test() {
         ),
         (
             "
+                    const renderer = a => listItem => {
+                      return <div>{a} {listItem}</div>;
+                    };
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    const renderer = a => listItem =>
+                      React.createElement('div', null, a, listItem);
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
                     const processData = (options?: { value: string }) => options?.value || 'no data';
 
                     export const Component = observer(() => {
@@ -2223,9 +2278,21 @@ fn test() {
             None,
         ),
         (
-            "export default function Hello() {
-  return <div>Hello {this.props.name}</div>;
-}",
+            "const renderer = a => listItem => cond ? <div>{listItem}</div> : null;",
+            None,
+            None
+        ),
+        (
+            "const renderer = a => listItem => { const x = <div>{listItem}</div>; return x; };",
+            None,
+            None
+        ),
+        (
+            "
+                export default function Hello() {
+                    return <div>Hello {this.props.name}</div>;
+                }
+            ",
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,
         ),

@@ -905,22 +905,33 @@ pub fn find_innermost_function_with_jsx<'a>(
 /// Stops at nested function boundaries to avoid detecting JSX from child components.
 struct JsxFinder {
     found: bool,
+    is_in_argument: bool,
 }
 
 impl JsxFinder {
     fn new() -> Self {
-        Self { found: false }
+        Self { found: false, is_in_argument: false }
     }
 }
 
 impl<'a> Visit<'a> for JsxFinder {
     fn visit_jsx_element(&mut self, _elem: &JSXElement<'a>) {
-        self.found = true;
+        if !self.is_in_argument {
+            self.found = true;
+        }
         // Don't walk children - we found what we need
     }
 
     fn visit_jsx_fragment(&mut self, _frag: &JSXFragment<'a>) {
-        self.found = true;
+        if !self.is_in_argument {
+            self.found = true;
+        }
+    }
+
+    fn visit_arguments(&mut self, it: &oxc_allocator::Vec<'a, oxc_ast::ast::Argument<'a>>) {
+        self.is_in_argument = true;
+        walk::walk_arguments(self, it);
+        self.is_in_argument = false;
     }
 
     fn visit_call_expression(&mut self, call: &CallExpression<'a>) {
@@ -954,7 +965,7 @@ pub fn function_body_contains_jsx(body: &FunctionBody) -> bool {
     finder.found
 }
 
-/// Checks if a function-like expression (function or arrow function) contains JSX
+/// Checks if a function-like expression (function or arrow function) contains JSX.
 pub fn expression_contains_jsx(expr: &Expression) -> bool {
     match expr {
         Expression::FunctionExpression(func) => function_contains_jsx(func),
