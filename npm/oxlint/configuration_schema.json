@@ -4441,7 +4441,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "no-constant-binary-expression": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoConstantBinaryExpressionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "no-constant-condition": {
           "anyOf": [
@@ -13407,6 +13424,16 @@
             "type": "string"
           },
           "markdownDescription": "The `allow` option permits the given list of console methods to be used as exceptions to\nthis rule.\n\nSay the option was configured as `{ \"allow\": [\"info\"] }` then the rule would behave as\nfollows:\n\nExample of **incorrect** code for this option:\n```javascript\nconsole.log('foo');\n```\n\nExample of **correct** code for this option:\n```javascript\nconsole.info('foo');\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoConstantBinaryExpressionConfig": {
+      "type": "object",
+      "properties": {
+        "checkRelationalComparisons": {
+          "default": true,
+          "type": "boolean"
         }
       },
       "additionalProperties": false

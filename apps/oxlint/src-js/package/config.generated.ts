@@ -1114,7 +1114,7 @@ export interface DummyRuleMap {
   "no-cond-assign"?: RuleNoConfig | [AllowWarnDeny, NoCondAssignConfig];
   "no-console"?: RuleNoConfig | [AllowWarnDeny, NoConsoleConfig];
   "no-const-assign"?: RuleNoConfig;
-  "no-constant-binary-expression"?: RuleNoConfig;
+  "no-constant-binary-expression"?: RuleNoConfig | [AllowWarnDeny, NoConstantBinaryExpressionConfig];
   "no-constant-condition"?: RuleNoConfig | [AllowWarnDeny, NoConstantCondition];
   "no-constructor-return"?: RuleNoConfig;
   "no-continue"?: RuleNoConfig;
@@ -2912,6 +2912,9 @@ export interface NoConsoleConfig {
    * ```
    */
   allow?: string[];
+}
+export interface NoConstantBinaryExpressionConfig {
+  checkRelationalComparisons?: boolean;
 }
 export interface NoConstantCondition {
   /**
