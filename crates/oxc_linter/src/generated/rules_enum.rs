@@ -143,6 +143,7 @@ pub use crate::rules::eslint::no_unexpected_multiline::NoUnexpectedMultiline as 
 pub use crate::rules::eslint::no_unmodified_loop_condition::NoUnmodifiedLoopCondition as EslintNoUnmodifiedLoopCondition;
 pub use crate::rules::eslint::no_unneeded_ternary::NoUnneededTernary as EslintNoUnneededTernary;
 pub use crate::rules::eslint::no_unreachable::NoUnreachable as EslintNoUnreachable;
+pub use crate::rules::eslint::no_unreachable_loop::NoUnreachableLoop as EslintNoUnreachableLoop;
 pub use crate::rules::eslint::no_unsafe_finally::NoUnsafeFinally as EslintNoUnsafeFinally;
 pub use crate::rules::eslint::no_unsafe_negation::NoUnsafeNegation as EslintNoUnsafeNegation;
 pub use crate::rules::eslint::no_unsafe_optional_chaining::NoUnsafeOptionalChaining as EslintNoUnsafeOptionalChaining;
@@ -1024,6 +1025,7 @@ pub enum RuleEnum {
     EslintNoUnmodifiedLoopCondition(EslintNoUnmodifiedLoopCondition),
     EslintNoUnneededTernary(EslintNoUnneededTernary),
     EslintNoUnreachable(EslintNoUnreachable),
+    EslintNoUnreachableLoop(EslintNoUnreachableLoop),
     EslintNoUnsafeFinally(EslintNoUnsafeFinally),
     EslintNoUnsafeNegation(EslintNoUnsafeNegation),
     EslintNoUnsafeOptionalChaining(EslintNoUnsafeOptionalChaining),
@@ -1871,7 +1873,8 @@ const ESLINT_NO_UNEXPECTED_MULTILINE_ID: usize = ESLINT_NO_UNDERSCORE_DANGLE_ID 
 const ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID: usize = ESLINT_NO_UNEXPECTED_MULTILINE_ID + 1usize;
 const ESLINT_NO_UNNEEDED_TERNARY_ID: usize = ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID + 1usize;
 const ESLINT_NO_UNREACHABLE_ID: usize = ESLINT_NO_UNNEEDED_TERNARY_ID + 1usize;
-const ESLINT_NO_UNSAFE_FINALLY_ID: usize = ESLINT_NO_UNREACHABLE_ID + 1usize;
+const ESLINT_NO_UNREACHABLE_LOOP_ID: usize = ESLINT_NO_UNREACHABLE_ID + 1usize;
+const ESLINT_NO_UNSAFE_FINALLY_ID: usize = ESLINT_NO_UNREACHABLE_LOOP_ID + 1usize;
 const ESLINT_NO_UNSAFE_NEGATION_ID: usize = ESLINT_NO_UNSAFE_FINALLY_ID + 1usize;
 const ESLINT_NO_UNSAFE_OPTIONAL_CHAINING_ID: usize = ESLINT_NO_UNSAFE_NEGATION_ID + 1usize;
 const ESLINT_NO_UNUSED_EXPRESSIONS_ID: usize = ESLINT_NO_UNSAFE_OPTIONAL_CHAINING_ID + 1usize;
@@ -2822,6 +2825,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(_) => ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID,
             Self::EslintNoUnneededTernary(_) => ESLINT_NO_UNNEEDED_TERNARY_ID,
             Self::EslintNoUnreachable(_) => ESLINT_NO_UNREACHABLE_ID,
+            Self::EslintNoUnreachableLoop(_) => ESLINT_NO_UNREACHABLE_LOOP_ID,
             Self::EslintNoUnsafeFinally(_) => ESLINT_NO_UNSAFE_FINALLY_ID,
             Self::EslintNoUnsafeNegation(_) => ESLINT_NO_UNSAFE_NEGATION_ID,
             Self::EslintNoUnsafeOptionalChaining(_) => ESLINT_NO_UNSAFE_OPTIONAL_CHAINING_ID,
@@ -3792,6 +3796,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::NAME,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::NAME,
             Self::EslintNoUnreachable(_) => EslintNoUnreachable::NAME,
+            Self::EslintNoUnreachableLoop(_) => EslintNoUnreachableLoop::NAME,
             Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::NAME,
             Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::NAME,
             Self::EslintNoUnsafeOptionalChaining(_) => EslintNoUnsafeOptionalChaining::NAME,
@@ -4750,6 +4755,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::CATEGORY,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::CATEGORY,
             Self::EslintNoUnreachable(_) => EslintNoUnreachable::CATEGORY,
+            Self::EslintNoUnreachableLoop(_) => EslintNoUnreachableLoop::CATEGORY,
             Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::CATEGORY,
             Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::CATEGORY,
             Self::EslintNoUnsafeOptionalChaining(_) => EslintNoUnsafeOptionalChaining::CATEGORY,
@@ -5763,6 +5769,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::FIX,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::FIX,
             Self::EslintNoUnreachable(_) => EslintNoUnreachable::FIX,
+            Self::EslintNoUnreachableLoop(_) => EslintNoUnreachableLoop::FIX,
             Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::FIX,
             Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::FIX,
             Self::EslintNoUnsafeOptionalChaining(_) => EslintNoUnsafeOptionalChaining::FIX,
@@ -6744,6 +6751,7 @@ impl RuleEnum {
             }
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::documentation(),
             Self::EslintNoUnreachable(_) => EslintNoUnreachable::documentation(),
+            Self::EslintNoUnreachableLoop(_) => EslintNoUnreachableLoop::documentation(),
             Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::documentation(),
             Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::documentation(),
             Self::EslintNoUnsafeOptionalChaining(_) => {
@@ -8192,6 +8200,8 @@ impl RuleEnum {
                 .or_else(|| EslintNoUnneededTernary::schema(generator)),
             Self::EslintNoUnreachable(_) => EslintNoUnreachable::config_schema(generator)
                 .or_else(|| EslintNoUnreachable::schema(generator)),
+            Self::EslintNoUnreachableLoop(_) => EslintNoUnreachableLoop::config_schema(generator)
+                .or_else(|| EslintNoUnreachableLoop::schema(generator)),
             Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::config_schema(generator)
                 .or_else(|| EslintNoUnsafeFinally::schema(generator)),
             Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::config_schema(generator)
@@ -10353,6 +10363,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(_) => "eslint",
             Self::EslintNoUnneededTernary(_) => "eslint",
             Self::EslintNoUnreachable(_) => "eslint",
+            Self::EslintNoUnreachableLoop(_) => "eslint",
             Self::EslintNoUnsafeFinally(_) => "eslint",
             Self::EslintNoUnsafeNegation(_) => "eslint",
             Self::EslintNoUnsafeOptionalChaining(_) => "eslint",
@@ -11528,6 +11539,9 @@ impl RuleEnum {
             Self::EslintNoUnreachable(_) => {
                 Ok(Self::EslintNoUnreachable(EslintNoUnreachable::from_configuration(value)?))
             }
+            Self::EslintNoUnreachableLoop(_) => Ok(Self::EslintNoUnreachableLoop(
+                EslintNoUnreachableLoop::from_configuration(value)?,
+            )),
             Self::EslintNoUnsafeFinally(_) => {
                 Ok(Self::EslintNoUnsafeFinally(EslintNoUnsafeFinally::from_configuration(value)?))
             }
@@ -13900,6 +13914,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.to_configuration(),
             Self::EslintNoUnneededTernary(rule) => rule.to_configuration(),
             Self::EslintNoUnreachable(rule) => rule.to_configuration(),
+            Self::EslintNoUnreachableLoop(rule) => rule.to_configuration(),
             Self::EslintNoUnsafeFinally(rule) => rule.to_configuration(),
             Self::EslintNoUnsafeNegation(rule) => rule.to_configuration(),
             Self::EslintNoUnsafeOptionalChaining(rule) => rule.to_configuration(),
@@ -14747,6 +14762,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run(node, ctx),
             Self::EslintNoUnneededTernary(rule) => rule.run(node, ctx),
             Self::EslintNoUnreachable(rule) => rule.run(node, ctx),
+            Self::EslintNoUnreachableLoop(rule) => rule.run(node, ctx),
             Self::EslintNoUnsafeFinally(rule) => rule.run(node, ctx),
             Self::EslintNoUnsafeNegation(rule) => rule.run(node, ctx),
             Self::EslintNoUnsafeOptionalChaining(rule) => rule.run(node, ctx),
@@ -15602,6 +15618,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run_once(ctx),
             Self::EslintNoUnneededTernary(rule) => rule.run_once(ctx),
             Self::EslintNoUnreachable(rule) => rule.run_once(ctx),
+            Self::EslintNoUnreachableLoop(rule) => rule.run_once(ctx),
             Self::EslintNoUnsafeFinally(rule) => rule.run_once(ctx),
             Self::EslintNoUnsafeNegation(rule) => rule.run_once(ctx),
             Self::EslintNoUnsafeOptionalChaining(rule) => rule.run_once(ctx),
@@ -16460,6 +16477,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnneededTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnreachable(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoUnreachableLoop(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnsafeFinally(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnsafeNegation(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnsafeOptionalChaining(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17430,6 +17448,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.should_run(ctx),
             Self::EslintNoUnneededTernary(rule) => rule.should_run(ctx),
             Self::EslintNoUnreachable(rule) => rule.should_run(ctx),
+            Self::EslintNoUnreachableLoop(rule) => rule.should_run(ctx),
             Self::EslintNoUnsafeFinally(rule) => rule.should_run(ctx),
             Self::EslintNoUnsafeNegation(rule) => rule.should_run(ctx),
             Self::EslintNoUnsafeOptionalChaining(rule) => rule.should_run(ctx),
@@ -18296,6 +18315,7 @@ impl RuleEnum {
             }
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::IS_TSGOLINT_RULE,
             Self::EslintNoUnreachable(_) => EslintNoUnreachable::IS_TSGOLINT_RULE,
+            Self::EslintNoUnreachableLoop(_) => EslintNoUnreachableLoop::IS_TSGOLINT_RULE,
             Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::IS_TSGOLINT_RULE,
             Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::IS_TSGOLINT_RULE,
             Self::EslintNoUnsafeOptionalChaining(_) => {
@@ -19496,6 +19516,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::VERSION,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::VERSION,
             Self::EslintNoUnreachable(_) => EslintNoUnreachable::VERSION,
+            Self::EslintNoUnreachableLoop(_) => EslintNoUnreachableLoop::VERSION,
             Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::VERSION,
             Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::VERSION,
             Self::EslintNoUnsafeOptionalChaining(_) => EslintNoUnsafeOptionalChaining::VERSION,
@@ -20517,6 +20538,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::HAS_CONFIG,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::HAS_CONFIG,
             Self::EslintNoUnreachable(_) => EslintNoUnreachable::HAS_CONFIG,
+            Self::EslintNoUnreachableLoop(_) => EslintNoUnreachableLoop::HAS_CONFIG,
             Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::HAS_CONFIG,
             Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::HAS_CONFIG,
             Self::EslintNoUnsafeOptionalChaining(_) => EslintNoUnsafeOptionalChaining::HAS_CONFIG,
@@ -21563,6 +21585,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::INFO,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::INFO,
             Self::EslintNoUnreachable(_) => EslintNoUnreachable::INFO,
+            Self::EslintNoUnreachableLoop(_) => EslintNoUnreachableLoop::INFO,
             Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::INFO,
             Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::INFO,
             Self::EslintNoUnsafeOptionalChaining(_) => EslintNoUnsafeOptionalChaining::INFO,
@@ -22524,6 +22547,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.types_info(),
             Self::EslintNoUnneededTernary(rule) => rule.types_info(),
             Self::EslintNoUnreachable(rule) => rule.types_info(),
+            Self::EslintNoUnreachableLoop(rule) => rule.types_info(),
             Self::EslintNoUnsafeFinally(rule) => rule.types_info(),
             Self::EslintNoUnsafeNegation(rule) => rule.types_info(),
             Self::EslintNoUnsafeOptionalChaining(rule) => rule.types_info(),
@@ -23366,6 +23390,7 @@ impl RuleEnum {
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run_info(),
             Self::EslintNoUnneededTernary(rule) => rule.run_info(),
             Self::EslintNoUnreachable(rule) => rule.run_info(),
+            Self::EslintNoUnreachableLoop(rule) => rule.run_info(),
             Self::EslintNoUnsafeFinally(rule) => rule.run_info(),
             Self::EslintNoUnsafeNegation(rule) => rule.run_info(),
             Self::EslintNoUnsafeOptionalChaining(rule) => rule.run_info(),
@@ -24230,6 +24255,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoUnmodifiedLoopCondition(EslintNoUnmodifiedLoopCondition::default()),
         RuleEnum::EslintNoUnneededTernary(EslintNoUnneededTernary::default()),
         RuleEnum::EslintNoUnreachable(EslintNoUnreachable::default()),
+        RuleEnum::EslintNoUnreachableLoop(EslintNoUnreachableLoop::default()),
         RuleEnum::EslintNoUnsafeFinally(EslintNoUnsafeFinally::default()),
         RuleEnum::EslintNoUnsafeNegation(EslintNoUnsafeNegation::default()),
         RuleEnum::EslintNoUnsafeOptionalChaining(EslintNoUnsafeOptionalChaining::default()),

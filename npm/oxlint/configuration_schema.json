@@ -5324,6 +5324,26 @@
         "no-unreachable": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "no-unreachable-loop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoUnreachableLoop"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "no-unsafe-finally": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -12373,6 +12393,16 @@
       },
       "additionalProperties": false
     },
+    "LoopType": {
+      "type": "string",
+      "enum": [
+        "WhileStatement",
+        "DoWhileStatement",
+        "ForStatement",
+        "ForInStatement",
+        "ForOfStatement"
+      ]
+    },
     "MaxClassesPerFileConfig": {
       "type": "object",
       "properties": {
@@ -15332,6 +15362,21 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "Whether to allow the default assignment pattern `x ? x : y`.\n\nWhen set to `false`, the rule also flags cases like `x ? x : y` and suggests using\nthe logical OR form `x || y` instead. When `true` (default), such default assignments\nare allowed and not reported."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoUnreachableLoop": {
+      "$ref": "#/definitions/NoUnreachableLoopConfig"
+    },
+    "NoUnreachableLoopConfig": {
+      "type": "object",
+      "properties": {
+        "ignore": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LoopType"
+          }
         }
       },
       "additionalProperties": false

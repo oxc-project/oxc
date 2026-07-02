@@ -1,0 +1,185 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ while (foo) { for (a of b) { if (baz) { break; } else { throw err; } } }
+   · ────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:15]
+ 1 │ while (foo) { for (a of b) { if (baz) { break; } else { throw err; } } }
+   ·               ────────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:37]
+ 1 │ lbl: for (var i = 0; i < 10; i++) { while (foo) break lbl; } /* outer is valid because inner can have 0 iterations */
+   ·                                     ──────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ for (a in b) { while (foo) { if(baz) { break; } else { break; } } break; }
+   · ──────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:16]
+ 1 │ for (a in b) { while (foo) { if(baz) { break; } else { break; } } break; }
+   ·                ──────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:18]
+ 1 │ function foo() { for (var i = 0; i < 10; i++) { do { return; } while(i) } }
+   ·                  ────────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:49]
+ 1 │ function foo() { for (var i = 0; i < 10; i++) { do { return; } while(i) } }
+   ·                                                 ───────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:6]
+ 1 │ lbl: while(foo) { do { break lbl; } while(baz) }
+   ·      ───────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:19]
+ 1 │ lbl: while(foo) { do { break lbl; } while(baz) }
+   ·                   ────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:21]
+ 1 │ lbl: for (a in b) { while(foo) { continue lbl; } }
+   ·                     ────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ for (a of b) { for(;;) { if (foo) { throw err; } } }
+   · ────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:16]
+ 1 │ for (a of b) { for(;;) { if (foo) { throw err; } } }
+   ·                ───────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:19]
+ 1 │ function foo () { for (a in b) { while (true) { if (bar) { return; } } } }
+   ·                   ──────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:4]
+ 1 │ do for (var i = 1; i < 10; i++) break; while(foo)
+   ·    ───────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ do { for (var i = 1; i < 10; i++) continue; break; } while(foo)
+   · ───────────────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:12]
+ 1 │ for (;;) { for (var i = 1; i < 10; i ++) break; if (foo) break; continue; }
+   ·            ────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ while (a) break; do break; while (b); for (;;) break; for (c in d) break; for (e of f) break;
+   · ────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:18]
+ 1 │ while (a) break; do break; while (b); for (;;) break; for (c in d) break; for (e of f) break;
+   ·                  ────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:39]
+ 1 │ while (a) break; do break; while (b); for (;;) break; for (c in d) break; for (e of f) break;
+   ·                                       ───────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:55]
+ 1 │ while (a) break; do break; while (b); for (;;) break; for (c in d) break; for (e of f) break;
+   ·                                                       ───────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:75]
+ 1 │ while (a) break; do break; while (b); for (;;) break; for (c in d) break; for (e of f) break;
+   ·                                                                           ───────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ while (a) break;
+   · ────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ do break; while (a)
+   · ───────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ for (a in b) break; for (c of d) break;
+   · ───────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:21]
+ 1 │ for (a in b) break; for (c of d) break;
+   ·                     ───────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:21]
+ 1 │ for (a in b) break; for (;;) break; for (c of d) break;
+   ·                     ───────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
