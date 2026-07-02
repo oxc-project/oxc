@@ -322,6 +322,7 @@ impl<'a> ClassProperties<'a> {
         );
 
         // `(..._args) => (super(..._args), <inits>, this)`
+        let body_scope_id = ctx.create_child_scope(super_func_scope_id, ScopeFlags::FunctionBody);
         let super_func = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
             SPAN,
             true,
@@ -346,7 +347,13 @@ impl<'a> ClassProperties<'a> {
                 )
             },
             NONE,
-            FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), body, ctx),
+            FunctionBody::boxed_with_scope_id(
+                SPAN,
+                body_scope_id,
+                ArenaVec::new_in(ctx),
+                body,
+                ctx,
+            ),
             super_func_scope_id,
             false,
             false,
@@ -407,6 +414,7 @@ impl<'a> ClassProperties<'a> {
         let body_stmts =
             ArenaVec::from_iter_in(exprs_into_stmts(inits, &ctx.ast).chain([return_stmt]), ctx);
         // `function() { <inits>; return this; }`
+        let body_scope_id = ctx.create_child_scope(super_func_scope_id, ScopeFlags::FunctionBody);
         let super_func = Expression::new_function_expression_with_scope_id_and_pure_and_pife(
             SPAN,
             FunctionType::FunctionExpression,
@@ -424,7 +432,13 @@ impl<'a> ClassProperties<'a> {
                 ctx,
             ),
             NONE,
-            Some(FunctionBody::boxed(SPAN, directives, body_stmts, ctx)),
+            Some(FunctionBody::boxed_with_scope_id(
+                SPAN,
+                body_scope_id,
+                directives,
+                body_stmts,
+                ctx,
+            )),
             super_func_scope_id,
             false,
             false,

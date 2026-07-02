@@ -202,6 +202,21 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         Self { helper, _marker: std::marker::PhantomData }
     }
 
+    fn create_function_body(
+        scope_id: ScopeId,
+        statements: ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> ArenaBox<'a, FunctionBody<'a>> {
+        let body_scope_id = ctx.create_child_scope(scope_id, ScopeFlags::FunctionBody);
+        FunctionBody::boxed_with_scope_id(
+            SPAN,
+            body_scope_id,
+            ArenaVec::new_in(ctx),
+            statements,
+            ctx,
+        )
+    }
+
     /// Transforms async method definitions to generator functions wrapped in asyncToGenerator.
     ///
     /// ## Example
@@ -298,9 +313,8 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         // Modify the wrapper function
         func.r#async = false;
         func.generator = false;
-        func.body = Some(FunctionBody::boxed(
-            SPAN,
-            ArenaVec::new_in(ctx),
+        func.body = Some(Self::create_function_body(
+            wrapper_scope_id,
             ArenaVec::from_value_in(statement, ctx),
             ctx,
         ));
@@ -359,7 +373,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             let params = Self::create_placeholder_params(&params, scope_id, ctx);
             let statements =
                 ArenaVec::from_value_in(Self::create_apply_call_statement(&bound_ident, ctx), ctx);
-            let body = FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), statements, ctx);
+            let body = Self::create_function_body(scope_id, statements, ctx);
             let (r#type, id) = if id.is_some() {
                 // Caller is emitted as a function declaration inside the wrapper; its binding
                 // was already moved to `wrapper_scope_id` above.
@@ -411,9 +425,8 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             debug_assert!(wrapper_function.body.is_none());
             wrapper_function.r#async = false;
             wrapper_function.generator = false;
-            wrapper_function.body.replace(FunctionBody::boxed(
-                SPAN,
-                ArenaVec::new_in(ctx),
+            wrapper_function.body.replace(Self::create_function_body(
+                wrapper_scope_id,
                 statements,
                 ctx,
             ));
@@ -466,9 +479,8 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             let statements =
                 ArenaVec::from_value_in(Self::create_apply_call_statement(&bound_ident, ctx), ctx);
             debug_assert!(wrapper_function.body.is_none());
-            wrapper_function.body.replace(FunctionBody::boxed(
-                SPAN,
-                ArenaVec::new_in(ctx),
+            wrapper_function.body.replace(Self::create_function_body(
+                wrapper_scope_id,
                 statements,
                 ctx,
             ));
@@ -489,13 +501,12 @@ impl<'a> AsyncGeneratorExecutor<'a> {
                 ],
                 ctx,
             );
-            let body = FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), statements, ctx);
-
             let scope_id = ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
             // The generator function will move to this function, so we need
             // to change the parent scope of the generator function to the scope of this function.
             ctx.scoping_mut().change_scope_parent_id(generator_scope_id, Some(scope_id));
 
+            let body = Self::create_function_body(scope_id, statements, ctx);
             let params = Self::create_empty_params(ctx);
             let id = Some(bound_ident.create_binding_identifier(ctx));
             let caller_function = Self::create_function(
@@ -556,7 +567,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             let params = Self::create_placeholder_params(&params, scope_id, ctx);
             let statements =
                 ArenaVec::from_value_in(Self::create_apply_call_statement(&bound_ident, ctx), ctx);
-            let body = FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), statements, ctx);
+            let body = Self::create_function_body(scope_id, statements, ctx);
             let id = function_name.map(|name| {
                 ctx.generate_binding(name, scope_id, SymbolFlags::Function)
                     .create_binding_identifier(ctx)
@@ -583,7 +594,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
                 ctx,
             );
             let statements = ArenaVec::from_array_in([statement, caller_function], ctx);
-            let body = FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), statements, ctx);
+            let body = Self::create_function_body(wrapper_scope_id, statements, ctx);
             let params = Self::create_empty_params(ctx);
             let wrapper_function = Self::create_function(
                 FunctionType::FunctionExpression,
