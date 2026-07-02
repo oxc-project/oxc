@@ -51,7 +51,6 @@ enum LoopType {
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 pub struct NoUnreachableLoop(Box<NoUnreachableLoopConfig>);
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
