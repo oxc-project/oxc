@@ -6,7 +6,7 @@ use oxc_ast::{
     ast::{Expression, Statement},
 };
 use oxc_cfg::{
-    BlockNodeId, EdgeType, EvalConstConditionResult, Instruction, InstructionKind,
+    BlockNodeId, EdgeType, ErrorEdgeKind, EvalConstConditionResult, Instruction, InstructionKind,
     LabeledInstruction,
     graph::{Direction, visit::EdgeRef},
 };
@@ -223,7 +223,13 @@ fn has_next_iteration_path(
                 EdgeType::Backedge => {
                     if owns_block(source, loop_id, ctx)
                         || (is_synthetic_continuation(source, loop_id, ctx, unreachable)
-                            && is_next_iteration_target(edge.target(), loop_id, ctx))
+                            && reaches_next_iteration_target(
+                                edge.target(),
+                                loop_id,
+                                start,
+                                ctx,
+                                unreachable,
+                            ))
                     {
                         return true;
                     }
@@ -233,7 +239,13 @@ fn has_next_iteration_path(
                     for instruction in cfg.basic_block(source).instructions() {
                         match instruction.kind {
                             InstructionKind::Continue(LabeledInstruction::Unlabeled)
-                                if can_continue_loop_from(source, loop_id, ctx, unreachable) =>
+                                if can_continue_loop_from(
+                                    source,
+                                    loop_id,
+                                    start,
+                                    ctx,
+                                    unreachable,
+                                ) =>
                             {
                                 return true;
                             }
@@ -241,6 +253,18 @@ fn has_next_iteration_path(
                                 if can_continue_loop_from(
                                     edge.target(),
                                     loop_id,
+                                    start,
+                                    ctx,
+                                    unreachable,
+                                ) =>
+                            {
+                                return true;
+                            }
+                            InstructionKind::Break(_)
+                                if reaches_next_iteration_target(
+                                    edge.target(),
+                                    loop_id,
+                                    start,
                                     ctx,
                                     unreachable,
                                 ) =>
@@ -267,7 +291,8 @@ fn has_next_iteration_path(
                 | EdgeType::NewFunction
                 | EdgeType::Finalize
                 | EdgeType::Join
-                | EdgeType::Error(_) => {}
+                | EdgeType::Error(ErrorEdgeKind::Implicit) => {}
+                EdgeType::Error(ErrorEdgeKind::Explicit) => stack.push(edge.target()),
             }
         }
     }
@@ -292,12 +317,61 @@ fn is_static_infinite_loop_exit(block_id: BlockNodeId, ctx: &LintContext<'_>) ->
 fn can_continue_loop_from(
     block_id: BlockNodeId,
     loop_id: NodeId,
+    body_start: BlockNodeId,
     ctx: &LintContext<'_>,
     unreachable: Option<&[bool]>,
 ) -> bool {
     owns_block(block_id, loop_id, ctx)
         || is_synthetic_continuation(block_id, loop_id, ctx, unreachable)
-        || is_next_iteration_target(block_id, loop_id, ctx)
+        || reaches_next_iteration_target(block_id, loop_id, body_start, ctx, unreachable)
+}
+
+fn reaches_next_iteration_target(
+    block_id: BlockNodeId,
+    loop_id: NodeId,
+    body_start: BlockNodeId,
+    ctx: &LintContext<'_>,
+    unreachable: Option<&[bool]>,
+) -> bool {
+    let cfg = ctx.cfg();
+    let graph = cfg.graph();
+    let mut stack = vec![block_id];
+    let mut seen = Vec::new();
+
+    while let Some(current) = stack.pop() {
+        if seen.contains(&current) || is_unreachable_block(current, ctx, unreachable) {
+            continue;
+        }
+        seen.push(current);
+
+        if current == body_start {
+            return true;
+        }
+
+        if !cfg.basic_block(current).instructions().is_empty()
+            && !is_loop_control_block(current, loop_id, ctx)
+        {
+            continue;
+        }
+
+        for edge in graph.edges_directed(current, Direction::Outgoing) {
+            if matches!(edge.weight(), EdgeType::Normal | EdgeType::Jump | EdgeType::Backedge) {
+                stack.push(edge.target());
+            }
+        }
+    }
+
+    false
+}
+
+fn is_loop_control_block(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
+    ctx.cfg().basic_block(block_id).instructions().iter().any(|instruction| {
+        matches!(instruction.kind, InstructionKind::Condition | InstructionKind::Iteration(_))
+            && instruction
+                .node_id
+                .and_then(|node_id| nearest_loop(node_id, ctx))
+                .is_some_and(|nearest_loop| nearest_loop == loop_id)
+    })
 }
 
 fn is_synthetic_continuation(
@@ -331,7 +405,7 @@ fn is_synthetic_continuation(
 
             if owns_block(source, loop_id, ctx)
                 || (matches!(edge.weight(), EdgeType::Normal)
-                    && can_skip_nested_loop(source, loop_id, ctx))
+                    && nested_loop_can_complete_normally(source, loop_id, ctx))
             {
                 return true;
             }
@@ -343,10 +417,6 @@ fn is_synthetic_continuation(
     }
 
     false
-}
-
-fn is_next_iteration_target(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
-    owns_block(block_id, loop_id, ctx) || empty_block_backedges_to_loop(block_id, loop_id, ctx)
 }
 
 fn owns_block(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
@@ -395,13 +465,17 @@ fn empty_block_backedges_to_loop(
             .any(|edge| directly_owns_block(edge.target(), loop_id, ctx))
 }
 
-fn can_skip_nested_loop(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
+fn nested_loop_can_complete_normally(
+    block_id: BlockNodeId,
+    loop_id: NodeId,
+    ctx: &LintContext<'_>,
+) -> bool {
     let Some(nested_loop_id) = nearest_loop_for_block(block_id, ctx) else {
         return false;
     };
     nested_loop_id != loop_id
         && enclosing_loop(nested_loop_id, ctx).is_some_and(|id| id == loop_id)
-        && loop_can_have_zero_iterations(ctx.nodes().kind(nested_loop_id))
+        && loop_can_complete_normally(ctx.nodes().kind(nested_loop_id))
 }
 
 fn nearest_loop_for_block(block_id: BlockNodeId, ctx: &LintContext<'_>) -> Option<NodeId> {
@@ -416,12 +490,14 @@ fn enclosing_loop(node_id: NodeId, ctx: &LintContext<'_>) -> Option<NodeId> {
     ctx.nodes().ancestor_ids(node_id).find(|ancestor_id| is_loop(ctx.nodes().kind(*ancestor_id)))
 }
 
-fn loop_can_have_zero_iterations(kind: AstKind<'_>) -> bool {
+fn loop_can_complete_normally(kind: AstKind<'_>) -> bool {
     match kind {
         AstKind::WhileStatement(statement) => !is_static_true(&statement.test),
+        AstKind::DoWhileStatement(statement) => !is_static_true(&statement.test),
         AstKind::ForStatement(statement) => {
             statement.test.as_ref().is_some_and(|test| !is_static_true(test))
         }
+        AstKind::ForInStatement(_) | AstKind::ForOfStatement(_) => true,
         _ => false,
     }
 }
@@ -552,7 +628,8 @@ fn test() {
     ];
 
     let source_code = |template: &str, body: &str| {
-        let loop_source = template.replace("<body>", body);
+        let (prefix, suffix) = template.split_once("<body>").unwrap();
+        let loop_source = format!("{prefix}{body}{suffix}");
         if body.contains("return") && !template.contains("function") {
             format!("function someFunc() {{ {loop_source} }}")
         } else {
