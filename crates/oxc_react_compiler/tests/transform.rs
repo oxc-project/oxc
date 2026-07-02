@@ -12,10 +12,7 @@ use oxc_react_compiler::{PluginOptions, TransformResult, transform};
 fn options() -> PluginOptions {
     // The upstream options type is constructed typed (it has no `Deserialize`);
     // only `filename` differs from the compiler's standard defaults.
-    PluginOptions {
-        filename: Some("Component.jsx".to_string()),
-        ..oxc_react_compiler::default_plugin_options()
-    }
+    PluginOptions { filename: Some("Component.jsx".to_string()), ..PluginOptions::default() }
 }
 
 /// Parse `source_text` then run the compiler in place, returning the

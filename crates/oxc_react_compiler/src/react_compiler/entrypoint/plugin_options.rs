@@ -50,12 +50,6 @@ pub struct PluginOptions {
     pub custom_opt_out_directives: Option<Vec<String>>,
     pub environment: EnvironmentConfig,
 
-    /// Source code of the file being compiled (passed from Babel plugin for fast refresh hash).
-    pub source_code: Option<String>,
-
-    /// Enable profiling timing data collection.
-    pub profiling: bool,
-
     /// Enable debug logging (HIR formatting after each pass).
     /// Only set to true when a logger with debugLogIRs is configured on the JS side.
     pub debug: bool,

@@ -1,8 +1,6 @@
 use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_hir::ReactFunctionType;
 
-use crate::react_compiler::timing::TimingEntry;
-
 /// Source location with index and filename fields for logger event serialization.
 /// Matches the Babel SourceLocation format that the TS compiler emits in logger events.
 #[derive(Debug, Clone)]
@@ -80,17 +78,9 @@ pub enum CompileResult<'a> {
         /// Each entry maps an original binding name to its renamed version,
         /// identified by the binding's declaration start position in the source.
         renames: Vec<BindingRenameInfo>,
-        /// Timing data for profiling. Only populated when __profiling is enabled.
-        timing: Vec<TimingEntry>,
     },
     /// A fatal error occurred and panicThreshold dictates it should throw.
-    Error {
-        error: CompilerErrorInfo,
-        events: Vec<LoggerEvent>,
-        ordered_log: Vec<OrderedLogItem>,
-        /// Timing data for profiling. Only populated when __profiling is enabled.
-        timing: Vec<TimingEntry>,
-    },
+    Error { error: CompilerErrorInfo, events: Vec<LoggerEvent>, ordered_log: Vec<OrderedLogItem> },
 }
 
 /// An item in the ordered log, which can be either a logger event or a debug entry.

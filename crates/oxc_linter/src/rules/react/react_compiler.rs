@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_diagnostics::Severity;
 use oxc_macros::declare_oxc_lint;
-use oxc_react_compiler::{EnvironmentConfig, PluginOptions, default_plugin_options};
+use oxc_react_compiler::{EnvironmentConfig, PluginOptions};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -36,7 +36,7 @@ fn react_compiler_options(filename: Option<String>) -> PluginOptions {
             validate_no_derived_computations_in_effects: true,
             ..EnvironmentConfig::default()
         },
-        ..default_plugin_options()
+        ..PluginOptions::default()
     }
 }
 

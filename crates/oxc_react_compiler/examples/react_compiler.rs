@@ -19,7 +19,7 @@ use oxc_codegen::Codegen;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-use oxc_react_compiler::{default_plugin_options, transform};
+use oxc_react_compiler::{PluginOptions, transform};
 
 /// Compile a React component with the Rust React Compiler and print the result.
 fn main() {
@@ -38,7 +38,7 @@ fn main() {
     let allocator = Allocator::default();
     let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
 
-    let result = transform(&mut program, &allocator, default_plugin_options());
+    let result = transform(&mut program, &allocator, PluginOptions::default());
 
     if !result.diagnostics.is_empty() {
         println!("Diagnostics:\n");

@@ -1,6 +1,5 @@
 pub mod debug_print;
 pub mod entrypoint;
-pub mod timing;
 
 // Re-export from new crates for backwards compatibility
 pub use crate::react_compiler_diagnostics;

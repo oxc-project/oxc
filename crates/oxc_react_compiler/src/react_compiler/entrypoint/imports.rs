@@ -13,7 +13,6 @@ use crate::scope::ScopeInfo;
 use super::compile_result::{DebugLogEntry, LoggerEvent, OrderedLogItem};
 use super::plugin_options::{CompilerTarget, PluginOptions};
 use super::suppression::SuppressionRange;
-use crate::react_compiler::timing::TimingData;
 
 /// An import specifier tracked by ProgramContext.
 /// Corresponds to NonLocalImportSpecifier in the TS compiler.
@@ -51,9 +50,6 @@ pub struct ProgramContext {
     // Variable renames from lowering, to be applied back to the Babel AST
     pub renames: Vec<BindingRename>,
 
-    /// Timing data for profiling. Accumulates across all function compilations.
-    pub timing: TimingData,
-
     /// Whether debug logging is enabled (HIR formatting after each pass).
     pub debug_enabled: bool,
 
@@ -72,7 +68,6 @@ impl ProgramContext {
         has_module_scope_opt_out: bool,
     ) -> Self {
         let react_runtime_module = get_react_compiler_runtime_module(&opts.target);
-        let profiling = opts.profiling;
         let debug_enabled = opts.debug;
         Self {
             opts,
@@ -88,7 +83,6 @@ impl ProgramContext {
             instrument_gating_name: None,
             hook_guard_name: None,
             renames: Vec::new(),
-            timing: TimingData::new(profiling),
             debug_enabled,
             already_compiled: FxHashSet::default(),
             known_referenced_names: FxHashSet::default(),

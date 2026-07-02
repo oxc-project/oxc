@@ -53,29 +53,29 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::GetSpan;
 use rustc_hash::FxHashSet;
 
-/// [`PluginOptions`] with the compiler's standard defaults (it has no `Default`).
-/// Override fields with struct-update syntax: `PluginOptions { ..default_plugin_options() }`.
-pub fn default_plugin_options() -> PluginOptions {
-    PluginOptions {
-        should_compile: true,
-        enable_reanimated: false,
-        is_dev: false,
-        filename: None,
-        compilation_mode: "infer".to_string(),
-        panic_threshold: "none".to_string(),
-        target: CompilerTarget::Version("19".to_string()),
-        gating: None,
-        dynamic_gating: None,
-        no_emit: false,
-        output_mode: None,
-        eslint_suppression_rules: None,
-        flow_suppressions: true,
-        ignore_use_no_forget: false,
-        custom_opt_out_directives: None,
-        environment: EnvironmentConfig::default(),
-        source_code: None,
-        profiling: false,
-        debug: false,
+impl Default for PluginOptions {
+    /// The compiler's standard defaults. Override fields with struct-update syntax:
+    /// `PluginOptions { ..Default::default() }`.
+    fn default() -> Self {
+        PluginOptions {
+            should_compile: true,
+            enable_reanimated: false,
+            is_dev: false,
+            filename: None,
+            compilation_mode: "infer".to_string(),
+            panic_threshold: "none".to_string(),
+            target: CompilerTarget::Version("19".to_string()),
+            gating: None,
+            dynamic_gating: None,
+            no_emit: false,
+            output_mode: None,
+            eslint_suppression_rules: None,
+            flow_suppressions: true,
+            ignore_use_no_forget: false,
+            custom_opt_out_directives: None,
+            environment: EnvironmentConfig::default(),
+            debug: false,
+        }
     }
 }
 
@@ -126,19 +126,6 @@ fn compile<'a>(
     allocator: &'a Allocator,
     options: PluginOptions,
 ) -> (Option<Program<'a>>, Diagnostics, Vec<LoggerEvent>) {
-    let source_text = program.source_text;
-
-    // The HIR lowering computes `SourceLocation` line/column from a line-offset
-    // table built off `context.code` (see `pipeline::compile_fn`). The oxc
-    // front-end derives locations on demand from the source text, so the source
-    // must be threaded through. Without it, every loc collapses to
-    // `line = 1, column = byte_offset`, which surfaces as wrong `(line:col)`
-    // suffixes in diagnostics.
-    let mut options = options;
-    if options.source_code.is_none() {
-        options.source_code = Some(source_text.to_string());
-    }
-
     // Skip files with no React-like functions, unless the mode compiles everything.
     if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
         && !has_react_like_functions(program)

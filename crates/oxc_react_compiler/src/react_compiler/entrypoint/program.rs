@@ -1358,7 +1358,6 @@ fn handle_error<'a>(
             error: error_info,
             events: context.events.clone(),
             ordered_log: context.ordered_log.clone(),
-            timing: Vec::new(),
         })
     } else {
         None
@@ -3131,7 +3130,6 @@ pub fn compile_program<'a, 'p>(
             events: early_events,
             ordered_log: early_ordered_log,
             renames: Vec::new(),
-            timing: Vec::new(),
         };
     }
 
@@ -3144,7 +3142,6 @@ pub fn compile_program<'a, 'p>(
             events: early_events,
             ordered_log: early_ordered_log,
             renames: Vec::new(),
-            timing: Vec::new(),
         };
     }
 
@@ -3183,8 +3180,9 @@ pub fn compile_program<'a, 'p>(
     let mut context = ProgramContext::new(
         options.clone(),
         options.filename.clone(),
-        // Pass the source code for fast refresh hash computation.
-        options.source_code.clone(),
+        // Source text feeds the line-offset table (diagnostic line/col) and the fast
+        // refresh hash. The oxc front-end derives locations from it on demand.
+        Some(program.source_text.to_string()),
         suppressions,
         has_module_scope_opt_out,
     );
@@ -3210,7 +3208,6 @@ pub fn compile_program<'a, 'p>(
             events: context.events,
             ordered_log: context.ordered_log,
             renames: convert_renames(&context.renames),
-            timing: Vec::new(),
         };
     }
 
@@ -3311,7 +3308,6 @@ pub fn compile_program<'a, 'p>(
             events: context.events,
             ordered_log: context.ordered_log,
             renames: convert_renames(&context.renames),
-            timing: Vec::new(),
         };
     }
 
@@ -3355,7 +3351,6 @@ pub fn compile_program<'a, 'p>(
             events: context.events,
             ordered_log: context.ordered_log,
             renames: convert_renames(&context.renames),
-            timing: Vec::new(),
         };
     }
 
@@ -3364,14 +3359,11 @@ pub fn compile_program<'a, 'p>(
     // functions, and add the memo-cache / gating imports.
     let compiled_program = ox_splice_program(ast, oxc_program, &replacements, &mut context);
 
-    let timing_entries = context.timing.into_entries();
-
     CompileResult::Success {
         ast: Some(compiled_program),
         events: context.events,
         ordered_log: context.ordered_log,
         renames: convert_renames(&context.renames),
-        timing: timing_entries,
     }
 }
 
