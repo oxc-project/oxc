@@ -134,6 +134,8 @@ pub enum LineMode {
     Hard,
     /// See [crate::builders::empty_line] for documentation.
     Empty,
+    /// See [crate::builders::literal_line_break] for documentation.
+    Literal,
 }
 
 impl LineMode {
@@ -142,7 +144,7 @@ impl LineMode {
     }
 
     pub const fn will_break(self) -> bool {
-        matches!(self, LineMode::Hard | LineMode::Empty)
+        matches!(self, LineMode::Hard | LineMode::Empty | LineMode::Literal)
     }
 }
 
