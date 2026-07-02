@@ -2,7 +2,8 @@ use std::{
     env,
     ffi::OsStr,
     fmt::Debug,
-    io::{ErrorKind, Write},
+    fs::File,
+    io::{BufWriter, ErrorKind, Write},
     path::{Path, PathBuf, absolute},
     sync::Arc,
     time::Instant,
@@ -75,7 +76,9 @@ impl CliRunner {
         let format_str = self.options.output_options.format;
         let debug_files = self.options.output_options.debug.contains(DebugOption::Files);
         let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
+        let output_file = self.options.output_options.output_file.clone();
         let output_formatter = OutputFormatter::new(format_str);
+        let mut output_file_writer = None;
 
         let LintCommand {
             paths,
@@ -160,28 +163,35 @@ impl CliRunner {
             override_builder = Some(builder);
         }
 
-        if paths.is_empty() {
-            // If explicit paths were provided, but all have been
-            // filtered, return early.
-            if provided_path_count > 0 {
-                if debug_files {
-                    return crate::mode::run_debug_files(
-                        std::iter::empty::<&Path>(),
-                        &self.cwd,
-                        stdout,
-                    );
-                }
-
-                return Self::handle_no_files_found(
+        let explicit_paths_filtered = paths.is_empty() && provided_path_count > 0;
+        if explicit_paths_filtered {
+            if debug_files {
+                return crate::mode::run_debug_files(
+                    std::iter::empty::<&Path>(),
+                    &self.cwd,
                     stdout,
-                    &output_formatter,
-                    now,
-                    None,
-                    misc_options.no_error_on_unmatched_pattern,
                 );
             }
-
+        } else if paths.is_empty() {
             paths.push(self.cwd.clone());
+        }
+
+        // Create the report file once before any lint-report path can write to it.
+        if let Err(result) =
+            Self::ensure_report_file_writer(stdout, output_file.as_deref(), &mut output_file_writer)
+        {
+            return result;
+        }
+
+        if explicit_paths_filtered {
+            return Self::handle_no_files_found(
+                stdout,
+                &mut output_file_writer,
+                &output_formatter,
+                now,
+                None,
+                misc_options.no_error_on_unmatched_pattern,
+            );
         }
 
         let walker = Walk::new(&paths, &self.cwd, &ignore_options, override_builder);
@@ -462,6 +472,7 @@ impl CliRunner {
         if number_of_files == 0 {
             return Self::handle_no_files_found(
                 stdout,
+                &mut output_file_writer,
                 &output_formatter,
                 now,
                 number_of_rules,
@@ -518,7 +529,9 @@ impl CliRunner {
 
         drop(tx_error);
 
-        let diagnostic_result = diagnostic_service.run(stdout);
+        let mut report_writer = Self::report_writer(stdout, &mut output_file_writer);
+
+        let diagnostic_result = diagnostic_service.run(&mut report_writer);
 
         let oxlint_suppression_file_action = if let Err(report_suppression_error) = result {
             OxlintSuppressionFileAction::UnableToPerformFsOperation(report_suppression_error)
@@ -539,7 +552,7 @@ impl CliRunner {
             oxlint_suppression_file_action,
             rule_timings: rule_timing_store.as_ref().map(RuleTimingStore::collect),
         }) {
-            print_and_flush_stdout(stdout, &end);
+            print_and_flush_stdout(&mut report_writer, &end);
         }
 
         // When --suppress-all is used and the file was written successfully,
@@ -594,8 +607,46 @@ impl CliRunner {
         )
     }
 
+    fn ensure_report_file_writer(
+        stdout: &mut dyn Write,
+        output_file: Option<&Path>,
+        output_file_writer: &mut Option<BufWriter<File>>,
+    ) -> Result<(), CliRunResult> {
+        let Some(path) = output_file else {
+            return Ok(());
+        };
+        if output_file_writer.is_some() {
+            return Ok(());
+        }
+
+        match File::create(path).map(BufWriter::new) {
+            Ok(writer) => {
+                *output_file_writer = Some(writer);
+                Ok(())
+            }
+            Err(err) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!("Failed to create output file {}: {err}\n", path.display()),
+                );
+                Err(CliRunResult::OutputFileWriteFailed)
+            }
+        }
+    }
+
+    fn report_writer<'a>(
+        stdout: &'a mut dyn Write,
+        output_file_writer: &'a mut Option<BufWriter<File>>,
+    ) -> ReportWriter<'a> {
+        match output_file_writer {
+            Some(writer) => ReportWriter::File(writer),
+            None => ReportWriter::Stdout(stdout),
+        }
+    }
+
     fn handle_no_files_found(
         stdout: &mut dyn Write,
+        output_file_writer: &mut Option<BufWriter<File>>,
         output_formatter: &OutputFormatter,
         now: Instant,
         number_of_rules: Option<usize>,
@@ -616,7 +667,8 @@ impl CliRunner {
             oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
             rule_timings: None,
         }) {
-            print_and_flush_stdout(stdout, &end);
+            let mut report_writer = Self::report_writer(stdout, output_file_writer);
+            print_and_flush_stdout(&mut report_writer, &end);
         }
 
         if no_error_on_unmatched_pattern {
@@ -667,6 +719,27 @@ impl CliRunner {
     }
 }
 
+enum ReportWriter<'a> {
+    Stdout(&'a mut dyn Write),
+    File(&'a mut BufWriter<File>),
+}
+
+impl Write for ReportWriter<'_> {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        match self {
+            Self::Stdout(writer) => writer.write(buf),
+            Self::File(writer) => writer.write(buf),
+        }
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        match self {
+            Self::Stdout(writer) => writer.flush(),
+            Self::File(writer) => writer.flush(),
+        }
+    }
+}
+
 pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
     stdout.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
     stdout.flush().or_else(check_for_writer_error).unwrap();
@@ -707,7 +780,7 @@ fn render_config_builder_error(
 mod test {
     use std::fs;
 
-    use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
+    use crate::{DEFAULT_OXLINTRC_NAME, cli::CliRunResult, tester::Tester};
     use oxc_linter::rules::RULES;
 
     // lints the full directory of fixtures,
@@ -740,6 +813,31 @@ mod test {
     fn multi_files() {
         let args = &["fixtures/cli/linter/debugger.js", "fixtures/cli/linter/nan.js"];
         Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn invalid_output_file_does_not_apply_fixes() {
+        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
+        fs::write(
+            temp_dir.path().join(DEFAULT_OXLINTRC_NAME),
+            r#"{"categories":{"correctness":"off"},"rules":{"no-new-wrappers":"error"}}"#,
+        )
+        .unwrap();
+
+        let source_path = temp_dir.path().join("test.js");
+        let source = "var x = new String('Hello world');\n";
+        fs::write(&source_path, source).unwrap();
+
+        let report_path = temp_dir.path().join("missing").join("report.json");
+        let (_, result) = Tester::new().with_cwd(temp_dir.path().to_path_buf()).test_output(&[
+            "--fix",
+            "-o",
+            report_path.to_str().unwrap(),
+            "test.js",
+        ]);
+
+        assert!(matches!(result, CliRunResult::OutputFileWriteFailed));
+        assert_eq!(fs::read_to_string(source_path).unwrap(), source);
     }
 
     #[test]

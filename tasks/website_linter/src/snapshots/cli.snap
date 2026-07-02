@@ -121,6 +121,8 @@ Arguments:
 ## Output
 - **`-f`**, **`--format`**=_`ARG`_ &mdash; 
   Use a specific output format. Possible values: `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
+- **`-o`**, **`--output-file`**=_`PATH`_ &mdash; 
+  Write the report to a file instead of stdout. The parent directory must already exist; the file is created or truncated.
 - **`    --debug`**=_`OPTIONS`_ &mdash; 
   Enable debug output options. Options are comma-separated. Possible values:
  * `files` - Print the list of files that will be linted, then exit.

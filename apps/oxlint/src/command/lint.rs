@@ -281,6 +281,11 @@ pub struct OutputOptions {
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
 
+    /// Write the report to a file instead of stdout.
+    /// The parent directory must already exist; the file is created or truncated.
+    #[bpaf(long("output-file"), short('o'), argument("PATH"), hide_usage)]
+    pub output_file: Option<PathBuf>,
+
     #[bpaf(
         long("debug"),
         argument::<DebugOptions>("OPTIONS"),
@@ -651,6 +656,7 @@ mod lint_options {
         assert!(!options.list_rules);
         assert_eq!(options.output_options.format, OutputFormat::Default);
         assert_eq!(options.output_options.debug, DebugOptions::default());
+        assert_eq!(options.output_options.output_file, None);
     }
 
     #[test]
