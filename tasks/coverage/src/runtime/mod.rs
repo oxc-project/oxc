@@ -13,7 +13,6 @@
 mod test262_status;
 
 use std::{
-    num::NonZeroUsize,
     path::Path,
     process::{Child, Command, Stdio},
     thread,
@@ -136,8 +135,9 @@ pub fn run(filter: Option<&str>, detail: bool) {
     // the parallel skip filter, so any failure surfaces deterministically.
     let _ = get_v8_test262_failure_paths();
 
-    // One server per core keeps every core busy without over-subscribing them.
-    let num_servers = std::thread::available_parallelism().map_or(1, NonZeroUsize::get);
+    // One server per rayon worker keeps every core busy without spawning
+    // servers nothing will talk to (the pool is 1 thread under --debug).
+    let num_servers = rayon::current_num_threads();
 
     // A single agent, shared across the rayon threads and the readiness probes.
     let http = agent();
