@@ -451,9 +451,17 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             Self::create_placeholder_params(&wrapper_function.params, wrapper_scope_id, ctx);
         let params = mem::replace(&mut wrapper_function.params, params);
 
+        let function_binding_scope_id =
+            Self::function_declaration_binding_scope_id(wrapper_function.id.as_ref(), ctx);
+        if function_binding_scope_id != ctx.current_scope_id()
+            && let Some(id) = &wrapper_function.id
+        {
+            Self::move_binding_identifier_to_target_scope(function_binding_scope_id, id, ctx);
+        }
+
         let bound_ident = Self::create_bound_identifier(
             wrapper_function.id.as_ref(),
-            ctx.current_scope_id(),
+            Self::function_declaration_binding_scope_id(None, ctx),
             SymbolFlags::Function,
             ctx,
         );
@@ -507,6 +515,31 @@ impl<'a> AsyncGeneratorExecutor<'a> {
                 ctx,
             );
             Statement::FunctionDeclaration(caller_function)
+        }
+    }
+
+    /// Returns the binding scope a rebuilt semantic tree would use for a plain function
+    /// declaration emitted at the current position.
+    fn function_declaration_binding_scope_id(
+        id: Option<&BindingIdentifier<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) -> ScopeId {
+        if ctx.state.source_type.is_typescript() {
+            return ctx.current_scope_id();
+        }
+
+        let scope_flags = ctx.current_scope_flags();
+        if scope_flags.is_var() || scope_flags.is_strict_mode() {
+            return ctx.current_scope_id();
+        }
+
+        let hoist_scope_id = ctx.current_hoist_scope_id();
+        if let Some(id) = id
+            && ctx.scoping().scope_has_binding(hoist_scope_id, id.name)
+        {
+            ctx.current_scope_id()
+        } else {
+            hoist_scope_id
         }
     }
 
