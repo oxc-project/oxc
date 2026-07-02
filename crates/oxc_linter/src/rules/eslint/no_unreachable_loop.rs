@@ -387,12 +387,12 @@ fn is_synthetic_continuation(
     }
 
     let mut stack = vec![block_id];
-    let mut seen = Vec::new();
+    let mut seen = vec![false; cfg.basic_blocks.len()];
     while let Some(current) = stack.pop() {
-        if seen.contains(&current) {
+        if seen[current.index()] {
             continue;
         }
-        seen.push(current);
+        seen[current.index()] = true;
 
         for edge in graph
             .edges_directed(current, Direction::Incoming)
