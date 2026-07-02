@@ -8,39 +8,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
       {
         "children": [
           {
-            "children": [
-              {
-                "children": [
-                  {
-                    "children": [],
-                    "flags": "ScopeFlags(0x0)",
-                    "id": 4,
-                    "node": "TSFunctionType",
-                    "symbols": [
-                      {
-                        "flags": "SymbolFlags(FunctionScopedVariable)",
-                        "id": 3,
-                        "name": "arg2",
-                        "node": "FormalParameter(arg2)",
-                        "references": []
-                      }
-                    ]
-                  }
-                ],
-                "flags": "ScopeFlags(0x0)",
-                "id": 3,
-                "node": "TSFunctionType",
-                "symbols": [
-                  {
-                    "flags": "SymbolFlags(FunctionScopedVariable)",
-                    "id": 2,
-                    "name": "arg",
-                    "node": "FormalParameter(arg)",
-                    "references": []
-                  }
-                ]
-              }
-            ],
+            "children": [],
             "flags": "ScopeFlags(TsConditional)",
             "id": 2,
             "node": "TSConditionalType",
@@ -59,6 +27,37 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                     "scope_id": 2
                   }
                 ]
+              }
+            ]
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(0x0)",
+                "id": 4,
+                "node": "TSFunctionType",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable)",
+                    "id": 3,
+                    "name": "arg2",
+                    "node": "FormalParameter(arg2)",
+                    "references": []
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 3,
+            "node": "TSFunctionType",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 2,
+                "name": "arg",
+                "node": "FormalParameter(arg)",
+                "references": []
               }
             ]
           }
