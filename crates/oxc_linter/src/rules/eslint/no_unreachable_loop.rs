@@ -599,7 +599,7 @@ fn is_loop_control_block(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintConte
         matches!(instruction.kind, InstructionKind::Condition | InstructionKind::Iteration(_))
             && instruction
                 .node_id
-                .and_then(|node_id| nearest_loop(node_id, ctx))
+                .and_then(|node_id| enclosing_loop(node_id, ctx))
                 .is_some_and(|nearest_loop| nearest_loop == loop_id)
     })
 }
@@ -662,7 +662,7 @@ fn directly_owns_block(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext
     ctx.cfg().basic_block(block_id).instructions().iter().any(|instruction| {
         instruction
             .node_id
-            .and_then(|node_id| nearest_loop(node_id, ctx))
+            .and_then(|node_id| enclosing_loop(node_id, ctx))
             .is_some_and(|nearest_loop| nearest_loop == loop_id)
     })
 }
@@ -700,24 +700,25 @@ fn nested_loop_can_complete_normally(
     loop_id: NodeId,
     ctx: &LintContext<'_>,
 ) -> bool {
-    let Some(nested_loop_id) = nearest_loop_for_block(block_id, ctx) else {
-        return false;
-    };
-    nested_loop_id != loop_id
+    if let Some(nested_loop_id) = nearest_loop_for_block(block_id, ctx)
+        && nested_loop_id != loop_id
         && enclosing_loop(nested_loop_id, ctx).is_some_and(|id| id == loop_id)
         && loop_can_complete_normally(ctx.nodes().kind(nested_loop_id))
+    {
+        return true;
+    }
+
+    false
 }
 
 fn nearest_loop_for_block(block_id: BlockNodeId, ctx: &LintContext<'_>) -> Option<NodeId> {
-    ctx.cfg()
-        .basic_block(block_id)
-        .instructions()
-        .iter()
-        .find_map(|instruction| instruction.node_id.and_then(|node_id| nearest_loop(node_id, ctx)))
+    ctx.cfg().basic_block(block_id).instructions().iter().find_map(|instruction| {
+        instruction.node_id.and_then(|node_id| enclosing_loop(node_id, ctx))
+    })
 }
 
 fn enclosing_loop(node_id: NodeId, ctx: &LintContext<'_>) -> Option<NodeId> {
-    ctx.nodes().ancestor_ids(node_id).find(|ancestor_id| is_loop(ctx.nodes().kind(*ancestor_id)))
+    ctx.nodes().ancestor_kinds(node_id).find(|ancestor| is_loop(*ancestor)).map(|n| n.node_id())
 }
 
 fn loop_can_complete_normally(kind: AstKind<'_>) -> bool {
@@ -729,18 +730,6 @@ fn loop_can_complete_normally(kind: AstKind<'_>) -> bool {
         }
         AstKind::ForInStatement(_) | AstKind::ForOfStatement(_) => true,
         _ => false,
-    }
-}
-
-fn nearest_loop(mut node_id: NodeId, ctx: &LintContext<'_>) -> Option<NodeId> {
-    loop {
-        if is_loop(ctx.nodes().kind(node_id)) {
-            return Some(node_id);
-        }
-        if node_id == NodeId::ROOT {
-            return None;
-        }
-        node_id = ctx.nodes().parent_id(node_id);
     }
 }
 
