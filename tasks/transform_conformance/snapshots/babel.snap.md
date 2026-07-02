@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 665/1165
+Passed: 677/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -197,7 +197,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (186/269)
+# babel-plugin-transform-class-properties (198/269)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -220,17 +220,6 @@ x Output mismatch
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
-
-* assumption-setPublicClassFields/instance-computed/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_x", "x"]
-rebuilt        : ScopeId(1): ["x"]
-Bindings mismatch:
-after transform: ScopeId(2): ["F"]
-rebuilt        : ScopeId(2): ["F", "_x"]
-Symbol scope ID mismatch for "_x":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
 
 * assumption-setPublicClassFields/static-infer-name/input.js
 x Output mismatch
@@ -271,33 +260,11 @@ rebuilt        : []
 * nested-class/super-call-in-decorator/input.js
 x Output mismatch
 
-* nested-class/super-call-in-key/input.js
-Bindings mismatch:
-after transform: ScopeId(7): ["_super"]
-rebuilt        : ScopeId(7): []
-Bindings mismatch:
-after transform: ScopeId(8): ["Inner"]
-rebuilt        : ScopeId(8): ["Inner", "_super"]
-Symbol scope ID mismatch for "_super":
-after transform: SymbolId(3): ScopeId(7)
-rebuilt        : SymbolId(2): ScopeId(8)
-
 * nested-class/super-property-in-accessor-key/input.js
 x Output mismatch
 
 * nested-class/super-property-in-decorator/input.js
 x Output mismatch
-
-* nested-class/super-property-in-key/input.js
-Bindings mismatch:
-after transform: ScopeId(5): ["_super$toString"]
-rebuilt        : ScopeId(5): []
-Bindings mismatch:
-after transform: ScopeId(6): ["Inner"]
-rebuilt        : ScopeId(6): ["Inner", "_super$toString"]
-Symbol scope ID mismatch for "_super$toString":
-after transform: SymbolId(3): ScopeId(5)
-rebuilt        : SymbolId(2): ScopeId(6)
 
 * private/class-shadow-builtins/input.mjs
 x Output mismatch
@@ -311,39 +278,6 @@ rebuilt        : ScopeId(4): Some(ScopeId(3))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
-
-* private/nested-class-computed-redeclared/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["_babelHelpers$classPr", "_foo2"]
-rebuilt        : ScopeId(4): ["_foo2"]
-Bindings mismatch:
-after transform: ScopeId(3): ["Nested"]
-rebuilt        : ScopeId(5): ["Nested", "_babelHelpers$classPr"]
-Symbol scope ID mismatch for "_babelHelpers$classPr":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(5)
-
-* private/nested-class-extends-computed/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["_foo2", "_this$foo"]
-rebuilt        : ScopeId(4): ["_foo2"]
-Bindings mismatch:
-after transform: ScopeId(3): ["Nested"]
-rebuilt        : ScopeId(5): ["Nested", "_this$foo"]
-Symbol scope ID mismatch for "_this$foo":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(5)
-
-* private/nested-class-extends-computed-redeclared/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["_foo2", "_foo3", "_this$foo"]
-rebuilt        : ScopeId(4): ["_foo2", "_foo3"]
-Bindings mismatch:
-after transform: ScopeId(3): ["Nested"]
-rebuilt        : ScopeId(5): ["Nested", "_this$foo"]
-Symbol scope ID mismatch for "_this$foo":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(3): ScopeId(5)
 
 * private/optional-chain-cast-to-boolean/input.js
 x Output mismatch
@@ -389,39 +323,6 @@ rebuilt        : ScopeId(4): Some(ScopeId(3))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
-
-* private-loose/nested-class-computed-redeclared/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["_babelHelpers$classPr", "_foo2"]
-rebuilt        : ScopeId(4): ["_foo2"]
-Bindings mismatch:
-after transform: ScopeId(3): ["Nested"]
-rebuilt        : ScopeId(5): ["Nested", "_babelHelpers$classPr"]
-Symbol scope ID mismatch for "_babelHelpers$classPr":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(5)
-
-* private-loose/nested-class-extends-computed/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["_foo2", "_this$foo"]
-rebuilt        : ScopeId(4): ["_foo2"]
-Bindings mismatch:
-after transform: ScopeId(3): ["Nested"]
-rebuilt        : ScopeId(5): ["Nested", "_this$foo"]
-Symbol scope ID mismatch for "_this$foo":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(5)
-
-* private-loose/nested-class-extends-computed-redeclared/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["_foo2", "_foo3", "_this$foo"]
-rebuilt        : ScopeId(4): ["_foo2", "_foo3"]
-Bindings mismatch:
-after transform: ScopeId(3): ["Nested"]
-rebuilt        : ScopeId(5): ["Nested", "_this$foo"]
-Symbol scope ID mismatch for "_this$foo":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(3): ScopeId(5)
 
 * private-loose/optional-chain-before-member-call/input.js
 x Output mismatch
@@ -482,17 +383,6 @@ x Output mismatch
 * public/computed/input.js
 x Output mismatch
 
-* public/computed-without-block/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_k", "k"]
-rebuilt        : ScopeId(1): ["k"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["_k"]
-Symbol scope ID mismatch for "_k":
-after transform: SymbolId(2): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
-
 * public/delete-super-property/input.js
 x Output mismatch
 
@@ -505,17 +395,6 @@ rebuilt        : ScopeId(4): Some(ScopeId(3))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
-
-* public/instance-computed/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_x", "x"]
-rebuilt        : ScopeId(1): ["x"]
-Bindings mismatch:
-after transform: ScopeId(2): ["F"]
-rebuilt        : ScopeId(2): ["F", "_x"]
-Symbol scope ID mismatch for "_x":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
 
 * public/static-infer-name/input.js
 x Output mismatch
@@ -535,17 +414,6 @@ x Output mismatch
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
-
-* public-loose/instance-computed/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_x", "x"]
-rebuilt        : ScopeId(1): ["x"]
-Bindings mismatch:
-after transform: ScopeId(2): ["F"]
-rebuilt        : ScopeId(2): ["F", "_x"]
-Symbol scope ID mismatch for "_x":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
 
 * public-loose/static-infer-name/input.js
 x Output mismatch
@@ -568,18 +436,9 @@ rebuilt        : ScopeId(14): Some(ScopeId(13))
 Scope parent mismatch:
 after transform: ScopeId(33): Some(ScopeId(18))
 rebuilt        : ScopeId(22): Some(ScopeId(21))
-Bindings mismatch:
-after transform: ScopeId(26): ["_super3", "_super4"]
-rebuilt        : ScopeId(30): ["_super3"]
-Bindings mismatch:
-after transform: ScopeId(27): ["B"]
-rebuilt        : ScopeId(31): ["B", "_super4"]
 Scope parent mismatch:
 after transform: ScopeId(35): Some(ScopeId(26))
 rebuilt        : ScopeId(32): Some(ScopeId(31))
-Symbol scope ID mismatch for "_super4":
-after transform: SymbolId(16): ScopeId(26)
-rebuilt        : SymbolId(13): ScopeId(31)
 
 * regression/multiple-super-in-termary/input.js
 Scope parent mismatch:

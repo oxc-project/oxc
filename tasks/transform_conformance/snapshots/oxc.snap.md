@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 224/397
+Passed: 226/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -32,7 +32,7 @@ after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (18/33)
+# babel-plugin-transform-class-properties (20/33)
 * instance-prop-initializer-var-clash/input.js
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(6))
@@ -77,58 +77,6 @@ rebuilt        : ScopeId(13): Some(ScopeId(12))
 Scope parent mismatch:
 after transform: ScopeId(5): Some(ScopeId(3))
 rebuilt        : ScopeId(5): Some(ScopeId(4))
-
-* super-in-constructor-strict/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_super"]
-rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["C"]
-rebuilt        : ScopeId(2): ["C", "_super"]
-Scope parent mismatch:
-after transform: ScopeId(11): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-Bindings mismatch:
-after transform: ScopeId(6): ["_super2"]
-rebuilt        : ScopeId(8): []
-Bindings mismatch:
-after transform: ScopeId(7): ["C"]
-rebuilt        : ScopeId(9): ["C", "_super2"]
-Scope parent mismatch:
-after transform: ScopeId(13): Some(ScopeId(6))
-rebuilt        : ScopeId(10): Some(ScopeId(9))
-Symbol scope ID mismatch for "_super":
-after transform: SymbolId(6): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(2)
-Symbol scope ID mismatch for "_super2":
-after transform: SymbolId(7): ScopeId(6)
-rebuilt        : SymbolId(5): ScopeId(9)
-
-* this-in-computed-key/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref", "_this"]
-rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["C"]
-rebuilt        : ScopeId(2): ["C", "_ref", "_this"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_ref2", "_this2"]
-rebuilt        : ScopeId(6): []
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(7): ["_ref2", "_this2"]
-Symbol scope ID mismatch for "_this":
-after transform: SymbolId(5): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(2)
-Symbol scope ID mismatch for "_ref":
-after transform: SymbolId(6): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
-Symbol scope ID mismatch for "_this2":
-after transform: SymbolId(7): ScopeId(4)
-rebuilt        : SymbolId(5): ScopeId(7)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(8): ScopeId(4)
-rebuilt        : SymbolId(6): ScopeId(7)
 
 * typescript/declare-computed-keys/input.ts
 Symbol reference IDs mismatch for "KEY1":

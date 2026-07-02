@@ -2427,6 +2427,8 @@ unsafe fn walk_function_body<'a, Tr: Traverse<'a>>(
         .get()
         .unwrap();
     ctx.set_current_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
     traverser.enter_function_body(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::FunctionBodyDirectives(
         ancestor::FunctionBodyWithoutDirectives(node, PhantomData),
@@ -2446,6 +2448,7 @@ unsafe fn walk_function_body<'a, Tr: Traverse<'a>>(
     ctx.pop_stack(pop_token);
     traverser.exit_function_body(&mut *node, ctx);
     ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
 }
 
 unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(

@@ -329,6 +329,7 @@ fn generate_scope_code(struct_def: &StructDef) -> (TokenStream, TokenStream, boo
         "Program"
             | "BlockStatement"
             | "Function"
+            | "FunctionBody"
             | "ArrowFunctionExpression"
             | "StaticBlock"
             | "TSModuleDeclaration"

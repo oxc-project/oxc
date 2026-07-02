@@ -3,10 +3,14 @@ commit: 1fb0b771
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
 <<<<<<< HEAD
+<<<<<<< HEAD
 Positive Passed: 2028/2236 (90.70%)
 =======
 Positive Passed: 2031/2236 (90.83%)
 >>>>>>> 31460b4833 (fix(traverse): enter function body scope before hooks)
+=======
+Positive Passed: 2032/2236 (90.88%)
+>>>>>>> 96facb4468 (fix(traverse): set function body block scope)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -88,17 +92,6 @@ rebuilt        : ScopeId(1): ["x"]
 Symbol scope ID mismatch for "_x":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(2): ScopeId(0)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_arguments"]
-rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["A"]
-rebuilt        : ScopeId(2): ["A", "_arguments"]
-Symbol scope ID mismatch for "_arguments":
-after transform: SymbolId(2): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-inside-params-of-function-inside-params-of-async-function/input.js
 Bindings mismatch:
