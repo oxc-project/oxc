@@ -2428,8 +2428,6 @@ unsafe fn walk_function_body<'a, Tr: Traverse<'a>>(
         .get()
         .unwrap();
     ctx.set_current_scope_id(current_scope_id);
-    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
-    ctx.set_current_hoist_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::FunctionBodyDirectives(
         ancestor::FunctionBodyWithoutDirectives(node, PhantomData),
     ));
@@ -2447,7 +2445,6 @@ unsafe fn walk_function_body<'a, Tr: Traverse<'a>>(
     );
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
-    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
     traverser.exit_function_body(&mut *node, ctx);
 }
 
