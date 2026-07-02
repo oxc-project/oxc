@@ -1,13 +1,13 @@
 //! End-to-end integration tests: oxc parse + semantic -> compile -> codegen.
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{ModuleExportName, Statement};
+use oxc_ast::ast::{ModuleExportName, Program, Statement};
 use oxc_codegen::Codegen;
+use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
-use oxc_react_compiler::PluginOptions;
-use oxc_react_compiler::transform_source;
+use oxc_react_compiler::{PluginOptions, TransformResult, transform};
 
 fn options() -> PluginOptions {
     // The upstream options type is constructed typed (it has no `Deserialize`);
@@ -16,6 +16,19 @@ fn options() -> PluginOptions {
         filename: Some("Component.jsx".to_string()),
         ..oxc_react_compiler::default_plugin_options()
     }
+}
+
+/// Parse `source_text` then run the compiler in place, returning the
+/// (possibly rewritten) program together with the result.
+fn transform_source<'a>(
+    source_text: &'a str,
+    source_type: SourceType,
+    allocator: &'a Allocator,
+    options: PluginOptions,
+) -> (Program<'a>, TransformResult) {
+    let mut program = Parser::new(allocator, source_text, source_type).parse().program;
+    let result = transform(&mut program, allocator, options);
+    (program, result)
 }
 
 #[test]

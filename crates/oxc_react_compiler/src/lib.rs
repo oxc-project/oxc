@@ -49,9 +49,8 @@ pub use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 
 use oxc_ast::ast::Program;
 use oxc_diagnostics::Diagnostics;
-use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::{GetSpan, SourceType};
+use oxc_span::GetSpan;
 use rustc_hash::FxHashSet;
 
 /// [`PluginOptions`] with the compiler's standard defaults (it has no `Default`).
@@ -210,19 +209,6 @@ fn preserve_comments<'a>(
     compiled.source_text = source.source_text;
 }
 
-/// Convenience wrapper — parses source text then transforms it in place, returning
-/// the (possibly rewritten) program together with the result.
-pub fn transform_source<'a>(
-    source_text: &'a str,
-    source_type: SourceType,
-    allocator: &'a Allocator,
-    options: PluginOptions,
-) -> (Program<'a>, TransformResult) {
-    let mut program = Parser::new(allocator, source_text, source_type).parse().program;
-    let result = transform(&mut program, allocator, options);
-    (program, result)
-}
-
 /// Lint a pre-parsed program — like [`transform`] but read-only: it collects
 /// diagnostics without rewriting the program.
 pub fn lint(program: &Program, options: PluginOptions) -> LintResult {
@@ -233,15 +219,4 @@ pub fn lint(program: &Program, options: PluginOptions) -> LintResult {
     let allocator = Allocator::default();
     let (_program, diagnostics, _events) = compile(program, &allocator, options);
     LintResult { diagnostics }
-}
-
-/// Convenience wrapper — parses source text, runs semantic analysis, then lints.
-pub fn lint_source(
-    source_text: &str,
-    source_type: SourceType,
-    options: PluginOptions,
-) -> LintResult {
-    let allocator = Allocator::default();
-    let parsed = Parser::new(&allocator, source_text, source_type).parse();
-    lint(&parsed.program, options)
 }
