@@ -1436,14 +1436,14 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 
 ### What it does
 
-Encourages using `Array.prototype.find` instead of `filter(...)[0]` or
-similar patterns when only the first matching element is needed.
+Encourages using `Array.prototype.find` and `Array.prototype.findLast` instead of
+taking the first or last matching element from `filter(...)`.
 
 ### Why is this bad?
 
-Using `filter(...)[0]` to get the first match is less efficient and more verbose
-than using `find(...)`. `find` short-circuits when a match is found,
-whereas `filter` evaluates the entire array.
+Using `filter(...)[0]` or array destructuring to get the first match is less
+efficient and more verbose than using `find(...)`. `find` and `findLast`
+short-circuit when a match is found, whereas `filter` evaluates the entire array.
 
 ### Examples
 
@@ -1451,12 +1451,18 @@ Examples of **incorrect** code for this rule:
 ```js
 const match = users.filter(u => u.id === id)[0];
 const match = users.filter(fn).shift();
+const [match] = users.filter(fn);
+
+const match = users.filter(fn).at(-1);
+const match = users.filter(fn).pop();
 ```
 
 Examples of **correct** code for this rule:
 ```js
 const match = users.find(u => u.id === id);
 const match = users.find(fn);
+
+const match = users.findLast(fn);
 ```
 
 
