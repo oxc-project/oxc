@@ -15,7 +15,7 @@ use oxc_linter::{
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use crate::{DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME};
+use crate::{DEFAULT_JS_OXLINTRC_NAMES, DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME};
 use crate::{VITE_CONFIG_NAME, vp_version};
 
 const GIT_DIR: &str = ".git";
@@ -34,7 +34,7 @@ pub struct JsConfigResult {
 const OXLINT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
     json: DEFAULT_OXLINTRC_NAME,
     jsonc: DEFAULT_JSONC_OXLINTRC_NAME,
-    js: DEFAULT_TS_OXLINTRC_NAME,
+    js: DEFAULT_JS_OXLINTRC_NAMES,
     vite: VITE_CONFIG_NAME,
 };
 

@@ -951,10 +951,15 @@ mod test_watchers {
             let patterns =
                 Tester::new("fixtures/lsp/watchers/default", json!({})).get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 3);
+            assert_eq!(patterns.len(), 8);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[3], "**/oxlint.config.mts".to_string());
+            assert_eq!(patterns[4], "**/oxlint.config.cts".to_string());
+            assert_eq!(patterns[5], "**/oxlint.config.mjs".to_string());
+            assert_eq!(patterns[6], "**/oxlint.config.cjs".to_string());
+            assert_eq!(patterns[7], "**/oxlint.config.js".to_string());
         }
 
         #[test]
@@ -967,10 +972,15 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 3);
+            assert_eq!(patterns.len(), 8);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[3], "**/oxlint.config.mts".to_string());
+            assert_eq!(patterns[4], "**/oxlint.config.cts".to_string());
+            assert_eq!(patterns[5], "**/oxlint.config.mjs".to_string());
+            assert_eq!(patterns[6], "**/oxlint.config.cjs".to_string());
+            assert_eq!(patterns[7], "**/oxlint.config.js".to_string());
         }
 
         #[test]
@@ -992,12 +1002,15 @@ mod test_watchers {
             let patterns = Tester::new("fixtures/lsp/watchers/linter_extends", json!({}))
                 .get_watcher_patterns();
 
-            // The `.oxlintrc.json` extends `./lint.json` -> 4 watchers (json, jsonc, ts, lint.json)
-            assert_eq!(patterns.len(), 4);
+            // The `.oxlintrc.json` extends `./lint.json` -> 9 watchers
+            // (json, jsonc, the 6 JS/TS config variants, and lint.json)
+            assert_eq!(patterns.len(), 9);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "lint.json".to_string());
+            assert_eq!(patterns[3], "**/oxlint.config.mts".to_string());
+            assert_eq!(patterns[7], "**/oxlint.config.js".to_string());
+            assert_eq!(patterns[8], "lint.json".to_string());
         }
 
         #[test]
@@ -1025,11 +1038,12 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 4);
+            assert_eq!(patterns.len(), 9);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "**/tsconfig*.json".to_string());
+            assert_eq!(patterns[7], "**/oxlint.config.js".to_string());
+            assert_eq!(patterns[8], "**/tsconfig*.json".to_string());
         }
     }
 
@@ -1080,11 +1094,12 @@ mod test_watchers {
                         "typeAware": true
                     }));
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 4);
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 9);
             assert_eq!(watch_patterns.as_ref().unwrap()[0], "**/.oxlintrc.json".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/tsconfig*.json".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[7], "**/oxlint.config.js".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[8], "**/tsconfig*.json".to_string());
         }
     }
 }
