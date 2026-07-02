@@ -244,7 +244,6 @@ fn has_next_iteration_path(
                             {
                                 return true;
                             }
-                            InstructionKind::Continue(_) => has_abrupt_jump = true,
                             InstructionKind::Break(_)
                                 if reaches_next_iteration_target(
                                     edge.target(),
@@ -256,7 +255,9 @@ fn has_next_iteration_path(
                             {
                                 return true;
                             }
-                            InstructionKind::Break(_) => has_abrupt_jump = true,
+                            InstructionKind::Continue(_) | InstructionKind::Break(_) => {
+                                has_abrupt_jump = true;
+                            }
                             _ => {}
                         }
                     }
@@ -413,13 +414,77 @@ fn reaches_next_iteration_target(
         }
 
         for edge in graph.edges_directed(current, Direction::Outgoing) {
+            match edge.weight() {
+                EdgeType::Normal | EdgeType::Jump => stack.push(edge.target()),
+                EdgeType::Backedge
+                    if !backedge_targets_enclosing_loop(
+                        edge.source(),
+                        edge.target(),
+                        loop_id,
+                        ctx,
+                    ) =>
+                {
+                    stack.push(edge.target());
+                }
+                _ => {}
+            }
+        }
+    }
+
+    false
+}
+
+fn backedge_targets_enclosing_loop(
+    source: BlockNodeId,
+    target: BlockNodeId,
+    loop_id: NodeId,
+    ctx: &LintContext<'_>,
+) -> bool {
+    if owns_block(source, loop_id, ctx) || owns_block(target, loop_id, ctx) {
+        return false;
+    }
+
+    loop_owner_for_backedge_target(target, ctx).is_some_and(|owner| {
+        owner != loop_id && ctx.nodes().ancestor_ids(loop_id).any(|ancestor| ancestor == owner)
+    })
+}
+
+fn loop_owner_for_backedge_target(block_id: BlockNodeId, ctx: &LintContext<'_>) -> Option<NodeId> {
+    if let Some(loop_id) = nearest_loop_for_block(block_id, ctx) {
+        return Some(loop_id);
+    }
+
+    let cfg = ctx.cfg();
+    let graph = cfg.graph();
+    let mut stack = vec![block_id];
+    let mut seen = vec![false; cfg.basic_blocks.len()];
+
+    while let Some(current) = stack.pop() {
+        if seen[current.index()] || !cfg.basic_block(current).instructions().is_empty() {
+            continue;
+        }
+        seen[current.index()] = true;
+
+        for edge in graph.edges_directed(current, Direction::Incoming) {
+            if let Some(loop_id) = loop_statement_for_block(edge.source(), ctx) {
+                return Some(loop_id);
+            }
+        }
+
+        for edge in graph.edges_directed(current, Direction::Outgoing) {
             if matches!(edge.weight(), EdgeType::Normal | EdgeType::Jump | EdgeType::Backedge) {
                 stack.push(edge.target());
             }
         }
     }
 
-    false
+    None
+}
+
+fn loop_statement_for_block(block_id: BlockNodeId, ctx: &LintContext<'_>) -> Option<NodeId> {
+    ctx.cfg().basic_block(block_id).instructions().iter().find_map(|instruction| {
+        instruction.node_id.filter(|node_id| is_loop(ctx.nodes().kind(*node_id)))
+    })
 }
 
 fn is_loop_control_block(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
@@ -795,6 +860,7 @@ fn test() {
         ("function foo() { do { return; } while (false) }", None).into(),
         ("while (a) { try { continue; } finally { break; } }", None).into(),
         ("function foo() { while (a) { try { continue; } finally { return; } } }", None).into(),
+        ("for (;;) { while (a) break; }", None).into(),
         (
             "while (a) break;",
             Some(serde_json::json!([{ "ignore": ["DoWhileStatement"] }])),

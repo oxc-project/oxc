@@ -5848,6 +5848,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the loop or make at least one path continue to the next iteration.
 
   ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:12]
+ 1 │ for (;;) { while (a) break; }
+   ·            ────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
    ╭─[no_unreachable_loop.tsx:1:1]
  1 │ while (a) break;
    · ────────────────
