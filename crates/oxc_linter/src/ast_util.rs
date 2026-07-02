@@ -636,6 +636,23 @@ const METHOD_WHICH_HAS_THIS_ARG: [&str; 10] = [
     "some",
 ];
 
+fn is_array_from_family_method(callee: &Expression) -> bool {
+    let Some(member_expr) = callee.get_member_expr() else {
+        return false;
+    };
+
+    let object = member_expr.object();
+
+    match member_expr.static_property_name() {
+        Some("from") => matches!(
+            object.get_inner_expression(),
+            Expression::Identifier(ident) if ident.name.ends_with("Array")
+        ),
+        Some("fromAsync") => object.is_specific_id("Array"),
+        _ => false,
+    }
+}
+
 pub fn is_default_this_binding<'a>(
     semantic: &Semantic<'a>,
     node: &AstNode<'a>,
@@ -779,7 +796,7 @@ pub fn is_default_this_binding<'a>(
                             .as_expression()
                             .is_some_and(Expression::is_null_or_undefined);
                 }
-                if call_expr.callee.is_specific_member_access("Array", "from") {
+                if is_array_from_family_method(&call_expr.callee) {
                     return call_expr.arguments.len() != 3
                         || call_expr.arguments[1].span() != current_node.span()
                         || call_expr.arguments[2]
