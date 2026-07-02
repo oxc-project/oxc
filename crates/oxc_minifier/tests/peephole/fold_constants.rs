@@ -1478,5 +1478,19 @@ mod bigint {
         fold_same("({ a: foo(), ...{ __proto__: bar() }, b: baz() })"); // can be folded to `({ a: foo(), b: (bar(), baz()) })`
         fold("({ ...{ __proto__() {} } })", "({ __proto__() {} })");
         fold("({ ...{ ['__proto__']: null } })", "({ ['__proto__']: null })");
+
+        // super references inside object literal methods
+        fold_same("({ ...{ m() { return super.x; } } })");
+        fold_same("({ __proto__: p2, ...{ __proto__: p1, m() { return super.x; } } })");
+
+        // nested classes/objects with super should still be folded because super is bound to the nested scope
+        fold(
+            "({ ...{ m() { return class A extends B { constructor() { super(); } }; } } })",
+            "({ m() { return class extends B { constructor() { super(); } }; } })",
+        );
+        fold(
+            "({ ...{ m() { return ({ m() { return super.x; } }); } } })",
+            "({ m() { return ({ m() { return super.x; } }); } })",
+        );
     }
 }
