@@ -12,7 +12,8 @@ pub trait TakeIn<'a>: Dummy<'a> {
         mem::replace(self, dummy)
     }
 
-    /// Replace node with a boxed dummy.
+    /// Replace node with a dummy, allocate the original node into the arena,
+    /// and return it as a [`Box<Self>`].
     #[must_use]
     fn take_in_box<A: GetAllocator<'a>>(&mut self, allocator_accessor: &A) -> Box<'a, Self> {
         let allocator = allocator_accessor.allocator();
