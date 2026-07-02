@@ -136,9 +136,11 @@ pub fn infer_mutation_aliasing_effects(
         state: InferenceState,
     ) {
         if let Some(queued_state) = queued_states.get(&block_id) {
-            let merged = queued_state.merge(&state);
-            let new_state = merged.unwrap_or_else(|| queued_state.clone());
-            queued_states.insert(block_id, new_state);
+            // `merge` returns None when the queued state already subsumes `state`;
+            // the existing entry can stay as-is.
+            if let Some(new_state) = queued_state.merge(&state) {
+                queued_states.insert(block_id, new_state);
+            }
         } else {
             let prev_state = states_by_block.get(&block_id);
             if let Some(prev) = prev_state {
@@ -190,7 +192,7 @@ pub fn infer_mutation_aliasing_effects(
             };
 
             states_by_block.insert(block_id, incoming_state.clone());
-            let mut state = incoming_state.clone();
+            let mut state = incoming_state;
 
             infer_block(&mut context, &mut state, block_id, func, env)?;
 
@@ -222,10 +224,16 @@ pub fn infer_mutation_aliasing_effects(
                 return Err(diag);
             }
 
-            // Queue successors
+            // Queue successors. Every successor receives the same post-block state;
+            // the last one takes it by move instead of by clone.
             let successors = terminal_successors(&func.body.blocks[&block_id].terminal);
-            for next_block_id in successors {
-                queue(&mut queued_states, &states_by_block, next_block_id, state.clone());
+            let mut successors = successors.into_iter();
+            if let Some(mut next_block_id) = successors.next() {
+                for later_block_id in successors {
+                    queue(&mut queued_states, &states_by_block, next_block_id, state.clone());
+                    next_block_id = later_block_id;
+                }
+                queue(&mut queued_states, &states_by_block, next_block_id, state);
             }
         }
     }
