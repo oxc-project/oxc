@@ -292,6 +292,8 @@ impl<'a> TypeScriptNamespace {
                 parent_stmts.push(Statement::from(declaration));
             }
         }
+        *ctx.scoping_mut().scope_flags_mut(scope_id) =
+            ScopeFlags::Function | ScopeFlags::StrictMode;
         let body_scope_id = ctx.insert_scope_below_statements_from_scope_id(
             &new_stmts,
             scope_id,
@@ -356,8 +358,6 @@ impl<'a> TypeScriptNamespace {
                     scope_id,
                     ctx,
                 ));
-            *ctx.scoping_mut().scope_flags_mut(scope_id) =
-                ScopeFlags::Function | ScopeFlags::StrictMode;
             Expression::new_parenthesized_expression(span, function_expr, ctx)
         };
 
