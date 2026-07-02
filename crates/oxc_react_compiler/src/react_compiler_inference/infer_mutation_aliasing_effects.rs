@@ -679,15 +679,15 @@ enum MutationResult {
 // =============================================================================
 
 struct Context {
-    interned_effects: FxHashMap<String, AliasingEffect>,
+    interned_effects: FxHashMap<EffectKey, AliasingEffect>,
     instruction_signature_cache: FxHashMap<u32, InstructionSignature>,
     catch_handlers: FxHashMap<BlockId, Place>,
     is_function_expression: bool,
     hoisted_context_declarations: FxHashMap<DeclarationId, Option<Place>>,
     non_mutating_spreads: FxHashSet<IdentifierId>,
-    /// Cache of ValueIds keyed by effect hash, ensuring stable allocation-site identity
+    /// Cache of ValueIds keyed by effect key, ensuring stable allocation-site identity
     /// across fixpoint iterations. Mirrors TS `effectInstructionValueCache`.
-    effect_value_id_cache: FxHashMap<String, ValueId>,
+    effect_value_id_cache: FxHashMap<EffectKey, ValueId>,
     /// Maps ValueId to FunctionId for function expressions, so we can look up
     /// locally-declared functions when processing Apply effects.
     function_values: FxHashMap<ValueId, FunctionId>,
@@ -701,14 +701,14 @@ struct Context {
 
 impl Context {
     fn intern_effect(&mut self, effect: AliasingEffect) -> AliasingEffect {
-        let hash = hash_effect(&effect);
-        self.interned_effects.entry(hash).or_insert(effect).clone()
+        let key = effect_key(&effect);
+        self.interned_effects.entry(key).or_insert(effect).clone()
     }
 
     /// Get or create a stable ValueId for a given effect, ensuring fixpoint convergence.
     fn get_or_create_value_id(&mut self, effect: &AliasingEffect) -> ValueId {
-        let hash = hash_effect(effect);
-        *self.effect_value_id_cache.entry(hash).or_insert_with(ValueId::new)
+        let key = effect_key(effect);
+        *self.effect_value_id_cache.entry(key).or_insert_with(ValueId::new)
     }
 }
 
@@ -717,84 +717,186 @@ struct InstructionSignature {
 }
 
 // =============================================================================
-// Helper: hash_effect
+// Helper: effect_key
 // =============================================================================
 
-fn hash_effect(effect: &AliasingEffect) -> String {
+/// Interning key for an `AliasingEffect`. Exactly the same fields participate in
+/// identity as in the string key this replaces — everything else (`Apply`'s
+/// `signature`/`span`, `Mutate`'s `reason`, `Impure`'s `error`) is ignored — but
+/// building and hashing the key no longer allocates or runs the formatting
+/// machinery on the hot path (except for the rare error-carrying arms, which
+/// clone their message strings).
+#[derive(PartialEq, Eq, Hash)]
+enum EffectKey {
+    Apply {
+        receiver: IdentifierId,
+        function: IdentifierId,
+        mutates_function: bool,
+        args: Vec<ArgKey>,
+        into: IdentifierId,
+    },
+    CreateFrom {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    ImmutableCapture {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    Assign {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    Alias {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    Capture {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    MaybeAlias {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    Create {
+        into: IdentifierId,
+        value: ValueKind,
+        reason: ValueReason,
+    },
+    Freeze {
+        value: IdentifierId,
+        reason: ValueReason,
+    },
+    Impure {
+        place: IdentifierId,
+    },
+    Render {
+        place: IdentifierId,
+    },
+    MutateFrozen {
+        place: IdentifierId,
+        message: Cow<'static, str>,
+        help: Option<Cow<'static, str>>,
+    },
+    MutateGlobal {
+        place: IdentifierId,
+        message: Cow<'static, str>,
+        help: Option<Cow<'static, str>>,
+    },
+    Mutate {
+        value: IdentifierId,
+    },
+    MutateConditionally {
+        value: IdentifierId,
+    },
+    MutateTransitive {
+        value: IdentifierId,
+    },
+    MutateTransitiveConditionally {
+        value: IdentifierId,
+    },
+    CreateFunction {
+        into: IdentifierId,
+        function_id: FunctionId,
+        captures: Vec<IdentifierId>,
+    },
+    /// Synthetic keys used by the `Assign` handler for kind-preserving copies;
+    /// they share the ValueId cache but never collide with real-effect keys.
+    AssignFrozen {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+    AssignCopy {
+        from: IdentifierId,
+        into: IdentifierId,
+    },
+}
+
+/// Key form of an `Apply` argument (identifier only, like the string encoding).
+#[derive(PartialEq, Eq, Hash)]
+enum ArgKey {
+    Place(IdentifierId),
+    Spread(IdentifierId),
+    Hole,
+}
+
+fn effect_key(effect: &AliasingEffect) -> EffectKey {
     match effect {
         AliasingEffect::Apply { receiver, function, mutates_function, args, into, .. } => {
-            let args_str: Vec<Cow<'_, str>> = args
+            let mut key_args: Vec<ArgKey> = args
                 .iter()
                 .map(|a| match a {
-                    PlaceOrSpreadOrHole::Hole => Cow::Borrowed(""),
-                    PlaceOrSpreadOrHole::Place(p) => {
-                        Cow::Owned(format!("{}", p.identifier.index()))
-                    }
-                    PlaceOrSpreadOrHole::Spread(s) => {
-                        Cow::Owned(format!("...{}", s.place.identifier.index()))
-                    }
+                    PlaceOrSpreadOrHole::Hole => ArgKey::Hole,
+                    PlaceOrSpreadOrHole::Place(p) => ArgKey::Place(p.identifier),
+                    PlaceOrSpreadOrHole::Spread(s) => ArgKey::Spread(s.place.identifier),
                 })
                 .collect();
-            format!(
-                "Apply:{}:{}:{}:{}:{}",
-                receiver.identifier.index(),
-                function.identifier.index(),
-                mutates_function,
-                args_str.join(","),
-                into.identifier.index()
-            )
+            // The string key joined args with "," and encoded a hole as "", so a
+            // single-hole list was indistinguishable from an empty one. Keep that.
+            if matches!(key_args.as_slice(), [ArgKey::Hole]) {
+                key_args.clear();
+            }
+            EffectKey::Apply {
+                receiver: receiver.identifier,
+                function: function.identifier,
+                mutates_function: *mutates_function,
+                args: key_args,
+                into: into.identifier,
+            }
         }
         AliasingEffect::CreateFrom { from, into } => {
-            format!("CreateFrom:{}:{}", from.identifier.index(), into.identifier.index())
+            EffectKey::CreateFrom { from: from.identifier, into: into.identifier }
         }
         AliasingEffect::ImmutableCapture { from, into } => {
-            format!("ImmutableCapture:{}:{}", from.identifier.index(), into.identifier.index())
+            EffectKey::ImmutableCapture { from: from.identifier, into: into.identifier }
         }
         AliasingEffect::Assign { from, into } => {
-            format!("Assign:{}:{}", from.identifier.index(), into.identifier.index())
+            EffectKey::Assign { from: from.identifier, into: into.identifier }
         }
         AliasingEffect::Alias { from, into } => {
-            format!("Alias:{}:{}", from.identifier.index(), into.identifier.index())
+            EffectKey::Alias { from: from.identifier, into: into.identifier }
         }
         AliasingEffect::Capture { from, into } => {
-            format!("Capture:{}:{}", from.identifier.index(), into.identifier.index())
+            EffectKey::Capture { from: from.identifier, into: into.identifier }
         }
         AliasingEffect::MaybeAlias { from, into } => {
-            format!("MaybeAlias:{}:{}", from.identifier.index(), into.identifier.index())
+            EffectKey::MaybeAlias { from: from.identifier, into: into.identifier }
         }
         AliasingEffect::Create { into, value, reason } => {
-            format!("Create:{}:{:?}:{:?}", into.identifier.index(), value, reason)
+            EffectKey::Create { into: into.identifier, value: *value, reason: *reason }
         }
         AliasingEffect::Freeze { value, reason } => {
-            format!("Freeze:{}:{:?}", value.identifier.index(), reason)
+            EffectKey::Freeze { value: value.identifier, reason: *reason }
         }
-        AliasingEffect::Impure { place, .. } => format!("Impure:{}", place.identifier.index()),
-        AliasingEffect::Render { place } => format!("Render:{}", place.identifier.index()),
-        AliasingEffect::MutateFrozen { place, error } => {
-            format!("MutateFrozen:{}:{}:{:?}", place.identifier.index(), error.message, error.help)
-        }
-        AliasingEffect::MutateGlobal { place, error } => {
-            format!("MutateGlobal:{}:{}:{:?}", place.identifier.index(), error.message, error.help)
-        }
-        AliasingEffect::Mutate { value, .. } => format!("Mutate:{}", value.identifier.index()),
+        AliasingEffect::Impure { place, .. } => EffectKey::Impure { place: place.identifier },
+        AliasingEffect::Render { place } => EffectKey::Render { place: place.identifier },
+        AliasingEffect::MutateFrozen { place, error } => EffectKey::MutateFrozen {
+            place: place.identifier,
+            message: error.message.clone(),
+            help: error.help.clone(),
+        },
+        AliasingEffect::MutateGlobal { place, error } => EffectKey::MutateGlobal {
+            place: place.identifier,
+            message: error.message.clone(),
+            help: error.help.clone(),
+        },
+        AliasingEffect::Mutate { value, .. } => EffectKey::Mutate { value: value.identifier },
         AliasingEffect::MutateConditionally { value } => {
-            format!("MutateConditionally:{}", value.identifier.index())
+            EffectKey::MutateConditionally { value: value.identifier }
         }
         AliasingEffect::MutateTransitive { value } => {
-            format!("MutateTransitive:{}", value.identifier.index())
+            EffectKey::MutateTransitive { value: value.identifier }
         }
         AliasingEffect::MutateTransitiveConditionally { value } => {
-            format!("MutateTransitiveConditionally:{}", value.identifier.index())
+            EffectKey::MutateTransitiveConditionally { value: value.identifier }
         }
         AliasingEffect::CreateFunction { into, function_id, captures } => {
-            let cap_str: Vec<String> =
-                captures.iter().map(|p| format!("{}", p.identifier.index())).collect();
-            format!(
-                "CreateFunction:{}:{}:{}",
-                into.identifier.index(),
-                function_id.index(),
-                cap_str.join(",")
-            )
+            EffectKey::CreateFunction {
+                into: into.identifier,
+                function_id: *function_id,
+                captures: captures.iter().map(|p| p.identifier).collect(),
+            }
         }
     }
 }
@@ -1529,11 +1631,8 @@ fn apply_effect(
                         effects,
                         env,
                     )?;
-                    let cache_key = format!(
-                        "Assign_frozen:{}:{}",
-                        from.identifier.index(),
-                        into.identifier.index()
-                    );
+                    let cache_key =
+                        EffectKey::AssignFrozen { from: from.identifier, into: into.identifier };
                     let value_id = *context
                         .effect_value_id_cache
                         .entry(cache_key)
@@ -1545,11 +1644,8 @@ fn apply_effect(
                     state.define(into.identifier, value_id);
                 }
                 ValueKind::Global | ValueKind::Primitive => {
-                    let cache_key = format!(
-                        "Assign_copy:{}:{}",
-                        from.identifier.index(),
-                        into.identifier.index()
-                    );
+                    let cache_key =
+                        EffectKey::AssignCopy { from: from.identifier, into: into.identifier };
                     let value_id = *context
                         .effect_value_id_cache
                         .entry(cache_key)

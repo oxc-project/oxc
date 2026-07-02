@@ -13,7 +13,7 @@ use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_hir::Effect;
 
 /// Mirrors TS `ValueKind` enum for use in config.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ValueKind {
     Mutable,
     Frozen,
