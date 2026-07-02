@@ -30,51 +30,9 @@ impl<'a> UnresolvedReferences<'a> {
         self.references.push((name, reference_id));
     }
 
-    /// Get the current length, used as a checkpoint for early resolution.
-    #[inline]
-    pub(crate) fn checkpoint(&self) -> usize {
-        self.references.len()
-    }
-
     /// Take all collected references, leaving the list empty. O(1) pointer swap.
     #[inline]
     pub(crate) fn take(&mut self) -> Vec<(Ident<'a>, ReferenceId)> {
         std::mem::take(&mut self.references)
-    }
-
-    /// Current number of unresolved references.
-    #[inline]
-    pub(crate) fn len(&self) -> usize {
-        self.references.len()
-    }
-
-    /// Read a reference by index, by value.
-    ///
-    /// Used by [`crate::SemanticBuilder::resolve_references_for_current_scope`]
-    /// to process the list in-place without allocating a temporary `Vec`. Both
-    /// `Ident<'a>` and `ReferenceId` are `Copy`, so this hands the caller an
-    /// owned pair that's detached from the underlying borrow.
-    ///
-    /// # Panics
-    /// Panics if `idx >= self.len()`.
-    #[inline]
-    pub(crate) fn get(&self, idx: usize) -> (Ident<'a>, ReferenceId) {
-        self.references[idx]
-    }
-
-    /// Overwrite the reference at `idx` (write-cursor support for in-place
-    /// processing).
-    ///
-    /// # Panics
-    /// Panics if `idx >= self.len()`.
-    #[inline]
-    pub(crate) fn set(&mut self, idx: usize, name: Ident<'a>, reference_id: ReferenceId) {
-        self.references[idx] = (name, reference_id);
-    }
-
-    /// Truncate the list to `len`, removing references at the end.
-    #[inline]
-    pub(crate) fn truncate(&mut self, len: usize) {
-        self.references.truncate(len);
     }
 }

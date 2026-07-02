@@ -976,7 +976,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_function_body(&mut self, it: &FunctionBody<'a>) {
-        self.visit_statements(&it.statements);
+        if let Some(scope_id) = it.scope_id.get() {
+            self.scope_ids.push(scope_id);
+        } else {
+            self.visit_statements(&it.statements);
+        }
     }
 
     #[inline]

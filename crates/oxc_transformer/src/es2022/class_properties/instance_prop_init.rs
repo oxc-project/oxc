@@ -6,7 +6,7 @@ use std::cell::Cell;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{Visit, walk};
 use oxc_data_structures::stack::Stack;
 use oxc_str::Ident;
 use oxc_syntax::{
@@ -105,6 +105,19 @@ impl<'a> Visit<'a> for InstanceInitializerVisitor<'a, '_> {
     #[inline]
     fn leave_scope(&mut self) {
         self.scope_ids_stack.pop();
+    }
+
+    fn visit_function_body(&mut self, it: &FunctionBody<'a>) {
+        // A function body's scope is optional (present only when the parameters
+        // contain expressions), so `VisitMut` walks don't enter it — handle it here.
+        let has_scope = it.scope_id.get().is_some();
+        if has_scope {
+            self.enter_scope(ScopeFlags::FunctionBody, &it.scope_id);
+        }
+        walk::walk_function_body(self, it);
+        if has_scope {
+            self.leave_scope();
+        }
     }
 
     // `#[inline]` because this function just delegates to `check_for_symbol_clash`

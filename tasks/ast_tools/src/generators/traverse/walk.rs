@@ -274,6 +274,72 @@ fn generate_scope_code(struct_def: &StructDef) -> (TokenStream, TokenStream, boo
     let type_screaming_name = type_snake_name.cow_to_ascii_uppercase();
     let scope_id_offset = format_ident!("OFFSET_{}_{}", type_screaming_name, "SCOPE_ID");
 
+    // Determine if this is a var-hoisting scope
+    let is_var_hoisting_scope = struct_def.name() == "Function"
+        || scope.flags.contains("Top")
+        || scope.flags.contains("Function")
+        || scope.flags.contains("ClassStaticBlock")
+        || scope.flags.contains("TsModuleBlock");
+
+    // Determine if this is a block scope
+    let is_block_scope = matches!(
+        struct_def.name(),
+        "Program"
+            | "BlockStatement"
+            | "Function"
+            | "ArrowFunctionExpression"
+            | "FunctionBody"
+            | "StaticBlock"
+            | "TSModuleDeclaration"
+            | "TSGlobalDeclaration"
+    );
+
+    if scope.optional {
+        // The scope may not exist for this node (`scope_id` is `None`); enter it
+        // only when present. Restores are unconditional — they write back the same
+        // values when the scope wasn't entered.
+        let mut set_code = quote! {
+            ctx.set_current_scope_id(current_scope_id);
+        };
+        let mut save_code = quote! {
+            let previous_scope_id = ctx.current_scope_id();
+        };
+        let mut exit_code = quote! {
+            ctx.set_current_scope_id(previous_scope_id);
+        };
+        if is_var_hoisting_scope {
+            save_code.extend(quote! {
+                let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+            });
+            set_code.extend(quote! {
+                ctx.set_current_hoist_scope_id(current_scope_id);
+            });
+            exit_code.extend(quote! {
+                ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+            });
+        }
+        if is_block_scope {
+            save_code.extend(quote! {
+                let previous_block_scope_id = ctx.current_block_scope_id();
+            });
+            set_code.extend(quote! {
+                ctx.set_current_block_scope_id(current_scope_id);
+            });
+            exit_code.extend(quote! {
+                ctx.set_current_block_scope_id(previous_block_scope_id);
+            });
+        }
+        let enter_code = quote! {
+            #save_code
+            if let Some(current_scope_id) = (*((node as *mut u8).add(ancestor::#scope_id_offset)
+                as *mut Cell<Option<ScopeId>>)).get()
+            {
+                #set_code
+            }
+        };
+        return (enter_code, exit_code, true);
+    }
+
     let mut enter_code = quote! {
         let previous_scope_id = ctx.current_scope_id();
         let current_scope_id = (*((node as *mut u8).add(ancestor::#scope_id_offset)
@@ -285,12 +351,6 @@ fn generate_scope_code(struct_def: &StructDef) -> (TokenStream, TokenStream, boo
         ctx.set_current_scope_id(previous_scope_id);
     };
 
-    // Determine if this is a var-hoisting scope
-    let is_var_hoisting_scope = struct_def.name() == "Function"
-        || scope.flags.contains("Top")
-        || scope.flags.contains("Function")
-        || scope.flags.contains("ClassStaticBlock")
-        || scope.flags.contains("TsModuleBlock");
     if is_var_hoisting_scope {
         enter_code.extend(quote! {
             let previous_hoist_scope_id = ctx.current_hoist_scope_id();
@@ -301,17 +361,6 @@ fn generate_scope_code(struct_def: &StructDef) -> (TokenStream, TokenStream, boo
         });
     }
 
-    // Determine if this is a block scope
-    let is_block_scope = matches!(
-        struct_def.name(),
-        "Program"
-            | "BlockStatement"
-            | "Function"
-            | "ArrowFunctionExpression"
-            | "StaticBlock"
-            | "TSModuleDeclaration"
-            | "TSGlobalDeclaration"
-    );
     if is_block_scope {
         enter_code.extend(quote! {
             let previous_block_scope_id = ctx.current_block_scope_id();

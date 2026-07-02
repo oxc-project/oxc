@@ -13298,7 +13298,13 @@ impl<'a> FunctionBody<'a> {
         builder: &B,
     ) -> Self {
         let builder = builder.builder();
-        FunctionBody { node_id: Cell::new(builder.node_id()), span, directives, statements }
+        FunctionBody {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            directives,
+            statements,
+            scope_id: Default::default(),
+        }
     }
 
     /// Build a [`FunctionBody`], and store it in the memory arena.
@@ -13318,6 +13324,58 @@ impl<'a> FunctionBody<'a> {
         builder: &B,
     ) -> ArenaBox<'a, Self> {
         ArenaBox::new_in(Self::new(span, directives, statements, builder), builder.builder())
+    }
+
+    /// Build a [`FunctionBody`] with `scope_id`.
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`FunctionBody::boxed_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `directives`
+    /// * `statements`
+    /// * `scope_id`: The body's own var environment, present only when the function's
+    #[inline]
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>>(
+        span: Span,
+        directives: ArenaVec<'a, Directive<'a>>,
+        statements: ArenaVec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+        builder: &B,
+    ) -> Self {
+        let builder = builder.builder();
+        FunctionBody {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            directives,
+            statements,
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`FunctionBody`] with `scope_id`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`FunctionBody::new_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `directives`
+    /// * `statements`
+    /// * `scope_id`: The body's own var environment, present only when the function's
+    #[inline]
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>>(
+        span: Span,
+        directives: ArenaVec<'a, Directive<'a>>,
+        statements: ArenaVec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+        builder: &B,
+    ) -> ArenaBox<'a, Self> {
+        ArenaBox::new_in(
+            Self::new_with_scope_id(span, directives, statements, scope_id, builder),
+            builder.builder(),
+        )
     }
 }
 

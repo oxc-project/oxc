@@ -13,6 +13,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
             "id": 2,
             "node": "Function(<anonymous>)",
             "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(FunctionBody)",
+            "id": 3,
+            "node": "ArrowFunctionExpression",
+            "symbols": []
           }
         ],
         "flags": "ScopeFlags(Function | Arrow)",

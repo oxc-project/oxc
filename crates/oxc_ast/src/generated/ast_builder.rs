@@ -7223,7 +7223,13 @@ impl<'a> AstBuilder<'a> {
         directives: ArenaVec<'a, Directive<'a>>,
         statements: ArenaVec<'a, Statement<'a>>,
     ) -> FunctionBody<'a> {
-        FunctionBody { node_id: Default::default(), span, directives, statements }
+        FunctionBody {
+            node_id: Default::default(),
+            span,
+            directives,
+            statements,
+            scope_id: Default::default(),
+        }
     }
 
     /// Build a [`FunctionBody`], and store it in the memory arena.
@@ -7246,6 +7252,63 @@ impl<'a> AstBuilder<'a> {
         statements: ArenaVec<'a, Statement<'a>>,
     ) -> ArenaBox<'a, FunctionBody<'a>> {
         ArenaBox::new_in(self.function_body(span, directives, statements), &self)
+    }
+
+    /// Build a [`FunctionBody`] with `scope_id`.
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_function_body_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `directives`
+    /// * `statements`
+    /// * `scope_id`: The body's own var environment, present only when the function's
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn function_body_with_scope_id(
+        self,
+        span: Span,
+        directives: ArenaVec<'a, Directive<'a>>,
+        statements: ArenaVec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+    ) -> FunctionBody<'a> {
+        FunctionBody {
+            node_id: Default::default(),
+            span,
+            directives,
+            statements,
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`FunctionBody`] with `scope_id`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::function_body_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `directives`
+    /// * `statements`
+    /// * `scope_id`: The body's own var environment, present only when the function's
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn alloc_function_body_with_scope_id(
+        self,
+        span: Span,
+        directives: ArenaVec<'a, Directive<'a>>,
+        statements: ArenaVec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+    ) -> ArenaBox<'a, FunctionBody<'a>> {
+        ArenaBox::new_in(
+            self.function_body_with_scope_id(span, directives, statements, scope_id),
+            &self,
+        )
     }
 
     /// Build an [`ArrowFunctionExpression`].

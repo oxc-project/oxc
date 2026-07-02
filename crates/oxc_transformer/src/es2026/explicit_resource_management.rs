@@ -940,7 +940,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         // binding called `_`. `using_ctx` is a UID with prefix `_usingCtx`.
         let ident = ctx.generate_binding(
             static_ident!("_"),
-            block_scope_id,
+            catch_scope_id,
             SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
         );
 

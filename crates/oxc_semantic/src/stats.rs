@@ -2,9 +2,15 @@ use std::cell::Cell;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, IdentifierReference, Program, TSEnumMemberName},
+    ast::{
+        ArrowFunctionExpression, BindingIdentifier, Function, IdentifierReference, Program,
+        TSEnumMemberName,
+    },
 };
-use oxc_ast_visit::{Visit, walk::walk_ts_enum_member_name};
+use oxc_ast_visit::{
+    Visit,
+    walk::{walk_arrow_function_expression, walk_function, walk_ts_enum_member_name},
+};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 /// Macro to assert that `left >= right`
@@ -170,5 +176,21 @@ impl<'a> Visit<'a> for Counter {
     fn visit_ts_enum_member_name(&mut self, it: &TSEnumMemberName<'a>) {
         self.stats.symbols += 1;
         walk_ts_enum_member_name(self, it);
+    }
+
+    // `SemanticBuilder` gives the body of a function whose parameters contain
+    // expressions its own scope (see `has_parameter_expressions`); mirror that here.
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
+        if func.body.is_some() && crate::builder::has_parameter_expressions(&func.params) {
+            self.stats.scopes += 1;
+        }
+        walk_function(self, func, flags);
+    }
+
+    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
+        if !expr.expression && crate::builder::has_parameter_expressions(&expr.params) {
+            self.stats.scopes += 1;
+        }
+        walk_arrow_function_expression(self, expr);
     }
 }

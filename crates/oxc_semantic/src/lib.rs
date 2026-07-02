@@ -45,7 +45,7 @@ mod unresolved_stack;
 
 #[cfg(feature = "linter")]
 pub use ast_types_bitset::AstTypesBitset;
-pub use builder::{SemanticBuilder, SemanticBuilderReturn};
+pub use builder::{SemanticBuilder, SemanticBuilderReturn, has_parameter_expressions};
 pub use is_global_reference::IsGlobalReference;
 #[cfg(feature = "jsdoc")]
 pub use jsdoc::JSDocFinder;

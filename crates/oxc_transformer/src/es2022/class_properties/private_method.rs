@@ -212,4 +212,17 @@ impl<'a> VisitMut<'a> for PrivateMethodVisitor<'a, '_> {
     fn leave_scope(&mut self) {
         self.strict_scope_depth = self.strict_scope_depth.saturating_sub(1);
     }
+
+    fn visit_function_body(&mut self, it: &mut FunctionBody<'a>) {
+        // A function body's scope is optional (present only when the parameters
+        // contain expressions), so `VisitMut` walks don't enter it — handle it here.
+        let has_scope = it.scope_id.get().is_some();
+        if has_scope {
+            self.enter_scope(ScopeFlags::FunctionBody, &it.scope_id);
+        }
+        walk_mut::walk_function_body(self, it);
+        if has_scope {
+            self.leave_scope();
+        }
+    }
 }

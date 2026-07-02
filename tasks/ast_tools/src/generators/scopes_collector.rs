@@ -352,10 +352,36 @@ fn generate_visit_method_for_struct(
 
         let scope_id_field = scope_id_field.unwrap();
         let scope_id_field_ident = scope_id_field.ident();
-        let body = quote! {
-            #stmts_before
-            self.add_scope(&it.#scope_id_field_ident);
-            #stmts_after
+        let body = if scope.optional {
+            // The scope may not exist. When it does, it owns everything between the
+            // enter / exit indexes; when it does not, the scopes inside those fields
+            // are direct children and must be collected instead.
+            let mut inner_stmts = quote!();
+            for (field_index, field) in struct_def.fields.iter().enumerate() {
+                if field_index < scope.enter_before_index || field_index >= scope.exit_before_index
+                {
+                    continue;
+                }
+                if let Some(visit) = generate_visit_stmt_for_struct_field(field, schema) {
+                    inner_stmts.extend(visit);
+                    stmt_count += 1;
+                }
+            }
+            quote! {
+                #stmts_before
+                if let Some(scope_id) = it.#scope_id_field_ident.get() {
+                    self.scope_ids.push(scope_id);
+                } else {
+                    #inner_stmts
+                }
+                #stmts_after
+            }
+        } else {
+            quote! {
+                #stmts_before
+                self.add_scope(&it.#scope_id_field_ident);
+                #stmts_after
+            }
         };
         (body, stmt_count)
     } else if struct_def.visit.contains_scope {

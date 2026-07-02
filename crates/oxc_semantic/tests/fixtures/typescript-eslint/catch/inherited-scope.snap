@@ -19,21 +19,21 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/inherited
             "flags": "ScopeFlags(0x0)",
             "id": 3,
             "node": "BlockStatement",
-            "symbols": [
-              {
-                "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                "id": 1,
-                "name": "e",
-                "node": "CatchParameter",
-                "references": []
-              }
-            ]
+            "symbols": []
           }
         ],
         "flags": "ScopeFlags(CatchClause)",
         "id": 2,
         "node": "CatchClause",
-        "symbols": []
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+            "id": 1,
+            "name": "e",
+            "node": "CatchParameter",
+            "references": []
+          }
+        ]
       }
     ],
     "flags": "ScopeFlags(Top)",
