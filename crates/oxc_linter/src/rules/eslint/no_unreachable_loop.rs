@@ -127,19 +127,15 @@ impl Rule for NoUnreachableLoop {
             return;
         }
 
-        // This loop looks like a violation. Before reporting, rule out the
-        // dead-code case above: only a static infinite loop can render a
-        // following loop unreachable, so the corrected reachability map is built
-        // only here — a rare path. `effective_unreachable_blocks` only ever marks
-        // *more* blocks unreachable than the CFG, so it can only turn a report
-        // into a non-report, never the other way around.
-        if is_static_infinite_loop(node.kind()) {
-            let unreachable = effective_unreachable_blocks(ctx);
-            if is_unreachable_node(node.id(), ctx, Some(&unreachable))
-                || body_is_unreachable(body, ctx, Some(&unreachable))
-            {
-                return;
-            }
+        // This loop looks like a violation. Before reporting, rule out dead
+        // code after a previous static infinite loop. `effective_unreachable_blocks`
+        // is built only on this rare path and can only turn a report into a
+        // non-report, never the other way around.
+        let unreachable = effective_unreachable_blocks(ctx);
+        if is_unreachable_node(node.id(), ctx, Some(&unreachable))
+            || body_is_unreachable(body, ctx, Some(&unreachable))
+        {
+            return;
         }
 
         ctx.diagnostic(no_unreachable_loop_diagnostic(node.kind().span()));
@@ -179,17 +175,6 @@ fn is_unreachable_block(
         || ctx.cfg().basic_block(block_id).is_unreachable(),
         |unreachable| unreachable[block_id.index()],
     )
-}
-
-fn is_static_infinite_loop(kind: AstKind<'_>) -> bool {
-    match kind {
-        AstKind::WhileStatement(statement) => is_static_true(&statement.test),
-        AstKind::DoWhileStatement(statement) => is_static_true(&statement.test),
-        AstKind::ForStatement(statement) => {
-            statement.test.as_ref().is_none_or(|test| is_static_true(test))
-        }
-        _ => false,
-    }
 }
 
 fn has_next_iteration_path(
@@ -651,6 +636,7 @@ fn test() {
         ("function foo() { return; while (a) break; }", None).into(),
         ("while(true); while(true);", None).into(),
         ("while(true); while(true) break;", None).into(),
+        ("while (true) {} while (foo) break;", None).into(),
         (
             "while (a) break;",
             Some(serde_json::json!([{ "ignore": ["WhileStatement"] }])),
