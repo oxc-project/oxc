@@ -20,6 +20,9 @@ pub struct LintServiceOptions {
     /// TypeScript `tsconfig.json` path for reading path alias and project references
     tsconfig: Option<PathBuf>,
 
+    /// Canonical roots that autofix writeback is allowed to modify.
+    autofix_write_roots: Vec<PathBuf>,
+
     cross_module: bool,
 }
 
@@ -29,7 +32,12 @@ impl LintServiceOptions {
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), tsconfig: None, cross_module: false }
+        Self {
+            cwd: cwd.into(),
+            tsconfig: None,
+            autofix_write_roots: Vec::new(),
+            cross_module: false,
+        }
     }
 
     #[inline]
@@ -51,6 +59,13 @@ impl LintServiceOptions {
     #[must_use]
     pub fn with_cross_module(mut self, cross_module: bool) -> Self {
         self.cross_module = cross_module;
+        self
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn with_autofix_write_roots(mut self, roots: Vec<PathBuf>) -> Self {
+        self.autofix_write_roots = roots;
         self
     }
 
