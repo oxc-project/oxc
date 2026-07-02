@@ -431,6 +431,9 @@ rebuilt        : ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok", "T"]
 Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(10): ScopeFlags(StrictMode | FunctionBody)
+rebuilt        : ScopeId(5): ScopeFlags(FunctionBody)
 Symbol flags mismatch for "Name":
 after transform: SymbolId(7): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
@@ -460,6 +463,9 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["X"]
 rebuilt        : ScopeId(2): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | FunctionBody)
+rebuilt        : ScopeId(2): ScopeFlags(FunctionBody)
 Symbol flags mismatch for "N1":
 after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -474,6 +480,9 @@ rebuilt        : SymbolId(3): ScopeId(1)
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | FunctionBody)
+rebuilt        : ScopeId(2): ScopeFlags(FunctionBody)
 Bindings mismatch:
 after transform: ScopeId(2): ["_N2"]
 rebuilt        : ScopeId(3): ["X", "_N2"]
@@ -483,6 +492,9 @@ rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["V", "X"]
 rebuilt        : ScopeId(4): ["V"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(StrictMode | FunctionBody)
+rebuilt        : ScopeId(4): ScopeFlags(FunctionBody)
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(2)]
@@ -512,6 +524,9 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["Foo", "foo"]
 rebuilt        : ScopeId(2): ["foo"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | FunctionBody)
+rebuilt        : ScopeId(2): ScopeFlags(FunctionBody)
 Bindings mismatch:
 after transform: ScopeId(2): ["_N2"]
 rebuilt        : ScopeId(3): ["Foo", "_N2"]
@@ -521,6 +536,9 @@ rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["Foo", "foo"]
 rebuilt        : ScopeId(4): ["foo"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(StrictMode | FunctionBody)
+rebuilt        : ScopeId(4): ScopeFlags(FunctionBody)
 Symbol flags mismatch for "N1":
 after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -547,6 +565,9 @@ rebuilt        : SymbolId(7): []
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(StrictMode | FunctionBody)
+rebuilt        : ScopeId(2): ScopeFlags(FunctionBody)
 Bindings mismatch:
 after transform: ScopeId(2): ["x", "y"]
 rebuilt        : ScopeId(3): ["x"]
@@ -559,6 +580,9 @@ rebuilt        : ScopeId(5): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(6): ScopeFlags(StrictMode | FunctionBody)
+rebuilt        : ScopeId(8): ScopeFlags(FunctionBody)
 Symbol flags mismatch for "x":
 after transform: SymbolId(0): SymbolFlags(RegularEnum | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -582,6 +606,9 @@ rebuilt        : ScopeId(0): ["Foo"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | FunctionBody)
+rebuilt        : ScopeId(2): ScopeFlags(FunctionBody)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(Interface | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -600,8 +627,14 @@ Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(StrictMode | FunctionBody)
+rebuilt        : ScopeId(2): ScopeFlags(FunctionBody)
+Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(StrictMode | FunctionBody)
+rebuilt        : ScopeId(4): ScopeFlags(FunctionBody)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(TypeAlias | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -616,6 +649,9 @@ rebuilt        : SymbolId(0): []
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(StrictMode | FunctionBody)
+rebuilt        : ScopeId(2): ScopeFlags(FunctionBody)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
