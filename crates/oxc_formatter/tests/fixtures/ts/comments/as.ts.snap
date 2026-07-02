@@ -4,6 +4,7 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 ==================== Input ====================
 (activeService as unknown as QuickInputController) /* TS fail */
   .pick();
+1 as const /* c */;
 
 ==================== Output ====================
 ------------------
@@ -11,11 +12,13 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 ------------------
 (activeService as unknown as QuickInputController) /* TS fail */
   .pick();
+1 as const /* c */;
 
 -------------------
 { printWidth: 100 }
 -------------------
 (activeService as unknown as QuickInputController) /* TS fail */
   .pick();
+1 as const /* c */;
 
 ===================== End =====================
