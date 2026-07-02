@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, ScopeId};
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -78,26 +78,16 @@ fn global_this_member<'a>(expr: &'a MemberExpression<'_>) -> Option<&'a str> {
 
 fn resolve_global_binding<'a, 'b: 'a>(
     ident: &'a ArenaBox<'a, IdentifierReference<'a>>,
-    scope_id: ScopeId,
     ctx: &LintContext<'a>,
 ) -> Option<&'a str> {
-    if ctx.is_reference_to_global_variable(ident) {
-        return Some(ident.name.as_str());
-    }
+    let symbols = ctx.scoping();
 
-    let scope = ctx.scoping();
-    let Some(binding_id) = scope.find_binding(scope_id, ident.name) else {
-        // Panic in debug builds, but fail gracefully in release builds.
-        debug_assert!(
-            false,
-            "No binding id found for {}, but this IdentifierReference
-                is not a global",
-            &ident.name
-        );
-        return None;
+    let Some(binding_id) = symbols.get_reference(ident.reference_id()).symbol_id() else {
+        // Unresolved references are globals unless disabled through config.
+        return ctx.is_reference_to_global_variable(ident).then_some(ident.name.as_str());
     };
 
-    let decl = ctx.nodes().get_node(scope.symbol_declaration(binding_id));
+    let decl = ctx.nodes().get_node(symbols.symbol_declaration(binding_id));
     match decl.kind() {
         AstKind::VariableDeclarator(parent_decl) => {
             if !parent_decl.id.is_binding_identifier() {
@@ -106,8 +96,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
             match &parent_decl.init {
                 // handles "let a = JSON; let b = a; a();"
                 Some(Expression::Identifier(parent_ident)) if parent_ident.name != ident.name => {
-                    let decl_scope = decl.scope_id();
-                    resolve_global_binding(parent_ident, decl_scope, ctx)
+                    resolve_global_binding(parent_ident, ctx)
                 }
                 // handles "let a = globalThis.JSON; let b = a; a();"
                 Some(parent_expr) if parent_expr.is_member_expression() => {
@@ -123,18 +112,18 @@ fn resolve_global_binding<'a, 'b: 'a>(
 impl Rule for NoObjCalls {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::NewExpression(expr) => check_callee(&expr.callee, expr.span, node, ctx),
-            AstKind::CallExpression(expr) => check_callee(&expr.callee, expr.span, node, ctx),
+            AstKind::NewExpression(expr) => check_callee(&expr.callee, expr.span, ctx),
+            AstKind::CallExpression(expr) => check_callee(&expr.callee, expr.span, ctx),
             _ => {}
         }
     }
 }
 
-fn check_callee<'a>(callee: &'a Expression, span: Span, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+fn check_callee<'a>(callee: &'a Expression, span: Span, ctx: &LintContext<'a>) {
     match callee {
         Expression::Identifier(ident) => {
             // handle new Math(), Math(), etc
-            if let Some(top_level_reference) = resolve_global_binding(ident, node.scope_id(), ctx)
+            if let Some(top_level_reference) = resolve_global_binding(ident, ctx)
                 && is_global_obj(top_level_reference)
             {
                 ctx.diagnostic(no_obj_calls_diagnostic(ident.name.as_str(), span));
@@ -294,4 +283,8 @@ fn test() {
     ];
 
     Tester::new(NoObjCalls::NAME, NoObjCalls::PLUGIN, pass, fail).test_and_snapshot();
+
+    let pass = vec![("Math();", None, Some(serde_json::json!({ "globals": { "Math": "off" } })))];
+    let fail = vec![("Math();", None, None)];
+    Tester::new(NoObjCalls::NAME, NoObjCalls::PLUGIN, pass, fail).test();
 }
