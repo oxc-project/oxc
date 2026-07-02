@@ -34,29 +34,16 @@ pub fn parse_jest_fn_call<'a>(
     let resolved = resolve_to_jest_fn(call_expr, original)?;
     let name = resolved.original.unwrap_or(resolved.local);
 
-    // Fast path (cost-only, result byte-identical to the slow path below):
+    // Avoid building a node chain for unknown bare calls in non-test files.
+    // The slow path would return:
+    //   `setTimeout(...)` -> `Some(GeneralJest { kind: Unknown, members: [] })`
+    //   `setTimeout(...).foo` -> `None`
     //
-    // Restricted to NON-test files (`!is_jest && !is_vitest`). That is the only
-    // framework arm where an unknown call's result does not depend on the
-    // `is_valid_jest_call` / `is_valid_vitest_call` filtering the slow path runs
-    // when the file is a Jest/Vitest file: on a test file an unknown root is
-    // rejected there and the slow path returns `None` (e.g.
-    // `is_valid_vitest_call(["setTimeout"]) == false`), so test files must defer
-    // to the slow path — handling them here would wrongly return `Some`.
-    //
-    // On a non-test file, when the callee is a bare identifier that is not a
-    // known Jest function name (recognized by neither `JestFnKind::from` nor
-    // `JEST_METHOD_NAMES`), the slow path builds a single-element node chain (so
-    // `members` is EMPTY), skips the (test-only) `is_valid_*` checks, and reaches
-    // exactly one of two outcomes:
-    //   * `None`, when the call is not the top of its expression chain
-    //     (parent is another call / member access), or
-    //   * `Some(GeneralJest { kind: Unknown, members: [], name, local })`.
-    // Reproduce that here without the per-call `get_node_chain` heap allocation.
-    //
-    // `each` is deliberately left to the slow path so its dedicated `each`
-    // handling is unchanged. This keeps the fast path identical to the slow path
-    // by construction (verified by `tests/jest_fn_fast_path_oracle.rs`).
+    // Test files still need the slow path because unknown roots are rejected by
+    // `is_valid_jest_call` / `is_valid_vitest_call`. For example, `setTimeout`
+    // should not be treated as a Vitest call just because it wraps an `expect`.
+    // Leave `each` on the slow path so its special outer-call handling stays
+    // centralized.
     if !ctx.frameworks().is_jest()
         && !ctx.frameworks().is_vitest()
         && matches!(callee, Expression::Identifier(_))
@@ -110,11 +97,7 @@ pub fn parse_jest_fn_call<'a>(
 
         let kind = JestFnKind::from(name);
 
-        // every member node must have a member expression as their parent
-        // in order to be part of the call chain we're parsing.
-        // `remove(0)` reuses `chain`'s existing allocation for `members`
-        // (i.e. `chain[1..]`), avoiding the extra allocation `split_off` makes
-        // for the tail; the resulting `head`/`members` values are unchanged.
+        // Reuse the chain allocation for the remaining members.
         let head = chain.remove(0);
         let members = chain;
 
@@ -153,11 +136,10 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        // `call_chains` is only consulted to validate/refine the call when the
-        // file is a Jest or Vitest file. On a non-test file (the `(false, false)`
-        // arm) it is built but never read, and `is_extend_fixture` is gated on
-        // `is_vitest()` — so skip building it entirely there. This is cost-only:
-        // the returned value is unchanged.
+        // Only test files need the string chain:
+        //   `test.only(...)` validates as Jest/Vitest.
+        //   `setTimeout(...)` is rejected as an unknown test-file root.
+        // Non-test files do not consult the chain after this point.
         let is_jest = ctx.frameworks().is_jest();
         let is_vitest = ctx.frameworks().is_vitest();
         if is_jest || is_vitest {

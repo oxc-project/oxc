@@ -1,17 +1,9 @@
-//! Behavior oracle for the `parse_jest_fn_call` fast path.
+//! Regression tests for the `parse_jest_fn_call` fast path.
 //!
-//! `parse_jest_fn_call` is consumed by an open set of Jest/Vitest rules, several
-//! of which run on NON-test files and read its result for arbitrary call names.
-//! A previous attempt changed the helper's *return value* on the `(false,false)`
-//! framework arm and silently dropped diagnostics for two such consumers
-//! (`prefer-importing-jest-globals` for `pending()`, and
-//! `prefer-called-exactly-once-with` for a `setTimeout(...)` wrapper).
-//!
-//! This oracle pins those exact behaviors by driving the real `Linter::run` with
-//! every built-in rule enabled, on a NON-test file (no jest/vitest import, plain
-//! `.ts` path) so `is_jest()`/`is_vitest()` are both `false` — the arm the fast
-//! path must keep byte-identical. Any consumer regression flips one of these
-//! assertions.
+//! Some Jest/Vitest rules call this helper in ordinary source files, where
+//! `is_jest()` and `is_vitest()` are both false. These tests pin the consumers
+//! that rely on unknown bare calls still returning `Some`, while test files
+//! continue to reject unknown roots such as `setTimeout`.
 
 use std::{path::Path, sync::Arc};
 
@@ -57,8 +49,7 @@ fn lint_all_rules(source: &str, path: &str) -> Vec<String> {
         .collect()
 }
 
-/// `prefer-importing-jest-globals` reads only the *name* of an `Unknown`-kind
-/// jest call; `pending` is a `JEST_METHOD_NAMES` global with no `JestFnKind`.
+/// `pending` is a Jest global name, but its kind is `Unknown`.
 #[test]
 fn pending_global_in_non_test_file_is_reported() {
     let diagnostics = lint_all_rules("pending();\n", "src/app.ts");
@@ -68,9 +59,7 @@ fn pending_global_in_non_test_file_is_reported() {
     );
 }
 
-/// `prefer-called-exactly-once-with` matches `Some(GeneralJest(_))` for ANY kind
-/// (members unused) and recurses into the callback via the call expression, so a
-/// non-jest wrapper around the matcher pair must still be analyzed.
+/// Unknown wrappers in non-test files are still traversed by Vitest rules.
 #[test]
 fn settimeout_wrapper_in_non_test_file_is_reported() {
     let source = "setTimeout(() => {\n  expect(x).toHaveBeenCalledOnce();\n  expect(x).toHaveBeenCalledWith('hoge');\n});\n";
@@ -81,7 +70,7 @@ fn settimeout_wrapper_in_non_test_file_is_reported() {
     );
 }
 
-/// A genuinely non-Jest bare call must never be reported as a Jest global.
+/// Plain unknown calls must not become Jest global import suggestions.
 #[test]
 fn plain_non_jest_call_is_not_reported_as_jest_global() {
     let diagnostics = lint_all_rules("foo();\n", "src/app.ts");
@@ -91,11 +80,7 @@ fn plain_non_jest_call_is_not_reported_as_jest_global() {
     );
 }
 
-/// On a Vitest file (`is_vitest() == true`) the slow path rejects an unknown
-/// root such as `setTimeout` via `is_valid_vitest_call`, so
-/// `prefer-called-exactly-once-with` does NOT fire. The fast path is gated off on
-/// test files to preserve this — a naive fast path returned `Some` here and
-/// wrongly ADDED a `toHaveBeenCalledExactlyOnceWith` diagnostic.
+/// In Vitest files, unknown roots are rejected by the slow path.
 #[test]
 fn settimeout_wrapper_in_vitest_file_is_not_reported() {
     let source = "import { test, expect } from 'vitest';\nsetTimeout(() => {\n  expect(x).toHaveBeenCalledOnce();\n  expect(x).toHaveBeenCalledWith('hoge');\n});\n";
@@ -106,9 +91,7 @@ fn settimeout_wrapper_in_vitest_file_is_not_reported() {
     );
 }
 
-/// Same divergent path reached via a `*.test.ts` filename (`is_jest() == true`
-/// through `is_jestlike_file`): the unknown root `setTimeout` is rejected by the
-/// slow path, so no `toHaveBeenCalledExactlyOnceWith` diagnostic is produced.
+/// `*.test.ts` files also use the slow path for unknown roots.
 #[test]
 fn settimeout_wrapper_in_dot_test_file_is_not_reported() {
     let source = "setTimeout(() => {\n  expect(x).toHaveBeenCalledOnce();\n  expect(x).toHaveBeenCalledWith('hoge');\n});\n";
