@@ -502,7 +502,13 @@ impl Rule for ExhaustiveDeps {
 
                     if has_write_reference
                         || get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
-                            .is_some_and(|decl| decl.scope_id() != component_scope_id)
+                            .is_some_and(|decl| {
+                                !is_component_or_body_scope(
+                                    decl.scope_id(),
+                                    component_scope_id,
+                                    ctx,
+                                )
+                            })
                     {
                         continue;
                     }
@@ -1008,7 +1014,7 @@ fn is_identifier_a_dependency_impl<'a>(
     };
 
     // As long as the variable is not declared inside the component, it is not a dependency.
-    if declaration.scope_id() != component_scope_id {
+    if !is_component_or_body_scope(declaration.scope_id(), component_scope_id, ctx) {
         // 1. Variable was declared outside the component scope
         // ```tsx
         // const id = crypto.randomUUID();
@@ -1049,6 +1055,20 @@ fn is_identifier_a_dependency_impl<'a>(
     }
 
     true
+}
+
+fn is_component_or_body_scope(
+    scope_id: ScopeId,
+    component_scope_id: ScopeId,
+    ctx: &LintContext<'_>,
+) -> bool {
+    if scope_id == component_scope_id {
+        return true;
+    }
+
+    let scoping = ctx.scoping();
+    scoping.scope_flags(scope_id).is_function_body()
+        && scoping.scope_parent_id(scope_id).is_some_and(|parent| parent == component_scope_id)
 }
 
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L164

@@ -8,16 +8,32 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/this-jsxide
       {
         "children": [
           {
-            "children": [],
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode | FunctionBody)",
+                "id": 3,
+                "node": "FunctionBody",
+                "symbols": []
+              }
+            ],
             "flags": "ScopeFlags(StrictMode | Function | Arrow)",
             "id": 2,
             "node": "ArrowFunctionExpression",
             "symbols": []
           },
           {
-            "children": [],
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode | FunctionBody)",
+                "id": 5,
+                "node": "FunctionBody",
+                "symbols": []
+              }
+            ],
             "flags": "ScopeFlags(StrictMode | Function)",
-            "id": 3,
+            "id": 4,
             "node": "Function(<anonymous>)",
             "symbols": []
           }

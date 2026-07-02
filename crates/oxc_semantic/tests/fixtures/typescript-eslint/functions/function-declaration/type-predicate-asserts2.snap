@@ -13,7 +13,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         "symbols": []
       },
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(FunctionBody)",
+            "id": 3,
+            "node": "FunctionBody",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(Function)",
         "id": 2,
         "node": "Function(foo)",

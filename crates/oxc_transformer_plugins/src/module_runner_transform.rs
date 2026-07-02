@@ -777,14 +777,16 @@ impl<'a> ModuleRunnerTransform<'a> {
         let kind = FormalParameterKind::FormalParameter;
         let params = FormalParameters::new(SPAN, kind, ArenaVec::new_in(ctx), NONE, ctx);
         let statement = Statement::new_return_statement(SPAN, Some(expr), ctx);
-        let body = FunctionBody::new(
+        let scope_id = ctx.create_child_scope(ctx.scoping().root_scope_id(), ScopeFlags::Function);
+        let body_scope_id = ctx.create_child_scope(scope_id, ScopeFlags::FunctionBody);
+        let body = FunctionBody::new_with_scope_id(
             SPAN,
+            body_scope_id,
             ArenaVec::new_in(ctx),
             ArenaVec::from_value_in(statement, ctx),
             ctx,
         );
         let r#type = FunctionType::FunctionExpression;
-        let scope_id = ctx.create_child_scope(ctx.scoping().root_scope_id(), ScopeFlags::Function);
         Expression::new_function_expression_with_scope_id_and_pure_and_pife(
             SPAN,
             r#type,

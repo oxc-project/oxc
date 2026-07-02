@@ -292,7 +292,9 @@ impl<'a> TypeScriptNamespace {
                 parent_stmts.push(Statement::from(declaration));
             }
         }
-        let func_body = FunctionBody::new(SPAN, directives, new_stmts, ctx);
+        let body_scope_id = ctx.create_child_scope(scope_id, ScopeFlags::FunctionBody);
+        let func_body =
+            FunctionBody::new_with_scope_id(SPAN, body_scope_id, directives, new_stmts, ctx);
 
         parent_stmts.push(Self::transform_namespace(
             span,

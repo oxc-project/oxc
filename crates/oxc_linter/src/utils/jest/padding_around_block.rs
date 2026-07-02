@@ -28,6 +28,9 @@ pub fn report_missing_padding_before_jest_block<'a>(
             };
             get_statement_span_before_node(node, body.statements.as_slice())
         }
+        AstKind::FunctionBody(body) => {
+            get_statement_span_before_node(node, body.statements.as_slice())
+        }
         _ => None,
     };
     let Some(prev_statement_span) = prev_statement_span else {

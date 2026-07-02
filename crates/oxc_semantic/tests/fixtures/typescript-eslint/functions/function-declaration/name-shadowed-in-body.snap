@@ -6,19 +6,27 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
   {
     "children": [
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(FunctionBody)",
+            "id": 2,
+            "node": "FunctionBody",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+                "id": 1,
+                "name": "Foo",
+                "node": "VariableDeclarator(Foo)",
+                "references": []
+              }
+            ]
+          }
+        ],
         "flags": "ScopeFlags(Function)",
         "id": 1,
         "node": "Function(Foo)",
-        "symbols": [
-          {
-            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
-            "id": 1,
-            "name": "Foo",
-            "node": "VariableDeclarator(Foo)",
-            "references": []
-          }
-        ]
+        "symbols": []
       }
     ],
     "flags": "ScopeFlags(Top)",
