@@ -4,12 +4,12 @@ use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, Function},
+    ast::{ArrowFunctionExpression, CallExpression, Function},
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_cfg::{ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::visit::EdgeRef};
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNodes, NodeId};
+use oxc_semantic::{AstNodes, NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 
@@ -161,6 +161,33 @@ mod diagnostics {
         .with_label(span.label("This Hook call is inside a nested callback."))
         .with_error_code_scope(SCOPE)
     }
+
+    pub(super) fn use_effect_event_reference(
+        span: Span,
+        name: &str,
+        called: bool,
+    ) -> OxcDiagnostic {
+        let mut message = format!(
+            "`{name}` is a function created with React Hook \"useEffectEvent\", and can only be called from \
+            Effects and Effect Events in the same component."
+        );
+
+        if !called {
+            message.push_str(" It cannot be assigned to a variable or passed down.");
+        }
+
+        OxcDiagnostic::warn(message)
+            .with_label(span.label("Effect Event escapes its component or custom Hook."))
+            .with_error_code_scope(SCOPE)
+    }
+
+    pub(super) fn use_effect_event_inline_escape(span: Span) -> OxcDiagnostic {
+        OxcDiagnostic::warn(
+            "React Hook \"useEffectEvent\" can only be called at the top level of your component. It cannot be passed down.",
+        )
+        .with_label(span.label("Effect Event is passed directly instead of being assigned locally."))
+        .with_error_code_scope(SCOPE)
+    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -259,6 +286,10 @@ impl Rule for RulesOfHooks {
         let Some(parent_func) = parent_func(nodes, node) else {
             return ctx.diagnostic(diagnostics::top_level_hook(span, hook_name));
         };
+
+        if is_react_function_call(call, "useEffectEvent") {
+            check_use_effect_event_usage(node, call, ctx);
+        }
 
         // Check if our parent function is part of a class.
         if matches!(
@@ -744,6 +775,59 @@ fn is_inside_try_catch(
         .ancestors(hook_node_id)
         .take_while(|node| node.id() != function_node_id)
         .any(|node| matches!(node.kind(), AstKind::TryStatement(_) | AstKind::CatchClause(_)))
+}
+
+fn check_use_effect_event_usage(
+    node: &AstNode<'_>,
+    call: &CallExpression<'_>,
+    ctx: &LintContext<'_>,
+) {
+    match ctx.nodes().parent_kind(node.id()) {
+        AstKind::VariableDeclarator(decl) => {
+            if let Some(ident) = decl.id.get_binding_identifier() {
+                report_invalid_use_effect_event_references(ident.symbol_id(), ctx);
+            }
+        }
+        // As with other Hooks, a top-level expression statement is permitted.
+        AstKind::ExpressionStatement(_) => {}
+        _ => ctx.diagnostic(diagnostics::use_effect_event_inline_escape(call.span)),
+    }
+}
+
+fn report_invalid_use_effect_event_references(symbol_id: SymbolId, ctx: &LintContext<'_>) {
+    for reference in ctx.semantic().symbol_references(symbol_id) {
+        if is_inside_effect_or_effect_event_call(ctx.nodes(), reference.node_id()) {
+            continue;
+        }
+
+        let span = ctx.semantic().reference_span(reference);
+        ctx.diagnostic(diagnostics::use_effect_event_reference(
+            span,
+            ctx.semantic().reference_name(reference),
+            is_reference_call_callee(ctx.nodes(), reference.node_id(), span),
+        ));
+    }
+}
+
+fn is_inside_effect_or_effect_event_call(nodes: &AstNodes<'_>, node_id: NodeId) -> bool {
+    nodes.ancestors(node_id).any(|ancestor| match ancestor.kind() {
+        AstKind::CallExpression(call) => is_effect_or_effect_event_call(call),
+        _ => false,
+    })
+}
+
+fn is_effect_or_effect_event_call(call: &CallExpression<'_>) -> bool {
+    is_react_function_call(call, "useEffect")
+        || is_react_function_call(call, "useLayoutEffect")
+        || is_react_function_call(call, "useInsertionEffect")
+        || is_react_function_call(call, "useEffectEvent")
+}
+
+fn is_reference_call_callee(nodes: &AstNodes<'_>, node_id: NodeId, span: Span) -> bool {
+    nodes.ancestors(node_id).any(|ancestor| match ancestor.kind() {
+        AstKind::CallExpression(call) => call.callee.span() == span,
+        _ => false,
+    })
 }
 
 /// Checks if the `node_id` is a callback argument (including JSX render props),
@@ -1479,6 +1563,33 @@ fn test() {
             const value = 1;
             useState(value);
           } catch {}
+        }
+    ",
+    "
+        function MyComponent({ theme }) {
+          const onClick = useEffectEvent(() => {
+            showNotification(theme);
+          });
+          useEffect(() => {
+            onClick();
+          });
+          React.useLayoutEffect(() => {
+            setTimeout(onClick, 100);
+          });
+        }
+    ",
+    "
+        function MyComponent({ theme }) {
+          const onClick = useEffectEvent(() => {
+            showNotification(theme);
+          });
+          const onClick2 = useEffectEvent(() => {
+            debounce(onClick);
+            debounce(() => onClick());
+          });
+          useInsertionEffect(() => {
+            onClick2();
+          });
         }
     "
     ];
@@ -2238,6 +2349,36 @@ fn test() {
             }
         ",
         r"const Foo3 = hoc(function NamedComp(props) { if (props.cond) { const [_a, _b] = useState(false); } });",
+        r#"
+            function MyComponent({ theme }) {
+                const onClick = useEffectEvent(() => {
+                    showNotification(theme);
+                });
+                return <Child onClick={onClick} />;
+            }
+        "#,
+        r"
+            function useCustomHook() {
+                const onEvent = useEffectEvent(() => {});
+                return { onEvent };
+            }
+        ",
+        r#"
+            function MyComponent({ theme }) {
+                return <Child onClick={useEffectEvent(() => {
+                    showNotification(theme);
+                })} />;
+            }
+        "#,
+        r"
+            function MyComponent({ theme }) {
+                const onClick = useEffectEvent(() => {
+                    showNotification(theme);
+                });
+                const handler = () => onClick();
+                return <Child onClick={handler} />;
+            }
+        ",
     ];
 
     Tester::new(RulesOfHooks::NAME, RulesOfHooks::PLUGIN, pass, fail).test_and_snapshot();

@@ -1171,3 +1171,40 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                       ╰── When this condition is false, this Hook is skipped.
    ╰────
   help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component. It cannot be assigned to a variable or passed down.
+   ╭─[rules_of_hooks.tsx:6:40]
+ 5 │                 });
+ 6 │                 return <Child onClick={onClick} />;
+   ·                                        ───┬───
+   ·                                           ╰── Effect Event escapes its component or custom Hook.
+ 7 │             }
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onEvent` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component. It cannot be assigned to a variable or passed down.
+   ╭─[rules_of_hooks.tsx:4:26]
+ 3 │                 const onEvent = useEffectEvent(() => {});
+ 4 │                 return { onEvent };
+   ·                          ───┬───
+   ·                             ╰── Effect Event escapes its component or custom Hook.
+ 5 │             }
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useEffectEvent" can only be called at the top level of your component. It cannot be passed down.
+   ╭─[rules_of_hooks.tsx:3:40]
+ 2 │                 function MyComponent({ theme }) {
+ 3 │ ╭─▶                 return <Child onClick={useEffectEvent(() => {
+ 4 │ │                       showNotification(theme);
+ 5 │ ├─▶                 })} />;
+   · ╰──── Effect Event is passed directly instead of being assigned locally.
+ 6 │                 }
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component.
+   ╭─[rules_of_hooks.tsx:6:39]
+ 5 │                 });
+ 6 │                 const handler = () => onClick();
+   ·                                       ───┬───
+   ·                                          ╰── Effect Event escapes its component or custom Hook.
+ 7 │                 return <Child onClick={handler} />;
+   ╰────
