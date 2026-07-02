@@ -98,12 +98,7 @@ impl Rule for NoUnreachableLoop {
                 }
                 (LoopType::While, &statement.body)
             }
-            AstKind::DoWhileStatement(statement) => {
-                if is_static_false(&statement.test) {
-                    return;
-                }
-                (LoopType::DoWhile, &statement.body)
-            }
+            AstKind::DoWhileStatement(statement) => (LoopType::DoWhile, &statement.body),
             AstKind::ForStatement(statement) => {
                 if statement.test.as_ref().is_some_and(|test| is_static_false(test)) {
                     return;
@@ -731,6 +726,8 @@ fn test() {
             Some(serde_json::json!([{ "ignore": [] }])),
         )
             .into(),
+        ("do { break; } while (false)", None).into(),
+        ("function foo() { do { return; } while (false) }", None).into(),
         (
             "while (a) break;",
             Some(serde_json::json!([{ "ignore": ["DoWhileStatement"] }])),
