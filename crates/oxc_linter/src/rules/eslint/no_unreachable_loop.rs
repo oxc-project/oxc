@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_cfg::{
     BlockNodeId, EdgeType, ErrorEdgeKind, EvalConstConditionResult, Instruction, InstructionKind,
-    LabeledInstruction,
+    LabeledInstruction, ReturnInstructionKind,
     graph::{Direction, visit::EdgeRef},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -287,7 +287,11 @@ fn has_next_iteration_path(
                         stack.push(edge.target());
                     }
                 }
-                EdgeType::Error(ErrorEdgeKind::Explicit) => stack.push(edge.target()),
+                EdgeType::Error(ErrorEdgeKind::Explicit) => {
+                    if explicit_error_edge_can_throw(source, ctx) {
+                        stack.push(edge.target());
+                    }
+                }
             }
         }
     }
@@ -345,11 +349,14 @@ fn finalizer_can_complete_without_override(
 
         for edge in graph.edges_directed(current, Direction::Outgoing) {
             match edge.weight() {
-                EdgeType::Normal
-                | EdgeType::Jump
-                | EdgeType::Backedge
-                | EdgeType::Finalize
-                | EdgeType::Error(ErrorEdgeKind::Explicit) => stack.push(edge.target()),
+                EdgeType::Normal | EdgeType::Jump | EdgeType::Backedge | EdgeType::Finalize => {
+                    stack.push(edge.target());
+                }
+                EdgeType::Error(ErrorEdgeKind::Explicit) => {
+                    if explicit_error_edge_can_throw(current, ctx) {
+                        stack.push(edge.target());
+                    }
+                }
                 EdgeType::Unreachable | EdgeType::Join => return true,
                 EdgeType::NewFunction | EdgeType::Error(ErrorEdgeKind::Implicit) => {}
             }
@@ -357,6 +364,29 @@ fn finalizer_can_complete_without_override(
     }
 
     false
+}
+
+fn explicit_error_edge_can_throw(block_id: BlockNodeId, ctx: &LintContext<'_>) -> bool {
+    let mut can_throw = false;
+
+    for instruction in ctx.cfg().basic_block(block_id).instructions() {
+        match instruction.kind {
+            InstructionKind::Break(_)
+            | InstructionKind::Continue(_)
+            | InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined)
+            | InstructionKind::ImplicitReturn
+            | InstructionKind::Unreachable => return false,
+            InstructionKind::Throw
+            | InstructionKind::Return(ReturnInstructionKind::NotImplicitUndefined) => {
+                return true;
+            }
+            InstructionKind::Statement
+            | InstructionKind::Condition
+            | InstructionKind::Iteration(_) => can_throw = true,
+        }
+    }
+
+    can_throw
 }
 
 fn is_static_infinite_loop_exit(block_id: BlockNodeId, ctx: &LintContext<'_>) -> bool {
@@ -858,6 +888,8 @@ fn test() {
             .into(),
         ("do { break; } while (false)", None).into(),
         ("function foo() { do { return; } while (false) }", None).into(),
+        ("while (a) { try { break; } catch { } }", None).into(),
+        ("function foo() { while (a) { try { return; } catch { } } }", None).into(),
         ("while (a) { try { continue; } finally { break; } }", None).into(),
         ("function foo() { while (a) { try { continue; } finally { return; } } }", None).into(),
         ("for (;;) { while (a) break; }", None).into(),
