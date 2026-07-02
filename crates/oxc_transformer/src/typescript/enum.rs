@@ -221,7 +221,11 @@ impl<'a> TypeScriptEnum {
             ctx,
         );
         let span = decl.span;
-        let body_scope_id = ctx.create_child_scope(func_scope_id, ScopeFlags::FunctionBody);
+        let body_scope_id = ctx.insert_scope_below_statements_from_scope_id(
+            &statements,
+            func_scope_id,
+            ScopeFlags::FunctionBody,
+        );
         let body = FunctionBody::boxed_with_scope_id(
             span,
             body_scope_id,

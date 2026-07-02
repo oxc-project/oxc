@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 700/1165
+Passed: 581/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -9,7 +9,7 @@ Passed: 700/1165
 * babel-plugin-transform-react-display-name
 
 
-# babel-preset-env (33/85)
+# babel-preset-env (32/85)
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
@@ -81,6 +81,11 @@ x Output mismatch
 
 * plugins-integration/issue-7527/input.mjs
 x Output mismatch
+
+* plugins-integration/issue-9935/input.js
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(4))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
 
 * plugins-integration/regression-2892/input.mjs
 x Output mismatch
@@ -167,12 +172,105 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (25/28)
+# babel-plugin-transform-explicit-resource-management (19/28)
+* integration/async-to-generator/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(5): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_usingCtx":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(5)
+
 * integration/commonjs-transform/input.js
 x Output mismatch
 
+* source-maps/switch/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): ["_usingCtx", "_usingCtx2"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "_usingCtx2"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_usingCtx":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "_usingCtx2":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(1)
+
+* transform-await/switch/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): ["_usingCtx", "_usingCtx2"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "_usingCtx2"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_usingCtx":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "_usingCtx2":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(1)
+
+* transform-sync/function-body/input.js
+Bindings mismatch:
+after transform: ScopeId(2): ["x"]
+rebuilt        : ScopeId(2): []
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(1))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(1))
+rebuilt        : ScopeId(4): Some(ScopeId(2))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(1))
+rebuilt        : ScopeId(6): Some(ScopeId(2))
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(3)
+
+* transform-sync/multiple-nested/input.js
+Bindings mismatch:
+after transform: ScopeId(4): ["z"]
+rebuilt        : ScopeId(4): []
+Bindings mismatch:
+after transform: ScopeId(11): []
+rebuilt        : ScopeId(5): ["z"]
+Scope parent mismatch:
+after transform: ScopeId(11): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(12): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(14): Some(ScopeId(3))
+rebuilt        : ScopeId(8): Some(ScopeId(4))
+Symbol scope ID mismatch for "z":
+after transform: SymbolId(2): ScopeId(4)
+rebuilt        : SymbolId(5): ScopeId(5)
+
 * transform-sync/named-evaluation/input.js
 x Output mismatch
+
+* transform-sync/switch/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): ["_usingCtx", "_usingCtx2"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "_usingCtx2"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_usingCtx":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "_usingCtx2":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(1)
 
 * transform-top-level/hoisting-mutate-outer-class-binding/input.js
 x Output mismatch
@@ -192,7 +290,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (212/269)
+# babel-plugin-transform-class-properties (150/269)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -211,11 +309,54 @@ x Output mismatch
 * assumption-setPublicClassFields/computed/input.js
 x Output mismatch
 
+* assumption-setPublicClassFields/foobar/input.js
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+* assumption-setPublicClassFields/instance-computed/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "x"]
+rebuilt        : ScopeId(1): ["x"]
+Bindings mismatch:
+after transform: ScopeId(2): ["F"]
+rebuilt        : ScopeId(2): ["F", "_x"]
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
+
+* assumption-setPublicClassFields/non-block-arrow-func/input.mjs
+Bindings mismatch:
+after transform: ScopeId(1): ["param"]
+rebuilt        : ScopeId(1): ["_App", "param"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_App"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_App":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+
+* assumption-setPublicClassFields/regression-T6719/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["ComposedComponent"]
+rebuilt        : ScopeId(1): ["ComposedComponent", "_WithContext"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_WithContext"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_WithContext":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+
 * assumption-setPublicClassFields/static-infer-name/input.js
 x Output mismatch
 
 * assumption-setPublicClassFields/static-super-loose/input.js
 x Output mismatch
+
+* assumption-setPublicClassFields/super-expression/input.js
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
 
 * class-name-tdz/general/input.js
 x Output mismatch
@@ -245,17 +386,905 @@ rebuilt        : []
 * nested-class/super-call-in-decorator/input.js
 x Output mismatch
 
+* nested-class/super-call-in-key/input.js
+Bindings mismatch:
+after transform: ScopeId(7): ["_super"]
+rebuilt        : ScopeId(7): []
+Bindings mismatch:
+after transform: ScopeId(8): ["Inner"]
+rebuilt        : ScopeId(8): ["Inner", "_super"]
+Symbol scope ID mismatch for "_super":
+after transform: SymbolId(3): ScopeId(7)
+rebuilt        : SymbolId(2): ScopeId(8)
+
 * nested-class/super-property-in-accessor-key/input.js
 x Output mismatch
 
 * nested-class/super-property-in-decorator/input.js
 x Output mismatch
 
+* nested-class/super-property-in-key/input.js
+Bindings mismatch:
+after transform: ScopeId(5): ["_super$toString"]
+rebuilt        : ScopeId(5): []
+Bindings mismatch:
+after transform: ScopeId(6): ["Inner"]
+rebuilt        : ScopeId(6): ["Inner", "_super$toString"]
+Symbol scope ID mismatch for "_super$toString":
+after transform: SymbolId(3): ScopeId(5)
+rebuilt        : SymbolId(2): ScopeId(6)
+
+* private/assignment/input.js
+Bindings mismatch:
+after transform: ScopeId(2): ["other"]
+rebuilt        : ScopeId(4): ["_other$obj", "other"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_other$obj"]
+rebuilt        : ScopeId(5): []
+Symbol scope ID mismatch for "_other$obj":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(4)
+
+* private/call/input.js
+Bindings mismatch:
+after transform: ScopeId(4): ["other"]
+rebuilt        : ScopeId(6): ["_other$obj", "other"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_other$obj"]
+rebuilt        : ScopeId(7): []
+Symbol scope ID mismatch for "_other$obj":
+after transform: SymbolId(3): ScopeId(5)
+rebuilt        : SymbolId(3): ScopeId(6)
+
 * private/class-shadow-builtins/input.mjs
 x Output mismatch
 
+* private/derived-multiple-supers/input.js
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+* private/foobar/input.js
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+* private/logical-assignment/input.js
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(6): ["_this$self"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_this$self"]
+rebuilt        : ScopeId(7): []
+Symbol scope ID mismatch for "_this$self":
+after transform: SymbolId(4): ScopeId(5)
+rebuilt        : SymbolId(4): ScopeId(6)
+
+* private/nested-class-computed-redeclared/input.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_babelHelpers$classPr"]
+rebuilt        : ScopeId(4): ["_foo2"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_foo2"]
+rebuilt        : ScopeId(5): ["Nested", "_babelHelpers$classPr"]
+Symbol scope ID mismatch for "_babelHelpers$classPr":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(5)
+Symbol scope ID mismatch for "_foo2":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(4)
+
+* private/nested-class-extends-computed/input.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_this$foo"]
+rebuilt        : ScopeId(4): ["_foo2"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_foo2"]
+rebuilt        : ScopeId(5): ["Nested", "_this$foo"]
+Symbol scope ID mismatch for "_this$foo":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(5)
+Symbol scope ID mismatch for "_foo2":
+after transform: SymbolId(4): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(4)
+
+* private/nested-class-extends-computed-redeclared/input.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_this$foo"]
+rebuilt        : ScopeId(4): ["_foo2", "_foo3"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_foo2", "_foo3"]
+rebuilt        : ScopeId(5): ["Nested", "_this$foo"]
+Symbol scope ID mismatch for "_foo2":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(2): ScopeId(4)
+Symbol scope ID mismatch for "_this$foo":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(5)
+Symbol scope ID mismatch for "_foo3":
+after transform: SymbolId(5): ScopeId(3)
+rebuilt        : SymbolId(4): ScopeId(4)
+
+* private/nested-class-other-redeclared/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(4): ["_bar2"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_bar2"]
+rebuilt        : ScopeId(5): ["Nested"]
+Symbol scope ID mismatch for "_bar2":
+after transform: SymbolId(4): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(4)
+
+* private/nested-class-redeclared/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(4): ["_foo2"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_foo2"]
+rebuilt        : ScopeId(5): ["Nested"]
+Symbol scope ID mismatch for "_foo2":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(2): ScopeId(4)
+
+* private/non-block-arrow-func/input.mjs
+Bindings mismatch:
+after transform: ScopeId(1): ["param"]
+rebuilt        : ScopeId(1): ["_App", "_props", "param"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_App", "_props"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_App":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "_props":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+
+* private/optional-chain-before-member-call/input.js
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(4): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call2", "_call2$self", "_deep$very$o", "_deep$very$o$Foo", "_deep$very$o2", "_deep$very$o2$Foo", "_deep$very$o3", "_deep$very$o3$Foo", "_fn$Foo", "_fn$Foo$self", "_fn$Foo$self$getSelf", "_fn$Foo$self$self", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o", "_fnDeep$very$o$Foo", "_fnDeep$very$o2", "_fnDeep$very$o2$Foo", "_fnDeep$very$o3", "_fnDeep$very$o3$Foo", "_getSelf", "_getSelf$self", "_getSelf2", "_getSelf2$self", "_getSelf3", "_getSelf3$self", "_getSelf4", "_getSelf4$self", "_o$Foo", "_o$Foo$self", "_o$Foo$self$getSelf", "_o$Foo$self$self", "_o$Foo2", "_o$Foo3", "_ref", "_ref$self", "_ref10", "_ref10$getSelf", "_ref11", "_ref11$getSelf", "_ref11$getSelf$call", "_ref12", "_ref12$self", "_ref2", "_ref2$self", "_ref3", "_ref3$call", "_ref4", "_ref4$getSelf", "_ref5", "_ref5$getSelf", "_ref5$getSelf$call", "_ref6", "_ref6$self", "_ref7", "_ref7$self", "_ref8", "_ref8$self", "_ref9", "_ref9$call", "_self2", "_self2$self", "_self3", "_self3$self"]
+Bindings mismatch:
+after transform: ScopeId(7): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call2", "_call2$self", "_deep$very$o", "_deep$very$o$Foo", "_deep$very$o2", "_deep$very$o2$Foo", "_deep$very$o3", "_deep$very$o3$Foo", "_fn$Foo", "_fn$Foo$self", "_fn$Foo$self$getSelf", "_fn$Foo$self$self", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o", "_fnDeep$very$o$Foo", "_fnDeep$very$o2", "_fnDeep$very$o2$Foo", "_fnDeep$very$o3", "_fnDeep$very$o3$Foo", "_getSelf", "_getSelf$self", "_getSelf2", "_getSelf2$self", "_getSelf3", "_getSelf3$self", "_getSelf4", "_getSelf4$self", "_o$Foo", "_o$Foo$self", "_o$Foo$self$getSelf", "_o$Foo$self$self", "_o$Foo2", "_o$Foo3", "_ref", "_ref$self", "_ref10", "_ref10$getSelf", "_ref11", "_ref11$getSelf", "_ref11$getSelf$call", "_ref12", "_ref12$self", "_ref2", "_ref2$self", "_ref3", "_ref3$call", "_ref4", "_ref4$getSelf", "_ref5", "_ref5$getSelf", "_ref5$getSelf$call", "_ref6", "_ref6$self", "_ref7", "_ref7$self", "_ref8", "_ref8$self", "_ref9", "_ref9$call", "_self2", "_self2$self", "_self3", "_self3$self", "deep", "fn", "fnDeep", "o"]
+rebuilt        : ScopeId(5): ["deep", "fn", "fnDeep", "o"]
+Symbol scope ID mismatch for "_o$Foo":
+after transform: SymbolId(9): ScopeId(7)
+rebuilt        : SymbolId(2): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo2":
+after transform: SymbolId(10): ScopeId(7)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo3":
+after transform: SymbolId(11): ScopeId(7)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o":
+after transform: SymbolId(12): ScopeId(7)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo":
+after transform: SymbolId(13): ScopeId(7)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o2":
+after transform: SymbolId(14): ScopeId(7)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o2$Foo":
+after transform: SymbolId(15): ScopeId(7)
+rebuilt        : SymbolId(8): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o3":
+after transform: SymbolId(16): ScopeId(7)
+rebuilt        : SymbolId(9): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o3$Foo":
+after transform: SymbolId(17): ScopeId(7)
+rebuilt        : SymbolId(10): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self":
+after transform: SymbolId(18): ScopeId(7)
+rebuilt        : SymbolId(11): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self$self":
+after transform: SymbolId(19): ScopeId(7)
+rebuilt        : SymbolId(12): ScopeId(4)
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(20): ScopeId(7)
+rebuilt        : SymbolId(13): ScopeId(4)
+Symbol scope ID mismatch for "_ref$self":
+after transform: SymbolId(21): ScopeId(7)
+rebuilt        : SymbolId(14): ScopeId(4)
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(22): ScopeId(7)
+rebuilt        : SymbolId(15): ScopeId(4)
+Symbol scope ID mismatch for "_ref2$self":
+after transform: SymbolId(23): ScopeId(7)
+rebuilt        : SymbolId(16): ScopeId(4)
+Symbol scope ID mismatch for "_self2":
+after transform: SymbolId(24): ScopeId(7)
+rebuilt        : SymbolId(17): ScopeId(4)
+Symbol scope ID mismatch for "_self2$self":
+after transform: SymbolId(25): ScopeId(7)
+rebuilt        : SymbolId(18): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self$getSelf":
+after transform: SymbolId(26): ScopeId(7)
+rebuilt        : SymbolId(19): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC":
+after transform: SymbolId(27): ScopeId(7)
+rebuilt        : SymbolId(20): ScopeId(4)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(28): ScopeId(7)
+rebuilt        : SymbolId(21): ScopeId(4)
+Symbol scope ID mismatch for "_ref3$call":
+after transform: SymbolId(29): ScopeId(7)
+rebuilt        : SymbolId(22): ScopeId(4)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(30): ScopeId(7)
+rebuilt        : SymbolId(23): ScopeId(4)
+Symbol scope ID mismatch for "_ref4$getSelf":
+after transform: SymbolId(31): ScopeId(7)
+rebuilt        : SymbolId(24): ScopeId(4)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(32): ScopeId(7)
+rebuilt        : SymbolId(25): ScopeId(4)
+Symbol scope ID mismatch for "_ref5$getSelf":
+after transform: SymbolId(33): ScopeId(7)
+rebuilt        : SymbolId(26): ScopeId(4)
+Symbol scope ID mismatch for "_ref5$getSelf$call":
+after transform: SymbolId(34): ScopeId(7)
+rebuilt        : SymbolId(27): ScopeId(4)
+Symbol scope ID mismatch for "_ref6":
+after transform: SymbolId(35): ScopeId(7)
+rebuilt        : SymbolId(28): ScopeId(4)
+Symbol scope ID mismatch for "_ref6$self":
+after transform: SymbolId(36): ScopeId(7)
+rebuilt        : SymbolId(29): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC2":
+after transform: SymbolId(37): ScopeId(7)
+rebuilt        : SymbolId(30): ScopeId(4)
+Symbol scope ID mismatch for "_call":
+after transform: SymbolId(38): ScopeId(7)
+rebuilt        : SymbolId(31): ScopeId(4)
+Symbol scope ID mismatch for "_call$self":
+after transform: SymbolId(39): ScopeId(7)
+rebuilt        : SymbolId(32): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf":
+after transform: SymbolId(40): ScopeId(7)
+rebuilt        : SymbolId(33): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self":
+after transform: SymbolId(41): ScopeId(7)
+rebuilt        : SymbolId(34): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2":
+after transform: SymbolId(42): ScopeId(7)
+rebuilt        : SymbolId(35): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2$self":
+after transform: SymbolId(43): ScopeId(7)
+rebuilt        : SymbolId(36): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo":
+after transform: SymbolId(44): ScopeId(7)
+rebuilt        : SymbolId(37): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo2":
+after transform: SymbolId(45): ScopeId(7)
+rebuilt        : SymbolId(38): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo3":
+after transform: SymbolId(46): ScopeId(7)
+rebuilt        : SymbolId(39): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o":
+after transform: SymbolId(47): ScopeId(7)
+rebuilt        : SymbolId(40): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo":
+after transform: SymbolId(48): ScopeId(7)
+rebuilt        : SymbolId(41): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o2":
+after transform: SymbolId(49): ScopeId(7)
+rebuilt        : SymbolId(42): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o2$Foo":
+after transform: SymbolId(50): ScopeId(7)
+rebuilt        : SymbolId(43): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o3":
+after transform: SymbolId(51): ScopeId(7)
+rebuilt        : SymbolId(44): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o3$Foo":
+after transform: SymbolId(52): ScopeId(7)
+rebuilt        : SymbolId(45): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self":
+after transform: SymbolId(53): ScopeId(7)
+rebuilt        : SymbolId(46): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self$self":
+after transform: SymbolId(54): ScopeId(7)
+rebuilt        : SymbolId(47): ScopeId(4)
+Symbol scope ID mismatch for "_ref7":
+after transform: SymbolId(55): ScopeId(7)
+rebuilt        : SymbolId(48): ScopeId(4)
+Symbol scope ID mismatch for "_ref7$self":
+after transform: SymbolId(56): ScopeId(7)
+rebuilt        : SymbolId(49): ScopeId(4)
+Symbol scope ID mismatch for "_ref8":
+after transform: SymbolId(57): ScopeId(7)
+rebuilt        : SymbolId(50): ScopeId(4)
+Symbol scope ID mismatch for "_ref8$self":
+after transform: SymbolId(58): ScopeId(7)
+rebuilt        : SymbolId(51): ScopeId(4)
+Symbol scope ID mismatch for "_self3":
+after transform: SymbolId(59): ScopeId(7)
+rebuilt        : SymbolId(52): ScopeId(4)
+Symbol scope ID mismatch for "_self3$self":
+after transform: SymbolId(60): ScopeId(7)
+rebuilt        : SymbolId(53): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self$getSelf":
+after transform: SymbolId(61): ScopeId(7)
+rebuilt        : SymbolId(54): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC3":
+after transform: SymbolId(62): ScopeId(7)
+rebuilt        : SymbolId(55): ScopeId(4)
+Symbol scope ID mismatch for "_ref9":
+after transform: SymbolId(63): ScopeId(7)
+rebuilt        : SymbolId(56): ScopeId(4)
+Symbol scope ID mismatch for "_ref9$call":
+after transform: SymbolId(64): ScopeId(7)
+rebuilt        : SymbolId(57): ScopeId(4)
+Symbol scope ID mismatch for "_ref10":
+after transform: SymbolId(65): ScopeId(7)
+rebuilt        : SymbolId(58): ScopeId(4)
+Symbol scope ID mismatch for "_ref10$getSelf":
+after transform: SymbolId(66): ScopeId(7)
+rebuilt        : SymbolId(59): ScopeId(4)
+Symbol scope ID mismatch for "_ref11":
+after transform: SymbolId(67): ScopeId(7)
+rebuilt        : SymbolId(60): ScopeId(4)
+Symbol scope ID mismatch for "_ref11$getSelf":
+after transform: SymbolId(68): ScopeId(7)
+rebuilt        : SymbolId(61): ScopeId(4)
+Symbol scope ID mismatch for "_ref11$getSelf$call":
+after transform: SymbolId(69): ScopeId(7)
+rebuilt        : SymbolId(62): ScopeId(4)
+Symbol scope ID mismatch for "_ref12":
+after transform: SymbolId(70): ScopeId(7)
+rebuilt        : SymbolId(63): ScopeId(4)
+Symbol scope ID mismatch for "_ref12$self":
+after transform: SymbolId(71): ScopeId(7)
+rebuilt        : SymbolId(64): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC4":
+after transform: SymbolId(72): ScopeId(7)
+rebuilt        : SymbolId(65): ScopeId(4)
+Symbol scope ID mismatch for "_call2":
+after transform: SymbolId(73): ScopeId(7)
+rebuilt        : SymbolId(66): ScopeId(4)
+Symbol scope ID mismatch for "_call2$self":
+after transform: SymbolId(74): ScopeId(7)
+rebuilt        : SymbolId(67): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3":
+after transform: SymbolId(75): ScopeId(7)
+rebuilt        : SymbolId(68): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3$self":
+after transform: SymbolId(76): ScopeId(7)
+rebuilt        : SymbolId(69): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4":
+after transform: SymbolId(77): ScopeId(7)
+rebuilt        : SymbolId(70): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4$self":
+after transform: SymbolId(78): ScopeId(7)
+rebuilt        : SymbolId(71): ScopeId(4)
+
+* private/optional-chain-before-member-call-with-transform/input.js
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(4): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call2", "_call2$self", "_deep$very$o", "_deep$very$o$Foo", "_deep$very$o2", "_deep$very$o2$Foo", "_deep$very$o3", "_deep$very$o3$Foo", "_fn$Foo", "_fn$Foo$self", "_fn$Foo$self$getSelf", "_fn$Foo$self$self", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o", "_fnDeep$very$o$Foo", "_fnDeep$very$o2", "_fnDeep$very$o2$Foo", "_fnDeep$very$o3", "_fnDeep$very$o3$Foo", "_getSelf", "_getSelf$self", "_getSelf2", "_getSelf2$self", "_getSelf3", "_getSelf3$self", "_getSelf4", "_getSelf4$self", "_o$Foo", "_o$Foo$self", "_o$Foo$self$getSelf", "_o$Foo$self$self", "_o$Foo2", "_o$Foo3", "_ref", "_ref$self", "_ref10", "_ref11", "_ref11$getSelf", "_ref12", "_ref12$self", "_ref13", "_ref13$self", "_ref14", "_ref15", "_ref15$call", "_ref16", "_ref16$getSelf", "_ref17", "_ref17$getSelf", "_ref17$getSelf$call", "_ref18", "_ref19", "_ref19$self", "_ref2", "_ref2$self", "_ref20", "_ref21", "_ref22", "_ref22$getSelf", "_ref3", "_ref4", "_ref4$call", "_ref5", "_ref5$getSelf", "_ref6", "_ref6$getSelf", "_ref6$getSelf$call", "_ref7", "_ref8", "_ref8$self", "_ref9", "_self2", "_self2$self", "_self3", "_self3$self"]
+Bindings mismatch:
+after transform: ScopeId(7): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call2", "_call2$self", "_deep$very$o", "_deep$very$o$Foo", "_deep$very$o2", "_deep$very$o2$Foo", "_deep$very$o3", "_deep$very$o3$Foo", "_fn$Foo", "_fn$Foo$self", "_fn$Foo$self$getSelf", "_fn$Foo$self$self", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o", "_fnDeep$very$o$Foo", "_fnDeep$very$o2", "_fnDeep$very$o2$Foo", "_fnDeep$very$o3", "_fnDeep$very$o3$Foo", "_getSelf", "_getSelf$self", "_getSelf2", "_getSelf2$self", "_getSelf3", "_getSelf3$self", "_getSelf4", "_getSelf4$self", "_o$Foo", "_o$Foo$self", "_o$Foo$self$getSelf", "_o$Foo$self$self", "_o$Foo2", "_o$Foo3", "_ref", "_ref$self", "_ref10", "_ref11", "_ref11$getSelf", "_ref12", "_ref12$self", "_ref13", "_ref13$self", "_ref14", "_ref15", "_ref15$call", "_ref16", "_ref16$getSelf", "_ref17", "_ref17$getSelf", "_ref17$getSelf$call", "_ref18", "_ref19", "_ref19$self", "_ref2", "_ref2$self", "_ref20", "_ref21", "_ref22", "_ref22$getSelf", "_ref3", "_ref4", "_ref4$call", "_ref5", "_ref5$getSelf", "_ref6", "_ref6$getSelf", "_ref6$getSelf$call", "_ref7", "_ref8", "_ref8$self", "_ref9", "_self2", "_self2$self", "_self3", "_self3$self", "deep", "fn", "fnDeep", "o"]
+rebuilt        : ScopeId(5): ["deep", "fn", "fnDeep", "o"]
+Symbol scope ID mismatch for "_o$Foo":
+after transform: SymbolId(9): ScopeId(7)
+rebuilt        : SymbolId(2): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo2":
+after transform: SymbolId(10): ScopeId(7)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo3":
+after transform: SymbolId(11): ScopeId(7)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o":
+after transform: SymbolId(12): ScopeId(7)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo":
+after transform: SymbolId(13): ScopeId(7)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o2":
+after transform: SymbolId(14): ScopeId(7)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o2$Foo":
+after transform: SymbolId(15): ScopeId(7)
+rebuilt        : SymbolId(8): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o3":
+after transform: SymbolId(16): ScopeId(7)
+rebuilt        : SymbolId(9): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o3$Foo":
+after transform: SymbolId(17): ScopeId(7)
+rebuilt        : SymbolId(10): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self":
+after transform: SymbolId(18): ScopeId(7)
+rebuilt        : SymbolId(11): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self$self":
+after transform: SymbolId(19): ScopeId(7)
+rebuilt        : SymbolId(12): ScopeId(4)
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(20): ScopeId(7)
+rebuilt        : SymbolId(13): ScopeId(4)
+Symbol scope ID mismatch for "_ref$self":
+after transform: SymbolId(21): ScopeId(7)
+rebuilt        : SymbolId(14): ScopeId(4)
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(22): ScopeId(7)
+rebuilt        : SymbolId(15): ScopeId(4)
+Symbol scope ID mismatch for "_ref2$self":
+after transform: SymbolId(23): ScopeId(7)
+rebuilt        : SymbolId(16): ScopeId(4)
+Symbol scope ID mismatch for "_self2":
+after transform: SymbolId(24): ScopeId(7)
+rebuilt        : SymbolId(17): ScopeId(4)
+Symbol scope ID mismatch for "_self2$self":
+after transform: SymbolId(25): ScopeId(7)
+rebuilt        : SymbolId(18): ScopeId(4)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(26): ScopeId(7)
+rebuilt        : SymbolId(19): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self$getSelf":
+after transform: SymbolId(27): ScopeId(7)
+rebuilt        : SymbolId(20): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC":
+after transform: SymbolId(28): ScopeId(7)
+rebuilt        : SymbolId(21): ScopeId(4)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(29): ScopeId(7)
+rebuilt        : SymbolId(22): ScopeId(4)
+Symbol scope ID mismatch for "_ref4$call":
+after transform: SymbolId(30): ScopeId(7)
+rebuilt        : SymbolId(23): ScopeId(4)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(31): ScopeId(7)
+rebuilt        : SymbolId(24): ScopeId(4)
+Symbol scope ID mismatch for "_ref5$getSelf":
+after transform: SymbolId(32): ScopeId(7)
+rebuilt        : SymbolId(25): ScopeId(4)
+Symbol scope ID mismatch for "_ref6":
+after transform: SymbolId(33): ScopeId(7)
+rebuilt        : SymbolId(26): ScopeId(4)
+Symbol scope ID mismatch for "_ref6$getSelf":
+after transform: SymbolId(34): ScopeId(7)
+rebuilt        : SymbolId(27): ScopeId(4)
+Symbol scope ID mismatch for "_ref6$getSelf$call":
+after transform: SymbolId(35): ScopeId(7)
+rebuilt        : SymbolId(28): ScopeId(4)
+Symbol scope ID mismatch for "_ref7":
+after transform: SymbolId(36): ScopeId(7)
+rebuilt        : SymbolId(29): ScopeId(4)
+Symbol scope ID mismatch for "_ref8":
+after transform: SymbolId(37): ScopeId(7)
+rebuilt        : SymbolId(30): ScopeId(4)
+Symbol scope ID mismatch for "_ref8$self":
+after transform: SymbolId(38): ScopeId(7)
+rebuilt        : SymbolId(31): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC2":
+after transform: SymbolId(39): ScopeId(7)
+rebuilt        : SymbolId(32): ScopeId(4)
+Symbol scope ID mismatch for "_call":
+after transform: SymbolId(40): ScopeId(7)
+rebuilt        : SymbolId(33): ScopeId(4)
+Symbol scope ID mismatch for "_call$self":
+after transform: SymbolId(41): ScopeId(7)
+rebuilt        : SymbolId(34): ScopeId(4)
+Symbol scope ID mismatch for "_ref9":
+after transform: SymbolId(42): ScopeId(7)
+rebuilt        : SymbolId(35): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf":
+after transform: SymbolId(43): ScopeId(7)
+rebuilt        : SymbolId(36): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self":
+after transform: SymbolId(44): ScopeId(7)
+rebuilt        : SymbolId(37): ScopeId(4)
+Symbol scope ID mismatch for "_ref10":
+after transform: SymbolId(45): ScopeId(7)
+rebuilt        : SymbolId(38): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2":
+after transform: SymbolId(46): ScopeId(7)
+rebuilt        : SymbolId(39): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2$self":
+after transform: SymbolId(47): ScopeId(7)
+rebuilt        : SymbolId(40): ScopeId(4)
+Symbol scope ID mismatch for "_ref11":
+after transform: SymbolId(48): ScopeId(7)
+rebuilt        : SymbolId(41): ScopeId(4)
+Symbol scope ID mismatch for "_ref11$getSelf":
+after transform: SymbolId(49): ScopeId(7)
+rebuilt        : SymbolId(42): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo":
+after transform: SymbolId(50): ScopeId(7)
+rebuilt        : SymbolId(43): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo2":
+after transform: SymbolId(51): ScopeId(7)
+rebuilt        : SymbolId(44): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo3":
+after transform: SymbolId(52): ScopeId(7)
+rebuilt        : SymbolId(45): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o":
+after transform: SymbolId(53): ScopeId(7)
+rebuilt        : SymbolId(46): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo":
+after transform: SymbolId(54): ScopeId(7)
+rebuilt        : SymbolId(47): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o2":
+after transform: SymbolId(55): ScopeId(7)
+rebuilt        : SymbolId(48): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o2$Foo":
+after transform: SymbolId(56): ScopeId(7)
+rebuilt        : SymbolId(49): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o3":
+after transform: SymbolId(57): ScopeId(7)
+rebuilt        : SymbolId(50): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o3$Foo":
+after transform: SymbolId(58): ScopeId(7)
+rebuilt        : SymbolId(51): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self":
+after transform: SymbolId(59): ScopeId(7)
+rebuilt        : SymbolId(52): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self$self":
+after transform: SymbolId(60): ScopeId(7)
+rebuilt        : SymbolId(53): ScopeId(4)
+Symbol scope ID mismatch for "_ref12":
+after transform: SymbolId(61): ScopeId(7)
+rebuilt        : SymbolId(54): ScopeId(4)
+Symbol scope ID mismatch for "_ref12$self":
+after transform: SymbolId(62): ScopeId(7)
+rebuilt        : SymbolId(55): ScopeId(4)
+Symbol scope ID mismatch for "_ref13":
+after transform: SymbolId(63): ScopeId(7)
+rebuilt        : SymbolId(56): ScopeId(4)
+Symbol scope ID mismatch for "_ref13$self":
+after transform: SymbolId(64): ScopeId(7)
+rebuilt        : SymbolId(57): ScopeId(4)
+Symbol scope ID mismatch for "_self3":
+after transform: SymbolId(65): ScopeId(7)
+rebuilt        : SymbolId(58): ScopeId(4)
+Symbol scope ID mismatch for "_self3$self":
+after transform: SymbolId(66): ScopeId(7)
+rebuilt        : SymbolId(59): ScopeId(4)
+Symbol scope ID mismatch for "_ref14":
+after transform: SymbolId(67): ScopeId(7)
+rebuilt        : SymbolId(60): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self$getSelf":
+after transform: SymbolId(68): ScopeId(7)
+rebuilt        : SymbolId(61): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC3":
+after transform: SymbolId(69): ScopeId(7)
+rebuilt        : SymbolId(62): ScopeId(4)
+Symbol scope ID mismatch for "_ref15":
+after transform: SymbolId(70): ScopeId(7)
+rebuilt        : SymbolId(63): ScopeId(4)
+Symbol scope ID mismatch for "_ref15$call":
+after transform: SymbolId(71): ScopeId(7)
+rebuilt        : SymbolId(64): ScopeId(4)
+Symbol scope ID mismatch for "_ref16":
+after transform: SymbolId(72): ScopeId(7)
+rebuilt        : SymbolId(65): ScopeId(4)
+Symbol scope ID mismatch for "_ref16$getSelf":
+after transform: SymbolId(73): ScopeId(7)
+rebuilt        : SymbolId(66): ScopeId(4)
+Symbol scope ID mismatch for "_ref17":
+after transform: SymbolId(74): ScopeId(7)
+rebuilt        : SymbolId(67): ScopeId(4)
+Symbol scope ID mismatch for "_ref17$getSelf":
+after transform: SymbolId(75): ScopeId(7)
+rebuilt        : SymbolId(68): ScopeId(4)
+Symbol scope ID mismatch for "_ref17$getSelf$call":
+after transform: SymbolId(76): ScopeId(7)
+rebuilt        : SymbolId(69): ScopeId(4)
+Symbol scope ID mismatch for "_ref18":
+after transform: SymbolId(77): ScopeId(7)
+rebuilt        : SymbolId(70): ScopeId(4)
+Symbol scope ID mismatch for "_ref19":
+after transform: SymbolId(78): ScopeId(7)
+rebuilt        : SymbolId(71): ScopeId(4)
+Symbol scope ID mismatch for "_ref19$self":
+after transform: SymbolId(79): ScopeId(7)
+rebuilt        : SymbolId(72): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC4":
+after transform: SymbolId(80): ScopeId(7)
+rebuilt        : SymbolId(73): ScopeId(4)
+Symbol scope ID mismatch for "_call2":
+after transform: SymbolId(81): ScopeId(7)
+rebuilt        : SymbolId(74): ScopeId(4)
+Symbol scope ID mismatch for "_call2$self":
+after transform: SymbolId(82): ScopeId(7)
+rebuilt        : SymbolId(75): ScopeId(4)
+Symbol scope ID mismatch for "_ref20":
+after transform: SymbolId(83): ScopeId(7)
+rebuilt        : SymbolId(76): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3":
+after transform: SymbolId(84): ScopeId(7)
+rebuilt        : SymbolId(77): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3$self":
+after transform: SymbolId(85): ScopeId(7)
+rebuilt        : SymbolId(78): ScopeId(4)
+Symbol scope ID mismatch for "_ref21":
+after transform: SymbolId(86): ScopeId(7)
+rebuilt        : SymbolId(79): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4":
+after transform: SymbolId(87): ScopeId(7)
+rebuilt        : SymbolId(80): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4$self":
+after transform: SymbolId(88): ScopeId(7)
+rebuilt        : SymbolId(81): ScopeId(4)
+Symbol scope ID mismatch for "_ref22":
+after transform: SymbolId(89): ScopeId(7)
+rebuilt        : SymbolId(82): ScopeId(4)
+Symbol scope ID mismatch for "_ref22$getSelf":
+after transform: SymbolId(90): ScopeId(7)
+rebuilt        : SymbolId(83): ScopeId(4)
+
+* private/optional-chain-before-property/input.js
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(4): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call2", "_deep$very$o", "_deep$very$o2", "_deep$very$o3", "_fnDeep$very$o", "_fnDeep$very$o2", "_fnDeep$very$o3", "_getSelf", "_getSelf2", "_getSelf3", "_getSelf4", "_ref", "_ref10", "_ref11", "_ref11$getSelf", "_ref12", "_ref2", "_ref3", "_ref4", "_ref5", "_ref5$getSelf", "_ref6", "_ref7", "_ref8", "_ref9", "_self2", "_self3"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call2", "_deep$very$o", "_deep$very$o2", "_deep$very$o3", "_fnDeep$very$o", "_fnDeep$very$o2", "_fnDeep$very$o3", "_getSelf", "_getSelf2", "_getSelf3", "_getSelf4", "_ref", "_ref10", "_ref11", "_ref11$getSelf", "_ref12", "_ref2", "_ref3", "_ref4", "_ref5", "_ref5$getSelf", "_ref6", "_ref7", "_ref8", "_ref9", "_self2", "_self3", "deep", "fn", "fnDeep", "o"]
+rebuilt        : ScopeId(5): ["deep", "fn", "fnDeep", "o"]
+Symbol scope ID mismatch for "_deep$very$o":
+after transform: SymbolId(7): ScopeId(5)
+rebuilt        : SymbolId(2): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o2":
+after transform: SymbolId(8): ScopeId(5)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o3":
+after transform: SymbolId(9): ScopeId(5)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(10): ScopeId(5)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(11): ScopeId(5)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_self2":
+after transform: SymbolId(12): ScopeId(5)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC":
+after transform: SymbolId(13): ScopeId(5)
+rebuilt        : SymbolId(8): ScopeId(4)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(14): ScopeId(5)
+rebuilt        : SymbolId(9): ScopeId(4)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(15): ScopeId(5)
+rebuilt        : SymbolId(10): ScopeId(4)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(16): ScopeId(5)
+rebuilt        : SymbolId(11): ScopeId(4)
+Symbol scope ID mismatch for "_ref5$getSelf":
+after transform: SymbolId(17): ScopeId(5)
+rebuilt        : SymbolId(12): ScopeId(4)
+Symbol scope ID mismatch for "_ref6":
+after transform: SymbolId(18): ScopeId(5)
+rebuilt        : SymbolId(13): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC2":
+after transform: SymbolId(19): ScopeId(5)
+rebuilt        : SymbolId(14): ScopeId(4)
+Symbol scope ID mismatch for "_call":
+after transform: SymbolId(20): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf":
+after transform: SymbolId(21): ScopeId(5)
+rebuilt        : SymbolId(16): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2":
+after transform: SymbolId(22): ScopeId(5)
+rebuilt        : SymbolId(17): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o":
+after transform: SymbolId(23): ScopeId(5)
+rebuilt        : SymbolId(18): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o2":
+after transform: SymbolId(24): ScopeId(5)
+rebuilt        : SymbolId(19): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o3":
+after transform: SymbolId(25): ScopeId(5)
+rebuilt        : SymbolId(20): ScopeId(4)
+Symbol scope ID mismatch for "_ref7":
+after transform: SymbolId(26): ScopeId(5)
+rebuilt        : SymbolId(21): ScopeId(4)
+Symbol scope ID mismatch for "_ref8":
+after transform: SymbolId(27): ScopeId(5)
+rebuilt        : SymbolId(22): ScopeId(4)
+Symbol scope ID mismatch for "_self3":
+after transform: SymbolId(28): ScopeId(5)
+rebuilt        : SymbolId(23): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC3":
+after transform: SymbolId(29): ScopeId(5)
+rebuilt        : SymbolId(24): ScopeId(4)
+Symbol scope ID mismatch for "_ref9":
+after transform: SymbolId(30): ScopeId(5)
+rebuilt        : SymbolId(25): ScopeId(4)
+Symbol scope ID mismatch for "_ref10":
+after transform: SymbolId(31): ScopeId(5)
+rebuilt        : SymbolId(26): ScopeId(4)
+Symbol scope ID mismatch for "_ref11":
+after transform: SymbolId(32): ScopeId(5)
+rebuilt        : SymbolId(27): ScopeId(4)
+Symbol scope ID mismatch for "_ref11$getSelf":
+after transform: SymbolId(33): ScopeId(5)
+rebuilt        : SymbolId(28): ScopeId(4)
+Symbol scope ID mismatch for "_ref12":
+after transform: SymbolId(34): ScopeId(5)
+rebuilt        : SymbolId(29): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC4":
+after transform: SymbolId(35): ScopeId(5)
+rebuilt        : SymbolId(30): ScopeId(4)
+Symbol scope ID mismatch for "_call2":
+after transform: SymbolId(36): ScopeId(5)
+rebuilt        : SymbolId(31): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3":
+after transform: SymbolId(37): ScopeId(5)
+rebuilt        : SymbolId(32): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4":
+after transform: SymbolId(38): ScopeId(5)
+rebuilt        : SymbolId(33): ScopeId(4)
+
+* private/optional-chain-before-property-with-transform/input.js
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(4): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call2", "_deep$very$o", "_deep$very$o2", "_deep$very$o3", "_fnDeep$very$o", "_fnDeep$very$o2", "_fnDeep$very$o3", "_getSelf", "_getSelf2", "_getSelf3", "_getSelf4", "_ref", "_ref10", "_ref11", "_ref11$getSelf", "_ref12", "_ref13", "_ref14", "_ref15", "_ref16", "_ref17", "_ref17$getSelf", "_ref18", "_ref19", "_ref2", "_ref20", "_ref21", "_ref22", "_ref22$getSelf", "_ref3", "_ref4", "_ref5", "_ref6", "_ref6$getSelf", "_ref7", "_ref8", "_ref9", "_self2", "_self3"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call2", "_deep$very$o", "_deep$very$o2", "_deep$very$o3", "_fnDeep$very$o", "_fnDeep$very$o2", "_fnDeep$very$o3", "_getSelf", "_getSelf2", "_getSelf3", "_getSelf4", "_ref", "_ref10", "_ref11", "_ref11$getSelf", "_ref12", "_ref13", "_ref14", "_ref15", "_ref16", "_ref17", "_ref17$getSelf", "_ref18", "_ref19", "_ref2", "_ref20", "_ref21", "_ref22", "_ref22$getSelf", "_ref3", "_ref4", "_ref5", "_ref6", "_ref6$getSelf", "_ref7", "_ref8", "_ref9", "_self2", "_self3", "deep", "fn", "fnDeep", "o"]
+rebuilt        : ScopeId(5): ["deep", "fn", "fnDeep", "o"]
+Symbol scope ID mismatch for "_deep$very$o":
+after transform: SymbolId(7): ScopeId(5)
+rebuilt        : SymbolId(2): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o2":
+after transform: SymbolId(8): ScopeId(5)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o3":
+after transform: SymbolId(9): ScopeId(5)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(10): ScopeId(5)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(11): ScopeId(5)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_self2":
+after transform: SymbolId(12): ScopeId(5)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(13): ScopeId(5)
+rebuilt        : SymbolId(8): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC":
+after transform: SymbolId(14): ScopeId(5)
+rebuilt        : SymbolId(9): ScopeId(4)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(15): ScopeId(5)
+rebuilt        : SymbolId(10): ScopeId(4)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(16): ScopeId(5)
+rebuilt        : SymbolId(11): ScopeId(4)
+Symbol scope ID mismatch for "_ref6":
+after transform: SymbolId(17): ScopeId(5)
+rebuilt        : SymbolId(12): ScopeId(4)
+Symbol scope ID mismatch for "_ref6$getSelf":
+after transform: SymbolId(18): ScopeId(5)
+rebuilt        : SymbolId(13): ScopeId(4)
+Symbol scope ID mismatch for "_ref7":
+after transform: SymbolId(19): ScopeId(5)
+rebuilt        : SymbolId(14): ScopeId(4)
+Symbol scope ID mismatch for "_ref8":
+after transform: SymbolId(20): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC2":
+after transform: SymbolId(21): ScopeId(5)
+rebuilt        : SymbolId(16): ScopeId(4)
+Symbol scope ID mismatch for "_call":
+after transform: SymbolId(22): ScopeId(5)
+rebuilt        : SymbolId(17): ScopeId(4)
+Symbol scope ID mismatch for "_ref9":
+after transform: SymbolId(23): ScopeId(5)
+rebuilt        : SymbolId(18): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf":
+after transform: SymbolId(24): ScopeId(5)
+rebuilt        : SymbolId(19): ScopeId(4)
+Symbol scope ID mismatch for "_ref10":
+after transform: SymbolId(25): ScopeId(5)
+rebuilt        : SymbolId(20): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2":
+after transform: SymbolId(26): ScopeId(5)
+rebuilt        : SymbolId(21): ScopeId(4)
+Symbol scope ID mismatch for "_ref11":
+after transform: SymbolId(27): ScopeId(5)
+rebuilt        : SymbolId(22): ScopeId(4)
+Symbol scope ID mismatch for "_ref11$getSelf":
+after transform: SymbolId(28): ScopeId(5)
+rebuilt        : SymbolId(23): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o":
+after transform: SymbolId(29): ScopeId(5)
+rebuilt        : SymbolId(24): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o2":
+after transform: SymbolId(30): ScopeId(5)
+rebuilt        : SymbolId(25): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o3":
+after transform: SymbolId(31): ScopeId(5)
+rebuilt        : SymbolId(26): ScopeId(4)
+Symbol scope ID mismatch for "_ref12":
+after transform: SymbolId(32): ScopeId(5)
+rebuilt        : SymbolId(27): ScopeId(4)
+Symbol scope ID mismatch for "_ref13":
+after transform: SymbolId(33): ScopeId(5)
+rebuilt        : SymbolId(28): ScopeId(4)
+Symbol scope ID mismatch for "_self3":
+after transform: SymbolId(34): ScopeId(5)
+rebuilt        : SymbolId(29): ScopeId(4)
+Symbol scope ID mismatch for "_ref14":
+after transform: SymbolId(35): ScopeId(5)
+rebuilt        : SymbolId(30): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC3":
+after transform: SymbolId(36): ScopeId(5)
+rebuilt        : SymbolId(31): ScopeId(4)
+Symbol scope ID mismatch for "_ref15":
+after transform: SymbolId(37): ScopeId(5)
+rebuilt        : SymbolId(32): ScopeId(4)
+Symbol scope ID mismatch for "_ref16":
+after transform: SymbolId(38): ScopeId(5)
+rebuilt        : SymbolId(33): ScopeId(4)
+Symbol scope ID mismatch for "_ref17":
+after transform: SymbolId(39): ScopeId(5)
+rebuilt        : SymbolId(34): ScopeId(4)
+Symbol scope ID mismatch for "_ref17$getSelf":
+after transform: SymbolId(40): ScopeId(5)
+rebuilt        : SymbolId(35): ScopeId(4)
+Symbol scope ID mismatch for "_ref18":
+after transform: SymbolId(41): ScopeId(5)
+rebuilt        : SymbolId(36): ScopeId(4)
+Symbol scope ID mismatch for "_ref19":
+after transform: SymbolId(42): ScopeId(5)
+rebuilt        : SymbolId(37): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC4":
+after transform: SymbolId(43): ScopeId(5)
+rebuilt        : SymbolId(38): ScopeId(4)
+Symbol scope ID mismatch for "_call2":
+after transform: SymbolId(44): ScopeId(5)
+rebuilt        : SymbolId(39): ScopeId(4)
+Symbol scope ID mismatch for "_ref20":
+after transform: SymbolId(45): ScopeId(5)
+rebuilt        : SymbolId(40): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3":
+after transform: SymbolId(46): ScopeId(5)
+rebuilt        : SymbolId(41): ScopeId(4)
+Symbol scope ID mismatch for "_ref21":
+after transform: SymbolId(47): ScopeId(5)
+rebuilt        : SymbolId(42): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4":
+after transform: SymbolId(48): ScopeId(5)
+rebuilt        : SymbolId(43): ScopeId(4)
+Symbol scope ID mismatch for "_ref22":
+after transform: SymbolId(49): ScopeId(5)
+rebuilt        : SymbolId(44): ScopeId(4)
+Symbol scope ID mismatch for "_ref22$getSelf":
+after transform: SymbolId(50): ScopeId(5)
+rebuilt        : SymbolId(45): ScopeId(4)
+
 * private/optional-chain-cast-to-boolean/input.js
 x Output mismatch
+
+* private/optional-chain-delete-property/input.js
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(4): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_deep$very$o", "_fnDeep$very$o"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_deep$very$o", "_fnDeep$very$o", "deep", "fn", "fnDeep", "o"]
+rebuilt        : ScopeId(5): ["deep", "fn", "fnDeep", "o"]
+Symbol scope ID mismatch for "_deep$very$o":
+after transform: SymbolId(7): ScopeId(5)
+rebuilt        : SymbolId(2): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC":
+after transform: SymbolId(8): ScopeId(5)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC2":
+after transform: SymbolId(9): ScopeId(5)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o":
+after transform: SymbolId(10): ScopeId(5)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC3":
+after transform: SymbolId(11): ScopeId(5)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC4":
+after transform: SymbolId(12): ScopeId(5)
+rebuilt        : SymbolId(7): ScopeId(4)
 
 * private/optional-chain-delete-property-with-transform/input.js
 x Output mismatch
@@ -266,14 +1295,1092 @@ x Output mismatch
 * private/optional-chain-in-function-param-with-transform/input.js
 x Output mismatch
 
+* private/optional-chain-member-optional-call/input.js
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(4): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call2", "_call2$self", "_deep$very$o", "_deep$very$o$Foo", "_deep$very$o2", "_deep$very$o2$Foo", "_deep$very$o3", "_deep$very$o3$Foo", "_fn$Foo", "_fn$Foo$self", "_fn$Foo$self$getSelf", "_fn$Foo$self$self", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o", "_fnDeep$very$o$Foo", "_fnDeep$very$o2", "_fnDeep$very$o2$Foo", "_fnDeep$very$o3", "_fnDeep$very$o3$Foo", "_getSelf", "_getSelf$self", "_getSelf2", "_getSelf2$self", "_getSelf3", "_getSelf3$self", "_getSelf4", "_getSelf4$self", "_o$Foo", "_o$Foo$self", "_o$Foo$self$getSelf", "_o$Foo$self$self", "_o$Foo2", "_o$Foo3", "_ref", "_ref$self", "_ref10", "_ref10$getSelf", "_ref11", "_ref11$getSelf", "_ref11$getSelf$call", "_ref12", "_ref12$self", "_ref2", "_ref2$self", "_ref3", "_ref3$call", "_ref4", "_ref4$getSelf", "_ref5", "_ref5$getSelf", "_ref5$getSelf$call", "_ref6", "_ref6$self", "_ref7", "_ref7$self", "_ref8", "_ref8$self", "_ref9", "_ref9$call", "_self2", "_self2$self", "_self3", "_self3$self"]
+Bindings mismatch:
+after transform: ScopeId(7): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call2", "_call2$self", "_deep$very$o", "_deep$very$o$Foo", "_deep$very$o2", "_deep$very$o2$Foo", "_deep$very$o3", "_deep$very$o3$Foo", "_fn$Foo", "_fn$Foo$self", "_fn$Foo$self$getSelf", "_fn$Foo$self$self", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o", "_fnDeep$very$o$Foo", "_fnDeep$very$o2", "_fnDeep$very$o2$Foo", "_fnDeep$very$o3", "_fnDeep$very$o3$Foo", "_getSelf", "_getSelf$self", "_getSelf2", "_getSelf2$self", "_getSelf3", "_getSelf3$self", "_getSelf4", "_getSelf4$self", "_o$Foo", "_o$Foo$self", "_o$Foo$self$getSelf", "_o$Foo$self$self", "_o$Foo2", "_o$Foo3", "_ref", "_ref$self", "_ref10", "_ref10$getSelf", "_ref11", "_ref11$getSelf", "_ref11$getSelf$call", "_ref12", "_ref12$self", "_ref2", "_ref2$self", "_ref3", "_ref3$call", "_ref4", "_ref4$getSelf", "_ref5", "_ref5$getSelf", "_ref5$getSelf$call", "_ref6", "_ref6$self", "_ref7", "_ref7$self", "_ref8", "_ref8$self", "_ref9", "_ref9$call", "_self2", "_self2$self", "_self3", "_self3$self", "deep", "fn", "fnDeep", "o"]
+rebuilt        : ScopeId(5): ["deep", "fn", "fnDeep", "o"]
+Symbol scope ID mismatch for "_o$Foo":
+after transform: SymbolId(9): ScopeId(7)
+rebuilt        : SymbolId(2): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo2":
+after transform: SymbolId(10): ScopeId(7)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo3":
+after transform: SymbolId(11): ScopeId(7)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o":
+after transform: SymbolId(12): ScopeId(7)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo":
+after transform: SymbolId(13): ScopeId(7)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o2":
+after transform: SymbolId(14): ScopeId(7)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o2$Foo":
+after transform: SymbolId(15): ScopeId(7)
+rebuilt        : SymbolId(8): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o3":
+after transform: SymbolId(16): ScopeId(7)
+rebuilt        : SymbolId(9): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o3$Foo":
+after transform: SymbolId(17): ScopeId(7)
+rebuilt        : SymbolId(10): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self":
+after transform: SymbolId(18): ScopeId(7)
+rebuilt        : SymbolId(11): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self$self":
+after transform: SymbolId(19): ScopeId(7)
+rebuilt        : SymbolId(12): ScopeId(4)
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(20): ScopeId(7)
+rebuilt        : SymbolId(13): ScopeId(4)
+Symbol scope ID mismatch for "_ref$self":
+after transform: SymbolId(21): ScopeId(7)
+rebuilt        : SymbolId(14): ScopeId(4)
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(22): ScopeId(7)
+rebuilt        : SymbolId(15): ScopeId(4)
+Symbol scope ID mismatch for "_ref2$self":
+after transform: SymbolId(23): ScopeId(7)
+rebuilt        : SymbolId(16): ScopeId(4)
+Symbol scope ID mismatch for "_self2":
+after transform: SymbolId(24): ScopeId(7)
+rebuilt        : SymbolId(17): ScopeId(4)
+Symbol scope ID mismatch for "_self2$self":
+after transform: SymbolId(25): ScopeId(7)
+rebuilt        : SymbolId(18): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self$getSelf":
+after transform: SymbolId(26): ScopeId(7)
+rebuilt        : SymbolId(19): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC":
+after transform: SymbolId(27): ScopeId(7)
+rebuilt        : SymbolId(20): ScopeId(4)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(28): ScopeId(7)
+rebuilt        : SymbolId(21): ScopeId(4)
+Symbol scope ID mismatch for "_ref3$call":
+after transform: SymbolId(29): ScopeId(7)
+rebuilt        : SymbolId(22): ScopeId(4)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(30): ScopeId(7)
+rebuilt        : SymbolId(23): ScopeId(4)
+Symbol scope ID mismatch for "_ref4$getSelf":
+after transform: SymbolId(31): ScopeId(7)
+rebuilt        : SymbolId(24): ScopeId(4)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(32): ScopeId(7)
+rebuilt        : SymbolId(25): ScopeId(4)
+Symbol scope ID mismatch for "_ref5$getSelf":
+after transform: SymbolId(33): ScopeId(7)
+rebuilt        : SymbolId(26): ScopeId(4)
+Symbol scope ID mismatch for "_ref5$getSelf$call":
+after transform: SymbolId(34): ScopeId(7)
+rebuilt        : SymbolId(27): ScopeId(4)
+Symbol scope ID mismatch for "_ref6":
+after transform: SymbolId(35): ScopeId(7)
+rebuilt        : SymbolId(28): ScopeId(4)
+Symbol scope ID mismatch for "_ref6$self":
+after transform: SymbolId(36): ScopeId(7)
+rebuilt        : SymbolId(29): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC2":
+after transform: SymbolId(37): ScopeId(7)
+rebuilt        : SymbolId(30): ScopeId(4)
+Symbol scope ID mismatch for "_call":
+after transform: SymbolId(38): ScopeId(7)
+rebuilt        : SymbolId(31): ScopeId(4)
+Symbol scope ID mismatch for "_call$self":
+after transform: SymbolId(39): ScopeId(7)
+rebuilt        : SymbolId(32): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf":
+after transform: SymbolId(40): ScopeId(7)
+rebuilt        : SymbolId(33): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self":
+after transform: SymbolId(41): ScopeId(7)
+rebuilt        : SymbolId(34): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2":
+after transform: SymbolId(42): ScopeId(7)
+rebuilt        : SymbolId(35): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2$self":
+after transform: SymbolId(43): ScopeId(7)
+rebuilt        : SymbolId(36): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo":
+after transform: SymbolId(44): ScopeId(7)
+rebuilt        : SymbolId(37): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo2":
+after transform: SymbolId(45): ScopeId(7)
+rebuilt        : SymbolId(38): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo3":
+after transform: SymbolId(46): ScopeId(7)
+rebuilt        : SymbolId(39): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o":
+after transform: SymbolId(47): ScopeId(7)
+rebuilt        : SymbolId(40): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo":
+after transform: SymbolId(48): ScopeId(7)
+rebuilt        : SymbolId(41): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o2":
+after transform: SymbolId(49): ScopeId(7)
+rebuilt        : SymbolId(42): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o2$Foo":
+after transform: SymbolId(50): ScopeId(7)
+rebuilt        : SymbolId(43): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o3":
+after transform: SymbolId(51): ScopeId(7)
+rebuilt        : SymbolId(44): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o3$Foo":
+after transform: SymbolId(52): ScopeId(7)
+rebuilt        : SymbolId(45): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self":
+after transform: SymbolId(53): ScopeId(7)
+rebuilt        : SymbolId(46): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self$self":
+after transform: SymbolId(54): ScopeId(7)
+rebuilt        : SymbolId(47): ScopeId(4)
+Symbol scope ID mismatch for "_ref7":
+after transform: SymbolId(55): ScopeId(7)
+rebuilt        : SymbolId(48): ScopeId(4)
+Symbol scope ID mismatch for "_ref7$self":
+after transform: SymbolId(56): ScopeId(7)
+rebuilt        : SymbolId(49): ScopeId(4)
+Symbol scope ID mismatch for "_ref8":
+after transform: SymbolId(57): ScopeId(7)
+rebuilt        : SymbolId(50): ScopeId(4)
+Symbol scope ID mismatch for "_ref8$self":
+after transform: SymbolId(58): ScopeId(7)
+rebuilt        : SymbolId(51): ScopeId(4)
+Symbol scope ID mismatch for "_self3":
+after transform: SymbolId(59): ScopeId(7)
+rebuilt        : SymbolId(52): ScopeId(4)
+Symbol scope ID mismatch for "_self3$self":
+after transform: SymbolId(60): ScopeId(7)
+rebuilt        : SymbolId(53): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self$getSelf":
+after transform: SymbolId(61): ScopeId(7)
+rebuilt        : SymbolId(54): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC3":
+after transform: SymbolId(62): ScopeId(7)
+rebuilt        : SymbolId(55): ScopeId(4)
+Symbol scope ID mismatch for "_ref9":
+after transform: SymbolId(63): ScopeId(7)
+rebuilt        : SymbolId(56): ScopeId(4)
+Symbol scope ID mismatch for "_ref9$call":
+after transform: SymbolId(64): ScopeId(7)
+rebuilt        : SymbolId(57): ScopeId(4)
+Symbol scope ID mismatch for "_ref10":
+after transform: SymbolId(65): ScopeId(7)
+rebuilt        : SymbolId(58): ScopeId(4)
+Symbol scope ID mismatch for "_ref10$getSelf":
+after transform: SymbolId(66): ScopeId(7)
+rebuilt        : SymbolId(59): ScopeId(4)
+Symbol scope ID mismatch for "_ref11":
+after transform: SymbolId(67): ScopeId(7)
+rebuilt        : SymbolId(60): ScopeId(4)
+Symbol scope ID mismatch for "_ref11$getSelf":
+after transform: SymbolId(68): ScopeId(7)
+rebuilt        : SymbolId(61): ScopeId(4)
+Symbol scope ID mismatch for "_ref11$getSelf$call":
+after transform: SymbolId(69): ScopeId(7)
+rebuilt        : SymbolId(62): ScopeId(4)
+Symbol scope ID mismatch for "_ref12":
+after transform: SymbolId(70): ScopeId(7)
+rebuilt        : SymbolId(63): ScopeId(4)
+Symbol scope ID mismatch for "_ref12$self":
+after transform: SymbolId(71): ScopeId(7)
+rebuilt        : SymbolId(64): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC4":
+after transform: SymbolId(72): ScopeId(7)
+rebuilt        : SymbolId(65): ScopeId(4)
+Symbol scope ID mismatch for "_call2":
+after transform: SymbolId(73): ScopeId(7)
+rebuilt        : SymbolId(66): ScopeId(4)
+Symbol scope ID mismatch for "_call2$self":
+after transform: SymbolId(74): ScopeId(7)
+rebuilt        : SymbolId(67): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3":
+after transform: SymbolId(75): ScopeId(7)
+rebuilt        : SymbolId(68): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3$self":
+after transform: SymbolId(76): ScopeId(7)
+rebuilt        : SymbolId(69): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4":
+after transform: SymbolId(77): ScopeId(7)
+rebuilt        : SymbolId(70): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4$self":
+after transform: SymbolId(78): ScopeId(7)
+rebuilt        : SymbolId(71): ScopeId(4)
+
 * private/optional-chain-member-optional-call-spread-arguments/input.js
 x Output mismatch
 
 * private/optional-chain-member-optional-call-with-transform/input.js
 x Output mismatch
 
+* private/optional-chain-optional-member-call/input.js
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(4): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call2", "_call2$self", "_deep$very$o", "_deep$very$o$Foo", "_deep$very$o2", "_deep$very$o2$Foo", "_deep$very$o3", "_deep$very$o3$Foo", "_fn$Foo", "_fn$Foo$self", "_fn$Foo$self$getSelf", "_fn$Foo$self$self", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o", "_fnDeep$very$o$Foo", "_fnDeep$very$o2", "_fnDeep$very$o2$Foo", "_fnDeep$very$o3", "_fnDeep$very$o3$Foo", "_getSelf", "_getSelf$self", "_getSelf2", "_getSelf2$self", "_getSelf3", "_getSelf3$self", "_getSelf4", "_getSelf4$self", "_o$Foo", "_o$Foo$self", "_o$Foo$self$getSelf", "_o$Foo$self$self", "_o$Foo2", "_o$Foo3", "_ref", "_ref$self", "_ref10", "_ref10$getSelf", "_ref11", "_ref11$getSelf", "_ref11$getSelf$call", "_ref12", "_ref12$self", "_ref2", "_ref2$self", "_ref3", "_ref3$call", "_ref4", "_ref4$getSelf", "_ref5", "_ref5$getSelf", "_ref5$getSelf$call", "_ref6", "_ref6$self", "_ref7", "_ref7$self", "_ref8", "_ref8$self", "_ref9", "_ref9$call", "_self2", "_self2$self", "_self3", "_self3$self"]
+Bindings mismatch:
+after transform: ScopeId(7): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call2", "_call2$self", "_deep$very$o", "_deep$very$o$Foo", "_deep$very$o2", "_deep$very$o2$Foo", "_deep$very$o3", "_deep$very$o3$Foo", "_fn$Foo", "_fn$Foo$self", "_fn$Foo$self$getSelf", "_fn$Foo$self$self", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o", "_fnDeep$very$o$Foo", "_fnDeep$very$o2", "_fnDeep$very$o2$Foo", "_fnDeep$very$o3", "_fnDeep$very$o3$Foo", "_getSelf", "_getSelf$self", "_getSelf2", "_getSelf2$self", "_getSelf3", "_getSelf3$self", "_getSelf4", "_getSelf4$self", "_o$Foo", "_o$Foo$self", "_o$Foo$self$getSelf", "_o$Foo$self$self", "_o$Foo2", "_o$Foo3", "_ref", "_ref$self", "_ref10", "_ref10$getSelf", "_ref11", "_ref11$getSelf", "_ref11$getSelf$call", "_ref12", "_ref12$self", "_ref2", "_ref2$self", "_ref3", "_ref3$call", "_ref4", "_ref4$getSelf", "_ref5", "_ref5$getSelf", "_ref5$getSelf$call", "_ref6", "_ref6$self", "_ref7", "_ref7$self", "_ref8", "_ref8$self", "_ref9", "_ref9$call", "_self2", "_self2$self", "_self3", "_self3$self", "deep", "fn", "fnDeep", "o"]
+rebuilt        : ScopeId(5): ["deep", "fn", "fnDeep", "o"]
+Symbol scope ID mismatch for "_o$Foo":
+after transform: SymbolId(9): ScopeId(7)
+rebuilt        : SymbolId(2): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo2":
+after transform: SymbolId(10): ScopeId(7)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo3":
+after transform: SymbolId(11): ScopeId(7)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o":
+after transform: SymbolId(12): ScopeId(7)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo":
+after transform: SymbolId(13): ScopeId(7)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o2":
+after transform: SymbolId(14): ScopeId(7)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o2$Foo":
+after transform: SymbolId(15): ScopeId(7)
+rebuilt        : SymbolId(8): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o3":
+after transform: SymbolId(16): ScopeId(7)
+rebuilt        : SymbolId(9): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o3$Foo":
+after transform: SymbolId(17): ScopeId(7)
+rebuilt        : SymbolId(10): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self":
+after transform: SymbolId(18): ScopeId(7)
+rebuilt        : SymbolId(11): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self$self":
+after transform: SymbolId(19): ScopeId(7)
+rebuilt        : SymbolId(12): ScopeId(4)
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(20): ScopeId(7)
+rebuilt        : SymbolId(13): ScopeId(4)
+Symbol scope ID mismatch for "_ref$self":
+after transform: SymbolId(21): ScopeId(7)
+rebuilt        : SymbolId(14): ScopeId(4)
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(22): ScopeId(7)
+rebuilt        : SymbolId(15): ScopeId(4)
+Symbol scope ID mismatch for "_ref2$self":
+after transform: SymbolId(23): ScopeId(7)
+rebuilt        : SymbolId(16): ScopeId(4)
+Symbol scope ID mismatch for "_self2":
+after transform: SymbolId(24): ScopeId(7)
+rebuilt        : SymbolId(17): ScopeId(4)
+Symbol scope ID mismatch for "_self2$self":
+after transform: SymbolId(25): ScopeId(7)
+rebuilt        : SymbolId(18): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self$getSelf":
+after transform: SymbolId(26): ScopeId(7)
+rebuilt        : SymbolId(19): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC":
+after transform: SymbolId(27): ScopeId(7)
+rebuilt        : SymbolId(20): ScopeId(4)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(28): ScopeId(7)
+rebuilt        : SymbolId(21): ScopeId(4)
+Symbol scope ID mismatch for "_ref3$call":
+after transform: SymbolId(29): ScopeId(7)
+rebuilt        : SymbolId(22): ScopeId(4)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(30): ScopeId(7)
+rebuilt        : SymbolId(23): ScopeId(4)
+Symbol scope ID mismatch for "_ref4$getSelf":
+after transform: SymbolId(31): ScopeId(7)
+rebuilt        : SymbolId(24): ScopeId(4)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(32): ScopeId(7)
+rebuilt        : SymbolId(25): ScopeId(4)
+Symbol scope ID mismatch for "_ref5$getSelf":
+after transform: SymbolId(33): ScopeId(7)
+rebuilt        : SymbolId(26): ScopeId(4)
+Symbol scope ID mismatch for "_ref5$getSelf$call":
+after transform: SymbolId(34): ScopeId(7)
+rebuilt        : SymbolId(27): ScopeId(4)
+Symbol scope ID mismatch for "_ref6":
+after transform: SymbolId(35): ScopeId(7)
+rebuilt        : SymbolId(28): ScopeId(4)
+Symbol scope ID mismatch for "_ref6$self":
+after transform: SymbolId(36): ScopeId(7)
+rebuilt        : SymbolId(29): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC2":
+after transform: SymbolId(37): ScopeId(7)
+rebuilt        : SymbolId(30): ScopeId(4)
+Symbol scope ID mismatch for "_call":
+after transform: SymbolId(38): ScopeId(7)
+rebuilt        : SymbolId(31): ScopeId(4)
+Symbol scope ID mismatch for "_call$self":
+after transform: SymbolId(39): ScopeId(7)
+rebuilt        : SymbolId(32): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf":
+after transform: SymbolId(40): ScopeId(7)
+rebuilt        : SymbolId(33): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self":
+after transform: SymbolId(41): ScopeId(7)
+rebuilt        : SymbolId(34): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2":
+after transform: SymbolId(42): ScopeId(7)
+rebuilt        : SymbolId(35): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2$self":
+after transform: SymbolId(43): ScopeId(7)
+rebuilt        : SymbolId(36): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo":
+after transform: SymbolId(44): ScopeId(7)
+rebuilt        : SymbolId(37): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo2":
+after transform: SymbolId(45): ScopeId(7)
+rebuilt        : SymbolId(38): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo3":
+after transform: SymbolId(46): ScopeId(7)
+rebuilt        : SymbolId(39): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o":
+after transform: SymbolId(47): ScopeId(7)
+rebuilt        : SymbolId(40): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo":
+after transform: SymbolId(48): ScopeId(7)
+rebuilt        : SymbolId(41): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o2":
+after transform: SymbolId(49): ScopeId(7)
+rebuilt        : SymbolId(42): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o2$Foo":
+after transform: SymbolId(50): ScopeId(7)
+rebuilt        : SymbolId(43): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o3":
+after transform: SymbolId(51): ScopeId(7)
+rebuilt        : SymbolId(44): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o3$Foo":
+after transform: SymbolId(52): ScopeId(7)
+rebuilt        : SymbolId(45): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self":
+after transform: SymbolId(53): ScopeId(7)
+rebuilt        : SymbolId(46): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self$self":
+after transform: SymbolId(54): ScopeId(7)
+rebuilt        : SymbolId(47): ScopeId(4)
+Symbol scope ID mismatch for "_ref7":
+after transform: SymbolId(55): ScopeId(7)
+rebuilt        : SymbolId(48): ScopeId(4)
+Symbol scope ID mismatch for "_ref7$self":
+after transform: SymbolId(56): ScopeId(7)
+rebuilt        : SymbolId(49): ScopeId(4)
+Symbol scope ID mismatch for "_ref8":
+after transform: SymbolId(57): ScopeId(7)
+rebuilt        : SymbolId(50): ScopeId(4)
+Symbol scope ID mismatch for "_ref8$self":
+after transform: SymbolId(58): ScopeId(7)
+rebuilt        : SymbolId(51): ScopeId(4)
+Symbol scope ID mismatch for "_self3":
+after transform: SymbolId(59): ScopeId(7)
+rebuilt        : SymbolId(52): ScopeId(4)
+Symbol scope ID mismatch for "_self3$self":
+after transform: SymbolId(60): ScopeId(7)
+rebuilt        : SymbolId(53): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self$getSelf":
+after transform: SymbolId(61): ScopeId(7)
+rebuilt        : SymbolId(54): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC3":
+after transform: SymbolId(62): ScopeId(7)
+rebuilt        : SymbolId(55): ScopeId(4)
+Symbol scope ID mismatch for "_ref9":
+after transform: SymbolId(63): ScopeId(7)
+rebuilt        : SymbolId(56): ScopeId(4)
+Symbol scope ID mismatch for "_ref9$call":
+after transform: SymbolId(64): ScopeId(7)
+rebuilt        : SymbolId(57): ScopeId(4)
+Symbol scope ID mismatch for "_ref10":
+after transform: SymbolId(65): ScopeId(7)
+rebuilt        : SymbolId(58): ScopeId(4)
+Symbol scope ID mismatch for "_ref10$getSelf":
+after transform: SymbolId(66): ScopeId(7)
+rebuilt        : SymbolId(59): ScopeId(4)
+Symbol scope ID mismatch for "_ref11":
+after transform: SymbolId(67): ScopeId(7)
+rebuilt        : SymbolId(60): ScopeId(4)
+Symbol scope ID mismatch for "_ref11$getSelf":
+after transform: SymbolId(68): ScopeId(7)
+rebuilt        : SymbolId(61): ScopeId(4)
+Symbol scope ID mismatch for "_ref11$getSelf$call":
+after transform: SymbolId(69): ScopeId(7)
+rebuilt        : SymbolId(62): ScopeId(4)
+Symbol scope ID mismatch for "_ref12":
+after transform: SymbolId(70): ScopeId(7)
+rebuilt        : SymbolId(63): ScopeId(4)
+Symbol scope ID mismatch for "_ref12$self":
+after transform: SymbolId(71): ScopeId(7)
+rebuilt        : SymbolId(64): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC4":
+after transform: SymbolId(72): ScopeId(7)
+rebuilt        : SymbolId(65): ScopeId(4)
+Symbol scope ID mismatch for "_call2":
+after transform: SymbolId(73): ScopeId(7)
+rebuilt        : SymbolId(66): ScopeId(4)
+Symbol scope ID mismatch for "_call2$self":
+after transform: SymbolId(74): ScopeId(7)
+rebuilt        : SymbolId(67): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3":
+after transform: SymbolId(75): ScopeId(7)
+rebuilt        : SymbolId(68): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3$self":
+after transform: SymbolId(76): ScopeId(7)
+rebuilt        : SymbolId(69): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4":
+after transform: SymbolId(77): ScopeId(7)
+rebuilt        : SymbolId(70): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4$self":
+after transform: SymbolId(78): ScopeId(7)
+rebuilt        : SymbolId(71): ScopeId(4)
+
+* private/optional-chain-optional-member-call-with-transform/input.js
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(4): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call$self2", "_call2", "_deep$very$o", "_deep$very$o$Foo", "_deep$very$o$Foo2", "_deep$very$o$Foo3", "_deep$very$o2", "_deep$very$o3", "_fn$Foo", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o", "_fnDeep$very$o$Foo", "_fnDeep$very$o$Foo2", "_fnDeep$very$o$Foo3", "_fnDeep$very$o2", "_fnDeep$very$o3", "_getSelf", "_getSelf$self", "_getSelf$self2", "_getSelf$self3", "_getSelf$self4", "_getSelf2", "_getSelf3", "_getSelf4", "_o$Foo", "_o$Foo2", "_o$Foo3", "_ref", "_ref10", "_ref11", "_ref12", "_ref13", "_ref13$getSelf", "_ref14", "_ref15", "_ref16", "_ref17", "_ref18", "_ref19", "_ref2", "_ref20", "_ref21", "_ref22", "_ref22$getSelf", "_ref23", "_ref24", "_ref25", "_ref26", "_ref26$getSelf", "_ref3", "_ref4", "_ref5", "_ref6", "_ref7", "_ref8", "_ref9", "_ref9$getSelf", "_self$self", "_self$self2", "_self2", "_self3", "_self4", "_self5", "_self6", "_self7"]
+Bindings mismatch:
+after transform: ScopeId(7): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call$self2", "_call2", "_deep$very$o", "_deep$very$o$Foo", "_deep$very$o$Foo2", "_deep$very$o$Foo3", "_deep$very$o2", "_deep$very$o3", "_fn$Foo", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o", "_fnDeep$very$o$Foo", "_fnDeep$very$o$Foo2", "_fnDeep$very$o$Foo3", "_fnDeep$very$o2", "_fnDeep$very$o3", "_getSelf", "_getSelf$self", "_getSelf$self2", "_getSelf$self3", "_getSelf$self4", "_getSelf2", "_getSelf3", "_getSelf4", "_o$Foo", "_o$Foo2", "_o$Foo3", "_ref", "_ref10", "_ref11", "_ref12", "_ref13", "_ref13$getSelf", "_ref14", "_ref15", "_ref16", "_ref17", "_ref18", "_ref19", "_ref2", "_ref20", "_ref21", "_ref22", "_ref22$getSelf", "_ref23", "_ref24", "_ref25", "_ref26", "_ref26$getSelf", "_ref3", "_ref4", "_ref5", "_ref6", "_ref7", "_ref8", "_ref9", "_ref9$getSelf", "_self$self", "_self$self2", "_self2", "_self3", "_self4", "_self5", "_self6", "_self7", "deep", "fn", "fnDeep", "o"]
+rebuilt        : ScopeId(5): ["deep", "fn", "fnDeep", "o"]
+Symbol scope ID mismatch for "_o$Foo":
+after transform: SymbolId(9): ScopeId(7)
+rebuilt        : SymbolId(2): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo2":
+after transform: SymbolId(10): ScopeId(7)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo3":
+after transform: SymbolId(11): ScopeId(7)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo":
+after transform: SymbolId(12): ScopeId(7)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o":
+after transform: SymbolId(13): ScopeId(7)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo2":
+after transform: SymbolId(14): ScopeId(7)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o2":
+after transform: SymbolId(15): ScopeId(7)
+rebuilt        : SymbolId(8): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo3":
+after transform: SymbolId(16): ScopeId(7)
+rebuilt        : SymbolId(9): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o3":
+after transform: SymbolId(17): ScopeId(7)
+rebuilt        : SymbolId(10): ScopeId(4)
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(18): ScopeId(7)
+rebuilt        : SymbolId(11): ScopeId(4)
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(19): ScopeId(7)
+rebuilt        : SymbolId(12): ScopeId(4)
+Symbol scope ID mismatch for "_self2":
+after transform: SymbolId(20): ScopeId(7)
+rebuilt        : SymbolId(13): ScopeId(4)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(21): ScopeId(7)
+rebuilt        : SymbolId(14): ScopeId(4)
+Symbol scope ID mismatch for "_self3":
+after transform: SymbolId(22): ScopeId(7)
+rebuilt        : SymbolId(15): ScopeId(4)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(23): ScopeId(7)
+rebuilt        : SymbolId(16): ScopeId(4)
+Symbol scope ID mismatch for "_self$self":
+after transform: SymbolId(24): ScopeId(7)
+rebuilt        : SymbolId(17): ScopeId(4)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(25): ScopeId(7)
+rebuilt        : SymbolId(18): ScopeId(4)
+Symbol scope ID mismatch for "_ref6":
+after transform: SymbolId(26): ScopeId(7)
+rebuilt        : SymbolId(19): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC":
+after transform: SymbolId(27): ScopeId(7)
+rebuilt        : SymbolId(20): ScopeId(4)
+Symbol scope ID mismatch for "_call":
+after transform: SymbolId(28): ScopeId(7)
+rebuilt        : SymbolId(21): ScopeId(4)
+Symbol scope ID mismatch for "_ref7":
+after transform: SymbolId(29): ScopeId(7)
+rebuilt        : SymbolId(22): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf":
+after transform: SymbolId(30): ScopeId(7)
+rebuilt        : SymbolId(23): ScopeId(4)
+Symbol scope ID mismatch for "_ref8":
+after transform: SymbolId(31): ScopeId(7)
+rebuilt        : SymbolId(24): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2":
+after transform: SymbolId(32): ScopeId(7)
+rebuilt        : SymbolId(25): ScopeId(4)
+Symbol scope ID mismatch for "_ref9":
+after transform: SymbolId(33): ScopeId(7)
+rebuilt        : SymbolId(26): ScopeId(4)
+Symbol scope ID mismatch for "_ref9$getSelf":
+after transform: SymbolId(34): ScopeId(7)
+rebuilt        : SymbolId(27): ScopeId(4)
+Symbol scope ID mismatch for "_self4":
+after transform: SymbolId(35): ScopeId(7)
+rebuilt        : SymbolId(28): ScopeId(4)
+Symbol scope ID mismatch for "_ref10":
+after transform: SymbolId(36): ScopeId(7)
+rebuilt        : SymbolId(29): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC2":
+after transform: SymbolId(37): ScopeId(7)
+rebuilt        : SymbolId(30): ScopeId(4)
+Symbol scope ID mismatch for "_call$self":
+after transform: SymbolId(38): ScopeId(7)
+rebuilt        : SymbolId(31): ScopeId(4)
+Symbol scope ID mismatch for "_ref11":
+after transform: SymbolId(39): ScopeId(7)
+rebuilt        : SymbolId(32): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self":
+after transform: SymbolId(40): ScopeId(7)
+rebuilt        : SymbolId(33): ScopeId(4)
+Symbol scope ID mismatch for "_ref12":
+after transform: SymbolId(41): ScopeId(7)
+rebuilt        : SymbolId(34): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self2":
+after transform: SymbolId(42): ScopeId(7)
+rebuilt        : SymbolId(35): ScopeId(4)
+Symbol scope ID mismatch for "_ref13":
+after transform: SymbolId(43): ScopeId(7)
+rebuilt        : SymbolId(36): ScopeId(4)
+Symbol scope ID mismatch for "_ref13$getSelf":
+after transform: SymbolId(44): ScopeId(7)
+rebuilt        : SymbolId(37): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo":
+after transform: SymbolId(45): ScopeId(7)
+rebuilt        : SymbolId(38): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo2":
+after transform: SymbolId(46): ScopeId(7)
+rebuilt        : SymbolId(39): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo3":
+after transform: SymbolId(47): ScopeId(7)
+rebuilt        : SymbolId(40): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo":
+after transform: SymbolId(48): ScopeId(7)
+rebuilt        : SymbolId(41): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o":
+after transform: SymbolId(49): ScopeId(7)
+rebuilt        : SymbolId(42): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo2":
+after transform: SymbolId(50): ScopeId(7)
+rebuilt        : SymbolId(43): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o2":
+after transform: SymbolId(51): ScopeId(7)
+rebuilt        : SymbolId(44): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo3":
+after transform: SymbolId(52): ScopeId(7)
+rebuilt        : SymbolId(45): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o3":
+after transform: SymbolId(53): ScopeId(7)
+rebuilt        : SymbolId(46): ScopeId(4)
+Symbol scope ID mismatch for "_ref14":
+after transform: SymbolId(54): ScopeId(7)
+rebuilt        : SymbolId(47): ScopeId(4)
+Symbol scope ID mismatch for "_ref15":
+after transform: SymbolId(55): ScopeId(7)
+rebuilt        : SymbolId(48): ScopeId(4)
+Symbol scope ID mismatch for "_self5":
+after transform: SymbolId(56): ScopeId(7)
+rebuilt        : SymbolId(49): ScopeId(4)
+Symbol scope ID mismatch for "_ref16":
+after transform: SymbolId(57): ScopeId(7)
+rebuilt        : SymbolId(50): ScopeId(4)
+Symbol scope ID mismatch for "_self6":
+after transform: SymbolId(58): ScopeId(7)
+rebuilt        : SymbolId(51): ScopeId(4)
+Symbol scope ID mismatch for "_ref17":
+after transform: SymbolId(59): ScopeId(7)
+rebuilt        : SymbolId(52): ScopeId(4)
+Symbol scope ID mismatch for "_self$self2":
+after transform: SymbolId(60): ScopeId(7)
+rebuilt        : SymbolId(53): ScopeId(4)
+Symbol scope ID mismatch for "_ref18":
+after transform: SymbolId(61): ScopeId(7)
+rebuilt        : SymbolId(54): ScopeId(4)
+Symbol scope ID mismatch for "_ref19":
+after transform: SymbolId(62): ScopeId(7)
+rebuilt        : SymbolId(55): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC3":
+after transform: SymbolId(63): ScopeId(7)
+rebuilt        : SymbolId(56): ScopeId(4)
+Symbol scope ID mismatch for "_call2":
+after transform: SymbolId(64): ScopeId(7)
+rebuilt        : SymbolId(57): ScopeId(4)
+Symbol scope ID mismatch for "_ref20":
+after transform: SymbolId(65): ScopeId(7)
+rebuilt        : SymbolId(58): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3":
+after transform: SymbolId(66): ScopeId(7)
+rebuilt        : SymbolId(59): ScopeId(4)
+Symbol scope ID mismatch for "_ref21":
+after transform: SymbolId(67): ScopeId(7)
+rebuilt        : SymbolId(60): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4":
+after transform: SymbolId(68): ScopeId(7)
+rebuilt        : SymbolId(61): ScopeId(4)
+Symbol scope ID mismatch for "_ref22":
+after transform: SymbolId(69): ScopeId(7)
+rebuilt        : SymbolId(62): ScopeId(4)
+Symbol scope ID mismatch for "_ref22$getSelf":
+after transform: SymbolId(70): ScopeId(7)
+rebuilt        : SymbolId(63): ScopeId(4)
+Symbol scope ID mismatch for "_self7":
+after transform: SymbolId(71): ScopeId(7)
+rebuilt        : SymbolId(64): ScopeId(4)
+Symbol scope ID mismatch for "_ref23":
+after transform: SymbolId(72): ScopeId(7)
+rebuilt        : SymbolId(65): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC4":
+after transform: SymbolId(73): ScopeId(7)
+rebuilt        : SymbolId(66): ScopeId(4)
+Symbol scope ID mismatch for "_call$self2":
+after transform: SymbolId(74): ScopeId(7)
+rebuilt        : SymbolId(67): ScopeId(4)
+Symbol scope ID mismatch for "_ref24":
+after transform: SymbolId(75): ScopeId(7)
+rebuilt        : SymbolId(68): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self3":
+after transform: SymbolId(76): ScopeId(7)
+rebuilt        : SymbolId(69): ScopeId(4)
+Symbol scope ID mismatch for "_ref25":
+after transform: SymbolId(77): ScopeId(7)
+rebuilt        : SymbolId(70): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self4":
+after transform: SymbolId(78): ScopeId(7)
+rebuilt        : SymbolId(71): ScopeId(4)
+Symbol scope ID mismatch for "_ref26":
+after transform: SymbolId(79): ScopeId(7)
+rebuilt        : SymbolId(72): ScopeId(4)
+Symbol scope ID mismatch for "_ref26$getSelf":
+after transform: SymbolId(80): ScopeId(7)
+rebuilt        : SymbolId(73): ScopeId(4)
+
+* private/optional-chain-optional-property/input.js
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(4): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call$self2", "_call2", "_deep$very$o$Foo", "_deep$very$o$Foo2", "_deep$very$o$Foo3", "_fn$Foo", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o$Foo", "_fnDeep$very$o$Foo2", "_fnDeep$very$o$Foo3", "_getSelf", "_getSelf$self", "_getSelf$self2", "_getSelf$self3", "_getSelf$self4", "_getSelf2", "_getSelf3", "_getSelf4", "_o$Foo", "_o$Foo2", "_o$Foo3", "_ref", "_ref2", "_ref3", "_ref4", "_ref5", "_ref6", "_self$self", "_self$self2", "_self2", "_self3", "_self4", "_self5", "_self6", "_self7"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call$self2", "_call2", "_deep$very$o$Foo", "_deep$very$o$Foo2", "_deep$very$o$Foo3", "_fn$Foo", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o$Foo", "_fnDeep$very$o$Foo2", "_fnDeep$very$o$Foo3", "_getSelf", "_getSelf$self", "_getSelf$self2", "_getSelf$self3", "_getSelf$self4", "_getSelf2", "_getSelf3", "_getSelf4", "_o$Foo", "_o$Foo2", "_o$Foo3", "_ref", "_ref2", "_ref3", "_ref4", "_ref5", "_ref6", "_self$self", "_self$self2", "_self2", "_self3", "_self4", "_self5", "_self6", "_self7", "deep", "fn", "fnDeep", "o"]
+rebuilt        : ScopeId(5): ["deep", "fn", "fnDeep", "o"]
+Symbol scope ID mismatch for "_o$Foo":
+after transform: SymbolId(7): ScopeId(5)
+rebuilt        : SymbolId(2): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo2":
+after transform: SymbolId(8): ScopeId(5)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo3":
+after transform: SymbolId(9): ScopeId(5)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo":
+after transform: SymbolId(10): ScopeId(5)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo2":
+after transform: SymbolId(11): ScopeId(5)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo3":
+after transform: SymbolId(12): ScopeId(5)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(13): ScopeId(5)
+rebuilt        : SymbolId(8): ScopeId(4)
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(14): ScopeId(5)
+rebuilt        : SymbolId(9): ScopeId(4)
+Symbol scope ID mismatch for "_self2":
+after transform: SymbolId(15): ScopeId(5)
+rebuilt        : SymbolId(10): ScopeId(4)
+Symbol scope ID mismatch for "_self3":
+after transform: SymbolId(16): ScopeId(5)
+rebuilt        : SymbolId(11): ScopeId(4)
+Symbol scope ID mismatch for "_self$self":
+after transform: SymbolId(17): ScopeId(5)
+rebuilt        : SymbolId(12): ScopeId(4)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(18): ScopeId(5)
+rebuilt        : SymbolId(13): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC":
+after transform: SymbolId(19): ScopeId(5)
+rebuilt        : SymbolId(14): ScopeId(4)
+Symbol scope ID mismatch for "_call":
+after transform: SymbolId(20): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf":
+after transform: SymbolId(21): ScopeId(5)
+rebuilt        : SymbolId(16): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2":
+after transform: SymbolId(22): ScopeId(5)
+rebuilt        : SymbolId(17): ScopeId(4)
+Symbol scope ID mismatch for "_self4":
+after transform: SymbolId(23): ScopeId(5)
+rebuilt        : SymbolId(18): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC2":
+after transform: SymbolId(24): ScopeId(5)
+rebuilt        : SymbolId(19): ScopeId(4)
+Symbol scope ID mismatch for "_call$self":
+after transform: SymbolId(25): ScopeId(5)
+rebuilt        : SymbolId(20): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self":
+after transform: SymbolId(26): ScopeId(5)
+rebuilt        : SymbolId(21): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self2":
+after transform: SymbolId(27): ScopeId(5)
+rebuilt        : SymbolId(22): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo":
+after transform: SymbolId(28): ScopeId(5)
+rebuilt        : SymbolId(23): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo2":
+after transform: SymbolId(29): ScopeId(5)
+rebuilt        : SymbolId(24): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo3":
+after transform: SymbolId(30): ScopeId(5)
+rebuilt        : SymbolId(25): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo":
+after transform: SymbolId(31): ScopeId(5)
+rebuilt        : SymbolId(26): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo2":
+after transform: SymbolId(32): ScopeId(5)
+rebuilt        : SymbolId(27): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo3":
+after transform: SymbolId(33): ScopeId(5)
+rebuilt        : SymbolId(28): ScopeId(4)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(34): ScopeId(5)
+rebuilt        : SymbolId(29): ScopeId(4)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(35): ScopeId(5)
+rebuilt        : SymbolId(30): ScopeId(4)
+Symbol scope ID mismatch for "_self5":
+after transform: SymbolId(36): ScopeId(5)
+rebuilt        : SymbolId(31): ScopeId(4)
+Symbol scope ID mismatch for "_self6":
+after transform: SymbolId(37): ScopeId(5)
+rebuilt        : SymbolId(32): ScopeId(4)
+Symbol scope ID mismatch for "_self$self2":
+after transform: SymbolId(38): ScopeId(5)
+rebuilt        : SymbolId(33): ScopeId(4)
+Symbol scope ID mismatch for "_ref6":
+after transform: SymbolId(39): ScopeId(5)
+rebuilt        : SymbolId(34): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC3":
+after transform: SymbolId(40): ScopeId(5)
+rebuilt        : SymbolId(35): ScopeId(4)
+Symbol scope ID mismatch for "_call2":
+after transform: SymbolId(41): ScopeId(5)
+rebuilt        : SymbolId(36): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3":
+after transform: SymbolId(42): ScopeId(5)
+rebuilt        : SymbolId(37): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4":
+after transform: SymbolId(43): ScopeId(5)
+rebuilt        : SymbolId(38): ScopeId(4)
+Symbol scope ID mismatch for "_self7":
+after transform: SymbolId(44): ScopeId(5)
+rebuilt        : SymbolId(39): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC4":
+after transform: SymbolId(45): ScopeId(5)
+rebuilt        : SymbolId(40): ScopeId(4)
+Symbol scope ID mismatch for "_call$self2":
+after transform: SymbolId(46): ScopeId(5)
+rebuilt        : SymbolId(41): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self3":
+after transform: SymbolId(47): ScopeId(5)
+rebuilt        : SymbolId(42): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self4":
+after transform: SymbolId(48): ScopeId(5)
+rebuilt        : SymbolId(43): ScopeId(4)
+
+* private/optional-chain-optional-property-with-transform/input.js
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(4): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call$self2", "_call2", "_deep$very$o", "_deep$very$o$Foo", "_deep$very$o$Foo2", "_deep$very$o$Foo3", "_deep$very$o2", "_deep$very$o3", "_fn$Foo", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o", "_fnDeep$very$o$Foo", "_fnDeep$very$o$Foo2", "_fnDeep$very$o$Foo3", "_fnDeep$very$o2", "_fnDeep$very$o3", "_getSelf", "_getSelf$self", "_getSelf$self2", "_getSelf$self3", "_getSelf$self4", "_getSelf2", "_getSelf3", "_getSelf4", "_o$Foo", "_o$Foo2", "_o$Foo3", "_ref", "_ref10", "_ref11", "_ref12", "_ref13", "_ref13$getSelf", "_ref14", "_ref15", "_ref16", "_ref17", "_ref18", "_ref19", "_ref2", "_ref20", "_ref21", "_ref22", "_ref22$getSelf", "_ref23", "_ref24", "_ref25", "_ref26", "_ref26$getSelf", "_ref3", "_ref4", "_ref5", "_ref6", "_ref7", "_ref8", "_ref9", "_ref9$getSelf", "_self$self", "_self$self2", "_self2", "_self3", "_self4", "_self5", "_self6", "_self7"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_babelHelpers$assertC", "_babelHelpers$assertC2", "_babelHelpers$assertC3", "_babelHelpers$assertC4", "_call", "_call$self", "_call$self2", "_call2", "_deep$very$o", "_deep$very$o$Foo", "_deep$very$o$Foo2", "_deep$very$o$Foo3", "_deep$very$o2", "_deep$very$o3", "_fn$Foo", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o", "_fnDeep$very$o$Foo", "_fnDeep$very$o$Foo2", "_fnDeep$very$o$Foo3", "_fnDeep$very$o2", "_fnDeep$very$o3", "_getSelf", "_getSelf$self", "_getSelf$self2", "_getSelf$self3", "_getSelf$self4", "_getSelf2", "_getSelf3", "_getSelf4", "_o$Foo", "_o$Foo2", "_o$Foo3", "_ref", "_ref10", "_ref11", "_ref12", "_ref13", "_ref13$getSelf", "_ref14", "_ref15", "_ref16", "_ref17", "_ref18", "_ref19", "_ref2", "_ref20", "_ref21", "_ref22", "_ref22$getSelf", "_ref23", "_ref24", "_ref25", "_ref26", "_ref26$getSelf", "_ref3", "_ref4", "_ref5", "_ref6", "_ref7", "_ref8", "_ref9", "_ref9$getSelf", "_self$self", "_self$self2", "_self2", "_self3", "_self4", "_self5", "_self6", "_self7", "deep", "fn", "fnDeep", "o"]
+rebuilt        : ScopeId(5): ["deep", "fn", "fnDeep", "o"]
+Symbol scope ID mismatch for "_o$Foo":
+after transform: SymbolId(7): ScopeId(5)
+rebuilt        : SymbolId(2): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo2":
+after transform: SymbolId(8): ScopeId(5)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo3":
+after transform: SymbolId(9): ScopeId(5)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo":
+after transform: SymbolId(10): ScopeId(5)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o":
+after transform: SymbolId(11): ScopeId(5)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo2":
+after transform: SymbolId(12): ScopeId(5)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o2":
+after transform: SymbolId(13): ScopeId(5)
+rebuilt        : SymbolId(8): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo3":
+after transform: SymbolId(14): ScopeId(5)
+rebuilt        : SymbolId(9): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o3":
+after transform: SymbolId(15): ScopeId(5)
+rebuilt        : SymbolId(10): ScopeId(4)
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(16): ScopeId(5)
+rebuilt        : SymbolId(11): ScopeId(4)
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(17): ScopeId(5)
+rebuilt        : SymbolId(12): ScopeId(4)
+Symbol scope ID mismatch for "_self2":
+after transform: SymbolId(18): ScopeId(5)
+rebuilt        : SymbolId(13): ScopeId(4)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(19): ScopeId(5)
+rebuilt        : SymbolId(14): ScopeId(4)
+Symbol scope ID mismatch for "_self3":
+after transform: SymbolId(20): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(4)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(21): ScopeId(5)
+rebuilt        : SymbolId(16): ScopeId(4)
+Symbol scope ID mismatch for "_self$self":
+after transform: SymbolId(22): ScopeId(5)
+rebuilt        : SymbolId(17): ScopeId(4)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(23): ScopeId(5)
+rebuilt        : SymbolId(18): ScopeId(4)
+Symbol scope ID mismatch for "_ref6":
+after transform: SymbolId(24): ScopeId(5)
+rebuilt        : SymbolId(19): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC":
+after transform: SymbolId(25): ScopeId(5)
+rebuilt        : SymbolId(20): ScopeId(4)
+Symbol scope ID mismatch for "_call":
+after transform: SymbolId(26): ScopeId(5)
+rebuilt        : SymbolId(21): ScopeId(4)
+Symbol scope ID mismatch for "_ref7":
+after transform: SymbolId(27): ScopeId(5)
+rebuilt        : SymbolId(22): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf":
+after transform: SymbolId(28): ScopeId(5)
+rebuilt        : SymbolId(23): ScopeId(4)
+Symbol scope ID mismatch for "_ref8":
+after transform: SymbolId(29): ScopeId(5)
+rebuilt        : SymbolId(24): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2":
+after transform: SymbolId(30): ScopeId(5)
+rebuilt        : SymbolId(25): ScopeId(4)
+Symbol scope ID mismatch for "_ref9":
+after transform: SymbolId(31): ScopeId(5)
+rebuilt        : SymbolId(26): ScopeId(4)
+Symbol scope ID mismatch for "_ref9$getSelf":
+after transform: SymbolId(32): ScopeId(5)
+rebuilt        : SymbolId(27): ScopeId(4)
+Symbol scope ID mismatch for "_self4":
+after transform: SymbolId(33): ScopeId(5)
+rebuilt        : SymbolId(28): ScopeId(4)
+Symbol scope ID mismatch for "_ref10":
+after transform: SymbolId(34): ScopeId(5)
+rebuilt        : SymbolId(29): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC2":
+after transform: SymbolId(35): ScopeId(5)
+rebuilt        : SymbolId(30): ScopeId(4)
+Symbol scope ID mismatch for "_call$self":
+after transform: SymbolId(36): ScopeId(5)
+rebuilt        : SymbolId(31): ScopeId(4)
+Symbol scope ID mismatch for "_ref11":
+after transform: SymbolId(37): ScopeId(5)
+rebuilt        : SymbolId(32): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self":
+after transform: SymbolId(38): ScopeId(5)
+rebuilt        : SymbolId(33): ScopeId(4)
+Symbol scope ID mismatch for "_ref12":
+after transform: SymbolId(39): ScopeId(5)
+rebuilt        : SymbolId(34): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self2":
+after transform: SymbolId(40): ScopeId(5)
+rebuilt        : SymbolId(35): ScopeId(4)
+Symbol scope ID mismatch for "_ref13":
+after transform: SymbolId(41): ScopeId(5)
+rebuilt        : SymbolId(36): ScopeId(4)
+Symbol scope ID mismatch for "_ref13$getSelf":
+after transform: SymbolId(42): ScopeId(5)
+rebuilt        : SymbolId(37): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo":
+after transform: SymbolId(43): ScopeId(5)
+rebuilt        : SymbolId(38): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo2":
+after transform: SymbolId(44): ScopeId(5)
+rebuilt        : SymbolId(39): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo3":
+after transform: SymbolId(45): ScopeId(5)
+rebuilt        : SymbolId(40): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo":
+after transform: SymbolId(46): ScopeId(5)
+rebuilt        : SymbolId(41): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o":
+after transform: SymbolId(47): ScopeId(5)
+rebuilt        : SymbolId(42): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo2":
+after transform: SymbolId(48): ScopeId(5)
+rebuilt        : SymbolId(43): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o2":
+after transform: SymbolId(49): ScopeId(5)
+rebuilt        : SymbolId(44): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo3":
+after transform: SymbolId(50): ScopeId(5)
+rebuilt        : SymbolId(45): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o3":
+after transform: SymbolId(51): ScopeId(5)
+rebuilt        : SymbolId(46): ScopeId(4)
+Symbol scope ID mismatch for "_ref14":
+after transform: SymbolId(52): ScopeId(5)
+rebuilt        : SymbolId(47): ScopeId(4)
+Symbol scope ID mismatch for "_ref15":
+after transform: SymbolId(53): ScopeId(5)
+rebuilt        : SymbolId(48): ScopeId(4)
+Symbol scope ID mismatch for "_self5":
+after transform: SymbolId(54): ScopeId(5)
+rebuilt        : SymbolId(49): ScopeId(4)
+Symbol scope ID mismatch for "_ref16":
+after transform: SymbolId(55): ScopeId(5)
+rebuilt        : SymbolId(50): ScopeId(4)
+Symbol scope ID mismatch for "_self6":
+after transform: SymbolId(56): ScopeId(5)
+rebuilt        : SymbolId(51): ScopeId(4)
+Symbol scope ID mismatch for "_ref17":
+after transform: SymbolId(57): ScopeId(5)
+rebuilt        : SymbolId(52): ScopeId(4)
+Symbol scope ID mismatch for "_self$self2":
+after transform: SymbolId(58): ScopeId(5)
+rebuilt        : SymbolId(53): ScopeId(4)
+Symbol scope ID mismatch for "_ref18":
+after transform: SymbolId(59): ScopeId(5)
+rebuilt        : SymbolId(54): ScopeId(4)
+Symbol scope ID mismatch for "_ref19":
+after transform: SymbolId(60): ScopeId(5)
+rebuilt        : SymbolId(55): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC3":
+after transform: SymbolId(61): ScopeId(5)
+rebuilt        : SymbolId(56): ScopeId(4)
+Symbol scope ID mismatch for "_call2":
+after transform: SymbolId(62): ScopeId(5)
+rebuilt        : SymbolId(57): ScopeId(4)
+Symbol scope ID mismatch for "_ref20":
+after transform: SymbolId(63): ScopeId(5)
+rebuilt        : SymbolId(58): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3":
+after transform: SymbolId(64): ScopeId(5)
+rebuilt        : SymbolId(59): ScopeId(4)
+Symbol scope ID mismatch for "_ref21":
+after transform: SymbolId(65): ScopeId(5)
+rebuilt        : SymbolId(60): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4":
+after transform: SymbolId(66): ScopeId(5)
+rebuilt        : SymbolId(61): ScopeId(4)
+Symbol scope ID mismatch for "_ref22":
+after transform: SymbolId(67): ScopeId(5)
+rebuilt        : SymbolId(62): ScopeId(4)
+Symbol scope ID mismatch for "_ref22$getSelf":
+after transform: SymbolId(68): ScopeId(5)
+rebuilt        : SymbolId(63): ScopeId(4)
+Symbol scope ID mismatch for "_self7":
+after transform: SymbolId(69): ScopeId(5)
+rebuilt        : SymbolId(64): ScopeId(4)
+Symbol scope ID mismatch for "_ref23":
+after transform: SymbolId(70): ScopeId(5)
+rebuilt        : SymbolId(65): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$assertC4":
+after transform: SymbolId(71): ScopeId(5)
+rebuilt        : SymbolId(66): ScopeId(4)
+Symbol scope ID mismatch for "_call$self2":
+after transform: SymbolId(72): ScopeId(5)
+rebuilt        : SymbolId(67): ScopeId(4)
+Symbol scope ID mismatch for "_ref24":
+after transform: SymbolId(73): ScopeId(5)
+rebuilt        : SymbolId(68): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self3":
+after transform: SymbolId(74): ScopeId(5)
+rebuilt        : SymbolId(69): ScopeId(4)
+Symbol scope ID mismatch for "_ref25":
+after transform: SymbolId(75): ScopeId(5)
+rebuilt        : SymbolId(70): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self4":
+after transform: SymbolId(76): ScopeId(5)
+rebuilt        : SymbolId(71): ScopeId(4)
+Symbol scope ID mismatch for "_ref26":
+after transform: SymbolId(77): ScopeId(5)
+rebuilt        : SymbolId(72): ScopeId(4)
+Symbol scope ID mismatch for "_ref26$getSelf":
+after transform: SymbolId(78): ScopeId(5)
+rebuilt        : SymbolId(73): ScopeId(4)
+
+* private/parenthesized-optional-member-call/input.js
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(4): ["_fn$Foo$self$getSelf", "_fn$Foo$self$getSelf2", "_o$Foo", "_o$Foo$self$getSelf", "_o$Foo$self$getSelf2", "_o$Foo2", "_o$Foo3"]
+Bindings mismatch:
+after transform: ScopeId(7): ["_fn$Foo$self$getSelf", "_fn$Foo$self$getSelf2", "_o$Foo", "_o$Foo$self$getSelf", "_o$Foo$self$getSelf2", "_o$Foo2", "_o$Foo3", "fn", "o"]
+rebuilt        : ScopeId(5): ["fn", "o"]
+Symbol scope ID mismatch for "_o$Foo":
+after transform: SymbolId(6): ScopeId(7)
+rebuilt        : SymbolId(2): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo2":
+after transform: SymbolId(7): ScopeId(7)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo3":
+after transform: SymbolId(8): ScopeId(7)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self$getSelf":
+after transform: SymbolId(9): ScopeId(7)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo$self$getSelf2":
+after transform: SymbolId(10): ScopeId(7)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self$getSelf":
+after transform: SymbolId(11): ScopeId(7)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo$self$getSelf2":
+after transform: SymbolId(12): ScopeId(7)
+rebuilt        : SymbolId(8): ScopeId(4)
+
 * private/parenthesized-optional-member-call-with-transform/input.js
 x Output mismatch
+
+* private/reevaluated/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): ["_Foo", "_bar", "_foo"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_Foo", "_bar", "_foo"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_Foo":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "_foo":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+Symbol scope ID mismatch for "_bar":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(1)
+
+* private/regression-T6719/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["ComposedComponent"]
+rebuilt        : ScopeId(1): ["ComposedComponent", "_WithContext", "_propTypes"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_WithContext", "_propTypes"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_WithContext":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+Symbol scope ID mismatch for "_propTypes":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(1)
 
 * private/static-infer-name/input.js
 x Output mismatch
@@ -281,11 +2388,156 @@ x Output mismatch
 * private/static-shadow/input.js
 x Output mismatch
 
-* private-loose/canonical/input.js
-x Output mismatch
+* private/super-expression/input.js
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+* private/update/input.js
+Bindings mismatch:
+after transform: ScopeId(2): ["other"]
+rebuilt        : ScopeId(4): ["_other$obj", "_other$obj$foo", "_other$obj$foo2", "_other$obj$foo3", "_other$obj2", "_this$foo", "_this$foo2", "_this$foo3", "other"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_other$obj", "_other$obj$foo", "_other$obj$foo2", "_other$obj$foo3", "_other$obj2", "_this$foo", "_this$foo2", "_this$foo3"]
+rebuilt        : ScopeId(5): []
+Symbol scope ID mismatch for "_this$foo":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "_this$foo2":
+after transform: SymbolId(4): ScopeId(3)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_this$foo3":
+after transform: SymbolId(5): ScopeId(3)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_other$obj":
+after transform: SymbolId(6): ScopeId(3)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_other$obj$foo":
+after transform: SymbolId(7): ScopeId(3)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "_other$obj$foo2":
+after transform: SymbolId(8): ScopeId(3)
+rebuilt        : SymbolId(8): ScopeId(4)
+Symbol scope ID mismatch for "_other$obj2":
+after transform: SymbolId(9): ScopeId(3)
+rebuilt        : SymbolId(9): ScopeId(4)
+Symbol scope ID mismatch for "_other$obj$foo3":
+after transform: SymbolId(10): ScopeId(3)
+rebuilt        : SymbolId(10): ScopeId(4)
 
 * private-loose/class-shadow-builtins/input.mjs
 x Output mismatch
+
+* private-loose/derived-multiple-supers/input.js
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+* private-loose/foobar/input.js
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+* private-loose/logical-assignment/input.js
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(6): ["_babelHelpers$classPr", "_babelHelpers$classPr2", "_babelHelpers$classPr3", "_babelHelpers$classPr4"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_babelHelpers$classPr", "_babelHelpers$classPr2", "_babelHelpers$classPr3", "_babelHelpers$classPr4"]
+rebuilt        : ScopeId(7): []
+Symbol scope ID mismatch for "_babelHelpers$classPr":
+after transform: SymbolId(4): ScopeId(5)
+rebuilt        : SymbolId(4): ScopeId(6)
+Symbol scope ID mismatch for "_babelHelpers$classPr2":
+after transform: SymbolId(5): ScopeId(5)
+rebuilt        : SymbolId(5): ScopeId(6)
+Symbol scope ID mismatch for "_babelHelpers$classPr3":
+after transform: SymbolId(6): ScopeId(5)
+rebuilt        : SymbolId(6): ScopeId(6)
+Symbol scope ID mismatch for "_babelHelpers$classPr4":
+after transform: SymbolId(7): ScopeId(5)
+rebuilt        : SymbolId(7): ScopeId(6)
+
+* private-loose/nested-class-computed-redeclared/input.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_babelHelpers$classPr"]
+rebuilt        : ScopeId(4): ["_foo2"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_foo2"]
+rebuilt        : ScopeId(5): ["Nested", "_babelHelpers$classPr"]
+Symbol scope ID mismatch for "_babelHelpers$classPr":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(5)
+Symbol scope ID mismatch for "_foo2":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(4)
+
+* private-loose/nested-class-extends-computed/input.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_this$foo"]
+rebuilt        : ScopeId(4): ["_foo2"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_foo2"]
+rebuilt        : ScopeId(5): ["Nested", "_this$foo"]
+Symbol scope ID mismatch for "_this$foo":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(5)
+Symbol scope ID mismatch for "_foo2":
+after transform: SymbolId(4): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(4)
+
+* private-loose/nested-class-extends-computed-redeclared/input.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_this$foo"]
+rebuilt        : ScopeId(4): ["_foo2", "_foo3"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_foo2", "_foo3"]
+rebuilt        : ScopeId(5): ["Nested", "_this$foo"]
+Symbol scope ID mismatch for "_foo2":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(2): ScopeId(4)
+Symbol scope ID mismatch for "_this$foo":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(5)
+Symbol scope ID mismatch for "_foo3":
+after transform: SymbolId(5): ScopeId(3)
+rebuilt        : SymbolId(4): ScopeId(4)
+
+* private-loose/nested-class-other-redeclared/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(4): ["_bar2"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_bar2"]
+rebuilt        : ScopeId(5): ["Nested"]
+Symbol scope ID mismatch for "_bar2":
+after transform: SymbolId(4): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(4)
+
+* private-loose/nested-class-redeclared/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(4): ["_foo2"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_foo2"]
+rebuilt        : ScopeId(5): ["Nested"]
+Symbol scope ID mismatch for "_foo2":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(2): ScopeId(4)
+
+* private-loose/non-block-arrow-func/input.mjs
+Bindings mismatch:
+after transform: ScopeId(1): ["param"]
+rebuilt        : ScopeId(1): ["_App", "_props", "param"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_App", "_props"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_App":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "_props":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
 
 * private-loose/optional-chain-before-member-call/input.js
 x Output mismatch
@@ -301,6 +2553,32 @@ x Output mismatch
 
 * private-loose/optional-chain-cast-to-boolean/input.js
 x Output mismatch
+
+* private-loose/optional-chain-delete-property/input.js
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(4): ["_babelHelpers$classPr", "_babelHelpers$classPr2", "_babelHelpers$classPr3", "_babelHelpers$classPr4", "_deep$very$o", "_fnDeep$very$o"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_babelHelpers$classPr", "_babelHelpers$classPr2", "_babelHelpers$classPr3", "_babelHelpers$classPr4", "_deep$very$o", "_fnDeep$very$o", "deep", "fn", "fnDeep", "o"]
+rebuilt        : ScopeId(5): ["deep", "fn", "fnDeep", "o"]
+Symbol scope ID mismatch for "_deep$very$o":
+after transform: SymbolId(7): ScopeId(5)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$classPr":
+after transform: SymbolId(8): ScopeId(5)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$classPr2":
+after transform: SymbolId(9): ScopeId(5)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o":
+after transform: SymbolId(10): ScopeId(5)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$classPr3":
+after transform: SymbolId(11): ScopeId(5)
+rebuilt        : SymbolId(8): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$classPr4":
+after transform: SymbolId(12): ScopeId(5)
+rebuilt        : SymbolId(9): ScopeId(4)
 
 * private-loose/optional-chain-delete-property-with-transform/input.js
 x Output mismatch
@@ -323,6 +2601,140 @@ x Output mismatch
 * private-loose/optional-chain-optional-member-call-with-transform/input.js
 x Output mismatch
 
+* private-loose/optional-chain-optional-property/input.js
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(4): ["_babelHelpers$classPr", "_babelHelpers$classPr2", "_babelHelpers$classPr3", "_babelHelpers$classPr4", "_call", "_call$self", "_call$self2", "_call2", "_deep$very$o$Foo", "_deep$very$o$Foo2", "_deep$very$o$Foo3", "_fn$Foo", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o$Foo", "_fnDeep$very$o$Foo2", "_fnDeep$very$o$Foo3", "_getSelf", "_getSelf$self", "_getSelf$self2", "_getSelf$self3", "_getSelf$self4", "_getSelf2", "_getSelf3", "_getSelf4", "_o$Foo", "_o$Foo2", "_o$Foo3", "_ref", "_ref2", "_ref3", "_ref4", "_ref5", "_ref6", "_self$self", "_self$self2", "_self2", "_self3", "_self4", "_self5", "_self6", "_self7"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_babelHelpers$classPr", "_babelHelpers$classPr2", "_babelHelpers$classPr3", "_babelHelpers$classPr4", "_call", "_call$self", "_call$self2", "_call2", "_deep$very$o$Foo", "_deep$very$o$Foo2", "_deep$very$o$Foo3", "_fn$Foo", "_fn$Foo2", "_fn$Foo3", "_fnDeep$very$o$Foo", "_fnDeep$very$o$Foo2", "_fnDeep$very$o$Foo3", "_getSelf", "_getSelf$self", "_getSelf$self2", "_getSelf$self3", "_getSelf$self4", "_getSelf2", "_getSelf3", "_getSelf4", "_o$Foo", "_o$Foo2", "_o$Foo3", "_ref", "_ref2", "_ref3", "_ref4", "_ref5", "_ref6", "_self$self", "_self$self2", "_self2", "_self3", "_self4", "_self5", "_self6", "_self7", "deep", "fn", "fnDeep", "o"]
+rebuilt        : ScopeId(5): ["deep", "fn", "fnDeep", "o"]
+Symbol scope ID mismatch for "_o$Foo":
+after transform: SymbolId(7): ScopeId(5)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo2":
+after transform: SymbolId(8): ScopeId(5)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_o$Foo3":
+after transform: SymbolId(9): ScopeId(5)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo":
+after transform: SymbolId(10): ScopeId(5)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo2":
+after transform: SymbolId(11): ScopeId(5)
+rebuilt        : SymbolId(8): ScopeId(4)
+Symbol scope ID mismatch for "_deep$very$o$Foo3":
+after transform: SymbolId(12): ScopeId(5)
+rebuilt        : SymbolId(9): ScopeId(4)
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(13): ScopeId(5)
+rebuilt        : SymbolId(10): ScopeId(4)
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(14): ScopeId(5)
+rebuilt        : SymbolId(11): ScopeId(4)
+Symbol scope ID mismatch for "_self2":
+after transform: SymbolId(15): ScopeId(5)
+rebuilt        : SymbolId(12): ScopeId(4)
+Symbol scope ID mismatch for "_self3":
+after transform: SymbolId(16): ScopeId(5)
+rebuilt        : SymbolId(13): ScopeId(4)
+Symbol scope ID mismatch for "_self$self":
+after transform: SymbolId(17): ScopeId(5)
+rebuilt        : SymbolId(14): ScopeId(4)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(18): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$classPr":
+after transform: SymbolId(19): ScopeId(5)
+rebuilt        : SymbolId(16): ScopeId(4)
+Symbol scope ID mismatch for "_call":
+after transform: SymbolId(20): ScopeId(5)
+rebuilt        : SymbolId(17): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf":
+after transform: SymbolId(21): ScopeId(5)
+rebuilt        : SymbolId(18): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf2":
+after transform: SymbolId(22): ScopeId(5)
+rebuilt        : SymbolId(19): ScopeId(4)
+Symbol scope ID mismatch for "_self4":
+after transform: SymbolId(23): ScopeId(5)
+rebuilt        : SymbolId(20): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$classPr2":
+after transform: SymbolId(24): ScopeId(5)
+rebuilt        : SymbolId(21): ScopeId(4)
+Symbol scope ID mismatch for "_call$self":
+after transform: SymbolId(25): ScopeId(5)
+rebuilt        : SymbolId(22): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self":
+after transform: SymbolId(26): ScopeId(5)
+rebuilt        : SymbolId(23): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self2":
+after transform: SymbolId(27): ScopeId(5)
+rebuilt        : SymbolId(24): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo":
+after transform: SymbolId(28): ScopeId(5)
+rebuilt        : SymbolId(25): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo2":
+after transform: SymbolId(29): ScopeId(5)
+rebuilt        : SymbolId(26): ScopeId(4)
+Symbol scope ID mismatch for "_fn$Foo3":
+after transform: SymbolId(30): ScopeId(5)
+rebuilt        : SymbolId(27): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo":
+after transform: SymbolId(31): ScopeId(5)
+rebuilt        : SymbolId(28): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo2":
+after transform: SymbolId(32): ScopeId(5)
+rebuilt        : SymbolId(29): ScopeId(4)
+Symbol scope ID mismatch for "_fnDeep$very$o$Foo3":
+after transform: SymbolId(33): ScopeId(5)
+rebuilt        : SymbolId(30): ScopeId(4)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(34): ScopeId(5)
+rebuilt        : SymbolId(31): ScopeId(4)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(35): ScopeId(5)
+rebuilt        : SymbolId(32): ScopeId(4)
+Symbol scope ID mismatch for "_self5":
+after transform: SymbolId(36): ScopeId(5)
+rebuilt        : SymbolId(33): ScopeId(4)
+Symbol scope ID mismatch for "_self6":
+after transform: SymbolId(37): ScopeId(5)
+rebuilt        : SymbolId(34): ScopeId(4)
+Symbol scope ID mismatch for "_self$self2":
+after transform: SymbolId(38): ScopeId(5)
+rebuilt        : SymbolId(35): ScopeId(4)
+Symbol scope ID mismatch for "_ref6":
+after transform: SymbolId(39): ScopeId(5)
+rebuilt        : SymbolId(36): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$classPr3":
+after transform: SymbolId(40): ScopeId(5)
+rebuilt        : SymbolId(37): ScopeId(4)
+Symbol scope ID mismatch for "_call2":
+after transform: SymbolId(41): ScopeId(5)
+rebuilt        : SymbolId(38): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf3":
+after transform: SymbolId(42): ScopeId(5)
+rebuilt        : SymbolId(39): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf4":
+after transform: SymbolId(43): ScopeId(5)
+rebuilt        : SymbolId(40): ScopeId(4)
+Symbol scope ID mismatch for "_self7":
+after transform: SymbolId(44): ScopeId(5)
+rebuilt        : SymbolId(41): ScopeId(4)
+Symbol scope ID mismatch for "_babelHelpers$classPr4":
+after transform: SymbolId(45): ScopeId(5)
+rebuilt        : SymbolId(42): ScopeId(4)
+Symbol scope ID mismatch for "_call$self2":
+after transform: SymbolId(46): ScopeId(5)
+rebuilt        : SymbolId(43): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self3":
+after transform: SymbolId(47): ScopeId(5)
+rebuilt        : SymbolId(44): ScopeId(4)
+Symbol scope ID mismatch for "_getSelf$self4":
+after transform: SymbolId(48): ScopeId(5)
+rebuilt        : SymbolId(45): ScopeId(4)
+
 * private-loose/optional-chain-optional-property-with-transform/input.js
 x Output mismatch
 
@@ -332,8 +2744,30 @@ x Output mismatch
 * private-loose/parenthesized-optional-member-call-with-transform/input.js
 x Output mismatch
 
+* private-loose/reevaluated/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): ["_Foo", "_bar", "_foo"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_Foo", "_bar", "_foo"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_Foo":
+after transform: SymbolId(9): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "_foo":
+after transform: SymbolId(7): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+Symbol scope ID mismatch for "_bar":
+after transform: SymbolId(8): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(1)
+
 * private-loose/static-infer-name/input.js
 x Output mismatch
+
+* private-loose/super-expression/input.js
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
 
 * public/class-shadow-builtins/input.mjs
 x Output mismatch
@@ -341,11 +2775,81 @@ x Output mismatch
 * public/computed/input.js
 x Output mismatch
 
+* public/computed-toPrimitive/input.js
+Bindings mismatch:
+after transform: ScopeId(16): []
+rebuilt        : ScopeId(18): ["_Class2"]
+Bindings mismatch:
+after transform: ScopeId(17): ["_Class2"]
+rebuilt        : ScopeId(19): []
+Symbol scope ID mismatch for "_Class2":
+after transform: SymbolId(5): ScopeId(17)
+rebuilt        : SymbolId(4): ScopeId(18)
+
+* public/computed-without-block/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_k", "k"]
+rebuilt        : ScopeId(1): ["k"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["_k"]
+Symbol scope ID mismatch for "_k":
+after transform: SymbolId(2): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
+
 * public/delete-super-property/input.js
 x Output mismatch
 
+* public/derived-multiple-supers/input.js
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+* public/foobar/input.js
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+* public/instance-computed/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "x"]
+rebuilt        : ScopeId(1): ["x"]
+Bindings mismatch:
+after transform: ScopeId(2): ["F"]
+rebuilt        : ScopeId(2): ["F", "_x"]
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
+
+* public/non-block-arrow-func/input.mjs
+Bindings mismatch:
+after transform: ScopeId(1): ["param"]
+rebuilt        : ScopeId(1): ["_App", "param"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_App"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_App":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+
+* public/regression-T6719/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["ComposedComponent"]
+rebuilt        : ScopeId(1): ["ComposedComponent", "_WithContext"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_WithContext"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_WithContext":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+
 * public/static-infer-name/input.js
 x Output mismatch
+
+* public/super-expression/input.js
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
 
 * public-loose/class-shadow-builtins/input.mjs
 x Output mismatch
@@ -353,14 +2857,104 @@ x Output mismatch
 * public-loose/computed/input.js
 x Output mismatch
 
+* public-loose/foobar/input.js
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+* public-loose/instance-computed/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "x"]
+rebuilt        : ScopeId(1): ["x"]
+Bindings mismatch:
+after transform: ScopeId(2): ["F"]
+rebuilt        : ScopeId(2): ["F", "_x"]
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
+
+* public-loose/non-block-arrow-func/input.mjs
+Bindings mismatch:
+after transform: ScopeId(1): ["param"]
+rebuilt        : ScopeId(1): ["_App", "param"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_App"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_App":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+
+* public-loose/regression-T6719/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["ComposedComponent"]
+rebuilt        : ScopeId(1): ["ComposedComponent", "_WithContext"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_WithContext"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_WithContext":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+
 * public-loose/static-infer-name/input.js
 x Output mismatch
 
 * public-loose/static-super/input.js
 x Output mismatch
 
+* public-loose/super-expression/input.js
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
 * regression/6153/input.js
 x Output mismatch
+
+* regression/6154/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["_Other"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Other", "_Other"]
+rebuilt        : ScopeId(3): ["Other"]
+Symbol scope ID mismatch for "_Other":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(1): ScopeId(2)
+
+* regression/7371/input.js
+Scope parent mismatch:
+after transform: ScopeId(31): Some(ScopeId(12))
+rebuilt        : ScopeId(14): Some(ScopeId(13))
+Scope parent mismatch:
+after transform: ScopeId(33): Some(ScopeId(18))
+rebuilt        : ScopeId(22): Some(ScopeId(21))
+Bindings mismatch:
+after transform: ScopeId(26): ["_super3", "_super4"]
+rebuilt        : ScopeId(30): ["_super3"]
+Bindings mismatch:
+after transform: ScopeId(27): ["B"]
+rebuilt        : ScopeId(31): ["B", "_super4"]
+Scope parent mismatch:
+after transform: ScopeId(35): Some(ScopeId(26))
+rebuilt        : ScopeId(32): Some(ScopeId(31))
+Symbol scope ID mismatch for "_super4":
+after transform: SymbolId(16): ScopeId(26)
+rebuilt        : SymbolId(13): ScopeId(31)
+
+* regression/T6719/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["ComposedComponent"]
+rebuilt        : ScopeId(1): ["ComposedComponent", "_WithContext"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_WithContext"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_WithContext":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+
+* regression/multiple-super-in-termary/input.js
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
 
 * source-maps/private-get/input.js
 x Output mismatch
@@ -369,7 +2963,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-static-block (11/24)
+# babel-plugin-transform-class-static-block (10/24)
 * class-static-block/before-static-fields/input.js
 x Output mismatch
 
@@ -403,6 +2997,17 @@ x Output mismatch
 * integration/in-class-heritage/input.js
 x Output mismatch
 
+* integration/new-target/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["_Class"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_Class"]
+rebuilt        : ScopeId(3): []
+Symbol scope ID mismatch for "_Class":
+after transform: SymbolId(1): ScopeId(3)
+rebuilt        : SymbolId(1): ScopeId(2)
+
 * integration-loose/in-class-heritage/input.js
 x Output mismatch
 
@@ -410,7 +3015,41 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-methods (48/148)
+# babel-plugin-transform-private-methods (45/148)
+* accessors/updates/input.js
+Bindings mismatch:
+after transform: ScopeId(16): []
+rebuilt        : ScopeId(12): ["_this$privateFieldVal", "_this$privateFieldVal2", "_this$privateFieldVal3"]
+Bindings mismatch:
+after transform: ScopeId(17): ["_this$privateFieldVal", "_this$privateFieldVal2", "_this$privateFieldVal3"]
+rebuilt        : ScopeId(13): []
+Symbol scope ID mismatch for "_this$privateFieldVal":
+after transform: SymbolId(8): ScopeId(17)
+rebuilt        : SymbolId(5): ScopeId(12)
+Symbol scope ID mismatch for "_this$privateFieldVal2":
+after transform: SymbolId(9): ScopeId(17)
+rebuilt        : SymbolId(6): ScopeId(12)
+Symbol scope ID mismatch for "_this$privateFieldVal3":
+after transform: SymbolId(10): ScopeId(17)
+rebuilt        : SymbolId(7): ScopeId(12)
+
+* accessors/updates-bigint/input.js
+Bindings mismatch:
+after transform: ScopeId(16): []
+rebuilt        : ScopeId(12): ["_this$privateFieldVal", "_this$privateFieldVal2", "_this$privateFieldVal3"]
+Bindings mismatch:
+after transform: ScopeId(17): ["_this$privateFieldVal", "_this$privateFieldVal2", "_this$privateFieldVal3"]
+rebuilt        : ScopeId(13): []
+Symbol scope ID mismatch for "_this$privateFieldVal":
+after transform: SymbolId(8): ScopeId(17)
+rebuilt        : SymbolId(5): ScopeId(12)
+Symbol scope ID mismatch for "_this$privateFieldVal2":
+after transform: SymbolId(9): ScopeId(17)
+rebuilt        : SymbolId(6): ScopeId(12)
+Symbol scope ID mismatch for "_this$privateFieldVal3":
+after transform: SymbolId(10): ScopeId(17)
+rebuilt        : SymbolId(7): ScopeId(12)
+
 * accessors-loose/basic/input.js
 x Output mismatch
 
@@ -689,6 +3328,23 @@ x Output mismatch
 * static-accessors/set-only-getter/input.js
 x Output mismatch
 
+* static-accessors/updates/input.js
+Bindings mismatch:
+after transform: ScopeId(14): []
+rebuilt        : ScopeId(10): ["_Cl$privateFieldValue", "_Cl$privateFieldValue2", "_Cl$privateFieldValue3"]
+Bindings mismatch:
+after transform: ScopeId(15): ["_Cl$privateFieldValue", "_Cl$privateFieldValue2", "_Cl$privateFieldValue3"]
+rebuilt        : ScopeId(11): []
+Symbol scope ID mismatch for "_Cl$privateFieldValue":
+after transform: SymbolId(7): ScopeId(15)
+rebuilt        : SymbolId(3): ScopeId(10)
+Symbol scope ID mismatch for "_Cl$privateFieldValue2":
+after transform: SymbolId(8): ScopeId(15)
+rebuilt        : SymbolId(4): ScopeId(10)
+Symbol scope ID mismatch for "_Cl$privateFieldValue3":
+after transform: SymbolId(9): ScopeId(15)
+rebuilt        : SymbolId(5): ScopeId(10)
+
 * static-accessors-loose/basic/input.js
 x Output mismatch
 
@@ -744,7 +3400,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-property-in-object (24/59)
+# babel-plugin-transform-private-property-in-object (19/59)
 * assumption-privateFieldsAsProperties/accessor/input.js
 x Output mismatch
 
@@ -805,6 +3461,28 @@ x Output mismatch
 * assumption-privateFieldsAsSymbols/static-method/input.js
 x Output mismatch
 
+* private/nested-class-other-redeclared/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(4): ["_bar2"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_bar2"]
+rebuilt        : ScopeId(5): ["Nested"]
+Symbol scope ID mismatch for "_bar2":
+after transform: SymbolId(4): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(4)
+
+* private/nested-class-redeclared/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(4): ["_foo2"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_foo2"]
+rebuilt        : ScopeId(5): ["Nested"]
+Symbol scope ID mismatch for "_foo2":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(2): ScopeId(4)
+
 * private/static-shadow/input.js
 x Output mismatch
 
@@ -815,9 +3493,6 @@ x Output mismatch
 x Output mismatch
 
 * private-loose/method/input.js
-x Output mismatch
-
-* private-loose/native-classes/input.js
 x Output mismatch
 
 * private-loose/nested-class/input.js
@@ -844,6 +3519,53 @@ x Output mismatch
 * to-native-fields/class-expression-in-default-param/input.js
 x Output mismatch
 
+* to-native-fields/class-expression-instance/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): ["_priv"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_priv"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_priv":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+
+* to-native-fields/class-expression-static/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): ["_Class", "_priv"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_Class", "_priv"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_Class":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "_priv":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+
+* to-native-fields/nested-class-other-redeclared/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(4): ["_bar2"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_bar2"]
+rebuilt        : ScopeId(5): ["Nested"]
+Symbol scope ID mismatch for "_bar2":
+after transform: SymbolId(4): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(4)
+
+* to-native-fields/nested-class-redeclared/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(4): ["_foo2"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Nested", "_foo2"]
+rebuilt        : ScopeId(5): ["Nested"]
+Symbol scope ID mismatch for "_foo2":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(2): ScopeId(4)
+
 * to-native-fields/static-shadow/input.js
 x Output mismatch
 
@@ -851,7 +3573,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-nullish-coalescing-operator (9/24)
+# babel-plugin-transform-nullish-coalescing-operator (6/24)
 * assumption-noDocumentAll/transform/input.js
 x Output mismatch
 
@@ -876,8 +3598,30 @@ x Output mismatch
 * assumption-pureGetters/logical-assignment-undeclared/input.js
 x Output mismatch
 
+* assumption-pureGetters/transform/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["foo", "opts"]
+rebuilt        : ScopeId(1): ["_opts$foo", "foo", "opts"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_opts$foo"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_opts$foo":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+
 * assumption-pureGetters/transform-in-default-param/input.js
 x Output mismatch
+
+* assumption-pureGetters/transform-in-function/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["foo", "opts"]
+rebuilt        : ScopeId(1): ["_opts$foo", "foo", "opts"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_opts$foo"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_opts$foo":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
 
 * assumption-pureGetters/transform-static-refs-in-function/input.js
 x Output mismatch
@@ -887,6 +3631,17 @@ x Output mismatch
 
 * nullish-coalescing/logical-assignment-undeclared/input.js
 x Output mismatch
+
+* nullish-coalescing/transform-in-function/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["foo", "opts"]
+rebuilt        : ScopeId(1): ["_opts$foo", "foo", "opts"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_opts$foo"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_opts$foo":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
 
 * nullish-coalescing/transform-loose/input.js
 x Output mismatch
@@ -898,11 +3653,841 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-optional-chaining (42/45)
+# babel-plugin-transform-optional-chaining (23/45)
+* assumption-noDocumentAll/cast-to-boolean/input.js
+Bindings mismatch:
+after transform: ScopeId(5): ["o"]
+rebuilt        : ScopeId(5): ["_o$a$b", "o"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_o$a$b"]
+rebuilt        : ScopeId(6): []
+Bindings mismatch:
+after transform: ScopeId(7): ["o"]
+rebuilt        : ScopeId(7): ["_o$a$b$c", "_o$a$b2", "o"]
+Bindings mismatch:
+after transform: ScopeId(8): ["_o$a$b$c", "_o$a$b2"]
+rebuilt        : ScopeId(8): []
+Bindings mismatch:
+after transform: ScopeId(14): ["o"]
+rebuilt        : ScopeId(14): ["_o$a$b3", "o"]
+Bindings mismatch:
+after transform: ScopeId(15): ["_o$a$b3"]
+rebuilt        : ScopeId(15): []
+Bindings mismatch:
+after transform: ScopeId(16): ["o"]
+rebuilt        : ScopeId(16): ["_o$obj", "o"]
+Bindings mismatch:
+after transform: ScopeId(17): ["_o$obj"]
+rebuilt        : ScopeId(17): []
+Bindings mismatch:
+after transform: ScopeId(19): ["o"]
+rebuilt        : ScopeId(19): ["_o$obj2", "o"]
+Bindings mismatch:
+after transform: ScopeId(20): ["_o$obj2"]
+rebuilt        : ScopeId(20): []
+Bindings mismatch:
+after transform: ScopeId(21): ["o"]
+rebuilt        : ScopeId(21): ["_o$obj3", "_o$obj4", "_o$obj5", "o"]
+Bindings mismatch:
+after transform: ScopeId(22): ["_o$obj3", "_o$obj4", "_o$obj5"]
+rebuilt        : ScopeId(22): []
+Bindings mismatch:
+after transform: ScopeId(28): ["o"]
+rebuilt        : ScopeId(28): ["_o$obj6", "o"]
+Bindings mismatch:
+after transform: ScopeId(29): ["_o$obj6"]
+rebuilt        : ScopeId(29): []
+Bindings mismatch:
+after transform: ScopeId(30): ["o"]
+rebuilt        : ScopeId(30): ["_o$a", "_o$a$b4", "o"]
+Bindings mismatch:
+after transform: ScopeId(31): ["_o$a", "_o$a$b4"]
+rebuilt        : ScopeId(31): []
+Bindings mismatch:
+after transform: ScopeId(33): ["o"]
+rebuilt        : ScopeId(33): ["_o$a$b5", "_o$a2", "o"]
+Bindings mismatch:
+after transform: ScopeId(34): ["_o$a$b5", "_o$a2"]
+rebuilt        : ScopeId(34): []
+Bindings mismatch:
+after transform: ScopeId(35): ["o"]
+rebuilt        : ScopeId(35): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+Bindings mismatch:
+after transform: ScopeId(36): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9"]
+rebuilt        : ScopeId(36): []
+Symbol scope ID mismatch for "_o$a$b":
+after transform: SymbolId(14): ScopeId(6)
+rebuilt        : SymbolId(3): ScopeId(5)
+Symbol scope ID mismatch for "_o$a$b$c":
+after transform: SymbolId(15): ScopeId(8)
+rebuilt        : SymbolId(5): ScopeId(7)
+Symbol scope ID mismatch for "_o$a$b2":
+after transform: SymbolId(16): ScopeId(8)
+rebuilt        : SymbolId(6): ScopeId(7)
+Symbol scope ID mismatch for "_o$a$b3":
+after transform: SymbolId(17): ScopeId(15)
+rebuilt        : SymbolId(9): ScopeId(14)
+Symbol scope ID mismatch for "_o$obj":
+after transform: SymbolId(18): ScopeId(17)
+rebuilt        : SymbolId(11): ScopeId(16)
+Symbol scope ID mismatch for "_o$obj2":
+after transform: SymbolId(19): ScopeId(20)
+rebuilt        : SymbolId(13): ScopeId(19)
+Symbol scope ID mismatch for "_o$obj3":
+after transform: SymbolId(20): ScopeId(22)
+rebuilt        : SymbolId(15): ScopeId(21)
+Symbol scope ID mismatch for "_o$obj4":
+after transform: SymbolId(21): ScopeId(22)
+rebuilt        : SymbolId(16): ScopeId(21)
+Symbol scope ID mismatch for "_o$obj5":
+after transform: SymbolId(22): ScopeId(22)
+rebuilt        : SymbolId(17): ScopeId(21)
+Symbol scope ID mismatch for "_o$obj6":
+after transform: SymbolId(23): ScopeId(29)
+rebuilt        : SymbolId(20): ScopeId(28)
+Symbol scope ID mismatch for "_o$a$b4":
+after transform: SymbolId(24): ScopeId(31)
+rebuilt        : SymbolId(22): ScopeId(30)
+Symbol scope ID mismatch for "_o$a":
+after transform: SymbolId(25): ScopeId(31)
+rebuilt        : SymbolId(23): ScopeId(30)
+Symbol scope ID mismatch for "_o$a$b5":
+after transform: SymbolId(26): ScopeId(34)
+rebuilt        : SymbolId(25): ScopeId(33)
+Symbol scope ID mismatch for "_o$a2":
+after transform: SymbolId(27): ScopeId(34)
+rebuilt        : SymbolId(26): ScopeId(33)
+Symbol scope ID mismatch for "_o$a$b$c$non_existent":
+after transform: SymbolId(28): ScopeId(36)
+rebuilt        : SymbolId(28): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b6":
+after transform: SymbolId(29): ScopeId(36)
+rebuilt        : SymbolId(29): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b7":
+after transform: SymbolId(30): ScopeId(36)
+rebuilt        : SymbolId(30): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b$c$non_existent3":
+after transform: SymbolId(34): ScopeId(36)
+rebuilt        : SymbolId(31): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b10":
+after transform: SymbolId(35): ScopeId(36)
+rebuilt        : SymbolId(32): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b$c$non_existent2":
+after transform: SymbolId(31): ScopeId(36)
+rebuilt        : SymbolId(33): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b8":
+after transform: SymbolId(32): ScopeId(36)
+rebuilt        : SymbolId(34): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b9":
+after transform: SymbolId(33): ScopeId(36)
+rebuilt        : SymbolId(35): ScopeId(35)
+
+* assumption-noDocumentAll/in-function-params/input.js
+Bindings mismatch:
+after transform: ScopeId(11): []
+rebuilt        : ScopeId(2): ["_x"]
+Bindings mismatch:
+after transform: ScopeId(12): ["_x"]
+rebuilt        : ScopeId(3): []
+Bindings mismatch:
+after transform: ScopeId(15): []
+rebuilt        : ScopeId(10): ["_a$b"]
+Bindings mismatch:
+after transform: ScopeId(16): ["_a$b"]
+rebuilt        : ScopeId(11): []
+Bindings mismatch:
+after transform: ScopeId(17): []
+rebuilt        : ScopeId(14): ["_a$b2"]
+Bindings mismatch:
+after transform: ScopeId(18): ["_a$b2"]
+rebuilt        : ScopeId(15): []
+Bindings mismatch:
+after transform: ScopeId(19): []
+rebuilt        : ScopeId(18): ["_a$b3"]
+Bindings mismatch:
+after transform: ScopeId(20): ["_a$b3"]
+rebuilt        : ScopeId(19): []
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(14): ScopeId(12)
+rebuilt        : SymbolId(2): ScopeId(2)
+Symbol scope ID mismatch for "_a$b":
+after transform: SymbolId(15): ScopeId(16)
+rebuilt        : SymbolId(9): ScopeId(10)
+Symbol scope ID mismatch for "_a$b2":
+after transform: SymbolId(16): ScopeId(18)
+rebuilt        : SymbolId(13): ScopeId(14)
+Symbol scope ID mismatch for "_a$b3":
+after transform: SymbolId(17): ScopeId(20)
+rebuilt        : SymbolId(17): ScopeId(18)
+
+* assumption-noDocumentAll/memoize/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["foo"]
+rebuilt        : ScopeId(1): ["_foo$bar", "_foo$bar$baz", "_foo$bar$baz2", "_foo$bar10", "_foo$bar10$baz", "_foo$bar11", "_foo$bar11$baz", "_foo$bar2", "_foo$bar3", "_foo$bar4", "_foo$bar5", "_foo$bar6", "_foo$bar7", "_foo$bar8", "_foo$bar9", "_foo$get", "foo"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_foo$bar", "_foo$bar$baz", "_foo$bar$baz2", "_foo$bar10", "_foo$bar10$baz", "_foo$bar11", "_foo$bar11$baz", "_foo$bar2", "_foo$bar3", "_foo$bar4", "_foo$bar5", "_foo$bar6", "_foo$bar7", "_foo$bar8", "_foo$bar9", "_foo$get"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_foo$bar":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+Symbol scope ID mismatch for "_foo$get":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar2":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar3":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar$baz":
+after transform: SymbolId(6): ScopeId(2)
+rebuilt        : SymbolId(6): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar4":
+after transform: SymbolId(7): ScopeId(2)
+rebuilt        : SymbolId(7): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar$baz2":
+after transform: SymbolId(8): ScopeId(2)
+rebuilt        : SymbolId(8): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar5":
+after transform: SymbolId(9): ScopeId(2)
+rebuilt        : SymbolId(9): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar6":
+after transform: SymbolId(10): ScopeId(2)
+rebuilt        : SymbolId(10): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar7":
+after transform: SymbolId(11): ScopeId(2)
+rebuilt        : SymbolId(11): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar8":
+after transform: SymbolId(12): ScopeId(2)
+rebuilt        : SymbolId(12): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar9":
+after transform: SymbolId(13): ScopeId(2)
+rebuilt        : SymbolId(13): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar10":
+after transform: SymbolId(14): ScopeId(2)
+rebuilt        : SymbolId(14): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar10$baz":
+after transform: SymbolId(15): ScopeId(2)
+rebuilt        : SymbolId(15): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar11":
+after transform: SymbolId(16): ScopeId(2)
+rebuilt        : SymbolId(16): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar11$baz":
+after transform: SymbolId(17): ScopeId(2)
+rebuilt        : SymbolId(17): ScopeId(1)
+
+* assumption-noDocumentAll/super-method-call/input.js
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(5): ["_super$method"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_super$method"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_super$method":
+after transform: SymbolId(2): ScopeId(6)
+rebuilt        : SymbolId(2): ScopeId(5)
+
+* assumption-pureGetters/memoize/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["foo"]
+rebuilt        : ScopeId(1): ["_foo$bar", "_foo$bar$baz", "_foo$bar$baz2", "_foo$bar2", "_foo$bar3", "_foo$bar4", "_foo$bar5", "_foo$bar6", "_foo$bar7", "_foo$bar8", "_foo$bar8$baz", "_foo$bar9", "_foo$bar9$baz", "_foo$get", "foo"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_foo$bar", "_foo$bar$baz", "_foo$bar$baz2", "_foo$bar2", "_foo$bar3", "_foo$bar4", "_foo$bar5", "_foo$bar6", "_foo$bar7", "_foo$bar8", "_foo$bar8$baz", "_foo$bar9", "_foo$bar9$baz", "_foo$get"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_foo$bar":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+Symbol scope ID mismatch for "_foo$get":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar2":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar3":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar$baz":
+after transform: SymbolId(6): ScopeId(2)
+rebuilt        : SymbolId(6): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar$baz2":
+after transform: SymbolId(7): ScopeId(2)
+rebuilt        : SymbolId(7): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar4":
+after transform: SymbolId(8): ScopeId(2)
+rebuilt        : SymbolId(8): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar5":
+after transform: SymbolId(9): ScopeId(2)
+rebuilt        : SymbolId(9): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar6":
+after transform: SymbolId(10): ScopeId(2)
+rebuilt        : SymbolId(10): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar7":
+after transform: SymbolId(11): ScopeId(2)
+rebuilt        : SymbolId(11): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar8":
+after transform: SymbolId(12): ScopeId(2)
+rebuilt        : SymbolId(12): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar8$baz":
+after transform: SymbolId(13): ScopeId(2)
+rebuilt        : SymbolId(13): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar9":
+after transform: SymbolId(14): ScopeId(2)
+rebuilt        : SymbolId(14): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar9$baz":
+after transform: SymbolId(15): ScopeId(2)
+rebuilt        : SymbolId(15): ScopeId(1)
+
+* assumption-pureGetters/super-method-call/input.js
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(5): ["_super$method"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_super$method"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_super$method":
+after transform: SymbolId(2): ScopeId(6)
+rebuilt        : SymbolId(2): ScopeId(5)
+
+* general/cast-to-boolean/input.js
+Bindings mismatch:
+after transform: ScopeId(5): ["o"]
+rebuilt        : ScopeId(5): ["_o$a$b", "o"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_o$a$b"]
+rebuilt        : ScopeId(6): []
+Bindings mismatch:
+after transform: ScopeId(7): ["o"]
+rebuilt        : ScopeId(7): ["_o$a$b$c", "_o$a$b2", "o"]
+Bindings mismatch:
+after transform: ScopeId(8): ["_o$a$b$c", "_o$a$b2"]
+rebuilt        : ScopeId(8): []
+Bindings mismatch:
+after transform: ScopeId(14): ["o"]
+rebuilt        : ScopeId(14): ["_o$a$b3", "o"]
+Bindings mismatch:
+after transform: ScopeId(15): ["_o$a$b3"]
+rebuilt        : ScopeId(15): []
+Bindings mismatch:
+after transform: ScopeId(16): ["o"]
+rebuilt        : ScopeId(16): ["_o$obj", "o"]
+Bindings mismatch:
+after transform: ScopeId(17): ["_o$obj"]
+rebuilt        : ScopeId(17): []
+Bindings mismatch:
+after transform: ScopeId(19): ["o"]
+rebuilt        : ScopeId(19): ["_o$obj2", "o"]
+Bindings mismatch:
+after transform: ScopeId(20): ["_o$obj2"]
+rebuilt        : ScopeId(20): []
+Bindings mismatch:
+after transform: ScopeId(21): ["o"]
+rebuilt        : ScopeId(21): ["_o$obj3", "_o$obj4", "_o$obj5", "o"]
+Bindings mismatch:
+after transform: ScopeId(22): ["_o$obj3", "_o$obj4", "_o$obj5"]
+rebuilt        : ScopeId(22): []
+Bindings mismatch:
+after transform: ScopeId(28): ["o"]
+rebuilt        : ScopeId(28): ["_o$obj6", "o"]
+Bindings mismatch:
+after transform: ScopeId(29): ["_o$obj6"]
+rebuilt        : ScopeId(29): []
+Bindings mismatch:
+after transform: ScopeId(30): ["o"]
+rebuilt        : ScopeId(30): ["_o$a", "_o$a$b4", "o"]
+Bindings mismatch:
+after transform: ScopeId(31): ["_o$a", "_o$a$b4"]
+rebuilt        : ScopeId(31): []
+Bindings mismatch:
+after transform: ScopeId(33): ["o"]
+rebuilt        : ScopeId(33): ["_o$a$b5", "_o$a2", "o"]
+Bindings mismatch:
+after transform: ScopeId(34): ["_o$a$b5", "_o$a2"]
+rebuilt        : ScopeId(34): []
+Bindings mismatch:
+after transform: ScopeId(35): ["o"]
+rebuilt        : ScopeId(35): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+Bindings mismatch:
+after transform: ScopeId(36): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9"]
+rebuilt        : ScopeId(36): []
+Symbol scope ID mismatch for "_o$a$b":
+after transform: SymbolId(14): ScopeId(6)
+rebuilt        : SymbolId(3): ScopeId(5)
+Symbol scope ID mismatch for "_o$a$b$c":
+after transform: SymbolId(15): ScopeId(8)
+rebuilt        : SymbolId(5): ScopeId(7)
+Symbol scope ID mismatch for "_o$a$b2":
+after transform: SymbolId(16): ScopeId(8)
+rebuilt        : SymbolId(6): ScopeId(7)
+Symbol scope ID mismatch for "_o$a$b3":
+after transform: SymbolId(17): ScopeId(15)
+rebuilt        : SymbolId(9): ScopeId(14)
+Symbol scope ID mismatch for "_o$obj":
+after transform: SymbolId(18): ScopeId(17)
+rebuilt        : SymbolId(11): ScopeId(16)
+Symbol scope ID mismatch for "_o$obj2":
+after transform: SymbolId(19): ScopeId(20)
+rebuilt        : SymbolId(13): ScopeId(19)
+Symbol scope ID mismatch for "_o$obj3":
+after transform: SymbolId(20): ScopeId(22)
+rebuilt        : SymbolId(15): ScopeId(21)
+Symbol scope ID mismatch for "_o$obj4":
+after transform: SymbolId(21): ScopeId(22)
+rebuilt        : SymbolId(16): ScopeId(21)
+Symbol scope ID mismatch for "_o$obj5":
+after transform: SymbolId(22): ScopeId(22)
+rebuilt        : SymbolId(17): ScopeId(21)
+Symbol scope ID mismatch for "_o$obj6":
+after transform: SymbolId(23): ScopeId(29)
+rebuilt        : SymbolId(20): ScopeId(28)
+Symbol scope ID mismatch for "_o$a$b4":
+after transform: SymbolId(24): ScopeId(31)
+rebuilt        : SymbolId(22): ScopeId(30)
+Symbol scope ID mismatch for "_o$a":
+after transform: SymbolId(25): ScopeId(31)
+rebuilt        : SymbolId(23): ScopeId(30)
+Symbol scope ID mismatch for "_o$a$b5":
+after transform: SymbolId(26): ScopeId(34)
+rebuilt        : SymbolId(25): ScopeId(33)
+Symbol scope ID mismatch for "_o$a2":
+after transform: SymbolId(27): ScopeId(34)
+rebuilt        : SymbolId(26): ScopeId(33)
+Symbol scope ID mismatch for "_o$a$b$c$non_existent":
+after transform: SymbolId(28): ScopeId(36)
+rebuilt        : SymbolId(28): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b6":
+after transform: SymbolId(29): ScopeId(36)
+rebuilt        : SymbolId(29): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b7":
+after transform: SymbolId(30): ScopeId(36)
+rebuilt        : SymbolId(30): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b$c$non_existent3":
+after transform: SymbolId(34): ScopeId(36)
+rebuilt        : SymbolId(31): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b10":
+after transform: SymbolId(35): ScopeId(36)
+rebuilt        : SymbolId(32): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b$c$non_existent2":
+after transform: SymbolId(31): ScopeId(36)
+rebuilt        : SymbolId(33): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b8":
+after transform: SymbolId(32): ScopeId(36)
+rebuilt        : SymbolId(34): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b9":
+after transform: SymbolId(33): ScopeId(36)
+rebuilt        : SymbolId(35): ScopeId(35)
+
+* general/delete-in-function-params/input.js
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(2): ["_a"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_a"]
+rebuilt        : ScopeId(3): []
+Symbol scope ID mismatch for "_a":
+after transform: SymbolId(2): ScopeId(4)
+rebuilt        : SymbolId(2): ScopeId(2)
+
+* general/in-function-params/input.js
+Bindings mismatch:
+after transform: ScopeId(11): []
+rebuilt        : ScopeId(2): ["_x"]
+Bindings mismatch:
+after transform: ScopeId(12): ["_x"]
+rebuilt        : ScopeId(3): []
+Bindings mismatch:
+after transform: ScopeId(15): []
+rebuilt        : ScopeId(10): ["_a$b"]
+Bindings mismatch:
+after transform: ScopeId(16): ["_a$b"]
+rebuilt        : ScopeId(11): []
+Bindings mismatch:
+after transform: ScopeId(17): []
+rebuilt        : ScopeId(14): ["_a$b2"]
+Bindings mismatch:
+after transform: ScopeId(18): ["_a$b2"]
+rebuilt        : ScopeId(15): []
+Bindings mismatch:
+after transform: ScopeId(19): []
+rebuilt        : ScopeId(18): ["_a$b3"]
+Bindings mismatch:
+after transform: ScopeId(20): ["_a$b3"]
+rebuilt        : ScopeId(19): []
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(14): ScopeId(12)
+rebuilt        : SymbolId(2): ScopeId(2)
+Symbol scope ID mismatch for "_a$b":
+after transform: SymbolId(15): ScopeId(16)
+rebuilt        : SymbolId(9): ScopeId(10)
+Symbol scope ID mismatch for "_a$b2":
+after transform: SymbolId(16): ScopeId(18)
+rebuilt        : SymbolId(13): ScopeId(14)
+Symbol scope ID mismatch for "_a$b3":
+after transform: SymbolId(17): ScopeId(20)
+rebuilt        : SymbolId(17): ScopeId(18)
+
+* general/in-function-params-loose/input.js
+Bindings mismatch:
+after transform: ScopeId(11): []
+rebuilt        : ScopeId(2): ["_x"]
+Bindings mismatch:
+after transform: ScopeId(12): ["_x"]
+rebuilt        : ScopeId(3): []
+Bindings mismatch:
+after transform: ScopeId(15): []
+rebuilt        : ScopeId(10): ["_a$b"]
+Bindings mismatch:
+after transform: ScopeId(16): ["_a$b"]
+rebuilt        : ScopeId(11): []
+Bindings mismatch:
+after transform: ScopeId(17): []
+rebuilt        : ScopeId(14): ["_a$b2"]
+Bindings mismatch:
+after transform: ScopeId(18): ["_a$b2"]
+rebuilt        : ScopeId(15): []
+Bindings mismatch:
+after transform: ScopeId(19): []
+rebuilt        : ScopeId(18): ["_a$b3"]
+Bindings mismatch:
+after transform: ScopeId(20): ["_a$b3"]
+rebuilt        : ScopeId(19): []
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(14): ScopeId(12)
+rebuilt        : SymbolId(2): ScopeId(2)
+Symbol scope ID mismatch for "_a$b":
+after transform: SymbolId(15): ScopeId(16)
+rebuilt        : SymbolId(9): ScopeId(10)
+Symbol scope ID mismatch for "_a$b2":
+after transform: SymbolId(16): ScopeId(18)
+rebuilt        : SymbolId(13): ScopeId(14)
+Symbol scope ID mismatch for "_a$b3":
+after transform: SymbolId(17): ScopeId(20)
+rebuilt        : SymbolId(17): ScopeId(18)
+
+* general/memoize/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["foo"]
+rebuilt        : ScopeId(1): ["_foo$bar", "_foo$bar2", "_foo$bar3", "_foo$bar4", "_foo$bar5", "_foo$bar6", "_foo$bar6$baz", "_foo$bar7", "_foo$bar7$baz", "foo"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_foo$bar", "_foo$bar2", "_foo$bar3", "_foo$bar4", "_foo$bar5", "_foo$bar6", "_foo$bar6$baz", "_foo$bar7", "_foo$bar7$baz"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_foo$bar":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar2":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar3":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar4":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar5":
+after transform: SymbolId(6): ScopeId(2)
+rebuilt        : SymbolId(6): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar6":
+after transform: SymbolId(7): ScopeId(2)
+rebuilt        : SymbolId(7): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar6$baz":
+after transform: SymbolId(8): ScopeId(2)
+rebuilt        : SymbolId(8): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar7":
+after transform: SymbolId(9): ScopeId(2)
+rebuilt        : SymbolId(9): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar7$baz":
+after transform: SymbolId(10): ScopeId(2)
+rebuilt        : SymbolId(10): ScopeId(1)
+
+* general/memoize-loose/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["foo"]
+rebuilt        : ScopeId(1): ["_foo$bar", "_foo$bar$baz", "_foo$bar$baz2", "_foo$bar10", "_foo$bar10$baz", "_foo$bar11", "_foo$bar11$baz", "_foo$bar2", "_foo$bar3", "_foo$bar4", "_foo$bar5", "_foo$bar6", "_foo$bar7", "_foo$bar8", "_foo$bar9", "_foo$get", "foo"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_foo$bar", "_foo$bar$baz", "_foo$bar$baz2", "_foo$bar10", "_foo$bar10$baz", "_foo$bar11", "_foo$bar11$baz", "_foo$bar2", "_foo$bar3", "_foo$bar4", "_foo$bar5", "_foo$bar6", "_foo$bar7", "_foo$bar8", "_foo$bar9", "_foo$get"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_foo$bar":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+Symbol scope ID mismatch for "_foo$get":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar2":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar3":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar$baz":
+after transform: SymbolId(6): ScopeId(2)
+rebuilt        : SymbolId(6): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar4":
+after transform: SymbolId(7): ScopeId(2)
+rebuilt        : SymbolId(7): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar$baz2":
+after transform: SymbolId(8): ScopeId(2)
+rebuilt        : SymbolId(8): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar5":
+after transform: SymbolId(9): ScopeId(2)
+rebuilt        : SymbolId(9): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar6":
+after transform: SymbolId(10): ScopeId(2)
+rebuilt        : SymbolId(10): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar7":
+after transform: SymbolId(11): ScopeId(2)
+rebuilt        : SymbolId(11): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar8":
+after transform: SymbolId(12): ScopeId(2)
+rebuilt        : SymbolId(12): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar9":
+after transform: SymbolId(13): ScopeId(2)
+rebuilt        : SymbolId(13): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar10":
+after transform: SymbolId(14): ScopeId(2)
+rebuilt        : SymbolId(14): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar10$baz":
+after transform: SymbolId(15): ScopeId(2)
+rebuilt        : SymbolId(15): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar11":
+after transform: SymbolId(16): ScopeId(2)
+rebuilt        : SymbolId(16): ScopeId(1)
+Symbol scope ID mismatch for "_foo$bar11$baz":
+after transform: SymbolId(17): ScopeId(2)
+rebuilt        : SymbolId(17): ScopeId(1)
+
+* general/parenthesized-member-call/input.js
+Bindings mismatch:
+after transform: ScopeId(8): []
+rebuilt        : ScopeId(8): ["_fn", "_fn$Foo$self", "_o$Foo", "_o$Foo$self", "_o$Foo2", "_o$Foo3", "_o$Foo4"]
+Bindings mismatch:
+after transform: ScopeId(9): ["Foo", "_fn", "_fn$Foo$self", "_o$Foo", "_o$Foo$self", "_o$Foo2", "_o$Foo3", "_o$Foo4", "fn", "o"]
+rebuilt        : ScopeId(9): ["Foo", "fn", "o"]
+Symbol scope ID mismatch for "_o$Foo":
+after transform: SymbolId(4): ScopeId(9)
+rebuilt        : SymbolId(1): ScopeId(8)
+Symbol scope ID mismatch for "_o$Foo2":
+after transform: SymbolId(5): ScopeId(9)
+rebuilt        : SymbolId(2): ScopeId(8)
+Symbol scope ID mismatch for "_o$Foo3":
+after transform: SymbolId(6): ScopeId(9)
+rebuilt        : SymbolId(3): ScopeId(8)
+Symbol scope ID mismatch for "_o$Foo4":
+after transform: SymbolId(7): ScopeId(9)
+rebuilt        : SymbolId(4): ScopeId(8)
+Symbol scope ID mismatch for "_o$Foo$self":
+after transform: SymbolId(8): ScopeId(9)
+rebuilt        : SymbolId(5): ScopeId(8)
+Symbol scope ID mismatch for "_fn":
+after transform: SymbolId(9): ScopeId(9)
+rebuilt        : SymbolId(6): ScopeId(8)
+Symbol scope ID mismatch for "_fn$Foo$self":
+after transform: SymbolId(10): ScopeId(9)
+rebuilt        : SymbolId(7): ScopeId(8)
+
+* general/parenthesized-member-call-loose/input.js
+Bindings mismatch:
+after transform: ScopeId(8): []
+rebuilt        : ScopeId(8): ["_fn", "_fn$Foo$self", "_o$Foo", "_o$Foo$self", "_o$Foo2", "_o$Foo3", "_o$Foo4"]
+Bindings mismatch:
+after transform: ScopeId(9): ["Foo", "_fn", "_fn$Foo$self", "_o$Foo", "_o$Foo$self", "_o$Foo2", "_o$Foo3", "_o$Foo4", "fn", "o"]
+rebuilt        : ScopeId(9): ["Foo", "fn", "o"]
+Symbol scope ID mismatch for "_o$Foo":
+after transform: SymbolId(4): ScopeId(9)
+rebuilt        : SymbolId(1): ScopeId(8)
+Symbol scope ID mismatch for "_o$Foo2":
+after transform: SymbolId(5): ScopeId(9)
+rebuilt        : SymbolId(2): ScopeId(8)
+Symbol scope ID mismatch for "_o$Foo3":
+after transform: SymbolId(6): ScopeId(9)
+rebuilt        : SymbolId(3): ScopeId(8)
+Symbol scope ID mismatch for "_o$Foo4":
+after transform: SymbolId(7): ScopeId(9)
+rebuilt        : SymbolId(4): ScopeId(8)
+Symbol scope ID mismatch for "_o$Foo$self":
+after transform: SymbolId(8): ScopeId(9)
+rebuilt        : SymbolId(5): ScopeId(8)
+Symbol scope ID mismatch for "_fn":
+after transform: SymbolId(9): ScopeId(9)
+rebuilt        : SymbolId(6): ScopeId(8)
+Symbol scope ID mismatch for "_fn$Foo$self":
+after transform: SymbolId(10): ScopeId(9)
+rebuilt        : SymbolId(7): ScopeId(8)
+
+* general/super-method-call/input.js
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(5): ["_super$method"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_super$method"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_super$method":
+after transform: SymbolId(2): ScopeId(6)
+rebuilt        : SymbolId(2): ScopeId(5)
+
+* general/super-method-call-loose/input.js
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(5): ["_super$method"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_super$method"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_super$method":
+after transform: SymbolId(2): ScopeId(6)
+rebuilt        : SymbolId(2): ScopeId(5)
+
+* loose/cast-to-boolean/input.js
+Bindings mismatch:
+after transform: ScopeId(5): ["o"]
+rebuilt        : ScopeId(5): ["_o$a$b", "o"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_o$a$b"]
+rebuilt        : ScopeId(6): []
+Bindings mismatch:
+after transform: ScopeId(7): ["o"]
+rebuilt        : ScopeId(7): ["_o$a$b$c", "_o$a$b2", "o"]
+Bindings mismatch:
+after transform: ScopeId(8): ["_o$a$b$c", "_o$a$b2"]
+rebuilt        : ScopeId(8): []
+Bindings mismatch:
+after transform: ScopeId(14): ["o"]
+rebuilt        : ScopeId(14): ["_o$a$b3", "o"]
+Bindings mismatch:
+after transform: ScopeId(15): ["_o$a$b3"]
+rebuilt        : ScopeId(15): []
+Bindings mismatch:
+after transform: ScopeId(16): ["o"]
+rebuilt        : ScopeId(16): ["_o$obj", "o"]
+Bindings mismatch:
+after transform: ScopeId(17): ["_o$obj"]
+rebuilt        : ScopeId(17): []
+Bindings mismatch:
+after transform: ScopeId(19): ["o"]
+rebuilt        : ScopeId(19): ["_o$obj2", "o"]
+Bindings mismatch:
+after transform: ScopeId(20): ["_o$obj2"]
+rebuilt        : ScopeId(20): []
+Bindings mismatch:
+after transform: ScopeId(21): ["o"]
+rebuilt        : ScopeId(21): ["_o$obj3", "_o$obj4", "_o$obj5", "o"]
+Bindings mismatch:
+after transform: ScopeId(22): ["_o$obj3", "_o$obj4", "_o$obj5"]
+rebuilt        : ScopeId(22): []
+Bindings mismatch:
+after transform: ScopeId(28): ["o"]
+rebuilt        : ScopeId(28): ["_o$obj6", "o"]
+Bindings mismatch:
+after transform: ScopeId(29): ["_o$obj6"]
+rebuilt        : ScopeId(29): []
+Bindings mismatch:
+after transform: ScopeId(30): ["o"]
+rebuilt        : ScopeId(30): ["_o$a", "_o$a$b4", "o"]
+Bindings mismatch:
+after transform: ScopeId(31): ["_o$a", "_o$a$b4"]
+rebuilt        : ScopeId(31): []
+Bindings mismatch:
+after transform: ScopeId(33): ["o"]
+rebuilt        : ScopeId(33): ["_o$a$b5", "_o$a2", "o"]
+Bindings mismatch:
+after transform: ScopeId(34): ["_o$a$b5", "_o$a2"]
+rebuilt        : ScopeId(34): []
+Bindings mismatch:
+after transform: ScopeId(35): ["o"]
+rebuilt        : ScopeId(35): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+Bindings mismatch:
+after transform: ScopeId(36): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9"]
+rebuilt        : ScopeId(36): []
+Symbol scope ID mismatch for "_o$a$b":
+after transform: SymbolId(14): ScopeId(6)
+rebuilt        : SymbolId(3): ScopeId(5)
+Symbol scope ID mismatch for "_o$a$b$c":
+after transform: SymbolId(15): ScopeId(8)
+rebuilt        : SymbolId(5): ScopeId(7)
+Symbol scope ID mismatch for "_o$a$b2":
+after transform: SymbolId(16): ScopeId(8)
+rebuilt        : SymbolId(6): ScopeId(7)
+Symbol scope ID mismatch for "_o$a$b3":
+after transform: SymbolId(17): ScopeId(15)
+rebuilt        : SymbolId(9): ScopeId(14)
+Symbol scope ID mismatch for "_o$obj":
+after transform: SymbolId(18): ScopeId(17)
+rebuilt        : SymbolId(11): ScopeId(16)
+Symbol scope ID mismatch for "_o$obj2":
+after transform: SymbolId(19): ScopeId(20)
+rebuilt        : SymbolId(13): ScopeId(19)
+Symbol scope ID mismatch for "_o$obj3":
+after transform: SymbolId(20): ScopeId(22)
+rebuilt        : SymbolId(15): ScopeId(21)
+Symbol scope ID mismatch for "_o$obj4":
+after transform: SymbolId(21): ScopeId(22)
+rebuilt        : SymbolId(16): ScopeId(21)
+Symbol scope ID mismatch for "_o$obj5":
+after transform: SymbolId(22): ScopeId(22)
+rebuilt        : SymbolId(17): ScopeId(21)
+Symbol scope ID mismatch for "_o$obj6":
+after transform: SymbolId(23): ScopeId(29)
+rebuilt        : SymbolId(20): ScopeId(28)
+Symbol scope ID mismatch for "_o$a$b4":
+after transform: SymbolId(24): ScopeId(31)
+rebuilt        : SymbolId(22): ScopeId(30)
+Symbol scope ID mismatch for "_o$a":
+after transform: SymbolId(25): ScopeId(31)
+rebuilt        : SymbolId(23): ScopeId(30)
+Symbol scope ID mismatch for "_o$a$b5":
+after transform: SymbolId(26): ScopeId(34)
+rebuilt        : SymbolId(25): ScopeId(33)
+Symbol scope ID mismatch for "_o$a2":
+after transform: SymbolId(27): ScopeId(34)
+rebuilt        : SymbolId(26): ScopeId(33)
+Symbol scope ID mismatch for "_o$a$b$c$non_existent":
+after transform: SymbolId(28): ScopeId(36)
+rebuilt        : SymbolId(28): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b6":
+after transform: SymbolId(29): ScopeId(36)
+rebuilt        : SymbolId(29): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b7":
+after transform: SymbolId(30): ScopeId(36)
+rebuilt        : SymbolId(30): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b$c$non_existent3":
+after transform: SymbolId(34): ScopeId(36)
+rebuilt        : SymbolId(31): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b10":
+after transform: SymbolId(35): ScopeId(36)
+rebuilt        : SymbolId(32): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b$c$non_existent2":
+after transform: SymbolId(31): ScopeId(36)
+rebuilt        : SymbolId(33): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b8":
+after transform: SymbolId(32): ScopeId(36)
+rebuilt        : SymbolId(34): ScopeId(35)
+Symbol scope ID mismatch for "_o$a$b9":
+after transform: SymbolId(33): ScopeId(36)
+rebuilt        : SymbolId(35): ScopeId(35)
+
+* transparent-expr-wrappers/ts-as-call-context-in-if/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["a"]
+rebuilt        : ScopeId(1): ["_a$b", "a"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_a$b"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_a$b":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+
 * transparent-expr-wrappers/ts-as-function-call-loose/input.ts
 Unresolved references mismatch:
 after transform: ["A", "B", "foo"]
 rebuilt        : ["foo"]
+
+* transparent-expr-wrappers/ts-as-in-conditional/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["a"]
+rebuilt        : ScopeId(1): ["_a$c", "a"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_a$c"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_a$c":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
 
 * transparent-expr-wrappers/ts-as-member-expression/input.ts
 Unresolved references mismatch:
@@ -915,12 +4500,210 @@ after transform: ["ExampleType", "o"]
 rebuilt        : ["o"]
 
 
-# babel-plugin-transform-async-generator-functions (19/20)
+# babel-plugin-transform-async-generator-functions (10/20)
 * async-generators/class-private-method/input.js
 x Output mismatch
 
+* for-await/async-arrow/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_iteratorAbruptCompletion":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(0): ScopeId(1)
+Symbol scope ID mismatch for "_didIteratorError":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "_iteratorError":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+Symbol scope ID mismatch for "_iterator":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(1)
+Symbol scope ID mismatch for "_step":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(1)
 
-# babel-plugin-transform-object-rest-spread (30/40)
+* for-await/async-function/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(5): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_iteratorAbruptCompletion":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(5)
+Symbol scope ID mismatch for "_didIteratorError":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(5)
+Symbol scope ID mismatch for "_iteratorError":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(5)
+Symbol scope ID mismatch for "_iterator":
+after transform: SymbolId(6): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(5)
+Symbol scope ID mismatch for "_step":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(6): ScopeId(5)
+
+* for-await/async-function-no-transform/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_iteratorAbruptCompletion":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "_didIteratorError":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+Symbol scope ID mismatch for "_iteratorError":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(1)
+Symbol scope ID mismatch for "_iterator":
+after transform: SymbolId(6): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(1)
+Symbol scope ID mismatch for "_step":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(1)
+
+* for-await/async-generator/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(5): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_iteratorAbruptCompletion":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(5)
+Symbol scope ID mismatch for "_didIteratorError":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(5)
+Symbol scope ID mismatch for "_iteratorError":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(5)
+Symbol scope ID mismatch for "_iterator":
+after transform: SymbolId(6): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(5)
+Symbol scope ID mismatch for "_step":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(6): ScopeId(5)
+
+* for-await/create-async-from-sync-iterator/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(5): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_iteratorAbruptCompletion":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(5)
+Symbol scope ID mismatch for "_didIteratorError":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(5)
+Symbol scope ID mismatch for "_iteratorError":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(5)
+Symbol scope ID mismatch for "_iterator":
+after transform: SymbolId(6): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(5)
+Symbol scope ID mismatch for "_step":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(6): ScopeId(5)
+
+* for-await/destructuring/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(5): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_iteratorAbruptCompletion":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(5)
+Symbol scope ID mismatch for "_didIteratorError":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(5)
+Symbol scope ID mismatch for "_iteratorError":
+after transform: SymbolId(6): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(5)
+Symbol scope ID mismatch for "_iterator":
+after transform: SymbolId(7): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(5)
+Symbol scope ID mismatch for "_step":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(6): ScopeId(5)
+
+* for-await/lhs-member-expression/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_iteratorAbruptCompletion":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(0): ScopeId(1)
+Symbol scope ID mismatch for "_didIteratorError":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "_iteratorError":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+Symbol scope ID mismatch for "_iterator":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(1)
+Symbol scope ID mismatch for "_step":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(1)
+
+* for-await/re-declare-var-in-init-body/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_iteratorAbruptCompletion":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(0): ScopeId(1)
+Symbol scope ID mismatch for "_didIteratorError":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "_iteratorError":
+after transform: SymbolId(5): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
+Symbol scope ID mismatch for "_iterator":
+after transform: SymbolId(6): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(1)
+Symbol scope ID mismatch for "_step":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(1)
+
+* nested/generator-in-async/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(5): ["_g", "g"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_g", "g"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "g":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(5)
+Symbol scope ID mismatch for "_g":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(5)
+
+
+# babel-plugin-transform-object-rest-spread (23/40)
 * object-rest/for-x/input.js
 x Output mismatch
 
@@ -939,14 +4722,328 @@ x Output mismatch
 * object-rest/for-x-declaration-shadowed-block-scoped-bindings/input.js
 x Output mismatch
 
+* object-rest/nested-computed-key/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_ref", "rest"]
+rebuilt        : ScopeId(1): ["_ref"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_ref2", "b"]
+rebuilt        : ScopeId(2): ["_ref2", "b", "rest"]
+Symbol scope ID mismatch for "rest":
+after transform: SymbolId(2): ScopeId(1)
+rebuilt        : SymbolId(4): ScopeId(2)
+
+* object-rest/nested-default-value/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_ref", "rest"]
+rebuilt        : ScopeId(1): ["_ref"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_ref2", "b"]
+rebuilt        : ScopeId(2): ["_ref2", "b", "rest"]
+Symbol scope ID mismatch for "rest":
+after transform: SymbolId(2): ScopeId(1)
+rebuilt        : SymbolId(4): ScopeId(2)
+
 * object-rest/object-ref-computed/input.js
 x Output mismatch
+
+* object-rest/parameters/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_ref", "a34"]
+rebuilt        : ScopeId(1): ["_ref"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["a34"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_ref2", "a1", "b1"]
+rebuilt        : ScopeId(3): ["_ref2"]
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(4): ["a1", "b1"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_ref3", "a2", "b2", "c2"]
+rebuilt        : ScopeId(5): ["_ref3"]
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(6): ["a2", "b2", "c2"]
+Bindings mismatch:
+after transform: ScopeId(7): ["_ref4", "_ref5", "a3", "a5", "c3", "c5"]
+rebuilt        : ScopeId(7): ["_ref4", "_ref5"]
+Bindings mismatch:
+after transform: ScopeId(8): []
+rebuilt        : ScopeId(8): ["a3", "a5", "c3", "c5"]
+Bindings mismatch:
+after transform: ScopeId(9): ["_ref6", "_ref7", "a3", "ba1", "ba2", "c3"]
+rebuilt        : ScopeId(9): ["_ref6"]
+Bindings mismatch:
+after transform: ScopeId(10): []
+rebuilt        : ScopeId(10): ["_ref7", "a3", "ba1", "ba2", "c3"]
+Bindings mismatch:
+after transform: ScopeId(11): ["_ref8", "_ref9", "a3", "ba1", "ba2"]
+rebuilt        : ScopeId(11): ["_ref8"]
+Bindings mismatch:
+after transform: ScopeId(12): []
+rebuilt        : ScopeId(12): ["_ref9", "a3", "ba1", "ba2"]
+Bindings mismatch:
+after transform: ScopeId(13): ["_ref10", "a1", "b1"]
+rebuilt        : ScopeId(13): ["_ref10"]
+Bindings mismatch:
+after transform: ScopeId(14): []
+rebuilt        : ScopeId(14): ["a1", "b1"]
+Bindings mismatch:
+after transform: ScopeId(15): ["_ref11", "a1"]
+rebuilt        : ScopeId(15): ["_ref11"]
+Bindings mismatch:
+after transform: ScopeId(16): []
+rebuilt        : ScopeId(16): ["a1"]
+Bindings mismatch:
+after transform: ScopeId(17): ["_ref12", "a1", "a2"]
+rebuilt        : ScopeId(17): ["_ref12"]
+Bindings mismatch:
+after transform: ScopeId(18): []
+rebuilt        : ScopeId(18): ["a1", "a2"]
+Bindings mismatch:
+after transform: ScopeId(19): ["_ref13", "a1", "a2"]
+rebuilt        : ScopeId(19): ["_ref13", "a1"]
+Bindings mismatch:
+after transform: ScopeId(20): []
+rebuilt        : ScopeId(20): ["a2"]
+Symbol scope ID mismatch for "a34":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(11): ScopeId(2)
+Symbol scope ID mismatch for "a1":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(14): ScopeId(4)
+Symbol scope ID mismatch for "b1":
+after transform: SymbolId(4): ScopeId(3)
+rebuilt        : SymbolId(15): ScopeId(4)
+Symbol scope ID mismatch for "a2":
+after transform: SymbolId(6): ScopeId(5)
+rebuilt        : SymbolId(18): ScopeId(6)
+Symbol scope ID mismatch for "b2":
+after transform: SymbolId(7): ScopeId(5)
+rebuilt        : SymbolId(19): ScopeId(6)
+Symbol scope ID mismatch for "c2":
+after transform: SymbolId(8): ScopeId(5)
+rebuilt        : SymbolId(20): ScopeId(6)
+Symbol scope ID mismatch for "a5":
+after transform: SymbolId(12): ScopeId(7)
+rebuilt        : SymbolId(24): ScopeId(8)
+Symbol scope ID mismatch for "c5":
+after transform: SymbolId(13): ScopeId(7)
+rebuilt        : SymbolId(25): ScopeId(8)
+Symbol scope ID mismatch for "a3":
+after transform: SymbolId(10): ScopeId(7)
+rebuilt        : SymbolId(26): ScopeId(8)
+Symbol scope ID mismatch for "c3":
+after transform: SymbolId(11): ScopeId(7)
+rebuilt        : SymbolId(27): ScopeId(8)
+Symbol scope ID mismatch for "a3":
+after transform: SymbolId(15): ScopeId(9)
+rebuilt        : SymbolId(30): ScopeId(10)
+Symbol scope ID mismatch for "_ref7":
+after transform: SymbolId(51): ScopeId(9)
+rebuilt        : SymbolId(31): ScopeId(10)
+Symbol scope ID mismatch for "ba1":
+after transform: SymbolId(16): ScopeId(9)
+rebuilt        : SymbolId(32): ScopeId(10)
+Symbol scope ID mismatch for "ba2":
+after transform: SymbolId(17): ScopeId(9)
+rebuilt        : SymbolId(33): ScopeId(10)
+Symbol scope ID mismatch for "c3":
+after transform: SymbolId(18): ScopeId(9)
+rebuilt        : SymbolId(34): ScopeId(10)
+Symbol scope ID mismatch for "a3":
+after transform: SymbolId(20): ScopeId(11)
+rebuilt        : SymbolId(37): ScopeId(12)
+Symbol scope ID mismatch for "_ref9":
+after transform: SymbolId(55): ScopeId(11)
+rebuilt        : SymbolId(38): ScopeId(12)
+Symbol scope ID mismatch for "ba1":
+after transform: SymbolId(21): ScopeId(11)
+rebuilt        : SymbolId(39): ScopeId(12)
+Symbol scope ID mismatch for "ba2":
+after transform: SymbolId(22): ScopeId(11)
+rebuilt        : SymbolId(40): ScopeId(12)
+Symbol scope ID mismatch for "a1":
+after transform: SymbolId(24): ScopeId(13)
+rebuilt        : SymbolId(43): ScopeId(14)
+Symbol scope ID mismatch for "b1":
+after transform: SymbolId(25): ScopeId(13)
+rebuilt        : SymbolId(44): ScopeId(14)
+Symbol scope ID mismatch for "a1":
+after transform: SymbolId(27): ScopeId(15)
+rebuilt        : SymbolId(47): ScopeId(16)
+Symbol scope ID mismatch for "a1":
+after transform: SymbolId(29): ScopeId(17)
+rebuilt        : SymbolId(50): ScopeId(18)
+Symbol scope ID mismatch for "a2":
+after transform: SymbolId(30): ScopeId(17)
+rebuilt        : SymbolId(51): ScopeId(18)
+Symbol scope ID mismatch for "a2":
+after transform: SymbolId(33): ScopeId(19)
+rebuilt        : SymbolId(55): ScopeId(20)
+
+* object-rest/parameters-object-rest-used-in-default/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["R", "_ref", "a"]
+rebuilt        : ScopeId(1): ["_ref", "a"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["R"]
+Bindings mismatch:
+after transform: ScopeId(3): ["R", "Y", "_ref2", "a"]
+rebuilt        : ScopeId(3): ["_ref2", "a"]
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(4): ["R", "Y"]
+Bindings mismatch:
+after transform: ScopeId(5): ["R", "_ref3", "a"]
+rebuilt        : ScopeId(5): ["_ref3", "a"]
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(6): ["R"]
+Bindings mismatch:
+after transform: ScopeId(7): ["R", "_ref4", "a", "c", "e", "f"]
+rebuilt        : ScopeId(7): ["_ref4", "a", "c", "e", "f"]
+Bindings mismatch:
+after transform: ScopeId(8): ["q"]
+rebuilt        : ScopeId(8): ["R", "q"]
+Bindings mismatch:
+after transform: ScopeId(9): ["R", "_ref5", "a"]
+rebuilt        : ScopeId(9): ["_ref5", "a"]
+Bindings mismatch:
+after transform: ScopeId(10): []
+rebuilt        : ScopeId(10): ["R"]
+Bindings mismatch:
+after transform: ScopeId(11): ["R", "_ref6", "a"]
+rebuilt        : ScopeId(11): ["_ref6", "a"]
+Bindings mismatch:
+after transform: ScopeId(12): []
+rebuilt        : ScopeId(12): ["R"]
+Bindings mismatch:
+after transform: ScopeId(13): ["R", "_ref7", "a"]
+rebuilt        : ScopeId(13): ["_ref7", "a"]
+Bindings mismatch:
+after transform: ScopeId(14): []
+rebuilt        : ScopeId(14): ["R"]
+Bindings mismatch:
+after transform: ScopeId(15): ["R", "_ref8", "a"]
+rebuilt        : ScopeId(15): ["_ref8", "a"]
+Bindings mismatch:
+after transform: ScopeId(20): []
+rebuilt        : ScopeId(20): ["R"]
+Symbol scope ID mismatch for "R":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(3): ScopeId(2)
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(0): [ReferenceId(0)]
+rebuilt        : SymbolId(3): []
+Symbol scope ID mismatch for "Y":
+after transform: SymbolId(2): ScopeId(3)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(2): [ReferenceId(1)]
+rebuilt        : SymbolId(6): []
+Symbol scope ID mismatch for "R":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(7): ScopeId(4)
+Symbol scope ID mismatch for "R":
+after transform: SymbolId(6): ScopeId(5)
+rebuilt        : SymbolId(10): ScopeId(6)
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(6): [ReferenceId(2)]
+rebuilt        : SymbolId(10): []
+Symbol scope ID mismatch for "R":
+after transform: SymbolId(7): ScopeId(7)
+rebuilt        : SymbolId(16): ScopeId(8)
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(7): [ReferenceId(3)]
+rebuilt        : SymbolId(16): []
+Symbol scope ID mismatch for "R":
+after transform: SymbolId(13): ScopeId(9)
+rebuilt        : SymbolId(20): ScopeId(10)
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(13): [ReferenceId(6)]
+rebuilt        : SymbolId(20): []
+Symbol scope ID mismatch for "R":
+after transform: SymbolId(15): ScopeId(11)
+rebuilt        : SymbolId(23): ScopeId(12)
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(15): [ReferenceId(7)]
+rebuilt        : SymbolId(23): []
+Symbol scope ID mismatch for "R":
+after transform: SymbolId(17): ScopeId(13)
+rebuilt        : SymbolId(26): ScopeId(14)
+Symbol scope ID mismatch for "R":
+after transform: SymbolId(19): ScopeId(15)
+rebuilt        : SymbolId(31): ScopeId(20)
+Reference symbol mismatch for "R":
+after transform: SymbolId(0) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "Y":
+after transform: SymbolId(2) "Y"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(6) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(7) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(13) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(15) "R"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["b", "babelHelpers", "f", "q"]
+rebuilt        : ["R", "Y", "b", "babelHelpers", "f", "q"]
 
 * object-rest/symbol/input.js
 x Output mismatch
 
+* object-rest/template-literal-allLiterals-true-no-hoisting/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): ["_input", "_ref"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_input", "_ref", "foo", "input"]
+rebuilt        : ScopeId(2): ["foo", "input"]
+Symbol scope ID mismatch for "_input":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(1)
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(1)
+
 * regression/gh-17274/input.js
 x Output mismatch
+
+* regression/gh-4904/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_ref2", "b", "c"]
+rebuilt        : ScopeId(1): ["_ref2"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["b", "c"]
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(6): ScopeId(1)
+rebuilt        : SymbolId(11): ScopeId(2)
+Symbol scope ID mismatch for "c":
+after transform: SymbolId(7): ScopeId(1)
+rebuilt        : SymbolId(12): ScopeId(2)
+
+* regression/gh-7304/input.mjs
+Bindings mismatch:
+after transform: ScopeId(2): ["_ref", "object"]
+rebuilt        : ScopeId(2): ["_ref"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["object"]
+Symbol scope ID mismatch for "object":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(3)
 
 * regression/gh-8323/input.js
 
@@ -965,7 +5062,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-async-to-generator (9/31)
+# babel-plugin-transform-async-to-generator (7/31)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 
   x Compiler assumption `ignoreFunctionLength` is not implemented for object-
@@ -998,6 +5095,25 @@ x Output mismatch
   x Compiler assumption `ignoreFunctionLength` is not implemented for object-
   | rest-spread.
 
+
+* async-to-generator/object-method-with-super/input.js
+Scope parent mismatch:
+after transform: ScopeId(9): Some(ScopeId(7))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+* async-to-generator/shadowed-promise-nested/input.js
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(5): ["_bar", "bar"]
+Bindings mismatch:
+after transform: ScopeId(2): ["Promise", "_bar", "bar"]
+rebuilt        : ScopeId(6): ["Promise"]
+Symbol scope ID mismatch for "bar":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(5)
+Symbol scope ID mismatch for "_bar":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(5)
 
 * bluebird-coroutines/arrow-function/input.js
 x Output mismatch
@@ -1101,7 +5217,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (54/157)
+# babel-plugin-transform-typescript (53/157)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1244,10 +5360,10 @@ after transform: ScopeId(1): ScopeFlags(0x0)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["Animals", "CatDog"]
-rebuilt        : ScopeId(2): ["Animals"]
+rebuilt        : ScopeId(3): ["Animals"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "Animals":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -1267,16 +5383,16 @@ after transform: ScopeId(1): ScopeFlags(0x0)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["Animals", "Dog"]
-rebuilt        : ScopeId(2): ["Animals"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(3): ["Animals", "CatDog"]
 rebuilt        : ScopeId(3): ["Animals"]
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
+after transform: ScopeId(2): ScopeFlags(0x0)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(3): ["Animals", "CatDog"]
+rebuilt        : ScopeId(5): ["Animals"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol reference IDs mismatch for "Cat":
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
@@ -1299,10 +5415,10 @@ after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["B", "E"]
-rebuilt        : ScopeId(2): ["E"]
+rebuilt        : ScopeId(3): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -1371,10 +5487,10 @@ after transform: ScopeId(1): ScopeFlags(0x0)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["E", "z"]
-rebuilt        : ScopeId(2): ["E"]
+rebuilt        : ScopeId(3): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -1391,10 +5507,10 @@ after transform: ScopeId(1): ScopeFlags(0x0)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["IPC", "SERVER", "SOCKET", "UV_READABLE", "UV_WRITABLE", "constants"]
-rebuilt        : ScopeId(2): ["constants"]
+rebuilt        : ScopeId(3): ["constants"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "socketType":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -1498,13 +5614,13 @@ after transform: ScopeId(11): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 Bindings mismatch:
 after transform: ScopeId(12): ["BB", "L"]
-rebuilt        : ScopeId(3): ["BB"]
+rebuilt        : ScopeId(4): ["BB"]
 Scope flags mismatch:
 after transform: ScopeId(12): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
 Scope flags mismatch:
 after transform: ScopeId(15): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(6): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "BB":
 after transform: SymbolId(10): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
@@ -1743,12 +5859,21 @@ after transform: ["console"]
 rebuilt        : ["LongNameModule", "console"]
 
 * namespace/clobber-class/input.ts
+Bindings mismatch:
+after transform: ScopeId(2): ["B", "_A"]
+rebuilt        : ScopeId(2): ["_A"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["B"]
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(Class | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 22, end: 23 }]
 rebuilt        : SymbolId(0): []
+Symbol scope ID mismatch for "B":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(3)
 
 * namespace/clobber-enum/input.ts
 Bindings mismatch:
@@ -1757,12 +5882,21 @@ rebuilt        : ScopeId(1): ["A"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Bindings mismatch:
+after transform: ScopeId(2): ["B", "_A"]
+rebuilt        : ScopeId(3): ["_A"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(4): ["B"]
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(RegularEnum | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 30, end: 31 }]
 rebuilt        : SymbolId(0): []
+Symbol scope ID mismatch for "B":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(4)
 
 * namespace/clobber-export/input.ts
 Symbol flags mismatch for "N":
@@ -1773,6 +5907,12 @@ after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 35, en
 rebuilt        : SymbolId(0): []
 
 * namespace/contentious-names/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["N", "_N", "concat", "constructor", "copyWithin", "entries", "every", "fill", "filter", "find", "findIndex", "flat", "flatMap", "forEach", "includes", "indexOf", "join", "keys", "lastIndexOf", "length", "map", "pop", "push", "reduce", "reduceRight", "reverse", "shift", "slice", "some", "sort", "splice", "toLocaleString", "toString", "unshift", "values"]
+rebuilt        : ScopeId(1): ["_N"]
+Bindings mismatch:
+after transform: ScopeId(70): []
+rebuilt        : ScopeId(2): ["N", "concat", "constructor", "copyWithin", "entries", "every", "fill", "filter", "find", "findIndex", "flat", "flatMap", "forEach", "includes", "indexOf", "join", "keys", "lastIndexOf", "length", "map", "pop", "push", "reduce", "reduceRight", "reverse", "shift", "slice", "some", "sort", "splice", "toLocaleString", "toString", "unshift", "values"]
 Symbol flags mismatch for "N":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -1785,204 +5925,306 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N":
 after transform: SymbolId(1): Span { start: 26, end: 27 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "N":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
 Symbol flags mismatch for "constructor":
 after transform: SymbolId(3): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "constructor":
 after transform: SymbolId(3): Span { start: 50, end: 61 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "constructor":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(5): ScopeId(2)
 Symbol flags mismatch for "length":
 after transform: SymbolId(5): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "length":
 after transform: SymbolId(5): Span { start: 84, end: 90 }
 rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "length":
+after transform: SymbolId(5): ScopeId(1)
+rebuilt        : SymbolId(8): ScopeId(2)
 Symbol flags mismatch for "concat":
 after transform: SymbolId(7): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "concat":
 after transform: SymbolId(7): Span { start: 113, end: 119 }
 rebuilt        : SymbolId(11): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "concat":
+after transform: SymbolId(7): ScopeId(1)
+rebuilt        : SymbolId(11): ScopeId(2)
 Symbol flags mismatch for "copyWithin":
 after transform: SymbolId(9): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(14): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "copyWithin":
 after transform: SymbolId(9): Span { start: 142, end: 152 }
 rebuilt        : SymbolId(14): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "copyWithin":
+after transform: SymbolId(9): ScopeId(1)
+rebuilt        : SymbolId(14): ScopeId(2)
 Symbol flags mismatch for "fill":
 after transform: SymbolId(11): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(17): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "fill":
 after transform: SymbolId(11): Span { start: 175, end: 179 }
 rebuilt        : SymbolId(17): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "fill":
+after transform: SymbolId(11): ScopeId(1)
+rebuilt        : SymbolId(17): ScopeId(2)
 Symbol flags mismatch for "find":
 after transform: SymbolId(13): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(20): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "find":
 after transform: SymbolId(13): Span { start: 202, end: 206 }
 rebuilt        : SymbolId(20): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "find":
+after transform: SymbolId(13): ScopeId(1)
+rebuilt        : SymbolId(20): ScopeId(2)
 Symbol flags mismatch for "findIndex":
 after transform: SymbolId(15): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(23): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "findIndex":
 after transform: SymbolId(15): Span { start: 229, end: 238 }
 rebuilt        : SymbolId(23): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "findIndex":
+after transform: SymbolId(15): ScopeId(1)
+rebuilt        : SymbolId(23): ScopeId(2)
 Symbol flags mismatch for "lastIndexOf":
 after transform: SymbolId(17): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(26): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "lastIndexOf":
 after transform: SymbolId(17): Span { start: 261, end: 272 }
 rebuilt        : SymbolId(26): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "lastIndexOf":
+after transform: SymbolId(17): ScopeId(1)
+rebuilt        : SymbolId(26): ScopeId(2)
 Symbol flags mismatch for "pop":
 after transform: SymbolId(19): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(29): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "pop":
 after transform: SymbolId(19): Span { start: 295, end: 298 }
 rebuilt        : SymbolId(29): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "pop":
+after transform: SymbolId(19): ScopeId(1)
+rebuilt        : SymbolId(29): ScopeId(2)
 Symbol flags mismatch for "push":
 after transform: SymbolId(21): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(32): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "push":
 after transform: SymbolId(21): Span { start: 321, end: 325 }
 rebuilt        : SymbolId(32): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "push":
+after transform: SymbolId(21): ScopeId(1)
+rebuilt        : SymbolId(32): ScopeId(2)
 Symbol flags mismatch for "reverse":
 after transform: SymbolId(23): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(35): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "reverse":
 after transform: SymbolId(23): Span { start: 348, end: 355 }
 rebuilt        : SymbolId(35): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "reverse":
+after transform: SymbolId(23): ScopeId(1)
+rebuilt        : SymbolId(35): ScopeId(2)
 Symbol flags mismatch for "shift":
 after transform: SymbolId(25): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(38): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "shift":
 after transform: SymbolId(25): Span { start: 378, end: 383 }
 rebuilt        : SymbolId(38): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "shift":
+after transform: SymbolId(25): ScopeId(1)
+rebuilt        : SymbolId(38): ScopeId(2)
 Symbol flags mismatch for "unshift":
 after transform: SymbolId(27): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(41): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "unshift":
 after transform: SymbolId(27): Span { start: 406, end: 413 }
 rebuilt        : SymbolId(41): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "unshift":
+after transform: SymbolId(27): ScopeId(1)
+rebuilt        : SymbolId(41): ScopeId(2)
 Symbol flags mismatch for "slice":
 after transform: SymbolId(29): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(44): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "slice":
 after transform: SymbolId(29): Span { start: 436, end: 441 }
 rebuilt        : SymbolId(44): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "slice":
+after transform: SymbolId(29): ScopeId(1)
+rebuilt        : SymbolId(44): ScopeId(2)
 Symbol flags mismatch for "sort":
 after transform: SymbolId(31): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(47): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "sort":
 after transform: SymbolId(31): Span { start: 464, end: 468 }
 rebuilt        : SymbolId(47): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "sort":
+after transform: SymbolId(31): ScopeId(1)
+rebuilt        : SymbolId(47): ScopeId(2)
 Symbol flags mismatch for "splice":
 after transform: SymbolId(33): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(50): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "splice":
 after transform: SymbolId(33): Span { start: 491, end: 497 }
 rebuilt        : SymbolId(50): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "splice":
+after transform: SymbolId(33): ScopeId(1)
+rebuilt        : SymbolId(50): ScopeId(2)
 Symbol flags mismatch for "includes":
 after transform: SymbolId(35): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(53): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "includes":
 after transform: SymbolId(35): Span { start: 520, end: 528 }
 rebuilt        : SymbolId(53): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "includes":
+after transform: SymbolId(35): ScopeId(1)
+rebuilt        : SymbolId(53): ScopeId(2)
 Symbol flags mismatch for "indexOf":
 after transform: SymbolId(37): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(56): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "indexOf":
 after transform: SymbolId(37): Span { start: 551, end: 558 }
 rebuilt        : SymbolId(56): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "indexOf":
+after transform: SymbolId(37): ScopeId(1)
+rebuilt        : SymbolId(56): ScopeId(2)
 Symbol flags mismatch for "join":
 after transform: SymbolId(39): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(59): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "join":
 after transform: SymbolId(39): Span { start: 581, end: 585 }
 rebuilt        : SymbolId(59): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "join":
+after transform: SymbolId(39): ScopeId(1)
+rebuilt        : SymbolId(59): ScopeId(2)
 Symbol flags mismatch for "keys":
 after transform: SymbolId(41): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(62): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "keys":
 after transform: SymbolId(41): Span { start: 608, end: 612 }
 rebuilt        : SymbolId(62): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "keys":
+after transform: SymbolId(41): ScopeId(1)
+rebuilt        : SymbolId(62): ScopeId(2)
 Symbol flags mismatch for "entries":
 after transform: SymbolId(43): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(65): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "entries":
 after transform: SymbolId(43): Span { start: 635, end: 642 }
 rebuilt        : SymbolId(65): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "entries":
+after transform: SymbolId(43): ScopeId(1)
+rebuilt        : SymbolId(65): ScopeId(2)
 Symbol flags mismatch for "values":
 after transform: SymbolId(45): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(68): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "values":
 after transform: SymbolId(45): Span { start: 665, end: 671 }
 rebuilt        : SymbolId(68): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "values":
+after transform: SymbolId(45): ScopeId(1)
+rebuilt        : SymbolId(68): ScopeId(2)
 Symbol flags mismatch for "forEach":
 after transform: SymbolId(47): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(71): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "forEach":
 after transform: SymbolId(47): Span { start: 694, end: 701 }
 rebuilt        : SymbolId(71): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "forEach":
+after transform: SymbolId(47): ScopeId(1)
+rebuilt        : SymbolId(71): ScopeId(2)
 Symbol flags mismatch for "filter":
 after transform: SymbolId(49): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(74): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "filter":
 after transform: SymbolId(49): Span { start: 724, end: 730 }
 rebuilt        : SymbolId(74): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "filter":
+after transform: SymbolId(49): ScopeId(1)
+rebuilt        : SymbolId(74): ScopeId(2)
 Symbol flags mismatch for "map":
 after transform: SymbolId(51): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(77): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "map":
 after transform: SymbolId(51): Span { start: 753, end: 756 }
 rebuilt        : SymbolId(77): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "map":
+after transform: SymbolId(51): ScopeId(1)
+rebuilt        : SymbolId(77): ScopeId(2)
 Symbol flags mismatch for "every":
 after transform: SymbolId(53): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(80): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "every":
 after transform: SymbolId(53): Span { start: 779, end: 784 }
 rebuilt        : SymbolId(80): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "every":
+after transform: SymbolId(53): ScopeId(1)
+rebuilt        : SymbolId(80): ScopeId(2)
 Symbol flags mismatch for "some":
 after transform: SymbolId(55): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(83): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "some":
 after transform: SymbolId(55): Span { start: 807, end: 811 }
 rebuilt        : SymbolId(83): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "some":
+after transform: SymbolId(55): ScopeId(1)
+rebuilt        : SymbolId(83): ScopeId(2)
 Symbol flags mismatch for "reduce":
 after transform: SymbolId(57): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(86): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "reduce":
 after transform: SymbolId(57): Span { start: 834, end: 840 }
 rebuilt        : SymbolId(86): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "reduce":
+after transform: SymbolId(57): ScopeId(1)
+rebuilt        : SymbolId(86): ScopeId(2)
 Symbol flags mismatch for "reduceRight":
 after transform: SymbolId(59): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(89): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "reduceRight":
 after transform: SymbolId(59): Span { start: 863, end: 874 }
 rebuilt        : SymbolId(89): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "reduceRight":
+after transform: SymbolId(59): ScopeId(1)
+rebuilt        : SymbolId(89): ScopeId(2)
 Symbol flags mismatch for "toLocaleString":
 after transform: SymbolId(61): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(92): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "toLocaleString":
 after transform: SymbolId(61): Span { start: 897, end: 911 }
 rebuilt        : SymbolId(92): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "toLocaleString":
+after transform: SymbolId(61): ScopeId(1)
+rebuilt        : SymbolId(92): ScopeId(2)
 Symbol flags mismatch for "toString":
 after transform: SymbolId(63): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(95): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "toString":
 after transform: SymbolId(63): Span { start: 934, end: 942 }
 rebuilt        : SymbolId(95): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "toString":
+after transform: SymbolId(63): ScopeId(1)
+rebuilt        : SymbolId(95): ScopeId(2)
 Symbol flags mismatch for "flat":
 after transform: SymbolId(65): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(98): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "flat":
 after transform: SymbolId(65): Span { start: 965, end: 969 }
 rebuilt        : SymbolId(98): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "flat":
+after transform: SymbolId(65): ScopeId(1)
+rebuilt        : SymbolId(98): ScopeId(2)
 Symbol flags mismatch for "flatMap":
 after transform: SymbolId(67): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(101): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "flatMap":
 after transform: SymbolId(67): Span { start: 992, end: 999 }
 rebuilt        : SymbolId(101): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "flatMap":
+after transform: SymbolId(67): ScopeId(1)
+rebuilt        : SymbolId(101): ScopeId(2)
 
 * namespace/declare/input.ts
 Bindings mismatch:
@@ -2006,16 +6248,46 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 * namespace/empty-removed/input.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["_a", "b", "c", "d"]
-rebuilt        : ScopeId(1): ["_a", "c"]
+rebuilt        : ScopeId(1): ["_a"]
+Bindings mismatch:
+after transform: ScopeId(25): []
+rebuilt        : ScopeId(2): ["c"]
 Bindings mismatch:
 after transform: ScopeId(6): ["_WithTypes", "a", "b", "c", "d"]
-rebuilt        : ScopeId(3): ["_WithTypes", "d"]
+rebuilt        : ScopeId(5): ["_WithTypes"]
+Bindings mismatch:
+after transform: ScopeId(27): []
+rebuilt        : ScopeId(6): ["d"]
 Bindings mismatch:
 after transform: ScopeId(12): ["D", "_d"]
-rebuilt        : ScopeId(4): ["_d"]
+rebuilt        : ScopeId(7): ["_d"]
+Bindings mismatch:
+after transform: ScopeId(14): ["_WithValues", "a", "b", "c", "d", "e"]
+rebuilt        : ScopeId(9): ["_WithValues"]
+Bindings mismatch:
+after transform: ScopeId(33): []
+rebuilt        : ScopeId(10): ["a", "b", "c", "d", "e"]
+Bindings mismatch:
+after transform: ScopeId(15): ["A", "_a2"]
+rebuilt        : ScopeId(11): ["_a2"]
+Bindings mismatch:
+after transform: ScopeId(28): []
+rebuilt        : ScopeId(12): ["A"]
+Bindings mismatch:
+after transform: ScopeId(17): ["B", "_b"]
+rebuilt        : ScopeId(14): ["_b"]
+Bindings mismatch:
+after transform: ScopeId(29): []
+rebuilt        : ScopeId(15): ["B"]
 Scope flags mismatch:
 after transform: ScopeId(18): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(9): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(16): ScopeFlags(StrictMode | Function)
+Bindings mismatch:
+after transform: ScopeId(19): ["C", "_c2"]
+rebuilt        : ScopeId(18): ["_c2"]
+Bindings mismatch:
+after transform: ScopeId(30): []
+rebuilt        : ScopeId(19): ["C"]
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2031,6 +6303,9 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "c":
 after transform: SymbolId(2): Span { start: 43, end: 44 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "c":
+after transform: SymbolId(2): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
 Symbol flags mismatch for "WithTypes":
 after transform: SymbolId(6): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
@@ -2043,6 +6318,9 @@ rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "d":
 after transform: SymbolId(13): Span { start: 224, end: 225 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "d":
+after transform: SymbolId(13): ScopeId(6)
+rebuilt        : SymbolId(7): ScopeId(6)
 Symbol flags mismatch for "WithValues":
 after transform: SymbolId(15): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(9): SymbolFlags(BlockScopedVariable)
@@ -2055,33 +6333,57 @@ rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "a":
 after transform: SymbolId(16): Span { start: 287, end: 288 }
 rebuilt        : SymbolId(11): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(16): ScopeId(14)
+rebuilt        : SymbolId(11): ScopeId(10)
+Symbol scope ID mismatch for "A":
+after transform: SymbolId(17): ScopeId(15)
+rebuilt        : SymbolId(13): ScopeId(12)
 Symbol flags mismatch for "b":
 after transform: SymbolId(18): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(14): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "b":
 after transform: SymbolId(18): Span { start: 316, end: 317 }
 rebuilt        : SymbolId(14): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(18): ScopeId(14)
+rebuilt        : SymbolId(14): ScopeId(10)
 Symbol flags mismatch for "B":
 after transform: SymbolId(19): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(16): SymbolFlags(BlockScopedVariable)
+Symbol scope ID mismatch for "B":
+after transform: SymbolId(19): ScopeId(17)
+rebuilt        : SymbolId(16): ScopeId(15)
 Symbol flags mismatch for "c":
 after transform: SymbolId(20): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(18): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "c":
 after transform: SymbolId(20): Span { start: 344, end: 345 }
 rebuilt        : SymbolId(18): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "c":
+after transform: SymbolId(20): ScopeId(14)
+rebuilt        : SymbolId(18): ScopeId(10)
+Symbol scope ID mismatch for "C":
+after transform: SymbolId(21): ScopeId(19)
+rebuilt        : SymbolId(20): ScopeId(19)
 Symbol flags mismatch for "d":
 after transform: SymbolId(22): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(21): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "d":
 after transform: SymbolId(22): Span { start: 378, end: 379 }
 rebuilt        : SymbolId(21): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "d":
+after transform: SymbolId(22): ScopeId(14)
+rebuilt        : SymbolId(21): ScopeId(10)
 Symbol flags mismatch for "e":
 after transform: SymbolId(24): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(24): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "e":
 after transform: SymbolId(24): Span { start: 402, end: 403 }
 rebuilt        : SymbolId(24): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "e":
+after transform: SymbolId(24): ScopeId(14)
+rebuilt        : SymbolId(24): ScopeId(10)
 
 * namespace/export/input.ts
 Symbol flags mismatch for "N":
@@ -2133,17 +6435,41 @@ rebuilt        : SymbolId(0): []
 
 * namespace/nested/input.ts
 Bindings mismatch:
-after transform: ScopeId(9): ["H", "I", "J", "K"]
-rebuilt        : ScopeId(9): ["H"]
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(9): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(2): ["C", "D", "F", "G", "L", "M", "_A"]
+rebuilt        : ScopeId(2): ["_A"]
 Bindings mismatch:
-after transform: ScopeId(13): ["L", "M"]
-rebuilt        : ScopeId(13): ["L"]
+after transform: ScopeId(21): []
+rebuilt        : ScopeId(3): ["C", "D", "F", "G", "L", "M"]
+Bindings mismatch:
+after transform: ScopeId(3): ["E", "G", "_C"]
+rebuilt        : ScopeId(4): ["_C"]
+Bindings mismatch:
+after transform: ScopeId(16): []
+rebuilt        : ScopeId(5): ["E", "G"]
+Bindings mismatch:
+after transform: ScopeId(7): ["N", "_M"]
+rebuilt        : ScopeId(9): ["_M"]
+Bindings mismatch:
+after transform: ScopeId(17): []
+rebuilt        : ScopeId(10): ["N"]
+Bindings mismatch:
+after transform: ScopeId(10): ["C", "H", "_D"]
+rebuilt        : ScopeId(13): ["_D"]
+Bindings mismatch:
+after transform: ScopeId(18): []
+rebuilt        : ScopeId(14): ["C", "H"]
+Bindings mismatch:
+after transform: ScopeId(11): ["H", "I", "J", "K"]
+rebuilt        : ScopeId(15): ["H"]
 Scope flags mismatch:
-after transform: ScopeId(13): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(13): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(11): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(15): ScopeFlags(StrictMode | Function)
+Bindings mismatch:
+after transform: ScopeId(15): ["L", "M"]
+rebuilt        : ScopeId(22): ["L"]
+Scope flags mismatch:
+after transform: ScopeId(15): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(22): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(Class | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
@@ -2156,24 +6482,51 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "C":
 after transform: SymbolId(1): Span { start: 45, end: 46 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "C":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(3)
+Symbol scope ID mismatch for "G":
+after transform: SymbolId(2): ScopeId(3)
+rebuilt        : SymbolId(4): ScopeId(5)
+Symbol scope ID mismatch for "E":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(5): ScopeId(5)
 Symbol flags mismatch for "M":
 after transform: SymbolId(4): SymbolFlags(Function | ValueModule)
 rebuilt        : SymbolId(6): SymbolFlags(Function)
+Symbol scope ID mismatch for "M":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(6): ScopeId(3)
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(4): [Span { start: 110, end: 111 }, Span { start: 129, end: 130 }]
 rebuilt        : SymbolId(6): []
+Symbol scope ID mismatch for "N":
+after transform: SymbolId(5): ScopeId(7)
+rebuilt        : SymbolId(8): ScopeId(10)
 Symbol flags mismatch for "D":
 after transform: SymbolId(6): SymbolFlags(Function | ValueModule)
 rebuilt        : SymbolId(9): SymbolFlags(Function)
+Symbol scope ID mismatch for "D":
+after transform: SymbolId(6): ScopeId(2)
+rebuilt        : SymbolId(9): ScopeId(3)
 Symbol redeclarations mismatch for "D":
 after transform: SymbolId(6): [Span { start: 181, end: 182 }, Span { start: 207, end: 208 }]
 rebuilt        : SymbolId(9): []
+Symbol scope ID mismatch for "C":
+after transform: SymbolId(7): ScopeId(10)
+rebuilt        : SymbolId(11): ScopeId(14)
 Symbol flags mismatch for "H":
 after transform: SymbolId(8): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(12): SymbolFlags(BlockScopedVariable)
+Symbol scope ID mismatch for "H":
+after transform: SymbolId(8): ScopeId(10)
+rebuilt        : SymbolId(12): ScopeId(14)
 Symbol flags mismatch for "F":
 after transform: SymbolId(12): SymbolFlags(Class | ValueModule)
 rebuilt        : SymbolId(14): SymbolFlags(Class)
+Symbol scope ID mismatch for "F":
+after transform: SymbolId(12): ScopeId(2)
+rebuilt        : SymbolId(14): ScopeId(3)
 Symbol redeclarations mismatch for "F":
 after transform: SymbolId(12): [Span { start: 308, end: 309 }, Span { start: 325, end: 326 }]
 rebuilt        : SymbolId(14): []
@@ -2183,20 +6536,29 @@ rebuilt        : SymbolId(17): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "G":
 after transform: SymbolId(14): Span { start: 350, end: 351 }
 rebuilt        : SymbolId(17): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "G":
+after transform: SymbolId(14): ScopeId(2)
+rebuilt        : SymbolId(17): ScopeId(3)
 Symbol flags mismatch for "L":
 after transform: SymbolId(16): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(20): SymbolFlags(BlockScopedVariable)
+Symbol scope ID mismatch for "L":
+after transform: SymbolId(16): ScopeId(2)
+rebuilt        : SymbolId(20): ScopeId(3)
 
 * namespace/nested-namespace/input.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["B", "G", "_A"]
-rebuilt        : ScopeId(1): ["G", "_A"]
+rebuilt        : ScopeId(1): ["_A"]
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(2): ["G"]
 Bindings mismatch:
 after transform: ScopeId(4): ["G", "H"]
-rebuilt        : ScopeId(2): ["G"]
+rebuilt        : ScopeId(3): ["G"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2206,8 +6568,47 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol flags mismatch for "G":
 after transform: SymbolId(3): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Symbol scope ID mismatch for "G":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
 
 * namespace/nested-shorthand/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["Y", "_X"]
+rebuilt        : ScopeId(1): ["_X"]
+Bindings mismatch:
+after transform: ScopeId(8): []
+rebuilt        : ScopeId(2): ["Y"]
+Bindings mismatch:
+after transform: ScopeId(2): ["Z", "_Y"]
+rebuilt        : ScopeId(3): ["_Y"]
+Bindings mismatch:
+after transform: ScopeId(7): []
+rebuilt        : ScopeId(4): ["Z"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_proj", "data"]
+rebuilt        : ScopeId(5): ["_proj"]
+Bindings mismatch:
+after transform: ScopeId(12): []
+rebuilt        : ScopeId(6): ["data"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_data", "util"]
+rebuilt        : ScopeId(7): ["_data"]
+Bindings mismatch:
+after transform: ScopeId(11): []
+rebuilt        : ScopeId(8): ["util"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_util", "api"]
+rebuilt        : ScopeId(9): ["_util"]
+Bindings mismatch:
+after transform: ScopeId(10): []
+rebuilt        : ScopeId(10): ["api"]
+Bindings mismatch:
+after transform: ScopeId(6): ["X", "_api"]
+rebuilt        : ScopeId(11): ["_api"]
+Bindings mismatch:
+after transform: ScopeId(9): []
+rebuilt        : ScopeId(12): ["X"]
 Symbol flags mismatch for "X":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2220,6 +6621,12 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Y":
 after transform: SymbolId(1): Span { start: 12, end: 13 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "Y":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
+Symbol scope ID mismatch for "Z":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(4)
 Symbol flags mismatch for "proj":
 after transform: SymbolId(3): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
@@ -2232,23 +6639,59 @@ rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "data":
 after transform: SymbolId(4): Span { start: 56, end: 60 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "data":
+after transform: SymbolId(4): ScopeId(3)
+rebuilt        : SymbolId(7): ScopeId(6)
 Symbol flags mismatch for "util":
 after transform: SymbolId(5): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(9): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "util":
 after transform: SymbolId(5): Span { start: 61, end: 65 }
 rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "util":
+after transform: SymbolId(5): ScopeId(4)
+rebuilt        : SymbolId(9): ScopeId(8)
 Symbol flags mismatch for "api":
 after transform: SymbolId(6): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "api":
 after transform: SymbolId(6): Span { start: 66, end: 69 }
 rebuilt        : SymbolId(11): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "api":
+after transform: SymbolId(6): ScopeId(5)
+rebuilt        : SymbolId(11): ScopeId(10)
+Symbol scope ID mismatch for "X":
+after transform: SymbolId(7): ScopeId(6)
+rebuilt        : SymbolId(13): ScopeId(12)
 
 * namespace/same-name/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["N", "_N7", "_N8"]
+rebuilt        : ScopeId(1): ["_N8"]
+Bindings mismatch:
+after transform: ScopeId(14): []
+rebuilt        : ScopeId(2): ["N", "_N7"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_N10", "_N3"]
+rebuilt        : ScopeId(5): ["_N10"]
+Bindings mismatch:
+after transform: ScopeId(11): []
+rebuilt        : ScopeId(6): ["_N3"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_N11", "_N5"]
+rebuilt        : ScopeId(9): ["_N11"]
+Bindings mismatch:
+after transform: ScopeId(12): []
+rebuilt        : ScopeId(10): ["_N5"]
+Bindings mismatch:
+after transform: ScopeId(8): ["_N", "_N12"]
+rebuilt        : ScopeId(12): ["_N12"]
+Bindings mismatch:
+after transform: ScopeId(13): []
+rebuilt        : ScopeId(13): ["_N"]
 Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(8): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(9): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(14): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "N":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2261,18 +6704,33 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "_N7":
 after transform: SymbolId(1): Span { start: 26, end: 29 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "_N7":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
 Symbol flags mismatch for "N":
 after transform: SymbolId(3): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N":
 after transform: SymbolId(3): Span { start: 59, end: 60 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "N":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(5): ScopeId(2)
 Symbol redeclarations mismatch for "N":
 after transform: SymbolId(3): [Span { start: 59, end: 60 }, Span { start: 115, end: 116 }, Span { start: 166, end: 167 }]
 rebuilt        : SymbolId(5): []
+Symbol scope ID mismatch for "_N3":
+after transform: SymbolId(4): ScopeId(3)
+rebuilt        : SymbolId(7): ScopeId(6)
+Symbol scope ID mismatch for "_N5":
+after transform: SymbolId(5): ScopeId(6)
+rebuilt        : SymbolId(9): ScopeId(10)
 Symbol flags mismatch for "_N":
 after transform: SymbolId(6): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
+Symbol scope ID mismatch for "_N":
+after transform: SymbolId(6): ScopeId(8)
+rebuilt        : SymbolId(11): ScopeId(13)
 
 * namespace/undeclared/input.ts
 Symbol flags mismatch for "N":
@@ -2322,10 +6780,10 @@ after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["A", "z"]
-rebuilt        : ScopeId(2): ["A"]
+rebuilt        : ScopeId(3): ["A"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2366,6 +6824,17 @@ rebuilt        : ["f", "x"]
 Unresolved references mismatch:
 after transform: ["T", "f"]
 rebuilt        : ["f"]
+
+* variable-declaration/non-null-in-optional-chain/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): ["_a$b"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_a$b"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_a$b":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(1)
 
 
 # babel-preset-react (4/10)

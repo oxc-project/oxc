@@ -207,7 +207,11 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         statements: ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaBox<'a, FunctionBody<'a>> {
-        let body_scope_id = ctx.create_child_scope(scope_id, ScopeFlags::FunctionBody);
+        let body_scope_id = ctx.insert_scope_below_statements_from_scope_id(
+            &statements,
+            scope_id,
+            ScopeFlags::FunctionBody,
+        );
         FunctionBody::boxed_with_scope_id(
             SPAN,
             body_scope_id,

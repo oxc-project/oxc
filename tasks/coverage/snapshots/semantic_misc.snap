@@ -14,10 +14,10 @@ rebuilt        : ScopeId(0): []
 semantic Error: tasks/coverage/misc/pass/oxc-11593.ts
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(5): Some(ScopeId(0))
+rebuilt        : ScopeId(8): Some(ScopeId(0))
 Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(1))
-rebuilt        : ScopeId(7): Some(ScopeId(0))
+after transform: ScopeId(5): Some(ScopeId(1))
+rebuilt        : ScopeId(11): Some(ScopeId(0))
 Unresolved reference IDs mismatch for "String":
 after transform: [ReferenceId(11), ReferenceId(12)]
 rebuilt        : [ReferenceId(18)]
@@ -37,74 +37,452 @@ Bindings mismatch:
 after transform: ScopeId(0): ["C", "D", "Outer", "Outer2", "Outer3", "Outer4", "_D", "_Outer", "_access1_accessor_storage", "_access1_accessor_storage2", "_access2_accessor_storage", "_access2_accessor_storage2", "_access3_accessor_storage", "_access3_accessor_storage2", "_access4_accessor_storage", "_access4_accessor_storage2", "_access_accessor_storage5", "_assertClassBrand", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_decorate", "_decorateMetadata", "_defineProperty", "_ref5", "_super$foo13", "_super$foo13_computed_accessor_storage", "_super$foo14", "_super$foo15", "_super$foo16", "_superPropGet"]
 rebuilt        : ScopeId(0): ["C", "D", "Outer", "Outer2", "Outer3", "Outer4", "_D", "_Outer", "_access1_accessor_storage2", "_access2_accessor_storage2", "_access3_accessor_storage2", "_access4_accessor_storage2", "_access_accessor_storage5", "_assertClassBrand", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_decorate", "_decorateMetadata", "_defineProperty", "_ref5", "_super$foo13", "_super$foo13_computed_accessor_storage", "_super$foo14", "_super$foo15", "_super$foo16", "_superPropGet"]
 Bindings mismatch:
-after transform: ScopeId(133): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "Inner6", "_access_accessor_storage", "_access_accessor_storage2", "_ref", "_ref2", "_super", "_super$foo", "_super$foo2", "_super$foo3", "_super$foo4", "_super$foo_computed_accessor_storage", "_super2", "_super3", "_super4", "_super_computed_accessor_storage"]
-rebuilt        : ScopeId(150): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "Inner6", "_access_accessor_storage2", "_ref", "_ref2", "_super", "_super$foo", "_super$foo2", "_super$foo3", "_super$foo4", "_super$foo_computed_accessor_storage", "_super2", "_super3", "_super4", "_super_computed_accessor_storage"]
-Scope parent mismatch:
-after transform: ScopeId(137): Some(ScopeId(136))
-rebuilt        : ScopeId(153): Some(ScopeId(150))
-Scope parent mismatch:
-after transform: ScopeId(139): Some(ScopeId(136))
-rebuilt        : ScopeId(154): Some(ScopeId(150))
-Scope parent mismatch:
-after transform: ScopeId(149): Some(ScopeId(148))
-rebuilt        : ScopeId(176): Some(ScopeId(175))
-Scope parent mismatch:
-after transform: ScopeId(156): Some(ScopeId(155))
-rebuilt        : ScopeId(188): Some(ScopeId(187))
-Scope parent mismatch:
-after transform: ScopeId(178): Some(ScopeId(177))
-rebuilt        : ScopeId(201): Some(ScopeId(200))
-Scope parent mismatch:
-after transform: ScopeId(192): Some(ScopeId(191))
-rebuilt        : ScopeId(225): Some(ScopeId(224))
-Scope parent mismatch:
-after transform: ScopeId(199): Some(ScopeId(198))
-rebuilt        : ScopeId(237): Some(ScopeId(236))
-Scope parent mismatch:
-after transform: ScopeId(207): Some(ScopeId(206))
-rebuilt        : ScopeId(250): Some(ScopeId(249))
-Scope parent mismatch:
-after transform: ScopeId(170): Some(ScopeId(169))
-rebuilt        : ScopeId(285): Some(ScopeId(284))
-Scope parent mismatch:
-after transform: ScopeId(221): Some(ScopeId(220))
-rebuilt        : ScopeId(298): Some(ScopeId(297))
-Scope parent mismatch:
-after transform: ScopeId(228): Some(ScopeId(227))
-rebuilt        : ScopeId(310): Some(ScopeId(309))
+after transform: ScopeId(205): ["_ref", "_ref2", "_super$foo2", "_super$foo3", "_super$foo4", "_super2", "_super3", "_super4"]
+rebuilt        : ScopeId(240): ["_access_accessor_storage2", "_super", "_super$foo", "_super$foo_computed_accessor_storage", "_super_computed_accessor_storage"]
 Bindings mismatch:
-after transform: ScopeId(266): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "_Inner", "_access1_accessor_storage3", "_access2_accessor_storage3", "_access3_accessor_storage3", "_access4_accessor_storage3", "_access_accessor_storage15", "_access_accessor_storage16", "_access_accessor_storage17", "_ref13", "_super$foo53", "_super$foo53_computed_accessor_storage", "_super$foo54", "_super$foo55", "_super$foo56"]
-rebuilt        : ScopeId(354): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "_Inner", "_access1_accessor_storage3", "_access2_accessor_storage3", "_access3_accessor_storage3", "_access4_accessor_storage3", "_access_accessor_storage15", "_access_accessor_storage17", "_ref13", "_super$foo53", "_super$foo53_computed_accessor_storage", "_super$foo54", "_super$foo55", "_super$foo56"]
+after transform: ScopeId(206): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "Inner6", "_access_accessor_storage", "_access_accessor_storage2", "_super", "_super$foo", "_super$foo_computed_accessor_storage", "_super_computed_accessor_storage"]
+rebuilt        : ScopeId(241): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "Inner6", "_ref", "_ref2", "_super$foo2", "_super$foo3", "_super$foo4", "_super2", "_super3", "_super4"]
+Scope parent mismatch:
+after transform: ScopeId(211): Some(ScopeId(210))
+rebuilt        : ScopeId(245): Some(ScopeId(241))
+Scope parent mismatch:
+after transform: ScopeId(215): Some(ScopeId(210))
+rebuilt        : ScopeId(247): Some(ScopeId(241))
+Bindings mismatch:
+after transform: ScopeId(676): ["_ref3", "_super$foo6", "_super$foo7", "_super$foo8"]
+rebuilt        : ScopeId(283): ["_access_accessor_storage3", "_super$foo5", "_super$foo5_computed_accessor_storage"]
+Bindings mismatch:
+after transform: ScopeId(677): ["_access_accessor_storage3", "_super$foo5", "_super$foo5_computed_accessor_storage"]
+rebuilt        : ScopeId(284): ["_ref3", "_super$foo6", "_super$foo7", "_super$foo8"]
+Scope parent mismatch:
+after transform: ScopeId(229): Some(ScopeId(228))
+rebuilt        : ScopeId(285): Some(ScopeId(284))
+Bindings mismatch:
+after transform: ScopeId(238): ["_ref4", "_super$foo10", "_super$foo11", "_super$foo12"]
+rebuilt        : ScopeId(305): ["_access_accessor_storage4", "_super$foo9", "_super$foo9_computed_accessor_storage"]
+Bindings mismatch:
+after transform: ScopeId(239): ["_access_accessor_storage4", "_super$foo9", "_super$foo9_computed_accessor_storage"]
+rebuilt        : ScopeId(306): ["_ref4", "_super$foo10", "_super$foo11", "_super$foo12"]
+Scope parent mismatch:
+after transform: ScopeId(241): Some(ScopeId(240))
+rebuilt        : ScopeId(307): Some(ScopeId(306))
+Bindings mismatch:
+after transform: ScopeId(276): ["_ref7", "_super$foo22", "_super$foo23", "_super$foo24"]
+rebuilt        : ScopeId(329): ["_access_accessor_storage7", "_super$foo21", "_super$foo21_computed_accessor_storage"]
+Bindings mismatch:
+after transform: ScopeId(277): ["Inner", "Inner2", "_access_accessor_storage7", "_super$foo21", "_super$foo21_computed_accessor_storage"]
+rebuilt        : ScopeId(330): ["Inner", "Inner2", "_ref7", "_super$foo22", "_super$foo23", "_super$foo24"]
+Scope parent mismatch:
+after transform: ScopeId(279): Some(ScopeId(278))
+rebuilt        : ScopeId(331): Some(ScopeId(330))
+Bindings mismatch:
+after transform: ScopeId(288): ["_super$bar", "_super$foo26", "_super$foo27", "_super$foo28"]
+rebuilt        : ScopeId(351): ["_access_accessor_storage8", "_super$foo25", "_super$foo25_computed_accessor_storage"]
+Bindings mismatch:
+after transform: ScopeId(289): ["_access_accessor_storage8", "_super$foo25", "_super$foo25_computed_accessor_storage"]
+rebuilt        : ScopeId(352): ["_super$bar", "_super$foo26", "_super$foo27", "_super$foo28"]
+Bindings mismatch:
+after transform: ScopeId(300): ["_ref8", "_super$foo30", "_super$foo31", "_super$foo32"]
+rebuilt        : ScopeId(373): ["_access_accessor_storage9", "_super$foo29", "_super$foo29_computed_accessor_storage"]
+Bindings mismatch:
+after transform: ScopeId(301): ["Inner", "Inner2", "_access_accessor_storage9", "_super$foo29", "_super$foo29_computed_accessor_storage"]
+rebuilt        : ScopeId(374): ["Inner", "Inner2", "_ref8", "_super$foo30", "_super$foo31", "_super$foo32"]
+Scope parent mismatch:
+after transform: ScopeId(303): Some(ScopeId(302))
+rebuilt        : ScopeId(375): Some(ScopeId(374))
+Bindings mismatch:
+after transform: ScopeId(312): ["_ref9", "_super$foo34", "_super$foo35", "_super$foo36"]
+rebuilt        : ScopeId(395): ["_access_accessor_storage10", "_super$foo33", "_super$foo33_computed_accessor_storage"]
+Bindings mismatch:
+after transform: ScopeId(313): ["_access_accessor_storage10", "_super$foo33", "_super$foo33_computed_accessor_storage"]
+rebuilt        : ScopeId(396): ["_ref9", "_super$foo34", "_super$foo35", "_super$foo36"]
+Scope parent mismatch:
+after transform: ScopeId(315): Some(ScopeId(314))
+rebuilt        : ScopeId(397): Some(ScopeId(396))
+Bindings mismatch:
+after transform: ScopeId(326): ["_ref10", "_super$foo38", "_super$foo39", "_super$foo40"]
+rebuilt        : ScopeId(419): ["_access_accessor_storage11", "_super$foo37", "_super$foo37_computed_accessor_storage"]
+Bindings mismatch:
+after transform: ScopeId(327): ["Inner", "Inner2", "_access_accessor_storage11", "_super$foo37", "_super$foo37_computed_accessor_storage"]
+rebuilt        : ScopeId(420): ["Inner", "Inner2", "_ref10", "_super$foo38", "_super$foo39", "_super$foo40"]
+Scope parent mismatch:
+after transform: ScopeId(329): Some(ScopeId(328))
+rebuilt        : ScopeId(421): Some(ScopeId(420))
+Bindings mismatch:
+after transform: ScopeId(338): ["_super$bar2", "_super$foo42", "_super$foo43", "_super$foo44"]
+rebuilt        : ScopeId(441): ["_access_accessor_storage12", "_super$foo41", "_super$foo41_computed_accessor_storage"]
+Bindings mismatch:
+after transform: ScopeId(339): ["_access_accessor_storage12", "_super$foo41", "_super$foo41_computed_accessor_storage"]
+rebuilt        : ScopeId(442): ["_super$bar2", "_super$foo42", "_super$foo43", "_super$foo44"]
+Bindings mismatch:
+after transform: ScopeId(262): ["_ref6", "_super$foo18", "_super$foo19", "_super$foo20"]
+rebuilt        : ScopeId(483): ["_access_accessor_storage6", "_super$foo17", "_super$foo17_computed_accessor_storage"]
+Bindings mismatch:
+after transform: ScopeId(263): ["_access_accessor_storage6", "_super$foo17", "_super$foo17_computed_accessor_storage"]
+rebuilt        : ScopeId(484): ["_ref6", "_super$foo18", "_super$foo19", "_super$foo20"]
+Scope parent mismatch:
+after transform: ScopeId(265): Some(ScopeId(264))
+rebuilt        : ScopeId(485): Some(ScopeId(484))
+Bindings mismatch:
+after transform: ScopeId(350): ["Inner", "Inner2", "_access_accessor_storage13", "_ref11", "_super$foo45", "_super$foo45_computed_accessor_storage", "_super$foo46", "_super$foo47", "_super$foo48"]
+rebuilt        : ScopeId(507): ["_access_accessor_storage13", "_super$foo45", "_super$foo45_computed_accessor_storage"]
+Bindings mismatch:
+after transform: ScopeId(798): []
+rebuilt        : ScopeId(508): ["Inner", "Inner2", "_ref11", "_super$foo46", "_super$foo47", "_super$foo48"]
+Bindings mismatch:
+after transform: ScopeId(361): ["_ref12", "_super$foo50", "_super$foo51", "_super$foo52"]
+rebuilt        : ScopeId(529): ["_access_accessor_storage14", "_super$foo49", "_super$foo49_computed_accessor_storage"]
+Bindings mismatch:
+after transform: ScopeId(362): ["_access_accessor_storage14", "_super$foo49", "_super$foo49_computed_accessor_storage"]
+rebuilt        : ScopeId(530): ["_ref12", "_super$foo50", "_super$foo51", "_super$foo52"]
+Scope parent mismatch:
+after transform: ScopeId(364): Some(ScopeId(363))
+rebuilt        : ScopeId(531): Some(ScopeId(530))
+Bindings mismatch:
+after transform: ScopeId(427): ["_ref13", "_super$foo54", "_super$foo55", "_super$foo56"]
+rebuilt        : ScopeId(605): ["_Inner", "_access1_accessor_storage3", "_access2_accessor_storage3", "_access3_accessor_storage3", "_access4_accessor_storage3", "_access_accessor_storage15", "_access_accessor_storage17", "_super$foo53", "_super$foo53_computed_accessor_storage"]
+Bindings mismatch:
+after transform: ScopeId(428): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "_Inner", "_access1_accessor_storage3", "_access2_accessor_storage3", "_access3_accessor_storage3", "_access4_accessor_storage3", "_access_accessor_storage15", "_access_accessor_storage16", "_access_accessor_storage17", "_super$foo53", "_super$foo53_computed_accessor_storage"]
+rebuilt        : ScopeId(606): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "_ref13", "_super$foo54", "_super$foo55", "_super$foo56"]
 Scope flags mismatch:
-after transform: ScopeId(339): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(435): ScopeFlags(Function | Arrow)
+after transform: ScopeId(537): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(733): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
-after transform: ScopeId(339): Some(ScopeId(338))
-rebuilt        : ScopeId(435): Some(ScopeId(354))
+after transform: ScopeId(537): Some(ScopeId(536))
+rebuilt        : ScopeId(733): Some(ScopeId(606))
+Scope flags mismatch:
+after transform: ScopeId(538): ScopeFlags(StrictMode | FunctionBody)
+rebuilt        : ScopeId(734): ScopeFlags(FunctionBody)
 Scope parent mismatch:
-after transform: ScopeId(359): Some(ScopeId(358))
-rebuilt        : ScopeId(467): Some(ScopeId(455))
+after transform: ScopeId(566): Some(ScopeId(565))
+rebuilt        : ScopeId(785): Some(ScopeId(769))
 Scope parent mismatch:
-after transform: ScopeId(376): Some(ScopeId(375))
-rebuilt        : ScopeId(482): Some(ScopeId(470))
+after transform: ScopeId(590): Some(ScopeId(589))
+rebuilt        : ScopeId(806): Some(ScopeId(790))
 Scope parent mismatch:
-after transform: ScopeId(392): Some(ScopeId(391))
-rebuilt        : ScopeId(496): Some(ScopeId(484))
+after transform: ScopeId(613): Some(ScopeId(612))
+rebuilt        : ScopeId(826): Some(ScopeId(810))
 Symbol reference IDs mismatch for "_decorateMetadata":
 after transform: SymbolId(200): [ReferenceId(167), ReferenceId(171), ReferenceId(175), ReferenceId(176), ReferenceId(186), ReferenceId(187), ReferenceId(193), ReferenceId(194), ReferenceId(195), ReferenceId(199), ReferenceId(200), ReferenceId(201), ReferenceId(227), ReferenceId(229), ReferenceId(230), ReferenceId(236), ReferenceId(237), ReferenceId(238), ReferenceId(266), ReferenceId(268), ReferenceId(269), ReferenceId(275), ReferenceId(276), ReferenceId(277), ReferenceId(305), ReferenceId(307), ReferenceId(308), ReferenceId(314), ReferenceId(315), ReferenceId(316), ReferenceId(344), ReferenceId(346), ReferenceId(347), ReferenceId(353), ReferenceId(354), ReferenceId(355), ReferenceId(383), ReferenceId(387), ReferenceId(388), ReferenceId(396), ReferenceId(397), ReferenceId(398), ReferenceId(426), ReferenceId(428), ReferenceId(429), ReferenceId(435), ReferenceId(436), ReferenceId(437), ReferenceId(465), ReferenceId(469), ReferenceId(470), ReferenceId(478), ReferenceId(479), ReferenceId(480), ReferenceId(508), ReferenceId(510), ReferenceId(511), ReferenceId(517), ReferenceId(518), ReferenceId(519), ReferenceId(547), ReferenceId(551), ReferenceId(552), ReferenceId(560), ReferenceId(561), ReferenceId(562), ReferenceId(590), ReferenceId(592), ReferenceId(593), ReferenceId(599), ReferenceId(600), ReferenceId(601), ReferenceId(629), ReferenceId(633), ReferenceId(634), ReferenceId(642), ReferenceId(643), ReferenceId(644), ReferenceId(672), ReferenceId(674), ReferenceId(675), ReferenceId(681), ReferenceId(682), ReferenceId(683), ReferenceId(840), ReferenceId(844), ReferenceId(845), ReferenceId(853), ReferenceId(854), ReferenceId(855), ReferenceId(877), ReferenceId(881), ReferenceId(882), ReferenceId(892), ReferenceId(896), ReferenceId(897), ReferenceId(903), ReferenceId(904), ReferenceId(905), ReferenceId(909), ReferenceId(910), ReferenceId(911), ReferenceId(917), ReferenceId(918), ReferenceId(919), ReferenceId(921), ReferenceId(922), ReferenceId(923), ReferenceId(925), ReferenceId(926), ReferenceId(927), ReferenceId(931), ReferenceId(932), ReferenceId(933), ReferenceId(935), ReferenceId(936), ReferenceId(937), ReferenceId(939), ReferenceId(940), ReferenceId(941), ReferenceId(945), ReferenceId(946), ReferenceId(947), ReferenceId(949), ReferenceId(950), ReferenceId(951), ReferenceId(953), ReferenceId(954), ReferenceId(955)]
 rebuilt        : SymbolId(7): [ReferenceId(168), ReferenceId(172), ReferenceId(176), ReferenceId(178), ReferenceId(181), ReferenceId(183), ReferenceId(186), ReferenceId(188), ReferenceId(189), ReferenceId(192), ReferenceId(194), ReferenceId(195), ReferenceId(290), ReferenceId(294), ReferenceId(296), ReferenceId(299), ReferenceId(301), ReferenceId(302), ReferenceId(363), ReferenceId(367), ReferenceId(369), ReferenceId(372), ReferenceId(374), ReferenceId(375), ReferenceId(436), ReferenceId(440), ReferenceId(442), ReferenceId(445), ReferenceId(447), ReferenceId(448), ReferenceId(624), ReferenceId(631), ReferenceId(633), ReferenceId(639), ReferenceId(641), ReferenceId(642), ReferenceId(776), ReferenceId(780), ReferenceId(782), ReferenceId(785), ReferenceId(787), ReferenceId(788), ReferenceId(809), ReferenceId(813), ReferenceId(815), ReferenceId(818), ReferenceId(822), ReferenceId(824), ReferenceId(827), ReferenceId(829), ReferenceId(830), ReferenceId(833), ReferenceId(835), ReferenceId(836), ReferenceId(840), ReferenceId(842), ReferenceId(843), ReferenceId(846), ReferenceId(848), ReferenceId(849), ReferenceId(853), ReferenceId(855), ReferenceId(856)]
+Symbol scope ID mismatch for "_super":
+after transform: SymbolId(178): ScopeId(206)
+rebuilt        : SymbolId(81): ScopeId(240)
+Symbol scope ID mismatch for "_super$foo":
+after transform: SymbolId(180): ScopeId(206)
+rebuilt        : SymbolId(82): ScopeId(240)
+Symbol scope ID mismatch for "_super2":
+after transform: SymbolId(184): ScopeId(205)
+rebuilt        : SymbolId(83): ScopeId(241)
+Symbol scope ID mismatch for "_super$foo2":
+after transform: SymbolId(185): ScopeId(205)
+rebuilt        : SymbolId(84): ScopeId(241)
+Symbol scope ID mismatch for "_super3":
+after transform: SymbolId(188): ScopeId(205)
+rebuilt        : SymbolId(85): ScopeId(241)
+Symbol scope ID mismatch for "_super4":
+after transform: SymbolId(189): ScopeId(205)
+rebuilt        : SymbolId(86): ScopeId(241)
+Symbol scope ID mismatch for "_super$foo3":
+after transform: SymbolId(190): ScopeId(205)
+rebuilt        : SymbolId(87): ScopeId(241)
+Symbol scope ID mismatch for "_super$foo4":
+after transform: SymbolId(191): ScopeId(205)
+rebuilt        : SymbolId(88): ScopeId(241)
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(192): ScopeId(205)
+rebuilt        : SymbolId(89): ScopeId(241)
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(193): ScopeId(205)
+rebuilt        : SymbolId(90): ScopeId(241)
+Symbol scope ID mismatch for "_super_computed_accessor_storage":
+after transform: SymbolId(182): ScopeId(206)
+rebuilt        : SymbolId(93): ScopeId(240)
+Symbol scope ID mismatch for "_super$foo_computed_accessor_storage":
+after transform: SymbolId(183): ScopeId(206)
+rebuilt        : SymbolId(94): ScopeId(240)
 Symbol span mismatch for "Inner5":
 after transform: SymbolId(57): Span { start: 4573, end: 4579 }
 rebuilt        : SymbolId(100): Span { start: 0, end: 0 }
 Symbol span mismatch for "Inner5":
 after transform: SymbolId(194): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(101): Span { start: 4573, end: 4579 }
+Symbol scope ID mismatch for "_access_accessor_storage2":
+after transform: SymbolId(199): ScopeId(206)
+rebuilt        : SymbolId(105): ScopeId(240)
+Symbol scope ID mismatch for "_super$foo5":
+after transform: SymbolId(201): ScopeId(677)
+rebuilt        : SymbolId(107): ScopeId(283)
+Symbol scope ID mismatch for "_super$foo5_computed_accessor_storage":
+after transform: SymbolId(204): ScopeId(677)
+rebuilt        : SymbolId(108): ScopeId(283)
+Symbol scope ID mismatch for "_access_accessor_storage3":
+after transform: SymbolId(205): ScopeId(677)
+rebuilt        : SymbolId(109): ScopeId(283)
+Symbol scope ID mismatch for "_super$foo6":
+after transform: SymbolId(206): ScopeId(676)
+rebuilt        : SymbolId(110): ScopeId(284)
+Symbol scope ID mismatch for "_super$foo7":
+after transform: SymbolId(207): ScopeId(676)
+rebuilt        : SymbolId(111): ScopeId(284)
+Symbol scope ID mismatch for "_super$foo8":
+after transform: SymbolId(208): ScopeId(676)
+rebuilt        : SymbolId(112): ScopeId(284)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(209): ScopeId(676)
+rebuilt        : SymbolId(113): ScopeId(284)
+Symbol scope ID mismatch for "_super$foo9":
+after transform: SymbolId(210): ScopeId(239)
+rebuilt        : SymbolId(119): ScopeId(305)
+Symbol scope ID mismatch for "_super$foo9_computed_accessor_storage":
+after transform: SymbolId(213): ScopeId(239)
+rebuilt        : SymbolId(120): ScopeId(305)
+Symbol scope ID mismatch for "_access_accessor_storage4":
+after transform: SymbolId(214): ScopeId(239)
+rebuilt        : SymbolId(121): ScopeId(305)
+Symbol scope ID mismatch for "_super$foo10":
+after transform: SymbolId(215): ScopeId(238)
+rebuilt        : SymbolId(122): ScopeId(306)
+Symbol scope ID mismatch for "_super$foo11":
+after transform: SymbolId(216): ScopeId(238)
+rebuilt        : SymbolId(123): ScopeId(306)
+Symbol scope ID mismatch for "_super$foo12":
+after transform: SymbolId(217): ScopeId(238)
+rebuilt        : SymbolId(124): ScopeId(306)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(218): ScopeId(238)
+rebuilt        : SymbolId(125): ScopeId(306)
+Symbol scope ID mismatch for "_super$foo21":
+after transform: SymbolId(237): ScopeId(277)
+rebuilt        : SymbolId(131): ScopeId(329)
+Symbol scope ID mismatch for "_super$foo22":
+after transform: SymbolId(242): ScopeId(276)
+rebuilt        : SymbolId(132): ScopeId(330)
+Symbol scope ID mismatch for "_super$foo23":
+after transform: SymbolId(243): ScopeId(276)
+rebuilt        : SymbolId(133): ScopeId(330)
+Symbol scope ID mismatch for "_super$foo24":
+after transform: SymbolId(244): ScopeId(276)
+rebuilt        : SymbolId(134): ScopeId(330)
+Symbol scope ID mismatch for "_ref7":
+after transform: SymbolId(245): ScopeId(276)
+rebuilt        : SymbolId(135): ScopeId(330)
+Symbol scope ID mismatch for "_super$foo21_computed_accessor_storage":
+after transform: SymbolId(240): ScopeId(277)
+rebuilt        : SymbolId(136): ScopeId(329)
+Symbol scope ID mismatch for "_access_accessor_storage7":
+after transform: SymbolId(241): ScopeId(277)
+rebuilt        : SymbolId(137): ScopeId(329)
+Symbol scope ID mismatch for "_super$foo25":
+after transform: SymbolId(246): ScopeId(289)
+rebuilt        : SymbolId(143): ScopeId(351)
+Symbol scope ID mismatch for "_super$foo25_computed_accessor_storage":
+after transform: SymbolId(249): ScopeId(289)
+rebuilt        : SymbolId(144): ScopeId(351)
+Symbol scope ID mismatch for "_access_accessor_storage8":
+after transform: SymbolId(250): ScopeId(289)
+rebuilt        : SymbolId(145): ScopeId(351)
+Symbol scope ID mismatch for "_super$foo26":
+after transform: SymbolId(251): ScopeId(288)
+rebuilt        : SymbolId(146): ScopeId(352)
+Symbol scope ID mismatch for "_super$foo27":
+after transform: SymbolId(252): ScopeId(288)
+rebuilt        : SymbolId(147): ScopeId(352)
+Symbol scope ID mismatch for "_super$foo28":
+after transform: SymbolId(253): ScopeId(288)
+rebuilt        : SymbolId(148): ScopeId(352)
+Symbol scope ID mismatch for "_super$bar":
+after transform: SymbolId(254): ScopeId(288)
+rebuilt        : SymbolId(149): ScopeId(352)
+Symbol scope ID mismatch for "_super$foo29":
+after transform: SymbolId(255): ScopeId(301)
+rebuilt        : SymbolId(154): ScopeId(373)
+Symbol scope ID mismatch for "_super$foo30":
+after transform: SymbolId(260): ScopeId(300)
+rebuilt        : SymbolId(155): ScopeId(374)
+Symbol scope ID mismatch for "_super$foo31":
+after transform: SymbolId(261): ScopeId(300)
+rebuilt        : SymbolId(156): ScopeId(374)
+Symbol scope ID mismatch for "_super$foo32":
+after transform: SymbolId(262): ScopeId(300)
+rebuilt        : SymbolId(157): ScopeId(374)
+Symbol scope ID mismatch for "_ref8":
+after transform: SymbolId(263): ScopeId(300)
+rebuilt        : SymbolId(158): ScopeId(374)
+Symbol scope ID mismatch for "_super$foo29_computed_accessor_storage":
+after transform: SymbolId(258): ScopeId(301)
+rebuilt        : SymbolId(159): ScopeId(373)
+Symbol scope ID mismatch for "_access_accessor_storage9":
+after transform: SymbolId(259): ScopeId(301)
+rebuilt        : SymbolId(160): ScopeId(373)
+Symbol scope ID mismatch for "_super$foo33":
+after transform: SymbolId(264): ScopeId(313)
+rebuilt        : SymbolId(166): ScopeId(395)
+Symbol scope ID mismatch for "_super$foo33_computed_accessor_storage":
+after transform: SymbolId(267): ScopeId(313)
+rebuilt        : SymbolId(167): ScopeId(395)
+Symbol scope ID mismatch for "_access_accessor_storage10":
+after transform: SymbolId(268): ScopeId(313)
+rebuilt        : SymbolId(168): ScopeId(395)
+Symbol scope ID mismatch for "_super$foo34":
+after transform: SymbolId(269): ScopeId(312)
+rebuilt        : SymbolId(169): ScopeId(396)
+Symbol scope ID mismatch for "_super$foo35":
+after transform: SymbolId(270): ScopeId(312)
+rebuilt        : SymbolId(170): ScopeId(396)
+Symbol scope ID mismatch for "_super$foo36":
+after transform: SymbolId(271): ScopeId(312)
+rebuilt        : SymbolId(171): ScopeId(396)
+Symbol scope ID mismatch for "_ref9":
+after transform: SymbolId(272): ScopeId(312)
+rebuilt        : SymbolId(172): ScopeId(396)
+Symbol scope ID mismatch for "_super$foo37":
+after transform: SymbolId(273): ScopeId(327)
+rebuilt        : SymbolId(178): ScopeId(419)
+Symbol scope ID mismatch for "_super$foo38":
+after transform: SymbolId(278): ScopeId(326)
+rebuilt        : SymbolId(179): ScopeId(420)
+Symbol scope ID mismatch for "_super$foo39":
+after transform: SymbolId(279): ScopeId(326)
+rebuilt        : SymbolId(180): ScopeId(420)
+Symbol scope ID mismatch for "_super$foo40":
+after transform: SymbolId(280): ScopeId(326)
+rebuilt        : SymbolId(181): ScopeId(420)
+Symbol scope ID mismatch for "_ref10":
+after transform: SymbolId(281): ScopeId(326)
+rebuilt        : SymbolId(182): ScopeId(420)
+Symbol scope ID mismatch for "_super$foo37_computed_accessor_storage":
+after transform: SymbolId(276): ScopeId(327)
+rebuilt        : SymbolId(183): ScopeId(419)
+Symbol scope ID mismatch for "_access_accessor_storage11":
+after transform: SymbolId(277): ScopeId(327)
+rebuilt        : SymbolId(184): ScopeId(419)
+Symbol scope ID mismatch for "_super$foo41":
+after transform: SymbolId(282): ScopeId(339)
+rebuilt        : SymbolId(190): ScopeId(441)
+Symbol scope ID mismatch for "_super$foo41_computed_accessor_storage":
+after transform: SymbolId(285): ScopeId(339)
+rebuilt        : SymbolId(191): ScopeId(441)
+Symbol scope ID mismatch for "_access_accessor_storage12":
+after transform: SymbolId(286): ScopeId(339)
+rebuilt        : SymbolId(192): ScopeId(441)
+Symbol scope ID mismatch for "_super$foo42":
+after transform: SymbolId(287): ScopeId(338)
+rebuilt        : SymbolId(193): ScopeId(442)
+Symbol scope ID mismatch for "_super$foo43":
+after transform: SymbolId(288): ScopeId(338)
+rebuilt        : SymbolId(194): ScopeId(442)
+Symbol scope ID mismatch for "_super$foo44":
+after transform: SymbolId(289): ScopeId(338)
+rebuilt        : SymbolId(195): ScopeId(442)
+Symbol scope ID mismatch for "_super$bar2":
+after transform: SymbolId(290): ScopeId(338)
+rebuilt        : SymbolId(196): ScopeId(442)
+Symbol scope ID mismatch for "_super$foo17":
+after transform: SymbolId(228): ScopeId(263)
+rebuilt        : SymbolId(206): ScopeId(483)
+Symbol scope ID mismatch for "_super$foo17_computed_accessor_storage":
+after transform: SymbolId(231): ScopeId(263)
+rebuilt        : SymbolId(207): ScopeId(483)
+Symbol scope ID mismatch for "_access_accessor_storage6":
+after transform: SymbolId(232): ScopeId(263)
+rebuilt        : SymbolId(208): ScopeId(483)
+Symbol scope ID mismatch for "_super$foo18":
+after transform: SymbolId(233): ScopeId(262)
+rebuilt        : SymbolId(209): ScopeId(484)
+Symbol scope ID mismatch for "_super$foo19":
+after transform: SymbolId(234): ScopeId(262)
+rebuilt        : SymbolId(210): ScopeId(484)
+Symbol scope ID mismatch for "_super$foo20":
+after transform: SymbolId(235): ScopeId(262)
+rebuilt        : SymbolId(211): ScopeId(484)
+Symbol scope ID mismatch for "_ref6":
+after transform: SymbolId(236): ScopeId(262)
+rebuilt        : SymbolId(212): ScopeId(484)
+Symbol scope ID mismatch for "_super$foo46":
+after transform: SymbolId(296): ScopeId(350)
+rebuilt        : SymbolId(219): ScopeId(508)
+Symbol scope ID mismatch for "_super$foo47":
+after transform: SymbolId(297): ScopeId(350)
+rebuilt        : SymbolId(220): ScopeId(508)
+Symbol scope ID mismatch for "_super$foo48":
+after transform: SymbolId(298): ScopeId(350)
+rebuilt        : SymbolId(221): ScopeId(508)
+Symbol scope ID mismatch for "_ref11":
+after transform: SymbolId(299): ScopeId(350)
+rebuilt        : SymbolId(222): ScopeId(508)
+Symbol scope ID mismatch for "Inner":
+after transform: SymbolId(88): ScopeId(350)
+rebuilt        : SymbolId(226): ScopeId(508)
+Symbol scope ID mismatch for "Inner2":
+after transform: SymbolId(90): ScopeId(350)
+rebuilt        : SymbolId(229): ScopeId(508)
+Symbol scope ID mismatch for "_super$foo49":
+after transform: SymbolId(300): ScopeId(362)
+rebuilt        : SymbolId(230): ScopeId(529)
+Symbol scope ID mismatch for "_super$foo49_computed_accessor_storage":
+after transform: SymbolId(303): ScopeId(362)
+rebuilt        : SymbolId(231): ScopeId(529)
+Symbol scope ID mismatch for "_access_accessor_storage14":
+after transform: SymbolId(304): ScopeId(362)
+rebuilt        : SymbolId(232): ScopeId(529)
+Symbol scope ID mismatch for "_super$foo50":
+after transform: SymbolId(305): ScopeId(361)
+rebuilt        : SymbolId(233): ScopeId(530)
+Symbol scope ID mismatch for "_super$foo51":
+after transform: SymbolId(306): ScopeId(361)
+rebuilt        : SymbolId(234): ScopeId(530)
+Symbol scope ID mismatch for "_super$foo52":
+after transform: SymbolId(307): ScopeId(361)
+rebuilt        : SymbolId(235): ScopeId(530)
+Symbol scope ID mismatch for "_ref12":
+after transform: SymbolId(308): ScopeId(361)
+rebuilt        : SymbolId(236): ScopeId(530)
+Symbol scope ID mismatch for "_Inner":
+after transform: SymbolId(318): ScopeId(428)
+rebuilt        : SymbolId(251): ScopeId(605)
+Symbol scope ID mismatch for "_super$foo53":
+after transform: SymbolId(319): ScopeId(428)
+rebuilt        : SymbolId(252): ScopeId(605)
+Symbol scope ID mismatch for "_super$foo54":
+after transform: SymbolId(324): ScopeId(427)
+rebuilt        : SymbolId(253): ScopeId(606)
+Symbol scope ID mismatch for "_super$foo55":
+after transform: SymbolId(325): ScopeId(427)
+rebuilt        : SymbolId(254): ScopeId(606)
+Symbol scope ID mismatch for "_super$foo56":
+after transform: SymbolId(326): ScopeId(427)
+rebuilt        : SymbolId(255): ScopeId(606)
+Symbol scope ID mismatch for "_ref13":
+after transform: SymbolId(327): ScopeId(427)
+rebuilt        : SymbolId(256): ScopeId(606)
+Symbol scope ID mismatch for "_access1_accessor_storage3":
+after transform: SymbolId(314): ScopeId(428)
+rebuilt        : SymbolId(257): ScopeId(605)
+Symbol scope ID mismatch for "_access2_accessor_storage3":
+after transform: SymbolId(315): ScopeId(428)
+rebuilt        : SymbolId(258): ScopeId(605)
+Symbol scope ID mismatch for "_access3_accessor_storage3":
+after transform: SymbolId(316): ScopeId(428)
+rebuilt        : SymbolId(259): ScopeId(605)
+Symbol scope ID mismatch for "_access4_accessor_storage3":
+after transform: SymbolId(317): ScopeId(428)
+rebuilt        : SymbolId(260): ScopeId(605)
+Symbol scope ID mismatch for "_super$foo53_computed_accessor_storage":
+after transform: SymbolId(322): ScopeId(428)
+rebuilt        : SymbolId(286): ScopeId(605)
+Symbol scope ID mismatch for "_access_accessor_storage15":
+after transform: SymbolId(323): ScopeId(428)
+rebuilt        : SymbolId(287): ScopeId(605)
 Symbol span mismatch for "Inner4":
 after transform: SymbolId(126): Span { start: 12166, end: 12172 }
 rebuilt        : SymbolId(292): Span { start: 0, end: 0 }
 Symbol span mismatch for "Inner4":
 after transform: SymbolId(328): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(293): Span { start: 12166, end: 12172 }
+Symbol scope ID mismatch for "_access_accessor_storage17":
+after transform: SymbolId(332): ScopeId(428)
+rebuilt        : SymbolId(297): ScopeId(605)
 Unresolved reference IDs mismatch for "Function":
 after transform: [ReferenceId(192), ReferenceId(198), ReferenceId(235), ReferenceId(274), ReferenceId(313), ReferenceId(352), ReferenceId(395), ReferenceId(434), ReferenceId(477), ReferenceId(516), ReferenceId(559), ReferenceId(598), ReferenceId(641), ReferenceId(680), ReferenceId(852), ReferenceId(902), ReferenceId(908), ReferenceId(916), ReferenceId(920), ReferenceId(924), ReferenceId(930), ReferenceId(934), ReferenceId(938), ReferenceId(944), ReferenceId(948), ReferenceId(952)]
 rebuilt        : [ReferenceId(187), ReferenceId(193), ReferenceId(300), ReferenceId(373), ReferenceId(446), ReferenceId(640), ReferenceId(786), ReferenceId(828), ReferenceId(834), ReferenceId(841), ReferenceId(847), ReferenceId(854)]
@@ -113,6 +491,9 @@ after transform: [ReferenceId(166), ReferenceId(170), ReferenceId(174), Referenc
 rebuilt        : [ReferenceId(169), ReferenceId(173), ReferenceId(177), ReferenceId(182), ReferenceId(291), ReferenceId(295), ReferenceId(364), ReferenceId(368), ReferenceId(437), ReferenceId(441), ReferenceId(625), ReferenceId(632), ReferenceId(777), ReferenceId(781), ReferenceId(810), ReferenceId(814), ReferenceId(819), ReferenceId(823)]
 
 semantic Error: tasks/coverage/misc/pass/oxc-13284.ts
+Scope parent mismatch:
+after transform: ScopeId(25): Some(ScopeId(4))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
 Symbol reference IDs mismatch for "_super":
 after transform: SymbolId(18): [ReferenceId(14)]
 rebuilt        : SymbolId(9): []
@@ -142,6 +523,15 @@ semantic Error: tasks/coverage/misc/pass/oxc-3948-1.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["BrowserWorkingCopyBackupTracker", "CancellationToken", "DisposableStore", "EditorPart", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "IInstantiationService", "ILifecycleService", "ILogService", "IUntitledTextResourceEditorInput", "IWorkingCopyBackup", "IWorkingCopyBackupService", "IWorkingCopyEditorHandler", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "_decorate", "_decorateMetadata", "_decorateParam", "_defineProperty", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
 rebuilt        : ScopeId(0): ["BrowserWorkingCopyBackupTracker", "DisposableStore", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "ILifecycleService", "ILogService", "IWorkingCopyBackupService", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "_decorate", "_decorateMetadata", "_decorateParam", "_defineProperty", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
+Scope parent mismatch:
+after transform: ScopeId(102): Some(ScopeId(100))
+rebuilt        : ScopeId(18): Some(ScopeId(17))
+Bindings mismatch:
+after transform: ScopeId(23): ["untitled"]
+rebuilt        : ScopeId(37): ["_await$accessor$edito", "_untitledTextModel$te", "untitled"]
+Bindings mismatch:
+after transform: ScopeId(24): ["_await$accessor$edito", "_untitledTextModel$te", "accessor", "untitledTextEditor", "untitledTextModel", "workingCopyBackupService"]
+rebuilt        : ScopeId(38): ["accessor", "untitledTextEditor", "untitledTextModel", "workingCopyBackupService"]
 Symbol reference IDs mismatch for "URI":
 after transform: SymbolId(1): [ReferenceId(109), ReferenceId(117), ReferenceId(156), ReferenceId(158), ReferenceId(160), ReferenceId(162)]
 rebuilt        : SymbolId(1): [ReferenceId(196), ReferenceId(198), ReferenceId(200), ReferenceId(202)]
@@ -190,6 +580,12 @@ rebuilt        : SymbolId(38): [ReferenceId(23), ReferenceId(66), ReferenceId(10
 Symbol span mismatch for "TestWorkingCopyBackupTracker":
 after transform: SymbolId(136): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(39): Span { start: 3208, end: 3236 }
+Symbol scope ID mismatch for "_await$accessor$edito":
+after transform: SymbolId(142): ScopeId(24)
+rebuilt        : SymbolId(63): ScopeId(37)
+Symbol scope ID mismatch for "_untitledTextModel$te":
+after transform: SymbolId(143): ScopeId(24)
+rebuilt        : SymbolId(68): ScopeId(37)
 Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(36), ReferenceId(39), ReferenceId(82), ReferenceId(114), ReferenceId(153), ReferenceId(282)]
 rebuilt        : [ReferenceId(327)]
@@ -203,46 +599,46 @@ after transform: ScopeId(1): ScopeFlags(0x0)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["B", "baz"]
-rebuilt        : ScopeId(2): ["B"]
+rebuilt        : ScopeId(3): ["B"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(3): ["C", "baz"]
-rebuilt        : ScopeId(3): ["C"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
-after transform: ScopeId(4): ["D", "baz"]
-rebuilt        : ScopeId(4): ["D"]
+after transform: ScopeId(3): ["C", "baz"]
+rebuilt        : ScopeId(5): ["C"]
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["E", "baz"]
-rebuilt        : ScopeId(5): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(0x0)
+after transform: ScopeId(3): ScopeFlags(0x0)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
 Bindings mismatch:
-after transform: ScopeId(6): ["F", "baz"]
-rebuilt        : ScopeId(6): ["F"]
+after transform: ScopeId(4): ["D", "baz"]
+rebuilt        : ScopeId(7): ["D"]
 Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(0x0)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(7): ["G", "baz"]
-rebuilt        : ScopeId(7): ["G"]
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(0x0)
+after transform: ScopeId(4): ScopeFlags(0x0)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
 Bindings mismatch:
+after transform: ScopeId(5): ["E", "baz"]
+rebuilt        : ScopeId(9): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(0x0)
+rebuilt        : ScopeId(9): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(6): ["F", "baz"]
+rebuilt        : ScopeId(11): ["F"]
+Scope flags mismatch:
+after transform: ScopeId(6): ScopeFlags(0x0)
+rebuilt        : ScopeId(11): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(7): ["G", "baz"]
+rebuilt        : ScopeId(13): ["G"]
+Scope flags mismatch:
+after transform: ScopeId(7): ScopeFlags(0x0)
+rebuilt        : ScopeId(13): ScopeFlags(Function)
+Bindings mismatch:
 after transform: ScopeId(8): ["H", "baz"]
-rebuilt        : ScopeId(8): ["H"]
+rebuilt        : ScopeId(15): ["H"]
 Scope flags mismatch:
 after transform: ScopeId(8): ScopeFlags(0x0)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
+rebuilt        : ScopeId(15): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
