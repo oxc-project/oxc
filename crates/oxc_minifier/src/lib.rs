@@ -66,8 +66,7 @@ use rustc_hash::FxHashMap;
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 pub use property::{
-    CacheValue, ManglePropertiesOptions, PropertyMangleBail, PropertyMangleBailKind,
-    PropertyMangleCache, PropertyMangler,
+    ManglePropertiesOptions, PropertyMangleBail, PropertyMangleBailKind, PropertyMangler,
 };
 
 pub(crate) use crate::generated::traverse::Traverse;
@@ -100,10 +99,6 @@ pub struct MinifierReturn {
     /// A vector where each element corresponds to a class in declaration order.
     /// Each element is a mapping from original private member names to their mangled names.
     pub class_private_mappings: Option<IndexVec<ClassId, FxHashMap<String, CompactStr>>>,
-
-    /// The updated property-mangling cache (old name -> assigned name / reserved).
-    /// `None` unless property mangling ran.
-    pub property_mappings: Option<PropertyMangleCache>,
 
     /// Set when property mangling bailed out for the whole program (a `with` statement,
     /// a direct `eval`, or the `Function` constructor was found), meaning **no** property
@@ -190,18 +185,13 @@ impl<'a> Minifier {
             .map_or((None, None), |(scoping, mappings)| (Some(scoping), Some(mappings)));
 
         // Capture the whole-program bail (if any) before `rewrite` consumes the mangler, so a
-        // caller can surface a diagnostic even though `rewrite` silently returns the cache
-        // unchanged on bail.
+        // caller can surface a diagnostic even though `rewrite` is a silent no-op on bail.
         let property_mangle_bail = prop_mangler.as_ref().and_then(PropertyMangler::bail);
-        // Rewrite property names in place AFTER variable mangling, returning the updated cache.
-        let property_mappings = prop_mangler.map(|mangler| mangler.rewrite(program, allocator));
-
-        MinifierReturn {
-            scoping,
-            class_private_mappings,
-            property_mappings,
-            property_mangle_bail,
-            iterations,
+        // Rewrite property names in place AFTER variable mangling.
+        if let Some(mangler) = prop_mangler {
+            mangler.rewrite(program, allocator);
         }
+
+        MinifierReturn { scoping, class_private_mappings, property_mangle_bail, iterations }
     }
 }

@@ -202,15 +202,6 @@ export interface MinifyOptions {
    */
   reservedProps?: Array<string>
   /**
-   * A name cache for stable property mangling across builds.
-   *
-   * Pass an empty object `{}` to receive the resulting cache on
-   * {@link MinifyResult#mangleCache}, then feed it back into subsequent
-   * builds to keep names stable. A value of `false` reserves the property
-   * (it will never be mangled).
-   */
-  mangleCache?: Record<string, string | false>
-  /**
    * Also mangle quoted property names that match
    * {@link MinifyOptions#mangleProps mangleProps}.
    *
@@ -238,15 +229,6 @@ export interface MinifyResult {
    * Only populated when `codegen.legalComments` is `"linked"` or `"external"`.
    */
   legalComments: Array<string>
-  /**
-   * The property-name cache produced by property mangling.
-   *
-   * Only populated when {@link MinifyOptions#mangleProps mangleProps} is set.
-   * Maps original property names to their mangled names (or `false` if the
-   * name was reserved). Feed it back into {@link MinifyOptions#mangleCache}
-   * to keep names stable across builds.
-   */
-  mangleCache?: Record<string, string | false>
 }
 
 /** Minify synchronously. */

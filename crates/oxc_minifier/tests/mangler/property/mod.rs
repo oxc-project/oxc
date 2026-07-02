@@ -4,7 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_minifier::{
     CompressOptions, ManglePropertiesOptions, Minifier, MinifierOptions, PropertyMangleBailKind,
-    PropertyMangleCache, PropertyMangler,
+    PropertyMangler,
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -17,7 +17,6 @@ fn opts(regex: &str) -> ManglePropertiesOptions {
         reserved: FxHashSet::default(),
         mangle_quoted: false,
         debug: false,
-        cache: PropertyMangleCache::default(),
     }
 }
 

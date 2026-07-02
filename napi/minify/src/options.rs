@@ -1,11 +1,10 @@
 use napi::Either;
 use napi_derive::napi;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 use oxc_compat::EngineTargets;
-use oxc_minifier::{CacheValue, ManglePropertiesOptions, PropertyMangleCache};
+use oxc_minifier::ManglePropertiesOptions;
 use oxc_str::CompactStr;
-use oxc_syntax::identifier::is_identifier_name;
 
 #[napi(object)]
 pub struct TreeShakeOptions {
@@ -386,15 +385,6 @@ pub struct MinifyOptions {
     /// Terser-style `reserved` list.
     pub reserved_props: Option<Vec<String>>,
 
-    /// A name cache for stable property mangling across builds.
-    ///
-    /// Pass an empty object `{}` to receive the resulting cache on
-    /// {@link MinifyResult#mangleCache}, then feed it back into subsequent
-    /// builds to keep names stable. A value of `false` reserves the property
-    /// (it will never be mangled).
-    #[napi(ts_type = "Record<string, string | false>")]
-    pub mangle_cache: Option<FxHashMap<String, Either<String, bool>>>,
-
     /// Also mangle quoted property names that match
     /// {@link MinifyOptions#mangleProps mangleProps}.
     ///
@@ -437,8 +427,7 @@ impl TryFrom<&MinifyOptions> for oxc_minifier::MinifierOptions {
 ///
 /// # Errors
 ///
-/// Returns an error string if a regex fails to compile, or if the
-/// `mangleCache` contains an invalid key/value (e.g. `__proto__` or `true`).
+/// Returns an error string if a regex fails to compile.
 fn build_mangle_properties(o: &MinifyOptions) -> Result<Option<ManglePropertiesOptions>, String> {
     // Off by default: only enabled by a user-supplied `mangleProps` regex.
     let Some(mangle_props) = &o.mangle_props else {
@@ -455,43 +444,11 @@ fn build_mangle_properties(o: &MinifyOptions) -> Result<Option<ManglePropertiesO
     let reserved: FxHashSet<CompactStr> =
         o.reserved_props.iter().flatten().map(|s| CompactStr::from(s.as_str())).collect();
 
-    let mut cache = PropertyMangleCache::default();
-    if let Some(map) = &o.mangle_cache {
-        for (k, v) in map {
-            if k == "__proto__" {
-                return Err("mangleCache keys must not be `__proto__`".into());
-            }
-            let value = match v {
-                Either::A(s) => {
-                    if s == "__proto__" {
-                        return Err("mangleCache values must not be `__proto__`".into());
-                    }
-                    // The value is written verbatim into an identifier position, so it must be a
-                    // valid `IdentifierName` (keywords are fine — they are legal property keys and
-                    // after `.`). Anything else (`a-b`, `""`, `a b`) would silently corrupt the
-                    // output or produce invalid syntax.
-                    if !is_identifier_name(s) {
-                        return Err(format!(
-                            "mangleCache values must be valid identifier names, got `{s}`"
-                        ));
-                    }
-                    CacheValue::Name(CompactStr::from(s.as_str()))
-                }
-                Either::B(false) => CacheValue::Reserved,
-                Either::B(true) => {
-                    return Err("mangleCache values must be a string or false".into());
-                }
-            };
-            cache.map.insert(CompactStr::from(k.as_str()), value);
-        }
-    }
-
     Ok(Some(ManglePropertiesOptions {
         mangle,
         reserve,
         reserved,
         mangle_quoted: o.mangle_quoted.unwrap_or(false),
         debug: false,
-        cache,
     }))
 }
