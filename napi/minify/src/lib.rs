@@ -19,12 +19,11 @@ use std::path::PathBuf;
 
 use napi::{Either, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
-use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_minifier::{CacheValue, Minifier, PropertyMangleBail, PropertyMangleBailKind};
+use oxc_minifier::{Minifier, PropertyMangleBail, PropertyMangleBailKind};
 use oxc_napi::OxcError;
 use oxc_parser::Parser;
 use oxc_sourcemap::napi::SourceMap;
@@ -41,14 +40,6 @@ pub struct MinifyResult {
     /// Legal comments extracted from the source code.
     /// Only populated when `codegen.legalComments` is `"linked"` or `"external"`.
     pub legal_comments: Vec<String>,
-    /// The property-name cache produced by property mangling.
-    ///
-    /// Only populated when {@link MinifyOptions#mangleProps mangleProps} is set.
-    /// Maps original property names to their mangled names (or `false` if the
-    /// name was reserved). Feed it back into {@link MinifyOptions#mangleCache}
-    /// to keep names stable across builds.
-    #[napi(ts_type = "Record<string, string | false>")]
-    pub mangle_cache: Option<FxHashMap<String, Either<String, bool>>>,
 }
 
 fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>) -> MinifyResult {
@@ -83,21 +74,8 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
     let minifier_ret = Minifier::new(minifier_options).minify(&allocator, &mut program);
     let scoping = minifier_ret.scoping;
     // When property mangling bailed for the whole file, no property name was renamed; surface a
-    // warning so a shared-cache multi-file build does not silently ship mismatched names.
+    // warning so callers are not surprised that names they expected mangled were left intact.
     let property_mangle_bail = minifier_ret.property_mangle_bail;
-    let mangle_cache = minifier_ret.property_mappings.map(|cache| {
-        cache
-            .map
-            .into_iter()
-            .map(|(name, value)| {
-                let value = match value {
-                    CacheValue::Name(new_name) => Either::A(new_name.to_string()),
-                    CacheValue::Reserved => Either::B(false),
-                };
-                (name.to_string(), value)
-            })
-            .collect::<FxHashMap<String, Either<String, bool>>>()
-    });
 
     let mut codegen_options = match &options.codegen {
         // Need to remove all comments.
@@ -138,7 +116,6 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
         map: ret.map.map(oxc_sourcemap::napi::SourceMap::from),
         errors: OxcError::from_diagnostics(filename, source_text, diagnostics),
         legal_comments,
-        mangle_cache,
     }
 }
 

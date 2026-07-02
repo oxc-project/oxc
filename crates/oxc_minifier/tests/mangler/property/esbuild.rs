@@ -36,13 +36,11 @@
 //!   * Syntax lowering (optional-chain / class-field lowering) is a transformer
 //!     concern, not minify; the non-lowered essence is covered.
 
-use std::collections::BTreeMap;
-
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_minifier::{
-    CacheValue, CompressOptions, MangleOptions, ManglePropertiesOptions, Minifier, MinifierOptions,
-    PropertyMangleCache, PropertyMangler,
+    CompressOptions, MangleOptions, ManglePropertiesOptions, Minifier, MinifierOptions,
+    PropertyMangler,
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -56,47 +54,27 @@ fn opts(regex: &str) -> ManglePropertiesOptions {
         reserved: FxHashSet::default(),
         mangle_quoted: false,
         debug: false,
-        cache: PropertyMangleCache::default(),
     }
 }
 
-/// Flatten a `PropertyMangleCache` into a sorted `old -> new` map (reserved names are dropped,
-/// matching esbuild's `mangleCache` which only records the mangled names — reserved entries
-/// are stored as `false` and are not asserted here).
-fn cache_map(cache: &PropertyMangleCache) -> BTreeMap<String, String> {
-    cache
-        .map
-        .iter()
-        .filter_map(|(old, value)| match value {
-            CacheValue::Name(new) => Some((old.to_string(), new.to_string())),
-            CacheValue::Reserved => None,
-        })
-        .collect()
-}
-
-/// Run the `PropertyMangler` directly (no compress), returning `(code, old->new map)`.
-fn mangle(
-    src: &str,
-    source_type: SourceType,
-    mut options: ManglePropertiesOptions,
-) -> (String, BTreeMap<String, String>) {
+/// Run the `PropertyMangler` directly (no compress), returning the mangled code.
+fn mangle(src: &str, source_type: SourceType, mut options: ManglePropertiesOptions) -> String {
     let alloc = Allocator::default();
     let mut program = Parser::new(&alloc, src, source_type).parse().program;
     let mut m = PropertyMangler::new(std::mem::take(&mut options));
     m.collect(&program);
-    let cache = m.rewrite(&mut program, &alloc);
-    let code = Codegen::new().build(&program).code;
-    (code, cache_map(&cache))
+    m.rewrite(&mut program, &alloc);
+    Codegen::new().build(&program).code
 }
 
-/// Run the full `Minifier` (compress on), optionally with identifier mangle, returning
-/// `(code, old->new map)`.
+/// Run the full `Minifier` (compress on), optionally with identifier mangle, returning the
+/// mangled code.
 fn minify(
     src: &str,
     source_type: SourceType,
     prop_options: ManglePropertiesOptions,
     identifier_mangle: bool,
-) -> (String, BTreeMap<String, String>) {
+) -> String {
     let alloc = Allocator::default();
     let mut program = Parser::new(&alloc, src, source_type).parse().program;
     let options = MinifierOptions {
@@ -105,14 +83,7 @@ fn minify(
         mangle_properties: Some(prop_options),
     };
     let ret = Minifier::new(options).minify(&alloc, &mut program);
-    let code = Codegen::new().with_scoping(ret.scoping).build(&program).code;
-    let cache = ret.property_mappings.unwrap();
-    (code, cache_map(&cache))
-}
-
-/// Build an `old -> new` expectation map from string pairs.
-fn map(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
-    pairs.iter().map(|(k, v)| ((*k).to_string(), (*v).to_string())).collect()
+    Codegen::new().with_scoping(ret.scoping).build(&program).code
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -124,10 +95,8 @@ fn map(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
 // `bar_` matches `_$` -> renamed; the quoted `'baz_'` is reserved (no mangleQuoted), kept.
 #[test]
 fn mangle_props_entry2_default_object() {
-    let (code, cache) =
-        mangle("export default { bar_: 0, 'baz_': 1 }", SourceType::mjs(), opts("_$"));
+    let code = mangle("export default { bar_: 0, 'baz_': 1 }", SourceType::mjs(), opts("_$"));
     assert_eq!(code, "export default {\n\te: 0,\n\t\"baz_\": 1\n};\n");
-    assert_eq!(cache, map(&[("bar_", "e")]));
 }
 
 // Ported from bundler_default_test.go:6882 TestMangleProps (entry1.js, `shouldMangle` half).
@@ -138,7 +107,7 @@ fn mangle_props_entry2_default_object() {
 // esbuild, which tracks the bound local and mangles these.
 #[test]
 fn mangle_props_entry1_should_mangle_body() {
-    let (code, cache) = mangle(
+    let code = mangle(
         "export function shouldMangle() {
   let foo = {
     bar_: 0,
@@ -163,7 +132,6 @@ fn mangle_props_entry1_should_mangle_body() {
          \tlet { bar_ } = foo;\n\t({bar_} = foo);\n\tclass foo_ {\n\t\tbar_ = 0;\n\t\te() {}\n\
          \t\tstatic bar_ = 0;\n\t\tstatic e() {}\n\t}\n\treturn {\n\t\tbar_,\n\t\tt: foo_\n\t};\n}\n"
     );
-    assert_eq!(cache, map(&[("baz_", "e"), ("foo_", "t")]));
 }
 
 // Ported from bundler_default_test.go:6998 TestManglePropsKeywordPropertyMinify
@@ -174,7 +142,7 @@ fn mangle_props_entry1_should_mangle_body() {
 // `baz`) is renamed. compress:false so the unreferenced class is not tree-shaken.
 #[test]
 fn mangle_props_keyword_property_getter_mangled() {
-    let (code, cache) = mangle(
+    let code = mangle(
         "class Foo {
   static bar = { get baz() { return 123 } }
 }",
@@ -182,7 +150,6 @@ fn mangle_props_keyword_property_getter_mangled() {
         opts("."),
     );
     assert_eq!(code, "class Foo {\n\tstatic e = { get t() {\n\t\treturn 123;\n\t} };\n}\n");
-    assert_eq!(cache, map(&[("bar", "e"), ("baz", "t")]));
 }
 
 // Ported from bundler_default_test.go:7019 TestManglePropsOptionalChain
@@ -192,7 +159,7 @@ fn mangle_props_keyword_property_getter_mangled() {
 // occurrences reserve both names program-wide, so nothing is mangled.
 #[test]
 fn mangle_props_optional_chain() {
-    let (code, cache) = mangle(
+    let code = mangle(
         "export default function(x) {
   x.foo_;
   x.foo_?.();
@@ -211,7 +178,6 @@ fn mangle_props_optional_chain() {
         "export default function(x) {\n\tx.foo_;\n\tx.foo_?.();\n\tx?.foo_;\n\tx?.foo_();\n\
          \tx?.foo_.bar_;\n\tx?.foo_.bar_();\n\tx?.[\"foo_\"].bar_;\n\tx?.foo_[\"bar_\"];\n}\n"
     );
-    assert_eq!(cache, map(&[]));
 }
 
 // Ported from bundler_default_test.go:7070 TestReserveProps
@@ -222,9 +188,8 @@ fn mangle_props_optional_chain() {
 fn reserve_props() {
     let mut o = opts("_$");
     o.reserve = Some(lazy_regex::Regex::new("^_.*_$").unwrap());
-    let (code, cache) = mangle("export default { foo_: 0, _bar_: 1 }", SourceType::mjs(), o);
+    let code = mangle("export default { foo_: 0, _bar_: 1 }", SourceType::mjs(), o);
     assert_eq!(code, "export default {\n\te: 0,\n\t_bar_: 1\n};\n");
-    assert_eq!(cache, map(&[("foo_", "e")]));
 }
 
 // Ported from bundler_default_test.go:7239 TestManglePropsAvoidCollisions
@@ -233,7 +198,7 @@ fn reserve_props() {
 // possible, and `__proto__` is left intact.
 #[test]
 fn mangle_props_avoid_collisions() {
-    let (code, cache) = mangle(
+    let code = mangle(
         "export default {
   foo_: 0,
   bar_: 1,
@@ -245,7 +210,6 @@ fn mangle_props_avoid_collisions() {
         opts("_$"),
     );
     assert_eq!(code, "export default {\n\tt: 0,\n\te: 1,\n\ta: 2,\n\tb: 3,\n\t__proto__: {}\n};\n");
-    assert_eq!(cache, map(&[("foo_", "t"), ("bar_", "e")]));
     // Renamed names never collide with the pre-existing `a`/`b`, and `__proto__` is intact.
     assert!(code.contains("a: 2"), "{code}");
     assert!(code.contains("b: 3"), "{code}");
@@ -259,7 +223,7 @@ fn mangle_props_avoid_collisions() {
 // intact (nothing here is renamed).
 #[test]
 fn mangle_props_super_call_constructor_not_mangled() {
-    let (code, cache) = mangle(
+    let code = mangle(
         "class Foo {}
 class Bar extends Foo {
   constructor() {
@@ -274,7 +238,6 @@ class Bar extends Foo {
         "class Foo {}\nclass Bar extends Foo {\n\tconstructor() {\n\t\tsuper();\n\t}\n}\n"
     );
     assert!(code.contains("constructor"), "{code}");
-    assert_eq!(cache, map(&[]));
 }
 
 // Ported from bundler_default_test.go:7452 TestMangleNoQuotedProps
@@ -283,7 +246,7 @@ class Bar extends Foo {
 // bracket string keys as templates and keeps object/class quoted keys as strings.)
 #[test]
 fn mangle_no_quoted_props() {
-    let (code, cache) = mangle(
+    let code = mangle(
         "x['_doNotMangleThis'];
 x?.['_doNotMangleThis'];
 x[y ? '_doNotMangleThis' : z];
@@ -308,7 +271,6 @@ var { '_doNotMangleThis': x } = y;
          \"_doNotMangleThis\" in x;\n(y ? \"_doNotMangleThis\" : z) in x;\n\
          (y ? z : \"_doNotMangleThis\") in x;\n"
     );
-    assert_eq!(cache, map(&[]));
     // The property name survives everywhere (never renamed to a base54 name).
     assert!(!code.contains(".e"), "{code}");
 }
@@ -322,7 +284,7 @@ var { '_doNotMangleThis': x } = y;
 fn mangle_quoted_props_keep() {
     let mut o = opts("_");
     o.mangle_quoted = true;
-    let (code, cache) = mangle(
+    let code = mangle(
         "foo(\"_keepThisProperty\");
 foo((x, \"_keepThisProperty\"));
 foo(x ? \"_keepThisProperty\" : \"_keepThisPropertyToo\");
@@ -343,14 +305,13 @@ foo(\"_keepThisProperty\") in x;",
          (class {\n\t[foo(\"_keepThisProperty\")] = x;\n});\n\
          var { [foo(\"_keepThisProperty\")]: x } = y;\nfoo(\"_keepThisProperty\") in x;\n"
     );
-    assert_eq!(cache, map(&[]));
 }
 
 #[test]
 fn mangle_quoted_props_mangle() {
     let mut o = opts("_");
     o.mangle_quoted = true;
-    let (code, cache) = mangle(
+    let code = mangle(
         "x['_mangleThis'];
 x?.['_mangleThis'];
 x[y ? '_mangleThis' : z];
@@ -385,7 +346,6 @@ var { [(z, '_mangleThis')]: x } = y;
          (y, \"e\") in x;\n"
     );
     // Every occurrence renamed consistently to one name; nothing kept as `_mangleThis`.
-    assert_eq!(cache, map(&[("_mangleThis", "e")]));
     assert!(!code.contains("_mangleThis"), "{code}");
 }
 
@@ -398,7 +358,7 @@ var { [(z, '_mangleThis')]: x } = y;
 // annotated but do not match the regex `_`, so they stay.
 #[test]
 fn mangle_props_key_comment() {
-    let (code, cache) = mangle(
+    let code = mangle(
         "x(/* __KEY__ */ '_doNotMangleThis', /* __KEY__ */ `_doNotMangleThis`)
 x._mangleThis(/* @__KEY__ */ '_mangleThis', /* @__KEY__ */ `_mangleThis`)
 x._mangleThisToo(/* #__KEY__ */ '_mangleThisToo', /* #__KEY__ */ `_mangleThisToo`)
@@ -419,7 +379,6 @@ x([
          x([`foo.${\"e\"} = bar.${\"t\"}`, `foo.${\"notMangled\"} = bar.${\"notMangledEither\"}`]);\n"
     );
     // _mangleThis -> e, _mangleThisToo -> t, _someKey -> n (consistent member + annotation).
-    assert_eq!(cache, map(&[("_mangleThis", "e"), ("_mangleThisToo", "t"), ("_someKey", "n")]));
     // The non-annotated `_doNotMangleThis` and the regex-non-matching annotated strings survive.
     assert!(code.contains("_doNotMangleThis"), "{code}");
     assert!(code.contains("notMangled"), "{code}");
@@ -431,7 +390,7 @@ x([
 // variable binding is not a property -> kept. Parsed with a normal (script) source type.
 #[test]
 fn mangle_props_import_export_cjs() {
-    let (code, cache) = mangle(
+    let code = mangle(
         "exports.foo_ = 123
 let baz_ = require('xyz').bar_
 console.log(baz_)",
@@ -441,7 +400,6 @@ console.log(baz_)",
     assert_eq!(code, "exports.t = 123;\nlet baz_ = require(\"xyz\").e;\nconsole.log(baz_);\n");
     // variable binding `baz_` NOT mangled.
     assert!(code.contains("let baz_"), "{code}");
-    assert_eq!(cache, map(&[("bar_", "e"), ("foo_", "t")]));
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -455,7 +413,7 @@ console.log(baz_)",
 // target). Locals get joined/renamed.
 #[test]
 fn mangle_props_minify() {
-    let (code, cache) = minify(
+    let code = minify(
         "export function shouldMangle_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX() {
   let foo = {
     bar_: 0,
@@ -483,7 +441,6 @@ fn mangle_props_minify() {
          \treturn {\n\t\tbar_: t,\n\t\tt: n\n\t};\n}\n"
     );
     // baz_ and foo_ mangled; bar_ reserved (shorthand assignment target).
-    assert_eq!(cache, map(&[("baz_", "e"), ("foo_", "t")]));
 }
 
 // Ported from bundler_default_test.go:7369 TestManglePropsShorthand
@@ -492,10 +449,9 @@ fn mangle_props_minify() {
 // base54 name, the object/parameter shorthand is preserved.
 #[test]
 fn mangle_props_shorthand_preserved() {
-    let (code, cache) =
+    let code =
         minify("export let yyyyy = ({ xxxxx }) => ({ xxxxx })", SourceType::mjs(), opts("x"), true);
     assert_eq!(code, "export let yyyyy = ({ e }) => ({ e });\n");
-    assert_eq!(cache, map(&[("xxxxx", "e")]));
 }
 
 // Ported from bundler_default_test.go:7480 TestMangleNoQuotedPropsMinifySyntax
@@ -504,7 +460,7 @@ fn mangle_props_shorthand_preserved() {
 // dot/identifier form and joins statements, but the property NAME is preserved everywhere.
 #[test]
 fn mangle_no_quoted_props_minify_syntax() {
-    let (code, cache) = minify(
+    let code = minify(
         "x['_doNotMangleThis'];
 x?.['_doNotMangleThis'];
 x[y ? '_doNotMangleThis' : z];
@@ -529,7 +485,6 @@ var { '_doNotMangleThis': x } = y;
          \"_doNotMangleThis\" in x, (y ? \"_doNotMangleThis\" : z) in x, \
          (y ? z : \"_doNotMangleThis\") in x;\n"
     );
-    assert_eq!(cache, map(&[]));
     // Never renamed to a base54 name.
     assert!(!code.contains(".e"), "{code}");
     assert!(code.contains("_doNotMangleThis"), "{code}");
@@ -544,7 +499,7 @@ var { '_doNotMangleThis': x } = y;
 fn mangle_quoted_props_minify_syntax_keep() {
     let mut o = opts("_");
     o.mangle_quoted = true;
-    let (code, cache) = minify(
+    let code = minify(
         "foo(\"_keepThisProperty\");
 foo((x, \"_keepThisProperty\"));
 foo(x ? \"_keepThisProperty\" : \"_keepThisPropertyToo\");
@@ -565,14 +520,13 @@ foo(\"_keepThisProperty\") in x;",
          x?.[foo(\"_keepThisProperty\")], foo(\"_keepThisProperty\"), foo(\"_keepThisProperty\");\n\
          var { [foo(\"_keepThisProperty\")]: x } = y;\nfoo(\"_keepThisProperty\") in x;\n"
     );
-    assert_eq!(cache, map(&[]));
 }
 
 #[test]
 fn mangle_quoted_props_minify_syntax_mangle() {
     let mut o = opts("_");
     o.mangle_quoted = true;
-    let (code, cache) = minify(
+    let code = minify(
         "x['_mangleThis'];
 x?.['_mangleThis'];
 x[y ? '_mangleThis' : z];
@@ -604,7 +558,6 @@ var { [(z, '_mangleThis')]: x } = y;
          x[y, \"e\"], x?.[y, \"e\"], y, y;\nvar { e: x } = y, { e: x } = y, { [(z, \"e\")]: x } = y;\n\
          \"e\" in x, (y ? \"e\" : z) in x, (y ? z : \"e\") in x, (y, \"e\") in x;\n"
     );
-    assert_eq!(cache, map(&[("_mangleThis", "e")]));
     assert!(!code.contains("_mangleThis"), "{code}");
 }
 
@@ -617,7 +570,7 @@ var { [(z, '_mangleThis')]: x } = y;
 // `notMangledEither` are annotated but do not match `_`, so they stay.
 #[test]
 fn mangle_props_key_comment_minify() {
-    let (code, cache) = minify(
+    let code = minify(
         "x = class {
   _mangleThis = 1;
   [/* @__KEY__ */ '_mangleThisToo'] = 2;
@@ -646,7 +599,6 @@ x([
          x([`${foo}.e = bar.t`, `${foo}.notMangled = bar.notMangledEither`]);\n"
     );
     // _mangleThis -> e (real key), _mangleThisToo -> t (annotated computed key).
-    assert_eq!(cache, map(&[("_mangleThis", "e"), ("_mangleThisToo", "t")]));
     // Quoted-but-unannotated `_doNotMangleThis` reserved; regex-non-matching annotated survive.
     assert!(code.contains("_doNotMangleThis"), "{code}");
     assert!(code.contains("notMangled"), "{code}");
@@ -660,7 +612,7 @@ x([
 // local rename).
 #[test]
 fn mangle_props_import_export_esm() {
-    let (code, cache) = minify(
+    let code = minify(
         "export let foo_ = 123
 import { bar_ } from 'xyz'
 console.log(bar_)
@@ -676,7 +628,6 @@ o.member_ = 1",
     // export binding NOT mangled; import specifier NOT mangled.
     assert!(code.contains("export let foo_ = 123"), "{code}");
     assert!(code.contains("import { bar_ as"), "{code}");
-    assert_eq!(cache, map(&[("member_", "e")]));
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -691,15 +642,11 @@ o.member_ = 1",
 // bug. esbuild instead un-shorthands and mangles these.
 #[test]
 fn shorthand_assignment_target_reserves() {
-    let (shorthand_code, shorthand_cache) =
-        mangle("({ bar_ } = foo); x.bar_; x.baz_;", SourceType::cjs(), opts("_$"));
+    let shorthand_code = mangle("({ bar_ } = foo); x.bar_; x.baz_;", SourceType::cjs(), opts("_$"));
     assert_eq!(shorthand_code, "({bar_} = foo);\nx.bar_;\nx.e;\n");
-    assert_eq!(shorthand_cache, map(&[("baz_", "e")]));
 
-    let (explicit_code, explicit_cache) =
-        mangle("({ bar_: v } = foo); x.bar_;", SourceType::cjs(), opts("_$"));
+    let explicit_code = mangle("({ bar_: v } = foo); x.bar_;", SourceType::cjs(), opts("_$"));
     assert_eq!(explicit_code, "({e: v} = foo);\nx.e;\n");
-    assert_eq!(explicit_cache, map(&[("bar_", "e")]));
 }
 
 // ════════════════════════════════════════════════════════════════════════════

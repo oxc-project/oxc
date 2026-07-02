@@ -4,7 +4,7 @@
 //! It is **off by default**: nothing is mangled unless the user supplies a `mangle`
 //! regex via [`ManglePropertiesOptions`].
 //!
-//! This file contains the whole engine: the option/cache types, the eligibility check,
+//! This file contains the whole engine: the option type, the eligibility check,
 //! the name-assignment function, the read-only collect pass, the in-place rewrite pass,
 //! and the [`PropertyMangler`] driver that runs the two halves around compress/mangle.
 
@@ -63,33 +63,6 @@ pub struct ManglePropertiesOptions {
     pub mangle_quoted: bool,
     /// Whether to emit human-readable debug names. v1: always `false` (deferred).
     pub debug: bool,
-    /// Cross-build name cache (old -> new / reserved).
-    pub cache: PropertyMangleCache,
-}
-
-/// Persistent old-name -> assigned-name cache, so repeated builds produce stable names.
-#[derive(Clone, Default, Debug, PartialEq, Eq)]
-pub struct PropertyMangleCache {
-    pub map: FxHashMap<CompactStr, CacheValue>,
-}
-
-/// A cached decision for a property name.
-///
-/// # Contract
-///
-/// A [`CacheValue::Name`] is written verbatim into identifier positions (member accesses,
-/// object/class keys) by the rewrite pass, so it **must** be a valid ECMAScript
-/// `IdentifierName`. This engine does **not** validate cache values it is handed — callers
-/// that populate the cache from untrusted input (e.g. the N-API `mangleCache` option) are
-/// responsible for rejecting non-identifier names first. Names the engine generates itself
-/// (via `base54`) are always valid, so a cache built solely by prior runs is always sound.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum CacheValue {
-    /// The name was mangled to this new name. Must be a valid `IdentifierName` (see the
-    /// type-level contract; not validated here).
-    Name(CompactStr),
-    /// The name is reserved and must never be mangled.
-    Reserved,
 }
 
 /// Whether `name` is always reserved, regardless of the user's regex.
@@ -167,94 +140,43 @@ fn eligible(opts: &ManglePropertiesOptions, name: &str) -> bool {
 ///
 /// `classes` is the collect pass's classification of every distinct property name: the
 /// `Candidate` entries are mangled, the `Reserved` entries are program-wide reservations
-/// that the generated names must avoid. Returns the old -> new map and mutates the shared
-/// `cache`.
+/// that the generated names must avoid. Returns the old -> new map.
 ///
-/// The iteration order is deterministic (sorted) so that a shared cache reproduces
-/// the same names across builds, and the produced names are pairwise disjoint and
-/// never collide with reserved/always-reserved names.
-///
-/// When a cached name (`CacheValue::Name`) cannot be honored because its target
-/// collides with something already occupied this build (a program-wide reservation,
-/// an always-reserved name, a `Reserved`-pinned candidate's original spelling, or a
-/// name already claimed by another candidate), the candidate is **regenerated** a
-/// fresh valid name and the cache is rewritten — it is never left with its original
-/// spelling. The only names that keep their original spelling are cache `Reserved`
-/// entries (the user explicitly pinned them); those are marked occupied up front so
-/// they can never be handed to another candidate.
-fn assign(
-    classes: &FxHashMap<CompactStr, Class>,
-    cache: &mut PropertyMangleCache,
-) -> FxHashMap<CompactStr, CompactStr> {
+/// The iteration order is deterministic (sorted) so the same input always produces the same
+/// names. Names come from a monotonic `base54` counter, so the outputs are pairwise disjoint
+/// by construction; the counter only skips a name that collides with a reserved or
+/// always-reserved property.
+fn assign(classes: &FxHashMap<CompactStr, Class>) -> FxHashMap<CompactStr, CompactStr> {
     // `Reserved` already won over `Candidate` during collect, so the `Candidate` keys are exactly
     // the names to mangle (no candidate/reserved set difference needed). A name is reserved iff
     // it is classified `Reserved`; `CompactStr: Borrow<str>` lets the base54 `&str` probe directly.
     let is_reserved = |name: &str| matches!(classes.get(name), Some(Class::Reserved));
 
-    // Deterministic order so a shared cache is reproducible.
+    // Deterministic order so the same input always produces the same names.
     let mut names: Vec<&CompactStr> = classes
         .iter()
         .filter_map(|(name, class)| (*class == Class::Candidate).then_some(name))
         .collect();
     names.sort_unstable();
 
-    // Candidates the user pinned as Reserved keep their original spelling, so those
-    // names are occupied and must never be handed to another candidate.
-    let kept: FxHashSet<CompactStr> = names
-        .iter()
-        .filter(|n| matches!(cache.map.get(**n), Some(CacheValue::Reserved)))
-        .map(|n| (*n).clone())
-        .collect();
-
-    // Existing cache targets are avoided when GENERATING new names, so cross-build
-    // reuse stays stable (a future build honoring the cache won't collide).
-    let existing_targets: FxHashSet<CompactStr> = cache
-        .map
-        .values()
-        .filter_map(|v| if let CacheValue::Name(n) = v { Some(n.clone()) } else { None })
-        .collect();
-
-    let mut claimed: FxHashSet<CompactStr> = FxHashSet::default(); // outputs assigned this build
     let mut counter: u32 = 0;
     let mut map = FxHashMap::default();
 
     for name in names {
-        match cache.map.get(name) {
-            // Pinned: keep the original name, don't mangle.
-            Some(CacheValue::Reserved) => {}
-            // Honor the cached name only if it doesn't collide with anything occupied.
-            Some(CacheValue::Name(n))
-                if !is_reserved(n.as_str())
-                    && !is_always_reserved(n)
-                    && !kept.contains(n)
-                    && !claimed.contains(n) =>
-            {
-                map.insert(name.clone(), n.clone());
-                claimed.insert(n.clone());
+        // The counter only ever advances, so successive `base54` names are distinct: the outputs
+        // are pairwise disjoint without tracking assigned names. Skip only a generated name that
+        // collides with a reserved or always-reserved property.
+        let n = loop {
+            let candidate = base54(counter);
+            counter = counter.checked_add(1).expect("property name space exhausted");
+            let candidate = candidate.as_str();
+            // Test the `&str` view against both sets, allocating a `CompactStr` only once a name
+            // survives (discarded names on collision cost nothing).
+            if !is_reserved(candidate) && !is_always_reserved(candidate) {
+                break CompactStr::from(candidate);
             }
-            // No cache entry, or the cached name collided -> generate a fresh valid name
-            // and (re)write it into the cache.
-            _ => {
-                let n = loop {
-                    let candidate = base54(counter);
-                    counter = counter.checked_add(1).expect("property name space exhausted");
-                    let candidate = candidate.as_str();
-                    // Test the `&str` view against every set, allocating a `CompactStr` only
-                    // once a name survives (discarded names on collision cost nothing).
-                    if !is_reserved(candidate)
-                        && !is_always_reserved(candidate)
-                        && !kept.contains(candidate)
-                        && !claimed.contains(candidate)
-                        && !existing_targets.contains(candidate)
-                    {
-                        break CompactStr::from(candidate);
-                    }
-                };
-                map.insert(name.clone(), n.clone());
-                claimed.insert(n.clone());
-                cache.map.insert(name.clone(), CacheValue::Name(n));
-            }
-        }
+        };
+        map.insert(name.clone(), n);
     }
     map
 }
@@ -911,7 +833,7 @@ impl PropertyMangler {
         if self.state.bail.is_some() || self.key_annotated.is_empty() {
             return;
         }
-        let map = assign(&self.state.names, &mut self.opts.cache);
+        let map = assign(&self.state.names);
         if map.is_empty() {
             self.map = Some(map);
             return;
@@ -935,26 +857,21 @@ impl PropertyMangler {
         self.map = Some(map);
     }
 
-    /// Assign final names (if not already) and rewrite the program in place, returning the
-    /// updated cache.
+    /// Assign final names (if not already) and rewrite the program in place.
     ///
-    /// Does nothing (returns the unchanged cache) when the collect pass bailed, or when no
-    /// name ends up being mangled. Call this **after** variable mangling.
-    pub fn rewrite<'a>(
-        mut self,
-        program: &mut Program<'a>,
-        allocator: &'a Allocator,
-    ) -> PropertyMangleCache {
+    /// Does nothing when the collect pass bailed, or when no name ends up being mangled.
+    /// Call this **after** variable mangling.
+    pub fn rewrite<'a>(mut self, program: &mut Program<'a>, allocator: &'a Allocator) {
         if self.state.bail.is_some() {
-            return self.opts.cache;
+            return;
         }
         // `map` is already assigned if `rename_annotated_literals` ran; otherwise assign now.
         let map = match self.map.take() {
             Some(map) => map,
-            None => assign(&self.state.names, &mut self.opts.cache),
+            None => assign(&self.state.names),
         };
         if map.is_empty() {
-            return self.opts.cache;
+            return;
         }
         let mut rewriter = PropertyRewriter {
             map: &map,
@@ -964,7 +881,6 @@ impl PropertyMangler {
             ast: AstBuilder::new(allocator),
         };
         rewriter.visit_program(program);
-        self.opts.cache
     }
 }
 
@@ -981,7 +897,6 @@ mod tests {
             reserved: FxHashSet::default(),
             mangle_quoted: false,
             debug: false,
-            cache: PropertyMangleCache::default(),
         }
     }
 
@@ -1018,70 +933,20 @@ mod tests {
     #[test]
     fn assignment_is_deterministic_and_disjoint() {
         let cands = classes(&["_a", "_b"], &[]);
-        let mut cache = PropertyMangleCache::default();
-        let m1 = assign(&cands, &mut cache);
-        let m2 = assign(&cands, &mut PropertyMangleCache::default());
+        let m1 = assign(&cands);
+        let m2 = assign(&cands);
         assert_eq!(m1, m2); // deterministic
         let names: FxHashSet<_> = m1.values().collect();
         assert_eq!(names.len(), m1.len()); // no two map to the same name
     }
 
     #[test]
-    fn cache_reuse_and_reserved() {
-        let cands = classes(&["_a"], &[]);
-        let mut cache = PropertyMangleCache::default();
-        cache.map.insert("_a".into(), CacheValue::Name("Z".into()));
-        let m = assign(&cands, &mut cache);
-        assert_eq!(m[&CompactStr::from("_a")].as_str(), "Z"); // honors cache
-    }
-
-    #[test]
-    fn cache_collision_is_remangled_not_corrupted() {
-        let cands = classes(&["_a"], &["b"]);
-        let mut cache = PropertyMangleCache::default();
-        cache.map.insert("_a".into(), CacheValue::Name("b".into())); // collides with reserved `b`
-        let m = assign(&cands, &mut cache);
-        // The cached name `b` collides with a reservation, so `_a` is regenerated a fresh
-        // valid name instead of being kept/skipped. It must be mapped, and never to `b`.
-        let out = &m[&CompactStr::from("_a")];
-        assert_ne!(out.as_str(), "b"); // never collides with the reservation
-        // The cache is rewritten to the fresh name so future builds stay consistent.
-        assert_eq!(cache.map.get(&CompactStr::from("_a")), Some(&CacheValue::Name(out.clone())));
-    }
-
-    #[test]
-    fn generation_collision_does_not_corrupt() {
-        // `e` is cached to `Name("b")`, but `b` is reserved -> `e` must be regenerated.
-        // `_x` has no cache entry -> it is generated fresh. Neither output may collide.
-        let cands = classes(&["_x", "e"], &["b"]);
-        let mut cache = PropertyMangleCache::default();
-        cache.map.insert("e".into(), CacheValue::Name("b".into()));
-        let m = assign(&cands, &mut cache);
-        let x_out = m.get(&CompactStr::from("_x"));
-        let e_out = m.get(&CompactStr::from("e"));
-        assert!(x_out.is_some());
-        assert!(e_out.is_some());
-        // The two outputs must be distinct: no two source props map to one name.
-        assert_ne!(x_out, e_out);
-        // `e`'s collided cache name was dropped; its output is a fresh name, not `b`.
-        assert_ne!(e_out.unwrap().as_str(), "b");
-        // `_x`'s output must not be the literal `e` left dangling, nor `b`.
-        assert_ne!(x_out.unwrap().as_str(), "b");
-    }
-
-    #[test]
-    fn cache_reuse_collision_does_not_corrupt() {
-        // `_a` is cached to `_z`, but `_z` is itself a candidate cached to `q`.
-        // `q` is reserved, so `_z` is regenerated; `_a`'s cached `_z` must NOT be reused
-        // as `_z`'s own (now different) output, and the two outputs must be distinct.
-        let cands = classes(&["_a", "_z"], &["q"]);
-        let mut cache = PropertyMangleCache::default();
-        cache.map.insert("_a".into(), CacheValue::Name("_z".into()));
-        cache.map.insert("_z".into(), CacheValue::Name("q".into()));
-        let m = assign(&cands, &mut cache);
-        let a_out = &m[&CompactStr::from("_a")];
-        let z_out = &m[&CompactStr::from("_z")];
-        assert_ne!(a_out, z_out); // the two outputs are distinct
+    fn generated_names_avoid_reserved() {
+        // A generated name must skip a property classified `Reserved`. Only `_a` matches, so it
+        // is the sole candidate; `e` (base54's first name) is reserved, so `_a` must take `t`.
+        let cands = classes(&["_a"], &["e"]);
+        let m = assign(&cands);
+        assert_eq!(m[&CompactStr::from("_a")].as_str(), "t");
     }
 
     fn collect_src<'a>(
