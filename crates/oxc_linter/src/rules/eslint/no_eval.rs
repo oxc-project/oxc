@@ -315,6 +315,12 @@ fn test() {
             None,
             Some(PathBuf::from("foo.cjs")),
         ),
+        (
+            "obj.foo = (() => function() { this.eval('foo'); })()",
+            allow_indirect_with_false(),
+            None,
+            Some(PathBuf::from("foo.cjs")),
+        ),
         ("() => { this.eval('foo') }", None, None, None), // { "ecmaVersion": 6, "sourceType": "module" },
         ("function f() { 'use strict'; () => { this.eval('foo') } }", None, None, None), // { "ecmaVersion": 6 },
         ("(function f() { 'use strict'; () => { this.eval('foo') } })", None, None, None), // { "ecmaVersion": 6 },

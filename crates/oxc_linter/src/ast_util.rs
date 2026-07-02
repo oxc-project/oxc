@@ -686,6 +686,27 @@ pub fn is_default_this_binding<'a>(
                     _ => return true,
                 }
             }
+            AstKind::ExpressionStatement(expr_stmt) => {
+                let Some(function_body) = outermost_paren_parent(parent, semantic) else {
+                    return true;
+                };
+                let AstKind::FunctionBody(_) = function_body.kind() else {
+                    return true;
+                };
+                let Some(arrow_func) = outermost_paren_parent(function_body, semantic) else {
+                    return true;
+                };
+                let AstKind::ArrowFunctionExpression(expr) = arrow_func.kind() else {
+                    return true;
+                };
+                if !expr.expression
+                    || expr_stmt.expression.span() != current_node.span()
+                    || !is_callee(arrow_func, semantic)
+                {
+                    return true;
+                }
+                current_node = outermost_paren_parent(arrow_func, semantic).unwrap();
+            }
             AstKind::ArrowFunctionExpression(expr) => {
                 if current_node.span() != expr.body.span || !is_callee(parent, semantic) {
                     return true;
