@@ -2,7 +2,7 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2036/2236 (91.06%)
+Positive Passed: 2013/2236 (90.03%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -36,6 +36,22 @@ Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/regression/use-strict-with-pre-semi/input.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(2))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-using/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["_"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_"]
+rebuilt        : ScopeId(3): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(2)
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["Foo"]
@@ -45,6 +61,50 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/so
 Bindings mismatch:
 after transform: ScopeId(0): ["Foo"]
 rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await/input.js
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(7): ["err"]
+Bindings mismatch:
+after transform: ScopeId(6): ["err"]
+rebuilt        : ScopeId(8): []
+Symbol scope ID mismatch for "err":
+after transform: SymbolId(8): ScopeId(6)
+rebuilt        : SymbolId(10): ScopeId(7)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await-async-of/input.js
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(7): ["err"]
+Bindings mismatch:
+after transform: ScopeId(6): ["err"]
+rebuilt        : ScopeId(8): []
+Symbol scope ID mismatch for "err":
+after transform: SymbolId(7): ScopeId(6)
+rebuilt        : SymbolId(9): ScopeId(7)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2019/optional-catch-binding/no-binding/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["_unused"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_unused"]
+rebuilt        : ScopeId(3): []
+Symbol scope ID mismatch for "_unused":
+after transform: SymbolId(0): ScopeId(3)
+rebuilt        : SymbolId(0): ScopeId(2)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2019/optional-catch-binding/no-binding-finally/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["_unused"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_unused"]
+rebuilt        : ScopeId(3): []
+Symbol scope ID mismatch for "_unused":
+after transform: SymbolId(0): ScopeId(3)
+rebuilt        : SymbolId(0): ScopeId(2)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 Bindings mismatch:
@@ -57,6 +117,20 @@ Symbol scope ID mismatch for "_x":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(2): ScopeId(0)
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/nested/input.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_x2", "_y2", "x", "y"]
+rebuilt        : ScopeId(2): ["x", "y"]
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Symbol scope ID mismatch for "_x2":
+after transform: SymbolId(15): ScopeId(2)
+rebuilt        : SymbolId(8): ScopeId(3)
+Symbol scope ID mismatch for "_y2":
+after transform: SymbolId(16): ScopeId(2)
+rebuilt        : SymbolId(9): ScopeId(3)
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-inside-params-of-function-inside-params-of-async-function/input.js
 Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_defineProperty"]
@@ -68,13 +142,120 @@ Symbol scope ID mismatch for "_await":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-module/for-await/input.js
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(4): ["err"]
+Bindings mismatch:
+after transform: ScopeId(5): ["err"]
+rebuilt        : ScopeId(5): []
+Symbol scope ID mismatch for "err":
+after transform: SymbolId(7): ScopeId(5)
+rebuilt        : SymbolId(7): ScopeId(4)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-await-asi-using-binding/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["_"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_"]
+rebuilt        : ScopeId(3): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(2)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-await-using-comments/input.js
+Bindings mismatch:
+after transform: ScopeId(9): []
+rebuilt        : ScopeId(5): ["_"]
+Bindings mismatch:
+after transform: ScopeId(10): ["_"]
+rebuilt        : ScopeId(6): []
+Bindings mismatch:
+after transform: ScopeId(13): []
+rebuilt        : ScopeId(13): ["_"]
+Bindings mismatch:
+after transform: ScopeId(14): ["_"]
+rebuilt        : ScopeId(14): []
+Bindings mismatch:
+after transform: ScopeId(25): []
+rebuilt        : ScopeId(20): ["_"]
+Bindings mismatch:
+after transform: ScopeId(26): ["_"]
+rebuilt        : ScopeId(21): []
+Bindings mismatch:
+after transform: ScopeId(18): []
+rebuilt        : ScopeId(23): ["err"]
+Bindings mismatch:
+after transform: ScopeId(19): ["err"]
+rebuilt        : ScopeId(24): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(7): ScopeId(10)
+rebuilt        : SymbolId(7): ScopeId(5)
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(10): ScopeId(14)
+rebuilt        : SymbolId(12): ScopeId(13)
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(19): ScopeId(26)
+rebuilt        : SymbolId(20): ScopeId(20)
+Symbol scope ID mismatch for "err":
+after transform: SymbolId(17): ScopeId(19)
+rebuilt        : SymbolId(21): ScopeId(23)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-case-block-await-using-binding/input.js
+Bindings mismatch:
+after transform: ScopeId(7): []
+rebuilt        : ScopeId(7): ["_"]
+Bindings mismatch:
+after transform: ScopeId(8): ["_"]
+rebuilt        : ScopeId(8): []
+Bindings mismatch:
+after transform: ScopeId(10): []
+rebuilt        : ScopeId(12): ["_"]
+Bindings mismatch:
+after transform: ScopeId(11): ["_"]
+rebuilt        : ScopeId(13): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(5): ScopeId(8)
+rebuilt        : SymbolId(6): ScopeId(7)
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(7): ScopeId(11)
+rebuilt        : SymbolId(9): ScopeId(12)
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-for-using-binding-of-of/input.js
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(6): ["_"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_"]
+rebuilt        : ScopeId(7): []
+Bindings mismatch:
+after transform: ScopeId(17): []
+rebuilt        : ScopeId(12): ["_"]
+Bindings mismatch:
+after transform: ScopeId(18): ["_"]
+rebuilt        : ScopeId(13): []
+Bindings mismatch:
+after transform: ScopeId(10): []
+rebuilt        : ScopeId(15): ["err"]
+Bindings mismatch:
+after transform: ScopeId(11): ["err"]
+rebuilt        : ScopeId(16): []
 Symbol reference IDs mismatch for "of":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(7): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(6): ScopeId(6)
+rebuilt        : SymbolId(8): ScopeId(6)
 Symbol reference IDs mismatch for "of":
 after transform: SymbolId(2): [ReferenceId(1)]
 rebuilt        : SymbolId(15): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(15): ScopeId(18)
+rebuilt        : SymbolId(16): ScopeId(12)
+Symbol scope ID mismatch for "err":
+after transform: SymbolId(13): ScopeId(11)
+rebuilt        : SymbolId(17): ScopeId(15)
 Reference symbol mismatch for "of":
 after transform: SymbolId(1) "of"
 rebuilt        : <None>
@@ -84,6 +265,192 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["arguments", "require"]
 rebuilt        : ["arguments", "of", "require"]
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-basic/input.js
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(5): ["_"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(4): ScopeId(4)
+rebuilt        : SymbolId(6): ScopeId(5)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-escaped/input.js
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(5): ["_"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(4): ScopeId(4)
+rebuilt        : SymbolId(6): ScopeId(5)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-non-bmp/input.js
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(5): ["_"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_"]
+rebuilt        : ScopeId(6): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(4): ScopeId(4)
+rebuilt        : SymbolId(6): ScopeId(5)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-using/input.js
+Bindings mismatch:
+after transform: ScopeId(8): []
+rebuilt        : ScopeId(7): ["_"]
+Bindings mismatch:
+after transform: ScopeId(9): ["_"]
+rebuilt        : ScopeId(8): []
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(10): ["_"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_"]
+rebuilt        : ScopeId(11): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(8): ScopeId(9)
+rebuilt        : SymbolId(9): ScopeId(7)
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(5): ScopeId(5)
+rebuilt        : SymbolId(10): ScopeId(10)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-case-block-using-binding/input.js
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(4): ["_"]
+Bindings mismatch:
+after transform: ScopeId(7): ["_"]
+rebuilt        : ScopeId(5): []
+Bindings mismatch:
+after transform: ScopeId(9): []
+rebuilt        : ScopeId(9): ["_"]
+Bindings mismatch:
+after transform: ScopeId(10): ["_"]
+rebuilt        : ScopeId(10): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(4): ScopeId(7)
+rebuilt        : SymbolId(3): ScopeId(4)
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(6): ScopeId(10)
+rebuilt        : SymbolId(6): ScopeId(9)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-as-identifier-for-await-of/input.js
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(4): ["err"]
+Bindings mismatch:
+after transform: ScopeId(5): ["err"]
+rebuilt        : ScopeId(5): []
+Symbol scope ID mismatch for "err":
+after transform: SymbolId(6): ScopeId(5)
+rebuilt        : SymbolId(6): ScopeId(4)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-binding-await-script/input.js
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(2): ["_"]
+Bindings mismatch:
+after transform: ScopeId(7): ["_"]
+rebuilt        : ScopeId(3): []
+Bindings mismatch:
+after transform: ScopeId(9): []
+rebuilt        : ScopeId(6): ["_"]
+Bindings mismatch:
+after transform: ScopeId(10): ["_"]
+rebuilt        : ScopeId(7): []
+Bindings mismatch:
+after transform: ScopeId(12): []
+rebuilt        : ScopeId(10): ["_"]
+Bindings mismatch:
+after transform: ScopeId(13): ["_"]
+rebuilt        : ScopeId(11): []
+Bindings mismatch:
+after transform: ScopeId(16): []
+rebuilt        : ScopeId(16): ["_"]
+Bindings mismatch:
+after transform: ScopeId(17): ["_"]
+rebuilt        : ScopeId(17): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(7): ScopeId(7)
+rebuilt        : SymbolId(3): ScopeId(2)
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(9): ScopeId(10)
+rebuilt        : SymbolId(6): ScopeId(6)
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(11): ScopeId(13)
+rebuilt        : SymbolId(10): ScopeId(10)
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(14): ScopeId(17)
+rebuilt        : SymbolId(14): ScopeId(16)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-binding-basic/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["_"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_"]
+rebuilt        : ScopeId(3): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(2)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-binding-escaped/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["_"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_"]
+rebuilt        : ScopeId(3): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(2)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-binding-non-bmp/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["_"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_"]
+rebuilt        : ScopeId(3): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(2)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-binding-of/input.js
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["_"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_"]
+rebuilt        : ScopeId(3): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(2)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-using-binding-using/input.js
+Bindings mismatch:
+after transform: ScopeId(7): []
+rebuilt        : ScopeId(4): ["_"]
+Bindings mismatch:
+after transform: ScopeId(8): ["_"]
+rebuilt        : ScopeId(5): []
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(7): ["_"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_"]
+rebuilt        : ScopeId(8): []
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(7): ScopeId(8)
+rebuilt        : SymbolId(6): ScopeId(4)
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(4): ScopeId(4)
+rebuilt        : SymbolId(7): ScopeId(7)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 'abstract' modifier cannot be used with a private identifier.

@@ -6,7 +6,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
   {
     "children": [
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(FunctionBody)",
+            "id": 2,
+            "node": "Function(foo)",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(Function)",
         "id": 1,
         "node": "Function(foo)",
@@ -29,7 +37,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
                 "id": 2,
                 "name": "a",
                 "node_id": 31,
-                "scope_id": 1
+                "scope_id": 2
               }
             ]
           },

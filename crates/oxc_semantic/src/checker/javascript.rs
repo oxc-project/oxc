@@ -496,7 +496,14 @@ pub fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
         return;
     }
 
-    if !ctx.current_scope_flags().is_function() {
+    let scope_flags = ctx.current_scope_flags();
+    if scope_flags.is_function_body() {
+        // A `FunctionBody` scope only exists when the parameters contain
+        // expressions, which is never a simple parameter list.
+        ctx.error(diagnostics::illegal_use_strict(directive.span));
+        return;
+    }
+    if !scope_flags.is_function() {
         return;
     }
 

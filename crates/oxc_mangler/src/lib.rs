@@ -556,6 +556,9 @@ impl<'a, 's> SlotAssignment<'a, 's> {
             ArenaVec::<BitSet>::with_capacity_in(scoping.symbols_len(), &allocator);
         let mut tmp_bindings = ArenaVec::with_capacity_in(100, &allocator);
         let mut reusable_slots = ArenaVec::new_in(&allocator);
+        // Slots that must not be reused by the current scope because a parameter it
+        // shares a naming region with already holds them.
+        let mut forbidden_slots: FxHashSet<Slot> = FxHashSet::default();
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
 
@@ -584,15 +587,43 @@ impl<'a, 's> SlotAssignment<'a, 's> {
             }
             tmp_bindings.sort_unstable();
 
+            // A function body scope shares its parameters' naming space even though it
+            // is a separate scope: `function f(a) { let a }` is a syntax error. The
+            // same holds for a catch body block and its catch parameters. Slots held
+            // by the parameter scope's own bindings are not reusable here — liveness
+            // cannot express this, because an unreferenced binding's slot has no live
+            // scopes at all (that emptiness is what enables legal shadow reuse).
+            forbidden_slots.clear();
+            if let Some(parent_id) = scoping.scope_parent_id(scope_id)
+                && (scoping.scope_flags(scope_id).is_function_body()
+                    || scoping.scope_flags(parent_id).is_catch_clause())
+            {
+                forbidden_slots.extend(
+                    scoping
+                        .get_bindings(parent_id)
+                        .values()
+                        .map(|symbol_id| slots[symbol_id.index()])
+                        .filter(|&slot| slot != SLOT_UNASSIGNED),
+                );
+            }
+
             let mut slot = slot_liveness.len();
 
             reusable_slots.clear();
             reusable_slots.extend(
-                // Slots already assigned to other symbols, but not live in the current scope.
+                // Slots already assigned to other symbols, but not live in the current
+                // scope, and not held by a parameter this scope shares names with.
                 slot_liveness
                     .iter()
                     .enumerate()
-                    .filter(|(_, slot_liveness)| !slot_liveness.has_bit(scope_id.index()))
+                    .filter(|&(slot, slot_liveness)| {
+                        !slot_liveness.has_bit(scope_id.index())
+                            && (forbidden_slots.is_empty()
+                                || !forbidden_slots.contains(
+                                    #[expect(clippy::cast_possible_truncation)]
+                                    &(slot as Slot),
+                                ))
+                    })
                     .map(
                         // `slot_liveness` is an arena `Vec`, so its indexes cannot exceed `u32::MAX`
                         #[expect(clippy::cast_possible_truncation)]

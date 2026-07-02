@@ -6,7 +6,6 @@ use std::{
 };
 
 use rustc_hash::FxHashMap;
-use smallvec::SmallVec;
 
 use oxc_allocator::{Address, ArenaVec};
 use oxc_ast::{AstKind, ast::*};
@@ -34,7 +33,7 @@ use crate::{
     diagnostics::redeclaration,
     label::UnusedLabels,
     node::{Ancestry, AstNodeStore, AstNodeStoreKind},
-    scoping::{Bindings, Scoping},
+    scoping::Scoping,
     stats::Stats,
     unresolved_stack::UnresolvedReferences,
 };
@@ -98,9 +97,6 @@ pub struct SemanticBuilder<'a> {
     pub(crate) scoping: Scoping,
 
     pub(crate) unresolved_references: UnresolvedReferences<'a>,
-    /// Checkpoint for early resolution of function parameter / catch parameter references.
-    /// Tracks the start index in the flat unresolved references list.
-    unresolved_references_checkpoint: usize,
 
     unused_labels: UnusedLabels<'a>,
     #[cfg(feature = "jsdoc")]
@@ -160,7 +156,6 @@ impl<'a> SemanticBuilder<'a> {
             hoisting_variables: FxHashMap::default(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
-            unresolved_references_checkpoint: 0,
             unused_labels: UnusedLabels::default(),
             #[cfg(feature = "jsdoc")]
             jsdoc: JSDocBuilder::default(),
@@ -573,7 +568,25 @@ impl<'a> SemanticBuilder<'a> {
         let symbol_id = self
             .scoping
             .get_binding(scope_id, name)
-            .or_else(|| self.hoisting_variables.get(&(scope_id, name)).copied())?;
+            .or_else(|| self.hoisting_variables.get(&(scope_id, name)).copied())
+            .or_else(|| {
+                // A function body / catch body is a separate scope from the parameters,
+                // but declarations in it still clash with the parameters:
+                // `function f(x) { let x }` / `catch (e) { let e }` are redeclaration
+                // errors, and `var x` merges with parameter `x`.
+                let flags = self.scoping.scope_flags(scope_id);
+                let parent_is_params = flags.is_function_body()
+                    || self
+                        .scoping
+                        .scope_parent_id(scope_id)
+                        .is_some_and(|p| self.scoping.scope_flags(p).is_catch_clause());
+                if parent_is_params {
+                    let parent_id = self.scoping.scope_parent_id(scope_id)?;
+                    self.scoping.get_binding(parent_id, name)
+                } else {
+                    None
+                }
+            })?;
 
         let flags = self.scoping.symbol_flags(symbol_id);
 
@@ -704,38 +717,6 @@ impl<'a> SemanticBuilder<'a> {
         true
     }
 
-    /// Early-resolve references collected since the checkpoint by walking up the
-    /// full scope chain. Used for function parameters and catch parameters where
-    /// references must be resolved before entering the function body, to avoid
-    /// binding to variables declared inside the body (which share the same scope).
-    ///
-    /// Resolved references are removed. Unresolved references stay in the flat
-    /// list for later resolution by `resolve_all_references` (which handles
-    /// forward references to declarations not yet visited).
-    fn resolve_references_for_current_scope(&mut self) {
-        // Process in-place using a retain-style write-cursor — no temporary
-        // `Vec`. Reads each `(name, reference_id)` by value out of the flat
-        // list (both fields are `Copy`), so calling `walk_up_resolve_reference`
-        // (which takes `&mut self`) doesn't conflict with the index read.
-        let checkpoint = self.unresolved_references_checkpoint;
-        let end = self.unresolved_references.len();
-        if end <= checkpoint {
-            return;
-        }
-        let mut write_idx = checkpoint;
-        for read_idx in checkpoint..end {
-            let (name, reference_id) = self.unresolved_references.get(read_idx);
-            if !self.walk_up_resolve_reference(name, reference_id) {
-                // Keep in the flat list — may resolve later via forward declarations.
-                if write_idx != read_idx {
-                    self.unresolved_references.set(write_idx, name, reference_id);
-                }
-                write_idx += 1;
-            }
-        }
-        self.unresolved_references.truncate(write_idx);
-    }
-
     pub(crate) fn add_redeclare_variable(
         &mut self,
         symbol_id: SymbolId,
@@ -784,6 +765,44 @@ impl<'a> SemanticBuilder<'a> {
         self.current_scope_id = parent_scope_id;
         self.visit_decorators(decorators);
         self.current_scope_id = function_scope_id;
+    }
+}
+
+/// `hasParameterExpressions` from the spec's `FunctionDeclarationInstantiation`:
+/// whether any parameter contains an initializer or a computed property key.
+/// When true, the function body gets its own var environment, so parameter
+/// initializers cannot see body declarations.
+pub fn has_parameter_expressions(params: &FormalParameters) -> bool {
+    params
+        .items
+        .iter()
+        .any(|param| param.initializer.is_some() || binding_pattern_has_expression(&param.pattern))
+        || params
+            .rest
+            .as_ref()
+            .is_some_and(|rest| binding_pattern_has_expression(&rest.rest.argument))
+}
+
+fn binding_pattern_has_expression(pattern: &BindingPattern) -> bool {
+    match pattern {
+        BindingPattern::BindingIdentifier(_) => false,
+        BindingPattern::AssignmentPattern(_) => true,
+        BindingPattern::ObjectPattern(obj) => {
+            obj.properties
+                .iter()
+                .any(|prop| prop.computed || binding_pattern_has_expression(&prop.value))
+                || obj
+                    .rest
+                    .as_ref()
+                    .is_some_and(|rest| binding_pattern_has_expression(&rest.argument))
+        }
+        BindingPattern::ArrayPattern(arr) => {
+            arr.elements.iter().flatten().any(binding_pattern_has_expression)
+                || arr
+                    .rest
+                    .as_ref()
+                    .is_some_and(|rest| binding_pattern_has_expression(&rest.argument))
+        }
     }
 }
 
@@ -976,34 +995,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
 
-        let parent_scope_id = self.current_scope_id;
         self.enter_scope(ScopeFlags::empty(), &it.scope_id);
 
-        // Move all bindings from catch clause param scope to catch clause body scope
-        // to make it easier to resolve references and check redeclare errors
-        if self.scoping.scope_flags(parent_scope_id).is_catch_clause() {
-            let parent_bindings = self.scoping.cell.with_dependent_mut(|allocator, cell| {
-                if cell.bindings[parent_scope_id].is_empty() {
-                    None
-                } else {
-                    let mut parent_bindings = Bindings::new_in(allocator);
-                    mem::swap(&mut cell.bindings[parent_scope_id], &mut parent_bindings);
-                    // Collect into a `SmallVec` so the common `catch (e)` (a single binding)
-                    // resolves inline without a heap allocation. The ids must be collected
-                    // here to escape the `with_dependent_mut` borrow before calling
-                    // `set_symbol_scope_id` below.
-                    let parent_symbol_ids =
-                        parent_bindings.values().copied().collect::<SmallVec<[SymbolId; 4]>>();
-                    cell.bindings[self.current_scope_id] = parent_bindings;
-                    Some(parent_symbol_ids)
-                }
-            });
-            if let Some(parent_bindings) = parent_bindings {
-                for symbol_id in parent_bindings {
-                    self.scoping.set_symbol_scope_id(symbol_id, self.current_scope_id);
-                }
-            }
-        }
+        // Catch parameter bindings stay in the catch-clause scope (the parent of this
+        // block): references in the block resolve to them by walking up, and
+        // references in the parameter's own default expressions can never see the
+        // block's declarations. `check_redeclaration` looks through the block scope
+        // into the catch scope for the `catch (e) { let e }` redeclaration error.
 
         self.visit_statements(&it.body);
 
@@ -2041,10 +2039,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         ));
         /* cfg */
 
-        // Save checkpoint before visiting type params/params/return type
-        let saved_checkpoint = self.unresolved_references_checkpoint;
-        self.unresolved_references_checkpoint = self.unresolved_references.checkpoint();
-
         if let Some(type_parameters) = &func.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
@@ -2056,20 +2050,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_annotation(return_type);
         }
 
-        if func.params.has_parameter() || func.return_type.is_some() {
-            // `function foo({bar: identifier_reference}) {}`
-            //                     ^^^^^^^^^^^^^^^^^^^^
-            // `function foo<SomeType>(v: SomeType): SomeType { return v; }`
-            //                            ^^^^^^^^   ^^^^^^^^
-            // Parameter initializers must be resolved after all parameters have been declared.
-            // Param types and return type must be resolved after type parameters have been declared.
-            // In both cases, need to avoid binding to variables/types declared inside the function body.
-            self.resolve_references_for_current_scope();
-        }
-        self.unresolved_references_checkpoint = saved_checkpoint;
-
         if let Some(body) = &func.body {
-            self.visit_function_body(body);
+            // Per the spec, a function whose parameters contain expressions gets a
+            // separate var environment for its body, so parameter initializers (and
+            // param / return types) never see body declarations: references in them
+            // resolve past the function scope naturally.
+            if has_parameter_expressions(&func.params) {
+                let scope_id = Cell::new(None);
+                self.enter_scope(ScopeFlags::FunctionBody, &scope_id);
+                self.visit_function_body(body);
+                self.leave_scope();
+            } else {
+                self.visit_function_body(body);
+            }
         }
 
         /* cfg */
@@ -2126,10 +2119,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             &expr.scope_id,
         );
 
-        // Save checkpoint before visiting type params/params/return type
-        let saved_checkpoint = self.unresolved_references_checkpoint;
-        self.unresolved_references_checkpoint = self.unresolved_references.checkpoint();
-
         if let Some(parameters) = &expr.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);
         }
@@ -2148,19 +2137,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_annotation(return_type);
         }
 
-        if expr.params.has_parameter() || expr.return_type.is_some() {
-            // `let foo = ({bar: identifier_reference}) => {};`
-            //                   ^^^^^^^^^^^^^^^^^^^^
-            // `let foo = <SomeType>(v: SomeType): SomeType => v;`
-            //                          ^^^^^^^^   ^^^^^^^^
-            // Parameter initializers must be resolved after all parameters have been declared.
-            // Param types and return type must be resolved after type parameters have been declared.
-            // In both cases, need to avoid binding to variables/types declared inside the function body.
-            self.resolve_references_for_current_scope();
+        // Per the spec, a function whose parameters contain expressions gets a
+        // separate var environment for its body, so parameter initializers never
+        // see body declarations. An expression body declares nothing, so it never
+        // needs the extra scope.
+        if !expr.expression && has_parameter_expressions(&expr.params) {
+            let scope_id = Cell::new(None);
+            self.enter_scope(ScopeFlags::FunctionBody, &scope_id);
+            self.visit_function_body(&expr.body);
+            self.leave_scope();
+        } else {
+            self.visit_function_body(&expr.body);
         }
-        self.unresolved_references_checkpoint = saved_checkpoint;
-
-        self.visit_function_body(&expr.body);
 
         /* cfg */
         control_flow!(self, |cfg| {
@@ -2379,16 +2367,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         param.bind(self);
 
-        let saved_checkpoint = self.unresolved_references_checkpoint;
-        self.unresolved_references_checkpoint = self.unresolved_references.checkpoint();
-
         self.visit_span(&param.span);
         self.visit_binding_pattern(&param.pattern);
         if let Some(type_annotation) = &param.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
         }
-        self.resolve_references_for_current_scope();
-        self.unresolved_references_checkpoint = saved_checkpoint;
         self.leave_node(kind);
     }
 
