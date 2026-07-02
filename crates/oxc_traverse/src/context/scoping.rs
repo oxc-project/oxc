@@ -471,7 +471,7 @@ impl FunctionBodyScopeCollector {
         let Some(id) = &func.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
 
-        if func.r#async || func.generator || self.parent_scope_flags.is_strict_mode() {
+        if self.parent_scope_flags.is_strict_mode() {
             self.binding_symbol_ids.push(symbol_id);
         } else {
             self.function_declaration_symbol_ids.push(symbol_id);
