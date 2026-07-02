@@ -10306,6 +10306,9 @@
         "vue/require-typed-ref": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vue/require-valid-default-prop": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "vue/return-in-computed-property": {
           "anyOf": [
             {

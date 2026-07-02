@@ -1751,6 +1751,7 @@ export interface DummyRuleMap {
   "vue/require-render-return"?: RuleNoConfig;
   "vue/require-slots-as-functions"?: RuleNoConfig;
   "vue/require-typed-ref"?: RuleNoConfig;
+  "vue/require-valid-default-prop"?: RuleNoConfig;
   "vue/return-in-computed-property"?: RuleNoConfig | [AllowWarnDeny, ReturnInComputedPropertyConfig];
   "vue/return-in-emits-validator"?: RuleNoConfig;
   "vue/valid-define-emits"?: RuleNoConfig;
