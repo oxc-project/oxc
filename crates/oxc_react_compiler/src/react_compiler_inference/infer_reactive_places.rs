@@ -59,6 +59,13 @@ pub fn infer_reactive_places(
     // Compute control dominators
     let post_dominators = compute_post_dominator_tree(func, env.next_block_id().0, false)?;
 
+    // The post-dominator frontier of a block — and therefore the set of terminal
+    // test identifiers that control it — depends only on the CFG and the
+    // post-dominator tree, both fixed for the whole fixpoint. Cache the flattened
+    // test-identifier list per block instead of re-walking the CFG on every
+    // `is_reactive_controlled_block` call in every iteration.
+    let mut control_test_cache: FxHashMap<BlockId, Box<[IdentifierId]>> = FxHashMap::default();
+
     // Collect block IDs for iteration
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
 
@@ -73,8 +80,13 @@ pub fn infer_reactive_places(
     loop {
         for block_id in &block_ids {
             let block = func.body.blocks.get(block_id).unwrap();
-            let has_reactive_control =
-                is_reactive_controlled_block(block.id, func, &post_dominators, &mut reactive_map);
+            let has_reactive_control = is_reactive_controlled_block(
+                block.id,
+                func,
+                &post_dominators,
+                &mut reactive_map,
+                &mut control_test_cache,
+            );
 
             // Process phi nodes
             let block = func.body.blocks.get(block_id).unwrap();
@@ -103,6 +115,7 @@ pub fn infer_reactive_places(
                             func,
                             &post_dominators,
                             &mut reactive_map,
+                            &mut control_test_cache,
                         ) {
                             reactive_map.mark_reactive(phi.place.identifier);
                             break;
@@ -364,32 +377,31 @@ fn is_reactive_controlled_block(
     func: &HirFunction,
     post_dominators: &PostDominator,
     reactive_map: &mut ReactivityMap,
+    control_test_cache: &mut FxHashMap<BlockId, Box<[IdentifierId]>>,
 ) -> bool {
-    let frontier = post_dominator_frontier(func, post_dominators, block_id);
-    for frontier_block_id in &frontier {
-        let control_block = func.body.blocks.get(frontier_block_id).unwrap();
-        match &control_block.terminal {
-            Terminal::If { test, .. } | Terminal::Branch { test, .. } => {
-                if reactive_map.is_reactive(test.identifier) {
-                    return true;
+    let tests = control_test_cache.entry(block_id).or_insert_with(|| {
+        let frontier = post_dominator_frontier(func, post_dominators, block_id);
+        let mut tests: Vec<IdentifierId> = Vec::new();
+        for frontier_block_id in &frontier {
+            let control_block = func.body.blocks.get(frontier_block_id).unwrap();
+            match &control_block.terminal {
+                Terminal::If { test, .. } | Terminal::Branch { test, .. } => {
+                    tests.push(test.identifier);
                 }
-            }
-            Terminal::Switch { test, cases, .. } => {
-                if reactive_map.is_reactive(test.identifier) {
-                    return true;
-                }
-                for case in cases {
-                    if let Some(ref case_test) = case.test {
-                        if reactive_map.is_reactive(case_test.identifier) {
-                            return true;
+                Terminal::Switch { test, cases, .. } => {
+                    tests.push(test.identifier);
+                    for case in cases {
+                        if let Some(ref case_test) = case.test {
+                            tests.push(case_test.identifier);
                         }
                     }
                 }
+                _ => {}
             }
-            _ => {}
         }
-    }
-    false
+        tests.into_boxed_slice()
+    });
+    tests.iter().any(|&test_id| reactive_map.is_reactive(test_id))
 }
 
 // =============================================================================
