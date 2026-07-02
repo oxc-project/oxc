@@ -72,7 +72,7 @@ async function runCodeInHarness(options = {}) {
     };
 
     createContext(context);
-    if (!isRaw) runInContext(createHarnessForTest(includes), context);
+    if (!isRaw) getHarnessScript(includes).runInContext(context);
 
     if (isModule) {
       const module = new SourceTextModule(code, { context, importModuleDynamically });
@@ -128,6 +128,22 @@ function createHarnessForTest(includes) {
   return harness;
 }
 
+const harnessScriptCache = new Map();
+
+// Compile the harness once per distinct `includes` list and reuse the compiled
+// `vm.Script` across requests, instead of re-parsing assert.js + sta.js + the
+// includes + babelHelpers (~177 KB) on every execution. The cache key preserves
+// the original include order so the concatenated harness is byte-identical.
+function getHarnessScript(includes) {
+  const key = (includes || []).join(",");
+  let script = harnessScriptCache.get(key);
+  if (!script) {
+    script = new Script(createHarnessForTest(includes));
+    harnessScriptCache.set(key, script);
+  }
+  return script;
+}
+
 const server = createServer((req, res) => {
   if (req.method == "DELETE") {
     server.closeAllConnections();
@@ -171,4 +187,5 @@ process.on("unhandledRejection", () => {
 
 server.timeout = 3000;
 
-server.listen(32055, () => {});
+const port = process.env.PORT || 32055;
+server.listen(port, () => {});
