@@ -4,7 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
-use oxc_minifier::{CompressOptions, Compressor};
+use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -16,8 +16,9 @@ fn bench_minifier(criterion: &mut Criterion) {
 
     for file in TestFiles::minimal().files().iter().skip(1) {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = &file.source_text;
+        let source_text = file.source_text.as_str();
         let source_type = file.source_type;
+        let path = Path::new(&file.file_name);
 
         // Create `Allocator` outside of `bench_function`, so same allocator is used for
         // both the warmup and measurement phases
@@ -28,25 +29,15 @@ fn bench_minifier(criterion: &mut Criterion) {
                 // Reset allocator at start of each iteration
                 allocator.reset();
 
-                // Create fresh AST + semantic data for each iteration
-                let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let scoping = SemanticBuilder::new()
-                    .with_enum_eval(true)
-                    .build(&program)
-                    .semantic
-                    .into_scoping();
-
-                // Minifier only works on esnext.
-                let transform_options = TransformOptions::from_target("esnext").unwrap();
-                let transformer_ret =
-                    Transformer::new(&allocator, Path::new(&file.file_name), &transform_options)
-                        .build_with_scoping(scoping, &mut program);
-                assert!(transformer_ret.diagnostics.is_empty());
-                let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-
-                let options = CompressOptions::smallest();
+                // Strip TypeScript / lower to esnext in setup — the minifier only runs on esnext
+                // JS — so the measured block is the full `Minifier::minify` pipeline: the internal
+                // `SemanticBuilder` pass and compress. Variable mangling is deliberately off
+                // (`mangle: None`); it is measured separately by the `bench_mangler` group below.
+                let mut program = transform_to_js(&allocator, source_text, source_type, path);
+                let options =
+                    MinifierOptions { compress: Some(CompressOptions::smallest()), mangle: None };
                 runner.run(|| {
-                    Compressor::new(&allocator).build_with_scoping(&mut program, scoping, options);
+                    Minifier::new(options).minify(&allocator, &mut program);
                 });
             });
         });
