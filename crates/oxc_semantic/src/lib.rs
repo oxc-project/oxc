@@ -251,7 +251,7 @@ impl<'a> Semantic<'a> {
     pub fn symbol_references(
         &self,
         symbol_id: SymbolId,
-    ) -> impl Iterator<Item = &Reference> + '_ + use<'_> {
+    ) -> impl Iterator<Item = &Reference> + Clone + '_ + use<'_> {
         self.scoping.get_resolved_references(symbol_id)
     }
 

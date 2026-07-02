@@ -531,7 +531,7 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    fn current_class_ids(&self) -> impl Iterator<Item = ClassId> {
+    fn current_class_ids(&self) -> impl Iterator<Item = ClassId> + Clone {
         self.class_stack.iter().rev().copied()
     }
 
