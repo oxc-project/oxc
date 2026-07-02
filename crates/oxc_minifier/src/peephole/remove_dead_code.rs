@@ -499,6 +499,15 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Some(symbol_id) = id.and_then(|id| id.symbol_id.get()) else { return };
+        // Redeclarations are span-only in oxc_semantic and create no references, so
+        // they're invisible to the read-only-refs check below. The runtime-winning
+        // declaration may be an impure one that never reaches this function, so a
+        // "pure" fact recorded for another declaration of the same symbol cannot be
+        // trusted and must not survive.
+        if !ctx.scoping().symbol_redeclarations(symbol_id).is_empty() {
+            ctx.state.pure_functions.remove(&symbol_id);
+            return;
+        }
         if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
             ctx.state.pure_functions.insert(
                 symbol_id,
