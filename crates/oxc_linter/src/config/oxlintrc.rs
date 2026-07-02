@@ -425,6 +425,9 @@ impl Oxlintrc {
         let schema = self.schema.clone().or(other.schema);
         let options = self.options.merge(&other.options);
 
+        let mut ignore_patterns = other.ignore_patterns;
+        ignore_patterns.extend(self.ignore_patterns.clone());
+
         Oxlintrc {
             schema,
             plugins,
@@ -437,7 +440,7 @@ impl Oxlintrc {
             overrides,
             options,
             path: self.path.clone(),
-            ignore_patterns: self.ignore_patterns.clone(),
+            ignore_patterns,
             extends: self.extends.clone(),
             extends_configs: self.extends_configs.clone(),
         }
@@ -693,6 +696,24 @@ mod test {
         base.path = PathBuf::from("/root/base.json");
         let merged = root.merge(base);
         assert_eq!(merged.options.respect_eslint_disable_directives, Some(false));
+    }
+
+    #[test]
+    fn test_oxlintrc_merge_ignore_patterns() {
+        // An extended (parent) config's ignore patterns must be inherited by the child.
+        let root: Oxlintrc = serde_json::from_value(json!({ "extends": ["base.json"] })).unwrap();
+        let base: Oxlintrc =
+            serde_json::from_value(json!({ "ignorePatterns": ["**/dist"] })).unwrap();
+        let merged = root.merge(base);
+        assert_eq!(merged.ignore_patterns, vec!["**/dist".to_string()]);
+
+        // Patterns from both configs are combined, with the child's appended after the parent's.
+        let root: Oxlintrc =
+            serde_json::from_value(json!({ "ignorePatterns": ["child/out"] })).unwrap();
+        let base: Oxlintrc =
+            serde_json::from_value(json!({ "ignorePatterns": ["**/dist"] })).unwrap();
+        let merged = root.merge(base);
+        assert_eq!(merged.ignore_patterns, vec!["**/dist".to_string(), "child/out".to_string()]);
     }
 
     #[test]
