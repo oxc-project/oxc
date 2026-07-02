@@ -1,0 +1,31 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ promise(no-native): "Promise" is not defined
+   ╭─[no_native.tsx:1:5]
+ 1 │ new Promise(function (resolve, reject) {})
+   ·     ───────
+   ╰────
+  help: Bring your own `Promise` into scope first (e.g. `var Promise = require('bluebird')`) so the code still runs where there is no native one.
+
+  ⚠ promise(no-native): "Promise" is not defined
+   ╭─[no_native.tsx:1:1]
+ 1 │ Promise.resolve()
+   · ───────
+   ╰────
+  help: Bring your own `Promise` into scope first (e.g. `var Promise = require('bluebird')`) so the code still runs where there is no native one.
+
+  ⚠ promise(no-native): "Promise" is not defined
+   ╭─[no_native.tsx:1:1]
+ 1 │ Promise.reject(new Error("oops"))
+   · ───────
+   ╰────
+  help: Bring your own `Promise` into scope first (e.g. `var Promise = require('bluebird')`) so the code still runs where there is no native one.
+
+  ⚠ promise(no-native): "Promise" is not defined
+   ╭─[no_native.tsx:1:9]
+ 1 │ var x = Promise.all([a, b]);
+   ·         ───────
+   ╰────
+  help: Bring your own `Promise` into scope first (e.g. `var Promise = require('bluebird')`) so the code still runs where there is no native one.
