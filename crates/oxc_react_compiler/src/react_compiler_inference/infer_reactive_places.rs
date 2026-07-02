@@ -134,15 +134,12 @@ pub fn infer_reactive_places(
 
                 let value = &instr.value;
 
-                // Check if any operand is reactive
+                // Check if any operand is reactive. The place list is reused for
+                // the mutable-operand pass below instead of visiting twice.
                 let mut has_reactive_input = false;
-                let operands: Vec<IdentifierId> =
-                    visitors::each_instruction_value_operand(value, env)
-                        .into_iter()
-                        .map(|p| p.identifier)
-                        .collect();
-                for &op_id in &operands {
-                    let reactive = reactive_map.is_reactive(op_id);
+                let operand_places = visitors::each_instruction_value_operand(value, env);
+                for op_place in &operand_places {
+                    let reactive = reactive_map.is_reactive(op_place.identifier);
                     has_reactive_input = has_reactive_input || reactive;
                 }
 
@@ -171,21 +168,16 @@ pub fn infer_reactive_places(
 
                 if has_reactive_input {
                     // Mark lvalues reactive (unless stable)
-                    let lvalue_ids: Vec<IdentifierId> = visitors::each_instruction_lvalue(instr)
-                        .into_iter()
-                        .map(|p| p.identifier)
-                        .collect();
-                    for lvalue_id in lvalue_ids {
-                        if stable_sidemap.is_stable(lvalue_id) {
+                    for lvalue in &visitors::each_instruction_lvalue(instr) {
+                        if stable_sidemap.is_stable(lvalue.identifier) {
                             continue;
                         }
-                        reactive_map.mark_reactive(lvalue_id);
+                        reactive_map.mark_reactive(lvalue.identifier);
                     }
                 }
 
                 if has_reactive_input || has_reactive_control {
                     // Mark mutable operands reactive
-                    let operand_places = visitors::each_instruction_value_operand(value, env);
                     for op_place in &operand_places {
                         match op_place.effect {
                             Effect::Capture
