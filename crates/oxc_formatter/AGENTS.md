@@ -21,7 +21,9 @@ The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(cra
   - Drives context-dependent decisions like forced parentheses / quote style
   - The formatter knows nothing about Prettier/Vue vocabulary, callers pass wrapped source
 - `format_program`: Special-purpose AST-in entry point
-- `ExternalCallbacks` (in `external_formatter.rs`): Callbacks for embedded-doc / Tailwind formatting delegated back to the host
+- `ExternalCallbacks` (in `external_formatter.rs`): The host-supplied `FormatDispatcher`
+  (embedded-language formatting, see `oxc_formatter_core`'s `embedded` module)
+  plus string-based / Tailwind callbacks delegated back to the host
 
 ### Generated code
 
@@ -48,9 +50,16 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 
 ### Embedded language formatting
 
-- Two directions: xxx-in-js (e.g. css/graphql/html in template literals) and js-in-xxx (e.g. vue/svelte)
-- Both work by Oxfmt injecting Prettier calls through `ExternalCallbacks`
-  - This crate stays unaware of Prettier and only invokes the supplied callbacks
+Two directions: xxx-in-js (css/graphql/html in template literals) and js-in-xxx (vue/svelte).
+
+- xxx-in-js goes through the `FormatDispatcher` Oxfmt assembles Rust based formatter, Prettier Doc→IR fallback otherwise
+- As the JS host, this crate also owns the parent-side concerns in `print/template/embed/`:
+  - template-literal escape on returned IR,
+  - placeholder marker insertion / survival count / `${expr}` substitution,
+  - and `.raw` vs `.cooked` selection
+  - Language formatter crates stay free of these rules
+    - See `embed/mod.rs` for the shared helpers and `embed/{css,html,graphql,markdown}.rs` for each site's wiring
+- js-in-xxx works with `prettier-plugin-oxfmt` which uses `format_fragment`
 
 ## Fixing IR construction
 

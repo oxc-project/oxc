@@ -66,7 +66,7 @@ pub fn create_computed_key_temp_var<'a>(
     let binding =
         ctx.generate_uid_based_on_node(&key, outer_scope_id, SymbolFlags::BlockScopedVariable);
 
-    ctx.state.var_declarations.insert_let(&binding, None, ctx.ast);
+    ctx.state.var_declarations.insert_let(&binding, None, &ctx.ast);
 
     let assignment = create_assignment(&binding, key, SPAN, ctx);
     let ident = binding.create_read_expression(ctx);

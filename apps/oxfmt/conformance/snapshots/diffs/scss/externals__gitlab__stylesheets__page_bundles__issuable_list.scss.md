@@ -1,0 +1,511 @@
+# externals/gitlab/stylesheets/page_bundles/issuable_list.scss
+
+> Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)
+
+## Option 1
+
+`````json
+{"printWidth":80}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -75,9 +75,9 @@
+         color: var(--gray-700, $gray-700);
+       }
+     }
+ 
+-    @media (max-width: map-get($grid-breakpoints, lg)-1) {
++    @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+       .task-status,
+       .issuable-due-date,
+       .issuable-weight,
+       .project-ref-path {
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+
+.issuable-list {
+  li {
+    .issuable-info-container {
+      flex: 1;
+      display: flex;
+    }
+
+    .issuable-main-info {
+      flex: 1 auto;
+      margin-right: 10px;
+      min-width: 0;
+
+      .issue-weight-icon,
+      .issue-estimate-icon {
+        vertical-align: sub;
+      }
+    }
+
+    .issuable-info,
+    .issuable-meta {
+      font-size: $gl-font-size-sm;
+    }
+
+    .issuable-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      flex: 1 0 auto;
+
+      .controls {
+        margin-bottom: 2px;
+        line-height: 20px;
+        padding: 0;
+      }
+    }
+
+    @include media-breakpoint-down(xs) {
+      .issuable-meta {
+        .controls li {
+          margin-right: 0;
+        }
+      }
+    }
+
+    .issue-check {
+      min-width: 15px;
+    }
+
+    .issuable-milestone,
+    .issuable-info,
+    .task-status,
+    .issuable-timestamp {
+      font-weight: $gl-font-weight-normal;
+      color: var(--gray-500, $gl-text-color-secondary);
+
+      a {
+        color: var(--gl-text-color, $gl-text-color);
+      }
+
+      .gl-label-link {
+        color: inherit;
+
+        &:hover {
+          text-decoration: none;
+
+          .gl-label-text:last-of-type {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      .milestone {
+        color: var(--gray-700, $gray-700);
+      }
+    }
+
+    @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+      .task-status,
+      .issuable-due-date,
+      .issuable-weight,
+      .project-ref-path {
+        display: none;
+      }
+    }
+  }
+}
+
+.issuable-list li,
+.issuable-info-container .controls {
+  .avatar-counter {
+    padding-left: $gl-spacing-scale-1;
+    padding-right: $gl-spacing-scale-2;
+    height: $gl-spacing-scale-5;
+    min-width: $gl-spacing-scale-5;
+    line-height: 14px;
+  }
+}
+
+.merge-request {
+  .issuable-info-container .controls {
+    .avatar-counter {
+      line-height: $gl-line-height-16;
+      border: 0;
+    }
+  }
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+
+.issuable-list {
+  li {
+    .issuable-info-container {
+      flex: 1;
+      display: flex;
+    }
+
+    .issuable-main-info {
+      flex: 1 auto;
+      margin-right: 10px;
+      min-width: 0;
+
+      .issue-weight-icon,
+      .issue-estimate-icon {
+        vertical-align: sub;
+      }
+    }
+
+    .issuable-info,
+    .issuable-meta {
+      font-size: $gl-font-size-sm;
+    }
+
+    .issuable-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      flex: 1 0 auto;
+
+      .controls {
+        margin-bottom: 2px;
+        line-height: 20px;
+        padding: 0;
+      }
+    }
+
+    @include media-breakpoint-down(xs) {
+      .issuable-meta {
+        .controls li {
+          margin-right: 0;
+        }
+      }
+    }
+
+    .issue-check {
+      min-width: 15px;
+    }
+
+    .issuable-milestone,
+    .issuable-info,
+    .task-status,
+    .issuable-timestamp {
+      font-weight: $gl-font-weight-normal;
+      color: var(--gray-500, $gl-text-color-secondary);
+
+      a {
+        color: var(--gl-text-color, $gl-text-color);
+      }
+
+      .gl-label-link {
+        color: inherit;
+
+        &:hover {
+          text-decoration: none;
+
+          .gl-label-text:last-of-type {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      .milestone {
+        color: var(--gray-700, $gray-700);
+      }
+    }
+
+    @media (max-width: map-get($grid-breakpoints, lg)-1) {
+      .task-status,
+      .issuable-due-date,
+      .issuable-weight,
+      .project-ref-path {
+        display: none;
+      }
+    }
+  }
+}
+
+.issuable-list li,
+.issuable-info-container .controls {
+  .avatar-counter {
+    padding-left: $gl-spacing-scale-1;
+    padding-right: $gl-spacing-scale-2;
+    height: $gl-spacing-scale-5;
+    min-width: $gl-spacing-scale-5;
+    line-height: 14px;
+  }
+}
+
+.merge-request {
+  .issuable-info-container .controls {
+    .avatar-counter {
+      line-height: $gl-line-height-16;
+      border: 0;
+    }
+  }
+}
+
+`````
+
+## Option 2
+
+`````json
+{"printWidth":100}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -75,9 +75,9 @@
+         color: var(--gray-700, $gray-700);
+       }
+     }
+ 
+-    @media (max-width: map-get($grid-breakpoints, lg)-1) {
++    @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+       .task-status,
+       .issuable-due-date,
+       .issuable-weight,
+       .project-ref-path {
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+
+.issuable-list {
+  li {
+    .issuable-info-container {
+      flex: 1;
+      display: flex;
+    }
+
+    .issuable-main-info {
+      flex: 1 auto;
+      margin-right: 10px;
+      min-width: 0;
+
+      .issue-weight-icon,
+      .issue-estimate-icon {
+        vertical-align: sub;
+      }
+    }
+
+    .issuable-info,
+    .issuable-meta {
+      font-size: $gl-font-size-sm;
+    }
+
+    .issuable-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      flex: 1 0 auto;
+
+      .controls {
+        margin-bottom: 2px;
+        line-height: 20px;
+        padding: 0;
+      }
+    }
+
+    @include media-breakpoint-down(xs) {
+      .issuable-meta {
+        .controls li {
+          margin-right: 0;
+        }
+      }
+    }
+
+    .issue-check {
+      min-width: 15px;
+    }
+
+    .issuable-milestone,
+    .issuable-info,
+    .task-status,
+    .issuable-timestamp {
+      font-weight: $gl-font-weight-normal;
+      color: var(--gray-500, $gl-text-color-secondary);
+
+      a {
+        color: var(--gl-text-color, $gl-text-color);
+      }
+
+      .gl-label-link {
+        color: inherit;
+
+        &:hover {
+          text-decoration: none;
+
+          .gl-label-text:last-of-type {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      .milestone {
+        color: var(--gray-700, $gray-700);
+      }
+    }
+
+    @media (max-width: map-get($grid-breakpoints, lg) - 1) {
+      .task-status,
+      .issuable-due-date,
+      .issuable-weight,
+      .project-ref-path {
+        display: none;
+      }
+    }
+  }
+}
+
+.issuable-list li,
+.issuable-info-container .controls {
+  .avatar-counter {
+    padding-left: $gl-spacing-scale-1;
+    padding-right: $gl-spacing-scale-2;
+    height: $gl-spacing-scale-5;
+    min-width: $gl-spacing-scale-5;
+    line-height: 14px;
+  }
+}
+
+.merge-request {
+  .issuable-info-container .controls {
+    .avatar-counter {
+      line-height: $gl-line-height-16;
+      border: 0;
+    }
+  }
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+
+.issuable-list {
+  li {
+    .issuable-info-container {
+      flex: 1;
+      display: flex;
+    }
+
+    .issuable-main-info {
+      flex: 1 auto;
+      margin-right: 10px;
+      min-width: 0;
+
+      .issue-weight-icon,
+      .issue-estimate-icon {
+        vertical-align: sub;
+      }
+    }
+
+    .issuable-info,
+    .issuable-meta {
+      font-size: $gl-font-size-sm;
+    }
+
+    .issuable-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      flex: 1 0 auto;
+
+      .controls {
+        margin-bottom: 2px;
+        line-height: 20px;
+        padding: 0;
+      }
+    }
+
+    @include media-breakpoint-down(xs) {
+      .issuable-meta {
+        .controls li {
+          margin-right: 0;
+        }
+      }
+    }
+
+    .issue-check {
+      min-width: 15px;
+    }
+
+    .issuable-milestone,
+    .issuable-info,
+    .task-status,
+    .issuable-timestamp {
+      font-weight: $gl-font-weight-normal;
+      color: var(--gray-500, $gl-text-color-secondary);
+
+      a {
+        color: var(--gl-text-color, $gl-text-color);
+      }
+
+      .gl-label-link {
+        color: inherit;
+
+        &:hover {
+          text-decoration: none;
+
+          .gl-label-text:last-of-type {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      .milestone {
+        color: var(--gray-700, $gray-700);
+      }
+    }
+
+    @media (max-width: map-get($grid-breakpoints, lg)-1) {
+      .task-status,
+      .issuable-due-date,
+      .issuable-weight,
+      .project-ref-path {
+        display: none;
+      }
+    }
+  }
+}
+
+.issuable-list li,
+.issuable-info-container .controls {
+  .avatar-counter {
+    padding-left: $gl-spacing-scale-1;
+    padding-right: $gl-spacing-scale-2;
+    height: $gl-spacing-scale-5;
+    min-width: $gl-spacing-scale-5;
+    line-height: 14px;
+  }
+}
+
+.merge-request {
+  .issuable-info-container .controls {
+    .avatar-counter {
+      line-height: $gl-line-height-16;
+      border: 0;
+    }
+  }
+}
+
+`````

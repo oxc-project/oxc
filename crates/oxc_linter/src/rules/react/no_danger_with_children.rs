@@ -1,3 +1,4 @@
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, JSXAttributeItem, JSXAttributeName, JSXChild, ObjectPropertyKind},
@@ -336,7 +337,7 @@ fn find_var_in_scope<'c>(
 
 /// Returns whether a given object has a property with the given name.
 fn is_object_with_prop_name(
-    obj_props: &oxc_allocator::Vec<'_, ObjectPropertyKind<'_>>,
+    obj_props: &ArenaVec<'_, ObjectPropertyKind<'_>>,
     prop_name: &str,
 ) -> bool {
     obj_props.iter().any(|prop| {

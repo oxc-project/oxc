@@ -1,0 +1,16 @@
+# prettier-ignore
+type   Weird   {
+  a:   String
+}
+
+# oxfmt-ignore
+query   Q   {
+  weird   {   layout   }
+}
+
+{
+  normal
+  # oxfmt-ignore
+  weird   (  a : 1 )   {   x   }
+  alsoNormal
+}

@@ -25,7 +25,7 @@ use oxc_syntax::{
 };
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{BitSet, Vec};
+use oxc_allocator::{ArenaVec, BitSet, GetAllocator};
 use oxc_ast::ast::*;
 
 use crate::{
@@ -200,6 +200,21 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// True if the scope chain from `read_scope` up to (excluding) `body_scope`
+    /// crosses a function boundary — i.e. the read is in a closure relative to
+    /// `body_scope`. Async/generator/arrow scopes are all `Function`.
+    fn read_crosses_function_boundary(
+        read_scope: ScopeId,
+        body_scope: ScopeId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let scoping = ctx.scoping();
+        scoping
+            .scope_ancestors(read_scope)
+            .take_while(|&s| s != body_scope)
+            .any(|s| scoping.scope_flags(s).is_function())
+    }
+
     /// Refresh `ScopeFlags::DirectEval` from live direct-eval call sites.
     ///
     /// `direct_eval_scopes` lists scopes that still contain a direct `eval(...)` call.
@@ -298,7 +313,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
         }
-        let mut live = BitSet::new_in(initial_references_len, ctx.ast.allocator);
+        let mut live = BitSet::new_in(initial_references_len, ctx.allocator());
         LiveRefCollector { live: &mut live }.visit_program(program);
         for reference_ids in ctx.scoping().resolved_references() {
             for reference_id in reference_ids {
@@ -425,7 +440,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.state.dirty.dead_refs.clear();
             }
         } else {
-            ctx.state.dirty.dead_refs = BitSet::new_in(refs_len, ctx.ast.allocator);
+            ctx.state.dirty.dead_refs = BitSet::new_in(refs_len, ctx.allocator());
         }
         ctx.state.dirty.eval_dropped = false;
     }
@@ -467,7 +482,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         debug_assert!(ctx.state.dce || ctx.state.class_symbols_stack.is_exhausted());
     }
 
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_statements(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         Self::minimize_statements(stmts, ctx);
     }
 
@@ -587,6 +606,13 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Tree-shaking mode: fewer passes than full minify below. Only the ones
+        // that remove code, plus the constant folds those removals need. The
+        // folds stay on because the removal passes don't evaluate compound
+        // conditions themselves: `if ('production' === 'production')` must fold
+        // to `true` before the dead branch can be dropped. Passes that only
+        // shrink code (`substitute_*`, `minimize_*`) are left out. See the `dce`
+        // docs in `state.rs`.
         if ctx.state.dce {
             match expr {
                 Expression::TemplateLiteral(t) => {

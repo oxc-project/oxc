@@ -1,0 +1,29 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+:host {
+  /* The diamond corners are mitred at 22.5º to merge any arrow border. */
+  --arrow-size-diagonal: calc((var(--arrow-size) + var(--arrow-base-offset)) * 0.7071);
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+:host {
+  /* The diamond corners are mitred at 22.5º to merge any arrow border. */
+  --arrow-size-diagonal: calc(
+    (var(--arrow-size) + var(--arrow-base-offset)) * 0.7071
+  );
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+:host {
+  /* The diamond corners are mitred at 22.5º to merge any arrow border. */
+  --arrow-size-diagonal: calc((var(--arrow-size) + var(--arrow-base-offset)) * 0.7071);
+}
+
+===================== End =====================

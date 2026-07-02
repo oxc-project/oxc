@@ -1125,19 +1125,16 @@ fn has_matching_type_alias<'a>(
     }
     let Some(specifiers) = &import_decl.specifiers else { return false };
 
-    let import_names: FxHashSet<&str> =
-        specifiers.iter().map(|specifier| specifier.local().name.as_str()).collect();
-
     let scoping = ctx.scoping();
     let root_scope_id = scoping.root_scope_id();
-    let root_bindings = scoping.get_bindings(root_scope_id);
 
-    for (_, &symbol_id) in root_bindings {
+    for specifier in specifiers {
+        let Some(symbol_id) = scoping.get_binding(root_scope_id, specifier.local().name) else {
+            continue;
+        };
         for declaration_node_id in scoping.symbol_declarations(symbol_id) {
             let node = ctx.nodes().get_node(declaration_node_id);
-            if let AstKind::TSTypeAliasDeclaration(decl) = node.kind()
-                && import_names.contains(decl.id.name.as_str())
-            {
+            if matches!(node.kind(), AstKind::TSTypeAliasDeclaration(_)) {
                 return true;
             }
         }

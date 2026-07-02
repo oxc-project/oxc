@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -44,7 +44,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, VariableDeclarator<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let length = self.len();
 

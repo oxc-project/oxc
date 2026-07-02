@@ -13,7 +13,7 @@
 
 use std::{cell::Cell, marker::PhantomData};
 
-use oxc_allocator::Vec;
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_syntax::scope::ScopeId;
 
@@ -61,15 +61,15 @@ unsafe fn walk_program<'a, State, Tr: Traverse<'a, State>>(
         walk_hashbang(traverser, field as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::ProgramDirectives);
-    for item in
-        &mut *((node as *mut u8).add(ancestor::OFFSET_PROGRAM_DIRECTIVES) as *mut Vec<Directive>)
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_PROGRAM_DIRECTIVES)
+        as *mut ArenaVec<Directive>)
     {
         walk_directive(traverser, item as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::ProgramBody);
     walk_statements(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_PROGRAM_BODY) as *mut Vec<Statement>,
+        (node as *mut u8).add(ancestor::OFFSET_PROGRAM_BODY) as *mut ArenaVec<Statement>,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -260,7 +260,7 @@ unsafe fn walk_array_expression<'a, State, Tr: Traverse<'a, State>>(
         ancestor::ArrayExpressionWithoutElements(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_ARRAY_EXPRESSION_ELEMENTS)
-        as *mut Vec<ArrayExpressionElement>)
+        as *mut ArenaVec<ArrayExpressionElement>)
     {
         walk_array_expression_element(traverser, item as *mut _, ctx);
     }
@@ -349,7 +349,7 @@ unsafe fn walk_object_expression<'a, State, Tr: Traverse<'a, State>>(
         ancestor::ObjectExpressionWithoutProperties(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_OBJECT_EXPRESSION_PROPERTIES)
-        as *mut Vec<ObjectPropertyKind>)
+        as *mut ArenaVec<ObjectPropertyKind>)
     {
         walk_object_property_kind(traverser, item as *mut _, ctx);
     }
@@ -468,13 +468,13 @@ unsafe fn walk_template_literal<'a, State, Tr: Traverse<'a, State>>(
         ancestor::TemplateLiteralWithoutQuasis(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TEMPLATE_LITERAL_QUASIS)
-        as *mut Vec<TemplateElement>)
+        as *mut ArenaVec<TemplateElement>)
     {
         walk_template_element(traverser, item as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::TemplateLiteralExpressions);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TEMPLATE_LITERAL_EXPRESSIONS)
-        as *mut Vec<Expression>)
+        as *mut ArenaVec<Expression>)
     {
         walk_expression(traverser, item as *mut _, ctx);
     }
@@ -498,7 +498,7 @@ unsafe fn walk_tagged_template_expression<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
-        as *mut Option<Box<TSTypeParameterInstantiation>>)
+        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::TaggedTemplateExpressionTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
@@ -635,14 +635,14 @@ unsafe fn walk_call_expression<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_CALL_EXPRESSION_TYPE_ARGUMENTS)
-        as *mut Option<Box<TSTypeParameterInstantiation>>)
+        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::CallExpressionTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::CallExpressionArguments);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_CALL_EXPRESSION_ARGUMENTS)
-        as *mut Vec<Argument>)
+        as *mut ArenaVec<Argument>)
     {
         walk_argument(traverser, item as *mut _, ctx);
     }
@@ -666,14 +666,14 @@ unsafe fn walk_new_expression<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS)
-        as *mut Option<Box<TSTypeParameterInstantiation>>)
+        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::NewExpressionTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::NewExpressionArguments);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_NEW_EXPRESSION_ARGUMENTS)
-        as *mut Vec<Argument>)
+        as *mut ArenaVec<Argument>)
     {
         walk_argument(traverser, item as *mut _, ctx);
     }
@@ -1029,14 +1029,14 @@ unsafe fn walk_array_assignment_target<'a, State, Tr: Traverse<'a, State>>(
         ancestor::ArrayAssignmentTargetWithoutElements(node, PhantomData),
     ));
     for item in (*((node as *mut u8).add(ancestor::OFFSET_ARRAY_ASSIGNMENT_TARGET_ELEMENTS)
-        as *mut Vec<Option<AssignmentTargetMaybeDefault>>))
+        as *mut ArenaVec<Option<AssignmentTargetMaybeDefault>>))
         .iter_mut()
         .flatten()
     {
         walk_assignment_target_maybe_default(traverser, item as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ARRAY_ASSIGNMENT_TARGET_REST)
-        as *mut Option<Box<AssignmentTargetRest>>)
+        as *mut Option<ArenaBox<AssignmentTargetRest>>)
     {
         ctx.retag_stack(AncestorType::ArrayAssignmentTargetRest);
         walk_assignment_target_rest(traverser, (&mut **field) as *mut _, ctx);
@@ -1055,13 +1055,13 @@ unsafe fn walk_object_assignment_target<'a, State, Tr: Traverse<'a, State>>(
         ancestor::ObjectAssignmentTargetWithoutProperties(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_OBJECT_ASSIGNMENT_TARGET_PROPERTIES)
-        as *mut Vec<AssignmentTargetProperty>)
+        as *mut ArenaVec<AssignmentTargetProperty>)
     {
         walk_assignment_target_property(traverser, item as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_OBJECT_ASSIGNMENT_TARGET_REST)
-        as *mut Option<Box<AssignmentTargetRest>>)
+        as *mut Option<ArenaBox<AssignmentTargetRest>>)
     {
         ctx.retag_stack(AncestorType::ObjectAssignmentTargetRest);
         walk_assignment_target_rest(traverser, (&mut **field) as *mut _, ctx);
@@ -1220,7 +1220,7 @@ unsafe fn walk_sequence_expression<'a, State, Tr: Traverse<'a, State>>(
         ancestor::SequenceExpressionWithoutExpressions(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_SEQUENCE_EXPRESSION_EXPRESSIONS)
-        as *mut Vec<Expression>)
+        as *mut ArenaVec<Expression>)
     {
         walk_expression(traverser, item as *mut _, ctx);
     }
@@ -1442,7 +1442,7 @@ unsafe fn walk_block_statement<'a, State, Tr: Traverse<'a, State>>(
     ));
     walk_statements(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_BLOCK_STATEMENT_BODY) as *mut Vec<Statement>,
+        (node as *mut u8).add(ancestor::OFFSET_BLOCK_STATEMENT_BODY) as *mut ArenaVec<Statement>,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -1497,7 +1497,7 @@ unsafe fn walk_variable_declaration<'a, State, Tr: Traverse<'a, State>>(
         ancestor::VariableDeclarationWithoutDeclarations(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_VARIABLE_DECLARATION_DECLARATIONS)
-        as *mut Vec<VariableDeclarator>)
+        as *mut ArenaVec<VariableDeclarator>)
     {
         walk_variable_declarator(traverser, item as *mut _, ctx);
     }
@@ -1521,7 +1521,7 @@ unsafe fn walk_variable_declarator<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_VARIABLE_DECLARATOR_TYPE_ANNOTATION)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::VariableDeclaratorTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
@@ -1950,7 +1950,7 @@ unsafe fn walk_switch_statement<'a, State, Tr: Traverse<'a, State>>(
     ctx.set_current_scope_id(current_scope_id);
     ctx.retag_stack(AncestorType::SwitchStatementCases);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_SWITCH_STATEMENT_CASES)
-        as *mut Vec<SwitchCase>)
+        as *mut ArenaVec<SwitchCase>)
     {
         walk_switch_case(traverser, item as *mut _, ctx);
     }
@@ -1975,7 +1975,7 @@ unsafe fn walk_switch_case<'a, State, Tr: Traverse<'a, State>>(
     ctx.retag_stack(AncestorType::SwitchCaseConsequent);
     walk_statements(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_SWITCH_CASE_CONSEQUENT) as *mut Vec<Statement>,
+        (node as *mut u8).add(ancestor::OFFSET_SWITCH_CASE_CONSEQUENT) as *mut ArenaVec<Statement>,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -2036,17 +2036,17 @@ unsafe fn walk_try_statement<'a, State, Tr: Traverse<'a, State>>(
     walk_block_statement(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TRY_STATEMENT_BLOCK)
-            as *mut Box<BlockStatement>)) as *mut _,
+            as *mut ArenaBox<BlockStatement>)) as *mut _,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TRY_STATEMENT_HANDLER)
-        as *mut Option<Box<CatchClause>>)
+        as *mut Option<ArenaBox<CatchClause>>)
     {
         ctx.retag_stack(AncestorType::TryStatementHandler);
         walk_catch_clause(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TRY_STATEMENT_FINALIZER)
-        as *mut Option<Box<BlockStatement>>)
+        as *mut Option<ArenaBox<BlockStatement>>)
     {
         ctx.retag_stack(AncestorType::TryStatementFinalizer);
         walk_block_statement(traverser, (&mut **field) as *mut _, ctx);
@@ -2080,7 +2080,7 @@ unsafe fn walk_catch_clause<'a, State, Tr: Traverse<'a, State>>(
     walk_block_statement(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_BODY)
-            as *mut Box<BlockStatement>)) as *mut _,
+            as *mut ArenaBox<BlockStatement>)) as *mut _,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -2104,7 +2104,7 @@ unsafe fn walk_catch_parameter<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_CATCH_PARAMETER_TYPE_ANNOTATION)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::CatchParameterTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
@@ -2179,12 +2179,12 @@ unsafe fn walk_object_pattern<'a, State, Tr: Traverse<'a, State>>(
         ancestor::ObjectPatternWithoutProperties(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_OBJECT_PATTERN_PROPERTIES)
-        as *mut Vec<BindingProperty>)
+        as *mut ArenaVec<BindingProperty>)
     {
         walk_binding_property(traverser, item as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_OBJECT_PATTERN_REST)
-        as *mut Option<Box<BindingRestElement>>)
+        as *mut Option<ArenaBox<BindingRestElement>>)
     {
         ctx.retag_stack(AncestorType::ObjectPatternRest);
         walk_binding_rest_element(traverser, (&mut **field) as *mut _, ctx);
@@ -2227,14 +2227,14 @@ unsafe fn walk_array_pattern<'a, State, Tr: Traverse<'a, State>>(
         ancestor::ArrayPatternWithoutElements(node, PhantomData),
     ));
     for item in (*((node as *mut u8).add(ancestor::OFFSET_ARRAY_PATTERN_ELEMENTS)
-        as *mut Vec<Option<BindingPattern>>))
+        as *mut ArenaVec<Option<BindingPattern>>))
         .iter_mut()
         .flatten()
     {
         walk_binding_pattern(traverser, item as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ARRAY_PATTERN_REST)
-        as *mut Option<Box<BindingRestElement>>)
+        as *mut Option<ArenaBox<BindingRestElement>>)
     {
         ctx.retag_stack(AncestorType::ArrayPatternRest);
         walk_binding_rest_element(traverser, (&mut **field) as *mut _, ctx);
@@ -2286,13 +2286,13 @@ unsafe fn walk_function<'a, State, Tr: Traverse<'a, State>>(
         walk_binding_identifier(traverser, field as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
+        as *mut Option<ArenaBox<TSTypeParameterDeclaration>>)
     {
         ctx.retag_stack(AncestorType::FunctionTypeParameters);
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_THIS_PARAM)
-        as *mut Option<Box<TSThisParameter>>)
+        as *mut Option<ArenaBox<TSThisParameter>>)
     {
         ctx.retag_stack(AncestorType::FunctionThisParam);
         walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
@@ -2301,17 +2301,17 @@ unsafe fn walk_function<'a, State, Tr: Traverse<'a, State>>(
     walk_formal_parameters(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_FUNCTION_PARAMS)
-            as *mut Box<FormalParameters>)) as *mut _,
+            as *mut ArenaBox<FormalParameters>)) as *mut _,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_RETURN_TYPE)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::FunctionReturnType);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_BODY)
-        as *mut Option<Box<FunctionBody>>)
+        as *mut Option<ArenaBox<FunctionBody>>)
     {
         ctx.retag_stack(AncestorType::FunctionBody);
         walk_function_body(traverser, (&mut **field) as *mut _, ctx);
@@ -2333,12 +2333,12 @@ unsafe fn walk_formal_parameters<'a, State, Tr: Traverse<'a, State>>(
         ancestor::FormalParametersWithoutItems(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETERS_ITEMS)
-        as *mut Vec<FormalParameter>)
+        as *mut ArenaVec<FormalParameter>)
     {
         walk_formal_parameter(traverser, item as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETERS_REST)
-        as *mut Option<Box<FormalParameterRest>>)
+        as *mut Option<ArenaBox<FormalParameterRest>>)
     {
         ctx.retag_stack(AncestorType::FormalParametersRest);
         walk_formal_parameter_rest(traverser, (&mut **field) as *mut _, ctx);
@@ -2357,7 +2357,7 @@ unsafe fn walk_formal_parameter<'a, State, Tr: Traverse<'a, State>>(
         ancestor::FormalParameterWithoutDecorators(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_DECORATORS)
-        as *mut Vec<Decorator>)
+        as *mut ArenaVec<Decorator>)
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
@@ -2369,13 +2369,13 @@ unsafe fn walk_formal_parameter<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_FORMAL_PARAMETER_TYPE_ANNOTATION)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::FormalParameterTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_INITIALIZER)
-        as *mut Option<Box<Expression>>)
+        as *mut Option<ArenaBox<Expression>>)
     {
         ctx.retag_stack(AncestorType::FormalParameterInitializer);
         walk_expression(traverser, (&mut **field) as *mut _, ctx);
@@ -2394,7 +2394,7 @@ unsafe fn walk_formal_parameter_rest<'a, State, Tr: Traverse<'a, State>>(
         ancestor::FormalParameterRestWithoutDecorators(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_REST_DECORATORS)
-        as *mut Vec<Decorator>)
+        as *mut ArenaVec<Decorator>)
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
@@ -2407,7 +2407,7 @@ unsafe fn walk_formal_parameter_rest<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_FORMAL_PARAMETER_REST_TYPE_ANNOTATION)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::FormalParameterRestTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
@@ -2426,14 +2426,15 @@ unsafe fn walk_function_body<'a, State, Tr: Traverse<'a, State>>(
         ancestor::FunctionBodyWithoutDirectives(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_BODY_DIRECTIVES)
-        as *mut Vec<Directive>)
+        as *mut ArenaVec<Directive>)
     {
         walk_directive(traverser, item as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::FunctionBodyStatements);
     walk_statements(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_FUNCTION_BODY_STATEMENTS) as *mut Vec<Statement>,
+        (node as *mut u8).add(ancestor::OFFSET_FUNCTION_BODY_STATEMENTS)
+            as *mut ArenaVec<Statement>,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -2462,7 +2463,7 @@ unsafe fn walk_arrow_function_expression<'a, State, Tr: Traverse<'a, State>>(
     ));
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
+        as *mut Option<ArenaBox<TSTypeParameterDeclaration>>)
     {
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
@@ -2470,12 +2471,12 @@ unsafe fn walk_arrow_function_expression<'a, State, Tr: Traverse<'a, State>>(
     walk_formal_parameters(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_PARAMS)
-            as *mut Box<FormalParameters>)) as *mut _,
+            as *mut ArenaBox<FormalParameters>)) as *mut _,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::ArrowFunctionExpressionReturnType);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
@@ -2484,7 +2485,7 @@ unsafe fn walk_arrow_function_expression<'a, State, Tr: Traverse<'a, State>>(
     walk_function_body(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
-            as *mut Box<FunctionBody>)) as *mut _,
+            as *mut ArenaBox<FunctionBody>)) as *mut _,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -2521,7 +2522,7 @@ unsafe fn walk_class<'a, State, Tr: Traverse<'a, State>>(
     let pop_token = ctx
         .push_stack(Ancestor::ClassDecorators(ancestor::ClassWithoutDecorators(node, PhantomData)));
     for item in
-        &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_DECORATORS) as *mut Vec<Decorator>)
+        &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_DECORATORS) as *mut ArenaVec<Decorator>)
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
@@ -2538,7 +2539,7 @@ unsafe fn walk_class<'a, State, Tr: Traverse<'a, State>>(
         .unwrap();
     ctx.set_current_scope_id(current_scope_id);
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
+        as *mut Option<ArenaBox<TSTypeParameterDeclaration>>)
     {
         ctx.retag_stack(AncestorType::ClassTypeParameters);
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
@@ -2550,21 +2551,21 @@ unsafe fn walk_class<'a, State, Tr: Traverse<'a, State>>(
         walk_expression(traverser, field as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
-        as *mut Option<Box<TSTypeParameterInstantiation>>)
+        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::ClassSuperTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::ClassImplements);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_IMPLEMENTS)
-        as *mut Vec<TSClassImplements>)
+        as *mut ArenaVec<TSClassImplements>)
     {
         walk_ts_class_implements(traverser, item as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::ClassBody);
     walk_class_body(
         traverser,
-        (&mut **((node as *mut u8).add(ancestor::OFFSET_CLASS_BODY) as *mut Box<ClassBody>))
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_CLASS_BODY) as *mut ArenaBox<ClassBody>))
             as *mut _,
         ctx,
     );
@@ -2581,8 +2582,8 @@ unsafe fn walk_class_body<'a, State, Tr: Traverse<'a, State>>(
     traverser.enter_class_body(&mut *node, ctx);
     let pop_token =
         ctx.push_stack(Ancestor::ClassBodyBody(ancestor::ClassBodyWithoutBody(node, PhantomData)));
-    for item in
-        &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_BODY_BODY) as *mut Vec<ClassElement>)
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_BODY_BODY)
+        as *mut ArenaVec<ClassElement>)
     {
         walk_class_element(traverser, item as *mut _, ctx);
     }
@@ -2626,7 +2627,7 @@ unsafe fn walk_method_definition<'a, State, Tr: Traverse<'a, State>>(
         ancestor::MethodDefinitionWithoutDecorators(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_DECORATORS)
-        as *mut Vec<Decorator>)
+        as *mut ArenaVec<Decorator>)
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
@@ -2640,7 +2641,7 @@ unsafe fn walk_method_definition<'a, State, Tr: Traverse<'a, State>>(
     walk_function(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_VALUE)
-            as *mut Box<Function>)) as *mut _,
+            as *mut ArenaBox<Function>)) as *mut _,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -2657,7 +2658,7 @@ unsafe fn walk_property_definition<'a, State, Tr: Traverse<'a, State>>(
         ancestor::PropertyDefinitionWithoutDecorators(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_DECORATORS)
-        as *mut Vec<Decorator>)
+        as *mut ArenaVec<Decorator>)
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
@@ -2669,7 +2670,7 @@ unsafe fn walk_property_definition<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::PropertyDefinitionTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
@@ -2713,7 +2714,7 @@ unsafe fn walk_static_block<'a, State, Tr: Traverse<'a, State>>(
         .push_stack(Ancestor::StaticBlockBody(ancestor::StaticBlockWithoutBody(node, PhantomData)));
     walk_statements(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_STATIC_BLOCK_BODY) as *mut Vec<Statement>,
+        (node as *mut u8).add(ancestor::OFFSET_STATIC_BLOCK_BODY) as *mut ArenaVec<Statement>,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -2762,7 +2763,7 @@ unsafe fn walk_accessor_property<'a, State, Tr: Traverse<'a, State>>(
         ancestor::AccessorPropertyWithoutDecorators(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_DECORATORS)
-        as *mut Vec<Decorator>)
+        as *mut ArenaVec<Decorator>)
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
@@ -2774,7 +2775,7 @@ unsafe fn walk_accessor_property<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::AccessorPropertyTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
@@ -2824,7 +2825,7 @@ unsafe fn walk_import_declaration<'a, State, Tr: Traverse<'a, State>>(
     ));
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_IMPORT_DECLARATION_SPECIFIERS)
-        as *mut Option<Vec<ImportDeclarationSpecifier>>)
+        as *mut Option<ArenaVec<ImportDeclarationSpecifier>>)
     {
         for item in field.iter_mut() {
             walk_import_declaration_specifier(traverser, item as *mut _, ctx);
@@ -2838,7 +2839,7 @@ unsafe fn walk_import_declaration<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_IMPORT_DECLARATION_WITH_CLAUSE)
-        as *mut Option<Box<WithClause>>)
+        as *mut Option<ArenaBox<WithClause>>)
     {
         ctx.retag_stack(AncestorType::ImportDeclarationWithClause);
         walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
@@ -2939,7 +2940,7 @@ unsafe fn walk_with_clause<'a, State, Tr: Traverse<'a, State>>(
         ancestor::WithClauseWithoutWithEntries(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_WITH_CLAUSE_WITH_ENTRIES)
-        as *mut Vec<ImportAttribute>)
+        as *mut ArenaVec<ImportAttribute>)
     {
         walk_import_attribute(traverser, item as *mut _, ctx);
     }
@@ -3005,7 +3006,7 @@ unsafe fn walk_export_named_declaration<'a, State, Tr: Traverse<'a, State>>(
     }
     ctx.retag_stack(AncestorType::ExportNamedDeclarationSpecifiers);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_SPECIFIERS)
-        as *mut Vec<ExportSpecifier>)
+        as *mut ArenaVec<ExportSpecifier>)
     {
         walk_export_specifier(traverser, item as *mut _, ctx);
     }
@@ -3018,7 +3019,7 @@ unsafe fn walk_export_named_declaration<'a, State, Tr: Traverse<'a, State>>(
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
-        as *mut Option<Box<WithClause>>)
+        as *mut Option<ArenaBox<WithClause>>)
     {
         ctx.retag_stack(AncestorType::ExportNamedDeclarationWithClause);
         walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
@@ -3069,7 +3070,7 @@ unsafe fn walk_export_all_declaration<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_EXPORT_ALL_DECLARATION_WITH_CLAUSE)
-        as *mut Option<Box<WithClause>>)
+        as *mut Option<ArenaBox<WithClause>>)
     {
         ctx.retag_stack(AncestorType::ExportAllDeclarationWithClause);
         walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
@@ -3203,7 +3204,7 @@ unsafe fn walk_v8_intrinsic_expression<'a, State, Tr: Traverse<'a, State>>(
     );
     ctx.retag_stack(AncestorType::V8IntrinsicExpressionArguments);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_V8_INTRINSIC_EXPRESSION_ARGUMENTS)
-        as *mut Vec<Argument>)
+        as *mut ArenaVec<Argument>)
     {
         walk_argument(traverser, item as *mut _, ctx);
     }
@@ -3277,17 +3278,17 @@ unsafe fn walk_jsx_element<'a, State, Tr: Traverse<'a, State>>(
     walk_jsx_opening_element(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_OPENING_ELEMENT)
-            as *mut Box<JSXOpeningElement>)) as *mut _,
+            as *mut ArenaBox<JSXOpeningElement>)) as *mut _,
         ctx,
     );
     ctx.retag_stack(AncestorType::JSXElementChildren);
-    for item in
-        &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CHILDREN) as *mut Vec<JSXChild>)
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CHILDREN)
+        as *mut ArenaVec<JSXChild>)
     {
         walk_jsx_child(traverser, item as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CLOSING_ELEMENT)
-        as *mut Option<Box<JSXClosingElement>>)
+        as *mut Option<ArenaBox<JSXClosingElement>>)
     {
         ctx.retag_stack(AncestorType::JSXElementClosingElement);
         walk_jsx_closing_element(traverser, (&mut **field) as *mut _, ctx);
@@ -3312,14 +3313,14 @@ unsafe fn walk_jsx_opening_element<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
-        as *mut Option<Box<TSTypeParameterInstantiation>>)
+        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::JSXOpeningElementTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::JSXOpeningElementAttributes);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES)
-        as *mut Vec<JSXAttributeItem>)
+        as *mut ArenaVec<JSXAttributeItem>)
     {
         walk_jsx_attribute_item(traverser, item as *mut _, ctx);
     }
@@ -3361,8 +3362,8 @@ unsafe fn walk_jsx_fragment<'a, State, Tr: Traverse<'a, State>>(
         ctx,
     );
     ctx.retag_stack(AncestorType::JSXFragmentChildren);
-    for item in
-        &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_CHILDREN) as *mut Vec<JSXChild>)
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_CHILDREN)
+        as *mut ArenaVec<JSXChild>)
     {
         walk_jsx_child(traverser, item as *mut _, ctx);
     }
@@ -3743,7 +3744,7 @@ unsafe fn walk_ts_this_parameter<'a, State, Tr: Traverse<'a, State>>(
     ));
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_THIS_PARAMETER_TYPE_ANNOTATION)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
     }
@@ -3791,7 +3792,7 @@ unsafe fn walk_ts_enum_body<'a, State, Tr: Traverse<'a, State>>(
         ancestor::TSEnumBodyWithoutMembers(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_BODY_MEMBERS)
-        as *mut Vec<TSEnumMember>)
+        as *mut ArenaVec<TSEnumMember>)
     {
         walk_ts_enum_member(traverser, item as *mut _, ctx);
     }
@@ -4069,7 +4070,7 @@ unsafe fn walk_ts_union_type<'a, State, Tr: Traverse<'a, State>>(
         PhantomData,
     )));
     for item in
-        &mut *((node as *mut u8).add(ancestor::OFFSET_TS_UNION_TYPE_TYPES) as *mut Vec<TSType>)
+        &mut *((node as *mut u8).add(ancestor::OFFSET_TS_UNION_TYPE_TYPES) as *mut ArenaVec<TSType>)
     {
         walk_ts_type(traverser, item as *mut _, ctx);
     }
@@ -4087,7 +4088,7 @@ unsafe fn walk_ts_intersection_type<'a, State, Tr: Traverse<'a, State>>(
         ancestor::TSIntersectionTypeWithoutTypes(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_INTERSECTION_TYPE_TYPES)
-        as *mut Vec<TSType>)
+        as *mut ArenaVec<TSType>)
     {
         walk_ts_type(traverser, item as *mut _, ctx);
     }
@@ -4184,7 +4185,7 @@ unsafe fn walk_ts_tuple_type<'a, State, Tr: Traverse<'a, State>>(
         ancestor::TSTupleTypeWithoutElementTypes(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TUPLE_TYPE_ELEMENT_TYPES)
-        as *mut Vec<TSTupleElement>)
+        as *mut ArenaVec<TSTupleElement>)
     {
         walk_ts_tuple_element(traverser, item as *mut _, ctx);
     }
@@ -4449,7 +4450,7 @@ unsafe fn walk_ts_type_reference<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_TYPE_REFERENCE_TYPE_ARGUMENTS)
-        as *mut Option<Box<TSTypeParameterInstantiation>>)
+        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::TSTypeReferenceTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
@@ -4513,7 +4514,7 @@ unsafe fn walk_ts_type_parameter_instantiation<'a, State, Tr: Traverse<'a, State
     ));
     for item in &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_TYPE_PARAMETER_INSTANTIATION_PARAMS)
-        as *mut Vec<TSType>)
+        as *mut ArenaVec<TSType>)
     {
         walk_ts_type(traverser, item as *mut _, ctx);
     }
@@ -4561,7 +4562,7 @@ unsafe fn walk_ts_type_parameter_declaration<'a, State, Tr: Traverse<'a, State>>
         ancestor::TSTypeParameterDeclarationWithoutParams(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_PARAMETER_DECLARATION_PARAMS)
-        as *mut Vec<TSTypeParameter>)
+        as *mut ArenaVec<TSTypeParameter>)
     {
         walk_ts_type_parameter(traverser, item as *mut _, ctx);
     }
@@ -4593,7 +4594,7 @@ unsafe fn walk_ts_type_alias_declaration<'a, State, Tr: Traverse<'a, State>>(
     ctx.set_current_scope_id(current_scope_id);
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
+        as *mut Option<ArenaBox<TSTypeParameterDeclaration>>)
     {
         ctx.retag_stack(AncestorType::TSTypeAliasDeclarationTypeParameters);
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
@@ -4626,7 +4627,7 @@ unsafe fn walk_ts_class_implements<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_CLASS_IMPLEMENTS_TYPE_ARGUMENTS)
-        as *mut Option<Box<TSTypeParameterInstantiation>>)
+        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::TSClassImplementsTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
@@ -4659,14 +4660,14 @@ unsafe fn walk_ts_interface_declaration<'a, State, Tr: Traverse<'a, State>>(
     ctx.set_current_scope_id(current_scope_id);
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
+        as *mut Option<ArenaBox<TSTypeParameterDeclaration>>)
     {
         ctx.retag_stack(AncestorType::TSInterfaceDeclarationTypeParameters);
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::TSInterfaceDeclarationExtends);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
-        as *mut Vec<TSInterfaceHeritage>)
+        as *mut ArenaVec<TSInterfaceHeritage>)
     {
         walk_ts_interface_heritage(traverser, item as *mut _, ctx);
     }
@@ -4674,7 +4675,7 @@ unsafe fn walk_ts_interface_declaration<'a, State, Tr: Traverse<'a, State>>(
     walk_ts_interface_body(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_BODY)
-            as *mut Box<TSInterfaceBody>)) as *mut _,
+            as *mut ArenaBox<TSInterfaceBody>)) as *mut _,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -4692,7 +4693,7 @@ unsafe fn walk_ts_interface_body<'a, State, Tr: Traverse<'a, State>>(
         ancestor::TSInterfaceBodyWithoutBody(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_BODY_BODY)
-        as *mut Vec<TSSignature>)
+        as *mut ArenaVec<TSSignature>)
     {
         walk_ts_signature(traverser, item as *mut _, ctx);
     }
@@ -4716,7 +4717,7 @@ unsafe fn walk_ts_property_signature<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_PROPERTY_SIGNATURE_TYPE_ANNOTATION)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::TSPropertySignatureTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
@@ -4761,7 +4762,7 @@ unsafe fn walk_ts_index_signature<'a, State, Tr: Traverse<'a, State>>(
         ancestor::TSIndexSignatureWithoutParameters(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_PARAMETERS)
-        as *mut Vec<TSIndexSignatureName>)
+        as *mut ArenaVec<TSIndexSignatureName>)
     {
         walk_ts_index_signature_name(traverser, item as *mut _, ctx);
     }
@@ -4769,7 +4770,7 @@ unsafe fn walk_ts_index_signature<'a, State, Tr: Traverse<'a, State>>(
     walk_ts_type_annotation(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_TYPE_ANNOTATION)
-            as *mut Box<TSTypeAnnotation>)) as *mut _,
+            as *mut ArenaBox<TSTypeAnnotation>)) as *mut _,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -4794,13 +4795,13 @@ unsafe fn walk_ts_call_signature_declaration<'a, State, Tr: Traverse<'a, State>>
     ));
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
+        as *mut Option<ArenaBox<TSTypeParameterDeclaration>>)
     {
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
-        as *mut Option<Box<TSThisParameter>>)
+        as *mut Option<ArenaBox<TSThisParameter>>)
     {
         ctx.retag_stack(AncestorType::TSCallSignatureDeclarationThisParam);
         walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
@@ -4809,12 +4810,12 @@ unsafe fn walk_ts_call_signature_declaration<'a, State, Tr: Traverse<'a, State>>
     walk_formal_parameters(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS)
-            as *mut Box<FormalParameters>)) as *mut _,
+            as *mut ArenaBox<FormalParameters>)) as *mut _,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::TSCallSignatureDeclarationReturnType);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
@@ -4846,14 +4847,14 @@ unsafe fn walk_ts_method_signature<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
+        as *mut Option<ArenaBox<TSTypeParameterDeclaration>>)
     {
         ctx.retag_stack(AncestorType::TSMethodSignatureTypeParameters);
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
-        as *mut Option<Box<TSThisParameter>>)
+        as *mut Option<ArenaBox<TSThisParameter>>)
     {
         ctx.retag_stack(AncestorType::TSMethodSignatureThisParam);
         walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
@@ -4862,12 +4863,12 @@ unsafe fn walk_ts_method_signature<'a, State, Tr: Traverse<'a, State>>(
     walk_formal_parameters(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_METHOD_SIGNATURE_PARAMS)
-            as *mut Box<FormalParameters>)) as *mut _,
+            as *mut ArenaBox<FormalParameters>)) as *mut _,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::TSMethodSignatureReturnType);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
@@ -4895,7 +4896,7 @@ unsafe fn walk_ts_construct_signature_declaration<'a, State, Tr: Traverse<'a, St
     ));
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
+        as *mut Option<ArenaBox<TSTypeParameterDeclaration>>)
     {
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
@@ -4903,12 +4904,12 @@ unsafe fn walk_ts_construct_signature_declaration<'a, State, Tr: Traverse<'a, St
     walk_formal_parameters(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS)
-            as *mut Box<FormalParameters>)) as *mut _,
+            as *mut ArenaBox<FormalParameters>)) as *mut _,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::TSConstructSignatureDeclarationReturnType);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
@@ -4930,7 +4931,7 @@ unsafe fn walk_ts_index_signature_name<'a, State, Tr: Traverse<'a, State>>(
     walk_ts_type_annotation(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_NAME_TYPE_ANNOTATION)
-            as *mut Box<TSTypeAnnotation>)) as *mut _,
+            as *mut ArenaBox<TSTypeAnnotation>)) as *mut _,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -4953,7 +4954,7 @@ unsafe fn walk_ts_interface_heritage<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_INTERFACE_HERITAGE_TYPE_ARGUMENTS)
-        as *mut Option<Box<TSTypeParameterInstantiation>>)
+        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::TSInterfaceHeritageTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
@@ -4979,7 +4980,7 @@ unsafe fn walk_ts_type_predicate<'a, State, Tr: Traverse<'a, State>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_TYPE_PREDICATE_TYPE_ANNOTATION)
-        as *mut Option<Box<TSTypeAnnotation>>)
+        as *mut Option<ArenaBox<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::TSTypePredicateTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
@@ -5120,14 +5121,14 @@ unsafe fn walk_ts_module_block<'a, State, Tr: Traverse<'a, State>>(
         ancestor::TSModuleBlockWithoutDirectives(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_BLOCK_DIRECTIVES)
-        as *mut Vec<Directive>)
+        as *mut ArenaVec<Directive>)
     {
         walk_directive(traverser, item as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::TSModuleBlockBody);
     walk_statements(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_MODULE_BLOCK_BODY) as *mut Vec<Statement>,
+        (node as *mut u8).add(ancestor::OFFSET_TS_MODULE_BLOCK_BODY) as *mut ArenaVec<Statement>,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -5144,7 +5145,7 @@ unsafe fn walk_ts_type_literal<'a, State, Tr: Traverse<'a, State>>(
         ancestor::TSTypeLiteralWithoutMembers(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_LITERAL_MEMBERS)
-        as *mut Vec<TSSignature>)
+        as *mut ArenaVec<TSSignature>)
     {
         walk_ts_signature(traverser, item as *mut _, ctx);
     }
@@ -5164,7 +5165,7 @@ unsafe fn walk_ts_infer_type<'a, State, Tr: Traverse<'a, State>>(
     walk_ts_type_parameter(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INFER_TYPE_TYPE_PARAMETER)
-            as *mut Box<TSTypeParameter>)) as *mut _,
+            as *mut ArenaBox<TSTypeParameter>)) as *mut _,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -5186,7 +5187,7 @@ unsafe fn walk_ts_type_query<'a, State, Tr: Traverse<'a, State>>(
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_QUERY_TYPE_ARGUMENTS)
-        as *mut Option<Box<TSTypeParameterInstantiation>>)
+        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::TSTypeQueryTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
@@ -5229,7 +5230,7 @@ unsafe fn walk_ts_import_type<'a, State, Tr: Traverse<'a, State>>(
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_OPTIONS)
-        as *mut Option<Box<ObjectExpression>>)
+        as *mut Option<ArenaBox<ObjectExpression>>)
     {
         ctx.retag_stack(AncestorType::TSImportTypeOptions);
         walk_object_expression(traverser, (&mut **field) as *mut _, ctx);
@@ -5242,7 +5243,7 @@ unsafe fn walk_ts_import_type<'a, State, Tr: Traverse<'a, State>>(
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS)
-        as *mut Option<Box<TSTypeParameterInstantiation>>)
+        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::TSImportTypeTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
@@ -5311,12 +5312,12 @@ unsafe fn walk_ts_function_type<'a, State, Tr: Traverse<'a, State>>(
     ));
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
+        as *mut Option<ArenaBox<TSTypeParameterDeclaration>>)
     {
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
-        as *mut Option<Box<TSThisParameter>>)
+        as *mut Option<ArenaBox<TSThisParameter>>)
     {
         ctx.retag_stack(AncestorType::TSFunctionTypeThisParam);
         walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
@@ -5325,14 +5326,14 @@ unsafe fn walk_ts_function_type<'a, State, Tr: Traverse<'a, State>>(
     walk_formal_parameters(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_FUNCTION_TYPE_PARAMS)
-            as *mut Box<FormalParameters>)) as *mut _,
+            as *mut ArenaBox<FormalParameters>)) as *mut _,
         ctx,
     );
     ctx.retag_stack(AncestorType::TSFunctionTypeReturnType);
     walk_ts_type_annotation(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
-            as *mut Box<TSTypeAnnotation>)) as *mut _,
+            as *mut ArenaBox<TSTypeAnnotation>)) as *mut _,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -5357,7 +5358,7 @@ unsafe fn walk_ts_constructor_type<'a, State, Tr: Traverse<'a, State>>(
     ));
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
+        as *mut Option<ArenaBox<TSTypeParameterDeclaration>>)
     {
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
@@ -5365,14 +5366,14 @@ unsafe fn walk_ts_constructor_type<'a, State, Tr: Traverse<'a, State>>(
     walk_formal_parameters(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS)
-            as *mut Box<FormalParameters>)) as *mut _,
+            as *mut ArenaBox<FormalParameters>)) as *mut _,
         ctx,
     );
     ctx.retag_stack(AncestorType::TSConstructorTypeReturnType);
     walk_ts_type_annotation(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE)
-            as *mut Box<TSTypeAnnotation>)) as *mut _,
+            as *mut ArenaBox<TSTypeAnnotation>)) as *mut _,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -5433,13 +5434,13 @@ unsafe fn walk_ts_template_literal_type<'a, State, Tr: Traverse<'a, State>>(
         ancestor::TSTemplateLiteralTypeWithoutQuasis(node, PhantomData),
     ));
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TEMPLATE_LITERAL_TYPE_QUASIS)
-        as *mut Vec<TemplateElement>)
+        as *mut ArenaVec<TemplateElement>)
     {
         walk_template_element(traverser, item as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::TSTemplateLiteralTypeTypes);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_TEMPLATE_LITERAL_TYPE_TYPES)
-        as *mut Vec<TSType>)
+        as *mut ArenaVec<TSType>)
     {
         walk_ts_type(traverser, item as *mut _, ctx);
     }
@@ -5679,7 +5680,7 @@ unsafe fn walk_ts_instantiation_expression<'a, State, Tr: Traverse<'a, State>>(
     walk_ts_type_parameter_instantiation(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_ARGUMENTS)
-            as *mut Box<TSTypeParameterInstantiation>)) as *mut _,
+            as *mut ArenaBox<TSTypeParameterInstantiation>)) as *mut _,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -5734,7 +5735,7 @@ unsafe fn walk_js_doc_unknown_type<'a, State, Tr: Traverse<'a, State>>(
 
 unsafe fn walk_statements<'a, State, Tr: Traverse<'a, State>>(
     traverser: &mut Tr,
-    stmts: *mut Vec<'a, Statement<'a>>,
+    stmts: *mut ArenaVec<'a, Statement<'a>>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_statements(&mut *stmts, ctx);

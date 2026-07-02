@@ -1,5 +1,5 @@
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{TakeIn, Vec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, ValueType},
@@ -54,7 +54,11 @@ impl<'a> Traverse<'a> for Normalize {
         }
     }
 
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_statements(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         // No console handling here: `exit_expression` has already rewritten
         // every console call (statement position included) to `void 0`.
         stmts.retain(|stmt| match stmt {
@@ -85,7 +89,7 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::ParenthesizedExpression(paren_expr) = expr {
-            *expr = paren_expr.expression.take_in(ctx.ast);
+            *expr = paren_expr.expression.take_in(ctx);
         }
         // Handled outside the match below so the replacement can go through
         // `ctx.replace_expression`, which walks the dropped call (its
@@ -94,7 +98,7 @@ impl<'a> Traverse<'a> for Normalize {
             && let Expression::CallExpression(call_expr) = &*expr
             && Self::is_console_call_expression(call_expr)
         {
-            let new_expr = ctx.ast.void_0(call_expr.span);
+            let new_expr = Expression::new_void_0(call_expr.span, ctx);
             ctx.replace_expression(expr, new_expr);
             return;
         }
@@ -139,15 +143,16 @@ impl<'a> Normalize {
     }
 
     fn convert_while_to_for(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::WhileStatement(while_stmt) = stmt.take_in(ctx.ast) else { return };
+        let Statement::WhileStatement(while_stmt) = stmt.take_in(ctx) else { return };
         let while_stmt = while_stmt.unbox();
-        let for_stmt = ctx.ast.alloc_for_statement_with_scope_id(
+        let for_stmt = ForStatement::boxed_with_scope_id(
             while_stmt.span,
             None,
             Some(while_stmt.test),
             None,
             while_stmt.body,
             ctx.create_child_scope_of_current(ScopeFlags::empty()),
+            ctx,
         );
         *stmt = Statement::ForStatement(for_stmt);
     }
@@ -190,7 +195,7 @@ impl<'a> Normalize {
                 if Self::is_unary_delete_ancestor(ctx.ancestors()) {
                     return None;
                 }
-                Some(ctx.ast.void_0(ident.span))
+                Some(Expression::new_void_0(ident.span, ctx))
             }
             "Infinity" if ident.is_global_reference(ctx.scoping()) => {
                 // `delete Infinity` returns `false`
@@ -198,11 +203,12 @@ impl<'a> Normalize {
                 if Self::is_unary_delete_ancestor(ctx.ancestors()) {
                     return None;
                 }
-                Some(ctx.ast.expression_numeric_literal(
+                Some(Expression::new_numeric_literal(
                     ident.span,
                     f64::INFINITY,
                     None,
                     NumberBase::Decimal,
+                    ctx,
                 ))
             }
             "NaN" if ident.is_global_reference(ctx.scoping()) => {
@@ -211,7 +217,7 @@ impl<'a> Normalize {
                 if Self::is_unary_delete_ancestor(ctx.ancestors()) {
                     return None;
                 }
-                Some(ctx.ast.nan(ident.span))
+                Some(Expression::new_nan(ident.span, ctx))
             }
             _ => None,
         }
@@ -242,7 +248,7 @@ impl<'a> Normalize {
         // `flush_pass_dirty`, before pass 1 — otherwise the symbol would
         // look referenced forever.
         let new_arg =
-            ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
+            Expression::new_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal, ctx);
         ctx.replace_expression(&mut e.argument, new_arg);
     }
 
@@ -260,7 +266,7 @@ impl<'a> Normalize {
         if !ctx.is_global_reference(ident) {
             return None;
         }
-        Some(ctx.ast.nan(ident.span))
+        Some(Expression::new_nan(ident.span, ctx))
     }
 
     pub(crate) fn set_no_side_effects_to_call_expr(

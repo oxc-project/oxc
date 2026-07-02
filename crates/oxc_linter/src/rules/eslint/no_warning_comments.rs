@@ -209,7 +209,7 @@ impl NoWarningComments {
 
         terms
             .iter()
-            .filter_map(|term| {
+            .map(|term| {
                 let ends_with_word =
                     term.chars().last().is_some_and(|c| c.is_alphanumeric() || c == '_');
                 let suffix = if ends_with_word { r"\b" } else { "" };
@@ -228,7 +228,9 @@ impl NoWarningComments {
                     }
                 };
 
-                Regex::new(&pattern).ok()
+                Regex::new(&pattern).expect(
+                    "generated no-warning-comments regex should compile because user input is escaped",
+                )
             })
             .collect()
     }

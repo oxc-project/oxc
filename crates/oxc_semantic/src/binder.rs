@@ -100,7 +100,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 // Finally, add the variable to all hoisted scopes
                 // to support redeclaration checks when declaring variables with the same name later.
                 for &scope_id in &var_scope_ids {
-                    builder.hoisting_variables.entry(scope_id).or_default().insert(name, symbol_id);
+                    builder.hoisting_variables.insert((scope_id, name), symbol_id);
                 }
             });
         }
@@ -195,11 +195,7 @@ impl<'a> Binder<'a> for Function<'a> {
                         var_scope_id,
                         symbol_id,
                     );
-                    builder
-                        .hoisting_variables
-                        .entry(block_scope_id)
-                        .or_default()
-                        .insert(ident.name, symbol_id);
+                    builder.hoisting_variables.insert((block_scope_id, ident.name), symbol_id);
                 }
             }
 

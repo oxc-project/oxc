@@ -68,6 +68,7 @@ export type OptionsJsonEnum =
       line?: CommentConfigJson;
     };
 export type IgnoreClassWithImplements = "all" | "public-fields";
+export type ComplexityConfigEnum = number | ComplexityConfig;
 export type Variant = "classic" | "modified";
 /**
  * The enforcement type for the curly rule.
@@ -112,7 +113,14 @@ export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
 export type DistractingElement = "marquee" | "blink";
+export type MaxClassesPerFileConfigEnum = number | MaxClassesPerFileConfig;
+export type MaxDepthConfigEnum = number | MaxDepth;
+export type MaxLinesConfigEnum = number | MaxLinesConfig;
+export type MaxLinesPerFunctionConfigEnum = number | MaxLinesPerFunctionConfig;
+export type MaxNestedCallbacksConfigEnum = number | MaxNestedCallbacks;
+export type MaxParamsConfigEnum = number | MaxParamsConfig;
 export type CountThis = "always" | "never" | "except-void";
+export type MaxStatementsConfigEnum = number | MaxStatementsConfig;
 export type NoCondAssignConfig = "except-parens" | "always";
 export type CheckLoopsConfig = boolean | CheckLoops;
 export type CheckLoops = "all" | "allExceptWhileTrue" | "none";
@@ -140,6 +148,9 @@ export type AllowKind =
 export type NoInnerDeclarationsConfig = "functions" | "both";
 export type BlockScopedFunctions = "allow" | "disallow";
 export type NoMagicNumbersNumber = number | string;
+export type NoRestrictedImportsConfigEnum = string | RestrictedPath | NoRestrictedImportsConfig;
+export type PossiblePaths = string | RestrictedPath;
+export type PossiblePatterns = string | RestrictedPattern;
 export type NoReturnAssignMode = "always" | "except-parens";
 /**
  * Controls how hoisting is handled when checking for shadowing.
@@ -155,6 +166,10 @@ export type NoUseBeforeDefineConfigJson = Nofunc | NoUseBeforeDefineConfig;
 export type Nofunc = "nofunc";
 export type Location = "start" | "anywhere";
 /**
+ * The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`.
+ */
+export type CallbackReturn = string[];
+/**
  * The rule takes a single string option: the name of the error parameter.
  *
  * This can be either:
@@ -162,6 +177,7 @@ export type Location = "start" | "anywhere";
  * - a regexp pattern (e.g. `"^(err|error)$"`)
  *
  * If the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.
+ * Invalid regexp patterns are rejected during configuration parsing.
  *
  * Default: `"err"`.
  */
@@ -856,7 +872,7 @@ export interface DummyRuleMap {
   "block-scoped-var"?: RuleNoConfig;
   "capitalized-comments"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever] | [AllowWarnDeny, AlwaysNever, OptionsJsonEnum];
   "class-methods-use-this"?: RuleNoConfig | [AllowWarnDeny, ClassMethodsUseThisConfig];
-  complexity?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, ComplexityConfig]);
+  complexity?: RuleNoConfig | [AllowWarnDeny, ComplexityConfigEnum];
   "constructor-super"?: RuleNoConfig;
   curly?: RuleNoConfig | [AllowWarnDeny, CurlyType] | [AllowWarnDeny, CurlyType, CurlyConsistent];
   "default-case"?: RuleNoConfig | [AllowWarnDeny, DefaultCaseConfig];
@@ -1057,13 +1073,13 @@ export interface DummyRuleMap {
     | RuleNoConfig
     | [AllowWarnDeny, AlwaysNever]
     | [AllowWarnDeny, AlwaysNever, LogicalAssignmentOperatorsConfig];
-  "max-classes-per-file"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxClassesPerFileConfig]);
-  "max-depth"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxDepth]);
-  "max-lines"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxLinesConfig]);
-  "max-lines-per-function"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxLinesPerFunctionConfig]);
-  "max-nested-callbacks"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxNestedCallbacks]);
-  "max-params"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxParamsConfig]);
-  "max-statements"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxStatementsConfig]);
+  "max-classes-per-file"?: RuleNoConfig | [AllowWarnDeny, MaxClassesPerFileConfigEnum];
+  "max-depth"?: RuleNoConfig | [AllowWarnDeny, MaxDepthConfigEnum];
+  "max-lines"?: RuleNoConfig | [AllowWarnDeny, MaxLinesConfigEnum];
+  "max-lines-per-function"?: RuleNoConfig | [AllowWarnDeny, MaxLinesPerFunctionConfigEnum];
+  "max-nested-callbacks"?: RuleNoConfig | [AllowWarnDeny, MaxNestedCallbacksConfigEnum];
+  "max-params"?: RuleNoConfig | [AllowWarnDeny, MaxParamsConfigEnum];
+  "max-statements"?: RuleNoConfig | [AllowWarnDeny, MaxStatementsConfigEnum];
   "new-cap"?: RuleNoConfig | [AllowWarnDeny, NewCapConfig];
   "nextjs/google-font-display"?: RuleNoConfig;
   "nextjs/google-font-preconnect"?: RuleNoConfig;
@@ -1167,8 +1183,10 @@ export interface DummyRuleMap {
   "no-regex-spaces"?: RuleNoConfig;
   "no-restricted-exports"?: RuleNoConfig | [AllowWarnDeny, NoRestrictedExportsConfig];
   "no-restricted-globals"?: DummyRule;
-  "no-restricted-imports"?: DummyRule;
-  "no-restricted-properties"?: DummyRule;
+  "no-restricted-imports"?:
+    | RuleNoConfig
+    | [AllowWarnDeny, NoRestrictedImportsConfigEnum, ...NoRestrictedImportsConfigEnum[]];
+  "no-restricted-properties"?: RuleNoConfig | [AllowWarnDeny, PropertyDetails, ...PropertyDetails[]];
   "no-return-assign"?: RuleNoConfig | [AllowWarnDeny, NoReturnAssignMode];
   "no-script-url"?: RuleNoConfig;
   "no-self-assign"?: RuleNoConfig | [AllowWarnDeny, NoSelfAssign];
@@ -1212,7 +1230,7 @@ export interface DummyRuleMap {
   "no-void"?: RuleNoConfig | [AllowWarnDeny, NoVoid];
   "no-warning-comments"?: RuleNoConfig | [AllowWarnDeny, NoWarningCommentsConfigJson];
   "no-with"?: RuleNoConfig;
-  "node/callback-return"?: DummyRule;
+  "node/callback-return"?: RuleNoConfig | [AllowWarnDeny, CallbackReturn];
   "node/global-require"?: RuleNoConfig;
   "node/handle-callback-err"?: RuleNoConfig | [AllowWarnDeny, HandleCallbackErrConfig];
   "node/no-exports-assign"?: RuleNoConfig;
@@ -1740,7 +1758,7 @@ export interface DummyRuleMap {
   "vue/valid-define-props"?: RuleNoConfig;
   "vue/valid-next-tick"?: RuleNoConfig;
   yoda?: RuleNoConfig | [AllowWarnDeny, AllowYoda] | [AllowWarnDeny, AllowYoda, YodaOptions];
-  [k: string]: DummyRule | undefined | undefined;
+  [k: string]: DummyRule | undefined;
 }
 export interface AccessorPairsConfig {
   /**
@@ -3411,6 +3429,53 @@ export interface RestrictDefaultExports {
    */
   namespaceFrom?: boolean;
 }
+export interface RestrictedPath {
+  allowImportNames?: string[];
+  allowTypeImports?: boolean;
+  importNames?: string[];
+  message?: string;
+  name: string;
+}
+export interface NoRestrictedImportsConfig {
+  paths?: PossiblePaths[];
+  patterns?: PossiblePatterns[];
+}
+export interface RestrictedPattern {
+  allowImportNamePattern?: string;
+  allowImportNames?: string[];
+  allowTypeImports?: boolean;
+  caseSensitive?: boolean;
+  group?: string[];
+  importNamePattern?: string;
+  importNames?: string[];
+  message?: string;
+  regex?: string;
+}
+export interface PropertyDetails {
+  /**
+   * Objects where property access should be allowed. This must be used with `property` and
+   * cannot be used with `object`.
+   */
+  allowObjects?: string[];
+  /**
+   * Properties where property access should be allowed. This must be used with `object` and
+   * cannot be used with `property`.
+   */
+  allowProperties?: string[];
+  /**
+   * A custom message to display.
+   */
+  message?: string;
+  /**
+   * The object on which the property is being accessed.
+   */
+  object?: string;
+  /**
+   * The property being accessed. If `object` is not specified, this applies to the named
+   * property on all objects.
+   */
+  property?: string;
+}
 export interface NoSelfAssign {
   /**
    * The `props` option when set to `false`, disables the checking of properties.
@@ -4308,20 +4373,20 @@ export interface ForbidItemObject {
    * Component names for which this prop is **allowed** (all others are
    * forbidden).
    */
-  allowedFor: string[];
+  allowedFor?: string[];
   /**
    * Glob patterns for component names where the prop is **allowed**.
    */
-  allowedForPatterns: string[];
+  allowedForPatterns?: string[];
   /**
    * Component names for which this prop is **disallowed** (all others are
    * allowed).
    */
-  disallowedFor: string[];
+  disallowedFor?: string[];
   /**
    * Glob patterns for component names where the prop is **disallowed**.
    */
-  disallowedForPatterns: string[];
+  disallowedForPatterns?: string[];
   /**
    * Custom message to display.
    */
@@ -4343,7 +4408,7 @@ export interface ForbidDomPropsConfig {
    * An array of prop names or objects that are forbidden on DOM elements.
    *
    * Each array element can be a string with the property name, or an object
-   * with `propName`, an optional `disallowedFor` array of DOM node names,
+   * with `propName`, optional `disallowedFor` and `disallowedValues` arrays,
    * and an optional custom `message`.
    *
    * Examples:
@@ -4351,11 +4416,13 @@ export interface ForbidDomPropsConfig {
    * - `["error", { "forbid": ["id", "style"] }]`
    * - `["error", { "forbid": [{ "propName": "className", "message": "Use class instead" }] }]`
    * - `["error", { "forbid": [{ "propName": "style", "disallowedFor": ["div", "span"] }] }]`
+   * - `["error", { "forbid": [{ "propName": "type", "disallowedValues": ["button"] }] }]`
    */
   forbid?: ForbidDomPropsItem[];
 }
 /**
- * A prop with optional `disallowedFor` DOM node list and custom `message`.
+ * A prop with optional `disallowedFor` DOM node list, optional `disallowedValues`
+ * value list, and custom `message`.
  */
 export interface PropWithOptions {
   /**
@@ -4364,6 +4431,11 @@ export interface PropWithOptions {
    * DOM elements.
    */
   disallowedFor?: string[];
+  /**
+   * A list of string literal values for which this prop is forbidden. If
+   * omitted, the prop is forbidden for all values.
+   */
+  disallowedValues?: string[];
   /**
    * A custom message to display when this prop is used.
    */
@@ -6021,6 +6093,16 @@ export interface NoArrayReverse {
   allowExpressionStatement?: boolean;
 }
 export interface NoArraySort {
+  /**
+   * When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.
+   * This avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.
+   *
+   * Example of **correct** code for this rule with `allowAfterSpread` set to `true`:
+   * ```js
+   * const sorted = [...mySet].sort();
+   * ```
+   */
+  allowAfterSpread?: boolean;
   /**
    * When set to `true` (default), allows `array.sort()` as an expression statement.
    * Set to `false` to forbid `Array#sort()` even if it's an expression statement.

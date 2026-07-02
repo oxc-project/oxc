@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.138.0] - 2026-06-29
+
+### ⚡ Performance
+
+- c5eef8b regular_expression: Skip capturing-group pre-parse when pattern has no `(` (#23908) (Lawrence Lin)
+
 ## [0.132.0] - 2026-05-18
 
 ### ⚡ Performance

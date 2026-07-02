@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -53,7 +53,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ClassBody<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ClassElement<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, ClassElement<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         // Join class elements with hard line breaks between them
         let mut join = f.join_nodes_with_hardline();
@@ -194,7 +194,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, TSIndexSignatureName<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSIndexSignatureName<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         f.join_with(&soft_line_break_or_space()).entries_with_trailing_separator(
             self.iter(),
@@ -210,7 +210,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSClassImplements<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let last_index = self.len().saturating_sub(1);
         let mut joiner = f.join_with(soft_line_break_or_space());

@@ -1,0 +1,84 @@
+---
+source: crates/oxc_semantic/tests/integration/cfg.rs
+expression: snapshot
+input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/for_conditional_update.js
+---
+bb0: {
+
+}
+
+bb1: {
+	statement
+	statement
+}
+
+bb2: {
+	condition
+}
+
+bb3: {
+
+}
+
+bb4: {
+	condition
+}
+
+bb5: {
+
+}
+
+bb6: {
+
+}
+
+bb7: {
+
+}
+
+bb8: {
+	statement
+	statement
+}
+
+bb9: {
+
+}
+
+digraph {
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1
+ForStatement
+VariableDeclaration" shape = box]
+    2 [ label = "bb2
+Condition(BinaryExpression(<))" shape = box]
+    3 [ label = "bb3" shape = box]
+    4 [ label = "bb4
+Condition(IdentifierReference(forward))" shape = box]
+    5 [ label = "bb5" shape = box]
+    6 [ label = "bb6" shape = box]
+    7 [ label = "bb7" shape = box]
+    8 [ label = "bb8
+BlockStatement
+ExpressionStatement" shape = box]
+    9 [ label = "bb9" shape = box]
+    1 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    2 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    3 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    4 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    5 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    6 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    7 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    3 -> 4 [ label="Normal"]
+    5 -> 7 [ label="Normal"]
+    4 -> 5 [ label="Jump", color=green]
+    4 -> 6 [ label="Normal"]
+    6 -> 7 [ label="Normal"]
+    8 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    9 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    1 -> 2 [ label="Normal"]
+    2 -> 8 [ label="Jump", color=green]
+    8 -> 3 [ label="Backedge", color=grey]
+    7 -> 2 [ label="Backedge", color=grey]
+    2 -> 9 [ label="Normal"]
+}

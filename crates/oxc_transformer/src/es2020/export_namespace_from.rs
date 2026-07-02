@@ -25,8 +25,8 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.28.4/packages/babel-plugin-transform-export-namespace-from>
 //! * "export ns from" TC39 proposal: <https://github.com/tc39/proposal-export-ns-from>
 
-use oxc_allocator::TakeIn;
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::Traverse;
@@ -51,9 +51,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
             return;
         }
 
-        let mut new_statements = ctx.ast.vec_with_capacity(program.body.len());
+        let mut new_statements = ArenaVec::with_capacity_in(program.body.len(), ctx);
 
-        for stmt in program.body.take_in(ctx.ast) {
+        for stmt in program.body.take_in(ctx) {
             match stmt {
                 Statement::ExportAllDeclaration(export_all) if export_all.exported.is_some() => {
                     // Transform `export * as ns from "mod"` to:
@@ -71,20 +71,21 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
                     );
 
                     // Create `import * as _ns from "mod"`
-                    let import_specifier = ImportDeclarationSpecifier::ImportNamespaceSpecifier(
-                        ctx.ast.alloc_import_namespace_specifier(
+                    let import_specifier =
+                        ImportDeclarationSpecifier::new_import_namespace_specifier(
                             SPAN,
                             binding.create_binding_identifier(ctx),
-                        ),
-                    );
+                            ctx,
+                        );
 
-                    let import_decl = ctx.ast.alloc_import_declaration(
+                    let import_decl = ImportDeclaration::boxed(
                         SPAN,
-                        Some(ctx.ast.vec1(import_specifier)),
+                        Some(ArenaVec::from_value_in(import_specifier, ctx)),
                         source,
                         None,
                         NONE,
                         export_kind,
+                        ctx,
                     );
                     new_statements.push(Statement::ImportDeclaration(import_decl));
 
@@ -92,15 +93,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
                     let local =
                         ModuleExportName::IdentifierReference(binding.create_read_reference(ctx));
                     let export_specifier =
-                        ctx.ast.export_specifier(span, local, exported_name, export_kind);
+                        ExportSpecifier::new(span, local, exported_name, export_kind, ctx);
 
-                    let export_named_decl = ctx.ast.alloc_export_named_declaration(
+                    let export_named_decl = ExportNamedDeclaration::boxed(
                         span,
                         None,
-                        ctx.ast.vec1(export_specifier),
+                        ArenaVec::from_value_in(export_specifier, ctx),
                         None,
                         export_kind,
                         NONE,
+                        ctx,
                     );
                     new_statements.push(Statement::ExportNamedDeclaration(export_named_decl));
                 }

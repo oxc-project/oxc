@@ -1,4 +1,6 @@
 mod config;
+#[cfg(feature = "napi")]
+pub mod embed;
 mod format;
 pub mod options;
 pub mod oxfmtrc;

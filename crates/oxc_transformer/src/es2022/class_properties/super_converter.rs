@@ -1,7 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of `super` expressions.
 
-use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_traverse::ast_operations::get_var_name_from_node;
@@ -65,7 +65,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let property = &member.property;
-        let property = ctx.ast.expression_string_literal(property.span, property.name, None);
+        let property = Expression::new_string_literal(property.span, property.name, None, ctx);
         self.create_super_prop_get(member.span, property, is_callee, ctx)
     }
 
@@ -92,7 +92,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         is_callee: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let property = member.expression.take_in(ctx.ast);
+        let property = member.expression.take_in(ctx);
         self.create_super_prop_get(member.span, property, is_callee, ctx)
     }
 
@@ -149,8 +149,8 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         ctx: &TraverseCtx<'a>,
     ) {
         let elements = arguments.drain(..).map(ArrayExpressionElement::from);
-        let elements = ctx.ast.vec_from_iter(elements);
-        let array = ctx.ast.expression_array(SPAN, elements);
+        let elements = ArenaVec::from_iter_in(elements, ctx);
+        let array = Expression::new_array_expression(SPAN, elements, ctx);
         arguments.push(Argument::from(array));
     }
 
@@ -207,13 +207,13 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
+        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx) else {
             unreachable!()
         };
         let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
         let AssignmentTarget::StaticMemberExpression(member) = left else { unreachable!() };
         let property =
-            ctx.ast.expression_string_literal(member.property.span, member.property.name, None);
+            Expression::new_string_literal(member.property.span, member.property.name, None, ctx);
         *expr =
             self.transform_super_assignment_expression_impl(span, operator, property, value, ctx);
     }
@@ -235,7 +235,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
+        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx) else {
             unreachable!()
         };
         let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
@@ -274,7 +274,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
                 let get_call = self.create_super_prop_get(SPAN, property2, false, ctx);
 
                 // `_superPropGet(_Class, prop, _Class) + value`
-                let value = ctx.ast.expression_binary(SPAN, get_call, operator, value);
+                let value = Expression::new_binary_expression(SPAN, get_call, operator, value, ctx);
 
                 // `_superPropSet(_Class, prop, _superPropGet(_Class, prop, _Class) + value, 1)`
                 self.create_super_prop_set(span, property1, value, ctx)
@@ -289,7 +289,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
                 let set_call = self.create_super_prop_set(span, property2, value, ctx);
 
                 // `_superPropGet(_Class, prop, _Class) && _superPropSet(_Class, prop, value, _Class, 1)`
-                ctx.ast.expression_logical(span, get_call, operator, set_call)
+                Expression::new_logical_expression(span, get_call, operator, set_call, ctx)
             } else {
                 // The above covers all types of `AssignmentOperator`
                 unreachable!();
@@ -370,7 +370,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx.ast) else {
+        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx) else {
             unreachable!()
         };
         let SimpleAssignmentTarget::StaticMemberExpression(member) = &mut update_expr.argument
@@ -381,7 +381,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         let temp_var_name_base = get_var_name_from_node(member.as_ref());
 
         let property =
-            ctx.ast.expression_string_literal(member.property.span, member.property.name, None);
+            Expression::new_string_literal(member.property.span, member.property.name, None, ctx);
 
         *expr = self.transform_super_update_expression_impl(
             &temp_var_name_base,
@@ -433,7 +433,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx.ast) else {
+        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx) else {
             unreachable!()
         };
         let SimpleAssignmentTarget::ComputedMemberExpression(member) = &mut update_expr.argument
@@ -443,7 +443,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
 
         let temp_var_name_base = get_var_name_from_node(member.as_ref());
 
-        let property = member.expression.get_inner_expression_mut().take_in(ctx.ast);
+        let property = member.expression.get_inner_expression_mut().take_in(ctx);
 
         *expr = self.transform_super_update_expression_impl(
             &temp_var_name_base,
@@ -513,9 +513,11 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         if prefix {
             // Source = `++super$prop` (prefix `++`)
             // `(_super$prop = _superPropGet(_Class, prop, _Class), ++_super$prop)`
-            let value = ctx
-                .ast
-                .expression_sequence(SPAN, ctx.ast.vec_from_array([assignment, update_expr]));
+            let value = Expression::new_sequence_expression(
+                SPAN,
+                ArenaVec::from_array_in([assignment, update_expr], ctx),
+                ctx,
+            );
             // `_superPropSet(_Class, prop, value, _Class, 1)`
             self.create_super_prop_set(span, property1, value, ctx)
         } else {
@@ -525,21 +527,22 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
             let assignment2 = create_assignment(&temp_binding2, update_expr, SPAN, ctx);
 
             // `(_super$prop = _superPropGet(_Class, prop, _Class), _super$prop2 = _super$prop++, _super$prop)`
-            let value = ctx.ast.expression_sequence(
+            let value = Expression::new_sequence_expression(
                 SPAN,
-                ctx.ast.vec_from_array([
-                    assignment,
-                    assignment2,
-                    temp_binding.create_read_expression(ctx),
-                ]),
+                ArenaVec::from_array_in(
+                    [assignment, assignment2, temp_binding.create_read_expression(ctx)],
+                    ctx,
+                ),
+                ctx,
             );
 
             // `_superPropSet(_Class, prop, value, _Class, 1)`
             let set_call = self.create_super_prop_set(span, property1, value, ctx);
             // `(_superPropSet(_Class, prop, value, _Class, 1), _super$prop2)`
-            ctx.ast.expression_sequence(
+            Expression::new_sequence_expression(
                 span,
-                ctx.ast.vec_from_array([set_call, temp_binding2.create_read_expression(ctx)]),
+                ArenaVec::from_array_in([set_call, temp_binding2.create_read_expression(ctx)], ctx),
+                ctx,
             )
         }
     }
@@ -561,11 +564,11 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
 
         let arguments = if is_callee {
             // `(_Class, prop, _Class, 2)`
-            let two = ctx.ast.expression_numeric_literal(SPAN, 2.0, None, NumberBase::Decimal);
-            ctx.ast.vec_from_array([class, property, receiver, Argument::from(two)])
+            let two = Expression::new_numeric_literal(SPAN, 2.0, None, NumberBase::Decimal, ctx);
+            ArenaVec::from_array_in([class, property, receiver, Argument::from(two)], ctx)
         } else {
             // `(_Class, prop, _Class)`
-            ctx.ast.vec_from_array([class, property, receiver])
+            ArenaVec::from_array_in([class, property, receiver], ctx)
         };
 
         // `_superPropGet(_Class, prop, _Class)` or `_superPropGet(_Class, prop, _Class, 2)`
@@ -581,18 +584,16 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let (class, receiver) = self.get_class_binding_arguments(ctx);
-        let arguments = ctx.ast.vec_from_array([
-            class,
-            Argument::from(property),
-            Argument::from(value),
-            receiver,
-            Argument::from(ctx.ast.expression_numeric_literal(
-                SPAN,
-                1.0,
-                None,
-                NumberBase::Decimal,
-            )),
-        ]);
+        let arguments = ArenaVec::from_array_in(
+            [
+                class,
+                Argument::from(property),
+                Argument::from(value),
+                receiver,
+                Argument::new_numeric_literal(SPAN, 1.0, None, NumberBase::Decimal, ctx),
+            ],
+            ctx,
+        );
         helper_call_expr(Helper::SuperPropSet, arguments, ctx)
     }
 
@@ -618,9 +619,11 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
                 // to use `class.prototype` rather than `class`. We should consider using that flag here.
                 // <https://github.com/babel/babel/blob/1fbdb64a7fcc3488797e312506dbacff746d4e41/packages/babel-helpers/src/helpers/superPropGet.ts>
                 class = create_prototype_member(class, SPAN, ctx);
-                ctx.ast.expression_this(SPAN)
+                Expression::new_this_expression(SPAN, ctx)
             }
-            ClassPropertiesSuperConverterMode::StaticPrivateMethod => ctx.ast.expression_this(SPAN),
+            ClassPropertiesSuperConverterMode::StaticPrivateMethod => {
+                Expression::new_this_expression(SPAN, ctx)
+            }
         };
 
         (Argument::from(class), Argument::from(receiver))

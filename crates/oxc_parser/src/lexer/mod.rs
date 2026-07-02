@@ -9,7 +9,7 @@ use std::mem;
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
@@ -35,6 +35,7 @@ mod typescript;
 mod unicode;
 mod whitespace;
 
+#[cfg_attr(not(feature = "benchmarking"), expect(clippy::redundant_pub_crate))]
 pub(crate) use byte_handlers::{ByteHandler, ByteHandlers, byte_handler_tables};
 pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
@@ -133,9 +134,9 @@ impl<'a, C: Config> Lexer<'a, C> {
         //
         // However, we should choose a better heuristic based on real-world observation, and bring this usage down.
         let tokens = if config.tokens() {
-            ArenaVec::with_capacity_in(source_text.len() + 1, allocator)
+            ArenaVec::with_capacity_in(source_text.len() + 1, &allocator)
         } else {
-            ArenaVec::new_in(allocator)
+            ArenaVec::new_in(&allocator)
         };
 
         // The first token is at the start of file, so is allows on a new line
@@ -355,7 +356,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     pub(crate) fn take_tokens(&mut self) -> ArenaVec<'a, Token> {
-        mem::replace(&mut self.tokens, ArenaVec::new_in(self.allocator))
+        mem::replace(&mut self.tokens, ArenaVec::new_in(&self.allocator))
     }
 
     pub(crate) fn set_tokens(&mut self, tokens: ArenaVec<'a, Token>) {
@@ -374,7 +375,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         } else {
             // Tokens are disabled. Just return an empty vec.
             debug_assert!(self.tokens.is_empty());
-            ArenaVec::new_in(self.allocator)
+            ArenaVec::new_in(&self.allocator)
         }
     }
 

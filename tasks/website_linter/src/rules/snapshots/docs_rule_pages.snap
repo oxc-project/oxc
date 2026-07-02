@@ -1623,7 +1623,7 @@ type: `array`
 An array of prop names or objects that are forbidden on DOM elements.
 
 Each array element can be a string with the property name, or an object
-with `propName`, an optional `disallowedFor` array of DOM node names,
+with `propName`, optional `disallowedFor` and `disallowedValues` arrays,
 and an optional custom `message`.
 
 Examples:
@@ -1631,6 +1631,7 @@ Examples:
 - `["error", { "forbid": ["id", "style"] }]`
 - `["error", { "forbid": [{ "propName": "className", "message": "Use class instead" }] }]`
 - `["error", { "forbid": [{ "propName": "style", "disallowedFor": ["div", "span"] }] }]`
+- `["error", { "forbid": [{ "propName": "type", "disallowedValues": ["button"] }] }]`
 
 
 #### forbid[n]
@@ -1649,6 +1650,15 @@ type: `string[]`
 A list of DOM element names (e.g. `["div", "span"]`) on which this
 prop is forbidden. If empty or omitted, the prop is forbidden on all
 DOM elements.
+
+
+##### forbid[n].disallowedValues
+
+type: `string[]`
+
+
+A list of string literal values for which this prop is forbidden. If
+omitted, the prop is forbidden for all values.
 
 
 ##### forbid[n].message

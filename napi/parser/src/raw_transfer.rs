@@ -12,7 +12,7 @@ use napi::{
 use napi_derive::napi;
 
 use oxc::{
-    allocator::{Allocator, FromIn, Vec as ArenaVec},
+    allocator::{Allocator, ArenaVec, FromIn},
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
     semantic::SemanticBuilder,
 };
@@ -222,6 +222,7 @@ unsafe fn parse_raw_impl(
     let allocator =
         unsafe { Allocator::from_raw_parts(buffer_ptr, BLOCK_SIZE, buffer_ptr, BLOCK_LAYOUT) };
     let allocator = ManuallyDrop::new(allocator);
+    let allocator = &*allocator;
 
     // Check source text is in bounds of active data region of buffer.
     // Caller guarantees it is, but as this is critical to avoid reading/writing out of bounds,
@@ -263,7 +264,7 @@ unsafe fn parse_raw_impl(
         };
 
         // Parse
-        let ret = parse_impl(&allocator, source_type, source_text, &options);
+        let ret = parse_impl(allocator, source_type, source_text, &options);
         let mut program = ret.program;
         let mut comments = mem::replace(&mut program.comments, ArenaVec::new_in(&allocator));
         let mut module_record = ret.module_record;
@@ -281,13 +282,13 @@ unsafe fn parse_raw_impl(
                     ret.diagnostics.into_iter().chain(semantic_ret.diagnostics),
                     source_text,
                     filename,
-                    &allocator,
+                    allocator,
                 )
             } else {
                 ArenaVec::new_in(&allocator)
             }
         } else if !ret.diagnostics.is_empty() {
-            Error::from_diagnostics_in(ret.diagnostics, source_text, filename, &allocator)
+            Error::from_diagnostics_in(ret.diagnostics, source_text, filename, allocator)
         } else {
             ArenaVec::new_in(&allocator)
         };
@@ -325,7 +326,7 @@ unsafe fn parse_raw_impl(
         }
 
         // Convert module record
-        let module = EcmaScriptModule::from_in(module_record, &allocator);
+        let module = EcmaScriptModule::from_in(module_record, allocator);
 
         // Write `RawTransferData` to arena, and return pointer to it
         let data = RawTransferData { program, comments, module, errors };
