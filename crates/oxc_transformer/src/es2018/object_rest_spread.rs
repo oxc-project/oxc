@@ -715,11 +715,11 @@ impl<'a> ObjectRestSpread<'a> {
             return block.scope_id();
         }
         let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-        let (span, stmts) = if let Statement::EmptyStatement(empty_stmt) = stmt {
-            (empty_stmt.span, ArenaVec::new_in(ctx))
+        let span = stmt.span();
+        let stmts = if matches!(stmt, Statement::EmptyStatement(_)) {
+            ArenaVec::new_in(ctx)
         } else {
-            let span = stmt.span();
-            (span, ArenaVec::from_value_in(stmt.take_in(ctx), ctx))
+            ArenaVec::from_value_in(stmt.take_in(ctx), ctx)
         };
         *stmt = Statement::new_block_statement_with_scope_id(span, stmts, scope_id, ctx);
         scope_id
