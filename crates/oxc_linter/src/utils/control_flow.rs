@@ -107,12 +107,10 @@ pub fn effective_unreachable_blocks(ctx: &LintContext<'_>) -> Vec<bool> {
                 && let Some(loop_) =
                     cfg.is_infinite_loop_start(node, |instruction| match instruction {
                         Instruction { kind: InstructionKind::Condition, node_id: Some(id) } => {
-                            match nodes.kind(*id) {
-                                AstKind::BooleanLiteral(lit) => {
-                                    EvalConstConditionResult::Eval(lit.value)
-                                }
-                                _ => EvalConstConditionResult::Fail,
-                            }
+                            static_primitive_boolean(nodes.kind(*id)).map_or(
+                                EvalConstConditionResult::Fail,
+                                EvalConstConditionResult::Eval,
+                            )
                         }
                         _ => EvalConstConditionResult::NotFound,
                     })
@@ -162,4 +160,15 @@ pub fn effective_unreachable_blocks(ctx: &LintContext<'_>) -> Vec<bool> {
     }
 
     unreachable
+}
+
+fn static_primitive_boolean(kind: AstKind<'_>) -> Option<bool> {
+    match kind {
+        AstKind::BooleanLiteral(lit) => Some(lit.value),
+        AstKind::NullLiteral(_) => Some(false),
+        AstKind::NumericLiteral(lit) => Some(!lit.value.is_nan() && lit.value != 0.0),
+        AstKind::BigIntLiteral(lit) => Some(!lit.is_zero()),
+        AstKind::StringLiteral(lit) => Some(!lit.value.is_empty()),
+        _ => None,
+    }
 }

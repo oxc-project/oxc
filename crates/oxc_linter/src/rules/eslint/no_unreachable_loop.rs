@@ -5,15 +5,13 @@ use oxc_ast::{
     AstKind,
     ast::{Expression, Statement},
 };
-use oxc_cfg::{
-    BlockNodeId, EdgeType, EvalConstConditionResult, Instruction, InstructionKind,
-    LabeledInstruction,
-    graph::{Direction, visit::EdgeRef},
-};
+use oxc_cfg::BlockNodeId;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use smallvec::SmallVec;
 
 use crate::{
     AstNode,
@@ -91,27 +89,18 @@ impl Rule for NoUnreachableLoop {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (loop_type, body) = match node.kind() {
+        let (loop_type, body, test_prevents_body) = match node.kind() {
             AstKind::WhileStatement(statement) => {
-                if is_static_false(&statement.test) {
-                    return;
-                }
-                (LoopType::While, &statement.body)
+                (LoopType::While, &statement.body, is_static_false(&statement.test))
             }
-            AstKind::DoWhileStatement(statement) => {
-                if is_static_false(&statement.test) {
-                    return;
-                }
-                (LoopType::DoWhile, &statement.body)
-            }
+            AstKind::DoWhileStatement(statement) => (LoopType::DoWhile, &statement.body, false),
             AstKind::ForStatement(statement) => {
-                if statement.test.as_ref().is_some_and(|test| is_static_false(test)) {
-                    return;
-                }
-                (LoopType::For, &statement.body)
+                let test_prevents_body =
+                    statement.test.as_ref().is_some_and(|test| is_static_false(test));
+                (LoopType::For, &statement.body, test_prevents_body)
             }
-            AstKind::ForInStatement(statement) => (LoopType::ForIn, &statement.body),
-            AstKind::ForOfStatement(statement) => (LoopType::ForOf, &statement.body),
+            AstKind::ForInStatement(statement) => (LoopType::ForIn, &statement.body, false),
+            AstKind::ForOfStatement(statement) => (LoopType::ForOf, &statement.body, false),
             _ => return,
         };
 
@@ -124,27 +113,27 @@ impl Rule for NoUnreachableLoop {
         // decides every case except one: a loop that is dead code *after* an
         // infinite loop is reported as reachable here (the CFG does not
         // propagate unreachability past an infinite loop).
-        if is_unreachable_node(node.id(), ctx, None) || body_is_unreachable(body, ctx, None) {
+        if is_unreachable_node(node.id(), ctx, None)
+            || (!test_prevents_body && body_is_unreachable(body, ctx, None))
+        {
             return;
         }
 
-        if has_next_iteration_path(node.id(), ctx.nodes().cfg_id(body.node_id()), ctx, None) {
+        if loop_body_allows_next_iteration(node.id(), body, ctx) {
             return;
         }
 
         // This loop looks like a violation. Before reporting, rule out the
-        // dead-code case above: only a static infinite loop can render a
-        // following loop unreachable, so the corrected reachability map is built
-        // only here — a rare path. `effective_unreachable_blocks` only ever marks
-        // *more* blocks unreachable than the CFG, so it can only turn a report
-        // into a non-report, never the other way around.
-        if is_static_infinite_loop(node.kind()) {
-            let unreachable = effective_unreachable_blocks(ctx);
-            if is_unreachable_node(node.id(), ctx, Some(&unreachable))
-                || body_is_unreachable(body, ctx, Some(&unreachable))
-            {
-                return;
-            }
+        // dead-code case where a previous static infinite loop rendered this
+        // loop unreachable. The corrected reachability map is built only on this
+        // rare path. `effective_unreachable_blocks` only ever marks *more*
+        // blocks unreachable than the CFG, so it can only turn a report into a
+        // non-report, never the other way around.
+        let unreachable = effective_unreachable_blocks(ctx);
+        if is_unreachable_node(node.id(), ctx, Some(&unreachable))
+            || (!test_prevents_body && body_is_unreachable(body, ctx, Some(&unreachable)))
+        {
+            return;
         }
 
         ctx.diagnostic(no_unreachable_loop_diagnostic(node.kind().span()));
@@ -152,11 +141,37 @@ impl Rule for NoUnreachableLoop {
 }
 
 fn is_static_false(expr: &Expression<'_>) -> bool {
-    matches!(expr.without_parentheses(), Expression::BooleanLiteral(lit) if !lit.value)
+    static_primitive_boolean(expr) == Some(false)
 }
 
 fn is_static_true(expr: &Expression<'_>) -> bool {
-    matches!(expr.without_parentheses(), Expression::BooleanLiteral(lit) if lit.value)
+    static_primitive_boolean(expr) == Some(true)
+}
+
+fn static_primitive_boolean(expr: &Expression<'_>) -> Option<bool> {
+    let expr = expr.without_parentheses();
+    // `ToBoolean` also evaluates object/array/function expressions to `true`, but ESLint's
+    // loop code path logic still treats those tests as possibly throwing while evaluated.
+    if matches!(
+        expr,
+        Expression::BooleanLiteral(_)
+            | Expression::NullLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::StringLiteral(_)
+    ) {
+        expr.to_boolean(&WithoutGlobalReferenceInformation)
+    } else {
+        None
+    }
+}
+
+fn expression_can_throw_to_catch(expr: &Expression<'_>) -> bool {
+    static_primitive_boolean(expr).is_none()
+}
+
+fn loop_test_can_throw_to_catch(expr: &Expression<'_>) -> bool {
+    !is_static_true(expr)
 }
 
 fn body_is_unreachable(
@@ -186,244 +201,407 @@ fn is_unreachable_block(
     )
 }
 
-fn is_static_infinite_loop(kind: AstKind<'_>) -> bool {
-    match kind {
-        AstKind::WhileStatement(statement) => is_static_true(&statement.test),
-        AstKind::DoWhileStatement(statement) => is_static_true(&statement.test),
-        AstKind::ForStatement(statement) => {
-            statement.test.as_ref().is_none_or(|test| is_static_true(test))
+#[derive(Debug, Default, Clone)]
+struct FlowSummary<'a> {
+    normal: bool,
+    continues_to_target: bool,
+    breaks_to_target: bool,
+    breaks_switch: bool,
+    can_throw_to_catch: bool,
+    breaks_to_labels: SmallVec<[&'a str; 1]>,
+}
+
+impl<'a> FlowSummary<'a> {
+    fn normal() -> Self {
+        Self { normal: true, ..Self::default() }
+    }
+
+    fn continue_to_target() -> Self {
+        Self { continues_to_target: true, ..Self::default() }
+    }
+
+    fn break_to_target() -> Self {
+        Self { breaks_to_target: true, ..Self::default() }
+    }
+
+    fn break_to_label(label: &'a str) -> Self {
+        Self { breaks_to_labels: SmallVec::from_slice(&[label]), ..Self::default() }
+    }
+
+    fn abrupt() -> Self {
+        Self::default()
+    }
+
+    fn merge(self, other: Self) -> Self {
+        Self {
+            normal: self.normal || other.normal,
+            continues_to_target: self.continues_to_target || other.continues_to_target,
+            breaks_to_target: self.breaks_to_target || other.breaks_to_target,
+            breaks_switch: self.breaks_switch || other.breaks_switch,
+            can_throw_to_catch: self.can_throw_to_catch || other.can_throw_to_catch,
+            breaks_to_labels: {
+                let mut labels = self.breaks_to_labels;
+                labels.extend(other.breaks_to_labels);
+                labels
+            },
         }
-        _ => false,
+    }
+
+    fn without_normal(mut self) -> Self {
+        self.normal = false;
+        self
+    }
+
+    fn without_switch_break(mut self) -> Self {
+        self.breaks_switch = false;
+        self
+    }
+
+    fn consume_label(&mut self, label: &str) -> bool {
+        let original_len = self.breaks_to_labels.len();
+        self.breaks_to_labels.retain(|break_label| *break_label != label);
+        self.breaks_to_labels.len() != original_len
     }
 }
 
-fn has_next_iteration_path(
+fn loop_body_allows_next_iteration(
     loop_id: NodeId,
-    start: BlockNodeId,
+    body: &Statement<'_>,
     ctx: &LintContext<'_>,
-    unreachable: Option<&[bool]>,
 ) -> bool {
-    let cfg = ctx.cfg();
-    let graph = cfg.graph();
-    let mut stack = vec![start];
-    let mut seen = Vec::new();
+    let summary = summarize_statement(body, loop_id, ctx, false);
+    summary.normal || summary.continues_to_target
+}
 
-    while let Some(source) = stack.pop() {
-        if seen.contains(&source) || is_unreachable_block(source, ctx, unreachable) {
-            continue;
+fn summarize_statement<'a>(
+    statement: &'a Statement<'a>,
+    target_loop: NodeId,
+    ctx: &LintContext<'_>,
+    in_switch: bool,
+) -> FlowSummary<'a> {
+    match statement {
+        Statement::BlockStatement(block) => {
+            summarize_statement_list(&block.body, target_loop, ctx, in_switch)
         }
-        seen.push(source);
+        Statement::BreakStatement(statement) => {
+            if statement.label.is_none() && in_switch {
+                FlowSummary { normal: true, breaks_switch: true, ..FlowSummary::default() }
+            } else if break_targets_loop(
+                statement.node_id.get(),
+                statement.label.as_ref(),
+                target_loop,
+                ctx,
+            ) {
+                FlowSummary::break_to_target()
+            } else if let Some(label) = &statement.label {
+                FlowSummary::break_to_label(label.name.as_str())
+            } else {
+                FlowSummary::abrupt()
+            }
+        }
+        Statement::ContinueStatement(statement) => {
+            if continue_targets_loop(
+                statement.node_id.get(),
+                statement.label.as_ref(),
+                target_loop,
+                ctx,
+            ) {
+                FlowSummary::continue_to_target()
+            } else {
+                FlowSummary::abrupt()
+            }
+        }
+        Statement::ReturnStatement(statement) => FlowSummary {
+            can_throw_to_catch: statement.argument.is_some(),
+            ..FlowSummary::abrupt()
+        },
+        Statement::ThrowStatement(_) => {
+            FlowSummary { can_throw_to_catch: true, ..FlowSummary::abrupt() }
+        }
+        Statement::IfStatement(statement) => {
+            let consequent =
+                summarize_statement(&statement.consequent, target_loop, ctx, in_switch);
+            let alternate =
+                statement.alternate.as_ref().map_or_else(FlowSummary::normal, |alternate| {
+                    summarize_statement(alternate, target_loop, ctx, in_switch)
+                });
+            FlowSummary { can_throw_to_catch: true, ..consequent.merge(alternate) }
+        }
+        Statement::SwitchStatement(statement) => summarize_switch(statement, target_loop, ctx),
+        Statement::TryStatement(statement) => {
+            let block_summary =
+                summarize_statement_list(&statement.block.body, target_loop, ctx, in_switch);
+            let mut summary = if let Some(handler) = &statement.handler {
+                if block_summary.can_throw_to_catch {
+                    let handler_summary =
+                        summarize_statement_list(&handler.body.body, target_loop, ctx, in_switch);
+                    FlowSummary {
+                        can_throw_to_catch: handler_summary.can_throw_to_catch,
+                        ..block_summary.merge(handler_summary)
+                    }
+                } else {
+                    FlowSummary { can_throw_to_catch: false, ..block_summary }
+                }
+            } else {
+                block_summary
+            };
 
-        // Same for every outgoing edge of `source`, so compute it at most once
-        // per block rather than once per `Normal` edge.
-        let mut source_is_infinite_loop_exit = None;
-
-        for edge in graph.edges_directed(source, Direction::Outgoing) {
-            match edge.weight() {
-                EdgeType::Backedge => {
-                    if owns_block(source, loop_id, ctx)
-                        || (is_synthetic_continuation(source, loop_id, ctx, unreachable)
-                            && is_next_iteration_target(edge.target(), loop_id, ctx))
+            if let Some(finalizer) = &statement.finalizer {
+                let finalizer =
+                    summarize_statement_list(&finalizer.body, target_loop, ctx, in_switch);
+                if !finalizer.normal {
+                    if !summary.normal
+                        && !finally_continue_targets_do_while(
+                            &summary,
+                            &finalizer,
+                            target_loop,
+                            ctx,
+                        )
                     {
-                        return true;
+                        let mut finalizer = finalizer;
+                        finalizer.continues_to_target = summary.continues_to_target;
+                        return finalizer;
                     }
+                    return finalizer;
                 }
-                EdgeType::Jump => {
-                    let mut has_break = false;
-                    for instruction in cfg.basic_block(source).instructions() {
-                        match instruction.kind {
-                            InstructionKind::Continue(LabeledInstruction::Unlabeled)
-                                if can_continue_loop_from(source, loop_id, ctx, unreachable) =>
-                            {
-                                return true;
-                            }
-                            InstructionKind::Continue(LabeledInstruction::Labeled)
-                                if can_continue_loop_from(
-                                    edge.target(),
-                                    loop_id,
-                                    ctx,
-                                    unreachable,
-                                ) =>
-                            {
-                                return true;
-                            }
-                            InstructionKind::Break(_) => has_break = true,
-                            _ => {}
-                        }
-                    }
-
-                    if !has_break {
-                        stack.push(edge.target());
-                    }
+                if summary.normal {
+                    summary = summary.merge(finalizer.without_normal());
+                } else if finalizer.can_throw_to_catch {
+                    summary.can_throw_to_catch = true;
                 }
-                EdgeType::Normal => {
-                    let is_exit = *source_is_infinite_loop_exit
-                        .get_or_insert_with(|| is_static_infinite_loop_exit(source, ctx));
-                    if !is_exit {
-                        stack.push(edge.target());
-                    }
-                }
-                EdgeType::Unreachable
-                | EdgeType::NewFunction
-                | EdgeType::Finalize
-                | EdgeType::Join
-                | EdgeType::Error(_) => {}
             }
+
+            summary
         }
-    }
-
-    false
-}
-
-fn is_static_infinite_loop_exit(block_id: BlockNodeId, ctx: &LintContext<'_>) -> bool {
-    ctx.cfg()
-        .is_infinite_loop_start(block_id, |instruction| match instruction {
-            Instruction { kind: InstructionKind::Condition, node_id: Some(id) } => {
-                match ctx.nodes().kind(*id) {
-                    AstKind::BooleanLiteral(lit) => EvalConstConditionResult::Eval(lit.value),
-                    _ => EvalConstConditionResult::Fail,
-                }
+        Statement::LabeledStatement(statement) => {
+            let mut summary = summarize_statement(&statement.body, target_loop, ctx, in_switch);
+            if summary.consume_label(statement.label.name.as_str()) {
+                summary.normal = true;
             }
-            _ => EvalConstConditionResult::NotFound,
-        })
-        .is_some_and(|(_, loop_end)| loop_end == block_id)
+            summary
+        }
+        Statement::WhileStatement(statement) => summarize_nested_loop(
+            statement.node_id.get(),
+            &statement.body,
+            !is_static_true(&statement.test),
+            loop_test_can_throw_to_catch(&statement.test),
+            target_loop,
+            ctx,
+        ),
+        Statement::DoWhileStatement(statement) => {
+            let body = summarize_statement(&statement.body, statement.node_id.get(), ctx, false);
+            let completes = body.breaks_to_target
+                || (!is_static_true(&statement.test) && (body.normal || body.continues_to_target));
+            let outer = summarize_statement(&statement.body, target_loop, ctx, false);
+            let test_can_throw = (body.normal || body.continues_to_target)
+                && loop_test_can_throw_to_catch(&statement.test);
+            FlowSummary { normal: completes, can_throw_to_catch: test_can_throw, ..outer }
+        }
+        Statement::ForStatement(statement) => {
+            let can_skip = statement.test.as_ref().is_some_and(|test| !is_static_true(test));
+            summarize_for(statement, can_skip, target_loop, ctx)
+        }
+        Statement::ForInStatement(statement) => summarize_nested_loop(
+            statement.node_id.get(),
+            &statement.body,
+            true,
+            true,
+            target_loop,
+            ctx,
+        ),
+        Statement::ForOfStatement(statement) => summarize_nested_loop(
+            statement.node_id.get(),
+            &statement.body,
+            true,
+            true,
+            target_loop,
+            ctx,
+        ),
+        Statement::WithStatement(statement) => FlowSummary {
+            can_throw_to_catch: true,
+            ..summarize_statement(&statement.body, target_loop, ctx, in_switch)
+        },
+        _ => FlowSummary { can_throw_to_catch: true, ..FlowSummary::normal() },
+    }
 }
 
-fn can_continue_loop_from(
-    block_id: BlockNodeId,
-    loop_id: NodeId,
+fn summarize_statement_list<'a>(
+    statements: &'a [Statement<'a>],
+    target_loop: NodeId,
     ctx: &LintContext<'_>,
-    unreachable: Option<&[bool]>,
-) -> bool {
-    owns_block(block_id, loop_id, ctx)
-        || is_synthetic_continuation(block_id, loop_id, ctx, unreachable)
-        || is_next_iteration_target(block_id, loop_id, ctx)
+    in_switch: bool,
+) -> FlowSummary<'a> {
+    let mut summary = FlowSummary::default();
+    let mut reachable = true;
+
+    for statement in statements {
+        if !reachable {
+            break;
+        }
+
+        let statement_summary = summarize_statement(statement, target_loop, ctx, in_switch);
+        if statement_summary.breaks_switch {
+            summary = summary.merge(statement_summary);
+            summary.normal = true;
+            return summary;
+        }
+        reachable = statement_summary.normal;
+        summary = summary.merge(statement_summary);
+    }
+
+    summary.normal = reachable;
+    summary
 }
 
-fn is_synthetic_continuation(
-    block_id: BlockNodeId,
-    loop_id: NodeId,
+fn finally_continue_targets_do_while(
+    summary: &FlowSummary<'_>,
+    finalizer: &FlowSummary<'_>,
+    target_loop: NodeId,
     ctx: &LintContext<'_>,
-    unreachable: Option<&[bool]>,
 ) -> bool {
-    let cfg = ctx.cfg();
-    let graph = cfg.graph();
-    if !cfg.basic_block(block_id).instructions().is_empty() {
-        return false;
-    }
+    !summary.breaks_to_target
+        && finalizer.continues_to_target
+        && matches!(ctx.nodes().kind(target_loop), AstKind::DoWhileStatement(_))
+}
 
-    let mut stack = vec![block_id];
-    let mut seen = Vec::new();
-    while let Some(current) = stack.pop() {
-        if seen.contains(&current) {
-            continue;
+fn summarize_switch<'a>(
+    statement: &'a oxc_ast::ast::SwitchStatement<'a>,
+    target_loop: NodeId,
+    ctx: &LintContext<'_>,
+) -> FlowSummary<'a> {
+    let mut summary = FlowSummary::default();
+    let has_default = statement.cases.iter().any(|case| case.test.is_none());
+
+    if !has_default {
+        summary.normal = true;
+    }
+    summary.can_throw_to_catch = true;
+
+    for index in 0..statement.cases.len() {
+        let mut case_summary = FlowSummary::default();
+        let mut reachable = true;
+
+        for case in statement.cases.iter().skip(index) {
+            if !reachable {
+                break;
+            }
+
+            let consequent = summarize_statement_list(&case.consequent, target_loop, ctx, true);
+            let breaks_switch = consequent.breaks_switch;
+            let consequent_normal = consequent.normal;
+            case_summary = case_summary.merge(consequent.without_normal().without_switch_break());
+            if breaks_switch {
+                case_summary.normal = true;
+                reachable = false;
+                break;
+            }
+            reachable = consequent_normal;
         }
-        seen.push(current);
 
-        for edge in graph
-            .edges_directed(current, Direction::Incoming)
-            .filter(|edge| matches!(edge.weight(), EdgeType::Normal | EdgeType::Jump))
-        {
-            let source = edge.source();
-            if is_unreachable_block(source, ctx, unreachable) {
-                continue;
-            }
-
-            if owns_block(source, loop_id, ctx)
-                || (matches!(edge.weight(), EdgeType::Normal)
-                    && can_skip_nested_loop(source, loop_id, ctx))
-            {
-                return true;
-            }
-
-            if cfg.basic_block(source).instructions().is_empty() {
-                stack.push(source);
-            }
+        if reachable {
+            case_summary.normal = true;
         }
+        summary = summary.merge(case_summary);
     }
 
-    false
+    summary
 }
 
-fn is_next_iteration_target(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
-    owns_block(block_id, loop_id, ctx) || empty_block_backedges_to_loop(block_id, loop_id, ctx)
-}
-
-fn owns_block(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
-    directly_owns_block(block_id, loop_id, ctx)
-        || empty_backedge_targets_loop(block_id, loop_id, ctx)
-}
-
-fn directly_owns_block(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
-    if block_id == ctx.nodes().cfg_id(loop_id) {
-        return true;
+fn summarize_nested_loop<'a>(
+    loop_id: NodeId,
+    body: &'a Statement<'a>,
+    can_skip: bool,
+    loop_head_can_throw: bool,
+    target_loop: NodeId,
+    ctx: &LintContext<'_>,
+) -> FlowSummary<'a> {
+    let outer = summarize_statement(body, target_loop, ctx, false);
+    FlowSummary {
+        normal: can_skip || summarize_statement(body, loop_id, ctx, false).breaks_to_target,
+        continues_to_target: outer.continues_to_target,
+        breaks_to_target: outer.breaks_to_target,
+        breaks_switch: outer.breaks_switch,
+        can_throw_to_catch: loop_head_can_throw || outer.can_throw_to_catch,
+        breaks_to_labels: outer.breaks_to_labels,
     }
+}
 
-    ctx.cfg().basic_block(block_id).instructions().iter().any(|instruction| {
-        instruction
-            .node_id
-            .and_then(|node_id| nearest_loop(node_id, ctx))
-            .is_some_and(|nearest_loop| nearest_loop == loop_id)
+fn summarize_for<'a>(
+    statement: &'a oxc_ast::ast::ForStatement<'a>,
+    can_skip: bool,
+    target_loop: NodeId,
+    ctx: &LintContext<'_>,
+) -> FlowSummary<'a> {
+    let outer = summarize_statement(&statement.body, target_loop, ctx, false);
+    let body = summarize_statement(&statement.body, statement.node_id.get(), ctx, false);
+    let update_can_run = body.normal || body.continues_to_target;
+    let can_throw_to_catch = statement
+        .init
+        .as_ref()
+        .is_some_and(|init| init.as_expression().is_none_or(expression_can_throw_to_catch))
+        || statement.test.as_ref().is_some_and(loop_test_can_throw_to_catch)
+        || (update_can_run && statement.update.as_ref().is_some_and(expression_can_throw_to_catch))
+        || outer.can_throw_to_catch;
+
+    FlowSummary {
+        normal: can_skip || body.breaks_to_target,
+        continues_to_target: outer.continues_to_target,
+        breaks_to_target: outer.breaks_to_target,
+        breaks_switch: outer.breaks_switch,
+        can_throw_to_catch,
+        breaks_to_labels: outer.breaks_to_labels,
+    }
+}
+
+fn continue_targets_loop(
+    node_id: NodeId,
+    label: Option<&oxc_ast::ast::LabelIdentifier<'_>>,
+    target_loop: NodeId,
+    ctx: &LintContext<'_>,
+) -> bool {
+    label.map_or_else(
+        || nearest_loop(node_id, ctx).is_some_and(|loop_id| loop_id == target_loop),
+        |label| label_targets_loop(label.name.as_str(), target_loop, ctx),
+    )
+}
+
+fn break_targets_loop(
+    node_id: NodeId,
+    label: Option<&oxc_ast::ast::LabelIdentifier<'_>>,
+    target_loop: NodeId,
+    ctx: &LintContext<'_>,
+) -> bool {
+    label.map_or_else(
+        || nearest_breakable(node_id, ctx).is_some_and(|loop_id| loop_id == target_loop),
+        |label| label_targets_loop(label.name.as_str(), target_loop, ctx),
+    )
+}
+
+fn nearest_breakable(mut node_id: NodeId, ctx: &LintContext<'_>) -> Option<NodeId> {
+    loop {
+        let kind = ctx.nodes().kind(node_id);
+        if is_loop(kind) {
+            return Some(node_id);
+        }
+        if matches!(kind, AstKind::SwitchStatement(_)) {
+            return None;
+        }
+        if node_id == NodeId::ROOT {
+            return None;
+        }
+        node_id = ctx.nodes().parent_id(node_id);
+    }
+}
+
+fn label_targets_loop(label_name: &str, target_loop: NodeId, ctx: &LintContext<'_>) -> bool {
+    ctx.nodes().ancestor_ids(target_loop).any(|ancestor_id| {
+        matches!(
+            ctx.nodes().kind(ancestor_id),
+            AstKind::LabeledStatement(statement)
+                if statement.label.name.as_str() == label_name
+                    && statement.body.node_id() == target_loop
+        )
     })
-}
-
-fn empty_backedge_targets_loop(
-    block_id: BlockNodeId,
-    loop_id: NodeId,
-    ctx: &LintContext<'_>,
-) -> bool {
-    ctx.cfg().basic_block(block_id).instructions().is_empty()
-        && ctx
-            .cfg()
-            .graph()
-            .edges_directed(block_id, Direction::Incoming)
-            .any(|edge| matches!(edge.weight(), EdgeType::Backedge))
-        && empty_block_backedges_to_loop(block_id, loop_id, ctx)
-}
-
-fn empty_block_backedges_to_loop(
-    block_id: BlockNodeId,
-    loop_id: NodeId,
-    ctx: &LintContext<'_>,
-) -> bool {
-    ctx.cfg().basic_block(block_id).instructions().is_empty()
-        && ctx
-            .cfg()
-            .graph()
-            .edges_directed(block_id, Direction::Outgoing)
-            .filter(|edge| matches!(edge.weight(), EdgeType::Backedge))
-            .any(|edge| directly_owns_block(edge.target(), loop_id, ctx))
-}
-
-fn can_skip_nested_loop(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
-    let Some(nested_loop_id) = nearest_loop_for_block(block_id, ctx) else {
-        return false;
-    };
-    nested_loop_id != loop_id
-        && enclosing_loop(nested_loop_id, ctx).is_some_and(|id| id == loop_id)
-        && loop_can_have_zero_iterations(ctx.nodes().kind(nested_loop_id))
-}
-
-fn nearest_loop_for_block(block_id: BlockNodeId, ctx: &LintContext<'_>) -> Option<NodeId> {
-    ctx.cfg()
-        .basic_block(block_id)
-        .instructions()
-        .iter()
-        .find_map(|instruction| instruction.node_id.and_then(|node_id| nearest_loop(node_id, ctx)))
-}
-
-fn enclosing_loop(node_id: NodeId, ctx: &LintContext<'_>) -> Option<NodeId> {
-    ctx.nodes().ancestor_ids(node_id).find(|ancestor_id| is_loop(ctx.nodes().kind(*ancestor_id)))
-}
-
-fn loop_can_have_zero_iterations(kind: AstKind<'_>) -> bool {
-    match kind {
-        AstKind::WhileStatement(statement) => !is_static_true(&statement.test),
-        AstKind::ForStatement(statement) => {
-            statement.test.as_ref().is_some_and(|test| !is_static_true(test))
-        }
-        _ => false,
-    }
 }
 
 fn nearest_loop(mut node_id: NodeId, ctx: &LintContext<'_>) -> Option<NodeId> {
@@ -575,10 +753,26 @@ fn test() {
         ("for (x = 1; x < 10; i++) { if (x > 0) { foo(); throw err; } }", None).into(),
         ("for (x of []);", None).into(),
         ("for (x of [1]);", None).into(),
+        ("while (a) { label: { break label; } }", None).into(),
+        ("while (a) { try { continue; } finally { break; } }", None).into(),
+        ("function foo() { do { try { return; } finally { continue; } } while (a) }", None)
+            .into(),
+        ("do { try { throw err; } finally { continue; } } while (a)", None).into(),
+        (
+            "function foo() { do { try { return; } catch (e) { foo(); } finally { continue; } } while (a) }",
+            None,
+        )
+            .into(),
+        ("while (a) { try { if (foo) {} } catch { continue; } break; }", None).into(),
+        ("while (a) { try { switch (foo) {} } catch { continue; } break; }", None).into(),
+        ("while (a) { try { while (foo) {} } catch { continue; } break; }", None).into(),
+        ("while (a) { try { for (;;foo()) {} } catch { continue; } break; }", None).into(),
         ("function foo() { return; while (a); }", None).into(),
         ("function foo() { return; while (a) break; }", None).into(),
         ("while(true); while(true);", None).into(),
         ("while(true); while(true) break;", None).into(),
+        ("while (1); while (a) break;", None).into(),
+        ("while (\"x\"); while (a) break;", None).into(),
         (
             "while (a) break;",
             Some(serde_json::json!([{ "ignore": ["WhileStatement"] }])),
@@ -649,6 +843,29 @@ fn test() {
         ("do { for (var i = 1; i < 10; i++) continue; break; } while(foo)", None).into(),
         ("for (;;) { for (var i = 1; i < 10; i ++) break; if (foo) break; continue; }", None)
             .into(),
+        (
+            "function foo() { while (bar) { switch (baz) { case 1: break; default: return; } return; } }",
+            None,
+        )
+            .into(),
+        ("function foo() { while (a) { try { return; } finally { foo(); } } }", None).into(),
+        ("function foo() { while (a) { try { return; } finally { continue; } } }", None).into(),
+        (
+            "function foo() { while (a) { try { return; } catch (e) { foo(); } finally { foo(); } } }",
+            None,
+        )
+            .into(),
+        (
+            "function foo() { do { try { break; } finally { continue; } } while (a) }",
+            None,
+        )
+            .into(),
+        ("while (false) break;", None).into(),
+        ("for (;false;) break;", None).into(),
+        ("do break; while (false);", None).into(),
+        ("while (a) { try { while (true) {} } catch { continue; } break; }", None).into(),
+        ("while ({}); while (a) break;", None).into(),
+        ("while ([]); while (a) break;", None).into(),
         (
             "while (a) break; do break; while (b); for (;;) break; for (c in d) break; for (e of f) break;",
             Some(serde_json::json!([{ "ignore": [] }])),
