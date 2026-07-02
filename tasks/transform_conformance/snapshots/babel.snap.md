@@ -1,10 +1,11 @@
 commit: 1fb0b771
 
-Passed: 663/1165
+Passed: 701/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-export-namespace-from
+* babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
 
 
@@ -166,332 +167,12 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (0/28)
-* integration/async-to-generator/input.js
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(5): ["_"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(3): ScopeId(4)
-rebuilt        : SymbolId(4): ScopeId(5)
-
+# babel-plugin-transform-explicit-resource-management (25/28)
 * integration/commonjs-transform/input.js
 x Output mismatch
 
-* source-maps/block/input.js
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["_"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(2): ScopeId(3)
-rebuilt        : SymbolId(2): ScopeId(2)
-
-* source-maps/for-of/input.js
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(3): ["_"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_"]
-rebuilt        : ScopeId(4): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(3): ScopeId(4)
-rebuilt        : SymbolId(3): ScopeId(3)
-
-* source-maps/switch/input.js
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(4): ["_"]
-Bindings mismatch:
-after transform: ScopeId(6): ["_"]
-rebuilt        : ScopeId(5): []
-Bindings mismatch:
-after transform: ScopeId(8): []
-rebuilt        : ScopeId(8): ["_"]
-Bindings mismatch:
-after transform: ScopeId(9): ["_"]
-rebuilt        : ScopeId(9): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(4): ScopeId(6)
-rebuilt        : SymbolId(3): ScopeId(4)
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(6): ScopeId(9)
-rebuilt        : SymbolId(6): ScopeId(8)
-
-* source-maps/top-level/input.mjs
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["_"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(2): ScopeId(3)
-rebuilt        : SymbolId(2): ScopeId(2)
-
-* transform-await/mixed/input.js
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["_"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(4): ScopeId(3)
-rebuilt        : SymbolId(4): ScopeId(2)
-
-* transform-await/only-using-await/input.js
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["_"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(4): ScopeId(3)
-rebuilt        : SymbolId(4): ScopeId(2)
-
-* transform-await/switch/input.js
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(4): ["_"]
-Bindings mismatch:
-after transform: ScopeId(6): ["_"]
-rebuilt        : ScopeId(5): []
-Bindings mismatch:
-after transform: ScopeId(8): []
-rebuilt        : ScopeId(8): ["_"]
-Bindings mismatch:
-after transform: ScopeId(9): ["_"]
-rebuilt        : ScopeId(9): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(4): ScopeId(6)
-rebuilt        : SymbolId(3): ScopeId(4)
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(6): ScopeId(9)
-rebuilt        : SymbolId(6): ScopeId(8)
-
-* transform-sync/bare-block/input.js
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["_"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(2): ScopeId(3)
-rebuilt        : SymbolId(2): ScopeId(2)
-
-* transform-sync/for-await-head/input.js
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(3): ["_"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_"]
-rebuilt        : ScopeId(4): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(3): ScopeId(4)
-rebuilt        : SymbolId(3): ScopeId(3)
-
-* transform-sync/for-head/input.js
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(3): ["_"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_"]
-rebuilt        : ScopeId(4): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(3): ScopeId(4)
-rebuilt        : SymbolId(3): ScopeId(3)
-
-* transform-sync/for-head-shadow/input.js
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(5): ["_"]
-Bindings mismatch:
-after transform: ScopeId(6): ["_"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(5): ScopeId(6)
-rebuilt        : SymbolId(5): ScopeId(5)
-
-* transform-sync/function-body/input.js
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(3): ["_"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_"]
-rebuilt        : ScopeId(4): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(3): ScopeId(4)
-rebuilt        : SymbolId(3): ScopeId(3)
-
-* transform-sync/if-body/input.js
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["_"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(2): ScopeId(3)
-rebuilt        : SymbolId(2): ScopeId(2)
-
-* transform-sync/multiple-nested/input.js
-Bindings mismatch:
-after transform: ScopeId(11): []
-rebuilt        : ScopeId(5): ["_"]
-Bindings mismatch:
-after transform: ScopeId(12): ["_"]
-rebuilt        : ScopeId(6): []
-Bindings mismatch:
-after transform: ScopeId(7): []
-rebuilt        : ScopeId(8): ["_"]
-Bindings mismatch:
-after transform: ScopeId(8): ["_"]
-rebuilt        : ScopeId(9): []
-Bindings mismatch:
-after transform: ScopeId(4): []
-rebuilt        : ScopeId(11): ["_"]
-Bindings mismatch:
-after transform: ScopeId(5): ["_"]
-rebuilt        : ScopeId(12): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(8): ScopeId(12)
-rebuilt        : SymbolId(6): ScopeId(5)
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(6): ScopeId(8)
-rebuilt        : SymbolId(7): ScopeId(8)
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(4): ScopeId(5)
-rebuilt        : SymbolId(8): ScopeId(11)
-
-* transform-sync/multiple-same-level/input.js
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["_"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(5): ScopeId(3)
-rebuilt        : SymbolId(5): ScopeId(2)
-
 * transform-sync/named-evaluation/input.js
 x Output mismatch
-
-* transform-sync/static-block/input.js
-Bindings mismatch:
-after transform: ScopeId(4): []
-rebuilt        : ScopeId(4): ["_"]
-Bindings mismatch:
-after transform: ScopeId(5): ["_"]
-rebuilt        : ScopeId(5): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(3): ScopeId(5)
-rebuilt        : SymbolId(3): ScopeId(4)
-
-* transform-sync/switch/input.js
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(4): ["_"]
-Bindings mismatch:
-after transform: ScopeId(6): ["_"]
-rebuilt        : ScopeId(5): []
-Bindings mismatch:
-after transform: ScopeId(8): []
-rebuilt        : ScopeId(8): ["_"]
-Bindings mismatch:
-after transform: ScopeId(9): ["_"]
-rebuilt        : ScopeId(9): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(4): ScopeId(6)
-rebuilt        : SymbolId(3): ScopeId(4)
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(6): ScopeId(9)
-rebuilt        : SymbolId(6): ScopeId(8)
-
-* transform-top-level/await-or-not-preserved/input.mjs
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["_"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(3): ScopeId(3)
-rebuilt        : SymbolId(3): ScopeId(2)
-
-* transform-top-level/hoisting/input.mjs
-Bindings mismatch:
-after transform: ScopeId(7): []
-rebuilt        : ScopeId(7): ["_"]
-Bindings mismatch:
-after transform: ScopeId(8): ["_"]
-rebuilt        : ScopeId(8): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(12): ScopeId(8)
-rebuilt        : SymbolId(12): ScopeId(7)
-
-* transform-top-level/hoisting-default-clas-anon/input.mjs
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(3): ["_"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_"]
-rebuilt        : ScopeId(4): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(3): ScopeId(4)
-rebuilt        : SymbolId(3): ScopeId(3)
-
-* transform-top-level/hoisting-default-class/input.mjs
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(3): ["_"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_"]
-rebuilt        : ScopeId(4): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(4): ScopeId(4)
-rebuilt        : SymbolId(4): ScopeId(3)
-
-* transform-top-level/hoisting-default-expr/input.mjs
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["_"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(3): ScopeId(3)
-rebuilt        : SymbolId(3): ScopeId(2)
-
-* transform-top-level/hoisting-default-fn/input.mjs
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(3): ["_"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_"]
-rebuilt        : ScopeId(4): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(3): ScopeId(4)
-rebuilt        : SymbolId(3): ScopeId(3)
-
-* transform-top-level/hoisting-default-fn-anon/input.mjs
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(3): ["_"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_"]
-rebuilt        : ScopeId(4): []
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(3): ScopeId(4)
-rebuilt        : SymbolId(3): ScopeId(3)
 
 * transform-top-level/hoisting-mutate-outer-class-binding/input.js
 x Output mismatch
@@ -1228,195 +909,12 @@ after transform: ["ExampleType", "o"]
 rebuilt        : ["o"]
 
 
-# babel-plugin-transform-optional-catch-binding (2/4)
-* optional-catch-bindings/try-catch-block-no-binding/input.js
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["_unused"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_unused"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_unused":
-after transform: SymbolId(0): ScopeId(3)
-rebuilt        : SymbolId(0): ScopeId(2)
-
-* optional-catch-bindings/try-catch-finally-no-binding/input.js
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["_unused"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_unused"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_unused":
-after transform: SymbolId(0): ScopeId(3)
-rebuilt        : SymbolId(0): ScopeId(2)
-
-
-# babel-plugin-transform-async-generator-functions (11/20)
+# babel-plugin-transform-async-generator-functions (19/20)
 * async-generators/class-private-method/input.js
 x Output mismatch
 
-* for-await/async-arrow/input.js
-Bindings mismatch:
-after transform: ScopeId(6): []
-rebuilt        : ScopeId(6): ["err"]
-Bindings mismatch:
-after transform: ScopeId(7): ["err"]
-rebuilt        : ScopeId(7): []
-Symbol scope ID mismatch for "err":
-after transform: SymbolId(6): ScopeId(7)
-rebuilt        : SymbolId(6): ScopeId(6)
 
-* for-await/async-function/input.js
-Bindings mismatch:
-after transform: ScopeId(6): []
-rebuilt        : ScopeId(8): ["err"]
-Bindings mismatch:
-after transform: ScopeId(7): ["err"]
-rebuilt        : ScopeId(9): []
-Symbol scope ID mismatch for "err":
-after transform: SymbolId(7): ScopeId(7)
-rebuilt        : SymbolId(8): ScopeId(8)
-
-* for-await/async-function-no-transform/input.js
-Bindings mismatch:
-after transform: ScopeId(6): []
-rebuilt        : ScopeId(5): ["err"]
-Bindings mismatch:
-after transform: ScopeId(7): ["err"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "err":
-after transform: SymbolId(7): ScopeId(7)
-rebuilt        : SymbolId(7): ScopeId(5)
-
-* for-await/async-generator/input.js
-Bindings mismatch:
-after transform: ScopeId(6): []
-rebuilt        : ScopeId(8): ["err"]
-Bindings mismatch:
-after transform: ScopeId(7): ["err"]
-rebuilt        : ScopeId(9): []
-Symbol scope ID mismatch for "err":
-after transform: SymbolId(7): ScopeId(7)
-rebuilt        : SymbolId(8): ScopeId(8)
-
-* for-await/create-async-from-sync-iterator/input.js
-Bindings mismatch:
-after transform: ScopeId(6): []
-rebuilt        : ScopeId(8): ["err"]
-Bindings mismatch:
-after transform: ScopeId(7): ["err"]
-rebuilt        : ScopeId(9): []
-Symbol scope ID mismatch for "err":
-after transform: SymbolId(7): ScopeId(7)
-rebuilt        : SymbolId(8): ScopeId(8)
-
-* for-await/destructuring/input.js
-Bindings mismatch:
-after transform: ScopeId(6): []
-rebuilt        : ScopeId(8): ["err"]
-Bindings mismatch:
-after transform: ScopeId(7): ["err"]
-rebuilt        : ScopeId(9): []
-Symbol scope ID mismatch for "err":
-after transform: SymbolId(8): ScopeId(7)
-rebuilt        : SymbolId(9): ScopeId(8)
-
-* for-await/lhs-member-expression/input.js
-Bindings mismatch:
-after transform: ScopeId(6): []
-rebuilt        : ScopeId(5): ["err"]
-Bindings mismatch:
-after transform: ScopeId(7): ["err"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "err":
-after transform: SymbolId(5): ScopeId(7)
-rebuilt        : SymbolId(5): ScopeId(5)
-
-* for-await/re-declare-var-in-init-body/input.js
-Bindings mismatch:
-after transform: ScopeId(6): []
-rebuilt        : ScopeId(6): ["err"]
-Bindings mismatch:
-after transform: ScopeId(7): ["err"]
-rebuilt        : ScopeId(7): []
-Symbol scope ID mismatch for "err":
-after transform: SymbolId(7): ScopeId(7)
-rebuilt        : SymbolId(7): ScopeId(6)
-
-
-# babel-plugin-transform-object-rest-spread (26/40)
-* object-rest/catch-clause/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["a34"]
-rebuilt        : ScopeId(2): ["_ref"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_ref"]
-rebuilt        : ScopeId(3): ["a34"]
-Bindings mismatch:
-after transform: ScopeId(5): ["a1", "b1"]
-rebuilt        : ScopeId(5): ["_ref2"]
-Bindings mismatch:
-after transform: ScopeId(6): ["_ref2"]
-rebuilt        : ScopeId(6): ["a1", "b1"]
-Bindings mismatch:
-after transform: ScopeId(8): ["a2", "b2", "c2"]
-rebuilt        : ScopeId(8): ["_ref3"]
-Bindings mismatch:
-after transform: ScopeId(9): ["_ref3"]
-rebuilt        : ScopeId(9): ["a2", "b2", "c2"]
-Bindings mismatch:
-after transform: ScopeId(11): ["_ref5", "a2", "b2", "c3", "c4"]
-rebuilt        : ScopeId(11): ["_ref4"]
-Bindings mismatch:
-after transform: ScopeId(12): ["_ref4"]
-rebuilt        : ScopeId(12): ["_ref5", "a2", "b2", "c3", "c4"]
-Symbol scope ID mismatch for "_ref":
-after transform: SymbolId(12): ScopeId(3)
-rebuilt        : SymbolId(3): ScopeId(2)
-Symbol scope ID mismatch for "a34":
-after transform: SymbolId(0): ScopeId(2)
-rebuilt        : SymbolId(4): ScopeId(3)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(13): ScopeId(6)
-rebuilt        : SymbolId(5): ScopeId(5)
-Symbol scope ID mismatch for "a1":
-after transform: SymbolId(1): ScopeId(5)
-rebuilt        : SymbolId(6): ScopeId(6)
-Symbol scope ID mismatch for "b1":
-after transform: SymbolId(2): ScopeId(5)
-rebuilt        : SymbolId(7): ScopeId(6)
-Symbol scope ID mismatch for "_ref3":
-after transform: SymbolId(15): ScopeId(9)
-rebuilt        : SymbolId(8): ScopeId(8)
-Symbol scope ID mismatch for "a2":
-after transform: SymbolId(3): ScopeId(8)
-rebuilt        : SymbolId(9): ScopeId(9)
-Symbol scope ID mismatch for "b2":
-after transform: SymbolId(4): ScopeId(8)
-rebuilt        : SymbolId(10): ScopeId(9)
-Symbol scope ID mismatch for "c2":
-after transform: SymbolId(5): ScopeId(8)
-rebuilt        : SymbolId(11): ScopeId(9)
-Symbol scope ID mismatch for "_ref4":
-after transform: SymbolId(17): ScopeId(12)
-rebuilt        : SymbolId(12): ScopeId(11)
-Symbol scope ID mismatch for "a2":
-after transform: SymbolId(6): ScopeId(11)
-rebuilt        : SymbolId(13): ScopeId(12)
-Symbol scope ID mismatch for "b2":
-after transform: SymbolId(7): ScopeId(11)
-rebuilt        : SymbolId(14): ScopeId(12)
-Symbol scope ID mismatch for "_ref5":
-after transform: SymbolId(18): ScopeId(11)
-rebuilt        : SymbolId(15): ScopeId(12)
-Symbol scope ID mismatch for "c3":
-after transform: SymbolId(8): ScopeId(11)
-rebuilt        : SymbolId(16): ScopeId(12)
-Symbol scope ID mismatch for "c4":
-after transform: SymbolId(9): ScopeId(11)
-rebuilt        : SymbolId(17): ScopeId(12)
-
+# babel-plugin-transform-object-rest-spread (29/40)
 * object-rest/for-x/input.js
 x Output mismatch
 
@@ -1438,90 +936,25 @@ x Output mismatch
 * object-rest/object-ref-computed/input.js
 x Output mismatch
 
-* object-rest/parameters/input.js
-Bindings mismatch:
-after transform: ScopeId(7): ["_ref10", "a1", "b1"]
-rebuilt        : ScopeId(7): ["_ref10"]
-Symbol scope ID mismatch for "a1":
-after transform: SymbolId(24): ScopeId(7)
-rebuilt        : SymbolId(43): ScopeId(8)
-Symbol scope ID mismatch for "b1":
-after transform: SymbolId(25): ScopeId(7)
-rebuilt        : SymbolId(44): ScopeId(8)
-
 * object-rest/parameters-object-rest-used-in-default/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["R", "_ref", "a"]
-rebuilt        : ScopeId(1): ["_ref", "a"]
-Bindings mismatch:
-after transform: ScopeId(3): ["R", "Y", "_ref2", "a"]
-rebuilt        : ScopeId(3): ["_ref2", "a"]
-Bindings mismatch:
-after transform: ScopeId(5): ["R", "_ref3", "a"]
-rebuilt        : ScopeId(5): ["_ref3", "a"]
-Bindings mismatch:
-after transform: ScopeId(7): ["R", "_ref4", "a", "c", "e", "f"]
-rebuilt        : ScopeId(7): ["_ref4", "a", "c", "e", "f"]
-Bindings mismatch:
-after transform: ScopeId(9): ["R", "_ref5", "a"]
-rebuilt        : ScopeId(9): ["_ref5", "a"]
-Bindings mismatch:
-after transform: ScopeId(11): ["R", "_ref6", "a"]
-rebuilt        : ScopeId(11): ["_ref6", "a"]
-Bindings mismatch:
-after transform: ScopeId(13): ["R", "_ref7", "a"]
-rebuilt        : ScopeId(13): ["_ref7", "a"]
-Bindings mismatch:
-after transform: ScopeId(15): ["R", "_ref8", "a"]
-rebuilt        : ScopeId(15): ["_ref8", "a"]
-Symbol scope ID mismatch for "R":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(3): ScopeId(2)
 Symbol reference IDs mismatch for "R":
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(3): []
-Symbol scope ID mismatch for "Y":
-after transform: SymbolId(2): ScopeId(3)
-rebuilt        : SymbolId(6): ScopeId(4)
 Symbol reference IDs mismatch for "Y":
 after transform: SymbolId(2): [ReferenceId(1)]
 rebuilt        : SymbolId(6): []
-Symbol scope ID mismatch for "R":
-after transform: SymbolId(3): ScopeId(3)
-rebuilt        : SymbolId(7): ScopeId(4)
-Symbol scope ID mismatch for "R":
-after transform: SymbolId(6): ScopeId(5)
-rebuilt        : SymbolId(10): ScopeId(6)
 Symbol reference IDs mismatch for "R":
 after transform: SymbolId(6): [ReferenceId(2)]
 rebuilt        : SymbolId(10): []
-Symbol scope ID mismatch for "R":
-after transform: SymbolId(7): ScopeId(7)
-rebuilt        : SymbolId(16): ScopeId(8)
 Symbol reference IDs mismatch for "R":
 after transform: SymbolId(7): [ReferenceId(3)]
 rebuilt        : SymbolId(16): []
-Symbol scope ID mismatch for "q":
-after transform: SymbolId(12): ScopeId(8)
-rebuilt        : SymbolId(17): ScopeId(8)
-Symbol scope ID mismatch for "R":
-after transform: SymbolId(13): ScopeId(9)
-rebuilt        : SymbolId(20): ScopeId(10)
 Symbol reference IDs mismatch for "R":
 after transform: SymbolId(13): [ReferenceId(6)]
 rebuilt        : SymbolId(20): []
-Symbol scope ID mismatch for "R":
-after transform: SymbolId(15): ScopeId(11)
-rebuilt        : SymbolId(23): ScopeId(12)
 Symbol reference IDs mismatch for "R":
 after transform: SymbolId(15): [ReferenceId(7)]
 rebuilt        : SymbolId(23): []
-Symbol scope ID mismatch for "R":
-after transform: SymbolId(17): ScopeId(13)
-rebuilt        : SymbolId(26): ScopeId(14)
-Symbol scope ID mismatch for "R":
-after transform: SymbolId(19): ScopeId(15)
-rebuilt        : SymbolId(31): ScopeId(18)
 Reference symbol mismatch for "R":
 after transform: SymbolId(0) "R"
 rebuilt        : <None>
@@ -1549,20 +982,6 @@ x Output mismatch
 
 * regression/gh-17274/input.js
 x Output mismatch
-
-* regression/gh-7388/input.js
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(4): Some(ScopeId(3))
-Symbol scope ID mismatch for "fn2":
-after transform: SymbolId(4): ScopeId(3)
-rebuilt        : SymbolId(5): ScopeId(3)
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(6): ScopeId(5)
-rebuilt        : SymbolId(7): ScopeId(5)
-Symbol scope ID mismatch for "rest":
-after transform: SymbolId(7): ScopeId(5)
-rebuilt        : SymbolId(8): ScopeId(5)
 
 * regression/gh-8323/input.js
 

@@ -316,6 +316,15 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
         }
     }
 
+    fn visit_function_body(&mut self, it: &mut FunctionBody<'a>) {
+        // A function body's scope is optional (present only when the parameters
+        // contain expressions), so `VisitMut` walks don't enter it — handle it here.
+        if it.scope_id.get().is_some() {
+            self.enter_scope(ScopeFlags::FunctionBody, &it.scope_id);
+        }
+        walk_mut::walk_function_body(self, it);
+    }
+
     // Increment `this_depth` when entering code where `this` refers to a different `this`
     // from `this` within this class, and decrement it when exiting.
     // Therefore `this_depth == 0` when `this` refers to the `this` which needs to be transformed.

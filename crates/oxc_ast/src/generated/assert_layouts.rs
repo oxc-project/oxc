@@ -690,11 +690,12 @@ const _: () = {
     assert!(offset_of!(FormalParameterRest, rest) == 40);
     assert!(offset_of!(FormalParameterRest, type_annotation) == 72);
 
-    // Padding: 4 bytes
+    // Padding: 0 bytes
     assert!(size_of::<FunctionBody>() == 64);
     assert!(align_of::<FunctionBody>() == 8);
     assert!(offset_of!(FunctionBody, span) == 0);
     assert!(offset_of!(FunctionBody, node_id) == 8);
+    assert!(offset_of!(FunctionBody, scope_id) == 12);
     assert!(offset_of!(FunctionBody, directives) == 16);
     assert!(offset_of!(FunctionBody, statements) == 40);
 
@@ -2502,12 +2503,13 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(FormalParameterRest, type_annotation) == 48);
 
     // Padding: 0 bytes
-    assert!(size_of::<FunctionBody>() == 44);
+    assert!(size_of::<FunctionBody>() == 48);
     assert!(align_of::<FunctionBody>() == 4);
     assert!(offset_of!(FunctionBody, span) == 0);
     assert!(offset_of!(FunctionBody, node_id) == 8);
-    assert!(offset_of!(FunctionBody, directives) == 12);
-    assert!(offset_of!(FunctionBody, statements) == 28);
+    assert!(offset_of!(FunctionBody, scope_id) == 12);
+    assert!(offset_of!(FunctionBody, directives) == 16);
+    assert!(offset_of!(FunctionBody, statements) == 32);
 
     // Padding: 0 bytes
     assert!(size_of::<ArrowFunctionExpression>() == 36);

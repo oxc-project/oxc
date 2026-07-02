@@ -707,6 +707,19 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
         self.scope_stack.pop();
     }
 
+    fn visit_function_body(&mut self, it: &mut FunctionBody<'a>) {
+        // A function body's scope is optional (present only when the parameters
+        // contain expressions), so `VisitMut` walks don't enter it — handle it here.
+        let has_scope = it.scope_id.get().is_some();
+        if has_scope {
+            self.enter_scope(ScopeFlags::FunctionBody, &it.scope_id);
+        }
+        walk_mut::walk_function_body(self, it);
+        if has_scope {
+            self.leave_scope();
+        }
+    }
+
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
             Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {

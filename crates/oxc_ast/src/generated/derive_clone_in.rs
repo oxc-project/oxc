@@ -3840,6 +3840,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for FunctionBody<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             directives: CloneIn::clone_in(&self.directives, allocator),
             statements: CloneIn::clone_in(&self.statements, allocator),
+            scope_id: Default::default(),
         }
     }
 
@@ -3849,6 +3850,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for FunctionBody<'_> {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             directives: CloneIn::clone_in_with_semantic_ids(&self.directives, allocator),
             statements: CloneIn::clone_in_with_semantic_ids(&self.statements, allocator),
+            scope_id: CloneIn::clone_in_with_semantic_ids(&self.scope_id, allocator),
         }
     }
 }

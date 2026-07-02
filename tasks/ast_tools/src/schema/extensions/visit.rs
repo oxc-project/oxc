@@ -124,4 +124,10 @@ pub struct Scope {
     /// Conditions in which scope is strict mode.
     /// Stored as a string which should be parsed as an expression.
     pub strict_if: Option<String>,
+    /// Whether the scope exists only for some nodes of this type
+    /// (`scope_id` may legitimately be `None` after semantic analysis).
+    /// The scope is entered / collected only when `scope_id` is `Some`;
+    /// `Visit` walks do not enter it at all (the semantic builder manages
+    /// it manually).
+    pub optional: bool,
 }

@@ -564,6 +564,9 @@ impl<'a> ObjectRestSpread<'a> {
     fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = func.scope_id();
         let Some(body) = func.body.as_mut() else { return };
+        // Relocated declarations belong to the body's own scope when it has one
+        // (i.e. when the parameters contain expressions).
+        let moved_scope_id = body.scope_id.get().unwrap_or(scope_id);
         for param in &mut func.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
                 Self::replace_rest_element(
@@ -571,15 +574,18 @@ impl<'a> ObjectRestSpread<'a> {
                     &mut param.pattern,
                     &mut body.statements,
                     scope_id,
+                    moved_scope_id,
                     ctx,
                 );
             }
         }
+        Self::collapse_body_scope_if_no_parameter_expressions(&func.params, body, scope_id, ctx);
     }
 
     // Transform `(...x) => {}`.
     fn transform_arrow(arrow: &mut ArrowFunctionExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = arrow.scope_id();
+        let moved_scope_id = arrow.body.scope_id.get().unwrap_or(scope_id);
         for param in &mut arrow.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
                 // `({ ...args }) => { args }`
@@ -606,28 +612,40 @@ impl<'a> ObjectRestSpread<'a> {
                     &mut param.pattern,
                     &mut arrow.body.statements,
                     scope_id,
+                    moved_scope_id,
                     ctx,
                 );
             }
         }
+        Self::collapse_body_scope_if_no_parameter_expressions(
+            &arrow.params,
+            &arrow.body,
+            scope_id,
+            ctx,
+        );
     }
 
     // Transform `try {} catch ({...x}) {}`.
     fn transform_catch_clause(clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
+        let catch_scope_id = clause.scope_id();
         let Some(param) = &mut clause.param else { unreachable!() };
         if Self::has_nested_object_rest(&param.pattern) {
-            let scope_id = clause.body.scope_id();
+            let block_scope_id = clause.body.scope_id();
             // Remove `SymbolFlags::CatchVariable`.
             param.pattern.bound_names(&mut |ident| {
                 ctx.scoping_mut()
                     .symbol_flags_mut(ident.symbol_id())
                     .remove(SymbolFlags::CatchVariable);
             });
+            // The replacement `_ref` is the new catch parameter and lives in the
+            // catch-clause scope; the relocated names become `let` bindings of the
+            // catch body block.
             Self::replace_rest_element(
                 VariableDeclarationKind::Var,
                 &mut param.pattern,
                 &mut clause.body.body,
-                scope_id,
+                catch_scope_id,
+                block_scope_id,
                 ctx,
             );
         }
@@ -646,26 +664,19 @@ impl<'a> ObjectRestSpread<'a> {
                 let Statement::BlockStatement(block) = body else {
                     unreachable!();
                 };
-                let bound_symbol_ids = declarator.id.get_symbol_ids();
                 let old_scope_id =
                     if decl.kind.is_var() { ctx.current_hoist_scope_id() } else { scope_id };
 
+                // The `_ref` binding replaces the loop variable (`old_scope_id`); the
+                // relocated names become bindings of the loop body's block scope.
                 Self::replace_rest_element(
                     declarator.kind,
                     &mut declarator.id,
                     &mut block.body,
                     old_scope_id,
+                    new_scope_id,
                     ctx,
                 );
-
-                // Move the bindings from the for init scope to scope of the loop body.
-                for symbol_id in bound_symbol_ids {
-                    ctx.scoping_mut().move_binding_by_symbol_id(
-                        old_scope_id,
-                        new_scope_id,
-                        symbol_id,
-                    );
-                }
             }
         }
     }
@@ -747,14 +758,20 @@ impl<'a> ObjectRestSpread<'a> {
         kind: VariableDeclarationKind,
         pattern: &mut BindingPattern<'a>,
         body: &mut ArenaVec<'a, Statement<'a>>,
-        scope_id: ScopeId,
+        uid_scope_id: ScopeId,
+        moved_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
         match pattern {
             // Replace the object pattern, no need to walk the object properties.
             BindingPattern::ObjectPattern(_) => {
                 Self::replace_object_pattern_and_insert_into_block_body(
-                    kind, pattern, body, scope_id, ctx,
+                    kind,
+                    pattern,
+                    body,
+                    uid_scope_id,
+                    moved_scope_id,
+                    ctx,
                 );
             }
             BindingPattern::AssignmentPattern(pat) => {
@@ -762,21 +779,70 @@ impl<'a> ObjectRestSpread<'a> {
                     kind,
                     &mut pat.left,
                     body,
-                    scope_id,
+                    uid_scope_id,
+                    moved_scope_id,
                     ctx,
                 );
             }
             // Or replace all occurrences of object pattern inside array pattern.
             BindingPattern::ArrayPattern(pat) => {
                 for element in pat.elements.iter_mut().flatten() {
-                    Self::replace_rest_element(kind, element, body, scope_id, ctx);
+                    Self::replace_rest_element(
+                        kind,
+                        element,
+                        body,
+                        uid_scope_id,
+                        moved_scope_id,
+                        ctx,
+                    );
                 }
                 if let Some(element) = &mut pat.rest {
-                    Self::replace_rest_element(kind, &mut element.argument, body, scope_id, ctx);
+                    Self::replace_rest_element(
+                        kind,
+                        &mut element.argument,
+                        body,
+                        uid_scope_id,
+                        moved_scope_id,
+                        ctx,
+                    );
                 }
             }
             BindingPattern::BindingIdentifier(_) => {}
         }
+    }
+
+    /// After relocating patterns into the body, the parameters may no longer
+    /// contain expressions. A fresh semantic analysis of the output would then
+    /// not create a body scope, so collapse the existing one into the function
+    /// scope: move its bindings, re-parent its child scopes, and clear the
+    /// `scope_id` on the `FunctionBody`.
+    fn collapse_body_scope_if_no_parameter_expressions(
+        params: &FormalParameters<'a>,
+        body: &FunctionBody<'a>,
+        function_scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Some(body_scope_id) = body.scope_id.get() else { return };
+        if oxc_semantic::has_parameter_expressions(params) {
+            return;
+        }
+
+        let scoping = ctx.scoping_mut();
+        let symbol_ids = scoping.get_bindings(body_scope_id).values().copied().collect::<Vec<_>>();
+        for symbol_id in symbol_ids {
+            scoping.move_binding_by_symbol_id(body_scope_id, function_scope_id, symbol_id);
+        }
+        // No child-id table is maintained during transformation — sweep for children.
+        let scope_ids = scoping.scopes_len();
+        for index in 0..scope_ids {
+            let scope_id = ScopeId::from_usize(index);
+            if scoping.scope_parent_id(scope_id) == Some(body_scope_id) {
+                scoping.change_scope_parent_id(scope_id, Some(function_scope_id));
+            }
+        }
+        // The scope itself stays in the table as an unreachable orphan (there is
+        // no deletion API); nothing references it once the cell is cleared.
+        body.scope_id.set(None);
     }
 
     // Add `let {...x} = _ref` to body.
@@ -784,17 +850,25 @@ impl<'a> ObjectRestSpread<'a> {
         kind: VariableDeclarationKind,
         pat: &mut BindingPattern<'a>,
         body: &mut ArenaVec<'a, Statement<'a>>,
-        scope_id: ScopeId,
+        uid_scope_id: ScopeId,
+        moved_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let decl = Self::create_temporary_reference_for_binding(kind, pat, scope_id, ctx);
+        let decl = Self::create_temporary_reference_for_binding(
+            kind,
+            pat,
+            uid_scope_id,
+            moved_scope_id,
+            ctx,
+        );
         body.insert(0, Statement::VariableDeclaration(decl));
     }
 
     fn create_temporary_reference_for_binding(
         kind: VariableDeclarationKind,
         pat: &mut BindingPattern<'a>,
-        scope_id: ScopeId,
+        uid_scope_id: ScopeId,
+        moved_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
         let mut flags = kind_to_symbol_flags(kind);
@@ -803,12 +877,22 @@ impl<'a> ObjectRestSpread<'a> {
             //               ^^^
             flags |= SymbolFlags::CatchVariable;
         }
-        let bound_identifier = ctx.generate_uid("ref", scope_id, flags);
+        let bound_identifier = ctx.generate_uid("ref", uid_scope_id, flags);
         let kind = VariableDeclarationKind::Let;
         let id = mem::replace(pat, bound_identifier.create_binding_pattern(ctx));
         id.bound_names(&mut |ident| {
-            *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
-                SymbolFlags::BlockScopedVariable;
+            let symbol_id = ident.symbol_id();
+            *ctx.scoping_mut().symbol_flags_mut(symbol_id) = SymbolFlags::BlockScopedVariable;
+            // The relocated declaration lives in `moved_scope_id` (e.g. the function
+            // body's own scope when the parameters contain expressions).
+            let old_scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+            if old_scope_id != moved_scope_id {
+                ctx.scoping_mut().move_binding_by_symbol_id(
+                    old_scope_id,
+                    moved_scope_id,
+                    symbol_id,
+                );
+            }
         });
         let init = bound_identifier.create_read_expression(ctx);
         let declarations = ArenaVec::from_value_in(
