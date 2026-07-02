@@ -653,7 +653,13 @@ impl<'a> PeepholeOptimizations {
                     && let Some(symbol_id) =
                         ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
-                    ctx.state.pure_functions.contains_key(&symbol_id)
+                    // Membership alone is no longer enough: entries may carry
+                    // only a `dead_arg_prefix` fact for an async / effectful-body
+                    // function, whose unused-result call must NOT be deleted.
+                    ctx.state
+                        .pure_functions
+                        .get(&symbol_id)
+                        .is_some_and(|s| s.pure_return.is_some())
                 } else {
                     false
                 })

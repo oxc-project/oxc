@@ -45,6 +45,25 @@ impl<'a> PassDirty<'a> {
     }
 }
 
+/// What the pure-function recorder learned about a named function literal.
+/// An entry exists when at least one fact is present; a symbol with neither
+/// fact is removed from the map (see `try_save_pure_function`).
+#[derive(Debug)]
+pub struct FunctionSummary<'a> {
+    /// `Some(..)` ⇔ pure under the existing gates (non-async, non-generator,
+    /// side-effect-free body, plain params, read-only binding). Inner
+    /// `Some(Undefined)` ⇔ empty body, so the call is replaceable by `void 0`.
+    /// The three states (`None` / `Some(None)` / `Some(Some(_))`) are all
+    /// distinct, so the nested `Option` is intentional.
+    #[expect(clippy::option_option)]
+    pub pure_return: Option<Option<ConstantValue<'a>>>,
+    /// Smallest `N` such that every argument at index `>= N` can be dropped at
+    /// a call site (its parameter is unused, or it is beyond the declared
+    /// params). Present only when the arg-drop gates pass. `usize`, NOT `u8`:
+    /// param count can exceed 255 and truncation would be unsound.
+    pub dead_arg_prefix: Option<usize>,
+}
+
 pub struct MinifierState<'a> {
     pub source_type: SourceType,
 
@@ -67,8 +86,9 @@ pub struct MinifierState<'a> {
     /// out. See the `if ctx.state.dce` branch in `peephole/mod.rs`.
     pub dce: bool,
 
-    /// The return value of function declarations that are pure
-    pub pure_functions: FxHashMap<SymbolId, Option<ConstantValue<'a>>>,
+    /// Facts learned about named function literals: whether they are pure and,
+    /// independently, how many trailing arguments call sites may drop.
+    pub pure_functions: FxHashMap<SymbolId, FunctionSummary<'a>>,
 
     pub symbol_values: SymbolValues<'a>,
 

@@ -700,3 +700,21 @@ fn fold_coalesce_on_tracked_non_nullish_binding() {
 fn test_fold_if_keep_var_filter_converges() {
     test_same("function f() {\n\tif (0) var x, y;\n\ty = 1;\n\treturn y;\n}\nf();");
 }
+
+// Drop dead trailing arguments to functions that ignore them (#23866). The
+// recorder runs in DCE mode too, so the drop applies there as well.
+#[test]
+fn dce_drop_dead_args() {
+    test(
+        "const foo = (u) => { bar() }; foo(1); foo(2)",
+        "const foo = (u) => { bar() }; foo(); foo()",
+    );
+}
+
+#[test]
+fn dce_drop_dead_args_issue_repro() {
+    test(
+        "const foo = async (assets) => ({}); export default await foo({ bar: 'baz' })",
+        "const foo = async (assets) => ({}); export default await foo()",
+    );
+}

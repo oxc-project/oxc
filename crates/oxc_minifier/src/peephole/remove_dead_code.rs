@@ -7,8 +7,9 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::GetSpan;
+use oxc_syntax::scope::ScopeId;
 
-use crate::{TraverseCtx, keep_var::KeepVar};
+use crate::{TraverseCtx, keep_var::KeepVar, state::FunctionSummary};
 
 use super::PeepholeOptimizations;
 
@@ -441,6 +442,8 @@ impl<'a> PeepholeOptimizations {
                         body,
                         f.r#async,
                         f.generator,
+                        false,
+                        f.scope_id.get(),
                         ctx,
                     );
                 }
@@ -456,6 +459,8 @@ impl<'a> PeepholeOptimizations {
                                     &a.body,
                                     a.r#async,
                                     false,
+                                    true,
+                                    a.scope_id.get(),
                                     ctx,
                                 );
                             }
@@ -467,6 +472,8 @@ impl<'a> PeepholeOptimizations {
                                         body,
                                         f.r#async,
                                         f.generator,
+                                        false,
+                                        f.scope_id.get(),
                                         ctx,
                                     );
                                 }
@@ -480,62 +487,183 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Record what we know about a named function literal: whether it is pure
+    /// (`pure_return`) and, independently, how many trailing arguments call
+    /// sites may drop (`dead_arg_prefix`). Each fact has its own gates on top of
+    /// a shared set; an entry is inserted when either fact is present and any
+    /// stale entry is removed when neither is, so a fact recorded for an earlier
+    /// pass or an earlier declaration of the same symbol never survives.
+    #[expect(clippy::too_many_arguments)]
     fn try_save_pure_function(
         id: Option<&BindingIdentifier<'a>>,
         params: &FormalParameters<'a>,
         body: &FunctionBody<'a>,
         r#async: bool,
         generator: bool,
+        is_arrow: bool,
+        scope_id: Option<ScopeId>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if r#async || generator {
-            return;
-        }
-        // `function foo({}) {} foo(null)` is runtime type error.
-        if !params.items.iter().all(|pat| pat.pattern.is_binding_identifier()) {
-            return;
-        }
-        if body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)) {
-            return;
-        }
+        // ── Shared gates ──
         let Some(symbol_id) = id.and_then(|id| id.symbol_id.get()) else { return };
         // Redeclarations are span-only in oxc_semantic and create no references, so
         // they're invisible to the read-only-refs check below. The runtime-winning
         // declaration may be an impure one that never reaches this function, so a
-        // "pure" fact recorded for another declaration of the same symbol cannot be
+        // fact recorded for another declaration of the same symbol cannot be
         // trusted and must not survive.
         if !ctx.scoping().symbol_redeclarations(symbol_id).is_empty() {
             ctx.state.pure_functions.remove(&symbol_id);
             return;
         }
-        if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
-            ctx.state.pure_functions.insert(
-                symbol_id,
-                if body.is_empty() { Some(ConstantValue::Undefined) } else { None },
-            );
+        // Params must be plain identifiers with no default. `function foo({}) {}
+        // foo(null)` is a runtime type error, and — because in oxc a parameter
+        // default lives in `FormalParameter::initializer`, NOT an
+        // `AssignmentPattern` — `is_binding_identifier()` alone would accept
+        // `(u = g())`, whose default runs on `undefined`; the explicit
+        // `initializer.is_none()` excludes it.
+        if !params
+            .items
+            .iter()
+            .all(|pat| pat.pattern.is_binding_identifier() && pat.initializer.is_none())
+        {
+            ctx.state.pure_functions.remove(&symbol_id);
+            return;
         }
+        // A writable binding may be reassigned to a different (impure / arg-using)
+        // function that never reaches this recorder, so its facts can't be trusted.
+        if !ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
+            ctx.state.pure_functions.remove(&symbol_id);
+            return;
+        }
+
+        // ── `pure_return` fact — exactly the original gates and semantics ──
+        let pure_return = if !r#async
+            && !generator
+            && !body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx))
+        {
+            Some(if body.is_empty() { Some(ConstantValue::Undefined) } else { None })
+        } else {
+            None
+        };
+
+        // ── `dead_arg_prefix` fact — async / generator / effectful bodies OK ──
+        let dead_arg_prefix = Self::compute_dead_arg_prefix(params, is_arrow, scope_id, ctx);
+
+        if pure_return.is_some() || dead_arg_prefix.is_some() {
+            ctx.state
+                .pure_functions
+                .insert(symbol_id, FunctionSummary { pure_return, dead_arg_prefix });
+        } else {
+            ctx.state.pure_functions.remove(&symbol_id);
+        }
+    }
+
+    /// Smallest `N` such that every argument at index `>= N` is safe to drop at
+    /// a call site: its parameter is unused, or it is beyond the declared params
+    /// (which a function that ignores extra args never observes). `None` when a
+    /// soundness gate fails. Shared gates (plain params, read-only binding, no
+    /// redeclaration) are already checked by the caller.
+    fn compute_dead_arg_prefix(
+        params: &FormalParameters<'a>,
+        is_arrow: bool,
+        scope_id: Option<ScopeId>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<usize> {
+        // A rest param collects trailing args, so an argument's index no longer
+        // maps to a fixed parameter — never drop.
+        if params.rest.is_some() {
+            return None;
+        }
+        // Direct eval anywhere can read parameters by name / reflect on the call.
+        // `DirectEval` propagates to the root scope, so one global check suffices.
+        if ctx.scoping().root_scope_flags().contains_direct_eval() {
+            return None;
+        }
+        // A binding at a script's root scope is aliased on `globalThis` and can be
+        // reassigned by another script (or indirect eval) with no reference we can
+        // see, so its parameter-usage facts are untrustworthy.
+        if Self::keep_top_level_var_in_script_mode(ctx) {
+            return None;
+        }
+        // A non-arrow function exposes `arguments`, which reflects the *actual*
+        // argument list regardless of the declared params, so dropping an arg an
+        // `arguments[i]` read observes would change behavior. `arguments` mentions
+        // surface as an unresolved root reference, so one program-wide lookup
+        // covers every non-arrow body — except sloppy `var arguments`, which binds
+        // a real symbol aliasing the arguments object; that shape is a SyntaxError
+        // in strict code, so requiring the function scope to be strict closes it.
+        // Arrows never bind `arguments`; a nested non-arrow's `arguments` is its
+        // own object, unrelated to this call's args.
+        if !is_arrow {
+            let is_strict = scope_id
+                .is_some_and(|scope_id| ctx.scoping().scope_flags(scope_id).is_strict_mode());
+            if !is_strict || ctx.scoping().root_unresolved_references().contains_key("arguments") {
+                return None;
+            }
+        }
+        // Scan params from the end while unused; `n` is the count that must be
+        // kept. Recorded even when `n == params.len()` (no trailing unused param)
+        // so call sites can still drop arguments passed beyond the declared params.
+        let mut n = params.items.len();
+        while n > 0 {
+            let BindingPattern::BindingIdentifier(id) = &params.items[n - 1].pattern else { break };
+            let Some(symbol_id) = id.symbol_id.get() else { break };
+            if !ctx.scoping().symbol_is_unused(symbol_id) {
+                break;
+            }
+            n -= 1;
+        }
+        Some(n)
     }
 
     pub fn remove_dead_code_call_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::CallExpression(e) = expr else { return };
-        if let Expression::Identifier(ident) = &e.callee {
-            let reference_id = ident.reference_id();
-            if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
-                && matches!(
-                    ctx.state.pure_functions.get(&symbol_id),
-                    Some(Some(ConstantValue::Undefined))
+        let Expression::Identifier(ident) = &e.callee else { return };
+        let reference_id = ident.reference_id();
+        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else { return };
+        let Some((is_empty_body_pure, dead_arg_prefix)) =
+            ctx.state.pure_functions.get(&symbol_id).map(|summary| {
+                (
+                    matches!(summary.pure_return, Some(Some(ConstantValue::Undefined))),
+                    summary.dead_arg_prefix,
                 )
-            {
-                let mut exprs = Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
-                if exprs.is_empty() {
-                    let new_expr = Expression::new_void_0(e.span, ctx);
-                    ctx.replace_expression(expr, new_expr);
-                    return;
-                }
-                exprs.push(Expression::new_void_0(e.span, ctx));
-                let new_expr = Expression::new_sequence_expression(e.span, exprs, ctx);
+            })
+        else {
+            return;
+        };
+
+        // An empty-bodied pure function returns `undefined`, so the whole call is
+        // just its (effectful) arguments followed by `void 0`.
+        if is_empty_body_pure {
+            let mut exprs = Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
+            if exprs.is_empty() {
+                let new_expr = Expression::new_void_0(e.span, ctx);
                 ctx.replace_expression(expr, new_expr);
+                return;
             }
+            exprs.push(Expression::new_void_0(e.span, ctx));
+            let new_expr = Expression::new_sequence_expression(e.span, exprs, ctx);
+            ctx.replace_expression(expr, new_expr);
+            return;
+        }
+
+        // Otherwise drop trailing arguments the callee never reads.
+        let Some(n) = dead_arg_prefix else { return };
+        // A spread contributes an unknown number of values, so an argument's
+        // index no longer maps to a fixed parameter position; a trailing pop past
+        // an earlier spread could drop a value that actually lands on a *used*
+        // parameter. Bail if any argument is a spread.
+        if e.arguments.iter().any(|arg| matches!(arg, Argument::SpreadElement(_))) {
+            return;
+        }
+        while e.arguments.len() > n {
+            // Stop at the first side-effectful trailing arg: it must still run.
+            if e.arguments.last().unwrap().may_have_side_effects(ctx) {
+                break;
+            }
+            // Spreads were excluded above, so `into_expression` cannot panic.
+            let dropped = e.arguments.pop().unwrap().into_expression();
+            ctx.drop_expression(&dropped);
         }
     }
 
