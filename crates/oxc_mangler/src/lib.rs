@@ -11,7 +11,9 @@ use oxc_allocator::{Allocator, ArenaHashSet, ArenaVec, BitSet};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_ecmascript::BoundNames;
-use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, Stats, SymbolId};
+use oxc_semantic::{
+    AstNodes, Reference, ScopeId, Scoping, Semantic, SemanticBuilder, Stats, SymbolId,
+};
 use oxc_span::SourceType;
 use oxc_str::{CompactStr, Ident, Str};
 
@@ -594,9 +596,12 @@ impl<'a, 's> SlotAssignment<'a, 's> {
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
 
+        let scope_ids = scope_ids_parent_before_child(allocator, scoping);
+
         // Walk down the scope tree and assign a slot number for each symbol. Doing it as a scope
         // walk (rather than a flat symbol loop) generates better code.
-        for (scope_id, bindings) in scoping.iter_bindings() {
+        for scope_id in scope_ids {
+            let bindings = scoping.get_bindings(scope_id);
             if bindings.is_empty() {
                 continue;
             }
@@ -742,6 +747,29 @@ impl<'a, 's> SlotAssignment<'a, 's> {
         let total_slots = slot_liveness.len();
         Self { slots, total_slots, eval_reserved_names }
     }
+}
+
+fn scope_ids_parent_before_child<'a>(
+    allocator: &'a Allocator,
+    scoping: &Scoping,
+) -> ArenaVec<'a, ScopeId> {
+    let scopes_len = scoping.scopes_len();
+    let mut children = vec![Vec::new(); scopes_len];
+    for index in 0..scopes_len {
+        let scope_id = ScopeId::from_usize(index);
+        if let Some(parent_id) = scoping.scope_parent_id(scope_id) {
+            children[parent_id.index()].push(scope_id);
+        }
+    }
+
+    let mut ordered_scope_ids = ArenaVec::with_capacity_in(scopes_len, &allocator);
+    let mut stack = vec![scoping.root_scope_id()];
+    while let Some(scope_id) = stack.pop() {
+        ordered_scope_ids.push(scope_id);
+        stack.extend(children[scope_id.index()].iter().rev().copied());
+    }
+    debug_assert_eq!(ordered_scope_ids.len(), scopes_len);
+    ordered_scope_ids
 }
 
 impl<'a> SlotRanking<'a> {

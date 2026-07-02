@@ -4,6 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
+use oxc_semantic::{NodeId, ScopeFlags, SemanticBuilder};
 use oxc_span::SourceType;
 
 fn mangle_with_source_type(
@@ -246,6 +247,53 @@ fn function_expression_name_shadowed() {
         "function _() { var e; var t = function t() { if (e) {} else { var t = e; } } }",
         &options,
     );
+}
+
+#[test]
+fn inserted_parent_scope_mangles_before_existing_child_scope() {
+    let source_text = "function f() { let outer; { let inner = outer; } }";
+    let allocator = Allocator::default();
+    let source_type = SourceType::mjs().with_unambiguous(true);
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
+    let program = ret.program;
+    let mut semantic = SemanticBuilder::new()
+        .with_build_nodes(true)
+        .with_class_table(true)
+        .build(&program)
+        .semantic;
+    let (outer_scope_id, outer_symbol_id) = semantic
+        .scoping()
+        .iter_bindings()
+        .find_map(|(scope_id, bindings)| {
+            bindings.get("outer").map(|&symbol_id| (scope_id, symbol_id))
+        })
+        .unwrap();
+    let (inner_scope_id, _) = semantic
+        .scoping()
+        .iter_bindings()
+        .find_map(|(scope_id, bindings)| {
+            bindings.get("inner").map(|&symbol_id| (scope_id, symbol_id))
+        })
+        .unwrap();
+    let function_scope_id = semantic.scoping().scope_parent_id(outer_scope_id).unwrap();
+
+    // Simulate a transform inserting a new parent scope after the child block scope already
+    // exists, as happens when static-block statements are wrapped in an IIFE body.
+    let scoping = semantic.scoping_mut();
+    let inserted_scope_id =
+        scoping.add_scope(Some(function_scope_id), NodeId::DUMMY, ScopeFlags::FunctionBody);
+    scoping.move_binding_by_symbol_id(outer_scope_id, inserted_scope_id, outer_symbol_id);
+    scoping.set_scope_parent_id(inner_scope_id, Some(inserted_scope_id));
+
+    let class_private_mappings = Mangler::new().build_with_semantic(&mut semantic, &program);
+    let mangled = Codegen::new()
+        .with_scoping(Some(semantic.into_scoping()))
+        .with_private_member_mappings(Some(class_private_mappings))
+        .build(&program)
+        .code;
+
+    assert_eq!(mangled, "function f() {\n\tlet e;\n\t{\n\t\tlet t = e;\n\t}\n}\n");
 }
 
 /// Re-mangling a mangled output must be a fixed point.
