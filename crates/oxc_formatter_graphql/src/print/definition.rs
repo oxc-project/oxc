@@ -1,7 +1,5 @@
 //! Document-level definition printers: operations, fragments, and the type system.
 
-use oxc_graphql_parser::{cst, cst::CstNode};
-
 use oxc_formatter_core::{
     Buffer,
     builders::{
@@ -10,6 +8,11 @@ use oxc_formatter_core::{
     },
     write,
 };
+use oxc_graphql_parser::ast::{
+    Definition, Directive, DirectiveDefinition, EnumValueDefinition, FieldDefinition,
+    FragmentDefinition, InputValueDefinition, Name, NamedType, OperationDefinition, OperationType,
+    RootOperationTypeDefinition, SchemaDefinition, SchemaExtension, StringValue,
+};
 
 use crate::comments::flush_trailing_inside_comments;
 
@@ -17,226 +20,234 @@ use super::{
     GraphqlFormatter, SeparatorKind, common,
     common::DirectivesStyle,
     format_with, selection,
-    sig::{closing_token_start, node_text},
+    span::{Spanned, close_delim_start},
     write_sequence,
 };
 
-pub fn write_definition(definition: &cst::Definition, f: &mut GraphqlFormatter<'_, '_>) {
+pub(super) fn write_definition<'a>(
+    definition: &'a Definition<'a>,
+    f: &mut GraphqlFormatter<'_, 'a>,
+) {
     match definition {
-        cst::Definition::OperationDefinition(d) => write_operation_definition(d, f),
-        cst::Definition::FragmentDefinition(d) => write_fragment_definition(d, f),
-        cst::Definition::DirectiveDefinition(d) => write_directive_definition(d, f),
-        cst::Definition::SchemaDefinition(d) => write_schema_definition(d, f),
-        cst::Definition::ScalarTypeDefinition(d) => {
-            write_scalar_type(d.description(), false, d.name(), d.directives(), f);
+        Definition::Operation(d) => write_operation_definition(d, f),
+        Definition::Fragment(d) => write_fragment_definition(d, f),
+        Definition::Directive(d) => write_directive_definition(d, f),
+        Definition::Schema(d) => write_schema_definition(d, f),
+        Definition::SchemaExtension(d) => write_schema_extension(d, f),
+        Definition::ScalarType(d) => {
+            write_scalar_type(d.description.as_ref(), false, &d.name, &d.directives, f);
         }
-        cst::Definition::ScalarTypeExtension(d) => {
-            write_scalar_type(None, true, d.name(), d.directives(), f);
+        Definition::ScalarTypeExtension(d) => {
+            write_scalar_type(None, true, &d.name, &d.directives, f);
         }
-        cst::Definition::ObjectTypeDefinition(d) => write_object_like(
-            d.description(),
+        Definition::ObjectType(d) => write_object_like(
+            d.description.as_ref(),
             false,
             "type",
-            d.name(),
-            d.implements_interfaces(),
-            d.directives(),
-            d.fields_definition(),
+            &d.name,
+            &d.interfaces,
+            &d.directives,
+            &d.fields,
+            close_delim_start(d.span),
             f,
         ),
-        cst::Definition::ObjectTypeExtension(d) => write_object_like(
+        Definition::ObjectTypeExtension(d) => write_object_like(
             None,
             true,
             "type",
-            d.name(),
-            d.implements_interfaces(),
-            d.directives(),
-            d.fields_definition(),
+            &d.name,
+            &d.interfaces,
+            &d.directives,
+            &d.fields,
+            close_delim_start(d.span),
             f,
         ),
-        cst::Definition::InterfaceTypeDefinition(d) => write_object_like(
-            d.description(),
+        Definition::InterfaceType(d) => write_object_like(
+            d.description.as_ref(),
             false,
             "interface",
-            d.name(),
-            d.implements_interfaces(),
-            d.directives(),
-            d.fields_definition(),
+            &d.name,
+            &d.interfaces,
+            &d.directives,
+            &d.fields,
+            close_delim_start(d.span),
             f,
         ),
-        cst::Definition::InterfaceTypeExtension(d) => write_object_like(
+        Definition::InterfaceTypeExtension(d) => write_object_like(
             None,
             true,
             "interface",
-            d.name(),
-            d.implements_interfaces(),
-            d.directives(),
-            d.fields_definition(),
+            &d.name,
+            &d.interfaces,
+            &d.directives,
+            &d.fields,
+            close_delim_start(d.span),
             f,
         ),
-        cst::Definition::InputObjectTypeDefinition(d) => write_input_object_like(
-            d.description(),
+        Definition::InputObjectType(d) => write_input_object_like(
+            d.description.as_ref(),
             false,
-            d.name(),
-            d.directives(),
-            d.input_fields_definition(),
+            &d.name,
+            &d.directives,
+            &d.fields,
+            close_delim_start(d.span),
             f,
         ),
-        cst::Definition::InputObjectTypeExtension(d) => write_input_object_like(
+        Definition::InputObjectTypeExtension(d) => write_input_object_like(
             None,
             true,
-            d.name(),
-            d.directives(),
-            d.input_fields_definition(),
+            &d.name,
+            &d.directives,
+            &d.fields,
+            close_delim_start(d.span),
             f,
         ),
-        cst::Definition::UnionTypeDefinition(d) => write_union_like(
-            d.description(),
-            false,
-            d.name(),
-            d.directives(),
-            d.union_member_types(),
-            f,
-        ),
-        cst::Definition::UnionTypeExtension(d) => {
-            write_union_like(None, true, d.name(), d.directives(), d.union_member_types(), f);
+        Definition::UnionType(d) => {
+            write_union_like(d.description.as_ref(), false, &d.name, &d.directives, &d.members, f);
         }
-        cst::Definition::EnumTypeDefinition(d) => write_enum_like(
-            d.description(),
+        Definition::UnionTypeExtension(d) => {
+            write_union_like(None, true, &d.name, &d.directives, &d.members, f);
+        }
+        Definition::EnumType(d) => write_enum_like(
+            d.description.as_ref(),
             false,
-            d.name(),
-            d.directives(),
-            d.enum_values_definition(),
+            &d.name,
+            &d.directives,
+            &d.values,
+            close_delim_start(d.span),
             f,
         ),
-        cst::Definition::EnumTypeExtension(d) => {
-            write_enum_like(None, true, d.name(), d.directives(), d.enum_values_definition(), f);
+        Definition::EnumTypeExtension(d) => {
+            write_enum_like(
+                None,
+                true,
+                &d.name,
+                &d.directives,
+                &d.values,
+                close_delim_start(d.span),
+                f,
+            );
         }
-        cst::Definition::SchemaExtension(d) => write_schema_extension(d, f),
     }
 }
 
-fn write_operation_definition(
-    operation: &cst::OperationDefinition,
-    f: &mut GraphqlFormatter<'_, '_>,
+fn operation_type_keyword(kind: OperationType) -> &'static str {
+    match kind {
+        OperationType::Query => "query",
+        OperationType::Mutation => "mutation",
+        OperationType::Subscription => "subscription",
+    }
+}
+
+fn write_operation_definition<'a>(
+    operation: &'a OperationDefinition<'a>,
+    f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    common::write_description(operation.description(), f);
+    common::write_description(operation.description.as_ref(), f);
 
-    let has_operation = operation.operation_type().is_some();
-    let has_name = operation.name().is_some();
+    // Direct-AST `operation_type` is always set (shorthand `{ ... }` parses as Query).
+    // Shorthand means the operation's first significant token IS the selection set's `{`,
+    // so their span starts coincide. Mirrors Prettier's
+    // `locStart(node) !== locStart(node.selectionSet)` check.
+    let is_shorthand =
+        operation.selection_set.as_ref().is_some_and(|ss| ss.span.start == operation.span.start);
+    let has_operation = !is_shorthand;
+    let has_name = operation.name.is_some();
 
-    if let Some(operation_type) = operation.operation_type() {
-        write!(f, text(node_text(f, operation_type.syntax())));
+    if has_operation {
+        write!(f, text(operation_type_keyword(operation.operation_type)));
     }
-    if let Some(name) = operation.name() {
+    if let Some(name) = operation.name.as_ref() {
         write!(f, space());
-        common::write_name(&name, f);
+        common::write_name(name, f);
     }
-    let has_variable_definitions = operation
-        .variable_definitions()
-        .is_some_and(|vd| vd.variable_definitions().next().is_some());
+    let has_variable_definitions = !operation.variable_definitions.is_empty();
     if has_operation && !has_name && has_variable_definitions {
         write!(f, space());
     }
-    common::write_variable_definitions(operation.variable_definitions(), f);
-    common::write_directives(operation.directives(), DirectivesStyle::Definition, f);
+    common::write_variable_definitions(&operation.variable_definitions, f);
+    common::write_directives(&operation.directives, DirectivesStyle::Definition, f);
     if has_operation || has_name {
         write!(f, space());
     }
-    if let Some(selection_set) = operation.selection_set() {
-        selection::write_selection_set(&selection_set, f);
+    if let Some(selection_set) = operation.selection_set.as_ref() {
+        selection::write_selection_set(selection_set, f);
     }
 }
 
-fn write_fragment_definition(fragment: &cst::FragmentDefinition, f: &mut GraphqlFormatter<'_, '_>) {
-    common::write_description(fragment.description(), f);
-    write!(f, "fragment ");
-    if let Some(fragment_name) = fragment.fragment_name()
-        && let Some(name) = fragment_name.name()
-    {
-        common::write_name(&name, f);
-    }
-    // Legacy fragment variables (graphql-js `allowLegacyFragmentVariables`).
-    common::write_variable_definitions(fragment.variable_definitions(), f);
-    if let Some(type_condition) = fragment.type_condition()
-        && let Some(named) = type_condition.named_type()
-    {
-        write!(f, " on ");
-        common::write_named_type(&named, f);
-    }
-    common::write_directives(fragment.directives(), DirectivesStyle::Definition, f);
-    write!(f, space());
-    if let Some(selection_set) = fragment.selection_set() {
-        selection::write_selection_set(&selection_set, f);
-    }
-}
-
-fn write_directive_definition(
-    directive: &cst::DirectiveDefinition,
-    f: &mut GraphqlFormatter<'_, '_>,
+fn write_fragment_definition<'a>(
+    fragment: &'a FragmentDefinition<'a>,
+    f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    common::write_description(directive.description(), f);
-    write!(f, "directive @");
-    if let Some(name) = directive.name() {
-        common::write_name(&name, f);
+    common::write_description(fragment.description.as_ref(), f);
+    write!(f, "fragment ");
+    common::write_name(&fragment.name, f);
+    // Legacy fragment variables (graphql-js `allowLegacyFragmentVariables`).
+    common::write_variable_definitions(&fragment.variable_definitions, f);
+    write!(f, " on ");
+    common::write_named_type(&fragment.type_condition, f);
+    common::write_directives(&fragment.directives, DirectivesStyle::Definition, f);
+    write!(f, space());
+    if let Some(selection_set) = fragment.selection_set.as_ref() {
+        selection::write_selection_set(selection_set, f);
     }
-    write_arguments_definition(directive.arguments_definition(), f);
-    if directive.repeatable_token().is_some() {
+}
+
+fn write_directive_definition<'a>(
+    directive: &'a DirectiveDefinition<'a>,
+    f: &mut GraphqlFormatter<'_, 'a>,
+) {
+    common::write_description(directive.description.as_ref(), f);
+    write!(f, "directive @");
+    common::write_name(&directive.name, f);
+    write_arguments_definition(&directive.arguments, f);
+    if directive.repeatable {
         write!(f, " repeatable");
     }
     write!(f, " on ");
-    if let Some(locations) = directive.directive_locations() {
-        let list: Vec<cst::DirectiveLocation> = locations.directive_locations().collect();
-        for (i, location) in list.iter().enumerate() {
-            if i > 0 {
-                write!(f, " | ");
-            }
-            write!(f, text(node_text(f, location.syntax())));
+    let locations = directive.locations.as_slice();
+    for (i, location) in locations.iter().enumerate() {
+        if i > 0 {
+            write!(f, " | ");
         }
+        write!(f, text(location.name));
     }
 }
 
-fn write_schema_definition(schema: &cst::SchemaDefinition, f: &mut GraphqlFormatter<'_, '_>) {
-    common::write_description(schema.description(), f);
+fn write_schema_definition<'a>(schema: &'a SchemaDefinition<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
+    common::write_description(schema.description.as_ref(), f);
     write!(f, "schema");
-    common::write_directives(schema.directives(), DirectivesStyle::Attached, f);
+    common::write_directives(&schema.directives, DirectivesStyle::Attached, f);
     write!(f, " {");
-    let operation_types: Vec<cst::RootOperationTypeDefinition> =
-        schema.root_operation_type_definitions().collect();
+    let operation_types = schema.root_operations.as_slice();
     if operation_types.is_empty() {
         write!(f, [hard_line_break(), "}"]);
     } else {
-        let r_curly = closing_token_start(schema.r_curly_token(), schema.syntax());
-        write_braced_body(f, &operation_types, r_curly, |i, f| {
+        write_braced_body(f, operation_types, close_delim_start(schema.span), |i, f| {
             write_root_operation_type_definition(&operation_types[i], f);
         });
     }
 }
 
-fn write_schema_extension(schema: &cst::SchemaExtension, f: &mut GraphqlFormatter<'_, '_>) {
+fn write_schema_extension<'a>(schema: &'a SchemaExtension<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     write!(f, "extend schema");
-    common::write_directives(schema.directives(), DirectivesStyle::Attached, f);
-    let operation_types: Vec<cst::RootOperationTypeDefinition> =
-        schema.root_operation_type_definitions().collect();
+    common::write_directives(&schema.directives, DirectivesStyle::Attached, f);
+    let operation_types = schema.root_operations.as_slice();
     if !operation_types.is_empty() {
         write!(f, " {");
-        let r_curly = closing_token_start(schema.r_curly_token(), schema.syntax());
-        write_braced_body(f, &operation_types, r_curly, |i, f| {
+        write_braced_body(f, operation_types, close_delim_start(schema.span), |i, f| {
             write_root_operation_type_definition(&operation_types[i], f);
         });
     }
 }
 
-fn write_root_operation_type_definition(
-    operation_type_definition: &cst::RootOperationTypeDefinition,
-    f: &mut GraphqlFormatter<'_, '_>,
+fn write_root_operation_type_definition<'a>(
+    def: &'a RootOperationTypeDefinition<'a>,
+    f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    if let Some(operation_type) = operation_type_definition.operation_type() {
-        write!(f, text(node_text(f, operation_type.syntax())));
-    }
+    write!(f, text(operation_type_keyword(def.operation_type)));
     write!(f, ": ");
-    if let Some(named) = operation_type_definition.named_type() {
-        common::write_named_type(&named, f);
-    }
+    common::write_named_type(&def.named_type, f);
 }
 
 /// The body of an already-opened `{`: a hard-line sequence (blank lines preserved),
@@ -247,7 +258,7 @@ fn write_braced_body<'a, T, F>(
     r_curly_start: u32,
     write_item: F,
 ) where
-    T: CstNode,
+    T: Spanned,
     F: Fn(usize, &mut GraphqlFormatter<'_, 'a>),
 {
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
@@ -259,169 +270,143 @@ fn write_braced_body<'a, T, F>(
     write!(f, [block_indent(&body), "}"]);
 }
 
-fn write_scalar_type(
-    description: Option<cst::Description>,
+fn write_scalar_type<'a>(
+    description: Option<&StringValue<'a>>,
     extend: bool,
-    name: Option<cst::Name>,
-    directives: Option<cst::Directives>,
-    f: &mut GraphqlFormatter<'_, '_>,
+    name: &Name<'a>,
+    directives: &'a [Directive<'a>],
+    f: &mut GraphqlFormatter<'_, 'a>,
 ) {
     common::write_description(description, f);
     if extend {
         write!(f, "extend ");
     }
     write!(f, "scalar ");
-    if let Some(name) = name {
-        common::write_name(&name, f);
-    }
+    common::write_name(name, f);
     common::write_directives(directives, DirectivesStyle::Attached, f);
 }
 
 #[expect(clippy::too_many_arguments)]
-fn write_object_like(
-    description: Option<cst::Description>,
+fn write_object_like<'a>(
+    description: Option<&StringValue<'a>>,
     extend: bool,
     keyword: &'static str,
-    name: Option<cst::Name>,
-    implements: Option<cst::ImplementsInterfaces>,
-    directives: Option<cst::Directives>,
-    fields: Option<cst::FieldsDefinition>,
-    f: &mut GraphqlFormatter<'_, '_>,
+    name: &Name<'a>,
+    interfaces: &'a [NamedType<'a>],
+    directives: &'a [Directive<'a>],
+    fields: &'a [FieldDefinition<'a>],
+    r_curly_start: u32,
+    f: &mut GraphqlFormatter<'_, 'a>,
 ) {
     common::write_description(description, f);
     if extend {
         write!(f, "extend ");
     }
     write!(f, [keyword, space()]);
-    if let Some(name) = name {
-        common::write_name(&name, f);
-    }
-    common::write_implements_interfaces(implements, f);
+    common::write_name(name, f);
+    common::write_implements_interfaces(interfaces, f);
     common::write_directives(directives, DirectivesStyle::Attached, f);
 
-    if let Some(fields) = fields {
-        let items: Vec<cst::FieldDefinition> = fields.field_definitions().collect();
-        if !items.is_empty() {
-            write!(f, " {");
-            let r_curly = closing_token_start(fields.r_curly_token(), fields.syntax());
-            write_braced_body(f, &items, r_curly, |i, f| {
-                write_field_definition(&items[i], f);
-            });
-        }
+    if !fields.is_empty() {
+        write!(f, " {");
+        write_braced_body(f, fields, r_curly_start, |i, f| {
+            write_field_definition(&fields[i], f);
+        });
     }
 }
 
-fn write_input_object_like(
-    description: Option<cst::Description>,
+fn write_input_object_like<'a>(
+    description: Option<&StringValue<'a>>,
     extend: bool,
-    name: Option<cst::Name>,
-    directives: Option<cst::Directives>,
-    fields: Option<cst::InputFieldsDefinition>,
-    f: &mut GraphqlFormatter<'_, '_>,
+    name: &Name<'a>,
+    directives: &'a [Directive<'a>],
+    fields: &'a [InputValueDefinition<'a>],
+    r_curly_start: u32,
+    f: &mut GraphqlFormatter<'_, 'a>,
 ) {
     common::write_description(description, f);
     if extend {
         write!(f, "extend ");
     }
     write!(f, "input ");
-    if let Some(name) = name {
-        common::write_name(&name, f);
-    }
+    common::write_name(name, f);
     common::write_directives(directives, DirectivesStyle::Attached, f);
 
-    if let Some(fields) = fields {
-        let items: Vec<cst::InputValueDefinition> = fields.input_value_definitions().collect();
-        if !items.is_empty() {
-            write!(f, " {");
-            let r_curly = closing_token_start(fields.r_curly_token(), fields.syntax());
-            write_braced_body(f, &items, r_curly, |i, f| {
-                common::write_input_value_definition(&items[i], f);
-            });
-        }
+    if !fields.is_empty() {
+        write!(f, " {");
+        write_braced_body(f, fields, r_curly_start, |i, f| {
+            common::write_input_value_definition(&fields[i], f);
+        });
     }
 }
 
-fn write_enum_like(
-    description: Option<cst::Description>,
+fn write_enum_like<'a>(
+    description: Option<&StringValue<'a>>,
     extend: bool,
-    name: Option<cst::Name>,
-    directives: Option<cst::Directives>,
-    values: Option<cst::EnumValuesDefinition>,
-    f: &mut GraphqlFormatter<'_, '_>,
+    name: &Name<'a>,
+    directives: &'a [Directive<'a>],
+    values: &'a [EnumValueDefinition<'a>],
+    r_curly_start: u32,
+    f: &mut GraphqlFormatter<'_, 'a>,
 ) {
     common::write_description(description, f);
     if extend {
         write!(f, "extend ");
     }
     write!(f, "enum ");
-    if let Some(name) = name {
-        common::write_name(&name, f);
-    }
+    common::write_name(name, f);
     common::write_directives(directives, DirectivesStyle::Attached, f);
 
-    if let Some(values) = values {
-        let items: Vec<cst::EnumValueDefinition> = values.enum_value_definitions().collect();
-        if !items.is_empty() {
-            write!(f, " {");
-            let r_curly = closing_token_start(values.r_curly_token(), values.syntax());
-            write_braced_body(f, &items, r_curly, |i, f| {
-                write_enum_value_definition(&items[i], f);
-            });
-        }
+    if !values.is_empty() {
+        write!(f, " {");
+        write_braced_body(f, values, r_curly_start, |i, f| {
+            write_enum_value_definition(&values[i], f);
+        });
     }
 }
 
-fn write_enum_value_definition(value: &cst::EnumValueDefinition, f: &mut GraphqlFormatter<'_, '_>) {
-    common::write_description(value.description(), f);
-    if let Some(enum_value) = value.enum_value()
-        && let Some(name) = enum_value.name()
-    {
-        common::write_name(&name, f);
-    }
-    common::write_directives(value.directives(), DirectivesStyle::Attached, f);
-}
-
-// The CST handles are captured by `Fn` closures (callable multiple times),
-// so they are cloned inside; pass-by-value keeps the call sites uniform.
-#[expect(clippy::needless_pass_by_value)]
-fn write_union_like<'a>(
-    description: Option<cst::Description>,
-    extend: bool,
-    name: Option<cst::Name>,
-    directives: Option<cst::Directives>,
-    members: Option<cst::UnionMemberTypes>,
+fn write_enum_value_definition<'a>(
+    value: &'a EnumValueDefinition<'a>,
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    let content = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
-        common::write_description(description.clone(), f);
+    common::write_description(value.description.as_ref(), f);
+    common::write_name(&value.value.name, f);
+    common::write_directives(&value.directives, DirectivesStyle::Attached, f);
+}
+
+fn write_union_like<'a>(
+    description: Option<&StringValue<'a>>,
+    extend: bool,
+    name: &'a Name<'a>,
+    directives: &'a [Directive<'a>],
+    members: &'a [NamedType<'a>],
+    f: &mut GraphqlFormatter<'_, 'a>,
+) {
+    let content = format_with(move |f: &mut GraphqlFormatter<'_, 'a>| {
+        common::write_description(description, f);
         let inner = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
             if extend {
                 write!(f, "extend ");
             }
             write!(f, "union ");
-            if let Some(name) = name.clone() {
-                common::write_name(&name, f);
-            }
-            common::write_directives(directives.clone(), DirectivesStyle::Attached, f);
-            if let Some(members) = members.clone() {
-                let types: Vec<cst::NamedType> = members.named_types().collect();
-                if !types.is_empty() {
-                    write!(f, " =");
-                    write!(f, if_group_fits_on_line(&space()));
-                    let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
-                        let leader = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
-                            write!(f, [soft_line_break_or_space(), "| "]);
-                        });
-                        write!(f, if_group_breaks(&leader));
-                        for (i, named) in types.iter().enumerate() {
-                            if i > 0 {
-                                write!(f, [soft_line_break_or_space(), "| "]);
-                            }
-                            common::write_named_type(named, f);
-                        }
+            common::write_name(name, f);
+            common::write_directives(directives, DirectivesStyle::Attached, f);
+            if !members.is_empty() {
+                write!(f, " =");
+                write!(f, if_group_fits_on_line(&space()));
+                let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
+                    let leader = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
+                        write!(f, [soft_line_break_or_space(), "| "]);
                     });
-                    write!(f, indent(&body));
-                }
+                    write!(f, if_group_breaks(&leader));
+                    for (i, named) in members.iter().enumerate() {
+                        if i > 0 {
+                            write!(f, [soft_line_break_or_space(), "| "]);
+                        }
+                        common::write_named_type(named, f);
+                    }
+                });
+                write!(f, indent(&body));
             }
         });
         write!(f, group(&inner));
@@ -429,32 +414,24 @@ fn write_union_like<'a>(
     write!(f, group(&content));
 }
 
-fn write_field_definition(field: &cst::FieldDefinition, f: &mut GraphqlFormatter<'_, '_>) {
-    common::write_description(field.description(), f);
-    if let Some(name) = field.name() {
-        common::write_name(&name, f);
-    }
-    write_arguments_definition(field.arguments_definition(), f);
+fn write_field_definition<'a>(field: &'a FieldDefinition<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
+    common::write_description(field.description.as_ref(), f);
+    common::write_name(&field.name, f);
+    write_arguments_definition(&field.arguments, f);
     write!(f, ": ");
-    if let Some(ty) = field.ty() {
-        common::write_type(&ty, f);
+    if let Some(ty) = field.ty.as_ref() {
+        common::write_type(ty, f);
     }
-    common::write_directives(field.directives(), DirectivesStyle::Attached, f);
+    common::write_directives(&field.directives, DirectivesStyle::Attached, f);
 }
 
 /// `(name: Type = default @dir, ...)` on field and directive definitions.
 /// Blank lines between entries are preserved (Prettier routes these through `printSequence`).
-fn write_arguments_definition(
-    arguments: Option<cst::ArgumentsDefinition>,
-    f: &mut GraphqlFormatter<'_, '_>,
+fn write_arguments_definition<'a>(
+    arguments: &'a [InputValueDefinition<'a>],
+    f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    let Some(arguments) = arguments else { return };
-    let items: Vec<cst::InputValueDefinition> = arguments.input_value_definitions().collect();
-    if items.is_empty() {
-        return;
-    }
-    let r_paren = closing_token_start(arguments.r_paren_token(), arguments.syntax());
-    common::write_paren_list(f, &items, r_paren, true, |i, f| {
-        common::write_input_value_definition(&items[i], f);
+    common::write_paren_list(f, arguments, true, |i, f| {
+        common::write_input_value_definition(&arguments[i], f);
     });
 }
