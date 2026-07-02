@@ -4824,12 +4824,96 @@ export interface PreferFunctionComponent {
 }
 export interface ReactCompilerConfig {
   /**
+   * Capitalized functions are reserved for components and must be invoked as
+   * JSX (`validate_no_capitalized_calls`).
+   */
+  capitalizedCalls?: boolean;
+  /**
+   * Effects may not recompute values that could be derived during render
+   * (emitted as the `EffectDerivationsOfState` category;
+   * `validate_no_derived_computations_in_effects`).
+   */
+  derivedComputationsInEffect?: boolean;
+  /**
+   * JSX may not be constructed inside `try`/`catch`
+   * (`validate_no_jsx_in_try_statements`).
+   */
+  errorBoundaries?: boolean;
+  /**
+   * Hooks must be called unconditionally and in a consistent order
+   * (`validate_hooks_usage`).
+   */
+  hooks?: boolean;
+  /**
+   * Values that are known to be mutable (props, state) may not be mutated —
+   * the `Immutability` category. Emitted by the core mutation/aliasing
+   * inference pass and by `validate_locals_not_reassigned_after_render`,
+   * neither of which the compiler exposes a flag for.
+   */
+  immutability?: boolean;
+  /**
+   * Memoization dependency arrays (`useMemo`/`useCallback`/`useEffect`) must
+   * be exhaustive — the `MemoDependencies` category, equivalent to ESLint's
+   * `react-hooks/exhaustive-deps` (`validate_exhaustive_memoization_dependencies`).
+   */
+  memoDependencies?: boolean;
+  /**
+   * Manual `useMemo`/`useCallback` memoization must be preservable by the
+   * compiler — the `PreserveManualMemo` category. `eslint-plugin-react-compiler`
+   * ships this off by default; set to `false` to match
+   * (`enable_preserve_existing_memoization_guarantees` +
+   * `validate_preserve_existing_memoization_guarantees`).
+   *
+   * NOTE: the memoization validations are coupled. Disabling this alone
+   * *reclassifies* rather than removes — the compiler still bails on those
+   * sites and re-reports them under `MemoDependencies` (and a few under
+   * `Purity`). To silence the family, also set `memoDependencies: false`
+   * (and `purity: false` if those remain).
+   */
+  preserveManualMemo?: boolean;
+  /**
+   * Known-impure functions (e.g. `Math.random`, `Date.now`) may not be
+   * called during render (`validate_no_impure_functions_in_render`).
+   */
+  purity?: boolean;
+  /**
+   * Refs may not be read or written during render
+   * (`validate_ref_access_during_render`).
+   */
+  refs?: boolean;
+  /**
    * Also report compiler bail-outs — places where React Compiler skipped a
    * component or hook (for example because of unsupported syntax) without
    * finding a rule violation. These do not indicate incorrect code, only
    * code that the compiler declined to optimize.
    */
   reportAllBailouts?: boolean;
+  /**
+   * `setState` may not be called unconditionally inside an effect
+   * (`validate_no_set_state_in_effects`).
+   */
+  setStateInEffect?: boolean;
+  /**
+   * `setState` may not be called during render
+   * (`validate_no_set_state_in_render`).
+   */
+  setStateInRender?: boolean;
+  /**
+   * Components must be statically defined (`validate_static_components`).
+   */
+  staticComponents?: boolean;
+  /**
+   * `useMemo`/`useCallback` callbacks must be well-formed — the `UseMemo`
+   * category (callbacks taking parameters, being async/generator, or
+   * reassigning outer variables). Distinct from `voidUseMemo`, which covers
+   * callbacks that return nothing. Emitted by `drop_manual_memoization` and
+   * the non-void part of `validate_use_memo`, neither gated by a flag.
+   */
+  useMemo?: boolean;
+  /**
+   * `useMemo` callbacks must return a value (`validate_no_void_use_memo`).
+   */
+  voidUseMemo?: boolean;
 }
 export interface SelfClosingComp {
   /**
