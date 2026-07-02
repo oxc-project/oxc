@@ -88,8 +88,13 @@ impl Rule for JsxNoJsxAsProp {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXAttribute(attr) = node.kind() else {
+            return;
+        };
+
         run_react_perf_rule(
-            node,
+            attr,
+            node.scope_id(),
             ctx,
             Self::MESSAGE,
             self.native_allow_list(),

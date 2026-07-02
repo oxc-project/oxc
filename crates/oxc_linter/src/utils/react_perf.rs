@@ -1,17 +1,17 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, BindingPattern, Expression, JSXAttributeValue},
+    ast::{BindingIdentifier, BindingPattern, Expression, JSXAttribute, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use oxc_syntax::scope::ScopeId;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    AstNode, LintContext, context::ContextHost, rule::DefaultRuleConfig,
-    utils::is_react_component_name,
+    LintContext, context::ContextHost, rule::DefaultRuleConfig, utils::is_react_component_name,
 };
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
@@ -78,7 +78,8 @@ where
 }
 
 pub fn run_react_perf_rule<'a>(
-    node: &AstNode<'a>,
+    attr: &JSXAttribute<'a>,
+    scope_id: ScopeId,
     ctx: &LintContext<'a>,
     message: &'static str,
     native_allow_list: &NativeAllowList,
@@ -93,15 +94,12 @@ pub fn run_react_perf_rule<'a>(
 ) {
     // new objects/arrays/etc created at the root scope do not get
     // re-created on each render and thus do not affect performance.
-    if node.scope_id() == ctx.scoping().root_scope_id() {
+    if scope_id == ctx.scoping().root_scope_id() {
         return;
     }
 
     // look for JSX attributes whose values are expressions (foo={bar}) (as opposed to
     // spreads ({...foo}) or just boolean attributes) (<div foo />)
-    let AstKind::JSXAttribute(attr) = node.kind() else {
-        return;
-    };
     let Some(JSXAttributeValue::ExpressionContainer(container)) = attr.value.as_ref() else {
         return;
     };
@@ -112,7 +110,7 @@ pub fn run_react_perf_rule<'a>(
     // skip native elements (lowercase-first-letter tags like `div`) that are
     // exempted by the `nativeAllowList` configuration.
     if !matches!(native_allow_list, NativeAllowList::None)
-        && let AstKind::JSXOpeningElement(opening) = ctx.nodes().parent_kind(node.id())
+        && let AstKind::JSXOpeningElement(opening) = ctx.nodes().parent_kind(attr.node_id())
         && let Some(tag_name) = opening.name.get_identifier_name()
         && !is_react_component_name(&tag_name)
     {
