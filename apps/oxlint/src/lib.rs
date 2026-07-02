@@ -59,7 +59,18 @@ static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 const DEFAULT_OXLINTRC_NAME: &str = ".oxlintrc.json";
 const DEFAULT_JSONC_OXLINTRC_NAME: &str = ".oxlintrc.jsonc";
-const DEFAULT_TS_OXLINTRC_NAME: &str = "oxlint.config.ts";
+/// JS/TS config file names discovered automatically, mirroring the extensions
+/// accepted by an explicit `--config` (`.js`, `.mjs`, `.cjs`, `.ts`, `.mts`, `.cts`).
+///
+/// `oxlint.config.ts` is listed first so it stays the primary/documented name.
+const DEFAULT_JS_OXLINTRC_NAMES: &[&str] = &[
+    "oxlint.config.ts",
+    "oxlint.config.mts",
+    "oxlint.config.cts",
+    "oxlint.config.mjs",
+    "oxlint.config.cjs",
+    "oxlint.config.js",
+];
 /// Vite config file that may contain oxlint config under a `.lint` field.
 const VITE_CONFIG_NAME: &str = "vite.config.ts";
 

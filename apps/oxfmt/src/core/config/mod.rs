@@ -40,7 +40,7 @@ use super::{
 const OXFMT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
     json: ".oxfmtrc.json",
     jsonc: ".oxfmtrc.jsonc",
-    js: "oxfmt.config.ts",
+    js: &["oxfmt.config.ts"],
     vite: "vite.config.ts",
 };
 
