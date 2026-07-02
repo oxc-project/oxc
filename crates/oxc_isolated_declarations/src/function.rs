@@ -60,7 +60,7 @@ impl<'a> IsolatedDeclarations<'a> {
             param.pattern.clone_in(self.allocator())
         };
 
-        FormalParameterBindingPattern::remove_assignments_from_kind(self, &mut pattern);
+        FormalParameterBindingPattern::remove_assignments_from_kind(&mut pattern);
 
         if is_assignment_pattern
             || param.type_annotation.is_none()
@@ -180,10 +180,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let rest = params.rest.as_ref().map(|rest| {
             let mut rest = rest.clone_in(self.allocator());
-            FormalParameterBindingPattern::remove_assignments_from_kind(
-                self,
-                &mut rest.rest.argument,
-            );
+            FormalParameterBindingPattern::remove_assignments_from_kind(&mut rest.rest.argument);
             rest
         });
 
