@@ -10,7 +10,9 @@ use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, Erro
 use crate::react_compiler_hir::environment::BindingRename;
 use crate::scope::ScopeInfo;
 
-use super::compile_result::{DebugLogEntry, LoggerEvent, OrderedLogItem};
+use oxc_diagnostics::Diagnostics;
+
+use super::compile_result::{DebugLogEntry, OrderedLogItem};
 use super::plugin_options::{CompilerTarget, PluginOptions};
 use super::suppression::SuppressionRange;
 
@@ -37,9 +39,10 @@ pub struct ProgramContext {
     pub react_runtime_module: String,
     pub suppressions: Vec<SuppressionRange>,
     pub has_module_scope_opt_out: bool,
-    pub events: Vec<LoggerEvent>,
-    /// Unified ordered log that interleaves events and debug entries
-    /// in the order they were emitted during compilation.
+    /// Diagnostics (errors/warnings) accumulated during compilation. Fatality is
+    /// decided separately by `panicThreshold`.
+    pub diagnostics: Diagnostics,
+    /// Debug-log entries (HIR dumps) emitted when the `debug` feature is enabled.
     pub ordered_log: Vec<OrderedLogItem>,
 
     // Pre-resolved import local names for codegen
@@ -77,7 +80,7 @@ impl ProgramContext {
             react_runtime_module,
             suppressions,
             has_module_scope_opt_out,
-            events: Vec::new(),
+            diagnostics: Diagnostics::new(),
             ordered_log: Vec::new(),
             instrument_fn_name: None,
             instrument_gating_name: None,
@@ -218,12 +221,6 @@ impl ProgramContext {
     /// so subsequent function compilations avoid collisions.
     pub fn merge_uid_known_names(&mut self, names: &FxHashSet<String>) {
         self.known_referenced_names.extend(names.iter().cloned());
-    }
-
-    /// Log a compilation event.
-    pub fn log_event(&mut self, event: LoggerEvent) {
-        self.ordered_log.push(OrderedLogItem::Event { event: event.clone() });
-        self.events.push(event);
     }
 
     /// Log a debug entry (for debugLogIRs support).

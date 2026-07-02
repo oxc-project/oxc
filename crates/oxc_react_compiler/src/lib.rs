@@ -35,10 +35,9 @@ pub mod react_compiler_utils;
 #[allow(clippy::all)]
 pub mod react_compiler_validation;
 
-use crate::react_compiler::entrypoint::compile_result::{CompileResult, LoggerEvent};
+use crate::react_compiler::entrypoint::compile_result::CompileResult;
 use crate::react_compiler::entrypoint::program::compile_program;
 use convert_scope::convert_scope_info;
-use diagnostics::compile_result_to_diagnostics;
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
 
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
@@ -88,10 +87,6 @@ pub struct TransformResult {
     /// violations) are hard problems in the source; the program is still left
     /// valid. Warnings include bail-outs where the compiler declined to optimize.
     pub diagnostics: Diagnostics,
-    /// Raw structured logger events from the upstream compiler (compile
-    /// success/skip/error with memoization stats), for tooling and profiling.
-    /// Unlike `diagnostics`, these are not meant for user-facing reporting.
-    pub events: Vec<LoggerEvent>,
 }
 
 pub struct LintResult {
@@ -108,12 +103,12 @@ pub fn transform<'a>(
     allocator: &'a Allocator,
     options: PluginOptions,
 ) -> TransformResult {
-    let (compiled, diagnostics, events) = compile(program, allocator, options);
+    let (compiled, diagnostics) = compile(program, allocator, options);
     let changed = compiled.is_some();
     if let Some(compiled) = compiled {
         *program = compiled;
     }
-    TransformResult { changed, diagnostics, events }
+    TransformResult { changed, diagnostics }
 }
 
 /// Shared compile pipeline behind [`transform`] and [`lint`]. Borrows `program`
@@ -125,17 +120,17 @@ fn compile<'a>(
     program: &Program<'a>,
     allocator: &'a Allocator,
     options: PluginOptions,
-) -> (Option<Program<'a>>, Diagnostics, Vec<LoggerEvent>) {
+) -> (Option<Program<'a>>, Diagnostics) {
     // Skip files with no React-like functions, unless the mode compiles everything.
     if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
         && !has_react_like_functions(program)
     {
-        return (None, Diagnostics::default(), Vec::new());
+        return (None, Diagnostics::default());
     }
 
     // `using`/`await using` disposal semantics aren't preserved yet — skip the file.
     if has_resource_management_declarations(program) {
-        return (None, Diagnostics::default(), Vec::new());
+        return (None, Diagnostics::default());
     }
 
     let semantic = SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
@@ -147,10 +142,9 @@ fn compile<'a>(
     // Function discovery and lowering both walk the oxc `Program` directly.
     let result = compile_program(&ast_builder, program, scope_info, options);
 
-    let diagnostics = compile_result_to_diagnostics(&result);
-    let (program_ast, events) = match result {
-        CompileResult::Success { ast, events, .. } => (ast, events),
-        CompileResult::Error { events, .. } => (None, events),
+    let (program_ast, diagnostics) = match result {
+        CompileResult::Success { ast, diagnostics, .. } => (ast, diagnostics),
+        CompileResult::Error { diagnostics, .. } => (None, diagnostics),
     };
 
     let compiled = program_ast.map(|mut compiled: Program<'a>| {
@@ -159,7 +153,7 @@ fn compile<'a>(
         compiled
     });
 
-    (compiled, diagnostics, events)
+    (compiled, diagnostics)
 }
 
 /// Carry over the comments attached to top-level statements of the compiled
@@ -204,6 +198,6 @@ pub fn lint(program: &Program, options: PluginOptions) -> LintResult {
 
     // `no_emit` produces no program; a local arena for the conversion suffices.
     let allocator = Allocator::default();
-    let (_program, diagnostics, _events) = compile(program, &allocator, options);
+    let (_program, diagnostics) = compile(program, &allocator, options);
     LintResult { diagnostics }
 }

@@ -8,10 +8,8 @@
 //! Analogous to TS `Pipeline.ts` (`compileFn` → `run` → `runWithEnvironment`).
 //! Currently runs BuildHIR (lowering) and PruneMaybeThrows.
 
-use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
 use crate::react_compiler_diagnostics::ErrorCategory;
 use crate::react_compiler_hir::HirFunction;
 use crate::react_compiler_hir::ReactFunctionType;
@@ -87,11 +85,7 @@ use crate::react_compiler_validation::validate_use_memo;
 use crate::scope::*;
 
 use super::compile_result::CodegenFunction;
-use super::compile_result::CompilerErrorDetailInfo;
-use super::compile_result::CompilerErrorItemInfo;
 use super::compile_result::DebugLogEntry;
-use super::compile_result::LoggerPosition;
-use super::compile_result::LoggerSourceLocation;
 use super::compile_result::OutlinedFunction;
 use super::imports::ProgramContext;
 use super::plugin_options::CompilerOutputMode;
@@ -844,72 +838,12 @@ pub fn compile_outlined_fn<'a>(
     Ok(codegen_fn)
 }
 
-/// Log CompilerError diagnostics as CompileError events, matching TS `env.logErrors()` behavior.
-/// These are logged for telemetry/lint output but not accumulated as compile errors.
+/// Push a compiler error's per-detail diagnostics (validation / lint / telemetry
+/// path), matching TS `env.logErrors()`. No enclosing-function fallback label.
 fn log_errors_as_events(errors: &CompilerError, context: &mut ProgramContext) {
-    // Use the source_filename from the AST (set by parser's sourceFilename option).
-    // This is stored on the Environment during lowering.
-    let source_filename = context.source_filename();
     for detail in &errors.details {
-        let detail_info = match detail {
-            CompilerErrorOrDiagnostic::Diagnostic(d) => {
-                let items: Option<Vec<CompilerErrorItemInfo>> = {
-                    let v: Vec<CompilerErrorItemInfo> = d
-                        .details
-                        .iter()
-                        .map(|item| match item {
-                            CompilerDiagnosticDetail::Error { loc, message, identifier_name } => {
-                                CompilerErrorItemInfo {
-                                    kind: "error".to_string(),
-                                    loc: loc.as_ref().map(|l| LoggerSourceLocation {
-                                        start: LoggerPosition {
-                                            line: l.start.line,
-                                            column: l.start.column,
-                                            index: l.start.index,
-                                        },
-                                        end: LoggerPosition {
-                                            line: l.end.line,
-                                            column: l.end.column,
-                                            index: l.end.index,
-                                        },
-                                        filename: source_filename.clone(),
-                                        identifier_name: identifier_name.clone(),
-                                    }),
-                                    message: message.clone(),
-                                }
-                            }
-                            CompilerDiagnosticDetail::Hint { message } => CompilerErrorItemInfo {
-                                kind: "hint".to_string(),
-                                loc: None,
-                                message: Some(message.clone()),
-                            },
-                        })
-                        .collect();
-                    if v.is_empty() { None } else { Some(v) }
-                };
-                CompilerErrorDetailInfo {
-                    category: format!("{:?}", d.category),
-                    reason: d.reason.clone(),
-                    description: d.description.clone(),
-                    severity: format!("{:?}", d.logged_severity()),
-                    suggestions: None,
-                    details: items,
-                    loc: None,
-                }
-            }
-            CompilerErrorOrDiagnostic::ErrorDetail(d) => CompilerErrorDetailInfo {
-                category: format!("{:?}", d.category),
-                reason: d.reason.clone(),
-                description: d.description.clone(),
-                severity: format!("{:?}", d.logged_severity()),
-                suggestions: None,
-                details: None,
-                loc: None,
-            },
-        };
-        context.log_event(super::compile_result::LoggerEvent::CompileError {
-            fn_loc: None,
-            detail: detail_info,
-        });
+        if let Some(diagnostic) = crate::diagnostics::detail_to_diagnostic(detail, None) {
+            context.diagnostics.push(diagnostic);
+        }
     }
 }
