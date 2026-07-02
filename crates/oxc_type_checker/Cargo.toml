@@ -29,12 +29,24 @@ workspace = true
 [lib]
 test = false
 
+[[bin]]
+name = "oxc_tsc"
+path = "src/main.rs"
+test = false
+doctest = false
+
 [dependencies]
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_diagnostics = { workspace = true }
+oxc_resolver = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
+
+bpaf = { workspace = true, features = ["derive"] }
+cow-utils = { workspace = true }
+indexmap = { workspace = true }
+rustc-hash = { workspace = true }
 
 [dev-dependencies]
 oxc_allocator = { workspace = true }
