@@ -218,6 +218,12 @@ export type JsxCurlyBracePresenceConfig = JsxCurlyBracePresenceMode | JsxCurlyBr
 export type JsxCurlyBracePresenceMode = "always" | "never" | "ignore";
 export type JsxFilenameExtensionAllowMode = "always" | "as-needed";
 export type FragmentMode = "syntax" | "element";
+/**
+ * Strategies that are considered safe ways to write a conditional render.
+ *
+ * The first strategy listed is the one used by the autofix.
+ */
+export type ValidStrategies = "coerce" | "ternary";
 export type EnforceDynamicLinksEnum = "always" | "never";
 export type IgnoreEnforceOption = "ignore" | "enforce";
 export type AllowedOrDisallowInFunc = "allowed" | "disallow-in-func";
@@ -1331,6 +1337,7 @@ export interface DummyRuleMap {
   "react/jsx-no-comment-textnodes"?: RuleNoConfig;
   "react/jsx-no-constructed-context-values"?: RuleNoConfig;
   "react/jsx-no-duplicate-props"?: RuleNoConfig;
+  "react/jsx-no-leaked-render"?: RuleNoConfig | [AllowWarnDeny, JsxNoLeakedRenderConfig];
   "react/jsx-no-literals"?: RuleNoConfig | [AllowWarnDeny, JsxNoLiteralsConfig];
   "react/jsx-no-script-url"?:
     | RuleNoConfig
@@ -4575,6 +4582,19 @@ export interface JsxMaxDepthConfig {
    * The maximum allowed depth of nested JSX elements and fragments.
    */
   max?: number;
+}
+export interface JsxNoLeakedRenderConfig {
+  /**
+   * When `true`, logical expressions inside non-`children` attributes are ignored.
+   * Expressions assigned to `children` and any nested JSX are still checked.
+   */
+  ignoreAttributes?: boolean;
+  /**
+   * Which strategies are considered valid for conditional rendering.
+   *
+   * Defaults to allowing both `"ternary"` and `"coerce"`.
+   */
+  validStrategies?: ValidStrategies[];
 }
 /**
  * The options shared between the top-level config and each `elementOverrides` entry.

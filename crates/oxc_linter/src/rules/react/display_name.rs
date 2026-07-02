@@ -21,8 +21,9 @@ use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        InnermostFunction, expression_contains_jsx, find_innermost_function_with_jsx,
-        function_body_contains_jsx, function_contains_jsx, is_hoc_call, is_react_component_name,
+        InnermostFunction, check_react_version, expression_contains_jsx,
+        find_innermost_function_with_jsx, function_body_contains_jsx, function_contains_jsx,
+        is_hoc_call, is_react_component_name,
     },
 };
 
@@ -115,7 +116,7 @@ impl VersionCache {
             return compatible;
         }
         let current_version = ctx.settings().react.version.as_ref();
-        let compatible = check_react_version_internal(current_version, 16, 3);
+        let compatible = check_react_version(current_version, 16, 3);
         self.context_objects_compatible = Some(compatible);
         compatible
     }
@@ -759,25 +760,6 @@ fn is_module_exports_component(
         }
     }
     None
-}
-
-/// Internal version checking function
-fn check_react_version_internal(
-    version: Option<&ReactVersion>,
-    min_major: u32,
-    min_minor: u32,
-) -> bool {
-    match version {
-        Some(v) => {
-            let major = v.major();
-            let minor = v.minor();
-            major >= min_major && (major > min_major || minor >= min_minor)
-        }
-        None => {
-            // If no version specified, assume modern React
-            true
-        }
-    }
 }
 
 /// Internal memo/forwardRef version checking function
