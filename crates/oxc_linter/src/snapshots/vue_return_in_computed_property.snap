@@ -85,20 +85,20 @@ source: crates/oxc_linter/src/tester.rs
   help: All code paths inside a computed getter must return a value.
 
   ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
-   ╭─[return_in_computed_property.tsx:6:42]
- 5 │                   setup() {
- 6 │                     const foo = computed(() => {})
-   ·                                          ────────
- 7 │                     const foo2 = computed(function() {})
-   ╰────
-  help: All code paths inside a computed getter must return a value.
-
-  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
    ╭─[return_in_computed_property.tsx:7:43]
  6 │                     const foo = computed(() => {})
  7 │                     const foo2 = computed(function() {})
    ·                                           ─────────────
  8 │                     const foo3 = computed(() => {
+   ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+   ╭─[return_in_computed_property.tsx:6:42]
+ 5 │                   setup() {
+ 6 │                     const foo = computed(() => {})
+   ·                                          ────────
+ 7 │                     const foo2 = computed(function() {})
    ╰────
   help: All code paths inside a computed getter must return a value.
 

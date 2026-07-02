@@ -349,16 +349,6 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
   note: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key
 
-  ⚠ unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
-   ╭─[prefer_keyboard_event_key.tsx:7:41]
- 6 │                             {
- 7 │                                 const { charCode } = e;
-   ·                                         ────────
- 8 │                                 console.log(e.keyCode, charCode);
-   ╰────
-  help: The `charCode` property is deprecated.
-  note: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key
-
   ⚠ unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
    ╭─[prefer_keyboard_event_key.tsx:8:47]
  7 │                                 const { charCode } = e;
@@ -367,6 +357,16 @@ source: crates/oxc_linter/src/tester.rs
  9 │                             }
    ╰────
   help: The `keyCode` property is deprecated.
+  note: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key
+
+  ⚠ unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
+   ╭─[prefer_keyboard_event_key.tsx:7:41]
+ 6 │                             {
+ 7 │                                 const { charCode } = e;
+   ·                                         ────────
+ 8 │                                 console.log(e.keyCode, charCode);
+   ╰────
+  help: The `charCode` property is deprecated.
   note: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key
 
   ⚠ unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`

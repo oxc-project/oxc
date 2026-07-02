@@ -10,13 +10,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Separate each assignment into its own statement
 
   ⚠ eslint(no-multi-assign): Do not use chained assignment
-   ╭─[no_multi_assign.tsx:1:9]
- 1 │ var a = b = c = d;
-   ·         ─────────
-   ╰────
-  help: Separate each assignment into its own statement
-
-  ⚠ eslint(no-multi-assign): Do not use chained assignment
    ╭─[no_multi_assign.tsx:1:13]
  1 │ var a = b = c = d;
    ·             ─────
@@ -24,9 +17,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Separate each assignment into its own statement
 
   ⚠ eslint(no-multi-assign): Do not use chained assignment
-   ╭─[no_multi_assign.tsx:1:11]
- 1 │ let foo = bar = cee = 100;
-   ·           ───────────────
+   ╭─[no_multi_assign.tsx:1:9]
+ 1 │ var a = b = c = d;
+   ·         ─────────
    ╰────
   help: Separate each assignment into its own statement
 
@@ -34,6 +27,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_multi_assign.tsx:1:17]
  1 │ let foo = bar = cee = 100;
    ·                 ─────────
+   ╰────
+  help: Separate each assignment into its own statement
+
+  ⚠ eslint(no-multi-assign): Do not use chained assignment
+   ╭─[no_multi_assign.tsx:1:11]
+ 1 │ let foo = bar = cee = 100;
+   ·           ───────────────
    ╰────
   help: Separate each assignment into its own statement
 

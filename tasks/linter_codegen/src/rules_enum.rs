@@ -118,7 +118,7 @@ fn generate_imports() -> TokenStream {
         };
         #[cfg(feature = "ruledocs")]
         use crate::rule::RuleInfo;
-        use oxc_semantic::AstTypesBitset;
+        use oxc_semantic::{AstNodes, AstTypesBitset, NodeId};
     }
 }
 
@@ -219,6 +219,20 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
             quote! { Self::#enum_name(rule) => rule.run(node, ctx) }
+        })
+        .collect();
+
+    let run_batch_arms: Vec<TokenStream> = rule_entries
+        .iter()
+        .map(|rule| {
+            let enum_name = make_enum_ident(rule);
+            // Match on `self` once per call, then dispatch the whole node slice with a monomorphic,
+            // directly-inlinable loop. This hoists the enum match out of the per-node dispatch loop.
+            quote! { Self::#enum_name(rule) => {
+                for &node_id in node_ids {
+                    rule.run(nodes.get_node(node_id), ctx);
+                }
+            } }
         })
         .collect();
 
@@ -386,6 +400,27 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             fn run_once_dispatch(&self, ctx: &LintContext<'_>) {
                 match self {
                     #(#run_once_arms),*
+                }
+            }
+
+            /// Run this rule over every node in `node_ids` (all of the same AST type), resolving
+            /// each id against `nodes`. The enum match happens once per call rather than once per
+            /// node, so the per-node dispatch is a direct, inlinable call into the concrete rule.
+            pub(crate) fn run_batch<'a, const TIMINGS: bool>(
+                &self,
+                node_ids: &[NodeId],
+                nodes: &AstNodes<'a>,
+                ctx: &LintContext<'a>,
+                timing_stat: Option<&mut RuleTimingStat>,
+            ) {
+                if TIMINGS {
+                    timing_stat.expect("missing rule timing stat").time(|| match self {
+                        #(#run_batch_arms),*
+                    });
+                } else {
+                    match self {
+                        #(#run_batch_arms),*
+                    }
                 }
             }
 
