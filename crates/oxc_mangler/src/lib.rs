@@ -754,20 +754,26 @@ fn scope_ids_parent_before_child<'a>(
     scoping: &Scoping,
 ) -> ArenaVec<'a, ScopeId> {
     let scopes_len = scoping.scopes_len();
-    let mut children = vec![Vec::new(); scopes_len];
+    let mut ordered_scope_ids = ArenaVec::with_capacity_in(scopes_len, &allocator);
+    let mut visited = BitSet::new_in(scopes_len, allocator);
+    let mut stack = ArenaVec::new_in(&allocator);
+
     for index in 0..scopes_len {
-        let scope_id = ScopeId::from_usize(index);
-        if let Some(parent_id) = scoping.scope_parent_id(scope_id) {
-            children[parent_id.index()].push(scope_id);
+        let mut scope_id = ScopeId::from_usize(index);
+        while !visited.has_bit(scope_id.index()) {
+            stack.push(scope_id);
+            let Some(parent_id) = scoping.scope_parent_id(scope_id) else { break };
+            scope_id = parent_id;
+        }
+
+        while let Some(scope_id) = stack.pop() {
+            if !visited.has_bit(scope_id.index()) {
+                visited.set_bit(scope_id.index());
+                ordered_scope_ids.push(scope_id);
+            }
         }
     }
 
-    let mut ordered_scope_ids = ArenaVec::with_capacity_in(scopes_len, &allocator);
-    let mut stack = vec![scoping.root_scope_id()];
-    while let Some(scope_id) = stack.pop() {
-        ordered_scope_ids.push(scope_id);
-        stack.extend(children[scope_id.index()].iter().rev().copied());
-    }
     debug_assert_eq!(ordered_scope_ids.len(), scopes_len);
     ordered_scope_ids
 }
