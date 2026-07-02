@@ -1716,6 +1716,7 @@ export interface DummyRuleMap {
   "vue/define-props-declaration"?: RuleNoConfig | [AllowWarnDeny, DeclarationStyle2];
   "vue/define-props-destructuring"?: RuleNoConfig | [AllowWarnDeny, DefinePropsDestructuring];
   "vue/max-props"?: RuleNoConfig | [AllowWarnDeny, MaxProps];
+  "vue/multi-word-component-names"?: RuleNoConfig | [AllowWarnDeny, MultiWordComponentNamesConfig];
   "vue/next-tick-style"?: RuleNoConfig | [AllowWarnDeny, NextTickOption];
   "vue/no-arrow-functions-in-watch"?: RuleNoConfig;
   "vue/no-async-in-computed-properties"?: RuleNoConfig | [AllowWarnDeny, NoAsyncInComputedPropertiesConfig];
@@ -6386,6 +6387,12 @@ export interface MaxProps {
    * The maximum number of props allowed in a Vue SFC.
    */
   maxProps?: number;
+}
+export interface MultiWordComponentNamesConfig {
+  /**
+   * Component names to allow.
+   */
+  ignores?: string[];
 }
 export interface NoAsyncInComputedPropertiesConfig {
   /**

@@ -10045,6 +10045,26 @@
             }
           ]
         },
+        "vue/multi-word-component-names": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MultiWordComponentNames"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "vue/next-tick-style": {
           "anyOf": [
             {
@@ -12903,6 +12923,24 @@
             "type": "string"
           },
           "markdownDescription": "List of hover-out mouse event handlers that require corresponding keyboard event handlers."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MultiWordComponentNames": {
+      "$ref": "#/definitions/MultiWordComponentNamesConfig"
+    },
+    "MultiWordComponentNamesConfig": {
+      "type": "object",
+      "properties": {
+        "ignores": {
+          "description": "Component names to allow.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Component names to allow."
         }
       },
       "additionalProperties": false

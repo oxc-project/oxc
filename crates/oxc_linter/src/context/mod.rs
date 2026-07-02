@@ -611,6 +611,10 @@ impl<'a> LintContext<'a> {
     pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {
         self.parent.other_file_hosts()
     }
+
+    pub fn is_first_sub_host(&self) -> bool {
+        self.parent.is_first_sub_host()
+    }
 }
 
 /// Gets the canonical display name for a plugin, given its internal short plugin name.
