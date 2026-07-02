@@ -509,8 +509,7 @@ mod test {
 
     #[test]
     fn test_oxlintrc_reject_non_object() {
-        // A non-object top-level config must be rejected rather than silently
-        // deserialized positionally by serde_json (see #18821).
+        // A non-object top-level config must be rejected, not silently deserialized positionally.
         assert!(Oxlintrc::from_string("[]").is_err());
         assert!(Oxlintrc::from_string(r#"["error"]"#).is_err());
         assert!(Oxlintrc::from_string(r#""foo""#).is_err());
