@@ -71,7 +71,6 @@ enum CallContext<'a> {
 
 pub struct OptionalChaining<'a> {
     // states
-    is_inside_function_parameter: bool,
     temp_binding: Option<BoundIdentifier<'a>>,
     /// .call(context)
     ///       ^^^^^^^
@@ -80,11 +79,7 @@ pub struct OptionalChaining<'a> {
 
 impl OptionalChaining<'_> {
     pub fn new() -> Self {
-        Self {
-            is_inside_function_parameter: false,
-            temp_binding: None,
-            call_context: CallContext::None,
-        }
+        Self { temp_binding: None, call_context: CallContext::None }
     }
 }
 
@@ -103,25 +98,41 @@ impl<'a> Traverse<'a, TransformState<'a>> for OptionalChaining<'a> {
             _ => {}
         }
     }
-
-    // `#[inline]` because this is a hot path
-    #[inline]
-    fn enter_formal_parameters(&mut self, _: &mut FormalParameters<'a>, _: &mut TraverseCtx<'a>) {
-        self.is_inside_function_parameter = true;
-    }
-
-    // `#[inline]` because this is a hot path
-    #[inline]
-    fn exit_formal_parameters(
-        &mut self,
-        _node: &mut FormalParameters<'a>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.is_inside_function_parameter = false;
-    }
 }
 
 impl<'a> OptionalChaining<'a> {
+    /// Is the chain expression being transformed inside a function parameter's default value,
+    /// with no enclosing function body to hoist a temp binding into? Such a position has no
+    /// statement context, so the chain must be wrapped in an arrow IIFE instead.
+    ///
+    /// Walk up the ancestors and stop at the first boundary: a function body (`false` — there is
+    /// a statement context / a function scope to convert) or the formal parameters themselves
+    /// (`true`). The formal-parameters check covers both a direct default (`f(b = c?.d)`, via
+    /// `FormalParameterInitializer`) and a destructured default (`f({ b = c?.d })`, via the
+    /// pattern), so a temp can never be hoisted out of the parameter list. This is robust to
+    /// nested functions/arrows in *earlier* parameters (whose boundaries are not ancestors of
+    /// this node), and the arrow IIFE we emit is itself a function body, so a re-visit of the
+    /// moved chain terminates via the `false` branch.
+    fn is_inside_function_parameter(ctx: &TraverseCtx<'a>) -> bool {
+        for ancestor in ctx.ancestors() {
+            if ancestor.is_function_body()
+                || matches!(
+                    ancestor,
+                    Ancestor::FunctionBody(_) | Ancestor::ArrowFunctionExpressionBody(_)
+                )
+            {
+                return false;
+            }
+            if ancestor.is_formal_parameter()
+                || ancestor.is_formal_parameters()
+                || ancestor.is_formal_parameter_rest()
+            {
+                return true;
+            }
+        }
+        false
+    }
+
     fn set_temp_binding(&mut self, binding: BoundIdentifier<'a>) {
         self.temp_binding.replace(binding);
     }
@@ -292,7 +303,7 @@ impl<'a> OptionalChaining<'a> {
 
     /// Transform chain expression
     fn transform_chain_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        *expr = if self.is_inside_function_parameter {
+        *expr = if Self::is_inside_function_parameter(ctx) {
             // To insert the temp binding in the correct scope, we wrap the expression with
             // an arrow function. During the chain expression transformation, the temp binding
             // will be inserted into the arrow function's body.
@@ -308,7 +319,7 @@ impl<'a> OptionalChaining<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        *expr = if self.is_inside_function_parameter {
+        *expr = if Self::is_inside_function_parameter(ctx) {
             // Same as the above `transform_chain_expression` explanation
             wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx)
         } else {
