@@ -5617,6 +5617,29 @@
             }
           ]
         },
+        "node/exports-style": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExportsStyleMode"
+                },
+                {
+                  "$ref": "#/definitions/ExportsStyleOptions"
+                }
+              ],
+              "maxItems": 3,
+              "minItems": 2
+            }
+          ]
+        },
         "node/global-require": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -10777,6 +10800,51 @@
           "markdownDescription": "Disallow explicit `0` delay, prefer implicit default."
         }
       ]
+    },
+    "ExportsStyle": {
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/ExportsStyleMode"
+        },
+        {
+          "$ref": "#/definitions/ExportsStyleOptions"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2
+    },
+    "ExportsStyleMode": {
+      "oneOf": [
+        {
+          "description": "Requires `module.exports` and disallows `exports`",
+          "type": "string",
+          "enum": [
+            "module.exports"
+          ],
+          "markdownDescription": "Requires `module.exports` and disallows `exports`"
+        },
+        {
+          "description": "Requires `exports` and disallows `module.exports`",
+          "type": "string",
+          "enum": [
+            "exports"
+          ],
+          "markdownDescription": "Requires `exports` and disallows `module.exports`"
+        }
+      ]
+    },
+    "ExportsStyleOptions": {
+      "type": "object",
+      "properties": {
+        "allowBatchAssign": {
+          "description": "If this option is set to `true`, `module.exports = exports = obj` are allowed.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If this option is set to `true`, `module.exports = exports = obj` are allowed."
+        }
+      },
+      "additionalProperties": false
     },
     "ExtensionRule": {
       "description": "Extension rule configuration; Copy to avoid extra indirection.",

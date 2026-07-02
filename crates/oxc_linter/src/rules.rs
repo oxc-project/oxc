@@ -843,6 +843,7 @@ pub(crate) mod vitest {
 /// <https://github.com/eslint-community/eslint-plugin-n>
 pub(crate) mod node {
     pub mod callback_return;
+    pub mod exports_style;
     pub mod global_require;
     pub mod handle_callback_err;
     pub mod no_exports_assign;
