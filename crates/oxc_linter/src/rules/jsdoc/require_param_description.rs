@@ -108,7 +108,7 @@ impl Rule for RequireParamDescription {
         let settings = &ctx.settings().jsdoc;
         let resolved_param_tag_name = settings.resolve_tag_name("param");
 
-        let mut root_count = 0;
+        let mut root_names = Vec::new();
         for jsdoc in jsdocs
             .iter()
             .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
@@ -121,14 +121,28 @@ impl Rule for RequireParamDescription {
 
                 let (_, name_part, comment_part) = tag.type_name_comment();
 
-                if name_part.is_some_and(|name_part| !name_part.parsed().contains('.')) {
-                    root_count += 1;
-                }
-                if settings.exempt_destructured_roots_from_checks {
-                    // -1 for count to idx conversion
-                    if let Some(ParamKind::Nested(_)) = params_to_check.get(root_count - 1) {
-                        continue;
-                    }
+                let (current_param, is_current_root_tag) =
+                    name_part.map_or((None, false), |name_part| {
+                        let name = name_part.parsed();
+                        let root_name = name
+                            .split_once('.')
+                            .map_or(name, |(root_name, _)| root_name)
+                            .trim_end_matches("[]");
+                        let is_current_root_tag = name == root_name;
+                        let root_index = root_names
+                            .iter()
+                            .position(|&name| name == root_name)
+                            .unwrap_or_else(|| {
+                                root_names.push(root_name);
+                                root_names.len() - 1
+                            });
+                        (params_to_check.get(root_index), is_current_root_tag)
+                    });
+
+                if settings.exempt_destructured_roots_from_checks
+                    && matches!(current_param, Some(ParamKind::Nested(_)))
+                {
+                    continue;
                 }
 
                 // If description exists, skip
@@ -137,7 +151,7 @@ impl Rule for RequireParamDescription {
                 }
 
                 let is_destructured_root =
-                    matches!(params_to_check.get(root_count - 1), Some(ParamKind::Nested(_)));
+                    is_current_root_tag && matches!(current_param, Some(ParamKind::Nested(_)));
 
                 if self.0.set_default_destructured_root_description
                     && is_destructured_root
@@ -276,6 +290,22 @@ fn test() {
             Some(
                 serde_json::json!({ "settings": {        "jsdoc": {          "tagNamePreference": {            "param": "arg",          },        },      } }),
             ),
+        ),
+        ("/** @param input.userId */\nfunction quux (input) {}", None, None),
+        (
+            "/** @param input.userId User ID.\n * @param options */\nfunction quux (input, {flag}) {}",
+            Some(serde_json::json!([{ "setDefaultDestructuredRootDescription": true }])),
+            None,
+        ),
+        (
+            "/** @param employees Employees.\n * @param employees[].name Employee name.\n * @param options */\nfunction quux (employees, {flag}) {}",
+            Some(serde_json::json!([{ "setDefaultDestructuredRootDescription": true }])),
+            None,
+        ),
+        (
+            "/** @param root.foo */\nfunction quux ({foo}) {}",
+            Some(serde_json::json!([{ "setDefaultDestructuredRootDescription": true }])),
+            None,
         ),
         (
             "

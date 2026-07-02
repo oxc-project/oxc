@@ -567,8 +567,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         quote! { #enum_ident::#variant_name(s) => { #implementation }, }
     });
 
-    let inherits_match_arms = enum_def.inherits_types(schema).map(|inherited_type| {
-        let inherited_enum_def = inherited_type.as_enum().unwrap();
+    let inherits_match_arms = enum_def.inherits_enums(schema).map(|inherited_enum_def| {
         let inherits_snake_name = inherited_enum_def.snake_name();
         let match_ident = format_ident!("match_{inherits_snake_name}");
         let to_fn_ident = format_ident!("to_{inherits_snake_name}");

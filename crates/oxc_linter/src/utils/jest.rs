@@ -232,7 +232,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
 
                 if matches!(
                     import_decl.source.value.as_str(),
-                    "@jest/globals" | "vitest" | "vite-plus/test"
+                    "@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest"
                 ) {
                     let original = find_original_name(import_decl, name);
                     let ret = reference_ids
@@ -377,6 +377,7 @@ mod test {
                     0,
                     ContextSubHostOptions::default(),
                 )],
+                &allocator,
                 LintOptions::default(),
                 Arc::default(),
             ))

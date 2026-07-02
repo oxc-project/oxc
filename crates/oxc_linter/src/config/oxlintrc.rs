@@ -330,6 +330,13 @@ impl Oxlintrc {
             ))
         })?;
 
+        if !json.is_object() {
+            return Err(OxcDiagnostic::error(format!(
+                "Failed to parse oxlint config {}.\nExpected a JSON object.",
+                path.display()
+            )));
+        }
+
         let mut config = Self::deserialize(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })?;
@@ -350,6 +357,12 @@ impl Oxlintrc {
     pub fn from_string(json_string: &str) -> Result<Self, OxcDiagnostic> {
         let json = serde_json::from_str::<serde_json::Value>(json_string)
             .unwrap_or(serde_json::Value::Null);
+
+        if !json.is_object() {
+            return Err(OxcDiagnostic::error(
+                "Failed to parse config: expected a JSON object.".to_string(),
+            ));
+        }
 
         Self::deserialize(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
@@ -492,6 +505,19 @@ mod test {
         assert_eq!(config.options.max_warnings, None);
         assert_eq!(config.options.report_unused_disable_directives, None);
         assert_eq!(config.options.respect_eslint_disable_directives, None);
+    }
+
+    #[test]
+    fn test_oxlintrc_reject_non_object() {
+        // A non-object top-level config must be rejected, not silently deserialized positionally.
+        assert!(Oxlintrc::from_string("[]").is_err());
+        assert!(Oxlintrc::from_string(r#"["error"]"#).is_err());
+        assert!(Oxlintrc::from_string(r#""foo""#).is_err());
+        assert!(Oxlintrc::from_string("42").is_err());
+        assert!(Oxlintrc::from_string("true").is_err());
+        assert!(Oxlintrc::from_string("null").is_err());
+        // A valid object still parses.
+        assert!(Oxlintrc::from_string("{}").is_ok());
     }
 
     #[test]

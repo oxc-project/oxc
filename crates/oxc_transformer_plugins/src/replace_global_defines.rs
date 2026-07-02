@@ -16,6 +16,9 @@ use oxc_syntax::reference::Reference;
 
 /// Configuration for [ReplaceGlobalDefines].
 ///
+/// Define keys may be identifiers, property chains, `typeof` expressions over identifiers or
+/// property chains, and supported `import.meta` forms.
+///
 /// Due to the usage of an arena allocator, the constructor will parse once for grammatical errors,
 /// and does not save the constructed expression.
 ///
@@ -35,12 +38,19 @@ struct IdentifierDefine {
 struct ReplaceGlobalDefinesConfigImpl {
     identifier: IdentifierDefine,
     dot: Vec<DotDefine>,
+    typeof_defines: Vec<TypeofDefine>,
     meta_property: Vec<MetaPropertyDefine>,
     /// extra field to avoid linear scan `meta_property` to check if it has `import.meta` every
     /// time
     /// Some(replacement): import.meta -> replacement
     /// None -> no need to replace import.meta
     import_meta: Option<CompactStr>,
+}
+
+#[derive(Debug)]
+struct TypeofDefine {
+    parts: Vec<CompactStr>,
+    value: CompactStr,
 }
 
 #[derive(Debug)]
@@ -73,6 +83,7 @@ impl DotDefine {
 enum IdentifierType {
     Identifier,
     DotDefines { parts: Vec<CompactStr> },
+    Typeof { parts: Vec<CompactStr> },
     // import.meta.a
     ImportMetaWithParts { parts: Vec<CompactStr>, postfix_wildcard: bool },
     // import.meta or import.meta.*
@@ -82,12 +93,13 @@ enum IdentifierType {
 impl ReplaceGlobalDefinesConfig {
     /// # Errors
     ///
-    /// * key is not an identifier
+    /// * key is not a supported identifier, property chain, or `typeof` expression
     /// * value has a syntax error
     pub fn new<S: AsRef<str>>(defines: &[(S, S)]) -> Result<Self, Diagnostics> {
         let allocator = Allocator::default();
         let mut identifier_defines = vec![];
         let mut dot_defines = vec![];
+        let mut typeof_defines = vec![];
         let mut meta_properties_defines = vec![];
         let mut import_meta = None;
         let mut has_this_expr_define = false;
@@ -104,6 +116,9 @@ impl ReplaceGlobalDefinesConfig {
                 }
                 IdentifierType::DotDefines { parts } => {
                     dot_defines.push(DotDefine::new(parts, CompactStr::new(value)));
+                }
+                IdentifierType::Typeof { parts } => {
+                    typeof_defines.push(TypeofDefine { parts, value: CompactStr::new(value) });
                 }
                 IdentifierType::ImportMetaWithParts { parts, postfix_wildcard } => {
                     meta_properties_defines.push(MetaPropertyDefine::new(
@@ -140,12 +155,19 @@ impl ReplaceGlobalDefinesConfig {
         Ok(Self(Arc::new(ReplaceGlobalDefinesConfigImpl {
             identifier: IdentifierDefine { identifier_defines, has_this_expr_define },
             dot: dot_defines,
+            typeof_defines,
             meta_property: meta_properties_defines,
             import_meta,
         })))
     }
 
     fn check_key(key: &str) -> Result<IdentifierType, Diagnostics> {
+        if let Some(argument) = key.strip_prefix("typeof ") {
+            let parts: Vec<&str> = argument.split('.').collect();
+            let parts = Self::check_identifier_parts(key, &parts)?;
+            return Ok(IdentifierType::Typeof { parts });
+        }
+
         let parts: Vec<&str> = key.split('.').collect();
 
         assert!(!parts.is_empty());
@@ -164,24 +186,12 @@ impl ReplaceGlobalDefinesConfig {
         // We can ensure now the parts.len() >= 2
         let is_import_meta = parts[0] == "import" && parts[1] == "meta";
 
-        for part in &parts[0..normalized_parts_len] {
-            if !is_identifier_name(part) {
-                return Err(vec![OxcDiagnostic::error(format!(
-                    "The define key `{key}` contains an invalid identifier `{part}`."
-                ))]
-                .into());
-            }
-        }
+        let compact_parts = Self::check_identifier_parts(key, &parts[0..normalized_parts_len])?;
         if is_import_meta {
             match normalized_parts_len {
                 2 => Ok(IdentifierType::ImportMeta(normalized_parts_len != parts.len())),
                 _ => Ok(IdentifierType::ImportMetaWithParts {
-                    parts: parts
-                        .iter()
-                        .skip(2)
-                        .take(normalized_parts_len - 2)
-                        .map(|s| CompactStr::new(s))
-                        .collect(),
+                    parts: compact_parts.into_iter().skip(2).collect(),
                     postfix_wildcard: normalized_parts_len != parts.len(),
                 }),
             }
@@ -192,14 +202,21 @@ impl ReplaceGlobalDefinesConfig {
             )]
             .into())
         } else {
-            Ok(IdentifierType::DotDefines {
-                parts: parts
-                    .iter()
-                    .take(normalized_parts_len)
-                    .map(|s| CompactStr::new(s))
-                    .collect(),
-            })
+            Ok(IdentifierType::DotDefines { parts: compact_parts })
         }
+    }
+
+    fn check_identifier_parts(key: &str, parts: &[&str]) -> Result<Vec<CompactStr>, Diagnostics> {
+        for part in parts {
+            if !is_identifier_name(part) {
+                return Err(vec![OxcDiagnostic::error(format!(
+                    "The define key `{key}` contains an invalid identifier `{part}`."
+                ))]
+                .into());
+            }
+        }
+
+        Ok(parts.iter().map(|part| CompactStr::new(part)).collect())
     }
 
     fn check_value(allocator: &Allocator, source_text: &str) -> Result<(), Diagnostics> {
@@ -237,6 +254,8 @@ pub struct ReplaceGlobalDefines<'a> {
     /// Depth of non-arrow functions we're inside of. Used to compute scope flags for `this`
     /// replacement.
     non_arrow_function_depth: u32,
+    /// Depth of class field initializers or static blocks where `this` is the instance/class.
+    class_this_depth: u32,
     /// Destructuring keys from the parent `VariableDeclarator` when its `id` is an
     /// `ObjectPattern`. Used to optimize object expression replacements by only keeping needed
     /// keys.
@@ -248,7 +267,10 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
         if self.ast_node_lock.is_some() {
             return;
         }
-        let is_replaced = self.replace_identifier_defines(expr) || self.replace_dot_defines(expr);
+        let is_replaced = (!self.config.0.typeof_defines.is_empty()
+            && self.replace_typeof_defines(expr))
+            || self.replace_identifier_defines(expr)
+            || self.replace_dot_defines(expr);
         // Clear `destructuring_keys` after checking the first expression so the
         // optimization only applies to the direct init expression of a
         // destructuring `VariableDeclarator`, not to nested sub-expressions
@@ -294,6 +316,38 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
         self.non_arrow_function_depth -= 1;
     }
 
+    fn visit_property_definition(&mut self, property: &mut PropertyDefinition<'a>) {
+        self.visit_decorators(&mut property.decorators);
+        self.visit_property_key(&mut property.key);
+        if let Some(type_annotation) = &mut property.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &mut property.value {
+            self.class_this_depth += 1;
+            self.visit_expression(value);
+            self.class_this_depth -= 1;
+        }
+    }
+
+    fn visit_static_block(&mut self, block: &mut StaticBlock<'a>) {
+        self.class_this_depth += 1;
+        walk_mut::walk_static_block(self, block);
+        self.class_this_depth -= 1;
+    }
+
+    fn visit_accessor_property(&mut self, property: &mut AccessorProperty<'a>) {
+        self.visit_decorators(&mut property.decorators);
+        self.visit_property_key(&mut property.key);
+        if let Some(type_annotation) = &mut property.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &mut property.value {
+            self.class_this_depth += 1;
+            self.visit_expression(value);
+            self.class_this_depth -= 1;
+        }
+    }
+
     fn visit_variable_declarator(&mut self, declarator: &mut VariableDeclarator<'a>) {
         // Collect destructuring keys if LHS is an ObjectPattern.
         // `visit_expression` clears `destructuring_keys` after the first expression check,
@@ -326,6 +380,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             changed: false,
             scoping: None,
             non_arrow_function_depth: 0,
+            class_this_depth: 0,
             destructuring_keys: None,
         }
     }
@@ -393,6 +448,83 @@ impl<'a> ReplaceGlobalDefines<'a> {
             _ => {}
         }
         false
+    }
+
+    fn replace_typeof_defines(&mut self, expr: &mut Expression<'a>) -> bool {
+        let Expression::UnaryExpression(unary) = expr else {
+            return false;
+        };
+        if unary.operator != UnaryOperator::Typeof {
+            return false;
+        }
+
+        let scoping = self.scoping();
+        let scope_flags = self.current_scope_flags();
+        let value = self
+            .config
+            .0
+            .typeof_defines
+            .iter()
+            .find(|define| Self::is_typeof_define(scoping, scope_flags, define, &unary.argument))
+            .map(|define| define.value.clone());
+        if let Some(value) = value {
+            *expr = self.parse_value(&value);
+            return true;
+        }
+        false
+    }
+
+    fn is_typeof_define(
+        scoping: &Scoping,
+        scope_flags: ScopeFlags,
+        define: &TypeofDefine,
+        argument: &Expression<'a>,
+    ) -> bool {
+        let argument = argument.without_parentheses();
+        if define.parts.len() == 1 {
+            return match argument {
+                Expression::Identifier(ident) => {
+                    ident.name == define.parts[0].as_str()
+                        && Self::is_global_or_ambient_reference(scoping, ident)
+                }
+                Expression::ThisExpression(_) => {
+                    define.parts[0].as_str() == "this" && should_replace_this_expr(scope_flags)
+                }
+                _ => false,
+            };
+        }
+
+        let member = match argument {
+            Expression::StaticMemberExpression(member) => {
+                DotDefineMemberExpression::StaticMemberExpression(member)
+            }
+            Expression::ComputedMemberExpression(member) => {
+                DotDefineMemberExpression::ComputedMemberExpression(member)
+            }
+            Expression::ChainExpression(chain) => {
+                let Some(member) = chain.expression.as_member_expression() else {
+                    return false;
+                };
+                match member {
+                    MemberExpression::StaticMemberExpression(member) => {
+                        DotDefineMemberExpression::StaticMemberExpression(member)
+                    }
+                    MemberExpression::ComputedMemberExpression(member) => {
+                        DotDefineMemberExpression::ComputedMemberExpression(member)
+                    }
+                    MemberExpression::PrivateFieldExpression(_) => return false,
+                }
+            }
+            Expression::MetaProperty(meta) => {
+                return define.parts.len() == 2
+                    && define.parts[0].as_str() == "import"
+                    && define.parts[1].as_str() == "meta"
+                    && meta.meta.name == "import"
+                    && meta.property.name == "meta";
+            }
+            _ => return false,
+        };
+        Self::is_dot_define_parts(scoping, scope_flags, &define.parts, member)
     }
 
     fn replace_identifier_define_impl(
@@ -684,9 +816,15 @@ impl<'a> ReplaceGlobalDefines<'a> {
         false
     }
 
-    /// Compute the current scope flags based on function depth tracking.
+    /// Compute the current scope flags based on function and class `this` depth tracking.
     fn current_scope_flags(&self) -> ScopeFlags {
-        if self.non_arrow_function_depth > 0 { ScopeFlags::Function } else { ScopeFlags::Top }
+        if self.non_arrow_function_depth > 0 {
+            ScopeFlags::Function
+        } else if self.class_this_depth > 0 {
+            ScopeFlags::ClassStaticBlock
+        } else {
+            ScopeFlags::Top
+        }
     }
 
     /// If `expr` is a `ChainExpression` whose chain no longer contains any
@@ -751,7 +889,16 @@ impl<'a> ReplaceGlobalDefines<'a> {
         dot_define: &DotDefine,
         member: DotDefineMemberExpression<'b, 'a>,
     ) -> bool {
-        debug_assert!(dot_define.parts.len() > 1);
+        Self::is_dot_define_parts(scoping, scope_flags, &dot_define.parts, member)
+    }
+
+    fn is_dot_define_parts<'b>(
+        scoping: &Scoping,
+        scope_flags: ScopeFlags,
+        parts: &[CompactStr],
+        member: DotDefineMemberExpression<'b, 'a>,
+    ) -> bool {
+        debug_assert!(parts.len() > 1);
         let should_replace_this_expr = should_replace_this_expr(scope_flags);
         let Some(cur_part_name) = member.name() else {
             return false;
@@ -759,7 +906,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         let mut cur_part_name: &str = cur_part_name.as_str();
         let mut current_part_member_expression = Some(member);
 
-        for (i, part) in dot_define.parts.iter().enumerate().rev() {
+        for (i, part) in parts.iter().enumerate().rev() {
             if cur_part_name != part {
                 return false;
             }
@@ -768,7 +915,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             }
 
             current_part_member_expression = if let Some(member) = current_part_member_expression {
-                match &member.object() {
+                match member.object().without_parentheses() {
                     Expression::StaticMemberExpression(member) => {
                         cur_part_name = &member.property.name;
                         Some(DotDefineMemberExpression::StaticMemberExpression(member))
@@ -799,8 +946,8 @@ impl<'a> ReplaceGlobalDefines<'a> {
                             // We need the next two parts (going backwards) to be "meta" then "import"
                             // i.e., parts[i-1] == "meta" and parts[i-2] == "import"
                             if i >= 2
-                                && dot_define.parts[i - 1].as_str() == "meta"
-                                && dot_define.parts[i - 2].as_str() == "import"
+                                && parts[i - 1].as_str() == "meta"
+                                && parts[i - 2].as_str() == "import"
                             {
                                 // Successfully matched import.meta at the expected position
                                 // Return true if we've consumed all parts (i == 2)
@@ -919,7 +1066,8 @@ fn static_property_name_of_computed_expr<'b, 'a: 'b>(
 }
 
 const fn should_replace_this_expr(scope_flags: ScopeFlags) -> bool {
-    !scope_flags.contains(ScopeFlags::Function) || scope_flags.contains(ScopeFlags::Arrow)
+    !scope_flags.contains(ScopeFlags::ClassStaticBlock)
+        && (!scope_flags.contains(ScopeFlags::Function) || scope_flags.contains(ScopeFlags::Arrow))
 }
 
 fn assignment_target_from_expr(expr: Expression) -> Option<AssignmentTarget> {

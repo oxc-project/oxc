@@ -1,10 +1,10 @@
 use std::ops::Deref;
 
-use icu_segmenter::GraphemeClusterSegmenter;
 use lazy_regex::Regex;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
+use unicode_segmentation::UnicodeSegmentation;
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
@@ -202,8 +202,7 @@ impl IdLength {
             let ident_length = ident_name.len();
             (self.is_too_long(ident_length), self.is_too_short(ident_length))
         } else {
-            let segmenter = GraphemeClusterSegmenter::new();
-            let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
+            let graphemes_length = ident_name.graphemes(true).count();
             (self.is_too_long(graphemes_length), self.is_too_short(graphemes_length))
         };
 
@@ -265,8 +264,7 @@ impl IdLength {
             let ident_length = ident_name.len();
             (self.is_too_long(ident_length), self.is_too_short(ident_length))
         } else {
-            let segmenter = GraphemeClusterSegmenter::new();
-            let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
+            let graphemes_length = ident_name.graphemes(true).count();
             (self.is_too_long(graphemes_length), self.is_too_short(graphemes_length))
         };
 
@@ -372,8 +370,7 @@ impl IdLength {
             let ident_length = ident_name.len();
             (self.is_too_long(ident_length), self.is_too_short(ident_length))
         } else {
-            let segmenter = GraphemeClusterSegmenter::new();
-            let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
+            let graphemes_length = ident_name.graphemes(true).count();
             (self.is_too_long(graphemes_length), self.is_too_short(graphemes_length))
         };
 
