@@ -173,10 +173,7 @@ impl Config {
             .cloned()
             .collect::<FxHashMap<_, _>>();
 
-        // The full set of rules for the enabled plugins is only needed when an override
-        // introduces a new, unconfigured plugin (to apply its category rules). Compute it
-        // lazily so the common case — overrides that only tweak rule severities — doesn't
-        // clone every rule in `RULES` on each call (i.e. for every linted file).
+        // Build this only if an override adds a plugin whose category rules need applying.
         let mut all_rules: Option<Vec<RuleEnum>> = None;
 
         // Build a hashmap of existing external rules keyed by rule id with value (options_id, severity)
