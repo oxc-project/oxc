@@ -1,5 +1,5 @@
 use oxc_str::Ident;
-use oxc_syntax::reference::ReferenceId;
+use oxc_syntax::{reference::ReferenceId, scope::ScopeId};
 
 /// Flat list of unresolved references collected during AST traversal.
 ///
@@ -7,8 +7,13 @@ use oxc_syntax::reference::ReferenceId;
 /// references are collected flat and resolved in a single pass after traversal (walk-up).
 /// This eliminates all hashmap drain+insert operations during scope exit.
 pub struct UnresolvedReferences<'a> {
-    /// Flat list of (name, reference_id) pairs collected during traversal.
-    references: Vec<(Ident<'a>, ReferenceId)>,
+    /// Flat list of `(name, reference_id, scope_id)` collected during traversal.
+    ///
+    /// `scope_id` is the scope the resolution walk starts from — the reference's own
+    /// scope, unless a function / catch parameter region bumped it to the region's
+    /// parent scope (see `SemanticBuilder::resolve_references_for_current_scope`).
+    /// The extra field is free: the tuple is 24 bytes with or without it (padding).
+    references: Vec<(Ident<'a>, ReferenceId, ScopeId)>,
 }
 
 impl<'a> UnresolvedReferences<'a> {
@@ -24,10 +29,11 @@ impl<'a> UnresolvedReferences<'a> {
         self.references.reserve_exact(additional);
     }
 
-    /// Push an unresolved reference to the flat list.
+    /// Push an unresolved reference to the flat list. `scope_id` is the scope the
+    /// resolution walk starts from — the scope the reference occurs in.
     #[inline]
-    pub(crate) fn push(&mut self, name: Ident<'a>, reference_id: ReferenceId) {
-        self.references.push((name, reference_id));
+    pub(crate) fn push(&mut self, name: Ident<'a>, reference_id: ReferenceId, scope_id: ScopeId) {
+        self.references.push((name, reference_id, scope_id));
     }
 
     /// Get the current length, used as a checkpoint for early resolution.
@@ -38,7 +44,7 @@ impl<'a> UnresolvedReferences<'a> {
 
     /// Take all collected references, leaving the list empty. O(1) pointer swap.
     #[inline]
-    pub(crate) fn take(&mut self) -> Vec<(Ident<'a>, ReferenceId)> {
+    pub(crate) fn take(&mut self) -> Vec<(Ident<'a>, ReferenceId, ScopeId)> {
         std::mem::take(&mut self.references)
     }
 
@@ -51,14 +57,14 @@ impl<'a> UnresolvedReferences<'a> {
     /// Read a reference by index, by value.
     ///
     /// Used by [`crate::SemanticBuilder::resolve_references_for_current_scope`]
-    /// to process the list in-place without allocating a temporary `Vec`. Both
-    /// `Ident<'a>` and `ReferenceId` are `Copy`, so this hands the caller an
-    /// owned pair that's detached from the underlying borrow.
+    /// to process the list in-place without allocating a temporary `Vec`. All
+    /// fields are `Copy`, so this hands the caller an owned tuple that's
+    /// detached from the underlying borrow.
     ///
     /// # Panics
     /// Panics if `idx >= self.len()`.
     #[inline]
-    pub(crate) fn get(&self, idx: usize) -> (Ident<'a>, ReferenceId) {
+    pub(crate) fn get(&self, idx: usize) -> (Ident<'a>, ReferenceId, ScopeId) {
         self.references[idx]
     }
 
@@ -68,8 +74,14 @@ impl<'a> UnresolvedReferences<'a> {
     /// # Panics
     /// Panics if `idx >= self.len()`.
     #[inline]
-    pub(crate) fn set(&mut self, idx: usize, name: Ident<'a>, reference_id: ReferenceId) {
-        self.references[idx] = (name, reference_id);
+    pub(crate) fn set(
+        &mut self,
+        idx: usize,
+        name: Ident<'a>,
+        reference_id: ReferenceId,
+        scope_id: ScopeId,
+    ) {
+        self.references[idx] = (name, reference_id, scope_id);
     }
 
     /// Truncate the list to `len`, removing references at the end.

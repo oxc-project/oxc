@@ -476,3 +476,75 @@ fn test_import_value_redeclaration_in_module() {
     // TypeScript should NOT report this error (declaration merging)
     SemanticTester::ts("import { Foo } from './foo.js'; var Foo;").has_root_symbol("Foo").test();
 }
+
+#[test]
+fn test_parameter_initializer_binds_to_hoisted_declaration() {
+    // `r = s` must bind to the `function s` hoisted in `m`'s body — the nearest
+    // binding on the arrow's scope chain — not the top-level `s`. The builder used
+    // to eagerly resolve parameter-initializer references against ancestor scopes
+    // before the enclosing body's hoisted declarations were bound, capturing the
+    // reference to the outer symbol.
+    let tester = SemanticTester::js(
+        "function s() { return 'outer'; }
+         function m() {
+             const a = (r = s) => r();
+             return a();
+             function s() { return 'inner'; }
+         }",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let root_scope_id = scoping.root_scope_id();
+    let mut outer = None;
+    let mut inner = None;
+    for symbol_id in scoping.symbol_ids() {
+        if scoping.symbol_name(symbol_id) == "s" {
+            if scoping.symbol_scope_id(symbol_id) == root_scope_id {
+                outer = Some(symbol_id);
+            } else {
+                inner = Some(symbol_id);
+            }
+        }
+    }
+    assert_eq!(scoping.get_resolved_reference_ids(outer.unwrap()).len(), 0);
+    assert_eq!(scoping.get_resolved_reference_ids(inner.unwrap()).len(), 1);
+}
+
+#[test]
+fn test_parameter_initializer_does_not_bind_to_body_variable() {
+    // A parameter initializer must not see the function's own body declarations:
+    // `r = x` binds to the outer `x`, not the body `var x`.
+    // ... regardless of whether the outer declaration appears before or after the
+    // function in the source.
+    let sources = [
+        "var x = 1;
+         function m(r = x) {
+             var x = 2;
+             return r;
+         }",
+        "function m(r = x) {
+             var x = 2;
+             return r;
+         }
+         var x = 1;",
+    ];
+    for source in sources {
+        let tester = SemanticTester::js(source);
+        let semantic = tester.build();
+        let scoping = semantic.scoping();
+        let root_scope_id = scoping.root_scope_id();
+        let mut outer = None;
+        let mut body = None;
+        for symbol_id in scoping.symbol_ids() {
+            if scoping.symbol_name(symbol_id) == "x" {
+                if scoping.symbol_scope_id(symbol_id) == root_scope_id {
+                    outer = Some(symbol_id);
+                } else {
+                    body = Some(symbol_id);
+                }
+            }
+        }
+        assert_eq!(scoping.get_resolved_reference_ids(outer.unwrap()).len(), 1, "{source}");
+        assert_eq!(scoping.get_resolved_reference_ids(body.unwrap()).len(), 0, "{source}");
+    }
+}

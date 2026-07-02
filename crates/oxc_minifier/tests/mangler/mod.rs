@@ -375,6 +375,84 @@ fn reserved_names() {
     );
 }
 
+/// A reference in a parameter initializer must bind to a hoisted declaration in the
+/// *enclosing* function's body, even when an outer binding shares the name. The semantic
+/// builder used to eagerly resolve such references against ancestor scopes before the
+/// enclosing body's hoisted declarations were bound, capturing the reference to the wrong
+/// (outer) symbol and miscompiling — surfaced as mangler idempotency failures in
+/// monitor-oxc on ts-api-utils / typescript / vuetify.
+#[test]
+fn parameter_initializer_sees_enclosing_body_declarations() {
+    let options = &MangleOptions::default();
+
+    // `r = s` must follow the hoisted `function s` at the end of `m`'s body,
+    // not the top-level `s`.
+    test(
+        "function s() { return 'outer'; }
+         function m() {
+             const a = (r = s) => r();
+             return a();
+             function s() { return 'inner'; }
+         }",
+        "function s() { return 'outer'; }
+         function m() {
+             const e = (e = t) => e();
+             return e();
+             function t() { return 'inner'; }
+         }",
+        options,
+    );
+
+    // Same with a `const` declared after the arrow (bound later in the traversal,
+    // TDZ at runtime until initialized, but lexically the nearest binding).
+    test(
+        "const s = 'outer';
+         function m() {
+             const a = (r = s) => r;
+             const s = 'inner';
+             return a();
+         }",
+        "const s = 'outer';
+         function m() {
+             const e = (e = t) => e;
+             const t = 'inner';
+             return e();
+         }",
+        options,
+    );
+}
+
+/// Re-mangling output containing parameter initializers that reference hoisted
+/// enclosing-body declarations must be a fixed point.
+#[test]
+fn parameter_initializer_mangle_is_idempotent() {
+    let options = &MangleOptions::default();
+
+    let cases = [
+        "function s() { return 'outer'; }
+         function m() {
+             const a = (r = s) => r();
+             return a();
+             function s() { return 'inner'; }
+         }",
+        "const s = 'outer';
+         function m() {
+             const a = (r = s) => r;
+             const s = 'inner';
+             return a();
+         }",
+    ];
+
+    for case in cases {
+        let pass1 = mangle(case, options);
+        let pass2 = mangle(&pass1, options);
+        assert_eq!(
+            pass1, pass2,
+            "\nIdempotency failure for:\n{case}\nPass 1:\n{pass1}\nPass 2:\n{pass2}"
+        );
+    }
+}
+
 /// Annex B.3.2.1: In sloppy mode, function declarations inside blocks have var-like hoisting.
 /// The mangler must not assign the same name to such a function and an outer `var` binding.
 #[test]

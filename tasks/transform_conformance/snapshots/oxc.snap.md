@@ -784,7 +784,7 @@ rebuilt        : ["Ambient", "Object", "babelHelpers", "dec"]
 
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
-after transform: SymbolId(0): [ReferenceId(3), ReferenceId(1), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
 rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(7), ReferenceId(9)]
 Symbol span mismatch for "Example":
 after transform: SymbolId(1): Span { start: 87, end: 94 }
@@ -911,7 +911,7 @@ Symbol flags mismatch for "StringEnum":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "StringEnum":
-after transform: SymbolId(0): [ReferenceId(21), ReferenceId(5), ReferenceId(27)]
+after transform: SymbolId(0): [ReferenceId(5), ReferenceId(21), ReferenceId(27)]
 rebuilt        : SymbolId(0): [ReferenceId(3)]
 Symbol flags mismatch for "TemplateStringEnum":
 after transform: SymbolId(3): SymbolFlags(RegularEnum)
@@ -923,7 +923,7 @@ Symbol flags mismatch for "NumberEnum":
 after transform: SymbolId(6): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "NumberEnum":
-after transform: SymbolId(6): [ReferenceId(22), ReferenceId(9), ReferenceId(23), ReferenceId(37)]
+after transform: SymbolId(6): [ReferenceId(9), ReferenceId(22), ReferenceId(23), ReferenceId(37)]
 rebuilt        : SymbolId(4): [ReferenceId(13), ReferenceId(53)]
 Symbol flags mismatch for "UnaryEnum":
 after transform: SymbolId(9): SymbolFlags(RegularEnum)
