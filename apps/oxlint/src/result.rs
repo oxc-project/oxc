@@ -17,6 +17,7 @@ pub enum CliRunResult {
     LintMaxWarningsExceeded,
     LintNoWarningsAllowed,
     LintNoFilesFound,
+    OutputFileWriteFailed,
     PrintConfigResult,
     ConfigFileInitFailed,
     ConfigFileInitSucceeded,
@@ -36,6 +37,7 @@ impl Termination for CliRunResult {
             | Self::LintNoFilesFound
             | Self::LintNoWarningsAllowed
             | Self::LintMaxWarningsExceeded
+            | Self::OutputFileWriteFailed
             | Self::InvalidOptionConfig
             | Self::InvalidOptionTsConfig
             | Self::InvalidOptionTypeCheckWithoutTypeAware
