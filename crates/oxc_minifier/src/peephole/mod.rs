@@ -3,6 +3,7 @@ mod fold_constants;
 mod inline;
 mod minimize_conditional_expression;
 mod minimize_conditions;
+mod minimize_exit_points;
 mod minimize_expression_in_boolean_context;
 mod minimize_for_statement;
 mod minimize_if_statement;
