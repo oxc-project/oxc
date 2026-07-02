@@ -27,6 +27,11 @@ description = "oxc integration for the Rust port of React Compiler"
 doctest = false
 test = false
 
+[features]
+# Compile in the HIR debug printer (`react_compiler::debug_print`). Off by default;
+# the runtime `PluginOptions::debug` flag only produces output when this is enabled.
+debug = []
+
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
