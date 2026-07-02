@@ -2632,7 +2632,7 @@ dependencies = [
  "oxc_resolver",
  "oxc_semantic",
  "oxc_span",
- "rustc-hash 2.1.2",
+ "rustc-hash",
 ]
 
 [[package]]
