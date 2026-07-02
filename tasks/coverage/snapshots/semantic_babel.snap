@@ -2,7 +2,7 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2017/2236 (90.21%)
+Positive Passed: 2028/2236 (90.70%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -60,66 +60,6 @@ Symbol scope ID mismatch for "other":
 after transform: SymbolId(2): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(2)
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/13/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["x"]
-rebuilt        : ScopeId(1): ["_inner", "inner", "x"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_inner", "inner"]
-rebuilt        : ScopeId(2): []
-Symbol scope ID mismatch for "inner":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(1)
-Symbol scope ID mismatch for "_inner":
-after transform: SymbolId(2): ScopeId(2)
-rebuilt        : SymbolId(3): ScopeId(1)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await/input.js
-Bindings mismatch:
-after transform: ScopeId(1): []
-rebuilt        : ScopeId(5): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_iteratorAbruptCompletion":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(4): ScopeId(5)
-Symbol scope ID mismatch for "_didIteratorError":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(5)
-Symbol scope ID mismatch for "_iteratorError":
-after transform: SymbolId(6): ScopeId(2)
-rebuilt        : SymbolId(6): ScopeId(5)
-Symbol scope ID mismatch for "_iterator":
-after transform: SymbolId(7): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(5)
-Symbol scope ID mismatch for "_step":
-after transform: SymbolId(2): ScopeId(2)
-rebuilt        : SymbolId(8): ScopeId(5)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await-async-of/input.js
-Bindings mismatch:
-after transform: ScopeId(1): []
-rebuilt        : ScopeId(5): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_iteratorAbruptCompletion":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(4): ScopeId(5)
-Symbol scope ID mismatch for "_didIteratorError":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(5)
-Symbol scope ID mismatch for "_iteratorError":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(6): ScopeId(5)
-Symbol scope ID mismatch for "_iterator":
-after transform: SymbolId(6): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(5)
-Symbol scope ID mismatch for "_step":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(8): ScopeId(5)
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/3/input.js
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref", "x", "y"]
@@ -134,28 +74,6 @@ Symbol scope ID mismatch for "y":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(4): ScopeId(2)
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/super-method-class/input.js
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["_super"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_super"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_super":
-after transform: SymbolId(1): ScopeId(3)
-rebuilt        : SymbolId(1): ScopeId(2)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-async/input.js
-Bindings mismatch:
-after transform: ScopeId(1): []
-rebuilt        : ScopeId(1): ["_p"]
-Bindings mismatch:
-after transform: ScopeId(2): ["C", "_p"]
-rebuilt        : ScopeId(2): ["C"]
-Symbol scope ID mismatch for "_p":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(1)
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_classPrivateFieldInitSpec"]
@@ -166,42 +84,6 @@ rebuilt        : ScopeId(1): ["x"]
 Symbol scope ID mismatch for "_x":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(2): ScopeId(0)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/declared-later-outer-class/input.js
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(4): ["_x"]
-Bindings mismatch:
-after transform: ScopeId(3): ["A", "_x"]
-rebuilt        : ScopeId(5): ["A"]
-Symbol scope ID mismatch for "_x":
-after transform: SymbolId(4): ScopeId(3)
-rebuilt        : SymbolId(4): ScopeId(4)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/nested/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["x", "y"]
-rebuilt        : ScopeId(2): ["_x2", "_y2", "x", "y"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_x2", "_y2"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_x2":
-after transform: SymbolId(15): ScopeId(3)
-rebuilt        : SymbolId(8): ScopeId(2)
-Symbol scope ID mismatch for "_y2":
-after transform: SymbolId(16): ScopeId(3)
-rebuilt        : SymbolId(9): ScopeId(2)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/optional-chain-object/input.js
-Bindings mismatch:
-after transform: ScopeId(4): []
-rebuilt        : ScopeId(2): ["_o$Foo"]
-Bindings mismatch:
-after transform: ScopeId(5): ["_o$Foo", "o"]
-rebuilt        : ScopeId(3): ["o"]
-Symbol scope ID mismatch for "_o$Foo":
-after transform: SymbolId(5): ScopeId(5)
-rebuilt        : SymbolId(2): ScopeId(2)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
 Bindings mismatch:
@@ -225,94 +107,10 @@ Symbol scope ID mismatch for "_await":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-await-expr-using/input.js
-Bindings mismatch:
-after transform: ScopeId(1): []
-rebuilt        : ScopeId(5): ["_using"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_using"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_using":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(3): ScopeId(5)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-await-using-comments/input.js
-Bindings mismatch:
-after transform: ScopeId(1): []
-rebuilt        : ScopeId(5): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_usingCtx", "_usingCtx3", "_usingCtx4"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_usingCtx", "_usingCtx3", "_usingCtx4"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_usingCtx":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(5)
-Symbol scope ID mismatch for "_usingCtx3":
-after transform: SymbolId(9): ScopeId(2)
-rebuilt        : SymbolId(10): ScopeId(5)
-Symbol scope ID mismatch for "_iteratorAbruptCompletion":
-after transform: SymbolId(14): ScopeId(2)
-rebuilt        : SymbolId(13): ScopeId(5)
-Symbol scope ID mismatch for "_didIteratorError":
-after transform: SymbolId(13): ScopeId(2)
-rebuilt        : SymbolId(14): ScopeId(5)
-Symbol scope ID mismatch for "_iteratorError":
-after transform: SymbolId(15): ScopeId(2)
-rebuilt        : SymbolId(15): ScopeId(5)
-Symbol scope ID mismatch for "_iterator":
-after transform: SymbolId(16): ScopeId(2)
-rebuilt        : SymbolId(16): ScopeId(5)
-Symbol scope ID mismatch for "_step":
-after transform: SymbolId(11): ScopeId(2)
-rebuilt        : SymbolId(17): ScopeId(5)
-Symbol scope ID mismatch for "_usingCtx4":
-after transform: SymbolId(18): ScopeId(2)
-rebuilt        : SymbolId(18): ScopeId(5)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-case-block-await-using-binding/input.js
-Bindings mismatch:
-after transform: ScopeId(1): []
-rebuilt        : ScopeId(5): ["_usingCtx", "_usingCtx3"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_usingCtx", "_usingCtx3"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_usingCtx":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(4): ScopeId(5)
-Symbol scope ID mismatch for "_usingCtx3":
-after transform: SymbolId(6): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(5)
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-for-using-binding-of-of/input.js
-Bindings mismatch:
-after transform: ScopeId(1): []
-rebuilt        : ScopeId(5): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_usingCtx", "_usingCtx3"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_usingCtx", "_usingCtx3"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_usingCtx":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(6): ScopeId(5)
 Symbol reference IDs mismatch for "of":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(7): []
-Symbol scope ID mismatch for "_iteratorAbruptCompletion":
-after transform: SymbolId(10): ScopeId(2)
-rebuilt        : SymbolId(9): ScopeId(5)
-Symbol scope ID mismatch for "_didIteratorError":
-after transform: SymbolId(9): ScopeId(2)
-rebuilt        : SymbolId(10): ScopeId(5)
-Symbol scope ID mismatch for "_iteratorError":
-after transform: SymbolId(11): ScopeId(2)
-rebuilt        : SymbolId(11): ScopeId(5)
-Symbol scope ID mismatch for "_iterator":
-after transform: SymbolId(12): ScopeId(2)
-rebuilt        : SymbolId(12): ScopeId(5)
-Symbol scope ID mismatch for "_step":
-after transform: SymbolId(7): ScopeId(2)
-rebuilt        : SymbolId(13): ScopeId(5)
-Symbol scope ID mismatch for "_usingCtx3":
-after transform: SymbolId(14): ScopeId(2)
-rebuilt        : SymbolId(14): ScopeId(5)
 Symbol reference IDs mismatch for "of":
 after transform: SymbolId(2): [ReferenceId(1)]
 rebuilt        : SymbolId(15): []
@@ -388,10 +186,7 @@ rebuilt        : SymbolId(5): ScopeId(7)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-using/input.js
 Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx"]
-rebuilt        : ScopeId(5): ["_usingCtx", "_usingCtx3"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_usingCtx3", "using"]
+after transform: ScopeId(2): ["using"]
 rebuilt        : ScopeId(6): []
 Bindings mismatch:
 after transform: ScopeId(4): []
@@ -408,9 +203,6 @@ rebuilt        : ScopeId(15): Some(ScopeId(6))
 Symbol scope ID mismatch for "using":
 after transform: SymbolId(1): ScopeId(2)
 rebuilt        : SymbolId(5): ScopeId(7)
-Symbol scope ID mismatch for "_usingCtx3":
-after transform: SymbolId(7): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(5)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/object-binding-pattern-invalid-rest-in-object-pattern/input.js
 Bindings mismatch:
