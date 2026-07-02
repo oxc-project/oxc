@@ -278,13 +278,14 @@ fn has_next_iteration_path(
                 | EdgeType::Join
                 | EdgeType::Error(ErrorEdgeKind::Implicit) => {}
                 EdgeType::Finalize => {
-                    if cfg
-                        .basic_block(source)
-                        .instructions()
-                        .iter()
-                        .any(|instruction| matches!(instruction.kind, InstructionKind::Continue(_)))
-                    {
-                        stack.push(edge.target());
+                    if finalizer_can_continue_to_loop(
+                        edge.target(),
+                        loop_id,
+                        start,
+                        ctx,
+                        unreachable,
+                    ) {
+                        return true;
                     }
                 }
                 EdgeType::Error(ErrorEdgeKind::Explicit) => {
@@ -292,6 +293,82 @@ fn has_next_iteration_path(
                         stack.push(edge.target());
                     }
                 }
+            }
+        }
+    }
+
+    false
+}
+
+fn finalizer_can_continue_to_loop(
+    start: BlockNodeId,
+    loop_id: NodeId,
+    body_start: BlockNodeId,
+    ctx: &LintContext<'_>,
+    unreachable: Option<&[bool]>,
+) -> bool {
+    let cfg = ctx.cfg();
+    let graph = cfg.graph();
+    let mut stack = vec![start];
+    let mut seen = vec![false; cfg.basic_blocks.len()];
+
+    while let Some(current) = stack.pop() {
+        if seen[current.index()] || is_unreachable_block(current, ctx, unreachable) {
+            continue;
+        }
+        seen[current.index()] = true;
+
+        let mut has_abrupt_exit = false;
+        for instruction in cfg.basic_block(current).instructions() {
+            match instruction.kind {
+                InstructionKind::Continue(LabeledInstruction::Unlabeled)
+                    if can_continue_loop_from(current, loop_id, body_start, ctx, unreachable) =>
+                {
+                    return true;
+                }
+                InstructionKind::Continue(LabeledInstruction::Labeled) => {
+                    for edge in graph
+                        .edges_directed(current, Direction::Outgoing)
+                        .filter(|edge| matches!(edge.weight(), EdgeType::Jump))
+                    {
+                        if can_continue_loop_from(
+                            edge.target(),
+                            loop_id,
+                            body_start,
+                            ctx,
+                            unreachable,
+                        ) {
+                            return true;
+                        }
+                    }
+                    has_abrupt_exit = true;
+                }
+                InstructionKind::Break(_)
+                | InstructionKind::Return(_)
+                | InstructionKind::Throw
+                | InstructionKind::Continue(_) => has_abrupt_exit = true,
+                _ => {}
+            }
+        }
+
+        if has_abrupt_exit {
+            continue;
+        }
+
+        for edge in graph.edges_directed(current, Direction::Outgoing) {
+            match edge.weight() {
+                EdgeType::Normal | EdgeType::Jump | EdgeType::Backedge | EdgeType::Finalize => {
+                    stack.push(edge.target());
+                }
+                EdgeType::Error(ErrorEdgeKind::Explicit) => {
+                    if explicit_error_edge_can_throw(current, ctx) {
+                        stack.push(edge.target());
+                    }
+                }
+                EdgeType::Unreachable
+                | EdgeType::NewFunction
+                | EdgeType::Join
+                | EdgeType::Error(ErrorEdgeKind::Implicit) => {}
             }
         }
     }
@@ -811,6 +888,10 @@ fn test() {
         ("while(true); while(true) break;", None).into(),
         ("while (true) {} while (foo) break;", None).into(),
         ("while (a) { try { continue; } finally {} }", None).into(),
+        ("while (a) { try { break; } finally { continue; } }", None).into(),
+        ("while (a) { try { break; } finally { if (foo) continue; } }", None).into(),
+        ("while (a) { try { throw err; } finally { continue; } }", None).into(),
+        ("function foo() { while (a) { try { return; } finally { continue; } } }", None).into(),
         (
             "while (a) break;",
             Some(serde_json::json!([{ "ignore": ["WhileStatement"] }])),
