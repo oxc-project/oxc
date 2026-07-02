@@ -364,21 +364,21 @@ fn is_in_react_hook<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 
     let scoping = ctx.scoping();
 
-    // Check the parent scope's node (the function that contains us)
-    if let Some(parent_scope_id) = scoping.scope_parent_id(current_scope_id) {
+    // Check the nearest enclosing function, skipping body/block scopes.
+    let mut scope_id = scoping.scope_parent_id(current_scope_id);
+    while let Some(parent_scope_id) = scope_id {
         let parent_scope_node_id = scoping.get_node_id(parent_scope_id);
         let parent_scope_node = ctx.nodes().get_node(parent_scope_node_id);
 
-        // If the parent scope is a function, check if that function is inside a React hook
         if matches!(
             parent_scope_node.kind(),
             AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
         ) {
             let grandparent = ctx.nodes().parent_node(parent_scope_node_id);
-            if let AstKind::CallExpression(call_expr) = grandparent.kind() {
-                return is_react_hook(&call_expr.callee);
-            }
+            return matches!(grandparent.kind(), AstKind::CallExpression(call_expr) if is_react_hook(&call_expr.callee));
         }
+
+        scope_id = scoping.scope_parent_id(parent_scope_id);
     }
 
     false
@@ -393,13 +393,17 @@ fn get_short_span_for_fn_scope(
 
     debug_assert!(!scoping.scope_flags(scope_id).contains(ScopeFlags::Top));
 
-    let scope_id =
+    let mut scope_id =
         match ctx.nodes().parent_kind(ctx.scoping().symbol_declaration(function_symbol_id)) {
             AstKind::AssignmentExpression(_) | AstKind::ObjectProperty(_) => {
                 ctx.scoping().scope_parent_id(scope_id).unwrap_or(scope_id)
             }
             _ => scope_id,
         };
+
+    if scoping.scope_flags(scope_id).is_function_body() {
+        scope_id = scoping.scope_parent_id(scope_id).unwrap_or(scope_id);
+    }
 
     let node_creating_parent_scope = ctx.nodes().get_node(scoping.get_node_id(scope_id));
 

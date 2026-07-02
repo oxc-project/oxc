@@ -1251,6 +1251,7 @@ impl<'a> Dummy<'a> for FunctionBody<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
+            scope_id: Dummy::dummy(allocator),
             directives: Dummy::dummy(allocator),
             statements: Dummy::dummy(allocator),
         }

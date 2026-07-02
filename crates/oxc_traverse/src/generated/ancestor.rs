@@ -8653,6 +8653,7 @@ impl<'a, 't> GetAddress for FormalParameterRestWithoutTypeAnnotation<'a, 't> {
 
 pub(crate) const OFFSET_FUNCTION_BODY_NODE_ID: usize = offset_of!(FunctionBody, node_id);
 pub(crate) const OFFSET_FUNCTION_BODY_SPAN: usize = offset_of!(FunctionBody, span);
+pub(crate) const OFFSET_FUNCTION_BODY_SCOPE_ID: usize = offset_of!(FunctionBody, scope_id);
 pub(crate) const OFFSET_FUNCTION_BODY_DIRECTIVES: usize = offset_of!(FunctionBody, directives);
 pub(crate) const OFFSET_FUNCTION_BODY_STATEMENTS: usize = offset_of!(FunctionBody, statements);
 
@@ -8674,6 +8675,14 @@ impl<'a, 't> FunctionBodyWithoutDirectives<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
     }
 
     #[inline]
@@ -8710,6 +8719,14 @@ impl<'a, 't> FunctionBodyWithoutStatements<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
     }
 
     #[inline]

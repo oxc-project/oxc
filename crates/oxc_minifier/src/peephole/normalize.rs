@@ -471,10 +471,16 @@ impl<'a> Normalize {
     }
 
     fn remove_unused_use_strict_directive(body: &mut FunctionBody<'a>, ctx: &TraverseCtx<'a>) {
+        let current_scope_id = ctx.current_scope_id();
+        let parent_scope_id = ctx.scoping().scope_parent_id(current_scope_id);
+        let enclosing_scope_id = if ctx.scoping().scope_flags(current_scope_id).is_function_body() {
+            parent_scope_id.and_then(|scope_id| ctx.scoping().scope_parent_id(scope_id))
+        } else {
+            parent_scope_id
+        };
+
         if !body.directives.is_empty()
-            && ctx
-                .scoping()
-                .scope_parent_id(ctx.current_scope_id())
+            && enclosing_scope_id
                 .map(|scope_id| ctx.scoping().scope_flags(scope_id))
                 .is_some_and(ScopeFlags::is_strict_mode)
         {

@@ -147,13 +147,20 @@ fn can_safely_unnest(
         match arg_expr {
             Expression::ArrowFunctionExpression(arrow_expr) => {
                 let scope = arrow_expr.scope_id();
-                if uses_closest_cb_vars(scope, cb_span, ctx) {
+                if uses_closest_cb_vars(scope, cb_span, ctx)
+                    || uses_closest_cb_vars(arrow_expr.body.scope_id(), cb_span, ctx)
+                {
                     return false; // Not safe to unnest.
                 }
             }
             Expression::FunctionExpression(func_expr) => {
                 let scope = func_expr.scope_id();
-                if uses_closest_cb_vars(scope, cb_span, ctx) {
+                if uses_closest_cb_vars(scope, cb_span, ctx)
+                    || func_expr
+                        .body
+                        .as_ref()
+                        .is_some_and(|body| uses_closest_cb_vars(body.scope_id(), cb_span, ctx))
+                {
                     return false; // Not safe to unnest.
                 }
             }

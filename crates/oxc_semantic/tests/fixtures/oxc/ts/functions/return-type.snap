@@ -15,48 +15,64 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/return-type.ts
       {
         "children": [
           {
-            "children": [],
-            "flags": "ScopeFlags(StrictMode)",
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode)",
+                "id": 4,
+                "node": "TSTypeAliasDeclaration",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(StrictMode | FunctionBody)",
             "id": 3,
-            "node": "TSTypeAliasDeclaration",
-            "symbols": []
+            "node": "FunctionBody",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(TypeAlias)",
+                "id": 2,
+                "name": "T",
+                "node": "TSTypeAliasDeclaration",
+                "references": []
+              }
+            ]
           }
         ],
         "flags": "ScopeFlags(StrictMode | Function)",
         "id": 2,
         "node": "Function(Foo)",
-        "symbols": [
-          {
-            "flags": "SymbolFlags(TypeAlias)",
-            "id": 2,
-            "name": "T",
-            "node": "TSTypeAliasDeclaration",
-            "references": []
-          }
-        ]
+        "symbols": []
       },
       {
         "children": [
           {
-            "children": [],
-            "flags": "ScopeFlags(StrictMode)",
-            "id": 5,
-            "node": "TSTypeAliasDeclaration",
-            "symbols": []
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode)",
+                "id": 7,
+                "node": "TSTypeAliasDeclaration",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(StrictMode | FunctionBody)",
+            "id": 6,
+            "node": "FunctionBody",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(TypeAlias)",
+                "id": 4,
+                "name": "T",
+                "node": "TSTypeAliasDeclaration",
+                "references": []
+              }
+            ]
           }
         ],
         "flags": "ScopeFlags(StrictMode | Function | Arrow)",
-        "id": 4,
+        "id": 5,
         "node": "ArrowFunctionExpression",
-        "symbols": [
-          {
-            "flags": "SymbolFlags(TypeAlias)",
-            "id": 4,
-            "name": "T",
-            "node": "TSTypeAliasDeclaration",
-            "references": []
-          }
-        ]
+        "symbols": []
       }
     ],
     "flags": "ScopeFlags(StrictMode | Top)",
@@ -81,7 +97,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/return-type.ts
             "id": 1,
             "name": "T",
             "node_id": 24,
-            "scope_id": 4
+            "scope_id": 5
           }
         ]
       },

@@ -13,7 +13,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::Reference;
+use oxc_semantic::{Reference, ScopeId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     node::NodeId,
@@ -419,7 +419,8 @@ impl NoShadow {
         symbol_name: &str,
     ) -> Option<Span> {
         let symbol_declaration = ctx.scoping().symbol_declaration(symbol_id);
-        let symbol_scope = ctx.scoping().symbol_scope_id(symbol_id);
+        let symbol_scope =
+            Self::function_scope_for_body_scope(ctx, ctx.scoping().symbol_scope_id(symbol_id));
         let scope_node_id = ctx.scoping().get_node_id(symbol_scope);
 
         if symbol_declaration == scope_node_id {
@@ -528,10 +529,14 @@ impl NoShadow {
             return initializer.address() == ctx.nodes().kind(unwrapped_expression_id).address();
         }
 
-        let inner_scope_id = ctx.scoping().symbol_scope_id(inner_symbol_id);
+        let inner_scope_id = Self::function_scope_for_body_scope(
+            ctx,
+            ctx.scoping().symbol_scope_id(inner_symbol_id),
+        );
         let outer_scope_id = ctx.scoping().symbol_scope_id(outer_symbol_id);
         ctx.scoping()
             .scope_parent_id(inner_scope_id)
+            .map(|parent_scope_id| Self::function_scope_for_body_scope(ctx, parent_scope_id))
             .is_some_and(|parent_scope_id| parent_scope_id == outer_scope_id)
     }
 
@@ -542,7 +547,8 @@ impl NoShadow {
     ) -> bool {
         let scoping = ctx.scoping();
 
-        let variable_scope_id = scoping.symbol_scope_id(symbol_id);
+        let variable_scope_id =
+            Self::function_scope_for_body_scope(ctx, scoping.symbol_scope_id(symbol_id));
         let variable_scope_node_id = scoping.get_node_id(variable_scope_id);
         let variable_scope_node_kind = ctx.nodes().kind(variable_scope_node_id);
 
@@ -636,6 +642,15 @@ impl NoShadow {
         }
 
         false
+    }
+
+    fn function_scope_for_body_scope(ctx: &LintContext, scope_id: ScopeId) -> ScopeId {
+        let scoping = ctx.scoping();
+        if scoping.scope_flags(scope_id).is_function_body() {
+            scoping.scope_parent_id(scope_id).unwrap_or(scope_id)
+        } else {
+            scope_id
+        }
     }
 
     fn find_initializer_expression<'a>(

@@ -590,6 +590,7 @@ impl<'a, 's> SlotAssignment<'a, 's> {
             ArenaVec::<BitSet>::with_capacity_in(scoping.symbols_len(), &allocator);
         let mut tmp_bindings = ArenaVec::with_capacity_in(100, &allocator);
         let mut reusable_slots = ArenaVec::new_in(&allocator);
+        let mut parent_function_slots = ArenaVec::new_in(&allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
 
@@ -620,13 +621,30 @@ impl<'a, 's> SlotAssignment<'a, 's> {
 
             let mut slot = slot_liveness.len();
 
+            parent_function_slots.clear();
+            if scoping.scope_flags(scope_id).is_function_body()
+                && let Some(parent_scope_id) = scoping.scope_parent_id(scope_id)
+            {
+                parent_function_slots.extend(
+                    scoping
+                        .iter_bindings_in(parent_scope_id)
+                        .map(|symbol_id| slots[symbol_id.index()])
+                        .filter(|&slot| slot != SLOT_UNASSIGNED),
+                );
+            }
+
             reusable_slots.clear();
             reusable_slots.extend(
                 // Slots already assigned to other symbols, but not live in the current scope.
                 slot_liveness
                     .iter()
                     .enumerate()
-                    .filter(|(_, slot_liveness)| !slot_liveness.has_bit(scope_id.index()))
+                    .filter(|(slot, slot_liveness)| {
+                        !slot_liveness.has_bit(scope_id.index())
+                            && !parent_function_slots
+                                .iter()
+                                .any(|&parent_slot| parent_slot as usize == *slot)
+                    })
                     .map(
                         // `slot_liveness` is an arena `Vec`, so its indexes cannot exceed `u32::MAX`
                         #[expect(clippy::cast_possible_truncation)]

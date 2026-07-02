@@ -6,7 +6,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
   {
     "children": [
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode | FunctionBody)",
+            "id": 2,
+            "node": "FunctionBody",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(StrictMode | Function)",
         "id": 1,
         "node": "Function(foo)",
@@ -37,7 +45,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                 "id": 1,
                 "name": "y",
                 "node_id": 17,
-                "scope_id": 1
+                "scope_id": 2
               }
             ]
           }
@@ -46,7 +54,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
       {
         "children": [],
         "flags": "ScopeFlags(StrictMode)",
-        "id": 2,
+        "id": 3,
         "node": "TSTypeAliasDeclaration",
         "symbols": [
           {
@@ -60,7 +68,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                 "id": 3,
                 "name": "T",
                 "node_id": 28,
-                "scope_id": 2
+                "scope_id": 3
               }
             ]
           }
@@ -82,7 +90,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "id": 2,
             "name": "foo",
             "node_id": 25,
-            "scope_id": 2
+            "scope_id": 3
           }
         ]
       },

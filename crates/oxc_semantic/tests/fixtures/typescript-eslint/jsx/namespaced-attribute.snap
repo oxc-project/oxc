@@ -13,7 +13,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/namespaced-
         "symbols": []
       },
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode | FunctionBody)",
+            "id": 3,
+            "node": "FunctionBody",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(StrictMode | Function)",
         "id": 2,
         "node": "Function(Foo)",
@@ -29,7 +37,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/namespaced-
                 "id": 3,
                 "name": "props",
                 "node_id": 49,
-                "scope_id": 2
+                "scope_id": 3
               }
             ]
           }

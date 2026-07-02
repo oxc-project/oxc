@@ -573,7 +573,8 @@ impl<'a> SemanticBuilder<'a> {
         let symbol_id = self
             .scoping
             .get_binding(scope_id, name)
-            .or_else(|| self.hoisting_variables.get(&(scope_id, name)).copied())?;
+            .or_else(|| self.hoisting_variables.get(&(scope_id, name)).copied())
+            .or_else(|| self.check_function_body_parent_redeclaration(scope_id, name))?;
 
         let flags = self.scoping.symbol_flags(symbol_id);
 
@@ -589,6 +590,23 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         Some(symbol_id)
+    }
+
+    /// Function bodies have their own scope, but their top-level lexical and type declarations
+    /// still share duplicate-name checks with parameters and type parameters.
+    fn check_function_body_parent_redeclaration(
+        &self,
+        scope_id: ScopeId,
+        name: Ident<'a>,
+    ) -> Option<SymbolId> {
+        if !self.scoping.scope_flags(scope_id).is_function_body() {
+            return None;
+        }
+
+        let parent_scope_id = self.scoping.scope_parent_id(scope_id)?;
+        self.scoping
+            .get_binding(parent_scope_id, name)
+            .or_else(|| self.hoisting_variables.get(&(parent_scope_id, name)).copied())
     }
 
     /// Declare an unresolved reference in the current scope.

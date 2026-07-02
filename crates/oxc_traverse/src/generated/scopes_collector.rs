@@ -976,7 +976,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_function_body(&mut self, it: &FunctionBody<'a>) {
-        self.visit_statements(&it.statements);
+        self.add_scope(&it.scope_id);
     }
 
     #[inline]

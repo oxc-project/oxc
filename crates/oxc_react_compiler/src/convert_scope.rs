@@ -36,6 +36,8 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
     // In OXC, span.start is used as node_id (OXC spans are unique).
     let mut node_id_to_scope: FxHashMap<u32, ScopeId> = FxHashMap::default();
     let mut ref_node_id_to_binding: FxIndexMap<u32, BindingId> = FxIndexMap::default();
+    let mut scope_id_to_react_scope: FxHashMap<oxc_syntax::scope::ScopeId, ScopeId> =
+        FxHashMap::default();
 
     let mut symbol_to_binding: FxHashMap<SymbolId, BindingId> = FxHashMap::default();
 
@@ -70,22 +72,46 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
         });
     }
 
-    // Second pass: Create all scopes and update binding scope references
+    // Second pass: Create scopes. FunctionBody scopes are an OXC semantic detail; Babel function
+    // bodies share the function scope, and React Compiler lowering expects the same shape.
     for scope_id in scoping.scope_descendants_from_root() {
         let scope_flags = scoping.scope_flags(scope_id);
-        let parent = scoping.scope_parent_id(scope_id);
+        if scope_flags.is_function_body() {
+            let parent_scope_id = scoping
+                .scope_parent_id(scope_id)
+                .and_then(|parent| scope_id_to_react_scope.get(&parent).copied())
+                .expect("FunctionBody scope should have a converted parent scope");
+            scope_id_to_react_scope.insert(scope_id, parent_scope_id);
+            continue;
+        }
 
-        let our_scope_id = ScopeId(scope_id.index() as u32);
-
+        let parent = scoping
+            .scope_parent_id(scope_id)
+            .and_then(|parent| scope_id_to_react_scope.get(&parent).copied());
+        let our_scope_id = ScopeId(scopes.len() as u32);
         let kind = get_scope_kind(scope_flags, semantic, scope_id);
 
-        let mut scope_bindings: FxHashMap<String, BindingId> = FxHashMap::default();
+        scope_id_to_react_scope.insert(scope_id, our_scope_id);
+        scopes.push(ScopeData { id: our_scope_id, parent, kind, bindings: FxHashMap::default() });
+    }
+
+    // Third pass: Assign bindings and node lookups to converted scopes.
+    for scope_id in scoping.scope_descendants_from_root() {
+        let our_scope_id = *scope_id_to_react_scope
+            .get(&scope_id)
+            .expect("all OXC scopes should have a converted React scope");
+        let scope_index = our_scope_id.0 as usize;
+
         for symbol_id in scoping.iter_bindings_in(scope_id) {
             if let Some(&binding_id) = symbol_to_binding.get(&symbol_id) {
                 let name = bindings[binding_id.0 as usize].name.clone();
-                scope_bindings.insert(name, binding_id);
+                scopes[scope_index].bindings.insert(name, binding_id);
                 bindings[binding_id.0 as usize].scope = our_scope_id;
             }
+        }
+
+        if scoping.scope_flags(scope_id).is_function_body() {
+            continue;
         }
 
         let node_id = scoping.get_node_id(scope_id);
@@ -96,7 +122,7 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
         // For function scopes inside object methods, also map the parent
         // ObjectProperty start so the compiler can look up the scope using the
         // ObjectMethod's start position (which matches the property start in Babel).
-        if matches!(kind, ScopeKind::Function) {
+        if matches!(&scopes[scope_index].kind, ScopeKind::Function) {
             if let AstKind::Function(_) = node.kind() {
                 let parent_node_id = nodes.parent_id(node_id);
                 let parent_node = nodes.get_node(parent_node_id);
@@ -124,16 +150,9 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
             node_to_scope.insert(start, our_scope_id);
         }
         node_id_to_scope.insert(start, our_scope_id);
-
-        scopes.push(ScopeData {
-            id: our_scope_id,
-            parent: parent.map(|p| ScopeId(p.index() as u32)),
-            kind,
-            bindings: scope_bindings,
-        });
     }
 
-    // Third pass: Map all resolved references to bindings
+    // Fourth pass: Map all resolved references to bindings
     for symbol_id in scoping.symbol_ids() {
         if let Some(&binding_id) = symbol_to_binding.get(&symbol_id) {
             for &ref_id in scoping.get_resolved_reference_ids(symbol_id) {
@@ -210,7 +229,8 @@ pub fn convert_scope_info(semantic: &Semantic, _program: &Program) -> ScopeInfo 
         }
     }
 
-    let program_scope = ScopeId(scoping.root_scope_id().index() as u32);
+    let program_scope =
+        scope_id_to_react_scope.get(&scoping.root_scope_id()).copied().unwrap_or(ScopeId(0));
 
     ScopeInfo {
         scopes,
