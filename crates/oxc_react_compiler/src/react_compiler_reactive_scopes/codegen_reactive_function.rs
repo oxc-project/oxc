@@ -262,8 +262,8 @@ fn ox_codegen_outlined<'a>(
 // =============================================================================
 
 use oxc_allocator::GetAllocator;
+use oxc_allocator::IntoIn;
 use oxc_ast::ast as oxc;
-use oxc_span::GetSpan;
 use oxc_span::SPAN;
 
 // Temp value tracking. Maps a temporary's declaration to its emitted oxc value
@@ -419,27 +419,23 @@ fn ox_str<'a>(ast: &oxc_ast::builder::AstBuilder<'a>, s: &str) -> &'a str {
 }
 
 /// Re-emit a TS type annotation stored on a `TypeCastExpression` into the output
-/// allocator. The lowering stores the original `&TSType` AST node directly, so the
-/// common case (no identifier renames apply) is a cheap `clone_in`, no parser.
+/// allocator. The lowering stores the original `&TSType` AST node directly, so this
+/// is a `clone_in` — no parser.
 ///
 /// When some identifier reference inside the type has a binding rename (e.g. a
-/// `typeof field` whose value binding was renamed to `field_3`), we cannot just
-/// clone: we re-emit the original source slice with the renames applied as text
-/// edits and re-parse it (correctness over speed for this rare case). Returns
-/// `None` only when the rename path is needed but the source / span is unavailable
-/// or unparsable.
-fn ox_reparse_ts_type<'a>(
-    cx: &OxcContext<'a, '_, '_>,
-    ty: &oxc::TSType<'_>,
-) -> Option<oxc::TSType<'a>> {
-    // Compute the rename edits that apply to identifier references inside the type,
-    // as text edits keyed by absolute source offset. An ident is renamed only if it
-    // is an actual reference (its node-id is in `reference_node_ids`, excluding type
-    // labels / property keys) and a binding rename applies for the nearest enclosing
-    // declaration. Without this, a re-emitted `typeof field` keeps the pre-rename
-    // name while the value binding was renamed to `field_3`.
-    let edits: Vec<(u32, usize, String)> = if cx.env.renames.is_empty() {
-        Vec::new()
+/// `typeof field` whose value binding was renamed to `field_3`), the matching
+/// references in the clone are renamed in place. `clone_in` preserves spans, so the
+/// renames are keyed by source offset, exactly like the reference set that selects
+/// them.
+fn ox_reemit_ts_type<'a>(cx: &OxcContext<'a, '_, '_>, ty: &oxc::TSType<'_>) -> oxc::TSType<'a> {
+    // Which identifier references inside the type get a binding rename, keyed by
+    // absolute source offset. An ident is renamed only if it is an actual reference
+    // (its offset is in `reference_node_ids`, excluding type labels / property keys)
+    // and a binding rename applies for the nearest enclosing declaration. Without
+    // this, a `typeof field` keeps the pre-rename name while the value binding was
+    // renamed to `field_3`.
+    let renames_by_offset: FxHashMap<u32, String> = if cx.env.renames.is_empty() {
+        FxHashMap::default()
     } else {
         struct Collector {
             out: Vec<(u32, String)>,
@@ -455,67 +451,52 @@ fn ox_reparse_ts_type<'a>(
         let mut collector = Collector { out: Vec::new() };
         oxc_ast_visit::Visit::visit_ts_type(&mut collector, ty);
 
-        let mut edits: Vec<(u32, usize, String)> = Vec::new();
-        for (start, name) in &collector.out {
-            if *start == 0 || !cx.env.reference_node_ids.contains(start) {
+        let mut renames = FxHashMap::default();
+        for (offset, name) in &collector.out {
+            if *offset == 0 || !cx.env.reference_node_ids.contains(offset) {
                 continue;
             }
             if let Some(rename) = cx
                 .env
                 .renames
                 .iter()
-                .filter(|r| &r.original == name && r.declaration_start <= *start)
+                .filter(|r| &r.original == name && r.declaration_start <= *offset)
                 .max_by_key(|r| r.declaration_start)
             {
-                edits.push((*start, name.len(), rename.renamed.clone()));
+                renames.insert(*offset, rename.renamed.clone());
             }
         }
-        edits
+        renames
     };
 
-    // Common case: no renames apply — clone the stored type directly into the output
-    // allocator, no parser. This is the perf win over re-parsing.
-    if edits.is_empty() {
-        return Some(ty.clone_in(cx.ast.allocator()));
+    // Clone the stored type into the output allocator. Common case: no renames apply,
+    // so the clone is the whole answer.
+    let mut cloned = ty.clone_in(cx.ast.allocator());
+    if renames_by_offset.is_empty() {
+        return cloned;
     }
 
-    // Rename case: re-emit the original source slice with renames applied as text
-    // edits (right-to-left so earlier offsets stay valid) and re-parse it.
-    let span = ty.span();
-    let source = cx.env.code.as_deref()?;
-    let start = span.start as usize;
-    let end = span.end as usize;
-    if start >= source.len() || end > source.len() || start >= end {
-        return None;
+    // Rename case: rewrite the matching identifier references in the clone, keyed by
+    // the preserved source offset.
+    struct Renamer<'a> {
+        allocator: &'a oxc_allocator::Allocator,
+        renames_by_offset: FxHashMap<u32, String>,
     }
-    let slice = &source[start..end];
-    let mut edits = edits;
-    edits.sort_by_key(|edit| std::cmp::Reverse(edit.0));
-    let mut text = slice.to_string();
-    for (abs_start, old_len, renamed) in edits {
-        if let Some(rel) = (abs_start as usize).checked_sub(start) {
-            if rel + old_len <= text.len() {
-                text.replace_range(rel..rel + old_len, &renamed);
+    impl<'a> oxc_ast_visit::VisitMut<'a> for Renamer<'a> {
+        fn visit_identifier_reference(&mut self, it: &mut oxc::IdentifierReference<'a>) {
+            if let Some(renamed) = self.renames_by_offset.get(&it.span.start) {
+                it.name = renamed.as_str().into_in(self.allocator);
+            }
+        }
+        fn visit_identifier_name(&mut self, it: &mut oxc::IdentifierName<'a>) {
+            if let Some(renamed) = self.renames_by_offset.get(&it.span.start) {
+                it.name = renamed.as_str().into_in(self.allocator);
             }
         }
     }
-    // Wrap the type in a cast so the parser yields a `TSAsExpression` whose
-    // `type_annotation` is exactly the parsed type.
-    let wrapped = oxc_allocator::StringBuilder::from_strs_array_in(
-        ["let __oxc_t = null as ", &text, ";"],
-        cx.ast.allocator(),
-    )
-    .into_str();
-    let parsed =
-        oxc_parser::Parser::new(cx.ast.allocator(), wrapped, oxc_span::SourceType::tsx()).parse();
-    if parsed.panicked {
-        return None;
-    }
-    let stmt = parsed.program.body.into_iter().next()?;
-    let oxc::Statement::VariableDeclaration(decl) = stmt else { return None };
-    let init = decl.unbox().declarations.into_iter().next()?.init?;
-    let oxc::Expression::TSAsExpression(ts_as) = init else { return None };
-    Some(ts_as.unbox().type_annotation)
+    let mut renamer = Renamer { allocator: cx.ast.allocator(), renames_by_offset };
+    oxc_ast_visit::VisitMut::visit_ts_type(&mut renamer, &mut cloned);
+    cloned
 }
 
 /// Build `Symbol.for("<name>")`.
@@ -2226,24 +2207,24 @@ fn ox_codegen_base_instruction_value<'a>(
             ..
         } => {
             let expr = ox_codegen_place_to_expression(cx, value)?;
-            // Re-emit the stored TS type into the output allocator (cloning in the
-            // common case, or re-parsing with renames applied when a binding inside
-            // the type was renamed) and re-wrap the inner expression, matching the
-            // baseline output. If the type can't be recovered, fall back to the
-            // unwrapped expression.
+            // Re-emit the stored TS type into the output allocator (a `clone_in`, with
+            // any binding renames applied to identifier references inside the type) and
+            // re-wrap the inner expression, matching the baseline output.
             let wrapped = match (type_annotation_kind.as_deref(), type_annotation) {
-                (Some("satisfies"), Some(ta)) => match ox_reparse_ts_type(cx, ta) {
-                    Some(ty) => oxc_ast::ast::Expression::new_ts_satisfies_expression(
-                        SPAN, expr, ty, &cx.ast,
-                    ),
-                    None => expr,
-                },
-                (Some("as"), Some(ta)) => match ox_reparse_ts_type(cx, ta) {
-                    Some(ty) => {
-                        oxc_ast::ast::Expression::new_ts_as_expression(SPAN, expr, ty, &cx.ast)
-                    }
-                    None => expr,
-                },
+                (Some("satisfies"), Some(ta)) => {
+                    oxc_ast::ast::Expression::new_ts_satisfies_expression(
+                        SPAN,
+                        expr,
+                        ox_reemit_ts_type(cx, ta),
+                        &cx.ast,
+                    )
+                }
+                (Some("as"), Some(ta)) => oxc_ast::ast::Expression::new_ts_as_expression(
+                    SPAN,
+                    expr,
+                    ox_reemit_ts_type(cx, ta),
+                    &cx.ast,
+                ),
                 _ => expr,
             };
             Ok(OxValue::Expression(wrapped))
