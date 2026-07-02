@@ -10164,6 +10164,9 @@
         "vue/no-multiple-slot-args": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vue/no-ref-as-operand": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "vue/no-required-prop-with-default": {
           "$ref": "#/definitions/RuleNoConfig"
         },
