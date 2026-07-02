@@ -686,26 +686,13 @@ pub fn is_default_this_binding<'a>(
                     _ => return true,
                 }
             }
-            AstKind::ExpressionStatement(expr_stmt) => {
-                let Some(function_body) = outermost_paren_parent(parent, semantic) else {
+            AstKind::ExpressionStatement(_) => {
+                let Some(arrow_call) =
+                    concise_arrow_expression_body_iife_call(current_node, parent, semantic)
+                else {
                     return true;
                 };
-                let AstKind::FunctionBody(_) = function_body.kind() else {
-                    return true;
-                };
-                let Some(arrow_func) = outermost_paren_parent(function_body, semantic) else {
-                    return true;
-                };
-                let AstKind::ArrowFunctionExpression(expr) = arrow_func.kind() else {
-                    return true;
-                };
-                if !expr.expression
-                    || expr_stmt.expression.span() != current_node.span()
-                    || !is_callee(arrow_func, semantic)
-                {
-                    return true;
-                }
-                current_node = outermost_paren_parent(arrow_func, semantic).unwrap();
+                current_node = arrow_call;
             }
             AstKind::ArrowFunctionExpression(expr) => {
                 if current_node.span() != expr.body.span || !is_callee(parent, semantic) {
@@ -802,6 +789,37 @@ pub fn is_default_this_binding<'a>(
             _ => return true,
         }
     }
+}
+
+fn concise_arrow_expression_body_iife_call<'a, 'b>(
+    current_node: &'b AstNode<'a>,
+    parent: &'b AstNode<'a>,
+    semantic: &'b Semantic<'a>,
+) -> Option<&'b AstNode<'a>> {
+    let AstKind::ExpressionStatement(stmt) = parent.kind() else {
+        return None;
+    };
+    if stmt.expression.span() != current_node.span() {
+        return None;
+    }
+
+    let body_node = semantic.nodes().parent_node(parent.id());
+    let AstKind::FunctionBody(body) = body_node.kind() else {
+        return None;
+    };
+    if body.span != parent.span() {
+        return None;
+    }
+
+    let arrow_node = semantic.nodes().parent_node(body_node.id());
+    let AstKind::ArrowFunctionExpression(arrow) = arrow_node.kind() else {
+        return None;
+    };
+    if !arrow.expression || arrow.body.span != body.span || !is_callee(arrow_node, semantic) {
+        return None;
+    }
+
+    outermost_paren_parent(arrow_node, semantic)
 }
 
 pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a, str>> {
