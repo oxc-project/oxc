@@ -163,10 +163,15 @@ fn generate_walk_for_struct(
     let scope = struct_def.visit.scope.as_ref();
     let scope_enter_index = scope.map(|s| s.enter_before_index);
     let scope_exit_index = scope.map(|s| s.exit_before_index);
+    let enter_scope_before_hook = scope_id_field_exists
+        && struct_def.name() == "FunctionBody"
+        && scope_enter_index == Some(0);
+    let pre_hook_scope_code =
+        if enter_scope_before_hook { enter_scope_code.clone() } else { quote!() };
 
     // Generate field walking code
     let mut fields_code = quote!();
-    let mut scope_entered = false;
+    let mut scope_entered = enter_scope_before_hook;
     let mut scope_exited = false;
 
     for (i, (field_index, field)) in visited_fields.iter().enumerate() {
@@ -243,17 +248,34 @@ fn generate_walk_for_struct(
         quote!()
     };
 
-    quote! {
+    if enter_scope_before_hook {
+        quote! {
+            ///@@line_break
+            unsafe fn #walk_fn_name<#walk_generics>(
+                traverser: &mut Tr,
+                node: *mut #struct_ty,
+                ctx: &mut #ctx_ty,
+            ) {
+                #pre_hook_scope_code
+                traverser.#enter_fn_name(&mut *node, ctx);
+                #fields_code
+                traverser.#exit_fn_name(&mut *node, ctx);
+                #exit_scope_after
+            }
+        }
+    } else {
+        quote! {
         ///@@line_break
-        unsafe fn #walk_fn_name<#walk_generics>(
-            traverser: &mut Tr,
-            node: *mut #struct_ty,
-            ctx: &mut #ctx_ty,
-        ) {
-            traverser.#enter_fn_name(&mut *node, ctx);
-            #fields_code
-            #exit_scope_after
-            traverser.#exit_fn_name(&mut *node, ctx);
+            unsafe fn #walk_fn_name<#walk_generics>(
+                traverser: &mut Tr,
+                node: *mut #struct_ty,
+                ctx: &mut #ctx_ty,
+            ) {
+                traverser.#enter_fn_name(&mut *node, ctx);
+                #fields_code
+                #exit_scope_after
+                traverser.#exit_fn_name(&mut *node, ctx);
+            }
         }
     }
 }
