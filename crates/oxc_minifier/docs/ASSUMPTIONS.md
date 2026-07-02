@@ -81,6 +81,21 @@ try {
 
 This also lets an unused `new Int8Array(n)` (or any TypedArray) with a numeric-literal `n` be dropped: a valid length allocates a zeroed buffer with no observable effect, and a too-large literal only throws a maximum-length `RangeError`. A non-literal, negative (`new Int8Array(-1)`), `BigInt` (`new Int8Array(0n)`), or object argument is kept.
 
+### Coercion to a primitive does not throw for non-Symbol arguments
+
+Pure global functions and methods that coerce their arguments (`parseInt`, `isNaN`, `Math.*`, `Date.UTC`, `String.fromCharCode`, …) are treated as side-effect-free, so an unused call is dropped. A Symbol argument would make `ToString` / `ToNumber` throw a `TypeError`, but the minifier assumes a non-Symbol argument when it cannot prove the type — so `Math.abs(x)` / `parseInt(x)` stay droppable.
+
+```javascript
+// The minifier assumes this never happens:
+Math.abs(Symbol.iterator); // TypeError: Cannot convert a Symbol value to a number
+```
+
+A call is still kept when an argument _provably_ throws:
+
+- `ToNumber` on a `BigInt` (`Math.abs(10n)`, `isNaN(10n)`, `Date.UTC(10n)`).
+- `String.fromCodePoint(cp)` with a code point outside `[0, 0x10FFFF]` (`String.fromCodePoint(-1)`) — an "invalid code point" `RangeError`, distinct from the droppable maximum-length errors above.
+- A missing or invalid required argument (`String.raw()`, `Symbol.keyFor()`, `URL.canParse()`).
+
 ### No side effects from extending a class
 
 Extending a class does not have a side effect.
