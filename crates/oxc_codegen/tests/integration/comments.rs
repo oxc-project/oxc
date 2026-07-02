@@ -71,10 +71,7 @@ fn unit() {
     test("console.log(<>{/*before*/ x}</>)", "console.log(<>{/*before*/ x}</>);\n");
     // https://lingui.dev/ref/macro#definemessage
     test("const message = /*i18n*/{};", "const message = (/*i18n*/ {});\n");
-    test(
-        "function foo() { return /*i18n*/ {} }",
-        "function foo() {\n\treturn (\t/*i18n*/ {});\n}\n",
-    );
+    test("function foo() { return /*i18n*/ {} }", "function foo() {\n\treturn (/*i18n*/ {});\n}\n");
 
     test_same("export { /** @deprecated */ parseAst } from \"rolldown/parseAst\";\n");
     test_same("export { /** @deprecated */ parseAst };\n");
@@ -290,6 +287,22 @@ catch (err) // v8 ignore next
   /* v8 ignore next */
   ...rest,
 }",
+            // Coverage comment after `??` (right operand of a logical expression)
+            // https://github.com/oxc-project/oxc/issues/23485
+            "const x = 1 ?? /* istanbul ignore next -- @preserve */ 0;",
+            // Coverage comment after `&&`
+            "if (a && /* istanbul ignore next -- @preserve */ b) {}",
+            // Coverage comment after `||`, nested inside an indented block
+            "function f() {\n  if (a || /* istanbul ignore next -- @preserve */ b) {}\n}",
+            // Coverage comment before a ConditionalExpression consequent
+            "const y = cond ? /* istanbul ignore next -- @preserve */ 1 : 2;",
+            // Coverage comment before a ConditionalExpression consequent inside an object property
+            "const obj = { a: cond ? /* istanbul ignore next -- @preserve */ 1 : 2 };",
+            // Coverage comment before an object property value
+            // (shape produced by lowering a JSX prop: `key={/* c */ () => …}`)
+            "const obj = { removeSelection: /* istanbul ignore next -- @preserve */ () => onUpdate(null) };",
+            // Coverage comment inside a template literal substitution
+            "const t = `${/* istanbul ignore next -- @preserve */ () => undefined}`;",
         ];
 
         snapshot("coverage", &cases);

@@ -5,12 +5,16 @@
 use std::ops::Not;
 
 use oxc_ast::ast::{BinaryExpression, Expression, LogicalExpression};
+use oxc_span::GetSpan;
 use oxc_syntax::{
     operator::{BinaryOperator, LogicalOperator},
     precedence::{GetPrecedence, Precedence},
 };
 
-use crate::{Codegen, Context, Operator, cjs_module_lexer, r#gen::GenExpr};
+use crate::{
+    Codegen, Context, Operator, cjs_module_lexer,
+    r#gen::{GenExpr, is_pife_arrow_or_function},
+};
 
 #[derive(Clone, Copy)]
 pub enum Binaryish<'a> {
@@ -230,6 +234,12 @@ impl<'a> BinaryExpressionVisitor<'a> {
         self.operator.r#gen(p);
         p.print_soft_space();
         let right = self.e.right();
+        // Preserve a leading comment on the right operand, e.g. a coverage-ignore
+        // comment: `a ?? /* c */ b`, `a && /* c */ b`. Skip `pife`
+        // arrows/functions — they print the comment inside their own `(` wrap.
+        if !is_pife_arrow_or_function(right) {
+            p.print_inline_leading_comments(right.span().start);
+        }
         if !cjs_module_lexer::try_print_equality_string(p, self.operator, right) {
             right.gen_expr(p, self.right_precedence, self.ctx);
         }

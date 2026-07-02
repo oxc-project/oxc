@@ -168,6 +168,21 @@ impl Codegen<'_> {
         }
     }
 
+    /// Print leading comments that sit inline before an expression in a value
+    /// position — e.g. `a ?? /* c */ b`, `key: /* c */ v`, `` `${/* c */ x}` ``.
+    ///
+    /// Only block comments are emitted here. A line comment would force a
+    /// newline and re-anchor to a different node on the next parse, which breaks
+    /// codegen idempotency once a pass (e.g. the minifier) folds statements into
+    /// a single expression. Leaving line comments in place matches the previous
+    /// behavior, where such comments were dropped at these positions.
+    #[inline]
+    pub(crate) fn print_inline_leading_comments(&mut self, start: u32) {
+        if self.comments.get(&start).is_some_and(|comments| comments.iter().all(|c| !c.is_line())) {
+            self.print_leading_comments_anchored_to_self(start);
+        }
+    }
+
     /// Whether a legal-comment orphan with `attached_to < end` is still
     /// pending. Used by block emitters to keep an empty body multi-line.
     #[inline]
@@ -267,7 +282,10 @@ impl Codegen<'_> {
                     }
                 }
             }
-        } else {
+        } else if matches!(self.last_byte(), None | Some(b'\n')) {
+            // Only indent at the start of a line. An inline comment in a value
+            // position (e.g. `a ?? /* c */ b` nested inside an indented block)
+            // must not insert stray indentation mid-line.
             self.print_indent();
         }
         self.print_comment(first);
