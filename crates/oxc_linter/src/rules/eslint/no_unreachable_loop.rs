@@ -336,13 +336,13 @@ fn reaches_next_iteration_target(
     let cfg = ctx.cfg();
     let graph = cfg.graph();
     let mut stack = vec![block_id];
-    let mut seen = Vec::new();
+    let mut seen = vec![false; cfg.basic_blocks.len()];
 
     while let Some(current) = stack.pop() {
-        if seen.contains(&current) || is_unreachable_block(current, ctx, unreachable) {
+        if seen[current.index()] || is_unreachable_block(current, ctx, unreachable) {
             continue;
         }
-        seen.push(current);
+        seen[current.index()] = true;
 
         if current == body_start {
             return true;
