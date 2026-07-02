@@ -95,33 +95,25 @@ pub fn effective_unreachable_blocks(ctx: &LintContext<'_>) -> Vec<bool> {
     let graph = cfg.graph();
     let mut unreachable = vec![true; cfg.basic_blocks.len()];
     let mut infinite_loops = Vec::new();
-    let root_cfg_id = nodes.cfg_id(NodeId::ROOT);
-    unreachable[root_cfg_id.index()] = false;
 
-    let _: Control<()> = set_depth_first_search(graph, Some(root_cfg_id), |event| {
-        if let DfsEvent::Finish(node, _) = event {
-            let is_unreachable = cfg.basic_block(node).is_unreachable();
-            unreachable[node.index()] = is_unreachable;
+    for node in graph.node_indices() {
+        let is_unreachable = cfg.basic_block(node).is_unreachable();
+        unreachable[node.index()] = is_unreachable;
 
-            if !is_unreachable
-                && let Some(loop_) =
-                    cfg.is_infinite_loop_start(node, |instruction| match instruction {
-                        Instruction { kind: InstructionKind::Condition, node_id: Some(id) } => {
-                            match nodes.kind(*id) {
-                                AstKind::BooleanLiteral(lit) => {
-                                    EvalConstConditionResult::Eval(lit.value)
-                                }
-                                _ => EvalConstConditionResult::Fail,
-                            }
-                        }
-                        _ => EvalConstConditionResult::NotFound,
-                    })
-            {
-                infinite_loops.push(loop_);
-            }
+        if !is_unreachable
+            && let Some(loop_) = cfg.is_infinite_loop_start(node, |instruction| match instruction {
+                Instruction { kind: InstructionKind::Condition, node_id: Some(id) } => {
+                    match nodes.kind(*id) {
+                        AstKind::BooleanLiteral(lit) => EvalConstConditionResult::Eval(lit.value),
+                        _ => EvalConstConditionResult::Fail,
+                    }
+                }
+                _ => EvalConstConditionResult::NotFound,
+            })
+        {
+            infinite_loops.push(loop_);
         }
-        Control::Continue
-    });
+    }
 
     for loop_ in infinite_loops {
         let starts: Vec<_> = graph
