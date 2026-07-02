@@ -592,8 +592,20 @@ impl Extensions {
     ) {
         let config = &self.0;
 
-        // Prefer resolved extension (actual file), fallback to written extension (import text)
-        let extension_to_check = resolved_extension.or(written_extension);
+        // Prefer the resolved extension, but honor an explicitly-written genuine extension that
+        // differs from it: TS ESM `import './foo.js'` resolves to `./foo.ts`, yet `js: never`
+        // must still flag the written `.js`. "Genuine" excludes compound-name parts like
+        // `.stories` in `./foo.stories` (which resolves to `foo.stories.tsx`).
+        let written_is_genuine_extension = written_extension.is_some_and(|written| {
+            resolved_extension != Some(written)
+                && (ExtensionsConfig::is_standard_extension(written) || config.has_rule(written))
+        });
+
+        let extension_to_check = if written_is_genuine_extension {
+            written_extension
+        } else {
+            resolved_extension.or(written_extension)
+        };
 
         if let Some(ext_str) = extension_to_check {
             // Skip validation for unconfigured extensions (prevents false positives)
@@ -610,7 +622,10 @@ impl Extensions {
             // For files with multiple extensions (e.g., foo.stories.tsx), we need to check
             // if the ACTUAL file extension (resolved) matches what's written in the import.
             // If resolved is "tsx" but written is "stories", then tsx is NOT written.
-            let extension_is_written = if let Some(resolved) = resolved_extension {
+            let extension_is_written = if written_is_genuine_extension {
+                // The specifier explicitly ends with this genuine extension.
+                true
+            } else if let Some(resolved) = resolved_extension {
                 // If we have a resolved extension, check if it matches the written extension
                 written_extension == Some(resolved)
             } else {
@@ -1300,6 +1315,8 @@ fn test() {
         (r"import { Component } from './Component.stories';", Some(json!([{ "tsx": "never" }]))),
         (r"import { testUtil } from './utils.test';", Some(json!([{ "ts": "never" }]))),
         (r"import { helper } from './helper.spec';", Some(json!([{ "js": "never" }]))),
+        // `./typescript.js` resolves to `typescript.ts`; the written `.js` is allowed under `js: always`.
+        (r#"import x from "./typescript.js";"#, Some(json!(["always", { "js": "always" }]))),
         // Subpath imports
         // https://nodejs.org/api/packages.html#subpath-imports
         // (
@@ -1778,6 +1795,14 @@ fn test() {
             Some(json!(["never", { "ts": "never" }])),
         ),
         (r"import utils from './utils.spec.js';", Some(json!(["never", { "js": "never" }]))),
+        // `./typescript.js` resolves to `typescript.ts`, but the written `.js` must still be flagged under `never`.
+        (
+            r#"import def from "./typescript.js";"#,
+            Some(json!(["never", { "checkTypeImports": true, "js": "never" }])),
+        ),
+        (r#"import x from "./typescript.js";"#, Some(json!(["never"]))),
+        (r#"import x from "./typescript.js";"#, Some(json!([{ "js": "never" }]))),
+        (r#"import x from "./typescript.js";"#, Some(json!(["always", { "js": "never" }]))),
         // TODO: This should probably fail? Needs further investigation.
         // (
         //     r"import useState from '@foo/bar/useState';",
