@@ -67,11 +67,13 @@ pub fn wrap_statements_in_arrow_function_iife<'a>(
     stmts: ArenaVec<'a, Statement<'a>>,
     scope_id: ScopeId,
     span: Span,
-    ctx: &TraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
     let kind = FormalParameterKind::ArrowFormalParameters;
     let params = FormalParameters::boxed(SPAN, kind, ArenaVec::new_in(ctx), NONE, ctx);
-    let body = FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), stmts, ctx);
+    let body_scope_id = ctx.create_child_scope(scope_id, ScopeFlags::FunctionBody);
+    let body =
+        FunctionBody::boxed_with_scope_id(SPAN, body_scope_id, ArenaVec::new_in(ctx), stmts, ctx);
     let arrow = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
         SPAN, false, false, NONE, params, NONE, body, scope_id, false, false, ctx,
     );
@@ -206,7 +208,7 @@ pub fn create_class_constructor_with_params<'a>(
     stmts: ArenaVec<'a, Statement<'a>>,
     params: ArenaBox<'a, FormalParameters<'a>>,
     scope_id: ScopeId,
-    ctx: &TraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) -> ClassElement<'a> {
     create_class_method(
         ArenaVec::new_in(ctx),
@@ -233,8 +235,9 @@ pub fn create_class_method<'a>(
     computed: bool,
     is_static: bool,
     scope_id: ScopeId,
-    ctx: &TraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) -> ClassElement<'a> {
+    let body_scope_id = ctx.create_child_scope(scope_id, ScopeFlags::FunctionBody);
     ClassElement::new_method_definition(
         SPAN,
         MethodDefinitionType::MethodDefinition,
@@ -251,7 +254,13 @@ pub fn create_class_method<'a>(
             NONE,
             params,
             return_type,
-            Some(FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), stmts, ctx)),
+            Some(FunctionBody::boxed_with_scope_id(
+                SPAN,
+                body_scope_id,
+                ArenaVec::new_in(ctx),
+                stmts,
+                ctx,
+            )),
             scope_id,
             ctx,
         ),
