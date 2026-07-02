@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_ast::{
     AstKind,
@@ -672,6 +674,14 @@ impl Extensions {
     ) {
         let config = &self.0;
 
+        // Default / empty config: nothing is enforced (all imports pass).
+        if config.require_extension.is_none()
+            && config.extensions.is_empty()
+            && config.path_group_overrides.is_empty()
+        {
+            return;
+        }
+
         // Type imports check (only for ESM, always false for require)
         if is_type_import && !config.check_type_imports {
             return;
@@ -822,17 +832,16 @@ fn is_package_import(module_name: &str) -> bool {
 /// - `"./foo"` → `None`
 /// - `"./foo."` → `None` (empty extension)
 /// - `"./foo.bar/"` → `None` (directory path)
-fn get_file_extension_from_module_name(module_name: &str) -> Option<String> {
+fn get_file_extension_from_module_name(module_name: &str) -> Option<Cow<'_, str>> {
     use cow_utils::CowUtils;
-    if let Some((_, extension)) =
-        module_name.split('?').next().unwrap_or(module_name).rsplit_once('.')
-        && !extension.is_empty()
-        && !extension.starts_with('/')
-    {
-        return Some(extension.cow_to_ascii_lowercase().into_owned());
+    let path = module_name.split_once('?').map_or(module_name, |(path, _)| path);
+    let file_name = path.rsplit_once('/').map_or(path, |(_, file_name)| file_name);
+    let (_, extension) = file_name.rsplit_once('.')?;
+    if extension.is_empty() {
+        return None;
     }
 
-    None
+    Some(extension.cow_to_ascii_lowercase())
 }
 
 /// Get the actual file extension from the resolved module path.
@@ -1750,6 +1759,9 @@ fn test() {
         (r"import x from './foo#section';", Some(json!(["always"]))),
         // Edge case fail: Path alias without extension
         (r"import x from '@/components/Button';", Some(json!(["always"]))),
+        // Edge case fail: Dot in a directory segment is not a written file extension
+        (r"import x from './foo.bar/baz';", Some(json!(["always"]))),
+        (r"import x from './foo.bar/';", Some(json!(["always"]))),
         // Edge case fail: Mixed - some with, some without extensions
         (
             r"
