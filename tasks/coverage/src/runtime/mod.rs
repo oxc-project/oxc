@@ -13,9 +13,9 @@
 mod test262_status;
 
 use std::{
+    io::{self, BufRead, BufReader},
     process::{Child, Command, Stdio},
     thread,
-    time::Duration,
 };
 
 use oxc::{
@@ -27,7 +27,7 @@ use oxc::{
     span::SourceType,
     transformer::{HelperLoaderMode, TransformOptions, Transformer},
 };
-use oxc_tasks_common::agent;
+use oxc_tasks_common::local_agent;
 use rayon::prelude::*;
 use serde::Serialize;
 
@@ -39,7 +39,6 @@ use crate::{
 use test262_status::get_v8_test262_failure_paths;
 
 const HOST: &str = "http://localhost";
-const BASE_PORT: u16 = 32055;
 
 static SKIP_FEATURES: &[&str] = &[
     // Node's version of V8 doesn't implement these
@@ -138,20 +137,31 @@ pub fn run(files: &[Test262File]) -> Vec<CoverageResult> {
     // servers nothing will talk to (the pool is 1 thread under --debug).
     let num_servers = rayon::current_num_threads();
 
-    // A single agent, shared across the rayon threads and the readiness probes.
-    let http = agent();
+    // A single agent, shared across the rayon threads. Servers respond even for
+    // failing tests, so an `Err` here is transport-only (e.g. a request that
+    // queued past the client timeout on a loaded machine) — retry once before
+    // recording it as a failure; re-executing a test is harmless.
+    let http = local_agent();
     let send = |port: u16, request: &RunRequest| -> Result<String, String> {
-        http.post(&format!("{HOST}:{port}/run"))
-            .send_json(request)
-            .map_err(|err| err.to_string())
-            .and_then(|mut res| res.body_mut().read_to_string().map_err(|err| err.to_string()))
+        let post = || {
+            http.post(&format!("{HOST}:{port}/run"))
+                .send_json(request)
+                .map_err(|err| err.to_string())
+                .and_then(|mut res| res.body_mut().read_to_string().map_err(|err| err.to_string()))
+        };
+        post().or_else(|_| post())
     };
 
-    // Start the Node.js servers and wait for each to accept requests.
-    let server = ServerGuard((0..num_servers).map(|i| spawn_server(server_port(i))).collect());
-    for i in 0..num_servers {
-        wait_for_server(&send, server_port(i));
+    // Start the Node.js servers. `spawn_server` blocks until each has reported its
+    // port, which doubles as the readiness signal, so no polling is needed.
+    let mut children = Vec::with_capacity(num_servers);
+    let mut ports = Vec::with_capacity(num_servers);
+    for _ in 0..num_servers {
+        let (child, port) = spawn_server();
+        children.push(child);
+        ports.push(port);
     }
+    let server = ServerGuard(children);
 
     // Each rayon worker talks to its own server (round-robined if there are more
     // workers than servers); the three variants of a case share one server.
@@ -159,14 +169,14 @@ pub fn run(files: &[Test262File]) -> Vec<CoverageResult> {
         .par_iter()
         .filter(|&file| !skip_case(file))
         .map(|file| {
-            let port = server_port(rayon::current_thread_index().unwrap_or(0) % num_servers);
+            let port = ports[rayon::current_thread_index().unwrap_or(0) % ports.len()];
             run_case(file, port, &send)
         })
         .collect();
 
     // Ask each server to shut down gracefully, then ensure the processes are gone.
-    for i in 0..num_servers {
-        let _ = http.delete(&format!("{HOST}:{}", server_port(i))).call();
+    for &port in &ports {
+        let _ = http.delete(&format!("{HOST}:{port}")).call();
     }
     drop(server);
 
@@ -177,41 +187,37 @@ pub fn run(files: &[Test262File]) -> Vec<CoverageResult> {
     results
 }
 
-/// Port for the `index`-th server. The count is bounded by the core count, so it
-/// always fits in a `u16`.
-fn server_port(index: usize) -> u16 {
-    BASE_PORT + u16::try_from(index).expect("server index fits in u16")
-}
-
-fn spawn_server(port: u16) -> Child {
+/// Spawn a Node.js server and return it with the ephemeral port it bound to.
+///
+/// Blocks until the server prints its `PORT <n>` handshake line (emitted once it
+/// is listening), which is the readiness signal. The rest of the server's stdout
+/// is then drained to our stdout on a background thread — a chatty server (e.g.
+/// `DEBUG=1`) would otherwise block once the pipe buffer fills.
+fn spawn_server() -> (Child, u16) {
     let path = workspace_root().join("src/runtime/runtime.js");
-    Command::new("node")
+    let mut child = Command::new("node")
         .args(["--experimental-vm-modules"])
         .arg(&path)
-        .env("PORT", port.to_string())
-        .stdout(Stdio::inherit())
+        .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
         .spawn()
-        .expect("Failed to start runtime.js - ensure Node.js is installed")
-}
+        .expect("Failed to start runtime.js - ensure Node.js is installed");
 
-/// Poll a server until it answers a request, or panic after ~30s.
-fn wait_for_server(send: &impl Fn(u16, &RunRequest) -> Result<String, String>, port: u16) {
-    let probe = RunRequest {
-        code: String::new(),
-        includes: &[],
-        is_async: false,
-        is_module: false,
-        is_raw: true,
-        import_dir: "",
-    };
-    for _ in 0..300 {
-        if send(port, &probe).is_ok() {
-            return;
-        }
-        thread::sleep(Duration::from_millis(100));
-    }
-    panic!("Runtime server on {HOST}:{port} did not become ready");
+    let stdout = child.stdout.take().expect("runtime.js stdout is piped");
+    let mut reader = BufReader::new(stdout);
+
+    let mut first_line = String::new();
+    reader.read_line(&mut first_line).expect("failed to read the port line from runtime.js");
+    let port = first_line
+        .strip_prefix("PORT ")
+        .and_then(|rest| rest.trim().parse::<u16>().ok())
+        .unwrap_or_else(|| panic!("expected `PORT <n>` from runtime.js, got {first_line:?}"));
+
+    thread::spawn(move || {
+        let _ = io::copy(&mut reader, &mut io::stdout());
+    });
+
+    (child, port)
 }
 
 fn run_case(

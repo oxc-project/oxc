@@ -187,5 +187,10 @@ process.on("unhandledRejection", () => {
 
 server.timeout = 3000;
 
-const port = process.env.PORT || 32055;
-server.listen(port, () => {});
+// Listen on an OS-assigned ephemeral port and report it on the first stdout line
+// once listening. The parent process reads this line both to learn the port and
+// as the readiness signal — avoiding a fixed port that could collide with an
+// orphaned server or a concurrent run in another worktree.
+server.listen(0, () => {
+  console.log(`PORT ${server.address().port}`);
+});
