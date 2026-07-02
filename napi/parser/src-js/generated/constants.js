@@ -103,3 +103,13 @@ export const DESERIALIZED_FLAG_OFFSET = 15;
  * Discriminant value for `CommentKind::Line`.
  */
 export const COMMENT_LINE_KIND = 0;
+
+/**
+ * Discriminant value for `CommentKind::HTMLOpenLine`.
+ */
+export const COMMENT_HTML_OPEN_LINE_KIND = 3;
+
+/**
+ * Discriminant value for `CommentKind::HTMLCloseLine`.
+ */
+export const COMMENT_HTML_CLOSE_LINE_KIND = 4;

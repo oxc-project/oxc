@@ -32,7 +32,9 @@ pub fn convert_utf8_to_utf16(
             }
             Comment {
                 r#type: match comment.kind {
-                    CommentKind::Line => String::from("Line"),
+                    CommentKind::Line | CommentKind::HTMLOpenLine | CommentKind::HTMLCloseLine => {
+                        String::from("Line")
+                    }
                     CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
                         String::from("Block")
                     }

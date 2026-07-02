@@ -4944,18 +4944,25 @@ function deserializeCommentKind(pos) {
       return "Block";
     case 2:
       return "Block";
+    case 3:
+      return "Line";
+    case 4:
+      return "Line";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for CommentKind`);
   }
 }
 
 function deserializeComment(pos) {
-  let type = deserializeCommentKind(pos + 12),
-    start = deserializeI32(pos),
-    end = deserializeI32(pos + 4);
+  let start = deserializeI32(pos),
+    end = deserializeI32(pos + 4),
+    kind = deserializeU8(pos + 12);
   return {
-    type,
-    value: sourceText.slice(start + 2, end - (type === "Line" ? 0 : 2)),
+    type: deserializeCommentKind(pos + 12),
+    value: sourceText.slice(
+      start + (kind === 3 ? 4 : kind === 4 ? 3 : 2),
+      end - (kind === 1 || kind === 2 ? 2 : 0),
+    ),
     start,
     end,
     range: [start, end],
