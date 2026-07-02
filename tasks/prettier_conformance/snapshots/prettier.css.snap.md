@@ -1,10 +1,9 @@
-css compatibility: 147/150 (98.00%), 25 files skipped
+css compatibility: 148/150 (98.67%), 25 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| css/escaped-attribute/test.css | 💥 | 76.00% |
 | css/stylefmt-repo/at-media/at-media.css | 💥 | 90.48% |
 | css/stylefmt-repo/cssnext-example/cssnext-example.css | 💥 | 98.31% |
 
