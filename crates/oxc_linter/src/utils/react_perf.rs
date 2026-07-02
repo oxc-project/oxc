@@ -2,7 +2,7 @@ use std::fmt;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, BindingPattern, Expression, JSXAttributeValue},
+    ast::{BindingIdentifier, BindingPattern, Expression, JSXAttribute, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolId;
@@ -11,12 +11,7 @@ use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{
-    AstNode, LintContext,
-    context::ContextHost,
-    rule::{DefaultRuleConfig, Rule},
-    utils::is_react_component_name,
-};
+use crate::{AstNode, LintContext, utils::is_react_component_name};
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
@@ -96,93 +91,87 @@ pub trait ReactPerfRule: Sized + Default + fmt::Debug {
     ) -> Option<(/* decl */ Span, /* init */ Option<Span>)>;
 }
 
-impl<R> Rule for R
-where
-    R: ReactPerfRule + serde::de::DeserializeOwned,
-{
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+/// Shared `run` implementation for all `react_perf` rules.
+///
+/// Callers (the rules' `Rule::run` implementations) are expected to have already
+/// matched `node.kind()` against [`AstKind::JSXAttribute`] and pass the attribute in,
+/// so that the linter can dispatch these rules only to `JSXAttribute` nodes.
+pub fn run_react_perf_rule<'a, R: ReactPerfRule>(
+    rule: &R,
+    attr: &JSXAttribute<'a>,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) {
+    // new objects/arrays/etc created at the root scope do not get
+    // re-created on each render and thus do not affect performance.
+    if node.scope_id() == ctx.scoping().root_scope_id() {
+        return;
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // new objects/arrays/etc created at the root scope do not get
-        // re-created on each render and thus do not affect performance.
-        if node.scope_id() == ctx.scoping().root_scope_id() {
-            return;
-        }
+    // look for JSX attributes whose values are expressions (foo={bar}) (as opposed to
+    // spreads ({...foo}) or just boolean attributes) (<div foo />)
+    let Some(JSXAttributeValue::ExpressionContainer(container)) = attr.value.as_ref() else {
+        return;
+    };
+    let Some(expr) = container.expression.as_expression() else {
+        return;
+    };
 
-        // look for JSX attributes whose values are expressions (foo={bar}) (as opposed to
-        // spreads ({...foo}) or just boolean attributes) (<div foo />)
-        let AstKind::JSXAttribute(attr) = node.kind() else {
-            return;
-        };
-        let Some(JSXAttributeValue::ExpressionContainer(container)) = attr.value.as_ref() else {
-            return;
-        };
-        let Some(expr) = container.expression.as_expression() else {
-            return;
-        };
-
-        // skip native elements (lowercase-first-letter tags like `div`) that are
-        // exempted by the `nativeAllowList` configuration.
-        if !matches!(self.native_allow_list(), NativeAllowList::None)
-            && let AstKind::JSXOpeningElement(opening) = ctx.nodes().parent_kind(node.id())
-            && let Some(tag_name) = opening.name.get_identifier_name()
-            && !is_react_component_name(&tag_name)
-        {
-            match self.native_allow_list() {
-                NativeAllowList::All(_) => return,
-                NativeAllowList::List(names) => {
-                    if let Some(attr_name) = attr.name.as_identifier()
-                        && names.iter().any(|n| n.as_str().eq_ignore_ascii_case(&attr_name.name))
-                    {
-                        return;
-                    }
+    // skip native elements (lowercase-first-letter tags like `div`) that are
+    // exempted by the `nativeAllowList` configuration.
+    if !matches!(rule.native_allow_list(), NativeAllowList::None)
+        && let AstKind::JSXOpeningElement(opening) = ctx.nodes().parent_kind(node.id())
+        && let Some(tag_name) = opening.name.get_identifier_name()
+        && !is_react_component_name(&tag_name)
+    {
+        match rule.native_allow_list() {
+            NativeAllowList::All(_) => return,
+            NativeAllowList::List(names) => {
+                if let Some(attr_name) = attr.name.as_identifier()
+                    && names.iter().any(|n| n.as_str().eq_ignore_ascii_case(&attr_name.name))
+                {
+                    return;
                 }
-                NativeAllowList::None => {}
             }
-        }
-
-        // strip parenthesis and TS type casting expressions
-        let expr = expr.get_inner_expression();
-        // When expr is a violation, this fn will report the appropriate
-        // diagnostic and return true.
-        if let Some(attr_span) = self.check_for_violation_on_expr(expr) {
-            ctx.diagnostic(react_perf_inline_diagnostic(Self::MESSAGE, attr_span));
-            return;
-        }
-
-        // check for new objects/arrays/etc declared within the render function,
-        // which is effectively the same as passing a new object/array/etc
-        // directly as a prop.
-        let Expression::Identifier(ident) = expr else {
-            return;
-        };
-        let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
-            return;
-        };
-        // Symbols declared at the root scope won't (or, at least, shouldn't) be
-        // re-assigned inside component render functions, so we can safely
-        // ignore them.
-        if ctx.scoping().symbol_scope_id(symbol_id) == ctx.scoping().root_scope_id() {
-            return;
-        }
-
-        let declaration_node = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
-        if let Some((decl_span, init_span)) =
-            self.check_for_violation_on_ast_kind(&declaration_node.kind(), symbol_id)
-        {
-            ctx.diagnostic(react_perf_reference_diagnostic(
-                Self::MESSAGE,
-                ident.span,
-                decl_span,
-                init_span,
-            ));
+            NativeAllowList::None => {}
         }
     }
 
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
+    // strip parenthesis and TS type casting expressions
+    let expr = expr.get_inner_expression();
+    // When expr is a violation, this fn will report the appropriate
+    // diagnostic and return true.
+    if let Some(attr_span) = rule.check_for_violation_on_expr(expr) {
+        ctx.diagnostic(react_perf_inline_diagnostic(R::MESSAGE, attr_span));
+        return;
+    }
+
+    // check for new objects/arrays/etc declared within the render function,
+    // which is effectively the same as passing a new object/array/etc
+    // directly as a prop.
+    let Expression::Identifier(ident) = expr else {
+        return;
+    };
+    let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
+        return;
+    };
+    // Symbols declared at the root scope won't (or, at least, shouldn't) be
+    // re-assigned inside component render functions, so we can safely
+    // ignore them.
+    if ctx.scoping().symbol_scope_id(symbol_id) == ctx.scoping().root_scope_id() {
+        return;
+    }
+
+    let declaration_node = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
+    if let Some((decl_span, init_span)) =
+        rule.check_for_violation_on_ast_kind(&declaration_node.kind(), symbol_id)
+    {
+        ctx.diagnostic(react_perf_reference_diagnostic(
+            R::MESSAGE,
+            ident.span,
+            decl_span,
+            init_span,
+        ));
     }
 }
 

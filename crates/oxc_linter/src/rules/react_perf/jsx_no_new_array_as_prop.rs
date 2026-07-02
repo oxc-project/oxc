@@ -6,10 +6,13 @@ use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode, LintContext,
     ast_util::is_method_call,
+    context::ContextHost,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         NativeAllowList, ReactPerfConfig, ReactPerfRule, find_initialized_binding,
-        is_constructor_matching_name,
+        is_constructor_matching_name, run_react_perf_rule,
     },
 };
 
@@ -60,6 +63,23 @@ declare_oxc_lint!(
     version = "0.2.3",
     short_description = "Prevent arrays that are local to the current method from being used as values of JSX props.",
 );
+
+impl Rule for JsxNoNewArrayAsProp {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXAttribute(attr) = node.kind() else {
+            return;
+        };
+        run_react_perf_rule(self, attr, node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.source_type().is_jsx()
+    }
+}
 
 impl ReactPerfRule for JsxNoNewArrayAsProp {
     const MESSAGE: &'static str =

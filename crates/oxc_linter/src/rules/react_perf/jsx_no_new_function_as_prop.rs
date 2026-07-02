@@ -8,7 +8,15 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
-use crate::utils::{NativeAllowList, ReactPerfConfig, ReactPerfRule, is_constructor_matching_name};
+use crate::{
+    AstNode, LintContext,
+    context::ContextHost,
+    rule::{DefaultRuleConfig, Rule},
+    utils::{
+        NativeAllowList, ReactPerfConfig, ReactPerfRule, is_constructor_matching_name,
+        run_react_perf_rule,
+    },
+};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct JsxNoNewFunctionAsProp(Box<ReactPerfConfig>);
@@ -54,6 +62,23 @@ declare_oxc_lint!(
     version = "0.2.3",
     short_description = "Prevent functions that are local to the current method from being used as values of JSX props.",
 );
+
+impl Rule for JsxNoNewFunctionAsProp {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXAttribute(attr) = node.kind() else {
+            return;
+        };
+        run_react_perf_rule(self, attr, node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.source_type().is_jsx()
+    }
+}
 
 impl ReactPerfRule for JsxNoNewFunctionAsProp {
     const MESSAGE: &'static str =
