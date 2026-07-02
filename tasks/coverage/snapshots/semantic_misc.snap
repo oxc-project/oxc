@@ -124,12 +124,6 @@ Scope parent mismatch:
 after transform: ScopeId(265): Some(ScopeId(264))
 rebuilt        : ScopeId(485): Some(ScopeId(484))
 Bindings mismatch:
-after transform: ScopeId(350): ["Inner", "Inner2", "_access_accessor_storage13", "_ref11", "_super$foo45", "_super$foo45_computed_accessor_storage", "_super$foo46", "_super$foo47", "_super$foo48"]
-rebuilt        : ScopeId(507): ["_access_accessor_storage13", "_super$foo45", "_super$foo45_computed_accessor_storage"]
-Bindings mismatch:
-after transform: ScopeId(798): []
-rebuilt        : ScopeId(508): ["Inner", "Inner2", "_ref11", "_super$foo46", "_super$foo47", "_super$foo48"]
-Bindings mismatch:
 after transform: ScopeId(361): ["_ref12", "_super$foo50", "_super$foo51", "_super$foo52"]
 rebuilt        : ScopeId(529): ["_access_accessor_storage14", "_super$foo49", "_super$foo49_computed_accessor_storage"]
 Bindings mismatch:
@@ -399,24 +393,6 @@ rebuilt        : SymbolId(211): ScopeId(484)
 Symbol scope ID mismatch for "_ref6":
 after transform: SymbolId(236): ScopeId(262)
 rebuilt        : SymbolId(212): ScopeId(484)
-Symbol scope ID mismatch for "_super$foo46":
-after transform: SymbolId(296): ScopeId(350)
-rebuilt        : SymbolId(219): ScopeId(508)
-Symbol scope ID mismatch for "_super$foo47":
-after transform: SymbolId(297): ScopeId(350)
-rebuilt        : SymbolId(220): ScopeId(508)
-Symbol scope ID mismatch for "_super$foo48":
-after transform: SymbolId(298): ScopeId(350)
-rebuilt        : SymbolId(221): ScopeId(508)
-Symbol scope ID mismatch for "_ref11":
-after transform: SymbolId(299): ScopeId(350)
-rebuilt        : SymbolId(222): ScopeId(508)
-Symbol scope ID mismatch for "Inner":
-after transform: SymbolId(88): ScopeId(350)
-rebuilt        : SymbolId(226): ScopeId(508)
-Symbol scope ID mismatch for "Inner2":
-after transform: SymbolId(90): ScopeId(350)
-rebuilt        : SymbolId(229): ScopeId(508)
 Symbol scope ID mismatch for "_super$foo49":
 after transform: SymbolId(300): ScopeId(362)
 rebuilt        : SymbolId(230): ScopeId(529)

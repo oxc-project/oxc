@@ -309,6 +309,11 @@ impl Reference {
     }
 
     #[inline]
+    pub fn set_scope_id(&mut self, scope_id: ScopeId) {
+        self.scope_id = scope_id;
+    }
+
+    #[inline]
     pub fn flags(&self) -> ReferenceFlags {
         self.flags
     }
