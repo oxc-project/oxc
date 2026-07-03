@@ -358,8 +358,7 @@ fn generate_visit_method_for_struct(
             // are direct children and must be collected instead.
             let mut inner_stmts = quote!();
             for (field_index, field) in struct_def.fields.iter().enumerate() {
-                if field_index < scope.enter_before_index
-                    || field_index >= scope.exit_before_index
+                if field_index < scope.enter_before_index || field_index >= scope.exit_before_index
                 {
                     continue;
                 }
