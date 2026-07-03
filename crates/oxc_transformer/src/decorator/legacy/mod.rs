@@ -1027,6 +1027,7 @@ impl<'a> LegacyDecorator<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let span = class.span;
+        Self::sync_class_expression_name_binding(class, ctx);
         class.r#type = ClassType::ClassExpression;
         let initializer = Self::get_class_initializer(
             Expression::ClassExpression(class.take_in_box(ctx)),
@@ -1050,6 +1051,32 @@ impl<'a> LegacyDecorator<'a> {
             ctx,
         );
         Statement::from(var_declaration)
+    }
+
+    fn sync_class_expression_name_binding(class: &Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Some(id) = &class.id else { return };
+        let symbol_id = id.symbol_id();
+        let class_scope_id = class.scope_id();
+        let current_scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+        if current_scope_id == class_scope_id {
+            return;
+        }
+
+        ctx.scoping_mut().move_binding_by_symbol_id(current_scope_id, class_scope_id, symbol_id);
+
+        let reference_ids = ctx.scoping().get_resolved_reference_ids(symbol_id).to_vec();
+        for reference_id in reference_ids {
+            let reference_scope_id = ctx.scoping().get_reference(reference_id).scope_id();
+            if reference_scope_id == class_scope_id
+                || ctx.scoping().scope_is_descendant_of(reference_scope_id, class_scope_id)
+            {
+                continue;
+            }
+
+            ctx.scoping_mut().delete_resolved_reference(symbol_id, reference_id);
+            ctx.scoping_mut().get_reference_mut(reference_id).clear_symbol_id();
+            ctx.scoping_mut().add_root_unresolved_reference(id.name, reference_id);
+        }
     }
 
     /// Transforms a non-decorated class declaration.
