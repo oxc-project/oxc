@@ -593,14 +593,18 @@ impl<'a, 's> SlotAssignment<'a, 's> {
         let mut tmp_bindings = ArenaVec::with_capacity_in(100, &allocator);
         let mut reusable_slots = ArenaVec::new_in(&allocator);
         let mut parent_function_slots = ArenaVec::new_in(&allocator);
+        let mut forbidden_slots = BitSet::new_in(scoping.symbols_len(), allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
 
-        let scope_ids = scope_ids_parent_before_child(allocator, scoping);
+        let ordered_scope_ids = scope_ids_parent_before_child(allocator, scoping);
 
         // Walk down the scope tree and assign a slot number for each symbol. Doing it as a scope
         // walk (rather than a flat symbol loop) generates better code.
-        for scope_id in scope_ids {
+        for index in 0..scoping.scopes_len() {
+            let scope_id = ordered_scope_ids
+                .as_ref()
+                .map_or_else(|| ScopeId::from_usize(index), |scope_ids| scope_ids[index]);
             let bindings = scoping.get_bindings(scope_id);
             if bindings.is_empty() {
                 continue;
@@ -625,17 +629,21 @@ impl<'a, 's> SlotAssignment<'a, 's> {
             tmp_bindings.sort_unstable();
 
             let mut slot = slot_liveness.len();
+            let scope_index = scope_id.index();
 
+            let is_function_body = scoping.scope_flags(scope_id).is_function_body();
+            for &parent_slot in &parent_function_slots {
+                forbidden_slots.unset_bit(parent_slot as usize);
+            }
             parent_function_slots.clear();
-            if scoping.scope_flags(scope_id).is_function_body()
-                && let Some(parent_scope_id) = scoping.scope_parent_id(scope_id)
-            {
-                parent_function_slots.extend(
-                    scoping
-                        .iter_bindings_in(parent_scope_id)
-                        .map(|symbol_id| slots[symbol_id.index()])
-                        .filter(|&slot| slot != SLOT_UNASSIGNED),
-                );
+            if is_function_body && let Some(parent_scope_id) = scoping.scope_parent_id(scope_id) {
+                for symbol_id in scoping.iter_bindings_in(parent_scope_id) {
+                    let parent_slot = slots[symbol_id.index()];
+                    if parent_slot != SLOT_UNASSIGNED {
+                        parent_function_slots.push(parent_slot);
+                        forbidden_slots.set_bit(parent_slot as usize);
+                    }
+                }
             }
 
             reusable_slots.clear();
@@ -645,10 +653,8 @@ impl<'a, 's> SlotAssignment<'a, 's> {
                     .iter()
                     .enumerate()
                     .filter(|(slot, slot_liveness)| {
-                        !slot_liveness.has_bit(scope_id.index())
-                            && !parent_function_slots
-                                .iter()
-                                .any(|&parent_slot| parent_slot as usize == *slot)
+                        !slot_liveness.has_bit(scope_index)
+                            && (!is_function_body || !forbidden_slots.has_bit(*slot))
                     })
                     .map(
                         // `slot_liveness` is an arena `Vec`, so its indexes cannot exceed `u32::MAX`
@@ -679,7 +685,6 @@ impl<'a, 's> SlotAssignment<'a, 's> {
                 ancestor_set.set_bit(ancestor_id.index());
             }
 
-            let scope_id_index = scope_id.index();
             for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
                 slots[symbol_id.index()] = assigned_slot;
 
@@ -704,17 +709,16 @@ impl<'a, 's> SlotAssignment<'a, 's> {
                     for ancestor_id in scoping.scope_ancestors(used_scope_id) {
                         let ancestor_index = ancestor_id.index();
                         // Stop when we reach scope_id or any of its ancestors
-                        if ancestor_index == scope_id_index || ancestor_set.has_bit(ancestor_index)
-                        {
+                        if ancestor_index == scope_index || ancestor_set.has_bit(ancestor_index) {
                             break;
                         }
                         if slot_liveness_bitset.has_bit(ancestor_index) {
                             debug_assert!(
                                 scoping.scope_ancestors(ancestor_id).skip(1).all(|a| {
-                                    let idx = a.index();
-                                    slot_liveness_bitset.has_bit(idx)
-                                        || idx == scope_id_index
-                                        || ancestor_set.has_bit(idx)
+                                    let index = a.index();
+                                    slot_liveness_bitset.has_bit(index)
+                                        || index == scope_index
+                                        || ancestor_set.has_bit(index)
                                 }),
                                 "Invariant violated: ancestor chain should be fully marked live"
                             );
@@ -752,8 +756,16 @@ impl<'a, 's> SlotAssignment<'a, 's> {
 fn scope_ids_parent_before_child<'a>(
     allocator: &'a Allocator,
     scoping: &Scoping,
-) -> ArenaVec<'a, ScopeId> {
+) -> Option<ArenaVec<'a, ScopeId>> {
     let scopes_len = scoping.scopes_len();
+    if (0..scopes_len).all(|index| {
+        scoping
+            .scope_parent_id(ScopeId::from_usize(index))
+            .is_none_or(|parent_id| parent_id.index() < index)
+    }) {
+        return None;
+    }
+
     let mut ordered_scope_ids = ArenaVec::with_capacity_in(scopes_len, &allocator);
     let mut visited = BitSet::new_in(scopes_len, allocator);
     let mut stack = ArenaVec::new_in(&allocator);
@@ -775,7 +787,7 @@ fn scope_ids_parent_before_child<'a>(
     }
 
     debug_assert_eq!(ordered_scope_ids.len(), scopes_len);
-    ordered_scope_ids
+    Some(ordered_scope_ids)
 }
 
 impl<'a> SlotRanking<'a> {
