@@ -475,7 +475,7 @@ impl<'a> ClassProperties<'a> {
         let class_details = self.classes_stack.last_mut();
         if let Some(temp_binding) = &class_details.bindings.temp {
             // Binding for class name is required
-            if let Some(ident) = &class.id {
+            if class.id.is_some() {
                 // Insert `var _Class` statement, if it wasn't already in entry phase
                 if !class_details.bindings.temp_var_is_created {
                     ctx.state.var_declarations.insert_var(temp_binding, &ctx.ast);
@@ -485,7 +485,7 @@ impl<'a> ClassProperties<'a> {
                 // TODO(improve-on-babel): Could just insert `var _Class = Class;` after class,
                 // rather than separate `var _Class` declaration.
                 let class_name =
-                    BoundIdentifier::from_binding_ident(ident).create_read_expression(ctx);
+                    class_details.bindings.name.as_ref().unwrap().create_read_expression(ctx);
                 let expr = create_assignment(temp_binding, class_name, SPAN, ctx);
                 let stmt = Statement::new_expression_statement(SPAN, expr, ctx);
                 self.insert_after_stmts.insert(0, stmt);
