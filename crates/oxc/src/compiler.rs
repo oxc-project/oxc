@@ -3,10 +3,12 @@ use std::{mem, ops::ControlFlow, path::Path};
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
-use oxc_diagnostics::Diagnostics;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
-use oxc_minifier::{CompressOptions, Compressor, ManglePropertiesOptions, PropertyMangler};
+use oxc_minifier::{
+    CompressOptions, Compressor, ManglePropertiesOptions, PropertyMangleBailKind, PropertyMangler,
+};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn, Stats};
 use oxc_span::SourceType;
@@ -90,6 +92,11 @@ pub trait CompilerInterface {
     ///
     /// Runs around compress + variable mangle: candidates are collected on the
     /// original (pre-compress) program and rewritten after variable mangling.
+    ///
+    /// Collection runs on the post-transform program. When JSX is transformed in
+    /// this pipeline, JSX attribute names are lowered to plain object keys before
+    /// collection and are NOT auto-reserved — users mangling JSX-transformed code
+    /// must exclude component-prop names via the reserve regex/list.
     fn mangle_properties_options(&self) -> Option<ManglePropertiesOptions> {
         None
     }
@@ -225,6 +232,23 @@ pub trait CompilerInterface {
             .mangle_properties_options()
             .map(|options| self.property_mangle_collect(options, &allocator, &mut program));
 
+        // A whole-file bail (`with` / direct `eval` / `Function` constructor) makes the
+        // rewrite below a no-op; surface it as a warning so it isn't silent.
+        if let Some(bail) = property_mangler.as_ref().and_then(PropertyMangler::bail) {
+            let reason = match bail.kind {
+                PropertyMangleBailKind::With => "a `with` statement",
+                PropertyMangleBailKind::DirectEval => "a direct `eval(...)` call",
+                PropertyMangleBailKind::FunctionConstructor => "the `Function` constructor",
+            };
+            self.handle_errors(Diagnostics::from(
+                OxcDiagnostic::warn(format!(
+                    "Property mangling was skipped for the whole file because it contains \
+                     {reason}, which can reference property names dynamically."
+                ))
+                .with_label(bail.span),
+            ));
+        }
+
         /* Compress / DCE */
 
         // Both consumers need in-sync scoping; only rebuild when a preceding step
@@ -331,6 +355,10 @@ pub trait CompilerInterface {
 
     /// Collect property-mangling candidates on the original (pre-compress) program and
     /// rename `@__KEY__`-annotated literals, returning the driver to finish after mangling.
+    ///
+    /// The program is post-transform at this point (collect must see transform output,
+    /// e.g. quoted keys emitted by TS enum lowering), so lowered JSX attribute names are
+    /// NOT auto-reserved; reserve component-prop names explicitly when mangling JSX.
     fn property_mangle_collect<'a>(
         &self,
         options: ManglePropertiesOptions,
