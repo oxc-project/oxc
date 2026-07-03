@@ -1,5 +1,6 @@
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast_visit::{Visit, walk};
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_str::static_ident;
@@ -80,6 +81,7 @@ impl<'a> TypeScriptModule {
         };
 
         let left = AssignmentTarget::from(SimpleAssignmentTarget::from(module_exports));
+        Self::mark_expression_references_as_value(&export_assignment.expression, ctx);
         let right = export_assignment.expression.take_in(ctx);
         let assignment_expr = Expression::new_assignment_expression(
             SPAN,
@@ -89,6 +91,11 @@ impl<'a> TypeScriptModule {
             ctx,
         );
         Statement::new_expression_statement(SPAN, assignment_expr, ctx)
+    }
+
+    fn mark_expression_references_as_value(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let mut marker = ValueReferenceMarker { ctx };
+        marker.visit_expression(expr);
     }
 
     /// Transform TSImportEqualsDeclaration to a VariableDeclaration.
@@ -286,5 +293,17 @@ impl<'a> TypeScriptModule {
             debug_assert!(flags.is_read());
             *flags = ReferenceFlags::Type;
         }
+    }
+}
+
+struct ValueReferenceMarker<'a, 'v> {
+    ctx: &'v mut TraverseCtx<'a>,
+}
+
+impl<'a> Visit<'a> for ValueReferenceMarker<'a, '_> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        *self.ctx.scoping_mut().get_reference_mut(ident.reference_id()).flags_mut() =
+            ReferenceFlags::Read;
+        walk::walk_identifier_reference(self, ident);
     }
 }

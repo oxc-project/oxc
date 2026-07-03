@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4432/4720 (93.90%)
+Positive Passed: 4433/4720 (93.92%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -935,17 +935,6 @@ Symbol redeclarations mismatch for "L":
 after transform: SymbolId(1): [Span { start: 31, end: 32 }, Span { start: 107, end: 108 }]
 rebuilt        : SymbolId(2): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportNamespaceDeclarationRetainsVisibility.ts
-Reference symbol mismatch for "X":
-after transform: SymbolId(0) "X"
-rebuilt        : <None>
-Reference flags mismatch for "X":
-after transform: ReferenceId(2): ReferenceFlags(Type)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-Unresolved references mismatch:
-after transform: ["module"]
-rebuilt        : ["X", "module"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportRedeclarationTypeAliases.ts
 Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 42, end: 45 }
@@ -1433,9 +1422,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyCheckExter
 Reference symbol mismatch for "Bar":
 after transform: SymbolId(1) "Bar"
 rebuilt        : <None>
-Reference flags mismatch for "Bar":
-after transform: ReferenceId(0): ReferenceFlags(Type)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["module"]
 rebuilt        : ["Bar", "module"]
@@ -2379,9 +2365,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModule
 Reference symbol mismatch for "A":
 after transform: SymbolId(0) "A"
 rebuilt        : <None>
-Reference flags mismatch for "A":
-after transform: ReferenceId(0): ReferenceFlags(Type)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["module"]
 rebuilt        : ["A", "module"]
