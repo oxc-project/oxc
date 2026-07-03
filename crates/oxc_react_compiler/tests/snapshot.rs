@@ -1,20 +1,18 @@
 //! Snapshot tests over the upstream React Compiler fixture corpus.
 //!
-//! Each input under `fixtures/` (copied from the upstream
-//! `babel-plugin-react-compiler/src/__tests__/fixtures/compiler` tree) is parsed,
-//! analysed, and run through [`oxc_react_compiler::transform`]. The compiled output
+//! Each input under `fixtures/` (copied from upstream
+//! `babel-plugin-react-compiler/src/__tests__/fixtures/compiler`) is parsed,
+//! analysed, and run through [`oxc_react_compiler::transform`]; the compiled output
 //! plus diagnostics are snapshotted with `insta` into `tests/snapshots/`.
 //!
 //! Per-fixture options come from the first-line `// @directive` pragmas, mirroring
-//! the upstream `snap` runner's `makePluginOptions`: the base config is
-//! `compilationMode: all` / `panicThreshold: all_errors`, then each recognised
-//! directive overrides a `PluginOptions` field or an `EnvironmentConfig` field
-//! (booleans, enums, allow/block lists, and gating/instrumentation configs).
-//! Directives oxc doesn't model are ignored (as upstream ignores unknown keys).
+//! the upstream `snap` runner: the base config is `compilationMode: all` /
+//! `panicThreshold: all_errors`, then each recognised directive overrides a
+//! `PluginOptions` or `EnvironmentConfig` field. Unmodelled directives are ignored,
+//! as upstream ignores unknown keys.
 //!
-//! The snapshots are oxc's *own* golden output (not a comparison against Babel),
-//! so any change in compiler behaviour surfaces as a snapshot diff. Regenerate with
-//! `cargo insta accept` after reviewing.
+//! The snapshots are oxc's *own* golden output, so any change in compiler behaviour
+//! surfaces as a diff. Regenerate with `cargo insta accept` after reviewing.
 
 use std::{fs, path::Path};
 
@@ -51,19 +49,12 @@ fn run_fixture(source: &str) -> String {
     let parsed = Parser::new(&allocator, source, source_type).parse();
     let mut program = parsed.program;
 
-    // Surface parse failures instead of silently compiling a recovered/dummy AST,
-    // so a fixture that stops parsing shows up as a snapshot change.
     let mut out = String::new();
-    if !parsed.diagnostics.is_empty() {
-        out.push_str("Parse errors:\n\n");
-        for error in &parsed.diagnostics {
-            out.push_str(&format!("{error:?}\n"));
-        }
-        out.push('\n');
-    }
+    // Surface parse failures rather than silently compiling a recovered/dummy AST.
+    push_diagnostics(&mut out, "Parse errors", parsed.diagnostics.as_slice());
 
-    // `transform` borrows a `Semantic` built from the pristine program; scope it so
-    // the borrow ends before we swap in the compiled program (matching the example).
+    // `transform` borrows a `Semantic` built from the pristine program; scope the
+    // borrow so it ends before we swap in the compiled program.
     let mut result = {
         let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
         transform(&program, &semantic, &allocator, options)
@@ -72,13 +63,7 @@ fn run_fixture(source: &str) -> String {
         program = compiled;
     }
 
-    if !result.diagnostics.is_empty() {
-        out.push_str("Diagnostics:\n\n");
-        for diagnostic in &result.diagnostics {
-            out.push_str(&format!("{diagnostic:?}\n"));
-        }
-        out.push('\n');
-    }
+    push_diagnostics(&mut out, "Diagnostics", result.diagnostics.as_slice());
     if result.changed {
         out.push_str(&Codegen::new().build(&program).code);
     } else {
@@ -87,8 +72,21 @@ fn run_fixture(source: &str) -> String {
     out
 }
 
-/// Snapshot name = the fixture path relative to `fixtures/`, extension dropped and
-/// `/` replaced with `__` so nested fixtures with the same basename don't collide.
+/// Append a `"{label}:\n\n{diag}\n…\n"` section, or nothing when there are none.
+fn push_diagnostics(out: &mut String, label: &str, diagnostics: &[impl std::fmt::Debug]) {
+    if diagnostics.is_empty() {
+        return;
+    }
+    out.push_str(label);
+    out.push_str(":\n\n");
+    for diagnostic in diagnostics {
+        out.push_str(&format!("{diagnostic:?}\n"));
+    }
+    out.push('\n');
+}
+
+/// Snapshot name = fixture path under `fixtures/`, extension dropped and `/` → `__`
+/// so nested fixtures with the same basename don't collide.
 fn snapshot_name(path: &Path) -> String {
     let full = path.to_string_lossy();
     let rel = full.rsplit_once("/fixtures/").map_or(full.as_ref(), |(_, rel)| rel);
@@ -106,13 +104,10 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
     };
 
     let mut is_script = false;
-    let first_line = source.lines().next().unwrap_or("");
-    // Every fixture header uses the canonical `@key:value` / bare `@key` shape (the
-    // corpus is normalised — no legacy `@key(value)`, `@key="value"`, or `@key value`
-    // forms), so each `@`-delimited entry either splits at its first `:` into key +
-    // raw value (the value keeps internal spaces, e.g. `["use todo memo"]`) or is a
-    // bare flag.
-    for entry in first_line.split('@').skip(1) {
+    // Fixture headers are normalised to the canonical `@key:value` / bare `@key` shape,
+    // so each `@`-entry either splits at its first `:` into key + raw value (values keep
+    // internal spaces, e.g. `["use todo memo"]`) or is a bare flag.
+    for entry in source.lines().next().unwrap_or("").split('@').skip(1) {
         let entry = entry.trim();
         let (key, value) = match entry.split_once(':') {
             Some((key, value)) => (key, Some(value)),
@@ -131,7 +126,7 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
                 }
             }
             "outputMode" => options.output_mode = value.map(unquote),
-            // `@gating` has a fixed test default (upstream `testComplexPluginOptionDefaults`).
+            // Fixed test default (upstream `testComplexPluginOptionDefaults`).
             "gating" => {
                 options.gating = Some(GatingConfig {
                     source: "ReactForgetFeatureFlag".to_string(),
@@ -145,7 +140,7 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
             }
             "customOptOutDirectives" => {
                 if let Some(v) = value {
-                    options.custom_opt_out_directives = Some(string_array(v));
+                    options.custom_opt_out_directives = Some(json_strings(v));
                 }
             }
             other => set_environment_directive(&mut options.environment, other, value),
@@ -153,9 +148,8 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
     }
 
     // Upstream parses every (non-Flow) fixture with the TypeScript + JSX plugins,
-    // regardless of extension, and as a module unless `@script` — so the emitted
-    // runtime import is `import`, not `require`. Flow fixtures are excluded from the
-    // corpus (oxc has no Flow parser).
+    // regardless of extension, and as a module unless `@script` — so injected runtime
+    // imports are `import`, not `require`. Flow fixtures are excluded (no oxc parser).
     let source_type = if is_script {
         SourceType::tsx().with_script(true)
     } else {
@@ -164,83 +158,21 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
     (source_type, options)
 }
 
-/// Strip surrounding double quotes from a directive value (`"annotation"` → `annotation`).
+/// Strip surrounding double quotes: `"annotation"` → `annotation`.
 fn unquote(value: &str) -> String {
     value.strip_prefix('"').and_then(|v| v.strip_suffix('"')).unwrap_or(value).to_string()
 }
 
-/// Apply an `EnvironmentConfig` directive. Booleans default to `true` for a bare
-/// `@key` and clear on `@key:false`; enum / `Option` fields parse their value (or
-/// use the upstream test default). Directives with no matching field are ignored,
-/// matching the upstream runner.
+/// Apply a non-boolean `EnvironmentConfig` directive, delegating plain booleans to
+/// [`set_environment_bool`]. Unmodelled keys are ignored, matching the upstream runner.
 fn set_environment_directive(env: &mut EnvironmentConfig, camel_key: &str, value: Option<&str>) {
-    let on = value != Some("false");
-    // Upstream spells this test-only key with a double underscore, which
-    // `convert_case` would not fold to the field name.
+    // `throwUnknownException__testonly`'s double underscore won't fold via convert_case.
     let snake = if camel_key == "throwUnknownException__testonly" {
         "throw_unknown_exception_testonly".to_string()
     } else {
         camel_key.to_case(Case::Snake)
     };
     match snake.as_str() {
-        "enable_preserve_existing_memoization_guarantees" => {
-            env.enable_preserve_existing_memoization_guarantees = on;
-        }
-        "validate_preserve_existing_memoization_guarantees" => {
-            env.validate_preserve_existing_memoization_guarantees = on;
-        }
-        "validate_exhaustive_memoization_dependencies" => {
-            env.validate_exhaustive_memoization_dependencies = on;
-        }
-        "enable_optional_dependencies" => env.enable_optional_dependencies = on,
-        "enable_name_anonymous_functions" => env.enable_name_anonymous_functions = on,
-        "validate_hooks_usage" => env.validate_hooks_usage = on,
-        "validate_ref_access_during_render" => env.validate_ref_access_during_render = on,
-        "validate_no_set_state_in_render" => env.validate_no_set_state_in_render = on,
-        "enable_use_keyed_state" => env.enable_use_keyed_state = on,
-        "validate_no_set_state_in_effects" => env.validate_no_set_state_in_effects = on,
-        "validate_no_derived_computations_in_effects" => {
-            env.validate_no_derived_computations_in_effects = on;
-        }
-        "validate_no_derived_computations_in_effects_exp" => {
-            env.validate_no_derived_computations_in_effects_exp = on;
-        }
-        "validate_no_jsx_in_try_statements" => env.validate_no_jsx_in_try_statements = on,
-        "validate_static_components" => env.validate_static_components = on,
-        "validate_source_locations" => env.validate_source_locations = on,
-        "validate_no_impure_functions_in_render" => {
-            env.validate_no_impure_functions_in_render = on;
-        }
-        "validate_no_freezing_known_mutable_functions" => {
-            env.validate_no_freezing_known_mutable_functions = on;
-        }
-        "enable_assume_hooks_follow_rules_of_react" => {
-            env.enable_assume_hooks_follow_rules_of_react = on;
-        }
-        "enable_transitively_freeze_function_expressions" => {
-            env.enable_transitively_freeze_function_expressions = on;
-        }
-        "enable_function_outlining" => env.enable_function_outlining = on,
-        "enable_jsx_outlining" => env.enable_jsx_outlining = on,
-        "assert_valid_mutable_ranges" => env.assert_valid_mutable_ranges = on,
-        "throw_unknown_exception_testonly" => env.throw_unknown_exception_testonly = on,
-        "enable_custom_type_definition_for_reanimated" => {
-            env.enable_custom_type_definition_for_reanimated = on;
-        }
-        "enable_treat_ref_like_identifiers_as_refs" => {
-            env.enable_treat_ref_like_identifiers_as_refs = on;
-        }
-        "enable_treat_set_identifiers_as_state_setters" => {
-            env.enable_treat_set_identifiers_as_state_setters = on;
-        }
-        "validate_no_void_use_memo" => env.validate_no_void_use_memo = on,
-        "enable_allow_set_state_from_refs_in_effects" => {
-            env.enable_allow_set_state_from_refs_in_effects = on;
-        }
-        "enable_verbose_no_set_state_in_effect" => env.enable_verbose_no_set_state_in_effect = on,
-        "enable_forest" => env.enable_forest = on,
-
-        // Non-boolean fields.
         "validate_exhaustive_effect_dependencies" => {
             env.validate_exhaustive_effect_dependencies = match value.map(unquote).as_deref() {
                 Some("missing-only") => ExhaustiveEffectDepsMode::MissingOnly,
@@ -248,22 +180,22 @@ fn set_environment_directive(env: &mut EnvironmentConfig, camel_key: &str, value
                 _ => ExhaustiveEffectDepsMode::All,
             };
         }
-        // `Option<Vec<_>>` allow/block lists — the bare directive is `Some([])`
-        // (upstream `testComplexConfigDefaults`), else the parsed JSON array.
+        // Allow/block lists — a bare directive is `Some([])` (upstream
+        // `testComplexConfigDefaults`), else the parsed JSON array.
         "validate_no_capitalized_calls" => {
-            env.validate_no_capitalized_calls = Some(value.map(string_array).unwrap_or_default());
+            env.validate_no_capitalized_calls = Some(value.map(json_strings).unwrap_or_default());
         }
         "validate_blocklisted_imports" => {
-            env.validate_blocklisted_imports = Some(value.map(string_array).unwrap_or_default());
+            env.validate_blocklisted_imports = Some(value.map(json_strings).unwrap_or_default());
         }
+        // Upstream keeps only the macro name (before the first `.`).
         "custom_macros" => {
             if let Some(v) = value {
-                // Upstream keeps the segment before the first `.`.
-                let head = unquote(v).split('.').next().unwrap_or_default().to_string();
-                env.custom_macros = Some(vec![head]);
+                let name = unquote(v).split('.').next().unwrap_or_default().to_string();
+                env.custom_macros = Some(vec![name]);
             }
         }
-        // `Option<config>` fields with fixed test defaults (upstream `testComplexConfigDefaults`).
+        // Configs with fixed test defaults (upstream `testComplexConfigDefaults`).
         "enable_emit_instrument_forget" => {
             env.enable_emit_instrument_forget = Some(InstrumentationConfig {
                 fn_: external_fn("react-compiler-runtime", "useRenderCounter"),
@@ -275,7 +207,52 @@ fn set_environment_directive(env: &mut EnvironmentConfig, camel_key: &str, value
             env.enable_emit_hook_guards =
                 Some(external_fn("react-compiler-runtime", "$dispatcherGuard"));
         }
-        _ => {}
+        _ => set_environment_bool(env, &snake, value != Some("false")),
+    }
+}
+
+/// Set a boolean `EnvironmentConfig` field whose name equals the snake-case directive
+/// key. A bare `@key` (or `@key:true`) sets it; `@key:false` clears it.
+fn set_environment_bool(env: &mut EnvironmentConfig, snake: &str, on: bool) {
+    macro_rules! fields {
+        ($($field:ident)*) => {
+            match snake {
+                $(stringify!($field) => env.$field = on,)*
+                _ => {}
+            }
+        };
+    }
+    fields! {
+        enable_preserve_existing_memoization_guarantees
+        validate_preserve_existing_memoization_guarantees
+        validate_exhaustive_memoization_dependencies
+        enable_optional_dependencies
+        enable_name_anonymous_functions
+        validate_hooks_usage
+        validate_ref_access_during_render
+        validate_no_set_state_in_render
+        enable_use_keyed_state
+        validate_no_set_state_in_effects
+        validate_no_derived_computations_in_effects
+        validate_no_derived_computations_in_effects_exp
+        validate_no_jsx_in_try_statements
+        validate_static_components
+        validate_source_locations
+        validate_no_impure_functions_in_render
+        validate_no_freezing_known_mutable_functions
+        enable_assume_hooks_follow_rules_of_react
+        enable_transitively_freeze_function_expressions
+        enable_function_outlining
+        enable_jsx_outlining
+        assert_valid_mutable_ranges
+        throw_unknown_exception_testonly
+        enable_custom_type_definition_for_reanimated
+        enable_treat_ref_like_identifiers_as_refs
+        enable_treat_set_identifiers_as_state_setters
+        validate_no_void_use_memo
+        enable_allow_set_state_from_refs_in_effects
+        enable_verbose_no_set_state_in_effect
+        enable_forest
     }
 }
 
@@ -286,18 +263,14 @@ fn external_fn(source: &str, import_specifier_name: &str) -> ExternalFunctionCon
     }
 }
 
-/// Quoted strings in order, e.g. `["a","b"]` → `["a", "b"]`, `{"source":"x"}` → `["source", "x"]`.
-fn quoted(value: &str) -> Vec<String> {
+/// The double-quoted strings inside a JSON literal, in order:
+/// `["a","b"]` → `["a", "b"]`, `{"source":"x"}` → `["source", "x"]`.
+fn json_strings(value: &str) -> Vec<String> {
     value.split('"').skip(1).step_by(2).map(str::to_string).collect()
 }
 
-/// Elements of a JSON string array such as `["DangerousImport"]`.
-fn string_array(value: &str) -> Vec<String> {
-    quoted(value)
-}
-
-/// The `source` field of a JSON object such as `{"source":"shared-runtime"}`.
+/// The `source` field of a JSON object literal like `{"source":"shared-runtime"}`.
 fn json_source(value: &str) -> Option<String> {
-    let parts = quoted(value);
+    let parts = json_strings(value);
     parts.iter().position(|s| s == "source").and_then(|i| parts.get(i + 1).cloned())
 }
