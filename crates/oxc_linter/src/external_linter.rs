@@ -8,7 +8,6 @@ use oxc_span::Span;
 
 use crate::{
     config::{OxlintEnv, OxlintGlobals},
-    context::ContextHost,
     fixer::{CompositeFix, Fix, MergeFixesError},
 };
 
@@ -40,6 +39,45 @@ pub type ExternalLinterLoadPluginCb = Arc<
 pub type ExternalLinterSetupRuleConfigsCb =
     Arc<Box<dyn Fn(String) -> Result<(), String> + Send + Sync>>;
 
+pub type ExternalLinterLoadParserCb = Arc<
+    Box<
+        dyn Fn(
+                // File URL to load parser from
+                String,
+            ) -> Result<LoadParserResult, String>
+            + Send
+            + Sync,
+    >,
+>;
+
+pub type ExternalLinterLintFileWithJsParserCb = Arc<
+    Box<
+        dyn Fn(
+                // File path of file to lint
+                String,
+                // Source text of the file
+                String,
+                // Parser ID
+                u32,
+                // Parser options JSON (`None` if no `parserOptions` configured)
+                Option<String>,
+                // Rule IDs
+                Vec<u32>,
+                // Options IDs
+                Vec<u32>,
+                // Settings JSON
+                String,
+                // Globals JSON
+                String,
+                // Workspace URI (e.g. `file:///path/to/workspace`).
+                // `None` in CLI mode (single workspace), `Some` in LSP mode.
+                Option<String>,
+            ) -> Result<JsParserLintFileResult, String>
+            + Sync
+            + Send,
+    >,
+>;
+
 pub type ExternalLinterLintFileCb = Arc<
     Box<
         dyn Fn(
@@ -70,6 +108,36 @@ pub struct LoadPluginResult {
     pub name: String,
     pub offset: usize,
     pub rule_names: Vec<String>,
+}
+
+/// Result returned by `loadParser` JS callback on success.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LoadParserResult {
+    /// ID of the parser. Matches index into the `registeredParsers` array on JS side.
+    pub parser_id: usize,
+}
+
+/// Result returned by `lintFileWithJsParser` JS callback on success.
+///
+/// All spans are UTF-16 offsets into the original source text.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JsParserLintFileResult {
+    pub diagnostics: Vec<LintFileResult>,
+    /// Spans of all comments in the file, as reported by the parser.
+    /// Used to process disable directives on Rust side.
+    pub comments: Vec<JsComment>,
+}
+
+/// Comment in form sent from JS to Rust. Spans are UTF-16 offsets.
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JsComment {
+    /// `true` for block comments (`/* */` style), `false` for line comments
+    pub is_block: bool,
+    pub start: u32,
+    pub end: u32,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -248,8 +316,10 @@ fn create_invalid_offset_error(span: Span) -> Result<Fix, MergeFixesError> {
 #[derive(Clone)]
 pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
+    pub(crate) load_parser: ExternalLinterLoadParserCb,
     pub(crate) setup_rule_configs: ExternalLinterSetupRuleConfigsCb,
     pub(crate) lint_file: ExternalLinterLintFileCb,
+    pub(crate) lint_file_with_js_parser: ExternalLinterLintFileWithJsParserCb,
     pub create_workspace: ExternalLinterCreateWorkspaceCb,
     pub destroy_workspace: ExternalLinterDestroyWorkspaceCb,
 }
@@ -257,12 +327,22 @@ pub struct ExternalLinter {
 impl ExternalLinter {
     pub fn new(
         load_plugin: ExternalLinterLoadPluginCb,
+        load_parser: ExternalLinterLoadParserCb,
         setup_rule_configs: ExternalLinterSetupRuleConfigsCb,
         lint_file: ExternalLinterLintFileCb,
+        lint_file_with_js_parser: ExternalLinterLintFileWithJsParserCb,
         create_workspace: ExternalLinterCreateWorkspaceCb,
         destroy_workspace: ExternalLinterDestroyWorkspaceCb,
     ) -> Self {
-        Self { load_plugin, setup_rule_configs, lint_file, create_workspace, destroy_workspace }
+        Self {
+            load_plugin,
+            load_parser,
+            setup_rule_configs,
+            lint_file,
+            lint_file_with_js_parser,
+            create_workspace,
+            destroy_workspace,
+        }
     }
 }
 
@@ -283,8 +363,8 @@ pub struct GlobalsAndEnvs<'c> {
 }
 
 impl<'c> GlobalsAndEnvs<'c> {
-    pub fn new(ctx_host: &'c ContextHost<'_>) -> Self {
-        Self { globals: ctx_host.globals(), envs: EnabledEnvs(ctx_host.env()) }
+    pub fn new(globals: &'c OxlintGlobals, env: &'c OxlintEnv) -> Self {
+        Self { globals, envs: EnabledEnvs(env) }
     }
 }
 

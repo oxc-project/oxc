@@ -50,6 +50,25 @@ export let filePath: string | null = null;
 // Set by `setOptions` at end of registering all plugins, and may also be changed when switching workspaces.
 export let cwd: string | null = null;
 
+// Override for the `SourceCode` object returned by `context.sourceCode`.
+// Set by `lint_js_parser.ts` when linting a file parsed by a custom (JS) parser,
+// `null` when linting via the standard buffer-based path.
+let sourceCodeOverride: SourceCode | null = null;
+
+/**
+ * Set / clear the `SourceCode` override.
+ *
+ * When set, `context.sourceCode` (and deprecated `context.getSourceCode()`) return the override
+ * instead of the buffer-based `SOURCE_CODE` singleton.
+ *
+ * Used for files parsed by a custom (JS) parser, where there is no buffer.
+ *
+ * @param sourceCode - `SourceCode` object to return from `context.sourceCode`, or `null` to clear
+ */
+export function setSourceCodeOverride(sourceCode: SourceCode | null): void {
+  sourceCodeOverride = sourceCode;
+}
+
 /**
  * Set CWD. Used when switching workspaces.
  * @param cwdInput - CWD
@@ -394,7 +413,7 @@ const FILE_CONTEXT = Object.freeze({
   get sourceCode(): SourceCode {
     // Note: If we change this implementation, also change `getSourceCode` method below
     if (filePath === null) throw new Error("Cannot access `context.sourceCode` in `createOnce`");
-    return SOURCE_CODE;
+    return sourceCodeOverride === null ? SOURCE_CODE : sourceCodeOverride;
   },
 
   /**
@@ -404,7 +423,7 @@ const FILE_CONTEXT = Object.freeze({
    */
   getSourceCode(): SourceCode {
     if (filePath === null) throw new Error("Cannot call `context.getSourceCode` in `createOnce`");
-    return SOURCE_CODE;
+    return sourceCodeOverride === null ? SOURCE_CODE : sourceCodeOverride;
   },
 
   /**
