@@ -201,7 +201,11 @@ impl<'a> ClassProperties<'a> {
         // temp var for class. Static prop in class declaration doesn't.
         let need_temp_var = has_static_prop && (!is_declaration || class_name_binding.is_none());
 
-        let outer_hoist_scope_id = ctx.current_hoist_scope_id();
+        let outer_hoist_scope_id = ctx
+            .state
+            .var_declarations
+            .current_var_scope_id()
+            .unwrap_or_else(|| ctx.current_hoist_scope_id());
         let class_temp_binding = if need_temp_var {
             let temp_binding = ClassBindings::create_temp_binding(
                 class_name_binding.as_ref(),

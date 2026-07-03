@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4543/4720 (96.25%)
+Positive Passed: 4546/4720 (96.31%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -514,17 +514,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/staticFieldWithInterfaceContext.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_Class", "_Class10", "_Class11", "_Class12", "_Class13", "_Class14", "_Class15", "_Class2", "_Class4", "_Class5", "_Class6", "_Class7", "_Class8", "_Class9", "_defineProperty", "c", "c10", "c11", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "ex", "f"]
-rebuilt        : ScopeId(0): ["_Class", "_Class10", "_Class11", "_Class12", "_Class13", "_Class14", "_Class15", "_Class2", "_Class3", "_Class4", "_Class5", "_Class6", "_Class7", "_Class8", "_Class9", "_defineProperty", "c", "c10", "c11", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "ex", "f"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_Class3", "c"]
-rebuilt        : ScopeId(3): ["c"]
-Symbol scope ID mismatch for "_Class3":
-after transform: SymbolId(18): ScopeId(4)
-rebuilt        : SymbolId(3): ScopeId(0)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/stringLiteralObjectLiteralDeclaration1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -555,40 +544,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
 'with' statements are not allowed
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterBindingPattern.3.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "_defineProperty", "x"]
-rebuilt        : ScopeId(0): ["C", "_Class", "_Class2", "_defineProperty", "x"]
-Bindings mismatch:
-after transform: ScopeId(2): ["C", "_Class", "b"]
-rebuilt        : ScopeId(2): ["C", "b"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_Class2", "b", "d", "x"]
-rebuilt        : ScopeId(4): ["b", "d", "x"]
-Symbol scope ID mismatch for "_Class":
-after transform: SymbolId(7): ScopeId(2)
-rebuilt        : SymbolId(1): ScopeId(0)
-Symbol scope ID mismatch for "_Class2":
-after transform: SymbolId(9): ScopeId(4)
-rebuilt        : SymbolId(2): ScopeId(0)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterInitializer.3.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "_defineProperty", "x"]
-rebuilt        : ScopeId(0): ["C", "_Class", "_Class2", "_defineProperty", "x"]
-Bindings mismatch:
-after transform: ScopeId(2): ["C", "_Class", "b"]
-rebuilt        : ScopeId(2): ["C", "b"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_Class2", "b", "d", "x"]
-rebuilt        : ScopeId(4): ["b", "d", "x"]
-Symbol scope ID mismatch for "_Class":
-after transform: SymbolId(7): ScopeId(2)
-rebuilt        : SymbolId(1): ScopeId(0)
-Symbol scope ID mismatch for "_Class2":
-after transform: SymbolId(9): ScopeId(4)
-rebuilt        : SymbolId(2): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameClassExpressionLoop.ts
 Bindings mismatch:
