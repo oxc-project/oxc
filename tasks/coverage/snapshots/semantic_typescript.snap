@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4478/4720 (94.87%)
+Positive Passed: 4489/4720 (95.11%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -75,15 +75,6 @@ rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesClass3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(0): ["c5a", "c5b", "c5c"]
-rebuilt        : ScopeId(0): ["c5", "c5a", "c5b", "c5c"]
-Symbol flags mismatch for "c5":
-after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol redeclarations mismatch for "c5":
-after transform: SymbolId(0): [Span { start: 27, end: 29 }, Span { start: 61, end: 63 }]
-rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "c5a":
 after transform: SymbolId(1): SymbolFlags(BlockScopedVariable)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
@@ -466,17 +457,6 @@ Symbol redeclarations mismatch for "Bar":
 after transform: SymbolId(1): [Span { start: 51, end: 54 }, Span { start: 87, end: 90 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOfFuncspace.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["ExpandoMerge"]
-Symbol flags mismatch for "ExpandoMerge":
-after transform: SymbolId(0): SymbolFlags(Function | NamespaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol redeclarations mismatch for "ExpandoMerge":
-after transform: SymbolId(0): [Span { start: 19, end: 31 }, Span { start: 71, end: 83 }]
-rebuilt        : SymbolId(0): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationMaps.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -651,17 +631,6 @@ Symbol scope ID mismatch for "_class":
 after transform: SymbolId(8): ScopeId(0)
 rebuilt        : SymbolId(17): ScopeId(3)
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/expandoFunctionNestedAssigmentsDeclared.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["Foo"]
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(Function | ValueModule | Ambient)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 9, end: 12 }, Span { start: 44, end: 47 }]
-rebuilt        : SymbolId(0): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultProperty.ts
 Symbol flags mismatch for "B":
 after transform: SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -673,17 +642,6 @@ Symbol redeclarations mismatch for "B":
 after transform: SymbolId(1): [Span { start: 31, end: 32 }, Span { start: 84, end: 85 }]
 rebuilt        : SymbolId(2): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultProperty2.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_defineProperty"]
-rebuilt        : ScopeId(0): ["C", "_defineProperty"]
-Symbol flags mismatch for "C":
-after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule)
-rebuilt        : SymbolId(1): SymbolFlags(Class)
-Symbol redeclarations mismatch for "C":
-after transform: SymbolId(0): [Span { start: 83, end: 84 }, Span { start: 121, end: 122 }]
-rebuilt        : SymbolId(1): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty.ts
 Symbol flags mismatch for "B":
 after transform: SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -694,17 +652,6 @@ rebuilt        : SymbolId(2): Span { start: 31, end: 32 }
 Symbol redeclarations mismatch for "B":
 after transform: SymbolId(1): [Span { start: 31, end: 32 }, Span { start: 84, end: 85 }]
 rebuilt        : SymbolId(2): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty2.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_defineProperty"]
-rebuilt        : ScopeId(0): ["C", "_defineProperty"]
-Symbol flags mismatch for "C":
-after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule)
-rebuilt        : SymbolId(1): SymbolFlags(Class)
-Symbol redeclarations mismatch for "C":
-after transform: SymbolId(0): [Span { start: 78, end: 79 }, Span { start: 116, end: 117 }]
-rebuilt        : SymbolId(1): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportImportAndClodule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -880,17 +827,6 @@ Symbol redeclarations mismatch for "a":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 50, end: 51 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxLocalNamespaceIndexSignatureNoCrash.tsx
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["A", "X", "_jsxFileName"]
-Symbol flags mismatch for "X":
-after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule)
-rebuilt        : SymbolId(1): SymbolFlags(Class)
-Symbol redeclarations mismatch for "X":
-after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 106, end: 107 }]
-rebuilt        : SymbolId(1): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/letDeclarations2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -947,26 +883,6 @@ Symbol redeclarations mismatch for "M":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 56, end: 57 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/mixingFunctionAndAmbientModule1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["_A"]
-rebuilt        : ScopeId(1): ["My", "_A"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_B"]
-rebuilt        : ScopeId(3): ["My", "_B"]
-Symbol flags mismatch for "My":
-after transform: SymbolId(1): SymbolFlags(Function | ValueModule | Ambient)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-Symbol span mismatch for "My":
-after transform: SymbolId(1): Span { start: 36, end: 38 }
-rebuilt        : SymbolId(2): Span { start: 90, end: 92 }
-Symbol redeclarations mismatch for "My":
-after transform: SymbolId(1): [Span { start: 36, end: 38 }, Span { start: 90, end: 92 }]
-rebuilt        : SymbolId(2): []
-Symbol flags mismatch for "My":
-after transform: SymbolId(5): SymbolFlags(Function | ValueModule | Ambient)
-rebuilt        : SymbolId(6): SymbolFlags(Function)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleCodeGenTest3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -987,17 +903,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleMerge.ts
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 104, end: 105 }, Span { start: 233, end: 234 }]
-rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleRedifinitionErrors.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["A"]
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 22, end: 23 }]
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt4.ts
@@ -1062,45 +967,6 @@ rebuilt        : SymbolId(0): []
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/nameCollisionWithBlockScopedVariable1.ts
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 49, end: 50 }]
-rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/noCircularDefinitionOnExportOfPrivateInMergedNamespace.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["cat"]
-rebuilt        : ScopeId(0): ["Foo", "cat"]
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(1): SymbolFlags(Class | ValueModule | Ambient)
-rebuilt        : SymbolId(1): SymbolFlags(Class)
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(1): [Span { start: 22, end: 25 }, Span { start: 61, end: 64 }]
-rebuilt        : SymbolId(1): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/partiallyAmbientClodule.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["foo"]
-Symbol flags mismatch for "foo":
-after transform: SymbolId(0): SymbolFlags(Class | ValueModule | Ambient)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol span mismatch for "foo":
-after transform: SymbolId(0): Span { start: 18, end: 21 }
-rebuilt        : SymbolId(0): Span { start: 62, end: 65 }
-Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 18, end: 21 }, Span { start: 62, end: 65 }]
-rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/partiallyAmbientFundule.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["foo"]
-Symbol flags mismatch for "foo":
-after transform: SymbolId(0): SymbolFlags(Function | ValueModule | Ambient)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol span mismatch for "foo":
-after transform: SymbolId(0): Span { start: 18, end: 21 }
-rebuilt        : SymbolId(0): Span { start: 65, end: 68 }
-Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 18, end: 21 }, Span { start: 65, end: 68 }]
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyCheckExternalModuleExportAssignmentOfGenericClass.ts
@@ -1291,17 +1157,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/topLevel.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxAttributesHasInferrableIndex.tsx
-Bindings mismatch:
-after transform: ScopeId(0): ["Button", "_jsxFileName", "b"]
-rebuilt        : ScopeId(0): ["Button", "_jsxFileName", "b", "createElement"]
-Symbol flags mismatch for "createElement":
-after transform: SymbolId(2): SymbolFlags(Function | NamespaceModule)
-rebuilt        : SymbolId(1): SymbolFlags(Function)
-Symbol redeclarations mismatch for "createElement":
-after transform: SymbolId(2): [Span { start: 125, end: 138 }, Span { start: 243, end: 256 }]
-rebuilt        : SymbolId(1): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unexportedInstanceClassVariables.ts
 Symbol redeclarations mismatch for "M":
