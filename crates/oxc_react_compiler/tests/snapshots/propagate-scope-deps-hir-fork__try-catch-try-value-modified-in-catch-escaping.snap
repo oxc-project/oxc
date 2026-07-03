@@ -9,7 +9,6 @@ function Component(props) {
 	const $ = _c(3);
 	let x;
 	if ($[0] !== props.e || $[1] !== props.y) {
-		;
 		try {
 			const y = [];
 			y.push(props.y);

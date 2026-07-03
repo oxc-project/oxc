@@ -4,7 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/try-catch-logical-expression.js
 ---
 function Component(props) {
 	let result;
-	;
 	try {
 		result = props.cond && props.foo && props.items.length;
 	} catch (t0) {
