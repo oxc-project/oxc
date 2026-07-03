@@ -57,6 +57,8 @@ use oxc_diagnostics::Diagnostics;
 use oxc_semantic::Semantic;
 
 mod diagnostics;
+pub mod execute;
+pub mod tsoptions;
 
 pub use crate::diagnostics::type_error;
 
