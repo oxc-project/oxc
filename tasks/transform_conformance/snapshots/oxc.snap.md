@@ -128,15 +128,6 @@ rebuilt        : SymbolId(1): SymbolFlags(Import)
 Symbol redeclarations mismatch for "T":
 after transform: SymbolId(1): [Span { start: 149, end: 150 }, Span { start: 170, end: 171 }]
 rebuilt        : SymbolId(1): []
-Symbol flags mismatch for "B":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Import | TypeAlias)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol span mismatch for "B":
-after transform: SymbolId(2): Span { start: 267, end: 268 }
-rebuilt        : SymbolId(2): Span { start: 289, end: 290 }
-Symbol redeclarations mismatch for "B":
-after transform: SymbolId(2): [Span { start: 267, end: 268 }, Span { start: 289, end: 290 }, Span { start: 304, end: 305 }]
-rebuilt        : SymbolId(2): []
 
 * ts-declaration-empty-output/input.d.ts
 x Output mismatch

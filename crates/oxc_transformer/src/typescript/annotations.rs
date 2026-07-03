@@ -781,16 +781,17 @@ impl<'a> TypeScriptAnnotations<'a> {
         symbol_id: SymbolId,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
-        let non_ambient_value_redeclaration = ctx
-            .scoping()
-            .symbol_redeclarations(symbol_id)
-            .iter()
-            .rev()
-            .find(|redeclaration| {
-                redeclaration.flags.intersects(SymbolFlags::Class | SymbolFlags::Function)
-                    && !redeclaration.flags.is_ambient()
-            })
-            .map(|redeclaration| (redeclaration.span, redeclaration.flags));
+        let non_ambient_value_redeclaration =
+            ctx.scoping()
+                .symbol_redeclarations(symbol_id)
+                .iter()
+                .rev()
+                .find(|redeclaration| {
+                    redeclaration.flags.intersects(
+                        SymbolFlags::Class | SymbolFlags::Function | SymbolFlags::Variable,
+                    ) && !redeclaration.flags.is_ambient()
+                })
+                .map(|redeclaration| (redeclaration.span, redeclaration.flags));
 
         let Some((span, flags)) = non_ambient_value_redeclaration else {
             return false;
