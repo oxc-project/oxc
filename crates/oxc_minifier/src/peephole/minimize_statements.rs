@@ -30,6 +30,22 @@ fn dead_drop_mutates_ast(stmt: &Statement<'_>) -> bool {
             && decl.declarations.iter().all(|d| d.init.is_none() && d.type_annotation.is_none()))
 }
 
+/// Cap on how deep `optimize_implicit_jump` re-minimizes a drained tail within
+/// a single pass. The tail-guard fold (`if (c) return; REST` and the
+/// loop-`continue` form in `handle_if_statement`) recurses once per guard on
+/// the drained remainder, and a flat chain of such guards is not bounded by
+/// parse nesting, so generated code with a long run of them could otherwise
+/// overflow the stack. Beyond this depth the fold defers the remaining tail to
+/// the next global pass instead (still correct, just less folded).
+///
+/// Kept deliberately low: a `minimize_statements` frame is several KB, and the
+/// minifier runs on worker threads whose stacks can be ~2 MB (or smaller), so
+/// this recursion must stay within a fraction of that on top of the traversal
+/// already on the stack (empirically ~2000 levels overflow 8 MB, ~400 overflow
+/// 2 MB). 100 clears a 1 MB stack with margin and is far above any real guard
+/// chain, so real fixtures fold identically.
+const IF_FOLD_MAX_DEPTH: u32 = 100;
+
 impl<'a> PeepholeOptimizations {
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
     ///
@@ -48,7 +64,11 @@ impl<'a> PeepholeOptimizations {
     ///
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
-    pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    pub fn minimize_statements(
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+        depth: u32,
+    ) {
         let mut old_stmts = stmts.take_in(ctx);
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new();
@@ -81,6 +101,7 @@ impl<'a> PeepholeOptimizations {
                 stmts,
                 &mut is_control_flow_dead,
                 ctx,
+                depth,
             )
             .is_break()
             {
@@ -359,6 +380,26 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
+    /// `true` when the left spine of `expr` is already a `||`/`&&` chain at the
+    /// cap. The logical-join merges (the absorb-merge below and the joins in
+    /// `try_minimize_if`) fold a run of `if (x) <jump>` statements into a single
+    /// left-associative chain; without a stop the chain grows with the input
+    /// width, and building/printing a deep binary expression recurses on its
+    /// depth and overflows. Mirrors `conditional_expression_count_exceeded` for
+    /// ternaries; the cap is far above any real chain, so real code is untouched.
+    pub(crate) fn logical_expression_count_exceeded(expr: &Expression<'a>) -> bool {
+        let mut depth = 0u16;
+        let mut current = expr;
+        while let Expression::LogicalExpression(e) = current {
+            depth += 1;
+            if depth == 500 {
+                return true;
+            }
+            current = &e.left;
+        }
+        false
+    }
+
     fn minimize_statement(
         stmt: Statement<'a>,
         i: usize,
@@ -367,6 +408,7 @@ impl<'a> PeepholeOptimizations {
         is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
+        depth: u32,
     ) -> ControlFlow<()> {
         match stmt {
             Statement::EmptyStatement(_) => (),
@@ -390,7 +432,7 @@ impl<'a> PeepholeOptimizations {
                 Self::handle_switch_statement(switch_stmt, result, ctx);
             }
             Statement::IfStatement(if_stmt) => {
-                if Self::handle_if_statement(i, stmts, if_stmt, result, ctx).is_break() {
+                if Self::handle_if_statement(i, stmts, if_stmt, result, ctx, depth).is_break() {
                     return ControlFlow::Break(());
                 }
             }
@@ -738,6 +780,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
+        depth: u32,
     ) -> ControlFlow<()> {
         Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
 
@@ -756,6 +799,11 @@ impl<'a> PeepholeOptimizations {
                 if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut()
                     && prev_if_stmt.alternate.is_none()
                     && Self::jump_stmts_look_the_same(&prev_if_stmt.consequent, &if_stmt.consequent)
+                    // Stop growing the `||` chain past the cap so a long run of
+                    // identical-jump guards can't build an expression deep enough
+                    // to overflow. The current guard is left as a fresh statement,
+                    // which starts a new chain.
+                    && !Self::logical_expression_count_exceeded(&prev_if_stmt.test)
                 {
                     // "if (a) break c; if (b) break c;" => "if (a || b) break c;"
                     // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
@@ -828,7 +876,14 @@ impl<'a> PeepholeOptimizations {
                             ArenaVec::from_iter_in(drained_stmts, ctx)
                         };
 
-                        Self::minimize_statements(&mut body, ctx);
+                        // Recurse to fold a nested guard chain in this pass, but
+                        // cap the depth: a flat chain becomes recursion depth and
+                        // is not bounded by parse nesting. Past the cap, leave the
+                        // tail unminimized (wrapped below) for the next global
+                        // pass — correct, just less folded, and it can't overflow.
+                        if depth < IF_FOLD_MAX_DEPTH {
+                            Self::minimize_statements(&mut body, ctx, depth + 1);
+                        }
                         let span = if body.is_empty() {
                             if_stmt.consequent.span()
                         } else {

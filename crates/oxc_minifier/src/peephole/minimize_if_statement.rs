@@ -25,10 +25,13 @@ impl<'a> PeepholeOptimizations {
                     // "if (a) b();" => "a && b();"
                     e => (LogicalOperator::And, e),
                 };
-                let a = e.take_in(ctx);
-                let b = expr_stmt.expression.take_in(ctx);
-                let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
-                return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
+                // Don't extend a logical chain that is already at the cap.
+                if !Self::logical_expression_count_exceeded(e) {
+                    let a = e.take_in(ctx);
+                    let b = expr_stmt.expression.take_in(ctx);
+                    let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
+                    return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
+                }
             } else if let Some(Statement::ExpressionStatement(alternate_expr_stmt)) =
                 &mut if_stmt.alternate
             {
@@ -57,10 +60,13 @@ impl<'a> PeepholeOptimizations {
                     // "if (a) {} else b();" => "a || b();"
                     e => (LogicalOperator::Or, e),
                 };
-                let a = e.take_in(ctx);
-                let b = expr_stmt.expression.take_in(ctx);
-                let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
-                return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
+                // Don't extend a logical chain that is already at the cap.
+                if !Self::logical_expression_count_exceeded(e) {
+                    let a = e.take_in(ctx);
+                    let b = expr_stmt.expression.take_in(ctx);
+                    let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
+                    return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
+                }
             } else if let Some(stmt) = &mut if_stmt.alternate {
                 // "yes" is missing and "no" is not missing (and is not an expression)
                 match &mut if_stmt.test {
@@ -104,6 +110,11 @@ impl<'a> PeepholeOptimizations {
                 // "no" is missing
                 if let Statement::IfStatement(if2_stmt) = &mut if_stmt.consequent
                     && if2_stmt.alternate.is_none()
+                    // Don't collapse nested `if`s into an `&&` chain past the cap,
+                    // so deeply nested guards can't build an expression deep enough
+                    // to overflow. The nesting is left as-is: correct and terminal.
+                    && !Self::logical_expression_count_exceeded(&if_stmt.test)
+                    && !Self::logical_expression_count_exceeded(&if2_stmt.test)
                 {
                     // "if (a) if (b) return c;" => "if (a && b) return c;"
                     let a = if_stmt.test.take_in(ctx);
