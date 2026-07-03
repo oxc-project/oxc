@@ -89,11 +89,8 @@ fn parse_document<'a>(
     let source: &'a str =
         allocator.alloc_str(source_text.strip_prefix('\u{feff}').unwrap_or(source_text));
 
-    // Opt-in graphql-js 16 syntax
-    let ast = Parser::new(allocator, source)
-        .allow_executable_descriptions(true)
-        .allow_legacy_fragment_variables(true)
-        .parse();
+    // Opt-in graphql-js 17 syntax
+    let ast = Parser::new(allocator, source).experimental_fragment_arguments(true).parse();
     if let Some(error) = ast.errors().next() {
         let start = u32::try_from(error.index()).unwrap_or(0);
         let len = u32::try_from(error.data().len()).unwrap_or(0);

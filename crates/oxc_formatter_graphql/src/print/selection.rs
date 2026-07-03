@@ -68,6 +68,7 @@ fn write_field<'a>(field: &'a Field<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
 fn write_fragment_spread<'a>(spread: &'a FragmentSpread<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     write!(f, "...");
     common::write_name(&spread.name, f);
+    common::write_arguments(&spread.arguments, f);
     common::write_directives(&spread.directives, DirectivesStyle::Attached, f);
 }
 

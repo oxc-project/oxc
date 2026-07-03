@@ -9,9 +9,10 @@ use oxc_formatter_core::{
     write,
 };
 use oxc_graphql_parser::ast::{
-    Definition, Directive, DirectiveDefinition, EnumValueDefinition, FieldDefinition,
-    FragmentDefinition, InputValueDefinition, Name, NamedType, OperationDefinition, OperationType,
-    RootOperationTypeDefinition, SchemaDefinition, SchemaExtension, StringValue,
+    Definition, Directive, DirectiveDefinition, DirectiveExtension, EnumValueDefinition,
+    FieldDefinition, FragmentDefinition, InputValueDefinition, Name, NamedType,
+    OperationDefinition, OperationType, RootOperationTypeDefinition, SchemaDefinition,
+    SchemaExtension, StringValue,
 };
 
 use crate::comments::flush_trailing_inside_comments;
@@ -32,16 +33,17 @@ pub(super) fn write_definition<'a>(
         Definition::Operation(d) => write_operation_definition(d, f),
         Definition::Fragment(d) => write_fragment_definition(d, f),
         Definition::Directive(d) => write_directive_definition(d, f),
+        Definition::DirectiveExtension(d) => write_directive_extension(d, f),
         Definition::Schema(d) => write_schema_definition(d, f),
         Definition::SchemaExtension(d) => write_schema_extension(d, f),
         Definition::ScalarType(d) => {
-            write_scalar_type(d.description.as_ref(), false, &d.name, &d.directives, f);
+            write_scalar_type(d.description.as_deref(), false, &d.name, &d.directives, f);
         }
         Definition::ScalarTypeExtension(d) => {
             write_scalar_type(None, true, &d.name, &d.directives, f);
         }
         Definition::ObjectType(d) => write_object_like(
-            d.description.as_ref(),
+            d.description.as_deref(),
             false,
             "type",
             &d.name,
@@ -63,7 +65,7 @@ pub(super) fn write_definition<'a>(
             f,
         ),
         Definition::InterfaceType(d) => write_object_like(
-            d.description.as_ref(),
+            d.description.as_deref(),
             false,
             "interface",
             &d.name,
@@ -85,7 +87,7 @@ pub(super) fn write_definition<'a>(
             f,
         ),
         Definition::InputObjectType(d) => write_input_object_like(
-            d.description.as_ref(),
+            d.description.as_deref(),
             false,
             &d.name,
             &d.directives,
@@ -103,13 +105,20 @@ pub(super) fn write_definition<'a>(
             f,
         ),
         Definition::UnionType(d) => {
-            write_union_like(d.description.as_ref(), false, &d.name, &d.directives, &d.members, f);
+            write_union_like(
+                d.description.as_deref(),
+                false,
+                &d.name,
+                &d.directives,
+                &d.members,
+                f,
+            );
         }
         Definition::UnionTypeExtension(d) => {
             write_union_like(None, true, &d.name, &d.directives, &d.members, f);
         }
         Definition::EnumType(d) => write_enum_like(
-            d.description.as_ref(),
+            d.description.as_deref(),
             false,
             &d.name,
             &d.directives,
@@ -117,17 +126,15 @@ pub(super) fn write_definition<'a>(
             close_delim_start(d.span),
             f,
         ),
-        Definition::EnumTypeExtension(d) => {
-            write_enum_like(
-                None,
-                true,
-                &d.name,
-                &d.directives,
-                &d.values,
-                close_delim_start(d.span),
-                f,
-            );
-        }
+        Definition::EnumTypeExtension(d) => write_enum_like(
+            None,
+            true,
+            &d.name,
+            &d.directives,
+            &d.values,
+            close_delim_start(d.span),
+            f,
+        ),
     }
 }
 
@@ -143,7 +150,7 @@ fn write_operation_definition<'a>(
     operation: &'a OperationDefinition<'a>,
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    common::write_description(operation.description.as_ref(), f);
+    common::write_description(operation.description.as_deref(), f);
 
     // Direct-AST `operation_type` is always set (shorthand `{ ... }` parses as Query).
     // Shorthand means the operation's first significant token IS the selection set's `{`,
@@ -179,10 +186,10 @@ fn write_fragment_definition<'a>(
     fragment: &'a FragmentDefinition<'a>,
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    common::write_description(fragment.description.as_ref(), f);
+    common::write_description(fragment.description.as_deref(), f);
     write!(f, "fragment ");
     common::write_name(&fragment.name, f);
-    // Legacy fragment variables (graphql-js `allowLegacyFragmentVariables`).
+    // Fragment arguments
     common::write_variable_definitions(&fragment.variable_definitions, f);
     write!(f, " on ");
     common::write_named_type(&fragment.type_condition, f);
@@ -197,10 +204,11 @@ fn write_directive_definition<'a>(
     directive: &'a DirectiveDefinition<'a>,
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    common::write_description(directive.description.as_ref(), f);
+    common::write_description(directive.description.as_deref(), f);
     write!(f, "directive @");
     common::write_name(&directive.name, f);
     write_arguments_definition(&directive.arguments, f);
+    common::write_directives(&directive.directives, DirectivesStyle::Attached, f);
     if directive.repeatable {
         write!(f, " repeatable");
     }
@@ -214,8 +222,17 @@ fn write_directive_definition<'a>(
     }
 }
 
+fn write_directive_extension<'a>(
+    directive: &'a DirectiveExtension<'a>,
+    f: &mut GraphqlFormatter<'_, 'a>,
+) {
+    write!(f, "extend directive @");
+    common::write_name(&directive.name, f);
+    common::write_directives(&directive.directives, DirectivesStyle::Attached, f);
+}
+
 fn write_schema_definition<'a>(schema: &'a SchemaDefinition<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
-    common::write_description(schema.description.as_ref(), f);
+    common::write_description(schema.description.as_deref(), f);
     write!(f, "schema");
     common::write_directives(&schema.directives, DirectivesStyle::Attached, f);
     write!(f, " {");
@@ -369,7 +386,7 @@ fn write_enum_value_definition<'a>(
     value: &'a EnumValueDefinition<'a>,
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    common::write_description(value.description.as_ref(), f);
+    common::write_description(value.description.as_deref(), f);
     common::write_name(&value.value.name, f);
     common::write_directives(&value.directives, DirectivesStyle::Attached, f);
 }
@@ -415,7 +432,7 @@ fn write_union_like<'a>(
 }
 
 fn write_field_definition<'a>(field: &'a FieldDefinition<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
-    common::write_description(field.description.as_ref(), f);
+    common::write_description(field.description.as_deref(), f);
     common::write_name(&field.name, f);
     write_arguments_definition(&field.arguments, f);
     write!(f, ": ");

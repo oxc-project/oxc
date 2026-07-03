@@ -16,6 +16,8 @@ extend input Filter {
   extra: String
 }
 
+extend directive @directive @meta
+
 extend schema @directive
 
 extend schema {

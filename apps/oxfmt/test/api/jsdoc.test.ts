@@ -108,11 +108,7 @@ describe("JSDoc", () => {
   });
 
   it("should keep fenced code verbatim when the Rust formatter cannot parse it", async () => {
-    // Parse errors inside comments are NOT diagnostics and do NOT fall back
-    // to Prettier: the block stays as-is.
-    // - css: genuinely broken
-    // - graphql: draft-spec syntax (fragment spread arguments, graphql-js 17)
-    //   that the apollo-parser fork does not cover yet
+    // Parse errors inside comments are NOT diagnostics and stays as-is.
     const source = `
 /**
  * \`\`\`css
@@ -120,7 +116,7 @@ describe("JSDoc", () => {
  * \`\`\`
  *
  * \`\`\`graphql
- * fragment F on T { ...G(x: 1) }
+ * fragment Broken on T {
  * \`\`\`
  */
 `.trim();

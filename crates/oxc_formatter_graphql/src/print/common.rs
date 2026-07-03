@@ -186,7 +186,7 @@ fn write_variable_definition<'a>(
     variable_definition: &'a VariableDefinition<'a>,
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    write_description(variable_definition.description.as_ref(), f);
+    write_description(variable_definition.description.as_deref(), f);
     write_variable(&variable_definition.variable, f);
     write!(f, ": ");
     if let Some(ty) = variable_definition.ty.as_ref() {
@@ -233,7 +233,7 @@ pub(super) fn write_input_value_definition<'a>(
     input_value: &'a InputValueDefinition<'a>,
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    write_description_input_value(input_value.description.as_ref(), f);
+    write_description_input_value(input_value.description.as_deref(), f);
     write_name(&input_value.name, f);
     write!(f, ": ");
     if let Some(ty) = input_value.ty.as_ref() {

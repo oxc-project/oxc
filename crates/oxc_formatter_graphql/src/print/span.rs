@@ -1,7 +1,7 @@
 //! Span utilities bridging the parser AST and the formatter core.
 //!
-//! `oxc-graphql-parser` spans are usize-based ([`ast::Span`]) while the
-//! formatter core APIs take u32-based [`oxc_span::Span`]s; [`to_span`] converts.
+//! `oxc-graphql-parser` has its own span type ([`ast::Span`]) while the
+//! formatter core APIs take [`oxc_span::Span`]s; [`to_span`] converts.
 //! Node spans are significant-token spans (trivia is never included),
 //! so layout decisions use them directly, via [`Spanned`] when generic.
 //!
@@ -14,12 +14,12 @@
 use oxc_graphql_parser::ast;
 use oxc_span::Span;
 
-/// Converts an `oxc-graphql-parser` [`ast::Span`] (usize-based) into
-/// an [`oxc_span::Span`] (u32-based) for use with the formatter core APIs.
+/// Converts an `oxc-graphql-parser` [`ast::Span`] into an [`oxc_span::Span`]
+/// for use with the formatter core APIs (both are u32-based since parser 0.0.5).
 /// `pub`: also used by `format.rs` for the parser's comment spans (re-exported through `print`).
 #[inline]
 pub fn to_span(s: ast::Span) -> Span {
-    Span::new(u32::try_from(s.start).unwrap_or(u32::MAX), u32::try_from(s.end).unwrap_or(u32::MAX))
+    Span::new(s.start, s.end)
 }
 
 /// Significant span of an AST node as an [`oxc_span::Span`].
@@ -77,7 +77,7 @@ impl Spanned for ast::Value<'_> {
 /// Error-recovery spans may end elsewhere (e.g. at EOF),
 /// which would misplace comments flushed against this position.
 pub(super) fn close_delim_start(span: ast::Span) -> u32 {
-    to_span(span).end.saturating_sub(1)
+    span.end.saturating_sub(1)
 }
 
 /// Scans `source` from `from` for the first byte equal to `close`,

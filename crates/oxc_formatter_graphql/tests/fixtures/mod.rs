@@ -93,14 +93,7 @@ include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"));
 #[test]
 fn parse_error_is_err() {
     let allocator = Allocator::default();
-    for source in [
-        "query {{{",
-        "",
-        "# comments-only",
-        // Draft-spec syntax that Prettier main (graphql-js 17) accepts
-        // but oxc-graphql-parser does not (yet): fragment spread arguments.
-        "fragment F on T { ...G(x: 1) }",
-    ] {
+    for source in ["query {{{", "", "# comments-only"] {
         assert!(
             format(&allocator, source, GraphqlFormatOptions::default()).is_err(),
             "{source:?} should fail to format"

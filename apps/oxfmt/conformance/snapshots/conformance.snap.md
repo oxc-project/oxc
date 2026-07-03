@@ -25,25 +25,17 @@
 
 ## gql-in-js
 
-### Option 1: 11/12 (91.67%)
+### Option 1: 12/12 (100.00%)
 
 ```json
 {"printWidth":80}
 ```
 
-| File | Note |
-| :--- | :--- |
-| [edge-cases/gql-in-js/draft-syntax.js](diffs/gql-in-js/edge-cases__gql-in-js__draft-syntax.js.md) |  |
-
-### Option 2: 11/12 (91.67%)
+### Option 2: 12/12 (100.00%)
 
 ```json
 {"printWidth":100}
 ```
-
-| File | Note |
-| :--- | :--- |
-| [edge-cases/gql-in-js/draft-syntax.js](diffs/gql-in-js/edge-cases__gql-in-js__draft-syntax.js.md) |  |
 
 ## css-in-js
 

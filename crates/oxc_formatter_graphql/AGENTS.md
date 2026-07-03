@@ -22,12 +22,11 @@ This means it is not locked to a specific GraphQL version and can parse a wide r
 On the other hand, `apollo-parser`, the upstream we selected, strictly follows its versioning and currently only supports syntax up to Oct2021.
 Therefore, we forked it as [`oxc-graphql-parser`](https://crates.io/crates/oxc-graphql-parser) and added some support ourselves, pinned via the workspace `Cargo.toml`.
 
-The fork adds, behind opt-in parser flags, what Prettier(v3.8.4)'s graphql-js v16.x also accepts:
+The fork (v0.0.5) aligns with graphql-js v17.x, which Prettier 3.9 targets:
 
-- executable descriptions (Sep2025 spec)
-- and legacy fragment variables (`fragment F($x: Int) on T`)
-
-For Prettier(v3.9)'s graphql-js v17.x syntax support, see the Roadmap below.
+- executable descriptions (Sep2025 spec) and directive extensions (`extend directive`) are always-on
+- fragment arguments (`...F(size: $size)`) are behind the `experimental_fragment_arguments` flag
+  - which also covers the legacy `fragment F($x: Int) on T` definition-side syntax
 
 ### Error semantics
 
@@ -151,23 +150,3 @@ curl -sL https://docs.github.com/public/fpt/schema.docs.graphql -o /tmp/github-s
 diff <(npx prettier --parser=graphql /tmp/github-schema.graphql) \
   <(cargo run -q -p oxc_formatter_graphql --example graphql_formatter /tmp/github-schema.graphql)
 ```
-
-## Roadmap (TODO: Follow graphql-js 17 / Prettier main)
-
-The guiding axis is Prettier compatibility, not spec compliance:
-match the syntax that the graphql-js version Prettier depends on can format
-(Prettier stable = graphql-js 16, Prettier main = graphql-js 17).
-
-Directive applications like `@oneOf` / `@defer` need no work. `oxc-graphql-parser` (apollo-parser 0.8.6 base) already parses them.
-
-These are in Prettier's unreleased changelog (main has them, next stable will).
-
-- [#19171](https://github.com/prettier/prettier/blob/main/changelog_unreleased/graphql/19171.md):
-  directives on directive definitions (`directive @a @b on QUERY`) + `extend directive`.
-  graphql-js 17 graduated this to default (no option).
-  Need to update our fork first.
-- [#19297](https://github.com/prettier/prettier/blob/main/changelog_unreleased/graphql/19297.md):
-  fragment arguments (`...F(size: $size)`).
-  graphql-js 17 still gates it behind `experimentalFragmentArguments`;
-  it replaces the v16 `allowLegacyFragmentVariables` (definition-side, parser-only), which v17 removed.
-  Need to update our fork first.
