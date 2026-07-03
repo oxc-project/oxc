@@ -207,8 +207,28 @@ impl<'a> TypeScriptModule {
             VariableDeclarator::new(SPAN, kind, binding, NONE, Some(init), false, ctx),
             ctx,
         );
+        Self::sync_import_equals_value_binding(&decl.id, kind, ctx);
 
         Some(Declaration::new_variable_declaration(SPAN, kind, decls, false, ctx))
+    }
+
+    fn sync_import_equals_value_binding(
+        id: &BindingIdentifier<'a>,
+        kind: VariableDeclarationKind,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let flags = match kind {
+            VariableDeclarationKind::Var => SymbolFlags::FunctionScopedVariable,
+            VariableDeclarationKind::Let => SymbolFlags::BlockScopedVariable,
+            VariableDeclarationKind::Const => {
+                SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable
+            }
+            VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing => return,
+        };
+        let symbol_id = id.symbol_id();
+        *ctx.scoping_mut().symbol_flags_mut(symbol_id) = flags;
+        ctx.scoping_mut().set_symbol_span(symbol_id, id.span);
+        ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
     }
 
     #[expect(clippy::self_only_used_in_recursion)]

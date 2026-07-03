@@ -502,6 +502,7 @@ impl<'a> TypeScriptNamespace {
         // `export const a = 1` transforms to `const a = N.a = 1`, the output
         // is smaller than `const a = 1; N.a = a`;
         if is_all_binding_identifier {
+            Self::sync_variable_declaration_bindings(&var_decl, ctx);
             var_decl.declarations.iter_mut().for_each(|declarator| {
                 let Some(property_name) = declarator.id.get_identifier_name() else {
                     return;
@@ -548,6 +549,41 @@ impl<'a> TypeScriptNamespace {
             ],
             ctx,
         )
+    }
+
+    fn sync_variable_declaration_bindings(
+        var_decl: &VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let flags = match var_decl.kind {
+            VariableDeclarationKind::Var => SymbolFlags::FunctionScopedVariable,
+            VariableDeclarationKind::Let => SymbolFlags::BlockScopedVariable,
+            VariableDeclarationKind::Const => {
+                SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable
+            }
+            VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing => return,
+        };
+
+        for decl in &var_decl.declarations {
+            for ident in decl.id.get_binding_identifiers() {
+                let symbol_id = ident.symbol_id();
+                let has_type_metadata = {
+                    let scoping = ctx.scoping();
+                    scoping.symbol_flags(symbol_id).is_type()
+                        || scoping
+                            .symbol_redeclarations(symbol_id)
+                            .iter()
+                            .any(|redeclaration| redeclaration.flags.is_type())
+                };
+                if !has_type_metadata {
+                    continue;
+                }
+
+                *ctx.scoping_mut().symbol_flags_mut(symbol_id) = flags;
+                ctx.scoping_mut().set_symbol_span(symbol_id, ident.span);
+                ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
+            }
+        }
     }
 
     /// Check the namespace binding identifier if it is a redeclaration
