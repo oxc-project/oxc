@@ -12,7 +12,7 @@ use oxc_css_parser::{
         MediaCondition, MediaConditionKind, MediaFeature, MediaFeatureComparisonKind,
         MediaFeatureName, MediaInParens, MediaInParensKind, MediaQuery, MediaQueryList,
         NamespacePreludeUri, SassAtRootKind, SimpleBlock, SupportsCondition, SupportsConditionKind,
-        SupportsInParens, SupportsInParensKind, UnknownAtRulePrelude,
+        SupportsInParens, SupportsInParensKind, TokenSeq, UnknownAtRulePrelude,
     },
     token::{Token, TokenWithSpan},
 };
@@ -1536,17 +1536,46 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
             let span = to_span(&interpolation.span);
             write!(f, text(f.context().source_text().text_for(&span)));
         }
-        // W3C `<general-enclosed>` forward-compat fallback: any prelude oxc-css-parser
-        // can't structure (e.g. `(max-width: $bp)` without `allow_postcss_simple_vars`)
-        // is preserved as a verbatim `TokenSeq` inside its own parens.
-        MediaInParensKind::GeneralEnclosed(seq) => write_general_enclosed(&seq.span, f),
+        // W3C `<general-enclosed>` forward-compat fallback:
+        // any prelude `oxc-css-parser` can't structure (e.g. `(not all)`, `(screen and (color))`)
+        // keeps its tokens with whitespace normalized.
+        MediaInParensKind::GeneralEnclosed(seq) => write_general_enclosed(seq, f),
     }
 }
 
-/// `<general-enclosed>` prints its `TokenSeq` verbatim inside its own parens.
-fn write_general_enclosed(span: &oxc_css_parser::Span, f: &mut CssFormatter<'_, '_>) {
-    let span = to_span(span);
-    write!(f, [text("("), text(f.context().source_text().text_for(&span)), text(")")]);
+/// `<general-enclosed>` prints its `TokenSeq` inside its own parens,
+/// tokens verbatim but whitespace normalized:
+/// a source gap becomes one space, paren inner edges stay tight, `:`/`,` space right only.
+/// Gap-based spacing never fuses tokens the source kept apart
+/// (`and (color)` can't collapse into a function token `and(`).
+/// NOTE: Deliberately more normalized than Prettier.
+fn write_general_enclosed<'a>(seq: &TokenSeq<'a>, f: &mut CssFormatter<'_, 'a>) {
+    let source = f.context().source_text();
+    write!(f, "(");
+    for (i, tok) in seq.tokens.iter().enumerate() {
+        if i > 0 {
+            let prev = &seq.tokens[i - 1];
+            let needs_space = match (&prev.token, &tok.token) {
+                (Token::LParen(_) | Token::LBracket(_), _)
+                | (
+                    _,
+                    Token::RParen(_)
+                    | Token::RBracket(_)
+                    | Token::Comma(_)
+                    | Token::Semicolon(_)
+                    | Token::Colon(_),
+                ) => false,
+                (Token::Comma(_) | Token::Colon(_), _) => true,
+                _ => to_span(prev.span()).end != to_span(tok.span()).start,
+            };
+            if needs_space {
+                write!(f, space());
+            }
+        }
+        let span = to_span(tok.span());
+        write!(f, text(source.text_for(&span)));
+    }
+    write!(f, ")");
 }
 
 fn write_media_feature_name<'a>(name: &MediaFeatureName<'a>, f: &mut CssFormatter<'_, 'a>) {
@@ -1688,7 +1717,7 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
         SupportsInParensKind::Function(func) => {
             value::write_function(func, ValueContext::default(), f);
         }
-        SupportsInParensKind::GeneralEnclosed(seq) => write_general_enclosed(&seq.span, f),
+        SupportsInParensKind::GeneralEnclosed(seq) => write_general_enclosed(seq, f),
     }
 }
 

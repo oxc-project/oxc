@@ -158,6 +158,15 @@ Notable divergences are:
 - Broken `:not(...)` selector args indent at +2
   - Prettier lands at +4 (arg) / +2 (`)`)
   - Layout-only, rare trigger (selector longer than line width)
+- `<general-enclosed>` media preludes (`@media (not all)`, `(screen and (color))` unparsable as `<media-condition>`) normalize whitespace fully
+  - Source gap → one space, paren inner edges tight
+  - Prettier only collapses space RUNS inside the unparsable paren, leaving `(not ( screen and ( color ) ))`
+    - We print `(not (screen and (color)))`
+  - Reproducing the half-normalization is pure tokenizer-artifact matching;
+    - Gap-based spacing never fuses tokens the source kept apart (`and (` can't become a function token `and(`)
+- `@custom-media` preludes always print structured (e.g. `--viewport-medium (width <= 50rem)`)
+  - With the name GLUED to the `(` (`--viewport-medium(width<=50rem)`)
+  - Prettier keeps the whole prelude verbatim (ONE `media-type` token)
 - A declaration swallowed by a `;`-less css-in-js placeholder (`${m}\ncolor: red`)
   - We parse it structurally and FORMAT it (spacing/hex/number normalization)
   - Prettier keeps it verbatim, postcss swallows the run as an opaque prelude string it can't format, so `color   :   red` / `#FFFFFF` survive unformatted
@@ -244,7 +253,10 @@ cargo run -p oxc_prettier_conformance
 cargo run -p oxc_prettier_conformance -- --filter css/atrule
 ```
 
-At the current version (v3.9.1), the divergences of three files (`scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/variables/apply-rule.scss`) have been confirmed in the SCSS conformance, but these are intentional (see "Known divergences").
+At the current version (v3.9.1), the divergences of five files have been confirmed and are intentional (see "Known divergences"):
+
+- CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`
+- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/variables/apply-rule.scss`
 
 ### Embedded conformance (`apps/oxfmt`)
 

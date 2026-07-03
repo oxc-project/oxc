@@ -4,7 +4,7 @@ css compatibility: 148/150 (98.67%), 25 files skipped
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| css/stylefmt-repo/at-media/at-media.css | 💥 | 90.48% |
+| css/stylefmt-repo/at-media/at-media.css | 💥 | 95.24% |
 | css/stylefmt-repo/cssnext-example/cssnext-example.css | 💥 | 98.31% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
