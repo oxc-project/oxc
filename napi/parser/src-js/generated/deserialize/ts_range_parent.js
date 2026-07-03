@@ -4781,8 +4781,47 @@ function deserializeTSInterfaceHeritage(pos) {
       end: (end = deserializeI32(pos + 4)),
       range: [start, end],
       parent,
-    });
-  node.expression = deserializeExpression(pos + 16);
+    }),
+    expression = deserializeTSTypeName(pos + 16);
+  if (expression.type === "TSQualifiedName") {
+    let object = expression.left,
+      { right } = expression,
+      start,
+      end,
+      previous = (expression = {
+        type: "MemberExpression",
+        object,
+        property: right,
+        optional: false,
+        computed: false,
+        start: (start = expression.start),
+        end: (end = expression.end),
+        range: [start, end],
+        parent,
+      });
+    right.parent = previous;
+    for (;;) {
+      if (object.type !== "TSQualifiedName") {
+        object.parent = previous;
+        break;
+      }
+      let { left, right } = object;
+      previous = previous.object = {
+        type: "MemberExpression",
+        object: left,
+        property: right,
+        optional: false,
+        computed: false,
+        start: (start = object.start),
+        end: (end = object.end),
+        range: [start, end],
+        parent: previous,
+      };
+      right.parent = previous;
+      object = left;
+    }
+  }
+  node.expression = expression;
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 32);
   parent = previousParent;
   return node;

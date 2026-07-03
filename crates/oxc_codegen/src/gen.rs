@@ -4108,7 +4108,7 @@ impl Gen for TSInterfaceDeclaration<'_> {
 
 impl Gen for TSInterfaceHeritage<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        self.expression.print_expr(p, Precedence::Call, ctx);
+        self.type_name.print(p, ctx);
         if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }

@@ -1653,7 +1653,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
         // 3. If there are comments between the `id` and the `extends`, we use group mode.
         let group_mode = extends.len() > 1
             || extends.as_ref().first().is_some_and(|first| {
-                (first.expression.is_member_expression() && first.type_arguments.is_none()) || {
+                (first.type_name.is_qualified_name() && first.type_arguments.is_none()) || {
                     let prev_span = type_parameters.as_ref().map_or(id.span(), GetSpan::span);
                     f.comments().has_comment_in_range(prev_span.end, first.span().start)
                 }
@@ -1897,7 +1897,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSInterfac
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceHeritage<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, [self.expression(), self.type_arguments()]);
+        write!(f, [self.type_name(), self.type_arguments()]);
     }
 }
 

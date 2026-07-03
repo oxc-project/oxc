@@ -2811,7 +2811,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         //             ^^^^^^^^^
         self.current_reference_flags = ReferenceFlags::Type;
         self.visit_span(&heritage.span);
-        self.visit_expression(&heritage.expression);
+        self.visit_ts_type_name(&heritage.type_name);
         if let Some(type_arguments) = &heritage.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }

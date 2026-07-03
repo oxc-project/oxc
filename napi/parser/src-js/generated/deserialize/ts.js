@@ -3867,13 +3867,40 @@ function deserializeTSIndexSignatureName(pos) {
 
 function deserializeTSInterfaceHeritage(pos) {
   let node = {
-    type: "TSInterfaceHeritage",
-    expression: null,
-    typeArguments: null,
-    start: deserializeI32(pos),
-    end: deserializeI32(pos + 4),
-  };
-  node.expression = deserializeExpression(pos + 16);
+      type: "TSInterfaceHeritage",
+      expression: null,
+      typeArguments: null,
+      start: deserializeI32(pos),
+      end: deserializeI32(pos + 4),
+    },
+    expression = deserializeTSTypeName(pos + 16);
+  if (expression.type === "TSQualifiedName") {
+    let object = expression.left,
+      { right } = expression,
+      previous = (expression = {
+        type: "MemberExpression",
+        object,
+        property: right,
+        optional: false,
+        computed: false,
+        start: expression.start,
+        end: expression.end,
+      });
+    for (; object.type === "TSQualifiedName";) {
+      let { left, right } = object;
+      previous = previous.object = {
+        type: "MemberExpression",
+        object: left,
+        property: right,
+        optional: false,
+        computed: false,
+        start: object.start,
+        end: object.end,
+      };
+      object = left;
+    }
+  }
+  node.expression = expression;
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 32);
   return node;
 }

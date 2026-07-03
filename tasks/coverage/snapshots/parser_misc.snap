@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 71/71 (100.00%)
 Positive Passed: 71/71 (100.00%)
-Negative Passed: 150/150 (100.00%)
+Negative Passed: 151/151 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -4003,6 +4003,28 @@ Negative Passed: 150/150 (100.00%)
  3 │ }
    ╰────
   help: If this is intended to be the condition for the switch statement, add `case` before it.
+
+  × TS(1009): Trailing comma not allowed.
+   ╭─[misc/fail/ts-interface-invalid-heritage.ts:1:22]
+ 1 │ interface A extends B, {}
+   ·                      ─
+ 2 │ interface B extends this {}
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[misc/fail/ts-interface-invalid-heritage.ts:2:21]
+ 1 │ interface A extends B, {}
+ 2 │ interface B extends this {}
+   ·                     ────
+ 3 │ interface C extends this.D {}
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[misc/fail/ts-interface-invalid-heritage.ts:3:21]
+ 2 │ interface B extends this {}
+ 3 │ interface C extends this.D {}
+   ·                     ──────
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[misc/fail/ts-unerasable-as-chained.ts:4:33]

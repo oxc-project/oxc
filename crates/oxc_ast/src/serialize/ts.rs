@@ -377,6 +377,69 @@ impl ESTree for TSClassImplementsExpression<'_, '_> {
     }
 }
 
+/// Serializer for `expression` field of `TSInterfaceHeritage`.
+///
+/// Oxc stores interface heritage as a `TSTypeName`, but TS-ESTree exposes the field as an
+/// expression-shaped node.
+#[ast_meta]
+#[estree(
+    ts_type = "Expression",
+    raw_deser = "
+        let expression = DESER[TSTypeName](POS_OFFSET.type_name);
+        if (expression.type === 'TSQualifiedName') {
+            let object = expression.left;
+            const { right } = expression;
+            let start, end;
+            let previous = expression = {
+                type: 'MemberExpression',
+                object,
+                property: right,
+                optional: false,
+                computed: false,
+                start: start = expression.start,
+                end: end = expression.end,
+                ...(RANGE && { range: [start, end] }),
+                ...(PARENT && { parent }),
+            };
+
+            if (PARENT) right.parent = previous;
+
+            while (true) {
+                if (object.type !== 'TSQualifiedName') {
+                    if (PARENT) object.parent = previous;
+                    break;
+                }
+
+                const { left, right } = object;
+                previous = previous.object = {
+                    type: 'MemberExpression',
+                    object: left,
+                    property: right,
+                    optional: false,
+                    computed: false,
+                    start: start = object.start,
+                    end: end = object.end,
+                    ...(RANGE && { range: [start, end] }),
+                    ...(PARENT && { parent: previous }),
+                };
+
+                if (PARENT) right.parent = previous;
+
+                object = left;
+            }
+        }
+        expression
+    "
+)]
+pub struct TSInterfaceHeritageExpression<'a, 'b>(pub &'b TSInterfaceHeritage<'a>);
+
+impl ESTree for TSInterfaceHeritageExpression<'_, '_> {
+    #[inline] // Because it just delegates
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        TSTypeNameAsMemberExpression(&self.0.type_name).serialize(serializer);
+    }
+}
+
 struct TSTypeNameAsMemberExpression<'a, 'b>(&'b TSTypeName<'a>);
 
 impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {

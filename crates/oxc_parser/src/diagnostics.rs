@@ -1368,6 +1368,16 @@ pub fn interface_extend(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn empty_extends_clause(span: Span) -> OxcDiagnostic {
+    ts_error("1097", "'extends' list cannot be empty.").with_label(span)
+}
+
+#[cold]
+pub fn trailing_comma_not_allowed(span: Span) -> OxcDiagnostic {
+    ts_error("1009", "Trailing comma not allowed.").with_label(span)
+}
+
+#[cold]
 pub fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
     ts_error("1502", "The 'u' and 'v' regular expression flags cannot be enabled at the same time")
         .with_label(span)

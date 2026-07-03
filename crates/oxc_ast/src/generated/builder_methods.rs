@@ -24251,12 +24251,12 @@ impl<'a> TSInterfaceHeritage<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
+    /// * `type_name`
     /// * `type_arguments`
     #[inline]
     pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        expression: Expression<'a>,
+        type_name: TSTypeName<'a>,
         type_arguments: T1,
         builder: &B,
     ) -> Self
@@ -24267,7 +24267,7 @@ impl<'a> TSInterfaceHeritage<'a> {
         TSInterfaceHeritage {
             node_id: Cell::new(builder.node_id()),
             span,
-            expression,
+            type_name,
             type_arguments: type_arguments.into_in(builder.allocator()),
         }
     }

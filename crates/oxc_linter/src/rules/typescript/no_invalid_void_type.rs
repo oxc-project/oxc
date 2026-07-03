@@ -280,7 +280,7 @@ fn get_generic_type_argument_name<'a>(
             Some(ctx.source_range(class_implements.expression.span()))
         }
         AstKind::TSInterfaceHeritage(interface_heritage) => {
-            Some(ctx.source_range(interface_heritage.expression.span()))
+            Some(ctx.source_range(interface_heritage.type_name.span()))
         }
         AstKind::Class(class) => class
             .super_type_arguments

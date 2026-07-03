@@ -3817,7 +3817,7 @@ pub mod walk {
         let kind = AstKind::TSInterfaceHeritage(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_expression(&it.expression);
+        visitor.visit_ts_type_name(&it.type_name);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }

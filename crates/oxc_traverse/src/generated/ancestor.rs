@@ -274,7 +274,7 @@ pub(crate) enum AncestorType {
     TSConstructSignatureDeclarationParams = 250,
     TSConstructSignatureDeclarationReturnType = 251,
     TSIndexSignatureNameTypeAnnotation = 252,
-    TSInterfaceHeritageExpression = 253,
+    TSInterfaceHeritageTypeName = 253,
     TSInterfaceHeritageTypeArguments = 254,
     TSTypePredicateParameterName = 255,
     TSTypePredicateTypeAnnotation = 256,
@@ -811,8 +811,8 @@ pub enum Ancestor<'a, 't> {
     ) = AncestorType::TSConstructSignatureDeclarationReturnType as u16,
     TSIndexSignatureNameTypeAnnotation(TSIndexSignatureNameWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSIndexSignatureNameTypeAnnotation as u16,
-    TSInterfaceHeritageExpression(TSInterfaceHeritageWithoutExpression<'a, 't>) =
-        AncestorType::TSInterfaceHeritageExpression as u16,
+    TSInterfaceHeritageTypeName(TSInterfaceHeritageWithoutTypeName<'a, 't>) =
+        AncestorType::TSInterfaceHeritageTypeName as u16,
     TSInterfaceHeritageTypeArguments(TSInterfaceHeritageWithoutTypeArguments<'a, 't>) =
         AncestorType::TSInterfaceHeritageTypeArguments as u16,
     TSTypePredicateParameterName(TSTypePredicateWithoutParameterName<'a, 't>) =
@@ -1736,7 +1736,7 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_interface_heritage(self) -> bool {
         matches!(
             self,
-            Self::TSInterfaceHeritageExpression(_) | Self::TSInterfaceHeritageTypeArguments(_)
+            Self::TSInterfaceHeritageTypeName(_) | Self::TSInterfaceHeritageTypeArguments(_)
         )
     }
 
@@ -2006,7 +2006,6 @@ impl<'a, 't> Ancestor<'a, 't> {
                 | Self::JSXSpreadAttributeArgument(_)
                 | Self::JSXSpreadChildExpression(_)
                 | Self::TSEnumMemberInitializer(_)
-                | Self::TSInterfaceHeritageExpression(_)
                 | Self::TSAsExpressionExpression(_)
                 | Self::TSSatisfiesExpressionExpression(_)
                 | Self::TSTypeAssertionExpression(_)
@@ -2212,6 +2211,7 @@ impl<'a, 't> Ancestor<'a, 't> {
             Self::TSTypeReferenceTypeName(_)
                 | Self::TSQualifiedNameLeft(_)
                 | Self::TSClassImplementsExpression(_)
+                | Self::TSInterfaceHeritageTypeName(_)
         )
     }
 
@@ -2510,7 +2510,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSConstructSignatureDeclarationParams(a) => a.address(),
             Self::TSConstructSignatureDeclarationReturnType(a) => a.address(),
             Self::TSIndexSignatureNameTypeAnnotation(a) => a.address(),
-            Self::TSInterfaceHeritageExpression(a) => a.address(),
+            Self::TSInterfaceHeritageTypeName(a) => a.address(),
             Self::TSInterfaceHeritageTypeArguments(a) => a.address(),
             Self::TSTypePredicateParameterName(a) => a.address(),
             Self::TSTypePredicateTypeAnnotation(a) => a.address(),
@@ -16197,19 +16197,19 @@ impl<'a, 't> GetAddress for TSIndexSignatureNameWithoutTypeAnnotation<'a, 't> {
 pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_NODE_ID: usize =
     offset_of!(TSInterfaceHeritage, node_id);
 pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_SPAN: usize = offset_of!(TSInterfaceHeritage, span);
-pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_EXPRESSION: usize =
-    offset_of!(TSInterfaceHeritage, expression);
+pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_TYPE_NAME: usize =
+    offset_of!(TSInterfaceHeritage, type_name);
 pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_TYPE_ARGUMENTS: usize =
     offset_of!(TSInterfaceHeritage, type_arguments);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSInterfaceHeritageWithoutExpression<'a, 't>(
+pub struct TSInterfaceHeritageWithoutTypeName<'a, 't>(
     pub(crate) *const TSInterfaceHeritage<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSInterfaceHeritageWithoutExpression<'a, 't> {
+impl<'a, 't> TSInterfaceHeritageWithoutTypeName<'a, 't> {
     #[inline]
     pub fn node_id(self) -> &'t Cell<NodeId> {
         unsafe {
@@ -16232,7 +16232,7 @@ impl<'a, 't> TSInterfaceHeritageWithoutExpression<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for TSInterfaceHeritageWithoutExpression<'a, 't> {
+impl<'a, 't> GetAddress for TSInterfaceHeritageWithoutTypeName<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         unsafe { Address::from_ptr(self.0) }
@@ -16261,10 +16261,10 @@ impl<'a, 't> TSInterfaceHeritageWithoutTypeArguments<'a, 't> {
     }
 
     #[inline]
-    pub fn expression(self) -> &'t Expression<'a> {
+    pub fn type_name(self) -> &'t TSTypeName<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_EXPRESSION)
-                as *const Expression<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_TYPE_NAME)
+                as *const TSTypeName<'a>)
         }
     }
 }
