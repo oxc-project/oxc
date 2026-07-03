@@ -13,7 +13,6 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 use oxc_css_parser::{
-    Spanned,
     ast::{
         Calc, CalcOperatorKind, ComponentValue, Delimiter, DelimiterKind, Dimension, Function,
         FunctionName, InterpolableIdent, InterpolableStr, LessBinaryOperation,
@@ -113,7 +112,13 @@ fn print_string<'a>(raw: &'a str, options: &CssFormatOptions) -> Cow<'a, str> {
 }
 
 pub(super) fn write_str<'a>(str: &Str<'a>, f: &mut CssFormatter<'_, 'a>) {
-    let printed = print_string(str.raw, f.options());
+    write_str_raw(str.raw, f);
+}
+
+/// [`write_str`] for a raw quoted-string slice
+/// (callers that only hold the source text, no AST node).
+pub(super) fn write_str_raw<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
+    let printed = print_string(raw, f.options());
     write!(f, text(arena_cow_str(&printed, f)));
 }
 
@@ -346,6 +351,14 @@ fn is_wide_keyword(value: &str) -> bool {
         || value.eq_ignore_ascii_case("revert")
 }
 
+pub(super) fn token_depth_delta(token: &Token<'_>) -> i32 {
+    match token {
+        Token::LParen(_) | Token::LBracket(_) | Token::LBrace(_) => 1,
+        Token::RParen(_) | Token::RBracket(_) | Token::RBrace(_) => -1,
+        _ => 0,
+    }
+}
+
 fn is_comma(value: &ComponentValue<'_>) -> bool {
     matches!(value, ComponentValue::Delimiter(Delimiter { kind: DelimiterKind::Comma, .. }))
 }
@@ -369,6 +382,32 @@ fn is_word_like(value: &ComponentValue<'_>) -> bool {
 
 fn is_func_like(value: &ComponentValue<'_>) -> bool {
     matches!(value, ComponentValue::Function(_) | ComponentValue::Url(_))
+}
+
+/// `sandstone.10` / `theme(spacing.2.5)` / `1+1+1+1` / `calc(100%+2px)`:
+/// per CSS tokenization the glued `.10` / `+1` / `+2px` are numbers,
+/// but postcss lexes the whole contiguous run as ONE word
+/// (an xstyled / tailwind-theme token, or plugin-processed pseudo-math).
+///
+/// Such a number stays glued (`Separator::Tight`) and prints raw.
+/// `.10` must not normalize to `0.1`, `+1` must not gain a space.
+/// Two glued number-ish values can never be valid CSS,
+/// so a number-ish neighbor is as sure a word sign as a word-like one.
+/// (The raw-slice twin of this rule lives in `adjust_numbers_and_strings`,
+/// whose word-part scan skips numbers glued to a word; keep them in sync.)
+fn is_word_glued_number(values: &[ComponentValue<'_>], i: usize) -> bool {
+    let number_ish = |value: &ComponentValue<'_>| {
+        matches!(
+            value,
+            ComponentValue::Number(_)
+                | ComponentValue::Dimension(_)
+                | ComponentValue::Percentage(_)
+        )
+    };
+    i > 0
+        && number_ish(&values[i])
+        && (is_word_like(&values[i - 1]) || number_ish(&values[i - 1]))
+        && to_span(values[i - 1].span()).end == to_span(values[i].span()).start
 }
 
 /// Is this number-ish or a font-size-capable function? (Prettier's `isPossibleFontSize`)
@@ -440,10 +479,25 @@ impl ValueContext<'_> {
 }
 
 /// Splits a flat component stream at top-level commas.
+/// A raw `Token::Comma` splits too (postcss value-parses raw token streams the same way):
+/// a declaration value the typed grammar rejected falls back to raw tokens,
+/// and its comma list must still count as a multi-value list
+/// (`background-position: 0 0, 0 spacing(tight), ...` breaks one per line).
+/// Raw parens keep their inner commas out of the split.
 fn split_comma_groups<'b, 'a>(values: &'b [ComponentValue<'a>]) -> Vec<&'b [ComponentValue<'a>]> {
     let mut groups = vec![];
     let mut start = 0;
+    let mut depth = 0i32;
     for (i, v) in values.iter().enumerate() {
+        if let ComponentValue::TokenWithSpan(tok) = v {
+            if depth == 0 && matches!(&tok.token, Token::Comma(_)) {
+                groups.push(&values[start..i]);
+                start = i + 1;
+            } else {
+                depth += token_depth_delta(&tok.token);
+            }
+            continue;
+        }
         if is_comma(v) {
             groups.push(&values[start..i]);
             start = i + 1;
@@ -812,10 +866,17 @@ pub(super) fn write_comma_group<'a>(
             let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 flush_value_comments(start, f);
                 for (j, v) in run.iter().enumerate() {
-                    if j > 0
-                        && separator_between(values, run_start + j, ctx, source) == Separator::Space
-                    {
-                        write!(f, " ");
+                    if j > 0 {
+                        let sep = separator_between(values, run_start + j, ctx, source);
+                        if sep == Separator::Space {
+                            write!(f, " ");
+                        }
+                        // A word-glued number prints raw, not normalized (see `is_word_glued_number`);
+                        // gated on Tight so the spacing and text halves always come from one rule.
+                        if sep == Separator::Tight && is_word_glued_number(values, run_start + j) {
+                            write!(f, text(source.text_for(&to_span(v.span()))));
+                            continue;
+                        }
                     }
                     write_component_value(v, ctx, f);
                 }
@@ -1147,6 +1208,12 @@ fn separator_between(
         return Separator::Tight;
     }
 
+    // A word-glued number is part of ONE postcss word (`sandstone.10`);
+    // it also prints raw, see `is_word_glued_number`.
+    if gap_empty && is_word_glued_number(values, i) {
+        return Separator::Tight;
+    }
+
     // postcss-values lexes `1#{$var}` as ONE word:
     // a neighbor glued to an interpolated ident stays glued.
     {
@@ -1327,7 +1394,7 @@ pub(super) fn write_component_value<'a>(
             // `not` already wrote its space.
             if !keyword_not
                 && is_func_like(&unary.expr)
-                && to_span(unary.op.span()).end != to_span(unary.expr.span()).start
+                && to_span(&unary.op.span).end != to_span(unary.expr.span()).start
             {
                 write!(f, " ");
             }
@@ -1467,7 +1534,7 @@ fn write_sass_binary<'a>(
                 if matches!(op.kind, SassBinaryOperatorKind::Multiply) {
                     break;
                 }
-                let op_span = to_span(op.span());
+                let op_span = to_span(&op.span);
                 let next = &parts[run_end + 1].0;
                 let operand = &parts[run_end].0;
                 // Division mirrors postcss-values lexing:
@@ -1517,7 +1584,7 @@ fn write_sass_binary<'a>(
                 for (j, (operand, op)) in run.iter().enumerate() {
                     write_component_value(operand, ctx, f);
                     if let Some(op) = op {
-                        let op_span = to_span(op.span());
+                        let op_span = to_span(&op.span);
                         let operand_end = to_span(operand.span()).end;
                         let next_start = run.get(j + 1).map(|(next, _)| to_span(next.span()).start);
                         // `op(paren)` fuses like a postcss function token,
@@ -1595,9 +1662,11 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
             CalcOperatorKind::Minus => "-",
             CalcOperatorKind::Multiply => "*",
             CalcOperatorKind::Division => "/",
+            // Sass modulo inside a math function's arguments (`max(1px, 7px % 4)`)
+            CalcOperatorKind::Modulo => "%",
         };
         let left_end = to_span(calc.left.span()).end;
-        let op_span = to_span(calc.op.span());
+        let op_span = to_span(&calc.op.span);
         let right_start = to_span(calc.right.span()).start;
 
         push_operand(&calc.left, f, chunks, current);
@@ -1710,7 +1779,7 @@ fn write_less_binary_operation<'a>(
             LessOperationOperatorKind::Minus => "-",
         };
         let left_end = to_span(op.left.span()).end;
-        let op_span = to_span(op.op.span());
+        let op_span = to_span(&op.op.span);
         let right_start = to_span(op.right.span()).start;
 
         push_operand(&op.left, chunks, current);
@@ -2140,8 +2209,14 @@ pub(super) fn write_url<'a>(url: &Url<'a>, f: &mut CssFormatter<'_, 'a>) {
                     write!(f, text(inner));
                 } else {
                     let trimmed = inner.trim();
-                    // `url($a+$b)`: SCSS concatenation gets spaced
-                    if trimmed.contains('$') && trimmed.contains('+') && !trimmed.contains(' ') {
+                    // `url($a+$b)`: SCSS concatenation gets spaced.
+                    // SCSS only, in Css mode (postcss-simple-vars `$var`s)
+                    // Prettier keeps the raw url contents verbatim.
+                    if matches!(f.options().variant, crate::options::CssVariant::Scss)
+                        && trimmed.contains('$')
+                        && trimmed.contains('+')
+                        && !trimmed.contains(' ')
+                    {
                         let spaced = trimmed.cow_replace('+', " + ");
                         write!(f, text(f.allocator().alloc_str(&spaced)));
                     } else {

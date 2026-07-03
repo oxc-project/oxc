@@ -1,14 +1,11 @@
 //! SCSS-specific printing: variable declarations, maps, lists,
 //! control directives, mixins/includes/functions, module system.
 
-use oxc_css_parser::{
-    Spanned,
-    ast::{
-        ComponentValue, InterpolableStr, SassEach, SassFor, SassForBoundaryKind, SassForward,
-        SassForwardVisibilityModifierKind, SassFunction, SassIfAtRule, SassInclude, SassList,
-        SassMap, SassMixin, SassModuleConfig, SassParameters, SassUnaryOperatorKind, SassUse,
-        SassUseNamespaceKind, SassVariableDeclaration,
-    },
+use oxc_css_parser::ast::{
+    ComponentValue, InterpolableStr, SassEach, SassFor, SassForBoundaryKind, SassForward,
+    SassForwardVisibilityModifierKind, SassFunction, SassIfAtRule, SassInclude, SassList, SassMap,
+    SassMixin, SassModuleConfig, SassParameters, SassUnaryOperatorKind, SassUse,
+    SassUseNamespaceKind, SassVariableDeclaration,
 };
 
 use oxc_formatter_core::{
@@ -709,13 +706,13 @@ fn flatten_condition<'b, 'a>(cond: &'b ComponentValue<'a>, out: &mut Vec<CondPar
     match cond {
         ComponentValue::SassBinaryExpression(binary) => {
             flatten_condition(&binary.left, out);
-            out.push(CondPart::Op(to_span(binary.op.span())));
+            out.push(CondPart::Op(to_span(&binary.op.span)));
             flatten_condition(&binary.right, out);
         }
         ComponentValue::SassUnaryExpression(unary)
             if matches!(unary.op.kind, SassUnaryOperatorKind::Not) =>
         {
-            out.push(CondPart::Op(to_span(unary.op.span())));
+            out.push(CondPart::Op(to_span(&unary.op.span)));
             flatten_condition(&unary.expr, out);
         }
         other => out.push(CondPart::Value(other)),

@@ -5,7 +5,6 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 use oxc_css_parser::{
-    Spanned,
     ast::{
         AtRule, AtRulePrelude, ComponentValue, CustomMediaValue, ImportPrelude, ImportPreludeHref,
         ImportPreludeSupportsKind, InterpolableStr, KeyframesName, LessImportPrelude,
@@ -14,6 +13,7 @@ use oxc_css_parser::{
         NamespacePreludeUri, SassAtRootKind, SimpleBlock, SupportsCondition, SupportsConditionKind,
         SupportsInParens, SupportsInParensKind, TokenSeq, UnknownAtRulePrelude,
     },
+    pos::Span,
     token::{Token, TokenWithSpan},
 };
 
@@ -819,118 +819,9 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
         AtRulePrelude::SassUse(sass_use) => scss::write_sass_use(sass_use, f),
         AtRulePrelude::SassForward(forward) => scss::write_sass_forward(forward, f),
         AtRulePrelude::SassImport(import) => {
-            // Comments force the path list to break, one path per line
-            let last_end = to_span(import.span()).end;
-            let has_comments = f.context().comments().iter_before(last_end).next().is_some();
-            if has_comments && import.paths.len() > 1 {
-                // Comments fuse with the following path into ONE fill chunk (Prettier's `commaGroup`).
-                // Prettier's fill treats a chunk with a hardline as never-fitting,
-                // our core fill measures up to the hardline and calls it fit.
-                // So the separator breaks are simulated here with static widths.
-                let all: Vec<comments::CssComment> =
-                    f.context().comments().iter_before(last_end).collect();
-                let n = import.paths.len();
-                let mut leads: Vec<Vec<comments::CssComment>> = Vec::with_capacity(n);
-                for (i, path) in import.paths.iter().enumerate() {
-                    let path_start = to_span(path.span()).start;
-                    leads.push(
-                        all.iter()
-                            .filter(|c| c.span.end <= path_start)
-                            .filter(|c| {
-                                i == 0 || c.span.start >= to_span(import.paths[i - 1].span()).end
-                            })
-                            .copied()
-                            .collect(),
-                    );
-                }
-                // Prettier fill: separator stays flat only when
-                // [chunk, ", ", next chunk] fits and neither chunk has a comment (hardline).
-                let width = u32::from(f.options().line_width.value());
-                let indent_w = u32::from(f.options().indent_width.value());
-                let chunk_w: Vec<u32> = import
-                    .paths
-                    .iter()
-                    .enumerate()
-                    .map(|(i, p)| {
-                        let span = to_span(p.span());
-                        span.end - span.start + u32::from(i + 1 < n)
-                    })
-                    .collect();
-                let mut breaks_before = vec![false; n];
-                let mut x = 8; // after `@import `
-                for i in 0..n {
-                    if i + 1 == n {
-                        break;
-                    }
-                    let hard = leads[i].iter().any(|c| c.inline);
-                    let next_hard = leads[i + 1].iter().any(|c| c.inline);
-                    let fits2 = !hard && !next_hard && x + chunk_w[i] + 1 + chunk_w[i + 1] <= width;
-                    if fits2 {
-                        x += chunk_w[i] + 1;
-                    } else {
-                        breaks_before[i + 1] = true;
-                        x = indent_w;
-                    }
-                }
-                let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                    for (i, path) in import.paths.iter().enumerate() {
-                        if i > 0 {
-                            if breaks_before[i] {
-                                write!(f, hard_line_break());
-                            } else {
-                                write!(f, space());
-                            }
-                        }
-                        for &comment in &leads[i] {
-                            f.context().comments().take_before(comment.span.end);
-                            comments::write_single_comment(comment, f);
-                            if comment.inline {
-                                write!(f, hard_line_break());
-                            } else {
-                                write!(f, space());
-                            }
-                        }
-                        value::write_str(path, f);
-                        if i + 1 < n {
-                            write!(f, ",");
-                        }
-                    }
-                });
-                write!(f, indent(&body));
-            } else if has_comments {
-                let path = &import.paths[0];
-                let path_start = to_span(path.span()).start;
-                let lead: Vec<comments::CssComment> =
-                    f.context().comments().take_before(path_start).to_vec();
-                for &comment in &lead {
-                    comments::write_single_comment(comment, f);
-                    if comment.inline {
-                        write!(f, hard_line_break());
-                    } else {
-                        write!(f, space());
-                    }
-                }
-                value::write_str(path, f);
-            } else {
-                // Comma-separated path list:
-                // Prettier value-parses `@import` params (module rule) and fills them,
-                // long lists wrap at the line width with a continuation indent.
-                let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                    let mut filler = f.fill();
-                    let n = import.paths.len();
-                    for (i, path) in import.paths.iter().enumerate() {
-                        let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                            value::write_str(path, f);
-                            if i + 1 < n {
-                                write!(f, ",");
-                            }
-                        });
-                        filler.entry(&soft_line_break_or_space(), &content);
-                    }
-                    filler.finish();
-                });
-                write!(f, group(&indent(&body)));
-            }
+            let paths: Vec<(Span, &str)> =
+                import.paths.iter().map(|path| (path.span.clone(), path.raw)).collect();
+            write_import_path_list(&paths, to_span(import.span()).end, f);
         }
         // Only reached for SCSS-family names parsed AS CSS (see `is_value_parsed_at_rule`);
         // other `Unknown` preludes print verbatim via the `write_at_rule` early return.
@@ -958,11 +849,122 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
     }
 }
 
-fn token_depth_delta(token: &Token<'_>) -> i32 {
-    match token {
-        Token::LParen(_) | Token::LBracket(_) | Token::LBrace(_) => 1,
-        Token::RParen(_) | Token::RBracket(_) | Token::RBrace(_) => -1,
-        _ => 0,
+/// Prints an `@import` path list (`@import "a", "b", ...`) like Prettier's value-parsed params (module rule):
+/// paths fill at the line width with a continuation indent, and comments force one path per line.
+/// Used by the SCSS `SassImportPrelude` AND by `ImportPrelude`
+/// when its non-standard tail is exactly a comma-separated string list (see `import_as_path_list`).
+/// Paths arrive as `(span, raw)` pairs so both callers can feed it without fabricating AST nodes.
+fn write_import_path_list<'a>(
+    paths: &[(Span, &'a str)],
+    last_end: u32,
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    // Comments force the path list to break, one path per line
+    let has_comments = f.context().comments().iter_before(last_end).next().is_some();
+    if has_comments && paths.len() > 1 {
+        // Comments fuse with the following path into ONE fill chunk (Prettier's `commaGroup`).
+        // Prettier's fill treats a chunk with a hardline as never-fitting,
+        // our core fill measures up to the hardline and calls it fit.
+        // So the separator breaks are simulated here with static widths.
+        let all: Vec<comments::CssComment> = f.context().comments().iter_before(last_end).collect();
+        let n = paths.len();
+        let mut leads: Vec<Vec<comments::CssComment>> = Vec::with_capacity(n);
+        for (i, path) in paths.iter().enumerate() {
+            let path_start = to_span(&path.0).start;
+            leads.push(
+                all.iter()
+                    .filter(|c| c.span.end <= path_start)
+                    .filter(|c| i == 0 || c.span.start >= to_span(&paths[i - 1].0).end)
+                    .copied()
+                    .collect(),
+            );
+        }
+        // Prettier fill: separator stays flat only when
+        // [chunk, ", ", next chunk] fits and neither chunk has a comment (hardline).
+        let width = u32::from(f.options().line_width.value());
+        let indent_w = u32::from(f.options().indent_width.value());
+        let chunk_w: Vec<u32> = paths
+            .iter()
+            .enumerate()
+            .map(|(i, p)| {
+                let span = to_span(&p.0);
+                span.end - span.start + u32::from(i + 1 < n)
+            })
+            .collect();
+        let mut breaks_before = vec![false; n];
+        let mut x = 8; // after `@import `
+        for i in 0..n {
+            if i + 1 == n {
+                break;
+            }
+            let hard = leads[i].iter().any(|c| c.inline);
+            let next_hard = leads[i + 1].iter().any(|c| c.inline);
+            let fits2 = !hard && !next_hard && x + chunk_w[i] + 1 + chunk_w[i + 1] <= width;
+            if fits2 {
+                x += chunk_w[i] + 1;
+            } else {
+                breaks_before[i + 1] = true;
+                x = indent_w;
+            }
+        }
+        let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            for (i, path) in paths.iter().enumerate() {
+                if i > 0 {
+                    if breaks_before[i] {
+                        write!(f, hard_line_break());
+                    } else {
+                        write!(f, space());
+                    }
+                }
+                for &comment in &leads[i] {
+                    f.context().comments().take_before(comment.span.end);
+                    comments::write_single_comment(comment, f);
+                    if comment.inline {
+                        write!(f, hard_line_break());
+                    } else {
+                        write!(f, space());
+                    }
+                }
+                value::write_str_raw(path.1, f);
+                if i + 1 < n {
+                    write!(f, ",");
+                }
+            }
+        });
+        write!(f, indent(&body));
+    } else if has_comments {
+        let path = &paths[0];
+        let path_start = to_span(&path.0).start;
+        let lead: Vec<comments::CssComment> =
+            f.context().comments().take_before(path_start).to_vec();
+        for &comment in &lead {
+            comments::write_single_comment(comment, f);
+            if comment.inline {
+                write!(f, hard_line_break());
+            } else {
+                write!(f, space());
+            }
+        }
+        value::write_str_raw(path.1, f);
+    } else {
+        // Comma-separated path list:
+        // Prettier value-parses `@import` params (module rule) and fills them,
+        // long lists wrap at the line width with a continuation indent.
+        let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            let mut filler = f.fill();
+            let n = paths.len();
+            for (i, path) in paths.iter().enumerate() {
+                let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                    value::write_str_raw(path.1, f);
+                    if i + 1 < n {
+                        write!(f, ",");
+                    }
+                });
+                filler.entry(&soft_line_break_or_space(), &content);
+            }
+            filler.finish();
+        });
+        write!(f, group(&indent(&body)));
     }
 }
 
@@ -979,7 +981,7 @@ fn write_token_value<'a>(
     let mut depth = 0i32;
     let mut start = 0;
     for (i, tok) in tokens.iter().enumerate() {
-        depth += token_depth_delta(&tok.token);
+        depth += value::token_depth_delta(&tok.token);
         if depth == 0 && matches!(&tok.token, Token::Comma(_)) {
             groups.push(&tokens[start..i]);
             start = i + 1;
@@ -1038,10 +1040,9 @@ fn write_token_value<'a>(
                 write!(f, ",");
                 let sep_blank =
                     groups_ref[i - 1].iter().any(|t| matches!(&t.token, Token::Colon(_))) && {
-                        let prev_end =
-                            groups_ref[i - 1].last().map_or(0, |t| to_span(t.span()).end);
+                        let prev_end = groups_ref[i - 1].last().map_or(0, |t| to_span(&t.span).end);
                         let next_start =
-                            group_tokens.first().map_or(prev_end, |t| to_span(t.span()).start);
+                            group_tokens.first().map_or(prev_end, |t| to_span(&t.span).start);
                         comments::classify_gap(source.bytes_range(prev_end, next_start))
                             == comments::Gap::Blank
                     };
@@ -1064,7 +1065,7 @@ fn write_token_comma_group<'a>(tokens: &[TokenWithSpan<'a>], f: &mut CssFormatte
     let hug_lparen = tokens.len() > 1
         && matches!(&tokens[1].token, Token::LParen(_))
         && matches!(&tokens[0].token, Token::Ident(_))
-        && !source.text_for(&to_span(tokens[0].span())).eq_ignore_ascii_case("if");
+        && !source.text_for(&to_span(&tokens[0].span)).eq_ignore_ascii_case("if");
 
     let mut filler = f.fill();
     let mut i = 0;
@@ -1077,7 +1078,7 @@ fn write_token_comma_group<'a>(tokens: &[TokenWithSpan<'a>], f: &mut CssFormatte
             let mut depth = 0i32;
             let mut j = i;
             while j < tokens.len() {
-                depth += token_depth_delta(&tokens[j].token);
+                depth += value::token_depth_delta(&tokens[j].token);
                 j += 1;
                 if depth == 0 {
                     break;
@@ -1091,7 +1092,7 @@ fn write_token_comma_group<'a>(tokens: &[TokenWithSpan<'a>], f: &mut CssFormatte
             if matches!(&curr.token, Token::LParen(_) | Token::LBracket(_) | Token::LBrace(_)) {
                 // Opener glues to the run when fused in source,
                 // after a colon (`$arg: (...)`), or as a call (`name(...)`).
-                let glued = to_span(prev.span()).end == to_span(curr.span()).start
+                let glued = to_span(&prev.span).end == to_span(&curr.span).start
                     || matches!(&prev.token, Token::Colon(_))
                     || (run_end == 1 && hug_lparen);
                 if !glued {
@@ -1101,7 +1102,7 @@ fn write_token_comma_group<'a>(tokens: &[TokenWithSpan<'a>], f: &mut CssFormatte
                 let mut depth = 0i32;
                 let mut j = run_end;
                 while j < tokens.len() {
-                    depth += token_depth_delta(&tokens[j].token);
+                    depth += value::token_depth_delta(&tokens[j].token);
                     j += 1;
                     if depth == 0 {
                         break;
@@ -1110,7 +1111,7 @@ fn write_token_comma_group<'a>(tokens: &[TokenWithSpan<'a>], f: &mut CssFormatte
                 run_end = j;
                 continue;
             }
-            let tight = to_span(prev.span()).end == to_span(curr.span()).start
+            let tight = to_span(&prev.span).end == to_span(&curr.span).start
                 || matches!(
                     &curr.token,
                     Token::Comma(_)
@@ -1189,7 +1190,7 @@ fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssF
             let mut depth = 0i32;
             let mut k = j;
             while k < run.len() {
-                depth += token_depth_delta(&run[k].token);
+                depth += value::token_depth_delta(&run[k].token);
                 k += 1;
                 if depth == 0 {
                     break;
@@ -1200,7 +1201,7 @@ fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssF
                 if j > 0 {
                     write_token_pair_space(run, j, hug_lparen, f);
                 }
-                let span = to_span(tok.span());
+                let span = to_span(&tok.span);
                 write!(f, text(source.text_for(&span)));
                 j += 1;
                 continue;
@@ -1237,7 +1238,7 @@ fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssF
         if j > 0 {
             write_token_pair_space(run, j, hug_lparen, f);
         }
-        let span = to_span(tok.span());
+        let span = to_span(&tok.span);
         match &tok.token {
             Token::Str(_) => {
                 write_raw_str(source.text_for(&span), f);
@@ -1269,7 +1270,7 @@ fn write_token_pair_space<'a>(
 ) {
     let prev = &run[j - 1];
     let tok = &run[j];
-    let gap = to_span(prev.span()).end != to_span(tok.span()).start;
+    let gap = to_span(&prev.span).end != to_span(&tok.span).start;
     let wordish = |t: &Token<'_>| {
         matches!(t, Token::Ident(_) | Token::DollarVar(_) | Token::AtKeyword(_) | Token::RParen(_))
     };
@@ -1336,6 +1337,15 @@ fn write_keyframes_name<'a>(name: &KeyframesName<'a>, f: &mut CssFormatter<'_, '
 }
 
 fn write_import_prelude<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatter<'_, 'a>) {
+    // Css mode only:
+    // a comma-separated string list (`@import 'a', 'b'`) lands in the non-standard `modifiers` tail
+    // (its leading comma fails the structured media parse, and Css has no `SassImportPrelude` to fall back to,
+    // `oxc-css-parser` routes Scss/Sass there directly).
+    // Rebuild the typed path list and print it through the same comment-aware fill.
+    if let Some(paths) = import_as_path_list(import, f) {
+        write_import_path_list(&paths, to_span(import.span()).end, f);
+        return;
+    }
     // The whole prelude is one group: a long `@import url(...) media, list;`
     // breaks after the url and puts one query per line, all one indent in.
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
@@ -1344,8 +1354,54 @@ fn write_import_prelude<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatter<'_,
     write!(f, group(&indent(&body)));
 }
 
+/// `Some(paths)` (as `(span, raw)` pairs) when the prelude is a plain multi-path import:
+/// a string href whose whole tail is `, <string> (, <string>)*` held as raw tokens.
+fn import_as_path_list<'a>(
+    import: &ImportPrelude<'a>,
+    f: &CssFormatter<'_, 'a>,
+) -> Option<Vec<(Span, &'a str)>> {
+    let modifiers = import.modifiers.as_ref()?;
+    let ImportPreludeHref::Str(InterpolableStr::Literal(href)) = &import.href else {
+        return None;
+    };
+    // A path list always begins with a comma glued to the href
+    if !matches!(
+        modifiers.values.first(),
+        Some(ComponentValue::TokenWithSpan(TokenWithSpan { token: Token::Comma(_), .. }))
+    ) {
+        return None;
+    }
+    let source = f.context().source_text();
+    let mut paths = Vec::with_capacity(1 + modifiers.values.len() / 2);
+    paths.push((href.span.clone(), href.raw));
+    let mut expect_comma = true;
+    for value in &modifiers.values {
+        let ComponentValue::TokenWithSpan(tok) = value else {
+            return None;
+        };
+        match &tok.token {
+            Token::Comma(_) if expect_comma => expect_comma = false,
+            Token::Str(_) if !expect_comma => {
+                paths.push((tok.span.clone(), source.text_for(&to_span(&tok.span))));
+                expect_comma = true;
+            }
+            _ => return None,
+        }
+    }
+    // A trailing comma never arrives here (the parser rejects it)
+    (paths.len() > 1 && expect_comma).then_some(paths)
+}
+
 fn write_import_prelude_inner<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
+    // Non-standard import tail (`@import "a", "b"` / `@import "a" b c(d)`):
+    // reference compilers accept an arbitrary post-URL mix of idents,
+    // functions, parens, and comma-chained imports; oxc-css-parser keeps it as raw tokens
+    // (`layer`/`supports`/`media` are all `None` then).
+    if let Some(modifiers) = &import.modifiers {
+        write_import_modifiers(import, &modifiers.values, f);
+        return;
+    }
     write_import_href(&import.href, f);
     if let Some(layer) = &import.layer {
         write!(f, space());
@@ -1378,6 +1434,91 @@ fn write_import_prelude_inner<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatt
         write!(f, soft_line_break_or_space());
         // No own group/indent: the queries share the prelude-level group
         write_media_query_list_inner(media, f);
+    }
+}
+
+/// A non-standard import tail printed like Prettier's value-parsed params:
+/// a FILL over the top-level comma groups (as many per line as fit, commas glued left),
+/// the href riding as the first entry so `@import "a", "b", ...` wraps exactly where Prettier wraps.
+/// Within one group, token runs go through the token-value printer
+/// (spaces normalize, strings re-quote, `c( d )` → `c(d)`).
+fn write_import_modifiers<'a>(
+    import: &ImportPrelude<'a>,
+    values: &[ComponentValue<'a>],
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    // Split into subslices at top-level commas (mirrors `write_token_value`).
+    // A leading comma (`@import "a", "b"`) leaves an empty first group,
+    // whose comma glues straight onto the href.
+    let mut groups: Vec<&[ComponentValue<'a>]> = vec![];
+    let mut depth = 0i32;
+    let mut start = 0;
+    for (i, value) in values.iter().enumerate() {
+        if let ComponentValue::TokenWithSpan(tok) = value {
+            if depth == 0 && matches!(&tok.token, Token::Comma(_)) {
+                groups.push(&values[start..i]);
+                start = i + 1;
+                continue;
+            }
+            depth += value::token_depth_delta(&tok.token);
+        }
+    }
+    groups.push(&values[start..]);
+
+    let last = groups.len() - 1;
+    let first_group = groups[0];
+    let mut filler = f.fill();
+    let head = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+        write_import_href(&import.href, f);
+        if !first_group.is_empty() {
+            write!(f, space());
+            write_import_modifier_group(first_group, f);
+        }
+        if last > 0 {
+            write!(f, ",");
+        }
+    });
+    filler.entry(&soft_line_break_or_space(), &head);
+    for (i, group_values) in groups.iter().enumerate().skip(1) {
+        let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            write_import_modifier_group(group_values, f);
+            if i < last {
+                write!(f, ",");
+            }
+        });
+        filler.entry(&soft_line_break_or_space(), &content);
+    }
+    filler.finish();
+}
+
+/// One comma group of an import tail, printed as space-separated segments:
+/// a maximal token run goes through `write_token_comma_group` (spaces normalize, strings re-quote),
+/// a rare non-token value (SCSS interpolated string) reprints structurally.
+fn write_import_modifier_group<'a>(values: &[ComponentValue<'a>], f: &mut CssFormatter<'_, 'a>) {
+    let mut i = 0;
+    while i < values.len() {
+        if i > 0 {
+            write!(f, space());
+        }
+        if matches!(values[i], ComponentValue::TokenWithSpan(_)) {
+            let run_start = i;
+            while i < values.len() && matches!(values[i], ComponentValue::TokenWithSpan(_)) {
+                i += 1;
+            }
+            // `write_token_comma_group` needs a contiguous token slice,
+            // so the run is copied out of the enum (cold path, small runs).
+            let tokens: Vec<TokenWithSpan<'a>> = values[run_start..i]
+                .iter()
+                .filter_map(|value| match value {
+                    ComponentValue::TokenWithSpan(tok) => Some(tok.clone()),
+                    _ => None,
+                })
+                .collect();
+            write_token_comma_group(&tokens, f);
+        } else {
+            value::write_component_value(&values[i], ValueContext::default(), f);
+            i += 1;
+        }
     }
 }
 
@@ -1539,7 +1680,16 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
         // W3C `<general-enclosed>` forward-compat fallback:
         // any prelude `oxc-css-parser` can't structure (e.g. `(not all)`, `(screen and (color))`)
         // keeps its tokens with whitespace normalized.
-        MediaInParensKind::GeneralEnclosed(seq) => write_general_enclosed(seq, f),
+        MediaInParensKind::GeneralEnclosed(seq) => {
+            // Lenient bare operand (`print and speech`):
+            // `oxc-css-parser` accepts an unparenthesized ident as <general-enclosed>;
+            // the source shape must survive, so only reprint parens that exist.
+            if f.context().source_text().text_for(&to_span(&in_parens.span)).starts_with('(') {
+                write_general_enclosed(seq, f);
+            } else {
+                write_token_seq_normalized(seq, f);
+            }
+        }
     }
 }
 
@@ -1550,8 +1700,14 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
 /// (`and (color)` can't collapse into a function token `and(`).
 /// NOTE: Deliberately more normalized than Prettier.
 fn write_general_enclosed<'a>(seq: &TokenSeq<'a>, f: &mut CssFormatter<'_, 'a>) {
-    let source = f.context().source_text();
     write!(f, "(");
+    write_token_seq_normalized(seq, f);
+    write!(f, ")");
+}
+
+/// The `<general-enclosed>` token stream without the surrounding parens.
+fn write_token_seq_normalized<'a>(seq: &TokenSeq<'a>, f: &mut CssFormatter<'_, 'a>) {
+    let source = f.context().source_text();
     for (i, tok) in seq.tokens.iter().enumerate() {
         if i > 0 {
             let prev = &seq.tokens[i - 1];
@@ -1566,16 +1722,15 @@ fn write_general_enclosed<'a>(seq: &TokenSeq<'a>, f: &mut CssFormatter<'_, 'a>) 
                     | Token::Colon(_),
                 ) => false,
                 (Token::Comma(_) | Token::Colon(_), _) => true,
-                _ => to_span(prev.span()).end != to_span(tok.span()).start,
+                _ => to_span(&prev.span).end != to_span(&tok.span).start,
             };
             if needs_space {
                 write!(f, space());
             }
         }
-        let span = to_span(tok.span());
+        let span = to_span(&tok.span);
         write!(f, text(source.text_for(&span)));
     }
-    write!(f, ")");
 }
 
 fn write_media_feature_name<'a>(name: &MediaFeatureName<'a>, f: &mut CssFormatter<'_, 'a>) {
@@ -1718,6 +1873,12 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
             value::write_function(func, ValueContext::default(), f);
         }
         SupportsInParensKind::GeneralEnclosed(seq) => write_general_enclosed(seq, f),
+        // Sass only: a lone interpolation as a condition operand
+        // (`@supports #{"(a: b)"}`); reprints structurally like other interpolations
+        // (inner spaces collapse, string literals re-quote).
+        SupportsInParensKind::Interpolation(ident) => {
+            selector::write_interpolable_ident(ident, f);
+        }
     }
 }
 

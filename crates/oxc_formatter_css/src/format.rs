@@ -171,7 +171,6 @@ fn parse_stylesheet<'a>(
             // (Mantine, Vite/Next templates, etc), so accept its `$var` syntax in `CssVariant::Css`.
             // Scss/Less already handle `$variable` natively.
             allow_postcss_simple_vars: matches!(options.variant, CssVariant::Css),
-            ..ParserOptions::default()
         })
         .comments()
         .build();

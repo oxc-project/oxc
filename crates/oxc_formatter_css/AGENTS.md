@@ -35,8 +35,12 @@ The fork adds:
   - `margin: -@a -@b` = two values, NOT `(-@a) - @b` subtraction), `@a - @b` is subtraction
 - Various bug fixes for valid CSS/SCSS/Less syntax `oxc-css-parser` miss-parses or rejects
   - selector / at-rule / value-token coverage gaps
+- Additive leniencies for syntax reference compilers reject but postcss (and so Prettier) accepts
+  - the IE `*color` hack, Scss dotted words (`foo.bar`, xstyled / tailwind-theme tokens), plain-CSS `%placeholder` selectors (postcss-extend-rule), non-standard `@import` tails, ...
+  - Each is additive: it only accepts previously-erroring input, never changes the AST of input that already parsed
+  - See "Policy: how to take in non-spec / non-Sass dialect syntax" below
 
-On the other hand, Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `postcss-values-parser`, `postcss-media-query-parser`) and depends on `raws` (source gaps).
+Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `postcss-values-parser`, `postcss-media-query-parser`) and depends on `raws` (source gaps).
 
 `oxc-css-parser` parses everything structurally in one pass; source gaps are recovered by comparing span boundaries (`hasEmptyRawBefore(x)` == "no gap between spans").
 
@@ -136,6 +140,42 @@ However, some plugin-flavored constructs work anyway, because:
 
 Beyond those, we add support per-plugin when there's real demand.
 
+#### Policy: how to take in non-spec / non-Sass dialect syntax
+
+Plugin dialects (`xstyled` dotted tokens, Tailwind `theme()` paths, postcss plugin at-rules, ...) look like an unbounded support surface.
+They are not — the oracle is never "the dialect", it is what Prettier does with the bytes, and Prettier's answer is almost always "preserve verbatim".
+`postcss` is a token-soup preserver, not a grammar: everything it doesn't positively recognize is a "word" that round-trips untouched.
+So the target behavior is finite: never destroy tokens Prettier wouldn't destroy.
+
+When a dialect report comes in, first translate it: "which GENERAL postcss behavior are we missing?" Not "how do we support plugin Xxx?".
+Then absorb it at the highest possible rung of the escape-hatch hierarchy (top = cheapest, each rung covers whole classes of dialects at once):
+
+1. Unknown at-rule prelude verbatim (`write_verbatim_at_rule_tail`)
+   zero-cost bucket: Tailwind, postcss-mixins, ICSS ride it for free
+2. Raw fallbacks when the typed grammar rejects (raw component values, `TokenSeq`, `ImportPrelude.modifiers`)
+   `[attr=;]`, weird import tails
+3. postcss word rules at the separator layer (`is_word_glued_number`, the `1#{$var}` glue, solidus words)
+   variant-agnostic, fixes xstyled + `theme()` + future unknown tokens in one place
+4. `ParserOptions` flag + typed node (postcss-simple-vars)
+   ONLY when the formatter must make layout decisions INSIDE the construct.
+   Promotion criteria, all three:
+   (a) real user demand, (b) Prettier itself formats it structurally (not verbatim), (c) rungs 1-3 can't express it
+5. A dedicated `CssVariant`
+   only for real languages with reference compilers (css/scss/less).
+   Never for a plugin.
+
+Parser-side leniencies (in the `oxc-css-parser` fork) must be additive:
+accept only input that previously errored, and never change the AST of input that already parsed
+(e.g. dotted words try the typed `foo.$var` / `foo.bar(...)` parse first; only dart-sass-invalid shapes take the lenient path).
+Every lenient path carries a comment citing the reference-compiler vs postcss behavior, a test pinning the strict shapes, and shows up as a visible expected-error flip in the parser's conformance snapshots.
+
+Triage order for reports (failure modes are asymmetric, a parse error is a SAFE failure, oxfmt leaves the file/template as-is; silent token corruption like `sandstone.10` → `sandstone 0.1` is the UNSAFE one):
+don't corrupt (verbatim paths) → then accept (leniency) → then pretty-print (structure).
+
+Red flags that the approach is drifting:
+specific plugin names accumulating in code, or a leniency that reinterprets previously-valid input.
+Either means the fix is at the wrong rung.
+
 #### Supported: postcss-simple-vars (auto-enabled for `CssVariant::Css`)
 
 Covered:
@@ -158,6 +198,9 @@ Notable divergences are:
 - Broken `:not(...)` selector args indent at +2
   - Prettier lands at +4 (arg) / +2 (`)`)
   - Layout-only, rare trigger (selector longer than line width)
+- `@nest <selector-list>` continuation lines indent at +2 (same class as the `:not(...)` entry above)
+  - Prettier lands at +4 (comma-separated selectors) / +6 (wrapped selector parts) — an artifact of its generic at-rule params indent
+  - Ours matches how selector lists indent everywhere else; layout-only, deprecated syntax, triggers only on width overflow
 - `<general-enclosed>` media preludes (`@media (not all)`, `(screen and (color))` unparsable as `<media-condition>`) normalize whitespace fully
   - Source gap → one space, paren inner edges tight
   - Prettier only collapses space RUNS inside the unparsable paren, leaving `(not ( screen and ( color ) ))`
@@ -253,10 +296,25 @@ cargo run -p oxc_prettier_conformance
 cargo run -p oxc_prettier_conformance -- --filter css/atrule
 ```
 
-At the current version (v3.9.1), the divergences of five files have been confirmed and are intentional (see "Known divergences"):
+At the current version (v3.9.1), the divergences of six files have been confirmed and are intentional (see "Known divergences"):
 
-- CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`
+- CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/postcss-plugins/postcss-nesting.css`
 - SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/variables/apply-rule.scss`
+
+Two more files fail with MIXED hunks; they can't pass as files (the intentional hunks alone keep them failing), so the remaining diffs are itemized here:
+
+- `css/fill-value/fill.css` (~96% match) one hunk:
+  - a fill break-point inside a math-y value (`... * -1 +` vs breaking before `/ 2`);
+    - the "Less: nested math fill fit-check" divergence class (core-fill semantics)
+- `css/parens/parens.css` (~93% match) token-soup math spacing, three hunk classes:
+  - intentional (Prettier artifact): Prettier splits SOME source-glued `-(` into `- (`
+    - `prop`/`prop44`, an operator-heuristic side effect; ours keeps them all glued and consistent
+    - and glues a source-spaced `+ 20px` (`prop34`, the documented Less `func(x, + 20px)` divergence in Css mode)
+  - normalization-direction difference (open question, low value)
+    - a math operator adjacent to a function/paren boundary gets uniform `op` spacing from Prettier regardless of source (`round(1.5)+2` -> `round(1.5) + 2`, calc `*`/`/`);
+    - ours preserves the source spacing per token (`prop13/14`, `prop57-60`, `prop73/74`)
+  - within-a-word runs (`1+1+1+1`, `calc(100%+2px)`) match
+    - glued number-ish runs are ONE postcss word and print raw (see `is_word_glued_number`)
 
 ### Embedded conformance (`apps/oxfmt`)
 

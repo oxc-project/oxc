@@ -1,0 +1,31 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+@import "a" b c(d), "e" supports(f: g);
+@import "a"   b   c( d ) ,   "e"  supports(f:  g);
+@import "verylongname-aaaaaaaa.css" projection tv braille embossed handheld print screen speech tty;
+@import 'one.css', "two.css",   'three.css';
+@import "tailwindcss/utilities.css" layer(utilities) source(none) prefix(tw);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+@import "a" b c(d), "e" supports(f: g);
+@import "a" b c(d), "e" supports(f: g);
+@import "verylongname-aaaaaaaa.css" projection tv braille embossed handheld
+  print screen speech tty;
+@import "one.css", "two.css", "three.css";
+@import "tailwindcss/utilities.css" layer(utilities) source(none) prefix(tw);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+@import "a" b c(d), "e" supports(f: g);
+@import "a" b c(d), "e" supports(f: g);
+@import "verylongname-aaaaaaaa.css" projection tv braille embossed handheld print screen speech tty;
+@import "one.css", "two.css", "three.css";
+@import "tailwindcss/utilities.css" layer(utilities) source(none) prefix(tw);
+
+===================== End =====================
