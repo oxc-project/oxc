@@ -347,6 +347,7 @@ export type PathOption = "always" | "never";
 export type TypesOption = "always" | "never" | "prefer-import";
 export type BomOptionType = "always" | "never";
 export type NonZero = "greater-than" | "not-equal";
+export type ExplicitTimerDelayMode = "always" | "never";
 export type ModuleStylesOverride =
   | (
       | false
@@ -1514,6 +1515,7 @@ export interface DummyRuleMap {
   "unicorn/error-message"?: RuleNoConfig;
   "unicorn/escape-case"?: RuleNoConfig;
   "unicorn/explicit-length-check"?: RuleNoConfig | [AllowWarnDeny, ExplicitLengthCheck];
+  "unicorn/explicit-timer-delay"?: RuleNoConfig | [AllowWarnDeny, ExplicitTimerDelayMode];
   "unicorn/filename-case"?: DummyRule;
   "unicorn/import-style"?: RuleNoConfig | [AllowWarnDeny, ImportStyleConfig];
   "unicorn/max-nested-calls"?: RuleNoConfig | [AllowWarnDeny, MaxNestedCalls];

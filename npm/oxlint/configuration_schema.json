@@ -8671,6 +8671,26 @@
             }
           ]
         },
+        "unicorn/explicit-timer-delay": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExplicitTimerDelayMode"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "unicorn/filename-case": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -10737,6 +10757,26 @@
         }
       },
       "additionalProperties": false
+    },
+    "ExplicitTimerDelayMode": {
+      "oneOf": [
+        {
+          "description": "Require explicit `delay` argument for clarity.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Require explicit `delay` argument for clarity."
+        },
+        {
+          "description": "Disallow explicit `0` delay, prefer implicit default.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallow explicit `0` delay, prefer implicit default."
+        }
+      ]
     },
     "ExtensionRule": {
       "description": "Extension rule configuration; Copy to avoid extra indirection.",

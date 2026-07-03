@@ -496,6 +496,7 @@ pub(crate) mod unicorn {
     pub mod error_message;
     pub mod escape_case;
     pub mod explicit_length_check;
+    pub mod explicit_timer_delay;
     pub mod filename_case;
     pub mod import_style;
     pub mod max_nested_calls;

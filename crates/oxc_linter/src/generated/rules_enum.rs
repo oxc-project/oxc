@@ -607,6 +607,7 @@ pub use crate::rules::unicorn::empty_brace_spaces::EmptyBraceSpaces as UnicornEm
 pub use crate::rules::unicorn::error_message::ErrorMessage as UnicornErrorMessage;
 pub use crate::rules::unicorn::escape_case::EscapeCase as UnicornEscapeCase;
 pub use crate::rules::unicorn::explicit_length_check::ExplicitLengthCheck as UnicornExplicitLengthCheck;
+pub use crate::rules::unicorn::explicit_timer_delay::ExplicitTimerDelay as UnicornExplicitTimerDelay;
 pub use crate::rules::unicorn::filename_case::FilenameCase as UnicornFilenameCase;
 pub use crate::rules::unicorn::import_style::ImportStyle as UnicornImportStyle;
 pub use crate::rules::unicorn::max_nested_calls::MaxNestedCalls as UnicornMaxNestedCalls;
@@ -1329,6 +1330,7 @@ pub enum RuleEnum {
     UnicornErrorMessage(UnicornErrorMessage),
     UnicornEscapeCase(UnicornEscapeCase),
     UnicornExplicitLengthCheck(UnicornExplicitLengthCheck),
+    UnicornExplicitTimerDelay(UnicornExplicitTimerDelay),
     UnicornFilenameCase(UnicornFilenameCase),
     UnicornImportStyle(UnicornImportStyle),
     UnicornMaxNestedCalls(UnicornMaxNestedCalls),
@@ -2232,7 +2234,8 @@ const UNICORN_EMPTY_BRACE_SPACES_ID: usize = UNICORN_CUSTOM_ERROR_DEFINITION_ID 
 const UNICORN_ERROR_MESSAGE_ID: usize = UNICORN_EMPTY_BRACE_SPACES_ID + 1usize;
 const UNICORN_ESCAPE_CASE_ID: usize = UNICORN_ERROR_MESSAGE_ID + 1usize;
 const UNICORN_EXPLICIT_LENGTH_CHECK_ID: usize = UNICORN_ESCAPE_CASE_ID + 1usize;
-const UNICORN_FILENAME_CASE_ID: usize = UNICORN_EXPLICIT_LENGTH_CHECK_ID + 1usize;
+const UNICORN_EXPLICIT_TIMER_DELAY_ID: usize = UNICORN_EXPLICIT_LENGTH_CHECK_ID + 1usize;
+const UNICORN_FILENAME_CASE_ID: usize = UNICORN_EXPLICIT_TIMER_DELAY_ID + 1usize;
 const UNICORN_IMPORT_STYLE_ID: usize = UNICORN_FILENAME_CASE_ID + 1usize;
 const UNICORN_MAX_NESTED_CALLS_ID: usize = UNICORN_IMPORT_STYLE_ID + 1usize;
 const UNICORN_NEW_FOR_BUILTINS_ID: usize = UNICORN_MAX_NESTED_CALLS_ID + 1usize;
@@ -3207,6 +3210,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UNICORN_ERROR_MESSAGE_ID,
             Self::UnicornEscapeCase(_) => UNICORN_ESCAPE_CASE_ID,
             Self::UnicornExplicitLengthCheck(_) => UNICORN_EXPLICIT_LENGTH_CHECK_ID,
+            Self::UnicornExplicitTimerDelay(_) => UNICORN_EXPLICIT_TIMER_DELAY_ID,
             Self::UnicornFilenameCase(_) => UNICORN_FILENAME_CASE_ID,
             Self::UnicornImportStyle(_) => UNICORN_IMPORT_STYLE_ID,
             Self::UnicornMaxNestedCalls(_) => UNICORN_MAX_NESTED_CALLS_ID,
@@ -4175,6 +4179,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::NAME,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::NAME,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::NAME,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::NAME,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::NAME,
             Self::UnicornImportStyle(_) => UnicornImportStyle::NAME,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::NAME,
@@ -5161,6 +5166,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::CATEGORY,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::CATEGORY,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::CATEGORY,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::CATEGORY,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::CATEGORY,
             Self::UnicornImportStyle(_) => UnicornImportStyle::CATEGORY,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::CATEGORY,
@@ -6150,6 +6156,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::FIX,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::FIX,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::FIX,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::FIX,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::FIX,
             Self::UnicornImportStyle(_) => UnicornImportStyle::FIX,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::FIX,
@@ -7231,6 +7238,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::documentation(),
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::documentation(),
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::documentation(),
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::documentation(),
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::documentation(),
             Self::UnicornImportStyle(_) => UnicornImportStyle::documentation(),
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::documentation(),
@@ -9116,6 +9124,10 @@ impl RuleEnum {
                 UnicornExplicitLengthCheck::config_schema(generator)
                     .or_else(|| UnicornExplicitLengthCheck::schema(generator))
             }
+            Self::UnicornExplicitTimerDelay(_) => {
+                UnicornExplicitTimerDelay::config_schema(generator)
+                    .or_else(|| UnicornExplicitTimerDelay::schema(generator))
+            }
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::config_schema(generator)
                 .or_else(|| UnicornFilenameCase::schema(generator)),
             Self::UnicornImportStyle(_) => UnicornImportStyle::config_schema(generator)
@@ -10676,6 +10688,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => "unicorn",
             Self::UnicornEscapeCase(_) => "unicorn",
             Self::UnicornExplicitLengthCheck(_) => "unicorn",
+            Self::UnicornExplicitTimerDelay(_) => "unicorn",
             Self::UnicornFilenameCase(_) => "unicorn",
             Self::UnicornImportStyle(_) => "unicorn",
             Self::UnicornMaxNestedCalls(_) => "unicorn",
@@ -12557,6 +12570,9 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => Ok(Self::UnicornExplicitLengthCheck(
                 UnicornExplicitLengthCheck::from_configuration(value)?,
             )),
+            Self::UnicornExplicitTimerDelay(_) => Ok(Self::UnicornExplicitTimerDelay(
+                UnicornExplicitTimerDelay::from_configuration(value)?,
+            )),
             Self::UnicornFilenameCase(_) => {
                 Ok(Self::UnicornFilenameCase(UnicornFilenameCase::from_configuration(value)?))
             }
@@ -14233,6 +14249,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.to_configuration(),
             Self::UnicornEscapeCase(rule) => rule.to_configuration(),
             Self::UnicornExplicitLengthCheck(rule) => rule.to_configuration(),
+            Self::UnicornExplicitTimerDelay(rule) => rule.to_configuration(),
             Self::UnicornFilenameCase(rule) => rule.to_configuration(),
             Self::UnicornImportStyle(rule) => rule.to_configuration(),
             Self::UnicornMaxNestedCalls(rule) => rule.to_configuration(),
@@ -15080,6 +15097,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.run(node, ctx),
             Self::UnicornEscapeCase(rule) => rule.run(node, ctx),
             Self::UnicornExplicitLengthCheck(rule) => rule.run(node, ctx),
+            Self::UnicornExplicitTimerDelay(rule) => rule.run(node, ctx),
             Self::UnicornFilenameCase(rule) => rule.run(node, ctx),
             Self::UnicornImportStyle(rule) => rule.run(node, ctx),
             Self::UnicornMaxNestedCalls(rule) => rule.run(node, ctx),
@@ -15937,6 +15955,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.run_once(ctx),
             Self::UnicornEscapeCase(rule) => rule.run_once(ctx),
             Self::UnicornExplicitLengthCheck(rule) => rule.run_once(ctx),
+            Self::UnicornExplicitTimerDelay(rule) => rule.run_once(ctx),
             Self::UnicornFilenameCase(rule) => rule.run_once(ctx),
             Self::UnicornImportStyle(rule) => rule.run_once(ctx),
             Self::UnicornMaxNestedCalls(rule) => rule.run_once(ctx),
@@ -16871,6 +16890,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornEscapeCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornExplicitLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornExplicitTimerDelay(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornFilenameCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornImportStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornMaxNestedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17769,6 +17789,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.should_run(ctx),
             Self::UnicornEscapeCase(rule) => rule.should_run(ctx),
             Self::UnicornExplicitLengthCheck(rule) => rule.should_run(ctx),
+            Self::UnicornExplicitTimerDelay(rule) => rule.should_run(ctx),
             Self::UnicornFilenameCase(rule) => rule.should_run(ctx),
             Self::UnicornImportStyle(rule) => rule.should_run(ctx),
             Self::UnicornMaxNestedCalls(rule) => rule.should_run(ctx),
@@ -18809,6 +18830,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::IS_TSGOLINT_RULE,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::IS_TSGOLINT_RULE,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::IS_TSGOLINT_RULE,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::IS_TSGOLINT_RULE,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::IS_TSGOLINT_RULE,
             Self::UnicornImportStyle(_) => UnicornImportStyle::IS_TSGOLINT_RULE,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::IS_TSGOLINT_RULE,
@@ -19939,6 +19961,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::VERSION,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::VERSION,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::VERSION,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::VERSION,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::VERSION,
             Self::UnicornImportStyle(_) => UnicornImportStyle::VERSION,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::VERSION,
@@ -20974,6 +20997,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::HAS_CONFIG,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::HAS_CONFIG,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::HAS_CONFIG,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::HAS_CONFIG,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::HAS_CONFIG,
             Self::UnicornImportStyle(_) => UnicornImportStyle::HAS_CONFIG,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::HAS_CONFIG,
@@ -21984,6 +22008,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::INFO,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::INFO,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::INFO,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::INFO,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::INFO,
             Self::UnicornImportStyle(_) => UnicornImportStyle::INFO,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::INFO,
@@ -22873,6 +22898,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.types_info(),
             Self::UnicornEscapeCase(rule) => rule.types_info(),
             Self::UnicornExplicitLengthCheck(rule) => rule.types_info(),
+            Self::UnicornExplicitTimerDelay(rule) => rule.types_info(),
             Self::UnicornFilenameCase(rule) => rule.types_info(),
             Self::UnicornImportStyle(rule) => rule.types_info(),
             Self::UnicornMaxNestedCalls(rule) => rule.types_info(),
@@ -23717,6 +23743,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.run_info(),
             Self::UnicornEscapeCase(rule) => rule.run_info(),
             Self::UnicornExplicitLengthCheck(rule) => rule.run_info(),
+            Self::UnicornExplicitTimerDelay(rule) => rule.run_info(),
             Self::UnicornFilenameCase(rule) => rule.run_info(),
             Self::UnicornImportStyle(rule) => rule.run_info(),
             Self::UnicornMaxNestedCalls(rule) => rule.run_info(),
@@ -24657,6 +24684,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornErrorMessage(UnicornErrorMessage::default()),
         RuleEnum::UnicornEscapeCase(UnicornEscapeCase::default()),
         RuleEnum::UnicornExplicitLengthCheck(UnicornExplicitLengthCheck::default()),
+        RuleEnum::UnicornExplicitTimerDelay(UnicornExplicitTimerDelay::default()),
         RuleEnum::UnicornFilenameCase(UnicornFilenameCase::default()),
         RuleEnum::UnicornImportStyle(UnicornImportStyle::default()),
         RuleEnum::UnicornMaxNestedCalls(UnicornMaxNestedCalls::default()),
