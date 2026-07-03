@@ -43,6 +43,8 @@ oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
+indexmap = { workspace = true }
+rustc-hash = { workspace = true }
 
 [dev-dependencies]
 oxc_allocator = { workspace = true }

@@ -2625,6 +2625,7 @@ name = "oxc_type_checker"
 version = "0.138.0"
 dependencies = [
  "bpaf",
+ "indexmap",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
@@ -2633,6 +2634,7 @@ dependencies = [
  "oxc_resolver",
  "oxc_semantic",
  "oxc_span",
+ "rustc-hash",
 ]
 
 [[package]]

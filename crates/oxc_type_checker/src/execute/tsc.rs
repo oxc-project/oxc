@@ -6,7 +6,7 @@ use std::{
     process::ExitCode,
 };
 
-use crate::tsoptions::{TypeCheckCommand, parse_command_line, parse_config_file};
+use crate::tsoptions::{TypeCheckCommand, get_file_names, parse_command_line, parse_config_file};
 
 /// Run the type checker from the command line.
 ///
@@ -36,10 +36,12 @@ fn tsc_compilation(command: &TypeCheckCommand) -> ExitCode {
         // steps will expand its file globs and type check the project.
         Ok(Some(config_file)) => match parse_config_file(&config_file) {
             Ok(tsconfig) => {
+                let files = get_file_names(&tsconfig);
                 println!("project: {}", config_file.display());
-                println!("  files:   {:?}", tsconfig.files);
-                println!("  include: {:?}", tsconfig.include);
-                println!("  exclude: {:?}", tsconfig.exclude);
+                for file in &files {
+                    println!("  {}", file.display());
+                }
+                println!("({} files)", files.len());
                 ExitCode::SUCCESS
             }
             Err(message) => {
