@@ -283,6 +283,26 @@ fn run_semantic(
     path: &Path,
     options: Option<TransformOptions>,
 ) -> TestResult {
+    run_semantic_impl(code, source_type, path, options, None)
+}
+
+fn run_semantic_with_ts_ignore(
+    code: &str,
+    source_type: SourceType,
+    path: &Path,
+    options: Option<TransformOptions>,
+    ts_ignore_spans: &[Span],
+) -> TestResult {
+    run_semantic_impl(code, source_type, path, options, Some(ts_ignore_spans))
+}
+
+fn run_semantic_impl(
+    code: &str,
+    source_type: SourceType,
+    path: &Path,
+    options: Option<TransformOptions>,
+    ts_ignore_spans: Option<&[Span]>,
+) -> TestResult {
     let mut driver = Driver {
         path: path.to_path_buf(),
         transform: Some(options.unwrap_or_else(get_default_transformer_options)),
@@ -291,7 +311,10 @@ fn run_semantic(
     };
 
     driver.run(code, source_type);
-    let errors = driver.errors();
+    let mut errors = driver.errors();
+    if let Some(ts_ignore_spans) = ts_ignore_spans {
+        errors.retain(|error| !is_error_suppressed_by_ts_ignore(error, code, ts_ignore_spans));
+    }
     if errors.is_empty() {
         TestResult::Passed
     } else {
@@ -343,7 +366,13 @@ pub fn run_semantic_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> 
                     source_type = source_type.with_module(true);
                     options.jsx.runtime = JsxRuntime::Classic;
                 }
-                let result = run_semantic(&unit.content, source_type, &f.path, Some(options));
+                let result = run_semantic_with_ts_ignore(
+                    &unit.content,
+                    source_type,
+                    &f.path,
+                    Some(options),
+                    &unit.ts_ignore_spans,
+                );
                 if result != TestResult::Passed {
                     final_result = result;
                     break;
