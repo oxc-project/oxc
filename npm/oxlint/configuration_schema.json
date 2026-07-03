@@ -6664,6 +6664,26 @@
         "react/jsx-no-duplicate-props": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "react/jsx-no-leaked-render": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxNoLeakedRender"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "react/jsx-no-literals": {
           "anyOf": [
             {
@@ -12077,6 +12097,33 @@
           "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum allowed depth of nested JSX elements and fragments."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JsxNoLeakedRender": {
+      "$ref": "#/definitions/JsxNoLeakedRenderConfig"
+    },
+    "JsxNoLeakedRenderConfig": {
+      "type": "object",
+      "properties": {
+        "ignoreAttributes": {
+          "description": "Skip JSX attribute values (children of nested JSX inside attributes are\nstill linted because each `JSXExpressionContainer` is its own node).",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Skip JSX attribute values (children of nested JSX inside attributes are\nstill linted because each `JSXExpressionContainer` is its own node)."
+        },
+        "validStrategies": {
+          "description": "Strategies the user accepts for guarding JSX expressions. The first entry\ndetermines the preferred fix when both strategies are valid.",
+          "default": [
+            "ternary",
+            "coerce"
+          ],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ValidStrategies"
+          },
+          "markdownDescription": "Strategies the user accepts for guarding JSX expressions. The first entry\ndetermines the preferred fix when both strategies are valid."
         }
       },
       "additionalProperties": false
@@ -18739,6 +18786,13 @@
         }
       },
       "additionalProperties": false
+    },
+    "ValidStrategies": {
+      "type": "string",
+      "enum": [
+        "coerce",
+        "ternary"
+      ]
     },
     "ValidTypeof": {
       "type": "object",

@@ -219,6 +219,7 @@ export type JsxCurlyBracePresenceConfig = JsxCurlyBracePresenceMode | JsxCurlyBr
 export type JsxCurlyBracePresenceMode = "always" | "never" | "ignore";
 export type JsxFilenameExtensionAllowMode = "always" | "as-needed";
 export type FragmentMode = "syntax" | "element";
+export type ValidStrategies = "coerce" | "ternary";
 export type EnforceDynamicLinksEnum = "always" | "never";
 export type IgnoreEnforceOption = "ignore" | "enforce";
 export type AllowedOrDisallowInFunc = "allowed" | "disallow-in-func";
@@ -1334,6 +1335,7 @@ export interface DummyRuleMap {
   "react/jsx-no-comment-textnodes"?: RuleNoConfig;
   "react/jsx-no-constructed-context-values"?: RuleNoConfig;
   "react/jsx-no-duplicate-props"?: RuleNoConfig;
+  "react/jsx-no-leaked-render"?: RuleNoConfig | [AllowWarnDeny, JsxNoLeakedRenderConfig];
   "react/jsx-no-literals"?: RuleNoConfig | [AllowWarnDeny, JsxNoLiteralsConfig];
   "react/jsx-no-script-url"?:
     | RuleNoConfig
@@ -4587,6 +4589,18 @@ export interface JsxMaxDepthConfig {
    * The maximum allowed depth of nested JSX elements and fragments.
    */
   max?: number;
+}
+export interface JsxNoLeakedRenderConfig {
+  /**
+   * Skip JSX attribute values (children of nested JSX inside attributes are
+   * still linted because each `JSXExpressionContainer` is its own node).
+   */
+  ignoreAttributes?: boolean;
+  /**
+   * Strategies the user accepts for guarding JSX expressions. The first entry
+   * determines the preferred fix when both strategies are valid.
+   */
+  validStrategies?: ValidStrategies[];
 }
 /**
  * The options shared between the top-level config and each `elementOverrides` entry.
