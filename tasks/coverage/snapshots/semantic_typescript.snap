@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4546/4720 (96.31%)
+Positive Passed: 4547/4720 (96.33%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -544,23 +544,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
 'with' statements are not allowed
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameClassExpressionLoop.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_C_brand", "_classPrivateFieldInitSpec", "_classPrivateMethodInitSpec", "_myField", "array"]
-rebuilt        : ScopeId(0): ["_C_brand", "_classPrivateFieldInitSpec", "_classPrivateMethodInitSpec", "_get_accessor", "_method", "_myField", "_set_accessor", "array"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_get_accessor", "_method", "_set_accessor"]
-rebuilt        : ScopeId(2): []
-Symbol scope ID mismatch for "_method":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(0)
-Symbol scope ID mismatch for "_get_accessor":
-after transform: SymbolId(6): ScopeId(2)
-rebuilt        : SymbolId(8): ScopeId(0)
-Symbol scope ID mismatch for "_set_accessor":
-after transform: SymbolId(7): ScopeId(2)
-rebuilt        : SymbolId(9): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticAutoAccessorsWithDecorators.ts
 Scope flags mismatch:

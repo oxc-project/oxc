@@ -139,11 +139,19 @@ impl<'a> ClassProperties<'a> {
                             MethodDefinitionKind::Set => &format!("set_{}", ident.name),
                             MethodDefinitionKind::Constructor => unreachable!(),
                         };
-                        let binding = ctx.generate_uid(
-                            name,
-                            ctx.current_block_scope_id(),
-                            SymbolFlags::Function,
-                        );
+                        let block_scope_id = ctx.current_block_scope_id();
+                        let block_scope_flags = ctx.scoping().scope_flags(block_scope_id);
+                        let binding_scope_id =
+                            if block_scope_flags.is_var() || block_scope_flags.is_strict_mode() {
+                                block_scope_id
+                            } else {
+                                ctx.state
+                                    .var_declarations
+                                    .current_var_scope_id()
+                                    .unwrap_or_else(|| ctx.current_hoist_scope_id())
+                            };
+                        let binding =
+                            ctx.generate_uid(name, binding_scope_id, SymbolFlags::Function);
 
                         if let Some(prop) = private_props.get_mut(&ident.name) {
                             // If there's already a binding for this private property,
