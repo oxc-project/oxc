@@ -2,9 +2,11 @@
 
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
-use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
+use oxc_ast_visit::Visit;
+use oxc_ecmascript::BoundNames;
+use oxc_semantic::{ReferenceId, ScopeFlags, ScopeId, Scoping, SymbolFlags, SymbolId};
 use oxc_span::{SPAN, Span};
-use oxc_str::static_ident;
+use oxc_str::{Ident, static_ident};
 use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
@@ -119,6 +121,8 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             ctx,
         );
 
+        Self::retarget_for_of_right_references(stmt, ctx);
+
         let assignment_statement = match &mut stmt.left {
             ForStatementLeft::VariableDeclaration(variable) => {
                 // for await (let i of test)
@@ -172,6 +176,37 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             span,
             ctx,
         )
+    }
+
+    fn retarget_for_of_right_references(stmt: &ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ForStatementLeft::VariableDeclaration(decl) = &stmt.left else { return };
+
+        let outer_scope_id = ctx.scoping().scope_parent_id(stmt.scope_id());
+        let mut bindings = Vec::new();
+        decl.bound_names(&mut |ident| {
+            let outer_symbol_id = outer_scope_id
+                .and_then(|scope_id| ctx.scoping().find_binding(scope_id, ident.name));
+            bindings.push((ident.name, ident.symbol_id(), outer_symbol_id));
+        });
+
+        let mut collector = ForOfRightReferenceCollector {
+            bindings,
+            scoping: ctx.scoping(),
+            reference_retargets: Vec::new(),
+            _marker: std::marker::PhantomData,
+        };
+        collector.visit_expression(&stmt.right);
+
+        for (reference_id, name, old_symbol_id, new_symbol_id) in collector.reference_retargets {
+            ctx.scoping_mut().delete_resolved_reference(old_symbol_id, reference_id);
+            if let Some(new_symbol_id) = new_symbol_id {
+                ctx.scoping_mut().get_reference_mut(reference_id).set_symbol_id(new_symbol_id);
+                ctx.scoping_mut().add_resolved_reference(new_symbol_id, reference_id);
+            } else {
+                ctx.scoping_mut().get_reference_mut(reference_id).clear_symbol_id();
+                ctx.scoping_mut().add_root_unresolved_reference(name, reference_id);
+            }
+        }
     }
 
     /// Build a `for` statement used to replace the `for await` statement.
@@ -566,5 +601,26 @@ impl<'a> AsyncGeneratorFunctions<'a> {
 
         items.push(try_statement);
         items
+    }
+}
+
+struct ForOfRightReferenceCollector<'a, 's> {
+    bindings: Vec<(Ident<'a>, SymbolId, Option<SymbolId>)>,
+    scoping: &'s Scoping,
+    reference_retargets: Vec<(ReferenceId, Ident<'a>, SymbolId, Option<SymbolId>)>,
+    _marker: std::marker::PhantomData<&'a ()>,
+}
+
+impl<'a> Visit<'a> for ForOfRightReferenceCollector<'a, '_> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        let reference_id = ident.reference_id();
+        let current_symbol_id = self.scoping.get_reference(reference_id).symbol_id();
+        if let Some(&(name, old_symbol_id, new_symbol_id)) =
+            self.bindings.iter().find(|&&(name, symbol_id, _)| {
+                ident.name == name && current_symbol_id == Some(symbol_id)
+            })
+        {
+            self.reference_retargets.push((reference_id, name, old_symbol_id, new_symbol_id));
+        }
     }
 }

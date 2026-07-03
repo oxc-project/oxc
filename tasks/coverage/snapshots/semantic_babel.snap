@@ -2,24 +2,7 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2182/2236 (97.58%)
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-for-using-binding-of-of/input.js
-Symbol reference IDs mismatch for "of":
-after transform: SymbolId(1): [ReferenceId(0)]
-rebuilt        : SymbolId(7): []
-Symbol reference IDs mismatch for "of":
-after transform: SymbolId(2): [ReferenceId(1)]
-rebuilt        : SymbolId(15): []
-Reference symbol mismatch for "of":
-after transform: SymbolId(1) "of"
-rebuilt        : <None>
-Reference symbol mismatch for "of":
-after transform: SymbolId(2) "of"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["arguments", "require"]
-rebuilt        : ["arguments", "of", "require"]
-
+Positive Passed: 2183/2236 (97.63%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 'abstract' modifier cannot be used with a private identifier.
 

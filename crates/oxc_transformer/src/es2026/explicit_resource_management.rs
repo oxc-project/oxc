@@ -39,8 +39,9 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast_visit::Visit;
 use oxc_ecmascript::BoundNames;
-use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
+use oxc_semantic::{NodeId, ReferenceId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{SPAN, Span};
 use oxc_str::static_ident;
 use oxc_traverse::{BoundIdentifier, Traverse};
@@ -91,6 +92,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         let variable_declarator_binding_name = variable_declarator_binding_ident.name;
 
         let for_of_init_symbol_id = variable_declarator_binding_ident.symbol_id();
+        let right_reference_ids =
+            Self::collect_references_to_name(&for_of_stmt.right, variable_declarator_binding_name);
+        let outer_symbol_id =
+            ctx.scoping().scope_parent_id(for_of_stmt_scope_id).and_then(|scope_id| {
+                ctx.scoping().find_binding(scope_id, variable_declarator_binding_name)
+            });
 
         let temp_id = ctx.generate_uid_based_on_node(
             variable_declarator.id.get_binding_identifier().unwrap(),
@@ -100,6 +107,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
         let binding_pattern =
             mem::replace(&mut variable_declarator.id, temp_id.create_binding_pattern(ctx));
+        Self::retarget_for_of_right_references(
+            right_reference_ids,
+            variable_declarator_binding_name,
+            for_of_init_symbol_id,
+            outer_symbol_id,
+            ctx,
+        );
 
         // `using x = _x;`
         let using_stmt = Statement::new_variable_declaration(
@@ -603,6 +617,42 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 }
 
 impl<'a> ExplicitResourceManagement<'a> {
+    fn collect_references_to_name(
+        expr: &Expression<'a>,
+        name: oxc_str::Ident<'a>,
+    ) -> Vec<ReferenceId> {
+        let mut collector = ForOfRightReferenceCollector {
+            name,
+            reference_ids: vec![],
+            _marker: std::marker::PhantomData,
+        };
+        collector.visit_expression(expr);
+        collector.reference_ids
+    }
+
+    fn retarget_for_of_right_references(
+        reference_ids: Vec<ReferenceId>,
+        name: oxc_str::Ident<'a>,
+        old_symbol_id: SymbolId,
+        new_symbol_id: Option<SymbolId>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        for reference_id in reference_ids {
+            let current_symbol_id = ctx.scoping().get_reference(reference_id).symbol_id();
+            if current_symbol_id != Some(old_symbol_id) {
+                continue;
+            }
+            ctx.scoping_mut().delete_resolved_reference(old_symbol_id, reference_id);
+            if let Some(new_symbol_id) = new_symbol_id {
+                ctx.scoping_mut().get_reference_mut(reference_id).set_symbol_id(new_symbol_id);
+                ctx.scoping_mut().add_resolved_reference(new_symbol_id, reference_id);
+            } else {
+                ctx.scoping_mut().get_reference_mut(reference_id).clear_symbol_id();
+                ctx.scoping_mut().add_root_unresolved_reference(name, reference_id);
+            }
+        }
+    }
+
     /// Transform block statement.
     ///
     /// Input:
@@ -1074,5 +1124,19 @@ impl<'a> ExplicitResourceManagement<'a> {
             id.symbol_id.replace(Some(inner_symbol_id)).expect("class always has a symbol id");
         *scoping.symbol_flags_mut(outer_symbol_id) = SymbolFlags::FunctionScopedVariable;
         (BoundIdentifier::new(id.name, outer_symbol_id), original_span)
+    }
+}
+
+struct ForOfRightReferenceCollector<'a> {
+    name: oxc_str::Ident<'a>,
+    reference_ids: Vec<ReferenceId>,
+    _marker: std::marker::PhantomData<&'a ()>,
+}
+
+impl<'a> Visit<'a> for ForOfRightReferenceCollector<'a> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        if ident.name == self.name {
+            self.reference_ids.push(ident.reference_id());
+        }
     }
 }

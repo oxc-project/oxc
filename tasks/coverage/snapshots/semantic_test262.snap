@@ -2,7 +2,7 @@ commit: de8e621c
 
 semantic_test262 Summary:
 AST Parsed     : 47240/47240 (100.00%)
-Positive Passed: 47225/47240 (99.97%)
+Positive Passed: 47227/47240 (99.97%)
 semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/static-field-init-with-this.js
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | DirectEval)
@@ -85,26 +85,4 @@ semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/asy
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-of/head-await-using-bound-names-fordecl-tdz.js
-Symbol reference IDs mismatch for "x":
-after transform: SymbolId(0): []
-rebuilt        : SymbolId(2): [ReferenceId(9)]
-Symbol reference IDs mismatch for "x":
-after transform: SymbolId(1): [ReferenceId(4)]
-rebuilt        : SymbolId(5): []
-Reference symbol mismatch for "x":
-after transform: SymbolId(1) "x"
-rebuilt        : SymbolId(2) "x"
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-of/head-using-bound-names-fordecl-tdz.js
-Symbol reference IDs mismatch for "x":
-after transform: SymbolId(0): []
-rebuilt        : SymbolId(1): [ReferenceId(4)]
-Symbol reference IDs mismatch for "x":
-after transform: SymbolId(1): [ReferenceId(3)]
-rebuilt        : SymbolId(4): []
-Reference symbol mismatch for "x":
-after transform: SymbolId(1) "x"
-rebuilt        : SymbolId(1) "x"
 
