@@ -48,7 +48,7 @@ function Component(t0) {
 				break bb0;
 			}
 			t8 = store.id;
-			const t10 = fbt(`Directory: ${fbt.param("store URI", storeUri.replace("sftp://sftp.fb.com", ""))}`, "directory info");
+			const t10 = fbt._("Directory: {store URI}", [fbt._param("store URI", storeUri.replace("sftp://sftp.fb.com", ""))], { hk: "y1DI6" });
 			if ($[10] !== t10) {
 				t4 = <span>{t10}</span>;
 				$[10] = t10;
@@ -56,7 +56,7 @@ function Component(t0) {
 			} else {
 				t4 = $[11];
 			}
-			t5 = <span>{fbt(`Schema: ${fbt.param("schema", documentSchema)}`, "schema")},{" "}{fbt(`Geos: ${fbt.param("geos", licensedGeos.length)}`, "geos count")},{" "}</span>;
+			t5 = <span>{fbt._("Schema: {schema}", [fbt._param("schema", documentSchema)], { hk: "1Ua9F9" })},{" "}{fbt._("Geos: {geos}", [fbt._param("geos", licensedGeos.length)], { hk: "1PRSzD" })},{" "}</span>;
 			if ($[12] !== cwrSenderIds) {
 				t6 = cwrSenderIds != null && <span>Sender ID: {cwrSenderIds[0]}</span>;
 				$[12] = cwrSenderIds;

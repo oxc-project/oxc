@@ -8,9 +8,7 @@ function Component(props) {
 	const $ = _c(7);
 	let t0;
 	if ($[0] !== props.name) {
-		t0 = <fbt desc="Dialog to show to user">
-        Hello <fbt:param name="user name">{props.name}</fbt:param>
-      </fbt>;
+		t0 = fbt._("Hello {user name}", [fbt._param("user name", props.name)], { hk: "2zEDKF" });
 		$[0] = props.name;
 		$[1] = t0;
 	} else {
@@ -18,9 +16,7 @@ function Component(props) {
 	}
 	let t1;
 	if ($[2] !== props.actions) {
-		t1 = <fbt desc="Available actions|response">
-        <fbt:param name="actions|response">{props.actions}</fbt:param>
-      </fbt>;
+		t1 = fbt._("{actions|response}", [fbt._param("actions|response", props.actions)], { hk: "1cjfbg" });
 		$[2] = props.actions;
 		$[3] = t1;
 	} else {

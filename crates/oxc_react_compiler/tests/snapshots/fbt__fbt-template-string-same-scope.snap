@@ -13,7 +13,7 @@ export function Component(props) {
 	}
 	let t0;
 	if ($[0] !== count) {
-		t0 = fbt(`for ${fbt.param("count", count)} experiences`, "Label for the number of items", { project: "public" });
+		t0 = fbt._("for {count} experiences", [fbt._param("count", count)], { hk: "nmYpm" });
 		$[0] = count;
 		$[1] = t0;
 	} else {

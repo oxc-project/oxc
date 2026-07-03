@@ -2,6 +2,7 @@ use oxc_allocator::{Allocator, ArenaVec};
 
 pub mod convert_scope;
 pub mod diagnostics;
+pub mod fbt;
 pub mod prefilter;
 pub mod scope;
 
@@ -150,6 +151,9 @@ fn compile<'a>(
     let compiled = program_ast.map(|mut compiled: Program<'a>| {
         compiled.source_type = program.source_type;
         preserve_comments(&mut compiled, program, allocator);
+        // Lower `fbt`/`fbs` macros, mirroring upstream running `babel-plugin-fbt`
+        // (+ `-runtime`) after the compiler on the fixture harness.
+        crate::fbt::transform_fbt(&ast_builder, &mut compiled);
         compiled
     });
 

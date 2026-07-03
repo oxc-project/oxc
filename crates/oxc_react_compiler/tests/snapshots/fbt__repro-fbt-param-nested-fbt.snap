@@ -19,12 +19,7 @@ function Component(t0) {
 	const { firstname, lastname } = t0;
 	let t1;
 	if ($[0] !== firstname || $[1] !== lastname) {
-		t1 = fbt([
-			"Name: ",
-			fbt.param("firstname", identity(firstname)),
-			", ",
-			fbt.param("lastname", identity(fbt("(inner)" + fbt.param("lastname", identity(lastname)), "Inner fbt value")))
-		], "Name");
+		t1 = fbt._("Name: {firstname}, {lastname}", [fbt._param("firstname", identity(firstname)), fbt._param("lastname", identity(fbt._("(inner){lastname}", [fbt._param("lastname", identity(lastname))], { hk: "1Kdxyo" })))], { hk: "3AiIf8" });
 		$[0] = firstname;
 		$[1] = lastname;
 		$[2] = t1;

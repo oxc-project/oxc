@@ -18,9 +18,7 @@ function Component(props) {
 		} else {
 			t2 = $[3];
 		}
-		t0 = <Foo value={<fbt desc="Description of the parameter">
-          <fbt:param name="value">{t2}</fbt:param>%
-        </fbt>} />;
+		t0 = <Foo value={fbt._("{value}%", [fbt._param("value", t2)], { hk: "10F5Cc" })} />;
 		$[0] = props.text;
 		$[1] = t0;
 	} else {

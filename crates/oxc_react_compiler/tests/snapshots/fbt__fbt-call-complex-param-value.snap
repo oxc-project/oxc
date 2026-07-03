@@ -9,7 +9,7 @@ function Component(props) {
 	const $ = _c(4);
 	let t0;
 	if ($[0] !== props.name) {
-		t0 = fbt(`Hello, ${fbt.param("(key) name", identity(props.name))}!`, "(description) Greeting");
+		t0 = fbt._("Hello, {(key) name}!", [fbt._param("(key) name", identity(props.name))], { hk: "2sOsn5" });
 		$[0] = props.name;
 		$[1] = t0;
 	} else {

@@ -11,9 +11,7 @@ function Component(t0) {
 	const { data } = t0;
 	let t1;
 	if ($[0] !== data.name) {
-		t1 = <fbt desc="user name">
-        <fbt:param name="name">{data.name ?? ""}</fbt:param>
-      </fbt>;
+		t1 = fbt._("{name}", [fbt._param("name", data.name ?? "")], { hk: "csQUH" });
 		$[0] = data.name;
 		$[1] = t1;
 	} else {

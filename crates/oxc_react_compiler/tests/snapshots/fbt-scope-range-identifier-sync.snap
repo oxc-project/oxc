@@ -26,7 +26,7 @@ function Component(t0) {
 			const otherSize = selectedColor?.matchingProducts?.filter((product) => product.id != null && product.tags?.get("bridge") === selectedProduct?.tags?.get("bridge")).find((product_0) => product_0.tags?.get("size") !== selectedProduct?.tags?.get("size"));
 			const otherFrameSize = otherSize?.tags?.get("size");
 			if (otherSize?.id != null && otherFrameSize != null && rxIds.includes(otherSize.id)) {
-				t1 = <div>{fbt(`Only available in ${fbt.param("frame size", otherFrameSize)} size`, "Badge text")}</div>;
+				t1 = <div>{fbt._("Only available in {frame size} size", [fbt._param("frame size", otherFrameSize)], { hk: "4sIu3a" })}</div>;
 				break bb0;
 			}
 		}
@@ -43,7 +43,7 @@ function Component(t0) {
 	if (rxData.futureData.includes(selectedProduct?.id)) {
 		let t2;
 		if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-			t2 = <div>{fbt("Out of stock", "Badge text")}</div>;
+			t2 = <div>{fbt._("Out of stock", null, { hk: "M2wQM" })}</div>;
 			$[6] = t2;
 		} else {
 			t2 = $[6];
@@ -52,7 +52,7 @@ function Component(t0) {
 	}
 	let t2;
 	if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
-		t2 = <div>{fbt("Not available", "Badge text")}</div>;
+		t2 = <div>{fbt._("Not available", null, { hk: "43mHFe" })}</div>;
 		$[7] = t2;
 	} else {
 		t2 = $[7];
