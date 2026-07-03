@@ -9,6 +9,7 @@ use std::path::Path;
 
 use oxc_allocator::{Allocator, ArenaVec, TakeIn};
 use oxc_ast::{ast::*, builder::AstBuilder};
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::Diagnostics;
 #[cfg(feature = "react_compiler")]
 use oxc_react_compiler::{PluginOptions, transform as react_compiler_transform};
@@ -16,6 +17,7 @@ use oxc_semantic::Scoping;
 #[cfg(feature = "react_compiler")]
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{GetSpan, SPAN};
+use oxc_syntax::reference::ReferenceId;
 use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
 // Core
@@ -58,7 +60,7 @@ use es2022::ES2022;
 use es2026::ES2026;
 use jsx::Jsx;
 use regexp::RegExp;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use state::TransformState;
 use typescript::TypeScript;
 
@@ -211,7 +213,8 @@ impl<'a> Transformer<'a> {
 
         let mut reusable_ctx = ReusableTraverseCtx::new(self.state, scoping, allocator);
         traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
-        let (mut state, scoping) = reusable_ctx.into_state_and_scoping();
+        let (mut state, mut scoping) = reusable_ctx.into_state_and_scoping();
+        unresolve_removed_ambient_references(program, &state, &mut scoping);
         let helpers_used = state.helper_loader.used_helpers.drain().collect();
         let mut diagnostics = react_compiler_diagnostics;
         diagnostics.extend(state.take_errors());
@@ -239,6 +242,45 @@ impl<'a> Transformer<'a> {
         let scoping =
             SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
         (scoping, result.diagnostics)
+    }
+}
+
+fn unresolve_removed_ambient_references(
+    program: &Program<'_>,
+    state: &TransformState<'_>,
+    scoping: &mut Scoping,
+) {
+    let live_reference_ids = LiveReferenceIds::collect(program);
+    for &(name, symbol_id) in &state.removed_ambient_bindings {
+        let reference_ids = scoping.get_resolved_reference_ids(symbol_id).to_vec();
+        for reference_id in reference_ids {
+            if !live_reference_ids.contains(&reference_id) {
+                continue;
+            }
+            scoping.delete_resolved_reference(symbol_id, reference_id);
+            scoping.get_reference_mut(reference_id).clear_symbol_id();
+            scoping.add_root_unresolved_reference(name, reference_id);
+        }
+    }
+}
+
+#[derive(Default)]
+struct LiveReferenceIds(FxHashSet<ReferenceId>);
+
+impl LiveReferenceIds {
+    fn collect(program: &Program<'_>) -> FxHashSet<ReferenceId> {
+        let mut collector = Self::default();
+        collector.visit_program(program);
+        collector.0
+    }
+}
+
+impl<'a> Visit<'a> for LiveReferenceIds {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        if let Some(reference_id) = ident.reference_id.get() {
+            self.0.insert(reference_id);
+        }
+        walk::walk_identifier_reference(self, ident);
     }
 }
 

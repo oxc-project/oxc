@@ -5,6 +5,8 @@ use std::{
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
+use oxc_str::Ident;
+use oxc_syntax::symbol::SymbolId;
 
 use crate::{
     CompilerAssumptions, HelperLoaderOptions, Module, TransformOptions,
@@ -47,6 +49,8 @@ pub struct TransformState<'a> {
     // State for multiple plugins interacting
     /// `true` if class properties plugin is enabled
     pub is_class_properties_plugin_enabled: bool,
+
+    pub removed_ambient_bindings: Vec<(Ident<'a>, SymbolId)>,
 }
 
 impl Default for TransformState<'_> {
@@ -65,6 +69,7 @@ impl Default for TransformState<'_> {
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
             is_class_properties_plugin_enabled: false,
+            removed_ambient_bindings: vec![],
         }
     }
 }
@@ -89,6 +94,7 @@ impl TransformState<'_> {
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
             is_class_properties_plugin_enabled: options.env.es2022.class_properties.is_some(),
+            removed_ambient_bindings: vec![],
         }
     }
 

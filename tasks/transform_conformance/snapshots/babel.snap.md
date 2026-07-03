@@ -1414,15 +1414,30 @@ rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "Signal":
 after transform: SymbolId(0): Span { start: 14, end: 20 }
 rebuilt        : SymbolId(0): Span { start: 54, end: 60 }
+Symbol reference IDs mismatch for "Signal":
+after transform: SymbolId(0): []
+rebuilt        : SymbolId(0): [ReferenceId(1)]
 Symbol redeclarations mismatch for "Signal":
 after transform: SymbolId(0): [Span { start: 14, end: 20 }, Span { start: 54, end: 60 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Signal2":
 after transform: SymbolId(3): SymbolFlags(Class | Function | Ambient)
 rebuilt        : SymbolId(2): SymbolFlags(Function)
+Symbol reference IDs mismatch for "Signal2":
+after transform: SymbolId(3): []
+rebuilt        : SymbolId(2): [ReferenceId(3)]
 Symbol redeclarations mismatch for "Signal2":
 after transform: SymbolId(3): [Span { start: 147, end: 154 }, Span { start: 225, end: 232 }]
 rebuilt        : SymbolId(2): []
+Reference symbol mismatch for "Signal":
+after transform: <None>
+rebuilt        : SymbolId(0) "Signal"
+Reference symbol mismatch for "Signal2":
+after transform: <None>
+rebuilt        : SymbolId(2) "Signal2"
+Unresolved references mismatch:
+after transform: ["Signal", "Signal2"]
+rebuilt        : []
 
 * exports/declared-types/input.ts
 Bindings mismatch:

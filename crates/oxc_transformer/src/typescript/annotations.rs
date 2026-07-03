@@ -529,7 +529,7 @@ impl<'a> TypeScriptAnnotations<'a> {
             Declaration::FunctionDeclaration(func_decl) => {
                 if func_decl.declare {
                     if let Some(id) = &func_decl.id {
-                        Self::remove_binding(id, ctx);
+                        Self::remove_binding_and_unresolve_references(id, ctx);
                     }
                     false
                 } else {
@@ -540,7 +540,7 @@ impl<'a> TypeScriptAnnotations<'a> {
             Declaration::ClassDeclaration(class_decl) => {
                 if class_decl.declare {
                     if let Some(id) = &class_decl.id {
-                        Self::remove_binding(id, ctx);
+                        Self::remove_binding_and_unresolve_references(id, ctx);
                     }
                     false
                 } else {
@@ -561,7 +561,7 @@ impl<'a> TypeScriptAnnotations<'a> {
             // Remove `declare enum`
             Declaration::TSEnumDeclaration(enum_decl) => {
                 if enum_decl.declare {
-                    Self::remove_binding(&enum_decl.id, ctx);
+                    Self::remove_binding_and_unresolve_references(&enum_decl.id, ctx);
                     false
                 } else {
                     true
@@ -590,7 +590,7 @@ impl<'a> TypeScriptAnnotations<'a> {
     ) {
         for decl in &var_decl.declarations {
             for ident in decl.id.get_binding_identifiers() {
-                Self::remove_binding(ident, ctx);
+                Self::remove_binding_and_unresolve_references(ident, ctx);
             }
         }
     }
@@ -602,15 +602,17 @@ impl<'a> TypeScriptAnnotations<'a> {
             }
             Declaration::FunctionDeclaration(func_decl) => {
                 if let Some(id) = &func_decl.id {
-                    Self::remove_binding(id, ctx);
+                    Self::remove_binding_and_unresolve_references(id, ctx);
                 }
             }
             Declaration::ClassDeclaration(class_decl) => {
                 if let Some(id) = &class_decl.id {
-                    Self::remove_binding(id, ctx);
+                    Self::remove_binding_and_unresolve_references(id, ctx);
                 }
             }
-            Declaration::TSEnumDeclaration(enum_decl) => Self::remove_binding(&enum_decl.id, ctx),
+            Declaration::TSEnumDeclaration(enum_decl) => {
+                Self::remove_binding_and_unresolve_references(&enum_decl.id, ctx);
+            }
             Declaration::TSImportEqualsDeclaration(import_equals) => {
                 Self::remove_binding(&import_equals.id, ctx);
             }
@@ -642,6 +644,16 @@ impl<'a> TypeScriptAnnotations<'a> {
     fn remove_binding(ident: &BindingIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = ctx.scoping().symbol_scope_id(ident.symbol_id());
         ctx.scoping_mut().remove_binding(scope_id, ident.name);
+    }
+
+    fn remove_binding_and_unresolve_references(
+        ident: &BindingIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let symbol_id = ident.symbol_id();
+        let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+        ctx.scoping_mut().remove_binding(scope_id, ident.name);
+        ctx.state.removed_ambient_bindings.push((ident.name, symbol_id));
     }
 
     /// Check if the given name is a JSX pragma or fragment pragma import

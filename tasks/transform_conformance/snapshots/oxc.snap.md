@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 253/397
+Passed: 307/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -637,49 +637,9 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (18/105)
+# legacy-decorators (72/105)
 * oxc/accessor/input.ts
 x Output mismatch
-
-* oxc/accessor-name-collision/input.ts
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "property"]
-
-* oxc/accessor-with-class-properties/input.ts
-Reference symbol mismatch for "a":
-after transform: SymbolId(4) "a"
-rebuilt        : <None>
-Reference symbol mismatch for "a":
-after transform: SymbolId(4) "a"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["WeakMap", "babelHelpers"]
-rebuilt        : ["WeakMap", "a", "babelHelpers", "dec"]
 
 * oxc/class-without-name-with-decorated_class/input.ts
 Bindings mismatch:
@@ -706,27 +666,10 @@ Symbol scope ID mismatch for "_default":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(1): ScopeId(0)
 
-* oxc/metadata/ambient-declared-class/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(1) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "Ambient":
-after transform: SymbolId(0) "Ambient"
-rebuilt        : <None>
-Reference symbol mismatch for "Ambient":
-after transform: SymbolId(0) "Ambient"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Ambient", "Object", "babelHelpers", "dec"]
-
 * oxc/metadata/class-expression-via-const/input.ts
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(0): []
 rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(5)]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(1) "dec"
-rebuilt        : <None>
 Reference symbol mismatch for "C":
 after transform: <None>
 rebuilt        : SymbolId(0) "C"
@@ -739,25 +682,6 @@ rebuilt        : SymbolId(0) "C"
 Reference flags mismatch for "C":
 after transform: ReferenceId(3): ReferenceFlags(Read | Type)
 rebuilt        : ReferenceId(5): ReferenceFlags(Read)
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Object", "babelHelpers", "dec"]
-
-* oxc/metadata/constructor-overload/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["String", "babelHelpers"]
-rebuilt        : ["String", "babelHelpers", "dec"]
-
-* oxc/metadata/cross-file-imported-enum/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(1) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Object", "babelHelpers", "dec"]
 
 * oxc/metadata/enum-types/input.ts
 Bindings mismatch:
@@ -833,118 +757,13 @@ Symbol flags mismatch for "ComputedEnum":
 after transform: SymbolId(25): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(15): SymbolFlags(FunctionScopedVariable)
 
-* oxc/metadata/erased-import-no-type-keyword/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(1) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Object", "babelHelpers", "dec"]
-
-* oxc/metadata/forward-ref-class/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Object", "babelHelpers", "dec"]
-
-* oxc/metadata/getter-setter-method/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Function", "Number", "Object", "String", "babelHelpers"]
-rebuilt        : ["Function", "Number", "Object", "String", "babelHelpers", "dec"]
-
-* oxc/metadata/imports/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(3) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers", "console"]
-rebuilt        : ["Object", "babelHelpers", "console", "dec"]
-
-* oxc/metadata/namespace-imported-enum/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(1) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Object", "babelHelpers", "dec"]
-
 * oxc/metadata/nullable-union/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Boolean", "Number", "Object", "String", "babelHelpers"]
-rebuilt        : ["Boolean", "Number", "Object", "String", "babelHelpers", "dec"]
 Unresolved reference IDs mismatch for "String":
 after transform: [ReferenceId(5), ReferenceId(20)]
 rebuilt        : [ReferenceId(3)]
 Unresolved reference IDs mismatch for "Number":
 after transform: [ReferenceId(9), ReferenceId(21)]
 rebuilt        : [ReferenceId(8)]
-
-* oxc/metadata/params/input.ts
-Reference symbol mismatch for "methodDecorator":
-after transform: SymbolId(0) "methodDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "methodDecorator":
-after transform: SymbolId(0) "methodDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "methodDecorator":
-after transform: SymbolId(0) "methodDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "methodDecorator":
-after transform: SymbolId(0) "methodDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Boolean", "Function", "Number", "String", "babelHelpers"]
-rebuilt        : ["Boolean", "Function", "Number", "String", "babelHelpers", "methodDecorator", "paramDecorator"]
 
 * oxc/metadata/private-in-expression-in-decorator/input.ts
 Binding symbols mismatch:
@@ -987,33 +806,6 @@ Unresolved reference IDs mismatch for "babelHelpers":
 after transform: [ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(24)]
 rebuilt        : [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(16)]
 
-* oxc/metadata/readonly-array/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Array", "babelHelpers"]
-rebuilt        : ["Array", "babelHelpers", "dec"]
-
-* oxc/metadata/readonly-array-interface-shadow/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(2) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Object", "babelHelpers", "dec"]
-
-* oxc/metadata/static-anonymous-class-expression/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Error", "Object", "babelHelpers"]
-rebuilt        : ["Error", "Object", "babelHelpers", "dec"]
-
 * oxc/metadata/typescript-syntax/input.ts
 
   x TS(1249): A decorator can only decorate a method implementation, not an
@@ -1054,22 +846,6 @@ Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
 rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
 
-* typescript/accessor/decoratorOnClassAccessor1/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/accessor/decoratorOnClassAccessor2/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
 * typescript/accessor/decoratorOnClassAccessor3/input.ts
 
   x Expected `;` but found `@`
@@ -1081,22 +857,6 @@ rebuilt        : ["babelHelpers", "dec"]
  7 | }
    `----
 
-
-* typescript/accessor/decoratorOnClassAccessor4/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/accessor/decoratorOnClassAccessor5/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/accessor/decoratorOnClassAccessor6/input.ts
 
@@ -1118,28 +878,6 @@ x Output mismatch
 
 * typescript/constructor/decoratorOnClassConstructor1/input.ts
 x Output mismatch
-
-* typescript/constructor/decoratorOnClassConstructor4/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Number", "babelHelpers"]
-rebuilt        : ["Number", "babelHelpers", "dec"]
-
-* typescript/constructor/parameter/decoratorOnClassConstructorParameter1/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/constructor/parameter/decoratorOnClassConstructorParameter4/input.ts
 
@@ -1169,24 +907,8 @@ x Output mismatch
 * typescript/decoratedClassExportsCommonJS1/input.ts
 x Output mismatch
 
-* typescript/decoratedClassExportsCommonJS2/input.ts
-Reference symbol mismatch for "Something":
-after transform: SymbolId(2) "Something"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["Something", "babelHelpers"]
-
 * typescript/decoratedClassExportsSystem1/input.ts
 x Output mismatch
-
-* typescript/decoratedClassExportsSystem2/input.ts
-Reference symbol mismatch for "Something":
-after transform: SymbolId(2) "Something"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["Something", "babelHelpers"]
 
 * typescript/decoratorChecksFunctionBodies/input.ts
 Scope flags mismatch:
@@ -1196,113 +918,14 @@ Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(0))
 
-* typescript/decoratorOnClass1/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/decoratorOnClass2/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/decoratorOnClass3/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/decoratorOnClass4/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/decoratorOnClass5/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/decoratorOnClass8/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
 * typescript/decoratorOnClass9/input.ts
 x Output mismatch
-
-* typescript/method/decoratorOnClassMethod1/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/decoratorOnClassMethod10/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethod11/input.ts
 x Output mismatch
 
 * typescript/method/decoratorOnClassMethod12/input.ts
 x Output mismatch
-
-* typescript/method/decoratorOnClassMethod13/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/decoratorOnClassMethod14/input.ts
-Reference symbol mismatch for "decorator":
-after transform: SymbolId(0) "decorator"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Function", "babelHelpers"]
-rebuilt        : ["Function", "babelHelpers", "decorator"]
-
-* typescript/method/decoratorOnClassMethod15/input.ts
-Reference symbol mismatch for "decorator":
-after transform: SymbolId(0) "decorator"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Function", "babelHelpers"]
-rebuilt        : ["Function", "babelHelpers", "decorator"]
-
-* typescript/method/decoratorOnClassMethod16/input.ts
-Reference symbol mismatch for "decorator":
-after transform: SymbolId(0) "decorator"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Function", "babelHelpers"]
-rebuilt        : ["Function", "babelHelpers", "decorator"]
 
 * typescript/method/decoratorOnClassMethod17/input.ts
 
@@ -1316,24 +939,8 @@ rebuilt        : ["Function", "babelHelpers", "decorator"]
    `----
 
 
-* typescript/method/decoratorOnClassMethod18/input.ts
-Reference symbol mismatch for "decorator":
-after transform: SymbolId(0) "decorator"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Object", "babelHelpers", "decorator"]
-
 * typescript/method/decoratorOnClassMethod19/input.ts
 x Output mismatch
-
-* typescript/method/decoratorOnClassMethod2/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethod3/input.ts
 
@@ -1346,46 +953,6 @@ rebuilt        : ["babelHelpers", "dec"]
  7 | }
    `----
 
-
-* typescript/method/decoratorOnClassMethod4/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/decoratorOnClassMethod5/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/decoratorOnClassMethod6/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/decoratorOnClassMethod7/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/decoratorOnClassMethod8/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethodOverload1/input.ts
 
@@ -1400,38 +967,6 @@ rebuilt        : ["babelHelpers", "dec"]
   help: Move this after all the overloads
 
 
-* typescript/method/decoratorOnClassMethodOverload2/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/parameter/decoratorOnClassMethodParameter1/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/parameter/decoratorOnClassMethodParameter2/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/parameter/decoratorOnClassMethodParameter3/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
 * typescript/method/parameter/decoratorOnClassMethodThisParameter/input.ts
 
   x Identifier expected. 'this' is a reserved word that cannot be used here.
@@ -1442,68 +977,6 @@ rebuilt        : ["babelHelpers", "dec"]
  7 | }
    `----
 
-
-* typescript/property/decoratorOnClassAccessorProperty1/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty1/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty10/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty11/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty12/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["String", "babelHelpers"]
-rebuilt        : ["String", "babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty13/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty2/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/property/decoratorOnClassProperty3/input.ts
 
@@ -1516,22 +989,6 @@ rebuilt        : ["babelHelpers", "dec"]
  7 | }
    `----
 
-
-* typescript/property/decoratorOnClassProperty6/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty7/input.ts
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 
 # plugin-styled-components (25/40)
