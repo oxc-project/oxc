@@ -1,5 +1,7 @@
 # externals/gitlab/stylesheets/framework/variables_overrides.scss
 
+> Allowed (semantics): Prettier adds a trailing comma to non-comma-list map-item parens (`1: ($spacer * 0.5)` → 1-element list); we keep them inline. See crates/oxc_formatter_css/AGENTS.md
+
 ## Option 1
 
 `````json
@@ -12,19 +14,48 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -43,9 +43,11 @@
+@@ -40,33 +40,17 @@
+ $headings-font-weight: $gl-font-weight-bold;
+ $spacer: $grid-size;
+ $spacers: (
    0: 0,
-   1: (
-     $spacer * 0.5,
-   ),
--  2: ($spacer),
-+  2: (
-+    $spacer,
-+  ),
-   3: (
-     $spacer * 2,
-   ),
-   4: (
+-  1: (
+-    $spacer * 0.5,
+-  ),
++  1: ($spacer * 0.5),
+   2: ($spacer),
+-  3: (
+-    $spacer * 2,
+-  ),
+-  4: (
+-    $spacer * 3,
+-  ),
+-  5: (
+-    $spacer * 4,
+-  ),
+-  6: (
+-    $spacer * 5,
+-  ),
+-  7: (
+-    $spacer * 6,
+-  ),
+-  8: (
+-    $spacer * 7,
+-  ),
+-  9: (
+-    $spacer * 8,
+-  ),
++  3: ($spacer * 2),
++  4: ($spacer * 3),
++  5: ($spacer * 4),
++  6: ($spacer * 5),
++  7: ($spacer * 6),
++  8: ($spacer * 7),
++  9: ($spacer * 8),
+ );
+ $pagination-color: $gl-text-color;
+ $tooltip-padding-y: 0.5rem;
+ $tooltip-padding-x: 0.75rem;
 
 `````
 
@@ -74,33 +105,15 @@ $headings-font-weight: $gl-font-weight-bold;
 $spacer: $grid-size;
 $spacers: (
   0: 0,
-  1: (
-    $spacer * 0.5,
-  ),
-  2: (
-    $spacer,
-  ),
-  3: (
-    $spacer * 2,
-  ),
-  4: (
-    $spacer * 3,
-  ),
-  5: (
-    $spacer * 4,
-  ),
-  6: (
-    $spacer * 5,
-  ),
-  7: (
-    $spacer * 6,
-  ),
-  8: (
-    $spacer * 7,
-  ),
-  9: (
-    $spacer * 8,
-  ),
+  1: ($spacer * 0.5),
+  2: ($spacer),
+  3: ($spacer * 2),
+  4: ($spacer * 3),
+  5: ($spacer * 4),
+  6: ($spacer * 5),
+  7: ($spacer * 6),
+  8: ($spacer * 7),
+  9: ($spacer * 8),
 );
 $pagination-color: $gl-text-color;
 $tooltip-padding-y: 0.5rem;
@@ -248,19 +261,48 @@ $b-table-sort-icon-bg-not-sorted: "";
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -42,9 +42,11 @@
+@@ -39,33 +39,17 @@
+ $headings-font-weight: $gl-font-weight-bold;
+ $spacer: $grid-size;
+ $spacers: (
    0: 0,
-   1: (
-     $spacer * 0.5,
-   ),
--  2: ($spacer),
-+  2: (
-+    $spacer,
-+  ),
-   3: (
-     $spacer * 2,
-   ),
-   4: (
+-  1: (
+-    $spacer * 0.5,
+-  ),
++  1: ($spacer * 0.5),
+   2: ($spacer),
+-  3: (
+-    $spacer * 2,
+-  ),
+-  4: (
+-    $spacer * 3,
+-  ),
+-  5: (
+-    $spacer * 4,
+-  ),
+-  6: (
+-    $spacer * 5,
+-  ),
+-  7: (
+-    $spacer * 6,
+-  ),
+-  8: (
+-    $spacer * 7,
+-  ),
+-  9: (
+-    $spacer * 8,
+-  ),
++  3: ($spacer * 2),
++  4: ($spacer * 3),
++  5: ($spacer * 4),
++  6: ($spacer * 5),
++  7: ($spacer * 6),
++  8: ($spacer * 7),
++  9: ($spacer * 8),
+ );
+ $pagination-color: $gl-text-color;
+ $tooltip-padding-y: 0.5rem;
+ $tooltip-padding-x: 0.75rem;
 
 `````
 
@@ -309,33 +351,15 @@ $headings-font-weight: $gl-font-weight-bold;
 $spacer: $grid-size;
 $spacers: (
   0: 0,
-  1: (
-    $spacer * 0.5,
-  ),
-  2: (
-    $spacer,
-  ),
-  3: (
-    $spacer * 2,
-  ),
-  4: (
-    $spacer * 3,
-  ),
-  5: (
-    $spacer * 4,
-  ),
-  6: (
-    $spacer * 5,
-  ),
-  7: (
-    $spacer * 6,
-  ),
-  8: (
-    $spacer * 7,
-  ),
-  9: (
-    $spacer * 8,
-  ),
+  1: ($spacer * 0.5),
+  2: ($spacer),
+  3: ($spacer * 2),
+  4: ($spacer * 3),
+  5: ($spacer * 4),
+  6: ($spacer * 5),
+  7: ($spacer * 6),
+  8: ($spacer * 7),
+  9: ($spacer * 8),
 );
 $pagination-color: $gl-text-color;
 $tooltip-padding-y: 0.5rem;

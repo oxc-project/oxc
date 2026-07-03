@@ -310,7 +310,7 @@
 | [externals/gitlab/stylesheets/components/content_editor.scss](diffs/scss/externals__gitlab__stylesheets__components__content_editor.scss.md) |  |
 | [externals/gitlab/stylesheets/framework/diffs.scss](diffs/scss/externals__gitlab__stylesheets__framework__diffs.scss.md) | Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811) |
 | [externals/gitlab/stylesheets/framework/sidebar.scss](diffs/scss/externals__gitlab__stylesheets__framework__sidebar.scss.md) | Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165)<br>logn-expr line-break position |
-| [externals/gitlab/stylesheets/framework/variables_overrides.scss](diffs/scss/externals__gitlab__stylesheets__framework__variables_overrides.scss.md) |  |
+| [externals/gitlab/stylesheets/framework/variables_overrides.scss](diffs/scss/externals__gitlab__stylesheets__framework__variables_overrides.scss.md) | Allowed (semantics): Prettier adds a trailing comma to non-comma-list map-item parens (`1: ($spacer * 0.5)` → 1-element list); we keep them inline. See crates/oxc_formatter_css/AGENTS.md |
 | [externals/gitlab/stylesheets/highlight/conflict_colors.scss](diffs/scss/externals__gitlab__stylesheets__highlight__conflict_colors.scss.md) | Allowed: Prettier drops blank lines in SCSS maps with paren values; ours preserves (prettier/prettier#16824) |
 | [externals/gitlab/stylesheets/highlight/white_base.scss](diffs/scss/externals__gitlab__stylesheets__highlight__white_base.scss.md) | Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165) |
 | [externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles___ide_theme_overrides.scss.md) |  |
@@ -333,7 +333,7 @@
 | :--- | :--- |
 | [externals/gitlab/stylesheets/framework/diffs.scss](diffs/scss/externals__gitlab__stylesheets__framework__diffs.scss.md) | Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811) |
 | [externals/gitlab/stylesheets/framework/sidebar.scss](diffs/scss/externals__gitlab__stylesheets__framework__sidebar.scss.md) | Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165)<br>logn-expr line-break position |
-| [externals/gitlab/stylesheets/framework/variables_overrides.scss](diffs/scss/externals__gitlab__stylesheets__framework__variables_overrides.scss.md) |  |
+| [externals/gitlab/stylesheets/framework/variables_overrides.scss](diffs/scss/externals__gitlab__stylesheets__framework__variables_overrides.scss.md) | Allowed (semantics): Prettier adds a trailing comma to non-comma-list map-item parens (`1: ($spacer * 0.5)` → 1-element list); we keep them inline. See crates/oxc_formatter_css/AGENTS.md |
 | [externals/gitlab/stylesheets/highlight/conflict_colors.scss](diffs/scss/externals__gitlab__stylesheets__highlight__conflict_colors.scss.md) | Allowed: Prettier drops blank lines in SCSS maps with paren values; ours preserves (prettier/prettier#16824) |
 | [externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles___ide_theme_overrides.scss.md) |  |
 | [externals/gitlab/stylesheets/page_bundles/editor.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles__editor.scss.md) | Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811) |

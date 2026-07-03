@@ -14,8 +14,8 @@ use oxc_css_parser::{
 use oxc_formatter_core::{
     Buffer,
     builders::{
-        dedent, empty_line, group, hard_line_break, if_group_breaks, indent, soft_line_break,
-        soft_line_break_or_space, space, text,
+        dedent, empty_line, expand_parent, group, hard_line_break, if_group_breaks, indent,
+        soft_line_break, soft_line_break_or_space, space, text,
     },
     write,
 };
@@ -145,8 +145,10 @@ pub(super) fn write_sass_map<'a>(
 ) {
     if map.items.is_empty() {
         // A map with no items may still hold comments (`(\n  // c\n)`).
-        // Keep them inside the parens, one line each, instead of leaking
-        // them past `)` as a trailing declaration comment (Prettier #18535).
+        // Keep them inside the parens instead of leaking them past `)` as a trailing declaration comment.
+        // Block comments stay inline when they fit (`$map: (/* c */);`);
+        // a `//` comment glues to the current line but forces the `)` onto its own line,
+        // like Prettier's `lineSuffix` + `lineSuffixBoundary` (Prettier #18535).
         let r_paren = to_span(map.span()).end.saturating_sub(1);
         let tail: Vec<comments::CssComment> = f.context().comments().take_before(r_paren).to_vec();
         if tail.is_empty() {
@@ -154,17 +156,32 @@ pub(super) fn write_sass_map<'a>(
             return;
         }
         let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            write!(f, soft_line_break());
             for (i, &comment) in tail.iter().enumerate() {
-                if i == 0 || comment.inline || tail[i - 1].inline {
-                    write!(f, hard_line_break());
-                } else {
-                    // Block comments are fill items: they join when they fit
-                    write!(f, " ");
+                if i > 0 {
+                    if tail[i - 1].inline {
+                        // Prettier leaves a stray leading space here
+                        // (`   // b`, the `join(line)` separator prints before the deferred `lineSuffix` flushes);
+                        write!(f, hard_line_break());
+                    } else {
+                        write!(f, space());
+                    }
                 }
                 comments::write_single_comment(comment, f);
+                if comment.inline {
+                    write!(f, expand_parent());
+                }
             }
         });
-        write!(f, ["(", indent(&body), hard_line_break(), ")"]);
+        write!(
+            f,
+            group(&format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                write!(f, "(");
+                write!(f, indent(&body));
+                write!(f, soft_line_break());
+                write!(f, ")");
+            }))
+        );
         return;
     }
     // Maps break only in "map item" positions
@@ -228,6 +245,7 @@ pub(super) fn write_sass_map<'a>(
         write!(f, hard_line_break());
         let source = f.context().source_text();
         let mut last_item_block_with_comment = false;
+        let mut first_item_has_leading_comment = false;
         for (i, item) in map.items.iter().enumerate() {
             if i > 0 {
                 write!(f, ",");
@@ -275,6 +293,9 @@ pub(super) fn write_sass_map<'a>(
                 } else {
                     write!(f, " ");
                 }
+            }
+            if i == 0 {
+                first_item_has_leading_comment = had_leading_comment;
             }
             let key_is_block = matches!(
                 item.key,
@@ -347,7 +368,13 @@ pub(super) fn write_sass_map<'a>(
             .any(|c| c.span.start >= last_item_end && value::comment_is_own_line(c, source));
         // Prettier drops the trailing comma after a comment-preceded block value
         // (the pair doc isn't the plain dedent shape).
-        let printed_comma = (trailing && !last_item_block_with_comment) || has_ownline_tail;
+        // A comment before the FIRST item also drops it:
+        // the comment becomes `groups[0]` of the paren group,
+        // so `isKeyValuePairInParenGroupNode` no longer sees a key-value pair
+        // and the group stops being an SCSS map item.
+        let printed_comma =
+            (trailing && !last_item_block_with_comment && !first_item_has_leading_comment)
+                || has_ownline_tail;
         if printed_comma {
             write!(f, ",");
         }
@@ -362,7 +389,7 @@ pub(super) fn write_sass_map<'a>(
                 && ctx.in_args
                 && f.context().comments().peek().is_some_and(|c| c.span.start > source_comma_start);
             if !next_slot {
-                value::flush_same_line_comments(to_span(last.span()).end, f);
+                value::flush_same_line_comments(to_span(last.span()).end, r_paren, f);
             }
         }
         // Own-line comments before `)`: same-line runs stay glued
@@ -559,6 +586,9 @@ pub(super) fn write_sass_include<'a>(include: &SassInclude<'a>, f: &mut CssForma
     write!(f, text(source.text_for(&name_span)));
     if let Some(arguments) = &include.arguments {
         let args = &arguments.args;
+        // Same first-argument gate as `write_function` (which see), over typed args
+        let first_arg_is_kw =
+            args.first().is_some_and(|a| matches!(a, ComponentValue::SassKeywordArgument(_)));
         let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
             let source = f.context().source_text();
             write!(f, soft_line_break());
@@ -583,8 +613,13 @@ pub(super) fn write_sass_include<'a>(include: &SassInclude<'a>, f: &mut CssForma
                         write!(f, soft_line_break_or_space());
                     }
                 }
-                let arg_ctx =
-                    ValueContext { map_break: true, in_args: true, ..ValueContext::default() };
+                let arg_ctx = ValueContext {
+                    map_break: true,
+                    in_args: true,
+                    paren_break: first_arg_is_kw
+                        && matches!(arg, ComponentValue::SassKeywordArgument(_)),
+                    ..ValueContext::default()
+                };
                 write_top_level_value(arg, arg_ctx, f);
             }
         });
@@ -814,6 +849,8 @@ fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormat
             }
             let span = to_span(item.variable.span());
             write!(f, [text(source.text_for(&span)), ":", space()]);
+            // No first-argument gate here (cf. `write_function`):
+            // config items are structurally always `$var: value` pairs, so the gate holds by construction.
             let item_ctx =
                 ValueContext { paren_break: true, map_break: true, ..ValueContext::default() };
             write_top_level_value(&item.value, item_ctx, f);

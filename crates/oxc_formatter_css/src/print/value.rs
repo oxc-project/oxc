@@ -407,9 +407,9 @@ pub(super) struct ValueContext<'a> {
     pub no_break: bool,
     /// SCSS map printed in key position: stays inline (Prettier's `isKey`).
     pub map_key: bool,
-    /// A parenthesized comma list here breaks one item per line
-    /// (only as a direct map-item value,
-    /// `isSCSSMapItemNode` needs key-value pairs in the group or its grandparent).
+    /// A parenthesized COMMA list here breaks one item per line with a trailing comma
+    /// (only as a direct map-item value, `isSCSSMapItemNode` needs key-value pairs in the group or its grandparent;
+    /// non-comma-list contents never take the break, the comma would change their meaning).
     pub paren_break: bool,
     /// SCSS maps here always break (`$var:` values, function args, map items).
     pub map_break: bool,
@@ -648,7 +648,13 @@ pub(super) fn flush_value_comments(upper_bound: u32, f: &mut CssFormatter<'_, '_
 
 /// Emits pending comments that sit on the same line as the just-printed
 /// content ending at `prev_end` (` // c` / ` /* c */`), up to `upper_bound`.
-fn flush_same_line_comments_before(prev_end: u32, upper_bound: u32, f: &mut CssFormatter<'_, '_>) {
+/// Container tails pass their own end as the bound,
+/// so a same-line comment belonging to a FOLLOWING statement is never pulled inside.
+pub(super) fn flush_same_line_comments(
+    prev_end: u32,
+    upper_bound: u32,
+    f: &mut CssFormatter<'_, '_>,
+) {
     loop {
         let Some(comment) = f.context().comments().peek() else { return };
         let source = f.context().source_text();
@@ -666,12 +672,6 @@ fn flush_same_line_comments_before(prev_end: u32, upper_bound: u32, f: &mut CssF
             return;
         }
     }
-}
-
-/// Unbounded variant (used at container tails where everything pending
-/// belongs to the container).
-pub(super) fn flush_same_line_comments(prev_end: u32, f: &mut CssFormatter<'_, '_>) {
-    flush_same_line_comments_before(prev_end, u32::MAX, f);
 }
 
 /// Emits pending comments before `upper_bound` as ` /* c */` suffixes
@@ -1238,16 +1238,22 @@ pub(super) fn write_component_value<'a>(
         ComponentValue::SassMap(map) => scss::write_sass_map(map, ctx, f),
         ComponentValue::SassList(list) => scss::write_sass_list(list, ctx, f),
         ComponentValue::SassParenthesizedExpression(paren) => {
-            // `$var: ((a, b), (c, d))` / map item values: one item per line
-            if ctx.paren_break {
-                // Map-item values always break (`isSCSSMapItemNode`),
+            // `$var: ((a, b), (c, d))` / map item values: one item per line.
+            // ONLY a comma-separated list takes this break:
+            // the trailing comma is a semantic no-op there and NOWHERE else.
+            // NOTE: `(x,)` is a single-element list in Sass,
+            // so adding it to `($a + $b)` / `(a b)` / `(-$a)` changes the value
+            // and `2 * ($a + $b,)` fails to compile.
+            // (Prettier 3.9.1 does all of these; #19091 exempted single-node scalars only)
+            if ctx.paren_break
+                && let ComponentValue::SassList(list) = &*paren.expr
+                && list.comma_spans.is_some()
+            {
+                // Comma-list map-item values always break (`isSCSSMapItemNode`),
                 // with a trailing comma per option.
                 let inner_ctx = ValueContext { paren_break: false, ..ctx };
                 let trailing = f.options().allow_trailing_comma();
-                let elements: &[ComponentValue<'a>] = match &*paren.expr {
-                    ComponentValue::SassList(list) if list.comma_spans.is_some() => &list.elements,
-                    expr => std::slice::from_ref(expr),
-                };
+                let elements = &list.elements;
                 let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     write!(f, hard_line_break());
                     for (i, el) in elements.iter().enumerate() {
@@ -1281,7 +1287,9 @@ pub(super) fn write_component_value<'a>(
                         }
                         write_component_value(el, inner_ctx, f);
                     }
-                    if trailing && (ctx.map_key || ctx.paren_break) {
+                    // `ctx.paren_break` cannot be set here,
+                    // a comma list with it takes the hard-break branch above.
+                    if trailing && ctx.map_key {
                         write!(f, if_group_breaks(&text(",")));
                     }
                 } else {
@@ -1337,6 +1345,9 @@ pub(super) fn write_component_value<'a>(
                 write_component_value(&kw.value, ctx, f);
                 return;
             }
+            // Only a value that IS the paren group is a map item;
+            // a paren nested in a math expression (`$foo: 2 * ($bar + $baz)`) never breaks (Prettier #18530).
+            let ctx = ValueContext { paren_break: false, ..ctx };
             // `$name: value` may break after the colon when too long
             let pair = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 let mut filler = f.fill();
@@ -1985,6 +1996,14 @@ pub(super) fn write_function<'a>(
         no_leading_softline: false,
         ..ctx
     };
+    // A keyword argument's paren-group value is a map item
+    // ONLY when the call's FIRST argument is a key-value pair
+    // (Prettier's `isKeyValuePairInParenGroupNode` checks `groups[0]` alone):
+    // `func($k: (1, 2), a)` breaks, `func(a, $k: (1, 2))` does not.
+    let is_kw_arg = |g: &[ComponentValue<'a>]| {
+        g.len() == 1 && matches!(g[0], ComponentValue::SassKeywordArgument(_))
+    };
+    let first_arg_is_kw = groups.first().is_some_and(|g| is_kw_arg(g));
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         let source = f.context().source_text();
         write!(f, soft_line_break());
@@ -2010,7 +2029,9 @@ pub(super) fn write_function<'a>(
                     write!(f, soft_line_break_or_space());
                 }
             }
-            write_arg_group(group_values, ctx, f);
+            let arg_ctx =
+                ValueContext { paren_break: first_arg_is_kw && is_kw_arg(group_values), ..ctx };
+            write_arg_group(group_values, arg_ctx, f);
         }
         if has_trailing_comma {
             write!(f, ",");
