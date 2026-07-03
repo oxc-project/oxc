@@ -589,9 +589,20 @@ impl<'a> TypeScriptNamespace {
     /// Check the namespace binding identifier if it is a redeclaration
     fn is_redeclaration_namespace(id: &BindingIdentifier<'a>, ctx: &TraverseCtx<'a>) -> bool {
         let symbol_id = id.symbol_id();
+        if ctx.state.emitted_namespace_bindings.contains(&symbol_id) {
+            return true;
+        }
+
         let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
         // Find first value declaration because only value declaration will emit JS code.
-        redeclarations.iter().find(|rd| rd.flags.is_value()).is_some_and(|rd| rd.span != id.span)
+        redeclarations
+            .iter()
+            .find(|rd| {
+                rd.flags.intersects(SymbolFlags::Class | SymbolFlags::Function | SymbolFlags::Enum)
+                    && !rd.flags.is_ambient()
+                    && rd.span.start < id.span.start
+            })
+            .is_some_and(|rd| rd.span != id.span)
     }
 
     fn sync_namespace_binding(

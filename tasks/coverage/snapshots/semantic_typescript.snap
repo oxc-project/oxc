@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4576/4720 (96.95%)
+Positive Passed: 4577/4720 (96.97%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -99,32 +99,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileExportAssignmentImportInternalModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileGenericType2.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_defineProperty", "templa"]
-rebuilt        : ScopeId(0): ["_defineProperty"]
-Reference symbol mismatch for "templa":
-after transform: SymbolId(0) "templa"
-rebuilt        : <None>
-Reference symbol mismatch for "templa":
-after transform: SymbolId(0) "templa"
-rebuilt        : <None>
-Reference symbol mismatch for "templa":
-after transform: SymbolId(0) "templa"
-rebuilt        : <None>
-Reference symbol mismatch for "templa":
-after transform: SymbolId(0) "templa"
-rebuilt        : <None>
-Reference symbol mismatch for "templa":
-after transform: SymbolId(0) "templa"
-rebuilt        : <None>
-Reference symbol mismatch for "templa":
-after transform: SymbolId(0) "templa"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["require", "templa"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileInternalAliases.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
