@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4552/4720 (96.44%)
+Positive Passed: 4556/4720 (96.53%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -548,17 +548,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/withStatementInte
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty49.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/accessor/decoratorOnClassAccessor1.es6.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_decorate", "_decorateMetadata"]
-rebuilt        : ScopeId(0): ["_decorate", "_decorateMetadata", "_default"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_default"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_default":
-after transform: SymbolId(6): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(0)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass8.es6.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["_Class", "_decorate", "_default", "_defineProperty"]
@@ -578,39 +567,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["dec"]
 rebuilt        : ["_Class", "dec"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/method/decoratorOnClassMethod1.es6.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_decorate", "_decorateMetadata"]
-rebuilt        : ScopeId(0): ["_decorate", "_decorateMetadata", "_default"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_default"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_default":
-after transform: SymbolId(6): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(0)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/method/parameter/decoratorOnClassMethodParameter1.es6.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_decorate", "_decorateMetadata", "_decorateParam"]
-rebuilt        : ScopeId(0): ["_decorate", "_decorateMetadata", "_decorateParam", "_default"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_default"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_default":
-after transform: SymbolId(7): ScopeId(2)
-rebuilt        : SymbolId(3): ScopeId(0)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/property/decoratorOnClassProperty1.es6.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_decorate", "_decorateMetadata", "_defineProperty"]
-rebuilt        : ScopeId(0): ["_decorate", "_decorateMetadata", "_default", "_defineProperty"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_default"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_default":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(3): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts
 'with' statements are not allowed

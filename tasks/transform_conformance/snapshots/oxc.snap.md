@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 340/397
+Passed: 341/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -115,34 +115,14 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (77/105)
+# legacy-decorators (78/105)
 * oxc/accessor/input.ts
 x Output mismatch
 
 * oxc/class-without-name-with-decorated_class/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["dec"]
-rebuilt        : ScopeId(0): ["_default", "dec"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_default"]
-rebuilt        : ScopeId(1): []
 Symbol flags mismatch for "_default":
 after transform: SymbolId(1): SymbolFlags(Class)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
-Symbol scope ID mismatch for "_default":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(0)
-
-* oxc/class-without-name-with-decorated_element/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["dec"]
-rebuilt        : ScopeId(0): ["_default", "dec"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_default"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_default":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(0)
 
 * oxc/metadata/class-expression-via-const/input.ts
 Symbol reference IDs mismatch for "C":

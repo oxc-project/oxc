@@ -612,7 +612,10 @@ impl<'a> LegacyDecorator<'a> {
             if let Some(ident) = class.id() {
                 BoundIdentifier::from_binding_ident(ident)
             } else {
-                ctx.generate_uid_in_current_scope("default", SymbolFlags::Class)
+                let class_scope_id = class.scope_id().get().unwrap();
+                let class_parent_scope_id =
+                    ctx.scoping().scope_parent_id(class_scope_id).unwrap_or(ctx.current_scope_id());
+                ctx.generate_uid("default", class_parent_scope_id, SymbolFlags::Class)
             }
         });
 
