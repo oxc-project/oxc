@@ -875,6 +875,7 @@ export interface DummyRuleMap {
   "capitalized-comments"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever] | [AllowWarnDeny, AlwaysNever, OptionsJsonEnum];
   "class-methods-use-this"?: RuleNoConfig | [AllowWarnDeny, ClassMethodsUseThisConfig];
   complexity?: RuleNoConfig | [AllowWarnDeny, ComplexityConfigEnum];
+  "consistent-this"?: RuleNoConfig | [AllowWarnDeny, string, ...string[]];
   "constructor-super"?: RuleNoConfig;
   curly?: RuleNoConfig | [AllowWarnDeny, CurlyType] | [AllowWarnDeny, CurlyType, CurlyConsistent];
   "default-case"?: RuleNoConfig | [AllowWarnDeny, DefaultCaseConfig];
