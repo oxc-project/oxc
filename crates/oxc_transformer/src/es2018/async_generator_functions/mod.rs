@@ -143,7 +143,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a> {
             && function.generator
             && !function.is_typescript_syntax()
         {
-            let new_statement = self.executor.transform_function_declaration(function, ctx);
+            let (replacement, new_statement) =
+                self.executor.transform_function_declaration(function, ctx);
+            if let Some(replacement) = replacement {
+                *stmt = replacement;
+            }
             ctx.state.statement_injector.insert_after(stmt, new_statement);
         }
     }

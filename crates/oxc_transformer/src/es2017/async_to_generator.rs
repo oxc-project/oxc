@@ -137,7 +137,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
             && !function.generator
             && !function.is_typescript_syntax()
         {
-            let new_statement = self.executor.transform_function_declaration(function, ctx);
+            let (replacement, new_statement) =
+                self.executor.transform_function_declaration(function, ctx);
+            if let Some(replacement) = replacement {
+                *stmt = replacement;
+            }
             ctx.state.statement_injector.insert_after(stmt, new_statement);
         }
     }
@@ -437,7 +441,8 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         &self,
         wrapper_function: &mut Function<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Statement<'a> {
+    ) -> (Option<Statement<'a>>, Statement<'a>) {
+        let needs_lexical_wrapper = Self::needs_lexical_declaration_wrapper(ctx);
         let (generator_scope_id, wrapper_scope_id) = {
             let wrapper_scope_id =
                 ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
@@ -451,8 +456,11 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             Self::create_placeholder_params(&wrapper_function.params, wrapper_scope_id, ctx);
         let params = mem::replace(&mut wrapper_function.params, params);
 
-        let function_binding_scope_id =
-            Self::function_declaration_binding_scope_id(wrapper_function.id.as_ref(), ctx);
+        let function_binding_scope_id = if needs_lexical_wrapper {
+            ctx.current_scope_id()
+        } else {
+            Self::function_declaration_binding_scope_id(wrapper_function.id.as_ref(), ctx)
+        };
         if function_binding_scope_id != ctx.current_scope_id()
             && let Some(id) = &wrapper_function.id
         {
@@ -470,7 +478,6 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         {
             wrapper_function.r#async = false;
             wrapper_function.generator = false;
-            sync_function_symbol_flags(wrapper_function, ctx);
             let statements =
                 ArenaVec::from_value_in(Self::create_apply_call_statement(&bound_ident, ctx), ctx);
             debug_assert!(wrapper_function.body.is_none());
@@ -481,9 +488,15 @@ impl<'a> AsyncGeneratorExecutor<'a> {
                 ctx,
             ));
         }
+        let replacement_statement = if needs_lexical_wrapper {
+            Some(Self::create_lexical_wrapper_declaration(wrapper_function, ctx))
+        } else {
+            sync_function_symbol_flags(wrapper_function, ctx);
+            None
+        };
 
         // function _name() { _ref.apply(this, arguments); }
-        {
+        let helper_statement = {
             let statements = ArenaVec::from_array_in(
                 [
                     self.create_async_to_generator_assignment(
@@ -515,7 +528,47 @@ impl<'a> AsyncGeneratorExecutor<'a> {
                 ctx,
             );
             Statement::FunctionDeclaration(caller_function)
+        };
+
+        (replacement_statement, helper_statement)
+    }
+
+    /// Returns whether the original async/generator declaration must stay lexical after transform.
+    ///
+    /// In sloppy JavaScript block scopes, rewriting `async function x() {}` to `function x() {}`
+    /// would trigger Annex B hoisting for the plain function and make `x` visible outside the
+    /// block/switch scope. Emit `let x = function() {}` instead for these positions.
+    fn needs_lexical_declaration_wrapper(ctx: &TraverseCtx<'a>) -> bool {
+        if ctx.state.source_type.is_typescript() {
+            return false;
         }
+
+        let scope_flags = ctx.current_scope_flags();
+        !scope_flags.is_var() && !scope_flags.is_strict_mode()
+    }
+
+    fn create_lexical_wrapper_declaration(
+        wrapper_function: &mut Function<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        let id = wrapper_function.id.take().expect("function declaration should have an id");
+        let symbol_id = id.symbol_id();
+        *ctx.scoping_mut().symbol_flags_mut(symbol_id) = SymbolFlags::BlockScopedVariable;
+
+        let binding_pattern = BindingPattern::BindingIdentifier(ctx.alloc(id));
+        wrapper_function.r#type = FunctionType::FunctionExpression;
+        let init = Expression::FunctionExpression(wrapper_function.take_in_box(ctx));
+
+        let kind = VariableDeclarationKind::Let;
+        let declaration =
+            VariableDeclarator::new(SPAN, kind, binding_pattern, NONE, Some(init), false, ctx);
+        Statement::new_variable_declaration(
+            SPAN,
+            kind,
+            ArenaVec::from_value_in(declaration, ctx),
+            false,
+            ctx,
+        )
     }
 
     /// Returns the binding scope a rebuilt semantic tree would use for a plain function

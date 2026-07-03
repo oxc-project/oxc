@@ -2,7 +2,7 @@ commit: de8e621c
 
 semantic_test262 Summary:
 AST Parsed     : 47240/47240 (100.00%)
-Positive Passed: 47223/47240 (99.96%)
+Positive Passed: 47225/47240 (99.97%)
 semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/static-field-init-with-this.js
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | DirectEval)
@@ -107,26 +107,4 @@ rebuilt        : SymbolId(4): []
 Reference symbol mismatch for "x":
 after transform: SymbolId(1) "x"
 rebuilt        : SymbolId(1) "x"
-
-semantic Error: tasks/coverage/test262/test/language/statements/switch/scope-lex-async-function.js
-Symbol reference IDs mismatch for "x":
-after transform: SymbolId(0): []
-rebuilt        : SymbolId(1): [ReferenceId(7)]
-Reference symbol mismatch for "x":
-after transform: <None>
-rebuilt        : SymbolId(1) "x"
-Unresolved references mismatch:
-after transform: ["arguments", "require", "x"]
-rebuilt        : ["arguments", "require"]
-
-semantic Error: tasks/coverage/test262/test/language/statements/switch/scope-lex-async-generator.js
-Symbol reference IDs mismatch for "x":
-after transform: SymbolId(0): []
-rebuilt        : SymbolId(1): [ReferenceId(7)]
-Reference symbol mismatch for "x":
-after transform: <None>
-rebuilt        : SymbolId(1) "x"
-Unresolved references mismatch:
-after transform: ["arguments", "require", "x"]
-rebuilt        : ["arguments", "require"]
 
