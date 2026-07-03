@@ -70,23 +70,23 @@ console.log(result.map);
 ## Property mangling
 
 `oxc-minify` can rename object property names (`obj.longName` → `obj.e`) to
-shrink output further. This is controlled by four options:
+shrink output further. This is controlled by the `mangleProps` object option:
 
-| Option          | Type                        | Meaning                                                                                                                                                                                                                                                             |
-| --------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mangleProps`   | `string` (regex source)     | Only properties whose name matches this regular expression are renamed. **Setting this is what enables property mangling.**                                                                                                                                         |
-| `reserveProps`  | `string` (regex source)     | Properties whose name matches this regular expression are never renamed, even if they also match `mangleProps`.                                                                                                                                                     |
-| `reservedProps` | `string[]`                  | A literal list of property names that must never be renamed. Added to (never replaces) the built-in reserved set.                                                                                                                                                   |
-| `mangleQuoted`  | `boolean` (default `false`) | Also mangle quoted property names (`obj["_x"]`, `{ "_x": 1 }`) that match `mangleProps`. While off (the default) a quoted occurrence instead **reserves** that name program-wide, so quoting is a way to opt a property out. Aligned with esbuild's `mangleQuoted`. |
+| Field          | Type                        | Meaning                                                                                                                                                                                                                                                        |
+| -------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `regex`        | `string` (regex source)     | Required. Only properties whose name matches this regular expression are renamed. **Setting `mangleProps` is what enables property mangling.** Aligned with esbuild's `mangleProps`.                                                                          |
+| `exclude`      | `string` (regex source)     | Properties whose name matches this regular expression are never renamed, even if they also match `regex`. Aligned with esbuild's `reserveProps`.                                                                                                              |
+| `reserved`     | `string[]`                  | A literal list of property names that must never be renamed. Added to (never replaces) the built-in reserved set. Aligned with terser's `mangle.properties.reserved`.                                                                                         |
+| `mangleQuoted` | `boolean` (default `false`) | Also mangle quoted property names (`obj["_x"]`, `{ "_x": 1 }`) that match `regex`. While off (the default) a quoted occurrence instead **reserves** that name program-wide, so quoting is a way to opt a property out. Aligned with esbuild's `mangleQuoted`. |
 
-Both `mangleProps` and `reserveProps` take a regular expression **source
-string** (e.g. `"^_"`), not a `RegExp` object.
+Both `regex` and `exclude` take a regular expression **source string** (e.g.
+`"^_"`), not a `RegExp` object.
 
 ### Off by default
 
 Property mangling is **off unless you set `mangleProps`**. `mangle: true` alone
 renames **zero** properties — it only mangles variable/function names. Nothing
-is renamed until you supply a `mangleProps` regex.
+is renamed until you supply a `mangleProps` object with a `regex`.
 
 ### Unsafe — it can silently break your code
 
@@ -129,7 +129,7 @@ const code = `
 `;
 
 const result = minifySync("counter.js", code, {
-  mangleProps: "^_", // only rename properties starting with "_"
+  mangleProps: { regex: "^_" }, // only rename properties starting with "_"
 });
 
 console.log(result.code);
@@ -146,11 +146,18 @@ To reserve specific names or carve exceptions out of a broad regex:
 
 ```javascript
 minifySync("file.js", code, {
-  mangleProps: "^_",
-  reserveProps: "^_public", // keep anything starting with "_public"
-  reservedProps: ["_legacyApi"], // keep this exact name
+  mangleProps: {
+    regex: "^_",
+    exclude: "^_public", // keep anything starting with "_public"
+    reserved: ["_legacyApi"], // keep this exact name
+  },
 });
 ```
+
+`exclude` and `reserved` only filter which **source** names become mangle
+candidates. The **generated** names additionally avoid the `reserved` list, but
+deliberately not the `exclude` regex (esbuild parity: the regex only filters
+source-seen names).
 
 Names are assigned per `minify` call and are **not** stable across separate
 calls or files: a property renamed in one call will not match the same property

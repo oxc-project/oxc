@@ -12,11 +12,10 @@ use rustc_hash::FxHashSet;
 
 fn opts(regex: &str) -> ManglePropertiesOptions {
     ManglePropertiesOptions {
-        mangle: Some(lazy_regex::Regex::new(regex).unwrap()),
-        reserve: None,
+        regex: Some(lazy_regex::Regex::new(regex).unwrap()),
+        exclude: None,
         reserved: FxHashSet::default(),
         mangle_quoted: false,
-        debug: false,
     }
 }
 
@@ -179,12 +178,12 @@ fn test_st(src: &str, expected: &str, regex: &str, st: SourceType) {
     assert_eq!(got, want, "\nsrc {src}\nexpect {want}\ngot {got}");
 }
 
-/// PropertyMangler-direct run that also sets a `reserve` regex (carve-out).
-fn mangle_with_reserve(src: &str, mangle_re: &str, reserve_re: &str) -> String {
+/// PropertyMangler-direct run that also sets an `exclude` regex (carve-out).
+fn mangle_with_exclude(src: &str, mangle_re: &str, exclude_re: &str) -> String {
     let alloc = Allocator::default();
     let mut program = Parser::new(&alloc, src, SourceType::mjs()).parse().program;
     let mut o = opts(mangle_re);
-    o.reserve = Some(lazy_regex::Regex::new(reserve_re).unwrap());
+    o.exclude = Some(lazy_regex::Regex::new(exclude_re).unwrap());
     let mut m = PropertyMangler::new(o);
     m.collect(&program);
     m.rewrite(&mut program, &alloc);
@@ -334,9 +333,9 @@ fn bail_is_surfaced_through_minifier_return() {
 }
 
 #[test]
-fn reserve_regex_carves_out() {
-    // `mangle: ^_` plus `reserve: _keep$`: `_keep` stays, `_foo` -> `e`.
-    let got = mangle_with_reserve("o._keep; o._foo;", "^_", "_keep$");
+fn exclude_regex_carves_out() {
+    // `regex: ^_` plus `exclude: _keep$`: `_keep` stays, `_foo` -> `e`.
+    let got = mangle_with_exclude("o._keep; o._foo;", "^_", "_keep$");
     let want = codegen("o._keep; o.e;", SourceType::mjs());
     assert_eq!(got, want, "\nexpect {want}\ngot {got}");
 }

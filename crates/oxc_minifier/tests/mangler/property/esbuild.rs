@@ -9,8 +9,8 @@
 //! consistently and the right ones were reserved.
 //!
 //! Option mapping:
-//!   esbuild MangleProps: regexp("re")   -> mangle regex "re"
-//!   esbuild ReserveProps: regexp("re")  -> `opts.reserve`
+//!   esbuild MangleProps: regexp("re")   -> `opts.regex`
+//!   esbuild ReserveProps: regexp("re")  -> `opts.exclude`
 //!   esbuild MinifySyntax: true          -> full `Minifier` with compress (the `min_*` helpers)
 //!   esbuild MinifySyntax: false/unset   -> `PropertyMangler` directly (the `mangle_*` helpers)
 //!   esbuild MinifyIdentifiers: true     -> identifier mangle on (`min_*_mangle`)
@@ -49,11 +49,10 @@ use rustc_hash::FxHashSet;
 /// Build `ManglePropertiesOptions` from a mangle regex.
 fn opts(regex: &str) -> ManglePropertiesOptions {
     ManglePropertiesOptions {
-        mangle: Some(lazy_regex::Regex::new(regex).unwrap()),
-        reserve: None,
+        regex: Some(lazy_regex::Regex::new(regex).unwrap()),
+        exclude: None,
         reserved: FxHashSet::default(),
         mangle_quoted: false,
-        debug: false,
     }
 }
 
@@ -187,7 +186,7 @@ fn mangle_props_optional_chain() {
 #[test]
 fn reserve_props() {
     let mut o = opts("_$");
-    o.reserve = Some(lazy_regex::Regex::new("^_.*_$").unwrap());
+    o.exclude = Some(lazy_regex::Regex::new("^_.*_$").unwrap());
     let code = mangle("export default { foo_: 0, _bar_: 1 }", SourceType::mjs(), o);
     assert_eq!(code, "export default {\n\te: 0,\n\t_bar_: 1\n};\n");
 }

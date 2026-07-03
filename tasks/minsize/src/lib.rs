@@ -226,7 +226,7 @@ fn minify(
         compress: Some(CompressOptions::default()),
         mangle_properties: (enable_props && !options.compress_only).then(|| {
             ManglePropertiesOptions {
-                mangle: Some(lazy_regex::Regex::new("^_").unwrap()),
+                regex: Some(lazy_regex::Regex::new("^_").unwrap()),
                 mangle_quoted: true,
                 ..Default::default()
             }

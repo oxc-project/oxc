@@ -96,7 +96,7 @@ pub trait CompilerInterface {
     /// Collection runs on the post-transform program. When JSX is transformed in
     /// this pipeline, JSX attribute names are lowered to plain object keys before
     /// collection and are NOT auto-reserved — users mangling JSX-transformed code
-    /// must exclude component-prop names via the reserve regex/list.
+    /// must exclude component-prop names via the `exclude` regex / `reserved` list.
     fn mangle_properties_options(&self) -> Option<ManglePropertiesOptions> {
         None
     }

@@ -370,44 +370,49 @@ pub struct MinifyOptions {
 
     pub sourcemap: Option<bool>,
 
-    /// Mangle (rename) property names matching this regular expression.
+    /// Mangle (rename) property names.
     ///
     /// Property mangling is **off by default** and **unsafe**: it can break
     /// reflection, JSON serialization, dynamic property access, and DOM APIs.
     /// Only enable it when you control all the properties being renamed (the
     /// common convention is to prefix such properties with `_` and pass
-    /// `mangleProps: "^_"`).
+    /// `mangleProps: { regex: "^_" }`).
+    pub mangle_props: Option<ManglePropsOptions>,
+}
+
+#[napi(object)]
+pub struct ManglePropsOptions {
+    /// Property names matching this regular expression are candidates for
+    /// mangling.
     ///
     /// The value is a regular expression **source string** (not a `RegExp`).
     ///
     /// Aligned with esbuild's `mangleProps`.
-    pub mangle_props: Option<String>,
+    pub regex: String,
 
     /// Do not mangle property names matching this regular expression, even if
-    /// they match {@link MinifyOptions#mangleProps mangleProps}.
+    /// they match {@link ManglePropsOptions#regex regex}.
     ///
     /// The value is a regular expression **source string** (not a `RegExp`).
     ///
     /// Aligned with esbuild's `reserveProps`.
-    pub reserve_props: Option<String>,
+    pub exclude: Option<String>,
 
     /// A list of literal property names that must never be mangled.
     ///
     /// These are added to (never replace) the always-reserved set.
     ///
-    /// Terser-style `reserved` list.
-    pub reserved_props: Option<Vec<String>>,
+    /// Aligned with terser's `mangle.properties.reserved`.
+    pub reserved: Option<Vec<String>>,
 
     /// Also mangle quoted property names that match
-    /// {@link MinifyOptions#mangleProps mangleProps}.
+    /// {@link ManglePropsOptions#regex regex}.
     ///
     /// When `false` (default), a quoted property occurrence (`x['_foo']`,
     /// `{ '_foo': 1 }`, `'_foo' in x`) reserves that name program-wide, so it is
     /// never mangled. When `true`, such quoted keys become mangle candidates and
     /// are renamed consistently with their unquoted siblings (computed string
     /// indices are un-quoted to dot access where possible).
-    ///
-    /// Has no effect unless {@link MinifyOptions#mangleProps mangleProps} is set.
     ///
     /// Aligned with esbuild's `mangleQuoted`.
     ///
@@ -436,32 +441,36 @@ impl TryFrom<&MinifyOptions> for oxc_minifier::MinifierOptions {
 
 /// Build [`ManglePropertiesOptions`] from the N-API options.
 ///
-/// Returns `Ok(None)` when property mangling is disabled (no `mangleProps` regex).
+/// Returns `Ok(None)` when property mangling is disabled (no `mangleProps` object).
 ///
 /// # Errors
 ///
 /// Returns an error string if a regex fails to compile.
 fn build_mangle_properties(o: &MinifyOptions) -> Result<Option<ManglePropertiesOptions>, String> {
-    // Off by default: only enabled by a user-supplied `mangleProps` regex.
-    let Some(mangle_props) = &o.mangle_props else {
+    // Off by default: only enabled by a user-supplied `mangleProps` object.
+    let Some(props) = &o.mangle_props else {
         return Ok(None);
     };
 
-    let mangle = Some(lazy_regex::Regex::new(mangle_props).map_err(|e| e.to_string())?);
+    let regex = Some(
+        lazy_regex::Regex::new(&props.regex)
+            .map_err(|e| format!("Invalid mangleProps.regex: {e}"))?,
+    );
 
-    let reserve = match &o.reserve_props {
-        Some(s) => Some(lazy_regex::Regex::new(s).map_err(|e| e.to_string())?),
+    let exclude = match &props.exclude {
+        Some(s) => Some(
+            lazy_regex::Regex::new(s).map_err(|e| format!("Invalid mangleProps.exclude: {e}"))?,
+        ),
         None => None,
     };
 
     let reserved: FxHashSet<CompactStr> =
-        o.reserved_props.iter().flatten().map(|s| CompactStr::from(s.as_str())).collect();
+        props.reserved.iter().flatten().map(|s| CompactStr::from(s.as_str())).collect();
 
     Ok(Some(ManglePropertiesOptions {
-        mangle,
-        reserve,
+        regex,
+        exclude,
         reserved,
-        mangle_quoted: o.mangle_quoted.unwrap_or(false),
-        debug: false,
+        mangle_quoted: props.mangle_quoted.unwrap_or(false),
     }))
 }

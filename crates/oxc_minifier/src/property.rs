@@ -1,8 +1,8 @@
 //! Property-name mangling engine.
 //!
 //! This module implements opt-in property-name mangling (`obj.longName` -> `obj.a`).
-//! It is **off by default**: nothing is mangled unless the user supplies a `mangle`
-//! regex via [`ManglePropertiesOptions`].
+//! It is **off by default**: nothing is mangled unless the user supplies a `regex`
+//! via [`ManglePropertiesOptions`].
 //!
 //! This file contains the whole engine: the option type, the eligibility check,
 //! the name-assignment function, the read-only collect pass, the in-place rewrite pass,
@@ -45,13 +45,13 @@ const PROTOCOL_DENYLIST: &[&str] =
 
 /// Options controlling property mangling.
 ///
-/// Feature is **off** when `mangle` is `None`.
+/// Feature is **off** when `regex` is `None`.
 #[derive(Default, Clone, Debug)]
 pub struct ManglePropertiesOptions {
     /// Names matching this regex are candidates for mangling. `None` => feature off.
-    pub mangle: Option<lazy_regex::Regex>,
-    /// Names matching this regex are reserved (never mangled), even if `mangle` matches.
-    pub reserve: Option<lazy_regex::Regex>,
+    pub regex: Option<lazy_regex::Regex>,
+    /// Names matching this regex are reserved (never mangled), even if `regex` matches.
+    pub exclude: Option<lazy_regex::Regex>,
     /// Explicit reserved names. Added to (never replaces) the always-reserved set.
     pub reserved: FxHashSet<CompactStr>,
     /// Whether to mangle quoted keys.
@@ -61,8 +61,6 @@ pub struct ManglePropertiesOptions {
     /// When `true`, such strings become mangle candidates (subject to the same
     /// eligibility check) and are renamed consistently with their unquoted siblings.
     pub mangle_quoted: bool,
-    /// Whether to emit human-readable debug names. v1: always `false` (deferred).
-    pub debug: bool,
 }
 
 /// Whether `name` is always reserved, regardless of the user's regex.
@@ -129,8 +127,8 @@ fn key_annotated_spans(program: &Program) -> FxHashSet<u32> {
 
 /// Whether `name` is eligible for mangling under `opts`.
 fn eligible(opts: &ManglePropertiesOptions, name: &str) -> bool {
-    opts.mangle.as_ref().is_some_and(|re| re.is_match(name))
-        && !opts.reserve.as_ref().is_some_and(|re| re.is_match(name))
+    opts.regex.as_ref().is_some_and(|re| re.is_match(name))
+        && !opts.exclude.as_ref().is_some_and(|re| re.is_match(name))
         && !opts.reserved.contains(name)
         && !is_always_reserved(name)
         && !is_canonical_numeric_string(name)
@@ -146,7 +144,7 @@ fn eligible(opts: &ManglePropertiesOptions, name: &str) -> bool {
 /// name could be picked up by a later value-based lookup and renamed a second time. Keeping
 /// the generated names out of `classes` makes "apply at most once" structural. Generated
 /// names also avoid the always-reserved set and the user's explicit `reserved` names; the
-/// `reserve` REGEX is deliberately NOT applied to generated names (esbuild parity: the regex
+/// `exclude` REGEX is deliberately NOT applied to generated names (esbuild parity: the regex
 /// only filters source-seen names). Returns the old -> new map.
 ///
 /// The iteration order is deterministic (sorted) so the same input always produces the same
@@ -277,7 +275,7 @@ impl<'o> PropertyCollector<'o> {
     fn candidate(&mut self, name: &str) {
         // A property name repeats many times in a real bundle. Once it has been classified the
         // decision is fixed, so a single `contains_key` short-circuits before re-running
-        // `eligible` (which evaluates the mangle/reserve REGEXES) and before re-allocating a
+        // `eligible` (which evaluates the regex/exclude REGEXES) and before re-allocating a
         // `CompactStr`. This turns per-occurrence regex work into per-distinct-name work.
         // `CompactStr: Borrow<str>`, so the lookup takes the `&str` directly with no allocation.
         if self.state.names.contains_key(name) {
@@ -914,11 +912,10 @@ mod tests {
 
     fn opts(re: &str) -> ManglePropertiesOptions {
         ManglePropertiesOptions {
-            mangle: Some(Regex::new(re).unwrap()),
-            reserve: None,
+            regex: Some(Regex::new(re).unwrap()),
+            exclude: None,
             reserved: FxHashSet::default(),
             mangle_quoted: false,
-            debug: false,
         }
     }
 
@@ -988,7 +985,7 @@ mod tests {
     #[test]
     fn generated_names_avoid_user_reserved() {
         // An explicitly reserved name is never handed out (terser/esbuild parity). The
-        // `reserve` REGEX, by contrast, only filters source-seen names.
+        // `exclude` REGEX, by contrast, only filters source-seen names.
         let mut o = opts("^_");
         o.reserved.insert("e".into());
         let cands = classes(&["_a"], &[]);

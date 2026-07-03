@@ -165,7 +165,7 @@ fn bench_property_mangler(criterion: &mut Criterion) {
                 allocator.reset();
                 let mut program = transform_to_js(&allocator, source_text, source_type, path);
                 let options = ManglePropertiesOptions {
-                    mangle: Some(prop_regex.clone()),
+                    regex: Some(prop_regex.clone()),
                     mangle_quoted: true,
                     ..Default::default()
                 };
