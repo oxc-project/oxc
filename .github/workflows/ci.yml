@@ -522,7 +522,7 @@ jobs:
         uses: ./.github/actions/check-changes
         with:
           packages: oxc_coverage,oxc_transform_conformance,oxc_prettier_conformance
-          paths: tasks/coverage/,tasks/common/,tasks/oxc_transform_conformance/,tasks/oxc_prettier_conformance/,pnpm-lock.yaml
+          paths: tasks/coverage/,tasks/common/,tasks/transform_conformance/,tasks/prettier_conformance/,pnpm-lock.yaml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
