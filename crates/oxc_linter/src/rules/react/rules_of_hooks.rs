@@ -168,8 +168,7 @@ mod diagnostics {
         called: bool,
     ) -> OxcDiagnostic {
         let mut message = format!(
-            "`{name}` is a function created with React Hook \"useEffectEvent\", and can only be called from \
-            Effects and Effect Events in the same component."
+            r#"`{name}` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component."#
         );
 
         if !called {
@@ -183,7 +182,7 @@ mod diagnostics {
 
     pub(super) fn use_effect_event_inline_escape(span: Span) -> OxcDiagnostic {
         OxcDiagnostic::warn(
-            "React Hook \"useEffectEvent\" can only be called at the top level of your component. It cannot be passed down.",
+            r#"React Hook "useEffectEvent" can only be called at the top level of your component. It cannot be passed down."#,
         )
         .with_label(span.label("Effect Event is passed directly instead of being assigned locally."))
         .with_error_code_scope(SCOPE)
