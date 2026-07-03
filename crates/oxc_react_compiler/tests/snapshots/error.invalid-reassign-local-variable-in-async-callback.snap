@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.invalid-reassign-local-variable-in-async-callback.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: Cannot reassign variable in async function", labels: One([LabeledSpan { label: Some("Cannot reassign `value`"), span: SourceSpan { offset: SourceOffset(296), length: 5 }, primary: false }]), help: Some("Reassigning a variable in an async function can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

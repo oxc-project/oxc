@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-invalid-jsx-in-try-with-finally.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: (BuildHIR::lowerStatement) Handle TryStatement without a catch clause", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(92), length: 62 }, primary: false }]), help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.
