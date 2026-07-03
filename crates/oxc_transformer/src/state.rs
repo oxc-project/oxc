@@ -51,6 +51,7 @@ pub struct TransformState<'a> {
     pub is_class_properties_plugin_enabled: bool,
 
     pub removed_ambient_bindings: Vec<(Ident<'a>, SymbolId)>,
+    pub emitted_namespace_bindings: Vec<SymbolId>,
 }
 
 impl Default for TransformState<'_> {
@@ -70,6 +71,7 @@ impl Default for TransformState<'_> {
             top_level_statements: TopLevelStatementsStore::new(),
             is_class_properties_plugin_enabled: false,
             removed_ambient_bindings: vec![],
+            emitted_namespace_bindings: vec![],
         }
     }
 }
@@ -95,6 +97,7 @@ impl TransformState<'_> {
             top_level_statements: TopLevelStatementsStore::new(),
             is_class_properties_plugin_enabled: options.env.es2022.class_properties.is_some(),
             removed_ambient_bindings: vec![],
+            emitted_namespace_bindings: vec![],
         }
     }
 

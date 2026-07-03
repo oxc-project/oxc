@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 309/397
+Passed: 320/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -34,7 +34,7 @@ after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (28/33)
+# babel-plugin-transform-class-properties (29/33)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -47,18 +47,8 @@ x Output mismatch
 * static-super-tagged-template/input.js
 x Output mismatch
 
-* typescript/declare-computed-keys/input.ts
-Symbol reference IDs mismatch for "KEY1":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
-rebuilt        : SymbolId(1): []
 
-
-# babel-plugin-transform-typescript (29/60)
-* allow-declare-fields-false/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
-
+# babel-plugin-transform-typescript (36/60)
 * computed-constant-value/input.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "a", "b", "c", "d", "e"]
@@ -96,12 +86,6 @@ rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "D":
 after transform: SymbolId(16): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
-after transform: ["Infinity", "NaN"]
-rebuilt        : ["Infinity"]
-Unresolved reference IDs mismatch for "Infinity":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(8), ReferenceId(11), ReferenceId(14), ReferenceId(18)]
-rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12)]
 
 * const-enum-mixed-refs/input.ts
 Bindings mismatch:
@@ -181,9 +165,6 @@ rebuilt        : ScopeId(6): ["NestInner"]
 Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(0x0)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Symbol reference IDs mismatch for "x":
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(4)]
-rebuilt        : SymbolId(0): [ReferenceId(7)]
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
@@ -219,9 +200,6 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Color":
 after transform: SymbolId(4): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "Color":
-after transform: SymbolId(4): [ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(12)]
-rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(8)]
 
 * enum-template-literal/input.ts
 Bindings mismatch:
@@ -245,15 +223,9 @@ rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "Size":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "Size":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(7)]
-rebuilt        : SymbolId(0): [ReferenceId(3)]
 Symbol flags mismatch for "Animal":
 after transform: SymbolId(3): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "Animal":
-after transform: SymbolId(3): [ReferenceId(1), ReferenceId(3), ReferenceId(11)]
-rebuilt        : SymbolId(2): [ReferenceId(7)]
 Symbol flags mismatch for "AnimalSize":
 after transform: SymbolId(6): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
@@ -274,9 +246,6 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "NumberEnum":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "NumberEnum":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(13)]
-rebuilt        : SymbolId(0): [ReferenceId(9)]
 Symbol flags mismatch for "ComputedEnum":
 after transform: SymbolId(5): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
@@ -297,9 +266,6 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "NumberEnum":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "NumberEnum":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(8)]
-rebuilt        : SymbolId(0): [ReferenceId(5)]
 Symbol flags mismatch for "ComputedEnum":
 after transform: SymbolId(3): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
@@ -317,11 +283,6 @@ rebuilt        : SymbolId(8): Span { start: 226, end: 227 }
 Symbol redeclarations mismatch for "T":
 after transform: SymbolId(9): [Span { start: 205, end: 206 }, Span { start: 226, end: 227 }]
 rebuilt        : SymbolId(8): []
-
-* namespace/import-=/input.ts
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
-rebuilt        : SymbolId(0): [ReferenceId(2)]
 
 * namespace/redeclaration-with-enum/input.ts
 Bindings mismatch:
@@ -385,11 +346,6 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Direction":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-* optimize-enums/merged-enum/input.ts
-Unresolved references mismatch:
-after transform: ["A"]
-rebuilt        : []
 
 * optimize-enums/non-evaluable-kept/input.ts
 Bindings mismatch:
@@ -495,28 +451,8 @@ Symbol redeclarations mismatch for "B":
 after transform: SymbolId(2): [Span { start: 267, end: 268 }, Span { start: 289, end: 290 }, Span { start: 304, end: 305 }]
 rebuilt        : SymbolId(2): []
 
-* remove-class-properties-without-initializer/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
-
-* remove-unused-import-equals/input.ts
-Unresolved reference IDs mismatch for "foo":
-after transform: [ReferenceId(0), ReferenceId(6)]
-rebuilt        : [ReferenceId(0)]
-
 * ts-declaration-empty-output/input.d.ts
 x Output mismatch
-
-* use-define-for-class-fields/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
-
-* use-define-for-class-fields-without-class-properties/input.ts
-Unresolved reference IDs mismatch for "dce":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(17)]
-rebuilt        : [ReferenceId(5)]
 
 
 # babel-plugin-transform-react-jsx (51/54)
@@ -534,7 +470,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (72/105)
+# legacy-decorators (74/105)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -654,14 +590,6 @@ Symbol flags mismatch for "ComputedEnum":
 after transform: SymbolId(25): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(15): SymbolFlags(FunctionScopedVariable)
 
-* oxc/metadata/nullable-union/input.ts
-Unresolved reference IDs mismatch for "String":
-after transform: [ReferenceId(5), ReferenceId(20)]
-rebuilt        : [ReferenceId(3)]
-Unresolved reference IDs mismatch for "Number":
-after transform: [ReferenceId(9), ReferenceId(21)]
-rebuilt        : [ReferenceId(8)]
-
 * oxc/metadata/private-in-expression-in-decorator/input.ts
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
@@ -672,9 +600,6 @@ rebuilt        : ScopeId(1): []
 Bindings mismatch:
 after transform: ScopeId(3): ["Cls2"]
 rebuilt        : ScopeId(4): []
-Symbol reference IDs mismatch for "dec":
-after transform: SymbolId(0): [ReferenceId(4), ReferenceId(0), ReferenceId(1), ReferenceId(3)]
-rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(10)]
 Symbol scope ID mismatch for "Cls":
 after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(1): ScopeId(0)
@@ -699,9 +624,6 @@ rebuilt        : SymbolId(2) "Cls2"
 Reference symbol mismatch for "Cls2":
 after transform: SymbolId(2) "Cls2"
 rebuilt        : SymbolId(2) "Cls2"
-Unresolved reference IDs mismatch for "babelHelpers":
-after transform: [ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(24)]
-rebuilt        : [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(16)]
 
 * oxc/metadata/typescript-syntax/input.ts
 
@@ -734,14 +656,6 @@ rebuilt        : ScopeId(4): ScopeFlags(StrictMode | ClassStaticBlock)
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(0))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8)]
-rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(8)]
-
-* oxc/static-field-with-class-properties/input.ts
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
-rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
 
 * typescript/accessor/decoratorOnClassAccessor3/input.ts
 
@@ -888,12 +802,7 @@ x Output mismatch
 
 
 
-# plugin-styled-components (25/40)
-* minify-comments/input.js
-Unresolved references mismatch:
-after transform: ["x", "y", "z"]
-rebuilt        : ["x", "z"]
-
+# plugin-styled-components (26/40)
 * styled-components/add-identifier-with-top-level-import-paths/input.js
 x Output mismatch
 

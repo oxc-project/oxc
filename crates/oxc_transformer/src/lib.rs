@@ -7,7 +7,7 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, ArenaVec, TakeIn};
+use oxc_allocator::{Allocator, ArenaVec, BitSet, TakeIn};
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::Diagnostics;
@@ -251,6 +251,8 @@ fn unresolve_removed_ambient_references(
     scoping: &mut Scoping,
 ) {
     let live_reference_ids = LiveReferenceIds::collect(program);
+    remove_stale_references(scoping, &live_reference_ids);
+
     for &(name, symbol_id) in &state.removed_ambient_bindings {
         let reference_ids = scoping.get_resolved_reference_ids(symbol_id).to_vec();
         for reference_id in reference_ids {
@@ -262,6 +264,22 @@ fn unresolve_removed_ambient_references(
             scoping.add_root_unresolved_reference(name, reference_id);
         }
     }
+}
+
+fn remove_stale_references(scoping: &mut Scoping, live_reference_ids: &FxHashSet<ReferenceId>) {
+    let references_len = scoping.references_len();
+    let allocator = Allocator::default();
+    let mut stale_reference_ids = BitSet::new_in(references_len, &allocator);
+
+    for index in 0..references_len {
+        let reference_id = ReferenceId::new(index);
+        if !live_reference_ids.contains(&reference_id) {
+            stale_reference_ids.set_bit(index);
+        }
+    }
+
+    scoping.retain_resolved_references_excluding(&stale_reference_ids);
+    scoping.retain_root_unresolved_references_excluding(&stale_reference_ids);
 }
 
 #[derive(Default)]

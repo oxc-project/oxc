@@ -1198,9 +1198,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Animals":
 after transform: SymbolId(0): [Span { start: 5, end: 12 }, Span { start: 41, end: 48 }]
 rebuilt        : SymbolId(0): []
-Unresolved references mismatch:
-after transform: ["Cat", "Dog"]
-rebuilt        : []
 
 * enum/enum-merging-inner-references-shadow/input.ts
 Bindings mismatch:
@@ -1221,12 +1218,6 @@ rebuilt        : ScopeId(3): ["Animals"]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(0x0)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
-Symbol reference IDs mismatch for "Cat":
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
-Symbol reference IDs mismatch for "Dog":
-after transform: SymbolId(1): [ReferenceId(1)]
-rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "Animals":
 after transform: SymbolId(2): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
@@ -1342,9 +1333,6 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "socketType":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "socketType":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(10)]
-rebuilt        : SymbolId(0): [ReferenceId(7)]
 Symbol flags mismatch for "constants":
 after transform: SymbolId(4): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
@@ -1596,9 +1584,6 @@ rebuilt        : ScopeId(1): ["_N"]
 Scope flags mismatch:
 after transform: ScopeId(18): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(9): ScopeFlags(StrictMode | Function)
-Symbol reference IDs mismatch for "a":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(4), ReferenceId(5)]
-rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 Symbol flags mismatch for "B":
 after transform: SymbolId(19): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(16): SymbolFlags(BlockScopedVariable)

@@ -631,6 +631,20 @@ impl Scoping {
         });
     }
 
+    /// Remove every `ReferenceId` whose bit is set in `excluded` from the root
+    /// unresolved references list.
+    pub fn retain_root_unresolved_references_excluding(&mut self, excluded: &BitSet<'_>) {
+        if excluded.is_empty() {
+            return;
+        }
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.root_unresolved_references.retain(|_name, reference_ids| {
+                reference_ids.retain(|id| !excluded.contains(id.index()));
+                !reference_ids.is_empty()
+            });
+        });
+    }
+
     /// Reserve additional capacity for symbols, references, and scopes.
     pub fn reserve(
         &mut self,
@@ -911,6 +925,14 @@ impl Scoping {
     /// Remove an existing binding from a scope.
     pub fn remove_binding(&mut self, scope_id: ScopeId, name: Ident<'_>) {
         self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.bindings[scope_id].remove(name.as_str());
+        });
+    }
+
+    /// Remove an existing binding from a scope by its symbol ID.
+    pub fn remove_binding_by_symbol_id(&mut self, scope_id: ScopeId, symbol_id: SymbolId) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            let name = cell.symbol_names[symbol_id.index()];
             cell.bindings[scope_id].remove(name.as_str());
         });
     }

@@ -285,6 +285,7 @@ impl<'a> TypeScriptNamespace {
         }
 
         if !Self::is_redeclaration_namespace(&ident, ctx) {
+            ctx.state.emitted_namespace_bindings.push(symbol_id);
             let declaration = Self::create_variable_declaration(&binding, span, ctx);
             if is_export {
                 let export_named_decl =

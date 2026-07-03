@@ -666,6 +666,8 @@ impl<'a> TypeScriptAnnotations<'a> {
             return;
         }
 
+        let mut implemented_overload_symbols = Vec::new();
+
         for stmt in stmts {
             let function = match stmt {
                 Statement::FunctionDeclaration(func) => Some(func.as_ref()),
@@ -685,6 +687,17 @@ impl<'a> TypeScriptAnnotations<'a> {
 
             ctx.scoping_mut().set_symbol_span(symbol_id, id.span);
             ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
+            implemented_overload_symbols.push(symbol_id);
+        }
+
+        for &symbol_id in removed_overload_symbols {
+            if implemented_overload_symbols.contains(&symbol_id) {
+                continue;
+            }
+
+            let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+            ctx.scoping_mut().remove_binding_by_symbol_id(scope_id, symbol_id);
+            ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
         }
     }
 
@@ -698,6 +711,15 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let symbol_id = ident.symbol_id();
+        let flags = ctx.scoping().symbol_flags(symbol_id);
+        if flags.is_value()
+            && !flags.is_ambient()
+            && ctx.state.emitted_namespace_bindings.contains(&symbol_id)
+        {
+            ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
+            return;
+        }
+
         let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
         ctx.scoping_mut().remove_binding(scope_id, ident.name);
         ctx.state.removed_ambient_bindings.push((ident.name, symbol_id));

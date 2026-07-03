@@ -2,7 +2,7 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2161/2236 (96.65%)
+Positive Passed: 2166/2236 (96.87%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/typescript/TSEnumBody-trailing-comma/input.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
@@ -61,11 +61,6 @@ Multiple constructor implementations are not allowed.
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare/input.ts
 Identifier `x` has already been declared
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-readonly-field-initializer/input.ts
-Unresolved references mismatch:
-after transform: ["a"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts
 Function implementation is missing or not immediately following the declaration.
 Function implementation is missing or not immediately following the declaration.
@@ -73,11 +68,6 @@ Function implementation is missing or not immediately following the declaration.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-reserved-names/input.ts
 Function implementation is missing or not immediately following the declaration.
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-computed/input.ts
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-no-body/input.ts
 Function implementation is missing or not immediately following the declaration.
@@ -243,11 +233,6 @@ rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts
 A required parameter cannot follow an optional parameter.
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/method-computed/input.ts
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["N"]
@@ -257,9 +242,6 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Bindings mismatch:
 after transform: ScopeId(0): ["N", "x"]
 rebuilt        : ScopeId(0): ["x"]
-Symbol reference IDs mismatch for "x":
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare-export-named-declaration/input.ts
 Bindings mismatch:
@@ -268,11 +250,6 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-export-named-declaration/input.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-import-equals-internal/input.ts
-Unresolved references mismatch:
-after transform: ["N"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-nested-declare/input.ts
 Bindings mismatch:
@@ -550,11 +527,6 @@ rebuilt        : SymbolId(3): Span { start: 170, end: 171 }
 Symbol redeclarations mismatch for "b":
 after transform: SymbolId(3): [Span { start: 81, end: 82 }, Span { start: 170, end: 171 }]
 rebuilt        : SymbolId(3): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-different-module-and-top-level/input.ts
-Symbol reference IDs mismatch for "fooBar":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-interface-class/input.ts
 Bindings mismatch:

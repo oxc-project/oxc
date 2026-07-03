@@ -2,30 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4167/4720 (88.28%)
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientClassDeclarationWithExtends.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["d"]
-rebuilt        : ScopeId(0): ["D", "d"]
-Symbol reference IDs mismatch for "D":
-after transform: SymbolId(3): []
-rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
-Symbol redeclarations mismatch for "D":
-after transform: SymbolId(3): [Span { start: 97, end: 98 }, Span { start: 124, end: 125 }]
-rebuilt        : SymbolId(0): []
-Reference symbol mismatch for "D":
-after transform: <None>
-rebuilt        : SymbolId(0) "D"
-Reference symbol mismatch for "D":
-after transform: <None>
-rebuilt        : SymbolId(0) "D"
-Reference symbol mismatch for "D":
-after transform: <None>
-rebuilt        : SymbolId(0) "D"
-Unresolved references mismatch:
-after transform: ["D"]
-rebuilt        : []
-
+Positive Passed: 4227/4720 (89.56%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientClassOverloadForFunction.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -192,11 +169,6 @@ Bindings mismatch:
 after transform: ScopeId(0): ["Windows", "_asyncToGenerator", "_sample", "_sample2", "sample", "sample2"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_sample", "_sample2", "sample", "sample2"]
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/asyncYieldStarContextualType.ts
-Unresolved references mismatch:
-after transform: ["Symbol", "arguments", "authorPromise", "g", "mapper", "require"]
-rebuilt        : ["arguments", "authorPromise", "g", "mapper", "require"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Symbol flags mismatch for "foo":
@@ -267,9 +239,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesMod
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(0): ["m3b", "m3c"]
-rebuilt        : ScopeId(0): ["m3b", "m3c", "m3e"]
 Symbol flags mismatch for "m3b":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
@@ -288,21 +257,6 @@ rebuilt        : SymbolId(3): Span { start: 60, end: 63 }
 Symbol redeclarations mismatch for "m3c":
 after transform: SymbolId(2): [Span { start: 60, end: 63 }, Span { start: 88, end: 91 }]
 rebuilt        : SymbolId(3): []
-Symbol reference IDs mismatch for "m3e":
-after transform: SymbolId(6): []
-rebuilt        : SymbolId(8): [ReferenceId(9), ReferenceId(10)]
-Symbol redeclarations mismatch for "m3e":
-after transform: SymbolId(6): [Span { start: 198, end: 201 }, Span { start: 239, end: 242 }]
-rebuilt        : SymbolId(8): []
-Reference symbol mismatch for "m3e":
-after transform: <None>
-rebuilt        : SymbolId(8) "m3e"
-Reference symbol mismatch for "m3e":
-after transform: <None>
-rebuilt        : SymbolId(8) "m3e"
-Unresolved references mismatch:
-after transform: ["m3d", "m3e", "m3g"]
-rebuilt        : ["m3d", "m3g"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules4.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -407,11 +361,6 @@ rebuilt        : SymbolId(2): Span { start: 31, end: 32 }
 Symbol redeclarations mismatch for "N":
 after transform: SymbolId(1): [Span { start: 31, end: 32 }, Span { start: 58, end: 59 }]
 rebuilt        : SymbolId(2): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/classImplementsImportedInterface.ts
-Unresolved references mismatch:
-after transform: ["M1"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/cloduleAcrossModuleDefinitions.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -616,11 +565,6 @@ Symbol flags mismatch for "_this":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/commentOnAmbientClass1.ts
-Unresolved references mismatch:
-after transform: ["C"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/commentOnAmbientModule.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "D"]
@@ -714,9 +658,6 @@ rebuilt        : ScopeId(1): ["Props"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(0x0)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol reference IDs mismatch for "k":
-after transform: SymbolId(0): [ReferenceId(3), ReferenceId(5), ReferenceId(13)]
-rebuilt        : SymbolId(0): [ReferenceId(9)]
 Symbol flags mismatch for "Props":
 after transform: SymbolId(1): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
@@ -917,11 +858,6 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "User":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/controlFlowInstanceofWithSymbolHasInstance.ts
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(40), ReferenceId(45)]
-rebuilt        : [ReferenceId(30), ReferenceId(34)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/controlFlowManyConsecutiveConditionsNoTimeout.ts
 Bindings mismatch:
@@ -1133,11 +1069,6 @@ Symbol flags mismatch for "Enum":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCrossFileCopiedGeneratedImportType.ts
-Unresolved references mismatch:
-after transform: ["Number"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringArrayPattern3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -1226,9 +1157,6 @@ rebuilt        : SymbolId(11): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitImportInExportAssignmentModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Symbol reference IDs mismatch for "c":
-after transform: SymbolId(1): [ReferenceId(0), ReferenceId(5), ReferenceId(7)]
-rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(3)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitLocalClassHasRequiredDeclare.ts
 Symbol flags mismatch for "A":
@@ -1400,11 +1328,6 @@ Symbol redeclarations mismatch for "m2":
 after transform: SymbolId(0): [Span { start: 10, end: 12 }, Span { start: 233, end: 235 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationTypecheckNoUseBeforeReferenceCheck.ts
-Unresolved references mismatch:
-after transform: ["Object"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declareDottedExtend.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "D", "E", "ab"]
@@ -1446,11 +1369,6 @@ rebuilt        : SymbolId(1): Span { start: 241, end: 243 }
 Symbol redeclarations mismatch for "m2":
 after transform: SymbolId(0): [Span { start: 10, end: 12 }, Span { start: 241, end: 243 }]
 rebuilt        : SymbolId(1): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataNoStrictNull.ts
-Unresolved reference IDs mismatch for "String":
-after transform: [ReferenceId(5), ReferenceId(10)]
-rebuilt        : [ReferenceId(14)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataPromise.ts
 Reference flags mismatch for "Promise":
@@ -1556,11 +1474,6 @@ Symbol flags mismatch for "EnumTypeNode":
 after transform: SymbolId(10): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/discriminateWithOptionalProperty3.ts
-Unresolved references mismatch:
-after transform: ["Error", "getVariableValues"]
-rebuilt        : ["getVariableValues"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/discriminatedUnionJsxElement.tsx
 Bindings mismatch:
 after transform: ScopeId(4): ["Avatar", "ListItemVariant", "OneLine"]
@@ -1576,9 +1489,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/dottedModuleName2
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(10), ReferenceId(11), ReferenceId(28), ReferenceId(29)]
-rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(6), ReferenceId(15), ReferenceId(25), ReferenceId(26)]
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 174, end: 175 }]
 rebuilt        : SymbolId(0): []
@@ -2169,20 +2079,9 @@ rebuilt        : ScopeId(0): ["Foo", "_accessor_accessor_storage2", "_assertClas
 Bindings mismatch:
 after transform: ScopeId(3): []
 rebuilt        : ScopeId(3): ["_class"]
-Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(16): [ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(22), ReferenceId(23)]
-rebuilt        : SymbolId(2): []
-Symbol reference IDs mismatch for "dec":
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4)]
-rebuilt        : SymbolId(6): []
 Symbol scope ID mismatch for "_class":
 after transform: SymbolId(8): ScopeId(0)
 rebuilt        : SymbolId(14): ScopeId(3)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/esNextWeakRefs_IterableWeakMap.ts
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(8), ReferenceId(74), ReferenceId(88), ReferenceId(91)]
-rebuilt        : [ReferenceId(93), ReferenceId(96)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/expandoFunctionNestedAssigmentsDeclared.ts
 Symbol flags mismatch for "Foo":
@@ -2361,11 +2260,6 @@ Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/forwardRefInTypeDeclaration.ts
-Symbol reference IDs mismatch for "s5":
-after transform: SymbolId(9): [ReferenceId(4)]
-rebuilt        : SymbolId(5): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionDeclarationWithResolutionOfTypeOfSameName01.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -2413,16 +2307,6 @@ rebuilt        : SymbolId(0): Span { start: 9, end: 11 }
 Symbol redeclarations mismatch for "fn":
 after transform: SymbolId(0): [Span { start: 9, end: 11 }, Span { start: 45, end: 47 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericCallAtYieldExpressionInGenericCall2.ts
-Unresolved references mismatch:
-after transform: ["Symbol", "fn", "offer"]
-rebuilt        : ["fn", "offer"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericCallAtYieldExpressionInGenericCall3.ts
-Unresolved references mismatch:
-after transform: ["Symbol", "gen", "runPromise", "traverse"]
-rebuilt        : ["gen", "runPromise", "traverse"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericClassPropertyInheritanceSpecialization.ts
 Bindings mismatch:
@@ -2483,11 +2367,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importAndVariableDeclarationConflict2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifierInAmbientContext.ts
-Unresolved references mismatch:
-after transform: ["x"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importElisionEnum.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["MyEnum", "a", "b", "c", "d"]
@@ -2520,18 +2399,12 @@ rebuilt        : ["Array"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importInTypePosition.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(8), ReferenceId(9)]
-rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importOnAliasedIdentifiers.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Bindings mismatch:
 after transform: ScopeId(1): ["_A"]
 rebuilt        : ScopeId(1): ["X", "_A"]
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(5), ReferenceId(6)]
-rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 Symbol flags mismatch for "X":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | Interface)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
@@ -2657,24 +2530,15 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasInterface.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Unresolved references mismatch:
-after transform: ["a"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Unresolved references mismatch:
-after transform: ["a"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModuleInsideLocalModuleWithExport.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModuleInsideLocalModuleWithoutExport.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Unresolved references mismatch:
-after transform: ["a"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasVar.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -2688,14 +2552,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Symbol redeclarations mismatch for "a":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 50, end: 51 }]
 rebuilt        : SymbolId(0): []
-Unresolved references mismatch:
-after transform: ["b"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalImportUnInstantiatedModuleNotReferencingInstanceNoConflict.ts
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(3): [ReferenceId(0)]
-rebuilt        : SymbolId(2): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/intersectionTypeNormalization.ts
 Bindings mismatch:
@@ -2759,11 +2615,6 @@ Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesShadowGlobalTypeNotValue.ts
-Unresolved references mismatch:
-after transform: ["globalThis"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesSketchyAliasLocalMerge.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -2778,11 +2629,6 @@ Symbol redeclarations mismatch for "FC":
 after transform: SymbolId(0): [Span { start: 9, end: 11 }, Span { start: 34, end: 36 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/iterableTReturnTNext.ts
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(10), ReferenceId(19)]
-rebuilt        : [ReferenceId(17)]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsdocAccessEnumType.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
@@ -2793,11 +2639,6 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxComplexSignatureHasApplicabilityError.tsx
-Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(44), ReferenceId(242)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxElementsAsIdentifierNames.tsx
 Bindings mismatch:
@@ -2902,9 +2743,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "E":
 after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 33, end: 34 }]
 rebuilt        : SymbolId(0): []
-Unresolved references mismatch:
-after transform: ["a"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedModuleDeclarationCodeGen.ts
 Symbol redeclarations mismatch for "X":
@@ -2957,17 +2795,6 @@ rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(5): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
-after transform: ["Boolean", "Number", "Object", "String", "require"]
-rebuilt        : ["Boolean", "Number", "Object", "require"]
-Unresolved reference IDs mismatch for "Boolean":
-after transform: [ReferenceId(22), ReferenceId(23), ReferenceId(28)]
-rebuilt        : [ReferenceId(14)]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/metadataOfUnionWithNull.ts
-Unresolved references mismatch:
-after transform: ["Boolean", "Object", "String", "Symbol", "require"]
-rebuilt        : ["Boolean", "Object", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/missingTypeArguments3.ts
 Bindings mismatch:
@@ -3023,14 +2850,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["Q"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleAliasInterface.ts
-Symbol reference IDs mismatch for "_modes":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(16), ReferenceId(17)]
-rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
-Symbol reference IDs mismatch for "A1":
-after transform: SymbolId(21): [ReferenceId(11), ReferenceId(28), ReferenceId(29)]
-rebuilt        : SymbolId(22): [ReferenceId(14), ReferenceId(15)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleAndInterfaceSharingName4.ts
 Bindings mismatch:
@@ -3120,11 +2939,6 @@ Symbol redeclarations mismatch for "M":
 after transform: SymbolId(5): [Span { start: 101, end: 102 }, Span { start: 118, end: 119 }]
 rebuilt        : SymbolId(9): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt6.ts
-Symbol reference IDs mismatch for "Z":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7), ReferenceId(8)]
-rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7)]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleUnassignedVariable.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -3201,9 +3015,6 @@ after transform: SymbolId(14): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/noCircularDefinitionOnExportOfPrivateInMergedNamespace.ts
-Symbol reference IDs mismatch for "cat":
-after transform: SymbolId(0): [ReferenceId(1)]
-rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(1): SymbolFlags(Class | ValueModule | Ambient)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
@@ -3389,9 +3200,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Symbol reference IDs mismatch for "glo_M1_public":
-after transform: SymbolId(31): [ReferenceId(31), ReferenceId(44), ReferenceId(45), ReferenceId(81), ReferenceId(82)]
-rebuilt        : SymbolId(34): [ReferenceId(61), ReferenceId(62)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyImport.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -3478,9 +3286,6 @@ rebuilt        : SymbolId(13): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/qualifiedName_ImportDeclarations-entity-names-referencing-a-var.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Symbol reference IDs mismatch for "Alpha":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4)]
-rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite.ts
 Bindings mismatch:
@@ -3544,9 +3349,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/reservedNameOnMod
 Bindings mismatch:
 after transform: ScopeId(0): ["test"]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["mstring"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/resolveInterfaceNameWithSameLetDeclarationName1.ts
 Bindings mismatch:
@@ -3659,14 +3461,6 @@ Symbol scope ID mismatch for "_Class3":
 after transform: SymbolId(18): ScopeId(4)
 rebuilt        : SymbolId(3): ScopeId(0)
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/staticInitializersAndLegacyClassDecorators.ts
-Symbol reference IDs mismatch for "C1":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(5), ReferenceId(7), ReferenceId(9)]
-rebuilt        : SymbolId(4): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
-Symbol reference IDs mismatch for "C2":
-after transform: SymbolId(2): [ReferenceId(3), ReferenceId(13), ReferenceId(15)]
-rebuilt        : SymbolId(6): [ReferenceId(13), ReferenceId(17)]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/strictModeEnumMemberNameReserved.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["E", "static"]
@@ -3709,11 +3503,6 @@ Symbol redeclarations mismatch for "X":
 after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 35, end: 36 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/templateLiteralsAndDecoratorMetadata.ts
-Unresolved reference IDs mismatch for "String":
-after transform: [ReferenceId(2), ReferenceId(3)]
-rebuilt        : [ReferenceId(4)]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/topLevel.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -3749,11 +3538,6 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "SomeEnum":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxReactPropsInferenceSucceedsOnIntersections.tsx
-Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(3), ReferenceId(14)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeAliasFunctionTypeSharedSymbol.ts
 Bindings mismatch:
@@ -3834,9 +3618,6 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "E":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(6)]
-rebuilt        : SymbolId(0): [ReferenceId(5)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/underscoreMapFirst.ts
 Bindings mismatch:
@@ -4109,21 +3890,6 @@ Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/leaveOptionalParameterAsWritten.ts
-Symbol reference IDs mismatch for "a":
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/parameter/decoratorOnClassConstructorParameter5.ts
-Symbol reference IDs mismatch for "BulkEditPreviewProvider":
-after transform: SymbolId(1): [ReferenceId(0), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14)]
-rebuilt        : SymbolId(5): [ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(18)]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedClassExportsCommonJS1.ts
-Symbol reference IDs mismatch for "Testing123":
-after transform: SymbolId(3): [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(13)]
-rebuilt        : SymbolId(3): [ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod19.ts
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
@@ -4137,14 +3903,6 @@ rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(6): Some(ScopeId(4))
 rebuilt        : ScopeId(8): Some(ScopeId(0))
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorInAmbientContext.ts
-Symbol reference IDs mismatch for "_b":
-after transform: SymbolId(7): [ReferenceId(11), ReferenceId(12)]
-rebuilt        : SymbolId(2): [ReferenceId(13)]
-Symbol reference IDs mismatch for "b":
-after transform: SymbolId(3): [ReferenceId(3)]
-rebuilt        : SymbolId(3): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/legacyDecorators-contextualTypes.ts
 Scope flags mismatch:
@@ -4536,9 +4294,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "Animals":
 after transform: SymbolId(0): [Span { start: 12, end: 19 }, Span { start: 45, end: 52 }, Span { start: 78, end: 85 }]
 rebuilt        : SymbolId(0): []
-Unresolved references mismatch:
-after transform: ["Cat", "Dog"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumMerging.ts
 Bindings mismatch:
@@ -4653,43 +4408,8 @@ Symbol flags mismatch for "Color":
 after transform: SymbolId(49): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(37): SymbolFlags(BlockScopedVariable)
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolDeclarationEmit3.ts
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
-rebuilt        : [ReferenceId(0)]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolDeclarationEmit5.ts
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty20.ts
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(1), ReferenceId(3), ReferenceId(5)]
-rebuilt        : [ReferenceId(0), ReferenceId(2)]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty22.ts
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(0), ReferenceId(9)]
-rebuilt        : [ReferenceId(1)]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty40.ts
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(6), ReferenceId(8)]
-rebuilt        : [ReferenceId(0), ReferenceId(4), ReferenceId(6)]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty41.ts
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(6), ReferenceId(8)]
-rebuilt        : [ReferenceId(0), ReferenceId(4), ReferenceId(6)]
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty49.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty8.ts
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames47_ES6.ts
 Bindings mismatch:
@@ -4722,11 +4442,6 @@ Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNamesOnOverloads_ES6.ts
-Symbol reference IDs mismatch for "methodName":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/accessor/decoratorOnClassAccessor1.es6.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["_decorate", "_decorateMetadata"]
@@ -4737,21 +4452,6 @@ rebuilt        : ScopeId(1): []
 Symbol scope ID mismatch for "_default":
 after transform: SymbolId(6): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass5.es6.ts
-Symbol reference IDs mismatch for "C":
-after transform: SymbolId(3): [ReferenceId(3), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
-rebuilt        : SymbolId(3): [ReferenceId(5), ReferenceId(6), ReferenceId(10), ReferenceId(11)]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass6.es6.ts
-Symbol reference IDs mismatch for "C":
-after transform: SymbolId(3): [ReferenceId(3), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(13)]
-rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(9), ReferenceId(10)]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass7.es6.ts
-Symbol reference IDs mismatch for "C":
-after transform: SymbolId(3): [ReferenceId(3), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(13)]
-rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(9), ReferenceId(10)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass8.es6.ts
 Bindings mismatch:
@@ -5022,9 +4722,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/c
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage", "_z_accessor_storage2"]
 rebuilt        : ScopeId(0): ["C", "_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage2"]
-Symbol reference IDs mismatch for "C":
-after transform: SymbolId(1): [ReferenceId(80), ReferenceId(86), ReferenceId(33), ReferenceId(38), ReferenceId(44), ReferenceId(48), ReferenceId(54), ReferenceId(56), ReferenceId(59), ReferenceId(65), ReferenceId(70), ReferenceId(76), ReferenceId(91), ReferenceId(93)]
-rebuilt        : SymbolId(6): [ReferenceId(26), ReferenceId(33), ReferenceId(41), ReferenceId(47), ReferenceId(54), ReferenceId(62), ReferenceId(69), ReferenceId(77), ReferenceId(83), ReferenceId(90), ReferenceId(91), ReferenceId(96)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commonjs-classNamespaceMerge.ts
 Symbol redeclarations mismatch for "Example":
@@ -5043,9 +4740,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/c
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage", "_z_accessor_storage2"]
 rebuilt        : ScopeId(0): ["C", "_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage2"]
-Symbol reference IDs mismatch for "C":
-after transform: SymbolId(1): [ReferenceId(80), ReferenceId(86), ReferenceId(33), ReferenceId(38), ReferenceId(44), ReferenceId(48), ReferenceId(54), ReferenceId(56), ReferenceId(59), ReferenceId(65), ReferenceId(70), ReferenceId(76), ReferenceId(91), ReferenceId(93)]
-rebuilt        : SymbolId(6): [ReferenceId(26), ReferenceId(33), ReferenceId(41), ReferenceId(47), ReferenceId(54), ReferenceId(62), ReferenceId(69), ReferenceId(77), ReferenceId(83), ReferenceId(90), ReferenceId(91), ReferenceId(96)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticAccessor.ts
 Symbol reference IDs mismatch for "D":
@@ -5084,100 +4778,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/c
 Bindings mismatch:
 after transform: ScopeId(0): ["_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage", "_z_accessor_storage2"]
 rebuilt        : ScopeId(0): ["_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage2"]
-Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(17): [ReferenceId(30), ReferenceId(31), ReferenceId(32), ReferenceId(34), ReferenceId(35), ReferenceId(38), ReferenceId(39), ReferenceId(41), ReferenceId(43), ReferenceId(44), ReferenceId(52), ReferenceId(53), ReferenceId(54), ReferenceId(56), ReferenceId(57), ReferenceId(60), ReferenceId(61), ReferenceId(63), ReferenceId(65), ReferenceId(66)]
-rebuilt        : SymbolId(2): []
-Unresolved references mismatch:
-after transform: ["Function", "Number", "Object", "dec", "require"]
-rebuilt        : ["dec", "require"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.1.ts
-Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(3): [ReferenceId(18), ReferenceId(23), ReferenceId(28), ReferenceId(39)]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["Object", "dec", "require"]
-rebuilt        : ["dec", "require"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.10.ts
-Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(21): [ReferenceId(40), ReferenceId(45), ReferenceId(50), ReferenceId(55), ReferenceId(60), ReferenceId(69), ReferenceId(74), ReferenceId(78)]
-rebuilt        : SymbolId(1): [ReferenceId(62)]
-Unresolved reference IDs mismatch for "Object":
-after transform: [ReferenceId(39), ReferenceId(44), ReferenceId(49), ReferenceId(54), ReferenceId(59), ReferenceId(68), ReferenceId(73), ReferenceId(77)]
-rebuilt        : [ReferenceId(63)]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.11.ts
-Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(4): [ReferenceId(6), ReferenceId(9)]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["Object", "dec", "require"]
-rebuilt        : ["dec", "require"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.2.ts
-Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(4): [ReferenceId(19), ReferenceId(22), ReferenceId(25), ReferenceId(28), ReferenceId(31), ReferenceId(34)]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["Object", "dec", "require"]
-rebuilt        : ["dec", "require"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.3.ts
-Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(8): [ReferenceId(8), ReferenceId(11), ReferenceId(14)]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["Object", "dec", "require"]
-rebuilt        : ["dec", "require"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.4.ts
-Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(9): [ReferenceId(14), ReferenceId(17), ReferenceId(20)]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["Object", "dec", "obj", "require"]
-rebuilt        : ["dec", "obj", "require"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.5.ts
-Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(4): [ReferenceId(8)]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["Object", "dec", "obj", "require", "x"]
-rebuilt        : ["dec", "obj", "require", "x"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.6.ts
-Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(4): [ReferenceId(8)]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["Object", "dec", "obj", "require", "x"]
-rebuilt        : ["dec", "obj", "require", "x"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.7.ts
-Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(4): [ReferenceId(8)]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["Object", "dec", "obj", "require", "x"]
-rebuilt        : ["dec", "obj", "require", "x"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.8.ts
-Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(2): [ReferenceId(3)]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["Object"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.9.ts
-Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(2): [ReferenceId(4)]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["Object", "module"]
-rebuilt        : ["module"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-contextualTypes.ts
 Bindings mismatch:
@@ -5339,11 +4939,6 @@ Symbol flags mismatch for "E":
 after transform: SymbolId(2): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithRHSHasSymbolHasInstance.ts
-Unresolved references mismatch:
-after transform: ["A", "B", "Rhs10", "Rhs11", "Rhs12", "Rhs13", "Rhs7", "Rhs8", "Rhs9", "Symbol", "lhs0", "lhs1", "lhs2", "lhs3", "lhs4", "obj", "rhs0", "rhs1", "rhs14", "rhs15", "rhs2", "rhs3", "rhs4", "rhs5", "rhs6"]
-rebuilt        : ["A", "B", "Rhs10", "Rhs11", "Rhs12", "Rhs13", "Rhs7", "Rhs8", "Rhs9", "lhs0", "lhs1", "lhs2", "lhs3", "lhs4", "obj", "rhs0", "rhs1", "rhs14", "rhs15", "rhs2", "rhs3", "rhs4", "rhs5", "rhs6"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/functionExpressionContextualTyping1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["E", "blue", "red"]
@@ -5500,14 +5095,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModule
 Bindings mismatch:
 after transform: ScopeId(0): ["ns"]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["A"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/cjsImportInES2015.ts
-Unresolved references mismatch:
-after transform: ["Error"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration.ts
 Reference symbol mismatch for "A":
@@ -5722,9 +5309,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/codeGeneration/importStatements.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(5), ReferenceId(7), ReferenceId(14), ReferenceId(15)]
-rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(10), ReferenceId(14)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithAccessibleTypesInTypeParameterConstraintsClassHeritageListMemberTypeAnnotations.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -5796,7 +5380,7 @@ Reference symbol mismatch for "mod2":
 after transform: SymbolId(7) "mod2"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["mod1"]
+after transform: []
 rebuilt        : ["mod2", "pack2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocLinkTag9.ts
@@ -5876,16 +5460,6 @@ Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["A", "require"]
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactComponentWithDefaultTypeParameter1.tsx
-Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(1)]
-rebuilt        : SymbolId(2): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactComponentWithDefaultTypeParameter2.tsx
-Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(1)]
-rebuilt        : SymbolId(2): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit2.tsx
 Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "_jsxFileName", "_objectSpread", "p1", "p2", "p3", "spreads1", "spreads2", "spreads3", "spreads4", "spreads5"]
@@ -5910,16 +5484,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEm
 Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "_jsxFileName"]
 rebuilt        : ScopeId(0): ["_jsxFileName"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFileForHtmlFileWithinDeclarationFile.ts
-Unresolved references mismatch:
-after transform: ["HTMLElement"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFileForHtmlImport.ts
-Unresolved references mismatch:
-after transform: ["HTMLElement"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnum1.ts
 Bindings mismatch:
@@ -6043,26 +5607,6 @@ rebuilt        : ScopeId(1): []
 Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(1)
 rebuilt        : SymbolId(0): ScopeId(0)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Symbols/parserSymbolProperty2.ts
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Symbols/parserSymbolProperty3.ts
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Symbols/parserSymbolProperty4.ts
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Symbols/parserSymbolProperty8.ts
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerEnum1.ts
 Bindings mismatch:
