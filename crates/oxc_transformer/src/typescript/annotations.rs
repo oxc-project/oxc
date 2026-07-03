@@ -738,6 +738,10 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let symbol_id = ident.symbol_id();
+        if Self::preserve_non_ambient_value_redeclaration(symbol_id, ctx) {
+            return;
+        }
+
         let flags = ctx.scoping().symbol_flags(symbol_id);
         if flags.is_value()
             && !flags.is_ambient()
@@ -750,6 +754,30 @@ impl<'a> TypeScriptAnnotations<'a> {
         let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
         ctx.scoping_mut().remove_binding(scope_id, ident.name);
         ctx.state.removed_ambient_bindings.push((ident.name, symbol_id));
+    }
+
+    fn preserve_non_ambient_value_redeclaration(
+        symbol_id: SymbolId,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
+        let non_ambient_value_redeclaration = ctx
+            .scoping()
+            .symbol_redeclarations(symbol_id)
+            .iter()
+            .find(|redeclaration| {
+                redeclaration.flags.intersects(SymbolFlags::Class | SymbolFlags::Function)
+                    && !redeclaration.flags.is_ambient()
+            })
+            .map(|redeclaration| (redeclaration.span, redeclaration.flags));
+
+        let Some((span, flags)) = non_ambient_value_redeclaration else {
+            return false;
+        };
+
+        *ctx.scoping_mut().symbol_flags_mut(symbol_id) = flags;
+        ctx.scoping_mut().set_symbol_span(symbol_id, span);
+        ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
+        true
     }
 
     /// Check if the given name is a JSX pragma or fragment pragma import

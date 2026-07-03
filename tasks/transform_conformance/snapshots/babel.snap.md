@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 770/1165
+Passed: 772/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (118/157)
+# babel-plugin-transform-typescript (120/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1174,61 +1174,6 @@ x Output mismatch
 
 * enum/ts5.0-const-foldable/input.ts
 x Output mismatch
-
-* exports/declare-namespace/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["N"]
-Symbol flags mismatch for "N":
-after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule | Ambient)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol reference IDs mismatch for "N":
-after transform: SymbolId(0): []
-rebuilt        : SymbolId(0): [ReferenceId(1)]
-Symbol redeclarations mismatch for "N":
-after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 83, end: 84 }]
-rebuilt        : SymbolId(0): []
-Reference symbol mismatch for "N":
-after transform: <None>
-rebuilt        : SymbolId(0) "N"
-Unresolved references mismatch:
-after transform: ["N"]
-rebuilt        : []
-
-* exports/declare-shadowed/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["Signal", "Signal2"]
-Symbol flags mismatch for "Signal":
-after transform: SymbolId(0): SymbolFlags(Class | Function | Ambient)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol span mismatch for "Signal":
-after transform: SymbolId(0): Span { start: 14, end: 20 }
-rebuilt        : SymbolId(0): Span { start: 54, end: 60 }
-Symbol reference IDs mismatch for "Signal":
-after transform: SymbolId(0): []
-rebuilt        : SymbolId(0): [ReferenceId(1)]
-Symbol redeclarations mismatch for "Signal":
-after transform: SymbolId(0): [Span { start: 14, end: 20 }, Span { start: 54, end: 60 }]
-rebuilt        : SymbolId(0): []
-Symbol flags mismatch for "Signal2":
-after transform: SymbolId(3): SymbolFlags(Class | Function | Ambient)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-Symbol reference IDs mismatch for "Signal2":
-after transform: SymbolId(3): []
-rebuilt        : SymbolId(2): [ReferenceId(3)]
-Symbol redeclarations mismatch for "Signal2":
-after transform: SymbolId(3): [Span { start: 147, end: 154 }, Span { start: 225, end: 232 }]
-rebuilt        : SymbolId(2): []
-Reference symbol mismatch for "Signal":
-after transform: <None>
-rebuilt        : SymbolId(0) "Signal"
-Reference symbol mismatch for "Signal2":
-after transform: <None>
-rebuilt        : SymbolId(2) "Signal2"
-Unresolved references mismatch:
-after transform: ["Signal", "Signal2"]
-rebuilt        : []
 
 * exports/declared-types/input.ts
 Symbol redeclarations mismatch for "BB":

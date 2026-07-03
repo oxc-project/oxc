@@ -2,21 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4430/4720 (93.86%)
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientClassOverloadForFunction.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["foo"]
-Symbol flags mismatch for "foo":
-after transform: SymbolId(0): SymbolFlags(Class | Function | Ambient)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol span mismatch for "foo":
-after transform: SymbolId(0): Span { start: 14, end: 17 }
-rebuilt        : SymbolId(0): Span { start: 30, end: 33 }
-Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 14, end: 17 }, Span { start: 30, end: 33 }]
-rebuilt        : SymbolId(0): []
-
+Positive Passed: 4432/4720 (93.90%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -531,38 +517,6 @@ rebuilt        : SymbolId(11): []
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitImportInExportAssignmentModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitLocalClassHasRequiredDeclare.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["X", "_defineProperty"]
-rebuilt        : ScopeId(0): ["A", "X", "Y", "_defineProperty"]
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule | Ambient)
-rebuilt        : SymbolId(2): SymbolFlags(Class)
-Symbol span mismatch for "A":
-after transform: SymbolId(0): Span { start: 25, end: 26 }
-rebuilt        : SymbolId(2): Span { start: 78, end: 79 }
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): []
-rebuilt        : SymbolId(2): [ReferenceId(1)]
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 25, end: 26 }, Span { start: 78, end: 79 }]
-rebuilt        : SymbolId(2): []
-Symbol flags mismatch for "Y":
-after transform: SymbolId(3): SymbolFlags(Class | NamespaceModule | Ambient)
-rebuilt        : SymbolId(3): SymbolFlags(Class)
-Symbol span mismatch for "Y":
-after transform: SymbolId(3): Span { start: 128, end: 129 }
-rebuilt        : SymbolId(3): Span { start: 149, end: 150 }
-Symbol redeclarations mismatch for "Y":
-after transform: SymbolId(3): [Span { start: 128, end: 129 }, Span { start: 149, end: 150 }]
-rebuilt        : SymbolId(3): []
-Reference symbol mismatch for "A":
-after transform: <None>
-rebuilt        : SymbolId(2) "A"
-Unresolved references mismatch:
-after transform: ["A"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypePreservesTypeParameterConstraint.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["buildSchema"]
@@ -993,18 +947,9 @@ after transform: ["module"]
 rebuilt        : ["X", "module"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportRedeclarationTypeAliases.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["Foo"]
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(Function | TypeAlias)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "Foo":
-after transform: SymbolId(0): Span { start: 12, end: 15 }
+after transform: SymbolId(0): Span { start: 42, end: 45 }
 rebuilt        : SymbolId(0): Span { start: 73, end: 76 }
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 42, end: 45 }, Span { start: 73, end: 76 }]
-rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/extBaseClass1.ts
 Symbol redeclarations mismatch for "M":
@@ -1825,21 +1770,12 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedInterfacein
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedLocalsAndParametersOverloadSignatures.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C"]
-rebuilt        : ScopeId(0): ["C", "func", "genericFunc"]
 Symbol span mismatch for "func":
 after transform: SymbolId(0): Span { start: 16, end: 20 }
 rebuilt        : SymbolId(0): Span { start: 94, end: 98 }
-Symbol redeclarations mismatch for "func":
-after transform: SymbolId(0): [Span { start: 16, end: 20 }, Span { start: 94, end: 98 }]
-rebuilt        : SymbolId(0): []
 Symbol span mismatch for "genericFunc":
 after transform: SymbolId(17): Span { start: 523, end: 534 }
 rebuilt        : SymbolId(8): Span { start: 606, end: 617 }
-Symbol redeclarations mismatch for "genericFunc":
-after transform: SymbolId(17): [Span { start: 523, end: 534 }, Span { start: 606, end: 617 }]
-rebuilt        : SymbolId(8): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/usingModuleWithExportImportInValuePosition.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
