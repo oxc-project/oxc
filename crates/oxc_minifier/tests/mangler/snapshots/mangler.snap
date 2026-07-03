@@ -150,8 +150,8 @@ function _() {
 	var e;
 	try {
 		throw 0;
-	} catch (t) {
-		var t;
+	} catch (e) {
+		var e;
 	}
 }
 

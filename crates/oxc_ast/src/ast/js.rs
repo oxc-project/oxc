@@ -1854,6 +1854,7 @@ pub struct FormalParameterRest<'a> {
 
 /// <https://tc39.es/ecma262/#prod-FunctionBody>
 #[ast(visit)]
+#[scope(flags = ScopeFlags::FunctionBody, optional)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "BlockStatement")]
@@ -1864,6 +1865,12 @@ pub struct FunctionBody<'a> {
     pub directives: Vec<'a, Directive<'a>>,
     #[estree(rename = "body")]
     pub statements: Vec<'a, Statement<'a>>,
+    /// The body's own var environment, present only when the function's
+    /// parameters contain expressions (`hasParameterExpressions` in the spec).
+    /// `None` for the common simple-parameter case, where the body shares the
+    /// function's scope.
+    #[estree(skip)]
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 /// Arrow Function Definitions

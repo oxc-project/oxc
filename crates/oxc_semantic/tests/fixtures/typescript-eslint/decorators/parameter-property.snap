@@ -15,7 +15,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/para
       {
         "children": [
           {
-            "children": [],
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode | FunctionBody)",
+                "id": 4,
+                "node": "Function(<anonymous>)",
+                "symbols": []
+              }
+            ],
             "flags": "ScopeFlags(StrictMode | Function | Constructor)",
             "id": 3,
             "node": "Function(<anonymous>)",

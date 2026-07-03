@@ -2,390 +2,390 @@ commit: de8e621c
 
 semantic_test262 Summary:
 AST Parsed     : 47240/47240 (100.00%)
-Positive Passed: 47028/47240 (99.55%)
+Positive Passed: 46640/47240 (98.73%)
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-a-following-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-a-following-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-a-preceding-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-a-preceding-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(Function)
+after transform: ScopeId(6): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-fn-body-cntns-arguments-func-decl-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(Function)
+after transform: ScopeId(6): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-fn-body-cntns-arguments-lex-bind-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-fn-body-cntns-arguments-var-bind-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-no-pre-existing-arguments-bindings-are-present-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-named-a-following-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-named-a-following-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-named-a-preceding-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-named-a-preceding-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-named-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-named-fn-body-cntns-arguments-func-decl-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-named-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-named-fn-body-cntns-arguments-lex-bind-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-named-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-named-fn-body-cntns-arguments-var-bind-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-named-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-named-no-pre-existing-arguments-bindings-are-present-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-nameless-a-preceding-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-expr-nameless-a-preceding-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-decl-a-following-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-decl-a-following-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-decl-a-preceding-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-decl-a-preceding-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-func-decl-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-lex-bind-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-var-bind-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-decl-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-decl-no-pre-existing-arguments-bindings-are-present-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-expr-a-preceding-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-func-expr-a-preceding-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-meth-a-following-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-meth-a-following-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-meth-a-preceding-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-meth-a-preceding-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-func-decl-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-lex-bind-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-var-bind-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-meth-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-meth-no-pre-existing-arguments-bindings-are-present-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-named-func-expr-a-following-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-named-func-expr-a-following-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-named-func-expr-a-preceding-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-named-func-expr-a-preceding-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-func-decl-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-lex-bind-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-var-bind-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-named-func-expr-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-gen-named-func-expr-no-pre-existing-arguments-bindings-are-present-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-meth-a-following-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-meth-a-following-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-meth-a-preceding-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-meth-a-preceding-parameter-is-named-arguments-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-meth-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-meth-fn-body-cntns-arguments-func-decl-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-meth-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-meth-fn-body-cntns-arguments-lex-bind-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-meth-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-meth-fn-body-cntns-arguments-var-bind-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-meth-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-meth-no-pre-existing-arguments-bindings-are-present-declare-arguments.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/async-function/named-eval-var-scope-syntax-err.js
 Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(Function)
+after transform: ScopeId(6): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/async-function/named-reassign-fn-name-in-body-in-eval.js
@@ -400,7 +400,7 @@ rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/async-generator/named-eval-var-scope-syntax-err.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/async-generator/named-no-strict-reassign-fn-name-in-body-in-eval.js
@@ -412,6 +412,46 @@ semantic Error: tasks/coverage/test262/test/language/expressions/async-generator
 Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/async-gen-method/dflt-params-arg-val-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/async-gen-method/dflt-params-trailing-comma.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/dflt-params-arg-val-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/dflt-params-trailing-comma.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/async-method/dflt-params-arg-val-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/async-method/dflt-params-trailing-comma.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/async-method-static/dflt-params-arg-val-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/async-method-static/dflt-params-trailing-comma.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/cpn-class-expr-fields-computed-property-name-from-arrow-function-expression.js
 Scope flags mismatch:
@@ -496,6 +536,986 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-ary-elem-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-ary-elem-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-ary-elision-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-ary-elision-iter.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-ary-rest-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-ary-rest-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-exhausted.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-hole.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-undef.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-obj-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-obj-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-obj-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-obj-prop-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-obj-init-null.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-obj-init-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-list-err.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-ary-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-ary-value-null.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-ary.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-eval-err.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-id-get-value-err.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(10))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(4))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(4))
+rebuilt        : ScopeId(7): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(7): Some(ScopeId(4))
+rebuilt        : ScopeId(8): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(8): Some(ScopeId(4))
+rebuilt        : ScopeId(9): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-obj-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-obj-value-null.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-obj-value-undef.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-obj.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-elem-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-elem-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-elision-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-elision-iter.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-empty-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-empty-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-rest-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-rest-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-exhausted.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-hole.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-undef.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-obj-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-obj-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-obj-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-obj-prop-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-obj-init-null.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-obj-init-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-list-err.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-prop-ary-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-prop-ary-value-null.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-prop-ary.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-prop-eval-err.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-prop-id-get-value-err.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-prop-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(10))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(4))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(4))
+rebuilt        : ScopeId(7): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(7): Some(ScopeId(4))
+rebuilt        : ScopeId(8): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(8): Some(ScopeId(4))
+rebuilt        : ScopeId(9): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-prop-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-prop-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-prop-obj-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-prop-obj-value-null.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-prop-obj-value-undef.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-prop-obj.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-elem-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-elem-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-elision-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-elision-iter.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-empty-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-empty-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-rest-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-rest-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-exhausted.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(11))
+rebuilt        : ScopeId(10): Some(ScopeId(9))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-hole.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-undef.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-obj-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-obj-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-obj-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(10))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(8): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(9): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-obj-prop-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(10))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(8): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(9): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(11))
+rebuilt        : ScopeId(10): Some(ScopeId(9))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-prop-ary-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-prop-ary.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-prop-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(12))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(4))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(4))
+rebuilt        : ScopeId(9): Some(ScopeId(7))
+Scope parent mismatch:
+after transform: ScopeId(7): Some(ScopeId(4))
+rebuilt        : ScopeId(10): Some(ScopeId(7))
+Scope parent mismatch:
+after transform: ScopeId(8): Some(ScopeId(4))
+rebuilt        : ScopeId(11): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-prop-obj-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-prop-obj.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-elem-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-elem-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-elision-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-elision-iter.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-empty-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-empty-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-rest-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-rest-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-exhausted.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(10))
+rebuilt        : ScopeId(9): Some(ScopeId(8))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-hole.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-undef.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-obj-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-obj-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-obj-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(8): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-obj-prop-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(8): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(10))
+rebuilt        : ScopeId(9): Some(ScopeId(8))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-prop-ary-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-prop-ary.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-prop-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(11))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(4))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(4))
+rebuilt        : ScopeId(8): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(7): Some(ScopeId(4))
+rebuilt        : ScopeId(9): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(8): Some(ScopeId(4))
+rebuilt        : ScopeId(10): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-prop-obj-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-prop-obj.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-derived-cls-direct-eval-contains-superproperty-1.js
 Scope flags mismatch:
@@ -712,14 +1732,314 @@ Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | DirectEval)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode)
 
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-ary-elem-init.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-ary-elem-iter.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-ary-elision-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-ary-elision-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-iter.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-ary-rest-init.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-ary-rest-iter.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-exhausted.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-hole.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-undef.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-obj-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-obj-id.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-obj-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(7))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(2))
+rebuilt        : ScopeId(5): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(2))
+rebuilt        : ScopeId(6): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-obj-prop-id.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(7))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(2))
+rebuilt        : ScopeId(5): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(2))
+rebuilt        : ScopeId(6): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-dflt-obj-init-null.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-dflt-obj-init-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-list-err.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-prop-ary-init.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(5))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-prop-ary-value-null.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-prop-ary.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(5))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-prop-eval-err.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-prop-id-get-value-err.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-prop-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(7): Some(ScopeId(3))
+rebuilt        : ScopeId(8): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-prop-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-prop-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(5))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-prop-obj-init.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(5))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-prop-obj-value-null.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-prop-obj-value-undef.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-prop-obj.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(5))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(2))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-meth-dflt-params-arg-val-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-meth-dflt-params-trailing-comma.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
 semantic Error: tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-meth-eval-var-scope-syntax-err.js
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
+after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-arg-val-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+semantic Error: tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-trailing-comma.js
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(4))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
 
 semantic Error: tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-eval-var-scope-syntax-err.js
 Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(Function)
+after transform: ScopeId(6): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/module-code/top-level-await/syntax/for-await-await-expr-func-expression.js
@@ -757,13 +2077,53 @@ rebuilt        : ScopeId(29): Some(ScopeId(28))
 
 semantic Error: tasks/coverage/test262/test/language/statements/async-function/eval-var-scope-syntax-err.js
 Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(Function)
+after transform: ScopeId(7): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/statements/async-generator/eval-var-scope-syntax-err.js
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
+after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/async-gen-method/dflt-params-arg-val-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/async-gen-method/dflt-params-trailing-comma.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/async-gen-method-static/dflt-params-arg-val-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/async-gen-method-static/dflt-params-trailing-comma.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/async-method/dflt-params-arg-val-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/async-method/dflt-params-trailing-comma.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/async-method-static/dflt-params-arg-val-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/async-method-static/dflt-params-trailing-comma.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/cpn-class-decl-fields-computed-property-name-from-arrow-function-expression.js
 Scope flags mismatch:
@@ -912,6 +2272,986 @@ rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
 Symbol span mismatch for "C":
 after transform: SymbolId(8): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(9): Span { start: 1739, end: 1740 }
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-ary-elem-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-ary-elem-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-ary-elision-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-ary-elision-iter.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-ary-rest-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-ary-rest-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-exhausted.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-hole.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-undef.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-obj-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-obj-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-obj-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-obj-prop-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-dflt-obj-init-null.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-dflt-obj-init-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-list-err.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-prop-ary-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-prop-ary-value-null.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-prop-ary.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-prop-eval-err.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-prop-id-get-value-err.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-prop-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(10))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(4))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(4))
+rebuilt        : ScopeId(7): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(7): Some(ScopeId(4))
+rebuilt        : ScopeId(8): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(8): Some(ScopeId(4))
+rebuilt        : ScopeId(9): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-prop-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-prop-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-prop-obj-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-prop-obj-value-null.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-prop-obj-value-undef.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-prop-obj.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-elem-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-elem-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-elision-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-elision-iter.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-empty-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-empty-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-rest-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-rest-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-exhausted.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-hole.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-undef.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-obj-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-obj-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-obj-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-obj-prop-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-obj-init-null.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-obj-init-undefined.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-list-err.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-prop-ary-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-prop-ary-value-null.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-prop-ary.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-prop-eval-err.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-prop-id-get-value-err.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-prop-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(10))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(4))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(4))
+rebuilt        : ScopeId(7): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(7): Some(ScopeId(4))
+rebuilt        : ScopeId(8): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(8): Some(ScopeId(4))
+rebuilt        : ScopeId(9): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-prop-id-init-throws.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-prop-id-init-unresolvable.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-prop-obj-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-prop-obj-value-null.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-prop-obj-value-undef.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(5))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-prop-obj.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-elem-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-elem-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-elision-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-elision-iter.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-empty-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-empty-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-rest-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-rest-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-exhausted.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(11))
+rebuilt        : ScopeId(10): Some(ScopeId(9))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-hole.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-undef.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-obj-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-obj-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-obj-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(10))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(8): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(9): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-obj-prop-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(10))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(8): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(9): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(11))
+rebuilt        : ScopeId(10): Some(ScopeId(9))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-prop-ary-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-prop-ary.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-prop-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(12))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(4))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(4))
+rebuilt        : ScopeId(9): Some(ScopeId(7))
+Scope parent mismatch:
+after transform: ScopeId(7): Some(ScopeId(4))
+rebuilt        : ScopeId(10): Some(ScopeId(7))
+Scope parent mismatch:
+after transform: ScopeId(8): Some(ScopeId(4))
+rebuilt        : ScopeId(11): Some(ScopeId(7))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-prop-obj-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-prop-obj.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-elem-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-elem-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-elision-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-elision-iter.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-empty-init.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-empty-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-rest-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-rest-iter.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-exhausted.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(10))
+rebuilt        : ScopeId(9): Some(ScopeId(8))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-hole.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-undef.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-obj-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-obj-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(6))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-obj-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(8): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-obj-prop-id.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(9))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(3))
+rebuilt        : ScopeId(7): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(8): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-arrow.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(10))
+rebuilt        : ScopeId(9): Some(ScopeId(8))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-cover.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-gen.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(8))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(7))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-prop-ary-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-prop-ary.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-prop-id-init-skipped.js
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(11))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(4))
+rebuilt        : ScopeId(7): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(4))
+rebuilt        : ScopeId(8): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(7): Some(ScopeId(4))
+rebuilt        : ScopeId(9): Some(ScopeId(6))
+Scope parent mismatch:
+after transform: ScopeId(8): Some(ScopeId(4))
+rebuilt        : ScopeId(10): Some(ScopeId(6))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-prop-id-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-prop-obj-init.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-prop-obj.js
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(7))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/elements/arrow-body-derived-cls-direct-eval-contains-superproperty-1.js
 Scope flags mismatch:
@@ -1152,6 +3492,17 @@ semantic Error: tasks/coverage/test262/test/language/statements/class/elements/s
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | DirectEval)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode)
+
+semantic Error: tasks/coverage/test262/test/language/statements/class/static-init-arguments-methods.js
+Bindings mismatch:
+after transform: ScopeId(13): ["_arguments", "test262"]
+rebuilt        : ScopeId(10): ["test262"]
+Scope parent mismatch:
+after transform: ScopeId(11): Some(ScopeId(13))
+rebuilt        : ScopeId(12): Some(ScopeId(11))
+Symbol scope ID mismatch for "_arguments":
+after transform: SymbolId(15): ScopeId(13)
+rebuilt        : SymbolId(16): ScopeId(11)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-getter.js
 Scope parent mismatch:

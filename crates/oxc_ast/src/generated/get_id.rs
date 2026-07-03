@@ -1360,6 +1360,23 @@ impl FunctionBody<'_> {
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
     }
+
+    /// Get [`ScopeId`] of [`FunctionBody`].
+    ///
+    /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
+    ///
+    /// # Panics
+    /// Panics if `scope_id` is [`None`].
+    #[inline]
+    pub fn scope_id(&self) -> ScopeId {
+        self.scope_id.get().unwrap()
+    }
+
+    /// Set [`ScopeId`] of [`FunctionBody`].
+    #[inline]
+    pub fn set_scope_id(&self, scope_id: ScopeId) {
+        self.scope_id.set(Some(scope_id));
+    }
 }
 
 impl ArrowFunctionExpression<'_> {

@@ -189,6 +189,14 @@ impl<'a> Binder<'a> for Function<'a> {
                     .find(|&id| builder.scoping.scope_flags(id).is_var());
                 if let Some(var_scope_id) = var_scope_id
                     && !builder.scoping.scope_has_binding(var_scope_id, ident.name)
+                    // Annex B skips the extension when the name is bound by a
+                    // parameter. With a `FunctionBody` scope, parameters live in
+                    // the parent function scope.
+                    && !(builder.scoping.scope_flags(var_scope_id).is_function_body()
+                        && builder
+                            .scoping
+                            .scope_parent_id(var_scope_id)
+                            .is_some_and(|p| builder.scoping.scope_has_binding(p, ident.name)))
                 {
                     builder.scoping.move_binding_by_symbol_id(
                         block_scope_id,

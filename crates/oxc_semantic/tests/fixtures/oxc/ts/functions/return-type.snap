@@ -31,7 +31,15 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/return-type.ts
             "id": 2,
             "name": "T",
             "node": "TSTypeAliasDeclaration",
-            "references": []
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 0,
+                "name": "T",
+                "node_id": 10,
+                "scope_id": 2
+              }
+            ]
           }
         ]
       },
@@ -54,7 +62,15 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/return-type.ts
             "id": 4,
             "name": "T",
             "node": "TSTypeAliasDeclaration",
-            "references": []
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 1,
+                "name": "T",
+                "node_id": 24,
+                "scope_id": 4
+              }
+            ]
           }
         ]
       }
@@ -68,22 +84,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/return-type.ts
         "id": 0,
         "name": "T",
         "node": "TSTypeAliasDeclaration",
-        "references": [
-          {
-            "flags": "ReferenceFlags(Type)",
-            "id": 0,
-            "name": "T",
-            "node_id": 10,
-            "scope_id": 2
-          },
-          {
-            "flags": "ReferenceFlags(Type)",
-            "id": 1,
-            "name": "T",
-            "node_id": 24,
-            "scope_id": 4
-          }
-        ]
+        "references": []
       },
       {
         "flags": "SymbolFlags(Function)",

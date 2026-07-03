@@ -21,21 +21,6 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
             "node": "BlockStatement",
             "symbols": [
               {
-                "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                "id": 0,
-                "name": "e",
-                "node": "CatchParameter",
-                "references": [
-                  {
-                    "flags": "ReferenceFlags(Read)",
-                    "id": 0,
-                    "name": "e",
-                    "node_id": 8,
-                    "scope_id": 3
-                  }
-                ]
-              },
-              {
                 "flags": "SymbolFlags(BlockScopedVariable)",
                 "id": 1,
                 "name": "a",
@@ -48,7 +33,23 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
         "flags": "ScopeFlags(CatchClause)",
         "id": 2,
         "node": "CatchClause",
-        "symbols": []
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+            "id": 0,
+            "name": "e",
+            "node": "CatchParameter",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 0,
+                "name": "e",
+                "node_id": 8,
+                "scope_id": 3
+              }
+            ]
+          }
+        ]
       }
     ],
     "flags": "ScopeFlags(Top)",

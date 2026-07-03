@@ -1253,6 +1253,7 @@ impl<'a> Dummy<'a> for FunctionBody<'a> {
             span: Dummy::dummy(allocator),
             directives: Dummy::dummy(allocator),
             statements: Dummy::dummy(allocator),
+            scope_id: Dummy::dummy(allocator),
         }
     }
 }

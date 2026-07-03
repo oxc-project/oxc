@@ -13,7 +13,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-annotation
         "symbols": []
       },
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(FunctionBody)",
+            "id": 3,
+            "node": "Function(foo)",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(Function)",
         "id": 2,
         "node": "Function(foo)",
