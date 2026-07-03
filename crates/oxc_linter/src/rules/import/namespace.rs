@@ -319,10 +319,6 @@ fn check_deep_namespace_for_object_pattern(
         if let BindingPattern::ObjectPattern(pattern) = &property.value
             && let Some(module_source) = get_module_request_name(&name, module)
         {
-            // The request resolves to a name in `module`'s export entries, but the remote
-            // module may itself be unresolvable (e.g. re-exporting an external/missing module),
-            // in which case it is absent from `loaded_modules`. Skip rather than unwrap-panic,
-            // mirroring `check_deep_namespace_for_node`'s `?` handling.
             let Some(next_module) = module.get_loaded_module(module_source.as_str()) else {
                 continue;
             };
