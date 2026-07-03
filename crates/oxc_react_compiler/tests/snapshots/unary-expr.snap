@@ -5,21 +5,22 @@ input_file: crates/oxc_react_compiler/fixtures/unary-expr.js
 import { c as _c } from "react/compiler-runtime";
 // @enablePreserveExistingMemoizationGuarantees:false
 function component(a) {
-	const $ = _c(7);
+	const $ = _c(8);
 	const t = { t: a };
 	const z = +t.t;
 	const q = -t.t;
 	const p = void t.t;
+	const n = delete t.t;
 	const m = !t.t;
 	const e = ~t.t;
 	const f = typeof t.t;
 	let t0;
-	if ($[0] !== e || $[1] !== f || $[2] !== m || $[3] !== p || $[4] !== q || $[5] !== z) {
+	if ($[0] !== e || $[1] !== f || $[2] !== m || $[3] !== n || $[4] !== p || $[5] !== q || $[6] !== z) {
 		t0 = {
 			z,
 			p,
 			q,
-			n: undefined,
+			n,
 			m,
 			e,
 			f
@@ -27,12 +28,13 @@ function component(a) {
 		$[0] = e;
 		$[1] = f;
 		$[2] = m;
-		$[3] = p;
-		$[4] = q;
-		$[5] = z;
-		$[6] = t0;
+		$[3] = n;
+		$[4] = p;
+		$[5] = q;
+		$[6] = z;
+		$[7] = t0;
 	} else {
-		t0 = $[6];
+		t0 = $[7];
 	}
 	return t0;
 }

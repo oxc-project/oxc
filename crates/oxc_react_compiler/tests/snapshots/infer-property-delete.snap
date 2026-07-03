@@ -4,5 +4,7 @@ input_file: crates/oxc_react_compiler/fixtures/infer-property-delete.js
 ---
 // @enablePreserveExistingMemoizationGuarantees:false
 function Component(props) {
-	makeObject();
+	const x = makeObject();
+	const y = delete x.value;
+	return y;
 }

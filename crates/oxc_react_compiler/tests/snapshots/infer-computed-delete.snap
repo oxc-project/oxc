@@ -4,5 +4,7 @@ input_file: crates/oxc_react_compiler/fixtures/infer-computed-delete.js
 ---
 // @debug @enablePreserveExistingMemoizationGuarantees:false
 function Component(props) {
-	makeObject();
+	const x = makeObject();
+	const y = delete x[props.value];
+	return y;
 }
