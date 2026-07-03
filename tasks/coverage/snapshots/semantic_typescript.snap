@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4473/4720 (94.77%)
+Positive Passed: 4477/4720 (94.85%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -314,20 +314,6 @@ Symbol redeclarations mismatch for "Outer":
 after transform: SymbolId(0): [Span { start: 10, end: 15 }, Span { start: 53, end: 58 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualComputedNonBindablePropertyType.ts
-Bindings mismatch:
-after transform: ScopeId(12): []
-rebuilt        : ScopeId(2): ["propName"]
-Symbol flags mismatch for "propName":
-after transform: SymbolId(16): SymbolFlags(FunctionScopedVariable | TypeParameter)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch for "propName":
-after transform: SymbolId(16): Span { start: 526, end: 534 }
-rebuilt        : SymbolId(2): Span { start: 551, end: 559 }
-Symbol redeclarations mismatch for "propName":
-after transform: SymbolId(16): [Span { start: 526, end: 534 }, Span { start: 551, end: 559 }]
-rebuilt        : SymbolId(2): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileExportAssignmentImportInternalModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -437,48 +423,8 @@ Symbol redeclarations mismatch for "TranslationKeyEnum":
 after transform: SymbolId(1): [Span { start: 129, end: 147 }, Span { start: 198, end: 216 }]
 rebuilt        : SymbolId(2): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitHigherOrderRetainedGenerics.ts
-Bindings mismatch:
-after transform: ScopeId(38): []
-rebuilt        : ScopeId(2): ["F"]
-Bindings mismatch:
-after transform: ScopeId(47): []
-rebuilt        : ScopeId(5): ["F"]
-Symbol flags mismatch for "F":
-after transform: SymbolId(100): SymbolFlags(FunctionScopedVariable | TypeParameter)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch for "F":
-after transform: SymbolId(100): Span { start: 2588, end: 2589 }
-rebuilt        : SymbolId(4): Span { start: 2610, end: 2611 }
-Symbol redeclarations mismatch for "F":
-after transform: SymbolId(100): [Span { start: 2588, end: 2589 }, Span { start: 2610, end: 2611 }]
-rebuilt        : SymbolId(4): []
-Symbol flags mismatch for "F":
-after transform: SymbolId(146): SymbolFlags(FunctionScopedVariable | TypeParameter)
-rebuilt        : SymbolId(11): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch for "F":
-after transform: SymbolId(146): Span { start: 3332, end: 3333 }
-rebuilt        : SymbolId(11): Span { start: 3354, end: 3355 }
-Symbol redeclarations mismatch for "F":
-after transform: SymbolId(146): [Span { start: 3332, end: 3333 }, Span { start: 3354, end: 3355 }]
-rebuilt        : SymbolId(11): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitImportInExportAssignmentModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypePreservesTypeParameterConstraint.ts
-Bindings mismatch:
-after transform: ScopeId(22): []
-rebuilt        : ScopeId(2): ["o"]
-Symbol flags mismatch for "o":
-after transform: SymbolId(33): SymbolFlags(FunctionScopedVariable | TypeParameter)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch for "o":
-after transform: SymbolId(33): Span { start: 1419, end: 1420 }
-rebuilt        : SymbolId(3): Span { start: 1437, end: 1438 }
-Symbol redeclarations mismatch for "o":
-after transform: SymbolId(33): [Span { start: 1419, end: 1420 }, Span { start: 1437, end: 1438 }]
-rebuilt        : SymbolId(3): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflicts.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -840,20 +786,6 @@ rebuilt        : ScopeId(0): ["EndGate", "_defineProperty"]
 Symbol redeclarations mismatch for "EndGate":
 after transform: SymbolId(0): [Span { start: 10, end: 17 }, Span { start: 144, end: 151 }, Span { start: 335, end: 342 }]
 rebuilt        : SymbolId(1): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericsManyTypeParameters.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["a10", "a11", "a12", "a13", "a14", "a15", "a16", "a17", "a18", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "b1", "b10", "b11", "b12", "b13", "b14", "b15", "b16", "b17", "b18", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "c1", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "x1", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x18", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "y1", "y10", "y12", "y13", "y14", "y15", "y16", "y17", "y18", "y19", "y2", "y3", "y4", "y5", "y6", "y7", "y8", "y9", "z1", "z10", "z11", "z12", "z13", "z14", "z15", "z16", "z17", "z18", "z2", "z3", "z4", "z5", "z6", "z7", "z8", "z9"]
-rebuilt        : ScopeId(1): ["a1", "a10", "a11", "a12", "a13", "a14", "a15", "a16", "a17", "a18", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "b1", "b10", "b11", "b12", "b13", "b14", "b15", "b16", "b17", "b18", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "c1", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "x1", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x18", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "y1", "y10", "y12", "y13", "y14", "y15", "y16", "y17", "y18", "y19", "y2", "y3", "y4", "y5", "y6", "y7", "y8", "y9", "z1", "z10", "z11", "z12", "z13", "z14", "z15", "z16", "z17", "z18", "z2", "z3", "z4", "z5", "z6", "z7", "z8", "z9"]
-Symbol flags mismatch for "a1":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | TypeParameter)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch for "a1":
-after transform: SymbolId(1): Span { start: 18, end: 20 }
-rebuilt        : SymbolId(4): Span { start: 724, end: 726 }
-Symbol redeclarations mismatch for "a1":
-after transform: SymbolId(1): [Span { start: 18, end: 20 }, Span { start: 724, end: 726 }]
-rebuilt        : SymbolId(4): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importAliasWithDottedName.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support

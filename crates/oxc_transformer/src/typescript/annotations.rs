@@ -191,8 +191,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
     fn enter_arrow_function_expression(
         &mut self,
         expr: &mut ArrowFunctionExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
+        Self::preserve_type_parameter_value_redeclarations(expr.type_parameters.as_deref(), ctx);
         expr.type_parameters = None;
         expr.return_type = None;
     }
@@ -225,17 +226,19 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         }
     }
 
-    fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         // Remove TypeScript annotations from function declarations
         // Note: declare flag is preserved for exit_statements to handle declaration removal
+        Self::preserve_type_parameter_value_redeclarations(func.type_parameters.as_deref(), ctx);
         func.type_parameters = None;
         func.return_type = None;
         func.this_param = None;
     }
 
-    fn enter_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         // Remove TypeScript annotations from class declarations
         // Note: declare flag is preserved for exit_statements to handle declaration removal
+        Self::preserve_type_parameter_value_redeclarations(class.type_parameters.as_deref(), ctx);
         class.type_parameters = None;
         class.super_type_arguments = None;
         class.implements.clear();
@@ -341,7 +344,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         param.type_annotation = None;
     }
 
-    fn exit_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::preserve_type_parameter_value_redeclarations(func.type_parameters.as_deref(), ctx);
         func.this_param = None;
         func.type_parameters = None;
         func.return_type = None;
@@ -701,6 +705,16 @@ impl<'a> TypeScriptAnnotations<'a> {
                     }
                 }
             }
+        }
+    }
+
+    fn preserve_type_parameter_value_redeclarations(
+        type_parameters: Option<&TSTypeParameterDeclaration<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Some(type_parameters) = type_parameters else { return };
+        for param in &type_parameters.params {
+            Self::preserve_non_ambient_value_redeclaration(param.name.symbol_id(), ctx);
         }
     }
 
