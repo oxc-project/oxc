@@ -172,7 +172,8 @@ impl<'a> TypeScriptNamespace {
         };
 
         let binding = BoundIdentifier::from_binding_ident(&ident);
-        Self::sync_namespace_binding(&ident, ctx);
+        let is_redeclaration_namespace = Self::is_redeclaration_namespace(&ident, ctx);
+        Self::sync_namespace_binding(&ident, is_redeclaration_namespace, ctx);
 
         // Reuse `TSModuleDeclaration`'s scope in transformed function
         let scope_id = scope_id.get().unwrap();
@@ -288,7 +289,7 @@ impl<'a> TypeScriptNamespace {
             }
         }
 
-        if !Self::is_redeclaration_namespace(&ident, ctx) {
+        if !is_redeclaration_namespace {
             ctx.state.emitted_namespace_bindings.push(symbol_id);
             let declaration = Self::create_variable_declaration(&binding, span, ctx);
             if is_export {
@@ -557,8 +558,28 @@ impl<'a> TypeScriptNamespace {
         redeclarations.iter().find(|rd| rd.flags.is_value()).is_some_and(|rd| rd.span != id.span)
     }
 
-    fn sync_namespace_binding(id: &BindingIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn sync_namespace_binding(
+        id: &BindingIdentifier<'a>,
+        is_redeclaration_namespace: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let symbol_id = id.symbol_id();
+        if is_redeclaration_namespace
+            && let Some(redeclaration) =
+                ctx.scoping().symbol_redeclarations(symbol_id).iter().find(|redeclaration| {
+                    redeclaration
+                        .flags
+                        .intersects(SymbolFlags::Class | SymbolFlags::Function | SymbolFlags::Enum)
+                        && !redeclaration.flags.is_ambient()
+                })
+        {
+            let span = redeclaration.span;
+            let flags = redeclaration.flags;
+            *ctx.scoping_mut().symbol_flags_mut(symbol_id) = flags;
+            ctx.scoping_mut().set_symbol_span(symbol_id, span);
+            return;
+        }
+
         *ctx.scoping_mut().symbol_flags_mut(symbol_id) = SymbolFlags::BlockScopedVariable;
         ctx.scoping_mut().set_symbol_span(symbol_id, SPAN);
     }

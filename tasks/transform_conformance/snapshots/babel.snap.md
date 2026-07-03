@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 783/1165
+Passed: 786/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (131/157)
+# babel-plugin-transform-typescript (134/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1164,29 +1164,10 @@ x Output mismatch
 * imports/type-only-export-specifier-2/input.ts
 x Output mismatch
 
-* namespace/clobber-class/input.ts
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol span mismatch for "A":
-after transform: SymbolId(0): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(0): Span { start: 6, end: 7 }
-
 * namespace/clobber-enum/input.ts
-Symbol span mismatch for "A":
-after transform: SymbolId(0): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(0): Span { start: 5, end: 6 }
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 30, end: 31 }]
 rebuilt        : SymbolId(0): []
-
-* namespace/clobber-export/input.ts
-Symbol flags mismatch for "N":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol span mismatch for "N":
-after transform: SymbolId(0): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(0): Span { start: 13, end: 14 }
 
 * namespace/mutable-fail/input.ts
 
@@ -1211,32 +1192,6 @@ rebuilt        : SymbolId(0): Span { start: 13, end: 14 }
    : ^^^^^^^^^^^^^^
    `----
 
-
-* namespace/nested/input.ts
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol span mismatch for "A":
-after transform: SymbolId(0): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(0): Span { start: 6, end: 7 }
-Symbol flags mismatch for "M":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable)
-rebuilt        : SymbolId(6): SymbolFlags(Function)
-Symbol span mismatch for "M":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(6): Span { start: 110, end: 111 }
-Symbol flags mismatch for "D":
-after transform: SymbolId(6): SymbolFlags(BlockScopedVariable)
-rebuilt        : SymbolId(9): SymbolFlags(Function)
-Symbol span mismatch for "D":
-after transform: SymbolId(6): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(9): Span { start: 181, end: 182 }
-Symbol flags mismatch for "F":
-after transform: SymbolId(12): SymbolFlags(BlockScopedVariable)
-rebuilt        : SymbolId(14): SymbolFlags(Class)
-Symbol span mismatch for "F":
-after transform: SymbolId(12): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(14): Span { start: 308, end: 309 }
 
 * optimize-const-enums/custom-values-exported/input.ts
 x Output mismatch
