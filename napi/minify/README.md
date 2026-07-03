@@ -137,8 +137,10 @@ console.log(result.code);
 // `value` and `constructor` are left untouched.
 ```
 
-Mangled property names come out as `e`, `t`, `n`, … (ordered by frequency for
-better gzip), **not** `a`, `b`, `c`.
+Mangled property names come out as `e`, `t`, `n`, … (the mangler's
+frequency-tuned base54 alphabet, **not** `a`, `b`, `c`), assigned
+deterministically in sorted-name order — occurrences are not counted per
+program.
 
 To reserve specific names or carve exceptions out of a broad regex:
 
@@ -167,7 +169,9 @@ renamed in another. Multi-file projects should mangle through their bundler
   DOM names like `addEventListener`. Prefer the underscore convention over a
   broad regex.
 - Property mangling is **disabled for the whole input** if it contains `with` or
-  a direct `eval` / `Function` constructor.
+  a direct `eval` / `Function` constructor. When this happens a
+  `Warning`-severity entry is added to `result.errors` — check each entry's
+  `severity` instead of treating every entry as fatal.
 
 ## Assumptions
 

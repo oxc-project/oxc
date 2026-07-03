@@ -36,6 +36,11 @@ pub use crate::options::*;
 pub struct MinifyResult {
     pub code: String,
     pub map: Option<SourceMap>,
+    /// Parse errors and advisory warnings.
+    ///
+    /// Contains both fatal parse errors and `Warning`-severity advisories
+    /// (e.g. when property mangling is skipped for the whole file).
+    /// Check each entry's `severity` instead of treating every entry as fatal.
     pub errors: Vec<OxcError>,
     /// Legal comments extracted from the source code.
     /// Only populated when `codegen.legalComments` is `"linked"` or `"external"`.

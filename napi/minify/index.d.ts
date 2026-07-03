@@ -234,6 +234,13 @@ export interface MinifyOptions {
 export interface MinifyResult {
   code: string
   map?: SourceMap
+  /**
+   * Parse errors and advisory warnings.
+   *
+   * Contains both fatal parse errors and `Warning`-severity advisories
+   * (e.g. when property mangling is skipped for the whole file).
+   * Check each entry's `severity` instead of treating every entry as fatal.
+   */
   errors: Array<OxcError>
   /**
    * Legal comments extracted from the source code.
