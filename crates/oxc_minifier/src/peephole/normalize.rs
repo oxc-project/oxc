@@ -471,9 +471,6 @@ impl<'a> Normalize {
     }
 
     fn remove_unused_use_strict_directive(body: &mut FunctionBody<'a>, ctx: &TraverseCtx<'a>) {
-        // `exit_function_body` runs with the owning function scope as the current scope.
-        // `StrictMode` is inherited into that scope, so only remove the directive when an
-        // enclosing scope outside the current function is already strict.
         if !body.directives.is_empty()
             && ctx
                 .scoping()
