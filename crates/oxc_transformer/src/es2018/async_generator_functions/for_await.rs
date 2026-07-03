@@ -1,5 +1,7 @@
 //! This module is responsible for transforming `for await` to `for` statement
 
+use std::cell::Cell;
+
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::Visit;
@@ -325,6 +327,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             let block_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
             let for_statement_scope_id =
                 ctx.create_child_scope(block_scope_id, ScopeFlags::empty());
+            reparent_first_level_expression_scopes(&iterator, for_statement_scope_id, ctx);
 
             let for_statement = Statement::new_for_statement_with_scope_id(
                 span,
@@ -601,6 +604,42 @@ impl<'a> AsyncGeneratorFunctions<'a> {
 
         items.push(try_statement);
         items
+    }
+}
+
+fn reparent_first_level_expression_scopes<'a>(
+    expr: &Expression<'a>,
+    parent_scope_id: ScopeId,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    let mut reparenter = FirstLevelScopeReparenter { parent_scope_id, scope_depth: 0, ctx };
+    reparenter.visit_expression(expr);
+}
+
+struct FirstLevelScopeReparenter<'a, 'v> {
+    parent_scope_id: ScopeId,
+    scope_depth: u32,
+    ctx: &'v mut TraverseCtx<'a>,
+}
+
+impl<'a> Visit<'a> for FirstLevelScopeReparenter<'a, '_> {
+    fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
+        let scope_id = scope_id.get().unwrap();
+        if self.scope_depth == 0 {
+            let has_direct_eval = self.ctx.scoping().scope_flags(scope_id).contains_direct_eval();
+            self.ctx.scoping_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));
+            if has_direct_eval {
+                self.ctx
+                    .scoping_mut()
+                    .scope_flags_mut(self.parent_scope_id)
+                    .insert(ScopeFlags::DirectEval);
+            }
+        }
+        self.scope_depth += 1;
+    }
+
+    fn leave_scope(&mut self) {
+        self.scope_depth -= 1;
     }
 }
 
