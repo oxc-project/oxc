@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 337/397
+Passed: 338/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -123,7 +123,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (75/105)
+# legacy-decorators (76/105)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -159,15 +159,12 @@ rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(5)]
 Reference symbol mismatch for "C":
 after transform: <None>
 rebuilt        : SymbolId(0) "C"
-Reference flags mismatch for "C":
-after transform: ReferenceId(2): ReferenceFlags(Read | Type)
-rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 Reference symbol mismatch for "C":
 after transform: <None>
 rebuilt        : SymbolId(0) "C"
-Reference flags mismatch for "C":
-after transform: ReferenceId(3): ReferenceFlags(Read | Type)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["C", "Object", "babelHelpers", "dec"]
+rebuilt        : ["Object", "babelHelpers", "dec"]
 
 * oxc/metadata/private-in-expression-in-decorator/input.ts
 Binding symbols mismatch:
@@ -216,17 +213,6 @@ rebuilt        : SymbolId(2) "Cls2"
    `----
   help: Move this after all the overloads
 
-
-* oxc/metadata/unbound-type-reference/input.ts
-Reference flags mismatch for "UnboundTypeReference":
-after transform: ReferenceId(2): ReferenceFlags(Read | Type)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read)
-Reference flags mismatch for "UnboundTypeReference":
-after transform: ReferenceId(3): ReferenceFlags(Read | Type)
-rebuilt        : ReferenceId(7): ReferenceFlags(Read)
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers", "dce"]
-rebuilt        : ["Object", "UnboundTypeReference", "babelHelpers", "dce"]
 
 * oxc/static-field/input.ts
 Scope flags mismatch:

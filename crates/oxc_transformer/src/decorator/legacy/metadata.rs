@@ -712,7 +712,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             ReferenceFlags::Read
         } else {
             // Unresolved reference
-            ReferenceFlags::Type | ReferenceFlags::Read
+            ReferenceFlags::Read
         }
     }
 

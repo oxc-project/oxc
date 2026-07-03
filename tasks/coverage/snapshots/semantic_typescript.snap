@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4512/4720 (95.59%)
+Positive Passed: 4513/4720 (95.61%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -372,23 +372,6 @@ rebuilt        : SymbolId(1): Span { start: 241, end: 243 }
 Symbol redeclarations mismatch for "m2":
 after transform: SymbolId(0): [Span { start: 10, end: 12 }, Span { start: 241, end: 243 }]
 rebuilt        : SymbolId(1): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataPromise.ts
-Reference flags mismatch for "Promise":
-after transform: ReferenceId(28): ReferenceFlags(Read | Type)
-rebuilt        : ReferenceId(27): ReferenceFlags(Read)
-Reference flags mismatch for "Promise":
-after transform: ReferenceId(29): ReferenceFlags(Read | Type)
-rebuilt        : ReferenceId(29): ReferenceFlags(Read)
-Reference flags mismatch for "Promise":
-after transform: ReferenceId(25): ReferenceFlags(Read | Type)
-rebuilt        : ReferenceId(31): ReferenceFlags(Read)
-Reference flags mismatch for "Promise":
-after transform: ReferenceId(26): ReferenceFlags(Read | Type)
-rebuilt        : ReferenceId(33): ReferenceFlags(Read)
-Unresolved reference IDs mismatch for "Promise":
-after transform: [ReferenceId(9), ReferenceId(17)]
-rebuilt        : [ReferenceId(12), ReferenceId(20), ReferenceId(27), ReferenceId(29), ReferenceId(31), ReferenceId(33)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/dottedModuleName2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
