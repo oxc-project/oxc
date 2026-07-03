@@ -2622,6 +2622,7 @@ dependencies = [
 name = "oxc_type_checker"
 version = "0.138.0"
 dependencies = [
+ "bpaf",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
