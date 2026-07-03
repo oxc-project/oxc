@@ -334,17 +334,19 @@ impl<'a> LegacyDecorator<'a> {
         let has_static_accessor = class.body.body.iter().any(|e| {
             matches!(e, ClassElement::AccessorProperty(p) if p.r#static && !p.r#type.is_abstract())
         });
+        let class_scope_id = class.scope_id();
         let static_class_binding = if has_static_accessor {
             Some(if let Some(ident) = class.id.as_ref() {
                 BoundIdentifier::from_binding_ident(ident)
             } else {
-                ctx.generate_uid_in_current_scope("class", SymbolFlags::Class)
+                let binding_scope_id =
+                    if class.is_expression() { class_scope_id } else { ctx.current_scope_id() };
+                ctx.generate_uid("class", binding_scope_id, SymbolFlags::Class)
             })
         } else {
             None
         };
 
-        let class_scope_id = class.scope_id();
         let mut new_body = ArenaVec::with_capacity_in(class.body.body.len() * 3, ctx);
         let mut storage_names = Vec::new();
 
