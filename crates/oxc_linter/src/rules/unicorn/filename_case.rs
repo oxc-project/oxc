@@ -11,7 +11,7 @@ use oxc_span::Span;
 use crate::{
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
-    utils::{default_true, deserialize_regex_vec},
+    utils::{default_true, deserialize_regex_option, deserialize_regex_vec},
 };
 
 fn filename_case_diagnostic(message: String, help_message: String) -> OxcDiagnostic {
@@ -37,6 +37,7 @@ pub struct FilenameCaseConfig {
     pascal_case: bool,
     lowercase: bool,
     screaming_snake_case: bool,
+    regex: Option<Regex>,
     ignore: Vec<Regex>,
     multiple_file_extensions: bool,
 }
@@ -50,6 +51,7 @@ impl Default for FilenameCaseConfig {
             pascal_case: false,
             lowercase: false,
             screaming_snake_case: false,
+            regex: None,
             ignore: vec![],
             multiple_file_extensions: true,
         }
@@ -92,6 +94,26 @@ pub struct FilenameCaseConfigJson {
     /// }
     /// ```
     case: Option<FilenameCaseJsonOptions>,
+    /// A regular expression the filename must match. Can be combined with `case`/`cases`.
+    /// A filename is valid if it matches any enabled case style, or this pattern.
+    ///
+    /// Unlike the named case styles, the pattern is matched against the full filename
+    /// including its extension(s). Only leading/trailing `_` are stripped first, same as
+    /// for every other check.
+    ///
+    /// You can set the `regex` option like this:
+    /// ```json
+    /// {
+    ///   "unicorn/filename-case": [
+    ///     "error",
+    ///     {
+    ///       "regex": "^[a-z0-9-]+\\.js$"
+    ///     }
+    ///   ]
+    /// }
+    /// ```
+    #[serde(default, deserialize_with = "deserialize_regex_option")]
+    regex: Option<Regex>,
     /// An array of regular expression patterns for filenames to ignore.
     ///
     /// You can set the `ignore` option like this:
@@ -115,7 +137,13 @@ pub struct FilenameCaseConfigJson {
 
 impl Default for FilenameCaseConfigJson {
     fn default() -> Self {
-        Self { cases: None, case: None, ignore: vec![], multiple_file_extensions: true }
+        Self {
+            cases: None,
+            case: None,
+            regex: None,
+            ignore: vec![],
+            multiple_file_extensions: true,
+        }
     }
 }
 
@@ -213,21 +241,23 @@ declare_oxc_lint!(
 );
 
 /// How a filename is normalized for a given `filename-case` option.
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 enum CaseCheck {
     /// Normalize with `convert_case` (kebab/camel/snake/pascal/screaming-snake).
     Convert(Case<'static>),
     /// Lowercase only: reject uppercase letters but keep separators (ls-lint `lowercase`).
     Lowercase,
+    /// Match against a user-supplied regular expression (ls-lint `regex`).
+    Regex(Regex),
 }
 
 impl CaseCheck {
-    fn convert(self, name: &str) -> String {
+    fn convert(&self, name: &str) -> String {
         match self {
             CaseCheck::Convert(case) => {
                 // SCREAMING_SNAKE_CASE keeps digits attached to their word (e.g. `V2_API`,
                 // `FOO2BAR`), so drop the upper/digit boundaries too.
-                let boundaries: &[Boundary] = if case == Case::UpperSnake {
+                let boundaries: &[Boundary] = if *case == Case::UpperSnake {
                     &[
                         Boundary::LowerDigit,
                         Boundary::DigitLower,
@@ -237,9 +267,31 @@ impl CaseCheck {
                 } else {
                     &[Boundary::LowerDigit, Boundary::DigitLower]
                 };
-                Converter::new().remove_boundaries(boundaries).to_case(case).convert(name)
+                Converter::new().remove_boundaries(boundaries).to_case(*case).convert(name)
             }
             CaseCheck::Lowercase => name.cow_to_lowercase().into_owned(),
+            CaseCheck::Regex(_) => unreachable!("regex has no canonical conversion"),
+        }
+    }
+
+    /// Whether `name` already satisfies this check.
+    fn is_valid(&self, name: &str) -> bool {
+        match self {
+            CaseCheck::Regex(re) => re.is_match(name),
+            CaseCheck::Convert(_) | CaseCheck::Lowercase => self.convert(name) == name,
+        }
+    }
+
+    /// Text describing a name that would satisfy this check, used both in the
+    /// diagnostic's message and its rename suggestion. Named cases produce an
+    /// actual renamed filename; a regex has no canonical rename, so it's described instead.
+    fn suggestion(&self, raw_filename: &str, trimmed_filename: &str) -> String {
+        match self {
+            CaseCheck::Regex(re) => format!("a name matching `/{}/`", re.as_str()),
+            CaseCheck::Convert(_) | CaseCheck::Lowercase => format!(
+                "'{}'",
+                raw_filename.cow_replace(trimmed_filename, &self.convert(trimmed_filename))
+            ),
         }
     }
 }
@@ -249,6 +301,7 @@ impl Rule for FilenameCase {
         let json = serde_json::from_value::<DefaultRuleConfig<FilenameCaseConfigJson>>(value)?
             .into_inner();
         let mut config = FilenameCaseConfig {
+            regex: json.regex,
             ignore: json.ignore,
             multiple_file_extensions: json.multiple_file_extensions,
             ..Default::default()
@@ -300,6 +353,14 @@ impl Rule for FilenameCase {
 
         let trimmed_filename = filename.trim_matches('_');
 
+        // Nothing left to validate once the extension and surrounding `_` are stripped
+        // (e.g. a file named `___.js`) — every check would otherwise treat this
+        // inconsistently (named cases trivially accept an empty string, a `regex` normally
+        // wouldn't), so just exempt it like `index` files.
+        if trimmed_filename.is_empty() {
+            return;
+        }
+
         let cases = [
             (self.camel_case, CaseCheck::Convert(Case::Camel), "camelCase"),
             (self.kebab_case, CaseCheck::Convert(Case::Kebab), "kebab-case"),
@@ -313,10 +374,12 @@ impl Rule for FilenameCase {
             ),
         ];
 
-        let mut valid_cases = Vec::new();
+        // `name` is only meaningful for `Convert`/`Lowercase` cases — `Regex` derives its own
+        // message text from the pattern itself in the loop below, so its slot is unused.
+        let mut valid_cases: Vec<(CaseCheck, &'static str)> = Vec::new();
         for (enabled, case, name) in cases {
             if enabled {
-                if case.convert(trimmed_filename) == trimmed_filename {
+                if case.is_valid(trimmed_filename) {
                     return;
                 }
 
@@ -324,26 +387,49 @@ impl Rule for FilenameCase {
             }
         }
 
+        if let Some(re) = &self.regex {
+            // Unlike the named case checks, `regex` validates the full name including its
+            // extension(s) — `filename` is always a byte-prefix of `raw_filename`, so the part
+            // that was split off is exactly `raw_filename[filename.len()..]`.
+            let extension = &raw_filename[filename.len()..];
+            let trimmed_filename_with_extension = format!("{trimmed_filename}{extension}");
+
+            if re.is_match(&trimmed_filename_with_extension) {
+                return;
+            }
+
+            valid_cases.push((CaseCheck::Regex(re.clone()), ""));
+        }
+
         let valid_cases_len = valid_cases.len();
 
-        let mut message = String::from("Filename should be in ");
+        // A `regex` case can only be first when every named case is disabled (it's always
+        // appended after them above), i.e. `regex` is the sole enforced check — in that case
+        // "should be in" doesn't read naturally with a pattern, so use "should match" instead.
+        let starts_with_regex = matches!(valid_cases.first(), Some((CaseCheck::Regex(_), _)));
+        let mut message = String::from(if starts_with_regex {
+            "Filename should "
+        } else {
+            "Filename should be in "
+        });
         let mut help_message = String::from("Rename the file to ");
 
         for (i, (case, name)) in valid_cases.into_iter().enumerate() {
-            let filename = format!(
-                "'{}'",
-                raw_filename.cow_replace(trimmed_filename, &case.convert(trimmed_filename))
-            );
+            let filename = case.suggestion(raw_filename, trimmed_filename);
+            let name = match &case {
+                CaseCheck::Regex(re) => format!("match `/{}/`", re.as_str()),
+                CaseCheck::Convert(_) | CaseCheck::Lowercase => name.to_string(),
+            };
 
             let (name, filename) = if i == 0 {
                 (name, filename.as_ref())
             } else if i == valid_cases_len - 1 {
-                (&*format!(", or {name}"), &*format!(", or {filename}"))
+                (format!(", or {name}"), &*format!(", or {filename}"))
             } else {
-                (&*format!(", {name}"), &*format!(", {filename}"))
+                (format!(", {name}"), &*format!(", {filename}"))
             };
 
-            message.push_str(name);
+            message.push_str(&name);
             help_message.push_str(filename);
         }
 
@@ -632,6 +718,26 @@ fn test() {
             "src/foo/foo_bar.test_utils.js",
             serde_json::json!([{ "case": "snakeCase", "multipleFileExtensions": false }]),
         ),
+        // `regex` option: regex-only enforcement (all named cases disabled via `cases: {}`).
+        // Unlike named cases, `regex` matches the full filename including its extension.
+        test_case_with_options(
+            "src/foo/MY_CONF.js",
+            serde_json::json!([{ "cases": {}, "regex": "^[A-Z_]+\\.js$" }]),
+        ),
+        // `regex` combined with a named case: valid because it matches the regex, even
+        // though it doesn't match `camelCase`.
+        test_case_with_options(
+            "src/foo/__mocks__.js",
+            serde_json::json!([{ "case": "camelCase", "regex": "^__.*__\\.js$" }]),
+        ),
+        // `regex` combined with a named case: valid because it matches `camelCase`, even
+        // though it doesn't match the regex.
+        test_case_with_options(
+            "src/foo/fooBar.js",
+            serde_json::json!([{ "case": "camelCase", "regex": "^__.*__$" }]),
+        ),
+        // An undefined/empty filename with `regex` set should not crash.
+        test_case_with_options("", serde_json::json!([{ "regex": "^[a-z]+$" }])),
         // Ensure all `index` files are allowed, despite being in non-conforming case.
         test_case("index.js", "camelCase"),
         test_case("index.js", "snakeCase"),
@@ -763,6 +869,23 @@ fn test() {
         test_case_with_options(
             "src/foo/foo_bar.test-utils.js",
             serde_json::json!([{ "case": "snakeCase", "multipleFileExtensions": false }]),
+        ),
+        // `regex` option: regex-only enforcement, filename matches neither the (disabled)
+        // named cases nor the regex.
+        test_case_with_options(
+            "src/foo/fooBar.js",
+            serde_json::json!([{ "cases": {}, "regex": "^[A-Z_]+$" }]),
+        ),
+        // `regex` combined with a named case, filename matches neither.
+        test_case_with_options(
+            "src/foo/FOO-BAR.js",
+            serde_json::json!([{ "case": "camelCase", "regex": "^__.*__$" }]),
+        ),
+        // `regex` matches the full filename including its extension — a pattern anchored to a
+        // specific extension must fail for any other extension.
+        test_case_with_options(
+            "src/foo/MY_CONF.js",
+            serde_json::json!([{ "cases": {}, "regex": "^[A-Z_]+\\.ts$" }]),
         ),
         ("", None, None, Some(PathBuf::from("FooBar.tsx"))),
         // should only report once
