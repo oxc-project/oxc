@@ -82,6 +82,7 @@ impl<'a> TypeScriptModule {
 
         let left = AssignmentTarget::from(SimpleAssignmentTarget::from(module_exports));
         Self::mark_expression_references_as_value(&export_assignment.expression, ctx);
+        Self::unresolve_type_only_export_assignment_reference(&export_assignment.expression, ctx);
         let right = export_assignment.expression.take_in(ctx);
         let assignment_expr = Expression::new_assignment_expression(
             SPAN,
@@ -91,6 +92,24 @@ impl<'a> TypeScriptModule {
             ctx,
         );
         Statement::new_expression_statement(SPAN, assignment_expr, ctx)
+    }
+
+    fn unresolve_type_only_export_assignment_reference(
+        expr: &Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::Identifier(ident) = expr else { return };
+        let reference_id = ident.reference_id();
+        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
+            return;
+        };
+        if ctx.scoping().symbol_flags(symbol_id).can_be_referenced_by_value() {
+            return;
+        }
+
+        ctx.scoping_mut().delete_resolved_reference(symbol_id, reference_id);
+        ctx.scoping_mut().get_reference_mut(reference_id).clear_symbol_id();
+        ctx.scoping_mut().add_root_unresolved_reference(ident.name, reference_id);
     }
 
     fn mark_expression_references_as_value(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) {
