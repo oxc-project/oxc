@@ -483,8 +483,6 @@ fn test() {
         (r#"import * as a from "./deep/a"; console.log(a.b.c.d.e.f)"#, None),
         (r#"import * as a from "./deep/a"; var {b:{c:{d:{e}}}} = a"#, None),
         (r#"import { b } from "./deep/a"; var {c:{d:{e}}} = b"#, None),
-        // Object-pattern destructuring through a namespace whose remote module is unresolvable
-        // must not panic (previously `.unwrap()` on `get_loaded_module`).
         (r#"import * as a from "./unresolvable-namespace"; var {missing:{x}} = a"#, None),
         (r#"import * as a from "./deep-es7/a"; console.log(a.b.c.d.e)"#, None),
         (r#"import { b } from "./deep-es7/a"; console.log(b.c.d.e)"#, None),
