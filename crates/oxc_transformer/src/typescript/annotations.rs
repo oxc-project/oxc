@@ -127,7 +127,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                                 let id = match specifier {
                                     ImportDeclarationSpecifier::ImportSpecifier(s) => {
                                         if s.import_kind.is_type() {
-                                            Self::remove_binding(&s.local, ctx);
+                                            Self::remove_binding_and_unresolve_references(
+                                                &s.local, ctx,
+                                            );
                                             return false;
                                         }
                                         &s.local
@@ -707,13 +709,13 @@ impl<'a> TypeScriptAnnotations<'a> {
             for specifier in specifiers {
                 match specifier {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                        Self::remove_binding(&specifier.local, ctx);
+                        Self::remove_binding_and_unresolve_references(&specifier.local, ctx);
                     }
                     ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                        Self::remove_binding(&specifier.local, ctx);
+                        Self::remove_binding_and_unresolve_references(&specifier.local, ctx);
                     }
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                        Self::remove_binding(&specifier.local, ctx);
+                        Self::remove_binding_and_unresolve_references(&specifier.local, ctx);
                     }
                 }
             }

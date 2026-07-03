@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4572/4720 (96.86%)
+Positive Passed: 4573/4720 (96.89%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -575,14 +575,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithRelativePaths.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration.ts
-Reference symbol mismatch for "A":
-after transform: SymbolId(0) "A"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["module"]
-rebuilt        : ["A", "module"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/FunctionAndModuleWithSameNameAndDifferentCommonRoot.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
