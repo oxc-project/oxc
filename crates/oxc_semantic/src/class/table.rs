@@ -57,7 +57,7 @@ pub struct ClassTable<'a> {
 }
 
 impl<'a> ClassTable<'a> {
-    pub fn ancestors(&self, class_id: ClassId) -> impl Iterator<Item = ClassId> + '_ {
+    pub fn ancestors(&self, class_id: ClassId) -> impl Iterator<Item = ClassId> + Clone + '_ {
         std::iter::successors(Some(class_id), |class_id| self.parent_ids.get(class_id).copied())
     }
 
@@ -65,14 +65,14 @@ impl<'a> ClassTable<'a> {
         self.declarations.raw.len()
     }
 
-    pub fn iter_enumerated(&self) -> impl Iterator<Item = (ClassId, &NodeId)> + '_ {
+    pub fn iter_enumerated(&self) -> impl Iterator<Item = (ClassId, &NodeId)> + Clone + '_ {
         self.declarations.iter_enumerated()
     }
 
     pub fn iter_private_identifiers(
         &self,
         class_id: ClassId,
-    ) -> impl Iterator<Item = &PrivateIdentifierReference<'_>> + '_ {
+    ) -> impl Iterator<Item = &PrivateIdentifierReference<'_>> + Clone + '_ {
         self.private_identifier_references[class_id].iter()
     }
 

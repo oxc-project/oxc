@@ -89,12 +89,12 @@ impl Diagnostics {
     }
 
     /// Iterate over the [error](Severity::Error)-severity diagnostics.
-    pub fn errors(&self) -> impl Iterator<Item = &OxcDiagnostic> {
+    pub fn errors(&self) -> impl Iterator<Item = &OxcDiagnostic> + Clone {
         self.0.iter().filter(|diagnostic| diagnostic.severity == Severity::Error)
     }
 
     /// Iterate over the [warning](Severity::Warning)-severity diagnostics.
-    pub fn warnings(&self) -> impl Iterator<Item = &OxcDiagnostic> {
+    pub fn warnings(&self) -> impl Iterator<Item = &OxcDiagnostic> + Clone {
         self.0.iter().filter(|diagnostic| diagnostic.severity == Severity::Warning)
     }
 
