@@ -50,8 +50,6 @@
 //!     }
 //! }
 //! ```
-//!
-//! See `examples/checker.rs` for a runnable end-to-end example.
 
 use oxc_ast::ast::Program;
 use oxc_ast_visit::Visit;
