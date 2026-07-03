@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use lazy_regex::Regex;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_ast::{
@@ -784,7 +785,12 @@ fn check_use_effect_event_usage(
     match ctx.nodes().parent_kind(node.id()) {
         AstKind::VariableDeclarator(decl) => {
             if let Some(ident) = decl.id.get_binding_identifier() {
-                report_invalid_use_effect_event_references(ident.symbol_id(), ctx);
+                let additional_effect_hooks = additional_effect_hooks(ctx);
+                report_invalid_use_effect_event_references(
+                    ident.symbol_id(),
+                    additional_effect_hooks.as_ref(),
+                    ctx,
+                );
             }
         }
         // As with other Hooks, a top-level expression statement is permitted.
@@ -793,9 +799,23 @@ fn check_use_effect_event_usage(
     }
 }
 
-fn report_invalid_use_effect_event_references(symbol_id: SymbolId, ctx: &LintContext<'_>) {
+fn additional_effect_hooks(ctx: &LintContext<'_>) -> Option<Regex> {
+    let pattern =
+        ctx.settings().json.as_ref()?.get("react-hooks")?.get("additionalEffectHooks")?.as_str()?;
+    Regex::new(pattern).ok()
+}
+
+fn report_invalid_use_effect_event_references(
+    symbol_id: SymbolId,
+    additional_effect_hooks: Option<&Regex>,
+    ctx: &LintContext<'_>,
+) {
     for reference in ctx.semantic().symbol_references(symbol_id) {
-        if is_inside_effect_or_effect_event_call(ctx.nodes(), reference.node_id()) {
+        if is_inside_effect_or_effect_event_call(
+            ctx.nodes(),
+            reference.node_id(),
+            additional_effect_hooks,
+        ) {
             continue;
         }
 
@@ -808,18 +828,31 @@ fn report_invalid_use_effect_event_references(symbol_id: SymbolId, ctx: &LintCon
     }
 }
 
-fn is_inside_effect_or_effect_event_call(nodes: &AstNodes<'_>, node_id: NodeId) -> bool {
+fn is_inside_effect_or_effect_event_call(
+    nodes: &AstNodes<'_>,
+    node_id: NodeId,
+    additional_effect_hooks: Option<&Regex>,
+) -> bool {
     nodes.ancestors(node_id).any(|ancestor| match ancestor.kind() {
-        AstKind::CallExpression(call) => is_effect_or_effect_event_call(call),
+        AstKind::CallExpression(call) => {
+            is_effect_or_effect_event_call(call, additional_effect_hooks)
+        }
         _ => false,
     })
 }
 
-fn is_effect_or_effect_event_call(call: &CallExpression<'_>) -> bool {
+fn is_effect_or_effect_event_call(
+    call: &CallExpression<'_>,
+    additional_effect_hooks: Option<&Regex>,
+) -> bool {
     is_react_function_call(call, "useEffect")
         || is_react_function_call(call, "useLayoutEffect")
         || is_react_function_call(call, "useInsertionEffect")
         || is_react_function_call(call, "useEffectEvent")
+        || additional_effect_hooks.is_some_and(|regex| {
+            call.callee_name()
+                .is_some_and(|name| is_react_function_call(call, name) && regex.is_match(name))
+        })
 }
 
 fn is_reference_call_callee(nodes: &AstNodes<'_>, node_id: NodeId, span: Span) -> bool {
@@ -1564,34 +1597,145 @@ fn test() {
           } catch {}
         }
     ",
-    "
-        function MyComponent({ theme }) {
-          const onClick = useEffectEvent(() => {
-            showNotification(theme);
-          });
-          useEffect(() => {
-            onClick();
-          });
-          React.useLayoutEffect(() => {
-            setTimeout(onClick, 100);
-          });
-        }
-    ",
-    "
-        function MyComponent({ theme }) {
-          const onClick = useEffectEvent(() => {
-            showNotification(theme);
-          });
-          const onClick2 = useEffectEvent(() => {
-            debounce(onClick);
-            debounce(() => onClick());
-          });
-          useInsertionEffect(() => {
-            onClick2();
-          });
-        }
-    "
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useEffect(() => {
+                onClick();
+              });
+              React.useEffect(() => {
+                onClick();
+              });
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              const onClick2 = useEffectEvent(() => {
+                debounce(onClick);
+                debounce(() => onClick());
+                debounce(() => { onClick() });
+                deboucne(() => debounce(onClick));
+              });
+              useEffect(() => {
+                let id = setInterval(() => onClick(), 100);
+                return () => clearInterval(onClick);
+              }, []);
+              React.useEffect(() => {
+                let id = setInterval(() => onClick(), 100);
+                return () => clearInterval(onClick);
+              }, []);
+              return null;
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              useEffect(() => {
+                onClick();
+              });
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              const onEvent = useEffectEvent((text) => {
+                console.log(text);
+              });
+              useEffect(() => {
+                onEvent('Hello world');
+              });
+              React.useEffect(() => {
+                onEvent('Hello world');
+              });
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useLayoutEffect(() => {
+                onClick();
+              });
+              React.useLayoutEffect(() => {
+                onClick();
+              });
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useInsertionEffect(() => {
+                onClick();
+              });
+              React.useInsertionEffect(() => {
+                onClick();
+              });
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              const onClick2 = useEffectEvent(() => {
+                debounce(onClick);
+                debounce(() => onClick());
+                debounce(() => { onClick() });
+                deboucne(() => debounce(onClick));
+              });
+              useLayoutEffect(() => {
+                let id = setInterval(() => onClick(), 100);
+                return () => clearInterval(onClick);
+              }, []);
+              React.useLayoutEffect(() => {
+                let id = setInterval(() => onClick(), 100);
+                return () => clearInterval(onClick);
+              }, []);
+              useInsertionEffect(() => {
+                let id = setInterval(() => onClick(), 100);
+                return () => clearInterval(onClick);
+              }, []);
+              React.useInsertionEffect(() => {
+                let id = setInterval(() => onClick(), 100);
+                return () => clearInterval(onClick);
+              }, []);
+              return null;
+            }
+        ",
     ];
+
+    let pass_additional_effect_hooks = vec![(
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useMyEffect(() => {
+                onClick();
+              });
+              useServerEffect(() => {
+                onClick();
+              });
+            }
+        ",
+        None,
+        Some(serde_json::json!({
+            "settings": {
+                "react-hooks": {
+                    "additionalEffectHooks": "(useMyEffect|useServerEffect)"
+                }
+            }
+        })),
+    )];
 
     let fail = vec![
         // Invalid because it's dangerous and might not warn otherwise.
@@ -2348,20 +2492,24 @@ fn test() {
             }
         ",
         r"const Foo3 = hoc(function NamedComp(props) { if (props.cond) { const [_a, _b] = useState(false); } });",
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useCustomHook(() => {
+                onClick();
+              });
+            }
+        ",
         r#"
             function MyComponent({ theme }) {
                 const onClick = useEffectEvent(() => {
                     showNotification(theme);
                 });
-                return <Child onClick={onClick} />;
+                return <Child onClick={onClick}></Child>;
             }
         "#,
-        r"
-            function useCustomHook() {
-                const onEvent = useEffectEvent(() => {});
-                return { onEvent };
-            }
-        ",
         r#"
             function MyComponent({ theme }) {
                 return <Child onClick={useEffectEvent(() => {
@@ -2370,15 +2518,114 @@ fn test() {
             }
         "#,
         r"
-            function MyComponent({ theme }) {
+            function MyComponent({theme}) {
                 const onClick = useEffectEvent(() => {
-                    showNotification(theme);
+                    showNotification(theme)
                 });
-                const handler = () => onClick();
-                return <Child onClick={handler} />;
+                return <Child onClick={onClick} />
+            }
+
+            function MyOtherComponent({theme}) {
+                const onClick = useEffectEvent(() => {
+                    showNotification(theme)
+                });
+                return <Child onClick={() => onClick()} />
+            }
+
+            function MyLastComponent({theme}) {
+                const onClick = useEffectEvent(() => {
+                    showNotification(theme)
+                });
+                useEffect(() => {
+                    onClick();
+                    onClick;
+                })
+                return <Child />
+            }
+        ",
+        r#"
+            const MyComponent = ({ theme }) => {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              return <Child onClick={onClick}></Child>;
+            }
+        "#,
+        r#"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              let foo = onClick;
+              return <Bar onClick={foo} />
+            }
+        "#,
+        r#"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useEffect(() => {
+                setTimeout(onClick, 100);
+              });
+              return <Child onClick={onClick} />
+            }
+        "#,
+        r#"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              const onClick2 = () => { onClick() };
+              const onClick3 = useCallback(() => onClick(), []);
+              const onClick4 = onClick;
+              return <>
+                <Child onClick={onClick}></Child>
+                <Child onClick={onClick2}></Child>
+                <Child onClick={onClick3}></Child>
+              </>;
+            }
+        "#,
+        r"
+            function useCustomHook() {
+                const onEvent = useEffectEvent(() => {});
+                return { onEvent };
             }
         ",
     ];
 
-    Tester::new(RulesOfHooks::NAME, RulesOfHooks::PLUGIN, pass, fail).test_and_snapshot();
+    let fail_additional_effect_hooks = vec![(
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useWrongHook(() => {
+                onClick();
+              });
+            }
+        ",
+        None,
+        Some(serde_json::json!({
+            "settings": {
+                "react-hooks": {
+                    "additionalEffectHooks": "useMyEffect"
+                }
+            }
+        })),
+    )];
+
+    Tester::new(
+        RulesOfHooks::NAME,
+        RulesOfHooks::PLUGIN,
+        pass.iter()
+            .map(|&code| (code, None, None))
+            .chain(pass_additional_effect_hooks)
+            .collect::<Vec<_>>(),
+        fail.iter()
+            .map(|&code| (code, None, None))
+            .chain(fail_additional_effect_hooks)
+            .collect::<Vec<_>>(),
+    )
+    .test_and_snapshot();
 }
