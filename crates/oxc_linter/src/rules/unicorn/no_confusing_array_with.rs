@@ -143,8 +143,8 @@ fn is_length_member_for<'a>(
     object: &Expression<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    let index = index.without_parentheses().get_inner_expression();
-    let object = object.without_parentheses().get_inner_expression();
+    let index = index.get_inner_expression();
+    let object = object.get_inner_expression();
 
     let Some(member) = index.get_member_expr() else {
         return false;
