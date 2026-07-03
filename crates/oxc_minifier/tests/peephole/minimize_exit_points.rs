@@ -165,6 +165,8 @@ fn test_do_continue_optimization() {
     test("do{g:continue}while(true)", "do;while(!0);");
     test("do{g:if(a()){continue;}else{continue;} continue;}while(true)", "do g:a(); while(!0)");
     test("do{break}while(!new Date());", "do;while(!1);");
+    test("do{break}while(!new Foo());", "do break;while(!new Foo());");
+    test("do{break}while((foo(),false));", "do break; while (foo(), !1);");
     test(
         "do { foo(); switch (x) { case 1: break; default: f()}; } while(!1)",
         "do switch (foo(), x) { case 1: break; default: f(); } while (!1);",

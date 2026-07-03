@@ -2,7 +2,7 @@ use crate::{TraverseCtx, generated::ancestor::Ancestor};
 use bitflags::bitflags;
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::ConstantEvaluation;
+use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_span::SPAN;
 
 use super::PeepholeOptimizations;
@@ -120,9 +120,11 @@ impl<'a> PeepholeOptimizations {
                 Self::prune_tail_exit_in_child_statement(&mut s.body, RemoveFlag::CONTINUE, ctx);
             }
             Statement::DoWhileStatement(s) => {
-                // "do { continue; } while (false)"
+                // "do { continue; } while (*)"
                 let mut body_flags = RemoveFlag::CONTINUE;
-                if s.test.evaluate_value_to_boolean(ctx) == Some(false) {
+                if s.test.evaluate_value_to_boolean(ctx) == Some(false)
+                    && !s.test.may_have_side_effects(ctx)
+                {
                     // "do { break; } while (false)"
                     body_flags |= RemoveFlag::BREAK;
                 }
