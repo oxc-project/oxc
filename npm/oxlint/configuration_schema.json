@@ -16903,15 +16903,12 @@
           "markdownDescription": "An array of function names that should also be treated as test blocks."
         },
         "assertFunctionNames": {
-          "description": "A list of function names that should be treated as assertion functions.",
-          "default": [
-            "expect"
-          ],
+          "description": "A list of function names that should be treated as assertion functions.\nDefault: `[\"expect\"]`",
           "type": "array",
           "items": {
             "type": "string"
           },
-          "markdownDescription": "A list of function names that should be treated as assertion functions."
+          "markdownDescription": "A list of function names that should be treated as assertion functions.\nDefault: `[\"expect\"]`"
         }
       },
       "additionalProperties": false

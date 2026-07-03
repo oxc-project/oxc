@@ -2392,6 +2392,7 @@ export interface PreferEndingWithAnExpectConfig {
   additionalTestBlockFunctions?: string[];
   /**
    * A list of function names that should be treated as assertion functions.
+   * Default: `["expect"]`
    */
   assertFunctionNames?: string[];
 }
