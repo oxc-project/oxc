@@ -11,11 +11,17 @@ use crate::{
 };
 
 fn negative_index_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Avoid using a negative index with `Array#with()`.").with_label(span)
+    OxcDiagnostic::warn("Avoid using a negative index with `Array#with()`.")
+        .with_note("`Array#with()` interprets a negative index as an offset from the end.")
+        .with_help("Use a non-negative index to make the intended position explicit.")
+        .with_label(span)
 }
 
 fn length_index_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Avoid using `.length` as the index in `Array#with()`.").with_label(span)
+    OxcDiagnostic::warn("Avoid using `.length` as the index in `Array#with()`.")
+        .with_note("An array's `.length` is one past its last valid index.")
+        .with_help("Use `.length - 1` to replace the last element.")
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
