@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4529/4720 (95.95%)
+Positive Passed: 4530/4720 (95.97%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -99,24 +99,6 @@ rebuilt        : SymbolId(3): Span { start: 60, end: 63 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules4.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(0): ["m4", "m4a", "m4b", "m4c", "m4d", "m5"]
-rebuilt        : ScopeId(0): ["m4a", "m4b", "m4d", "m5"]
-Reference symbol mismatch for "m4":
-after transform: SymbolId(0) "m4"
-rebuilt        : <None>
-Reference symbol mismatch for "m4":
-after transform: SymbolId(0) "m4"
-rebuilt        : <None>
-Reference symbol mismatch for "m4c":
-after transform: SymbolId(7) "m4c"
-rebuilt        : <None>
-Reference symbol mismatch for "m4c":
-after transform: SymbolId(7) "m4c"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["m4", "m4c"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/circularTypeofWithFunctionModule.ts
 Symbol flags mismatch for "maker":
@@ -321,20 +303,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedSta
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumAssignmentCompat4.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumsWithMultipleDeclarations3.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["E"]
-rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "E":
-after transform: SymbolId(0) "E"
-rebuilt        : <None>
-Reference symbol mismatch for "E":
-after transform: SymbolId(0) "E"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["E"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportClause.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support

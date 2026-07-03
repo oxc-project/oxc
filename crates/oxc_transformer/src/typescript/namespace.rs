@@ -589,6 +589,10 @@ impl<'a> TypeScriptNamespace {
             ctx.scoping().symbol_redeclarations(symbol_id).iter().any(|redeclaration| {
                 redeclaration.flags.is_value() && !redeclaration.flags.is_ambient()
             });
+        let has_non_ambient_enum_redeclaration =
+            ctx.scoping().symbol_redeclarations(symbol_id).iter().any(|redeclaration| {
+                redeclaration.flags.is_enum() && !redeclaration.flags.is_ambient()
+            });
         if let Some(redeclaration) =
             ctx.scoping().symbol_redeclarations(symbol_id).iter().find(|redeclaration| {
                 redeclaration.flags.intersects(SymbolFlags::Variable)
@@ -602,7 +606,7 @@ impl<'a> TypeScriptNamespace {
             ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
             return;
         }
-        if has_non_ambient_value_redeclaration {
+        if has_non_ambient_value_redeclaration && !has_non_ambient_enum_redeclaration {
             return;
         }
 
