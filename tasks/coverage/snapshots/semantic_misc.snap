@@ -1,6 +1,6 @@
 semantic_misc Summary:
 AST Parsed     : 69/69 (100.00%)
-Positive Passed: 65/69 (94.20%)
+Positive Passed: 67/69 (97.10%)
 semantic Error: tasks/coverage/misc/pass/oxc-11593.ts
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
@@ -28,86 +28,4 @@ rebuilt        : ScopeId(482): Some(ScopeId(470))
 Scope parent mismatch:
 after transform: ScopeId(392): Some(ScopeId(391))
 rebuilt        : ScopeId(496): Some(ScopeId(484))
-
-semantic Error: tasks/coverage/misc/pass/oxc-4449.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "baz"]
-rebuilt        : ScopeId(1): ["A"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["B", "baz"]
-rebuilt        : ScopeId(2): ["B"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(3): ["C", "baz"]
-rebuilt        : ScopeId(3): ["C"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(4): ["D", "baz"]
-rebuilt        : ScopeId(4): ["D"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["E", "baz"]
-rebuilt        : ScopeId(5): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(6): ["F", "baz"]
-rebuilt        : ScopeId(6): ["F"]
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(0x0)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(7): ["G", "baz"]
-rebuilt        : ScopeId(7): ["G"]
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(0x0)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(8): ["H", "baz"]
-rebuilt        : ScopeId(8): ["H"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(0x0)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "B":
-after transform: SymbolId(2): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "C":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "D":
-after transform: SymbolId(6): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E":
-after transform: SymbolId(8): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "F":
-after transform: SymbolId(10): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "G":
-after transform: SymbolId(12): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(12): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "H":
-after transform: SymbolId(14): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/misc/pass/oxc-8193.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 

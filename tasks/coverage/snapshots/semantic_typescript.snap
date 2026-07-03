@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4227/4720 (89.56%)
+Positive Passed: 4368/4720 (92.54%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientClassOverloadForFunction.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -16,17 +16,6 @@ rebuilt        : SymbolId(0): Span { start: 30, end: 33 }
 Symbol redeclarations mismatch for "foo":
 after transform: SymbolId(0): [Span { start: 14, end: 17 }, Span { start: 30, end: 33 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientConstLiterals.ts
-Bindings mismatch:
-after transform: ScopeId(2): ["A", "B", "C", "E", "non identifier"]
-rebuilt        : ScopeId(2): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(3): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientEnumElementInitializer6.ts
 Bindings mismatch:
@@ -108,17 +97,6 @@ Bindings mismatch:
 after transform: ScopeId(0): ["Data", "WinJS"]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatForEnums.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["One", "TokenType", "Two"]
-rebuilt        : ScopeId(1): ["TokenType"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "TokenType":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -152,17 +130,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability9.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentNonObjectTypeConstraints.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/asyncFunctionsAndStrictNullChecks.ts
 Bindings mismatch:
@@ -261,33 +228,6 @@ rebuilt        : SymbolId(3): []
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules4.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(4): ["One", "m4a"]
-rebuilt        : ScopeId(3): ["m4a"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(6): ["One", "m4b"]
-rebuilt        : ScopeId(5): ["m4b"]
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(10): ["One", "m4c"]
-rebuilt        : ScopeId(6): ["m4c"]
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(0x0)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(14): ["One", "m4d"]
-rebuilt        : ScopeId(10): ["m4d"]
-Scope flags mismatch:
-after transform: ScopeId(14): ScopeFlags(0x0)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
 Symbol redeclarations mismatch for "m4a":
 after transform: SymbolId(1): [Span { start: 80, end: 83 }, Span { start: 104, end: 107 }]
 rebuilt        : SymbolId(1): []
@@ -317,21 +257,6 @@ after transform: []
 rebuilt        : ["m4", "m4c"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/autonumberingInEnums.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Foo", "a"]
-rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["Foo", "b"]
-rebuilt        : ScopeId(2): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 5, end: 8 }, Span { start: 29, end: 32 }]
 rebuilt        : SymbolId(0): []
@@ -405,59 +330,6 @@ Symbol redeclarations mismatch for "C":
 after transform: SymbolId(1): [Span { start: 29, end: 30 }, Span { start: 55, end: 56 }]
 rebuilt        : SymbolId(2): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences2.ts
-Bindings mismatch:
-after transform: ScopeId(17): ["Block", "CaseClause", "FunctionDeclaration", "FunctionExpression", "Identifier", "SyntaxKind"]
-rebuilt        : ScopeId(6): ["SyntaxKind"]
-Scope flags mismatch:
-after transform: ScopeId(17): ScopeFlags(0x0)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(36): ["ClassExpression", "ClassStatement", "SyntaxKind1"]
-rebuilt        : ScopeId(9): ["SyntaxKind1"]
-Scope flags mismatch:
-after transform: ScopeId(36): ScopeFlags(0x0)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
-Symbol flags mismatch for "SyntaxKind":
-after transform: SymbolId(36): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "SyntaxKind1":
-after transform: SymbolId(74): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(17): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences3.ts
-Bindings mismatch:
-after transform: ScopeId(32): ["AssertClause", "Decorator", "ImportClause", "ImportDeclaration", "Modifier", "SyntaxKind"]
-rebuilt        : ScopeId(1): ["SyntaxKind"]
-Scope flags mismatch:
-after transform: ScopeId(32): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "SyntaxKind":
-after transform: SymbolId(49): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences4.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Decorator", "Modifier", "SyntaxKind"]
-rebuilt        : ScopeId(1): ["SyntaxKind"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "SyntaxKind":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenEnumWithEnumMemberConflict.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Color", "Thing"]
-rebuilt        : ScopeId(1): ["Color"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Color":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithAccessorChildren.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Symbol redeclarations mismatch for "M":
@@ -469,17 +341,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 111, end: 112 }, Span { start: 198, end: 199 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithEnumMemberConflict.ts
-Bindings mismatch:
-after transform: ScopeId(2): ["e", "m1", "m2"]
-rebuilt        : ScopeId(2): ["e"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "e":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithFunctionChildren.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -554,43 +415,10 @@ rebuilt        : ScopeId(1): ["_m", "a"]
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndAliasInGlobal.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndEnumInGlobal.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["_this", "_thisVal1", "_thisVal2"]
-rebuilt        : ScopeId(1): ["_this"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "_this":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/commentOnAmbientModule.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "D"]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/commentOnExportEnumDeclaration.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Color", "b", "g", "r"]
-rebuilt        : ScopeId(1): ["Color"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Color":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/comparableRelationBidirectional.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["AutomationMode", "LOCATION", "NONE", "SYSTEM", "TIME"]
-rebuilt        : ScopeId(1): ["AutomationMode"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "AutomationMode":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/complexNarrowingWithAny.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -599,15 +427,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/computedEnumMembe
 Missing ReferenceId: "Foo"
 Missing ReferenceId: "Foo"
 Missing ReferenceId: "Foo"
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "F", "Foo", "G", "H", "I", "J"]
-rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(10): [ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24)]
 rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(12), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24)]
@@ -618,188 +437,20 @@ Missing ReferenceId: "Foo"
 Missing ReferenceId: "Foo"
 Missing ReferenceId: "Foo"
 Missing ReferenceId: "Foo"
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "D", "E1", "E2", "F", "Foo", "G", "H", "I", "J"]
-rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(2): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(14): [ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(31), ReferenceId(32), ReferenceId(33)]
 rebuilt        : SymbolId(3): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(14), ReferenceId(15), ReferenceId(17), ReferenceId(18), ReferenceId(20), ReferenceId(21), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(30), ReferenceId(31), ReferenceId(32), ReferenceId(33)]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/computedEnumTypeWidening.ts
-Bindings mismatch:
-after transform: ScopeId(2): ["A", "B", "C", "D", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(9): ["A", "B", "C", "MyEnum"]
-rebuilt        : ScopeId(8): ["MyEnum"]
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(0x0)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(2): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "MyEnum":
-after transform: SymbolId(52): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(43): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesWithSetterAssignment.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Props", "k"]
-rebuilt        : ScopeId(1): ["Props"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Props":
-after transform: SymbolId(1): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-ambient.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["M"]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumDeclarations.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["A", "B", "C", "E2"]
-rebuilt        : ScopeId(2): ["E2"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E2":
-after transform: SymbolId(4): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumNamespaceReferenceCausesNoImport.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["ConstFooEnum", "Here", "Some", "Values"]
-rebuilt        : ScopeId(1): ["ConstFooEnum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "ConstFooEnum":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumNamespaceReferenceCausesNoImport2.ts
-Bindings mismatch:
-after transform: ScopeId(2): ["ConstFooEnum", "Here", "Some", "Values"]
-rebuilt        : ScopeId(2): ["ConstFooEnum"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "ConstFooEnum":
-after transform: SymbolId(1): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumNoEmitReexport.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Bar", "Foo", "MyConstEnum"]
-rebuilt        : ScopeId(1): ["MyConstEnum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "MyConstEnum":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumOnlyModuleMerging.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(3): ["A", "X"]
-rebuilt        : ScopeId(3): ["A"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol redeclarations mismatch for "Outer":
 after transform: SymbolId(0): [Span { start: 10, end: 15 }, Span { start: 53, end: 58 }]
 rebuilt        : SymbolId(0): []
-Symbol flags mismatch for "A":
-after transform: SymbolId(2): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumPreserveEmitNamedExport1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "Foo"]
-rebuilt        : ScopeId(1): ["A"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumPreserveEmitNamedExport2.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "Foo"]
-rebuilt        : ScopeId(1): ["A"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumPreserveEmitReexport.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Bar", "Foo", "MyConstEnum"]
-rebuilt        : ScopeId(1): ["MyConstEnum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "MyConstEnum":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumSyntheticNodesComments.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "D", "En"]
-rebuilt        : ScopeId(1): ["En"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "En":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumToStringNoComments.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "Foo", "X", "Y", "Z"]
-rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumToStringWithComments.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "Foo", "X", "Y", "Z"]
-rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/constructorOverloads5.ts
 Bindings mismatch:
@@ -847,86 +498,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["app"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/controlFlowBreakContinueWithLabel.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "User"]
-rebuilt        : ScopeId(1): ["User"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "User":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/controlFlowManyConsecutiveConditionsNoTimeout.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Choice", "One", "Two"]
-rebuilt        : ScopeId(1): ["Choice"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Choice":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileEnumUsedAsValue.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["a", "b", "c", "e"]
-rebuilt        : ScopeId(1): ["e"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "e":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileEnums.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["a", "b", "c", "e1"]
-rebuilt        : ScopeId(1): ["e1"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["a", "b", "c", "e2"]
-rebuilt        : ScopeId(2): ["e2"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(3): ["a", "b", "c", "e3"]
-rebuilt        : ScopeId(3): ["e3"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(4): ["a", "b", "c", "d", "e", "e4"]
-rebuilt        : ScopeId(4): ["e4"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["Friday", "Saturday", "Sunday", "Weekend days", "e5"]
-rebuilt        : ScopeId(5): ["e5"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Symbol flags mismatch for "e1":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "e2":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "e3":
-after transform: SymbolId(8): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "e4":
-after transform: SymbolId(12): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "e5":
-after transform: SymbolId(18): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileExportAssignmentImportInternalModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -983,28 +554,6 @@ rebuilt        : SymbolId(0): []
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileModuleWithPropertyOfTypeModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofEnum.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["days", "friday", "monday", "saturday", "sunday", "thursday", "tuesday", "wednesday"]
-rebuilt        : ScopeId(1): ["days"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "days":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofInAnonymousType.ts
-Bindings mismatch:
-after transform: ScopeId(3): ["e", "holiday", "weekday", "weekend"]
-rebuilt        : ScopeId(3): ["e"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Symbol flags mismatch for "e":
-after transform: SymbolId(2): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -1047,28 +596,6 @@ Symbol redeclarations mismatch for "bar":
 after transform: SymbolId(0): [Span { start: 10, end: 13 }, Span { start: 26, end: 29 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedNameConstEnumAlias.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["EnumExample", "TEST"]
-rebuilt        : ScopeId(1): ["EnumExample"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "EnumExample":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedPropertyNameEnum1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "Enum"]
-rebuilt        : ScopeId(1): ["Enum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Enum":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringArrayPattern3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -1077,17 +604,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringPrivacyError.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitEnumReadonlyProperty.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitEnumReferenceViaImportEquals.ts
 Bindings mismatch:
@@ -1231,36 +747,21 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(0x0)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
 Symbol redeclarations mismatch for "X":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 160, end: 161 }]
 rebuilt        : SymbolId(0): []
-Symbol flags mismatch for "E":
-after transform: SymbolId(7): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflicts3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(14): ["D", "f"]
-rebuilt        : ScopeId(13): ["D"]
-Scope flags mismatch:
-after transform: ScopeId(14): ScopeFlags(0x0)
-rebuilt        : ScopeId(13): ScopeFlags(Function)
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 243, end: 244 }]
 rebuilt        : SymbolId(0): []
 Symbol redeclarations mismatch for "D":
 after transform: SymbolId(1): [Span { start: 35, end: 36 }, Span { start: 62, end: 63 }]
 rebuilt        : SymbolId(2): []
-Symbol flags mismatch for "D":
-after transform: SymbolId(10): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(16): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflictsWithAlias.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -1269,17 +770,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNa
 Symbol redeclarations mismatch for "Bar":
 after transform: SymbolId(1): [Span { start: 51, end: 54 }, Span { start: 87, end: 90 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNoNonRequiredParens.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "Test"]
-rebuilt        : ScopeId(1): ["Test"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Test":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOfFuncspace.ts
 Bindings mismatch:
@@ -1291,28 +781,6 @@ rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "ExpandoMerge":
 after transform: SymbolId(0): [Span { start: 19, end: 31 }, Span { start: 71, end: 83 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitSpreadStringlyKeyedEnum.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["0-17", "18-22", "23-27", "28-34", "35-44", "45-59", "60-150", "AgeGroups"]
-rebuilt        : ScopeId(1): ["AgeGroups"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "AgeGroups":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitStringEnumUsedInNonlocalSpread.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Test1", "Test2", "TestEnum"]
-rebuilt        : ScopeId(1): ["TestEnum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "TestEnum":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationMaps.ts
 Bindings mismatch:
@@ -1443,48 +911,6 @@ Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 10, end: 13 }, Span { start: 23, end: 26 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/discriminantPropertyCheck.ts
-Bindings mismatch:
-after transform: ScopeId(21): ["Num", "Str", "Types"]
-rebuilt        : ScopeId(17): ["Types"]
-Scope flags mismatch:
-after transform: ScopeId(21): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(17): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(44): ["BarEnum", "bar1", "bar2"]
-rebuilt        : ScopeId(28): ["BarEnum"]
-Scope flags mismatch:
-after transform: ScopeId(44): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(28): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Types":
-after transform: SymbolId(20): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(16): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "BarEnum":
-after transform: SymbolId(46): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(28): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/discriminantsAndPrimitives.ts
-Bindings mismatch:
-after transform: ScopeId(15): ["Disjunction", "EnumTypeNode", "Pattern"]
-rebuilt        : ScopeId(13): ["EnumTypeNode"]
-Scope flags mismatch:
-after transform: ScopeId(15): ScopeFlags(0x0)
-rebuilt        : ScopeId(13): ScopeFlags(Function)
-Symbol flags mismatch for "EnumTypeNode":
-after transform: SymbolId(10): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/discriminatedUnionJsxElement.tsx
-Bindings mismatch:
-after transform: ScopeId(4): ["Avatar", "ListItemVariant", "OneLine"]
-rebuilt        : ScopeId(2): ["ListItemVariant"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "ListItemVariant":
-after transform: SymbolId(7): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/dottedModuleName2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -1494,15 +920,6 @@ after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 174, e
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/doubleUnderscoreEnumEmit.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["(Anonymous class)", "(Anonymous function)", "Foo", "__a", "__call"]
-rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(0): Span { start: 5, end: 8 }
@@ -1561,295 +978,16 @@ rebuilt        : SymbolId(0): []
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts
 'with' statements are not allowed
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/emptyEnum.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumAssignmentCompat4.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(2): ["BAR", "MyEnum"]
-rebuilt        : ScopeId(2): ["MyEnum"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(4): ["FOO", "MyEnum"]
-rebuilt        : ScopeId(4): ["MyEnum"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Symbol flags mismatch for "MyEnum":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "MyEnum":
-after transform: SymbolId(5): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumCodeGenNewLines1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["b", "c", "d", "foo"]
-rebuilt        : ScopeId(1): ["foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "foo":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumDecl1.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["mAmbient"]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumDeclarationEmitInitializerHasImport.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Enum", "Value1", "Value2"]
-rebuilt        : ScopeId(1): ["Enum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Enum":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumFromExternalModule.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Mode", "Open"]
-rebuilt        : ScopeId(1): ["Mode"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Mode":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumIndexer.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["MyEnumType", "bar", "foo"]
-rebuilt        : ScopeId(1): ["MyEnumType"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "MyEnumType":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumKeysQuotedAsObjectPropertiesInDeclarationEmit.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["LEFT_BUTTON", "MIDDLE_BUTTON", "MouseButton", "NO_BUTTON", "RIGHT_BUTTON", "XBUTTON1_BUTTON", "XBUTTON2_BUTTON"]
-rebuilt        : ScopeId(1): ["MouseButton"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "MouseButton":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumLiteralUnionNotWidened.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "one", "two"]
-rebuilt        : ScopeId(1): ["A"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["B", "bar", "foo"]
-rebuilt        : ScopeId(2): ["B"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "B":
-after transform: SymbolId(3): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumLiteralsSubtypeReduction.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "E0", "E1", "E10", "E100", "E1000", "E1001", "E1002", "E1003", "E1004", "E1005", "E1006", "E1007", "E1008", "E1009", "E101", "E1010", "E1011", "E1012", "E1013", "E1014", "E1015", "E1016", "E1017", "E1018", "E1019", "E102", "E1020", "E1021", "E1022", "E1023", "E103", "E104", "E105", "E106", "E107", "E108", "E109", "E11", "E110", "E111", "E112", "E113", "E114", "E115", "E116", "E117", "E118", "E119", "E12", "E120", "E121", "E122", "E123", "E124", "E125", "E126", "E127", "E128", "E129", "E13", "E130", "E131", "E132", "E133", "E134", "E135", "E136", "E137", "E138", "E139", "E14", "E140", "E141", "E142", "E143", "E144", "E145", "E146", "E147", "E148", "E149", "E15", "E150", "E151", "E152", "E153", "E154", "E155", "E156", "E157", "E158", "E159", "E16", "E160", "E161", "E162", "E163", "E164", "E165", "E166", "E167", "E168", "E169", "E17", "E170", "E171", "E172", "E173", "E174", "E175", "E176", "E177", "E178", "E179", "E18", "E180", "E181", "E182", "E183", "E184", "E185", "E186", "E187", "E188", "E189", "E19", "E190", "E191", "E192", "E193", "E194", "E195", "E196", "E197", "E198", "E199", "E2", "E20", "E200", "E201", "E202", "E203", "E204", "E205", "E206", "E207", "E208", "E209", "E21", "E210", "E211", "E212", "E213", "E214", "E215", "E216", "E217", "E218", "E219", "E22", "E220", "E221", "E222", "E223", "E224", "E225", "E226", "E227", "E228", "E229", "E23", "E230", "E231", "E232", "E233", "E234", "E235", "E236", "E237", "E238", "E239", "E24", "E240", "E241", "E242", "E243", "E244", "E245", "E246", "E247", "E248", "E249", "E25", "E250", "E251", "E252", "E253", "E254", "E255", "E256", "E257", "E258", "E259", "E26", "E260", "E261", "E262", "E263", "E264", "E265", "E266", "E267", "E268", "E269", "E27", "E270", "E271", "E272", "E273", "E274", "E275", "E276", "E277", "E278", "E279", "E28", "E280", "E281", "E282", "E283", "E284", "E285", "E286", "E287", "E288", "E289", "E29", "E290", "E291", "E292", "E293", "E294", "E295", "E296", "E297", "E298", "E299", "E3", "E30", "E300", "E301", "E302", "E303", "E304", "E305", "E306", "E307", "E308", "E309", "E31", "E310", "E311", "E312", "E313", "E314", "E315", "E316", "E317", "E318", "E319", "E32", "E320", "E321", "E322", "E323", "E324", "E325", "E326", "E327", "E328", "E329", "E33", "E330", "E331", "E332", "E333", "E334", "E335", "E336", "E337", "E338", "E339", "E34", "E340", "E341", "E342", "E343", "E344", "E345", "E346", "E347", "E348", "E349", "E35", "E350", "E351", "E352", "E353", "E354", "E355", "E356", "E357", "E358", "E359", "E36", "E360", "E361", "E362", "E363", "E364", "E365", "E366", "E367", "E368", "E369", "E37", "E370", "E371", "E372", "E373", "E374", "E375", "E376", "E377", "E378", "E379", "E38", "E380", "E381", "E382", "E383", "E384", "E385", "E386", "E387", "E388", "E389", "E39", "E390", "E391", "E392", "E393", "E394", "E395", "E396", "E397", "E398", "E399", "E4", "E40", "E400", "E401", "E402", "E403", "E404", "E405", "E406", "E407", "E408", "E409", "E41", "E410", "E411", "E412", "E413", "E414", "E415", "E416", "E417", "E418", "E419", "E42", "E420", "E421", "E422", "E423", "E424", "E425", "E426", "E427", "E428", "E429", "E43", "E430", "E431", "E432", "E433", "E434", "E435", "E436", "E437", "E438", "E439", "E44", "E440", "E441", "E442", "E443", "E444", "E445", "E446", "E447", "E448", "E449", "E45", "E450", "E451", "E452", "E453", "E454", "E455", "E456", "E457", "E458", "E459", "E46", "E460", "E461", "E462", "E463", "E464", "E465", "E466", "E467", "E468", "E469", "E47", "E470", "E471", "E472", "E473", "E474", "E475", "E476", "E477", "E478", "E479", "E48", "E480", "E481", "E482", "E483", "E484", "E485", "E486", "E487", "E488", "E489", "E49", "E490", "E491", "E492", "E493", "E494", "E495", "E496", "E497", "E498", "E499", "E5", "E50", "E500", "E501", "E502", "E503", "E504", "E505", "E506", "E507", "E508", "E509", "E51", "E510", "E511", "E512", "E513", "E514", "E515", "E516", "E517", "E518", "E519", "E52", "E520", "E521", "E522", "E523", "E524", "E525", "E526", "E527", "E528", "E529", "E53", "E530", "E531", "E532", "E533", "E534", "E535", "E536", "E537", "E538", "E539", "E54", "E540", "E541", "E542", "E543", "E544", "E545", "E546", "E547", "E548", "E549", "E55", "E550", "E551", "E552", "E553", "E554", "E555", "E556", "E557", "E558", "E559", "E56", "E560", "E561", "E562", "E563", "E564", "E565", "E566", "E567", "E568", "E569", "E57", "E570", "E571", "E572", "E573", "E574", "E575", "E576", "E577", "E578", "E579", "E58", "E580", "E581", "E582", "E583", "E584", "E585", "E586", "E587", "E588", "E589", "E59", "E590", "E591", "E592", "E593", "E594", "E595", "E596", "E597", "E598", "E599", "E6", "E60", "E600", "E601", "E602", "E603", "E604", "E605", "E606", "E607", "E608", "E609", "E61", "E610", "E611", "E612", "E613", "E614", "E615", "E616", "E617", "E618", "E619", "E62", "E620", "E621", "E622", "E623", "E624", "E625", "E626", "E627", "E628", "E629", "E63", "E630", "E631", "E632", "E633", "E634", "E635", "E636", "E637", "E638", "E639", "E64", "E640", "E641", "E642", "E643", "E644", "E645", "E646", "E647", "E648", "E649", "E65", "E650", "E651", "E652", "E653", "E654", "E655", "E656", "E657", "E658", "E659", "E66", "E660", "E661", "E662", "E663", "E664", "E665", "E666", "E667", "E668", "E669", "E67", "E670", "E671", "E672", "E673", "E674", "E675", "E676", "E677", "E678", "E679", "E68", "E680", "E681", "E682", "E683", "E684", "E685", "E686", "E687", "E688", "E689", "E69", "E690", "E691", "E692", "E693", "E694", "E695", "E696", "E697", "E698", "E699", "E7", "E70", "E700", "E701", "E702", "E703", "E704", "E705", "E706", "E707", "E708", "E709", "E71", "E710", "E711", "E712", "E713", "E714", "E715", "E716", "E717", "E718", "E719", "E72", "E720", "E721", "E722", "E723", "E724", "E725", "E726", "E727", "E728", "E729", "E73", "E730", "E731", "E732", "E733", "E734", "E735", "E736", "E737", "E738", "E739", "E74", "E740", "E741", "E742", "E743", "E744", "E745", "E746", "E747", "E748", "E749", "E75", "E750", "E751", "E752", "E753", "E754", "E755", "E756", "E757", "E758", "E759", "E76", "E760", "E761", "E762", "E763", "E764", "E765", "E766", "E767", "E768", "E769", "E77", "E770", "E771", "E772", "E773", "E774", "E775", "E776", "E777", "E778", "E779", "E78", "E780", "E781", "E782", "E783", "E784", "E785", "E786", "E787", "E788", "E789", "E79", "E790", "E791", "E792", "E793", "E794", "E795", "E796", "E797", "E798", "E799", "E8", "E80", "E800", "E801", "E802", "E803", "E804", "E805", "E806", "E807", "E808", "E809", "E81", "E810", "E811", "E812", "E813", "E814", "E815", "E816", "E817", "E818", "E819", "E82", "E820", "E821", "E822", "E823", "E824", "E825", "E826", "E827", "E828", "E829", "E83", "E830", "E831", "E832", "E833", "E834", "E835", "E836", "E837", "E838", "E839", "E84", "E840", "E841", "E842", "E843", "E844", "E845", "E846", "E847", "E848", "E849", "E85", "E850", "E851", "E852", "E853", "E854", "E855", "E856", "E857", "E858", "E859", "E86", "E860", "E861", "E862", "E863", "E864", "E865", "E866", "E867", "E868", "E869", "E87", "E870", "E871", "E872", "E873", "E874", "E875", "E876", "E877", "E878", "E879", "E88", "E880", "E881", "E882", "E883", "E884", "E885", "E886", "E887", "E888", "E889", "E89", "E890", "E891", "E892", "E893", "E894", "E895", "E896", "E897", "E898", "E899", "E9", "E90", "E900", "E901", "E902", "E903", "E904", "E905", "E906", "E907", "E908", "E909", "E91", "E910", "E911", "E912", "E913", "E914", "E915", "E916", "E917", "E918", "E919", "E92", "E920", "E921", "E922", "E923", "E924", "E925", "E926", "E927", "E928", "E929", "E93", "E930", "E931", "E932", "E933", "E934", "E935", "E936", "E937", "E938", "E939", "E94", "E940", "E941", "E942", "E943", "E944", "E945", "E946", "E947", "E948", "E949", "E95", "E950", "E951", "E952", "E953", "E954", "E955", "E956", "E957", "E958", "E959", "E96", "E960", "E961", "E962", "E963", "E964", "E965", "E966", "E967", "E968", "E969", "E97", "E970", "E971", "E972", "E973", "E974", "E975", "E976", "E977", "E978", "E979", "E98", "E980", "E981", "E982", "E983", "E984", "E985", "E986", "E987", "E988", "E989", "E99", "E990", "E991", "E992", "E993", "E994", "E995", "E996", "E997", "E998", "E999"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumMapBackIntoItself.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Large", "Medium", "Small", "TShirtSize"]
-rebuilt        : ScopeId(1): ["TShirtSize"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "TShirtSize":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumMemberNameNonIdentifier.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["123startsWithNumber", "E", "has space", "hyphen-member", "regular", "Ϳ"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumMemberReduction.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "MyEnum"]
-rebuilt        : ScopeId(1): ["MyEnum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["A", "B", "C", "MyStringEnum"]
-rebuilt        : ScopeId(2): ["MyStringEnum"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(3): ["A", "B", "C", "MyStringEnumWithEmpty"]
-rebuilt        : ScopeId(3): ["MyStringEnumWithEmpty"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "MyEnum":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "MyStringEnum":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "MyStringEnumWithEmpty":
-after transform: SymbolId(8): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumNegativeLiteral1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "a", "b", "c"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumNumbering1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "D", "E", "Test"]
-rebuilt        : ScopeId(1): ["Test"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Test":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumOperations.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Enum", "None"]
-rebuilt        : ScopeId(1): ["Enum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Enum":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumWithInfinityProperty.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "Infinity"]
-rebuilt        : ScopeId(1): ["A"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumWithNaNProperty.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "NaN"]
-rebuilt        : ScopeId(1): ["A"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumWithNegativeInfinityProperty.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["-Infinity", "A"]
-rebuilt        : ScopeId(1): ["A"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumWithQuotedElementName1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "fo\"o"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumWithQuotedElementName2.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "fo'o"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumWithUnicodeEscape1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "gold ✰"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumWithoutInitializerAfterComputedMember.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "a", "b", "c"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumsWithMultipleDeclarations3.ts
-Bindings mismatch:
-after transform: ScopeId(2): ["A", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Reference symbol mismatch for "E":
 after transform: SymbolId(0) "E"
 rebuilt        : <None>
@@ -1876,174 +1014,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportClauseWithoutModuleSpecifier.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleConstEnumDeclaration.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["a", "b", "c", "e1"]
-rebuilt        : ScopeId(1): ["e1"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["e2", "x", "y", "z"]
-rebuilt        : ScopeId(2): ["e2"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(4): ["a", "b", "c", "e3"]
-rebuilt        : ScopeId(4): ["e3"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["e4", "x", "y", "z"]
-rebuilt        : ScopeId(5): ["e4"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(5): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(7): ["a", "b", "c", "e5"]
-rebuilt        : ScopeId(7): ["e5"]
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(7): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(8): ["e6", "x", "y", "z"]
-rebuilt        : ScopeId(8): ["e6"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(8): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "e1":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "e2":
-after transform: SymbolId(4): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "e3":
-after transform: SymbolId(11): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "e4":
-after transform: SymbolId(15): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(10): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "e5":
-after transform: SymbolId(24): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(18): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "e6":
-after transform: SymbolId(28): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(20): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleConstEnumDeclaration2.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["a", "b", "c", "e1"]
-rebuilt        : ScopeId(1): ["e1"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["e2", "x", "y", "z"]
-rebuilt        : ScopeId(2): ["e2"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(4): ["a", "b", "c", "e3"]
-rebuilt        : ScopeId(4): ["e3"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["e4", "x", "y", "z"]
-rebuilt        : ScopeId(5): ["e4"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(5): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(7): ["a", "b", "c", "e5"]
-rebuilt        : ScopeId(7): ["e5"]
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(7): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(8): ["e6", "x", "y", "z"]
-rebuilt        : ScopeId(8): ["e6"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(8): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "e1":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "e2":
-after transform: SymbolId(4): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "e3":
-after transform: SymbolId(11): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "e4":
-after transform: SymbolId(15): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(10): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "e5":
-after transform: SymbolId(24): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(18): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "e6":
-after transform: SymbolId(28): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(20): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleEnumDeclaration.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["a", "b", "c", "e1"]
-rebuilt        : ScopeId(1): ["e1"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["e2", "x", "y", "z"]
-rebuilt        : ScopeId(2): ["e2"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(4): ["a", "b", "c", "e3"]
-rebuilt        : ScopeId(4): ["e3"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["e4", "x", "y", "z"]
-rebuilt        : ScopeId(5): ["e4"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(5): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(7): ["a", "b", "c", "e5"]
-rebuilt        : ScopeId(7): ["e5"]
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(7): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(8): ["e6", "x", "y", "z"]
-rebuilt        : ScopeId(8): ["e6"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(8): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "e1":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "e2":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "e3":
-after transform: SymbolId(11): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "e4":
-after transform: SymbolId(15): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(10): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "e5":
-after transform: SymbolId(24): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(18): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "e6":
-after transform: SymbolId(28): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(20): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleInternalImport.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -2104,17 +1074,6 @@ rebuilt        : SymbolId(1): Span { start: 155, end: 161 }
 Symbol redeclarations mismatch for "server":
 after transform: SymbolId(2): [Span { start: 85, end: 91 }, Span { start: 155, end: 161 }]
 rebuilt        : SymbolId(1): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentEnum.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportDeclarationsInAmbientNamespaces.ts
 Bindings mismatch:
@@ -2238,28 +1197,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/fakeInfinity2.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "Foo"]
-rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/fakeInfinity3.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "Foo"]
-rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionDeclarationWithResolutionOfTypeOfSameName01.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -2367,17 +1304,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importAndVariableDeclarationConflict2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/importElisionEnum.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["MyEnum", "a", "b", "c", "d"]
-rebuilt        : ScopeId(1): ["MyEnum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "MyEnum":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importElisionExportNonExportAndDefault.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -2414,14 +1340,6 @@ rebuilt        : SymbolId(2): Span { start: 66, end: 67 }
 Symbol redeclarations mismatch for "X":
 after transform: SymbolId(1): [Span { start: 35, end: 36 }, Span { start: 66, end: 67 }]
 rebuilt        : SymbolId(2): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/indexIntoEnum.ts
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/innerExtern.ts
 Bindings mismatch:
@@ -2477,39 +1395,12 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasEnum.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(2): ["Friday", "Saturday", "Sunday", "weekend"]
-rebuilt        : ScopeId(2): ["weekend"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "weekend":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasEnumInsideLocalModuleWithExport.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(2): ["Friday", "Saturday", "Sunday", "weekend"]
-rebuilt        : ScopeId(2): ["weekend"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "weekend":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasEnumInsideLocalModuleWithoutExport.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(2): ["Friday", "Saturday", "Sunday", "weekend"]
-rebuilt        : ScopeId(2): ["weekend"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "weekend":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasFunction.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -2553,68 +1444,6 @@ Symbol redeclarations mismatch for "a":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 50, end: 51 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/intersectionTypeNormalization.ts
-Bindings mismatch:
-after transform: ScopeId(27): ["A", "a1", "a2", "a3", "a75", "a76", "a77"]
-rebuilt        : ScopeId(4): ["A"]
-Scope flags mismatch:
-after transform: ScopeId(27): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(28): ["B", "b1", "b2", "b86", "b87"]
-rebuilt        : ScopeId(5): ["B"]
-Scope flags mismatch:
-after transform: ScopeId(28): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(29): ["C", "c1", "c2", "c210", "c211"]
-rebuilt        : ScopeId(6): ["C"]
-Scope flags mismatch:
-after transform: ScopeId(29): ScopeFlags(0x0)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Symbol flags mismatch for "A":
-after transform: SymbolId(28): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "B":
-after transform: SymbolId(35): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(9): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "C":
-after transform: SymbolId(40): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesImportConstEnum.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["BAR", "Foo"]
-rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesImportConstEnumTypeOnly.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Bar", "Foo"]
-rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesNonAmbientConstEnum.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "X"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesSketchyAliasLocalMerge.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -2628,17 +1457,6 @@ rebuilt        : SymbolId(0): Span { start: 34, end: 36 }
 Symbol redeclarations mismatch for "FC":
 after transform: SymbolId(0): [Span { start: 9, end: 11 }, Span { start: 34, end: 36 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsdocAccessEnumType.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxElementsAsIdentifierNames.tsx
 Bindings mismatch:
@@ -2684,28 +1502,6 @@ rebuilt        : SymbolId(1): []
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/letDeclarations2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/localImportNameVsGlobalName.ts
-Bindings mismatch:
-after transform: ScopeId(2): ["DOWN", "Key", "LEFT", "RIGHT", "UP"]
-rebuilt        : ScopeId(2): ["Key"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "Key":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedToToIndexSignatureInference.ts
-Bindings mismatch:
-after transform: ScopeId(4): ["A", "B", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(10): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Symbol flags mismatch for "point":
@@ -2725,21 +1521,6 @@ after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 101, e
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedEnumDeclarationCodeGen.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "a", "b"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["E", "c"]
-rebuilt        : ScopeId(2): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "E":
 after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 33, end: 34 }]
 rebuilt        : SymbolId(0): []
@@ -2769,32 +1550,15 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(0x0)
-rebuilt        : ScopeId(12): ScopeFlags(Function)
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 94, end: 95 }]
 rebuilt        : SymbolId(0): []
-Symbol flags mismatch for "plop":
-after transform: SymbolId(10): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(16): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedModuleDeclarationWithSharedExportedVar.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 56, end: 57 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/metadataOfUnion.ts
-Bindings mismatch:
-after transform: ScopeId(4): ["A", "B", "C", "D", "E"]
-rebuilt        : ScopeId(5): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(5): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/missingTypeArguments3.ts
 Bindings mismatch:
@@ -2805,26 +1569,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/mixedExports.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["M", "M1"]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/mixedTypeEnumComparison.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "N1", "N2", "S1", "S2"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(6): ["C1", "E2", "N1", "S1"]
-rebuilt        : ScopeId(5): ["E2"]
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E2":
-after transform: SymbolId(9): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mixingFunctionAndAmbientModule1.ts
 Symbol flags mismatch for "My":
@@ -2858,26 +1602,6 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleCodeGenTest3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleCodeGenTest5.ts
-Bindings mismatch:
-after transform: ScopeId(7): ["A", "E1"]
-rebuilt        : ScopeId(9): ["E1"]
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(9): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(8): ["B", "E2"]
-rebuilt        : ScopeId(10): ["E2"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(10): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "E1":
-after transform: SymbolId(6): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "E2":
-after transform: SymbolId(9): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleCodegenTest4.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -2914,17 +1638,6 @@ Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 22, end: 23 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleSameValueDuplicateExportedBindings2.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Animals", "Cat", "Dog"]
-rebuilt        : ScopeId(1): ["Animals"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Animals":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt4.ts
 Bindings mismatch:
 after transform: ScopeId(5): ["_M2", "bar"]
@@ -2956,18 +1669,9 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(5): ["B", "C", "E", "InnerMod", "_M", "exported_var", "someModuleFunction", "someModuleVar", "x", "y"]
 rebuilt        : ScopeId(5): ["B", "C", "E", "InnerMod", "_M", "someModuleFunction", "someModuleVar", "x", "y"]
-Bindings mismatch:
-after transform: ScopeId(8): ["A", "B", "C", "E"]
-rebuilt        : ScopeId(8): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(0x0)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(5): [Span { start: 243, end: 244 }, Span { start: 1079, end: 1080 }]
 rebuilt        : SymbolId(8): []
-Symbol flags mismatch for "E":
-after transform: SymbolId(8): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(13): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/multiModuleClodule1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -3003,17 +1707,6 @@ Bindings mismatch:
 after transform: ScopeId(0): ["Q2", "Q3", "Q4"]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/neverAsDiscriminantType.ts
-Bindings mismatch:
-after transform: ScopeId(14): ["DISPATCH", "GatewayOpcode", "HEARTBEAT", "HEARTBEAT_ACK", "HELLO", "IDENTIFY", "INVALID_SESSION", "PRESENCE_UPDATE", "RECONNECT", "REQUEST_GUILD_MEMBERS", "RESUME", "VOICE_STATE_UPDATE"]
-rebuilt        : ScopeId(5): ["GatewayOpcode"]
-Scope flags mismatch:
-after transform: ScopeId(14): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(5): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "GatewayOpcode":
-after transform: SymbolId(14): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/noCircularDefinitionOnExportOfPrivateInMergedNamespace.ts
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(1): SymbolFlags(Class | ValueModule | Ambient)
@@ -3021,109 +1714,6 @@ rebuilt        : SymbolId(1): SymbolFlags(Class)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(1): [Span { start: 22, end: 25 }, Span { start: 61, end: 64 }]
 rebuilt        : SymbolId(1): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/noUncheckedIndexAccess.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Bacon", "Meat", "Sausage"]
-rebuilt        : ScopeId(1): ["Meat"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["A", "a", "b", "c"]
-rebuilt        : ScopeId(2): ["A"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(3): ["B", "x", "y", "z"]
-rebuilt        : ScopeId(3): ["B"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Symbol flags mismatch for "Meat":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "A":
-after transform: SymbolId(12): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(11): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "B":
-after transform: SymbolId(16): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(13): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/numericEnumMappedType.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E1", "ONE", "THREE", "TWO"]
-rebuilt        : ScopeId(1): ["E1"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(8): ["A", "B", "N1"]
-rebuilt        : ScopeId(2): ["N1"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(9): ["C", "D", "N2"]
-rebuilt        : ScopeId(3): ["N2"]
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Symbol flags mismatch for "E1":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "N1":
-after transform: SymbolId(17): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "N2":
-after transform: SymbolId(20): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/objectLiteralEnumPropertyNames.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "Strs"]
-rebuilt        : ScopeId(1): ["Strs"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(4): ["A", "B", "Nums"]
-rebuilt        : ScopeId(2): ["Nums"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "Strs":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "Nums":
-after transform: SymbolId(12): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(9): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/overload2.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "B":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/parseEntityNameWithReservedWord.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Bool", "false"]
-rebuilt        : ScopeId(1): ["Bool"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Bool":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/partiallyAmbientClodule.ts
 Symbol flags mismatch for "foo":
@@ -3146,17 +1736,6 @@ rebuilt        : SymbolId(0): Span { start: 65, end: 68 }
 Symbol redeclarations mismatch for "foo":
 after transform: SymbolId(0): [Span { start: 18, end: 21 }, Span { start: 65, end: 68 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/preserveConstEnums.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "Value", "Value2"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyCheckExternalModuleExportAssignmentOfGenericClass.ts
 Reference symbol mismatch for "Bar":
@@ -3265,24 +1844,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(3): ["Grumpy", "Happy", "e_private"]
-rebuilt        : ScopeId(3): ["e_private"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(12): ["Grumpy", "Happy", "e_public"]
-rebuilt        : ScopeId(9): ["e_public"]
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(9): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "e_private":
-after transform: SymbolId(2): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "e_public":
-after transform: SymbolId(14): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(13): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/qualifiedName_ImportDeclarations-entity-names-referencing-a-var.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -3291,17 +1852,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfin
 Bindings mismatch:
 after transform: ScopeId(0): ["Curry", "R", "Tools"]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursiveArrayNotCircular.ts
-Bindings mismatch:
-after transform: ScopeId(3): ["ActionType", "Bar", "Batch", "Baz", "Foo"]
-rebuilt        : ScopeId(1): ["ActionType"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "ActionType":
-after transform: SymbolId(3): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursiveCloduleReference.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -3319,17 +1869,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursiveMods.ts
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 62, end: 65 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/reducibleIndexedAccessTypes.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "Type"]
-rebuilt        : ScopeId(1): ["Type"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Type":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reexportNameAliasedAndHoisted.ts
 Bindings mismatch:
@@ -3439,17 +1978,6 @@ Symbol redeclarations mismatch for "m1":
 after transform: SymbolId(0): [Span { start: 10, end: 12 }, Span { start: 70, end: 72 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/stableTypeOrdering.ts
-Bindings mismatch:
-after transform: ScopeId(5): ["Blue", "Color", "Green", "Red"]
-rebuilt        : ScopeId(6): ["Color"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(0x0)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Symbol flags mismatch for "Color":
-after transform: SymbolId(9): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/staticFieldWithInterfaceContext.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["_Class", "_Class10", "_Class11", "_Class12", "_Class13", "_Class14", "_Class15", "_Class2", "_Class4", "_Class5", "_Class6", "_Class7", "_Class8", "_Class9", "_defineProperty", "c", "c10", "c11", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "ex", "f"]
@@ -3460,17 +1988,6 @@ rebuilt        : ScopeId(3): ["c"]
 Symbol scope ID mismatch for "_Class3":
 after transform: SymbolId(18): ScopeId(4)
 rebuilt        : SymbolId(3): ScopeId(0)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/strictModeEnumMemberNameReserved.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "static"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/stringLiteralObjectLiteralDeclaration1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -3506,17 +2023,6 @@ rebuilt        : SymbolId(0): []
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/topLevel.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/trackedSymbolsNoCrash.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Node0", "Node1", "Node10", "Node11", "Node12", "Node13", "Node14", "Node15", "Node16", "Node17", "Node18", "Node19", "Node2", "Node20", "Node21", "Node22", "Node23", "Node24", "Node25", "Node26", "Node27", "Node28", "Node29", "Node3", "Node30", "Node31", "Node32", "Node33", "Node34", "Node35", "Node36", "Node37", "Node38", "Node39", "Node4", "Node40", "Node41", "Node42", "Node43", "Node44", "Node45", "Node46", "Node47", "Node48", "Node49", "Node5", "Node50", "Node51", "Node52", "Node53", "Node54", "Node55", "Node56", "Node57", "Node58", "Node59", "Node6", "Node60", "Node61", "Node62", "Node63", "Node64", "Node65", "Node66", "Node67", "Node68", "Node69", "Node7", "Node70", "Node71", "Node72", "Node73", "Node74", "Node75", "Node76", "Node77", "Node78", "Node79", "Node8", "Node80", "Node81", "Node82", "Node83", "Node84", "Node85", "Node86", "Node87", "Node88", "Node89", "Node9", "Node90", "Node91", "Node92", "Node93", "Node94", "Node95", "Node96", "Node97", "Node98", "Node99", "SyntaxKind"]
-rebuilt        : ScopeId(1): ["SyntaxKind"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "SyntaxKind":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxAttributesHasInferrableIndex.tsx
 Bindings mismatch:
 after transform: ScopeId(0): ["Button", "_jsxFileName", "b"]
@@ -3528,17 +2034,6 @@ Symbol redeclarations mismatch for "createElement":
 after transform: SymbolId(2): [Span { start: 125, end: 138 }, Span { start: 243, end: 256 }]
 rebuilt        : SymbolId(1): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxDefaultImports.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["SomeEnum", "one"]
-rebuilt        : ScopeId(1): ["SomeEnum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "SomeEnum":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeAliasFunctionTypeSharedSymbol.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -3549,28 +2044,6 @@ rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "Mixin":
 after transform: SymbolId(0): [Span { start: 42, end: 47 }, Span { start: 152, end: 157 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeGuardNarrowsIndexedAccessOfKnownProperty11.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeGuardNarrowsIndexedAccessOfKnownProperty12.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeVal.ts
 Bindings mismatch:
@@ -3597,28 +2070,6 @@ Symbol redeclarations mismatch for "I":
 after transform: SymbolId(0): [Span { start: 4, end: 5 }, Span { start: 32, end: 33 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/unaryPlus.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "some", "thing"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(2): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/underscoreEscapedNameInEnum.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "__foo", "bar"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/underscoreMapFirst.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["MyView", "_"]
@@ -3640,17 +2091,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/unexportedInstanc
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 67, end: 68 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/unionOfEnumInference.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "Enum"]
-rebuilt        : ScopeId(1): ["Enum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Enum":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedClassesinNamespace3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -3857,39 +2297,6 @@ Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(8): Some(ScopeId(0))
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnum1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "a", "b", "c", "d", "e", "f", "g", "h"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnum3.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["TestType", "bar", "foo"]
-rebuilt        : ScopeId(1): ["TestType"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "TestType":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnumPropertyAccess3.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "D", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod19.ts
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
@@ -3972,475 +2379,36 @@ Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(26): Some(ScopeId(0))
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumBasics.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "E1"]
-rebuilt        : ScopeId(1): ["E1"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["A", "B", "C", "E2"]
-rebuilt        : ScopeId(2): ["E2"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(3): ["E3", "X", "Y", "Z"]
-rebuilt        : ScopeId(3): ["E3"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(4): ["E4", "X", "Y", "Z"]
-rebuilt        : ScopeId(4): ["E4"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["A", "B", "C", "E5"]
-rebuilt        : ScopeId(5): ["E5"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(6): ["A", "B", "C", "E6"]
-rebuilt        : ScopeId(6): ["E6"]
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(0x0)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(7): ["A", "E7"]
-rebuilt        : ScopeId(7): ["E7"]
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(0x0)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(8): ["B", "E8"]
-rebuilt        : ScopeId(8): ["E8"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(0x0)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(9): ["A", "B", "E9"]
-rebuilt        : ScopeId(9): ["E9"]
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(0x0)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
-Symbol flags mismatch for "E1":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E2":
-after transform: SymbolId(7): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E3":
-after transform: SymbolId(11): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(7): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E4":
-after transform: SymbolId(15): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(9): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E5":
-after transform: SymbolId(19): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(11): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E6":
-after transform: SymbolId(23): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(13): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E7":
-after transform: SymbolId(27): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(15): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E8":
-after transform: SymbolId(29): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(17): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E9":
-after transform: SymbolId(31): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(19): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumClassification.ts
 Missing ReferenceId: "E20"
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "E01"]
-rebuilt        : ScopeId(1): ["E01"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["A", "E02"]
-rebuilt        : ScopeId(2): ["E02"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(3): ["A", "E03"]
-rebuilt        : ScopeId(3): ["E03"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(4): ["A", "B", "C", "E04"]
-rebuilt        : ScopeId(4): ["E04"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["A", "B", "C", "E05"]
-rebuilt        : ScopeId(5): ["E05"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(6): ["A", "B", "C", "E06"]
-rebuilt        : ScopeId(6): ["E06"]
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(0x0)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(7): ["A", "B", "C", "D", "E", "E07", "F"]
-rebuilt        : ScopeId(7): ["E07"]
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(0x0)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(8): ["A", "B", "C", "D", "E", "E08"]
-rebuilt        : ScopeId(8): ["E08"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(0x0)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(0x0)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(10): ["A", "B", "C", "E11"]
-rebuilt        : ScopeId(10): ["E11"]
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(0x0)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(11): ["A", "B", "C", "E12"]
-rebuilt        : ScopeId(11): ["E12"]
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(0x0)
-rebuilt        : ScopeId(11): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(12): ["A", "B", "C", "D", "E20"]
-rebuilt        : ScopeId(12): ["E20"]
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(0x0)
-rebuilt        : ScopeId(12): ScopeFlags(Function)
-Symbol flags mismatch for "E01":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E02":
-after transform: SymbolId(2): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E03":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E04":
-after transform: SymbolId(6): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E05":
-after transform: SymbolId(10): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E06":
-after transform: SymbolId(14): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E07":
-after transform: SymbolId(18): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(12): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E08":
-after transform: SymbolId(25): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E10":
-after transform: SymbolId(31): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(16): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E11":
-after transform: SymbolId(32): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(18): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E12":
-after transform: SymbolId(36): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(20): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E20":
-after transform: SymbolId(40): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(22): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "E20":
 after transform: SymbolId(56): [ReferenceId(77), ReferenceId(78), ReferenceId(79), ReferenceId(80), ReferenceId(81), ReferenceId(82), ReferenceId(83), ReferenceId(84)]
 rebuilt        : SymbolId(23): [ReferenceId(72), ReferenceId(73), ReferenceId(74), ReferenceId(75), ReferenceId(76), ReferenceId(77), ReferenceId(78), ReferenceId(79), ReferenceId(81)]
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumConstantMemberWithStringEmitDeclaration.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["T1", "a", "b", "c"]
-rebuilt        : ScopeId(1): ["T1"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["T2", "a", "b"]
-rebuilt        : ScopeId(2): ["T2"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(3): ["T3", "a", "b"]
-rebuilt        : ScopeId(3): ["T3"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(4): ["T4", "a"]
-rebuilt        : ScopeId(4): ["T4"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["T5", "a"]
-rebuilt        : ScopeId(5): ["T5"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Symbol flags mismatch for "T1":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "T2":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "T3":
-after transform: SymbolId(7): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "T4":
-after transform: SymbolId(10): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "T5":
-after transform: SymbolId(12): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumConstantMemberWithTemplateLiteralsEmitDeclaration.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["T1", "a"]
-rebuilt        : ScopeId(1): ["T1"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["T2", "a", "b", "c"]
-rebuilt        : ScopeId(2): ["T2"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(3): ["T3", "a"]
-rebuilt        : ScopeId(3): ["T3"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(4): ["T4", "a", "b", "c", "d", "e"]
-rebuilt        : ScopeId(4): ["T4"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["T5", "a", "b", "c", "d"]
-rebuilt        : ScopeId(5): ["T5"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(6): ["T6", "a", "b"]
-rebuilt        : ScopeId(6): ["T6"]
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(0x0)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Symbol flags mismatch for "T1":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "T2":
-after transform: SymbolId(2): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "T3":
-after transform: SymbolId(6): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "T4":
-after transform: SymbolId(8): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "T5":
-after transform: SymbolId(14): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "T6":
-after transform: SymbolId(19): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumExportMergingES6.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Animals", "Cat"]
-rebuilt        : ScopeId(1): ["Animals"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["Animals", "Dog"]
-rebuilt        : ScopeId(2): ["Animals"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(3): ["Animals", "CatDog"]
-rebuilt        : ScopeId(3): ["Animals"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Animals":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "Animals":
 after transform: SymbolId(0): [Span { start: 12, end: 19 }, Span { start: 45, end: 52 }, Span { start: 78, end: 85 }]
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumMerging.ts
-Bindings mismatch:
-after transform: ScopeId(2): ["A", "B", "C", "EImpl1"]
-rebuilt        : ScopeId(2): ["EImpl1"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(3): ["D", "E", "EImpl1", "F"]
-rebuilt        : ScopeId(3): ["EImpl1"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(4): ["A", "B", "C", "EConst1"]
-rebuilt        : ScopeId(4): ["EConst1"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["D", "E", "EConst1", "F"]
-rebuilt        : ScopeId(5): ["EConst1"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(7): ["A", "B", "C", "EComp2"]
-rebuilt        : ScopeId(7): ["EComp2"]
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(0x0)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(8): ["D", "E", "EComp2", "F"]
-rebuilt        : ScopeId(8): ["EComp2"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(0x0)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(10): ["A", "B", "EInit"]
-rebuilt        : ScopeId(10): ["EInit"]
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(0x0)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(11): ["C", "D", "E", "EInit"]
-rebuilt        : ScopeId(11): ["EInit"]
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(0x0)
-rebuilt        : ScopeId(11): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(13): ["Blue", "Color", "Green", "Red"]
-rebuilt        : ScopeId(13): ["Color"]
-Scope flags mismatch:
-after transform: ScopeId(13): ScopeFlags(0x0)
-rebuilt        : ScopeId(13): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(15): ["Blue", "Color", "Green", "Red"]
-rebuilt        : ScopeId(15): ["Color"]
-Scope flags mismatch:
-after transform: ScopeId(15): ScopeFlags(0x0)
-rebuilt        : ScopeId(15): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(18): ["Blue", "Color", "Green", "Red"]
-rebuilt        : ScopeId(18): ["Color"]
-Scope flags mismatch:
-after transform: ScopeId(18): ScopeFlags(0x0)
-rebuilt        : ScopeId(18): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(21): ["Color", "Yellow"]
-rebuilt        : ScopeId(21): ["Color"]
-Scope flags mismatch:
-after transform: ScopeId(21): ScopeFlags(0x0)
-rebuilt        : ScopeId(21): ScopeFlags(Function)
-Symbol flags mismatch for "EImpl1":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "EImpl1":
 after transform: SymbolId(1): [Span { start: 200, end: 206 }, Span { start: 241, end: 247 }]
 rebuilt        : SymbolId(2): []
-Symbol flags mismatch for "EConst1":
-after transform: SymbolId(8): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "EConst1":
 after transform: SymbolId(8): [Span { start: 293, end: 300 }, Span { start: 354, end: 361 }]
 rebuilt        : SymbolId(5): []
-Symbol flags mismatch for "EComp2":
-after transform: SymbolId(17): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "EComp2":
 after transform: SymbolId(17): [Span { start: 597, end: 603 }, Span { start: 690, end: 696 }]
 rebuilt        : SymbolId(11): []
-Symbol flags mismatch for "EInit":
-after transform: SymbolId(26): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(17): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "EInit":
 after transform: SymbolId(26): [Span { start: 973, end: 978 }, Span { start: 1018, end: 1023 }]
 rebuilt        : SymbolId(17): []
-Symbol flags mismatch for "Color":
-after transform: SymbolId(33): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(22): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "Color":
-after transform: SymbolId(38): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(26): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "M6":
 after transform: SymbolId(42): [Span { start: 1236, end: 1238 }, Span { start: 1298, end: 1300 }]
 rebuilt        : SymbolId(28): []
-Symbol flags mismatch for "Color":
-after transform: SymbolId(44): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(32): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "Color":
-after transform: SymbolId(49): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(37): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty49.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames47_ES6.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E1", "x"]
-rebuilt        : ScopeId(1): ["E1"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["E2", "x"]
-rebuilt        : ScopeId(2): ["E2"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "E1":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E2":
-after transform: SymbolId(2): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames7_ES6.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "member"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/accessor/decoratorOnClassAccessor1.es6.ts
 Bindings mismatch:
@@ -4511,87 +2479,15 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExpo
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports1-es6.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(4): ["A", "B", "C", "E"]
-rebuilt        : ScopeId(3): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["A", "B", "C", "D"]
-rebuilt        : ScopeId(4): ["D"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "D":
-after transform: SymbolId(8): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(4): ["A", "B", "C", "E"]
-rebuilt        : ScopeId(3): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["A", "B", "C", "D"]
-rebuilt        : ScopeId(4): ["D"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "D":
-after transform: SymbolId(8): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports3-es6.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(4): ["A", "B", "C", "E"]
-rebuilt        : ScopeId(3): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["A", "B", "C", "D"]
-rebuilt        : ScopeId(4): ["D"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "D":
-after transform: SymbolId(8): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(4): ["A", "B", "C", "E"]
-rebuilt        : ScopeId(3): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(5): ["A", "B", "C", "D"]
-rebuilt        : ScopeId(4): ["D"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "D":
-after transform: SymbolId(8): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesWithModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -4907,59 +2803,8 @@ Symbol redeclarations mismatch for "_y_accessor_storage2":
 after transform: SymbolId(55): []
 rebuilt        : SymbolId(30): [Span { start: 0, end: 0 }, Span { start: 0, end: 0 }]
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/arrayLiterals/arrayLiteralInference.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["AdvancedList", "AppType", "Composite", "HeaderDetail", "HeaderMultiDetail", "ListOnly", "ModuleSettings", "Relationship", "Report", "Standard"]
-rebuilt        : ScopeId(1): ["AppType"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["AppStyle", "MiniApp", "PivotTable", "Standard", "Tree", "TreeEntity"]
-rebuilt        : ScopeId(2): ["AppStyle"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "AppType":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "AppStyle":
-after transform: SymbolId(10): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithAnyAndEveryType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(4): ["E", "a", "b", "c"]
-rebuilt        : ScopeId(5): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(2): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/functionExpressionContextualTyping1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "blue", "red"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/elementAccess/stringEnumInElementAccess01.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/identifiers/scopeResolutionIdentifiers.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -4978,28 +2823,6 @@ Symbol redeclarations mismatch for "nestedCtor":
 after transform: SymbolId(10): [Span { start: 197, end: 207 }, Span { start: 240, end: 250 }]
 rebuilt        : SymbolId(8): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeAssertions/constAssertionOnEnum.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "Foo"]
-rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/TypeGuardWithEnumUnion.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["B", "Color", "G", "R"]
-rebuilt        : ScopeId(1): ["Color"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Color":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInFunctionAndModuleBlock.ts
 Bindings mismatch:
 after transform: ScopeId(9): ["x", "y"]
@@ -5011,17 +2834,6 @@ Symbol scope ID mismatch for "foo":
 after transform: SymbolId(19): ScopeId(10)
 rebuilt        : SymbolId(19): ScopeId(9)
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithEnumType.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["", "A", "B", "ENUM1"]
-rebuilt        : ScopeId(1): ["ENUM1"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "ENUM1":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/decrementOperator/decrementOperatorWithAnyOtherType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -5031,39 +2843,11 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithBooleanType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithEnumType.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["", "A", "B", "ENUM1"]
-rebuilt        : ScopeId(2): ["ENUM1"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "ENUM":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "ENUM1":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithNumberType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithStringType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJSImportNotAsPrimaryExpression.ts
-Bindings mismatch:
-after transform: ScopeId(5): ["A", "B", "C", "E1"]
-rebuilt        : ScopeId(3): ["E1"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "E1":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentMergedModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -5172,46 +2956,7 @@ Symbol redeclarations mismatch for "B":
 after transform: SymbolId(1): [Span { start: 67, end: 68 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(1): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxConstEnum.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxConstEnumUsage.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Foo", "a", "b", "c"]
-rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxRestrictionsESM.ts
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "A":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/generators/generatorYieldContextualType.ts
-Bindings mismatch:
-after transform: ScopeId(7): ["Back", "Cancel", "Directive", "LoadMore", "Noop"]
-rebuilt        : ScopeId(3): ["Directive"]
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Symbol flags mismatch for "Directive":
-after transform: SymbolId(12): SymbolFlags(BlockScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch for "Directive":
 after transform: SymbolId(12): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(3): Span { start: 318, end: 327 }
@@ -5268,15 +3013,6 @@ after transform: SymbolId(5): [Span { start: 227, end: 232 }, Span { start: 371,
 rebuilt        : SymbolId(8): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/EnumAndModuleWithSameNameAndCommonRoot.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Blue", "Red", "enumdule"]
-rebuilt        : ScopeId(1): ["enumdule"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "enumdule":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch for "enumdule":
 after transform: SymbolId(0): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(0): Span { start: 5, end: 13 }
@@ -5288,12 +3024,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModule
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/ModuleAndEnumWithSameNameAndCommonRoot.ts
-Bindings mismatch:
-after transform: ScopeId(4): ["Blue", "Red", "enumdule"]
-rebuilt        : ScopeId(4): ["enumdule"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol redeclarations mismatch for "enumdule":
 after transform: SymbolId(0): [Span { start: 10, end: 18 }, Span { start: 121, end: 129 }]
 rebuilt        : SymbolId(0): []
@@ -5382,17 +3112,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["mod2", "pack2"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocLinkTag9.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Enum", "EnumValue"]
-rebuilt        : ScopeId(1): ["Enum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Enum":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxIntersectionElementPropsType.tsx
 Bindings mismatch:
@@ -5485,102 +3204,6 @@ Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "_jsxFileName"]
 rebuilt        : ScopeId(0): ["_jsxFileName"]
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnum1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["IsIndexer", "IsNumberIndexer", "IsStringIndexer", "None", "SignatureFlags"]
-rebuilt        : ScopeId(1): ["SignatureFlags"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "SignatureFlags":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnum2.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["IsIndexer", "IsNumberIndexer", "IsStringIndexer", "None", "SignatureFlags"]
-rebuilt        : ScopeId(1): ["SignatureFlags"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "SignatureFlags":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnum3.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "SignatureFlags":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnum6.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Bar", "E", "Foo"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration5.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "D", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration6.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "D", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserInterfaceKeywordInEnum.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Bar", "interface"]
-rebuilt        : ScopeId(1): ["Bar"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Bar":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserInterfaceKeywordInEnum1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Bar", "interface"]
-rebuilt        : ScopeId(1): ["Bar"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Bar":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration8.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["M"]
@@ -5608,60 +3231,10 @@ Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(1)
 rebuilt        : SymbolId(0): ScopeId(0)
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerEnum1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["CodeGenTarget", "ES3", "ES5"]
-rebuilt        : ScopeId(1): ["CodeGenTarget"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "CodeGenTarget":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionOfUnionOfUnitTypes.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "D", "E", "F"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/literal/enumLiteralTypes1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Choice", "No", "Unknown", "Yes"]
-rebuilt        : ScopeId(1): ["Choice"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Choice":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/literal/enumLiteralTypes2.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Choice", "No", "Unknown", "Yes"]
-rebuilt        : ScopeId(1): ["Choice"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Choice":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/literal/literalTypeWidening.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["E", "Set", "_excluded", "_objectSpread", "_objectWithoutProperties", "a", "arr", "b", "doWork", "f1", "f2", "f3", "f4", "f5", "f6", "increment", "isFailure", "isSuccess", "keys", "langCodeSet", "langCodes", "onMouseOver", "result", "test", "x"]
 rebuilt        : ScopeId(0): ["E", "FAILURE", "Set", "_excluded", "_objectSpread", "_objectWithoutProperties", "a", "arr", "b", "doWork", "f1", "f2", "f3", "f4", "f5", "f6", "increment", "isFailure", "isSuccess", "keys", "langCodeSet", "langCodes", "onMouseOver", "result", "test", "x"]
-Bindings mismatch:
-after transform: ScopeId(26): ["A", "B", "E"]
-rebuilt        : ScopeId(18): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(26): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(18): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "FAILURE":
 after transform: SymbolId(65): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
 rebuilt        : SymbolId(62): SymbolFlags(BlockScopedVariable | ConstVariable)
@@ -5671,85 +3244,12 @@ rebuilt        : SymbolId(62): Span { start: 2256, end: 2263 }
 Symbol redeclarations mismatch for "FAILURE":
 after transform: SymbolId(65): [Span { start: 2229, end: 2236 }, Span { start: 2256, end: 2263 }]
 rebuilt        : SymbolId(62): []
-Symbol flags mismatch for "E":
-after transform: SymbolId(105): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(87): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/literal/literalTypes2.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/literal/stringEnumLiteralTypes1.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Choice", "No", "Unknown", "Yes"]
-rebuilt        : ScopeId(1): ["Choice"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Choice":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/literal/stringEnumLiteralTypes2.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Choice", "No", "Unknown", "Yes"]
-rebuilt        : ScopeId(1): ["Choice"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "Choice":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypes8.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "a", "b"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeOverlappingStringEnumKeys.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["CAT", "DOG", "TerrestrialAnimalTypes"]
-rebuilt        : ScopeId(1): ["TerrestrialAnimalTypes"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(2): ["AlienAnimalTypes", "CAT"]
-rebuilt        : ScopeId(2): ["AlienAnimalTypes"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Symbol flags mismatch for "TerrestrialAnimalTypes":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "AlienAnimalTypes":
-after transform: SymbolId(3): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithoutReturnTypeAnnotationInference.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(32): ["A", "e1"]
-rebuilt        : ScopeId(31): ["e1"]
-Scope flags mismatch:
-after transform: ScopeId(32): ScopeFlags(0x0)
-rebuilt        : ScopeId(31): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(44): SymbolFlags(BlockScopedVariable)
 rebuilt        : SymbolId(43): SymbolFlags(Function)
@@ -5768,9 +3268,6 @@ rebuilt        : SymbolId(48): Span { start: 1364, end: 1366 }
 Symbol redeclarations mismatch for "c1":
 after transform: SymbolId(48): [Span { start: 1364, end: 1366 }, Span { start: 1421, end: 1423 }]
 rebuilt        : SymbolId(48): []
-Symbol flags mismatch for "e1":
-after transform: SymbolId(53): SymbolFlags(BlockScopedVariable)
-rebuilt        : SymbolId(54): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch for "e1":
 after transform: SymbolId(53): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(54): Span { start: 1511, end: 1513 }
@@ -5778,51 +3275,9 @@ Symbol redeclarations mismatch for "e1":
 after transform: SymbolId(53): [Span { start: 1511, end: 1513 }, Span { start: 1530, end: 1532 }]
 rebuilt        : SymbolId(54): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/propertyNamesOfReservedWords.ts
-Bindings mismatch:
-after transform: ScopeId(3): ["E", "abstract", "as", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "debugger", "default", "delete", "do", "double", "else", "enum", "export", "extends", "false", "final", "finally", "float", "for", "function", "goto", "if", "implements", "import", "in", "instanceof", "int", "interface", "is", "long", "namespace", "native", "new", "null", "package", "private", "protected", "public", "return", "short", "static", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "true", "try", "typeof", "use", "var", "void", "volatile", "while", "with"]
-rebuilt        : ScopeId(3): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(11): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(11): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/primitives/number/validNumberAssignments.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiersReturnsAndYields.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "Val", "Val2"]
-rebuilt        : ScopeId(1): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/anyAssignabilityInInheritance.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(33): ["A", "E"]
-rebuilt        : ScopeId(5): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(33): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(49): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "f":
 after transform: SymbolId(54): SymbolFlags(BlockScopedVariable)
 rebuilt        : SymbolId(7): SymbolFlags(Function)
@@ -5845,15 +3300,6 @@ rebuilt        : SymbolId(10): []
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/anyAssignableToEveryType2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(18): ["A", "E"]
-rebuilt        : ScopeId(5): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(18): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(19): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "f":
 after transform: SymbolId(22): SymbolFlags(BlockScopedVariable)
 rebuilt        : SymbolId(5): SymbolFlags(Function)
@@ -5873,17 +3319,6 @@ Symbol redeclarations mismatch for "c":
 after transform: SymbolId(25): [Span { start: 1133, end: 1134 }, Span { start: 1161, end: 1162 }]
 rebuilt        : SymbolId(8): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/nullAssignableToEveryType.ts
-Bindings mismatch:
-after transform: ScopeId(3): ["A", "E"]
-rebuilt        : ScopeId(3): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/bestCommonType/heterogeneousArrayLiterals.ts
 Symbol flags mismatch for "Derived":
 after transform: SymbolId(15): SymbolFlags(BlockScopedVariable)
@@ -5898,15 +3333,6 @@ rebuilt        : SymbolId(16): []
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/nullIsSubtypeOfEverythingButUndefined.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(8): ["A", "E"]
-rebuilt        : ScopeId(9): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(0x0)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(26): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(23): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "f":
 after transform: SymbolId(30): SymbolFlags(BlockScopedVariable)
 rebuilt        : SymbolId(27): SymbolFlags(Function)
@@ -5929,15 +3355,6 @@ rebuilt        : SymbolId(32): []
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfAny.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(18): ["A", "E"]
-rebuilt        : ScopeId(5): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(18): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(19): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "f":
 after transform: SymbolId(22): SymbolFlags(BlockScopedVariable)
 rebuilt        : SymbolId(5): SymbolFlags(Function)
@@ -5957,28 +3374,6 @@ Symbol redeclarations mismatch for "c":
 after transform: SymbolId(25): [Span { start: 1066, end: 1067 }, Span { start: 1094, end: 1095 }]
 rebuilt        : SymbolId(8): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentity2.ts
-Bindings mismatch:
-after transform: ScopeId(5): ["A", "E"]
-rebuilt        : ScopeId(7): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(0x0)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(6): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/primtiveTypesAreIdentical.ts
-Bindings mismatch:
-after transform: ScopeId(17): ["A", "E"]
-rebuilt        : ScopeId(6): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(17): ScopeFlags(0x0)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Symbol flags mismatch for "E":
-after transform: SymbolId(21): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericContextualTypes1.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["arrayFilter", "arrayMap", "f00", "f01", "f02", "f03", "f10", "f11", "f12", "f13", "f20", "f21", "f22", "f23", "f30", "f31", "f40"]
@@ -5992,15 +3387,4 @@ rebuilt        : SymbolId(32): Span { start: 1621, end: 1623 }
 Symbol redeclarations mismatch for "fn":
 after transform: SymbolId(119): [Span { start: 1594, end: 1596 }, Span { start: 1621, end: 1623 }]
 rebuilt        : SymbolId(32): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/union/discriminatedUnionTypes4.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["AnimalType", "cat", "dog"]
-rebuilt        : ScopeId(1): ["AnimalType"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Symbol flags mismatch for "AnimalType":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 

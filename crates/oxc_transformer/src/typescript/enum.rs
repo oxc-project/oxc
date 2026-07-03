@@ -220,6 +220,11 @@ impl<'a> TypeScriptEnum {
             &param_binding,
             ctx,
         );
+        let scope_flags =
+            ctx.scoping().get_new_scope_flags(ScopeFlags::Function, ctx.current_scope_id());
+        *ctx.scoping_mut().scope_flags_mut(func_scope_id) = scope_flags;
+        ctx.scoping_mut().retain_scope_binding(func_scope_id, param_binding.symbol_id);
+
         let span = decl.span;
         let body = FunctionBody::boxed(span, ArenaVec::new_in(ctx), statements, ctx);
         let callee = Expression::new_function_expression_with_scope_id_and_pure_and_pife(
@@ -292,6 +297,14 @@ impl<'a> TypeScriptEnum {
             VariableDeclarationKind::Let
         } else {
             VariableDeclarationKind::Var
+        };
+        *ctx.scoping_mut().symbol_flags_mut(enum_symbol_id) = match kind {
+            VariableDeclarationKind::Var => SymbolFlags::FunctionScopedVariable,
+            VariableDeclarationKind::Let => SymbolFlags::BlockScopedVariable,
+            VariableDeclarationKind::Const => SymbolFlags::ConstVariable,
+            VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing => {
+                SymbolFlags::BlockScopedVariable
+            }
         };
         let decls = {
             let binding = BindingPattern::new_binding_identifier_with_symbol_id(

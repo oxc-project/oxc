@@ -937,6 +937,13 @@ impl Scoping {
         });
     }
 
+    /// Remove all bindings from a scope except the provided symbol.
+    pub fn retain_scope_binding(&mut self, scope_id: ScopeId, keep_symbol_id: SymbolId) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.bindings[scope_id].retain(|_name, symbol_id| *symbol_id == keep_symbol_id);
+        });
+    }
+
     /// Move a binding from one scope to another.
     pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: Ident<'_>) {
         self.cell.with_dependent_mut(|_allocator, cell| {
