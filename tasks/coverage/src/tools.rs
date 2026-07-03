@@ -10,7 +10,7 @@ use std::{
 use oxc::{
     allocator::Allocator,
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
-    diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcDiagnostic},
+    diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcDiagnostic, Severity},
     minifier::CompressOptions,
     parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig},
     span::{ModuleKind, SourceType, Span},
@@ -283,7 +283,7 @@ fn run_semantic(
     path: &Path,
     options: Option<TransformOptions>,
 ) -> TestResult {
-    run_semantic_impl(code, source_type, path, options, None, false)
+    run_semantic_impl(code, source_type, path, options, None, false, false)
 }
 
 fn run_semantic_consistency(
@@ -292,7 +292,7 @@ fn run_semantic_consistency(
     path: &Path,
     options: Option<TransformOptions>,
 ) -> TestResult {
-    run_semantic_impl(code, source_type, path, options, None, true)
+    run_semantic_impl(code, source_type, path, options, None, true, false)
 }
 
 fn run_semantic_with_ts_ignore(
@@ -302,7 +302,7 @@ fn run_semantic_with_ts_ignore(
     options: Option<TransformOptions>,
     ts_ignore_spans: &[Span],
 ) -> TestResult {
-    run_semantic_impl(code, source_type, path, options, Some(ts_ignore_spans), false)
+    run_semantic_impl(code, source_type, path, options, Some(ts_ignore_spans), false, true)
 }
 
 fn run_semantic_impl(
@@ -312,6 +312,7 @@ fn run_semantic_impl(
     options: Option<TransformOptions>,
     ts_ignore_spans: Option<&[Span]>,
     consistency_errors_only: bool,
+    ignore_warnings: bool,
 ) -> TestResult {
     let mut driver = Driver {
         path: path.to_path_buf(),
@@ -322,6 +323,9 @@ fn run_semantic_impl(
 
     driver.run(code, source_type);
     let mut errors = driver.errors();
+    if ignore_warnings {
+        errors.retain(|error| error.severity != Severity::Warning);
+    }
     if let Some(ts_ignore_spans) = ts_ignore_spans {
         errors.retain(|error| !is_error_suppressed_by_ts_ignore(error, code, ts_ignore_spans));
     }
