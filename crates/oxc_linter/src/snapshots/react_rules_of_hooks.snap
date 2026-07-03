@@ -1290,6 +1290,17 @@ source: crates/oxc_linter/src/tester.rs
  5 │             }
    ╰────
 
+  ⚠ react-hooks(rules-of-hooks): React Hook "useEffectEvent" is called in function "notAComponent" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
+   ╭─[rules_of_hooks.tsx:2:19]
+ 1 │ function notAComponent() {
+   ·          ──────┬──────
+   ·                ╰── Outer function
+ 2 │   const onEvent = useEffectEvent(() => {});
+   ·                   ───────┬──────
+   ·                          ╰── Hook is called here
+ 3 │   return onEvent;
+   ╰────
+
   ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component.
    ╭─[rules_of_hooks.tsx:7:17]
  6 │               useWrongHook(() => {

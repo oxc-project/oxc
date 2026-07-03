@@ -784,6 +784,9 @@ fn check_use_effect_event_usage(
 ) {
     match ctx.nodes().parent_kind(node.id()) {
         AstKind::VariableDeclarator(decl) => {
+            if !is_somewhere_inside_component_or_hook(ctx.nodes(), node.id()) {
+                return;
+            }
             if let Some(ident) = decl.id.get_binding_identifier() {
                 let additional_effect_hooks = additional_effect_hooks(ctx);
                 report_invalid_use_effect_event_references(
@@ -2592,6 +2595,10 @@ fn test() {
                 return { onEvent };
             }
         ",
+        r"function notAComponent() {
+  const onEvent = useEffectEvent(() => {});
+  return onEvent;
+}",
     ];
 
     let fail_additional_effect_hooks = vec![(
