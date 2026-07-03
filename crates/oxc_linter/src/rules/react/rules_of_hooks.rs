@@ -2505,21 +2505,21 @@ fn test() {
               });
             }
         ",
-        r#"
+        r"
             function MyComponent({ theme }) {
                 const onClick = useEffectEvent(() => {
                     showNotification(theme);
                 });
                 return <Child onClick={onClick}></Child>;
             }
-        "#,
-        r#"
+        ",
+        r"
             function MyComponent({ theme }) {
                 return <Child onClick={useEffectEvent(() => {
                     showNotification(theme);
                 })} />;
             }
-        "#,
+        ",
         r"
             function MyComponent({theme}) {
                 const onClick = useEffectEvent(() => {
@@ -2546,15 +2546,15 @@ fn test() {
                 return <Child />
             }
         ",
-        r#"
+        r"
             const MyComponent = ({ theme }) => {
               const onClick = useEffectEvent(() => {
                 showNotification(theme);
               });
               return <Child onClick={onClick}></Child>;
             }
-        "#,
-        r#"
+        ",
+        r"
             function MyComponent({ theme }) {
               const onClick = useEffectEvent(() => {
                 showNotification(theme);
@@ -2562,8 +2562,8 @@ fn test() {
               let foo = onClick;
               return <Bar onClick={foo} />
             }
-        "#,
-        r#"
+        ",
+        r"
             function MyComponent({ theme }) {
               const onClick = useEffectEvent(() => {
                 showNotification(theme);
@@ -2573,8 +2573,8 @@ fn test() {
               });
               return <Child onClick={onClick} />
             }
-        "#,
-        r#"
+        ",
+        r"
             function MyComponent({ theme }) {
               const onClick = useEffectEvent(() => {
                 showNotification(theme);
@@ -2588,7 +2588,7 @@ fn test() {
                 <Child onClick={onClick3}></Child>
               </>;
             }
-        "#,
+        ",
         r"
             function useCustomHook() {
                 const onEvent = useEffectEvent(() => {});
