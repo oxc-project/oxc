@@ -172,9 +172,49 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (25/28)
+# babel-plugin-transform-explicit-resource-management (23/28)
 * integration/commonjs-transform/input.js
 x Output mismatch
+
+* transform-sync/function-body/input.js
+Bindings mismatch:
+after transform: ScopeId(2): ["x"]
+rebuilt        : ScopeId(2): []
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(1))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(1))
+rebuilt        : ScopeId(4): Some(ScopeId(2))
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(1))
+rebuilt        : ScopeId(6): Some(ScopeId(2))
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(3)
+
+* transform-sync/multiple-nested/input.js
+Bindings mismatch:
+after transform: ScopeId(4): ["z"]
+rebuilt        : ScopeId(4): []
+Bindings mismatch:
+after transform: ScopeId(11): []
+rebuilt        : ScopeId(5): ["z"]
+Scope parent mismatch:
+after transform: ScopeId(11): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(12): Some(ScopeId(3))
+rebuilt        : ScopeId(6): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(14): Some(ScopeId(3))
+rebuilt        : ScopeId(8): Some(ScopeId(4))
+Symbol scope ID mismatch for "z":
+after transform: SymbolId(2): ScopeId(4)
+rebuilt        : SymbolId(5): ScopeId(5)
 
 * transform-sync/named-evaluation/input.js
 x Output mismatch
