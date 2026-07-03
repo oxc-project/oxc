@@ -376,13 +376,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        let mut removed_overload_symbols = Vec::new();
         // Remove TS-only statements early to avoid traversing their children
         stmts.retain(|stmt| match stmt {
-            match_declaration!(Statement) => {
-                self.should_keep_declaration(stmt.to_declaration(), ctx)
-            }
+            match_declaration!(Statement) => self.should_keep_declaration(
+                stmt.to_declaration(),
+                ctx,
+                &mut removed_overload_symbols,
+            ),
             _ => true,
         });
+        Self::sync_overload_implementation_symbols(stmts, &removed_overload_symbols, ctx);
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -510,7 +514,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
 impl<'a> TypeScriptAnnotations<'a> {
     #[inline]
-    fn should_keep_declaration(&self, decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+    fn should_keep_declaration(
+        &self,
+        decl: &Declaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+        removed_overload_symbols: &mut Vec<SymbolId>,
+    ) -> bool {
         match decl {
             // Remove type aliases, interfaces, and `declare global {}`
             Declaration::TSTypeAliasDeclaration(_)
@@ -533,7 +542,14 @@ impl<'a> TypeScriptAnnotations<'a> {
                     }
                     false
                 } else {
-                    func_decl.body.is_some()
+                    if func_decl.body.is_some() {
+                        true
+                    } else {
+                        if let Some(id) = &func_decl.id {
+                            removed_overload_symbols.push(id.symbol_id());
+                        }
+                        false
+                    }
                 }
             }
             // Remove `declare class`
@@ -638,6 +654,37 @@ impl<'a> TypeScriptAnnotations<'a> {
                     }
                 }
             }
+        }
+    }
+
+    fn sync_overload_implementation_symbols(
+        stmts: &ArenaVec<'a, Statement<'a>>,
+        removed_overload_symbols: &[SymbolId],
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if removed_overload_symbols.is_empty() {
+            return;
+        }
+
+        for stmt in stmts {
+            let function = match stmt {
+                Statement::FunctionDeclaration(func) => Some(func.as_ref()),
+                Statement::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
+                    Some(Declaration::FunctionDeclaration(func)) => Some(func.as_ref()),
+                    _ => None,
+                },
+                _ => None,
+            };
+
+            let Some(function) = function else { continue };
+            let Some(id) = &function.id else { continue };
+            let symbol_id = id.symbol_id();
+            if !removed_overload_symbols.contains(&symbol_id) {
+                continue;
+            }
+
+            ctx.scoping_mut().set_symbol_span(symbol_id, id.span);
+            ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
         }
     }
 

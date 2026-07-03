@@ -509,6 +509,13 @@ impl Scoping {
         });
     }
 
+    /// Remove all redeclaration metadata for a symbol.
+    pub fn clear_symbol_redeclarations(&mut self, symbol_id: SymbolId) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.symbol_redeclarations.remove(&symbol_id);
+        });
+    }
+
     #[inline]
     /// Create and store a reference entry.
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {

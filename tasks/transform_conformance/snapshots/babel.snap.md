@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 748/1165
+Passed: 750/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (96/157)
+# babel-plugin-transform-typescript (98/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1488,22 +1488,6 @@ rebuilt        : ["Math"]
 
 * exports/interface/input.ts
 x Output mismatch
-
-* function/overloads/input.ts
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
-rebuilt        : SymbolId(0): []
-
-* function/overloads-exports/input.mjs
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
-rebuilt        : SymbolId(0): []
 
 * imports/enum-id/input.ts
 Bindings mismatch:
