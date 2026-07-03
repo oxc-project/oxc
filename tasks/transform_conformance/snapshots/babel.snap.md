@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 772/1165
+Passed: 773/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (120/157)
+# babel-plugin-transform-typescript (121/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1192,29 +1192,6 @@ rebuilt        : ["Math"]
 
 * exports/interface/input.ts
 x Output mismatch
-
-* imports/import-type-func-with-duplicate-name/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["Foo", "Foo2"]
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(Function | TypeImport)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol span mismatch for "Foo":
-after transform: SymbolId(0): Span { start: 13, end: 16 }
-rebuilt        : SymbolId(0): Span { start: 70, end: 73 }
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 13, end: 16 }, Span { start: 70, end: 73 }]
-rebuilt        : SymbolId(0): []
-Symbol flags mismatch for "Foo2":
-after transform: SymbolId(1): SymbolFlags(Function | TypeImport)
-rebuilt        : SymbolId(1): SymbolFlags(Function)
-Symbol span mismatch for "Foo2":
-after transform: SymbolId(1): Span { start: 43, end: 47 }
-rebuilt        : SymbolId(1): Span { start: 87, end: 91 }
-Symbol redeclarations mismatch for "Foo2":
-after transform: SymbolId(1): [Span { start: 43, end: 47 }, Span { start: 87, end: 91 }]
-rebuilt        : SymbolId(1): []
 
 * imports/type-only-export-specifier-2/input.ts
 x Output mismatch

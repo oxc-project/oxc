@@ -625,8 +625,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                             .get_resolved_references(import_equals.id.symbol_id())
                             .all(Reference::is_type));
                 if !keep {
-                    let scope_id = ctx.current_scope_id();
-                    ctx.scoping_mut().remove_binding(scope_id, import_equals.id.name);
+                    Self::remove_binding(&import_equals.id, ctx);
                 }
                 keep
             }
@@ -750,6 +749,10 @@ impl<'a> TypeScriptAnnotations<'a> {
     }
 
     fn remove_binding(ident: &BindingIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
+        if Self::preserve_non_ambient_value_redeclaration(ident.symbol_id(), ctx) {
+            return;
+        }
+
         let scope_id = ctx.scoping().symbol_scope_id(ident.symbol_id());
         ctx.scoping_mut().remove_binding(scope_id, ident.name);
     }

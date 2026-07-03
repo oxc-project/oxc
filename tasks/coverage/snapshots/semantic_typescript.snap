@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4463/4720 (94.56%)
+Positive Passed: 4469/4720 (94.68%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -657,17 +657,6 @@ Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(1)
 rebuilt        : SymbolId(0): ScopeId(0)
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/duplicateVarAndImport.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["a"]
-Symbol flags mismatch for "a":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol redeclarations mismatch for "a":
-after transform: SymbolId(0): [Span { start: 50, end: 51 }, Span { start: 76, end: 77 }]
-rebuilt        : SymbolId(0): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts
 'with' statements are not allowed
 
@@ -979,20 +968,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasWith
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Symbol redeclarations mismatch for "a":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 50, end: 51 }]
-rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesSketchyAliasLocalMerge.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["FC"]
-Symbol flags mismatch for "FC":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Import)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "FC":
-after transform: SymbolId(0): Span { start: 9, end: 11 }
-rebuilt        : SymbolId(0): Span { start: 34, end: 36 }
-Symbol redeclarations mismatch for "FC":
-after transform: SymbolId(0): [Span { start: 9, end: 11 }, Span { start: 34, end: 36 }]
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxLocalNamespaceIndexSignatureNoCrash.tsx
@@ -1408,20 +1383,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/structuralTypeInDeclareFileForModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/symbolMergeValueAndImportedType.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["X"]
-Symbol flags mismatch for "X":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Import)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol span mismatch for "X":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 35, end: 36 }
-Symbol redeclarations mismatch for "X":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 35, end: 36 }]
-rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/topLevel.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -1963,48 +1924,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["module"]
 rebuilt        : ["A", "module"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/mergedWithLocalValue.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["A"]
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | TypeImport)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol span mismatch for "A":
-after transform: SymbolId(0): Span { start: 14, end: 15 }
-rebuilt        : SymbolId(0): Span { start: 36, end: 37 }
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 14, end: 15 }, Span { start: 36, end: 37 }]
-rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/namespaceImportTypeQuery2.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["B"]
-rebuilt        : ScopeId(0): ["A", "B"]
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Import)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol span mismatch for "A":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 31, end: 32 }
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 31, end: 32 }]
-rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnlyMerge1.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["A"]
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Import)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol span mismatch for "A":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 31, end: 32 }
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 31, end: 32 }]
-rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/generators/generatorYieldContextualType.ts
 Symbol span mismatch for "Directive":

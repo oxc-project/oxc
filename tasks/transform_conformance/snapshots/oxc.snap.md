@@ -111,17 +111,8 @@ x Output mismatch
 
 * redeclarations/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): []
+after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): ["A", "B", "T"]
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Import)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol span mismatch for "A":
-after transform: SymbolId(0): Span { start: 57, end: 58 }
-rebuilt        : SymbolId(0): Span { start: 79, end: 80 }
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 57, end: 58 }, Span { start: 79, end: 80 }]
-rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "T":
 after transform: SymbolId(1): SymbolFlags(Import | TypeAlias)
 rebuilt        : SymbolId(1): SymbolFlags(Import)
