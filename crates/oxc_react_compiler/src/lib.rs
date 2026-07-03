@@ -42,7 +42,7 @@ use prefilter::{has_react_like_functions, has_resource_management_declarations};
 
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use crate::react_compiler::entrypoint::plugin_options::{
-    CompilerTarget, DynamicGatingConfig, GatingConfig, PluginOptions,
+    CompilerOutputMode, CompilerTarget, DynamicGatingConfig, GatingConfig, PluginOptions,
 };
 pub use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 

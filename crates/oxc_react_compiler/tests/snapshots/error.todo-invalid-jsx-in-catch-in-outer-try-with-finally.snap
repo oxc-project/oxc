@@ -6,4 +6,19 @@ Diagnostics:
 
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: (BuildHIR::lowerStatement) Handle TryStatement without a catch clause", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(134), length: 158 }, primary: false }]), help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
 
-No changes.
+// @validateNoJSXInTryStatements @outputMode:"lint"
+import { identity } from "shared-runtime";
+function Component(props) {
+	let el;
+	try {
+		let value;
+		try {
+			value = identity(props.foo);
+		} catch {
+			el = <div value={value} />;
+		}
+	} finally {
+		console.log(el);
+	}
+	return el;
+}

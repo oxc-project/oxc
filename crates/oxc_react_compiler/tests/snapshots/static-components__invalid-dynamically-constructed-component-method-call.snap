@@ -6,4 +6,8 @@ Diagnostics:
 
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] StaticComponents: Cannot create components during render", labels: Two([LabeledSpan { label: Some("This component is created during render"), span: SourceSpan { offset: SourceOffset(137), length: 9 }, primary: false }, LabeledSpan { label: Some("The component is created during render here"), span: SourceSpan { offset: SourceOffset(110), length: 15 }, primary: false }]), help: Some("Components created during render will reset their state each time they are created. Declare components outside of render"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
-No changes.
+// @loggerTestOnly @validateStaticComponents @outputMode:"lint"
+function Example(props) {
+	const Component = props.foo.bar();
+	return <Component />;
+}
