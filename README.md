@@ -78,14 +78,6 @@ If you are unable to contribute by code, you can still participate by:
 - [Endorsements](https://oxc.rs/endorsements)
 - [Releases](https://github.com/oxc-project/oxc/releases)
 
-## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
-
-<p align="center">
-  <a href="https://github.com/sponsors/Boshen">
-    <img src="https://raw.githubusercontent.com/Boshen/sponsors/main/sponsors.svg" alt="My sponsors" />
-  </a>
-</p>
-
 ## 📖 License
 
 Oxc is free and open-source software licensed under the [MIT License](./LICENSE).
@@ -119,3 +111,11 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [shopify]: https://shopify.com/
 [bytedance]: https://www.bytedance.com/
 [shopee]: https://shopee.com/
+
+## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
+
+<p align="center">
+  <a href="https://github.com/sponsors/Boshen">
+    <img src="https://raw.githubusercontent.com/Boshen/sponsors/main/sponsors.svg" alt="Our sponsors" />
+  </a>
+</p>
