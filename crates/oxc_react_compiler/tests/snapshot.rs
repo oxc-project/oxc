@@ -173,6 +173,20 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
         }
     }
 
+    // Mirror the snap runner (`packages/snap/src/compiler.ts`): the fixture corpus runs
+    // with `validatePreserveExistingMemoizationGuarantees` OFF by default — most fixtures
+    // care about compilation output, not whether manual memoization is preserved — and it
+    // is turned on only when the fixture's first line opts in via the directive. Snap keys
+    // off substring presence alone (ignoring any `:value`), so replicate that exactly and
+    // let it override whatever the directive loop parsed. Without this, fixtures that set
+    // `@enablePreserveExistingMemoizationGuarantees:false` still hit `ValidatePreservedManual-
+    // Memoization` and bail with a spurious "memoization could not be preserved" error.
+    options.environment.validate_preserve_existing_memoization_guarantees = source
+        .lines()
+        .next()
+        .unwrap_or("")
+        .contains("@validatePreserveExistingMemoizationGuarantees");
+
     // Upstream parses every (non-Flow) fixture with the TypeScript + JSX plugins,
     // regardless of extension, and as a module unless `@script` — so injected runtime
     // imports are `import`, not `require`. Flow fixtures are excluded (no oxc parser).

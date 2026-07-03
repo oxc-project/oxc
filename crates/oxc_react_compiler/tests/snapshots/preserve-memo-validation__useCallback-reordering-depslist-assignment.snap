@@ -2,10 +2,45 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/preserve-memo-validation/useCallback-reordering-depslist-assignment.tsx
 ---
-Diagnostics:
-
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] PreserveManualMemo: Existing memoization could not be preserved", labels: One([LabeledSpan { label: Some("This dependency may be modified later"), span: SourceSpan { offset: SourceOffset(402), length: 1 }, primary: false }]), help: Some("React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This dependency may be mutated later, which could cause the value to change unexpectedly"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] PreserveManualMemo: Existing memoization could not be preserved", labels: One([LabeledSpan { label: Some("Could not preserve existing manual memoization"), span: SourceSpan { offset: SourceOffset(349), length: 27 }, primary: false }]), help: Some("React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `x`, but the source dependencies were [y]. Inferred different dependency than source"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] PreserveManualMemo: Existing memoization could not be preserved", labels: One([LabeledSpan { label: Some("Could not preserve existing manual memoization"), span: SourceSpan { offset: SourceOffset(349), length: 27 }, primary: false }]), help: Some("React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `arr2`, but the source dependencies were [y]. Inferred different dependency than source"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
-
-No changes.
+import { c as _c } from "react/compiler-runtime";
+// @enablePreserveExistingMemoizationGuarantees:false @validateExhaustiveMemoizationDependencies:false
+import { useCallback } from "react";
+import { Stringify } from "shared-runtime";
+// We currently produce invalid output (incorrect scoping for `y` declaration)
+function useFoo(arr1, arr2) {
+	const $ = _c(7);
+	let t0;
+	if ($[0] !== arr1) {
+		t0 = [arr1];
+		$[0] = arr1;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	const x = t0;
+	let t1;
+	if ($[2] !== arr2 || $[3] !== x) {
+		let y;
+		t1 = () => ({ y });
+		y = x.concat(arr2), y;
+		$[2] = arr2;
+		$[3] = x;
+		$[4] = t1;
+	} else {
+		t1 = $[4];
+	}
+	const getVal = t1;
+	let t2;
+	if ($[5] !== getVal) {
+		t2 = <Stringify getVal={getVal} shouldInvokeFns={true} />;
+		$[5] = getVal;
+		$[6] = t2;
+	} else {
+		t2 = $[6];
+	}
+	return t2;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: useFoo,
+	params: [[1, 2], [3, 4]]
+};
