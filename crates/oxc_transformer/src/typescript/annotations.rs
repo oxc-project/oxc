@@ -96,11 +96,22 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 }
                 Statement::ExportAllDeclaration(decl) => !decl.export_kind.is_type(),
                 Statement::ExportDefaultDeclaration(decl) => {
-                    !decl.is_typescript_syntax()
-                        && !matches!(
+                    if decl.is_typescript_syntax() {
+                        if let ExportDefaultDeclarationKind::FunctionDeclaration(func_decl) =
+                            &decl.declaration
+                            && !func_decl.declare
+                            && func_decl.body.is_none()
+                            && let Some(id) = &func_decl.id
+                        {
+                            removed_overload_symbols.push(id.symbol_id());
+                        }
+                        false
+                    } else {
+                        !matches!(
                             &decl.declaration,
                             ExportDefaultDeclarationKind::Identifier(ident) if Self::is_refers_to_type(ident, ctx)
                         )
+                    }
                 }
                 Statement::ImportDeclaration(decl) => {
                     if decl.import_kind.is_type() {
@@ -732,6 +743,10 @@ impl<'a> TypeScriptAnnotations<'a> {
         for stmt in stmts {
             let function = match stmt {
                 Statement::FunctionDeclaration(func) => Some(func.as_ref()),
+                Statement::ExportDefaultDeclaration(decl) => match &decl.declaration {
+                    ExportDefaultDeclarationKind::FunctionDeclaration(func) => Some(func.as_ref()),
+                    _ => None,
+                },
                 Statement::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
                     Some(Declaration::FunctionDeclaration(func)) => Some(func.as_ref()),
                     _ => None,

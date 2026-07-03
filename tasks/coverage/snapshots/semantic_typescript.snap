@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4477/4720 (94.85%)
+Positive Passed: 4478/4720 (94.87%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -660,14 +660,6 @@ after transform: SymbolId(0): SymbolFlags(Function | ValueModule | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 9, end: 12 }, Span { start: 44, end: 47 }]
-rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultInterfaceAndFunctionOverloads.ts
-Symbol span mismatch for "foo":
-after transform: SymbolId(0): Span { start: 24, end: 27 }
-rebuilt        : SymbolId(0): Span { start: 126, end: 129 }
-Symbol redeclarations mismatch for "foo":
-after transform: SymbolId(0): [Span { start: 24, end: 27 }, Span { start: 75, end: 78 }, Span { start: 126, end: 129 }]
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultProperty.ts
