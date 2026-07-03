@@ -75,9 +75,6 @@ x Output mismatch
 x Output mismatch
 
 * namespace/redeclaration-with-enum/input.ts
-Symbol redeclarations mismatch for "x":
-after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 39, end: 40 }]
-rebuilt        : SymbolId(0): []
 Symbol span mismatch for "y":
 after transform: SymbolId(2): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(3): Span { start: 59, end: 60 }

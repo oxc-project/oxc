@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 773/1165
+Passed: 779/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (121/157)
+# babel-plugin-transform-typescript (127/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1139,21 +1139,6 @@ x Output mismatch
    `----
 
 
-* enum/enum-merging-inner-references/input.ts
-Symbol redeclarations mismatch for "Animals":
-after transform: SymbolId(0): [Span { start: 5, end: 12 }, Span { start: 41, end: 48 }]
-rebuilt        : SymbolId(0): []
-
-* enum/enum-merging-inner-references-shadow/input.ts
-Symbol redeclarations mismatch for "Animals":
-after transform: SymbolId(2): [Span { start: 38, end: 45 }, Span { start: 65, end: 72 }, Span { start: 92, end: 99 }]
-rebuilt        : SymbolId(2): []
-
-* enum/export/input.ts
-Symbol redeclarations mismatch for "E":
-after transform: SymbolId(0): [Span { start: 12, end: 13 }, Span { start: 40, end: 41 }]
-rebuilt        : SymbolId(0): []
-
 * enum/mix-references/input.ts
 x Output mismatch
 
@@ -1164,21 +1149,11 @@ Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(7): [ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
 rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(12)]
 
-* enum/non-scoped/input.ts
-Symbol redeclarations mismatch for "E":
-after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 40, end: 41 }]
-rebuilt        : SymbolId(0): []
-
 * enum/reverse-mappings-syntactically-determinable/input.ts
 x Output mismatch
 
 * enum/ts5.0-const-foldable/input.ts
 x Output mismatch
-
-* exports/declared-types/input.ts
-Symbol redeclarations mismatch for "BB":
-after transform: SymbolId(10): [Span { start: 445, end: 447 }, Span { start: 461, end: 463 }]
-rebuilt        : SymbolId(1): []
 
 * exports/export-context-variables/input.ts
 Unresolved references mismatch:
@@ -1317,11 +1292,6 @@ x Output mismatch
 
 * optimize-const-enums/exported/input.ts
 x Output mismatch
-
-* optimize-const-enums/merged/input.ts
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 11, end: 12 }, Span { start: 36, end: 37 }]
-rebuilt        : SymbolId(0): []
 
 * optimize-const-enums/merged-exported/input.ts
 x Output mismatch

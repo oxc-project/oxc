@@ -2,7 +2,7 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2215/2236 (99.06%)
+Positive Passed: 2217/2236 (99.15%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 'abstract' modifier cannot be used with a private identifier.
 
@@ -66,16 +66,6 @@ Ambient modules cannot be nested in other modules or namespaces.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/namespace-declaration-var-2/input.js
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-constenum-constenum/input.ts
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 11, end: 14 }, Span { start: 29, end: 32 }]
-rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-enum/input.ts
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 5, end: 8 }, Span { start: 17, end: 20 }]
-rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts
 'const' modifier can only appear on a type parameter of a function, method or class
