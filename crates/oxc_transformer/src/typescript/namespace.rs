@@ -118,6 +118,7 @@ impl<'a> TypeScriptNamespace {
         if flags.is_namespace_module() {
             // Don't need further check because NO `ValueModule` namespace redeclaration
             if !flags.is_value_module() {
+                Self::remove_binding(&ident, ctx);
                 return;
             }
 
@@ -158,6 +159,7 @@ impl<'a> TypeScriptNamespace {
 
             // Return if the current declaration is a namespace
             if current_declaration_flags.is_namespace_module() {
+                Self::remove_binding(&ident, ctx);
                 return;
             }
         }
@@ -167,6 +169,7 @@ impl<'a> TypeScriptNamespace {
         };
 
         let binding = BoundIdentifier::from_binding_ident(&ident);
+        Self::sync_namespace_binding(&ident, ctx);
 
         // Reuse `TSModuleDeclaration`'s scope in transformed function
         let scope_id = scope_id.get().unwrap();
@@ -334,6 +337,10 @@ impl<'a> TypeScriptNamespace {
         // `(function (_N) { var x; })(N || (N = {}))`;
         //  ^^^^^^^^^^^^^^^^^^^^^^^^^^
         let callee = {
+            let mut scope_flags = ScopeFlags::Function;
+            if ctx.current_scope_flags().is_strict_mode() || func_body.has_use_strict_directive() {
+                scope_flags |= ScopeFlags::StrictMode;
+            }
             let params = {
                 let pattern = param_binding.create_binding_pattern(ctx);
                 let items =
@@ -350,8 +357,7 @@ impl<'a> TypeScriptNamespace {
                     scope_id,
                     ctx,
                 ));
-            *ctx.scoping_mut().scope_flags_mut(scope_id) =
-                ScopeFlags::Function | ScopeFlags::StrictMode;
+            *ctx.scoping_mut().scope_flags_mut(scope_id) = scope_flags;
             Expression::new_parenthesized_expression(span, function_expr, ctx)
         };
 
@@ -524,6 +530,18 @@ impl<'a> TypeScriptNamespace {
         let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
         // Find first value declaration because only value declaration will emit JS code.
         redeclarations.iter().find(|rd| rd.flags.is_value()).is_some_and(|rd| rd.span != id.span)
+    }
+
+    fn sync_namespace_binding(id: &BindingIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
+        let symbol_id = id.symbol_id();
+        *ctx.scoping_mut().symbol_flags_mut(symbol_id) = SymbolFlags::BlockScopedVariable;
+        ctx.scoping_mut().set_symbol_span(symbol_id, SPAN);
+    }
+
+    fn remove_binding(id: &BindingIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
+        let symbol_id = id.symbol_id();
+        let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+        ctx.scoping_mut().remove_binding(scope_id, id.name);
     }
 }
 
