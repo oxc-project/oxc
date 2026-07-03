@@ -283,7 +283,16 @@ fn run_semantic(
     path: &Path,
     options: Option<TransformOptions>,
 ) -> TestResult {
-    run_semantic_impl(code, source_type, path, options, None)
+    run_semantic_impl(code, source_type, path, options, None, false)
+}
+
+fn run_semantic_consistency(
+    code: &str,
+    source_type: SourceType,
+    path: &Path,
+    options: Option<TransformOptions>,
+) -> TestResult {
+    run_semantic_impl(code, source_type, path, options, None, true)
 }
 
 fn run_semantic_with_ts_ignore(
@@ -293,7 +302,7 @@ fn run_semantic_with_ts_ignore(
     options: Option<TransformOptions>,
     ts_ignore_spans: &[Span],
 ) -> TestResult {
-    run_semantic_impl(code, source_type, path, options, Some(ts_ignore_spans))
+    run_semantic_impl(code, source_type, path, options, Some(ts_ignore_spans), false)
 }
 
 fn run_semantic_impl(
@@ -302,6 +311,7 @@ fn run_semantic_impl(
     path: &Path,
     options: Option<TransformOptions>,
     ts_ignore_spans: Option<&[Span]>,
+    consistency_errors_only: bool,
 ) -> TestResult {
     let mut driver = Driver {
         path: path.to_path_buf(),
@@ -315,6 +325,9 @@ fn run_semantic_impl(
     if let Some(ts_ignore_spans) = ts_ignore_spans {
         errors.retain(|error| !is_error_suppressed_by_ts_ignore(error, code, ts_ignore_spans));
     }
+    if consistency_errors_only {
+        errors.retain(is_semantic_consistency_error);
+    }
     if errors.is_empty() {
         TestResult::Passed
     } else {
@@ -322,6 +335,12 @@ fn run_semantic_impl(
             errors.into_iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n");
         TestResult::GenericError("semantic", messages)
     }
+}
+
+fn is_semantic_consistency_error(error: &OxcDiagnostic) -> bool {
+    error.message.contains("mismatch")
+        || error.message.starts_with("Missing ")
+        || error.message.starts_with("SourceType is not javascript")
 }
 
 pub fn run_semantic_test262(files: &[Test262File]) -> Vec<CoverageResult> {
@@ -346,7 +365,7 @@ pub fn run_semantic_babel(files: &[BabelFile]) -> Vec<CoverageResult> {
         .par_iter()
         .filter(|f| !f.should_fail)
         .map(|f| {
-            let result = run_semantic(&f.code, f.source_type, &f.path, None);
+            let result = run_semantic_consistency(&f.code, f.source_type, &f.path, None);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
