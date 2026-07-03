@@ -318,6 +318,28 @@ fn reserve_regex_carves_out() {
     assert_eq!(got, want, "\nexpect {want}\ngot {got}");
 }
 
+/// PropertyMangler-direct run with explicit `reserved` names.
+fn mangle_with_reserved(src: &str, mangle_re: &str, reserved: &[&str]) -> String {
+    let alloc = Allocator::default();
+    let mut program = Parser::new(&alloc, src, SourceType::mjs()).parse().program;
+    let mut o = opts(mangle_re);
+    o.reserved = reserved.iter().map(|name| (*name).into()).collect();
+    let mut m = PropertyMangler::new(o);
+    m.collect(&program);
+    m.rewrite(&mut program, &alloc);
+    Codegen::new().build(&program).code
+}
+
+#[test]
+fn reserved_names_not_generated() {
+    // `reserved: ['t']` must keep `t` out of the GENERATED names too (terser/esbuild
+    // parity), not just reserve source-seen `t`s: `_a` -> `e`, then `_b` skips `t` -> `n`.
+    let got = mangle_with_reserved("o._a; o._b;", "^_", &["t"]);
+    let want = codegen("o.e; o.n;", SourceType::mjs());
+    assert_eq!(got, want, "\nexpect {want}\ngot {got}");
+    assert!(!got.contains(".t"), "the user-reserved `t` must never be handed out: {got}");
+}
+
 // ---------------------------------------------------------------------------
 // No-substitution template literals (`` `_foo` ``) in key/index positions are
 // runtime-equivalent to the quoted string `'_foo'`, so they must be classified
@@ -391,9 +413,11 @@ fn template_member_reserved_through_full_minify() {
 
 // ---------------------------------------------------------------------------
 // Apply-once semantics: the rename map must be applied at most ONCE per position.
-// A `Candidate` original name (e.g. `e`) may itself be handed out as another
-// candidate's new name, so a position that is un-quoted (or renamed via an
-// annotation) must never be re-visited and re-looked-up in the map.
+// `assign` keeps generated names disjoint from EVERY property name seen in the
+// program, so a freshly-written new name (an un-quoted key, a renamed annotated
+// literal, or a key compress un-quotes later) is never itself a key in the map
+// and can never be re-matched by name. These tests pin that: a source property
+// named `e` (base54's first output) forces the generator to skip `e`.
 // ---------------------------------------------------------------------------
 
 /// PropertyMangler run mirroring the full `Minifier` ordering (collect ->
@@ -413,27 +437,50 @@ fn mangle_pipeline(src: &str, regex: &str, quoted: bool) -> String {
 
 #[test]
 fn unquote_member_not_double_renamed() {
-    // `_a` -> `e` (un-quoted) and `e` -> `t`. Un-quoting `x['_a']` to `x.e` must NOT then
-    // re-look-up `e` in the map and turn it into `x.t`.
+    // The source property `e` forces the generator to skip `e`: `_a` -> `t`, `e` -> `n`.
+    // Un-quoting `x['_a']` to `x.t` writes a name outside the map, so a re-visit could
+    // never rename it again.
     let got = mangle_quoted("x.e; x['_a'];", "^(_a|e)$");
-    let want = codegen("x.t; x.e;", SourceType::mjs());
+    let want = codegen("x.n; x.t;", SourceType::mjs());
     assert_eq!(got, want, "\nexpect {want}\ngot {got}");
 }
 
 #[test]
 fn unquote_object_key_not_double_renamed() {
-    // Un-quoting `'_a'` (-> `e`) as an object key must not then rename the fresh `e` to `t`.
+    // Un-quoting `'_a'` (-> `t`) as an object key writes a name outside the map; the
+    // sibling source key `e` renames to `n`, never colliding with the fresh `t`.
     let got = mangle_quoted("({ e: 1, '_a': 2 });", "^(_a|e)$");
-    let want = codegen("({ t: 1, e: 2 });", SourceType::mjs());
+    let want = codegen("({ n: 1, t: 2 });", SourceType::mjs());
     assert_eq!(got, want, "\nexpect {want}\ngot {got}");
 }
 
 #[test]
 fn annotated_literal_not_double_renamed() {
-    // `rename_annotated_literals` renames `'_a'` (-> `e`) pre-compress; the later `rewrite`
-    // pass must NOT re-visit that span and rename the fresh `e` to `t`.
+    // `rename_annotated_literals` renames `'_a'` (-> `t`) pre-compress; the value at that
+    // span is now a name outside the map, so the later `rewrite` pass leaves it alone.
     let got = mangle_pipeline("f(/* @__KEY__ */ '_a'); x.e;", "^(_a|e)$", false);
-    let want = codegen("f(/* @__KEY__ */ 'e'); x.t;", SourceType::mjs());
+    let want = codegen("f(/* @__KEY__ */ 't'); x.n;", SourceType::mjs());
+    assert_eq!(got, want, "\nexpect {want}\ngot {got}");
+}
+
+#[test]
+fn compress_unquoted_annotated_key_not_double_renamed() {
+    // Through the FULL pipeline: `assign` maps `_a` -> `t` and `e` -> `n` (the generator
+    // skips the source property name `e`). The pre-compress annotated pass renames
+    // `'_a'` -> `'t'`; compress un-quotes `x['t']` -> `x.t`; the post-mangle rewrite then
+    // sees `t`, which is not a key in the map, and leaves it alone — so the annotated key
+    // is renamed exactly once and the two source properties keep DISTINCT final names.
+    test_min("o.e = 1; x[/* @__KEY__ */ '_a'] = 2;", "o.n = 1; x.t = 2;", "^[e_]");
+}
+
+#[test]
+fn annotated_key_and_sibling_share_name() {
+    // `assign` maps `_x` -> `t` and `e` -> `n` (skipping the source name `e`). The annotated
+    // computed key is renamed once (pre-compress) to `t`; the in-place `rename_key_expression`
+    // path of the later rewrite finds `t` outside the map and leaves it alone, so the key and
+    // its unquoted sibling `o._x` end up with the SAME name, distinct from `e`'s new name.
+    let got = mangle_pipeline("o[(0, /* @__KEY__ */ '_x')]; o._x; o.e;", "^[_e]", true);
+    let want = codegen("o[(0, /* @__KEY__ */ 't')]; o.t; o.n;", SourceType::mjs());
     assert_eq!(got, want, "\nexpect {want}\ngot {got}");
 }
 

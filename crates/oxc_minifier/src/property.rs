@@ -139,18 +139,26 @@ fn eligible(opts: &ManglePropertiesOptions, name: &str) -> bool {
 /// Assign final mangled names.
 ///
 /// `classes` is the collect pass's classification of every distinct property name: the
-/// `Candidate` entries are mangled, the `Reserved` entries are program-wide reservations
-/// that the generated names must avoid. Returns the old -> new map.
+/// `Candidate` entries are mangled. Generated names must be disjoint from EVERY name in
+/// `classes` (`Candidate` originals included, not just the `Reserved` entries): the rename
+/// passes re-match positions by NAME (un-quoted keys, annotated literals, keys that compress
+/// un-quotes between collect and rewrite), so a generated name equal to any source property
+/// name could be picked up by a later value-based lookup and renamed a second time. Keeping
+/// the generated names out of `classes` makes "apply at most once" structural. Generated
+/// names also avoid the always-reserved set and the user's explicit `reserved` names; the
+/// `reserve` REGEX is deliberately NOT applied to generated names (esbuild parity: the regex
+/// only filters source-seen names). Returns the old -> new map.
 ///
 /// The iteration order is deterministic (sorted) so the same input always produces the same
 /// names. Names come from a monotonic `base54` counter, so the outputs are pairwise disjoint
-/// by construction; the counter only skips a name that collides with a reserved or
-/// always-reserved property.
-fn assign(classes: &FxHashMap<CompactStr, Class>) -> FxHashMap<CompactStr, CompactStr> {
+/// by construction; the counter skips any name that collides with the sets above.
+fn assign(
+    opts: &ManglePropertiesOptions,
+    classes: &FxHashMap<CompactStr, Class>,
+) -> FxHashMap<CompactStr, CompactStr> {
     // `Reserved` already won over `Candidate` during collect, so the `Candidate` keys are exactly
-    // the names to mangle (no candidate/reserved set difference needed). A name is reserved iff
-    // it is classified `Reserved`; `CompactStr: Borrow<str>` lets the base54 `&str` probe directly.
-    let is_reserved = |name: &str| matches!(classes.get(name), Some(Class::Reserved));
+    // the names to mangle (no candidate/reserved set difference needed). `CompactStr: Borrow<str>`
+    // lets the base54 `&str` probe `classes` and `opts.reserved` directly.
 
     // Deterministic order so the same input always produces the same names.
     let mut names: Vec<&CompactStr> = classes
@@ -164,15 +172,19 @@ fn assign(classes: &FxHashMap<CompactStr, Class>) -> FxHashMap<CompactStr, Compa
 
     for name in names {
         // The counter only ever advances, so successive `base54` names are distinct: the outputs
-        // are pairwise disjoint without tracking assigned names. Skip only a generated name that
-        // collides with a reserved or always-reserved property.
+        // are pairwise disjoint without tracking assigned names. Skip a generated name that
+        // collides with ANY property name seen in the program, an always-reserved name, or an
+        // explicitly reserved name (see the doc comment for why `Candidate` originals count).
         let n = loop {
             let candidate = base54(counter);
             counter = counter.checked_add(1).expect("property name space exhausted");
             let candidate = candidate.as_str();
-            // Test the `&str` view against both sets, allocating a `CompactStr` only once a name
+            // Test the `&str` view against the sets, allocating a `CompactStr` only once a name
             // survives (discarded names on collision cost nothing).
-            if !is_reserved(candidate) && !is_always_reserved(candidate) {
+            if !classes.contains_key(candidate)
+                && !is_always_reserved(candidate)
+                && !opts.reserved.contains(candidate)
+            {
                 break CompactStr::from(candidate);
             }
         };
@@ -636,9 +648,11 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
                 &self.ast,
             );
             *it = Expression::StaticMemberExpression(new_member);
-            // Apply-once: the fresh property identifier must never be re-looked-up in `map`
-            // (a `Candidate` original like `e` can be another candidate's NEW name). Visit only
-            // the object subtree instead of re-dispatching the walk on the replacement.
+            // The fresh property identifier holds a generated name, which is never a key in
+            // `map` (`assign` keeps generated names disjoint from every source property name),
+            // so a re-lookup could not rename it again anyway. Only the object subtree has
+            // work left; visit it directly instead of re-dispatching the walk on the
+            // replacement.
             if let Expression::StaticMemberExpression(new_member) = it {
                 self.visit_expression(&mut new_member.object);
             }
@@ -666,10 +680,10 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     }
 
     fn visit_object_property(&mut self, it: &mut oxc_ast::ast::ObjectProperty<'a>) {
-        // Apply-once: walk children FIRST (which renames a real `StaticIdentifier` key and the
-        // value), THEN un-quote the string key. Un-quoting produces a fresh identifier whose name
-        // may itself be another candidate's original; re-visiting it would rename it a second time.
-        // A shorthand string key cannot exist, so un-quoting the key is always safe.
+        // Walk children FIRST (which renames a real `StaticIdentifier` key and the value), THEN
+        // un-quote the string key: the fresh identifier holds a generated name — never a key in
+        // `map` — so nothing is left for the walk to do on it. A shorthand string key cannot
+        // exist, so un-quoting the key is always safe.
         walk_mut::walk_object_property(self, it);
         if !self.rename_annotated_only && self.mangle_quoted {
             self.rewrite_key_position(&mut it.key, &mut it.computed);
@@ -822,9 +836,10 @@ impl PropertyMangler {
     /// annotated literal's value in place is position-independent and safe to do this early.
     ///
     /// Does nothing when collect bailed or nothing is mangled. After renaming, the annotated
-    /// spans are dropped from `key_annotated` so the later `rewrite` pass leaves the (already
-    /// renamed) literals untouched: a renamed value can itself be an old-name key in `map`, so
-    /// re-checking the span there would rename it a second time.
+    /// spans are dropped from `key_annotated`: every annotated literal with a mapping now
+    /// holds its final NEW name — never a key in `map`, since `assign` keeps generated names
+    /// disjoint from every source property name — so the later `rewrite` pass has nothing
+    /// left to do at these spans.
     pub fn rename_annotated_literals<'a>(
         &mut self,
         program: &mut Program<'a>,
@@ -833,7 +848,7 @@ impl PropertyMangler {
         if self.state.bail.is_some() || self.key_annotated.is_empty() {
             return;
         }
-        let map = assign(&self.state.names);
+        let map = assign(&self.opts, &self.state.names);
         if map.is_empty() {
             self.map = Some(map);
             return;
@@ -848,11 +863,12 @@ impl PropertyMangler {
             };
             rewriter.visit_program(program);
         }
-        // Every annotated literal with a mapping has now been renamed in place, so its value
-        // holds a NEW name — which may itself be an old-name key in `map`. The later `rewrite`
-        // pass must not revisit these spans (that would rename them a second time), so drop
-        // them. The direct collect+rewrite API never calls this method, so it keeps
-        // `key_annotated` intact and renames each annotated literal exactly once there.
+        // Every annotated literal with a mapping has now been renamed in place; its value
+        // holds a NEW name, which is never a key in `map` (generated names are disjoint from
+        // every source property name), so the later `rewrite` pass would only no-op on these
+        // spans. Drop them to skip the redundant lookups. The direct collect+rewrite API never
+        // calls this method, so it keeps `key_annotated` intact and renames each annotated
+        // literal there instead.
         self.key_annotated.clear();
         self.map = Some(map);
     }
@@ -868,7 +884,7 @@ impl PropertyMangler {
         // `map` is already assigned if `rename_annotated_literals` ran; otherwise assign now.
         let map = match self.map.take() {
             Some(map) => map,
-            None => assign(&self.state.names),
+            None => assign(&self.opts, &self.state.names),
         };
         if map.is_empty() {
             return;
@@ -932,9 +948,10 @@ mod tests {
 
     #[test]
     fn assignment_is_deterministic_and_disjoint() {
+        let o = opts("^_");
         let cands = classes(&["_a", "_b"], &[]);
-        let m1 = assign(&cands);
-        let m2 = assign(&cands);
+        let m1 = assign(&o, &cands);
+        let m2 = assign(&o, &cands);
         assert_eq!(m1, m2); // deterministic
         let names: FxHashSet<_> = m1.values().collect();
         assert_eq!(names.len(), m1.len()); // no two map to the same name
@@ -944,8 +961,32 @@ mod tests {
     fn generated_names_avoid_reserved() {
         // A generated name must skip a property classified `Reserved`. Only `_a` matches, so it
         // is the sole candidate; `e` (base54's first name) is reserved, so `_a` must take `t`.
+        let o = opts("^_");
         let cands = classes(&["_a"], &["e"]);
-        let m = assign(&cands);
+        let m = assign(&o, &cands);
+        assert_eq!(m[&CompactStr::from("_a")].as_str(), "t");
+    }
+
+    #[test]
+    fn generated_names_avoid_candidate_originals() {
+        // Generated names are disjoint from EVERY source property name, `Candidate` originals
+        // included: with `e` itself a candidate, `_a` must skip `e` and take `t`, and `e` takes
+        // `n`. This is what makes the rewrite's by-name re-matching apply at most once.
+        let o = opts(".");
+        let cands = classes(&["_a", "e"], &[]);
+        let m = assign(&o, &cands);
+        assert_eq!(m[&CompactStr::from("_a")].as_str(), "t");
+        assert_eq!(m[&CompactStr::from("e")].as_str(), "n");
+    }
+
+    #[test]
+    fn generated_names_avoid_user_reserved() {
+        // An explicitly reserved name is never handed out (terser/esbuild parity). The
+        // `reserve` REGEX, by contrast, only filters source-seen names.
+        let mut o = opts("^_");
+        o.reserved.insert("e".into());
+        let cands = classes(&["_a"], &[]);
+        let m = assign(&o, &cands);
         assert_eq!(m[&CompactStr::from("_a")].as_str(), "t");
     }
 
