@@ -185,6 +185,8 @@ fn test() {
         "array.with?.(-1, value)",
         "with_(-1, value)",
         "array.with(0 as const, value)",
+        // Type assertions are not supported in TSX.
+        // "array.with(<number>0, value)",
         " array.with(0, value)",
         "array.with(0!, value)",
         "array.with(0 satisfies number, value)",
@@ -204,10 +206,14 @@ fn test() {
         "array.with(array.length, value, extra)",
         "object.items.with(object.items.length, value)",
         "array.with(-1 as const, value)",
+        // Type assertions are not supported in TSX.
+        // "array.with(<number>-1, value)",
         "array.with( -1, value)",
         "array.with(-1!, value)",
         "array.with(-1 satisfies number, value)",
         "array.with(array.length as number, value)",
+        // Type assertions are not supported in TSX.
+        // "array.with(<number>array.length, value)",
         "array.with( array.length, value)",
         "array.with(array.length!, value)",
         "array.with(array.length satisfies number, value)",
