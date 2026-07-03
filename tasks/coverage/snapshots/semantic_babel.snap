@@ -2,7 +2,7 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2029/2236 (90.74%)
+Positive Passed: 2036/2236 (91.06%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -46,34 +46,6 @@ Bindings mismatch:
 after transform: ScopeId(0): ["Foo"]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/object-rest-spread/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref", "other", "title"]
-rebuilt        : ScopeId(1): ["_ref"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["other", "title"]
-Symbol scope ID mismatch for "title":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(2)
-Symbol scope ID mismatch for "other":
-after transform: SymbolId(2): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(2)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/3/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref", "x", "y"]
-rebuilt        : ScopeId(1): ["_ref"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["x", "y"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(3): ScopeId(2)
-Symbol scope ID mismatch for "y":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(2)
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_classPrivateFieldInitSpec"]
@@ -112,100 +84,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["arguments", "require"]
 rebuilt        : ["arguments", "of", "require"]
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-basic/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["basic"]
-rebuilt        : ScopeId(6): []
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(7): ["basic"]
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(7): Some(ScopeId(6))
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(1))
-rebuilt        : ScopeId(8): Some(ScopeId(6))
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(1))
-rebuilt        : ScopeId(10): Some(ScopeId(6))
-Symbol scope ID mismatch for "basic":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(7)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-escaped/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["ab"]
-rebuilt        : ScopeId(6): []
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(7): ["ab"]
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(7): Some(ScopeId(6))
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(1))
-rebuilt        : ScopeId(8): Some(ScopeId(6))
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(1))
-rebuilt        : ScopeId(10): Some(ScopeId(6))
-Symbol scope ID mismatch for "ab":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(7)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-non-bmp/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["𠮷"]
-rebuilt        : ScopeId(6): []
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(7): ["𠮷"]
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(7): Some(ScopeId(6))
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(1))
-rebuilt        : ScopeId(8): Some(ScopeId(6))
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(1))
-rebuilt        : ScopeId(10): Some(ScopeId(6))
-Symbol scope ID mismatch for "𠮷":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(7)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-using/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["using"]
-rebuilt        : ScopeId(6): []
-Bindings mismatch:
-after transform: ScopeId(4): []
-rebuilt        : ScopeId(7): ["using"]
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(1))
-rebuilt        : ScopeId(7): Some(ScopeId(6))
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(1))
-rebuilt        : ScopeId(13): Some(ScopeId(6))
-Scope parent mismatch:
-after transform: ScopeId(7): Some(ScopeId(1))
-rebuilt        : ScopeId(15): Some(ScopeId(6))
-Symbol scope ID mismatch for "using":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(7)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/object-binding-pattern-invalid-rest-in-object-pattern/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref", "a", "b"]
-rebuilt        : ScopeId(1): ["_ref"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["a", "b"]
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(3): ScopeId(2)
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(2)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 'abstract' modifier cannot be used with a private identifier.

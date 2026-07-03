@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 225/397
+Passed: 227/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -10,6 +10,7 @@ Passed: 225/397
 * babel-plugin-transform-optional-chaining
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-async-generator-functions
+* babel-plugin-transform-object-rest-spread
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 * babel-preset-typescript
@@ -19,7 +20,7 @@ Passed: 225/397
 * plugin-tagged-template-transform
 
 
-# babel-plugin-transform-explicit-resource-management (2/4)
+# babel-plugin-transform-explicit-resource-management (3/4)
 * export-class-name/input.js
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(7)]
@@ -30,29 +31,6 @@ rebuilt        : SymbolId(3): [ReferenceId(4)]
 Reference symbol mismatch for "C":
 after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
-
-* function-with-scopes-in-params/input.js
-Bindings mismatch:
-after transform: ScopeId(6): ["x", "y"]
-rebuilt        : ScopeId(6): []
-Bindings mismatch:
-after transform: ScopeId(9): []
-rebuilt        : ScopeId(7): ["x", "y"]
-Scope parent mismatch:
-after transform: ScopeId(9): Some(ScopeId(1))
-rebuilt        : ScopeId(7): Some(ScopeId(6))
-Scope parent mismatch:
-after transform: ScopeId(10): Some(ScopeId(1))
-rebuilt        : ScopeId(10): Some(ScopeId(6))
-Scope parent mismatch:
-after transform: ScopeId(12): Some(ScopeId(1))
-rebuilt        : ScopeId(12): Some(ScopeId(6))
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(3): ScopeId(6)
-rebuilt        : SymbolId(4): ScopeId(7)
-Symbol scope ID mismatch for "y":
-after transform: SymbolId(4): ScopeId(6)
-rebuilt        : SymbolId(5): ScopeId(7)
 
 
 # babel-plugin-transform-class-properties (20/33)
@@ -115,19 +93,6 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(8), R
 Symbol reference IDs mismatch for "X":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(9), ReferenceId(12)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
-
-
-# babel-plugin-transform-object-rest-spread (7/8)
-* object-rest/with-arrow-function-expression/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref", "args"]
-rebuilt        : ScopeId(1): ["_ref"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["args"]
-Symbol scope ID mismatch for "args":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
 
 
 # babel-plugin-transform-async-to-generator (22/28)

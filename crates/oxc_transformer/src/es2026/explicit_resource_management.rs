@@ -40,7 +40,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_ecmascript::BoundNames;
-use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
+use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{SPAN, Span};
 use oxc_str::static_ident;
 use oxc_traverse::{BoundIdentifier, Traverse};
@@ -253,38 +253,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         if let Some((new_stmts, needs_await, using_ctx)) =
             self.transform_statements(&mut body.statements, ctx.current_hoist_scope_id(), ctx)
         {
-            let current_scope_id = ctx.current_scope_id();
-            let block_stmt_scope_id =
-                ctx.insert_scope_below_statements(&new_stmts, ScopeFlags::empty());
-
-            // `insert_scope_below_statements` moves child scopes from `current_scope_id` (the
-            // function body) onto `block_stmt_scope_id` (the generated `try` body), but direct
-            // bindings stay on `current_scope_id`. Move block-scoped variable and class bindings
-            // into the new scope so the binding map matches the AST shape. Function parameters and
-            // `var` bindings such as `_usingCtx` are not block-scoped and remain in the function
-            // body scope.
-            let to_move: Vec<SymbolId> = ctx
-                .scoping()
-                .iter_bindings_in(current_scope_id)
-                .filter(|&id| {
-                    ctx.scoping()
-                        .symbol_flags(id)
-                        .intersects(SymbolFlags::BlockScopedVariable | SymbolFlags::Class)
-                })
-                .collect();
-            for symbol_id in to_move {
-                ctx.scoping_mut().move_binding_by_symbol_id(
-                    current_scope_id,
-                    block_stmt_scope_id,
-                    symbol_id,
-                );
-            }
+            let body_scope_id = body.scope_id();
+            let block_stmt_scope_id = ctx.insert_scope_below_statements_from_scope_id(
+                &new_stmts,
+                body_scope_id,
+                ScopeFlags::empty(),
+            );
 
             body.statements = ArenaVec::from_value_in(
                 Self::create_try_stmt(
                     BlockStatement::new_with_scope_id(SPAN, new_stmts, block_stmt_scope_id, ctx),
                     &using_ctx,
-                    current_scope_id,
+                    body_scope_id,
                     needs_await,
                     SPAN,
                     ctx,
