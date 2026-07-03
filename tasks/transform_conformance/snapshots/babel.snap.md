@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 767/1165
+Passed: 769/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (115/157)
+# babel-plugin-transform-typescript (117/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1139,16 +1139,6 @@ x Output mismatch
    `----
 
 
-* declarations/erased/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["M", "N"]
-rebuilt        : ScopeId(0): []
-
-* declarations/nested-namespace/input.mjs
-Bindings mismatch:
-after transform: ScopeId(0): ["P"]
-rebuilt        : ScopeId(0): []
-
 * enum/enum-merging-inner-references/input.ts
 Symbol redeclarations mismatch for "Animals":
 after transform: SymbolId(0): [Span { start: 5, end: 12 }, Span { start: 41, end: 48 }]
@@ -1186,12 +1176,24 @@ x Output mismatch
 x Output mismatch
 
 * exports/declare-namespace/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["N"]
 Symbol flags mismatch for "N":
 after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
+Symbol reference IDs mismatch for "N":
+after transform: SymbolId(0): []
+rebuilt        : SymbolId(0): [ReferenceId(1)]
 Symbol redeclarations mismatch for "N":
 after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(0): []
+Reference symbol mismatch for "N":
+after transform: <None>
+rebuilt        : SymbolId(0) "N"
+Unresolved references mismatch:
+after transform: ["N"]
+rebuilt        : []
 
 * exports/declare-shadowed/input.ts
 Bindings mismatch:
@@ -1229,9 +1231,6 @@ after transform: ["Signal", "Signal2"]
 rebuilt        : []
 
 * exports/declared-types/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["BB", "BB2", "C2", "N", "foo"]
-rebuilt        : ScopeId(0): ["BB", "BB2", "C2", "foo"]
 Symbol redeclarations mismatch for "BB":
 after transform: SymbolId(10): [Span { start: 445, end: 447 }, Span { start: 461, end: 463 }]
 rebuilt        : SymbolId(1): []
@@ -1276,9 +1275,6 @@ rebuilt        : SymbolId(1): []
 x Output mismatch
 
 * namespace/alias/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["AliasModule", "LongNameModule", "bar", "baz", "node", "some", "str"]
-rebuilt        : ScopeId(0): ["AliasModule", "bar", "baz", "node", "some", "str"]
 Reference symbol mismatch for "LongNameModule":
 after transform: SymbolId(0) "LongNameModule"
 rebuilt        : <None>

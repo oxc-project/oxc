@@ -579,12 +579,16 @@ impl<'a> TypeScriptAnnotations<'a> {
             // Keep instantiated `module` declarations — they have runtime
             // representation and need to be transformed.
             Declaration::TSModuleDeclaration(module_decl) => {
-                !module_decl.declare
+                let keep = !module_decl.declare
                     && !matches!(
                         &module_decl.id,
                         TSModuleDeclarationName::Identifier(ident)
                             if ctx.scoping().symbol_flags(ident.symbol_id()).is_namespace_module()
-                    )
+                    );
+                if !keep {
+                    Self::remove_ts_module_declaration_binding(module_decl, ctx);
+                }
+                keep
             }
             // Remove `declare enum`
             Declaration::TSEnumDeclaration(enum_decl) => {
@@ -644,10 +648,21 @@ impl<'a> TypeScriptAnnotations<'a> {
             Declaration::TSImportEqualsDeclaration(import_equals) => {
                 Self::remove_binding(&import_equals.id, ctx);
             }
+            Declaration::TSModuleDeclaration(module_decl) => {
+                Self::remove_ts_module_declaration_binding(module_decl, ctx);
+            }
             Declaration::TSTypeAliasDeclaration(_)
             | Declaration::TSInterfaceDeclaration(_)
-            | Declaration::TSGlobalDeclaration(_)
-            | Declaration::TSModuleDeclaration(_) => {}
+            | Declaration::TSGlobalDeclaration(_) => {}
+        }
+    }
+
+    fn remove_ts_module_declaration_binding(
+        module_decl: &TSModuleDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let TSModuleDeclarationName::Identifier(ident) = &module_decl.id {
+            Self::remove_binding_and_unresolve_references(ident, ctx);
         }
     }
 

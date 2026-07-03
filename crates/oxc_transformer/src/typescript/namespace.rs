@@ -99,6 +99,9 @@ impl<'a> TypeScriptNamespace {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if decl.declare {
+            if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
+                Self::remove_binding(ident, ctx);
+            }
             return;
         }
 

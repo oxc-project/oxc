@@ -2,7 +2,7 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2184/2236 (97.67%)
+Positive Passed: 2192/2236 (98.03%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 'abstract' modifier cannot be used with a private identifier.
 
@@ -54,21 +54,6 @@ Identifier `x` has already been declared
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
 Function implementation is missing or not immediately following the declaration.
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["N"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/valid-namespace-var/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["valid_namespace_var"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["N"]
-rebuilt        : ScopeId(0): []
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals/input.ts
 Reference flags mismatch for "f":
 after transform: ReferenceId(0): ReferenceFlags(Read | Type)
@@ -88,37 +73,12 @@ rebuilt        : ["f", "module"]
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts
 A required parameter cannot follow an optional parameter.
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["N"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare-export-named/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["N", "x"]
-rebuilt        : ScopeId(0): ["x"]
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare-export-named-declaration/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["N"]
-rebuilt        : ScopeId(0): []
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-export-named-declaration/input.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-nested-declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
 Ambient modules cannot be nested in other modules or namespaces.
 Ambient modules cannot be nested in other modules or namespaces.
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["N"]
-rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/callable-class/input.ts
 Bindings mismatch:
