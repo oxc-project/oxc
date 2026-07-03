@@ -44,6 +44,10 @@ pub fn write_quoted_str<'a>(f: &mut JsonFormatter<'_, 'a>, quote_byte: u8, body:
 /// JS stringifies the parsed value into a different shape (`"16"` for `0x10`, `"NaN"` for `1_2`),
 /// Rust simply fails to parse, so `Err` mapping to `false` matches.
 pub fn number_string_round_trips(s: &str) -> bool {
+    // PERF: Use `dragonbox_ecma` directly instead of `oxc_syntax::ToJsString`
+    // The latter returns `String` (heap alloc),
+    // while `Buffer::format` returns `&str` borrowed from a stack buffer.
+    // This is only a `==` comparison on a hot path (every numeric key), so avoid the alloc.
     s.parse::<f64>()
         .is_ok_and(|value| value.is_finite() && dragonbox_ecma::Buffer::new().format(value) == s)
 }

@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 94fbacb ast: [**BREAKING**] Only export `AstBuilder` and `NONE` in `builder` module (#23876) (overlookmotel)
+- 88f4455 str: [**BREAKING**] `Str` and `Ident` methods take `&GetAllocator` (#23781) (overlookmotel)
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+- bd74f9d allocator: [**BREAKING**] Rename `AllocatorAccessor` trait to `GetAllocator` (#23675) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+- 785461b ast: Add custom builder methods to AST types (#23651) (overlookmotel)
+- 05d1357 ast: Add AST creation methods to AST types (#23650) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 0ab64ec ast: Silence deprecation warnings within files defining deprecated `AstBuilder` methods (#23889) (overlookmotel)
+- 3800f01 ast: Legacy `AstBuilder` methods take `self` not `&self` (#23891) (overlookmotel)
+- 025045d ast: `ExportNamedDeclaration` plain builder methods return boxed nodes (#23783) (overlookmotel)
+- 7537c58 ast: Fix name of `AstBuilder` method for `Expression::V8IntrinsicExpression` (#23766) (overlookmotel)
+
+### 📚 Documentation
+
+- aa1ad74 ast: Add `#[deprecated]` to legacy `AstBuilder` methods (#23877) (overlookmotel)
+- a4676db ast: Correct doc comment for `NONE` (#23765) (overlookmotel)
+
 ## [0.137.0] - 2026-06-18
 
 ### 💥 BREAKING CHANGES

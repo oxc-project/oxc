@@ -1,0 +1,16 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/todo-hir_numeric_format.js
+---
+// HIR Pattern: NUMERIC_FORMAT_DIFF (5 files, 1.5%)
+// TS: 2.18739127891275e+22 (scientific), Rust: 21873912789127500000000 (decimal)
+describe("logUnsafeIntResponse", () => {
+	afterEach(_temp);
+	it("logs when unsafe integer found in response", _temp2);
+});
+function _temp() {}
+function _temp2() {
+	logUnsafeIntResponse("GET", "/api/v1/test/", { abc: 218739127891275e8 });
+	expect(MockLogger.Logger).toHaveBeenCalledWith();
+	expect(MockLogger.warn).toHaveBeenNthCalledWith();
+}

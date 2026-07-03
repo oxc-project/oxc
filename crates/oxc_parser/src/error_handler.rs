@@ -1,6 +1,6 @@
 //! Code related to error handling.
 
-use oxc_allocator::Dummy;
+use oxc_allocator::{Dummy, GetAllocator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
@@ -48,7 +48,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[cold]
     pub(crate) fn unexpected<T: Dummy<'a>>(&mut self) -> T {
         self.set_unexpected();
-        Dummy::dummy(self.ast.allocator)
+        Dummy::dummy(self.allocator())
     }
 
     /// Push a Syntax Error
@@ -88,7 +88,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[cold]
     pub(crate) fn fatal_error<T: Dummy<'a>>(&mut self, error: OxcDiagnostic) -> T {
         self.set_fatal_error(error);
-        Dummy::dummy(self.ast.allocator)
+        Dummy::dummy(self.allocator())
     }
 
     pub(crate) fn has_fatal_error(&self) -> bool {

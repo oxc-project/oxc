@@ -40,7 +40,12 @@ impl<'a> PeepholeOptimizations {
                     argument
                 } else {
                     // `if ((a | b) === 0);", "if (!(a | b));")`
-                    ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
+                    Expression::new_unary_expression(
+                        e.span,
+                        UnaryOperator::LogicalNot,
+                        argument,
+                        ctx,
+                    )
                 };
                 ctx.replace_expression(expr, new_expr);
             }
@@ -118,7 +123,7 @@ impl<'a> PeepholeOptimizations {
                         .get_symbol_value(symbol_id)
                         .is_some_and(|sv| sv.boolean_falsy)
                 {
-                    let new_expr = ctx.ast.expression_boolean_literal(span, false);
+                    let new_expr = Expression::new_boolean_literal(span, false, ctx);
                     ctx.replace_expression(expr, new_expr);
                 }
             }

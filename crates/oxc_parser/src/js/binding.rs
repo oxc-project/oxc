@@ -1,4 +1,4 @@
-use oxc_allocator::Box;
+use oxc_allocator::ArenaBox;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -20,7 +20,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(super) fn parse_binding_pattern_with_type_annotation(
         &mut self,
-    ) -> (BindingPattern<'a>, Option<Box<'a, TSTypeAnnotation<'a>>>) {
+    ) -> (BindingPattern<'a>, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>) {
         let pattern = self.parse_binding_pattern_kind();
         let type_annotation = self.parse_ts_type_annotation();
         (pattern, type_annotation)
@@ -59,7 +59,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         self.expect(Kind::RCurly);
-        self.ast.binding_pattern_object_pattern(self.end_span(span), list, rest)
+        BindingPattern::new_object_pattern(self.end_span(span), list, rest, self)
     }
 
     /// Section 14.3.3 Array Binding Pattern
@@ -75,7 +75,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::binding_rest_element_last,
         );
         self.expect(Kind::RBrack);
-        self.ast.binding_pattern_array_pattern(self.end_span(span), list, rest)
+        BindingPattern::new_array_pattern(self.end_span(span), list, rest, self)
     }
 
     fn parse_array_binding_element(&mut self) -> Option<BindingPattern<'a>> {
@@ -87,7 +87,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Section 14.3.3 Binding Rest Property
-    pub(crate) fn parse_rest_element(&mut self) -> Box<'a, BindingRestElement<'a>> {
+    pub(crate) fn parse_rest_element(&mut self) -> ArenaBox<'a, BindingRestElement<'a>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
         let init_span = self.start_span();
@@ -116,7 +116,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::a_rest_element_cannot_have_an_initializer(pat.span));
         }
 
-        self.ast.alloc_binding_rest_element(self.end_span(span), argument)
+        BindingRestElement::boxed(self.end_span(span), argument, self)
     }
 
     /// Parse rest element for function parameters (type annotation NOT consumed)
@@ -145,7 +145,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::a_rest_parameter_cannot_have_an_initializer(pat.span));
         }
 
-        self.ast.binding_rest_element(self.end_span(span), argument)
+        BindingRestElement::new(self.end_span(span), argument, self)
     }
 
     /// `BindingProperty`[Yield, Await] :
@@ -167,7 +167,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 shorthand = true;
                 self.check_identifier_with_span(key_cur_kind, self.ctx, ident.span);
                 let identifier =
-                    self.ast.binding_pattern_binding_identifier(ident.span, ident.name);
+                    BindingPattern::new_binding_identifier(ident.span, ident.name, self);
                 self.context_add(Context::In, |p| p.parse_initializer(span, identifier))
             } else {
                 return self.unexpected();
@@ -179,7 +179,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.parse_binding_pattern_with_initializer()
         };
 
-        self.ast.binding_property(self.end_span(span), key, value, shorthand, computed)
+        BindingProperty::new(self.end_span(span), key, value, shorthand, computed, self)
     }
 
     /// Initializer[In, Yield, Await] :
@@ -187,7 +187,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_initializer(&mut self, span: u32, left: BindingPattern<'a>) -> BindingPattern<'a> {
         if self.eat(Kind::Eq) {
             let expr = self.parse_assignment_expression_or_higher();
-            self.ast.binding_pattern_assignment_pattern(self.end_span(span), left, expr)
+            BindingPattern::new_assignment_pattern(self.end_span(span), left, expr, self)
         } else {
             left
         }

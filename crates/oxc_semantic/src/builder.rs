@@ -6,8 +6,9 @@ use std::{
 };
 
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 
-use oxc_allocator::Address;
+use oxc_allocator::{Address, ArenaVec};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::Visit;
 #[cfg(feature = "cfg")]
@@ -17,7 +18,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
-use oxc_str::{Ident, IdentHashMap};
+use oxc_str::Ident;
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -85,9 +86,10 @@ pub struct SemanticBuilder<'a> {
     current_reference_flags: ReferenceFlags,
     /// Symbols that have been hoisted out of a scope (e.g. `var` declarations hoisted to
     /// the enclosing function scope, or Annex B function declarations hoisted to the var scope).
-    /// Keyed by the **original** scope the symbol was declared in, so that future declarations
-    /// in that scope can still detect redeclarations via `check_redeclaration`.
-    pub(crate) hoisting_variables: FxHashMap<ScopeId, IdentHashMap<'a, SymbolId>>,
+    /// Keyed by the `(original scope, name)` the symbol was declared in, so that future
+    /// declarations in that scope can still detect redeclarations via `check_redeclaration`.
+    /// A single flat map avoids allocating a per-scope inner map for every hoisting scope.
+    pub(crate) hoisting_variables: FxHashMap<(ScopeId, Ident<'a>), SymbolId>,
 
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
@@ -565,12 +567,13 @@ impl<'a> SemanticBuilder<'a> {
         &self,
         scope_id: ScopeId,
         span: Span,
-        name: Ident<'_>,
+        name: Ident<'a>,
         excludes: SymbolFlags,
     ) -> Option<SymbolId> {
-        let symbol_id = self.scoping.get_binding(scope_id, name).or_else(|| {
-            self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(&name).copied())
-        })?;
+        let symbol_id = self
+            .scoping
+            .get_binding(scope_id, name)
+            .or_else(|| self.hoisting_variables.get(&(scope_id, name)).copied())?;
 
         let flags = self.scoping.symbol_flags(symbol_id);
 
@@ -747,7 +750,7 @@ impl<'a> SemanticBuilder<'a> {
         );
     }
 
-    fn visit_parameter_decorators(&mut self, decorators: &oxc_allocator::Vec<'a, Decorator<'a>>) {
+    fn visit_parameter_decorators(&mut self, decorators: &ArenaVec<'a, Decorator<'a>>) {
         if decorators.is_empty() {
             return;
         }
@@ -985,7 +988,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 } else {
                     let mut parent_bindings = Bindings::new_in(allocator);
                     mem::swap(&mut cell.bindings[parent_scope_id], &mut parent_bindings);
-                    let parent_symbol_ids = parent_bindings.values().copied().collect::<Vec<_>>();
+                    // Collect into a `SmallVec` so the common `catch (e)` (a single binding)
+                    // resolves inline without a heap allocation. The ids must be collected
+                    // here to escape the `with_dependent_mut` borrow before calling
+                    // `set_symbol_scope_id` below.
+                    let parent_symbol_ids =
+                        parent_bindings.values().copied().collect::<SmallVec<[SymbolId; 4]>>();
                     cell.bindings[self.current_scope_id] = parent_bindings;
                     Some(parent_symbol_ids)
                 }
@@ -1333,10 +1341,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         #[cfg(feature = "cfg")]
-        let before_body_graph_ix = control_flow!(self, |cfg| {
+        let (after_update_graph_ix, before_body_graph_ix) = control_flow!(self, |cfg| {
+            let after_update_graph_ix = cfg.current_node_ix;
             let before_body_graph_ix = cfg.new_basic_block_normal();
             cfg.ctx(None).default().allow_break().allow_continue();
-            before_body_graph_ix
+            (after_update_graph_ix, before_body_graph_ix)
         });
         /* cfg */
 
@@ -1349,7 +1358,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             cfg.add_edge(before_for_graph_ix, test_graph_ix, EdgeType::Normal);
             cfg.add_edge(after_test_graph_ix, before_body_graph_ix, EdgeType::Jump);
             cfg.add_edge(after_body_graph_ix, update_graph_ix, EdgeType::Backedge);
-            cfg.add_edge(update_graph_ix, test_graph_ix, EdgeType::Backedge);
+            cfg.add_edge(after_update_graph_ix, test_graph_ix, EdgeType::Backedge);
             cfg.add_edge(after_test_graph_ix, after_for_stmt, EdgeType::Normal);
 
             cfg.ctx(None)
@@ -1911,12 +1920,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg - body basic block */
         #[cfg(feature = "cfg")]
-        let body_graph_ix = control_flow!(self, |cfg| {
+        let (after_test_graph_ix, body_graph_ix) = control_flow!(self, |cfg| {
             cfg.append_condition_to(condition_graph_ix, test_node_id);
+            let after_test_graph_ix = cfg.current_node_ix;
             let body_graph_ix = cfg.new_basic_block_normal();
 
             cfg.ctx(None).default().allow_break().allow_continue();
-            body_graph_ix
+            (after_test_graph_ix, body_graph_ix)
         });
         /* cfg */
 
@@ -1928,9 +1938,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             let after_while_graph_ix = cfg.new_basic_block_normal();
 
             cfg.add_edge(before_while_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
-            cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Jump);
+            cfg.add_edge(after_test_graph_ix, body_graph_ix, EdgeType::Jump);
             cfg.add_edge(after_body_graph_ix, condition_graph_ix, EdgeType::Backedge);
-            cfg.add_edge(condition_graph_ix, after_while_graph_ix, EdgeType::Normal);
+            cfg.add_edge(after_test_graph_ix, after_while_graph_ix, EdgeType::Normal);
 
             cfg.ctx(None)
                 .mark_break(after_while_graph_ix)

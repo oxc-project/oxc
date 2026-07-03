@@ -73,27 +73,75 @@ impl Rule for NoUselessCall {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
-        let Some(callee) =
-            as_member_expression_without_chain_expression(call_expr.callee.without_parentheses())
-        else {
-            return;
-        };
-
-        if !is_call_or_non_variadic_apply(call_expr, callee) {
+        let Some(callee) = classify_callee(&call_expr.callee) else { return };
+        if !callee.kind.has_valid_arguments(call_expr) {
             return;
         }
 
-        let applied = callee.object().without_parentheses();
         let Some(first_arg) = call_expr.arguments.first() else { return };
         let Some(this_arg) = first_arg.as_expression() else { return };
 
-        if validate_this_argument(this_arg, applied) {
-            ctx.diagnostic(no_useless_call_diagnostic(
-                callee.static_property_name().unwrap(),
-                call_expr.span,
-            ));
+        if validate_this_argument(this_arg, callee.applied) {
+            ctx.diagnostic(no_useless_call_diagnostic(callee.kind.name(), call_expr.span));
         }
     }
+}
+
+struct ClassifiedCallee<'a> {
+    kind: CallOrApply,
+    applied: &'a Expression<'a>,
+}
+
+#[derive(Clone, Copy)]
+enum CallOrApply {
+    Call,
+    Apply,
+}
+
+impl CallOrApply {
+    fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "call" => Some(Self::Call),
+            "apply" => Some(Self::Apply),
+            _ => None,
+        }
+    }
+
+    fn name(self) -> &'static str {
+        match self {
+            Self::Call => "call",
+            Self::Apply => "apply",
+        }
+    }
+
+    fn has_valid_arguments(self, call_expr: &CallExpression) -> bool {
+        match self {
+            Self::Call => !call_expr.arguments.is_empty(),
+            Self::Apply => {
+                call_expr.arguments.len() == 2
+                    && call_expr
+                        .arguments
+                        .get(1)
+                        .and_then(|arg| arg.as_expression())
+                        .is_some_and(|expr| matches!(expr, Expression::ArrayExpression(_)))
+            }
+        }
+    }
+}
+
+fn classify_callee<'a>(callee: &'a Expression<'a>) -> Option<ClassifiedCallee<'a>> {
+    if let Expression::StaticMemberExpression(member_expr) = callee {
+        let kind = CallOrApply::from_name(member_expr.property.name.as_str())?;
+        return Some(ClassifiedCallee { kind, applied: member_expr.object.without_parentheses() });
+    }
+
+    let callee = as_member_expression_without_chain_expression(callee.without_parentheses())?;
+    if callee.is_computed() {
+        return None;
+    }
+
+    let kind = CallOrApply::from_name(callee.static_property_name()?)?;
+    Some(ClassifiedCallee { kind, applied: callee.object().without_parentheses() })
 }
 
 fn validate_this_argument(this_arg: &Expression, applied: &Expression) -> bool {
@@ -118,26 +166,6 @@ fn validate_member_expression(this_arg: &Expression, applied_member: &MemberExpr
     }
 
     applied_object.content_eq(this_arg)
-}
-
-fn is_call_function(call_expr: &CallExpression, callee: &MemberExpression) -> bool {
-    callee.static_property_name().is_some_and(|name| name == "call")
-        && !call_expr.arguments.is_empty()
-}
-
-fn is_apply_function(call_expr: &CallExpression, callee: &MemberExpression) -> bool {
-    callee.static_property_name().is_some_and(|name| name == "apply")
-        && call_expr.arguments.len() == 2
-        && call_expr
-            .arguments
-            .get(1)
-            .and_then(|arg| arg.as_expression())
-            .is_some_and(|expr| matches!(expr, Expression::ArrayExpression(_)))
-}
-
-fn is_call_or_non_variadic_apply(call_expr: &CallExpression, callee: &MemberExpression) -> bool {
-    !callee.is_computed()
-        && (is_call_function(call_expr, callee) || is_apply_function(call_expr, callee))
 }
 
 fn as_member_expression_without_chain_expression<'a>(
@@ -186,6 +214,7 @@ fn test() {
         "foo.call(undefined, 1, 2);",
         "foo.call(void 0, 1, 2);",
         "foo.call(null, 1, 2);",
+        "(foo.call)(undefined, 1);",
         "obj.foo.call(obj, 1, 2);",
         "a.b.c.foo.call(a.b.c, 1, 2);",
         "a.b(x, y).c.foo.call(a.b(x, y).c, 1, 2);",
@@ -193,6 +222,7 @@ fn test() {
         "foo.apply(void 0, [1, 2]);",
         "foo.apply(null, [1, 2]);",
         "obj.foo.apply(obj, [1, 2]);",
+        "(obj.foo.apply)(obj, []);",
         "a.b.c.foo.apply(a.b.c, [1, 2]);",
         "a.b(x, y).c.foo.apply(a.b(x, y).c, [1, 2]);",
         "[].concat.apply([ ], [1, 2]);",

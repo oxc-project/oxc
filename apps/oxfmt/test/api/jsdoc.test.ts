@@ -54,6 +54,78 @@ describe("JSDoc", () => {
     );
   });
 
+  it("should format fenced scss, less and graphql through the Rust standalone path", async () => {
+    // Since plan Step 5-1, these languages format via `oxc_formatter_css` /
+    // `oxc_formatter_graphql` (string-in/string-out) instead of Prettier.
+    // scss/less use their own variant (the old Prettier path parsed all of
+    // css/scss/less as scss).
+    const source = `
+/**
+ * \`\`\`scss
+ * .a { .b { color :blue } }
+ * \`\`\`
+ *
+ * \`\`\`less
+ * .mixin() { color: red; }
+ * \`\`\`
+ *
+ * \`\`\`graphql
+ * query Q  { user { id   name } }
+ * \`\`\`
+ */
+`.trim();
+
+    const result = await format("a.ts", source, { jsdoc: {} });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe(
+      `
+/**
+ * \`\`\`scss
+ * .a {
+ *   .b {
+ *     color: blue;
+ *   }
+ * }
+ * \`\`\`
+ *
+ * \`\`\`less
+ * .mixin() {
+ *   color: red;
+ * }
+ * \`\`\`
+ *
+ * \`\`\`graphql
+ * query Q {
+ *   user {
+ *     id
+ *     name
+ *   }
+ * }
+ * \`\`\`
+ */
+`.trimStart(),
+    );
+  });
+
+  it("should keep fenced code verbatim when the Rust formatter cannot parse it", async () => {
+    // Parse errors inside comments are NOT diagnostics and stays as-is.
+    const source = `
+/**
+ * \`\`\`css
+ * .a { color: }}} broken {{{
+ * \`\`\`
+ *
+ * \`\`\`graphql
+ * fragment Broken on T {
+ * \`\`\`
+ */
+`.trim();
+
+    const result = await format("a.ts", source, { jsdoc: {} });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe(`${source}\n`);
+  });
+
   it("should format jsdoc in vue the same as in plain js", async () => {
     const jsdocComment = `
 /**

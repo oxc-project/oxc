@@ -970,7 +970,7 @@ mod test {
     use super::*;
 
     use oxc_allocator::Allocator;
-    use oxc_ast::AstBuilder;
+    use oxc_ast::{ast::IdentifierName, builder::AstBuilder};
     use oxc_span::Span;
 
     #[test]
@@ -1000,33 +1000,38 @@ mod test {
         let ast = AstBuilder::new(&alloc);
 
         // Identifier: useState
-        let use_state = ast.expression_identifier(Span::default(), "useState");
+        let use_state = Expression::new_identifier(Span::default(), "useState", &ast);
         assert!(is_react_hook(&use_state));
 
         // Identifier: use
-        let just_use = ast.expression_identifier(Span::default(), "use");
+        let just_use = Expression::new_identifier(Span::default(), "use", &ast);
         assert!(is_react_hook(&just_use));
 
         // Identifier: userError, should not be considered a hook despite starting with "use"
-        let user_error = ast.expression_identifier(Span::default(), "userError");
+        let user_error = Expression::new_identifier(Span::default(), "userError", &ast);
         assert!(!is_react_hook(&user_error));
 
         // Identifier that's not a hook
-        let not_hook = ast.expression_identifier(Span::default(), "notAHook");
+        let not_hook = Expression::new_identifier(Span::default(), "notAHook", &ast);
         assert!(!is_react_hook(&not_hook));
 
         // Static member: React.useEffect -> valid
-        let react_obj = ast.expression_identifier(Span::default(), "React");
-        let prop = ast.identifier_name(Span::default(), "useEffect");
+        let react_obj = Expression::new_identifier(Span::default(), "React", &ast);
+        let prop = IdentifierName::new(Span::default(), "useEffect", &ast);
         let react_use_effect =
-            ast.member_expression_static(Span::default(), react_obj, prop, false).into();
+            Expression::new_static_member_expression(Span::default(), react_obj, prop, false, &ast);
         assert!(is_react_hook(&react_use_effect));
 
         // Static member: react.useEffect -> invalid because namespace isn't PascalCase
-        let react_lower = ast.expression_identifier(Span::default(), "react");
-        let prop2 = ast.identifier_name(Span::default(), "useEffect");
-        let react_lower_use_effect =
-            ast.member_expression_static(Span::default(), react_lower, prop2, false).into();
+        let react_lower = Expression::new_identifier(Span::default(), "react", &ast);
+        let prop2 = IdentifierName::new(Span::default(), "useEffect", &ast);
+        let react_lower_use_effect = Expression::new_static_member_expression(
+            Span::default(),
+            react_lower,
+            prop2,
+            false,
+            &ast,
+        );
         assert!(!is_react_hook(&react_lower_use_effect));
     }
 

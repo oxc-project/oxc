@@ -10,10 +10,11 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstBuilder,
     ast::{
-        Expression, LogicalOperator, ObjectExpression, ObjectPropertyKind, Program, PropertyKind,
+        Expression, LogicalOperator, ObjectExpression, ObjectPropertyKind, Program, PropertyKey,
+        PropertyKind,
     },
+    builder::AstBuilder,
 };
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_span::SPAN;
@@ -1809,14 +1810,15 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
 
         if has_range_field {
             // Insert `__proto__: NodeProto` as first field
-            let prop = self.ast.object_property_kind_object_property(
+            let prop = ObjectPropertyKind::new_object_property(
                 SPAN,
                 PropertyKind::Init,
-                self.ast.property_key_static_identifier(SPAN, "__proto__"),
-                self.ast.expression_identifier(SPAN, "NodeProto"),
+                PropertyKey::new_static_identifier(SPAN, "__proto__", &self.ast),
+                Expression::new_identifier(SPAN, "NodeProto", &self.ast),
                 false,
                 false,
                 false,
+                &self.ast,
             );
             obj_expr.properties.insert(0, prop);
         }

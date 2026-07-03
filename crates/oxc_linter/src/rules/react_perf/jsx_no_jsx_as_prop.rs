@@ -5,7 +5,15 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
-use crate::utils::{NativeAllowList, ReactPerfConfig, ReactPerfRule};
+use crate::{
+    AstNode, LintContext,
+    context::ContextHost,
+    rule::Rule,
+    utils::{
+        NativeAllowList, ReactPerfConfig, react_perf_from_configuration, run_react_perf_rule,
+        should_run_react_perf,
+    },
+};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct JsxNoJsxAsProp(Box<ReactPerfConfig>);
@@ -53,25 +61,50 @@ declare_oxc_lint!(
     short_description = "Prevent JSX elements that are local to the current method from being used as values of JSX props.",
 );
 
-impl ReactPerfRule for JsxNoJsxAsProp {
+impl JsxNoJsxAsProp {
     const MESSAGE: &'static str = "JSX attribute values should not contain other JSX.";
 
     fn native_allow_list(&self) -> &NativeAllowList {
         self.0.native_allow_list()
     }
 
-    fn check_for_violation_on_expr(&self, expr: &Expression<'_>) -> Option<Span> {
+    fn check_for_violation_on_expr(expr: &Expression<'_>) -> Option<Span> {
         check_expression(expr)
     }
 
     fn check_for_violation_on_ast_kind(
-        &self,
         kind: &AstKind<'_>,
         _symbol_id: SymbolId,
     ) -> Option<(/* decl */ Span, /* init */ Option<Span>)> {
         let decl = kind.as_variable_declarator()?;
         let init_span = decl.init.as_ref().and_then(check_expression)?;
         Some((decl.id.span(), Some(init_span)))
+    }
+}
+
+impl Rule for JsxNoJsxAsProp {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
+        react_perf_from_configuration(value)
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXAttribute(attr) = node.kind() else {
+            return;
+        };
+
+        run_react_perf_rule(
+            attr,
+            node.scope_id(),
+            ctx,
+            Self::MESSAGE,
+            self.native_allow_list(),
+            Self::check_for_violation_on_expr,
+            Self::check_for_violation_on_ast_kind,
+        );
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        should_run_react_perf(ctx)
     }
 }
 

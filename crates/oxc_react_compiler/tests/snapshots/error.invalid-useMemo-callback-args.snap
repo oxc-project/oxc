@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.invalid-useMemo-callback-args.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] UseMemo: useMemo() callbacks may not accept parameters", labels: One([LabeledSpan { label: Some("Callbacks with parameters are not supported"), span: SourceSpan { offset: SourceOffset(45), length: 1 }, primary: false }]), help: Some("useMemo() callbacks are called by React to cache calculations across re-renders. They should not take parameters. Instead, directly reference the props, state, or local variables needed for the computation"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] MemoDependencies: Found missing memoization dependencies", labels: One([LabeledSpan { label: Some("Missing dependency `a`"), span: SourceSpan { offset: SourceOffset(50), length: 1 }, primary: false }]), help: Some("Missing dependencies can cause a value to update less often than it should, resulting in stale UI"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

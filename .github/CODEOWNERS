@@ -10,8 +10,6 @@ pnpm-lock.yaml
 # Linter (@camc314)
 
 /crates/oxc_linter @camc314
-/crates/oxc_config @camc314
-/crates/oxc_language_server @camc314 @sysix
 /oxlintrc.json @camc314
 /apps/oxlint @camc314
 /apps/oxlint/conformance @camc314 @overlookmotel
@@ -32,6 +30,8 @@ pnpm-lock.yaml
 /crates/oxc_formatter @leaysgur
 /crates/oxc_formatter_core @leaysgur
 /crates/oxc_formatter_json @leaysgur
+/crates/oxc_formatter_graphql @leaysgur
+/crates/oxc_formatter_css @leaysgur
 /crates/oxc_jsdoc @leaysgur
 /crates/oxc_regular_expression @leaysgur
 /oxfmtrc.jsonc @leaysgur
@@ -42,6 +42,8 @@ pnpm-lock.yaml
 
 # Shared application tooling (@camc314 @leaysgur)
 
+/crates/oxc_language_server @camc314 @leaysgur @sysix
+/crates/oxc_config @camc314 @leaysgur
 /apps/shared @camc314 @leaysgur
 
 # Transformer / Minifier / Semantic (@dunqing)

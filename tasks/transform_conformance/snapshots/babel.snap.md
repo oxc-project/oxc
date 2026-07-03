@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 702/1165
+Passed: 700/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -192,7 +192,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (213/269)
+# babel-plugin-transform-class-properties (212/269)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -279,6 +279,9 @@ x Output mismatch
 x Output mismatch
 
 * private/static-shadow/input.js
+x Output mismatch
+
+* private-loose/canonical/input.js
 x Output mismatch
 
 * private-loose/class-shadow-builtins/input.mjs
@@ -741,7 +744,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-property-in-object (25/59)
+# babel-plugin-transform-private-property-in-object (24/59)
 * assumption-privateFieldsAsProperties/accessor/input.js
 x Output mismatch
 
@@ -812,6 +815,9 @@ x Output mismatch
 x Output mismatch
 
 * private-loose/method/input.js
+x Output mismatch
+
+* private-loose/native-classes/input.js
 x Output mismatch
 
 * private-loose/nested-class/input.js

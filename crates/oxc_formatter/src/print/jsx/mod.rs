@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 
 pub mod child_list;
@@ -308,7 +308,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXEmptyExpression> {
     fn write(&self, _f: &mut JsFormatter<'_, 'a>) {}
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, JSXAttributeItem<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let line_break = if f.options().attribute_position == AttributePosition::Multiline {
             hard_line_break()

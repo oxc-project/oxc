@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{FileExtension, GetSpan};
 
@@ -34,12 +34,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
-        self.ast.declaration_ts_enum(
+        Declaration::new_ts_enum_declaration(
             span,
             id,
             body,
             modifiers.contains_const(),
             modifiers.contains_declare(),
+            self,
         )
     }
 
@@ -54,7 +55,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Self::parse_ts_enum_member,
         );
         self.expect(Kind::RCurly);
-        self.ast.ts_enum_body(self.end_span(span), members)
+        TSEnumBody::new(self.end_span(span), members, self)
     }
 
     pub(crate) fn parse_ts_enum_member(&mut self) -> TSEnumMember<'a> {
@@ -65,7 +66,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             None
         };
-        self.ast.ts_enum_member(self.end_span(span), id, initializer)
+        TSEnumMember::new(self.end_span(span), id, initializer, self)
     }
 
     fn parse_ts_enum_member_name(&mut self) -> TSEnumMemberName<'a> {
@@ -109,7 +110,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /* ------------------- Annotation ----------------- */
 
-    pub(crate) fn parse_ts_type_annotation(&mut self) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
+    pub(crate) fn parse_ts_type_annotation(
+        &mut self,
+    ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
         if !self.is_ts {
             return None;
         }
@@ -119,7 +122,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         self.bump_any(); // bump ':'
         let type_annotation = self.parse_ts_type();
-        Some(self.ast.alloc_ts_type_annotation(self.end_span(span), type_annotation))
+        Some(TSTypeAnnotation::boxed(self.end_span(span), type_annotation, self))
     }
 
     pub(crate) fn parse_ts_type_alias_declaration(
@@ -148,21 +151,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.bump_any();
             if self.at(Kind::Dot) {
                 // `type something = intrinsic. ...`
-                let left_name = self.ast.ts_type_name_identifier_reference(
+                let left_name = TSTypeName::new_identifier_reference(
                     intrinsic_token.span(),
                     self.token_source(&intrinsic_token),
+                    self,
                 );
                 let type_name =
                     self.parse_ts_qualified_type_name(intrinsic_token.start(), left_name);
                 let type_parameters = self.parse_type_arguments_of_type_reference();
-                self.ast.ts_type_type_reference(
+                TSType::new_ts_type_reference(
                     self.end_span(intrinsic_token.start()),
                     type_name,
                     type_parameters,
+                    self,
                 )
             } else {
                 // `type something = intrinsic`
-                self.ast.ts_type_intrinsic_keyword(intrinsic_token.span())
+                TSType::new_ts_intrinsic_keyword(intrinsic_token.span(), self)
             }
         } else {
             // `type something = ...`
@@ -179,7 +184,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        self.ast.declaration_ts_type_alias(span, id, params, ty, modifiers.contains_declare())
+        Declaration::new_ts_type_alias_declaration(
+            span,
+            id,
+            params,
+            ty,
+            modifiers.contains_declare(),
+            self,
+        )
     }
 
     /* ---------------------  Interface  ------------------------ */
@@ -226,7 +238,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let (extends, implements) = self.parse_heritage_clause();
         let body = self.parse_ts_interface_body();
-        let extends = extends.unwrap_or_else(|| self.ast.vec());
+        let extends = extends.unwrap_or_else(|| ArenaVec::new_in(self));
         self.verify_modifiers(
             modifiers,
             ModifierKinds::new([ModifierKind::Declare]),
@@ -244,21 +256,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::interface_extend(extend.span));
             }
         }
-        self.ast.declaration_ts_interface(
+        Declaration::new_ts_interface_declaration(
             self.end_span(span),
             id,
             type_parameters,
             extends,
             body,
             modifiers.contains_declare(),
+            self,
         )
     }
 
-    fn parse_ts_interface_body(&mut self) -> Box<'a, TSInterfaceBody<'a>> {
+    fn parse_ts_interface_body(&mut self) -> ArenaBox<'a, TSInterfaceBody<'a>> {
         let span = self.start_span();
         let body_list =
             self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature);
-        self.ast.alloc_ts_interface_body(self.end_span(span), body_list)
+        TSInterfaceBody::boxed(self.end_span(span), body_list, self)
     }
 
     pub(crate) fn parse_ts_type_signature(&mut self) -> TSSignature<'a> {
@@ -345,7 +358,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         span: u32,
         modifiers: &Modifiers,
-    ) -> Box<'a, TSModuleDeclaration<'a>> {
+    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
         let kind = if self.eat(Kind::Namespace) {
             TSModuleDeclarationKind::Namespace
         } else {
@@ -362,7 +375,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         span: u32,
         modifiers: &Modifiers,
-    ) -> Box<'a, TSModuleDeclaration<'a>> {
+    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
         let id = TSModuleDeclarationName::StringLiteral(self.parse_literal_string());
         let body = if self.at(Kind::LCurly) {
             // External module body (`declare module "x" {}`); `import`/`export` are allowed here.
@@ -378,12 +391,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
-        self.ast.alloc_ts_module_declaration(
+        TSModuleDeclaration::boxed(
             self.end_span(span),
             id,
             body,
             TSModuleDeclarationKind::Module,
             modifiers.contains_declare(),
+            self,
         )
     }
 
@@ -428,7 +442,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    fn parse_ts_module_block(&mut self, in_ts_namespace_body: bool) -> Box<'a, TSModuleBlock<'a>> {
+    fn parse_ts_module_block(
+        &mut self,
+        in_ts_namespace_body: bool,
+    ) -> ArenaBox<'a, TSModuleBlock<'a>> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
         // Remove TopLevel context for module block
@@ -436,7 +453,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             p.parse_directives_and_statements(in_ts_namespace_body)
         });
         self.expect(Kind::RCurly);
-        self.ast.alloc_ts_module_block(self.end_span(span), directives, statements)
+        TSModuleBlock::boxed(self.end_span(span), directives, statements, self)
     }
 
     fn parse_module_or_namespace_declaration(
@@ -444,7 +461,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         kind: TSModuleDeclarationKind,
         modifiers: &Modifiers,
-    ) -> Box<'a, TSModuleDeclaration<'a>> {
+    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
         let id = TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
         let body = if self.eat(Kind::Dot) {
             let span = self.start_span();
@@ -462,12 +479,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
-        self.ast.alloc_ts_module_declaration(
+        TSModuleDeclaration::boxed(
             self.end_span(span),
             id,
             Some(body),
             kind,
             modifiers.contains_declare(),
+            self,
         )
     }
 
@@ -475,7 +493,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         span: u32,
         modifiers: &Modifiers,
-    ) -> Box<'a, TSGlobalDeclaration<'a>> {
+    ) -> ArenaBox<'a, TSGlobalDeclaration<'a>> {
         let keyword_span_start = self.start_span();
         self.expect(Kind::Global);
         let keyword_span = self.end_span(keyword_span_start);
@@ -489,11 +507,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        self.ast.alloc_ts_global_declaration(
+        TSGlobalDeclaration::boxed(
             self.end_span(span),
             keyword_span,
             body,
             modifiers.contains_declare(),
+            self,
         )
     }
 
@@ -516,7 +535,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             .ctx
             .union_ambient_if(modifiers.contains_declare())
             .and_await(modifiers.contains_async());
-        let decl = self.parse_declaration(start_span, &modifiers, self.ast.vec());
+        let decl = self.parse_declaration(start_span, &modifiers, ArenaVec::new_in(self));
         self.ctx = reserved_ctx;
         // A TypeScript declaration (`interface`, `type`, `enum`, `namespace`, …) is a
         // `Declaration`, not a `Statement`, so it cannot stand alone as the body of
@@ -531,7 +550,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start_span: u32,
         modifiers: &Modifiers,
-        decorators: Vec<'a, Decorator<'a>>,
+        decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> Declaration<'a> {
         let kind = self.cur_kind();
         if kind != Kind::Class {
@@ -634,7 +653,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start_span: u32,
         modifiers: &Modifiers,
-    ) -> Box<'a, Function<'a>> {
+    ) -> ArenaBox<'a, Function<'a>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function);
         let generator = self.eat(Kind::Star);
@@ -664,7 +683,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::jsx_type_assertion_in_mts_cts(span));
         }
 
-        self.ast.expression_ts_type_assertion(span, type_annotation, expression)
+        Expression::new_ts_type_assertion(span, type_annotation, expression, self)
     }
 
     pub(crate) fn parse_ts_import_equals_declaration(
@@ -680,9 +699,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.expect(Kind::LParen);
             let expression = self.parse_literal_string();
             self.expect(Kind::RParen);
-            self.ast.ts_module_reference_external_module_reference(
+            TSModuleReference::new_external_module_reference(
                 self.end_span(reference_span),
                 expression,
+                self,
             )
         } else {
             self.parse_ts_module_reference(reference_span)
@@ -700,7 +720,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::import_alias_cannot_use_import_type(span));
         }
 
-        self.ast.declaration_ts_import_equals(span, identifier, module_reference, import_kind)
+        Declaration::new_ts_import_equals_declaration(
+            span,
+            identifier,
+            module_reference,
+            import_kind,
+            self,
+        )
     }
 
     /// Parse `TSModuleReference` for `import x = foo` or `import x = foo.bar`.
@@ -715,12 +741,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Recover by creating an identifier
             let this = this_span.source_text(self.source_text);
             debug_assert_eq!(this, "this");
-            let ident = self.ast.alloc_identifier_reference(this_span, this);
+            let ident = IdentifierReference::boxed(this_span, this, self);
             return TSModuleReference::IdentifierReference(ident);
         }
 
         let ident = self.parse_identifier_name();
-        let left = self.ast.ts_type_name_identifier_reference(ident.span, ident.name);
+        let left = TSTypeName::new_identifier_reference(ident.span, ident.name, self);
 
         // Parse qualified name: foo.bar.baz
         let type_name =
@@ -744,7 +770,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let this_span = self.end_span(span);
 
         let type_annotation = self.parse_ts_type_annotation();
-        self.ast.ts_this_parameter(self.end_span(span), this_span, type_annotation)
+        TSThisParameter::new(self.end_span(span), this_span, type_annotation, self)
     }
 
     pub(crate) fn at_start_of_ts_declaration(&mut self) -> bool {

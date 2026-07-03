@@ -11,7 +11,7 @@ use std::{
 };
 
 use oxc_allocator::{
-    Allocator, CloneIn, Dummy, FromIn, IdentBuildHasher, StringBuilder as ArenaStringBuilder,
+    Allocator, ArenaStringBuilder, CloneIn, Dummy, FromIn, GetAllocator, IdentBuildHasher,
     ident_hash,
 };
 #[cfg(feature = "serialize")]
@@ -130,6 +130,12 @@ pub const fn new_const_ident(s: &str) -> Ident<'_> {
 }
 
 impl<'a> Ident<'a> {
+    /// Allocate provided `&str` into arena, and return an [`Ident<'a>`].
+    #[inline]
+    pub fn from_str_in<A: GetAllocator<'a>>(s: &str, allocator: &A) -> Self {
+        new_const_ident(allocator.allocator().alloc_str(s))
+    }
+
     /// Create an [`Ident`] from raw components.
     ///
     /// # SAFETY
@@ -211,11 +217,11 @@ impl<'a> Ident<'a> {
     // are statically known. See `Allocator::alloc_concat_strs_array`.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn from_strs_array_in<const N: usize>(
+    pub fn from_strs_array_in<const N: usize, A: GetAllocator<'a>>(
         strings: [&str; N],
-        allocator: &'a Allocator,
+        allocator: &A,
     ) -> Ident<'a> {
-        Self::from(allocator.alloc_concat_strs_array(strings))
+        Self::from(allocator.allocator().alloc_concat_strs_array(strings))
     }
 
     /// Convert a [`Cow<'a, str>`] to an [`Ident<'a>`].
@@ -225,10 +231,10 @@ impl<'a> Ident<'a> {
     ///
     /// If the `Cow` is owned, allocates the string into arena to generate a new `Ident`.
     #[inline]
-    pub fn from_cow_in(value: &Cow<'a, str>, allocator: &'a Allocator) -> Ident<'a> {
+    pub fn from_cow_in<A: GetAllocator<'a>>(value: &Cow<'a, str>, allocator: &A) -> Ident<'a> {
         match value {
             Cow::Borrowed(s) => Ident::from(*s),
-            Cow::Owned(s) => Ident::from_in(s, allocator),
+            Cow::Owned(s) => Ident::from_str_in(s, allocator),
         }
     }
 }
@@ -486,7 +492,7 @@ pub type IdentHashMap<'a, V> = hashbrown::HashMap<Ident<'a>, V, IdentBuildHasher
 
 /// Arena-allocated hash map keyed by [`Ident`], using precomputed ident hash.
 pub type ArenaIdentHashMap<'alloc, V> =
-    oxc_allocator::HashMap<'alloc, Ident<'alloc>, V, IdentBuildHasher>;
+    oxc_allocator::ArenaHashMap<'alloc, Ident<'alloc>, V, IdentBuildHasher>;
 
 /// Hash set of [`Ident`], using precomputed ident hash.
 pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, IdentBuildHasher>;
@@ -704,6 +710,97 @@ mod test {
     fn static_ident_const_context() {
         const IDENT: Ident<'static> = static_ident!("hello");
         assert_eq!(IDENT.as_str(), "hello");
+    }
+
+    #[test]
+    #[expect(clippy::items_after_statements)]
+    fn ident_from_str_in() {
+        let allocator = Allocator::new();
+        let allocator: &Allocator = &allocator;
+
+        // Pass an actual `Allocator`
+        let ident = Ident::from_str_in("world", &allocator);
+        assert_eq!(ident.as_str(), "world");
+        assert_eq!(ident, Ident::from("world"));
+
+        // Pass a struct which implements `GetAllocator`
+        struct Wrapper<'a>(&'a Allocator);
+
+        impl<'a> GetAllocator<'a> for Wrapper<'a> {
+            fn allocator(&self) -> &'a Allocator {
+                self.0
+            }
+        }
+
+        let wrapper = Wrapper(allocator);
+        let ident = Ident::from_str_in("hello", &wrapper);
+        assert_eq!(ident.as_str(), "hello");
+        assert_eq!(ident, Ident::from("hello"));
+    }
+
+    #[test]
+    #[expect(clippy::items_after_statements)]
+    fn ident_from_strs_array_in() {
+        let allocator = Allocator::new();
+        let allocator = &allocator;
+
+        // Pass an actual `Allocator`
+        let ident = Ident::from_strs_array_in(["hello", " ", "world", "!"], &allocator);
+        assert_eq!(ident.as_str(), "hello world!");
+        assert_eq!(ident, Ident::from("hello world!"));
+
+        // Pass a struct which implements `GetAllocator`
+        struct Wrapper<'a>(&'a Allocator);
+
+        impl<'a> GetAllocator<'a> for Wrapper<'a> {
+            fn allocator(&self) -> &'a Allocator {
+                self.0
+            }
+        }
+
+        let wrapper = Wrapper(allocator);
+        let ident = Ident::from_strs_array_in(["foo", "_", "bar"], &wrapper);
+        assert_eq!(ident.as_str(), "foo_bar");
+        assert_eq!(ident, Ident::from("foo_bar"));
+    }
+
+    #[test]
+    #[expect(clippy::items_after_statements)]
+    fn ident_from_cow_in() {
+        let allocator = Allocator::new();
+        let allocator = &allocator;
+
+        // `Cow::Borrowed` references the same string, without allocating in arena
+        let borrowed = "world";
+        let used_before = allocator.used_bytes();
+        let ident = Ident::from_cow_in(&Cow::Borrowed(borrowed), &allocator);
+        assert_eq!(ident.as_str(), "world");
+        assert_eq!(ident, Ident::from("world"));
+        assert_eq!(ident.as_str().as_ptr(), borrowed.as_ptr());
+        assert_eq!(allocator.used_bytes(), used_before);
+
+        // `Cow::Owned` allocates a new string in arena
+        let owned = "owned".to_string();
+        let owned_ptr = owned.as_ptr();
+        let ident = Ident::from_cow_in(&Cow::Owned(owned), &allocator);
+        assert_eq!(ident.as_str(), "owned");
+        assert_eq!(ident, Ident::from("owned"));
+        assert_ne!(ident.as_str().as_ptr(), owned_ptr);
+        assert!(allocator.used_bytes() > used_before);
+
+        // Pass a struct which implements `GetAllocator`
+        struct Wrapper<'a>(&'a Allocator);
+
+        impl<'a> GetAllocator<'a> for Wrapper<'a> {
+            fn allocator(&self) -> &'a Allocator {
+                self.0
+            }
+        }
+
+        let wrapper = Wrapper(allocator);
+        let ident = Ident::from_cow_in(&Cow::Borrowed("hello"), &wrapper);
+        assert_eq!(ident.as_str(), "hello");
+        assert_eq!(ident, Ident::from("hello"));
     }
 
     #[test]

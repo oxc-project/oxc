@@ -260,7 +260,7 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
                     && meta_property.meta.name == "new"
                     && meta_property.property.name == "target" =>
             {
-                *expr = self.ctx.ast.void_0(meta_property.span);
+                *expr = Expression::new_void_0(meta_property.span, self.ctx);
                 return;
             }
             // `delete this`
@@ -538,7 +538,7 @@ impl<'a> StaticVisitor<'a, '_> {
     /// Replace `delete this` with `true`.
     fn replace_delete_this_with_true(&self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {
-            *expr = self.ctx.ast.expression_boolean_literal(span, true);
+            *expr = Expression::new_boolean_literal(span, true, self.ctx);
         }
     }
 

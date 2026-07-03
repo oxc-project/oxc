@@ -1,4 +1,4 @@
-use oxc_allocator::{TakeIn, Vec as ArenaVec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{Reference, SymbolFlags};
@@ -160,7 +160,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         // still considered a module
         if no_modules_remaining && some_modules_deleted && ctx.state.module_imports.is_empty() {
             let export_decl = Statement::ExportNamedDeclaration(
-                ctx.ast.plain_export_named_declaration(SPAN, ctx.ast.vec(), None),
+                ExportNamedDeclaration::boxed_plain(SPAN, ArenaVec::new_in(ctx), None, ctx),
             );
             program.body.push(export_decl);
         }
@@ -556,7 +556,12 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let scope_id = ctx.insert_scope_below_statement(&stmt, ScopeFlags::empty());
-        ctx.ast.statement_block_with_scope_id(span, ctx.ast.vec1(stmt), scope_id)
+        Statement::new_block_statement_with_scope_id(
+            span,
+            ArenaVec::from_value_in(stmt, ctx),
+            scope_id,
+            ctx,
+        )
     }
 
     fn replace_for_statement_body_with_empty_block_if_ts(
@@ -574,7 +579,12 @@ impl<'a> TypeScriptAnnotations<'a> {
     ) {
         if stmt.is_typescript_syntax() {
             let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-            *stmt = ctx.ast.statement_block_with_scope_id(stmt.span(), ctx.ast.vec(), scope_id);
+            *stmt = Statement::new_block_statement_with_scope_id(
+                stmt.span(),
+                ArenaVec::new_in(ctx),
+                scope_id,
+                ctx,
+            );
         }
     }
 
@@ -625,26 +635,26 @@ impl<'a> Assignment<'a> {
     // Creates `this.name = name`
     fn create_this_property_assignment(&self, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
         let reference_id = ctx.create_bound_reference(self.symbol_id, ReferenceFlags::Read);
-        let id = ctx.ast.alloc_identifier_reference_with_reference_id(
-            self.span,
-            self.name,
-            reference_id,
-        );
+        let id =
+            IdentifierReference::boxed_with_reference_id(self.span, self.name, reference_id, ctx);
 
-        ctx.ast.statement_expression(
+        Statement::new_expression_statement(
             SPAN,
-            ctx.ast.expression_assignment(
+            Expression::new_assignment_expression(
                 SPAN,
                 AssignmentOperator::Assign,
-                SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
+                SimpleAssignmentTarget::new_static_member_expression(
                     SPAN,
-                    ctx.ast.expression_this(SPAN),
-                    ctx.ast.identifier_name(self.span, self.name),
+                    Expression::new_this_expression(SPAN, ctx),
+                    IdentifierName::new(self.span, self.name, ctx),
                     false,
-                ))
+                    ctx,
+                )
                 .into(),
                 Expression::Identifier(id),
+                ctx,
             ),
+            ctx,
         )
     }
 }

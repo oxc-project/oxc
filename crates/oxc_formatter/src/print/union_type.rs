@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -246,7 +246,7 @@ fn should_indent_alias_union<'a>(
 }
 
 fn format_union_types<'a>(
-    node: &AstNode<'a, Vec<'a, TSType<'a>>>,
+    node: &AstNode<'a, ArenaVec<'a, TSType<'a>>>,
     mut suppressed_node_span: Span,
     should_hug: bool,
     f: &mut JsFormatter<'_, 'a>,
@@ -318,7 +318,7 @@ fn format_union_types<'a>(
             //            ^^^^^^^^^^^ the following logic is to print comment2,
             // )[]; // comment 3
             //```
-            // TODO: We may need to tweak `AstNode<'a, Vec<'a, T>>` iterator as some of Vec's last elements should have the following span.
+            // TODO: We may need to tweak `AstNode<'a, ArenaVec<'a, T>>` iterator as some of Vec's last elements should have the following span.
             let comments = f.context().comments().end_of_line_comments_after(element_span.end);
             write!(f, FormatTrailingComments::Comments(comments));
         }

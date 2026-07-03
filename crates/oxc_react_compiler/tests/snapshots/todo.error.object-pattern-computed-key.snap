@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/todo.error.object-pattern-computed-key.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Invariant: [InferMutationAliasingEffects] Expected value kind to be initialized", labels: One([LabeledSpan { label: Some("this is uninitialized"), span: SourceSpan { offset: SourceOffset(135), length: 5 }, primary: false }]), help: Some("<unknown> value$3"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

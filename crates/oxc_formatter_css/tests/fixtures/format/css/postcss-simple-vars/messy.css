@@ -1,0 +1,3 @@
+$primary:red;$bp:48em;
+
+.demo{ color:$primary  ;  padding   :   10px; @media (max-width:$bp){font-size:12px;} }

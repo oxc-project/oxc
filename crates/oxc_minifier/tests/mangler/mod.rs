@@ -8,14 +8,14 @@ use oxc_span::SourceType;
 
 fn mangle_with_source_type(
     source_text: &str,
-    options: MangleOptions,
+    options: &MangleOptions,
     source_type: SourceType,
 ) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
     let program = ret.program;
-    let mangler_return = Mangler::new().with_options(options).build(&program);
+    let mangler_return = Mangler::new().with_options(options.clone()).build(&program);
     Codegen::new()
         .with_scoping(Some(mangler_return.scoping))
         .with_private_member_mappings(Some(mangler_return.class_private_mappings))
@@ -23,15 +23,15 @@ fn mangle_with_source_type(
         .code
 }
 
-fn mangle(source_text: &str, options: MangleOptions) -> String {
+fn mangle(source_text: &str, options: &MangleOptions) -> String {
     mangle_with_source_type(source_text, options, SourceType::mjs().with_unambiguous(true))
 }
 
-fn mangle_script(source_text: &str, options: MangleOptions) -> String {
+fn mangle_script(source_text: &str, options: &MangleOptions) -> String {
     mangle_with_source_type(source_text, options, SourceType::script())
 }
 
-fn test(source_text: &str, expected: &str, options: MangleOptions) {
+fn test(source_text: &str, expected: &str, options: &MangleOptions) {
     let mangled = mangle(source_text, options);
     let expected = {
         let allocator = Allocator::default();
@@ -52,12 +52,12 @@ fn direct_eval() {
 
     // Symbols in scopes with direct eval should NOT be mangled
     let source_text = "function foo() { let NO_MANGLE; eval('') }";
-    let mangled = mangle(source_text, options);
+    let mangled = mangle(source_text, &options);
     assert_eq!(mangled, "function foo() {\n\tlet NO_MANGLE;\n\teval(\"\");\n}\n");
 
     // Nested direct eval: parent scope also should not mangle
     let source_text = "function foo() { let NO_MANGLE; function bar() { eval('') } }";
-    let mangled = mangle(source_text, options);
+    let mangled = mangle(source_text, &options);
     assert_eq!(
         mangled,
         "function foo() {\n\tlet NO_MANGLE;\n\tfunction bar() {\n\t\teval(\"\");\n\t}\n}\n"
@@ -66,43 +66,43 @@ fn direct_eval() {
     // Sibling scope without direct eval should be mangled
     let source_text =
         "function foo() { let NO_MANGLE; eval('') } function bar() { let SHOULD_MANGLE; }";
-    let mangled = mangle(source_text, options);
+    let mangled = mangle(source_text, &options);
     // SHOULD_MANGLE gets mangled (to some short name), NO_MANGLE stays as is
     assert!(mangled.contains("NO_MANGLE"));
     assert!(!mangled.contains("SHOULD_MANGLE"));
 
     // Child function scope without direct eval CAN be mangled (eval in parent cannot access child function locals)
     let source_text = "function foo() { eval(''); function bar() { let CAN_MANGLE; } }";
-    let mangled = mangle(source_text, options);
+    let mangled = mangle(source_text, &options);
     assert!(!mangled.contains("CAN_MANGLE"));
 
     // Indirect eval should still allow mangling
     let source_text = "function foo() { let SHOULD_MANGLE; (0, eval)('') }";
-    let mangled = mangle(source_text, options);
+    let mangled = mangle(source_text, &options);
     assert!(!mangled.contains("SHOULD_MANGLE"));
 
     test(
         r#"var e = () => {}; var foo = (bar) => e(bar); var pt = (() => { eval("") })();"#,
         r#"var e = () => {}; var foo = (t) => e(t); var pt = (() => { eval(""); })();"#,
-        MangleOptions::default(),
+        &MangleOptions::default(),
     );
 
     test(
         r#"var e = () => {}; var foo = (bar) => e(bar); var pt = (() => { eval("") })();"#,
         r#"var e = () => {}; var foo = (t) => e(t); var pt = (() => { eval(""); })();"#,
-        MangleOptions { top_level: Some(true), ..MangleOptions::default() },
+        &MangleOptions { top_level: Some(true), ..MangleOptions::default() },
     );
 
     test(
         r"function outer() { let e = 1; eval(''); function inner() { let longNameToMangle = 2; console.log(e); } }",
         r#"function outer() { let e = 1; eval(""); function inner() { let t = 2; console.log(e); } }"#,
-        MangleOptions::default(),
+        &MangleOptions::default(),
     );
 
     test(
         r"function evalScope() { let x = 1; eval(''); } function siblingScope() { let longName = 2; console.log(longName); }",
         r#"function evalScope() {let x = 1; eval(""); } function siblingScope() { let e = 2; console.log(e); }"#,
-        MangleOptions::default(),
+        &MangleOptions::default(),
     );
 }
 
@@ -165,12 +165,12 @@ fn mangler() {
     let mut snapshot = String::new();
     cases.into_iter().fold(&mut snapshot, |w, case| {
         let options = MangleOptions::default();
-        write!(w, "{case}\n{}\n", mangle(case, options)).unwrap();
+        write!(w, "{case}\n{}\n", mangle(case, &options)).unwrap();
         w
     });
     top_level_cases.into_iter().fold(&mut snapshot, |w, case| {
         let options = MangleOptions { top_level: Some(true), ..MangleOptions::default() };
-        write!(w, "{case}\n{}\n", mangle(case, options)).unwrap();
+        write!(w, "{case}\n{}\n", mangle(case, &options)).unwrap();
         w
     });
     keep_name_cases.into_iter().fold(&mut snapshot, |w, case| {
@@ -178,7 +178,7 @@ fn mangler() {
             keep_names: MangleOptionsKeepNames::all_true(),
             ..MangleOptions::default()
         };
-        write!(w, "{case}\n{}\n", mangle(case, options)).unwrap();
+        write!(w, "{case}\n{}\n", mangle(case, &options)).unwrap();
         w
     });
 
@@ -210,7 +210,7 @@ fn private_member_mangling() {
     let mut snapshot = String::new();
     cases.into_iter().fold(&mut snapshot, |w, case| {
         let options = MangleOptions::default();
-        write!(w, "{case}\n{}\n", mangle(case, options)).unwrap();
+        write!(w, "{case}\n{}\n", mangle(case, &options)).unwrap();
         w
     });
 
@@ -230,21 +230,21 @@ fn function_expression_name_shadowed() {
     test(
         "function _() { var x; var f = function foo() { var foo = x; } }",
         "function _() { var e; var t = function t() { var t = e; } }",
-        options,
+        &options,
     );
 
     // Parameter shadow.
     test(
         "function _() { var x; (function foo(foo) { foo + x })() }",
         "function _() { var e; (function t(t) { t + e; })(); }",
-        options,
+        &options,
     );
 
     // `var` inside an `else` block — still hoists through the block scope to the fn-expr scope.
     test(
         "function _() { var x; var f = function foo() { if (x) {} else { var foo = x; } } }",
         "function _() { var e; var t = function t() { if (e) {} else { var t = e; } } }",
-        options,
+        &options,
     );
 }
 
@@ -267,13 +267,112 @@ fn shadowed_fn_expr_mangle_is_idempotent() {
     ];
 
     for case in cases {
-        let pass1 = mangle(case, options);
-        let pass2 = mangle(&pass1, options);
+        let pass1 = mangle(case, &options);
+        let pass2 = mangle(&pass1, &options);
         assert_eq!(
             pass1, pass2,
             "\nIdempotency failure for:\n{case}\nPass 1:\n{pass1}\nPass 2:\n{pass2}"
         );
     }
+}
+
+/// Destructured bindings in `export const/let/var` define the module's export names —
+/// they must never be renamed (`export const { find } = x` exports `find`; renaming the
+/// binding renames the export). Surfaced by monitor-oxc: mangled `css-tree` lost its
+/// `find` export and broke `import { find } from "css-tree"` at runtime.
+#[test]
+fn destructured_exports_keep_names() {
+    let options = MangleOptions::default();
+
+    test(
+        "import syntax from 's';
+         export const { tokenize, parse, find } = syntax;",
+        "import e from 's';
+         export const { tokenize, parse, find } = e;",
+        &options,
+    );
+
+    test(
+        "import syntax from 's';
+         export const [first, second, ...rest] = syntax;",
+        "import e from 's';
+         export const [first, second, ...rest] = e;",
+        &options,
+    );
+
+    // Renamed destructuring and nested patterns: only the bound names are exported.
+    test(
+        "import syntax from 's';
+         export const { a: renamed, b: { nested = 1 } } = syntax;",
+        "import e from 's';
+         export const { a: renamed, b: { nested = 1 } } = e;",
+        &options,
+    );
+}
+
+/// With `reserved: ["exports", "module"]`, those bindings keep their names. Node's
+/// cjs-module-lexer detects a CommonJS module's named exports by lexically scanning
+/// for `exports.<name> =` / `module.exports` token patterns — it does no scope
+/// analysis. UMD bundles bind `exports` / `module` as wrapper-function parameters
+/// (e.g. `async`'s `factory(exports)`); renaming the parameter erases every named
+/// export, breaking `import { queue } from "async"` at runtime in Node. `reserved` is
+/// empty by default, matching esbuild / terser / swc, which also rename these.
+#[test]
+fn reserved_names() {
+    let options = MangleOptions {
+        reserved: ["exports", "module"].into_iter().map(Into::into).collect(),
+        ..MangleOptions::default()
+    };
+
+    // UMD factory parameter named `exports`.
+    test(
+        "(function (global, factory) {
+             typeof exports === 'object' && typeof module !== 'undefined'
+                 ? factory(exports)
+                 : factory((global.lib = {}));
+         })(this, function (exports) {
+             function queue(worker) { return worker; }
+             exports.queue = queue;
+         });",
+        "(function (e, t) {
+             typeof exports === 'object' && typeof module !== 'undefined'
+                 ? t(exports)
+                 : t((e.lib = {}));
+         })(this, function (exports) {
+             function t(e) { return e; }
+             exports.queue = t;
+         });",
+        &options,
+    );
+
+    // CommonJS wrapper parameters named `module` and `exports`.
+    test(
+        "(function (module, exports) {
+             function helper(value) { return value; }
+             module.exports.helper = helper;
+             exports.other = helper;
+         })(m, m.exports);",
+        "(function (module, exports) {
+             function t(e) { return e; }
+             module.exports.helper = t;
+             exports.other = t;
+         })(m, m.exports);",
+        &options,
+    );
+
+    // Off by default: `exports` is renamed like any other binding (matching
+    // esbuild / terser / swc), trading Node named-import detection for size.
+    test(
+        "(function (factory) { factory(exports); })(function (exports) {
+             function queue(worker) { return worker; }
+             exports.queue = queue;
+         });",
+        "(function (e) { e(exports); })(function (e) {
+             function t(e) { return e; }
+             e.queue = t;
+         });",
+        &MangleOptions::default(),
+    );
 }
 
 /// Annex B.3.2.1: In sloppy mode, function declarations inside blocks have var-like hoisting.
@@ -304,7 +403,7 @@ fn annex_b_block_scoped_function() {
     let mut snapshot = String::new();
     cases.into_iter().fold(&mut snapshot, |w, case| {
         let options = MangleOptions::default();
-        write!(w, "{case}\n{}\n", mangle_script(case, options)).unwrap();
+        write!(w, "{case}\n{}\n", mangle_script(case, &options)).unwrap();
         w
     });
 

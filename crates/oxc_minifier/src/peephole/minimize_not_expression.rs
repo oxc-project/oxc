@@ -13,7 +13,8 @@ impl<'a> PeepholeOptimizations {
         expr: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut unary = ctx.ast.expression_unary(span, UnaryOperator::LogicalNot, expr);
+        let mut unary =
+            Expression::new_unary_expression(span, UnaryOperator::LogicalNot, expr, ctx);
         Self::minimize_unary(&mut unary, ctx);
         unary
     }

@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/fault-tolerance/error.var-declaration-and-mutation-of-props.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: (BuildHIR::lowerStatement) Handle var kinds in VariableDeclaration", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(310), length: 24 }, primary: false }]), help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: This value cannot be modified", labels: One([LabeledSpan { label: Some("value cannot be modified"), span: SourceSpan { offset: SourceOffset(400), length: 5 }, primary: false }]), help: Some("Modifying component props or hook arguments is not allowed. Consider using a local variable instead"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

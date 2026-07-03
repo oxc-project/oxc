@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/preserve-memo-validation/error.hoist-useCallback-conditional-access-own-scope.ts
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] PreserveManualMemo: Existing memoization could not be preserved", labels: One([LabeledSpan { label: Some("Could not preserve existing manual memoization"), span: SourceSpan { offset: SourceOffset(195), length: 84 }, primary: false }]), help: Some("React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `propB`, but the source dependencies were [propA, propB.x.y]. Inferred less specific property than source"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.
