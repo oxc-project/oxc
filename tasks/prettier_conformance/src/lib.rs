@@ -273,7 +273,6 @@ impl TestRunner {
                     &snapshots,
                     path.file_name().unwrap().to_string_lossy().as_ref(),
                     snapshot_options,
-                    format_options.line_width().value() as usize,
                 )
                 .unwrap();
 
@@ -367,25 +366,41 @@ impl TestRunner {
         snap_content: &str,
         file_name: &str,
         snapshot_options: &[(String, String)],
-        print_width: usize,
     ) -> Option<String> {
         let filename_started = snap_content.find(&format!("exports[`{file_name} "))?;
-        let expected = &snap_content[filename_started..];
+        let after_filename = &snap_content[filename_started..];
 
-        let options_started = expected.find(&format!(
+        // Anchor on the options block (header + key:value lines). The line that
+        // follows is a `printWidth` visualization whose exact rendering varies by
+        // Prettier version, so we skip it by jumping to the following
+        // `=====input=====`. To disambiguate between blocks where one options
+        // list is a prefix of another (e.g. `parsers: [...]` vs
+        // `parsers: [...] + singleQuote: true`), we require the gap between the
+        // matched options and the input marker to be exactly one line (the
+        // visualization), retrying past the false match otherwise.
+        let options_pattern = format!(
             "====================================options=====================================
 {}
-{}| printWidth
-=====================================input======================================
 ",
             snapshot_options
                 .iter()
                 .map(|(k, v)| format!("{k}: {v}"))
                 .collect::<Vec<_>>()
                 .join("\n"),
-            " ".repeat(print_width)
-        ))?;
-        let expected = &expected[options_started..];
+        );
+        let input_marker =
+            "\n=====================================input======================================\n";
+        let mut search_from = 0;
+        let expected = loop {
+            let pos = after_filename[search_from..].find(&options_pattern)?;
+            let after_options = search_from + pos + options_pattern.len();
+            let input_pos = after_filename[after_options..].find(input_marker)?;
+            let between = &after_filename[after_options..after_options + input_pos];
+            if !between.contains('\n') {
+                break &after_filename[after_options + input_pos..];
+            }
+            search_from = after_options;
+        };
 
         let output_start_line =
             "=====================================output=====================================\n";
