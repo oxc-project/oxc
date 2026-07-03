@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4516/4720 (95.68%)
+Positive Passed: 4523/4720 (95.83%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -99,6 +99,9 @@ rebuilt        : SymbolId(3): Span { start: 60, end: 63 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules4.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Bindings mismatch:
+after transform: ScopeId(0): ["m4", "m4a", "m4b", "m4c", "m4d", "m5"]
+rebuilt        : ScopeId(0): ["m4a", "m4b", "m4d", "m5"]
 Reference symbol mismatch for "m4":
 after transform: SymbolId(0) "m4"
 rebuilt        : <None>
@@ -144,9 +147,6 @@ after transform: SymbolId(0): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(0): Span { start: 6, end: 9 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/cloduleWithPriorUninstantiatedModule.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["Moclodule"]
 Symbol flags mismatch for "Moclodule":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
@@ -197,6 +197,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileExportAss
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileGenericType2.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["_defineProperty", "templa"]
+rebuilt        : ScopeId(0): ["_defineProperty"]
 Reference symbol mismatch for "templa":
 after transform: SymbolId(0) "templa"
 rebuilt        : <None>
@@ -220,9 +223,6 @@ after transform: ["require"]
 rebuilt        : ["require", "templa"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileImportModuleWithExportAssignment.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["m2"]
 Symbol flags mismatch for "m2":
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NamespaceModule)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -237,32 +237,12 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileInternalA
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileModuleContinuation.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["A"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileModuleWithPropertyOfTypeModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause1.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["X"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause2.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["X"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause3.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["X"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringArrayPattern3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -314,9 +294,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNa
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationMaps.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["m2"]
 Symbol flags mismatch for "m2":
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NamespaceModule)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -328,9 +305,6 @@ after transform: SymbolId(0): [Span { start: 10, end: 12 }, Span { start: 233, e
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declareFileExportAssignment.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["m2"]
 Symbol flags mismatch for "m2":
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NamespaceModule)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -342,9 +316,6 @@ after transform: SymbolId(0): [Span { start: 10, end: 12 }, Span { start: 233, e
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declareFileExportAssignmentWithVarFromVariableStatement.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["x"]
-rebuilt        : ScopeId(0): ["m2", "x"]
 Symbol flags mismatch for "m2":
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NamespaceModule)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
@@ -396,6 +367,9 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumsWithMultipleDeclarations3.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["E"]
+rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "E":
 after transform: SymbolId(0) "E"
 rebuilt        : <None>
@@ -508,16 +482,6 @@ rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "fn":
 after transform: SymbolId(0): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(0): Span { start: 9, end: 11 }
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericConstraintOnExtendedBuiltinTypes.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_defineProperty"]
-rebuilt        : ScopeId(0): ["EndGate", "_defineProperty"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericConstraintOnExtendedBuiltinTypes2.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_defineProperty"]
-rebuilt        : ScopeId(0): ["EndGate", "_defineProperty"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importAliasWithDottedName.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -793,9 +757,6 @@ after transform: SymbolId(1): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(2): Span { start: 29, end: 30 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/resolveModuleNameWithSameLetDeclarationName1.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["foo"]
 Symbol flags mismatch for "foo":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | NamespaceModule | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -807,9 +768,6 @@ after transform: SymbolId(0): [Span { start: 18, end: 21 }, Span { start: 59, en
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/resolveNameWithNamspace.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["myAssert"]
 Symbol flags mismatch for "myAssert":
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NamespaceModule)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -819,11 +777,6 @@ rebuilt        : SymbolId(0): Span { start: 91, end: 99 }
 Symbol redeclarations mismatch for "myAssert":
 after transform: SymbolId(0): [Span { start: 44, end: 52 }, Span { start: 91, end: 99 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/reuseInnerModuleMember.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["bar"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -1425,9 +1378,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/nestedModules.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(0): ["m", "p", "point"]
-rebuilt        : ScopeId(0): ["A", "M2", "m", "p", "point"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit6.tsx
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
