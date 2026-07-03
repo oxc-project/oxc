@@ -1,0 +1,604 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a > b)
+   ·            ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:9]
+ 1 │ [].sort((a, b) => a > b)
+   ·         ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:27]
+ 1 │ Array.from(iterable).sort((a, b) => a > b)
+   ·                           ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:22]
+ 1 │ new Array().toSorted((a, b) => a > b)
+   ·                      ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a >= b)
+   ·            ────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a < b)
+   ·            ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a <= b)
+   ·            ────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => b > a)
+   ·            ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => b >= a)
+   ·            ────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => b < a)
+   ·            ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => b <= a)
+   ·            ────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a.score > b.score)
+   ·            ───────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a.score >= b.score)
+   ·            ────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a[0] < b[0])
+   ·            ─────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a[i] <= b[i])
+   ·            ──────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a.foo.bar > b.foo.bar)
+   ·            ───────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a > c)
+   ·            ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a.foo > b.bar)
+   ·            ───────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a[i] > b[j])
+   ·            ─────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a > b, extraArgument)
+   ·            ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:15]
+ 1 │ array["sort"]((a, b) => a > b)
+   ·               ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:19]
+ 1 │ array["toSorted"]((a, b) => a > b)
+   ·                   ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:2:27]
+ 1 │ const method = "sort";
+ 2 │             array[method]((a, b) => a > b)
+   ·                           ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:16]
+ 1 │ array.toSorted((a, b) => a > b)
+   ·                ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:14]
+ 1 │ array.sort?.((a, b) => a > b)
+   ·              ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:13]
+ 1 │ array?.sort((a, b) => a > b)
+   ·             ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(function (a, b) { return a > b; })
+   ·            ─────────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(function (a, a) { return a > a; })
+   ·            ─────────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ ╭─▶ array.sort((a, b) => {
+ 2 │ │    return a > b;
+ 3 │ ╰─▶  })
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => (a) > (b))
+   ·            ───────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ ╭─▶ array.sort((a, b) => {
+ 2 │ │    // Compare
+ 3 │ │    return a > b;
+ 4 │ ╰─▶  })
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a === b)
+   ·            ─────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:18]
+ 1 │ strings.toSorted((a, b) => a === b)
+   ·                  ─────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a !== b)
+   ·            ─────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => true)
+   ·            ──────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => false)
+   ·            ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => Boolean(a - b))
+   ·            ────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => !(a - b))
+   ·            ──────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a > b && c > d)
+   ·            ────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a > b ? c > d : e > f)
+   ·            ───────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a in b)
+   ·            ────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a, b) => a instanceof b)
+   ·            ────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Boolean)
+   ·            ───────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:16]
+ 1 │ array.toSorted(Boolean)
+   ·                ───────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(isFinite)
+   ·            ────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(isNaN)
+   ·            ─────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Array.isArray)
+   ·            ─────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(ArrayBuffer.isView)
+   ·            ──────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Atomics.isLockFree)
+   ·            ──────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Number.isFinite)
+   ·            ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Number.isInteger)
+   ·            ────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Number.isNaN)
+   ·            ────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Number["isNaN"])
+   ·            ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Number.isSafeInteger)
+   ·            ────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Object.hasOwn)
+   ·            ─────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Object.is)
+   ·            ─────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Object.isExtensible)
+   ·            ───────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Object.isFrozen)
+   ·            ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Object.isSealed)
+   ·            ───────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Reflect.deleteProperty)
+   ·            ──────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Reflect.has)
+   ·            ───────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(URL.canParse)
+   ·            ────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:2:13]
+ 1 │ const compare = (a, b) => a > b;
+ 2 │  array.sort(compare)
+   ·             ───────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:2:13]
+ 1 │ const compare = function (a, b) { return a > b; };
+ 2 │  array.sort(compare)
+   ·             ───────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:2:13]
+ 1 │ function compare(a, b) { return a > b; }
+ 2 │  array.sort(compare)
+   ·             ───────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a: number, b: number): boolean => a > b)
+   ·            ────────────────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:13]
+ 1 │ array.sort((Boolean as (value: unknown) => boolean))
+   ·             ──────────────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:2:13]
+ 1 │ const compare: (a: number, b: number) => boolean = (a, b) => compareUnknown(a, b);
+ 2 │  array.sort(compare)
+   ·             ───────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:2:13]
+ 1 │ type Comparator = (a: number, b: number) => boolean;
+ 2 │  array.sort(((a, b) => a > b) as Comparator)
+   ·             ───────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:2:13]
+ 1 │ type Comparator = (a: number, b: number) => boolean;
+ 2 │  array.sort(compare as Comparator)
+   ·             ─────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(((a: number, b: number) => a > b) as (a: number, b: number) => boolean)
+   ·            ──────────────────────────────────────────────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(compare as (a: number, b: number) => boolean)
+   ·            ────────────────────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a: number, b: number): boolean => compare(a, b))
+   ·            ────────────────────────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ ╭─▶ array.sort(function (a: number, b: number): boolean {
+ 2 │ │    return compare(a, b);
+ 3 │ ╰─▶  })
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a: number, b: number) => (a > b) as boolean)
+   ·            ────────────────────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a: number, b: number) => <boolean>(a > b))
+   ·            ──────────────────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a: number, b: number) => (a > b) satisfies boolean)
+   ·            ───────────────────────────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a: number, b: number) => (a > b)!)
+   ·            ──────────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(<T extends {score: number}>(a, b) => a.score > b.score)
+   ·            ──────────────────────────────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a?, b?) => a > b)
+   ·            ─────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ ╭─▶ array.sort((a: number, b: number): boolean => {
+ 2 │ │    if (a > b) { return true; }
+ 3 │ │    return false;
+ 4 │ ╰─▶  })
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort((a: unknown, b: unknown) => (a as number) > (b as number))
+   ·            ─────────────────────────────────────────────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(Boolean!)
+   ·            ────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.
+
+  ⚠ unicorn(no-boolean-sort-comparator): Do not return a boolean from a sort comparator.
+   ╭─[no_boolean_sort_comparator.tsx:1:12]
+ 1 │ array.sort(([a], [b]) => a > b)
+   ·            ───────────────────
+   ╰────
+  help: A sort comparator must return a number: negative, zero, or positive. Returning a boolean sorts inconsistently.

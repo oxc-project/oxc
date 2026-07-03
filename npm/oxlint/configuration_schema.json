@@ -8824,6 +8824,9 @@
         "unicorn/no-await-in-promise-methods": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-boolean-sort-comparator": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-confusing-array-with": {
           "$ref": "#/definitions/RuleNoConfig"
         },
