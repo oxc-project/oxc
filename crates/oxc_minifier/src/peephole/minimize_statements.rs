@@ -30,6 +30,22 @@ fn dead_drop_mutates_ast(stmt: &Statement<'_>) -> bool {
             && decl.declarations.iter().all(|d| d.init.is_none() && d.type_annotation.is_none()))
 }
 
+/// Cap on how deep the early-return guard inversion re-minimizes a drained
+/// tail within a single pass. A flat chain of guards folds by recursing once
+/// per guard (see the guard arm in `handle_if_statement`), and flat input is
+/// not bounded by parse nesting, so generated code with a long run of
+/// sequential guards could otherwise overflow the stack. Beyond this depth the
+/// arm defers the remaining tail to the next global pass instead (still correct,
+/// just less folded).
+///
+/// Kept deliberately low: a `minimize_statements` frame is several KB, and the
+/// minifier runs on worker threads whose stacks can be ~2 MB (or smaller), so
+/// this recursion must stay within a fraction of that on top of the traversal
+/// already on the stack (empirically ~2000 levels overflow 8 MB, ~400 overflow
+/// 2 MB). 100 clears a 1 MB stack with margin and is far above any real guard
+/// chain, so real fixtures fold identically.
+const GUARD_INVERSION_MAX_DEPTH: u32 = 100;
+
 impl<'a> PeepholeOptimizations {
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
     ///
@@ -48,7 +64,11 @@ impl<'a> PeepholeOptimizations {
     ///
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
-    pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    pub fn minimize_statements(
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+        depth: u32,
+    ) {
         let mut old_stmts = stmts.take_in(ctx);
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new();
@@ -81,6 +101,7 @@ impl<'a> PeepholeOptimizations {
                 stmts,
                 &mut is_control_flow_dead,
                 ctx,
+                depth,
             )
             .is_break()
             {
@@ -367,6 +388,7 @@ impl<'a> PeepholeOptimizations {
         is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
+        depth: u32,
     ) -> ControlFlow<()> {
         match stmt {
             Statement::EmptyStatement(_) => (),
@@ -390,7 +412,7 @@ impl<'a> PeepholeOptimizations {
                 Self::handle_switch_statement(switch_stmt, result, ctx);
             }
             Statement::IfStatement(if_stmt) => {
-                if Self::handle_if_statement(i, stmts, if_stmt, result, ctx).is_break() {
+                if Self::handle_if_statement(i, stmts, if_stmt, result, ctx, depth).is_break() {
                     return ControlFlow::Break(());
                 }
             }
@@ -738,6 +760,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
+        depth: u32,
     ) -> ControlFlow<()> {
         Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
 
@@ -828,7 +851,7 @@ impl<'a> PeepholeOptimizations {
                             ArenaVec::from_iter_in(drained_stmts, ctx)
                         };
 
-                        Self::minimize_statements(&mut body, ctx);
+                        Self::minimize_statements(&mut body, ctx, depth);
                         let span = if body.is_empty() {
                             if_stmt.consequent.span()
                         } else {
@@ -874,6 +897,101 @@ impl<'a> PeepholeOptimizations {
                         break;
                     }
                     return ControlFlow::Continue(());
+                }
+            } else if ctx.parent().is_function_body()
+                && matches!(&if_stmt.consequent, Statement::BlockStatement(block)
+                    if block.body.last().is_some_and(|s|
+                        matches!(s, Statement::ReturnStatement(r) if r.argument.is_none())))
+            {
+                // "function f() { if (c) { X; return; } REST }"
+                //   => "function f() { if (c) { X } else { REST } }"
+                //
+                // A guard block whose tail is a bare `return` makes the trailing
+                // statements reachable only when the test is false, so they move
+                // into an `else`. We re-minimize that `else` body and re-run
+                // `try_minimize_if` inline (like `optimize_implicit_jump` above),
+                // so a whole chain of guards collapses innermost-first in a single
+                // pass into a conditional/logical expression once the branches
+                // reduce to expression statements (e.g. `if (x) { foo(); return }
+                // bar()` => `x ? foo() : bar()`). Keeps the test polarity because
+                // the non-empty consequent gives us a real `else` branch to fill.
+                //
+                // REST and any existing alternate get nested inside a new block,
+                // so bail when they declare bindings the test could observe in the
+                // current scope (same reasoning as the jump-statement path above).
+                let mut can_move_rest_into_block = true;
+                if let Some(alternate) = &if_stmt.alternate
+                    && Self::statement_cares_about_scope(alternate)
+                {
+                    can_move_rest_into_block = false;
+                }
+                if can_move_rest_into_block && let Some(rest) = stmts.get(i + 1..) {
+                    for stmt in rest {
+                        if Self::statement_cares_about_scope(stmt) {
+                            can_move_rest_into_block = false;
+                            break;
+                        }
+                    }
+                }
+
+                if can_move_rest_into_block {
+                    // Consequent: drop the now-redundant trailing `return`, then
+                    // unwrap a single statement so `try_minimize_if` can fold it.
+                    let Statement::BlockStatement(mut consequent_block) =
+                        if_stmt.consequent.take_in(ctx)
+                    else {
+                        unreachable!()
+                    };
+                    let dropped_return = consequent_block.body.pop().unwrap();
+                    ctx.drop_statement(&dropped_return);
+                    let consequent = if consequent_block.body.len() == 1 {
+                        consequent_block.body.remove(0)
+                    } else {
+                        Statement::BlockStatement(consequent_block)
+                    };
+
+                    // Else: any existing alternate, then the trailing statements.
+                    // Re-minimizing here (same as the jump path) folds a nested
+                    // guard chain in this pass instead of one guard per pass —
+                    // but each guard recurses one level, so a flat chain becomes
+                    // stack depth. Past the cap, defer the tail to the next global
+                    // pass (leave it unminimized) so pathological input can't
+                    // overflow; the output is still correct, just less folded.
+                    let drained_stmts = stmts.drain(i + 1..);
+                    let mut else_body = if let Some(alternate) = if_stmt.alternate.take() {
+                        ArenaVec::from_iter_in(iter::once(alternate).chain(drained_stmts), ctx)
+                    } else {
+                        ArenaVec::from_iter_in(drained_stmts, ctx)
+                    };
+                    if depth < GUARD_INVERSION_MAX_DEPTH {
+                        Self::minimize_statements(&mut else_body, ctx, depth + 1);
+                    }
+                    // A single statement needs no wrapping block: the scope guard
+                    // above already excluded lexical declarations, so anything
+                    // left is a valid bare `else` body. Avoids an otherwise
+                    // short-lived block + scope the fixed-point loop would flatten.
+                    let alternate = match else_body.len() {
+                        0 => None,
+                        1 => Some(else_body.remove(0)),
+                        _ => {
+                            let span = else_body[0].span();
+                            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
+                            Some(Statement::new_block_statement_with_scope_id(
+                                span, else_body, scope_id, ctx,
+                            ))
+                        }
+                    };
+
+                    // Rebuild and fold in place so the ternary/logical form is
+                    // reached this pass rather than deferred to the next one.
+                    let test = if_stmt.test.take_in(ctx);
+                    let mut new_if =
+                        IfStatement::new(test.span(), test, consequent, alternate, ctx);
+                    let folded = Self::try_minimize_if(&mut new_if, ctx)
+                        .unwrap_or_else(|| Statement::IfStatement(ArenaBox::new_in(new_if, ctx)));
+                    result.push(folded);
+                    ctx.notice_change();
+                    return ControlFlow::Break(());
                 }
             }
         }
