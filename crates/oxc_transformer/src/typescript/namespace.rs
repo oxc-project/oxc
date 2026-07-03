@@ -220,6 +220,7 @@ impl<'a> TypeScriptNamespace {
                     let export_decl = export_decl.unbox();
                     if let Some(decl) = export_decl.declaration {
                         if decl.declare() {
+                            Self::remove_declaration_bindings(&decl, ctx);
                             continue;
                         }
                         match decl {
@@ -435,6 +436,18 @@ impl<'a> TypeScriptNamespace {
 
         let expr = Expression::new_call_expression(span, callee, NONE, arguments, false, ctx);
         Statement::new_expression_statement(span, expr, ctx)
+    }
+
+    fn remove_declaration_bindings(decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        match decl {
+            Declaration::TSEnumDeclaration(enum_decl) => Self::remove_binding(&enum_decl.id, ctx),
+            Declaration::TSModuleDeclaration(module_decl) => {
+                if let TSModuleDeclarationName::Identifier(ident) = &module_decl.id {
+                    Self::remove_binding(ident, ctx);
+                }
+            }
+            _ => decl.bound_names(&mut |id| Self::remove_binding(id, ctx)),
+        }
     }
 
     /// Add assignment statement for decl id

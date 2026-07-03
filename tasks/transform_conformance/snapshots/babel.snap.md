@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 779/1165
+Passed: 780/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (127/157)
+# babel-plugin-transform-typescript (128/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1200,11 +1200,6 @@ rebuilt        : SymbolId(0): Span { start: 13, end: 14 }
 Symbol redeclarations mismatch for "N":
 after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 35, end: 36 }]
 rebuilt        : SymbolId(0): []
-
-* namespace/declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["B", "C", "_N", "e", "f", "v"]
-rebuilt        : ScopeId(1): ["_N"]
 
 * namespace/multiple/input.ts
 Symbol redeclarations mismatch for "N":

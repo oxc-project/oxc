@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4489/4720 (95.11%)
+Positive Passed: 4497/4720 (95.28%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -249,31 +249,6 @@ rebuilt        : SymbolId(0): []
 Symbol redeclarations mismatch for "m2":
 after transform: SymbolId(7): [Span { start: 192, end: 194 }, Span { start: 308, end: 310 }]
 rebuilt        : SymbolId(9): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientClass.ts
-Bindings mismatch:
-after transform: ScopeId(6): ["_m", "exports", "require"]
-rebuilt        : ScopeId(1): ["_m"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientEnum.ts
-Bindings mismatch:
-after transform: ScopeId(6): ["_m", "exports", "require"]
-rebuilt        : ScopeId(1): ["_m"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientFunction.ts
-Bindings mismatch:
-after transform: ScopeId(6): ["_m", "a", "exports", "require"]
-rebuilt        : ScopeId(1): ["_m", "a"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientFunctionInGlobalFile.ts
-Bindings mismatch:
-after transform: ScopeId(6): ["_m", "a", "exports", "require"]
-rebuilt        : ScopeId(1): ["_m", "a"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientVar.ts
-Bindings mismatch:
-after transform: ScopeId(2): ["_m", "a", "exports", "require"]
-rebuilt        : ScopeId(1): ["_m", "a"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndAliasInGlobal.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -756,17 +731,6 @@ Symbol redeclarations mismatch for "X":
 after transform: SymbolId(1): [Span { start: 35, end: 36 }, Span { start: 66, end: 67 }]
 rebuilt        : SymbolId(2): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/innerExtern.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["B", "BB", "_A"]
-rebuilt        : ScopeId(1): ["B", "_A"]
-Reference symbol mismatch for "BB":
-after transform: SymbolId(1) "BB"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["BB", "require"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasClass.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -933,9 +897,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleVisibilityT
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(5): ["B", "C", "E", "InnerMod", "_M", "exported_var", "someModuleFunction", "someModuleVar", "x", "y"]
-rebuilt        : ScopeId(5): ["B", "C", "E", "InnerMod", "_M", "someModuleFunction", "someModuleVar", "x", "y"]
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(5): [Span { start: 243, end: 244 }, Span { start: 1079, end: 1080 }]
 rebuilt        : SymbolId(8): []
@@ -984,14 +945,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyCheckTypeOfInvisibleModuleNoError.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionParameterDeclFile.ts
-Bindings mismatch:
-after transform: ScopeId(71): ["_publicModule", "privateClass", "privateClassWithPrivateModuleParameterTypes", "privateClassWithWithPrivateParmeterTypes", "privateClassWithWithPublicParmeterTypes", "privateFunctionWithPrivateModuleParameterTypes", "privateFunctionWithPrivateParmeterTypes", "privateFunctionWithPublicParmeterTypes", "publicAmbientFunctionWithPrivateModuleParameterTypes", "publicAmbientFunctionWithPrivateParmeterTypes", "publicAmbientFunctionWithPublicParmeterTypes", "publicClass", "publicClassWithPrivateModuleParameterTypes", "publicClassWithWithPrivateParmeterTypes", "publicClassWithWithPublicParmeterTypes", "publicFunctionWithPrivateModuleParameterTypes", "publicFunctionWithPrivateParmeterTypes", "publicFunctionWithPublicParmeterTypes"]
-rebuilt        : ScopeId(41): ["_publicModule", "privateClass", "privateClassWithPrivateModuleParameterTypes", "privateClassWithWithPrivateParmeterTypes", "privateClassWithWithPublicParmeterTypes", "privateFunctionWithPrivateModuleParameterTypes", "privateFunctionWithPrivateParmeterTypes", "privateFunctionWithPublicParmeterTypes", "publicClass", "publicClassWithPrivateModuleParameterTypes", "publicClassWithWithPrivateParmeterTypes", "publicClassWithWithPublicParmeterTypes", "publicFunctionWithPrivateModuleParameterTypes", "publicFunctionWithPrivateParmeterTypes", "publicFunctionWithPublicParmeterTypes"]
-Bindings mismatch:
-after transform: ScopeId(142): ["_privateModule", "privateClass", "privateClassWithPrivateModuleParameterTypes", "privateClassWithWithPrivateParmeterTypes", "privateClassWithWithPublicParmeterTypes", "privateFunctionWithPrivateModuleParameterTypes", "privateFunctionWithPrivateParmeterTypes", "privateFunctionWithPublicParmeterTypes", "publicAmbientFunctionWithPrivateModuleParameterTypes", "publicAmbientFunctionWithPrivateParmeterTypes", "publicAmbientFunctionWithPublicParmeterTypes", "publicClass", "publicClassWithPrivateModuleParameterTypes", "publicClassWithWithPrivateParmeterTypes", "publicClassWithWithPublicParmeterTypes", "publicFunctionWithPrivateModuleParameterTypes", "publicFunctionWithPrivateParmeterTypes", "publicFunctionWithPublicParmeterTypes"]
-rebuilt        : ScopeId(82): ["_privateModule", "privateClass", "privateClassWithPrivateModuleParameterTypes", "privateClassWithWithPrivateParmeterTypes", "privateClassWithWithPublicParmeterTypes", "privateFunctionWithPrivateModuleParameterTypes", "privateFunctionWithPrivateParmeterTypes", "privateFunctionWithPublicParmeterTypes", "publicClass", "publicClassWithPrivateModuleParameterTypes", "publicClassWithWithPrivateParmeterTypes", "publicClassWithWithPublicParmeterTypes", "publicFunctionWithPrivateModuleParameterTypes", "publicFunctionWithPrivateParmeterTypes", "publicFunctionWithPublicParmeterTypes"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyGloImport.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -1178,20 +1131,12 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Bindings mismatch:
-after transform: ScopeId(8): ["C", "C2", "_m", "a", "a2", "b", "b2", "b22", "b222", "b23", "b2E", "d1E", "d2E", "m", "m1", "m3", "mE", "v1E"]
-rebuilt        : ScopeId(1): ["C", "C2", "_m", "a", "a2", "b", "b2", "b22", "b222", "b23", "b2E", "m", "m1", "m3", "mE"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/visSyntax.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
 'with' statements are not allowed
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientInsideNonAmbient.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["C", "E", "M", "_M", "f", "x"]
-rebuilt        : ScopeId(1): ["_M"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterBindingPattern.3.ts
 Bindings mismatch:
