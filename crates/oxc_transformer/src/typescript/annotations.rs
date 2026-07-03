@@ -300,10 +300,20 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
     ) {
         if let Some(expr) = target.get_expression_mut() {
             let inner_expr = expr.get_inner_expression_mut();
-            if inner_expr.is_member_expression() {
-                let inner_expr = inner_expr.take_in(ctx);
-                let member_expr = inner_expr.into_member_expression();
-                *target = AssignmentTarget::from(member_expr);
+            match inner_expr {
+                inner_expr @ Expression::Identifier(_) => {
+                    let inner_expr = inner_expr.take_in(ctx);
+                    let Expression::Identifier(ident) = inner_expr else {
+                        unreachable!();
+                    };
+                    *target = AssignmentTarget::AssignmentTargetIdentifier(ident);
+                }
+                inner_expr @ match_member_expression!(Expression) => {
+                    let inner_expr = inner_expr.take_in(ctx);
+                    let member_expr = inner_expr.into_member_expression();
+                    *target = AssignmentTarget::from(member_expr);
+                }
+                _ => {}
             }
         }
     }
@@ -459,11 +469,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
     fn enter_for_in_statement(&mut self, stmt: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = stmt.scope_id();
+        Self::replace_for_statement_left_typescript_syntax(&mut stmt.left, ctx);
         Self::replace_for_statement_body_with_empty_block_if_ts(&mut stmt.body, scope_id, ctx);
     }
 
     fn enter_for_of_statement(&mut self, stmt: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = stmt.scope_id();
+        Self::replace_for_statement_left_typescript_syntax(&mut stmt.left, ctx);
         Self::replace_for_statement_body_with_empty_block_if_ts(&mut stmt.body, scope_id, ctx);
     }
 
@@ -752,6 +764,26 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         Self::replace_with_empty_block_if_ts(body, parent_scope_id, ctx);
+    }
+
+    fn replace_for_statement_left_typescript_syntax(
+        left: &mut ForStatementLeft<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let left @ match_assignment_target!(ForStatementLeft) = left else { return };
+        let target = left.to_assignment_target_mut();
+        if let Some(expr) = target.get_expression_mut() {
+            let inner_expr = expr.get_inner_expression_mut();
+            if let Expression::Identifier(_) = inner_expr {
+                let inner_expr = inner_expr.take_in(ctx);
+                let Expression::Identifier(ident) = inner_expr else {
+                    unreachable!();
+                };
+                *ctx.scoping_mut().get_reference_mut(ident.reference_id()).flags_mut() =
+                    ReferenceFlags::Write;
+                *target = AssignmentTarget::AssignmentTargetIdentifier(ident);
+            }
+        }
     }
 
     fn replace_with_empty_block_if_ts(

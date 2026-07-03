@@ -2,14 +2,9 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2183/2236 (97.63%)
+Positive Passed: 2184/2236 (97.67%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 'abstract' modifier cannot be used with a private identifier.
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/for-of-lhs/input.ts
-Reference flags mismatch for "a":
-after transform: ReferenceId(3): ReferenceFlags(Read)
-rebuilt        : ReferenceId(1): ReferenceFlags(Write)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/abstract-false-positive/input.ts
 Unresolved references mismatch:
