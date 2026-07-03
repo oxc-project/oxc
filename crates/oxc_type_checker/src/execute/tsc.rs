@@ -6,7 +6,7 @@ use std::{
     process::ExitCode,
 };
 
-use crate::tsoptions::{TypeCheckCommand, parse_command_line};
+use crate::tsoptions::{TypeCheckCommand, parse_command_line, parse_config_file};
 
 /// Run the type checker from the command line.
 ///
@@ -32,11 +32,21 @@ fn tsc_compilation(command: &TypeCheckCommand) -> ExitCode {
     };
 
     match resolve_config_file(command, &cwd) {
-        // A resolved config file. Later steps will parse it and type check the project.
-        Ok(Some(config_file)) => {
-            println!("project: {}", config_file.display());
-            ExitCode::SUCCESS
-        }
+        // A resolved config file: parse it (resolving `extends`) via `oxc_resolver`. Later
+        // steps will expand its file globs and type check the project.
+        Ok(Some(config_file)) => match parse_config_file(&config_file) {
+            Ok(tsconfig) => {
+                println!("project: {}", config_file.display());
+                println!("  files:   {:?}", tsconfig.files);
+                println!("  include: {:?}", tsconfig.include);
+                println!("  exclude: {:?}", tsconfig.exclude);
+                ExitCode::SUCCESS
+            }
+            Err(message) => {
+                eprintln!("{message}");
+                ExitCode::FAILURE
+            }
+        },
         // Source files were given without a config file. Later steps will type check them
         // directly as root files.
         Ok(None) => {
