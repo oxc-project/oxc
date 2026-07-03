@@ -88,20 +88,20 @@ Run `clippy` and resolve all warnings.
 
 ### Fixtures tests
 
-Snapshot tests driven by fixture files under `tests/fixtures/graphql/`,
-covering what the Prettier conformance suite does not:
-`# oxfmt-ignore` suppression, blank-line runs inside block strings,
-string escape re-encoding (incl. the `\r` divergence), empty `[]` / `{}` values,
-the full set of type-system extensions, insignificant-comma trivia,
-trailing comments at various positions,
-width-overflowing `implements` lists (which never break),
-and executable descriptions + legacy fragment variables
-(comment / blank-line / width edges beyond the conformance fixtures).
+Snapshot tests driven by fixture files under `tests/fixtures/graphql/`, covering what the Prettier conformance suite does not:
 
-`build.rs` auto-generates a test case from every `.graphql` file using the core
-`test_support` harness. Unit tests in `tests/fixtures/mod.rs` cover parse-error
-`Err` semantics and BOM preservation; `src/comments.rs` has `classify_gap` tests
-(CR / CRLF endings, which `.gitattributes` keeps out of fixture files).
+- `# oxfmt-ignore` suppression
+- blank-line runs inside block strings
+- string escape re-encoding (incl. the `\r` divergence)
+- empty `[]` / `{}` values
+- the full set of type-system extensions
+- insignificant-comma trivia
+- trailing comments at various positions
+- etc
+
+`build.rs` auto-generates a test case from every `.graphql` file using the core `test_support` harness.
+Unit tests in `tests/fixtures/mod.rs` cover parse-error `Err` semantics and BOM preservation;
+`src/comments.rs` has `classify_gap` tests (CR / CRLF endings, which `.gitattributes` keeps out of fixture files).
 
 ```sh
 cargo test -p oxc_formatter_graphql
@@ -162,10 +162,6 @@ Directive applications like `@oneOf` / `@defer` need no work. `oxc-graphql-parse
 
 These are in Prettier's unreleased changelog (main has them, next stable will).
 
-- [#18582](https://github.com/prettier/prettier/blob/main/changelog_unreleased/graphql/18582.md):
-  allow `implements` lists to break. We currently implement never break
-  (see `tests/fixtures/graphql/implements-width.graphql`),
-  so this is a layout divergence that will become incompatible, not a new-syntax item, lands sooner.
 - [#19171](https://github.com/prettier/prettier/blob/main/changelog_unreleased/graphql/19171.md):
   directives on directive definitions (`directive @a @b on QUERY`) + `extend directive`.
   graphql-js 17 graduated this to default (no option).
