@@ -54,7 +54,7 @@ declare_oxc_lint!(
     /// ```
     NoConfusingArrayWith,
     unicorn,
-    correctness,
+    suspicious,
     version = "next",
     short_description = "Disallow confusing uses of `Array#with()`.",
 );
