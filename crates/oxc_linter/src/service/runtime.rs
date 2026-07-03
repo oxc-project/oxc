@@ -609,6 +609,15 @@ impl Runtime {
         diff_manager: &Arc<DiffManager>,
         rule_timing_store: Option<&RuleTimingStore>,
     ) {
+        // Files with an external (JS) parser are parsed and linted entirely on JS side.
+        // They are linted separately, and don't take part in the module graph.
+        let (js_parser_paths, paths): (Vec<_>, Vec<_>) =
+            paths.into_iter().partition(|path| self.linter.has_external_parser(Path::new(path)));
+
+        if !js_parser_paths.is_empty() {
+            self.run_with_js_parser(file_system, &js_parser_paths, tx_error, diff_manager);
+        }
+
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
@@ -738,6 +747,64 @@ impl Runtime {
                     });
                 },
             );
+        });
+    }
+
+    /// Lint files which are parsed by an external (JS) parser.
+    ///
+    /// These files are parsed on JS side by the parser configured in `languageOptions.parser`,
+    /// and only external (JS plugin) rules run on them.
+    fn run_with_js_parser(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: &[Arc<OsStr>],
+        tx_error: &DiagnosticSender,
+        diff_manager: &Arc<DiffManager>,
+    ) {
+        paths.par_iter().for_each(|path| {
+            let path = Path::new(path);
+
+            let allocator_guard = self.allocator_pool.get();
+            let source_text = match file_system.read_to_arena_str(path, &allocator_guard) {
+                Ok(source_text) => source_text,
+                Err(err) => {
+                    tx_error
+                        .send(vec![Error::new(OxcDiagnostic::error(format!(
+                            "Failed to open file {} with error \"{err}\"",
+                            path.display()
+                        )))])
+                        .unwrap();
+                    return;
+                }
+            };
+
+            let mut messages = self.linter.run_with_js_parser(path, source_text);
+
+            if self.linter.options().fix.is_some() {
+                let fix_result = Fixer::new(source_text, messages, None).fix();
+                if fix_result.fixed
+                    && let Err(error) = file_system.write_file(path, &fix_result.fixed_code)
+                {
+                    tx_error
+                        .send(vec![Error::new(OxcDiagnostic::error(format!(
+                            "Failed to write file {} with error \"{error}\"",
+                            path.display()
+                        )))])
+                        .unwrap();
+                }
+                messages = fix_result.messages;
+            }
+
+            if !diff_manager.skip() {
+                messages = diff_manager.collect_file(path, &self.cwd, messages);
+            }
+
+            if !messages.is_empty() {
+                let errors = messages.into_iter().map(Into::into).collect();
+                let diagnostics =
+                    DiagnosticService::wrap_diagnostics(&self.cwd, path, source_text, errors);
+                tx_error.send(diagnostics).unwrap();
+            }
         });
     }
 

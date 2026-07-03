@@ -1,0 +1,14 @@
+{
+  "overrides": [
+    {
+      "files": ["**/*.{gjs,gts}"],
+      "jsPlugins": ["eslint-plugin-ember"],
+      "languageOptions": {
+        "parser": "ember-eslint-parser"
+      },
+      "rules": {
+        "ember/template-no-let-reference": "error"
+      }
+    }
+  ]
+}

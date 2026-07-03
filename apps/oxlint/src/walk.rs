@@ -20,15 +20,22 @@ impl Default for Extensions {
     }
 }
 
+/// Predicate deciding whether a file is included in the walk, instead of matching
+/// by file extension.
+pub type PathMatcher = Arc<dyn Fn(&Path) -> bool + Send + Sync>;
+
 pub struct Walk {
     inner: ignore::WalkParallel,
     /// The file extensions to include during the traversal.
     extensions: Extensions,
+    /// When set, files are matched with this predicate instead of by extension.
+    path_matcher: Option<PathMatcher>,
 }
 
 struct WalkBuilder {
     sender: mpsc::Sender<Vec<Arc<OsStr>>>,
     extensions: Extensions,
+    path_matcher: Option<PathMatcher>,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
@@ -37,6 +44,7 @@ impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
             paths: vec![],
             sender: self.sender.clone(),
             extensions: self.extensions.clone(),
+            path_matcher: self.path_matcher.clone(),
         })
     }
 }
@@ -45,6 +53,7 @@ struct WalkCollector {
     paths: Vec<Arc<OsStr>>,
     sender: mpsc::Sender<Vec<Arc<OsStr>>>,
     extensions: Extensions,
+    path_matcher: Option<PathMatcher>,
 }
 
 impl Drop for WalkCollector {
@@ -65,7 +74,7 @@ impl ignore::ParallelVisitor for WalkCollector {
                 {
                     return ignore::WalkState::Skip;
                 }
-                if Walk::is_wanted_entry(&entry, &self.extensions) {
+                if Walk::is_wanted_entry(&entry, &self.extensions, self.path_matcher.as_ref()) {
                     self.paths.push(entry.path().as_os_str().into());
                 }
                 ignore::WalkState::Continue
@@ -112,12 +121,13 @@ impl Walk {
             // Use the same thread count as rayon (controlled by `--threads`)
             .threads(rayon::current_num_threads())
             .build_parallel();
-        Self { inner, extensions: Extensions::default() }
+        Self { inner, extensions: Extensions::default(), path_matcher: None }
     }
 
     pub fn paths(self) -> Vec<Arc<OsStr>> {
         let (sender, receiver) = mpsc::channel::<Vec<Arc<OsStr>>>();
-        let mut builder = WalkBuilder { sender, extensions: self.extensions };
+        let mut builder =
+            WalkBuilder { sender, extensions: self.extensions, path_matcher: self.path_matcher };
         self.inner.visit(&mut builder);
         drop(builder);
         receiver.into_iter().flatten().collect()
@@ -129,7 +139,20 @@ impl Walk {
         self
     }
 
-    fn is_wanted_entry(dir_entry: &DirEntry, extensions: &Extensions) -> bool {
+    /// Match files with `path_matcher` instead of by extension.
+    ///
+    /// Used to walk files which are not lintable by extension, but are matched by
+    /// a config override with `languageOptions.parser` (e.g. Ember's `.gjs`/`.gts` files).
+    pub fn with_path_matcher(mut self, path_matcher: PathMatcher) -> Self {
+        self.path_matcher = Some(path_matcher);
+        self
+    }
+
+    fn is_wanted_entry(
+        dir_entry: &DirEntry,
+        extensions: &Extensions,
+        path_matcher: Option<&PathMatcher>,
+    ) -> bool {
         let Some(file_type) = dir_entry.file_type() else { return false };
         if file_type.is_dir() {
             return false;
@@ -139,6 +162,9 @@ impl Walk {
         let file_name = file_name.as_ref();
         if [".min.", "-min.", "_min."].iter().any(|e| file_name.contains(e)) {
             return false;
+        }
+        if let Some(path_matcher) = path_matcher {
+            return path_matcher(dir_entry.path());
         }
         let Some(extension) = dir_entry.path().extension() else { return false };
         let extension = extension.to_string_lossy();

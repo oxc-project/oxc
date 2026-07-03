@@ -468,6 +468,12 @@ impl Oxlintrc {
                     })
                     .collect();
             }
+
+            if let Some(language_options) = &mut override_config.language_options
+                && let Some(parser) = &mut language_options.parser
+            {
+                parser.config_dir = config_dir.to_path_buf();
+            }
         }
 
         for config in &mut self.extends_configs {

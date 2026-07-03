@@ -1,6 +1,7 @@
 use std::{
     fmt::{self, Debug, Display},
     path::{Component as PathComponent, Path, PathBuf},
+    sync::Arc,
 };
 
 use itertools::Itertools;
@@ -16,19 +17,23 @@ use crate::{
     config::{
         ESLintRule, OxlintOverrides, OxlintRules,
         external_plugins::ExternalPluginEntry,
+        language_options::ExternalParserEntry,
         overrides::OxlintOverride,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
         rules::OverrideRulesError,
     },
     external_linter::ExternalLinter,
-    external_plugin_store::{ExternalOptionsId, ExternalRuleId},
+    external_plugin_store::{ExternalOptionsId, ExternalParserId, ExternalRuleId},
     rules::RULES,
 };
 
 use super::{
     Config,
     categories::OxlintCategories,
-    config_store::{ResolvedOxlintOverride, ResolvedOxlintOverrideRules, ResolvedOxlintOverrides},
+    config_store::{
+        ResolvedExternalParser, ResolvedOxlintOverride, ResolvedOxlintOverrideRules,
+        ResolvedOxlintOverrides,
+    },
 };
 
 #[must_use = "You dropped your builder without building a Linter! Did you mean to call .build()?"]
@@ -38,6 +43,11 @@ pub struct ConfigStoreBuilder {
     config: LintConfig,
     categories: OxlintCategories,
     overrides: OxlintOverrides,
+
+    /// IDs of external parsers loaded for overrides with `languageOptions.parser`,
+    /// keyed by `(config_dir, specifier)`.
+    /// Empty if external parsers are not enabled (no external linter).
+    external_parser_ids: FxHashMap<(PathBuf, String), ExternalParserId>,
 
     // Collect all `extends` file paths for the language server.
     // The server will tell the clients to watch for the extends files.
@@ -61,9 +71,18 @@ impl ConfigStoreBuilder {
         let external_rules = FxHashMap::default();
         let categories: OxlintCategories = OxlintCategories::default();
         let overrides = OxlintOverrides::default();
+        let external_parser_ids = FxHashMap::default();
         let extended_paths = Vec::new();
 
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        Self {
+            rules,
+            external_rules,
+            config,
+            categories,
+            overrides,
+            external_parser_ids,
+            extended_paths,
+        }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -76,8 +95,17 @@ impl ConfigStoreBuilder {
         let categories: OxlintCategories = OxlintCategories::default();
         let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
         let external_rules = FxHashMap::default();
+        let external_parser_ids = FxHashMap::default();
         let extended_paths = Vec::new();
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        Self {
+            rules,
+            external_rules,
+            config,
+            categories,
+            overrides,
+            external_parser_ids,
+            extended_paths,
+        }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -139,6 +167,14 @@ impl ConfigStoreBuilder {
                             );
                         }
                     }
+                }
+
+                if let Some(parser) = external_parser_entry(r#override)
+                    && is_relative_plugin_specifier(&parser.specifier)
+                {
+                    return Err(ConfigBuilderError::RelativeExternalPluginSpecifierInExtends {
+                        plugin_specifier: parser.specifier.clone(),
+                    });
                 }
             }
 
@@ -242,16 +278,28 @@ impl ConfigStoreBuilder {
             }
         }
 
-        // Only attempt to load external JS plugins when external plugins are enabled,
-        // i.e., when the external JS linter is available/initialized. If the store is
+        // Collect external parsers from overrides (`languageOptions.parser` is overrides-only)
+        let external_parsers: FxHashSet<&ExternalParserEntry> =
+            oxlintrc.overrides.iter().filter_map(external_parser_entry).collect();
+
+        // Only attempt to load external JS plugins and parsers when external plugins are
+        // enabled, i.e., when the external JS linter is available/initialized. If the store is
         // disabled, configs that reference external plugins are accepted but the plugins
         // themselves are not loaded, to avoid failing config parsing.
-        if !external_plugins.is_empty() && external_plugin_store.is_enabled() {
+        let mut external_parser_ids = FxHashMap::default();
+        if (!external_plugins.is_empty() || !external_parsers.is_empty())
+            && external_plugin_store.is_enabled()
+        {
             let Some(external_linter) = external_linter else {
                 #[expect(clippy::missing_panics_doc, reason = "infallible")]
-                let first_plugin = external_plugins.iter().next().unwrap();
+                let first_specifier = external_plugins
+                    .iter()
+                    .map(|entry| &entry.specifier)
+                    .chain(external_parsers.iter().map(|entry| &entry.specifier))
+                    .next()
+                    .unwrap();
                 return Err(ConfigBuilderError::NoExternalLinterConfigured {
-                    plugin_specifier: first_plugin.specifier.clone(),
+                    plugin_specifier: first_specifier.clone(),
                 });
             };
 
@@ -270,6 +318,18 @@ impl ConfigStoreBuilder {
                     external_plugin_store,
                     workspace_uri,
                 )?;
+            }
+
+            for entry in &external_parsers {
+                let parser_id = Self::load_external_parser(
+                    &entry.config_dir,
+                    &entry.specifier,
+                    external_linter,
+                    &resolver,
+                    external_plugin_store,
+                )?;
+                external_parser_ids
+                    .insert((entry.config_dir.clone(), entry.specifier.clone()), parser_id);
             }
         }
 
@@ -299,6 +359,7 @@ impl ConfigStoreBuilder {
             config,
             categories,
             overrides: oxlintrc.overrides,
+            external_parser_ids,
             extended_paths,
         };
 
@@ -546,6 +607,24 @@ impl ConfigStoreBuilder {
                     external_plugin_store,
                 )?;
 
+                // Resolve external parser for this override.
+                // `external_parser_ids` is empty if external parsers are not enabled,
+                // in which case the parser is silently ignored (same as external plugins).
+                let external_parser =
+                    override_config.language_options.as_ref().and_then(|language_options| {
+                        let parser = language_options.parser.as_ref()?;
+                        let parser_id = *self
+                            .external_parser_ids
+                            .get(&(parser.config_dir.clone(), parser.specifier.clone()))?;
+                        let parser_options_json =
+                            language_options.parser_options.as_ref().map(|options| {
+                                // `serde_json::Value` serialization is infallible
+                                let json = serde_json::to_string(options).unwrap();
+                                Arc::from(json.as_str())
+                            });
+                        Some(ResolvedExternalParser { parser_id, parser_options_json })
+                    });
+
                 // Convert to vectors
                 builtin_rules.extend(rules_map);
                 external_rules.extend(
@@ -560,6 +639,7 @@ impl ConfigStoreBuilder {
                     env: override_config.env,
                     globals: override_config.globals,
                     plugins: override_config.plugins,
+                    external_parser,
                     rules: ResolvedOxlintOverrideRules { builtin_rules, external_rules },
                 })
             })
@@ -713,6 +793,45 @@ impl ConfigStoreBuilder {
             Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name })
         }
     }
+
+    fn load_external_parser(
+        resolve_dir: &Path,
+        parser_specifier: &str,
+        external_linter: &ExternalLinter,
+        resolver: &Resolver,
+        external_plugin_store: &mut ExternalPluginStore,
+    ) -> Result<ExternalParserId, ConfigBuilderError> {
+        // Resolve the specifier relative to the config directory
+        let resolved = resolver.resolve(resolve_dir, parser_specifier).map_err(|e| {
+            ConfigBuilderError::ParserLoadFailed {
+                parser_specifier: parser_specifier.to_string(),
+                error: e.to_string(),
+            }
+        })?;
+        let parser_path = resolved.full_path();
+
+        if let Some(parser_id) = external_plugin_store.get_registered_parser_id(&parser_path) {
+            return Ok(parser_id);
+        }
+
+        // Convert path to a `file://...` URL, as required by `import(...)` on JS side.
+        // Note: `unwrap()` here is infallible as `parser_path` is an absolute path.
+        let parser_url = String::from(Url::from_file_path(&parser_path).unwrap());
+
+        let result = (external_linter.load_parser)(parser_url).map_err(|error| {
+            ConfigBuilderError::ParserLoadFailed {
+                parser_specifier: parser_specifier.to_string(),
+                error,
+            }
+        })?;
+
+        Ok(external_plugin_store.register_parser(parser_path, result.parser_id))
+    }
+}
+
+/// Get the external parser entry configured in an override, if any.
+fn external_parser_entry(override_config: &OxlintOverride) -> Option<&ExternalParserEntry> {
+    override_config.language_options.as_ref()?.parser.as_ref()
 }
 
 fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
@@ -746,6 +865,10 @@ pub enum ConfigBuilderError {
     },
     PluginLoadFailed {
         plugin_specifier: String,
+        error: String,
+    },
+    ParserLoadFailed {
+        parser_specifier: String,
         error: String,
     },
     NoExternalLinterConfigured {
@@ -795,6 +918,10 @@ impl Display for ConfigBuilderError {
             }
             ConfigBuilderError::PluginLoadFailed { plugin_specifier, error } => {
                 write!(f, "Failed to load JS plugin: {plugin_specifier}\n  {error}")?;
+                Ok(())
+            }
+            ConfigBuilderError::ParserLoadFailed { parser_specifier, error } => {
+                write!(f, "Failed to load parser: {parser_specifier}\n  {error}")?;
                 Ok(())
             }
             ConfigBuilderError::NoExternalLinterConfigured { plugin_specifier } => {

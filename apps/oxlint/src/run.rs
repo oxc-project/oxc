@@ -42,6 +42,56 @@ pub type JsLoadPluginCb = ThreadsafeFunction<
     false,
 >;
 
+/// JS callback to load a custom parser.
+#[napi]
+pub type JsLoadParserCb = ThreadsafeFunction<
+    // Arguments
+    String, // File URL to load parser from
+    // Return value
+    Promise<String>, // `LoadParserResult`, serialized to JSON
+    // Arguments (repeated)
+    String,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// JS callback to lint a file which is parsed by a custom (JS) parser.
+#[napi]
+pub type JsLintFileWithJsParserCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(
+        String,         // Absolute path of file to lint
+        String,         // Source text of the file
+        u32,            // Parser ID
+        Option<String>, // Parser options, as JSON string (`None` if not configured)
+        Vec<u32>,       // Array of rule IDs
+        Vec<u32>,       // Array of options IDs
+        String,         // Settings for the file, as JSON string
+        String,         // Globals for the file, as JSON string
+        Option<String>, // Workspace URI (`None` in CLI mode, `Some` in LSP mode)
+    )>,
+    // Return value
+    String, // `JsParserLintFileResult`, serialized to JSON
+    // Arguments (repeated)
+    FnArgs<(
+        String,
+        String,
+        u32,
+        Option<String>,
+        Vec<u32>,
+        Vec<u32>,
+        String,
+        String,
+        Option<String>,
+    )>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// JS callback to lint a file.
 #[napi]
 pub type JsLintFileCb = ThreadsafeFunction<
@@ -131,11 +181,13 @@ pub type JsLoadJsConfigsCb = ThreadsafeFunction<
 /// JS side passes in:
 /// 1. `args`: Command line arguments (process.argv.slice(2))
 /// 2. `load_plugin`: Load a JS plugin from a file path.
-/// 3. `setup_rule_configs`: Setup configuration options.
-/// 4. `lint_file`: Lint a file.
-/// 5. `create_workspace`: Create a workspace.
-/// 6. `destroy_workspace`: Destroy a workspace.
-/// 7. `load_js_configs`: Load JavaScript config files.
+/// 3. `load_parser`: Load a custom parser from a file path.
+/// 4. `setup_rule_configs`: Setup configuration options.
+/// 5. `lint_file`: Lint a file.
+/// 6. `lint_file_with_js_parser`: Lint a file which is parsed by a custom (JS) parser.
+/// 7. `create_workspace`: Create a workspace.
+/// 8. `destroy_workspace`: Destroy a workspace.
+/// 9. `load_js_configs`: Load JavaScript config files.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -144,8 +196,10 @@ pub type JsLoadJsConfigsCb = ThreadsafeFunction<
 pub async fn lint(
     args: Vec<String>,
     load_plugin: JsLoadPluginCb,
+    load_parser: JsLoadParserCb,
     setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
+    lint_file_with_js_parser: JsLintFileWithJsParserCb,
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
     load_js_configs: JsLoadJsConfigsCb,
@@ -153,8 +207,10 @@ pub async fn lint(
     lint_impl(
         args,
         load_plugin,
+        load_parser,
         setup_rule_configs,
         lint_file,
+        lint_file_with_js_parser,
         create_workspace,
         destroy_workspace,
         load_js_configs,
@@ -165,11 +221,14 @@ pub async fn lint(
 }
 
 /// Run the linter.
+#[expect(clippy::too_many_arguments)]
 async fn lint_impl(
     args: Vec<String>,
     load_plugin: JsLoadPluginCb,
+    load_parser: JsLoadParserCb,
     setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
+    lint_file_with_js_parser: JsLintFileWithJsParserCb,
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
     load_js_configs: JsLoadJsConfigsCb,
@@ -201,8 +260,10 @@ async fn lint_impl(
         let js_config_loader = Some(crate::js_config::create_js_config_loader(load_js_configs));
         let external_linter = Some(crate::js_plugins::create_external_linter(
             load_plugin,
+            load_parser,
             setup_rule_configs,
             lint_file,
+            lint_file_with_js_parser,
             create_workspace,
             destroy_workspace,
         ));
@@ -210,10 +271,12 @@ async fn lint_impl(
     };
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let (external_linter, js_config_loader) = {
-        let (_, _, _, _, _, _) = (
+        let (_, _, _, _, _, _, _, _) = (
             load_plugin,
+            load_parser,
             setup_rule_configs,
             lint_file,
+            lint_file_with_js_parser,
             create_workspace,
             destroy_workspace,
             load_js_configs,

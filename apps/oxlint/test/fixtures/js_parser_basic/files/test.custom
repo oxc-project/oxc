@@ -1,0 +1,8 @@
+const answer = `The answer is ${21 * 2}`;
+
+/* eslint-disable-next-line custom-parser-plugin/no-template -- directive comes from parser comments */
+const ignored = `disabled ${1}`;
+
+function greet(name) {
+  return "hello " + name;
+}
