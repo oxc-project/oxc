@@ -108,16 +108,19 @@ pub fn codegen_function<'a, 'h>(
         fbt_operands,
     );
 
-    // The value-emission port covers most instruction kinds, but a few sub-emitters
-    // (function/object/JSX expressions, hook-guard wrapping, TS-type reparse) are
-    // deferred to later batches and currently raise an invariant error. Until they
-    // land — and until the emitted body is actually spliced into the program — fall
-    // back to an empty body on any emission error, preserving the pre-batch behavior
-    // (the original program is returned un-memoized by `compile_program`) without
-    // surfacing spurious diagnostics. This shim is removed once emission is complete.
+    // A few codegen sub-emitters (destructuring reassignment targets, hook-guard
+    // wrapping) are not yet ported and raise an `unimplemented` error. For those,
+    // fall back to an empty body so the function is emitted un-memoized instead of
+    // surfacing a spurious diagnostic for a construct the upstream compiler handles.
+    //
+    // Genuine invariant errors (unnamed temporaries, MethodCall property must be an
+    // unmemoized MemberExpression, const/let referenced as an expression, ...) are
+    // NOT `unimplemented` and propagate as diagnostics — matching the upstream
+    // compiler, which throws an Invariant on these inputs rather than silently
+    // emitting wrong code.
     let mut compiled = match ox_codegen_reactive_function(&mut cx, func) {
         Ok(compiled) => compiled,
-        Err(_) => OxcCompiledFunction {
+        Err(err) if err.unimplemented => OxcCompiledFunction {
             params: oxc_ast::ast::FormalParameters::boxed(
                 SPAN,
                 oxc_ast::ast::FormalParameterKind::FormalParameter,
@@ -139,6 +142,7 @@ pub fn codegen_function<'a, 'h>(
             pruned_memo_blocks: 0,
             pruned_memo_values: 0,
         },
+        Err(err) => return Err(err),
     };
 
     let cache_count = compiled.memo_slots_used;
@@ -2573,9 +2577,10 @@ fn ox_binding_pattern_to_assignment_target<'a>(
                 oxc_ast::ast::IdentifierReference::boxed(SPAN, id.name, &cx.ast),
             ))
         }
-        _ => {
-            Err(invariant_err("Destructuring reassignment targets are not yet ported to oxc", None))
-        }
+        _ => Err(unimplemented_err(
+            "Destructuring reassignment targets are not yet ported to oxc",
+            None,
+        )),
     }
 }
 
@@ -3161,7 +3166,7 @@ fn ox_maybe_wrap_hook_call<'a>(
     if cx.env.hook_guard_name.is_some()
         && cx.env.output_mode == crate::react_compiler_hir::environment::OutputMode::Client
     {
-        return Err(invariant_err(
+        return Err(unimplemented_err(
             "Hook guard wrapping in oxc codegen is not yet ported (deferred to a later batch)",
             None,
         ));
@@ -3378,6 +3383,17 @@ fn invariant(
     loc: Option<DiagSourceLocation>,
 ) -> Result<(), CompilerError> {
     if !condition { Err(invariant_err(reason, loc)) } else { Ok(()) }
+}
+
+/// Construct an error for a codegen sub-emitter that has not yet been ported. Unlike
+/// [`invariant_err`], `codegen_function` catches these (via `CompilerError::unimplemented`)
+/// and falls back to an empty body rather than surfacing a spurious diagnostic for a
+/// construct the upstream compiler handles. Use this only for genuinely-unported paths,
+/// never for real invariants (which must propagate and fail loudly like upstream).
+fn unimplemented_err(reason: &str, loc: Option<DiagSourceLocation>) -> CompilerError {
+    let mut err = invariant_err(reason, loc);
+    err.unimplemented = true;
+    err
 }
 
 fn invariant_err(reason: &str, loc: Option<DiagSourceLocation>) -> CompilerError {
