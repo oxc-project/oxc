@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 339/397
+Passed: 340/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -115,7 +115,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (76/105)
+# legacy-decorators (77/105)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -277,11 +277,6 @@ x Output mismatch
 
 * typescript/decoratedClassExportsSystem1/input.ts
 x Output mismatch
-
-* typescript/decoratorChecksFunctionBodies/input.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
 
 * typescript/decoratorOnClass9/input.ts
 x Output mismatch

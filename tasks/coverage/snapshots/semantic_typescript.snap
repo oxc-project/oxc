@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4547/4720 (96.33%)
+Positive Passed: 4552/4720 (96.44%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -545,57 +545,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
 'with' statements are not allowed
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticAutoAccessorsWithDecorators.ts
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(7): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod19.ts
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/legacyDecorators-contextualTypes.ts
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(15): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(16): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(17): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(18): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(19): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(14): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(20): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(17): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(21): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(18): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(22): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(20): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(23): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(22): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(24): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(26): ScopeFlags(Function | Arrow)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty49.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -797,11 +746,6 @@ Reference symbol mismatch for "C":
 after transform: SymbolId(4) "C"
 rebuilt        : SymbolId(3) "C"
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-outerThisReference.ts
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(7): ScopeFlags(Function | Arrow)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticAccessor.ts
 Symbol reference IDs mismatch for "D":
 after transform: SymbolId(3): [ReferenceId(45), ReferenceId(47)]
@@ -834,68 +778,6 @@ rebuilt        : SymbolId(11): []
 Reference symbol mismatch for "D":
 after transform: SymbolId(16) "D"
 rebuilt        : SymbolId(10) "D"
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-contextualTypes.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(23): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(24): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(25): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(26): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(27): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(13): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(28): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(15): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(29): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(16): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(30): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(17): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(31): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(18): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(32): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(19): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(33): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(21): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(34): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(23): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(35): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(25): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(36): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(27): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(37): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(29): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(38): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(31): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(39): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(32): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(40): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(33): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(41): ScopeFlags(Function | Arrow)
-Scope flags mismatch:
-after transform: ScopeId(34): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(42): ScopeFlags(Function | Arrow)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithAnyAndEveryType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support

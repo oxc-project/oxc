@@ -1256,8 +1256,15 @@ impl<'a> LegacyDecorator<'a> {
         for statement in statements {
             collector.visit_statement(statement);
         }
-        for scope_id in collector.scope_ids {
+        let parent_is_strict = ctx.scoping().scope_flags(parent_scope_id).is_strict_mode();
+        for (scope_id, preserve_strict) in collector.scope_ids {
             ctx.scoping_mut().change_scope_parent_id(scope_id, Some(parent_scope_id));
+            let flags = ctx.scoping_mut().scope_flags_mut(scope_id);
+            if parent_is_strict || preserve_strict {
+                flags.insert(ScopeFlags::StrictMode);
+            } else {
+                flags.remove(ScopeFlags::StrictMode);
+            }
         }
     }
 
@@ -1506,20 +1513,22 @@ impl<'a> LegacyDecorator<'a> {
 
 #[derive(Default)]
 struct DecoratorExpressionScopeCollector {
-    scope_ids: Vec<ScopeId>,
+    scope_ids: Vec<(ScopeId, bool)>,
 }
 
 impl<'a> Visit<'a> for DecoratorExpressionScopeCollector {
-    fn visit_function(&mut self, function: &Function<'a>, _flags: ScopeFlags) {
-        self.scope_ids.push(function.scope_id.get().unwrap());
+    fn visit_function(&mut self, function: &Function<'a>, _: ScopeFlags) {
+        let preserve_strict =
+            function.body.as_ref().is_some_and(|body| body.has_use_strict_directive());
+        self.scope_ids.push((function.scope_id.get().unwrap(), preserve_strict));
     }
 
     fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
-        self.scope_ids.push(arrow.scope_id.get().unwrap());
+        self.scope_ids.push((arrow.scope_id.get().unwrap(), arrow.body.has_use_strict_directive()));
     }
 
     fn visit_class(&mut self, class: &Class<'a>) {
-        self.scope_ids.push(class.scope_id.get().unwrap());
+        self.scope_ids.push((class.scope_id.get().unwrap(), true));
     }
 }
 
