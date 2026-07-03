@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/effect-derived-computations/invalid-derived-computation-in-effect.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] EffectDerivationsOfState: You might not need an effect. Derive values in render, not effects.", labels: One([LabeledSpan { label: Some("This should be computed during render, not in an effect"), span: SourceSpan { offset: SourceOffset(362), length: 11 }, primary: false }]), help: Some("Using an effect triggers an additional render which can hurt performance and user experience, potentially briefly showing stale values to the user\n\nThis setState call is setting a derived value that depends on the following reactive sources:\n\nState: [firstName]\n\nData Flow Tree:\n└── firstName (State)\n\nSee: https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

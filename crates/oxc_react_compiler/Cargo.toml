@@ -53,6 +53,10 @@ rustc-hash = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_parser = { workspace = true }
 
+# Snapshot testing of the compiler over the upstream fixture corpus (tests/snapshot.rs).
+insta = { workspace = true, features = ["glob"] }
+convert_case = { workspace = true }
+
 # Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
 # If we enabled `disable_old_builder` feature in main dependency, feature unification would
 # cause it to be activated for `oxc_ast` for the user too.

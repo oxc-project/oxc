@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/fbt/error.todo-fbt-plural-in-expression-container.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: Support duplicate fbt tags", labels: Two([LabeledSpan { label: Some("Multiple `<fbt:plural>` tags found"), span: SourceSpan { offset: SourceOffset(95), length: 10 }, primary: false }, LabeledSpan { label: Some("Multiple `<fbt:plural>` tags found"), span: SourceSpan { offset: SourceOffset(291), length: 10 }, primary: false }]), help: Some("Support `<fbt>` tags with multiple `<fbt:plural>` values"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

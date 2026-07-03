@@ -1,0 +1,5 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/dont-memoize-primitive-function-call-non-escaping.js
+---
+No changes.

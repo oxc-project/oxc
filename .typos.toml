@@ -11,6 +11,7 @@ extend-exclude = [
   "apps/oxfmt/test/**/fixtures/**",
   "apps/oxfmt/conformance/snapshots/diffs/**/",
   "crates/oxc_linter/fixtures",
+  "crates/oxc_react_compiler/fixtures",
   "crates/oxc_linter/src/rules/eslint/no_undefined.rs",
   "crates/oxc_linter/src/rules/eslint/no_unused_vars/ignored.rs",
   "crates/oxc_linter/src/rules/eslint/no_unused_vars/options.rs",

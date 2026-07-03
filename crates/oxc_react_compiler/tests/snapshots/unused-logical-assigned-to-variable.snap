@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/unused-logical-assigned-to-variable.js
+---
+function Component(props) {
+	const obj = makeObject();
+	const obj2 = makeObject();
+	(obj.a ?? obj2.b) || props.c;
+	return null;
+}
