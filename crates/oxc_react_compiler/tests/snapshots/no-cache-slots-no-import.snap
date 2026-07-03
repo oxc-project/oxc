@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/no-cache-slots-no-import.js
 ---
-// @compilationMode(all)
+// @compilationMode:"all"
 function useMyHook(t0) {
 	const { a, b } = t0;
 	return a + b;

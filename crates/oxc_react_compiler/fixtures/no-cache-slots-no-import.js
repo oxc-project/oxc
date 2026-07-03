@@ -1,4 +1,4 @@
-// @compilationMode(all)
+// @compilationMode:"all"
 function useMyHook({a, b}) {
   return a + b;
 }

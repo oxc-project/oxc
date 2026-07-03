@@ -107,15 +107,16 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
 
     let mut is_script = false;
     let first_line = source.lines().next().unwrap_or("");
-    // Mirror upstream `splitPragma`: each `@`-delimited entry splits at its first
-    // `:` into `key` + raw `value` (the value keeps internal spaces, e.g.
-    // `["use todo memo"]`); a colon-less entry is a bare flag whose key is its first
-    // space-delimited word (any trailing `word` is discarded, as upstream does).
+    // Every fixture header uses the canonical `@key:value` / bare `@key` shape (the
+    // corpus is normalised — no legacy `@key(value)`, `@key="value"`, or `@key value`
+    // forms), so each `@`-delimited entry either splits at its first `:` into key +
+    // raw value (the value keeps internal spaces, e.g. `["use todo memo"]`) or is a
+    // bare flag.
     for entry in first_line.split('@').skip(1) {
         let entry = entry.trim();
         let (key, value) = match entry.split_once(':') {
-            Some((k, v)) => (k, Some(v)),
-            None => (entry.split(' ').next().unwrap_or(""), None),
+            Some((key, value)) => (key, Some(value)),
+            None => (entry, None),
         };
         match key {
             "script" => is_script = true,

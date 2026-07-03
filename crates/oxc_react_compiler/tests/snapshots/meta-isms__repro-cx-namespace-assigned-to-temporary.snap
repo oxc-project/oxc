@@ -3,7 +3,7 @@ source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/meta-isms/repro-cx-namespace-assigned-to-temporary.js
 ---
 import { c as _c } from "react/compiler-runtime";
-// @compilationMode:"infer" @enableAssumeHooksFollowRulesOfReact:false @customMacros(cx)
+// @compilationMode:"infer" @enableAssumeHooksFollowRulesOfReact:false @customMacros:"cx"
 import { identity } from "shared-runtime";
 const DARK = "dark";
 function Component() {

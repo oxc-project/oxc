@@ -1,4 +1,4 @@
-// @panicThreshold(none)
+// @panicThreshold:"none"
 'use no memo';
 
 function Foo() {

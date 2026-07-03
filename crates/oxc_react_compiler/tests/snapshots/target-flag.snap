@@ -3,7 +3,7 @@ source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/target-flag.js
 ---
 import { c as _c } from "react/compiler-runtime";
-// @target="18"
+// @target:"18"
 function Component() {
 	const $ = _c(1);
 	let t0;

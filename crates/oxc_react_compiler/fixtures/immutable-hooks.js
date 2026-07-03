@@ -1,4 +1,4 @@
-// @enableAssumeHooksFollowRulesOfReact true
+// @enableAssumeHooksFollowRulesOfReact:true
 function Component(props) {
   const x = {};
   // In enableAssumeHooksFollowRulesOfReact mode hooks freeze their inputs and return frozen values
