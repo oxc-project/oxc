@@ -2,14 +2,9 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2217/2236 (99.15%)
+Positive Passed: 2218/2236 (99.19%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 'abstract' modifier cannot be used with a private identifier.
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/abstract-false-positive/input.ts
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["abstract"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-modifier-names/input.ts
 Multiple constructor implementations are not allowed.

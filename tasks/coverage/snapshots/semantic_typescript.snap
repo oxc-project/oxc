@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4571/4720 (96.84%)
+Positive Passed: 4572/4720 (96.86%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -252,11 +252,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importAndVariableDeclarationConflict2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/importExportInternalComments.ts
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Array"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importInTypePosition.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support

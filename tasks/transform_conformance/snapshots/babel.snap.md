@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 787/1165
+Passed: 789/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (135/157)
+# babel-plugin-transform-typescript (137/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1147,16 +1147,6 @@ x Output mismatch
 
 * enum/ts5.0-const-foldable/input.ts
 x Output mismatch
-
-* exports/export-context-variables/input.ts
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["undefined"]
-
-* exports/export-globals/input.ts
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Math"]
 
 * exports/interface/input.ts
 x Output mismatch

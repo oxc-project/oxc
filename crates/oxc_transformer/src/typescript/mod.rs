@@ -69,6 +69,32 @@ impl<'a> TypeScript<'a> {
                 || options.remove_class_fields_without_initializer,
         }
     }
+
+    fn restore_export_default_unresolved_references(
+        program: &Program<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        for stmt in &program.body {
+            let Statement::ExportDefaultDeclaration(decl) = stmt else { continue };
+            let ExportDefaultDeclarationKind::Identifier(ident) = &decl.declaration else {
+                continue;
+            };
+            let Some(reference_id) = ident.reference_id.get() else { continue };
+
+            let is_missing_unresolved = {
+                let scoping = ctx.scoping();
+                scoping.get_reference(reference_id).symbol_id().is_none()
+                    && !scoping
+                        .root_unresolved_references()
+                        .get(ident.name.as_str())
+                        .is_some_and(|reference_ids| reference_ids.contains(&reference_id))
+            };
+
+            if is_missing_unresolved {
+                ctx.scoping_mut().add_root_unresolved_reference(ident.name, reference_id);
+            }
+        }
+    }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
@@ -89,6 +115,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         self.annotations.exit_program(program, ctx);
         self.module.exit_program(program, ctx);
         ctx.scoping.delete_typescript_bindings();
+        Self::restore_export_default_unresolved_references(program, ctx);
     }
 
     fn enter_arrow_function_expression(
