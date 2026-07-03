@@ -20,9 +20,15 @@ use convert_case::{Case, Casing};
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
+use oxc_react_compiler::react_compiler_hir::Effect;
 use oxc_react_compiler::react_compiler_hir::environment_config::{
     ExhaustiveEffectDepsMode, ExternalFunctionConfig, InstrumentationConfig,
 };
+use oxc_react_compiler::react_compiler_hir::type_config::{
+    BuiltInTypeRef, FunctionTypeConfig, HookTypeConfig, ObjectTypeConfig, TypeConfig,
+    TypeReferenceConfig, ValueKind,
+};
+use oxc_react_compiler::react_compiler_utils::FxIndexMap;
 use oxc_react_compiler::{
     DynamicGatingConfig, EnvironmentConfig, GatingConfig, PluginOptions, transform,
 };
@@ -102,6 +108,10 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
         panic_threshold: "all_errors".to_string(),
         ..PluginOptions::default()
     };
+    // Mirror the snap runner's test `moduleTypeProvider`; unlisted modules fall back to
+    // oxc's default provider, so only the `error.invalid-{type-provider,known-incompatible}-*`
+    // fixtures (which import these magic modules) are affected.
+    options.environment.module_type_provider = Some(test_module_type_provider());
 
     let mut is_script = false;
     // Fixture headers are normalised to the canonical `@key:value` / bare `@key` shape,
@@ -273,4 +283,98 @@ fn json_strings(value: &str) -> Vec<String> {
 fn json_source(value: &str) -> Option<String> {
     let parts = json_strings(value);
     parts.iter().position(|s| s == "source").and_then(|i| parts.get(i + 1).cloned())
+}
+
+/// The upstream snap runner's test `moduleTypeProvider` (`shared-runtime-type-provider`),
+/// limited to the magic modules the corpus imports to exercise type-config /
+/// known-incompatible-library validation. These configs are intentionally invalid or
+/// flagged, so the `error.invalid-type-provider-*` / `error.invalid-known-incompatible-*`
+/// fixtures produce diagnostics instead of compiling.
+fn test_module_type_provider() -> FxIndexMap<String, TypeConfig> {
+    FxIndexMap::from_iter([
+        (
+            "ReactCompilerKnownIncompatibleTest".to_string(),
+            object([
+                (
+                    "useKnownIncompatible",
+                    hook(
+                        type_ref(),
+                        Some(Vec::new()),
+                        incompat("useKnownIncompatible is known to be incompatible"),
+                    ),
+                ),
+                (
+                    "useKnownIncompatibleIndirect",
+                    hook(
+                        object([(
+                            "incompatible",
+                            incompatible_fn(
+                                "useKnownIncompatibleIndirect returns an incompatible() function that is known incompatible",
+                            ),
+                        )]),
+                        Some(Vec::new()),
+                        None,
+                    ),
+                ),
+                (
+                    "knownIncompatible",
+                    incompatible_fn("useKnownIncompatible is known to be incompatible"),
+                ),
+            ]),
+        ),
+        (
+            "ReactCompilerTest".to_string(),
+            object([
+                ("useHookNotTypedAsHook", type_ref()),
+                ("notAhookTypedAsHook", hook(type_ref(), None, None)),
+            ]),
+        ),
+        ("useDefaultExportNotTypedAsHook".to_string(), object([("default", type_ref())])),
+    ])
+}
+
+fn object(properties: impl IntoIterator<Item = (&'static str, TypeConfig)>) -> TypeConfig {
+    let properties = properties.into_iter().map(|(name, config)| (name.to_string(), config));
+    TypeConfig::Object(ObjectTypeConfig { properties: Some(properties.collect()) })
+}
+
+fn type_ref() -> TypeConfig {
+    TypeConfig::TypeReference(TypeReferenceConfig { name: BuiltInTypeRef::Any })
+}
+
+fn hook(
+    return_type: TypeConfig,
+    positional_params: Option<Vec<Effect>>,
+    known_incompatible: Option<String>,
+) -> TypeConfig {
+    let rest_param = positional_params.as_ref().map(|_| Effect::Read);
+    TypeConfig::Hook(HookTypeConfig {
+        positional_params,
+        rest_param,
+        return_type: Box::new(return_type),
+        return_value_kind: None,
+        no_alias: None,
+        aliasing: None,
+        known_incompatible,
+    })
+}
+
+fn incompatible_fn(message: &str) -> TypeConfig {
+    TypeConfig::Function(FunctionTypeConfig {
+        positional_params: Vec::new(),
+        rest_param: Some(Effect::Read),
+        callee_effect: Effect::Read,
+        return_type: Box::new(type_ref()),
+        return_value_kind: ValueKind::Mutable,
+        no_alias: None,
+        mutable_only_if_operands_are_mutable: None,
+        impure: None,
+        canonical_name: None,
+        aliasing: None,
+        known_incompatible: Some(message.to_string()),
+    })
+}
+
+fn incompat(message: &str) -> Option<String> {
+    Some(message.to_string())
 }
