@@ -319,6 +319,10 @@ fn check_deep_namespace_for_object_pattern(
         if let BindingPattern::ObjectPattern(pattern) = &property.value
             && let Some(module_source) = get_module_request_name(&name, module)
         {
+            let Some(next_module) = module.get_loaded_module(module_source.as_str()) else {
+                continue;
+            };
+
             let mut next_namespaces = namespaces.to_owned();
             next_namespaces.push(name.to_string());
 
@@ -326,7 +330,7 @@ fn check_deep_namespace_for_object_pattern(
                 pattern,
                 source,
                 next_namespaces.as_slice(),
-                &module.get_loaded_module(module_source.as_str()).unwrap(),
+                &next_module,
                 ctx,
             );
             continue;
@@ -479,6 +483,7 @@ fn test() {
         (r#"import * as a from "./deep/a"; console.log(a.b.c.d.e.f)"#, None),
         (r#"import * as a from "./deep/a"; var {b:{c:{d:{e}}}} = a"#, None),
         (r#"import { b } from "./deep/a"; var {c:{d:{e}}} = b"#, None),
+        (r#"import * as a from "./unresolvable-namespace"; var {missing:{x}} = a"#, None),
         (r#"import * as a from "./deep-es7/a"; console.log(a.b.c.d.e)"#, None),
         (r#"import { b } from "./deep-es7/a"; console.log(b.c.d.e)"#, None),
         (r#"import * as a from "./deep-es7/a"; console.log(a.b.c.d.e.f)"#, None),
