@@ -117,6 +117,15 @@ pub(super) fn write_str<'a>(str: &Str<'a>, f: &mut CssFormatter<'_, 'a>) {
     write!(f, text(arena_cow_str(&printed, f)));
 }
 
+/// [`write_str`] for attribute-selector values.
+/// Prettier wraps the value in `replaceEndOfLine(..., literallineWithoutBreakParent)`:
+/// an escaped literal newline inside the value prints verbatim,
+/// but must not force a break in front of the selector.
+pub(super) fn write_attribute_str<'a>(str: &Str<'a>, f: &mut CssFormatter<'_, 'a>) {
+    let printed = print_string(str.raw, f.options());
+    write!(f, text(arena_cow_str(&printed, f)).without_expand_parent());
+}
+
 /// Prettier's `adjustNumbers(adjustStrings(...))` over a raw source slice:
 /// strings re-quote via `printString`,
 /// standalone numbers (not glued to a word part) get `printCssNumber` + lowercased/canonical unit;
