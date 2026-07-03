@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 335/397
+Passed: 337/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (50/60)
+# babel-plugin-transform-typescript (52/60)
 * declare-and-definite-with-initializer/input.ts
 
   x TS(1263): Declarations with initializers cannot also have definite
@@ -82,23 +82,10 @@ Symbol redeclarations mismatch for "y":
 after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(3): []
 
-* namespace/redeclaration-with-interface/input.ts
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 41, end: 44 }]
-rebuilt        : SymbolId(0): []
-
-* namespace/redeclaration-with-type-alias/input.ts
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 39, end: 42 }, Span { start: 87, end: 90 }]
-rebuilt        : SymbolId(0): []
-
 * namespace/redeclaration-with-type-only-namespace/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
 rebuilt        : ScopeId(0): ["Foo"]
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 62, end: 65 }]
-rebuilt        : SymbolId(0): []
 
 * optimize-enums/auto-increment-after-string/input.ts
 x Output mismatch

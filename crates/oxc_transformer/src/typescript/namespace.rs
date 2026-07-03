@@ -311,6 +311,14 @@ impl<'a> TypeScriptNamespace {
             scope_id,
             ctx,
         ));
+        let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
+        if !redeclarations
+            .iter()
+            .any(|redeclaration| redeclaration.flags.intersects(SymbolFlags::Enum))
+            && redeclarations.last().is_some_and(|redeclaration| redeclaration.span == ident.span)
+        {
+            ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
+        }
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
