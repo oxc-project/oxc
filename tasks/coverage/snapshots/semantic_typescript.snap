@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4433/4720 (93.92%)
+Positive Passed: 4443/4720 (94.13%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -423,20 +423,6 @@ after transform: ScopeId(0): []
 rebuilt        : ScopeId(0): ["X"]
 Symbol redeclarations mismatch for "X":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 61, end: 62 }, Span { start: 188, end: 189 }]
-rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declInput.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["bar"]
-Symbol flags mismatch for "bar":
-after transform: SymbolId(0): SymbolFlags(Class | Interface)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol span mismatch for "bar":
-after transform: SymbolId(0): Span { start: 10, end: 13 }
-rebuilt        : SymbolId(0): Span { start: 26, end: 29 }
-Symbol redeclarations mismatch for "bar":
-after transform: SymbolId(0): [Span { start: 10, end: 13 }, Span { start: 26, end: 29 }]
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringArrayPattern3.ts
@@ -935,11 +921,6 @@ Symbol redeclarations mismatch for "L":
 after transform: SymbolId(1): [Span { start: 31, end: 32 }, Span { start: 107, end: 108 }]
 rebuilt        : SymbolId(2): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportRedeclarationTypeAliases.ts
-Symbol span mismatch for "Foo":
-after transform: SymbolId(0): Span { start: 42, end: 45 }
-rebuilt        : SymbolId(0): Span { start: 73, end: 76 }
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/extBaseClass1.ts
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 110, end: 111 }]
@@ -950,20 +931,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionDeclarationWithResolutionOfTypeOfSameName01.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["f"]
-Symbol flags mismatch for "f":
-after transform: SymbolId(0): SymbolFlags(Function | Interface)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 10, end: 11 }
-rebuilt        : SymbolId(0): Span { start: 26, end: 27 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 26, end: 27 }]
-rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionInIfStatementInModule.ts
 Bindings mismatch:
@@ -1086,26 +1053,8 @@ rebuilt        : ["BB", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/interfaceDeclaration2.ts
 Bindings mismatch:
-after transform: ScopeId(0): []
+after transform: ScopeId(0): ["I2", "I3"]
 rebuilt        : ScopeId(0): ["I2", "I3", "I4"]
-Symbol flags mismatch for "I2":
-after transform: SymbolId(1): SymbolFlags(Class | Interface)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol span mismatch for "I2":
-after transform: SymbolId(1): Span { start: 45, end: 47 }
-rebuilt        : SymbolId(0): Span { start: 58, end: 60 }
-Symbol redeclarations mismatch for "I2":
-after transform: SymbolId(1): [Span { start: 45, end: 47 }, Span { start: 58, end: 60 }]
-rebuilt        : SymbolId(0): []
-Symbol flags mismatch for "I3":
-after transform: SymbolId(2): SymbolFlags(Function | Interface)
-rebuilt        : SymbolId(1): SymbolFlags(Function)
-Symbol span mismatch for "I3":
-after transform: SymbolId(2): Span { start: 76, end: 78 }
-rebuilt        : SymbolId(1): Span { start: 92, end: 94 }
-Symbol redeclarations mismatch for "I3":
-after transform: SymbolId(2): [Span { start: 76, end: 78 }, Span { start: 92, end: 94 }]
-rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "I4":
 after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | Interface)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
@@ -1669,17 +1618,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/structuralTypeInDeclareFileForModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/superHasMethodsFromMergedInterface.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Sub"]
-rebuilt        : ScopeId(0): ["C", "Sub"]
-Symbol flags mismatch for "C":
-after transform: SymbolId(0): SymbolFlags(Class | Interface)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol redeclarations mismatch for "C":
-after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 31, end: 32 }]
-rebuilt        : SymbolId(0): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/symbolMergeValueAndImportedType.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -1707,17 +1645,6 @@ rebuilt        : SymbolId(1): SymbolFlags(Function)
 Symbol redeclarations mismatch for "createElement":
 after transform: SymbolId(2): [Span { start: 125, end: 138 }, Span { start: 243, end: 256 }]
 rebuilt        : SymbolId(1): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeAliasFunctionTypeSharedSymbol.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["Mixin"]
-Symbol flags mismatch for "Mixin":
-after transform: SymbolId(0): SymbolFlags(Function | TypeAlias)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol redeclarations mismatch for "Mixin":
-after transform: SymbolId(0): [Span { start: 42, end: 47 }, Span { start: 152, end: 157 }]
-rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeVal.ts
 Bindings mismatch:
@@ -1754,14 +1681,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedInterfaceinNamespace5.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedLocalsAndParametersOverloadSignatures.ts
-Symbol span mismatch for "func":
-after transform: SymbolId(0): Span { start: 16, end: 20 }
-rebuilt        : SymbolId(0): Span { start: 94, end: 98 }
-Symbol span mismatch for "genericFunc":
-after transform: SymbolId(17): Span { start: 523, end: 534 }
-rebuilt        : SymbolId(8): Span { start: 606, end: 617 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/usingModuleWithExportImportInValuePosition.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -1838,34 +1757,9 @@ Symbol scope ID mismatch for "_set_accessor":
 after transform: SymbolId(7): ScopeId(2)
 rebuilt        : SymbolId(9): ScopeId(0)
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameConstructorSignature.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_x"]
-rebuilt        : ScopeId(0): ["C", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_x"]
-Symbol flags mismatch for "C":
-after transform: SymbolId(1): SymbolFlags(Class | Interface)
-rebuilt        : SymbolId(3): SymbolFlags(Class)
-Symbol redeclarations mismatch for "C":
-after transform: SymbolId(1): [Span { start: 37, end: 38 }, Span { start: 185, end: 186 }]
-rebuilt        : SymbolId(3): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClasses.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["AbstractBase", "ConcreteBase", "DerivedFromAbstract", "DerivedFromConcrete", "wasAbstract", "wasConcrete"]
-rebuilt        : ScopeId(0): ["AbstractBase", "ConcreteBase", "DerivedFromAbstract", "DerivedFromConcrete", "Mixin", "wasAbstract", "wasConcrete"]
-Symbol flags mismatch for "Mixin":
-after transform: SymbolId(0): SymbolFlags(Function | Interface)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol span mismatch for "Mixin":
-after transform: SymbolId(0): Span { start: 10, end: 15 }
-rebuilt        : SymbolId(0): Span { start: 55, end: 60 }
-Symbol redeclarations mismatch for "Mixin":
-after transform: SymbolId(0): [Span { start: 10, end: 15 }, Span { start: 55, end: 60 }]
-rebuilt        : SymbolId(0): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/mixinClassesAnnotated.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["Base", "Derived", "Thing1", "Thing2", "Thing3", "_defineProperty", "f1", "f2"]
+after transform: ScopeId(0): ["Base", "Derived", "Tagged", "Thing1", "Thing2", "Thing3", "_defineProperty", "f1", "f2"]
 rebuilt        : ScopeId(0): ["Base", "Derived", "Printable", "Tagged", "Thing1", "Thing2", "Thing3", "_defineProperty", "f1", "f2"]
 Symbol flags mismatch for "Printable":
 after transform: SymbolId(10): SymbolFlags(BlockScopedVariable | ConstVariable | Interface)
@@ -1876,43 +1770,6 @@ rebuilt        : SymbolId(8): Span { start: 287, end: 296 }
 Symbol redeclarations mismatch for "Printable":
 after transform: SymbolId(10): [Span { start: 247, end: 256 }, Span { start: 287, end: 296 }]
 rebuilt        : SymbolId(8): []
-Symbol flags mismatch for "Tagged":
-after transform: SymbolId(14): SymbolFlags(Function | Interface)
-rebuilt        : SymbolId(12): SymbolFlags(Function)
-Symbol span mismatch for "Tagged":
-after transform: SymbolId(14): Span { start: 557, end: 563 }
-rebuilt        : SymbolId(12): Span { start: 596, end: 602 }
-Symbol redeclarations mismatch for "Tagged":
-after transform: SymbolId(14): [Span { start: 557, end: 563 }, Span { start: 596, end: 602 }]
-rebuilt        : SymbolId(12): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty5.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C"]
-rebuilt        : ScopeId(0): ["B", "C"]
-Symbol flags mismatch for "B":
-after transform: SymbolId(1): SymbolFlags(Class | Interface)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol span mismatch for "B":
-after transform: SymbolId(1): Span { start: 40, end: 41 }
-rebuilt        : SymbolId(0): Span { start: 62, end: 63 }
-Symbol redeclarations mismatch for "B":
-after transform: SymbolId(1): [Span { start: 40, end: 41 }, Span { start: 62, end: 63 }]
-rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty9.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["ApiEnum", "ApiEnumMember", "ApiItem"]
-rebuilt        : ScopeId(0): ["ApiEnum", "ApiEnumMember", "ApiItem", "ApiItemContainerMixin"]
-Symbol flags mismatch for "ApiItemContainerMixin":
-after transform: SymbolId(9): SymbolFlags(Function | Interface)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-Symbol span mismatch for "ApiItemContainerMixin":
-after transform: SymbolId(9): Span { start: 462, end: 483 }
-rebuilt        : SymbolId(2): Span { start: 558, end: 579 }
-Symbol redeclarations mismatch for "ApiItemContainerMixin":
-after transform: SymbolId(9): [Span { start: 462, end: 483 }, Span { start: 558, end: 579 }]
-rebuilt        : SymbolId(2): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticAutoAccessorsWithDecorators.ts
 Scope flags mismatch:
@@ -2413,17 +2270,8 @@ rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeValueMerge1.ts
 Bindings mismatch:
-after transform: ScopeId(0): []
+after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): ["A", "B"]
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(Function | TypeAlias)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol span mismatch for "A":
-after transform: SymbolId(0): Span { start: 12, end: 13 }
-rebuilt        : SymbolId(0): Span { start: 33, end: 34 }
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 12, end: 13 }, Span { start: 33, end: 34 }]
-rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "B":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | TypeAlias)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)

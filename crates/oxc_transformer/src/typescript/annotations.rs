@@ -58,13 +58,23 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut no_modules_remaining = true;
         let mut some_modules_deleted = false;
+        let mut removed_overload_symbols = Vec::new();
 
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
                 Statement::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
                     let declaration = decl.declaration.as_ref().unwrap();
                     if declaration.is_typescript_syntax() {
-                        Self::remove_declaration_bindings(declaration, ctx);
+                        if let Declaration::FunctionDeclaration(func_decl) = declaration
+                            && !func_decl.declare
+                            && func_decl.body.is_none()
+                        {
+                            if let Some(id) = &func_decl.id {
+                                removed_overload_symbols.push(id.symbol_id());
+                            }
+                        } else {
+                            Self::remove_declaration_bindings(declaration, ctx);
+                        }
                         false
                     } else {
                         true
@@ -165,6 +175,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
             need_retain
         });
+        Self::sync_overload_implementation_symbols(&program.body, &removed_overload_symbols, ctx);
 
         // Determine if we still have import/export statements, otherwise we
         // need to inject an empty statement (`export {}`) so that the file is
@@ -534,9 +545,15 @@ impl<'a> TypeScriptAnnotations<'a> {
     ) -> bool {
         match decl {
             // Remove type aliases, interfaces, and `declare global {}`
-            Declaration::TSTypeAliasDeclaration(_)
-            | Declaration::TSInterfaceDeclaration(_)
-            | Declaration::TSGlobalDeclaration(_) => false,
+            Declaration::TSTypeAliasDeclaration(type_decl) => {
+                Self::preserve_non_ambient_value_redeclaration(type_decl.id.symbol_id(), ctx);
+                false
+            }
+            Declaration::TSInterfaceDeclaration(interface_decl) => {
+                Self::preserve_non_ambient_value_redeclaration(interface_decl.id.symbol_id(), ctx);
+                false
+            }
+            Declaration::TSGlobalDeclaration(_) => false,
             // Remove `declare var/let/const`
             Declaration::VariableDeclaration(var_decl) => {
                 if var_decl.declare {
@@ -651,9 +668,13 @@ impl<'a> TypeScriptAnnotations<'a> {
             Declaration::TSModuleDeclaration(module_decl) => {
                 Self::remove_ts_module_declaration_binding(module_decl, ctx);
             }
-            Declaration::TSTypeAliasDeclaration(_)
-            | Declaration::TSInterfaceDeclaration(_)
-            | Declaration::TSGlobalDeclaration(_) => {}
+            Declaration::TSTypeAliasDeclaration(type_decl) => {
+                Self::preserve_non_ambient_value_redeclaration(type_decl.id.symbol_id(), ctx);
+            }
+            Declaration::TSInterfaceDeclaration(interface_decl) => {
+                Self::preserve_non_ambient_value_redeclaration(interface_decl.id.symbol_id(), ctx);
+            }
+            Declaration::TSGlobalDeclaration(_) => {}
         }
     }
 
@@ -764,6 +785,7 @@ impl<'a> TypeScriptAnnotations<'a> {
             .scoping()
             .symbol_redeclarations(symbol_id)
             .iter()
+            .rev()
             .find(|redeclaration| {
                 redeclaration.flags.intersects(SymbolFlags::Class | SymbolFlags::Function)
                     && !redeclaration.flags.is_ambient()

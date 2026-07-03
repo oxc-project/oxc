@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 334/397
+Passed: 335/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (49/60)
+# babel-plugin-transform-typescript (50/60)
 * declare-and-definite-with-initializer/input.ts
 
   x TS(1263): Declarations with initializers cannot also have definite
@@ -73,20 +73,6 @@ x Output mismatch
 
 * enum-member-reference/input.ts
 x Output mismatch
-
-* export-elimination/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok"]
-rebuilt        : ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok", "T"]
-Symbol flags mismatch for "T":
-after transform: SymbolId(9): SymbolFlags(Function | TypeAlias)
-rebuilt        : SymbolId(8): SymbolFlags(Function)
-Symbol span mismatch for "T":
-after transform: SymbolId(9): Span { start: 205, end: 206 }
-rebuilt        : SymbolId(8): Span { start: 226, end: 227 }
-Symbol redeclarations mismatch for "T":
-after transform: SymbolId(9): [Span { start: 205, end: 206 }, Span { start: 226, end: 227 }]
-rebuilt        : SymbolId(8): []
 
 * namespace/redeclaration-with-enum/input.ts
 Symbol redeclarations mismatch for "x":
