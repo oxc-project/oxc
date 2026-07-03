@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4412/4720 (93.47%)
+Positive Passed: 4430/4720 (93.86%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientClassOverloadForFunction.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -16,57 +16,6 @@ rebuilt        : SymbolId(0): Span { start: 30, end: 33 }
 Symbol redeclarations mismatch for "foo":
 after transform: SymbolId(0): [Span { start: 14, end: 17 }, Span { start: 30, end: 33 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientModuleExports.ts
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference symbol mismatch for "Foo2":
-after transform: SymbolId(5) "Foo2"
-rebuilt        : <None>
-Reference symbol mismatch for "Foo2":
-after transform: SymbolId(5) "Foo2"
-rebuilt        : <None>
-Reference symbol mismatch for "Foo2":
-after transform: SymbolId(5) "Foo2"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Foo", "Foo2"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientModuleWithTemplateLiterals.ts
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Foo"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientModules.ts
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Foo"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -407,28 +356,6 @@ Symbol redeclarations mismatch for "propName":
 after transform: SymbolId(16): [Span { start: 526, end: 534 }, Span { start: 551, end: 559 }]
 rebuilt        : SymbolId(2): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualReturnTypeOfIIFE2.ts
-Reference symbol mismatch for "app":
-after transform: SymbolId(0) "app"
-rebuilt        : <None>
-Reference symbol mismatch for "app":
-after transform: SymbolId(0) "app"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["app"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualReturnTypeOfIIFE3.ts
-Reference symbol mismatch for "app":
-after transform: SymbolId(0) "app"
-rebuilt        : <None>
-Reference symbol mismatch for "app":
-after transform: SymbolId(0) "app"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["app"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileExportAssignmentImportInternalModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -738,17 +665,6 @@ Symbol redeclarations mismatch for "m2":
 after transform: SymbolId(0): [Span { start: 10, end: 12 }, Span { start: 233, end: 235 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declareDottedExtend.ts
-Reference symbol mismatch for "A":
-after transform: SymbolId(0) "A"
-rebuilt        : <None>
-Reference symbol mismatch for "A":
-after transform: SymbolId(0) "A"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["A"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declareFileExportAssignment.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -932,14 +848,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["E"]
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest7.ts
-Reference symbol mismatch for "M":
-after transform: SymbolId(0) "M"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["M"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportClause.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -1008,14 +916,6 @@ rebuilt        : SymbolId(1): Span { start: 155, end: 161 }
 Symbol redeclarations mismatch for "server":
 after transform: SymbolId(2): [Span { start: 85, end: 91 }, Span { start: 155, end: 161 }]
 rebuilt        : SymbolId(1): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportDeclarationsInAmbientNamespaces.ts
-Reference symbol mismatch for "Q":
-after transform: SymbolId(0) "Q"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Q"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultInterfaceAndFunctionOverloads.ts
 Symbol span mismatch for "foo":
@@ -1111,14 +1011,6 @@ Symbol redeclarations mismatch for "M":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 110, end: 111 }]
 rebuilt        : SymbolId(1): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/externModuleClobber.ts
-Reference symbol mismatch for "EM":
-after transform: SymbolId(0) "EM"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["EM"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -1173,14 +1065,6 @@ Symbol redeclarations mismatch for "fn":
 after transform: SymbolId(0): [Span { start: 9, end: 11 }, Span { start: 45, end: 47 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericClassPropertyInheritanceSpecialization.ts
-Reference symbol mismatch for "ko":
-after transform: SymbolId(30) "ko"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["ko", "require"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericConstraintOnExtendedBuiltinTypes.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["_defineProperty"]
@@ -1196,17 +1080,6 @@ rebuilt        : ScopeId(0): ["EndGate", "_defineProperty"]
 Symbol redeclarations mismatch for "EndGate":
 after transform: SymbolId(0): [Span { start: 10, end: 17 }, Span { start: 144, end: 151 }, Span { start: 335, end: 342 }]
 rebuilt        : SymbolId(1): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericInference2.ts
-Reference symbol mismatch for "ko":
-after transform: SymbolId(0) "ko"
-rebuilt        : <None>
-Reference symbol mismatch for "ko":
-after transform: SymbolId(0) "ko"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["ko"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericsManyTypeParameters.ts
 Bindings mismatch:
@@ -1474,14 +1347,6 @@ rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "My":
 after transform: SymbolId(5): SymbolFlags(Function | ValueModule | Ambient)
 rebuilt        : SymbolId(6): SymbolFlags(Function)
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/modFunctionCrash.ts
-Reference symbol mismatch for "Q":
-after transform: SymbolId(0) "Q"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Q"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleCodeGenTest3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -1948,20 +1813,6 @@ Symbol redeclarations mismatch for "I":
 after transform: SymbolId(0): [Span { start: 4, end: 5 }, Span { start: 32, end: 33 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/underscoreMapFirst.ts
-Reference symbol mismatch for "_":
-after transform: SymbolId(0) "_"
-rebuilt        : <None>
-Reference symbol mismatch for "_":
-after transform: SymbolId(0) "_"
-rebuilt        : <None>
-Reference symbol mismatch for "_":
-after transform: SymbolId(0) "_"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["View"]
-rebuilt        : ["View", "_"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unexportedInstanceClassVariables.ts
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 67, end: 68 }]
@@ -2008,17 +1859,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
 'with' statements are not allowed
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarations.ts
-Reference symbol mismatch for "M1":
-after transform: SymbolId(43) "M1"
-rebuilt        : <None>
-Reference symbol mismatch for "M1":
-after transform: SymbolId(43) "M1"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["E3"]
-rebuilt        : ["E3", "M1"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientInsideNonAmbient.ts
 Bindings mismatch:
@@ -2596,14 +2436,6 @@ Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 10, end: 13 }, Span { start: 87, end: 90 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportDeclaredModule.ts
-Reference symbol mismatch for "M1":
-after transform: SymbolId(0) "M1"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["module"]
-rebuilt        : ["M1", "module"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithRelativePaths.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -2821,38 +2653,11 @@ Symbol redeclarations mismatch for "M2":
 after transform: SymbolId(6): [Span { start: 238, end: 240 }, Span { start: 323, end: 325 }]
 rebuilt        : SymbolId(5): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/reExportAliasMakesInstantiated.ts
-Reference symbol mismatch for "pack2":
-after transform: SymbolId(2) "pack2"
-rebuilt        : <None>
-Reference symbol mismatch for "mod2":
-after transform: SymbolId(7) "mod2"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["mod2", "pack2"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxOpeningClosingNames.tsx
-Reference symbol mismatch for "A":
-after transform: SymbolId(2) "A"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["A", "require"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit6.tsx
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 51, end: 52 }]
 rebuilt        : SymbolId(2): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration11.ts
-Reference symbol mismatch for "string":
-after transform: SymbolId(0) "string"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["string"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel3.ts
 Bindings mismatch:

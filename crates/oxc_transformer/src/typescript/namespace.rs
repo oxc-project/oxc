@@ -544,8 +544,15 @@ impl<'a> TypeScriptNamespace {
 
     fn remove_binding(id: &BindingIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
         let symbol_id = id.symbol_id();
+        let has_non_ambient_value_redeclaration =
+            ctx.scoping().symbol_redeclarations(symbol_id).iter().any(|redeclaration| {
+                redeclaration.flags.is_value() && !redeclaration.flags.is_ambient()
+            });
         let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
         ctx.scoping_mut().remove_binding(scope_id, id.name);
+        if !has_non_ambient_value_redeclaration {
+            ctx.state.removed_ambient_bindings.push((id.name, symbol_id));
+        }
     }
 }
 

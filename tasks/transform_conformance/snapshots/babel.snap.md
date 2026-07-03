@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 769/1165
+Passed: 770/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (117/157)
+# babel-plugin-transform-typescript (118/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1273,14 +1273,6 @@ rebuilt        : SymbolId(1): []
 
 * imports/type-only-export-specifier-2/input.ts
 x Output mismatch
-
-* namespace/alias/input.ts
-Reference symbol mismatch for "LongNameModule":
-after transform: SymbolId(0) "LongNameModule"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["console"]
-rebuilt        : ["LongNameModule", "console"]
 
 * namespace/clobber-class/input.ts
 Symbol flags mismatch for "A":
