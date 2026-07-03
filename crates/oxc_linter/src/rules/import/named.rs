@@ -273,8 +273,6 @@ fn test() {
         "import x from './typescript-export-assign-object'",
         "export { default as foo } from './typescript-export-default'",
         "import { default as foo } from './typescript-export-default'",
-        // Mutually-recursive `export *` (a re-exports b, b re-exports a) must not panic via
-        // re-entrant `OnceLock` init; names still resolve across the cycle.
         "import { a, b } from './cyclic-star-a'",
         "import { a, b } from './cyclic-star-b'",
     ];
