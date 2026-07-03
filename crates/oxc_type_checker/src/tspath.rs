@@ -10,6 +10,8 @@ use std::{borrow::Cow, fmt};
 
 use cow_utils::CowUtils;
 
+use crate::fold;
+
 /// Known extensions, longest declaration extensions first, used by [`TsPath::change_extension`].
 const EXTENSIONS_TO_REMOVE: &[&str] = &[
     ".d.ts", ".d.mts", ".d.cts", ".mjs", ".mts", ".cjs", ".cts", ".ts", ".js", ".tsx", ".jsx",
@@ -107,13 +109,13 @@ impl TsPath {
         Self::normalized_components_of(&combined)
     }
 
-    /// Case-folded key for de-duplication (ASCII approximation of tsgo's `ToFileNameLowerCase`,
-    /// which deliberately avoids lower-casing certain unicode chars).
+    /// Case-folded key for de-duplication (tsgo's `GetCanonicalFileName` /
+    /// `ToFileNameLowerCase`, which lowercases everything except U+0130).
     pub fn canonical(&self, use_case_sensitive_file_names: bool) -> String {
         if use_case_sensitive_file_names {
             self.0.clone()
         } else {
-            self.0.cow_to_ascii_lowercase().into_owned()
+            fold::to_file_name_lower_case(&self.0)
         }
     }
 
@@ -136,12 +138,17 @@ impl TsPath {
         TsPath(Self::change_any_extension(&self.0, new_extension, EXTENSIONS_TO_REMOVE))
     }
 
-    /// Whether `child` is contained within (or equal to) this path. The volume/root component is
-    /// always compared case-insensitively, matching tsgo. Both must already be absolute (tsgo
-    /// threads a `currentDirectory` through; the only caller here passes absolute base paths).
-    pub fn contains(&self, child: &str, use_case_sensitive_file_names: bool) -> bool {
-        let parent = Self::combine_into("", &[&self.0]);
-        let child = Self::combine_into("", &[child]);
+    /// Whether `child` is contained within (or equal to) this path (tsgo `ContainsPath`).
+    /// Relative inputs are resolved against `current_directory` first; the volume/root
+    /// component is always compared case-insensitively (Unicode fold), matching tsgo.
+    pub fn contains(
+        &self,
+        child: &str,
+        use_case_sensitive_file_names: bool,
+        current_directory: &str,
+    ) -> bool {
+        let parent = Self::combine_into(current_directory, &[&self.0]);
+        let child = Self::combine_into(current_directory, &[child]);
         if parent.is_empty() || child.is_empty() {
             return false;
         }
@@ -155,7 +162,7 @@ impl TsPath {
         }
         for (i, parent_component) in parent_components.iter().enumerate() {
             let equal = if i == 0 || !use_case_sensitive_file_names {
-                parent_component.eq_ignore_ascii_case(&child_components[i])
+                fold::str_fold_eq(parent_component, &child_components[i])
             } else {
                 *parent_component == child_components[i]
             };

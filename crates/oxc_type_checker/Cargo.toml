@@ -26,8 +26,6 @@ description = "An experimental type checker for JavaScript and TypeScript (work 
 [lints]
 workspace = true
 
-[lib]
-test = false
 
 [[bin]]
 name = "oxc_tsc"

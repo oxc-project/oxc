@@ -12,7 +12,7 @@
 use cow_utils::CowUtils;
 use rustc_hash::FxHashSet;
 
-use crate::tspath::TsPath;
+use crate::{fold, tspath::TsPath};
 
 /// How a set of patterns is being used, which changes matching rules.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -25,15 +25,16 @@ pub enum Usage {
     Exclude,
 }
 
-/// Pass as the `depth` argument to [`read_directory`] for no depth limit.
+/// Pass as the `depth` argument to [`read_directory`] for no depth limit. A depth of `0`
+/// also means unlimited, matching tsgo (whose signed decrement never re-reaches zero).
 pub const UNLIMITED_DEPTH: usize = usize::MAX;
 
 /// Directory entries returned by a [`FileSystemHost`].
 ///
 /// `files` and `directories` must be sorted for deterministic output. `symlinks` names the
-/// entries in `directories` that are symlinks (so the walker re-resolves their real path);
-/// `None` means the host does not track symlinks and every directory's real path is resolved
-/// via [`FileSystemHost::realpath`].
+/// entries that are symlinks — the walker re-resolves the real path of directories listed
+/// there; `None` means the host does not track symlinks and every directory's real path is
+/// resolved via [`FileSystemHost::realpath`].
 #[derive(Debug, Default)]
 pub struct Entries {
     pub files: Vec<String>,
@@ -59,6 +60,7 @@ pub fn read_directory(
     depth: usize,
 ) -> Vec<String> {
     let use_cs = host.use_case_sensitive_file_names();
+    let depth = if depth == 0 { UNLIMITED_DEPTH } else { depth };
     let path = TsPath::from(path).normalized().into_string();
     let current_directory = TsPath::from(current_dir).normalized().into_string();
     let absolute_path =
@@ -137,16 +139,18 @@ fn get_base_paths(
         .collect();
 
     include_base_paths.sort_by(|a, b| {
-        if use_case_sensitive_file_names {
-            a.cmp(b)
-        } else {
-            a.cow_to_ascii_lowercase().cmp(&b.cow_to_ascii_lowercase())
-        }
+        if use_case_sensitive_file_names { a.cmp(b) } else { fold::compare_case_insensitive(a, b) }
     });
 
+    // Resolving against `path` also swallows the empty base path a rooted spec with a
+    // wildcard in its first component produces (tsgo passes `path` as CurrentDirectory).
     for include_base_path in include_base_paths {
         let contained = base_paths.iter().any(|bp| {
-            TsPath::from(bp.as_str()).contains(&include_base_path, use_case_sensitive_file_names)
+            TsPath::from(bp.as_str()).contains(
+                &include_base_path,
+                use_case_sensitive_file_names,
+                path,
+            )
         });
         if !contained {
             base_paths.push(include_base_path);
@@ -336,9 +340,11 @@ impl GlobPattern {
             return false;
         }
 
-        // Fast path: single `*` followed by a literal suffix (e.g. "*.ts").
+        // Fast path: single `*` followed by a literal suffix (e.g. "*.ts"). `get` mirrors
+        // Go byte slicing: a window splitting a multi-byte char simply fails to match.
         if let [Segment::Star, Segment::Literal(suffix)] = segs {
-            if s.len() < suffix.len() || !self.strings_equal(suffix, &s[s.len() - suffix.len()..]) {
+            let tail = s.len().checked_sub(suffix.len()).and_then(|start| s.get(start..));
+            if !tail.is_some_and(|tail| self.strings_equal(suffix, tail)) {
                 return false;
             }
             return self.should_include_min_js(s, segs);
@@ -360,7 +366,9 @@ impl GlobPattern {
                 match seg {
                     Segment::Literal(lit) => {
                         let end = s_idx + lit.len();
-                        if end <= s.len() && self.strings_equal(lit, &s[s_idx..end]) {
+                        // `get` mirrors Go byte slicing: a range splitting a multi-byte
+                        // char fails to match and falls through to backtracking.
+                        if s.get(s_idx..end).is_some_and(|sub| self.strings_equal(lit, sub)) {
                             s_idx = end;
                             seg_idx += 1;
                             continue;
@@ -419,8 +427,7 @@ impl GlobPattern {
         if self.case_sensitive {
             filename.ends_with(MIN_JS)
         } else {
-            filename.len() >= MIN_JS.len()
-                && filename[filename.len() - MIN_JS.len()..].eq_ignore_ascii_case(MIN_JS)
+            fold::has_suffix_fold(filename, MIN_JS)
         }
     }
 
@@ -439,7 +446,7 @@ impl GlobPattern {
     }
 
     fn strings_equal(&self, a: &str, b: &str) -> bool {
-        if self.case_sensitive { a == b } else { a.eq_ignore_ascii_case(b) }
+        if self.case_sensitive { a == b } else { fold::str_fold_eq(a, b) }
     }
 }
 
@@ -517,6 +524,13 @@ fn next_path_part_parts<'a>(
 
 fn is_hidden_path(name: &str) -> bool {
     name.as_bytes().first() == Some(&b'.')
+}
+
+/// Whether `file_type` is a regular file. Wraps `FileType::is_file` so the intentional
+/// "regular files only" choice (symlinks are classified separately) reads as deliberate.
+#[expect(clippy::filetype_is_file, reason = "symlinks are handled in a separate branch")]
+fn is_regular_file(file_type: std::fs::FileType) -> bool {
+    file_type.is_file()
 }
 
 fn is_package_folder(name: &str) -> bool {
@@ -637,9 +651,6 @@ impl GlobVisitor<'_> {
         }
 
         if depth != UNLIMITED_DEPTH {
-            if depth == 0 {
-                return;
-            }
             depth -= 1;
             if depth == 0 {
                 return;
@@ -716,21 +727,25 @@ impl FileSystemHost for StdFs {
                     continue;
                 };
                 let name = entry.file_name().to_string_lossy().into_owned();
-                let is_symlink = file_type.is_symlink();
-                // `file_type` does not follow symlinks; classify the target via `metadata`.
-                let is_dir = if is_symlink {
-                    std::fs::metadata(entry.path()).is_ok_and(|m| m.is_dir())
-                } else {
-                    file_type.is_dir()
-                };
-                if is_dir {
-                    directories.push(name.clone());
-                    if is_symlink {
+                if file_type.is_dir() {
+                    directories.push(name);
+                } else if is_regular_file(file_type) {
+                    files.push(name);
+                } else if file_type.is_symlink() {
+                    // Classify by the target (`metadata` follows the link). Dangling
+                    // symlinks and links to special files are dropped, matching tsgo.
+                    let Ok(metadata) = std::fs::metadata(entry.path()) else {
+                        continue;
+                    };
+                    if metadata.is_dir() {
+                        directories.push(name.clone());
+                        symlinks.insert(name);
+                    } else if metadata.is_file() {
+                        files.push(name.clone());
                         symlinks.insert(name);
                     }
-                } else {
-                    files.push(name);
                 }
+                // Other special files (FIFOs, sockets, devices) are dropped, matching tsgo.
             }
         }
 

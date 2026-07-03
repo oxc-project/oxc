@@ -59,12 +59,16 @@ use oxc_diagnostics::Diagnostics;
 use oxc_semantic::Semantic;
 
 mod diagnostics;
+mod fold;
 
 pub mod extension;
 pub mod project;
 pub mod tsconfig;
 pub mod tspath;
 pub mod vfsmatch;
+
+#[cfg(test)]
+mod tests;
 
 pub use crate::diagnostics::type_error;
 

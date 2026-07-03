@@ -49,11 +49,9 @@ fn main() -> RunResult {
             for diagnostic in &result.diagnostics {
                 eprintln!("{diagnostic:?}");
             }
-            // tsgo's internal order is literal -> wildcard -> json; sort for stable CLI output.
-            let mut files = result.files;
-            files.sort();
-            files.dedup();
-            for file in &files {
+            // Print in tsgo's order (literal -> wildcard -> json), duplicates included,
+            // so the output can be diffed directly against `tsgo --showConfig`.
+            for file in &result.files {
                 println!("{file}");
             }
             RunResult::Success
