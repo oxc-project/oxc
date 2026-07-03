@@ -121,7 +121,7 @@ fn get_confusing_with_index<'a>(
 }
 
 fn get_static_number_value(expression: &Expression) -> Option<f64> {
-    let expression = unwrap_typescript_expression(expression);
+    let expression = expression.get_inner_expression();
 
     match expression {
         Expression::NumericLiteral(literal) => Some(literal.value),
@@ -135,24 +135,6 @@ fn get_static_number_value(expression: &Expression) -> Option<f64> {
             Some(if unary.operator == UnaryOperator::UnaryNegation { -value } else { value })
         }
         _ => None,
-    }
-}
-
-fn unwrap_typescript_expression<'a>(expression: &'a Expression<'a>) -> &'a Expression<'a> {
-    match expression.get_inner_expression() {
-        Expression::TSAsExpression(as_expression) => {
-            unwrap_typescript_expression(&as_expression.expression)
-        }
-        Expression::TSSatisfiesExpression(satisfies_expression) => {
-            unwrap_typescript_expression(&satisfies_expression.expression)
-        }
-        Expression::TSNonNullExpression(non_null_expression) => {
-            unwrap_typescript_expression(&non_null_expression.expression)
-        }
-        Expression::TSTypeAssertion(type_assertion) => {
-            unwrap_typescript_expression(&type_assertion.expression)
-        }
-        other => other,
     }
 }
 
@@ -176,11 +158,7 @@ fn is_length_member_for<'a>(
         return false;
     }
 
-    is_same_expression(
-        unwrap_typescript_expression(member.object()),
-        unwrap_typescript_expression(object),
-        ctx,
-    )
+    is_same_expression(member.object().get_inner_expression(), object.get_inner_expression(), ctx)
 }
 
 #[test]
