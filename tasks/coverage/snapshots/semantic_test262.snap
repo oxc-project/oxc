@@ -2,12 +2,7 @@ commit: de8e621c
 
 semantic_test262 Summary:
 AST Parsed     : 47240/47240 (100.00%)
-Positive Passed: 47227/47240 (99.97%)
-semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/static-field-init-with-this.js
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | DirectEval)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode)
-
+Positive Passed: 47229/47240 (99.98%)
 semantic Error: tasks/coverage/test262/test/language/module-code/top-level-await/syntax/for-await-await-expr-func-expression.js
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
@@ -40,11 +35,6 @@ rebuilt        : ScopeId(16): Some(ScopeId(15))
 Scope parent mismatch:
 after transform: ScopeId(10): Some(ScopeId(9))
 rebuilt        : ScopeId(29): Some(ScopeId(28))
-
-semantic Error: tasks/coverage/test262/test/language/statements/class/elements/static-field-init-with-this.js
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | DirectEval)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-getter.js
 Scope parent mismatch:

@@ -3,6 +3,7 @@
 
 use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast_visit::{Visit, walk};
 use oxc_span::SPAN;
 use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
@@ -456,6 +457,7 @@ impl<'a> ClassProperties<'a> {
         // Transform static properties, remove static and instance properties, and move computed keys
         // to before class
         self.transform_class_elements(class, ctx);
+        sync_class_direct_eval_flag(class, ctx);
 
         // Insert temp var for class if required. Name class if required.
         let class_details = self.classes_stack.last_mut();
@@ -612,6 +614,7 @@ impl<'a> ClassProperties<'a> {
         // Transform static properties, remove static and instance properties, and move computed keys
         // to before class
         self.transform_class_elements(class, ctx);
+        sync_class_direct_eval_flag(class, ctx);
 
         // Insert expressions before / after class.
         // `C = class { [x()] = 1; static y = 2 };`
@@ -876,6 +879,42 @@ impl<'a> ClassProperties<'a> {
         } else {
             self.insert_after_exprs.push(expr);
         }
+    }
+}
+
+fn sync_class_direct_eval_flag(class: &Class<'_>, ctx: &mut TraverseCtx<'_>) {
+    let scope_flags = ctx.scoping_mut().scope_flags_mut(class.scope_id());
+    if DirectEvalDetector::contains_direct_eval(class) {
+        scope_flags.insert(ScopeFlags::DirectEval);
+    } else {
+        scope_flags.remove(ScopeFlags::DirectEval);
+    }
+}
+
+struct DirectEvalDetector {
+    found: bool,
+}
+
+impl DirectEvalDetector {
+    fn contains_direct_eval(class: &Class<'_>) -> bool {
+        let mut detector = Self { found: false };
+        detector.visit_class(class);
+        detector.found
+    }
+}
+
+impl<'a> Visit<'a> for DirectEvalDetector {
+    fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
+        if self.found {
+            return;
+        }
+
+        if !expr.optional && expr.callee.is_specific_id("eval") {
+            self.found = true;
+            return;
+        }
+
+        walk::walk_call_expression(self, expr);
     }
 }
 
