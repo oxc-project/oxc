@@ -1,4 +1,4 @@
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -867,7 +867,7 @@ fn write_grouped_arguments<'a>(
     // since we already know that it won't be fitting on a single line.
     let variants = if grouped_breaks {
         write!(f, [expand_parent()]);
-        ArenaVec::from_array_in([middle_variant, most_expanded], f.allocator())
+        ArenaVec::from_array_in([middle_variant, most_expanded], f)
     } else {
         // Write the most flat variant with the first or last argument grouped.
         let most_flat = {
@@ -898,7 +898,7 @@ fn write_grouped_arguments<'a>(
             buffer.into_vec().into_arena_slice()
         };
 
-        ArenaVec::from_array_in([most_flat, middle_variant, most_expanded], f.allocator())
+        ArenaVec::from_array_in([most_flat, middle_variant, most_expanded], f)
     };
 
     // SAFETY: Safe because variants is guaranteed to contain exactly 3 entries:
@@ -1136,7 +1136,7 @@ fn is_huggable_html_embed_single_arg(arguments: &[Argument], f: &JsFormatter<'_,
 /// useMemo(() => {}, [])
 /// ```
 fn is_react_hook_with_deps_array(
-    arguments: &AstNode<ArenaVec<Argument>>,
+    arguments: &AstNode<'_, ArenaVec<'_, Argument<'_>>>,
     comments: &Comments,
 ) -> bool {
     if arguments.len() > 3 || arguments.len() < 2 {

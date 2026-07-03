@@ -1,0 +1,5 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/effect-derived-computations/derived-state-from-prop-setter-call-outside-effect-no-error.js
+---
+No changes.

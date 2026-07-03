@@ -1,0 +1,49 @@
+# oxc_type_checker
+#
+# An experimental, work-in-progress type checker for JavaScript and TypeScript.
+#
+# This crate is a deliberately small scaffold: it wires the parser and semantic
+# analyzer together, walks the AST, and gives you a place to emit diagnostics.
+# It performs no type checking yet — it exists as a starting point for people who
+# want to experiment with building a type checker on top of oxc.
+
+[package]
+name = "oxc_type_checker"
+version = "0.138.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/src"]
+keywords.workspace = true
+license.workspace = true
+# Experimental scaffold — not published to crates.io yet.
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+description = "An experimental type checker for JavaScript and TypeScript (work in progress)"
+
+[lints]
+workspace = true
+
+[lib]
+test = false
+
+[[bin]]
+name = "oxcheck"
+path = "src/main.rs"
+test = false
+
+[dependencies]
+oxc_ast = { workspace = true }
+oxc_ast_visit = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_resolver = { workspace = true }
+oxc_semantic = { workspace = true }
+oxc_span = { workspace = true }
+
+bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
+
+[dev-dependencies]
+oxc_allocator = { workspace = true }
+oxc_parser = { workspace = true }

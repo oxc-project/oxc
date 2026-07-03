@@ -46,16 +46,16 @@ impl<'a> PeepholeOptimizations {
             if let Expression::LogicalExpression(logical_expr) = &mut b
                 && logical_expr.operator == op
             {
-                let right = logical_expr.left.take_in(ctx.ast);
+                let right = logical_expr.left.take_in(ctx);
                 a = Self::join_with_left_associative_op(span, op, a, right, ctx);
-                b = logical_expr.right.take_in(ctx.ast);
+                b = logical_expr.right.take_in(ctx);
                 continue;
             }
             break;
         }
         // "a op b" => "a op b"
         // "(a op b) op c" => "(a op b) op c"
-        let mut logic_expr = ctx.ast.expression_logical(span, a, op, b);
+        let mut logic_expr = Expression::new_logical_expression(span, a, op, b, ctx);
         Self::minimize_logical_expression(&mut logic_expr, ctx);
         logic_expr
     }
@@ -109,10 +109,10 @@ impl<'a> PeepholeOptimizations {
             _ => return,
         }
         let new_expr = if b {
-            e.left.take_in(ctx.ast)
+            e.left.take_in(ctx)
         } else {
-            let argument = e.left.take_in(ctx.ast);
-            ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
+            let argument = e.left.take_in(ctx);
+            Expression::new_unary_expression(e.span, UnaryOperator::LogicalNot, argument, ctx)
         };
         ctx.replace_expression(expr, new_expr);
     }
@@ -130,21 +130,23 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(ctx) {
-            let new_left = ctx.ast.expression_numeric_literal(
+            let new_left = Expression::new_numeric_literal(
                 e.left.span(),
                 if left_bool { 1.0 } else { 0.0 },
                 None,
                 NumberBase::Decimal,
+                ctx,
             );
             ctx.replace_expression(&mut e.left, new_left);
             return;
         }
         if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(ctx) {
-            let new_right = ctx.ast.expression_numeric_literal(
+            let new_right = Expression::new_numeric_literal(
                 e.right.span(),
                 if right_bool { 1.0 } else { 0.0 },
                 None,
                 NumberBase::Decimal,
+                ctx,
             );
             ctx.replace_expression(&mut e.right, new_right);
         }
@@ -204,7 +206,7 @@ impl<'a> PeepholeOptimizations {
         reference.flags_mut().insert(ReferenceFlags::Read);
 
         let new_op = logical_expr.operator.to_assignment_operator();
-        let new_right = logical_expr.right.take_in(ctx.ast);
+        let new_right = logical_expr.right.take_in(ctx);
         expr.operator = new_op;
         ctx.replace_expression(&mut expr.right, new_right);
     }
@@ -226,7 +228,7 @@ impl<'a> PeepholeOptimizations {
 
         Self::mark_assignment_target_as_read(&expr.left, ctx);
 
-        let new_right = binary_expr.right.take_in(ctx.ast);
+        let new_right = binary_expr.right.take_in(ctx);
         expr.operator = new_op;
         ctx.replace_expression(&mut expr.right, new_right);
     }
@@ -253,8 +255,8 @@ impl<'a> PeepholeOptimizations {
             return;
         };
         let Some(target) = e.left.as_simple_assignment_target_mut() else { return };
-        let target = target.take_in(ctx.ast);
-        let new_expr = ctx.ast.expression_update(e.span, operator, true, target);
+        let target = target.take_in(ctx);
+        let new_expr = Expression::new_update_expression(e.span, operator, true, target, ctx);
         ctx.replace_expression(expr, new_expr);
     }
 }

@@ -4,6 +4,141 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.72.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 88f4455 str: [**BREAKING**] `Str` and `Ident` methods take `&GetAllocator` (#23781) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+- 1c8f50c linter: Add schema for `eslint/no-restricted-import` (#23642) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 7cb85c4 linter/eslint/no-negated-condition: Add autofix for negated conditions (#23825) (Yagiz Nizipli)
+- d891990 linter/jsx-a11y/role-supports-aria-props: Ignore nullish prop values (#23865) (Mikhail Baev)
+- 94b6599 linter: Deduplicate missing plugin errors (#23853) (camc314)
+- eff3eff linter/oxc/branches-sharing-code: Avoid else-if false positives (#23843) (camc314)
+- 2a2d3b9 linter/eslint/prefer-destructuring: Skip `AssignmentExpression` autofixes (#23818) (camc314)
+- ddc24ae linter/eslint/id-length: Respect checkGeneric for mapped type keys (#23802) (bab)
+- cd89202 linter/react/exhaustive-deps: Skip wrapper expression when analyzing hook initializers (#23793) (camc314)
+- 20e8285 linter/unicorn/prefer-native-coercion-function: Allow ts type predicates (#23774) (camc314)
+- 368fda7 linter/eslint/no-warning-comments: Avoid dropping generated regex patterns (#23741) (camc314)
+- ce44fbd linter/valid-title: Escape disallowed words regex (#23742) (camc314)
+- 3100d11 linter/prefer-called-exactly-once-with: Avoid out-of-bounds slice panic at end of file (#23625) (Jerry Zhao)
+- 742be36 refactor/node/handle-callback-err: Reject invalid regex config (#23740) (camc314)
+- d7be179 linter/eslint/no-restricted-globals: Handle shadowed locals (#23736) (camc314)
+- b3b1ff8 linter/vitest/expect-expect: Handle global vitest detection correctly (#23734) (camc314)
+
+### ⚡ Performance
+
+- 68f9472 linter/jsx-a11y: Skip lowercasing non-aria attribute names (#23906) (Lawrence Lin)
+- b9312b4 linter/unicorn/prefer-export-from: Use keyed binding lookup (#23893) (Marius Schulz)
+- cd5204e linter/typescript/no-unsafe-declaration-merging: Use keyed binding lookup (#23894) (Marius Schulz)
+- e948498 linter/eslint/prefer-named-capture-group: Only dispatch for relevant node types (#23868) (Connor Shea)
+- 4ac7a8e linter/eslint/max-depth: Derive node types (#23896) (Connor Shea)
+- daeed09 linter/eslint/no-restricted-globals: Only scan unresolved references  (#23890) (camc314)
+- e808514 linter/jest-vitest: Speed up no-standalone-expect (#23883) (camc314)
+- 8b165e5 linter/react/exhaustive-deps: Skip non-reactive calls early (#23882) (camc314)
+- 54005e7 linter/eslint/no-unused-vars: Precompute exported bindings (#23881) (camc314)
+- 9bc2f8c linter/unicorn/prefer-number-properties: Speed up global checks (#23880) (camc314)
+- 4ff104f linter: Optimize `require-hook` and `prefer-mock-*` rules to run on specific node types (#23871) (Connor Shea)
+- cc2213b linter: Run `no-underscore-dangle` only when relevant node types are present (#23867) (Connor Shea)
+- 3e55c21 linter/promise/always-return: Narrow to function node types (#23878) (Connor Shea)
+- 7136182 linter/jest-vitest: Speed up no-commented-out-tests (#23864) (camc314)
+- f138264 linter/eslint/no-script-url: Match javascript: prefix without allocating (#23861) (Lawrence Lin)
+- 7ef6895 linter/react/no-array-index-key: Delay index symbol lookup (#23857) (camc314)
+- 26bc171 linter/react/no-array-index-key: Match callback methods directly (#23856) (camc314)
+- 44fbbda linter/jsx-a11y/interactive-supports-focus: Check cheap conditions first (#23854) (camc314)
+- 84a5aa3 linter/eslint/no-extend-native: Skip lowercase references early (#23851) (camc314)
+- 88a74b2 linter/eslint/no-nonoctal-decimal-escape: Scan decimal escapes as bytes (#23850) (camc314)
+- fca69a8 linter: Skip traversal without this expressions (#23845) (camc314)
+- 838fd63 linter: Reduce preallocation for per-file diagnostics `Vec` (#23705) (Marius Schulz)
+- 417b506 linter/typescript/array-type: Remove full source text clone (#23751) (Marius Schulz)
+
+### 📚 Documentation
+
+- 57e4469 linter/unicorn: Update prefer-dom-node-text-content rationale (#23933) (Mikhail Baev)
+- 3d61dea all: Correct capitalization in comments (#23887) (overlookmotel)
+
+## [1.71.0] - 2026-06-22
+
+### 💥 BREAKING CHANGES
+
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+
+### 🚀 Features
+
+- ff65285 linter: `no-restricted-globals` add missing upstream options (#23663) (Sysix)
+- 7b8bd89 linter/typescript: Implement suggestion for `no-unnecessary-type-constraint` rule (#23646) (Mikhail Baev)
+- 0dc2405 linter: Add schema for `eslint/no-restricted-properties` (#23619) (Sysix)
+- b638d0e linter: Add schema for `node/callback-return` (#23615) (Sysix)
+- eb8bedc linter: Add schema for `import/extensions` (#23557) (WaterWhisperer)
+- 46f3625 linter: Implement node/no-sync rule (#23589) (fujitani sora)
+- b01739a linter: Add schema for `unicorn/numeric-separators-style` (#23554) (Mikhail Baev)
+- 68afd2a linter/node: Implement `no-mixed-requires` rule (#23539) (fujitani sora)
+- 59d8893 linter: `unicorn/numeric-separators-style` support missing options (#23524) (Sysix)
+- a421215 linter: Add schema for `eslint/prefer-destructuring` (#23410) (WaterWhisperer)
+- 84438be linter/jsdoc: Added missing options to `require-param-description` (#23416) (kapobajza)
+- c145b72 linter/jsdoc/require-param-type: Implement fixer (#23513) (camc314)
+- 51910df linter/jsdoc: Add missing options to `require-param-type` rule (#23418) (kapobajza)
+- e90925f linter/unicorn: Implement prefer-number-coercion rule (#23497) (Shekhu☺️)
+- dd1c866 linter/vue: Implement no-async-in-computed-properties rule (#23493) (bab)
+- b02444e linter: Add schema for `react/jsx-no-script-url` (#23475) (WaterWhisperer)
+- a8dce46 linter/unicorn: Implement `max-nested-calls` rule (#23461) (arieleli01212)
+
+### 🐛 Bug Fixes
+
+- b1948a1 linter/radix: Avoid panic on `parseInt` with a spread radix argument (#23623) (Jerry Zhao)
+- f28ccfd linter/prefer-query-selector: Use a compound selector for multiple classes (#23628) (Jerry Zhao)
+- 13f2970 linter/prefer-numeric-literals: Avoid panic on `parseInt` with a spread radix argument (#23624) (Jerry Zhao)
+- 57612b3 linter: Report invalid capitalized-comments ignore patterns (#23608) (camc314)
+- 800ee2a linter/consistent-vitest-vi: Preserve import aliases when rewriting the import (#23568) (Yunfei He)
+- f78b5e1 linter/consistent-indexed-object-style: Don't leak a stray comma into the value type (#23566) (Yunfei He)
+- 6b104e8 linter/radix: Detect a trailing comma only after the argument (#23569) (Yunfei He)
+- 2de20cb linter/unicorn/prefer-at: Correct two-argument `slice().pop()` index (#23565) (Yunfei He)
+- de778ec linter: `unicorn/numeric-separators-style` preserve dot for floats without decial part (#23553) (Sysix)
+- 651027c linter/curly: Remove only the block's own braces (#23580) (Yunfei He)
+- 687e835 linter/array-type: Parenthesize a conditional-type element (#23579) (Yunfei He)
+- 9c80dff linter/unicorn/no-unnecessary-await: Don't paste operators into invalid syntax (#23556) (Yunfei He)
+- 46e1463 linter/no-compare-neg-zero: Delete the `-` of a parenthesized `-0` (#23578) (Yunfei He)
+- d172a97 linter/unicorn/prefer-math-trunk: Skip fixer for LHS with side effects (#23548) (camc314)
+- 1c3a9bd linter/unicorn/prefer-negative-index: Don't report `Array#with` (#23518) (Yunfei He)
+- c17db5d linter/unicorn/prefer-spread: Don't report `.slice()` on non-array receivers (#23520) (Yunfei He)
+- 9cd0c2f linter/unicorn/prefer-date-now: Keep `BigInt` wrapper when fixing `BigInt(new Date())` (#23523) (Yunfei He)
+- 16bb890 linter/unicorn/prefer-array-flat: Skip non-array `flatMap` receivers (#23527) (Yunfei He)
+- 3e6f90f linter/unicorn/no-zero-fractions: Insert a space after any preceding keyword (#23529) (Yunfei He)
+- 79a7d69 linter/eslint/no-useless-assignment: Handle exceptional control-flow paths (#23544) (camc314)
+- e8e2741 linter/unicorn/prefer-math-min-max: Preserve operand source text in the fix (#23533) (Yunfei He)
+- f592154 linter/react/display-name: Ignore lowercase jsx helpers (#23510) (camc314)
+- df7612f linter/jsx-a11y/no-noninteractive-element-to-interactive-role: Allow custom roles config (#23507) (camc314)
+- 924b931 linter/unicorn/prefer-at: Handle checking all indexes correctly (#23504) (camc314)
+- ca9686b linter/unicorn/prefer-at: Report zero indexes (#23503) (camc314)
+- e96a4e3 linter/unicorn/explicit-length-check: Ignore optional chains (#23487) (camc314)
+- a303c23 linter/jsx-a11y: Align `anchor-is-valid` config with upstream (#23446) (camc314)
+- f27a6d1 linter: False positives with non `*.setTimeout` call in `no-confusing-set-timeout` (#23444) (camc314)
+
+### ⚡ Performance
+
+- 8e0dd65 linter: Emit RuleEnum dispatch match once instead of per timing branch (#23499) (Boshen)
+- d5c7d99 linter/expect-expect: Avoid recompiling matches on every traversal (#23593) (camc314)
+- f191520 linter/no-useless-spread: Avoid collecting `Vec` before iterating (#23546) (camc314)
+- 79340d1 linter: Stream React lifecycle ancestors (#23545) (camc314)
+- 1923169 linter/eslint/max-classes: Gate rule by rule config threshold (#23509) (camc314)
+- 3f60de3 linter: Use bucketed dispatch for all files (#23452) (camc314)
+- 3699971 linter/typescript/no-unnecessary-parameter-property-assignment: Avoid temporary vec allocations (#23492) (camc314)
+- 4ef0ceb linter/eslint/no-useless-switch-case: Avoid temporary vec allocations (#23489) (camc314)
+- 2e09dd3 linter: Avoid JSX fragment child collections (#23486) (camc314)
+- f30a64c linter/oxc/branches-sharing-code: Borrow shared branch suggestion text (#23484) (camc314)
+- 097a317 linter/eslint/no-control-regex: Retain control regex candidates in place (#23482) (camc314)
+- b3a093d linter: Reuse rule dispatch buckets (#23450) (camc314)
+
+### 📚 Documentation
+
+- b50bf4d linter: Remove manually written options doc for `eslint/arrow-body-style` (#23490) (Mikhail Baev)
+
 ## [1.70.0] - 2026-06-15
 
 ### 🚀 Features

@@ -1,0 +1,12 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/fbt/error.todo-fbt-as-local.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: Support local variables named `fbt`", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(525), length: 3 }, primary: false }]), help: Some("Local variables named `fbt` may conflict with the fbt plugin and are not yet supported"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: Support local variables named `fbt`", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(525), length: 3 }, primary: false }]), help: Some("Local variables named `fbt` may conflict with the fbt plugin and are not yet supported"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: Support local variables named `fbt`", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(525), length: 3 }, primary: false }]), help: Some("Local variables named `fbt` may conflict with the fbt plugin and are not yet supported"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: Support local variables named `fbt`", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(665), length: 3 }, primary: false }]), help: Some("Local variables named `fbt` may conflict with the fbt plugin and are not yet supported"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

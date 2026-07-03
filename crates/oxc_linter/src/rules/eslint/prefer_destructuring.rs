@@ -230,20 +230,7 @@ impl Rule for PreferDestructuring {
                                 && get_target_name(&assign_expr.left)
                                     .is_some_and(|v| v == string_literal.value)
                             {
-                                ctx.diagnostic_with_fix(
-                                    prefer_object_destructuring(assign_expr.span),
-                                    |fixer| {
-                                        generate_fix(
-                                            &fixer,
-                                            string_literal.span.shrink(1),
-                                            get_object_span_without_redundant_parentheses(
-                                                &comp_expr.object,
-                                            ),
-                                            assign_expr.span,
-                                            true,
-                                        )
-                                    },
-                                );
+                                ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
                             }
                         }
                     }
@@ -252,21 +239,7 @@ impl Rule for PreferDestructuring {
                             && get_target_name(&assign_expr.left)
                                 .is_some_and(|name| name == static_expr.property.name.as_str()) =>
                     {
-                        // Safe autofix for assignments: foo = object.foo; -> ({ foo } = object);
-                        ctx.diagnostic_with_fix(
-                            prefer_object_destructuring(assign_expr.span),
-                            |fixer| {
-                                generate_fix(
-                                    &fixer,
-                                    static_expr.property.span,
-                                    get_object_span_without_redundant_parentheses(
-                                        &static_expr.object,
-                                    ),
-                                    assign_expr.span,
-                                    true,
-                                )
-                            },
-                        );
+                        ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
                     }
                     _ => {}
                 }
@@ -320,7 +293,6 @@ impl Rule for PreferDestructuring {
                                                     &comp_expr.object,
                                                 ),
                                                 declarator.span(),
-                                                false,
                                             )
                                         },
                                     );
@@ -344,7 +316,6 @@ impl Rule for PreferDestructuring {
                                                 &static_expr.object,
                                             ),
                                             declarator.span(),
-                                            false,
                                         )
                                     },
                                 );
@@ -391,22 +362,16 @@ fn get_object_span_without_redundant_parentheses(object: &Expression) -> Span {
     }
 }
 
-/// Generate the fix for object destructuring.
-/// `is_assignment` determines whether to wrap in parentheses for assignment expressions.
+/// Generate the fix for object destructuring in a variable declaration.
 fn generate_fix(
     fixer: &crate::fixer::RuleFixer<'_, '_>,
     prop_span: Span,
     object_span: Span,
     replacement_span: Span,
-    is_assignment: bool,
 ) -> crate::fixer::RuleFix {
     let prop = fixer.source_range(prop_span);
     let object_text = fixer.source_range(object_span);
-    let replacement = if is_assignment {
-        format!("({{ {prop} }} = {object_text})")
-    } else {
-        format!("{{{prop}}} = {object_text}")
-    };
+    let replacement = format!("{{{prop}}} = {object_text}");
     fixer.replace(replacement_span, replacement)
 }
 
@@ -774,7 +739,8 @@ fn test() {
         ),
         ("var foo = object.foo, /* comment */ a;", "var {foo} = object, /* comment */ a;", None),
         ("var foo = object['foo'];", "var {foo} = object;", None),
-        ("foo = object.foo;", "({ foo } = object);", None),
+        ("foo = object.foo;", "foo = object.foo;", None),
+        ("foo = object['foo'];", "foo = object['foo'];", None),
     ];
 
     Tester::new(PreferDestructuring::NAME, PreferDestructuring::PLUGIN, pass, fail)

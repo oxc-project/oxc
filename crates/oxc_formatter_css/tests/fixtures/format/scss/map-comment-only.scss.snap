@@ -1,0 +1,80 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A map whose only content is a comment keeps the comment INSIDE the parens —
+// it must not leak past `)` (Prettier#18535, 3.8.4 misprints it as
+// `$map: () // comment`). Block comments stay inline when they fit;
+// a `//` comment forces the `)` onto its own line (Prettier's `lineSuffixBoundary`).
+$inline: (
+  // comment
+);
+$block: (
+  /* block */
+);
+$multi: (
+  // a
+  // b
+);
+// Regression guards: a truly empty map stays `()`, and a map WITH items still
+// renders its leading comment normally. A comment before the FIRST item makes
+// the group `groups[0]` a non-key-value pair in Prettier, so the map stops
+// being an SCSS map item and loses its trailing comma.
+$empty: ();
+$with-items: (
+  // comment
+  a: 1,
+);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A map whose only content is a comment keeps the comment INSIDE the parens —
+// it must not leak past `)` (Prettier#18535, 3.8.4 misprints it as
+// `$map: () // comment`). Block comments stay inline when they fit;
+// a `//` comment forces the `)` onto its own line (Prettier's `lineSuffixBoundary`).
+$inline: (
+  // comment
+);
+$block: (/* block */);
+$multi: (
+  // a
+  // b
+);
+// Regression guards: a truly empty map stays `()`, and a map WITH items still
+// renders its leading comment normally. A comment before the FIRST item makes
+// the group `groups[0]` a non-key-value pair in Prettier, so the map stops
+// being an SCSS map item and loses its trailing comma.
+$empty: ();
+$with-items: (
+  // comment
+  a: 1
+);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A map whose only content is a comment keeps the comment INSIDE the parens —
+// it must not leak past `)` (Prettier#18535, 3.8.4 misprints it as
+// `$map: () // comment`). Block comments stay inline when they fit;
+// a `//` comment forces the `)` onto its own line (Prettier's `lineSuffixBoundary`).
+$inline: (
+  // comment
+);
+$block: (/* block */);
+$multi: (
+  // a
+  // b
+);
+// Regression guards: a truly empty map stays `()`, and a map WITH items still
+// renders its leading comment normally. A comment before the FIRST item makes
+// the group `groups[0]` a non-key-value pair in Prettier, so the map stops
+// being an SCSS map item and loses its trailing comma.
+$empty: ();
+$with-items: (
+  // comment
+  a: 1
+);
+
+===================== End =====================

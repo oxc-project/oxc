@@ -9,7 +9,9 @@ extend-exclude = [
   "apps/oxlint/conformance/snapshot.md",
   "apps/oxlint/src-js/package/config.generated.ts",
   "apps/oxfmt/test/**/fixtures/**",
+  "apps/oxfmt/conformance/snapshots/diffs/**/",
   "crates/oxc_linter/fixtures",
+  "crates/oxc_react_compiler/fixtures",
   "crates/oxc_linter/src/rules/eslint/no_undefined.rs",
   "crates/oxc_linter/src/rules/eslint/no_unused_vars/ignored.rs",
   "crates/oxc_linter/src/rules/eslint/no_unused_vars/options.rs",
@@ -59,3 +61,8 @@ writeable = "writeable"
 IIFEs = "IIFEs"
 allowIIFEs = "allowIIFEs"
 TAGS_PEV_FORMATE_DESCRIPTION = "TAGS_PEV_FORMATE_DESCRIPTION"
+# Vendored react_compiler local-variable abbreviations (PrivateName, Optional{Call,Member}Expression, plural of `from`)
+pn = "pn"
+oce = "oce"
+ome = "ome"
+froms = "froms"

@@ -216,6 +216,7 @@
 
     "unicorn/no-named-default": "Implemented via `import/no-named-default`.",
     "unicorn/no-double-comparison": "Use `oxc/double-comparisons` instead.",
+    "unicorn/no-chained-comparison": "Use `oxc/bad-comparison-sequence` instead. TypeScript also reports errors for these comparisons.",
 
     "vue/no-lone-template": "Not currently possible, as it requires Vue template parsing.",
     "vue/no-v-html": "Not currently possible, as it requires Vue template parsing.",

@@ -2,7 +2,7 @@ commit: de8e621c
 
 semantic_test262 Summary:
 AST Parsed     : 47240/47240 (100.00%)
-Positive Passed: 47020/47240 (99.53%)
+Positive Passed: 47028/47240 (99.55%)
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-a-following-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(Function)
@@ -760,66 +760,10 @@ Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
-semantic Error: tasks/coverage/test262/test/language/statements/async-function/unscopables-with-in-nested-fn.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_asyncToGenerator", "callCount", "count", "v"]
-rebuilt        : ScopeId(0): ["_asyncToGenerator", "_ref", "callCount", "count", "ref", "v"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref", "ref"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "ref":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(0)
-Symbol scope ID mismatch for "_ref":
-after transform: SymbolId(7): ScopeId(1)
-rebuilt        : SymbolId(6): ScopeId(0)
-
-semantic Error: tasks/coverage/test262/test/language/statements/async-function/unscopables-with.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_asyncToGenerator", "callCount", "count", "v"]
-rebuilt        : ScopeId(0): ["_asyncToGenerator", "_ref", "callCount", "count", "ref", "v"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref", "ref"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "ref":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(0)
-Symbol scope ID mismatch for "_ref":
-after transform: SymbolId(7): ScopeId(1)
-rebuilt        : SymbolId(6): ScopeId(0)
-
 semantic Error: tasks/coverage/test262/test/language/statements/async-generator/eval-var-scope-syntax-err.js
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
-
-semantic Error: tasks/coverage/test262/test/language/statements/async-generator/unscopables-with-in-nested-fn.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_wrapAsyncGenerator", "callCount", "count", "v"]
-rebuilt        : ScopeId(0): ["_ref", "_wrapAsyncGenerator", "callCount", "count", "ref", "v"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref", "ref"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "ref":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(0)
-Symbol scope ID mismatch for "_ref":
-after transform: SymbolId(7): ScopeId(1)
-rebuilt        : SymbolId(6): ScopeId(0)
-
-semantic Error: tasks/coverage/test262/test/language/statements/async-generator/unscopables-with.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_wrapAsyncGenerator", "callCount", "count", "v"]
-rebuilt        : ScopeId(0): ["_ref", "_wrapAsyncGenerator", "callCount", "count", "ref", "v"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref", "ref"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "ref":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(0)
-Symbol scope ID mismatch for "_ref":
-after transform: SymbolId(7): ScopeId(1)
-rebuilt        : SymbolId(6): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/cpn-class-decl-fields-computed-property-name-from-arrow-function-expression.js
 Scope flags mismatch:
@@ -1209,34 +1153,6 @@ Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | DirectEval)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode)
 
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-id-put-unresolvable-no-strict.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_asyncIterator", "_asyncToGenerator"]
-rebuilt        : ScopeId(0): ["_asyncIterator", "_asyncToGenerator", "_fn", "fn"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_fn", "fn", "iterCount", "promise"]
-rebuilt        : ScopeId(1): ["iterCount", "promise"]
-Symbol scope ID mismatch for "fn":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(3): ScopeId(0)
-Symbol scope ID mismatch for "_fn":
-after transform: SymbolId(10): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(0)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-put-unresolvable-no-strict.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_asyncIterator", "_asyncToGenerator"]
-rebuilt        : ScopeId(0): ["_asyncIterator", "_asyncToGenerator", "_fn", "fn"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_fn", "fn", "iterCount", "promise"]
-rebuilt        : ScopeId(1): ["iterCount", "promise"]
-Symbol scope ID mismatch for "fn":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(3): ScopeId(0)
-Symbol scope ID mismatch for "_fn":
-after transform: SymbolId(10): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(0)
-
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-getter.js
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
@@ -1256,34 +1172,6 @@ semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/asy
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-id-put-unresolvable-no-strict.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_asyncIterator", "_awaitAsyncGenerator", "_wrapAsyncGenerator"]
-rebuilt        : ScopeId(0): ["_asyncIterator", "_awaitAsyncGenerator", "_fn", "_wrapAsyncGenerator", "fn"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_fn", "fn", "iterCount", "promise"]
-rebuilt        : ScopeId(1): ["iterCount", "promise"]
-Symbol scope ID mismatch for "fn":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(0)
-Symbol scope ID mismatch for "_fn":
-after transform: SymbolId(11): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(0)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-put-unresolvable-no-strict.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_asyncIterator", "_awaitAsyncGenerator", "_wrapAsyncGenerator"]
-rebuilt        : ScopeId(0): ["_asyncIterator", "_awaitAsyncGenerator", "_fn", "_wrapAsyncGenerator", "fn"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_fn", "fn", "iterCount", "promise"]
-rebuilt        : ScopeId(1): ["iterCount", "promise"]
-Symbol scope ID mismatch for "fn":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(0)
-Symbol scope ID mismatch for "_fn":
-after transform: SymbolId(11): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-getter.js
 Scope parent mismatch:
@@ -1328,21 +1216,9 @@ after transform: SymbolId(1) "x"
 rebuilt        : SymbolId(1) "x"
 
 semantic Error: tasks/coverage/test262/test/language/statements/switch/scope-lex-async-function.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_asyncToGenerator"]
-rebuilt        : ScopeId(0): ["_asyncToGenerator", "_x", "x"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_x", "x"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(0)
 Symbol reference IDs mismatch for "x":
 after transform: SymbolId(0): []
 rebuilt        : SymbolId(1): [ReferenceId(7)]
-Symbol scope ID mismatch for "_x":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(0)
 Reference symbol mismatch for "x":
 after transform: <None>
 rebuilt        : SymbolId(1) "x"
@@ -1351,21 +1227,9 @@ after transform: ["arguments", "require", "x"]
 rebuilt        : ["arguments", "require"]
 
 semantic Error: tasks/coverage/test262/test/language/statements/switch/scope-lex-async-generator.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_wrapAsyncGenerator"]
-rebuilt        : ScopeId(0): ["_wrapAsyncGenerator", "_x", "x"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_x", "x"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(0)
 Symbol reference IDs mismatch for "x":
 after transform: SymbolId(0): []
 rebuilt        : SymbolId(1): [ReferenceId(7)]
-Symbol scope ID mismatch for "_x":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(0)
 Reference symbol mismatch for "x":
 after transform: <None>
 rebuilt        : SymbolId(1) "x"

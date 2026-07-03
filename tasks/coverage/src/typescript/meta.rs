@@ -345,7 +345,7 @@ impl TestCaseContent {
     //   * `filename(module=es2022).errors.txt`
     //   * `filename(target=esnext).errors.txt`
     //   * `filename.errors.txt`
-    fn get_error_files(path: &Path, options: &CompilerSettings) -> Vec<String> {
+    pub(crate) fn get_error_files(path: &Path, options: &CompilerSettings) -> Vec<String> {
         #[must_use]
         fn create_suffixes<T: Display>(name: &str, flags: &[T]) -> Option<Vec<String>> {
             if flags.len() < 2 {

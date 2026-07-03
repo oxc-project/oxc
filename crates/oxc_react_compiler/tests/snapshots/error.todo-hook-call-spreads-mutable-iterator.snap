@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-hook-call-spreads-mutable-iterator.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Unexpected error: Todo: Support spread syntax for hook arguments (5:24)", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(45), length: 120 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: Support spread syntax for hook arguments", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(147), length: 14 }, primary: false }]), help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

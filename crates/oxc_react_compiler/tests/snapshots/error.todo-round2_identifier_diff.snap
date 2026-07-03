@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-round2_identifier_diff.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: Unsupported declaration type for hoisting", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(167), length: 596 }, primary: false }]), help: Some("variable \"OuterProps\" declared with Unknown"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: (BuildHIR::lowerExpression) Handle ClassExpression expressions", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(368), length: 387 }, primary: false }]), help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

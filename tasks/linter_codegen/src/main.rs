@@ -208,7 +208,15 @@ fn detect_rule_run_implementations(file: &File, rule: &RuleEntry) -> FxHashSet<S
     // functions that are implemented in the rule impl. Then, we will only remove a few known functions
     // that do not affect rule run behavior. This way, if we ever add more ways of running a rule, it should
     // be forwards compatible even if we do not change the linter codegen.
-    let ignore_funcs = FxHashSet::from_iter(["from_configuration", "should_run"]);
+    let ignore_funcs = FxHashSet::from_iter([
+        // Safe because this only deserializes the config and does not affect rule run behavior.
+        "from_configuration",
+        // Safe because this only serializes the rule config and does not affect rule run behavior.
+        "to_configuration",
+        // This function does affect rule run behavior, but is explicitly taken into account
+        // when determining whether a rule should be run on a given file.
+        "should_run",
+    ]);
 
     // Get names of all implemented functions in rule impl
     let implemented_funcs = rule_impl

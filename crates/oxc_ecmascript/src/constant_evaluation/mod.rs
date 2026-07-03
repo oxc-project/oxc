@@ -15,7 +15,8 @@ use std::borrow::Cow;
 
 use num_bigint::BigInt;
 use num_traits::{ToPrimitive, Zero};
-use oxc_ast::{AstBuilder, ast::*};
+use oxc_allocator::GetAllocator;
+use oxc_ast::{ast::*, builder::GetAstBuilder};
 
 use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
 
@@ -26,8 +27,9 @@ use crate::{
     to_numeric::ToNumeric,
 };
 
-pub trait ConstantEvaluationCtx<'a>: MayHaveSideEffectsContext<'a> {
-    fn ast(&self) -> AstBuilder<'a>;
+pub trait ConstantEvaluationCtx<'a>:
+    MayHaveSideEffectsContext<'a> + GetAstBuilder<'a> + GetAllocator<'a>
+{
 }
 
 pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {

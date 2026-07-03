@@ -37,7 +37,7 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 
-use super::{macros::inherit_variants, *};
+use super::*;
 
 /// Represents the root of a JavaScript abstract syntax tree (AST), containing metadata about the source,
 /// directives, top-level statements, and scope information.
@@ -67,7 +67,6 @@ pub struct Program<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-inherit_variants! {
 /// Represents a type for AST nodes corresponding to JavaScript's expressions.
 ///
 /// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
@@ -164,62 +163,9 @@ pub enum Expression<'a> {
     /// See [`V8IntrinsicExpression`] for AST node details.
     V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 39,
 
-    // `MemberExpression` variants added here by `inherit_variants!` macro
-    @inherit MemberExpression
+    // `MemberExpression` variants added here by `#[ast]` macro
+    INHERIT(MemberExpression<'a>),
 }
-}
-
-/// Macro for matching `Expression`'s variants.
-/// Includes `MemberExpression`'s variants.
-#[macro_export]
-macro_rules! match_expression {
-    ($ty:ident) => {
-        $ty::BooleanLiteral(_)
-            | $ty::NullLiteral(_)
-            | $ty::NumericLiteral(_)
-            | $ty::BigIntLiteral(_)
-            | $ty::RegExpLiteral(_)
-            | $ty::StringLiteral(_)
-            | $ty::TemplateLiteral(_)
-            | $ty::Identifier(_)
-            | $ty::MetaProperty(_)
-            | $ty::Super(_)
-            | $ty::ArrayExpression(_)
-            | $ty::ArrowFunctionExpression(_)
-            | $ty::AssignmentExpression(_)
-            | $ty::AwaitExpression(_)
-            | $ty::BinaryExpression(_)
-            | $ty::CallExpression(_)
-            | $ty::ChainExpression(_)
-            | $ty::ClassExpression(_)
-            | $ty::ConditionalExpression(_)
-            | $ty::FunctionExpression(_)
-            | $ty::ImportExpression(_)
-            | $ty::LogicalExpression(_)
-            | $ty::NewExpression(_)
-            | $ty::ObjectExpression(_)
-            | $ty::ParenthesizedExpression(_)
-            | $ty::SequenceExpression(_)
-            | $ty::TaggedTemplateExpression(_)
-            | $ty::ThisExpression(_)
-            | $ty::UnaryExpression(_)
-            | $ty::UpdateExpression(_)
-            | $ty::YieldExpression(_)
-            | $ty::PrivateInExpression(_)
-            | $ty::JSXElement(_)
-            | $ty::JSXFragment(_)
-            | $ty::TSAsExpression(_)
-            | $ty::TSSatisfiesExpression(_)
-            | $ty::TSTypeAssertion(_)
-            | $ty::TSNonNullExpression(_)
-            | $ty::TSInstantiationExpression(_)
-            | $ty::ComputedMemberExpression(_)
-            | $ty::StaticMemberExpression(_)
-            | $ty::PrivateFieldExpression(_)
-            | $ty::V8IntrinsicExpression(_)
-    };
-}
-pub use match_expression;
 
 /// `foo` in `let foo = 1;`
 ///
@@ -279,7 +225,7 @@ pub struct IdentifierReference<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "Identifier",
-    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsTypeAnnotationOrNull),
     field_order(decorators, name, optional, typeAnnotation, span),
 )]
 pub struct BindingIdentifier<'a> {
@@ -338,7 +284,6 @@ pub struct ArrayExpression<'a> {
     pub elements: Vec<'a, ArrayExpressionElement<'a>>,
 }
 
-inherit_variants! {
 /// Represents an element in an array literal.
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
@@ -355,9 +300,9 @@ pub enum ArrayExpressionElement<'a> {
     /// Array hole for sparse arrays.
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     Elision(Box<'a, Elision>) = 65,
-    // `Expression` variants added here by `inherit_variants!` macro
-    @inherit Expression
-}
+
+    // `Expression` variants added here by `#[ast]` macro
+    INHERIT(Expression<'a>),
 }
 
 /// empty slot in `const array = [1, , 2];`
@@ -415,7 +360,6 @@ pub struct ObjectProperty<'a> {
     pub computed: bool,
 }
 
-inherit_variants! {
 /// Property Key
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
@@ -429,9 +373,9 @@ pub enum PropertyKey<'a> {
     StaticIdentifier(Box<'a, IdentifierName<'a>>) = 64,
     /// `#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
     PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>) = 65,
-    // `Expression` variants added here by `inherit_variants!` macro
-    @inherit Expression
-}
+
+    // `Expression` variants added here by `#[ast]` macro
+    INHERIT(Expression<'a>),
 }
 
 /// Represents the kind of property in an object literal or class.
@@ -533,17 +477,6 @@ pub enum MemberExpression<'a> {
     PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 50,
 }
 
-/// Macro for matching `MemberExpression`'s variants.
-#[macro_export]
-macro_rules! match_member_expression {
-    ($ty:ident) => {
-        $ty::ComputedMemberExpression(_)
-            | $ty::StaticMemberExpression(_)
-            | $ty::PrivateFieldExpression(_)
-    };
-}
-pub use match_member_expression;
-
 /// `ar[0]` in `const ar = [1, 2]; ar[0];`
 ///
 /// Represents a computed member access expression, which can include an object and an expression.
@@ -575,7 +508,7 @@ pub struct StaticMemberExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
-/// `c.#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
+/// `this.#a` in `class C { #a = 1; getA() { return this.#a; } }`
 ///
 /// Represents a private field access expression, which can include an object and a private identifier.
 #[ast(visit)]
@@ -678,7 +611,6 @@ pub struct SpreadElement<'a> {
     pub argument: Expression<'a>,
 }
 
-inherit_variants! {
 /// Argument
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
@@ -690,9 +622,9 @@ inherit_variants! {
 pub enum Argument<'a> {
     /// `...[1, 2]` in `const arr = [...[1, 2]];`
     SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
-    // `Expression` variants added here by `inherit_variants!` macro
-    @inherit Expression
-}
+
+    // `Expression` variants added here by `#[ast]` macro
+    INHERIT(Expression<'a>),
 }
 
 /// `++i` in `let i = 0; ++i;`
@@ -794,7 +726,6 @@ pub struct AssignmentExpression<'a> {
     pub right: Expression<'a>,
 }
 
-inherit_variants! {
 /// Destructuring Assignment
 ///
 /// Inherits variants from [`SimpleAssignmentTarget`] and [`AssignmentTargetPattern`].
@@ -805,14 +736,11 @@ inherit_variants! {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum AssignmentTarget<'a> {
-    // `SimpleAssignmentTarget` variants added here by `inherit_variants!` macro
-    @inherit SimpleAssignmentTarget
-    // `AssignmentTargetPattern` variants added here by `inherit_variants!` macro
-    @inherit AssignmentTargetPattern
-}
+    // `SimpleAssignmentTarget` and `AssignmentTargetPattern` variants added here by `#[ast]` macro
+    INHERIT(SimpleAssignmentTarget<'a>),
+    INHERIT(AssignmentTargetPattern<'a>),
 }
 
-inherit_variants! {
 /// Simple Assignment Target
 ///
 /// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
@@ -827,46 +755,10 @@ pub enum SimpleAssignmentTarget<'a> {
     TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 2,
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
     TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
-    // `MemberExpression` variants added here by `inherit_variants!` macro
-    @inherit MemberExpression
-}
-}
 
-/// Macro for matching `AssignmentTarget`'s variants.
-/// Includes `SimpleAssignmentTarget`'s and `AssignmentTargetPattern`'s variants.
-#[macro_export]
-macro_rules! match_assignment_target {
-    ($ty:ident) => {
-        $ty::AssignmentTargetIdentifier(_)
-            | $ty::ComputedMemberExpression(_)
-            | $ty::StaticMemberExpression(_)
-            | $ty::PrivateFieldExpression(_)
-            | $ty::TSAsExpression(_)
-            | $ty::TSSatisfiesExpression(_)
-            | $ty::TSNonNullExpression(_)
-            | $ty::TSTypeAssertion(_)
-            | $ty::ArrayAssignmentTarget(_)
-            | $ty::ObjectAssignmentTarget(_)
-    };
+    // `MemberExpression` variants added here by `#[ast]` macro
+    INHERIT(MemberExpression<'a>),
 }
-pub use match_assignment_target;
-
-/// Macro for matching `SimpleAssignmentTarget`'s variants.
-/// Includes `MemberExpression`'s variants
-#[macro_export]
-macro_rules! match_simple_assignment_target {
-    ($ty:ident) => {
-        $ty::AssignmentTargetIdentifier(_)
-            | $ty::ComputedMemberExpression(_)
-            | $ty::StaticMemberExpression(_)
-            | $ty::PrivateFieldExpression(_)
-            | $ty::TSAsExpression(_)
-            | $ty::TSSatisfiesExpression(_)
-            | $ty::TSNonNullExpression(_)
-            | $ty::TSTypeAssertion(_)
-    };
-}
-pub use match_simple_assignment_target;
 
 #[ast(visit)]
 #[derive(Debug)]
@@ -875,15 +767,6 @@ pub enum AssignmentTargetPattern<'a> {
     ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a>>) = 8,
     ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a>>) = 9,
 }
-
-/// Macro for matching `AssignmentTargetPattern`'s variants.
-#[macro_export]
-macro_rules! match_assignment_target_pattern {
-    ($ty:ident) => {
-        $ty::ArrayAssignmentTarget(_) | $ty::ObjectAssignmentTarget(_)
-    };
-}
-pub use match_assignment_target_pattern;
 
 /// `[a, b]` in `[a, b] = arr;`
 ///
@@ -941,7 +824,6 @@ pub struct AssignmentTargetRest<'a> {
     pub target: AssignmentTarget<'a>,
 }
 
-inherit_variants! {
 /// Assignment Target Maybe Default
 ///
 /// Inherits variants from [`AssignmentTarget`]. See [`ast` module docs] for explanation of inheritance.
@@ -952,9 +834,9 @@ inherit_variants! {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum AssignmentTargetMaybeDefault<'a> {
     AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>) = 16,
-    // `AssignmentTarget` variants added here by `inherit_variants!` macro
-    @inherit AssignmentTarget
-}
+
+    // `AssignmentTarget` variants added here by `#[ast]` macro
+    INHERIT(AssignmentTarget<'a>),
 }
 
 #[ast(visit)]
@@ -1082,7 +964,6 @@ pub struct ChainExpression<'a> {
     pub expression: ChainElement<'a>,
 }
 
-inherit_variants! {
 /// Chain Element
 ///
 /// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
@@ -1095,9 +976,9 @@ pub enum ChainElement<'a> {
     CallExpression(Box<'a, CallExpression<'a>>) = 0,
     /// `foo?.baz!` or `foo?.[bar]!`
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 1,
-    // `MemberExpression` variants added here by `inherit_variants!` macro
-    @inherit MemberExpression
-}
+
+    // `MemberExpression` variants added here by `#[ast]` macro
+    INHERIT(MemberExpression<'a>),
 }
 
 /// `(a + b)` in `const res = (a + b) / c;`
@@ -1113,7 +994,6 @@ pub struct ParenthesizedExpression<'a> {
     pub expression: Expression<'a>,
 }
 
-inherit_variants! {
 /// Statement
 ///
 /// Inherits variants from [`Declaration`] and [`ModuleDeclaration`].
@@ -1143,11 +1023,10 @@ pub enum Statement<'a> {
     TryStatement(Box<'a, TryStatement<'a>>) = 15,
     WhileStatement(Box<'a, WhileStatement<'a>>) = 16,
     WithStatement(Box<'a, WithStatement<'a>>) = 17,
-    // `Declaration` variants added here by `inherit_variants!` macro
-    @inherit Declaration
-    // `ModuleDeclaration` variants added here by `inherit_variants!` macro
-    @inherit ModuleDeclaration
-}
+
+    // `Declaration` and `ModuleDeclaration` variants added here by `#[ast]` macro
+    INHERIT(Declaration<'a>),
+    INHERIT(ModuleDeclaration<'a>),
 }
 
 /// `"use strict";` in `"use strict";`
@@ -1209,23 +1088,6 @@ pub enum Declaration<'a> {
     TSGlobalDeclaration(Box<'a, TSGlobalDeclaration<'a>>) = 39,
     TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
 }
-
-/// Macro for matching `Declaration`'s variants.
-#[macro_export]
-macro_rules! match_declaration {
-    ($ty:ident) => {
-        $ty::VariableDeclaration(_)
-            | $ty::FunctionDeclaration(_)
-            | $ty::ClassDeclaration(_)
-            | $ty::TSTypeAliasDeclaration(_)
-            | $ty::TSInterfaceDeclaration(_)
-            | $ty::TSEnumDeclaration(_)
-            | $ty::TSModuleDeclaration(_)
-            | $ty::TSGlobalDeclaration(_)
-            | $ty::TSImportEqualsDeclaration(_)
-    };
-}
-pub use match_declaration;
 
 /// `let a;` in `let a; a = 1;`
 ///
@@ -1349,7 +1211,6 @@ pub struct ForStatement<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-inherit_variants! {
 /// For Statement Init
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
@@ -1360,9 +1221,9 @@ inherit_variants! {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum ForStatementInit<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 64,
-    // `Expression` variants added here by `inherit_variants!` macro
-    @inherit Expression
-}
+
+    // `Expression` variants added here by `#[ast]` macro
+    INHERIT(Expression<'a>),
 }
 
 /// For-In Statement
@@ -1379,7 +1240,6 @@ pub struct ForInStatement<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-inherit_variants! {
 /// For Statement Left
 ///
 /// Inherits variants from [`AssignmentTarget`]. See [`ast` module docs] for explanation of inheritance.
@@ -1390,9 +1250,9 @@ inherit_variants! {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum ForStatementLeft<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 16,
-    // `AssignmentTarget` variants added here by `inherit_variants!` macro
-    @inherit AssignmentTarget
-}
+
+    // `AssignmentTarget` variants added here by `#[ast]` macro
+    INHERIT(AssignmentTarget<'a>),
 }
 
 /// For-Of Statement
@@ -1679,7 +1539,7 @@ pub struct AssignmentPattern<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
-    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsTypeAnnotationOrNull),
     field_order(decorators, properties, optional, typeAnnotation, span),
 )]
 pub struct ObjectPattern<'a> {
@@ -1714,7 +1574,7 @@ pub struct BindingProperty<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
-    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsTypeAnnotationOrNull),
     field_order(decorators, elements, optional, typeAnnotation, span),
 )]
 pub struct ArrayPattern<'a> {
@@ -1739,7 +1599,7 @@ pub struct ArrayPattern<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "RestElement",
-    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull, value = TsNull),
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsTypeAnnotationOrNull, value = TsNull),
     field_order(decorators, argument, optional, typeAnnotation, value, span),
 )]
 pub struct BindingRestElement<'a> {
@@ -2430,20 +2290,6 @@ pub enum ModuleDeclaration<'a> {
     TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
 }
 
-/// Macro for matching `ModuleDeclaration`'s variants.
-#[macro_export]
-macro_rules! match_module_declaration {
-    ($ty:ident) => {
-        $ty::ImportDeclaration(_)
-            | $ty::ExportAllDeclaration(_)
-            | $ty::ExportDefaultDeclaration(_)
-            | $ty::ExportNamedDeclaration(_)
-            | $ty::TSExportAssignment(_)
-            | $ty::TSNamespaceExportDeclaration(_)
-    };
-}
-pub use match_module_declaration;
-
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
@@ -2769,7 +2615,6 @@ pub struct ExportSpecifier<'a> {
     pub export_kind: ImportOrExportKind, // `export { type Foo as Bar };`
 }
 
-inherit_variants! {
 /// Export Default Declaration Kind
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
@@ -2785,9 +2630,8 @@ pub enum ExportDefaultDeclarationKind<'a> {
 
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 66,
 
-    // `Expression` variants added here by `inherit_variants!` macro
-    @inherit Expression
-}
+    // `Expression` variants added here by `#[ast]` macro
+    INHERIT(Expression<'a>),
 }
 
 /// Module Export Name

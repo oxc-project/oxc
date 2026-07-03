@@ -10,7 +10,7 @@ use std::{borrow::Cow, ops::Deref};
 
 use unicode_width::UnicodeWidthStr;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 
 use crate::IndentWidth;
 
@@ -92,6 +92,12 @@ pub enum FormatElement<'a> {
     /// The usize is an index into the collected tailwind classes array.
     /// During printing, this will be replaced with the sorted class name.
     TailwindClass(usize),
+
+    /// An embedded-language interpolation placeholder.
+    /// The `u32` is the host's expression index (0-based, e.g. the Nth `${expr}` of a css-in-js template).
+    /// The host that embeds this IR MUST replace the marker with the interpolation before the document is printed;
+    /// it is not meant to reach the printer (which `debug_assert`s if one survives).
+    EmbedPlaceholder(u32),
 }
 
 impl std::fmt::Debug for FormatElement<'_> {
@@ -111,6 +117,9 @@ impl std::fmt::Debug for FormatElement<'_> {
             FormatElement::TailwindClass(index) => {
                 fmt.debug_tuple("TailwindClass").field(index).finish()
             }
+            FormatElement::EmbedPlaceholder(index) => {
+                fmt.debug_tuple("EmbedPlaceholder").field(index).finish()
+            }
         }
     }
 }
@@ -125,6 +134,8 @@ pub enum LineMode {
     Hard,
     /// See [crate::builders::empty_line] for documentation.
     Empty,
+    /// See [crate::builders::literal_line_break] for documentation.
+    Literal,
 }
 
 impl LineMode {
@@ -133,7 +144,7 @@ impl LineMode {
     }
 
     pub const fn will_break(self) -> bool {
-        matches!(self, LineMode::Hard | LineMode::Empty)
+        matches!(self, LineMode::Hard | LineMode::Empty | LineMode::Literal)
     }
 }
 
@@ -267,7 +278,7 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => line_mode.will_break(),
-            FormatElement::Text { text: _, width } => width.is_multiline(),
+            FormatElement::Text { text: _, width } => width.propagates_expand(),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even
             // the most flat version contains some content that forces a break.
@@ -277,7 +288,8 @@ impl FormatElements for FormatElement<'_> {
             | FormatElement::LineSuffixBoundary
             | FormatElement::Space
             | FormatElement::Tag(_)
-            | FormatElement::TailwindClass(_) => false,
+            | FormatElement::TailwindClass(_)
+            | FormatElement::EmbedPlaceholder(_) => false,
         }
     }
 
@@ -413,25 +425,37 @@ pub trait FormatElements {
 ///
 /// ## Representation
 ///
-/// Uses a single `u32` to efficiently store both the width value and a multiline flag:
+/// Uses a single `u32` to efficiently store the width value and two flags:
 ///
 /// - Bit 31: Multiline flag (1 = multiline, 0 = single line)
-/// - Bits 0-30: Width value (stored directly)
+/// - Bit 30: No-expand flag (1 = multiline text that does not expand enclosing groups)
+/// - Bits 0-29: Width value (stored directly)
 ///
 /// This encoding allows `TextWidth` to fit in 4 bytes while supporting both a width value
-/// and a boolean flag. The maximum representable width is 2^31 - 1 (0x7FFFFFFF).
+/// and boolean flags. The maximum representable width is 2^30 - 1 (0x3FFFFFFF).
 ///
 /// The maximum value is sufficient in practice as texts that long would exceed any
 /// reasonable line width configuration (typically < 500 columns).
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct TextWidth(u32);
 
+/// Every byte in `0x20..=0x7E` is a single-width ASCII character,
+/// so display width equals byte length and the text is guaranteed single-line.
+fn is_all_printable_ascii(s: &str) -> bool {
+    s.as_bytes().iter().all(|&b| matches!(b, 0x20..=0x7e))
+}
+
 impl TextWidth {
     /// Bit mask for the multiline flag (highest bit)
     const MULTILINE_MASK: u32 = 1 << 31;
 
-    /// Bit mask for extracting the width value (all bits except the highest)
-    const WIDTH_MASK: u32 = Self::MULTILINE_MASK - 1;
+    /// Bit mask for the "multiline but does not expand enclosing groups" flag.
+    /// Equivalent to Prettier's `literallineWithoutBreakParent`: the newlines still
+    /// print literally, but `Document::propagate_expand` / `will_break` ignore them.
+    const NO_EXPAND_MASK: u32 = 1 << 30;
+
+    /// Bit mask for extracting the width value (all bits except the flags)
+    const WIDTH_MASK: u32 = Self::NO_EXPAND_MASK - 1;
 
     /// Encodes width and multiline flag into a single u32.
     const fn encode(width: u32, multiline: bool) -> u32 {
@@ -468,6 +492,12 @@ impl TextWidth {
             return Self::single(0);
         }
 
+        // Excludes `\t`, `\n`, control bytes and multi-byte UTF-8,
+        // those fall through to the scan below.
+        if is_all_printable_ascii(text) {
+            return Self::single(text.len() as u32);
+        }
+
         let mut width = 0u32;
         let mut segment_start = 0;
         for (i, c) in text.char_indices() {
@@ -491,14 +521,30 @@ impl TextWidth {
 
     /// Creates width from a string known to not contain whitespace.
     /// More efficient than `from_text` when whitespace is guaranteed absent.
+    #[expect(clippy::cast_possible_truncation)]
     pub fn from_non_whitespace_str(name: &str) -> TextWidth {
-        #[expect(clippy::cast_possible_truncation)]
+        if is_all_printable_ascii(name) {
+            return Self::single(name.len() as u32);
+        }
         Self::single(name.width() as u32)
     }
 
     /// Returns true if the text contains newlines.
     pub const fn is_multiline(self) -> bool {
         (self.0 & Self::MULTILINE_MASK) != 0
+    }
+
+    /// Marks a multiline width so its newlines do NOT expand enclosing groups
+    /// (Prettier's `literallineWithoutBreakParent`). No-op for single-line widths.
+    #[must_use]
+    pub const fn without_expand_parent(self) -> Self {
+        if self.is_multiline() { Self(self.0 | Self::NO_EXPAND_MASK) } else { self }
+    }
+
+    /// Returns true if the text forces enclosing groups to expand:
+    /// it contains newlines and is not marked [`Self::without_expand_parent`].
+    pub const fn propagates_expand(self) -> bool {
+        (self.0 & (Self::MULTILINE_MASK | Self::NO_EXPAND_MASK)) == Self::MULTILINE_MASK
     }
 }
 
@@ -556,6 +602,24 @@ mod tests {
     }
 
     #[test]
+    fn without_expand_parent_disables_propagation_keeping_width() {
+        let multi = TextWidth::multiline(3);
+        debug_assert!(multi.propagates_expand());
+
+        let no_expand = multi.without_expand_parent();
+        debug_assert!(no_expand.is_multiline());
+        debug_assert!(!no_expand.propagates_expand());
+        debug_assert_eq!(no_expand.value(), 3);
+    }
+
+    #[test]
+    fn without_expand_parent_is_noop_for_single_line() {
+        let single = TextWidth::single(3);
+        debug_assert!(!single.propagates_expand());
+        debug_assert_eq!(single.without_expand_parent(), single);
+    }
+
+    #[test]
     fn from_text_handles_unicode() {
         // Emoji width
         let width = TextWidth::from_text("👍", indent_width(2));
@@ -598,5 +662,93 @@ mod tests {
         let width = TextWidth::from_text("", indent_width(2));
         debug_assert_eq!(width.value(), 0);
         debug_assert!(!width.is_multiline());
+    }
+
+    #[test]
+    fn ascii_fast_path_is_byte_identical_to_slow_path() {
+        use unicode_width::UnicodeWidthStr;
+
+        // Reference: the original `from_text` scan, without the ASCII fast path.
+        #[expect(clippy::cast_possible_truncation)]
+        fn from_text_slow(text: &str, indent_width: IndentWidth) -> TextWidth {
+            if text.is_empty() {
+                return TextWidth::single(0);
+            }
+            let mut width = 0u32;
+            let mut segment_start = 0;
+            for (i, c) in text.char_indices() {
+                match c {
+                    '\t' => {
+                        width += text[segment_start..i].width() as u32;
+                        width += u32::from(indent_width.value());
+                        segment_start = i + 1;
+                    }
+                    '\n' => {
+                        width += text[segment_start..i].width() as u32;
+                        return TextWidth::multiline(width);
+                    }
+                    _ => {}
+                }
+            }
+            width += text[segment_start..].width() as u32;
+            TextWidth::single(width)
+        }
+
+        let cases = [
+            "",
+            "abc",
+            "a b c",
+            "className",
+            "onClick",
+            "~!@#$%^&*()_+-=[]{}|;':\",./<>?",
+            " ",
+            "  leading-and-trailing  ",
+            "\t",
+            "a\tb",
+            "a\nb",
+            "a\r\nb",
+            "line1\nline2",
+            "café",
+            "日本語",
+            "🗑️ DELETE",
+            "⚠️",
+            "a\u{0b}b", // vertical tab
+            "a\u{0c}b", // form feed
+            "a\u{7f}b", // DEL
+            "\u{1f}",   // unit separator
+            "mix café \t 日 \n end",
+        ];
+        let w = indent_width(4);
+        for &s in &cases {
+            debug_assert_eq!(
+                TextWidth::from_text(s, w).0,
+                from_text_slow(s, w).0,
+                "from_text mismatch for {s:?}"
+            );
+        }
+
+        // `from_non_whitespace_str` must equal an unconditional `UnicodeWidthStr::width`.
+        let names = [
+            "",
+            "x",
+            "className",
+            "onClick",
+            "snake_case_$id123",
+            "~!@#",
+            "café",
+            "日本語",
+            "🗑️",
+            "a\u{7f}b",
+            "\u{0b}",
+        ];
+        for &n in &names {
+            #[expect(clippy::cast_possible_truncation)]
+            let expected = TextWidth::single(n.width() as u32);
+            debug_assert_eq!(
+                TextWidth::from_non_whitespace_str(n).0,
+                expected.0,
+                "from_non_whitespace_str mismatch for {n:?}"
+            );
+        }
     }
 }

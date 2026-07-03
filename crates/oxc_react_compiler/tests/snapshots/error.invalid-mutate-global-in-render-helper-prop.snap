@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.invalid-mutate-global-in-render-helper-prop.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: This value cannot be modified", labels: One([LabeledSpan { label: Some("value cannot be modified"), span: SourceSpan { offset: SourceOffset(398), length: 6 }, primary: false }]), help: Some("Modifying a variable defined outside a component or hook is not allowed. Consider using an effect"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

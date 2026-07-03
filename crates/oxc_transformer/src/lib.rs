@@ -7,8 +7,8 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
-use oxc_ast::{AstBuilder, ast::*};
+use oxc_allocator::{Allocator, ArenaVec, TakeIn};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_diagnostics::Diagnostics;
 #[cfg(feature = "react_compiler")]
 use oxc_react_compiler::{PluginOptions, transform as react_compiler_transform};
@@ -190,7 +190,7 @@ impl<'a> Transformer<'a> {
             x1_jsx: Jsx::new(
                 self.jsx,
                 self.env.es2018.object_rest_spread,
-                ast_builder,
+                &ast_builder,
                 program.source_type,
             ),
             x2_es2026: ES2026::new(self.env.es2026),
@@ -228,11 +228,14 @@ impl<'a> Transformer<'a> {
         let Some(options) = self.react_compiler.take() else {
             return (scoping, Diagnostics::new());
         };
-        let result = react_compiler_transform(program, self.allocator, options);
-        let Some(compiled) = result.program else {
-            return (scoping, result.diagnostics);
+        let mut result = {
+            let semantic = SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
+            react_compiler_transform(program, &semantic, self.allocator, options)
         };
-        *program = compiled;
+        if !result.changed {
+            return (scoping, result.diagnostics);
+        }
+        *program = result.program.take().expect("changed result should include a program");
         let scoping =
             SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
         (scoping, result.diagnostics)
@@ -645,8 +648,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     continue;
                 };
-                let expression = Some(expr_stmt.expression.take_in(ctx.ast));
-                *stmt = ctx.ast.statement_return(SPAN, expression);
+                let expression = Some(expr_stmt.expression.take_in(ctx));
+                *stmt = Statement::new_return_statement(SPAN, expression, ctx);
                 return;
             }
             unreachable!("At least one statement should be expression statement")

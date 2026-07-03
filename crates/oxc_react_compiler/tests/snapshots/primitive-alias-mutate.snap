@@ -1,0 +1,15 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/primitive-alias-mutate.js
+---
+function component(a) {
+	let x;
+	if (a) {
+		x = "bar";
+	} else {
+		x = "baz";
+	}
+	const y = x;
+	mutate(y);
+	return y;
+}

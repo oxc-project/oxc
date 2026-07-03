@@ -1,6 +1,6 @@
 [package]
 name = "oxc_mangler"
-version = "0.137.0"
+version = "0.138.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -23,6 +23,7 @@ test = true
 oxc_allocator = { workspace = true, features = ["bitset"] }
 oxc_ast = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["inline_string"] }
+oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
@@ -34,3 +35,8 @@ rustc-hash = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }
+
+# Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
+# If we enabled `disable_old_builder` feature in main dependency, feature unification would
+# cause it to be activated for `oxc_ast` for the user too.
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }

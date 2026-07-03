@@ -307,6 +307,20 @@ fn test() {
         ("function foo() { this.eval('foo'); }", None, None, None),
         ("var obj = {foo: function() { this.eval('foo'); }}", None, None, None),
         ("var obj = {}; obj.foo = function() { this.eval('foo'); }", None, None, None),
+        // A function returned from an immediately-invoked function and assigned to a
+        // member is not bound to the global object, so `this.eval` is not indirect eval.
+        (
+            "obj.foo = (function() { return function() { this.eval('foo'); }; })()",
+            allow_indirect_with_false(),
+            None,
+            Some(PathBuf::from("foo.cjs")),
+        ),
+        (
+            "obj.foo = (() => function() { this.eval('foo'); })()",
+            allow_indirect_with_false(),
+            None,
+            Some(PathBuf::from("foo.cjs")),
+        ),
         ("() => { this.eval('foo') }", None, None, None), // { "ecmaVersion": 6, "sourceType": "module" },
         ("function f() { 'use strict'; () => { this.eval('foo') } }", None, None, None), // { "ecmaVersion": 6 },
         ("(function f() { 'use strict'; () => { this.eval('foo') } })", None, None, None), // { "ecmaVersion": 6 },
@@ -330,6 +344,24 @@ fn test() {
         ),
         (
             "['1+1'].flatMap(function (str) { return this.eval(str); }, new Evaluator);",
+            None,
+            None,
+            None,
+        ),
+        (
+            "Array.from(values, function (value) { return this.eval(value); }, context);",
+            None,
+            None,
+            None,
+        ),
+        (
+            "Array.fromAsync(values, async function (value) { return this.eval(await value); }, context);",
+            None,
+            None,
+            None,
+        ),
+        (
+            "Uint8Array.from(values, function (value) { return this.eval(value); }, context);",
             None,
             None,
             None,
@@ -501,6 +533,42 @@ fn test() {
         ),
         (
             "['1'].reduce(function (a, b) { return this.eval(a) ? a : b; }, '0');",
+            allow_indirect_with_false(),
+            None,
+            Some(PathBuf::from("foo.cjs")),
+        ),
+        (
+            "Array.fromAsync(values, async function (value) { return this.eval(await value); });",
+            allow_indirect_with_false(),
+            None,
+            Some(PathBuf::from("foo.cjs")),
+        ),
+        (
+            "Array.fromAsync(values, async function (value) { return this.eval(await value); }, null);",
+            allow_indirect_with_false(),
+            None,
+            Some(PathBuf::from("foo.cjs")),
+        ),
+        (
+            "Array.fromAsync(values, async function (value) { return this.eval(await value); }, undefined);",
+            allow_indirect_with_false(),
+            None,
+            Some(PathBuf::from("foo.cjs")),
+        ),
+        (
+            "Uint8Array.from(values, function (value) { return this.eval(value); });",
+            allow_indirect_with_false(),
+            None,
+            Some(PathBuf::from("foo.cjs")),
+        ),
+        (
+            "Uint8Array.from(values, function (value) { return this.eval(value); }, null);",
+            allow_indirect_with_false(),
+            None,
+            Some(PathBuf::from("foo.cjs")),
+        ),
+        (
+            "Uint8Array.from(values, function (value) { return this.eval(value); }, undefined);",
             allow_indirect_with_false(),
             None,
             Some(PathBuf::from("foo.cjs")),

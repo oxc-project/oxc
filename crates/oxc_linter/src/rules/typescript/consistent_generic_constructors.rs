@@ -1,3 +1,4 @@
+use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -121,7 +122,7 @@ impl ConsistentGenericConstructors {
     fn check<'a>(
         &self,
         node: &AstNode<'a>,
-        type_annotation: Option<&oxc_allocator::Box<'a, TSTypeAnnotation<'a>>>,
+        type_annotation: Option<&ArenaBox<'a, TSTypeAnnotation<'a>>>,
         init: Option<&Expression<'a>>,
         ctx: &LintContext<'a>,
     ) {
