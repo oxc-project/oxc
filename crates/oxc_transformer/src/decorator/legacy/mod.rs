@@ -346,6 +346,7 @@ impl<'a> LegacyDecorator<'a> {
 
         let class_scope_id = class.scope_id();
         let mut new_body = ArenaVec::with_capacity_in(class.body.body.len() * 3, ctx);
+        let mut storage_names = Vec::new();
 
         for element in class.body.body.drain(..) {
             let ClassElement::AccessorProperty(accessor) = element else {
@@ -387,7 +388,7 @@ impl<'a> LegacyDecorator<'a> {
                 let getter_key = PropertyKey::from(assignment);
                 let setter_key = PropertyKey::from(reference);
                 let storage_name =
-                    Str::from_strs_array_in(["_", &key_name, "_computed_accessor_storage"], ctx);
+                    Self::create_accessor_storage_name(&key_name, true, &mut storage_names, ctx);
                 (storage_name, getter_key, setter_key)
             } else {
                 // Use `name()` to get the raw property name, avoiding `get_var_name_from_node`
@@ -397,7 +398,7 @@ impl<'a> LegacyDecorator<'a> {
                     .name()
                     .unwrap_or_else(|| Cow::Owned(get_var_name_from_node(&accessor.key)));
                 let storage_name =
-                    Str::from_strs_array_in(["_", &key_name, "_accessor_storage"], ctx);
+                    Self::create_accessor_storage_name(&key_name, false, &mut storage_names, ctx);
                 let getter_key = accessor.key.clone_in(ctx.ast.allocator());
                 let setter_key = accessor.key.clone_in(ctx.ast.allocator());
                 (storage_name, getter_key, setter_key)
@@ -463,6 +464,24 @@ impl<'a> LegacyDecorator<'a> {
         }
 
         class.body.body = new_body;
+    }
+
+    fn create_accessor_storage_name(
+        key_name: &str,
+        computed: bool,
+        storage_names: &mut Vec<String>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Str<'a> {
+        let suffix = if computed { "_computed_accessor_storage" } else { "_accessor_storage" };
+        let base_name = format!("_{key_name}{suffix}");
+        let mut storage_name = base_name.clone();
+        let mut index = 2;
+        while storage_names.contains(&storage_name) {
+            storage_name = format!("{base_name}{index}");
+            index += 1;
+        }
+        storage_names.push(storage_name.clone());
+        Str::from_str_in(&storage_name, ctx)
     }
 
     /// Create a getter or setter method that accesses a private backing field.

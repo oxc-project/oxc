@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4368/4720 (92.54%)
+Positive Passed: 4371/4720 (92.61%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientClassOverloadForFunction.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -1044,14 +1044,14 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/esDecoratorsClassFieldsCrash.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "_accessor_accessor_storage", "_accessor_accessor_storage2", "_assertClassBrand", "_class", "_class2", "_classPrivateFieldInitSpec", "_decorateMetadata", "_defineProperty", "dec"]
-rebuilt        : ScopeId(0): ["Foo", "_accessor_accessor_storage2", "_assertClassBrand", "_class2", "_classPrivateFieldInitSpec", "_decorateMetadata", "_defineProperty", "dec"]
+after transform: ScopeId(0): ["Foo", "_accessor_accessor_storage", "_accessor_accessor_storage2", "_assertClassBrand", "_class", "_class2", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_decorateMetadata", "_defineProperty", "dec"]
+rebuilt        : ScopeId(0): ["Foo", "_accessor_accessor_storage", "_accessor_accessor_storage2", "_assertClassBrand", "_class2", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_decorateMetadata", "_defineProperty", "dec"]
 Bindings mismatch:
 after transform: ScopeId(3): []
 rebuilt        : ScopeId(3): ["_class"]
 Symbol scope ID mismatch for "_class":
 after transform: SymbolId(8): ScopeId(0)
-rebuilt        : SymbolId(14): ScopeId(3)
+rebuilt        : SymbolId(17): ScopeId(3)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/expandoFunctionNestedAssigmentsDeclared.ts
 Symbol flags mismatch for "Foo":
@@ -2569,11 +2569,6 @@ Reference symbol mismatch for "C":
 after transform: SymbolId(4) "C"
 rebuilt        : SymbolId(3) "C"
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commentPreservation.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage", "_z_accessor_storage2"]
-rebuilt        : ScopeId(0): ["C", "_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage2"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commonjs-classNamespaceMerge.ts
 Symbol redeclarations mismatch for "Example":
 after transform: SymbolId(1): [Span { start: 43, end: 50 }, Span { start: 93, end: 100 }]
@@ -2583,11 +2578,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/c
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(7): ScopeFlags(Function | Arrow)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-sourceMap.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage", "_z_accessor_storage2"]
-rebuilt        : ScopeId(0): ["C", "_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticAccessor.ts
 Symbol reference IDs mismatch for "D":
@@ -2622,15 +2612,7 @@ Reference symbol mismatch for "D":
 after transform: SymbolId(16) "D"
 rebuilt        : SymbolId(10) "D"
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-commentPreservation.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage", "_z_accessor_storage2"]
-rebuilt        : ScopeId(0): ["_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage2"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-contextualTypes.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "_C_brand", "_b_accessor_storage", "_b_accessor_storage2", "_c", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_classPrivateMethodInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_f", "_g", "_get_a", "_get_b", "_get_x", "_get_y", "_set_a", "_set_b", "_set_x", "_set_y", "_y_accessor_storage", "_y_accessor_storage2", "_z"]
-rebuilt        : ScopeId(0): ["C", "_C_brand", "_b_accessor_storage2", "_c", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_classPrivateMethodInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_f", "_g", "_get_a", "_get_b", "_get_x", "_get_y", "_set_a", "_set_b", "_set_x", "_set_y", "_y_accessor_storage2", "_z"]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(23): ScopeFlags(Function | Arrow)
@@ -2691,9 +2673,6 @@ rebuilt        : ScopeId(41): ScopeFlags(Function | Arrow)
 Scope flags mismatch:
 after transform: ScopeId(34): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(42): ScopeFlags(Function | Arrow)
-Symbol redeclarations mismatch for "_y_accessor_storage2":
-after transform: SymbolId(55): []
-rebuilt        : SymbolId(30): [Span { start: 0, end: 0 }, Span { start: 0, end: 0 }]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithAnyAndEveryType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support

@@ -1,14 +1,3 @@
 semantic_misc Summary:
 AST Parsed     : 69/69 (100.00%)
-Positive Passed: 68/69 (98.55%)
-semantic Error: tasks/coverage/misc/pass/oxc-13284.js
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "D", "Outer", "Outer2", "Outer3", "Outer4", "_D", "_Outer", "_access1_accessor_storage", "_access1_accessor_storage2", "_access2_accessor_storage", "_access2_accessor_storage2", "_access3_accessor_storage", "_access3_accessor_storage2", "_access4_accessor_storage", "_access4_accessor_storage2", "_access_accessor_storage5", "_assertClassBrand", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_decorate", "_decorateMetadata", "_defineProperty", "_ref5", "_super$foo13", "_super$foo13_computed_accessor_storage", "_super$foo14", "_super$foo15", "_super$foo16", "_superPropGet"]
-rebuilt        : ScopeId(0): ["C", "D", "Outer", "Outer2", "Outer3", "Outer4", "_D", "_Outer", "_access1_accessor_storage2", "_access2_accessor_storage2", "_access3_accessor_storage2", "_access4_accessor_storage2", "_access_accessor_storage5", "_assertClassBrand", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_decorate", "_decorateMetadata", "_defineProperty", "_ref5", "_super$foo13", "_super$foo13_computed_accessor_storage", "_super$foo14", "_super$foo15", "_super$foo16", "_superPropGet"]
-Bindings mismatch:
-after transform: ScopeId(133): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "Inner6", "_access_accessor_storage", "_access_accessor_storage2", "_ref", "_ref2", "_super", "_super$foo", "_super$foo2", "_super$foo3", "_super$foo4", "_super$foo_computed_accessor_storage", "_super2", "_super3", "_super4", "_super_computed_accessor_storage"]
-rebuilt        : ScopeId(150): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "Inner6", "_access_accessor_storage2", "_ref", "_ref2", "_super", "_super$foo", "_super$foo2", "_super$foo3", "_super$foo4", "_super$foo_computed_accessor_storage", "_super2", "_super3", "_super4", "_super_computed_accessor_storage"]
-Bindings mismatch:
-after transform: ScopeId(266): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "_Inner", "_access1_accessor_storage3", "_access2_accessor_storage3", "_access3_accessor_storage3", "_access4_accessor_storage3", "_access_accessor_storage15", "_access_accessor_storage16", "_access_accessor_storage17", "_ref13", "_super$foo53", "_super$foo53_computed_accessor_storage", "_super$foo54", "_super$foo55", "_super$foo56"]
-rebuilt        : ScopeId(354): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "_Inner", "_access1_accessor_storage3", "_access2_accessor_storage3", "_access3_accessor_storage3", "_access4_accessor_storage3", "_access_accessor_storage15", "_access_accessor_storage17", "_ref13", "_super$foo53", "_super$foo53_computed_accessor_storage", "_super$foo54", "_super$foo55", "_super$foo56"]
-
+Positive Passed: 69/69 (100.00%)
