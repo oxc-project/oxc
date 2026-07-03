@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4556/4720 (96.53%)
+Positive Passed: 4559/4720 (96.59%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -190,11 +190,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/dottedModuleName2
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/doubleUnderscoreEnumEmit.ts
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 5, end: 8 }, Span { start: 117, end: 120 }]
-rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/duplicateAnonymousInners1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -771,19 +766,6 @@ Unresolved references mismatch:
 after transform: ["module"]
 rebuilt        : ["A", "module"]
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/generators/generatorYieldContextualType.ts
-Symbol redeclarations mismatch for "Directive":
-after transform: SymbolId(12): [Span { start: 318, end: 327 }, Span { start: 381, end: 390 }]
-rebuilt        : SymbolId(3): []
-Symbol redeclarations mismatch for "StepResult":
-after transform: SymbolId(28): [Span { start: 1257, end: 1267 }, Span { start: 1321, end: 1331 }]
-rebuilt        : SymbolId(8): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/EnumAndModuleWithSameNameAndCommonRoot.ts
-Symbol redeclarations mismatch for "enumdule":
-after transform: SymbolId(0): [Span { start: 5, end: 13 }, Span { start: 43, end: 51 }]
-rebuilt        : SymbolId(0): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/FunctionAndModuleWithSameNameAndDifferentCommonRoot.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -839,9 +821,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Symbol redeclarations mismatch for "e1":
-after transform: SymbolId(53): [Span { start: 1511, end: 1513 }, Span { start: 1530, end: 1532 }]
-rebuilt        : SymbolId(54): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/anyAssignabilityInInheritance.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support

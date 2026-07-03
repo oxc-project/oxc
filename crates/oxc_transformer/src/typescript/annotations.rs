@@ -562,11 +562,11 @@ impl<'a> TypeScriptAnnotations<'a> {
         match decl {
             // Remove type aliases, interfaces, and `declare global {}`
             Declaration::TSTypeAliasDeclaration(type_decl) => {
-                Self::preserve_non_ambient_value_redeclaration(type_decl.id.symbol_id(), ctx);
+                Self::preserve_removed_type_binding(type_decl.id.symbol_id(), ctx);
                 false
             }
             Declaration::TSInterfaceDeclaration(interface_decl) => {
-                Self::preserve_non_ambient_value_redeclaration(interface_decl.id.symbol_id(), ctx);
+                Self::preserve_removed_type_binding(interface_decl.id.symbol_id(), ctx);
                 false
             }
             Declaration::TSGlobalDeclaration(_) => false,
@@ -684,10 +684,10 @@ impl<'a> TypeScriptAnnotations<'a> {
                 Self::remove_ts_module_declaration_binding(module_decl, ctx);
             }
             Declaration::TSTypeAliasDeclaration(type_decl) => {
-                Self::preserve_non_ambient_value_redeclaration(type_decl.id.symbol_id(), ctx);
+                Self::preserve_removed_type_binding(type_decl.id.symbol_id(), ctx);
             }
             Declaration::TSInterfaceDeclaration(interface_decl) => {
-                Self::preserve_non_ambient_value_redeclaration(interface_decl.id.symbol_id(), ctx);
+                Self::preserve_removed_type_binding(interface_decl.id.symbol_id(), ctx);
             }
             Declaration::TSGlobalDeclaration(_) => {}
         }
@@ -871,6 +871,20 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx.scoping_mut().set_symbol_span(symbol_id, span);
         ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
         true
+    }
+
+    fn preserve_removed_type_binding(symbol_id: SymbolId, ctx: &mut TraverseCtx<'a>) {
+        if Self::preserve_non_ambient_value_redeclaration(symbol_id, ctx) {
+            return;
+        }
+
+        let flags = ctx.scoping().symbol_flags(symbol_id);
+        if flags.is_value()
+            && !flags.is_ambient()
+            && ctx.state.emitted_namespace_bindings.contains(&symbol_id)
+        {
+            ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
+        }
     }
 
     /// Check if the given name is a JSX pragma or fragment pragma import

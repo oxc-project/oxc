@@ -251,7 +251,11 @@ impl<'a> TypeScriptEnum {
         let redeclarations = ctx.scoping().symbol_redeclarations(enum_symbol_id);
         let is_already_declared =
             redeclarations.first().map_or_else(|| false, |rd| rd.span != decl.id.span);
-        let is_last_redeclaration = redeclarations.last().is_some_and(|rd| rd.span == decl.id.span);
+        let is_last_enum_redeclaration = redeclarations
+            .iter()
+            .rev()
+            .find(|rd| rd.flags.is_enum())
+            .is_some_and(|rd| rd.span == decl.id.span);
 
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
@@ -291,7 +295,7 @@ impl<'a> TypeScriptEnum {
             );
             let left = AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(left));
             let expr = Expression::new_assignment_expression(span, op, left, call_expression, ctx);
-            if is_last_redeclaration {
+            if is_last_enum_redeclaration {
                 ctx.scoping_mut().clear_symbol_redeclarations(enum_symbol_id);
             }
             return Some(Statement::new_expression_statement(span, expr, ctx));
@@ -341,6 +345,9 @@ impl<'a> TypeScriptEnum {
         } else {
             Statement::from(variable_declaration)
         };
+        if is_last_enum_redeclaration {
+            ctx.scoping_mut().clear_symbol_redeclarations(enum_symbol_id);
+        }
         Some(stmt)
     }
 
