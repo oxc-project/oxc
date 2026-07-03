@@ -455,7 +455,11 @@ impl<'a> Visit<'a> for PropertyCollector<'_> {
     }
 
     fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
-        if let Expression::Identifier(ident) = &it.callee {
+        // Match through parens (and TS wrappers): per ECMA-262 `(eval)(x)` is still a DIRECT
+        // eval (parentheses preserve the reference), and the AST keeps `ParenthesizedExpression`
+        // nodes (`preserve_parens`). A sequence `(0, eval)(x)` stays indirect:
+        // `get_inner_expression` does not unwrap it.
+        if let Expression::Identifier(ident) = it.callee.get_inner_expression() {
             match ident.name.as_str() {
                 "eval" => self.bail(PropertyMangleBailKind::DirectEval, it.span),
                 "Function" => self.bail(PropertyMangleBailKind::FunctionConstructor, it.span),
@@ -466,7 +470,9 @@ impl<'a> Visit<'a> for PropertyCollector<'_> {
     }
 
     fn visit_new_expression(&mut self, it: &NewExpression<'a>) {
-        if let Expression::Identifier(ident) = &it.callee
+        // `new (Function)(...)` still reaches the `Function` constructor; see through parens
+        // as in `visit_call_expression`.
+        if let Expression::Identifier(ident) = it.callee.get_inner_expression()
             && ident.name.as_str() == "Function"
         {
             self.bail(PropertyMangleBailKind::FunctionConstructor, it.span);

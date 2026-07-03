@@ -279,6 +279,29 @@ fn eval_bails() {
 }
 
 #[test]
+fn parenthesized_direct_eval_bails() {
+    // Per ECMA-262, `(eval)(x)` is still a DIRECT eval — parentheses preserve the
+    // reference — and the parser keeps the `ParenthesizedExpression` node, so the bail
+    // must see through it.
+    let alloc = Allocator::default();
+    let program = Parser::new(&alloc, "(eval)('a._x'); o._foo;", SourceType::mjs()).parse().program;
+    let mut m = PropertyMangler::new(opts("^_"));
+    m.collect(&program);
+    assert_eq!(m.bail().map(|b| b.kind), Some(PropertyMangleBailKind::DirectEval));
+}
+
+#[test]
+fn parenthesized_function_constructor_bails() {
+    // `new (Function)('x')` still reaches the `Function` constructor through the parens.
+    let alloc = Allocator::default();
+    let program =
+        Parser::new(&alloc, "new (Function)('x'); o._foo;", SourceType::mjs()).parse().program;
+    let mut m = PropertyMangler::new(opts("^_"));
+    m.collect(&program);
+    assert_eq!(m.bail().map(|b| b.kind), Some(PropertyMangleBailKind::FunctionConstructor));
+}
+
+#[test]
 fn bail_is_surfaced_through_minifier_return() {
     // A bailing input (direct `eval`) disables property mangling for the whole file. The bail
     // must be observable on `MinifierReturn` (kind + span) so callers can warn instead of
