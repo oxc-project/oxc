@@ -423,6 +423,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
             _ => true,
         });
         Self::sync_overload_implementation_symbols(stmts, &removed_overload_symbols, ctx);
+        Self::hoist_annex_b_function_bindings(stmts, ctx);
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -774,6 +775,43 @@ impl<'a> TypeScriptAnnotations<'a> {
             let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
             ctx.scoping_mut().remove_binding_by_symbol_id(scope_id, symbol_id);
             ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
+        }
+    }
+
+    fn hoist_annex_b_function_bindings(
+        stmts: &ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let current_scope_id = ctx.current_scope_id();
+        let current_scope_flags = ctx.scoping().scope_flags(current_scope_id);
+        if current_scope_flags.is_var() || current_scope_flags.is_strict_mode() {
+            return;
+        }
+
+        let Some(var_scope_id) = ctx
+            .scoping()
+            .scope_ancestors(current_scope_id)
+            .skip(1)
+            .find(|&scope_id| ctx.scoping().scope_flags(scope_id).is_var())
+        else {
+            return;
+        };
+
+        for stmt in stmts {
+            let Statement::FunctionDeclaration(func) = stmt else { continue };
+            if func.r#async || func.generator {
+                continue;
+            }
+            let Some(id) = &func.id else { continue };
+
+            let symbol_id = id.symbol_id();
+            if ctx.scoping().symbol_scope_id(symbol_id) != current_scope_id
+                || ctx.scoping().scope_has_binding(var_scope_id, id.name)
+            {
+                continue;
+            }
+
+            ctx.scoping_mut().move_binding_by_symbol_id(current_scope_id, var_scope_id, symbol_id);
         }
     }
 

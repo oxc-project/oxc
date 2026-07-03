@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4530/4720 (95.97%)
+Positive Passed: 4534/4720 (96.06%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -286,17 +286,6 @@ rebuilt        : SymbolId(4): Span { start: 198, end: 201 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/duplicateAnonymousInners1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/duplicateLabel3.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["f"]
-Bindings mismatch:
-after transform: ScopeId(1): ["f"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "f":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(0): ScopeId(0)
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts
 'with' statements are not allowed
 
@@ -378,17 +367,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionInIfStatementInModule.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["_Midori"]
-rebuilt        : ScopeId(1): ["Foo", "_Midori"]
-Bindings mismatch:
-after transform: ScopeId(2): ["Foo"]
-rebuilt        : ScopeId(2): []
-Symbol scope ID mismatch for "Foo":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(1)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionMergedWithModule.ts
 Symbol flags mismatch for "foo":
@@ -1134,17 +1112,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/identifiers/scopeResolutionIdentifiers.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInFunctionAndModuleBlock.ts
-Bindings mismatch:
-after transform: ScopeId(9): ["x", "y"]
-rebuilt        : ScopeId(9): ["foo", "x", "y"]
-Bindings mismatch:
-after transform: ScopeId(10): ["foo"]
-rebuilt        : ScopeId(10): []
-Symbol scope ID mismatch for "foo":
-after transform: SymbolId(19): ScopeId(10)
-rebuilt        : SymbolId(19): ScopeId(9)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/decrementOperator/decrementOperatorWithAnyOtherType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -1283,17 +1250,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit6.tsx
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel3.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["f"]
-Bindings mismatch:
-after transform: ScopeId(1): ["f"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "f":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(0): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithoutReturnTypeAnnotationInference.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
