@@ -156,6 +156,7 @@ export type NoReturnAssignMode = "always" | "except-parens";
  * Controls how hoisting is handled when checking for shadowing.
  */
 export type HoistOption = "all" | "functions" | "functions-and-types" | "never" | "types";
+export type LoopType = "WhileStatement" | "DoWhileStatement" | "ForStatement" | "ForInStatement" | "ForOfStatement";
 export type NoUnusedVarsConfig = VarsOption | NoUnusedVarsOptions;
 export type VarsOption = "all" | "local";
 export type ArgsOption = "after-used" | "all" | "none";
@@ -346,6 +347,7 @@ export type PathOption = "always" | "never";
 export type TypesOption = "always" | "never" | "prefer-import";
 export type BomOptionType = "always" | "never";
 export type NonZero = "greater-than" | "not-equal";
+export type ExplicitTimerDelayMode = "always" | "never";
 export type ModuleStylesOverride =
   | (
       | false
@@ -1114,7 +1116,7 @@ export interface DummyRuleMap {
   "no-cond-assign"?: RuleNoConfig | [AllowWarnDeny, NoCondAssignConfig];
   "no-console"?: RuleNoConfig | [AllowWarnDeny, NoConsoleConfig];
   "no-const-assign"?: RuleNoConfig;
-  "no-constant-binary-expression"?: RuleNoConfig;
+  "no-constant-binary-expression"?: RuleNoConfig | [AllowWarnDeny, NoConstantBinaryExpressionConfig];
   "no-constant-condition"?: RuleNoConfig | [AllowWarnDeny, NoConstantCondition];
   "no-constructor-return"?: RuleNoConfig;
   "no-continue"?: RuleNoConfig;
@@ -1208,6 +1210,7 @@ export interface DummyRuleMap {
   "no-unmodified-loop-condition"?: RuleNoConfig;
   "no-unneeded-ternary"?: RuleNoConfig | [AllowWarnDeny, NoUnneededTernary];
   "no-unreachable"?: RuleNoConfig;
+  "no-unreachable-loop"?: RuleNoConfig | [AllowWarnDeny, NoUnreachableLoopConfig];
   "no-unsafe-finally"?: RuleNoConfig;
   "no-unsafe-negation"?: RuleNoConfig | [AllowWarnDeny, NoUnsafeNegation];
   "no-unsafe-optional-chaining"?: RuleNoConfig | [AllowWarnDeny, NoUnsafeOptionalChaining];
@@ -1512,6 +1515,7 @@ export interface DummyRuleMap {
   "unicorn/error-message"?: RuleNoConfig;
   "unicorn/escape-case"?: RuleNoConfig;
   "unicorn/explicit-length-check"?: RuleNoConfig | [AllowWarnDeny, ExplicitLengthCheck];
+  "unicorn/explicit-timer-delay"?: RuleNoConfig | [AllowWarnDeny, ExplicitTimerDelayMode];
   "unicorn/filename-case"?: DummyRule;
   "unicorn/import-style"?: RuleNoConfig | [AllowWarnDeny, ImportStyleConfig];
   "unicorn/max-nested-calls"?: RuleNoConfig | [AllowWarnDeny, MaxNestedCalls];
@@ -1528,6 +1532,7 @@ export interface DummyRuleMap {
   "unicorn/no-array-sort"?: RuleNoConfig | [AllowWarnDeny, NoArraySort];
   "unicorn/no-await-expression-member"?: RuleNoConfig;
   "unicorn/no-await-in-promise-methods"?: RuleNoConfig;
+  "unicorn/no-confusing-array-with"?: RuleNoConfig;
   "unicorn/no-console-spaces"?: RuleNoConfig;
   "unicorn/no-document-cookie"?: RuleNoConfig;
   "unicorn/no-empty-file"?: RuleNoConfig;
@@ -2389,6 +2394,7 @@ export interface PreferEndingWithAnExpectConfig {
   additionalTestBlockFunctions?: string[];
   /**
    * A list of function names that should be treated as assertion functions.
+   * Default: `["expect"]`
    */
   assertFunctionNames?: string[];
 }
@@ -2912,6 +2918,9 @@ export interface NoConsoleConfig {
    * ```
    */
   allow?: string[];
+}
+export interface NoConstantBinaryExpressionConfig {
+  checkRelationalComparisons?: boolean;
 }
 export interface NoConstantCondition {
   /**
@@ -3588,6 +3597,9 @@ export interface NoUnneededTernary {
    * are allowed and not reported.
    */
   defaultAssignment?: boolean;
+}
+export interface NoUnreachableLoopConfig {
+  ignore?: LoopType[];
 }
 export interface NoUnsafeNegation {
   /**
@@ -4373,20 +4385,20 @@ export interface ForbidItemObject {
    * Component names for which this prop is **allowed** (all others are
    * forbidden).
    */
-  allowedFor: string[];
+  allowedFor?: string[];
   /**
    * Glob patterns for component names where the prop is **allowed**.
    */
-  allowedForPatterns: string[];
+  allowedForPatterns?: string[];
   /**
    * Component names for which this prop is **disallowed** (all others are
    * allowed).
    */
-  disallowedFor: string[];
+  disallowedFor?: string[];
   /**
    * Glob patterns for component names where the prop is **disallowed**.
    */
-  disallowedForPatterns: string[];
+  disallowedForPatterns?: string[];
   /**
    * Custom message to display.
    */
@@ -6093,6 +6105,16 @@ export interface NoArrayReverse {
   allowExpressionStatement?: boolean;
 }
 export interface NoArraySort {
+  /**
+   * When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.
+   * This avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.
+   *
+   * Example of **correct** code for this rule with `allowAfterSpread` set to `true`:
+   * ```js
+   * const sorted = [...mySet].sort();
+   * ```
+   */
+  allowAfterSpread?: boolean;
   /**
    * When set to `true` (default), allows `array.sort()` as an expression statement.
    * Set to `false` to forbid `Array#sort()` even if it's an expression statement.

@@ -1,11 +1,9 @@
-use oxc_graphql_parser::{cst, cst::CstNode};
-
 use oxc_formatter_core::{
     Buffer, Format, Formatter,
     builders::{FormatWith, empty_line, hard_line_break, if_group_fits_on_line, soft_line_break},
     write,
 };
-use oxc_span::Span;
+use oxc_graphql_parser::ast::Document;
 
 use crate::{
     comments::{
@@ -16,14 +14,15 @@ use crate::{
     context::GraphqlFormatContext,
 };
 
-pub mod common;
-pub mod definition;
-pub mod selection;
-mod sig;
-pub mod string;
-pub mod value;
+mod common;
+mod definition;
+mod selection;
+mod span;
+mod string;
+mod value;
 
-use sig::{sig_end, sig_start};
+use span::Spanned;
+pub use span::to_span;
 
 pub type GraphqlFormatter<'buf, 'a> = Formatter<'buf, 'a, GraphqlFormatContext<'a>>;
 
@@ -50,7 +49,7 @@ where
 
 /// How consecutive sequence items are separated.
 #[derive(Clone, Copy, Eq, PartialEq)]
-pub enum SeparatorKind {
+enum SeparatorKind {
     /// One item per line (definitions, selections, fields, enum values, ...).
     Hard,
     /// Prettier's `join([ifBreak("", ", "), softline], items)`
@@ -64,7 +63,7 @@ pub enum SeparatorKind {
 ///
 /// Returns the significant end of the last item (`None` for an empty sequence),
 /// so callers can seed `flush_trailing_inside_comments` without re-scanning.
-pub fn write_sequence<'a, T, F>(
+fn write_sequence<'a, T, F>(
     f: &mut GraphqlFormatter<'_, 'a>,
     items: &[T],
     separator: SeparatorKind,
@@ -72,13 +71,13 @@ pub fn write_sequence<'a, T, F>(
     mut write_item: F,
 ) -> Option<u32>
 where
-    T: CstNode,
+    T: Spanned,
     F: FnMut(usize, &mut GraphqlFormatter<'_, 'a>),
 {
     let mut prev_end: Option<u32> = None;
     for (i, item) in items.iter().enumerate() {
-        let node = item.syntax();
-        let start = sig_start(node);
+        let item_span = item.span();
+        let start = item_span.start;
         if let Some(pe) = prev_end {
             write_trailing_same_line_comment(pe, f);
             // Measure the gap up to the next pending comment (if it precedes the item),
@@ -111,9 +110,9 @@ where
                 }
             }
         }
-        let end = sig_end(node);
+        let end = item_span.end;
         if is_suppressed_before(f, start) {
-            write_suppressed_node(Span::new(start, end), f);
+            write_suppressed_node(item_span, f);
         } else {
             flush_leading_comments(start, f);
             write_item(i, f);
@@ -125,8 +124,8 @@ where
 
 /// Top-level document: definitions joined by hard lines (blank lines preserved),
 /// then any comments trailing the last definition.
-pub fn write_document(document: &cst::Document, f: &mut GraphqlFormatter<'_, '_>) {
-    let defs: Vec<cst::Definition> = document.definitions().collect();
+pub fn write_document<'a>(document: &'a Document<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
+    let defs = document.definitions.as_slice();
     if defs.is_empty() {
         // Defensive: oxc-graphql-parser errors on empty/comments-only documents,
         // so this branch is unreachable on the normal path.
@@ -135,7 +134,7 @@ pub fn write_document(document: &cst::Document, f: &mut GraphqlFormatter<'_, '_>
         return;
     }
 
-    let last_end = write_sequence(f, &defs, SeparatorKind::Hard, true, |i, f| {
+    let last_end = write_sequence(f, defs, SeparatorKind::Hard, true, |i, f| {
         definition::write_definition(&defs[i], f);
     });
     if let Some(last_end) = last_end {

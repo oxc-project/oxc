@@ -173,10 +173,9 @@ fn parse_error_is_err() {
     let css = CssFormatOptions::default();
     let scss = CssFormatOptions { variant: CssVariant::Scss, ..css };
     for (source, options) in [
-        // Unclosed block (postcss also rejects this).
-        ("a {\n  color: red;\n", css),
-        // IE star hack: postcss tolerates it, oxc-css-parser does not.
-        ("a { *zoom: 1; }", css),
+        // NOTE: an unclosed block (`a {\n  color: red;\n`)
+        // Prettier rejects the unclosed block ("Unclosed block"), but we don't.
+        //
         // Top-level declaration: valid only as an embedded css-in-js fragment
         // (`format_to_ir`); standalone files must reject it like Dart Sass does.
         ("display: flex;", scss),

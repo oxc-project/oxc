@@ -15,6 +15,7 @@
 //! 6. Applying compiled functions back to the AST
 
 use oxc_ast::ast as oxc;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
@@ -22,11 +23,9 @@ use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
 use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
 use crate::react_compiler_diagnostics::ErrorCategory;
-use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
-use crate::react_compiler_reactive_scopes::old_builder_ext::OldBuilderExt;
 use crate::scope::ScopeId;
 use crate::scope::ScopeInfo;
 use oxc_allocator::GetAllocator;
@@ -34,15 +33,7 @@ use oxc_allocator::GetAllocator;
 use super::compile_result::BindingRenameInfo;
 use super::compile_result::CodegenFunction;
 use super::compile_result::CompileResult;
-use super::compile_result::CompilerErrorDetailInfo;
-use super::compile_result::CompilerErrorInfo;
-use super::compile_result::CompilerErrorItemInfo;
 use super::compile_result::DebugLogEntry;
-use super::compile_result::LoggerEvent;
-use super::compile_result::LoggerPosition;
-use super::compile_result::LoggerSourceLocation;
-use super::compile_result::LoggerSuggestionInfo;
-use super::compile_result::LoggerSuggestionOp;
 use super::compile_result::OrderedLogItem;
 use super::imports::ProgramContext;
 use super::imports::get_react_compiler_runtime_module;
@@ -73,25 +64,6 @@ const OPT_OUT_DIRECTIVES: &[&str] = &["use no forget", "use no memo"];
 // Internal types
 // -----------------------------------------------------------------------
 
-/// A source location for a discovered function, used only to feed logger
-/// events. The former Babel front-end carried this on `BaseNode.loc`; the oxc
-/// front-end synthesizes it from the function span (only the byte `index` is
-/// load-bearing — line/column/filename never reach the compiled output).
-#[derive(Debug, Clone)]
-struct FnSourceLoc {
-    start: FnSourcePos,
-    end: FnSourcePos,
-    filename: Option<String>,
-    identifier_name: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-struct FnSourcePos {
-    line: u32,
-    column: u32,
-    index: Option<u32>,
-}
-
 /// A function found in the program that should be compiled.
 ///
 /// `'a` is the arena lifetime of the discovered oxc function node.
@@ -100,10 +72,9 @@ struct CompileSource<'a> {
     kind: CompileSourceKind,
     original_kind: OriginalFnKind,
     fn_name: Option<String>,
-    /// Original AST source location for logger events. The example front-end
-    /// discards logger locations, and diagnostics carry their own byte spans, so
-    /// this is left `None` (it never affects compiled output).
-    fn_ast_loc: Option<FnSourceLoc>,
+    /// Byte span of the discovered function, used as the fallback labeled span in
+    /// compile-error diagnostics.
+    fn_ast_loc: Option<Span>,
     fn_start: Option<u32>,
     fn_end: Option<u32>,
     fn_node_id: Option<u32>,
@@ -1144,114 +1115,11 @@ fn get_callee_name_if_react_api<'e>(callee: &'e oxc::Expression) -> Option<&'e s
 // Error handling
 // -----------------------------------------------------------------------
 
-/// Convert CompilerDiagnostic details into serializable CompilerErrorItemInfo items.
-fn diagnostic_details_to_items(
-    d: &crate::react_compiler_diagnostics::CompilerDiagnostic,
-    filename: Option<&str>,
-) -> Option<Vec<CompilerErrorItemInfo>> {
-    let items: Vec<CompilerErrorItemInfo> = d
-        .details
-        .iter()
-        .map(|item| match item {
-            crate::react_compiler_diagnostics::CompilerDiagnosticDetail::Error {
-                loc,
-                message,
-                identifier_name,
-            } => CompilerErrorItemInfo {
-                kind: "error".to_string(),
-                loc: loc.as_ref().map(|l| {
-                    let mut logger_loc = diag_loc_to_logger_loc(l, filename);
-                    logger_loc.identifier_name = identifier_name.clone();
-                    logger_loc
-                }),
-                message: message.clone(),
-            },
-            crate::react_compiler_diagnostics::CompilerDiagnosticDetail::Hint { message } => {
-                CompilerErrorItemInfo {
-                    kind: "hint".to_string(),
-                    loc: None,
-                    message: Some(message.clone()),
-                }
-            }
-        })
-        .collect();
-    if items.is_empty() { None } else { Some(items) }
-}
-
-/// Convert an optional AST SourceLocation to a LoggerSourceLocation with filename.
-fn to_logger_loc(
-    ast_loc: Option<&FnSourceLoc>,
-    filename: Option<&str>,
-) -> Option<LoggerSourceLocation> {
-    ast_loc.map(|loc| LoggerSourceLocation {
-        start: LoggerPosition {
-            line: loc.start.line,
-            column: loc.start.column,
-            index: loc.start.index,
-        },
-        end: LoggerPosition { line: loc.end.line, column: loc.end.column, index: loc.end.index },
-        filename: filename.map(|s| s.to_string()),
-        identifier_name: loc.identifier_name.clone(),
-    })
-}
-
-/// Convert a diagnostics SourceLocation to a LoggerSourceLocation with filename.
-fn diag_loc_to_logger_loc(loc: &SourceLocation, filename: Option<&str>) -> LoggerSourceLocation {
-    LoggerSourceLocation {
-        start: LoggerPosition {
-            line: loc.start.line,
-            column: loc.start.column,
-            index: loc.start.index,
-        },
-        end: LoggerPosition { line: loc.end.line, column: loc.end.column, index: loc.end.index },
-        filename: filename.map(|s| s.to_string()),
-        identifier_name: None,
-    }
-}
-
-/// Convert diagnostic suggestions to logger suggestion infos.
-fn suggestions_to_logger(
-    suggestions: &Option<Vec<crate::react_compiler_diagnostics::CompilerSuggestion>>,
-) -> Option<Vec<LoggerSuggestionInfo>> {
-    suggestions.as_ref().map(|suggestions| {
-        suggestions
-            .iter()
-            .map(|s| {
-                let op = match s.op {
-                    crate::react_compiler_diagnostics::CompilerSuggestionOperation::InsertBefore => {
-                        LoggerSuggestionOp::InsertBefore
-                    }
-                    crate::react_compiler_diagnostics::CompilerSuggestionOperation::InsertAfter => {
-                        LoggerSuggestionOp::InsertAfter
-                    }
-                    crate::react_compiler_diagnostics::CompilerSuggestionOperation::Remove => {
-                        LoggerSuggestionOp::Remove
-                    }
-                    crate::react_compiler_diagnostics::CompilerSuggestionOperation::Replace => {
-                        LoggerSuggestionOp::Replace
-                    }
-                };
-                LoggerSuggestionInfo {
-                    description: s.description.clone(),
-                    op,
-                    range: s.range,
-                    text: s.text.clone(),
-                }
-            })
-            .collect()
-    })
-}
-
-/// Log an error as LoggerEvent(s) directly onto the ProgramContext.
-fn log_error(err: &CompilerError, fn_ast_loc: Option<&FnSourceLoc>, context: &mut ProgramContext) {
-    // Use the filename from the AST node's loc (set by parser's sourceFilename option),
-    // not from plugin options (which may have a different prefix like '/').
-    let source_filename = fn_ast_loc.and_then(|loc| loc.filename.as_deref());
-    let fn_loc = to_logger_loc(fn_ast_loc, source_filename);
-
-    // Detect simulated unknown exception (throwUnknownException__testonly).
-    // In TS, non-CompilerError exceptions are logged as PipelineError with the
-    // error message as data. Emit the same event shape.
+/// Push a compiler error's per-detail diagnostics onto the context.
+fn log_error(err: &CompilerError, fn_loc: Option<Span>, context: &mut ProgramContext) {
+    // Detect simulated unknown exception (throwUnknownException__testonly). In TS,
+    // non-CompilerError exceptions surface as a pipeline error carrying the error
+    // message rather than a per-detail compiler error.
     let is_simulated_unknown = err.details.len() == 1
         && err.details.iter().all(|d| match d {
             CompilerErrorOrDiagnostic::ErrorDetail(d) => {
@@ -1260,42 +1128,18 @@ fn log_error(err: &CompilerError, fn_ast_loc: Option<&FnSourceLoc>, context: &mu
             _ => false,
         });
     if is_simulated_unknown {
-        context.log_event(LoggerEvent::PipelineError {
-            fn_loc: fn_loc.clone(),
-            data: "Error: unexpected error".to_string(),
-        });
+        let mut diagnostic =
+            OxcDiagnostic::error("[ReactCompiler] Pipeline error: Error: unexpected error");
+        if let Some(span) = fn_loc {
+            diagnostic = diagnostic.with_label(span);
+        }
+        context.diagnostics.push(diagnostic);
         return;
     }
 
     for detail in &err.details {
-        let detail_info = match detail {
-            CompilerErrorOrDiagnostic::Diagnostic(d) => CompilerErrorDetailInfo {
-                category: format!("{:?}", d.category),
-                reason: d.reason.clone(),
-                description: d.description.clone(),
-                severity: format!("{:?}", d.logged_severity()),
-                suggestions: suggestions_to_logger(&d.suggestions),
-                details: diagnostic_details_to_items(d, source_filename),
-                loc: None,
-            },
-            CompilerErrorOrDiagnostic::ErrorDetail(d) => CompilerErrorDetailInfo {
-                category: format!("{:?}", d.category),
-                reason: d.reason.clone(),
-                description: d.description.clone(),
-                severity: format!("{:?}", d.logged_severity()),
-                suggestions: suggestions_to_logger(&d.suggestions),
-                details: None,
-                loc: d.loc.as_ref().map(|l| diag_loc_to_logger_loc(l, source_filename)),
-            },
-        };
-        // Use CompileErrorWithLoc when fn_loc is present to match TS field ordering
-        if let Some(ref loc) = fn_loc {
-            context.log_event(LoggerEvent::CompileErrorWithLoc {
-                fn_loc: loc.clone(),
-                detail: detail_info,
-            });
-        } else {
-            context.log_event(LoggerEvent::CompileError { fn_loc: None, detail: detail_info });
+        if let Some(diagnostic) = crate::diagnostics::detail_to_diagnostic(detail, fn_loc) {
+            context.diagnostics.push(diagnostic);
         }
     }
 }
@@ -1305,11 +1149,11 @@ fn log_error(err: &CompilerError, fn_ast_loc: Option<&FnSourceLoc>, context: &mu
 /// otherwise returns None (error was logged only).
 fn handle_error<'a>(
     err: &CompilerError,
-    fn_ast_loc: Option<&FnSourceLoc>,
+    fn_loc: Option<Span>,
     context: &mut ProgramContext,
 ) -> Option<CompileResult<'a>> {
     // Log the error
-    log_error(err, fn_ast_loc, context);
+    log_error(err, fn_loc, context);
 
     let should_panic = match context.opts.panic_threshold.as_str() {
         "all_errors" => true,
@@ -1324,81 +1168,15 @@ fn handle_error<'a>(
     });
 
     if should_panic || is_config_error {
-        let source_fn = context.source_filename();
-        let mut error_info = compiler_error_to_info(err, source_fn.as_deref());
-
-        // Detect simulated unknown exception (throwUnknownException__testonly).
-        // In the TS compiler, this throws a plain Error('unexpected error'), not
-        // a CompilerError. Set rawMessage so the JS side throws with the raw
-        // message instead of formatting through formatCompilerError().
-        let is_simulated_unknown = err.details.len() == 1
-            && err.details.iter().all(|d| match d {
-                CompilerErrorOrDiagnostic::ErrorDetail(d) => {
-                    d.category == ErrorCategory::Invariant && d.reason == "unexpected error"
-                }
-                _ => false,
-            });
-        if is_simulated_unknown {
-            error_info.raw_message = Some("unexpected error".to_string());
-        }
-
-        // Pre-format the error message in Rust when possible, so the JS
-        // shim can use it directly instead of calling formatCompilerError().
-        if error_info.raw_message.is_none() {
-            if let Some(ref source) = context.code {
-                error_info.formatted_message =
-                    Some(crate::react_compiler_diagnostics::code_frame::format_compiler_error(
-                        err,
-                        source,
-                        source_fn.as_deref(),
-                    ));
-            }
-        }
-
+        // The per-detail diagnostics were already pushed by `log_error`; the fatal
+        // result just carries them. (The old JS-shim summary is dropped.)
         Some(CompileResult::Error {
-            error: error_info,
-            events: context.events.clone(),
-            ordered_log: context.ordered_log.clone(),
-            timing: Vec::new(),
+            diagnostics: std::mem::take(&mut context.diagnostics),
+            ordered_log: std::mem::take(&mut context.ordered_log),
         })
     } else {
         None
     }
-}
-
-/// Convert a diagnostics CompilerError to a serializable CompilerErrorInfo.
-fn compiler_error_to_info(err: &CompilerError, filename: Option<&str>) -> CompilerErrorInfo {
-    let details: Vec<CompilerErrorDetailInfo> = err
-        .details
-        .iter()
-        .map(|d| match d {
-            CompilerErrorOrDiagnostic::Diagnostic(d) => CompilerErrorDetailInfo {
-                category: format!("{:?}", d.category),
-                reason: d.reason.clone(),
-                description: d.description.clone(),
-                severity: format!("{:?}", d.severity()),
-                suggestions: suggestions_to_logger(&d.suggestions),
-                details: diagnostic_details_to_items(d, filename),
-                loc: None,
-            },
-            CompilerErrorOrDiagnostic::ErrorDetail(d) => CompilerErrorDetailInfo {
-                category: format!("{:?}", d.category),
-                reason: d.reason.clone(),
-                description: d.description.clone(),
-                severity: format!("{:?}", d.severity()),
-                suggestions: suggestions_to_logger(&d.suggestions),
-                details: None,
-                loc: d.loc.as_ref().map(|l| diag_loc_to_logger_loc(l, filename)),
-            },
-        })
-        .collect();
-
-    let (reason, description) = details
-        .first()
-        .map(|d| (d.reason.clone(), d.description.clone()))
-        .unwrap_or_else(|| ("Unknown error".to_string(), None));
-
-    CompilerErrorInfo { reason, description, details, raw_message: None, formatted_message: None }
 }
 
 // -----------------------------------------------------------------------
@@ -1467,7 +1245,7 @@ fn process_fn<'a>(
         Ok(d) => d,
         Err(err) => {
             // Apply panic threshold logic (same as compilation errors)
-            if let Some(result) = handle_error(&err, source.fn_ast_loc.as_ref(), context) {
+            if let Some(result) = handle_error(&err, source.fn_ast_loc, context) {
                 return Err(result);
             }
             return Ok(None);
@@ -1480,60 +1258,38 @@ fn process_fn<'a>(
 
     match compile_result {
         Err(err) => {
-            // Emit CompileUnexpectedThrow for errors that were "thrown" from a pass
-            // (not accumulated via env.record_error) and have all non-Invariant details.
-            // Matches TS tryCompileFunction() catch block behavior.
+            // Surface errors "thrown" from a pass (not accumulated via
+            // env.record_error) that have all non-Invariant details, matching TS
+            // tryCompileFunction()'s catch block.
             if err.is_thrown && err.is_all_non_invariant() {
-                let source_filename =
-                    source.fn_ast_loc.as_ref().and_then(|loc| loc.filename.as_deref());
-                context.log_event(LoggerEvent::CompileUnexpectedThrow {
-                    fn_loc: to_logger_loc(source.fn_ast_loc.as_ref(), source_filename),
-                    data: err.to_string_for_event(),
-                });
+                let mut diagnostic = OxcDiagnostic::error(format!(
+                    "[ReactCompiler] Unexpected error: {}",
+                    err.to_string_for_event()
+                ));
+                if let Some(span) = source.fn_ast_loc {
+                    diagnostic = diagnostic.with_label(span);
+                }
+                context.diagnostics.push(diagnostic);
             }
 
             if opt_out.is_some() {
                 // If there's an opt-out, just log the error (don't escalate)
-                log_error(&err, source.fn_ast_loc.as_ref(), context);
+                log_error(&err, source.fn_ast_loc, context);
             } else {
                 // Apply panic threshold logic
-                if let Some(result) = handle_error(&err, source.fn_ast_loc.as_ref(), context) {
+                if let Some(result) = handle_error(&err, source.fn_ast_loc, context) {
                     return Err(result);
                 }
             }
             Ok(None)
         }
         Ok(codegen_fn) => {
-            // Check opt-out
+            // Functions opted out via directive are skipped; nothing to emit.
             if !context.opts.ignore_use_no_forget && opt_out.is_some() {
-                let opt_out_value = opt_out.unwrap();
-                let source_filename =
-                    source.fn_ast_loc.as_ref().and_then(|loc| loc.filename.as_deref());
-                context.log_event(LoggerEvent::CompileSkip {
-                    fn_loc: to_logger_loc(source.fn_ast_loc.as_ref(), source_filename),
-                    reason: format!("Skipped due to '{opt_out_value}' directive."),
-                    // The directive's own source location only fed logger events,
-                    // which the example front-end discards.
-                    loc: None,
-                });
-                // The function is skipped due to opt-out. Do NOT register the memo
-                // cache import here — it will be registered in apply_compiled_functions()
-                // only for functions that are actually applied to the output.
+                // Do NOT register the memo cache import here — it is registered in
+                // apply_compiled_functions() only for functions actually applied.
                 return Ok(None);
             }
-
-            // Log success with memo stats from CodegenFunction
-            let source_filename =
-                source.fn_ast_loc.as_ref().and_then(|loc| loc.filename.as_deref());
-            context.log_event(LoggerEvent::CompileSuccess {
-                fn_loc: to_logger_loc(source.fn_ast_loc.as_ref(), source_filename),
-                fn_name: codegen_fn.id.as_ref().map(|id| id.name.to_string()),
-                memo_slots: codegen_fn.memo_slots_used,
-                memo_blocks: codegen_fn.memo_blocks,
-                memo_values: codegen_fn.memo_values,
-                pruned_memo_blocks: codegen_fn.pruned_memo_blocks,
-                pruned_memo_values: codegen_fn.pruned_memo_values,
-            });
 
             // Check module scope opt-out
             if context.has_module_scope_opt_out {
@@ -1666,12 +1422,7 @@ fn try_make_compile_source<'a>(
         // The function source location flows into compile-error diagnostics as the
         // fallback labeled span (offset/length). Only the byte `index` is
         // load-bearing; line/column/filename never reach the example's output.
-        fn_ast_loc: Some(FnSourceLoc {
-            start: FnSourcePos { line: 0, column: 0, index: Some(span.start) },
-            end: FnSourcePos { line: 0, column: 0, index: Some(span.end) },
-            filename: None,
-            identifier_name: None,
-        }),
+        fn_ast_loc: Some(span),
         fn_start: Some(span.start),
         fn_end: Some(span.end),
         fn_node_id: Some(node_id),
@@ -2368,7 +2119,7 @@ fn ox_build_function<'a>(
 ) -> oxc_allocator::Box<'a, oxc_ast::ast::Function<'a>> {
     use oxc_allocator::CloneIn;
     use oxc_span::SPAN;
-    ast.alloc_function(
+    oxc_ast::ast::Function::boxed(
         SPAN,
         fn_type,
         codegen.id.clone_in(ast.allocator()),
@@ -2380,6 +2131,7 @@ fn ox_build_function<'a>(
         codegen.params.clone_in(ast.allocator()),
         None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
         Some(codegen.body.clone_in(ast.allocator())),
+        ast,
     )
 }
 
@@ -2394,15 +2146,18 @@ fn ox_build_compiled_expression<'a>(
     use oxc_span::SPAN;
     match original_kind {
         OriginalFnKind::ArrowFunctionExpression => {
-            oxc_ast::ast::Expression::ArrowFunctionExpression(ast.alloc_arrow_function_expression(
-                SPAN,
-                false,
-                codegen.is_async,
-                None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterDeclaration>>,
-                codegen.params.clone_in(ast.allocator()),
-                None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
-                codegen.body.clone_in(ast.allocator()),
-            ))
+            oxc_ast::ast::Expression::ArrowFunctionExpression(
+                oxc_ast::ast::ArrowFunctionExpression::boxed(
+                    SPAN,
+                    false,
+                    codegen.is_async,
+                    None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterDeclaration>>,
+                    codegen.params.clone_in(ast.allocator()),
+                    None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
+                    codegen.body.clone_in(ast.allocator()),
+                    ast,
+                ),
+            )
         }
         _ => oxc_ast::ast::Expression::FunctionExpression(ox_build_function(
             ast,
@@ -2501,19 +2256,25 @@ impl<'a, 'b> OxcReplaceWithGatedVisitor<'a, 'b> {
     fn build_const_decl(&self, name: &str) -> oxc_ast::ast::Statement<'a> {
         use oxc_allocator::CloneIn;
         use oxc_span::SPAN;
-        let declarator = self.ast.variable_declarator(
+        let declarator = oxc_ast::ast::VariableDeclarator::new(
             SPAN,
             oxc_ast::ast::VariableDeclarationKind::Const,
-            self.ast.binding_pattern_binding_identifier(SPAN, ox_atom(self.ast, name)),
+            oxc_ast::ast::BindingPattern::new_binding_identifier(
+                SPAN,
+                ox_atom(self.ast, name),
+                self.ast,
+            ),
             None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
             Some(self.gating_expression.clone_in(self.ast.allocator())),
             false,
+            self.ast,
         );
-        oxc_ast::ast::Statement::VariableDeclaration(self.ast.alloc_variable_declaration(
+        oxc_ast::ast::Statement::VariableDeclaration(oxc_ast::ast::VariableDeclaration::boxed(
             SPAN,
             oxc_ast::ast::VariableDeclarationKind::Const,
-            self.ast.vec1(declarator),
+            oxc_allocator::ArenaVec::from_value_in(declarator, self.ast),
             false,
+            self.ast,
         ))
     }
 }
@@ -2557,13 +2318,14 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
                         _ => unreachable!(),
                     };
                     stmts[i] = oxc_ast::ast::Statement::ExportNamedDeclaration(
-                        self.ast.alloc_export_named_declaration(
+                        oxc_ast::ast::ExportNamedDeclaration::boxed(
                             SPAN,
                             Some(decl),
-                            self.ast.vec(),
+                            oxc_allocator::ArenaVec::new_in(self.ast),
                             None,
                             oxc_ast::ast::ImportOrExportKind::Value,
                             None::<oxc_allocator::Box<oxc_ast::ast::WithClause>>,
+                            self.ast,
                         ),
                     );
                 } else {
@@ -2585,11 +2347,12 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
                             use oxc_allocator::CloneIn;
                             use oxc_span::SPAN;
                             stmts[i] = oxc_ast::ast::Statement::ExportDefaultDeclaration(
-                                self.ast.alloc_export_default_declaration(
+                                oxc_ast::ast::ExportDefaultDeclaration::boxed(
                                     SPAN,
                                     oxc_ast::ast::ExportDefaultDeclarationKind::from(
                                         self.gating_expression.clone_in(self.ast.allocator()),
                                     ),
+                                    self.ast,
                                 ),
                             );
                         }
@@ -2605,11 +2368,13 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
         // Insert `export default Name;` right after the replaced declaration.
         if let Some(name) = self.export_default_name.take() {
             use oxc_span::SPAN;
-            let ident = self.ast.expression_identifier(SPAN, ox_atom(self.ast, &name));
+            let ident =
+                oxc_ast::ast::Expression::new_identifier(SPAN, ox_atom(self.ast, &name), self.ast);
             let export = oxc_ast::ast::Statement::ExportDefaultDeclaration(
-                self.ast.alloc_export_default_declaration(
+                oxc_ast::ast::ExportDefaultDeclaration::boxed(
                     SPAN,
                     oxc_ast::ast::ExportDefaultDeclarationKind::from(ident),
+                    self.ast,
                 ),
             );
             // Find the const decl we just inserted (it has name `name`); insert after.
@@ -2673,12 +2438,13 @@ fn ox_gating_call<'a>(
     callee_name: &str,
 ) -> oxc_ast::ast::Expression<'a> {
     use oxc_span::SPAN;
-    ast.expression_call(
+    oxc_ast::ast::Expression::new_call_expression(
         SPAN,
-        ast.expression_identifier(SPAN, ox_atom(ast, callee_name)),
+        oxc_ast::ast::Expression::new_identifier(SPAN, ox_atom(ast, callee_name), ast),
         None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterInstantiation>>,
-        ast.vec(),
+        oxc_allocator::ArenaVec::new_in(ast),
         false,
+        ast,
     )
 }
 
@@ -2716,11 +2482,12 @@ fn ox_apply_gated_conditional<'a>(
 
     // gating() ? compiled : original
     use oxc_span::SPAN;
-    let gating_expression = ast.expression_conditional(
+    let gating_expression = oxc_ast::ast::Expression::new_conditional_expression(
         SPAN,
         ox_gating_call(ast, &gating_callee_name),
         compiled_expr,
         original_expr,
+        ast,
     );
 
     let mut visitor = OxcReplaceWithGatedVisitor {
@@ -2760,7 +2527,7 @@ fn ox_clone_original_fn_as_expression<'a>(
             if func.span.start == self.node_id {
                 use oxc_allocator::CloneIn;
                 use oxc_span::SPAN;
-                let f = self.ast.alloc_function(
+                let f = oxc_ast::ast::Function::boxed(
                     SPAN,
                     oxc_ast::ast::FunctionType::FunctionExpression,
                     func.id.clone_in(self.ast.allocator()),
@@ -2772,6 +2539,7 @@ fn ox_clone_original_fn_as_expression<'a>(
                     func.params.clone_in(self.ast.allocator()),
                     None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
                     func.body.clone_in(self.ast.allocator()),
+                    self.ast,
                 );
                 self.found = Some(oxc_ast::ast::Expression::FunctionExpression(f));
                 return;
@@ -2787,7 +2555,7 @@ fn ox_clone_original_fn_as_expression<'a>(
             }
             if arrow.span.start == self.node_id {
                 self.found = Some(oxc_ast::ast::Expression::ArrowFunctionExpression(
-                    self.ast.alloc(arrow.clone_in(self.ast.allocator())),
+                    oxc_allocator::ArenaBox::new_in(arrow.clone_in(self.ast.allocator()), self.ast),
                 ));
                 return;
             }
@@ -2953,71 +2721,90 @@ fn ox_add_imports_to_program<'a>(
         if let Some(&idx) = existing_import_indices.get(module_name) {
             // Merge into the existing import declaration.
             if let oxc_ast::ast::Statement::ImportDeclaration(import) = &mut program.body[idx] {
-                let specifiers = import.specifiers.get_or_insert_with(|| ast.vec());
+                let specifiers =
+                    import.specifiers.get_or_insert_with(|| oxc_allocator::ArenaVec::new_in(ast));
                 for spec in &sorted_imports {
                     specifiers.push(ox_make_import_specifier(ast, spec));
                 }
             }
         } else if is_module {
             // ESM: import { imported as local, ... } from 'module'
-            let mut specifiers = ast.vec();
+            let mut specifiers = oxc_allocator::ArenaVec::new_in(ast);
             for spec in &sorted_imports {
                 specifiers.push(ox_make_import_specifier(ast, spec));
             }
-            let source = ast.string_literal(SPAN, ox_atom(ast, module_name), None);
-            let import = ast.alloc_import_declaration(
+            let source =
+                oxc_ast::ast::StringLiteral::new(SPAN, ox_atom(ast, module_name), None, ast);
+            let import = oxc_ast::ast::ImportDeclaration::boxed(
                 SPAN,
                 Some(specifiers),
                 source,
                 None,
                 None::<oxc_allocator::Box<oxc_ast::ast::WithClause>>,
                 oxc_ast::ast::ImportOrExportKind::Value,
+                ast,
             );
             new_stmts.push(oxc_ast::ast::Statement::ImportDeclaration(import));
         } else {
             // CommonJS: const { imported: local, ... } = require('module')
-            let mut props = ast.vec();
+            let mut props = oxc_allocator::ArenaVec::new_in(ast);
             for spec in &sorted_imports {
-                let key = ast.property_key_static_identifier(SPAN, ox_atom(ast, &spec.imported));
-                let value = ast.binding_pattern_binding_identifier(SPAN, ox_atom(ast, &spec.name));
-                props.push(ast.binding_property(SPAN, key, value, false, false));
+                let key = oxc_ast::ast::PropertyKey::new_static_identifier(
+                    SPAN,
+                    ox_atom(ast, &spec.imported),
+                    ast,
+                );
+                let value = oxc_ast::ast::BindingPattern::new_binding_identifier(
+                    SPAN,
+                    ox_atom(ast, &spec.name),
+                    ast,
+                );
+                props.push(oxc_ast::ast::BindingProperty::new(SPAN, key, value, false, false, ast));
             }
-            let object_pattern = ast.binding_pattern_object_pattern(
+            let object_pattern = oxc_ast::ast::BindingPattern::new_object_pattern(
                 SPAN,
                 props,
                 None::<oxc_allocator::Box<oxc_ast::ast::BindingRestElement>>,
+                ast,
             );
-            let require_call = ast.expression_call(
+            let require_call = oxc_ast::ast::Expression::new_call_expression(
                 SPAN,
-                ast.expression_identifier(SPAN, "require"),
+                oxc_ast::ast::Expression::new_identifier(SPAN, "require", ast),
                 None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterInstantiation>>,
-                ast.vec1(oxc_ast::ast::Argument::from(ast.expression_string_literal(
-                    SPAN,
-                    ox_atom(ast, module_name),
-                    None,
-                ))),
+                oxc_allocator::ArenaVec::from_value_in(
+                    oxc_ast::ast::Argument::from(oxc_ast::ast::Expression::new_string_literal(
+                        SPAN,
+                        ox_atom(ast, module_name),
+                        None,
+                        ast,
+                    )),
+                    ast,
+                ),
                 false,
+                ast,
             );
-            let declarator = ast.variable_declarator(
+            let declarator = oxc_ast::ast::VariableDeclarator::new(
                 SPAN,
                 oxc_ast::ast::VariableDeclarationKind::Const,
                 object_pattern,
                 None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
                 Some(require_call),
                 false,
+                ast,
             );
-            let decl = ast.alloc_variable_declaration(
+            let decl = oxc_ast::ast::VariableDeclaration::boxed(
                 SPAN,
                 oxc_ast::ast::VariableDeclarationKind::Const,
-                ast.vec1(declarator),
+                oxc_allocator::ArenaVec::from_value_in(declarator, ast),
                 false,
+                ast,
             );
             new_stmts.push(oxc_ast::ast::Statement::VariableDeclaration(decl));
         }
     }
 
     if !new_stmts.is_empty() {
-        let old_body = std::mem::replace(&mut program.body, ast.vec());
+        let old_body = std::mem::replace(&mut program.body, oxc_allocator::ArenaVec::new_in(ast));
         program.body.extend(new_stmts);
         program.body.extend(old_body);
     }
@@ -3030,14 +2817,15 @@ fn ox_make_import_specifier<'a>(
 ) -> oxc_ast::ast::ImportDeclarationSpecifier<'a> {
     use oxc_span::SPAN;
     let imported = oxc_ast::ast::ModuleExportName::IdentifierName(
-        ast.identifier_name(SPAN, ox_atom(ast, &spec.imported)),
+        oxc_ast::ast::IdentifierName::new(SPAN, ox_atom(ast, &spec.imported), ast),
     );
-    let local = ast.binding_identifier(SPAN, ox_atom(ast, &spec.name));
-    oxc_ast::ast::ImportDeclarationSpecifier::ImportSpecifier(ast.alloc_import_specifier(
+    let local = oxc_ast::ast::BindingIdentifier::new(SPAN, ox_atom(ast, &spec.name), ast);
+    oxc_ast::ast::ImportDeclarationSpecifier::ImportSpecifier(oxc_ast::ast::ImportSpecifier::boxed(
         SPAN,
         imported,
         local,
         oxc_ast::ast::ImportOrExportKind::Value,
+        ast,
     ))
 }
 
@@ -3077,8 +2865,7 @@ pub fn compile_program<'a, 'p>(
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
-    // Create a temporary context for early-return paths (before full context is set up)
-    let early_events: Vec<LoggerEvent> = Vec::new();
+    // Debug log accumulated on early-return paths (before the full context exists).
     let mut early_ordered_log: Vec<OrderedLogItem> = Vec::new();
 
     // Log environment config for debugLogIRs
@@ -3088,27 +2875,15 @@ pub fn compile_program<'a, 'p>(
         });
     }
 
-    // Check if we should compile this file at all (pre-resolved by JS shim)
-    if !options.should_compile {
-        return CompileResult::Success {
-            ast: None,
-            events: early_events,
-            ordered_log: early_ordered_log,
-            renames: Vec::new(),
-            timing: Vec::new(),
-        };
-    }
-
     let program = oxc_program;
 
     // Check for existing runtime imports (file already compiled)
     if should_skip_compilation(program, &options) {
         return CompileResult::Success {
             ast: None,
-            events: early_events,
+            diagnostics: Diagnostics::new(),
             ordered_log: early_ordered_log,
             renames: Vec::new(),
-            timing: Vec::new(),
         };
     }
 
@@ -3146,17 +2921,12 @@ pub fn compile_program<'a, 'p>(
     // Create program context
     let mut context = ProgramContext::new(
         options.clone(),
-        options.filename.clone(),
-        // Pass the source code for fast refresh hash computation.
-        options.source_code.clone(),
+        // Source text feeds the line-offset table (diagnostic line/col) and the fast
+        // refresh hash. The oxc front-end derives locations from it on demand.
+        Some(program.source_text.to_string()),
         suppressions,
         has_module_scope_opt_out,
     );
-
-    // The source filename only fed logger event source locations. The oxc AST
-    // carries no per-node filename (the Babel bridge set it to `None` too), so
-    // leave it unset; it never affects compiled output or diagnostics.
-    context.set_source_filename(None);
 
     // Initialize known referenced names from scope bindings for UID collision detection
     context.init_from_scope(&scope);
@@ -3171,10 +2941,9 @@ pub fn compile_program<'a, 'p>(
         }
         return CompileResult::Success {
             ast: None,
-            events: context.events,
+            diagnostics: context.diagnostics,
             ordered_log: context.ordered_log,
             renames: convert_renames(&context.renames),
-            timing: Vec::new(),
         };
     }
 
@@ -3240,26 +3009,6 @@ pub fn compile_program<'a, 'p>(
         }
     }
 
-    // Emit CompileSuccess events for JSX-outlined functions (fn_type.is_some()).
-    // In TS, outlined functions from outlineJSX are appended to the compilation queue
-    // and processed after all original functions, so their events appear at the end.
-    // Regular outlined functions (from OutlineFunctions pass) don't get separate events.
-    for compiled in &compiled_fns {
-        for outlined in &compiled.codegen_fn.outlined {
-            if outlined.fn_type.is_some() {
-                context.log_event(LoggerEvent::CompileSuccess {
-                    fn_loc: None,
-                    fn_name: outlined.func.id.as_ref().map(|id| id.name.to_string()),
-                    memo_slots: outlined.func.memo_slots_used,
-                    memo_blocks: outlined.func.memo_blocks,
-                    memo_values: outlined.func.memo_values,
-                    pruned_memo_blocks: outlined.func.pruned_memo_blocks,
-                    pruned_memo_values: outlined.func.pruned_memo_values,
-                });
-            }
-        }
-    }
-
     // TS invariant: if there's a module scope opt-out, no functions should have been compiled
     if has_module_scope_opt_out {
         if !compiled_fns.is_empty() {
@@ -3272,10 +3021,9 @@ pub fn compile_program<'a, 'p>(
         }
         return CompileResult::Success {
             ast: None,
-            events: context.events,
+            diagnostics: context.diagnostics,
             ordered_log: context.ordered_log,
             renames: convert_renames(&context.renames),
-            timing: Vec::new(),
         };
     }
 
@@ -3316,10 +3064,9 @@ pub fn compile_program<'a, 'p>(
         // addImportsToProgram is only called when compiledFns.length > 0.
         return CompileResult::Success {
             ast: None,
-            events: context.events,
+            diagnostics: context.diagnostics,
             ordered_log: context.ordered_log,
             renames: convert_renames(&context.renames),
-            timing: Vec::new(),
         };
     }
 
@@ -3328,14 +3075,11 @@ pub fn compile_program<'a, 'p>(
     // functions, and add the memo-cache / gating imports.
     let compiled_program = ox_splice_program(ast, oxc_program, &replacements, &mut context);
 
-    let timing_entries = context.timing.into_entries();
-
     CompileResult::Success {
         ast: Some(compiled_program),
-        events: context.events,
+        diagnostics: context.diagnostics,
         ordered_log: context.ordered_log,
         renames: convert_renames(&context.renames),
-        timing: timing_entries,
     }
 }
 
@@ -3351,132 +3095,4 @@ fn convert_renames(
             declaration_start: r.declaration_start,
         })
         .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_is_hook_name() {
-        assert!(is_hook_name("useState"));
-        assert!(is_hook_name("useEffect"));
-        assert!(is_hook_name("use0Something"));
-        assert!(!is_hook_name("use"));
-        assert!(!is_hook_name("useless")); // lowercase after use
-        assert!(!is_hook_name("foo"));
-        assert!(!is_hook_name(""));
-    }
-
-    #[test]
-    fn test_is_component_name() {
-        assert!(is_component_name("MyComponent"));
-        assert!(is_component_name("App"));
-        assert!(!is_component_name("myComponent"));
-        assert!(!is_component_name("app"));
-        assert!(!is_component_name(""));
-    }
-
-    #[test]
-    fn test_is_valid_identifier() {
-        assert!(is_valid_identifier("foo"));
-        assert!(is_valid_identifier("_bar"));
-        assert!(is_valid_identifier("$baz"));
-        assert!(is_valid_identifier("foo123"));
-        assert!(!is_valid_identifier(""));
-        assert!(!is_valid_identifier("123foo"));
-        assert!(!is_valid_identifier("foo bar"));
-    }
-
-    /// Build an `oxc::FormalParameters` of plain identifier params from names,
-    /// for the component-param validity tests.
-    fn ident_params<'a>(
-        ast: &oxc_ast::builder::AstBuilder<'a>,
-        names: &[&str],
-    ) -> oxc_ast::ast::FormalParameters<'a> {
-        use oxc_span::SPAN;
-        let mut items = ast.vec();
-        for name in names {
-            let name = ox_atom(ast, name);
-            let pattern = ast.binding_pattern_binding_identifier(SPAN, name);
-            items.push(ast.formal_parameter(
-                SPAN,
-                ast.vec(),
-                pattern,
-                None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
-                None::<oxc_ast::ast::Expression>,
-                false,
-                None,
-                false,
-                false,
-            ));
-        }
-        ast.formal_parameters(
-            SPAN,
-            oxc_ast::ast::FormalParameterKind::FormalParameter,
-            items,
-            None::<oxc_allocator::Box<oxc_ast::ast::FormalParameterRest>>,
-        )
-    }
-
-    #[test]
-    fn test_is_valid_component_params_empty() {
-        let allocator = oxc_allocator::Allocator::default();
-        let ast = oxc_ast::builder::AstBuilder::new(&allocator);
-        assert!(is_valid_component_params(&ident_params(&ast, &[])));
-    }
-
-    #[test]
-    fn test_is_valid_component_params_one_identifier() {
-        let allocator = oxc_allocator::Allocator::default();
-        let ast = oxc_ast::builder::AstBuilder::new(&allocator);
-        assert!(is_valid_component_params(&ident_params(&ast, &["props"])));
-    }
-
-    #[test]
-    fn test_is_valid_component_params_too_many() {
-        let allocator = oxc_allocator::Allocator::default();
-        let ast = oxc_ast::builder::AstBuilder::new(&allocator);
-        assert!(!is_valid_component_params(&ident_params(&ast, &["a", "b", "c"])));
-    }
-
-    #[test]
-    fn test_is_valid_component_params_with_ref() {
-        let allocator = oxc_allocator::Allocator::default();
-        let ast = oxc_ast::builder::AstBuilder::new(&allocator);
-        assert!(is_valid_component_params(&ident_params(&ast, &["props", "ref"])));
-    }
-
-    #[test]
-    fn test_should_skip_compilation_no_import() {
-        let allocator = oxc_allocator::Allocator::default();
-        let parsed = oxc_parser::Parser::new(
-            &allocator,
-            "function Component() {}\n",
-            oxc_span::SourceType::tsx(),
-        )
-        .parse();
-        let options = PluginOptions {
-            should_compile: true,
-            enable_reanimated: false,
-            is_dev: false,
-            filename: None,
-            compilation_mode: "infer".to_string(),
-            panic_threshold: "none".to_string(),
-            target: super::super::plugin_options::CompilerTarget::Version("19".to_string()),
-            gating: None,
-            dynamic_gating: None,
-            no_emit: false,
-            output_mode: None,
-            eslint_suppression_rules: None,
-            flow_suppressions: true,
-            ignore_use_no_forget: false,
-            custom_opt_out_directives: None,
-            environment: EnvironmentConfig::default(),
-            source_code: None,
-            profiling: false,
-            debug: false,
-        };
-        assert!(!should_skip_compilation(&parsed.program, &options));
-    }
 }

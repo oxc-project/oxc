@@ -13,7 +13,6 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 use oxc_css_parser::{
-    Spanned,
     ast::{
         Calc, CalcOperatorKind, ComponentValue, Delimiter, DelimiterKind, Dimension, Function,
         FunctionName, InterpolableIdent, InterpolableStr, LessBinaryOperation,
@@ -113,8 +112,23 @@ fn print_string<'a>(raw: &'a str, options: &CssFormatOptions) -> Cow<'a, str> {
 }
 
 pub(super) fn write_str<'a>(str: &Str<'a>, f: &mut CssFormatter<'_, 'a>) {
-    let printed = print_string(str.raw, f.options());
+    write_str_raw(str.raw, f);
+}
+
+/// [`write_str`] for a raw quoted-string slice
+/// (callers that only hold the source text, no AST node).
+pub(super) fn write_str_raw<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
+    let printed = print_string(raw, f.options());
     write!(f, text(arena_cow_str(&printed, f)));
+}
+
+/// [`write_str`] for attribute-selector values.
+/// Prettier wraps the value in `replaceEndOfLine(..., literallineWithoutBreakParent)`:
+/// an escaped literal newline inside the value prints verbatim,
+/// but must not force a break in front of the selector.
+pub(super) fn write_attribute_str<'a>(str: &Str<'a>, f: &mut CssFormatter<'_, 'a>) {
+    let printed = print_string(str.raw, f.options());
+    write!(f, text(arena_cow_str(&printed, f)).without_expand_parent());
 }
 
 /// Prettier's `adjustNumbers(adjustStrings(...))` over a raw source slice:
@@ -337,6 +351,14 @@ fn is_wide_keyword(value: &str) -> bool {
         || value.eq_ignore_ascii_case("revert")
 }
 
+pub(super) fn token_depth_delta(token: &Token<'_>) -> i32 {
+    match token {
+        Token::LParen(_) | Token::LBracket(_) | Token::LBrace(_) => 1,
+        Token::RParen(_) | Token::RBracket(_) | Token::RBrace(_) => -1,
+        _ => 0,
+    }
+}
+
 fn is_comma(value: &ComponentValue<'_>) -> bool {
     matches!(value, ComponentValue::Delimiter(Delimiter { kind: DelimiterKind::Comma, .. }))
 }
@@ -360,6 +382,32 @@ fn is_word_like(value: &ComponentValue<'_>) -> bool {
 
 fn is_func_like(value: &ComponentValue<'_>) -> bool {
     matches!(value, ComponentValue::Function(_) | ComponentValue::Url(_))
+}
+
+/// `sandstone.10` / `theme(spacing.2.5)` / `1+1+1+1` / `calc(100%+2px)`:
+/// per CSS tokenization the glued `.10` / `+1` / `+2px` are numbers,
+/// but postcss lexes the whole contiguous run as ONE word
+/// (an xstyled / tailwind-theme token, or plugin-processed pseudo-math).
+///
+/// Such a number stays glued (`Separator::Tight`) and prints raw.
+/// `.10` must not normalize to `0.1`, `+1` must not gain a space.
+/// Two glued number-ish values can never be valid CSS,
+/// so a number-ish neighbor is as sure a word sign as a word-like one.
+/// (The raw-slice twin of this rule lives in `adjust_numbers_and_strings`,
+/// whose word-part scan skips numbers glued to a word; keep them in sync.)
+fn is_word_glued_number(values: &[ComponentValue<'_>], i: usize) -> bool {
+    let number_ish = |value: &ComponentValue<'_>| {
+        matches!(
+            value,
+            ComponentValue::Number(_)
+                | ComponentValue::Dimension(_)
+                | ComponentValue::Percentage(_)
+        )
+    };
+    i > 0
+        && number_ish(&values[i])
+        && (is_word_like(&values[i - 1]) || number_ish(&values[i - 1]))
+        && to_span(values[i - 1].span()).end == to_span(values[i].span()).start
 }
 
 /// Is this number-ish or a font-size-capable function? (Prettier's `isPossibleFontSize`)
@@ -398,9 +446,9 @@ pub(super) struct ValueContext<'a> {
     pub no_break: bool,
     /// SCSS map printed in key position: stays inline (Prettier's `isKey`).
     pub map_key: bool,
-    /// A parenthesized comma list here breaks one item per line
-    /// (only as a direct map-item value,
-    /// `isSCSSMapItemNode` needs key-value pairs in the group or its grandparent).
+    /// A parenthesized COMMA list here breaks one item per line with a trailing comma
+    /// (only as a direct map-item value, `isSCSSMapItemNode` needs key-value pairs in the group or its grandparent;
+    /// non-comma-list contents never take the break, the comma would change their meaning).
     pub paren_break: bool,
     /// SCSS maps here always break (`$var:` values, function args, map items).
     pub map_break: bool,
@@ -431,10 +479,25 @@ impl ValueContext<'_> {
 }
 
 /// Splits a flat component stream at top-level commas.
+/// A raw `Token::Comma` splits too (postcss value-parses raw token streams the same way):
+/// a declaration value the typed grammar rejected falls back to raw tokens,
+/// and its comma list must still count as a multi-value list
+/// (`background-position: 0 0, 0 spacing(tight), ...` breaks one per line).
+/// Raw parens keep their inner commas out of the split.
 fn split_comma_groups<'b, 'a>(values: &'b [ComponentValue<'a>]) -> Vec<&'b [ComponentValue<'a>]> {
     let mut groups = vec![];
     let mut start = 0;
+    let mut depth = 0i32;
     for (i, v) in values.iter().enumerate() {
+        if let ComponentValue::TokenWithSpan(tok) = v {
+            if depth == 0 && matches!(&tok.token, Token::Comma(_)) {
+                groups.push(&values[start..i]);
+                start = i + 1;
+            } else {
+                depth += token_depth_delta(&tok.token);
+            }
+            continue;
+        }
         if is_comma(v) {
             groups.push(&values[start..i]);
             start = i + 1;
@@ -639,7 +702,13 @@ pub(super) fn flush_value_comments(upper_bound: u32, f: &mut CssFormatter<'_, '_
 
 /// Emits pending comments that sit on the same line as the just-printed
 /// content ending at `prev_end` (` // c` / ` /* c */`), up to `upper_bound`.
-fn flush_same_line_comments_before(prev_end: u32, upper_bound: u32, f: &mut CssFormatter<'_, '_>) {
+/// Container tails pass their own end as the bound,
+/// so a same-line comment belonging to a FOLLOWING statement is never pulled inside.
+pub(super) fn flush_same_line_comments(
+    prev_end: u32,
+    upper_bound: u32,
+    f: &mut CssFormatter<'_, '_>,
+) {
     loop {
         let Some(comment) = f.context().comments().peek() else { return };
         let source = f.context().source_text();
@@ -657,12 +726,6 @@ fn flush_same_line_comments_before(prev_end: u32, upper_bound: u32, f: &mut CssF
             return;
         }
     }
-}
-
-/// Unbounded variant (used at container tails where everything pending
-/// belongs to the container).
-pub(super) fn flush_same_line_comments(prev_end: u32, f: &mut CssFormatter<'_, '_>) {
-    flush_same_line_comments_before(prev_end, u32::MAX, f);
 }
 
 /// Emits pending comments before `upper_bound` as ` /* c */` suffixes
@@ -803,10 +866,17 @@ pub(super) fn write_comma_group<'a>(
             let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 flush_value_comments(start, f);
                 for (j, v) in run.iter().enumerate() {
-                    if j > 0
-                        && separator_between(values, run_start + j, ctx, source) == Separator::Space
-                    {
-                        write!(f, " ");
+                    if j > 0 {
+                        let sep = separator_between(values, run_start + j, ctx, source);
+                        if sep == Separator::Space {
+                            write!(f, " ");
+                        }
+                        // A word-glued number prints raw, not normalized (see `is_word_glued_number`);
+                        // gated on Tight so the spacing and text halves always come from one rule.
+                        if sep == Separator::Tight && is_word_glued_number(values, run_start + j) {
+                            write!(f, text(source.text_for(&to_span(v.span()))));
+                            continue;
+                        }
                     }
                     write_component_value(v, ctx, f);
                 }
@@ -1138,6 +1208,12 @@ fn separator_between(
         return Separator::Tight;
     }
 
+    // A word-glued number is part of ONE postcss word (`sandstone.10`);
+    // it also prints raw, see `is_word_glued_number`.
+    if gap_empty && is_word_glued_number(values, i) {
+        return Separator::Tight;
+    }
+
     // postcss-values lexes `1#{$var}` as ONE word:
     // a neighbor glued to an interpolated ident stays glued.
     {
@@ -1229,16 +1305,22 @@ pub(super) fn write_component_value<'a>(
         ComponentValue::SassMap(map) => scss::write_sass_map(map, ctx, f),
         ComponentValue::SassList(list) => scss::write_sass_list(list, ctx, f),
         ComponentValue::SassParenthesizedExpression(paren) => {
-            // `$var: ((a, b), (c, d))` / map item values: one item per line
-            if ctx.paren_break {
-                // Map-item values always break (`isSCSSMapItemNode`),
+            // `$var: ((a, b), (c, d))` / map item values: one item per line.
+            // ONLY a comma-separated list takes this break:
+            // the trailing comma is a semantic no-op there and NOWHERE else.
+            // NOTE: `(x,)` is a single-element list in Sass,
+            // so adding it to `($a + $b)` / `(a b)` / `(-$a)` changes the value
+            // and `2 * ($a + $b,)` fails to compile.
+            // (Prettier 3.9.1 does all of these; #19091 exempted single-node scalars only)
+            if ctx.paren_break
+                && let ComponentValue::SassList(list) = &*paren.expr
+                && list.comma_spans.is_some()
+            {
+                // Comma-list map-item values always break (`isSCSSMapItemNode`),
                 // with a trailing comma per option.
                 let inner_ctx = ValueContext { paren_break: false, ..ctx };
                 let trailing = f.options().allow_trailing_comma();
-                let elements: &[ComponentValue<'a>] = match &*paren.expr {
-                    ComponentValue::SassList(list) if list.comma_spans.is_some() => &list.elements,
-                    expr => std::slice::from_ref(expr),
-                };
+                let elements = &list.elements;
                 let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     write!(f, hard_line_break());
                     for (i, el) in elements.iter().enumerate() {
@@ -1272,7 +1354,9 @@ pub(super) fn write_component_value<'a>(
                         }
                         write_component_value(el, inner_ctx, f);
                     }
-                    if trailing && (ctx.map_key || ctx.paren_break) {
+                    // `ctx.paren_break` cannot be set here,
+                    // a comma list with it takes the hard-break branch above.
+                    if trailing && ctx.map_key {
                         write!(f, if_group_breaks(&text(",")));
                     }
                 } else {
@@ -1310,7 +1394,7 @@ pub(super) fn write_component_value<'a>(
             // `not` already wrote its space.
             if !keyword_not
                 && is_func_like(&unary.expr)
-                && to_span(unary.op.span()).end != to_span(unary.expr.span()).start
+                && to_span(&unary.op.span).end != to_span(unary.expr.span()).start
             {
                 write!(f, " ");
             }
@@ -1328,6 +1412,9 @@ pub(super) fn write_component_value<'a>(
                 write_component_value(&kw.value, ctx, f);
                 return;
             }
+            // Only a value that IS the paren group is a map item;
+            // a paren nested in a math expression (`$foo: 2 * ($bar + $baz)`) never breaks (Prettier #18530).
+            let ctx = ValueContext { paren_break: false, ..ctx };
             // `$name: value` may break after the colon when too long
             let pair = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 let mut filler = f.fill();
@@ -1447,7 +1534,7 @@ fn write_sass_binary<'a>(
                 if matches!(op.kind, SassBinaryOperatorKind::Multiply) {
                     break;
                 }
-                let op_span = to_span(op.span());
+                let op_span = to_span(&op.span);
                 let next = &parts[run_end + 1].0;
                 let operand = &parts[run_end].0;
                 // Division mirrors postcss-values lexing:
@@ -1497,7 +1584,7 @@ fn write_sass_binary<'a>(
                 for (j, (operand, op)) in run.iter().enumerate() {
                     write_component_value(operand, ctx, f);
                     if let Some(op) = op {
-                        let op_span = to_span(op.span());
+                        let op_span = to_span(&op.span);
                         let operand_end = to_span(operand.span()).end;
                         let next_start = run.get(j + 1).map(|(next, _)| to_span(next.span()).start);
                         // `op(paren)` fuses like a postcss function token,
@@ -1575,9 +1662,11 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
             CalcOperatorKind::Minus => "-",
             CalcOperatorKind::Multiply => "*",
             CalcOperatorKind::Division => "/",
+            // Sass modulo inside a math function's arguments (`max(1px, 7px % 4)`)
+            CalcOperatorKind::Modulo => "%",
         };
         let left_end = to_span(calc.left.span()).end;
-        let op_span = to_span(calc.op.span());
+        let op_span = to_span(&calc.op.span);
         let right_start = to_span(calc.right.span()).start;
 
         push_operand(&calc.left, f, chunks, current);
@@ -1690,7 +1779,7 @@ fn write_less_binary_operation<'a>(
             LessOperationOperatorKind::Minus => "-",
         };
         let left_end = to_span(op.left.span()).end;
-        let op_span = to_span(op.op.span());
+        let op_span = to_span(&op.op.span);
         let right_start = to_span(op.right.span()).start;
 
         push_operand(&op.left, chunks, current);
@@ -1976,6 +2065,14 @@ pub(super) fn write_function<'a>(
         no_leading_softline: false,
         ..ctx
     };
+    // A keyword argument's paren-group value is a map item
+    // ONLY when the call's FIRST argument is a key-value pair
+    // (Prettier's `isKeyValuePairInParenGroupNode` checks `groups[0]` alone):
+    // `func($k: (1, 2), a)` breaks, `func(a, $k: (1, 2))` does not.
+    let is_kw_arg = |g: &[ComponentValue<'a>]| {
+        g.len() == 1 && matches!(g[0], ComponentValue::SassKeywordArgument(_))
+    };
+    let first_arg_is_kw = groups.first().is_some_and(|g| is_kw_arg(g));
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         let source = f.context().source_text();
         write!(f, soft_line_break());
@@ -2001,7 +2098,9 @@ pub(super) fn write_function<'a>(
                     write!(f, soft_line_break_or_space());
                 }
             }
-            write_arg_group(group_values, ctx, f);
+            let arg_ctx =
+                ValueContext { paren_break: first_arg_is_kw && is_kw_arg(group_values), ..ctx };
+            write_arg_group(group_values, arg_ctx, f);
         }
         if has_trailing_comma {
             write!(f, ",");
@@ -2110,8 +2209,14 @@ pub(super) fn write_url<'a>(url: &Url<'a>, f: &mut CssFormatter<'_, 'a>) {
                     write!(f, text(inner));
                 } else {
                     let trimmed = inner.trim();
-                    // `url($a+$b)`: SCSS concatenation gets spaced
-                    if trimmed.contains('$') && trimmed.contains('+') && !trimmed.contains(' ') {
+                    // `url($a+$b)`: SCSS concatenation gets spaced.
+                    // SCSS only, in Css mode (postcss-simple-vars `$var`s)
+                    // Prettier keeps the raw url contents verbatim.
+                    if matches!(f.options().variant, crate::options::CssVariant::Scss)
+                        && trimmed.contains('$')
+                        && trimmed.contains('+')
+                        && !trimmed.contains(' ')
+                    {
                         let spaced = trimmed.cow_replace('+', " + ");
                         write!(f, text(f.allocator().alloc_str(&spaced)));
                     } else {

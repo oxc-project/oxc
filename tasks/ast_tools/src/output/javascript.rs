@@ -52,7 +52,7 @@ fn format(source_text: &str) -> String {
         .arg(oxfmt_config_path)
         .arg(&tmp_file)
         .output()
-        .expect("Failed to run oxfmt (is it installed?)");
+        .expect("Failed to run oxfmt (do you need to run `pnpm i` to install it?)");
 
     // Read the formatted content
     let result = if output.status.success() {

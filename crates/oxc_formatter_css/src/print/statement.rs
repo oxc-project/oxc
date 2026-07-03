@@ -1,7 +1,6 @@
 use cow_utils::CowUtils;
-use oxc_css_parser::{
-    Spanned,
-    ast::{ComponentValue, Declaration, InterpolableIdent, QualifiedRule, SimpleBlock, Statement},
+use oxc_css_parser::ast::{
+    ComponentValue, Declaration, InterpolableIdent, QualifiedRule, SimpleBlock, Statement,
 };
 
 use oxc_formatter_core::{
@@ -190,7 +189,7 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
             // Preserve a trailing `;` from the source
             // (Prettier keeps `${foo};` as `${foo};` and `${foo}` as `${foo}`):
             // the `;` is consumed by the statement separator, so recover it from the source gap.
-            let end = to_span(placeholder.span()).end;
+            let end = to_span(&placeholder.span).end;
             if end_with_semicolon(end, f) > end {
                 write!(f, ";");
             }
@@ -298,6 +297,12 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     let source = f.context().source_text();
     let name_span = to_span(decl.name.span());
     let prop = source.text_for(&name_span);
+    // Legacy IE hack prefix glued to the property name
+    // (`*color: red`; `oxc-css-parser` also accepts `.`/`:`/`#` in Css mode);
+    // postcss keeps it as part of the prop, so Prettier preserves it.
+    if let Some(prefix) = decl.name_prefix {
+        write!(f, text(f.allocator().alloc_str(prefix.encode_utf8(&mut [0; 4]))));
+    }
     if let InterpolableIdent::Placeholder(placeholder) = &decl.name {
         // A css-in-js placeholder property name (`${foo}: ...`) is a typed marker
         // the host replaces with `${expr}`; never lowercase it like a real property.

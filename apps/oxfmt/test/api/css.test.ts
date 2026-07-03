@@ -65,10 +65,27 @@ describe("CSS/SCSS/Less files (oxc_formatter_css)", () => {
     `);
   });
 
-  it("should report a diagnostic for input rejects (no Prettier fallback)", async () => {
-    // IE star hack: postcss would tolerate it as a raw declaration,
-    // but `oxc_formatter_css` does not, the parse error is surfaced as-is.
+  it("should format postcss-tolerated syntax like the IE star hack", async () => {
+    // postcss tolerates it as a raw declaration and Prettier prints it back;
+    // `oxc-css-parser` accepts it via an additive leniency, so no diagnostic.
     const source = `a { *zoom: 1; color: red }`;
+    const result = await format("legacy.css", source);
+    expect(result.code).toBe("a {\n  *zoom: 1;\n  color: red;\n}\n");
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("should format an unclosed block by closing it", async () => {
+    // Prettier (postcss) rejects "Unclosed block"; `oxc-css-parser` recovers.
+    const source = `a {\n  color: red;\n`;
+    const result = await format("recovered.css", source);
+    expect(result.code).toBe("a {\n  color: red;\n}\n");
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("should report a diagnostic for input rejects (no Prettier fallback)", async () => {
+    // postcss tolerates this as raw at-rule params (Prettier destroys it to `@media ;`),
+    // but `oxc_formatter_css` does not, the parse error is surfaced as-is.
+    const source = `@media ( { }`;
     const result = await format("legacy.css", source);
     expect(result.code).toBe(source);
     expect(result.errors).toHaveLength(1);
@@ -76,7 +93,8 @@ describe("CSS/SCSS/Less files (oxc_formatter_css)", () => {
   });
 
   it("should report a diagnostic for genuinely broken input", async () => {
-    const source = `a {\n  color: red;\n`;
+    // A stray closing brace; postcss rejects it too ("Unexpected }").
+    const source = `} a { color: red }`;
     const result = await format("broken.css", source);
     expect(result.code).toBe(source);
     expect(result.errors).toHaveLength(1);

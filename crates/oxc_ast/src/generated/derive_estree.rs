@@ -102,7 +102,10 @@ impl ESTree for BindingIdentifier<'_> {
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("name", &self.name);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
-        state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
+        state.serialize_ts_field(
+            "typeAnnotation",
+            &crate::serialize::basic::TsTypeAnnotationOrNull(self),
+        );
         state.serialize_span(self.span);
         state.end();
     }
@@ -1218,7 +1221,10 @@ impl ESTree for ObjectPattern<'_> {
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("properties", &Concat2(&self.properties, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
-        state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
+        state.serialize_ts_field(
+            "typeAnnotation",
+            &crate::serialize::basic::TsTypeAnnotationOrNull(self),
+        );
         state.serialize_span(self.span);
         state.end();
     }
@@ -1247,7 +1253,10 @@ impl ESTree for ArrayPattern<'_> {
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("elements", &Concat2(&self.elements, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
-        state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
+        state.serialize_ts_field(
+            "typeAnnotation",
+            &crate::serialize::basic::TsTypeAnnotationOrNull(self),
+        );
         state.serialize_span(self.span);
         state.end();
     }
@@ -1260,7 +1269,10 @@ impl ESTree for BindingRestElement<'_> {
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("argument", &self.argument);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
-        state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
+        state.serialize_ts_field(
+            "typeAnnotation",
+            &crate::serialize::basic::TsTypeAnnotationOrNull(self),
+        );
         state.serialize_ts_field("value", &crate::serialize::basic::TsNull(self));
         state.serialize_span(self.span);
         state.end();

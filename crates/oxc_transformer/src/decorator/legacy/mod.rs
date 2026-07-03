@@ -1381,7 +1381,7 @@ impl<'a> LegacyDecorator<'a> {
                 Expression::new_template_literal(SPAN, quasis, ArenaVec::new_in(ctx), ctx)
             }
             PropertyKey::NullLiteral(_) => Expression::new_null_literal(SPAN, ctx),
-            _ => {
+            match_expression!(PropertyKey) => {
                 // ```ts
                 // Input:
                 // class Test {
@@ -1395,14 +1395,14 @@ impl<'a> LegacyDecorator<'a> {
                 //   static [_a = a()] = 0;
                 // ```
 
+                let key_expr = key.to_expression_mut();
+
                 // Create a unique binding for the computed property key, and insert it outside of the class
-                let binding = VarDeclarationsStore::create_uid_var_based_on_node(key, ctx);
+                let binding = VarDeclarationsStore::create_uid_var_based_on_node(key_expr, ctx);
                 let operator = AssignmentOperator::Assign;
                 let left = binding.create_write_target(ctx);
-                let right = key.to_expression_mut().take_in(ctx);
-                let key_expr =
-                    Expression::new_assignment_expression(SPAN, operator, left, right, ctx);
-                *key = PropertyKey::from(key_expr);
+                let right = key_expr.take_in(ctx);
+                *key = PropertyKey::new_assignment_expression(SPAN, operator, left, right, ctx);
                 binding.create_read_expression(ctx)
             }
         }

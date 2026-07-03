@@ -22,3 +22,8 @@ body {
 @theme inline {
   --font-heading: var(--font-inter);
 }
+
+/* container-query variant (`@7xl:` — a digit-led at-keyword) stays verbatim */
+.container-query {
+  @apply @7xl:flex-row;
+}

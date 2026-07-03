@@ -16,6 +16,16 @@ Formatting is two stages:
 
 Key IR pieces are all exported from the crate root.
 
+The semantics of each building block live in the `builders.rs` rustdocs.
+e.g. the three mechanisms for verbatim multi-line content
+(`literal_line_break()`, multiline `text()`, `text(..).without_expand_parent()`, and `mark_as_root` / `dedent_to_root`),
+with the non-obvious behaviors pinned by printer tests verified against Prettier's `printDocToString`.
+
+Prettier doc primitives are ported on demand; still missing:
+
+- `hardlineWithoutBreakParent` (markdown tables)
+- and the `trim` doc
+
 ### Generic context design
 
 The core is parameterized over a consumer-supplied context so it stays language-agnostic:

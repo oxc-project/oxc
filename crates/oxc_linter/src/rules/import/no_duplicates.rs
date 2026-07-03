@@ -149,26 +149,40 @@ impl Rule for NoDuplicates {
             // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
             let mut import_entries_maps: FxHashMap<u8, Vec<&RequestedModule>> =
                 FxHashMap::default();
+            // Side-effect and top-level type-only imports cannot be merged directly. A runtime
+            // import with specifiers (including inline type specifiers) can absorb either.
+            let mut key0_side_effect_imports = Vec::new();
+            let mut key0_type_only_imports = Vec::new();
+            let mut key0_has_runtime_specifiers = false;
             for requested_module in requested_modules {
-                let imports = module_record
+                let import_entries = module_record
                     .import_entries
                     .iter()
                     .filter(|entry| entry.module_request.span == requested_module.span)
                     .collect::<Vec<_>>();
-                if imports.is_empty() {
-                    import_entries_maps.entry(0).or_default().push(requested_module);
+                if import_entries.is_empty() {
+                    let key = u8::from(requested_module.is_type && !self.prefer_inline);
+                    import_entries_maps.entry(key).or_default().push(requested_module);
+                    if key == 0 {
+                        if requested_module.is_type {
+                            key0_type_only_imports.push(requested_module);
+                        } else {
+                            key0_side_effect_imports.push(requested_module);
+                        }
+                    }
                     continue;
                 }
                 let mut flags = [true; 4];
-                for imports in imports {
-                    let key = if imports.is_type {
-                        match imports.import_name {
+                let mut pushed_to_key0 = false;
+                for import_entry in import_entries {
+                    let key = if import_entry.is_type {
+                        match import_entry.import_name {
                             ImportImportName::Name(_) => u8::from(!self.prefer_inline),
                             ImportImportName::NamespaceObject => 2,
                             ImportImportName::Default(_) => 3,
                         }
                     } else {
-                        match imports.import_name {
+                        match import_entry.import_name {
                             ImportImportName::NamespaceObject => 2,
                             _ => 0,
                         }
@@ -177,11 +191,26 @@ impl Rule for NoDuplicates {
                     if flags[key as usize] {
                         flags[key as usize] = false;
                         import_entries_maps.entry(key).or_default().push(requested_module);
+                        if key == 0 {
+                            pushed_to_key0 = true;
+                        }
+                    }
+                }
+                if pushed_to_key0 {
+                    if requested_module.is_type {
+                        key0_type_only_imports.push(requested_module);
+                    } else {
+                        key0_has_runtime_specifiers = true;
                     }
                 }
             }
 
             for i in 0..4 {
+                if i == 0 && !key0_has_runtime_specifiers {
+                    check_duplicates(ctx, Some(&key0_side_effect_imports));
+                    check_duplicates(ctx, Some(&key0_type_only_imports));
+                    continue;
+                }
                 check_duplicates(ctx, import_entries_maps.get(&i));
             }
         }
@@ -259,6 +288,18 @@ fn test() {
         (r"import type * as something from './foo'; import { y } from './foo';", None),
         (r"import y from './foo'; import type * as something from './foo';", None),
         (r"import { y } from './foo'; import type * as something from './foo';", None),
+        // A type-only import is not a duplicate of a bare side-effect import.
+        (r"import type { Foo } from './foo'; import './foo';", None),
+        (
+            r"import type { Foo } from './foo'; import './foo';",
+            Some(json!([{ "preferInline": true }])),
+        ),
+        (
+            r"import './foo'; import type { Foo } from './foo';",
+            Some(json!([{ "prefer-inline": true }])),
+        ),
+        (r"import type {} from './foo'; import './foo';", None),
+        (r"import type {} from './foo'; import './foo';", Some(json!([{ "preferInline": true }]))),
         (r"import { RouterModule, Routes } from '@angular/router';", None),
     ];
 
@@ -479,6 +520,28 @@ fn test() {
         (
             r"import {AValue} from './foo'; import type {AType} from './foo'",
             Some(json!([{ "prefer-inline": true }])),
+        ),
+        // Genuine duplicates still reported (two type-only imports merge under prefer-inline).
+        (
+            r"import type {x} from './foo'; import type {y} from './foo'",
+            Some(json!([{ "preferInline": true }])),
+        ),
+        // A side-effect import is still redundant when a value import also exists.
+        (
+            r"import './foo'; import { Bar } from './foo'; import type { Foo } from './foo'",
+            Some(json!([{ "preferInline": true }])),
+        ),
+        (
+            r"import './foo'; import type { Foo } from './foo'; import type { Bar } from './foo'",
+            Some(json!([{ "preferInline": true }])),
+        ),
+        (
+            r"import './foo'; import './foo'; import type { Foo } from './foo'",
+            Some(json!([{ "preferInline": true }])),
+        ),
+        (
+            r"import { type Foo } from './foo'; import './foo'",
+            Some(json!([{ "preferInline": true }])),
         ),
     ];
 

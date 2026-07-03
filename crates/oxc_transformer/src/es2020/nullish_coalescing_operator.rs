@@ -46,24 +46,26 @@ impl NullishCoalescingOperator {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator {
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
-        if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
+        if matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
         {
-            return;
+            Self::transform_logical_expression(expr, ctx);
         }
-
-        // Take ownership of the `LogicalExpression`
-        let Expression::LogicalExpression(logical_expr) = expr.take_in(ctx) else { unreachable!() };
-
-        *expr = self.transform_logical_expression(logical_expr, ctx);
     }
 }
 
 impl<'a> NullishCoalescingOperator {
-    #[expect(clippy::unused_self)]
-    fn transform_logical_expression(
-        &self,
+    #[cold] // Most `Expression`s are not `??` `LogicalExpression`s
+    fn transform_logical_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Take ownership of the `LogicalExpression`
+        let Expression::LogicalExpression(logical_expr) = expr.take_in(ctx) else { unreachable!() };
+
+        *expr = Self::transform_logical_expression_impl(logical_expr, ctx);
+    }
+
+    fn transform_logical_expression_impl(
         logical_expr: ArenaBox<'a, LogicalExpression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {

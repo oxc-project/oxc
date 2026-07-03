@@ -12,7 +12,10 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration, TSModuleReference},
+    ast::{
+        Expression, ImportExpression, ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration,
+        TSModuleReference,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -270,7 +273,8 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// This rule allows you to specify imports that you don’t want to use in your application.
-    /// It applies to static imports only, not dynamic ones.
+    /// It applies to static imports and to dynamic `import()` with a string-literal source;
+    /// computed sources like `import(bar)` are ignored.
     ///
     /// ### Why is this bad?
     ///
@@ -1015,11 +1019,15 @@ impl Rule for NoRestrictedImports {
     }
 
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSImportEqualsDeclaration(declaration) = node.kind() else {
-            return;
-        };
-
-        self.report_ts_import_equals_declaration_allowed(ctx, declaration);
+        match node.kind() {
+            AstKind::TSImportEqualsDeclaration(declaration) => {
+                self.report_ts_import_equals_declaration_allowed(ctx, declaration);
+            }
+            AstKind::ImportExpression(import_expression) => {
+                self.report_import_expression_allowed(ctx, import_expression);
+            }
+            _ => {}
+        }
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -1243,24 +1251,63 @@ impl NoRestrictedImports {
             return;
         };
 
-        let source = &reference.expression.value;
+        self.report_string_literal_source(
+            ctx,
+            entry.span,
+            &reference.expression,
+            entry.import_kind == ImportOrExportKind::Type,
+            false,
+        );
+    }
+
+    fn report_import_expression_allowed(
+        &self,
+        ctx: &LintContext<'_>,
+        import_expression: &ImportExpression,
+    ) {
+        // Only string-literal sources are checkable; `import(bar)`, `import('a' + b)` are ignored.
+        let Expression::StringLiteral(source) = &import_expression.source else {
+            return;
+        };
+
+        // `is_type` is `false` (a runtime `import()` is never a type import); `is_dynamic_import`
+        // is `true` so name-scoped restrictions are skipped.
+        self.report_string_literal_source(ctx, import_expression.span, source, false, true);
+    }
+
+    /// Checks a string-literal module source against the configured `paths` and `patterns`.
+    /// Shared by `import x = require('…')` and dynamic `import('…')`.
+    fn report_string_literal_source(
+        &self,
+        ctx: &LintContext<'_>,
+        span: Span,
+        source_literal: &StringLiteral,
+        is_type: bool,
+        is_dynamic_import: bool,
+    ) {
+        let source = source_literal.value.as_str();
 
         for path in &self.paths {
             if source != path.name.as_str() {
                 continue;
             }
 
-            let result = &path.get_string_literal_result(
-                &reference.expression,
-                entry.import_kind == ImportOrExportKind::Type,
-            );
+            // Dynamic imports have no named bindings, so name-scoped restrictions
+            // (`importNames` / `allowImportNames`) do not apply.
+            if is_dynamic_import
+                && (path.import_names.is_some() || path.allow_import_names.is_some())
+            {
+                continue;
+            }
+
+            let result = &path.get_string_literal_result(source_literal, is_type);
 
             if *result == ImportNameResult::Allowed {
                 continue;
             }
 
             let diagnostic =
-                get_diagnostic_from_import_name_result_path(entry.span, source, result, path);
+                get_diagnostic_from_import_name_result_path(span, source, result, path);
 
             ctx.diagnostic(diagnostic);
         }
@@ -1269,23 +1316,29 @@ impl NoRestrictedImports {
         let mut found_errors = vec![];
 
         for pattern in &self.patterns {
-            let result = &pattern.get_string_literal_result(
-                &reference.expression,
-                entry.import_kind == ImportOrExportKind::Type,
-            );
+            if is_dynamic_import
+                && (pattern.import_names.is_some()
+                    || pattern.import_name_pattern.is_some()
+                    || pattern.allow_import_names.is_some()
+                    || pattern.allow_import_name_pattern.is_some())
+            {
+                continue;
+            }
+
+            let result = &pattern.get_string_literal_result(source_literal, is_type);
 
             if *result == ImportNameResult::Allowed {
                 continue;
             }
 
-            match pattern.get_group_glob_result(&reference.expression.value) {
+            match pattern.get_group_glob_result(source) {
                 GlobResult::Whitelist => {
                     whitelist_found = true;
                     break;
                 }
                 GlobResult::Found => {
                     let diagnostic: OxcDiagnostic = get_diagnostic_from_import_name_result_pattern(
-                        entry.span, source, result, pattern,
+                        span, source, result, pattern,
                     );
 
                     found_errors.push(diagnostic);
@@ -1293,9 +1346,9 @@ impl NoRestrictedImports {
                 GlobResult::None => (),
             }
 
-            if pattern.get_regex_result(&reference.expression.value) {
+            if pattern.get_regex_result(source) {
                 ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
-                    entry.span, source, result, pattern,
+                    span, source, result, pattern,
                 ));
             }
         }
@@ -1966,6 +2019,33 @@ fn test() {
             Some(
                 serde_json::json!([{ "patterns": [{ "group": ["[@a-z]*", "!.*/**"], "message": "foo is forbidden, use bar instead" }] }]),
             ),
+        ),
+        // dynamic `import()` with a string-literal source
+        ("import('os');", Some(serde_json::json!(["fs"]))),
+        ("import('foo/bar');", Some(serde_json::json!([{ "patterns": ["foo/baz"] }]))),
+        // non-literal dynamic import sources are ignored
+        ("import(foo);", Some(serde_json::json!(["foo"]))),
+        ("import(`foo`);", Some(serde_json::json!(["foo"]))),
+        ("import('foo' + bar);", Some(serde_json::json!(["foo"]))),
+        // `importNames` / `allowImportNames` do not apply to dynamic imports, so a name-scoped
+        // path/pattern restriction never fires on `import('...')`
+        (
+            "import('foo');",
+            Some(serde_json::json!([{
+                "paths": [{ "name": "foo", "importNames": ["DisallowedObject"] }]
+            }])),
+        ),
+        (
+            "import('foo');",
+            Some(serde_json::json!([{
+                "paths": [{ "name": "foo", "allowImportNames": ["bar"] }]
+            }])),
+        ),
+        (
+            "import('foo/bar');",
+            Some(serde_json::json!([{
+                "patterns": [{ "group": ["foo/*"], "allowImportNames": ["bar"] }]
+            }])),
         ),
     ];
 
@@ -3238,6 +3318,22 @@ fn test() {
                 "name": "react",
                 "message": "Example: React is not allowed to be imported"
             }])),
+        ),
+        // dynamic `import()` with a string-literal source
+        ("import('fs');", Some(serde_json::json!(["fs"]))),
+        ("import('foo/bar');", Some(serde_json::json!([{ "patterns": ["foo/*"] }]))),
+        (
+            "import('@anthropic-ai/sdk');",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "@anthropic-ai/sdk",
+                    "message": "Use the shared LLM abstraction instead."
+                }]
+            }])),
+        ),
+        (
+            "import('openai/resources');",
+            Some(serde_json::json!([{ "patterns": [{ "group": ["openai", "openai/*"] }] }])),
         ),
     ];
 

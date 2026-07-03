@@ -1,10 +1,9 @@
-less compatibility: 38/39 (97.44%), 7 files skipped
+less compatibility: 39/39 (100.00%), 7 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| less/postcss-8-improment/test.less | 💥 | 94.12% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
 

@@ -4441,7 +4441,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "no-constant-binary-expression": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoConstantBinaryExpressionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "no-constant-condition": {
           "anyOf": [
@@ -5323,6 +5340,26 @@
         },
         "no-unreachable": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "no-unreachable-loop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoUnreachableLoop"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "no-unsafe-finally": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -8634,6 +8671,26 @@
             }
           ]
         },
+        "unicorn/explicit-timer-delay": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExplicitTimerDelayMode"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "unicorn/filename-case": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -8765,6 +8822,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/no-await-in-promise-methods": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "unicorn/no-confusing-array-with": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/no-console-spaces": {
@@ -10698,6 +10758,26 @@
       },
       "additionalProperties": false
     },
+    "ExplicitTimerDelayMode": {
+      "oneOf": [
+        {
+          "description": "Require explicit `delay` argument for clarity.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Require explicit `delay` argument for clarity."
+        },
+        {
+          "description": "Disallow explicit `0` delay, prefer implicit default.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallow explicit `0` delay, prefer implicit default."
+        }
+      ]
+    },
     "ExtensionRule": {
       "description": "Extension rule configuration; Copy to avoid extra indirection.",
       "type": "string",
@@ -10914,15 +10994,10 @@
     },
     "ForbidItemObject": {
       "type": "object",
-      "required": [
-        "allowedFor",
-        "allowedForPatterns",
-        "disallowedFor",
-        "disallowedForPatterns"
-      ],
       "properties": {
         "allowedFor": {
           "description": "Component names for which this prop is **allowed** (all others are\nforbidden).",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10931,6 +11006,7 @@
         },
         "allowedForPatterns": {
           "description": "Glob patterns for component names where the prop is **allowed**.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10939,6 +11015,7 @@
         },
         "disallowedFor": {
           "description": "Component names for which this prop is **disallowed** (all others are\nallowed).",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10947,6 +11024,7 @@
         },
         "disallowedForPatterns": {
           "description": "Glob patterns for component names where the prop is **disallowed**.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -12375,6 +12453,16 @@
       },
       "additionalProperties": false
     },
+    "LoopType": {
+      "type": "string",
+      "enum": [
+        "WhileStatement",
+        "DoWhileStatement",
+        "ForStatement",
+        "ForInStatement",
+        "ForOfStatement"
+      ]
+    },
     "MaxClassesPerFileConfig": {
       "type": "object",
       "properties": {
@@ -13187,6 +13275,12 @@
     "NoArraySort": {
       "type": "object",
       "properties": {
+        "allowAfterSpread": {
+          "description": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```"
+        },
         "allowExpressionStatement": {
           "description": "When set to `true` (default), allows `array.sort()` as an expression statement.\nSet to `false` to forbid `Array#sort()` even if it's an expression statement.\n\nExample of **incorrect** code for this rule with `allowExpressionStatement` set to `false`:\n```js\narray.sort();\n```",
           "default": true,
@@ -13403,6 +13497,16 @@
             "type": "string"
           },
           "markdownDescription": "The `allow` option permits the given list of console methods to be used as exceptions to\nthis rule.\n\nSay the option was configured as `{ \"allow\": [\"info\"] }` then the rule would behave as\nfollows:\n\nExample of **incorrect** code for this option:\n```javascript\nconsole.log('foo');\n```\n\nExample of **correct** code for this option:\n```javascript\nconsole.info('foo');\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoConstantBinaryExpressionConfig": {
+      "type": "object",
+      "properties": {
+        "checkRelationalComparisons": {
+          "default": true,
+          "type": "boolean"
         }
       },
       "additionalProperties": false
@@ -15332,6 +15436,21 @@
       },
       "additionalProperties": false
     },
+    "NoUnreachableLoop": {
+      "$ref": "#/definitions/NoUnreachableLoopConfig"
+    },
+    "NoUnreachableLoopConfig": {
+      "type": "object",
+      "properties": {
+        "ignore": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LoopType"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "NoUnsafeConfig": {
       "type": "object",
       "properties": {
@@ -16824,15 +16943,12 @@
           "markdownDescription": "An array of function names that should also be treated as test blocks."
         },
         "assertFunctionNames": {
-          "description": "A list of function names that should be treated as assertion functions.",
-          "default": [
-            "expect"
-          ],
+          "description": "A list of function names that should be treated as assertion functions.\nDefault: `[\"expect\"]`",
           "type": "array",
           "items": {
             "type": "string"
           },
-          "markdownDescription": "A list of function names that should be treated as assertion functions."
+          "markdownDescription": "A list of function names that should be treated as assertion functions.\nDefault: `[\"expect\"]`"
         }
       },
       "additionalProperties": false

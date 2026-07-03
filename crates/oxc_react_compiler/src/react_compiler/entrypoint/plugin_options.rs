@@ -25,18 +25,9 @@ pub struct DynamicGatingConfig {
     pub source: String,
 }
 
-/// Serializable plugin options, pre-resolved by the JS shim.
-/// JS-only values (sources function, logger, etc.) are resolved before
-/// being sent to Rust.
+/// Serializable plugin options.
 #[derive(Debug, Clone)]
 pub struct PluginOptions {
-    // Pre-resolved by JS
-    pub should_compile: bool,
-    pub enable_reanimated: bool,
-    pub is_dev: bool,
-    pub filename: Option<String>,
-
-    // Pass-through options
     pub compilation_mode: String,
     pub panic_threshold: String,
     pub target: CompilerTarget,
@@ -49,12 +40,6 @@ pub struct PluginOptions {
     pub ignore_use_no_forget: bool,
     pub custom_opt_out_directives: Option<Vec<String>>,
     pub environment: EnvironmentConfig,
-
-    /// Source code of the file being compiled (passed from Babel plugin for fast refresh hash).
-    pub source_code: Option<String>,
-
-    /// Enable profiling timing data collection.
-    pub profiling: bool,
 
     /// Enable debug logging (HIR formatting after each pass).
     /// Only set to true when a logger with debugLogIRs is configured on the JS side.

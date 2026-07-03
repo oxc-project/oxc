@@ -10,10 +10,11 @@ use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, Erro
 use crate::react_compiler_hir::environment::BindingRename;
 use crate::scope::ScopeInfo;
 
-use super::compile_result::{DebugLogEntry, LoggerEvent, OrderedLogItem};
+use oxc_diagnostics::Diagnostics;
+
+use super::compile_result::{DebugLogEntry, OrderedLogItem};
 use super::plugin_options::{CompilerTarget, PluginOptions};
 use super::suppression::SuppressionRange;
-use crate::react_compiler::timing::TimingData;
 
 /// An import specifier tracked by ProgramContext.
 /// Corresponds to NonLocalImportSpecifier in the TS compiler.
@@ -29,18 +30,14 @@ pub struct NonLocalImportSpecifier {
 /// Equivalent to ProgramContext class in Imports.ts.
 pub struct ProgramContext {
     pub opts: PluginOptions,
-    pub filename: Option<String>,
-    /// The source filename from the parser's sourceFilename option.
-    /// This is the filename stored on AST node `loc.filename` fields,
-    /// which may differ from `filename` (e.g., no path prefix).
-    source_filename: Option<String>,
     pub code: Option<String>,
     pub react_runtime_module: String,
     pub suppressions: Vec<SuppressionRange>,
     pub has_module_scope_opt_out: bool,
-    pub events: Vec<LoggerEvent>,
-    /// Unified ordered log that interleaves events and debug entries
-    /// in the order they were emitted during compilation.
+    /// Diagnostics (errors/warnings) accumulated during compilation. Fatality is
+    /// decided separately by `panicThreshold`.
+    pub diagnostics: Diagnostics,
+    /// Debug-log entries (HIR dumps) emitted when the `debug` feature is enabled.
     pub ordered_log: Vec<OrderedLogItem>,
 
     // Pre-resolved import local names for codegen
@@ -50,9 +47,6 @@ pub struct ProgramContext {
 
     // Variable renames from lowering, to be applied back to the Babel AST
     pub renames: Vec<BindingRename>,
-
-    /// Timing data for profiling. Accumulates across all function compilations.
-    pub timing: TimingData,
 
     /// Whether debug logging is enabled (HIR formatting after each pass).
     pub debug_enabled: bool,
@@ -66,46 +60,29 @@ pub struct ProgramContext {
 impl ProgramContext {
     pub fn new(
         opts: PluginOptions,
-        filename: Option<String>,
         code: Option<String>,
         suppressions: Vec<SuppressionRange>,
         has_module_scope_opt_out: bool,
     ) -> Self {
         let react_runtime_module = get_react_compiler_runtime_module(&opts.target);
-        let profiling = opts.profiling;
         let debug_enabled = opts.debug;
         Self {
             opts,
-            filename,
-            source_filename: None,
             code,
             react_runtime_module,
             suppressions,
             has_module_scope_opt_out,
-            events: Vec::new(),
+            diagnostics: Diagnostics::new(),
             ordered_log: Vec::new(),
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
             renames: Vec::new(),
-            timing: TimingData::new(profiling),
             debug_enabled,
             already_compiled: FxHashSet::default(),
             known_referenced_names: FxHashSet::default(),
             imports: FxHashMap::default(),
         }
-    }
-
-    /// Set the source filename (from AST node loc.filename).
-    pub fn set_source_filename(&mut self, filename: Option<String>) {
-        if self.source_filename.is_none() {
-            self.source_filename = filename;
-        }
-    }
-
-    /// Get the source filename for logger events.
-    pub fn source_filename(&self) -> Option<String> {
-        self.source_filename.clone()
     }
 
     /// Check if a function at the given start position has already been compiled.
@@ -224,12 +201,6 @@ impl ProgramContext {
     /// so subsequent function compilations avoid collisions.
     pub fn merge_uid_known_names(&mut self, names: &FxHashSet<String>) {
         self.known_referenced_names.extend(names.iter().cloned());
-    }
-
-    /// Log a compilation event.
-    pub fn log_event(&mut self, event: LoggerEvent) {
-        self.ordered_log.push(OrderedLogItem::Event { event: event.clone() });
-        self.events.push(event);
     }
 
     /// Log a debug entry (for debugLogIRs support).

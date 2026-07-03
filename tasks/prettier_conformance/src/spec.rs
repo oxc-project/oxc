@@ -35,17 +35,6 @@ pub enum SpecOptions {
     Css(CssFormatOptions),
 }
 
-impl SpecOptions {
-    pub fn line_width(&self) -> LineWidth {
-        match self {
-            Self::Js(o) => o.line_width,
-            Self::Json(o) => o.line_width,
-            Self::Graphql(o) => o.line_width,
-            Self::Css(o) => o.line_width,
-        }
-    }
-}
-
 pub fn parse_spec(spec: &Path, language: TestLanguage) -> Vec<(SpecOptions, SnapshotOptions)> {
     let mut parser = SpecParser { language, ..SpecParser::default() };
     parser.parse(spec);
@@ -347,10 +336,8 @@ impl VisitMut<'_> for SpecParser {
             ),
         ));
 
-        if !snapshot_options.iter().any(|item| item.0 == "printWidth") {
-            snapshot_options.push(("printWidth".to_string(), "80".into()));
-        }
-
+        // Prettier omits `printWidth` from the options block when it equals the
+        // default (80); the value is only shown in the trailing visualization line.
         snapshot_options.sort_by(|a, b| a.0.cmp(&b.0));
 
         let options = match self.language {

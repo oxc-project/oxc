@@ -4201,9 +4201,45 @@ fn lower_expression<'a>(
             let loc = builder.source_location(unary.span);
             match unary.operator {
                 oxc::UnaryOperator::Delete => {
-                    // TODO(stage1a-arms): delete needs member lowering
-                    // (PropertyDelete / ComputedDelete).
-                    Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+                    // `delete obj.prop` / `delete obj[key]` mutate `obj`; lower to
+                    // PropertyDelete / ComputedDelete so mutation inference (and the
+                    // frozen-value check) sees the mutation, matching TS `BuildHIR`.
+                    // Unwrap parens first: oxc keeps `delete (obj.prop)` as a
+                    // `ParenthesizedExpression`, unlike Babel.
+                    if let Some(member) =
+                        unary.argument.without_parentheses().as_member_expression()
+                    {
+                        let lowered = lower_member_expression(builder, member)?;
+                        match lowered.property {
+                            MemberProperty::Literal(property) => {
+                                Ok(InstructionValue::PropertyDelete {
+                                    object: lowered.object,
+                                    property,
+                                    loc,
+                                })
+                            }
+                            MemberProperty::Computed(property) => {
+                                Ok(InstructionValue::ComputedDelete {
+                                    object: lowered.object,
+                                    property,
+                                    loc,
+                                })
+                            }
+                        }
+                    } else {
+                        // Anything else — a bare identifier, an optional chain
+                        // (`delete obj?.prop`, kept as a `ChainExpression`), etc. — can't
+                        // delete an object property; the fork rejects it rather than
+                        // silently dropping the delete.
+                        builder.record_error(CompilerErrorDetail {
+                            category: ErrorCategory::Syntax,
+                            reason: "Only object properties can be deleted".to_string(),
+                            description: None,
+                            loc: loc.clone(),
+                            suggestions: None,
+                        })?;
+                        Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
+                    }
                 }
                 op => {
                     let value = lower_expression_to_temporary(builder, &unary.argument)?;

@@ -1,0 +1,53 @@
+//! Small subset of typescript-go's `internal/tspath` needed by the file-matching port.
+//!
+//! Inputs are absolute, already-normalized POSIX-style paths (this is what `oxc_resolver`
+//! hands us), so these helpers deliberately do not re-implement `.`/`..` reduction.
+
+/// The extensions recognized when stripping/replacing a file extension, longest first so
+/// `.d.ts` is matched before `.ts`. Mirrors tsgo's declaration-aware `ChangeExtension`.
+const EXTENSIONS_TO_REMOVE: &[&str] = &[
+    ".d.ts", ".d.cts", ".d.mts", ".tsx", ".ts", ".cts", ".mts", ".jsx", ".js", ".cjs", ".mjs",
+    ".json",
+];
+
+/// tsgo `FileExtensionIs`: `path` ends with `extension` (and is longer than it).
+pub fn file_extension_is(path: &str, extension: &str) -> bool {
+    path.len() > extension.len() && path.ends_with(extension)
+}
+
+/// tsgo `FileExtensionIsOneOf`.
+pub fn file_extension_is_one_of(path: &str, extensions: &[&str]) -> bool {
+    extensions.iter().any(|extension| file_extension_is(path, extension))
+}
+
+/// tsgo `GetBaseFileName`: the final path segment.
+pub fn get_base_file_name(path: &str) -> &str {
+    match path.rfind('/') {
+        Some(index) => &path[index + 1..],
+        None => path,
+    }
+}
+
+/// tsgo `HasExtension`: the base name contains a `.`.
+pub fn has_extension(file_name: &str) -> bool {
+    get_base_file_name(file_name).contains('.')
+}
+
+/// tsgo `GetDirectoryPath`: everything up to (not including) the final separator.
+pub fn get_directory_path(path: &str) -> &str {
+    match path.rfind('/') {
+        Some(0) => "/",
+        Some(index) => &path[..index],
+        None => "",
+    }
+}
+
+/// tsgo `ChangeExtension`: replace the file's recognized extension with `new_extension`.
+pub fn change_extension(path: &str, new_extension: &str) -> String {
+    for extension in EXTENSIONS_TO_REMOVE {
+        if file_extension_is(path, extension) {
+            return format!("{}{new_extension}", &path[..path.len() - extension.len()]);
+        }
+    }
+    format!("{path}{new_extension}")
+}

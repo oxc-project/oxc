@@ -138,9 +138,9 @@ impl<'a> Printer<'a> {
     ) -> PrintResult<()> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
         };
 
         let args = stack.top();
@@ -164,7 +164,7 @@ impl<'a> Printer<'a> {
                             }
                             return Ok(());
                         }
-                        LineMode::Hard | LineMode::Empty => {
+                        LineMode::Hard | LineMode::Empty | LineMode::Literal => {
                             self.state.measured_group_fits = false;
                         }
                     }
@@ -172,6 +172,20 @@ impl<'a> Printer<'a> {
 
                 if self.state.line_suffixes.has_pending() {
                     self.flush_line_suffixes(queue, stack, indent_stack, Some(element));
+                    return Ok(());
+                }
+
+                if line_mode == &LineMode::Literal {
+                    // Prettier's literal line (`doc.literal` in `printDocToString`):
+                    // pending indention/space materialize as-is (a literal line never trims),
+                    // the newline always prints (even on an empty line),
+                    // and the next line starts at the marked root indention,
+                    // written eagerly (Prettier writes `indent.root.value` together with the newline)
+                    // so that a following hard line still sees a non-empty line to trim and break.
+                    self.flush_pending_indention_and_space();
+                    self.print_char('\n');
+                    self.print_indention(indent_stack.root());
+                    self.state.has_empty_line = false;
                     return Ok(());
                 }
 
@@ -266,6 +280,16 @@ impl<'a> Printer<'a> {
             FormatElement::Tag(StartAlign(align)) => {
                 indent_stack.align(align.count());
                 stack.push(TagKind::Align, args);
+            }
+
+            FormatElement::Tag(StartMarkAsRoot) => {
+                indent_stack.mark_root();
+                stack.push(TagKind::MarkAsRoot, args);
+            }
+
+            FormatElement::Tag(tag @ EndMarkAsRoot) => {
+                stack.pop(tag.kind())?;
+                indent_stack.end_mark_root();
             }
 
             FormatElement::Tag(StartConditionalContent(Condition { mode, group_id })) => {
@@ -666,25 +690,33 @@ impl<'a> Printer<'a> {
         invalid_end_tag(TagKind::Entry, stack.top_kind())
     }
 
-    fn print_text(&mut self, text: Text) {
-        if !self.state.pending_indent.is_empty() {
-            let indent = std::mem::take(&mut self.state.pending_indent);
-
-            let level = indent.level() as usize;
-            self.state.buffer.print_indent(level);
-            self.state.line_width += level * self.options.indent_width().value() as usize;
-
-            let align_count = indent.align() as usize;
-            for _ in 0..align_count {
-                // SAFETY: `' '` is an valid ASCII character
-                unsafe {
-                    self.state.buffer.print_byte_unchecked(b' ');
-                }
-            }
-            self.state.line_width += align_count;
+    /// Prints `indention` (indent levels + align spaces) and adds its width to the current line.
+    #[inline]
+    fn print_indention(&mut self, indention: Indention) {
+        if indention.is_empty() {
+            return;
         }
 
-        // Print pending spaces
+        let level = indention.level() as usize;
+        self.state.buffer.print_indent(level);
+        self.state.line_width += level * self.options.indent_width().value() as usize;
+
+        let align_count = indention.align() as usize;
+        for _ in 0..align_count {
+            // SAFETY: `' '` is an valid ASCII character
+            unsafe {
+                self.state.buffer.print_byte_unchecked(b' ');
+            }
+        }
+        self.state.line_width += align_count;
+    }
+
+    /// Materializes the pending indention and pending space before printing visible content.
+    #[inline]
+    fn flush_pending_indention_and_space(&mut self) {
+        let pending_indent = std::mem::take(&mut self.state.pending_indent);
+        self.print_indention(pending_indent);
+
         if self.state.pending_space {
             // SAFETY: `' '` is an valid ASCII character
             unsafe {
@@ -693,6 +725,10 @@ impl<'a> Printer<'a> {
             self.state.pending_space = false;
             self.state.line_width += 1;
         }
+    }
+
+    fn print_text(&mut self, text: Text) {
+        self.flush_pending_indention_and_space();
 
         match text {
             Text::Token(text) => {
@@ -782,6 +818,7 @@ struct PrinterState<'a> {
     fits_stack: Vec<StackFrame>,
     fits_indent_stack: Vec<Indention>,
     fits_stack_tem_indent: Vec<Indention>,
+    fits_root_indent_stack: Vec<Indention>,
     fits_queue: Vec<&'a [FormatElement<'a>]>,
     /// Sorted Tailwind CSS classes for lookup during printing
     sorted_tailwind_classes: &'a [String],
@@ -938,16 +975,22 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         let saved_queue = std::mem::take(&mut printer.state.fits_queue);
         let saved_indent_stack = std::mem::take(&mut printer.state.fits_indent_stack);
         let saved_stack_tem_indent = std::mem::take(&mut printer.state.fits_stack_tem_indent);
+        let saved_root_indent_stack = std::mem::take(&mut printer.state.fits_root_indent_stack);
         debug_assert!(saved_stack.is_empty());
         debug_assert!(saved_queue.is_empty());
         debug_assert!(saved_indent_stack.is_empty());
         debug_assert!(saved_stack_tem_indent.is_empty());
+        debug_assert!(saved_root_indent_stack.is_empty());
 
         let fits_queue = FitsQueue::new(print_queue, saved_queue);
         let fits_stack = FitsCallStack::new(print_stack, saved_stack);
 
-        let fits_indent_stack =
-            FitsIndentStack::new(print_indent_stack, saved_indent_stack, saved_stack_tem_indent);
+        let fits_indent_stack = FitsIndentStack::new(
+            print_indent_stack,
+            saved_indent_stack,
+            saved_stack_tem_indent,
+            saved_root_indent_stack,
+        );
 
         let fits_state = FitsState {
             pending_indent: printer.state.pending_indent,
@@ -1034,9 +1077,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     fn fits_element(&mut self, element: &'a FormatElement) -> PrintResult<Fits> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
         };
 
         let args = self.stack.top();
@@ -1054,7 +1097,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                             self.state.pending_space = true;
                         }
                         LineMode::Soft => {}
-                        LineMode::Hard | LineMode::Empty => {
+                        LineMode::Hard | LineMode::Empty | LineMode::Literal => {
                             // Even in flat mode, content that _directly_ contains a hard or empty
                             // line is considered to fit when a hard break is reached, since that
                             // break is always going to exist, regardless of the print mode.
@@ -1245,6 +1288,14 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 self.stack.pop(tag.kind())?;
                 self.indent_stack.pop();
             }
+            FormatElement::Tag(StartMarkAsRoot) => {
+                self.indent_stack.mark_root();
+                self.stack.push(TagKind::MarkAsRoot, args);
+            }
+            FormatElement::Tag(tag @ EndMarkAsRoot) => {
+                self.stack.pop(tag.kind())?;
+                self.indent_stack.end_mark_root();
+            }
             FormatElement::Tag(tag @ EndDedent(mode)) => {
                 if matches!(mode, DedentMode::Level) {
                     self.indent_stack.end_dedent();
@@ -1312,11 +1363,14 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         stack.clear();
         self.printer.state.fits_stack = stack;
 
-        let (mut indent_stack, mut history_stack) = self.indent_stack.finish();
+        let (mut indent_stack, mut history_stack, mut root_indent_stack) =
+            self.indent_stack.finish();
         indent_stack.clear();
         self.printer.state.fits_indent_stack = indent_stack;
         history_stack.clear();
         self.printer.state.fits_stack_tem_indent = history_stack;
+        root_indent_stack.clear();
+        self.printer.state.fits_root_indent_stack = root_indent_stack;
     }
 
     fn options(&self) -> &PrinterOptions {
@@ -1404,9 +1458,10 @@ mod tests {
         Argument, Arguments, Buffer, Document, Format, FormatState, IndentStyle, LineEnding,
         Printed, Printer, PrinterOptions, SimpleFormatContext, VecBuffer,
         builders::{
-            block_indent, empty_line, group, hard_line_break, if_group_breaks,
-            if_group_fits_on_line, line_suffix, soft_block_indent, soft_line_break,
-            soft_line_break_or_space, space, text, token,
+            align, block_indent, dedent_to_root, empty_line, group, hard_line_break,
+            if_group_breaks, if_group_fits_on_line, indent, line_suffix, literal_line_break,
+            mark_as_root, soft_block_indent, soft_line_break, soft_line_break_or_space, space,
+            text, token,
         },
         format_args,
         printer::PrintWidth,
@@ -1497,6 +1552,180 @@ mod tests {
 a",
             formatted.as_code()
         );
+    }
+
+    // The expected outputs of the `literal_line_break` / `mark_as_root` tests below are
+    // verified against Prettier's doc printer (`printDocToString`) with the equivalent
+    // `literallineWithoutBreakParent` / `markAsRoot` / `dedentToRoot` documents.
+
+    #[test]
+    fn literal_line_break_prints_at_column_zero_without_trimming() {
+        let allocator = Allocator::default();
+        let result = format_simple(
+            &allocator,
+            &format_args!(
+                token("a"),
+                indent(&format_args!(
+                    hard_line_break(),
+                    token("b "),
+                    literal_line_break(),
+                    token("c")
+                )),
+                hard_line_break(),
+                token("d")
+            ),
+        );
+
+        // The trailing space after `b` is preserved and `c` starts at column 0.
+        assert_eq!("a\n  b \nc\nd", result.as_code());
+    }
+
+    #[test]
+    fn literal_line_break_always_prints_the_newline() {
+        let allocator = Allocator::default();
+        let result = format_simple(
+            &allocator,
+            &format_args!(token("a"), literal_line_break(), literal_line_break(), token("b")),
+        );
+
+        // Unlike `hard_line_break`, consecutive literal lines are not collapsed.
+        assert_eq!("a\n\nb", result.as_code());
+    }
+
+    #[test]
+    fn literal_line_break_returns_to_marked_root() {
+        let allocator = Allocator::default();
+        let result = format_simple(
+            &allocator,
+            &format_args!(
+                token("k:"),
+                align(
+                    2,
+                    &format_args!(
+                        hard_line_break(),
+                        token("line1"),
+                        mark_as_root(&literal_line_break()),
+                        token("line2")
+                    )
+                ),
+                hard_line_break(),
+                token("z")
+            ),
+        );
+
+        // Without `mark_as_root`, `line2` would start at column 0.
+        assert_eq!("k:\n  line1\n  line2\nz", result.as_code());
+    }
+
+    #[test]
+    fn literal_line_break_expands_the_enclosing_group() {
+        let allocator = Allocator::default();
+        let result = format_simple(
+            &allocator,
+            &group(&format_args!(
+                token("<"),
+                soft_line_break(),
+                token("a"),
+                literal_line_break(),
+                token("b"),
+                soft_line_break(),
+                token(">")
+            )),
+        );
+
+        assert_eq!("<\na\nb\n>", result.as_code());
+    }
+
+    #[test]
+    fn literal_line_break_flushes_line_suffixes() {
+        let allocator = Allocator::default();
+        let result = format_simple(
+            &allocator,
+            &format_args!(
+                token("a"),
+                line_suffix(&token(" // c")),
+                literal_line_break(),
+                token("b")
+            ),
+        );
+
+        assert_eq!("a // c\nb", result.as_code());
+    }
+
+    #[test]
+    fn dedent_to_root_returns_to_marked_root() {
+        let allocator = Allocator::default();
+        let result = format_simple(
+            &allocator,
+            &format_args!(
+                token("k:"),
+                align(
+                    2,
+                    &mark_as_root(&format_args!(
+                        hard_line_break(),
+                        token("a"),
+                        indent(&format_args!(
+                            hard_line_break(),
+                            token("deep"),
+                            dedent_to_root(&format_args!(hard_line_break(), token("back")))
+                        ))
+                    ))
+                )
+            ),
+        );
+
+        // `dedent_to_root` returns to the `mark_as_root` indention (column 2), not column 0.
+        assert_eq!("k:\n  a\n    deep\n  back", result.as_code());
+    }
+
+    /// Composes the document shape of Prettier's YAML block scalar printing
+    /// (`language-yaml/print/block.js`): content indented via `align`,
+    /// line boundaries as `mark_as_root(&literal_line_break())` so continuation lines
+    /// keep the block's base indention, an empty content line as a hard line,
+    /// and the keep-chomping (`|+`) trailing newline as `dedent_to_root(&literal_line_break())`.
+    #[test]
+    fn yaml_block_scalar_shaped_document() {
+        let allocator = Allocator::default();
+        let result = format_simple(
+            &allocator,
+            &format_args!(
+                token("k: |+"),
+                align(
+                    2,
+                    &format_args!(
+                        hard_line_break(),
+                        token("hello world"),
+                        mark_as_root(&literal_line_break()),
+                        hard_line_break(),
+                        token("next"),
+                        dedent_to_root(&literal_line_break())
+                    )
+                )
+            ),
+        );
+
+        assert_eq!("k: |+\n  hello world\n\n  next\n", result.as_code());
+    }
+
+    /// Known divergence from Prettier: a hard line directly after a column-0 literal line
+    /// is absorbed by the "only print a newline if the line isn't already empty" rule
+    /// (Prettier prints both newlines). When a consumer needs the extra structural newline
+    /// after a trailing literal line (e.g. after a keep-chomping YAML block scalar),
+    /// use `empty_line()` which prints exactly one newline in this state.
+    #[test]
+    fn hard_line_after_column_zero_literal_line_is_absorbed() {
+        let allocator = Allocator::default();
+        let result = format_simple(
+            &allocator,
+            &format_args!(token("a"), literal_line_break(), hard_line_break(), token("b")),
+        );
+        assert_eq!("a\nb", result.as_code());
+
+        let result = format_simple(
+            &allocator,
+            &format_args!(token("a"), literal_line_break(), empty_line(), token("b")),
+        );
+        assert_eq!("a\n\nb", result.as_code());
     }
 
     #[test]
