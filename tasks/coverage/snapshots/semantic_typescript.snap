@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4513/4720 (95.61%)
+Positive Passed: 4516/4720 (95.68%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -189,24 +189,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/complexNarrowingWithAny.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/computedEnumMemberSyntacticallyString.ts
-Missing ReferenceId: "Foo"
-Missing ReferenceId: "Foo"
-Missing ReferenceId: "Foo"
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(10): [ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24)]
-rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(12), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24)]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/computedEnumMemberSyntacticallyString2.ts
-Missing ReferenceId: "Foo"
-Missing ReferenceId: "Foo"
-Missing ReferenceId: "Foo"
-Missing ReferenceId: "Foo"
-Missing ReferenceId: "Foo"
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(14): [ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(31), ReferenceId(32), ReferenceId(33)]
-rebuilt        : SymbolId(3): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(14), ReferenceId(15), ReferenceId(17), ReferenceId(18), ReferenceId(20), ReferenceId(21), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(30), ReferenceId(31), ReferenceId(32), ReferenceId(33)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumOnlyModuleMerging.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -989,12 +971,6 @@ rebuilt        : ScopeId(24): ScopeFlags(Function | Arrow)
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(26): ScopeFlags(Function | Arrow)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumClassification.ts
-Missing ReferenceId: "E20"
-Symbol reference IDs mismatch for "E20":
-after transform: SymbolId(56): [ReferenceId(77), ReferenceId(78), ReferenceId(79), ReferenceId(80), ReferenceId(81), ReferenceId(82), ReferenceId(83), ReferenceId(84)]
-rebuilt        : SymbolId(23): [ReferenceId(72), ReferenceId(73), ReferenceId(74), ReferenceId(75), ReferenceId(76), ReferenceId(77), ReferenceId(78), ReferenceId(79), ReferenceId(81)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty49.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support

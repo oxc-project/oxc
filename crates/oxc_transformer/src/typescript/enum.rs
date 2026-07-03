@@ -377,7 +377,7 @@ impl<'a> TypeScriptEnum {
                     None => {
                         prev_constant_number = None;
 
-                        IdentifierReferenceRename::new(param_binding.name, enum_scope_id, ctx)
+                        IdentifierReferenceRename::new(param_binding, enum_scope_id, ctx)
                             .visit_expression(&mut initializer);
 
                         initializer
@@ -618,16 +618,20 @@ impl<'a> TypeScriptEnum {
 /// }
 /// ```
 struct IdentifierReferenceRename<'a, 'ctx> {
-    enum_name: Ident<'a>,
+    enum_binding: BoundIdentifier<'a>,
     enum_scope_id: ScopeId,
     scope_stack: NonEmptyStack<ScopeId>,
-    ctx: &'ctx TraverseCtx<'a>,
+    ctx: &'ctx mut TraverseCtx<'a>,
 }
 
 impl<'a, 'ctx> IdentifierReferenceRename<'a, 'ctx> {
-    fn new(enum_name: Ident<'a>, enum_scope_id: ScopeId, ctx: &'ctx TraverseCtx<'a>) -> Self {
+    fn new(
+        enum_binding: &BoundIdentifier<'a>,
+        enum_scope_id: ScopeId,
+        ctx: &'ctx mut TraverseCtx<'a>,
+    ) -> Self {
         IdentifierReferenceRename {
-            enum_name,
+            enum_binding: enum_binding.clone(),
             enum_scope_id,
             scope_stack: NonEmptyStack::new(enum_scope_id),
             ctx,
@@ -698,7 +702,7 @@ impl IdentifierReferenceRename<'_, '_> {
         // `x` is an outer variable, not enum member, even if another `enum Merge { x }` exists).
         if let Some(parent_scope) = scoping.scope_parent_id(self.enum_scope_id)
             && let Some(enum_sym_id) =
-                scoping.get_binding(parent_scope, self.enum_name.as_str().into())
+                scoping.get_binding(parent_scope, self.enum_binding.name.as_str().into())
             && let Some(body_scopes) = scoping.get_enum_body_scopes(enum_sym_id)
         {
             for &body_scope in body_scopes {
@@ -727,7 +731,7 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
             Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {
-                let object = Expression::new_identifier(SPAN, self.enum_name, self.ctx);
+                let object = self.enum_binding.create_read_expression(self.ctx);
                 let property = IdentifierName::new(SPAN, ident.name, self.ctx);
                 *expr = MemberExpression::new_static_member_expression(
                     SPAN, object, property, false, self.ctx,

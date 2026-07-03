@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 782/1165
+Passed: 783/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (130/157)
+# babel-plugin-transform-typescript (131/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1141,13 +1141,6 @@ x Output mismatch
 
 * enum/mix-references/input.ts
 x Output mismatch
-
-* enum/non-constant-member-reference/input.ts
-Missing ReferenceId: "Foo"
-Missing ReferenceId: "Foo"
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(7): [ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
-rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(12)]
 
 * enum/reverse-mappings-syntactically-determinable/input.ts
 x Output mismatch
