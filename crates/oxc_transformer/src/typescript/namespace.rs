@@ -589,6 +589,19 @@ impl<'a> TypeScriptNamespace {
             ctx.scoping().symbol_redeclarations(symbol_id).iter().any(|redeclaration| {
                 redeclaration.flags.is_value() && !redeclaration.flags.is_ambient()
             });
+        if let Some(redeclaration) =
+            ctx.scoping().symbol_redeclarations(symbol_id).iter().find(|redeclaration| {
+                redeclaration.flags.intersects(SymbolFlags::Variable)
+                    && !redeclaration.flags.is_ambient()
+            })
+        {
+            let span = redeclaration.span;
+            let flags = redeclaration.flags;
+            *ctx.scoping_mut().symbol_flags_mut(symbol_id) = flags;
+            ctx.scoping_mut().set_symbol_span(symbol_id, span);
+            ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
+            return;
+        }
         if has_non_ambient_value_redeclaration {
             return;
         }
