@@ -1,14 +1,6 @@
 semantic_misc Summary:
 AST Parsed     : 69/69 (100.00%)
-Positive Passed: 67/69 (97.10%)
-semantic Error: tasks/coverage/misc/pass/oxc-11593.ts
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(5): Some(ScopeId(0))
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(1))
-rebuilt        : ScopeId(7): Some(ScopeId(0))
-
+Positive Passed: 68/69 (98.55%)
 semantic Error: tasks/coverage/misc/pass/oxc-13284.js
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "D", "Outer", "Outer2", "Outer3", "Outer4", "_D", "_Outer", "_access1_accessor_storage", "_access1_accessor_storage2", "_access2_accessor_storage", "_access2_accessor_storage2", "_access3_accessor_storage", "_access3_accessor_storage2", "_access4_accessor_storage", "_access4_accessor_storage2", "_access_accessor_storage5", "_assertClassBrand", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_decorate", "_decorateMetadata", "_defineProperty", "_ref5", "_super$foo13", "_super$foo13_computed_accessor_storage", "_super$foo14", "_super$foo15", "_super$foo16", "_superPropGet"]
@@ -19,13 +11,4 @@ rebuilt        : ScopeId(150): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5",
 Bindings mismatch:
 after transform: ScopeId(266): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "_Inner", "_access1_accessor_storage3", "_access2_accessor_storage3", "_access3_accessor_storage3", "_access4_accessor_storage3", "_access_accessor_storage15", "_access_accessor_storage16", "_access_accessor_storage17", "_ref13", "_super$foo53", "_super$foo53_computed_accessor_storage", "_super$foo54", "_super$foo55", "_super$foo56"]
 rebuilt        : ScopeId(354): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "_Inner", "_access1_accessor_storage3", "_access2_accessor_storage3", "_access3_accessor_storage3", "_access4_accessor_storage3", "_access_accessor_storage15", "_access_accessor_storage17", "_ref13", "_super$foo53", "_super$foo53_computed_accessor_storage", "_super$foo54", "_super$foo55", "_super$foo56"]
-Scope parent mismatch:
-after transform: ScopeId(359): Some(ScopeId(358))
-rebuilt        : ScopeId(467): Some(ScopeId(455))
-Scope parent mismatch:
-after transform: ScopeId(376): Some(ScopeId(375))
-rebuilt        : ScopeId(482): Some(ScopeId(470))
-Scope parent mismatch:
-after transform: ScopeId(392): Some(ScopeId(391))
-rebuilt        : ScopeId(496): Some(ScopeId(484))
 

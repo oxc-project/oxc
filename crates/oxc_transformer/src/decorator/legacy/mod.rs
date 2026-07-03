@@ -1163,6 +1163,7 @@ impl<'a> LegacyDecorator<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let scope_id = ctx.create_child_scope(class.scope_id(), ScopeFlags::ClassStaticBlock);
+        Self::reparent_decorator_statement_scopes(&decorations, scope_id, ctx);
         let decorations = ArenaVec::from_iter_in(decorations, ctx);
         let element =
             ClassElement::new_static_block_with_scope_id(SPAN, decorations, scope_id, ctx);
@@ -1206,8 +1207,11 @@ impl<'a> LegacyDecorator<'a> {
 
     /// Injects the class decorator statements after class-properties plugin has run, ensuring that
     /// all transformed fields are injected before the class decorator statements.
-    pub fn exit_class_at_end(&mut self, _class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn exit_class_at_end(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        let parent_scope_id =
+            ctx.scoping().scope_parent_id(class.scope_id()).unwrap_or(ctx.current_scope_id());
         for (address, stmts) in mem::take(&mut self.decorations) {
+            Self::reparent_decorator_statement_scopes(&stmts, parent_scope_id, ctx);
             ctx.state.statement_injector.insert_many_after(&address, stmts);
         }
     }
@@ -1215,13 +1219,27 @@ impl<'a> LegacyDecorator<'a> {
     /// Converts a vec of [`Decorator`] to [`Expression::ArrayExpression`].
     fn convert_decorators_to_array_expression(
         decorators_iter: impl Iterator<Item = Decorator<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let decorations = ArenaVec::from_iter_in(
-            decorators_iter.map(|decorator| ArrayExpressionElement::from(decorator.expression)),
-            ctx,
-        );
+        let mut decorations = ArenaVec::new_in(ctx);
+        for decorator in decorators_iter {
+            decorations.push(ArrayExpressionElement::from(decorator.expression));
+        }
         Expression::new_array_expression(SPAN, decorations, ctx)
+    }
+
+    fn reparent_decorator_statement_scopes(
+        statements: &[Statement<'a>],
+        parent_scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let mut collector = DecoratorExpressionScopeCollector::default();
+        for statement in statements {
+            collector.visit_statement(statement);
+        }
+        for scope_id in collector.scope_ids {
+            ctx.scoping_mut().change_scope_parent_id(scope_id, Some(parent_scope_id));
+        }
     }
 
     /// Get all decorators of a class method.
@@ -1464,6 +1482,25 @@ impl<'a> LegacyDecorator<'a> {
             SPAN, None, specifiers, None, kind, NONE, ctx,
         );
         Statement::from(export_class_reference)
+    }
+}
+
+#[derive(Default)]
+struct DecoratorExpressionScopeCollector {
+    scope_ids: Vec<ScopeId>,
+}
+
+impl<'a> Visit<'a> for DecoratorExpressionScopeCollector {
+    fn visit_function(&mut self, function: &Function<'a>, _flags: ScopeFlags) {
+        self.scope_ids.push(function.scope_id.get().unwrap());
+    }
+
+    fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
+        self.scope_ids.push(arrow.scope_id.get().unwrap());
+    }
+
+    fn visit_class(&mut self, class: &Class<'a>) {
+        self.scope_ids.push(class.scope_id.get().unwrap());
     }
 }
 
