@@ -39,22 +39,18 @@ pub struct SourceFileParseOptions {
 }
 
 // A `SourceFile` is self-referential: the parsed `Program` and its `Semantic` model borrow from
-// the `Allocator` that backs them. `self_cell` stores the arena (owner) alongside the data that
-// borrows from it (dependent). Mirrors `oxc_semantic`'s `ScopingCell` and `oxc_linter`'s
-// `ModuleContent`.
+// the `Allocator` that backs them. `self_cell` stores the arena (owner) alongside the semantic
+// model that borrows from it (dependent). Mirrors `oxc_linter`'s `ModuleContent`.
+//
+// `#[not_covariant]` because `Semantic<'a>` is invariant over `'a` (it becomes invariant once the
+// `oxc_semantic` `jsdoc`/`cfg` features are enabled), so the model is reached through a closure
+// (`with_semantic`) rather than a borrow that escapes.
 self_cell! {
     struct SourceFileCell {
         owner: Allocator,
-        #[covariant]
-        dependent: SourceFileData,
+        #[not_covariant]
+        dependent: Semantic,
     }
-}
-
-struct SourceFileData<'a> {
-    /// The source text, copied into the arena so it lives as long as the AST that borrows it.
-    source_text: &'a str,
-    /// Scopes, symbols, and references. Owns the parsed `Program` (holds `&'a Program`).
-    semantic: Semantic<'a>,
 }
 
 /// A single parsed and semantically-analyzed source file.
@@ -91,7 +87,7 @@ impl SourceFile {
             let program = allocator.alloc(parser_ret.program);
             let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(program);
             diagnostics.extend(semantic_ret.diagnostics.into_vec());
-            SourceFileData { source_text, semantic: semantic_ret.semantic }
+            semantic_ret.semantic
         });
         Self { parse_options, source_type, cell, diagnostics }
     }
@@ -116,14 +112,12 @@ impl SourceFile {
         &self.diagnostics
     }
 
-    /// The file's source text.
-    pub fn source_text(&self) -> &str {
-        self.cell.borrow_dependent().source_text
-    }
-
-    /// The file's semantic model (scopes, symbols, references).
-    pub fn semantic(&self) -> &Semantic<'_> {
-        &self.cell.borrow_dependent().semantic
+    /// Run `f` with the file's semantic model (scopes, symbols, references).
+    ///
+    /// Access is closure-based: `Semantic` borrows the file's arena and is invariant over its
+    /// lifetime, so the borrow cannot escape.
+    pub fn with_semantic<R>(&self, f: impl FnOnce(&Semantic) -> R) -> R {
+        self.cell.with_dependent(|_allocator, semantic| f(semantic))
     }
 }
 

@@ -59,9 +59,13 @@ fn builds_a_semantic_model_for_each_file() {
     let program = build_program(&[fixture("a.ts")]);
     let source_file = program.source_file(FileId::from_usize(0));
 
-    let symbol_names: Vec<&str> = source_file.semantic().scoping().symbol_names().collect();
-    assert!(symbol_names.contains(&"a"), "expected symbol `a`, got {symbol_names:?}");
-    assert!(symbol_names.contains(&"greet"), "expected symbol `greet`, got {symbol_names:?}");
+    let symbol_names: Vec<String> =
+        source_file.with_semantic(|s| s.scoping().symbol_names().map(String::from).collect());
+    assert!(symbol_names.iter().any(|n| n == "a"), "expected symbol `a`, got {symbol_names:?}");
+    assert!(
+        symbol_names.iter().any(|n| n == "greet"),
+        "expected symbol `greet`, got {symbol_names:?}"
+    );
 }
 
 #[test]
