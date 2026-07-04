@@ -43,7 +43,17 @@ clone_on_ref_ptr = "warn"
 self_named_module_files = "warn" # "-Wclippy::mod_module_files"
 empty_drop = "warn"
 empty_structs_with_brackets = "warn"
+empty_enum_variants_with_brackets = "warn"
 exit = "warn"
+# Performance: avoid the intermediate `String` allocation of `s.push_str(&format!(..))`.
+format_push_string = "warn"
+# Casting a function item/pointer to a number is almost always a mistake (a missing call).
+fn_to_numeric_cast_any = "warn"
+unnecessary_self_imports = "warn"
+# `return Err(x)?` obscures a plain `return Err(x.into())`.
+try_err = "warn"
+# Don't name a type `Error` when it implements `std::error::Error`.
+error_impl_error = "warn"
 filetype_is_file = "warn"
 get_unwrap = "warn"
 rc_buffer = "warn"

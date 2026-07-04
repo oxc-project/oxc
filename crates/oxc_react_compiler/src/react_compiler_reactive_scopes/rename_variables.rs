@@ -29,8 +29,8 @@ use crate::react_compiler_hir::ReactiveTerminalStatement;
 use crate::react_compiler_hir::ReactiveValue;
 use crate::react_compiler_hir::environment::Environment;
 
+use crate::react_compiler_reactive_scopes::visitors;
 use crate::react_compiler_reactive_scopes::visitors::ReactiveFunctionVisitor;
-use crate::react_compiler_reactive_scopes::visitors::{self};
 
 // =============================================================================
 // Scopes

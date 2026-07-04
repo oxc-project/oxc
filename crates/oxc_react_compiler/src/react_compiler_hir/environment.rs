@@ -11,9 +11,9 @@ use crate::react_compiler_diagnostics::ErrorCategory;
 
 use crate::react_compiler_hir::default_module_type_provider::default_module_type_provider;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
+use crate::react_compiler_hir::globals;
 use crate::react_compiler_hir::globals::Global;
 use crate::react_compiler_hir::globals::GlobalRegistry;
-use crate::react_compiler_hir::globals::{self};
 use crate::react_compiler_hir::object_shape::BUILT_IN_MIXED_READONLY_ID;
 use crate::react_compiler_hir::object_shape::FunctionSignature;
 use crate::react_compiler_hir::object_shape::HookKind;
