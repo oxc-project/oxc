@@ -643,8 +643,8 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          packages: oxc_linter
-          paths: tasks/linter_codegen/,npm/oxlint/configuration_schema.json,apps/oxlint/src-js/package/config.generated.ts,apps/oxlint/scripts/generate-config-types.ts,apps/oxlint/package.json,pnpm-lock.yaml,package.json
+          packages: oxc_linter,oxc_track_linter_timings
+          paths: tasks/linter_codegen/,tasks/track_linter_timings/,npm/oxlint/configuration_schema.json,apps/oxlint/src-js/package/config.generated.ts,apps/oxlint/scripts/generate-config-types.ts,apps/oxlint/package.json,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
@@ -667,5 +667,6 @@ jobs:
         run: |
           cargo lintgen
           pnpm --filter oxlint-app generate-config-types
+          cargo lint-timings
           git diff --exit-code ||
-          (echo 'Linter generated files have changed. Run `cargo lintgen`, `just linter-schema-json`, and `just linter-config-ts`, then commit the generated files.' && exit 1)
+          (echo 'Linter generated files or timing snapshots have changed. Run `cargo lintgen`, `just linter-schema-json`, `just linter-config-ts`, and `cargo lint-timings`, then commit the generated files.' && exit 1)

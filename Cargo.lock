@@ -2501,6 +2501,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_track_linter_timings"
+version = "0.0.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_linter",
+ "oxc_parser",
+ "oxc_semantic",
+ "oxc_tasks_common",
+ "rustc-hash",
+]
+
+[[package]]
 name = "oxc_track_memory_allocations"
 version = "0.0.0"
 dependencies = [
