@@ -540,14 +540,22 @@ impl<'a> SemanticBuilder<'a> {
             return symbol_id;
         }
 
-        self.scoping.create_symbol_with_binding(
+        let symbol_id = self.scoping.create_symbol_with_binding(
             span,
             name,
             includes,
             scope_id,
             scope_id,
             self.node_store.current_node_id,
-        )
+        );
+        // `scope_id` is the symbol's (possibly hoisted) scope; `current_scope_id`
+        // is where the declaration is textually written. Record the textual scope
+        // only when hoisting moved it, so `Scoping::symbol_declaration_scope` can
+        // recover it without the AST node table.
+        if scope_id != self.current_scope_id {
+            self.scoping.record_symbol_declaration_scope(symbol_id, self.current_scope_id);
+        }
+        symbol_id
     }
 
     /// Declare a new symbol on the current scope.
@@ -747,6 +755,7 @@ impl<'a> SemanticBuilder<'a> {
             flags,
             self.node_store.current_node_id,
             span,
+            self.current_scope_id,
         );
     }
 

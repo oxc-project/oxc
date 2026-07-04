@@ -392,7 +392,7 @@ impl<'t> Mangler<'t> {
         let constraints =
             Constraints::collect(allocator, scoping, ast_nodes, program, &self.options);
         // ── Phase 2: assign slots — give bindings that can share a name the same slot. ──
-        let slots = SlotAssignment::compute(allocator, scoping, ast_nodes, &constraints);
+        let slots = SlotAssignment::compute(allocator, scoping, &constraints);
         // ── Phase 3: rank slots by reference frequency (hottest first). ──
         let ranking = SlotRanking::tally(allocator, scoping, &constraints, &slots);
         // ── Phase 4: generate that many short, collision-free names. ──
@@ -569,12 +569,7 @@ impl<'a, 's> SlotAssignment<'a, 's> {
     /// when none are free. `slot_liveness[slot]` records the scopes a slot passes through live so
     /// descendant scopes can tell what's free. Invariant on the result: two symbols sharing a slot
     /// never have overlapping live ranges, so giving them one name is always safe.
-    fn compute(
-        allocator: &'a Allocator,
-        scoping: &'s Scoping,
-        ast_nodes: &AstNodes,
-        constraints: &Constraints,
-    ) -> Self {
+    fn compute(allocator: &'a Allocator, scoping: &'s Scoping, constraints: &Constraints) -> Self {
         let keep_name_symbols = constraints.keep_name_symbols.as_ref();
         // Names of bindings in direct-`eval` scopes — collected here, reserved in Phase 4.
         // TODO: eval reservation is conservative — ideally we'd reserve names per-slot.
@@ -676,12 +671,9 @@ impl<'a, 's> SlotAssignment<'a, 's> {
 
                 // `var` is hoisted, so include the scope where it is declared
                 // (for cases like `function foo() { { var x; let y; } }`).
-                let declared_scope_id =
-                    ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
-                let redeclared_scope_ids = scoping
-                    .symbol_redeclarations(symbol_id)
-                    .iter()
-                    .map(|r| ast_nodes.get_node(r.declaration).scope_id());
+                let declared_scope_id = scoping.symbol_declaration_scope(symbol_id);
+                let redeclared_scope_ids =
+                    scoping.symbol_redeclarations(symbol_id).iter().map(|r| r.scope_id);
                 let referenced_scope_ids =
                     scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
 

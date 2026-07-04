@@ -266,3 +266,44 @@ fn test_eval() {
         assert!(!semantic.scoping().root_scope_flags().contains_direct_eval());
     }
 }
+
+#[test]
+fn symbol_declaration_scope_matches_declaration_node_scope() {
+    // `Scoping::symbol_declaration_scope` must equal the scope of the symbol's
+    // declaration node (what a consumer would read via the AST node table) for
+    // every symbol — the tricky cases being hoisted `var`s (written in a nested
+    // block but bound in the function scope) and named function expressions (name
+    // bound in the function's own scope, declaration node in the enclosing scope).
+    let source = "
+        function log(x) { return x; }
+        function f() { { var hoisted = 1; log(hoisted); } return hoisted; }
+        let lexical = 2; log(lexical);
+        const g = function named(param) { return named ? param : 0; }; log(g);
+        for (var i = 0; i < 3; i++) { let j = i; log(j); }
+        // `var dup` written in two different scopes, both hoisted to `r`: the
+        // redeclaration's textual scope differs from the symbol's (hoisted) scope.
+        function r() { var dup = 1; log(dup); { var dup = 2; log(dup); } return dup; }
+    ";
+    let tester = SemanticTester::js(source);
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let nodes = semantic.nodes();
+    for symbol_id in scoping.symbol_ids() {
+        let expected = nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
+        assert_eq!(
+            scoping.symbol_declaration_scope(symbol_id),
+            expected,
+            "symbol {:?} ({:?})",
+            scoping.symbol_name(symbol_id),
+            scoping.symbol_flags(symbol_id),
+        );
+        for redeclaration in scoping.symbol_redeclarations(symbol_id) {
+            assert_eq!(
+                redeclaration.scope_id,
+                nodes.get_node(redeclaration.declaration).scope_id(),
+                "redeclaration of {:?}",
+                scoping.symbol_name(symbol_id),
+            );
+        }
+    }
+}
