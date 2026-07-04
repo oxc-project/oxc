@@ -363,7 +363,7 @@ node/no-path-concat                                        |  21217
 node/no-process-env                                        |  94090
 node/no-sync                                               |  62606
 oxc/approx-constant                                        |  14295
-oxc/bad-array-method-on-arguments                          | 209565
+oxc/bad-array-method-on-arguments                          |  94090
 oxc/bad-bitwise-operator                                   |  33609
 oxc/bad-char-at-comparison                                 |  62606
 oxc/bad-comparison-sequence                                |  20604
