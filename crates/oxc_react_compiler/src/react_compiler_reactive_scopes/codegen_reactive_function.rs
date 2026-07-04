@@ -2566,6 +2566,12 @@ fn ox_codegen_dependency<'a>(
 
 /// Convert a `BindingPattern` (from `ox_codegen_lvalue`) into an `AssignmentTarget`
 /// for reassignment / `StoreLocal` emission.
+///
+/// oxc models declaration binding patterns (`BindingPattern`) and assignment targets
+/// (`AssignmentTarget`) as distinct node families, so a destructuring reassignment
+/// like `[x] = arr` or `({a} = obj)` must be re-shaped from the pattern produced by
+/// `ox_codegen_lvalue` into the corresponding assignment-target tree. Mirrors Babel,
+/// which reuses the same `ArrayPattern`/`ObjectPattern` nodes as assignment LHS.
 fn ox_binding_pattern_to_assignment_target<'a>(
     cx: &OxcContext<'a, '_, '_>,
     pattern: oxc::BindingPattern<'a>,
@@ -2573,14 +2579,116 @@ fn ox_binding_pattern_to_assignment_target<'a>(
     match pattern {
         oxc::BindingPattern::BindingIdentifier(id) => {
             let id = id.unbox();
-            Ok(oxc::AssignmentTarget::AssignmentTargetIdentifier(
-                oxc_ast::ast::IdentifierReference::boxed(SPAN, id.name, &cx.ast),
+            Ok(oxc::AssignmentTarget::new_assignment_target_identifier(SPAN, id.name, &cx.ast))
+        }
+        oxc::BindingPattern::ArrayPattern(arr) => {
+            let arr = arr.unbox();
+            let mut elements: oxc_allocator::Vec<
+                'a,
+                Option<oxc::AssignmentTargetMaybeDefault<'a>>,
+            > = oxc_allocator::ArenaVec::new_in(&cx.ast);
+            for element in arr.elements {
+                match element {
+                    Some(bp) => elements.push(Some(ox_binding_pattern_to_maybe_default(cx, bp)?)),
+                    None => elements.push(None),
+                }
+            }
+            let rest = ox_binding_rest_to_assignment_rest(cx, arr.rest)?;
+            Ok(oxc::AssignmentTarget::new_array_assignment_target(SPAN, elements, rest, &cx.ast))
+        }
+        oxc::BindingPattern::ObjectPattern(obj) => {
+            let obj = obj.unbox();
+            let mut properties: oxc_allocator::Vec<'a, oxc::AssignmentTargetProperty<'a>> =
+                oxc_allocator::ArenaVec::new_in(&cx.ast);
+            for prop in obj.properties {
+                properties.push(ox_binding_property_to_assignment_property(cx, prop)?);
+            }
+            let rest = ox_binding_rest_to_assignment_rest(cx, obj.rest)?;
+            Ok(oxc::AssignmentTarget::new_object_assignment_target(SPAN, properties, rest, &cx.ast))
+        }
+        // A top-level default (`x = 1`) is not a valid assignment target on its own;
+        // defaults only appear nested and are handled by `ox_binding_pattern_to_maybe_default`.
+        oxc::BindingPattern::AssignmentPattern(_) => {
+            Err(invariant_err("Unexpected default in destructuring assignment target", None))
+        }
+    }
+}
+
+/// Convert a `BindingPattern` element into an `AssignmentTargetMaybeDefault`, turning a
+/// nested default (`[x = 1] = arr`) into an `AssignmentTargetWithDefault`.
+fn ox_binding_pattern_to_maybe_default<'a>(
+    cx: &OxcContext<'a, '_, '_>,
+    pattern: oxc::BindingPattern<'a>,
+) -> Result<oxc::AssignmentTargetMaybeDefault<'a>, CompilerError> {
+    match pattern {
+        oxc::BindingPattern::AssignmentPattern(assign) => {
+            let assign = assign.unbox();
+            let binding = ox_binding_pattern_to_assignment_target(cx, assign.left)?;
+            Ok(oxc::AssignmentTargetMaybeDefault::new_assignment_target_with_default(
+                SPAN,
+                binding,
+                assign.right,
+                &cx.ast,
             ))
         }
-        _ => Err(unimplemented_err(
-            "Destructuring reassignment targets are not yet ported to oxc",
-            None,
+        other => Ok(oxc::AssignmentTargetMaybeDefault::from(
+            ox_binding_pattern_to_assignment_target(cx, other)?,
         )),
+    }
+}
+
+/// Convert an object `BindingProperty` into an `AssignmentTargetProperty`, preserving the
+/// shorthand form (`{a}` / `{a = 1}`) vs the keyed form (`{a: b}` / `{a: b = 1}`).
+fn ox_binding_property_to_assignment_property<'a>(
+    cx: &OxcContext<'a, '_, '_>,
+    prop: oxc::BindingProperty<'a>,
+) -> Result<oxc::AssignmentTargetProperty<'a>, CompilerError> {
+    if prop.shorthand {
+        let (binding, init) = match prop.value {
+            oxc::BindingPattern::BindingIdentifier(id) => (id.unbox(), None),
+            oxc::BindingPattern::AssignmentPattern(assign) => {
+                let assign = assign.unbox();
+                let oxc::BindingPattern::BindingIdentifier(id) = assign.left else {
+                    return Err(invariant_err(
+                        "Expected an identifier in shorthand destructuring property",
+                        None,
+                    ));
+                };
+                (id.unbox(), Some(assign.right))
+            }
+            _ => {
+                return Err(invariant_err(
+                    "Expected an identifier in shorthand destructuring property",
+                    None,
+                ));
+            }
+        };
+        let reference = oxc_ast::ast::IdentifierReference::new(SPAN, binding.name, &cx.ast);
+        return Ok(oxc::AssignmentTargetProperty::new_assignment_target_property_identifier(
+            SPAN, reference, init, &cx.ast,
+        ));
+    }
+    let binding = ox_binding_pattern_to_maybe_default(cx, prop.value)?;
+    Ok(oxc::AssignmentTargetProperty::new_assignment_target_property_property(
+        SPAN,
+        prop.key,
+        binding,
+        prop.computed,
+        &cx.ast,
+    ))
+}
+
+/// Convert a binding rest element (`...x`) into an assignment-target rest.
+fn ox_binding_rest_to_assignment_rest<'a>(
+    cx: &OxcContext<'a, '_, '_>,
+    rest: Option<oxc_allocator::Box<'a, oxc::BindingRestElement<'a>>>,
+) -> Result<Option<oxc::AssignmentTargetRest<'a>>, CompilerError> {
+    match rest {
+        Some(rest) => {
+            let target = ox_binding_pattern_to_assignment_target(cx, rest.unbox().argument)?;
+            Ok(Some(oxc_ast::ast::AssignmentTargetRest::new(SPAN, target, &cx.ast)))
+        }
+        None => Ok(None),
     }
 }
 
