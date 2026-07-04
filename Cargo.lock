@@ -1930,7 +1930,6 @@ dependencies = [
  "serde",
  "serde_json",
  "smallvec",
- "unicode-width",
 ]
 
 [[package]]
@@ -1943,6 +1942,7 @@ dependencies = [
  "oxc_span",
  "rustc-hash",
  "serde_json",
+ "unicode-segmentation",
  "unicode-width",
 ]
 

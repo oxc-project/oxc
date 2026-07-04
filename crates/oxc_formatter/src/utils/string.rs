@@ -1,8 +1,6 @@
 use std::{borrow::Cow, ops::Deref};
 
-use unicode_width::UnicodeWidthStr;
-
-use oxc_formatter_core::{arena_cow_str, spec::normalize_string};
+use oxc_formatter_core::{arena_cow_str, get_string_width, spec::normalize_string};
 use oxc_span::SourceType;
 use oxc_syntax::identifier::is_identifier_name_patched;
 
@@ -77,7 +75,7 @@ impl Deref for CleanedStringLiteralText<'_> {
 
 impl CleanedStringLiteralText<'_> {
     pub fn width(&self) -> usize {
-        self.text.width()
+        get_string_width(&self.text)
     }
 }
 

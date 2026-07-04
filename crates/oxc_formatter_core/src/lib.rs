@@ -31,6 +31,7 @@ mod simple_context;
 mod source_text;
 pub mod spec;
 mod state;
+mod string_width;
 mod text_range;
 mod traits;
 
@@ -68,6 +69,7 @@ pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
 pub(crate) use simple_context::SimpleFormatContext;
 pub use source_text::SourceText;
 pub use state::FormatState;
+pub use string_width::get_string_width;
 pub use text_range::TextRange;
 pub use traits::{FormatContext, FormatOptions};
 

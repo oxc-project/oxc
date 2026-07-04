@@ -8,11 +8,10 @@ use std::hash::{Hash, Hasher};
 use std::ptr;
 use std::{borrow::Cow, ops::Deref};
 
-use unicode_width::UnicodeWidthStr;
-
 use oxc_allocator::ArenaVec;
 
 use crate::IndentWidth;
+use crate::string_width::get_string_width;
 
 use self::tag::{LabelId, Tag, TagKind};
 
@@ -482,9 +481,8 @@ impl TextWidth {
 
     /// Calculates width from text, handling tabs, newlines, and Unicode.
     ///
-    /// NOTE: Uses `UnicodeWidthStr::width()` for accurate emoji sequence handling.
-    /// Counting by `char` can lead to incorrect widths for complex Unicode sequences.
-    /// e.g. "🗑️" (U+1F5D1 U+FE0F) is a single emoji with width 2, but counting chars gives width 1.
+    /// NOTE: Uses [`get_string_width`] so the result matches Prettier's `printWidth`
+    /// measurement (see that function for how it differs from `unicode_width`).
     #[expect(clippy::cast_possible_truncation)]
     pub fn from_text(text: &str, indent_width: IndentWidth) -> TextWidth {
         // Fast path for empty text
@@ -503,18 +501,18 @@ impl TextWidth {
         for (i, c) in text.char_indices() {
             match c {
                 '\t' => {
-                    width += text[segment_start..i].width() as u32;
+                    width += get_string_width(&text[segment_start..i]) as u32;
                     width += u32::from(indent_width.value());
                     segment_start = i + 1; // Skip the tab character
                 }
                 '\n' => {
-                    width += text[segment_start..i].width() as u32;
+                    width += get_string_width(&text[segment_start..i]) as u32;
                     return Self::multiline(width);
                 }
                 _ => {}
             }
         }
-        width += text[segment_start..].width() as u32;
+        width += get_string_width(&text[segment_start..]) as u32;
 
         Self::single(width)
     }
@@ -526,7 +524,7 @@ impl TextWidth {
         if is_all_printable_ascii(name) {
             return Self::single(name.len() as u32);
         }
-        Self::single(name.width() as u32)
+        Self::single(get_string_width(name) as u32)
     }
 
     /// Returns true if the text contains newlines.
@@ -666,9 +664,8 @@ mod tests {
 
     #[test]
     fn ascii_fast_path_is_byte_identical_to_slow_path() {
-        use unicode_width::UnicodeWidthStr;
-
-        // Reference: the original `from_text` scan, without the ASCII fast path.
+        // Reference: the `from_text` scan without the ASCII fast path, using the same
+        // Prettier-compatible width function as the real implementation.
         #[expect(clippy::cast_possible_truncation)]
         fn from_text_slow(text: &str, indent_width: IndentWidth) -> TextWidth {
             if text.is_empty() {
@@ -679,18 +676,18 @@ mod tests {
             for (i, c) in text.char_indices() {
                 match c {
                     '\t' => {
-                        width += text[segment_start..i].width() as u32;
+                        width += get_string_width(&text[segment_start..i]) as u32;
                         width += u32::from(indent_width.value());
                         segment_start = i + 1;
                     }
                     '\n' => {
-                        width += text[segment_start..i].width() as u32;
+                        width += get_string_width(&text[segment_start..i]) as u32;
                         return TextWidth::multiline(width);
                     }
                     _ => {}
                 }
             }
-            width += text[segment_start..].width() as u32;
+            width += get_string_width(&text[segment_start..]) as u32;
             TextWidth::single(width)
         }
 
@@ -727,7 +724,7 @@ mod tests {
             );
         }
 
-        // `from_non_whitespace_str` must equal an unconditional `UnicodeWidthStr::width`.
+        // `from_non_whitespace_str` must equal an unconditional `get_string_width`.
         let names = [
             "",
             "x",
@@ -743,7 +740,7 @@ mod tests {
         ];
         for &n in &names {
             #[expect(clippy::cast_possible_truncation)]
-            let expected = TextWidth::single(n.width() as u32);
+            let expected = TextWidth::single(get_string_width(n) as u32);
             debug_assert_eq!(
                 TextWidth::from_non_whitespace_str(n).0,
                 expected.0,

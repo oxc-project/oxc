@@ -1,12 +1,10 @@
 mod embed;
 
-use unicode_width::UnicodeWidthStr;
-
 use std::cmp;
 
 use oxc_allocator::{ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_formatter_core::IndentWidth;
+use oxc_formatter_core::{IndentWidth, get_string_width};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -537,7 +535,7 @@ struct EachTemplateColumn<'a> {
 
 impl<'a> EachTemplateColumn<'a> {
     fn new(text: &'a str, will_break: bool) -> Self {
-        let width = text.width();
+        let width = get_string_width(text);
 
         Self { text, width, will_break }
     }

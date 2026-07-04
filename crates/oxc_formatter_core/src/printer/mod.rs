@@ -8,11 +8,11 @@ use std::num::NonZeroU8;
 
 use oxc_data_structures::code_buffer::{self, CodeBuffer};
 pub use printer_options::*;
-use unicode_width::UnicodeWidthChar;
 
 use crate::{
     ActualStart, BestFittingElement, Condition, DedentMode, FormatElement, GroupId, IndentStyle,
     InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextRange, TextWidth,
+    string_width::char_width,
 };
 
 use self::call_stack::{
@@ -775,7 +775,7 @@ impl<'a> Printer<'a> {
                 self.options.indent_width().value() as usize
             } else {
                 self.state.buffer.print_char(char);
-                char.width().unwrap_or(0)
+                char_width(char)
             };
 
             self.state.line_width += char_width;

@@ -37,7 +37,6 @@ itoa = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 smallvec = { workspace = true }
-unicode-width = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }

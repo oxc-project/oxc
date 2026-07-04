@@ -23,6 +23,7 @@ oxc_span = { workspace = true }
 
 cow-utils = { workspace = true }
 rustc-hash = { workspace = true }
+unicode-segmentation = { workspace = true }
 unicode-width = { workspace = true }
 
 serde_json = { workspace = true, optional = true }
