@@ -14,6 +14,12 @@
       "rules": {
         "ember/template-no-let-reference": "error"
       }
+    },
+    {
+      "files": ["**/this-in-template.gjs"],
+      "rules": {
+        "class-methods-use-this": "error"
+      }
     }
   ]
 }
