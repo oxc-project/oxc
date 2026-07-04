@@ -59,8 +59,14 @@ impl<'a> TriviaBuilder<'a> {
 
     pub fn mark_pure_comment_not_applied(&mut self, index: usize) {
         if let Some(comment) = self.comments.get_mut(index) {
-            debug_assert!(comment.is_pure());
-            comment.content = CommentContent::PureNotApplied;
+            // A label whose body resolves via a fatal-error/dummy expression (e.g. `/*#__PURE__*/:`)
+            // is first processed as an expression, marking the comment not-applied there, then
+            // re-processed by the enclosing `parse_statement_list_item` once it turns out to be a
+            // `LabeledStatement` rather than an `ExpressionStatement`. Already not-applied is a
+            // valid terminal state here, not a logic error, so this must be idempotent.
+            if comment.is_pure() {
+                comment.content = CommentContent::PureNotApplied;
+            }
         }
     }
 
@@ -417,6 +423,15 @@ mod test {
         ret.program.comments.iter().copied().collect::<Vec<_>>()
     }
 
+    /// Like `get_comments`, but for sources that are expected to contain a parse error
+    /// (the panic in issue #23669 only reproduces via a fatal parse error).
+    fn get_comments_allow_errors(source_text: &str) -> Vec<Comment> {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        ret.program.comments.iter().copied().collect::<Vec<_>>()
+    }
+
     #[test]
     fn comment_attachments() {
         let source_text = "
@@ -712,6 +727,27 @@ function bar() {}";
         ];
         for source_text in cases {
             let comments = get_comments(source_text);
+            assert_eq!(comments[0].content, CommentContent::PureNotApplied, "{source_text}");
+        }
+    }
+
+    #[test]
+    fn pure_comment_before_bare_colon_does_not_panic() {
+        // Regression test for #23669: `/*#__PURE__*/:` panicked with
+        // `assertion failed: comment.is_pure()`.
+        //
+        // The bare `:` is invalid where an expression is expected, which triggers a fatal parse
+        // error (recorded via a dummy `Identifier` expression). `parse_assignment_expression_or_higher_impl`
+        // marks the pure comment as not-applied for that dummy expression. The parser's cached
+        // current token is still `Colon` at this point (the lexer's cursor was advanced to EOF,
+        // but the token itself is re-fetched lazily), so `parse_expression_or_labeled_statement`
+        // still takes the labeled-statement path and produces a `LabeledStatement`. Since the
+        // resulting statement is not an `ExpressionStatement`, the enclosing
+        // `parse_statement_list_item` re-marks the same comment as not-applied, which previously
+        // panicked because it had already been marked.
+        let cases = ["/*#__PURE__*/:", "/* @__PURE__ */:", "/*#__PURE__*/:;"];
+        for source_text in cases {
+            let comments = get_comments_allow_errors(source_text);
             assert_eq!(comments[0].content, CommentContent::PureNotApplied, "{source_text}");
         }
     }
