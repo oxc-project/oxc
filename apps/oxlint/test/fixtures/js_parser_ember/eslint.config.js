@@ -15,4 +15,10 @@ export default [
       "no-unused-vars": "error",
     },
   },
+  {
+    files: ["files/this-in-template.gjs"],
+    rules: {
+      "class-methods-use-this": "error",
+    },
+  },
 ];

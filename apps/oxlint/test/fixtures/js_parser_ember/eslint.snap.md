@@ -14,10 +14,14 @@
   8:5   error  Unexpected 'debugger' statement                   no-debugger
   9:18  error  Expected '===' and instead saw '=='               eqeqeq
 
+<fixture>/files/this-in-template.gjs
+  12:3  error  Expected 'this' to be used by class method 'greeting'  class-methods-use-this
+  16:3  error  Expected 'this' to be used by class method 'farewell'  class-methods-use-this
+
 <fixture>/files/typescript.gts
   4:11  error  update-able variables are not supported in templates, reference a const variable    ember/template-no-let-reference
 
-✖ 6 problems (6 errors, 0 warnings)
+✖ 8 problems (8 errors, 0 warnings)
 ```
 
 # stderr

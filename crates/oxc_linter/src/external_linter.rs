@@ -147,9 +147,10 @@ pub struct JsMaskedRegion {
     /// `true` if the region is a class element (its parent node is a `ClassBody`),
     /// which requires a `static { ... }` placeholder instead of a template literal
     pub class_member: bool,
-    /// Names of variables referenced inside the region but declared outside all regions.
-    /// Injected into the placeholder so native rules see them as used (e.g. a component
-    /// referenced only inside an Ember `<template>` should not trigger `no-unused-vars`).
+    /// Expressions to inject into the placeholder so native rules see usage occurring
+    /// inside the region: variable names referenced inside the region but declared
+    /// outside all regions (e.g. a component referenced only inside an Ember
+    /// `<template>` should not trigger `no-unused-vars`), `this`, or `this.#name`.
     pub refs: Vec<String>,
 }
 
