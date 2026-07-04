@@ -84,6 +84,12 @@ use crate::react_compiler_validation::validate_static_components;
 use crate::react_compiler_validation::validate_use_memo;
 use crate::scope::*;
 
+use oxc_allocator::Allocator;
+use oxc_codegen::Codegen;
+use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
+use oxc_span::SourceType;
+
 use super::compile_result::CodegenFunction;
 use super::compile_result::DebugLogEntry;
 use super::compile_result::OutlinedFunction;
@@ -778,6 +784,7 @@ pub fn compile_fn<'a>(
         if let Some(fn_type) = o.fn_type {
             let fn_name = outlined_codegen.id.as_ref().map(|id| id.name.to_string());
             match compile_outlined_fn(
+                ast,
                 outlined_codegen,
                 fn_name.as_deref(),
                 fn_type,
@@ -819,13 +826,16 @@ pub fn compile_fn<'a>(
     })
 }
 
-/// Compile an outlined function's codegen AST through the full pipeline.
+/// Re-compile an outlined function through the full pipeline so it is memoized.
 ///
-/// Creates a fresh Environment, builds a synthetic ScopeInfo with unique fake
-/// positions for identifier resolution, lowers from AST to HIR, then runs
-/// the full compilation pipeline. This mirrors the TS behavior where outlined
-/// functions are inserted into the program AST and re-compiled from scratch.
+/// The outlined codegen AST produced by the first pass is un-memoized (it comes
+/// from the outlined-codegen loop, not the full pipeline). Mirroring TS — which
+/// inserts the outlined function as a top-level `FunctionDeclaration` and compiles
+/// it again from scratch — we print the synthesized function to source, re-parse it
+/// (giving the AST real, unique spans, which the compiler uses as node identity),
+/// and run it back through [`compile_fn`] as its own component/hook.
 pub fn compile_outlined_fn<'a>(
+    ast: &oxc_ast::builder::AstBuilder<'a>,
     codegen_fn: CodegenFunction<'a>,
     fn_name: Option<&str>,
     fn_type: ReactFunctionType,
@@ -833,8 +843,75 @@ pub fn compile_outlined_fn<'a>(
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
 ) -> Result<CodegenFunction<'a>, CompilerError> {
-    let _ = (fn_name, fn_type, mode, env_config, context);
-    Ok(codegen_fn)
+    // A `FunctionDeclaration` needs a name to be parseable; outlined functions always
+    // have one (`_temp`), but guard so a nameless input falls back to the un-memoized
+    // codegen rather than emitting invalid source.
+    if codegen_fn.id.is_none() {
+        return Ok(codegen_fn);
+    }
+
+    let source = emit_outlined_source(ast, codegen_fn);
+
+    // Re-parse in a fresh arena so the function gets real, unique spans. The parsed
+    // program (and its `Semantic`) borrow `source` and `outlined_alloc`, so both must
+    // outlive the `compile_fn` call below; declaration order keeps that invariant.
+    let outlined_alloc = Allocator::default();
+    let parsed = Parser::new(&outlined_alloc, &source, SourceType::tsx().with_module(true)).parse();
+    let semantic = SemanticBuilder::new().with_build_nodes(true).build(&parsed.program).semantic;
+    let scope_info = crate::convert_scope::convert_scope_info(&semantic, &parsed.program);
+
+    let Some(oxc_ast::ast::Statement::FunctionDeclaration(func)) = parsed.program.body.first()
+    else {
+        return Err(CompilerError::new());
+    };
+    let func_node = FunctionNode::Function(func);
+
+    // `compile_fn` derives `LineOffsets` from `context.code` to stamp HIR locations, so
+    // point it at the outlined source (cloned — `source` is still borrowed by the parse)
+    // for the duration of the re-compile, then restore the previous value.
+    let prev_code = context.code.replace(source.clone());
+    let result =
+        compile_fn(ast, &func_node, fn_name, &scope_info, fn_type, mode, env_config, context);
+    context.code = prev_code;
+    result
+}
+
+/// Print a synthesized outlined [`CodegenFunction`] as a standalone
+/// `FunctionDeclaration` source string, for re-parsing through the full pipeline.
+fn emit_outlined_source<'a>(
+    ast: &oxc_ast::builder::AstBuilder<'a>,
+    codegen_fn: CodegenFunction<'a>,
+) -> String {
+    use oxc_allocator::ArenaVec;
+    use oxc_ast::ast::{Function, FunctionType, Program, Statement};
+    use oxc_span::SPAN;
+
+    let CodegenFunction { id, params, body, generator, is_async, .. } = codegen_fn;
+    let func = Function::boxed(
+        SPAN,
+        FunctionType::FunctionDeclaration,
+        id,
+        generator,
+        is_async,
+        false,
+        None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterDeclaration>>,
+        None::<oxc_allocator::Box<oxc_ast::ast::TSThisParameter>>,
+        params,
+        None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
+        Some(body),
+        ast,
+    );
+    let program = Program::new(
+        SPAN,
+        SourceType::tsx(),
+        "",
+        ArenaVec::new_in(ast),
+        None,
+        ArenaVec::new_in(ast),
+        ArenaVec::from_value_in(Statement::FunctionDeclaration(func), ast),
+        ast,
+    );
+    Codegen::new().build(&program).code
 }
 
 /// Push a compiler error's per-detail diagnostics (validation / lint / telemetry
