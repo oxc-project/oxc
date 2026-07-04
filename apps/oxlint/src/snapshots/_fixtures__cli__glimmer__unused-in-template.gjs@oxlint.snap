@@ -1,0 +1,22 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: fixtures/cli/glimmer/unused-in-template.gjs
+working directory: 
+----------
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[fixtures/cli/glimmer/unused-in-template.gjs:5:1]
+ 4 | const greeting = "hello";
+ 5 | debugger;
+   : ^^^^^^^^^
+ 6 | 
+   `----
+  help: Remove the debugger statement
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 1 file with 95 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

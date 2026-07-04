@@ -11,7 +11,7 @@ use serde_json::Value;
 
 use crate::{
     AstNode,
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -71,6 +71,16 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnusedExpressions {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        // Glimmer (`.gjs`/`.gts`) is only skipped when the source came from the partial
+        // loader, which replaces each `<template>` with a synthesized `undefined`
+        // placeholder — in statement position (e.g. a template-only component) that is a
+        // bare expression statement this rule would flag. Other pipelines (e.g. a custom
+        // parser) don't produce the placeholder, so the rule stays enabled there.
+        !(ctx.is_from_partial_loader()
+            && ctx.file_extension().is_some_and(|ext| ext == "gjs" || ext == "gts"))
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ExpressionStatement(expression_stmt) = node.kind() else {
             return;

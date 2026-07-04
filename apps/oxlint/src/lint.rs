@@ -1062,6 +1062,23 @@ mod test {
     }
 
     #[test]
+    fn lint_glimmer_file() {
+        // `no-unused-vars` must be skipped for loader-derived Glimmer sources
+        // (`greeting` is only used in the blanked-out template), while other
+        // native rules (`no-debugger`) still run.
+        let args = &["fixtures/cli/glimmer/unused-in-template.gjs"];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn lint_glimmer_template_only_file() {
+        // The loader turns a top-level template into a bare `undefined` expression
+        // statement; `no-unused-expressions` must not flag the synthesized placeholder.
+        let args = &["fixtures/cli/glimmer/template-only.gjs"];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
     fn lint_svelte_module_and_instance_scripts() {
         let output =
             Tester::new().test_output_verbose(&["fixtures/cli/svelte/module-script.svelte"]);

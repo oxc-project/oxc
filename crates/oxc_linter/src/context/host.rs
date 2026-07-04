@@ -46,6 +46,9 @@ pub struct ContextSubHost<'a> {
     pub(super) parser_tokens: ArenaBox<'a, [Token]>,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
+    /// Whether this source was extracted by a partial loader (e.g. a `<script>`
+    /// block in a `.vue` file, or a `.gjs`/`.gts` file with templates blanked out).
+    pub(super) from_partial_loader: bool,
 }
 
 impl<'a> ContextSubHost<'a> {
@@ -79,6 +82,7 @@ impl<'a> ContextSubHost<'a> {
             disable_directives,
             framework_options: options.framework_options,
             parser_tokens: options.parser_tokens,
+            from_partial_loader: options.from_partial_loader,
         }
     }
 
@@ -110,6 +114,7 @@ pub struct ContextSubHostOptions<'a> {
     pub framework_options: FrameworkOptions,
     pub parser_tokens: ArenaBox<'a, [Token]>,
     pub respect_eslint_disable_directives: bool,
+    pub from_partial_loader: bool,
 }
 
 impl Default for ContextSubHostOptions<'_> {
@@ -118,6 +123,7 @@ impl Default for ContextSubHostOptions<'_> {
             framework_options: FrameworkOptions::Default,
             parser_tokens: ArenaBox::new_empty_boxed_slice(),
             respect_eslint_disable_directives: true,
+            from_partial_loader: false,
         }
     }
 }
@@ -278,6 +284,15 @@ impl<'a> ContextHost<'a> {
     #[inline]
     pub fn file_extension(&self) -> Option<&OsStr> {
         self.file_extension.as_deref()
+    }
+
+    /// Whether the source currently being linted was extracted by a partial
+    /// loader (e.g. a `<script>` block in a `.vue` file, or a `.gjs`/`.gts`
+    /// file with its templates blanked out). Sources produced by other means
+    /// (whole files, custom parsers) return `false`.
+    #[inline]
+    pub fn is_from_partial_loader(&self) -> bool {
+        self.current_sub_host().from_partial_loader
     }
 
     /// The source type of the file being linted, e.g. JavaScript, TypeScript,

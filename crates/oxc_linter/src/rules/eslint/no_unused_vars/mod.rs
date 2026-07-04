@@ -237,13 +237,19 @@ impl Rule for NoUnusedVars {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        // ignore .d.ts and vue/svelte/astro/gjs/gts files.
+        // ignore .d.ts and vue/svelte/astro files.
         // 1. declarations have side effects (they get merged together)
-        // 2. these scripts declare variables that get used in the template, which we can't detect
-        !ctx.source_type().is_typescript_definition()
-            && !ctx.file_extension().is_some_and(|ext| {
-                ext == "vue" || ext == "svelte" || ext == "astro" || ext == "gjs" || ext == "gts"
-            })
+        // 2. vue/svelte/astro scripts declare variables that get used in the template, which
+        //    we can't detect
+        // Glimmer (`.gjs`/`.gts`) is only skipped when the source came from the partial loader,
+        // which blanks out templates; other pipelines (e.g. a custom parser) keep template
+        // usage visible, so the rule stays correct there.
+        !(ctx.source_type().is_typescript_definition()
+            || ctx
+                .file_extension()
+                .is_some_and(|ext| ext == "vue" || ext == "svelte" || ext == "astro")
+            || (ctx.is_from_partial_loader()
+                && ctx.file_extension().is_some_and(|ext| ext == "gjs" || ext == "gts")))
     }
 }
 

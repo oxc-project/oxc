@@ -10,7 +10,6 @@ pub struct JavaScriptSource<'a> {
     /// The javascript source could be embedded in some file,
     /// use `start` to record start offset of js block in the original file.
     pub start: u32,
-    #[expect(dead_code)]
     is_partial: bool,
 
     // some partial sources can have special options defined, like Vue's `<script setup>`.
@@ -44,6 +43,13 @@ impl<'a> JavaScriptSource<'a> {
         start: u32,
     ) -> Self {
         Self { source_text, source_type, start, is_partial: true, framework_options }
+    }
+
+    /// `true` if this source was extracted from a container file by a
+    /// [`PartialLoader`](super::PartialLoader) (e.g. a `<script>` block in a
+    /// `.vue` file, or a `.gjs`/`.gts` file with its templates blanked out).
+    pub fn is_partial(&self) -> bool {
+        self.is_partial
     }
 
     pub fn as_str(&self) -> &'a str {

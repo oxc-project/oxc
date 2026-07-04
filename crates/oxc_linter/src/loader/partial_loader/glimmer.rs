@@ -259,10 +259,10 @@ mod test {
         let cleaned = sources.first().unwrap();
         let ret = Parser::new(&allocator, cleaned.source_text, cleaned.source_type).parse();
         assert!(
-            !ret.panicked && ret.errors.is_empty(),
+            !ret.panicked && ret.diagnostics.is_empty(),
             "cleaned output failed to parse for ext {ext}:\n--- input ---\n{source_text}\n--- cleaned ---\n{}\n--- errors ---\n{:#?}",
             cleaned.source_text,
-            ret.errors,
+            ret.diagnostics,
         );
     }
 

@@ -260,11 +260,15 @@ declare_oxc_lint!(
 
 impl Rule for RulesOfHooks {
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
-        // disable this rule in vue/nuxt, svelte(kit), and Glimmer (`.gjs`/`.gts`) files
+        // disable this rule in vue/nuxt and svelte(kit) files
         // react hook can be build in only `.ts` files,
         // but `useX` functions are popular and can be false positive in other frameworks
-        !ctx.file_extension()
-            .is_some_and(|ext| ext == "vue" || ext == "svelte" || ext == "gjs" || ext == "gts")
+        // Glimmer (`.gjs`/`.gts`) is only skipped on the zero-config partial-loader path;
+        // when the file is processed by another pipeline (e.g. an ESLint-compatible custom
+        // parser), behavior follows ESLint, which doesn't special-case these files.
+        !(ctx.file_extension().is_some_and(|ext| ext == "vue" || ext == "svelte")
+            || (ctx.is_from_partial_loader()
+                && ctx.file_extension().is_some_and(|ext| ext == "gjs" || ext == "gts")))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

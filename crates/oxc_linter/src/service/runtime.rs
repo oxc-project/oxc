@@ -648,6 +648,7 @@ impl Runtime {
                                         framework_options: section.source.framework_options,
                                         parser_tokens: section.parser_tokens,
                                         respect_eslint_disable_directives,
+                                        from_partial_loader: section.source.is_partial(),
                                         ..Default::default()
                                     },
                                 )),
@@ -786,6 +787,7 @@ impl Runtime {
                                             framework_options: section.source.framework_options,
                                             parser_tokens: section.parser_tokens,
                                             respect_eslint_disable_directives,
+                                            from_partial_loader: section.source.is_partial(),
                                             ..Default::default()
                                         },
                                     )),
@@ -929,6 +931,7 @@ impl Runtime {
                                         framework_options: section.source.framework_options,
                                         parser_tokens: section.parser_tokens,
                                         respect_eslint_disable_directives,
+                                        from_partial_loader: section.source.is_partial(),
                                         ..Default::default()
                                     },
                                 )),
