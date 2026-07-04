@@ -311,7 +311,11 @@ impl<'t> Mangler<'t> {
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
-        let mut builder = SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
+        // The AST node table is only read for `keep_names`; skip building it
+        // otherwise.
+        let build_nodes = self.options.keep_names.function || self.options.keep_names.class;
+        let mut builder =
+            SemanticBuilder::new().with_build_nodes(build_nodes).with_class_table(true);
         if let Some(stats) = self.stats {
             builder = builder.with_stats(stats);
         }

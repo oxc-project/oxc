@@ -142,8 +142,13 @@ impl<'a> Minifier {
             .options
             .mangle
             .map(|options| {
-                let mut builder =
-                    SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
+                // The mangler only reads the AST node table for `keep_names`, so
+                // skip building it otherwise (it is the biggest part of this
+                // pre-mangle semantic pass).
+                let build_nodes = options.keep_names.function || options.keep_names.class;
+                let mut builder = SemanticBuilder::new()
+                    .with_build_nodes(build_nodes)
+                    .with_class_table(true);
                 if let Some(stats) = stats {
                     builder = builder.with_stats(stats);
                 }
