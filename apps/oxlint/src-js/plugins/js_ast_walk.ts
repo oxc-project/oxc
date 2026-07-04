@@ -322,7 +322,11 @@ function isNode(value: unknown): value is JsParserNode {
 /**
  * Get visitor keys for a node whose type is not covered by visitor keys.
  *
- * Returns the node's own enumerable keys, minus `parent`, `range`, `loc`, and `type`.
+ * Returns the node's own enumerable keys, minus `parent`, `range`, `loc`, `type`,
+ * `leadingComments`, `trailingComments`, and keys starting with `_`.
+ * The last three exclusions match `eslint-visitor-keys`' `getKeys`, which ESLint uses as
+ * its fallback - they prevent descending into comment attachments (comment objects have
+ * a string `type`, so would otherwise be visited as nodes) and parser-internal properties.
  * (Values which are not nodes / arrays of nodes are filtered out during the walk.)
  *
  * @param node - AST node
@@ -331,7 +335,17 @@ function isNode(value: unknown): value is JsParserNode {
 export function getFallbackKeys(node: JsParserNode): string[] {
   const keys = [];
   for (const key of Object.keys(node)) {
-    if (key !== "parent" && key !== "range" && key !== "loc" && key !== "type") keys.push(key);
+    if (
+      key !== "parent" &&
+      key !== "range" &&
+      key !== "loc" &&
+      key !== "type" &&
+      key !== "leadingComments" &&
+      key !== "trailingComments" &&
+      !key.startsWith("_")
+    ) {
+      keys.push(key);
+    }
   }
   return keys;
 }
