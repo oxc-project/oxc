@@ -25,6 +25,9 @@ pub struct Redeclaration {
     pub span: Span,
     pub declaration: NodeId,
     pub flags: SymbolFlags,
+    /// Scope the redeclaration is textually declared in (the declaration node's
+    /// scope). May differ from the symbol's (hoisted) scope for `var`.
+    pub scope_id: ScopeId,
 }
 
 impl CloneIn<'_> for Redeclaration {
@@ -32,7 +35,12 @@ impl CloneIn<'_> for Redeclaration {
 
     #[inline]
     fn clone_in(&self, _allocator: &Allocator) -> Self::Cloned {
-        Self { span: self.span, declaration: NodeId::DUMMY, flags: self.flags }
+        Self {
+            span: self.span,
+            declaration: NodeId::DUMMY,
+            flags: self.flags,
+            scope_id: self.scope_id,
+        }
     }
 
     #[inline]
@@ -98,6 +106,14 @@ pub struct Scoping {
     /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
     pub(crate) no_side_effects: FxHashSet<SymbolId>,
 
+    /// Textual declaration scope of a symbol, stored only when it differs from
+    /// the symbol's (possibly hoisted) scope — i.e. a `var`/function declaration
+    /// hoisted out of the block it is written in. Callers read it via
+    /// [`Scoping::symbol_declaration_scope`], which falls back to
+    /// [`Scoping::symbol_scope_id`] for the common (non-hoisted) case. Lets the
+    /// mangler recover a declaration's textual scope without the AST node table.
+    pub(crate) symbol_declaration_scopes: FxHashMap<SymbolId, ScopeId>,
+
     /// Pre-computed enum member values and scope mappings.
     pub(crate) enum_data: EnumData,
 
@@ -119,6 +135,7 @@ impl Default for Scoping {
             symbol_table: SymbolTable::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
+            symbol_declaration_scopes: FxHashMap::default(),
             enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
@@ -395,6 +412,13 @@ impl Scoping {
     #[inline]
     /// Set the scope that owns `symbol_id`.
     pub fn set_symbol_scope_id(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
+        let current = *self.symbol_table.symbol_scope_ids(symbol_id);
+        if current != scope_id {
+            // The scope the symbol currently sits in is where it was textually
+            // declared, before this (hoisting) move. Preserve it the first time so
+            // `symbol_declaration_scope` keeps reporting the declaration's scope.
+            self.symbol_declaration_scopes.entry(symbol_id).or_insert(current);
+        }
         *self.symbol_table.symbol_scope_ids_mut(symbol_id) = scope_id;
     }
 
@@ -402,6 +426,40 @@ impl Scoping {
     /// Get the scope that owns `symbol_id`.
     pub fn symbol_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
         *self.symbol_table.symbol_scope_ids(symbol_id)
+    }
+
+    /// Get the scope a symbol is textually declared in — the scope of its
+    /// declaration node.
+    ///
+    /// Differs from [`Self::symbol_scope_id`] in two cases:
+    /// * a `var` / function declaration hoisted out of the block it is written in
+    ///   (recorded in `symbol_declaration_scopes`), and
+    /// * a **named function expression**, whose name binds in the function's own
+    ///   scope but whose declaration node (the function) sits in the enclosing
+    ///   scope — the parent of the function scope.
+    ///
+    /// For everything else the declaration scope *is* the symbol's scope.
+    #[inline]
+    pub fn symbol_declaration_scope(&self, symbol_id: SymbolId) -> ScopeId {
+        if let Some(&scope_id) = self.symbol_declaration_scopes.get(&symbol_id) {
+            return scope_id;
+        }
+        let scope_id = self.symbol_scope_id(symbol_id);
+        if self.symbol_flags(symbol_id).contains(SymbolFlags::FunctionExpression) {
+            return self.scope_parent_id(scope_id).unwrap_or(scope_id);
+        }
+        scope_id
+    }
+
+    /// Record a symbol's textual declaration scope. Only called during semantic
+    /// build when it differs from the symbol's (hoisted) scope.
+    #[inline]
+    pub(crate) fn record_symbol_declaration_scope(
+        &mut self,
+        symbol_id: SymbolId,
+        scope_id: ScopeId,
+    ) {
+        self.symbol_declaration_scopes.insert(symbol_id, scope_id);
     }
 
     /// Get the ID of the AST node declaring a symbol.
@@ -469,12 +527,15 @@ impl Scoping {
     }
 
     /// Record a redeclaration for an existing symbol.
+    ///
+    /// `scope_id` is the scope the redeclaration is textually declared in.
     pub fn add_symbol_redeclaration(
         &mut self,
         symbol_id: SymbolId,
         flags: SymbolFlags,
         declaration: NodeId,
         span: Span,
+        scope_id: ScopeId,
     ) {
         let is_first_redeclared =
             !self.cell.borrow_dependent().symbol_redeclarations.contains_key(&symbol_id);
@@ -484,10 +545,11 @@ impl Scoping {
             span: self.symbol_span(symbol_id),
             declaration: self.symbol_declaration(symbol_id),
             flags: self.symbol_flags(symbol_id),
+            scope_id: self.symbol_declaration_scope(symbol_id),
         });
 
         self.cell.with_dependent_mut(|allocator, cell| {
-            let redeclaration = Redeclaration { span, declaration, flags };
+            let redeclaration = Redeclaration { span, declaration, flags, scope_id };
             match cell.symbol_redeclarations.entry(symbol_id) {
                 Entry::Occupied(occupied) => {
                     occupied.into_mut().push(redeclaration);
@@ -1016,6 +1078,7 @@ impl Scoping {
             symbol_table: self.symbol_table.clone(),
             references: self.references.clone(),
             no_side_effects: self.no_side_effects.clone(),
+            symbol_declaration_scopes: self.symbol_declaration_scopes.clone(),
             enum_data: self.enum_data.clone(),
             scope_table: self.scope_table.clone(),
             cell: {

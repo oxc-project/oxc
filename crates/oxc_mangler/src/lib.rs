@@ -392,7 +392,7 @@ impl<'t> Mangler<'t> {
         let constraints =
             Constraints::collect(allocator, scoping, ast_nodes, program, &self.options);
         // ── Phase 2: assign slots — give bindings that can share a name the same slot. ──
-        let slots = SlotAssignment::compute(allocator, scoping, ast_nodes, &constraints);
+        let slots = SlotAssignment::compute(allocator, scoping, &constraints);
         // ── Phase 3: rank slots by reference frequency (hottest first). ──
         let ranking = SlotRanking::tally(allocator, scoping, &constraints, &slots);
         // ── Phase 4: generate that many short, collision-free names. ──
@@ -572,7 +572,6 @@ impl<'a, 's> SlotAssignment<'a, 's> {
     fn compute(
         allocator: &'a Allocator,
         scoping: &'s Scoping,
-        ast_nodes: &AstNodes,
         constraints: &Constraints,
     ) -> Self {
         let keep_name_symbols = constraints.keep_name_symbols.as_ref();
@@ -676,12 +675,9 @@ impl<'a, 's> SlotAssignment<'a, 's> {
 
                 // `var` is hoisted, so include the scope where it is declared
                 // (for cases like `function foo() { { var x; let y; } }`).
-                let declared_scope_id =
-                    ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
-                let redeclared_scope_ids = scoping
-                    .symbol_redeclarations(symbol_id)
-                    .iter()
-                    .map(|r| ast_nodes.get_node(r.declaration).scope_id());
+                let declared_scope_id = scoping.symbol_declaration_scope(symbol_id);
+                let redeclared_scope_ids =
+                    scoping.symbol_redeclarations(symbol_id).iter().map(|r| r.scope_id);
                 let referenced_scope_ids =
                     scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
 
