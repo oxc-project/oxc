@@ -156,7 +156,9 @@ function mergeVisitorKeys(
   for (const type of Object.keys(parserVisitorKeys)) {
     const parserKeys = parserVisitorKeys[type];
     if (!Array.isArray(parserKeys)) continue;
-    const existingKeys = merged[type];
+    // `Object.hasOwn` check so a type named e.g. `constructor` doesn't pick up
+    // `Object.prototype` members (same guard as ESLint's `vk.unionWith`)
+    const existingKeys = Object.hasOwn(merged, type) ? merged[type] : undefined;
     merged[type] =
       existingKeys === undefined ? parserKeys : [...new Set([...existingKeys, ...parserKeys])];
   }
@@ -1045,7 +1047,10 @@ function isSpaceBetweenImpl(
     const nextToken = createCursorWithSkip(true, currentToken.range[1], -1, {
       includeComments: true,
     }).getOneToken();
-    if (nextToken === null) break;
+    // Token store exhausted before reaching `finalToken` - possible when `finalToken` is
+    // a node containing no tokens (custom parsers can produce such nodes; ESLint would
+    // throw here). Fall back to comparing ranges directly, ESLint's "gap = space" rule.
+    if (nextToken === null) return currentToken.range[1] !== finalToken.range[0];
 
     if (
       currentToken.range[1] !== nextToken.range[0] ||

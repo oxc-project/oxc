@@ -83,23 +83,36 @@ export interface Parser {
 
 // Parser objects for loaded parsers.
 // Indexed by `parserId`, which is passed to `lintFileWithJsParser`.
-// Rust side asserts that `parserId` returned by `loadParser` equals the number of parsers
-// registered so far, so parsers are only ever appended to this array.
+// This array is process-global: parsers are only ever appended, and are deduped by URL,
+// so the same parser module always gets the same ID - even when Rust side creates a fresh
+// `ExternalPluginStore` and requests the parser again (e.g. LSP config rebuilds,
+// or a second workspace folder using the same parser).
 export const registeredParsers: Parser[] = [];
+
+// Parser IDs keyed by URL, to avoid registering the same parser twice (see above).
+const parserIdsByUrl = new Map<string, number>();
 
 /**
  * Load a custom parser.
  *
  * Mirrors the structure of `loadPlugin` in `load.ts`.
  *
+ * If a parser with the same URL was already loaded, returns its existing ID
+ * without loading it again.
+ *
  * @param url - Absolute path of parser file as a `file://...` URL
  * @returns Parser ID or error serialized to JSON string
  */
 export async function loadParser(url: string): Promise<string> {
   try {
-    const parser = resolveParser(await import(url));
-    registeredParsers.push(parser);
-    return JSON.stringify({ Success: { parserId: registeredParsers.length - 1 } });
+    let parserId = parserIdsByUrl.get(url);
+    if (parserId === undefined) {
+      const parser = resolveParser(await import(url));
+      registeredParsers.push(parser);
+      parserId = registeredParsers.length - 1;
+      parserIdsByUrl.set(url, parserId);
+    }
+    return JSON.stringify({ Success: { parserId } });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
   }

@@ -69,6 +69,54 @@ export function setSourceCodeOverride(sourceCode: SourceCode | null): void {
   sourceCodeOverride = sourceCode;
 }
 
+// Override for the language options returned by `context.languageOptions` and
+// `context.parserOptions`. Set by `lint_js_parser.ts` when linting a file parsed by
+// a custom (JS) parser - the standard `LANGUAGE_OPTIONS` / `PARSER_OPTIONS` singletons
+// read `sourceType` etc. from the buffer, which does not exist for such files.
+let languageOptionsOverride: LanguageOptions | null = null;
+
+/**
+ * Set / clear the language options override.
+ *
+ * When set, `context.languageOptions` returns the override instead of the buffer-based
+ * `LANGUAGE_OPTIONS` singleton, and `context.parserOptions` (deprecated) returns
+ * the override's `parserOptions`.
+ *
+ * Used for files parsed by a custom (JS) parser, where there is no buffer.
+ *
+ * @param override - Details of the custom parse, or `null` to clear
+ */
+export function setLanguageOptionsOverride(
+  override: {
+    sourceType: ModuleKind;
+    parser: unknown;
+    parserOptions: Record<string, unknown>;
+  } | null,
+): void {
+  if (override === null) {
+    languageOptionsOverride = null;
+    return;
+  }
+  languageOptionsOverride = {
+    sourceType: override.sourceType,
+    ecmaVersion: ECMA_VERSION,
+    parser: override.parser,
+    // Same as ESLint: `parserOptions` is the configured options object
+    parserOptions: override.parserOptions,
+    // Globals and envs come from config, same as the buffer-based path
+    get globals(): Readonly<Globals> {
+      if (globals === null) initGlobals();
+      debugAssertIsNonNull(globals);
+      return globals;
+    },
+    get env(): Readonly<Envs> {
+      if (envs === null) initGlobals();
+      debugAssertIsNonNull(envs);
+      return envs;
+    },
+  } as unknown as LanguageOptions;
+}
+
 /**
  * Set CWD. Used when switching workspaces.
  * @param cwdInput - CWD
@@ -433,7 +481,7 @@ const FILE_CONTEXT = Object.freeze({
     if (filePath === null) {
       throw new Error("Cannot access `context.languageOptions` in `createOnce`");
     }
-    return LANGUAGE_OPTIONS;
+    return languageOptionsOverride === null ? LANGUAGE_OPTIONS : languageOptionsOverride;
   },
 
   /**
@@ -466,7 +514,9 @@ const FILE_CONTEXT = Object.freeze({
    */
   get parserOptions(): Record<string, unknown> {
     if (filePath === null) throw new Error("Cannot access `context.parserOptions` in `createOnce`");
-    return PARSER_OPTIONS;
+    return languageOptionsOverride === null
+      ? PARSER_OPTIONS
+      : (languageOptionsOverride.parserOptions as Record<string, unknown>);
   },
 
   /**
