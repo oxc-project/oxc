@@ -254,7 +254,19 @@ fn lower_block_statement_inner<'a>(
         .bindings_with_child_blocks(scope_id)
         .into_iter()
         .filter(|&sid| {
-            !matches!(scope.binding_kind(sid), AstBindingKind::Param | AstBindingKind::Module)
+            // Type-only symbols (type parameters, interfaces, pure type aliases)
+            // are not part of Babel's `scope.bindings`, so its hoisting analysis
+            // never treats a pure-type-position reference to one as a
+            // referenced-before-declared use. OXC does give them a symbol, so
+            // without this guard a generic function that mentions its own type
+            // parameter `T` inside a nested function over-bails with
+            // "Unsupported declaration type for hoisting". See
+            // `ScopeResolver::is_type_only_binding`.
+            !scope.is_type_only_binding(sid)
+                && !matches!(
+                    scope.binding_kind(sid),
+                    AstBindingKind::Param | AstBindingKind::Module
+                )
                 && !matches!(
                     scope.decl_kind(sid),
                     DeclKind::FunctionExpression

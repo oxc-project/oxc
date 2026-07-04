@@ -276,6 +276,28 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         }
     }
 
+    /// Whether a symbol is a type-only binding — a type parameter, interface,
+    /// or a pure type alias / type-only import.
+    ///
+    /// Babel never registers these in `scope.bindings`, so its BuildHIR hoisting
+    /// analysis can never see them: `stmt.scope.getBinding(name)` returns `null`
+    /// for a type name, so the "referenced before declaration" check bails out
+    /// early and the identifier is never hoisted. OXC's semantic model *does*
+    /// give type parameters and interfaces a symbol, which lands them in the
+    /// hoistable set with an unclassifiable declaration kind and makes every
+    /// pure-type-position reference inside a nested function look like a
+    /// referenced-before-declared use — over-bailing whole generic functions
+    /// that Babel compiles. Excluding type-only symbols mirrors Babel's binding
+    /// table exactly.
+    ///
+    /// Symbols that are *also* values (a `class`, an `enum`, a value module, or
+    /// an `interface`/`class` merged declaration) are not type-only and remain
+    /// hoistable, matching Babel, which does register those.
+    pub fn is_type_only_binding(&self, symbol_id: SymbolId) -> bool {
+        let flags = self.scoping().symbol_flags(symbol_id);
+        flags.is_type() && !flags.is_value()
+    }
+
     /// The kind of the symbol's declaration AST node.
     pub fn decl_kind(&self, symbol_id: SymbolId) -> DeclKind {
         match self.nodes.get_node(self.scoping.symbol_declaration(symbol_id)).kind() {
