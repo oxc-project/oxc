@@ -8,7 +8,6 @@ import { useMemo } from "react";
 function useFoo(text) {
 	const $ = _c(2);
 	let t0;
-	;
 	try {
 		let formattedText;
 		try {

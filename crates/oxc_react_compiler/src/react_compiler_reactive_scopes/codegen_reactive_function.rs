@@ -714,8 +714,16 @@ fn ox_codegen_block_no_reset<'a, 'h>(
                 };
                 if let Some(ref label) = term_stmt.label {
                     if !label.implicit {
+                        // Collapse a labeled block that wraps a single statement
+                        // (`bb0: { switch {} }` -> `bb0: switch {}`). A `try` is the
+                        // exception: the reference output always keeps the braces around a
+                        // labeled `try` (`bb0: { try {} catch {} }`, never `bb0: try`), as
+                        // the catch-binding declaration originally padded the block.
                         let inner = match stmt {
-                            oxc::Statement::BlockStatement(mut bs) if bs.body.len() == 1 => {
+                            oxc::Statement::BlockStatement(mut bs)
+                                if bs.body.len() == 1
+                                    && !matches!(bs.body[0], oxc::Statement::TryStatement(_)) =>
+                            {
                                 bs.body.pop().unwrap()
                             }
                             other => other,
@@ -1432,7 +1440,13 @@ fn ox_codegen_instruction_nullable<'a, 'h>(
             | InstructionValue::Destructure { .. }
             | InstructionValue::DeclareLocal { .. }
             | InstructionValue::DeclareContext { .. } => {
-                return ox_codegen_store_or_declare(cx, instr, value);
+                // `emit_store` returns an empty statement for `InstructionKind::Catch`
+                // declarations: the catch parameter is emitted from the `Try` terminal's
+                // handler binding, so the declaration itself has no textual form. Drop it
+                // (like the other instruction paths below) so it does not surface as a
+                // stray `;` at the top of the labeled block wrapping the `try`.
+                let stmt = ox_codegen_store_or_declare(cx, instr, value)?;
+                return Ok(stmt.filter(|s| !matches!(s, oxc::Statement::EmptyStatement(_))));
             }
             InstructionValue::StartMemoize { .. } | InstructionValue::FinishMemoize { .. } => {
                 return Ok(None);

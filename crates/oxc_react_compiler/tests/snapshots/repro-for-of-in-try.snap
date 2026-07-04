@@ -12,7 +12,6 @@ function Foo(t0) {
 		t1 = Symbol.for("react.early_return_sentinel");
 		bb0: {
 			items = [];
-			;
 			try {
 				for (const [key, value] of Object.entries(obj)) {
 					items.push(`${key}: ${value}`);
