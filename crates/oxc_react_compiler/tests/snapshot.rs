@@ -30,7 +30,8 @@ use oxc_react_compiler::react_compiler_hir::type_config::{
 };
 use oxc_react_compiler::react_compiler_utils::FxIndexMap;
 use oxc_react_compiler::{
-    DynamicGatingConfig, EnvironmentConfig, GatingConfig, PluginOptions, transform,
+    CompilerOutputMode, DynamicGatingConfig, EnvironmentConfig, GatingConfig, PluginOptions,
+    transform,
 };
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -50,6 +51,12 @@ fn snapshots() {
 /// Parse, analyse, compile, and render the compiled program + diagnostics.
 fn run_fixture(source: &str) -> String {
     let (source_type, options) = parse_pragma(source);
+    // In lint output mode the compiler validates without rewriting the program, so
+    // `changed` is always false. Upstream's `snap` runner still emits the (unmodified)
+    // code in that mode alongside the reported findings, so mirror that here rather
+    // than collapsing to "No changes." — otherwise every lint fixture would look like a
+    // bail-out even though the compiler ran to completion.
+    let lint_mode = CompilerOutputMode::from_opts(&options) == CompilerOutputMode::Lint;
 
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, source_type).parse();
@@ -73,12 +80,13 @@ fn run_fixture(source: &str) -> String {
     // Mirror the upstream `snap` runner, which always re-emits the program as
     // `## Code` unless a hard error turns the output into `## Error`. So when the
     // compiler cleanly declines to change anything (e.g. `@expectNothingCompiled`,
-    // or a file with no React-like functions), echo the reprinted source rather
-    // than the `No changes.` marker. The marker is kept only when an error was
-    // reported (parse failure or a compile diagnostic), where upstream emits no
-    // code — and echoing a parse-recovered AST would be misleading.
+    // or a file with no React-like functions), or when a lint-mode run reports
+    // findings without rewriting the program, echo the reprinted source rather than
+    // the `No changes.` marker. The marker is kept only when a non-lint run reports
+    // an error (parse failure or compile diagnostic), where upstream emits no code —
+    // and echoing a parse-recovered AST would be misleading.
     let clean = parsed.diagnostics.is_empty() && result.diagnostics.as_slice().is_empty();
-    if result.changed || clean {
+    if result.changed || clean || lint_mode {
         out.push_str(&Codegen::new().build(&program).code);
     } else {
         out.push_str("No changes.");

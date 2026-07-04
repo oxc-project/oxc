@@ -6,4 +6,18 @@ Diagnostics:
 
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] EffectDerivationsOfState: You might not need an effect. Derive values in render, not effects.", labels: One([LabeledSpan { label: Some("This should be computed during render, not in an effect"), span: SourceSpan { offset: SourceOffset(462), length: 4 }, primary: false }]), help: Some("Using an effect triggers an additional render which can hurt performance and user experience, potentially briefly showing stale values to the user\n\nThis setState call is setting a derived value that depends on the following reactive sources:\n\nState: [second]\n\nData Flow Tree:\n└── second (State)\n\nSee: https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
-No changes.
+// @validateNoDerivedComputationsInEffects_exp @loggerTestOnly @outputMode:"lint"
+function Component({ prop }) {
+	const [s, setS] = useState();
+	const [second, setSecond] = useState(prop);
+	/*
+	* `second` is a source of state. It will inherit the value of `prop` in
+	* the first render, but after that it will no longer be updated when
+	* `prop` changes. So we shouldn't consider `second` as being derived from
+	* `prop`
+	*/
+	useEffect(() => {
+		setS(second);
+	}, [second]);
+	return <div>{s}</div>;
+}
