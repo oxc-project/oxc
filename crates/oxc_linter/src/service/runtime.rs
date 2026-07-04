@@ -615,6 +615,10 @@ impl Runtime {
             paths.into_iter().partition(|path| self.linter.has_external_parser(Path::new(path)));
 
         if !js_parser_paths.is_empty() {
+            // Dedupe, same as `paths_set` below for the native path.
+            // Overlapping input paths can yield the same file more than once.
+            let js_parser_paths: IndexSet<Arc<OsStr>, FxBuildHasher> =
+                js_parser_paths.into_iter().collect();
             self.run_with_js_parser(file_system, &js_parser_paths, tx_error, diff_manager);
         }
 
@@ -757,7 +761,7 @@ impl Runtime {
     fn run_with_js_parser(
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
-        paths: &[Arc<OsStr>],
+        paths: &IndexSet<Arc<OsStr>, FxBuildHasher>,
         tx_error: &DiagnosticSender,
         diff_manager: &Arc<DiffManager>,
     ) {
@@ -778,7 +782,17 @@ impl Runtime {
                 }
             };
 
-            let mut messages = self.linter.run_with_js_parser(path, source_text);
+            let (mut messages, disable_directives) =
+                self.linter.run_with_js_parser(path, source_text);
+
+            // Store the disable directives for this file, so unused directives can be
+            // reported, same as the native path.
+            if let Some(disable_directives) = disable_directives {
+                self.disable_directives_map
+                    .lock()
+                    .expect("disable_directives_map mutex poisoned")
+                    .insert(path.to_path_buf(), disable_directives);
+            }
 
             if self.linter.options().fix.is_some() {
                 let fix_result = Fixer::new(source_text, messages, None).fix();
@@ -811,6 +825,11 @@ impl Runtime {
     // language_server: the language server needs line and character position
     // the struct not using `oxc_diagnostic::Error, because we are just collecting information
     // and returning it to the client to let him display it.
+    /// Returns `true` if an external (JS) parser is configured for the file at `path`.
+    pub(super) fn has_external_parser(&self, path: &Path) -> bool {
+        self.linter.has_external_parser(path)
+    }
+
     pub(super) fn run_source(
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
@@ -818,10 +837,43 @@ impl Runtime {
     ) -> Vec<Message> {
         use std::sync::Mutex;
 
+        // Files with an external (JS) parser are parsed and linted entirely on JS side,
+        // same as in `run_impl`.
+        let (js_parser_paths, paths): (Vec<_>, Vec<_>) =
+            paths.into_iter().partition(|path| self.linter.has_external_parser(Path::new(path)));
+
+        let mut js_parser_messages = Vec::<Message>::new();
+        for path in &js_parser_paths {
+            let path = Path::new(path);
+            let allocator_guard = self.allocator_pool.get();
+            match file_system.read_to_arena_str(path, &allocator_guard) {
+                Ok(source_text) => {
+                    let (messages, disable_directives) =
+                        self.linter.run_with_js_parser(path, source_text);
+                    js_parser_messages.extend(messages);
+                    if let Some(disable_directives) = disable_directives {
+                        self.disable_directives_map
+                            .lock()
+                            .expect("disable_directives_map mutex poisoned")
+                            .insert(path.to_path_buf(), disable_directives);
+                    }
+                }
+                Err(err) => {
+                    js_parser_messages.push(Message::new(
+                        OxcDiagnostic::error(format!(
+                            "Failed to open file {} with error \"{err}\"",
+                            path.display()
+                        )),
+                        PossibleFixes::None,
+                    ));
+                }
+            }
+        }
+
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
-        let messages = Mutex::new(Vec::<Message>::new());
+        let messages = Mutex::new(js_parser_messages);
         rayon::scope(|scope| {
             self.resolve_modules(
                 file_system,

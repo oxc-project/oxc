@@ -44,10 +44,9 @@ pub struct ConfigStoreBuilder {
     categories: OxlintCategories,
     overrides: OxlintOverrides,
 
-    /// IDs of external parsers loaded for overrides with `languageOptions.parser`,
-    /// keyed by `(config_dir, specifier)`.
+    /// IDs of external parsers loaded for overrides with `languageOptions.parser`.
     /// Empty if external parsers are not enabled (no external linter).
-    external_parser_ids: FxHashMap<(PathBuf, String), ExternalParserId>,
+    external_parser_ids: FxHashMap<ExternalParserEntry, ExternalParserId>,
 
     // Collect all `extends` file paths for the language server.
     // The server will tell the clients to watch for the extends files.
@@ -328,8 +327,7 @@ impl ConfigStoreBuilder {
                     &resolver,
                     external_plugin_store,
                 )?;
-                external_parser_ids
-                    .insert((entry.config_dir.clone(), entry.specifier.clone()), parser_id);
+                external_parser_ids.insert((*entry).clone(), parser_id);
             }
         }
 
@@ -613,9 +611,7 @@ impl ConfigStoreBuilder {
                 let external_parser =
                     override_config.language_options.as_ref().and_then(|language_options| {
                         let parser = language_options.parser.as_ref()?;
-                        let parser_id = *self
-                            .external_parser_ids
-                            .get(&(parser.config_dir.clone(), parser.specifier.clone()))?;
+                        let parser_id = *self.external_parser_ids.get(parser)?;
                         let parser_options_json =
                             language_options.parser_options.as_ref().map(|options| {
                                 // `serde_json::Value` serialization is infallible

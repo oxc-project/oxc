@@ -524,7 +524,9 @@ impl Linter {
     /// Such files are parsed and linted entirely on JS side via [`Linter::run_with_js_parser`],
     /// instead of the native path.
     pub fn has_external_parser(&self, path: &Path) -> bool {
-        self.external_linter.is_some() && self.config.resolve(path).external_parser.is_some()
+        // Use the cheap glob-only check rather than `resolve()`, which rebuilds the full
+        // resolved rule set. This is called for every file in `Runtime::run`.
+        self.external_linter.is_some() && self.config.has_external_parser(path)
     }
 
     /// Lint a file which is parsed by an external (JS) parser.
@@ -532,11 +534,18 @@ impl Linter {
     /// The file is parsed on JS side by the parser configured in `languageOptions.parser`
     /// of the override matching the file, and only external (JS plugin) rules run on it.
     ///
+    /// Returns the messages, and the file's [`DisableDirectives`] (`None` if the file
+    /// was not linted, or linting failed before directives could be built).
+    ///
     /// # Panics
     /// Panics if no external parser is configured for the file (check with
     /// [`Linter::has_external_parser`] first), or no external linter is configured.
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    pub fn run_with_js_parser(&self, path: &Path, source_text: &str) -> Vec<Message> {
+    pub fn run_with_js_parser(
+        &self,
+        path: &Path,
+        source_text: &str,
+    ) -> (Vec<Message>, Option<DisableDirectives>) {
         const BOM: &str = "\u{feff}";
         const BOM_LEN: usize = BOM.len();
 
@@ -548,7 +557,7 @@ impl Linter {
 
         let external_rules = &resolved.external_rules;
         if external_rules.is_empty() {
-            return vec![];
+            return (vec![], None);
         }
 
         let mut messages = vec![];
@@ -558,6 +567,10 @@ impl Linter {
 
         // If has BOM, remove it. The parser receives source text without the BOM,
         // same as the raw transfer path.
+        // Spans converted back from UTF-16 are relative to the original text *including*
+        // the BOM (the span converter is created with an offset below), so all span-based
+        // slicing must use `original_source_text`, same as the buffer-based path.
+        let original_source_text = source_text;
         let has_bom = source_text.starts_with(BOM);
         let source_text = if has_bom { &source_text[BOM_LEN..] } else { source_text };
 
@@ -603,12 +616,13 @@ impl Linter {
             Err(err) => {
                 let message = format!("Error running JS plugin.\nFile path: {path_string}\n{err}");
                 messages.push(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
-                return messages;
+                return (messages, None);
             }
         };
 
         // Build disable directives from comments reported by the parser,
         // so `eslint-disable` comments work in files parsed by external parsers.
+        // Note: Converted-back spans are relative to `original_source_text` (including BOM).
         let comments = result
             .comments
             .iter()
@@ -616,7 +630,7 @@ impl Linter {
                 let mut span = Span::new(comment.start, comment.end);
                 span_converter.convert_span_back(&mut span);
                 // Skip comments with invalid spans (only possible if the parser misbehaves)
-                let text = source_text.get(span.start as usize..span.end as usize)?;
+                let text = original_source_text.get(span.start as usize..span.end as usize)?;
                 let kind = if !comment.is_block {
                     CommentKind::Line
                 } else if text.contains('\n') {
@@ -629,7 +643,7 @@ impl Linter {
             .collect::<Vec<_>>();
         let disable_directives = DisableDirectivesBuilder::new()
             .with_respect_eslint_disable_directives(self.respect_eslint_disable_directives())
-            .build(source_text, &comments);
+            .build(original_source_text, &comments);
 
         for diagnostic in result.diagnostics {
             // Convert UTF-16 offsets back to UTF-8
@@ -647,7 +661,7 @@ impl Linter {
             // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
             let mut create_fix = |fixes, fix_kind| match convert_and_merge_js_fixes(
                 fixes,
-                source_text,
+                original_source_text,
                 &span_converter,
                 has_bom,
             ) {
@@ -704,7 +718,7 @@ impl Linter {
             );
         }
 
-        messages
+        (messages, Some(disable_directives))
     }
 
     /// Lint a file which is parsed by an external (JS) parser.
@@ -712,8 +726,12 @@ impl Linter {
     /// External parsers (JS plugins) are not supported on non-64-bit or big-endian platforms,
     /// so this returns no messages.
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
-    pub fn run_with_js_parser(&self, _path: &Path, _source_text: &str) -> Vec<Message> {
-        vec![]
+    pub fn run_with_js_parser(
+        &self,
+        _path: &Path,
+        _source_text: &str,
+    ) -> (Vec<Message>, Option<DisableDirectives>) {
+        (vec![], None)
     }
 
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]

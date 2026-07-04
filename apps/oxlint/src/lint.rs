@@ -347,14 +347,6 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        if debug_files {
-            return crate::mode::run_debug_files(
-                files_to_lint.iter().map(|path| Path::new(path.as_ref())),
-                &self.cwd,
-                stdout,
-            );
-        }
-
         // If no external rules, discard `ExternalLinter`
         let mut external_linter = self.external_linter;
         if external_plugin_store.is_empty() {
@@ -394,13 +386,25 @@ impl CliRunner {
                 extra_paths.sort_unstable();
             }
 
-            // Skip ignored files, and files already found by the extension-based walk
-            // (possible if an override with a parser matches e.g. `.js` files)
-            let existing_paths =
+            // Skip ignored files, and files already seen - either found by the
+            // extension-based walk (possible if an override with a parser matches
+            // e.g. `.js` files), or yielded twice by this walk (overlapping input paths)
+            let mut seen_paths =
                 files_to_lint.iter().cloned().collect::<rustc_hash::FxHashSet<_>>();
             files_to_lint.extend(extra_paths.into_iter().filter(|path| {
-                !existing_paths.contains(path) && !ignore_matcher.should_ignore(Path::new(path))
+                !ignore_matcher.should_ignore(Path::new(path))
+                    && seen_paths.insert(Arc::clone(path))
             }));
+        }
+
+        // Note: This must come after the second walk above, so that files matched by
+        // an override with `languageOptions.parser` are included in the debug listing
+        if debug_files {
+            return crate::mode::run_debug_files(
+                files_to_lint.iter().map(|path| Path::new(path.as_ref())),
+                &self.cwd,
+                stdout,
+            );
         }
 
         let type_check_only = self.options.type_check_only;

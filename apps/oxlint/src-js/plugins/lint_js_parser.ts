@@ -13,7 +13,7 @@
  *   (from the parser output), which drive `eslint-disable` directive handling on Rust side.
  */
 
-import { setupFileContext, setSourceCodeOverride } from "./context.ts";
+import { setLanguageOptionsOverride, setSourceCodeOverride, setupFileContext } from "./context.ts";
 import { setGlobalsForFile } from "./globals.ts";
 import { compileJsVisitors, walkParserAst } from "./js_ast_walk.ts";
 import {
@@ -36,6 +36,7 @@ import { getErrorMessage } from "../utils/utils.ts";
 import type { AfterHook, Visitor } from "./types.ts";
 import type { JsParserParseResult, JsParserToken } from "./parsers.ts";
 import type { SourceCode } from "./source_code.ts";
+import type { ModuleKind } from "../generated/types.d.ts";
 
 // Comment in form sent to Rust (`JsComment` on Rust side). Spans are UTF-16 offsets.
 interface CommentReport {
@@ -178,13 +179,25 @@ function lintFileWithJsParserImpl(
   setSettingsForFile(settingsJSON);
   setGlobalsForFile(globalsJSON);
 
+  // Parse user-configured parser options.
+  // Used both for parsing, and for `context.languageOptions.parserOptions`.
+  const parserOptions: Record<string, unknown> | null =
+    parserOptionsJSON === null ? null : JSON.parse(parserOptionsJSON);
+
   // Parse the file with the custom parser
-  const parseResult = parseWithJsParser(filePath, sourceText, parserId, parserOptionsJSON);
+  const parseResult = parseWithJsParser(filePath, sourceText, parserId, parserOptions);
 
   // Set up `SourceCode` backed by the parse result,
-  // and make `context.sourceCode` return it instead of the buffer-based `SOURCE_CODE`
+  // and make `context.sourceCode` return it instead of the buffer-based `SOURCE_CODE`.
+  // Also override `context.languageOptions` / `context.parserOptions` - the buffer-based
+  // singletons read `sourceType` etc. from the buffer, which does not exist for this path.
   setupJsParserSourceCode(parseResult, sourceText);
   setSourceCodeOverride(JS_PARSER_SOURCE_CODE as unknown as SourceCode);
+  setLanguageOptionsOverride({
+    sourceType: (parseResult.ast.sourceType ?? "module") as ModuleKind,
+    parser: registeredParsers[parserId],
+    parserOptions: parserOptions ?? {},
+  });
 
   // Get visitors for this file from all rules
   const visitors: Visitor[] = [];
@@ -246,14 +259,14 @@ function lintFileWithJsParserImpl(
  * Parse a file with a registered custom parser.
  *
  * The parser's `parseForESLint` method is used if present, falling back to `parse`.
- * Base options match what ESLint passes to parsers, so parsers emit ranges, locations,
- * tokens, and comments. User-configured `parserOptions` are spread over the base options,
- * but `filePath` always wins.
+ * User-configured `parserOptions` are spread over `ecmaVersion`, but the
+ * `range` / `loc` / `tokens` / `comment` flags and `filePath` are applied last,
+ * so user options can never disable them - same as ESLint.
  *
  * @param filePath - Absolute path of file being parsed
  * @param sourceText - Source text of the file
  * @param parserId - ID of parser to parse the file with
- * @param parserOptionsJSON - Parser options as JSON, or `null` if not configured
+ * @param parserOptions - User-configured parser options, or `null` if not configured
  * @returns Parse result
  * @throws {Error} If the parser fails to parse the file, or does not return an AST
  */
@@ -261,21 +274,20 @@ function parseWithJsParser(
   filePath: string,
   sourceText: string,
   parserId: number,
-  parserOptionsJSON: string | null,
+  parserOptions: Record<string, unknown> | null,
 ): JsParserParseResult {
   const parser = registeredParsers[parserId];
   debugAssertIsNonNull(parser, "Parser should be registered");
 
-  const parserOptions: Record<string, unknown> | null =
-    parserOptionsJSON === null ? null : JSON.parse(parserOptionsJSON);
-
   const options: Record<string, unknown> = {
+    ecmaVersion: "latest",
+    ...parserOptions,
+    // These flags must always be set - `SourceCode` and comment extraction depend on them.
+    // ESLint also applies them after user options, so they cannot be disabled.
     range: true,
     loc: true,
     tokens: true,
     comment: true,
-    ecmaVersion: "latest",
-    ...parserOptions,
     filePath,
   };
 
@@ -330,17 +342,34 @@ function getComments(
     const isBlock = comment.type === "Block";
     let [start, end] = comment.range;
 
+    // Skip comments with invalid ranges (only possible if the parser misbehaves).
+    // Rust side deserializes spans as `u32`, so a negative / fractional / out-of-range value
+    // would fail deserialization of the whole result, losing all diagnostics for the file.
+    if (
+      !Number.isInteger(start) ||
+      !Number.isInteger(end) ||
+      start < 0 ||
+      end <= start ||
+      end > sourceText.length
+    ) {
+      continue;
+    }
+
     // Realign span using the comment's `value` (see doc comment above).
-    // Skip if `value` starts less than 2 chars into the comment (impossible for any real
-    // comment syntax, whose opening delimiters are at least 2 chars), or isn't found.
+    // Realignment requires at least 2 chars before the content (for delimiters shorter than
+    // 2 chars, e.g. Glimmer / YAML-style comments, the extra chars come from the surrounding
+    // source text - Rust strips 2 chars blindly, so their content doesn't matter).
+    // If `value` isn't found, or the realigned span isn't representable, the span is sent
+    // unchanged (correct for standard JS comments).
     const { value } = comment;
-    if (typeof value === "string" && value.length > 0 && start >= 0 && end > start) {
-      const valueIndex = sourceText.slice(start, end).indexOf(value);
-      if (valueIndex >= 2) {
-        const contentStart = start + valueIndex;
+    if (typeof value === "string" && value.length > 0) {
+      const contentStart = sourceText.indexOf(value, start);
+      if (contentStart !== -1 && contentStart >= 2) {
         const contentEnd = contentStart + value.length;
-        start = contentStart - 2;
-        end = isBlock ? contentEnd + 2 : contentEnd;
+        if (contentEnd <= end && (!isBlock || contentEnd + 2 <= sourceText.length)) {
+          start = contentStart - 2;
+          end = isBlock ? contentEnd + 2 : contentEnd;
+        }
       }
     }
 
@@ -389,6 +418,7 @@ function runAfterHooks(shouldThrowIfError: boolean): void {
  */
 function resetJsParserFile(): void {
   setSourceCodeOverride(null);
+  setLanguageOptionsOverride(null);
   resetJsParserSourceCode();
   // Also resets file context, source text, settings, and globals (shared with buffer-based path)
   resetFile();

@@ -51,9 +51,9 @@ pub struct ExternalPluginStore {
 
     /// External parsers, keyed by resolved parser module path.
     /// `ExternalParserId`s match indexes into the `registeredParsers` array on JS side.
+    /// That array is process-global and outlives this store (a fresh store is created per
+    /// config rebuild in LSP mode), so parser IDs are not sequential within a store.
     parser_paths: FxHashMap<PathBuf, ExternalParserId>,
-    /// Number of registered parsers. Used to check IDs stay in sync with JS side.
-    parsers_count: usize,
 
     is_enabled: bool,
 }
@@ -75,7 +75,6 @@ impl ExternalPluginStore {
             rules: IndexVec::default(),
             options,
             parser_paths: FxHashMap::default(),
-            parsers_count: 0,
             is_enabled,
         }
     }
@@ -85,9 +84,9 @@ impl ExternalPluginStore {
         self.is_enabled
     }
 
-    /// Returns `true` if no external plugins have been loaded.
+    /// Returns `true` if no external plugins or parsers have been loaded.
     pub fn is_empty(&self) -> bool {
-        self.plugins.is_empty()
+        self.plugins.is_empty() && self.parser_paths.is_empty()
     }
 
     pub fn is_plugin_registered(&self, plugin_path: &Path) -> bool {
@@ -135,26 +134,20 @@ impl ExternalPluginStore {
 
     /// Register parser loaded on JS side.
     ///
+    /// `parser_id_from_js` is an index into the process-global `registeredParsers` array
+    /// on JS side. JS side dedupes parsers by URL, so the same parser module always gets
+    /// the same ID, even across multiple `ExternalPluginStore`s (e.g. LSP config rebuilds).
+    ///
     /// # Panics
-    /// Panics if:
-    /// - Parser at `parser_path` is already registered.
-    /// - `parser_id_from_js` does not equal the number of registered parsers.
+    /// Panics if parser at `parser_path` is already registered in this store.
     pub fn register_parser(
         &mut self,
         parser_path: PathBuf,
         parser_id_from_js: usize,
     ) -> ExternalParserId {
-        assert!(
-            parser_id_from_js == self.parsers_count,
-            "register_parser: received parser ID {}, but {} parsers are currently registered",
-            parser_id_from_js,
-            self.parsers_count
-        );
-
         let parser_id = ExternalParserId::from_usize(parser_id_from_js);
         let existing = self.parser_paths.insert(parser_path, parser_id);
         assert!(existing.is_none(), "register_parser: parser already registered");
-        self.parsers_count += 1;
 
         parser_id
     }
