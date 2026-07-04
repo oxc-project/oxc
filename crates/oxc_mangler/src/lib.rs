@@ -573,11 +573,7 @@ impl<'a, 's> SlotAssignment<'a, 's> {
     /// when none are free. `slot_liveness[slot]` records the scopes a slot passes through live so
     /// descendant scopes can tell what's free. Invariant on the result: two symbols sharing a slot
     /// never have overlapping live ranges, so giving them one name is always safe.
-    fn compute(
-        allocator: &'a Allocator,
-        scoping: &'s Scoping,
-        constraints: &Constraints,
-    ) -> Self {
+    fn compute(allocator: &'a Allocator, scoping: &'s Scoping, constraints: &Constraints) -> Self {
         let keep_name_symbols = constraints.keep_name_symbols.as_ref();
         // Names of bindings in direct-`eval` scopes — collected here, reserved in Phase 4.
         // TODO: eval reservation is conservative — ideally we'd reserve names per-slot.

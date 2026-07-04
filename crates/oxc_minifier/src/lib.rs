@@ -146,9 +146,8 @@ impl<'a> Minifier {
                 // skip building it otherwise (it is the biggest part of this
                 // pre-mangle semantic pass).
                 let build_nodes = options.keep_names.function || options.keep_names.class;
-                let mut builder = SemanticBuilder::new()
-                    .with_build_nodes(build_nodes)
-                    .with_class_table(true);
+                let mut builder =
+                    SemanticBuilder::new().with_build_nodes(build_nodes).with_class_table(true);
                 if let Some(stats) = stats {
                     builder = builder.with_stats(stats);
                 }
