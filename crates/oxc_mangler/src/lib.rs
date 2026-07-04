@@ -311,7 +311,11 @@ impl<'t> Mangler<'t> {
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
-        let mut builder = SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
+        // The AST node table is only read for `keep_names`; skip building it
+        // otherwise.
+        let build_nodes = self.options.keep_names.function || self.options.keep_names.class;
+        let mut builder =
+            SemanticBuilder::new().with_build_nodes(build_nodes).with_class_table(true);
         if let Some(stats) = self.stats {
             builder = builder.with_stats(stats);
         }
@@ -569,11 +573,7 @@ impl<'a, 's> SlotAssignment<'a, 's> {
     /// when none are free. `slot_liveness[slot]` records the scopes a slot passes through live so
     /// descendant scopes can tell what's free. Invariant on the result: two symbols sharing a slot
     /// never have overlapping live ranges, so giving them one name is always safe.
-    fn compute(
-        allocator: &'a Allocator,
-        scoping: &'s Scoping,
-        constraints: &Constraints,
-    ) -> Self {
+    fn compute(allocator: &'a Allocator, scoping: &'s Scoping, constraints: &Constraints) -> Self {
         let keep_name_symbols = constraints.keep_name_symbols.as_ref();
         // Names of bindings in direct-`eval` scopes — collected here, reserved in Phase 4.
         // TODO: eval reservation is conservative — ideally we'd reserve names per-slot.
