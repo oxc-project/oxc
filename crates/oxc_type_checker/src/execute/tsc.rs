@@ -9,6 +9,7 @@ use std::{
 use crate::{
     compiler::{CompilerHost, Program},
     tsoptions::{TypeCheckCommand, get_file_names, parse_command_line, parse_config_file},
+    tspath::to_path,
 };
 
 /// Run the type checker from the command line.
@@ -20,11 +21,10 @@ pub fn command_line() -> ExitCode {
     tsc_compilation(&command)
 }
 
-/// Mirrors tsgo's `tscCompilation`: resolve the project into a config file (or root files)
-/// and report the outcome.
+/// Mirrors tsgo's `tscCompilation`: resolve the project into a config file (or root files),
+/// parse and bind those files into a [`Program`], and report the collected files.
 ///
-/// For now this only prints the resolved target; parsing the `tsconfig.json` and type
-/// checking are later steps.
+/// Type checking the program is a later step.
 fn tsc_compilation(command: &TypeCheckCommand) -> ExitCode {
     let cwd = match std::env::current_dir() {
         Ok(cwd) => cwd,
@@ -34,42 +34,34 @@ fn tsc_compilation(command: &TypeCheckCommand) -> ExitCode {
         }
     };
 
-    let host = CompilerHost::new(cwd.clone());
-    match resolve_config_file(command, &cwd) {
-        // A resolved config file: parse it (resolving `extends`) via `oxc_resolver`, expand its
-        // file globs into root files, then parse + bind them into a `Program`.
+    let root_files = match resolve_config_file(command, &cwd) {
+        // A resolved config file: parse it (resolving `extends`) via `oxc_resolver`, then expand
+        // its file globs into the root file list.
         Ok(Some(config_file)) => match parse_config_file(&config_file) {
             Ok(tsconfig) => {
-                let root_files = get_file_names(&tsconfig);
-                let program = Program::new(host, &root_files);
                 println!("project: {}", config_file.display());
-                for source_file in program.source_files() {
-                    println!("  {}", source_file.file_name().display());
-                }
-                println!("({} files)", program.len());
-                ExitCode::SUCCESS
+                get_file_names(&tsconfig)
             }
             Err(message) => {
                 eprintln!("{message}");
-                ExitCode::FAILURE
+                return ExitCode::FAILURE;
             }
         },
-        // Source files were given without a config file: parse + bind them directly as roots.
-        Ok(None) => {
-            let root_files: Vec<PathBuf> =
-                command.files.iter().map(|file| normalize(file, &cwd)).collect();
-            let program = Program::new(host, &root_files);
-            for source_file in program.source_files() {
-                println!("  {}", source_file.file_name().display());
-            }
-            println!("({} files)", program.len());
-            ExitCode::SUCCESS
-        }
+        // Source files given without a config file: use them directly as roots.
+        Ok(None) => command.files.iter().map(|file| to_path(&cwd, file)).collect(),
         Err(message) => {
             eprintln!("{message}");
-            ExitCode::FAILURE
+            return ExitCode::FAILURE;
         }
+    };
+
+    // Parse and bind every root file into the program's file store.
+    let program = Program::new(CompilerHost::new(cwd), &root_files);
+    for source_file in program.source_files() {
+        println!("  {}", source_file.file_name().display());
     }
+    println!("({} files)", program.len());
+    ExitCode::SUCCESS
 }
 
 /// Resolve the command line into the `tsconfig.json` (or config file) to load, mirroring
@@ -88,7 +80,7 @@ fn resolve_config_file(command: &TypeCheckCommand, cwd: &Path) -> Result<Option<
             );
         }
 
-        let file_or_directory = normalize(project, cwd);
+        let file_or_directory = to_path(cwd, project);
         if file_or_directory.is_dir() {
             // A directory: look for `tsconfig.json` inside it.
             let config_file = file_or_directory.join("tsconfig.json");
@@ -135,13 +127,4 @@ fn find_config_file(dir: &Path) -> Option<PathBuf> {
     dir.ancestors()
         .map(|ancestor| ancestor.join("tsconfig.json"))
         .find(|candidate| candidate.is_file())
-}
-
-/// Turn `path` into an absolute path against `cwd`.
-///
-// NOTE: this is a lightweight stand-in for tsgo's `tspath.NormalizePath`; a faithful
-// lexical normalization (collapsing `.`/`..` segments) is a later step.
-fn normalize(path: &Path, cwd: &Path) -> PathBuf {
-    let joined = cwd.join(path);
-    std::path::absolute(&joined).unwrap_or(joined)
 }

@@ -48,11 +48,14 @@ impl CompilerHost {
     /// Returns `None` if the file cannot be read (tsgo returns `nil`).
     pub fn get_source_file(&self, opts: SourceFileParseOptions) -> Option<SourceFile> {
         let source_text = self.fs.read_to_string(&opts.file_name).ok()?;
-        // oxc derives the JS/TS dialect (tsgo's `ScriptKind` + `LanguageVariant`) from the file
-        // extension. Unknown extensions (e.g. `.json`, whose faithful handling is deferred)
-        // fall back to the default so the file is still collected.
+        // Derive the JS/TS dialect from the extension (tsgo's `ScriptKind`/`LanguageVariant`).
+        // Extensions oxc's `SourceType` cannot model — notably `.json`, which `get_file_names`
+        // includes in the project and tsgo parses as JSON — fall back to the default dialect so
+        // the file still appears in the program's file list; faithful JSON parsing (tsgo's
+        // `parseJSONText`) and the `isSupportedExtension` gate for truly-unsupported extensions
+        // are deferred.
         let source_type = SourceType::from_path(&opts.file_name).unwrap_or_default();
-        Some(SourceFile::parse(opts, &source_text, source_type))
+        Some(SourceFile::parse(opts, source_text, source_type))
     }
 }
 

@@ -39,18 +39,26 @@ pub struct SourceFileParseOptions {
 }
 
 // A `SourceFile` is self-referential: the parsed `Program` and its `Semantic` model borrow from
-// the `Allocator` that backs them. `self_cell` stores the arena (owner) alongside the semantic
-// model that borrows from it (dependent). Mirrors `oxc_linter`'s `ModuleContent`.
+// the arena and source text that back them. `self_cell` stores the owner (the arena plus the owned
+// source text) alongside the semantic model that borrows from both (dependent). The source text is
+// read once and parsed in place — the AST and `Semantic` borrow it directly, with no second copy.
 //
 // `#[not_covariant]` because `Semantic<'a>` is invariant over `'a` (it becomes invariant once the
 // `oxc_semantic` `jsdoc`/`cfg` features are enabled), so the model is reached through a closure
 // (`with_semantic`) rather than a borrow that escapes.
 self_cell! {
     struct SourceFileCell {
-        owner: Allocator,
+        owner: SourceFileOwner,
         #[not_covariant]
         dependent: Semantic,
     }
+}
+
+/// Backing storage a [`SourceFile`]'s AST and [`Semantic`] borrow from: the arena, plus the owned
+/// source text they point into.
+struct SourceFileOwner {
+    allocator: Allocator,
+    source_text: String,
 }
 
 /// A single parsed and semantically-analyzed source file.
@@ -72,19 +80,17 @@ impl SourceFile {
     /// (eager) bind. `source_type` selects the JS/TS dialect (derived from the file extension).
     pub(crate) fn parse(
         parse_options: SourceFileParseOptions,
-        source_text: &str,
+        source_text: String,
         source_type: SourceType,
     ) -> Self {
         let mut diagnostics = Diagnostics::new();
-        let cell = SourceFileCell::new(Allocator::default(), |allocator| {
-            // Copy the source text into the arena so the AST that borrows it lives as long as
-            // the arena does.
-            let source_text = allocator.alloc_str(source_text);
-            let parser_ret = Parser::new(allocator, source_text, source_type).parse();
+        let owner = SourceFileOwner { allocator: Allocator::default(), source_text };
+        let cell = SourceFileCell::new(owner, |owner| {
+            let parser_ret = Parser::new(&owner.allocator, &owner.source_text, source_type).parse();
             diagnostics.extend(parser_ret.diagnostics.into_vec());
             // Move the program into the arena so `Semantic` can borrow it for the arena's
             // lifetime (mirrors `oxc_linter`'s `allocator.alloc(ret.program)`).
-            let program = allocator.alloc(parser_ret.program);
+            let program = owner.allocator.alloc(parser_ret.program);
             let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(program);
             diagnostics.extend(semantic_ret.diagnostics.into_vec());
             semantic_ret.semantic
@@ -117,7 +123,7 @@ impl SourceFile {
     /// Access is closure-based: `Semantic` borrows the file's arena and is invariant over its
     /// lifetime, so the borrow cannot escape.
     pub fn with_semantic<R>(&self, f: impl FnOnce(&Semantic) -> R) -> R {
-        self.cell.with_dependent(|_allocator, semantic| f(semantic))
+        self.cell.with_dependent(|_owner, semantic| f(semantic))
     }
 }
 
