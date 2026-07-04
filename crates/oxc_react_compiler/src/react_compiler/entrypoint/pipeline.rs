@@ -100,7 +100,7 @@ pub fn compile_fn<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     func: &FunctionNode<'_>,
     fn_name: Option<&str>,
-    scope_info: &ScopeInfo,
+    scope: &ScopeResolver<'_, '_>,
     fn_type: ReactFunctionType,
     mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
@@ -119,12 +119,12 @@ pub fn compile_fn<'a>(
     env.hook_guard_name = context.hook_guard_name.clone();
     env.seed_uid_known_names(&context.known_referenced_names());
 
-    env.reference_node_ids = scope_info.ref_node_id_to_binding.keys().copied().collect();
+    env.reference_node_ids = scope.all_reference_positions().clone();
 
     let line_offsets = crate::react_compiler_lowering::source_loc::LineOffsets::new(
         context.code.as_deref().unwrap_or(""),
     );
-    let mut hir = lower(func, fn_name, scope_info, &mut env, &line_offsets)?;
+    let mut hir = lower(func, fn_name, scope, &mut env, &line_offsets)?;
 
     // Copy renames from lowering to context (keep on env for codegen to apply to type annotations)
     if !env.renames.is_empty() {

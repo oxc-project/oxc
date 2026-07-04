@@ -9,11 +9,12 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
-use crate::scope::BindingId;
 use crate::scope::BindingKind as AstBindingKind;
+use crate::scope::DeclKind;
 use crate::scope::ScopeId;
-use crate::scope::ScopeInfo;
 use crate::scope::ScopeKind;
+use crate::scope::ScopeResolver;
+use crate::scope::SymbolId;
 
 use oxc_ast::ast as oxc;
 use oxc_span::GetSpan;
@@ -28,61 +29,38 @@ use crate::react_compiler_lowering::identifier_loc_index::build_identifier_loc_i
 use crate::react_compiler_lowering::source_loc::LineOffsets;
 
 fn validate_ts_this_parameter(
-    scope_info: &ScopeInfo,
+    scope: &ScopeResolver<'_, '_>,
     function_scope: ScopeId,
 ) -> Result<(), CompilerError> {
-    let Some(scope) = scope_info.scopes.get(function_scope.0 as usize) else {
+    let Some(symbol_id) = scope.get_binding(function_scope, "this") else {
         return Ok(());
     };
-    let Some(binding_id) = scope.bindings.get("this") else {
-        return Ok(());
-    };
-    let Some(binding) = scope_info.bindings.get(binding_id.0 as usize) else {
-        return Ok(());
-    };
-    if matches!(binding.kind, AstBindingKind::Param) {
+    if matches!(scope.binding_kind(symbol_id), AstBindingKind::Param) {
         return Err(CompilerError::from(reserved_identifier_diagnostic("this")));
     }
     Ok(())
 }
 
-fn is_class_scope_descendant(scope_info: &ScopeInfo, mut scope_id: ScopeId) -> bool {
-    while let Some(scope) = scope_info.scopes.get(scope_id.0 as usize) {
-        let Some(parent) = scope.parent else {
-            return false;
-        };
-        let Some(parent_scope) = scope_info.scopes.get(parent.0 as usize) else {
-            return false;
-        };
-        if matches!(parent_scope.kind, ScopeKind::Class) {
-            return true;
-        }
-        scope_id = parent;
-    }
-    false
+fn is_class_scope_descendant(scope: &ScopeResolver<'_, '_>, scope_id: ScopeId) -> bool {
+    scope.ancestors(scope_id).skip(1).any(|s| scope.scope_kind(s) == ScopeKind::Class)
 }
 
 fn validate_ts_this_parameters_in_function_range(
-    scope_info: &ScopeInfo,
+    scope: &ScopeResolver<'_, '_>,
     start: u32,
     end: u32,
 ) -> Result<(), CompilerError> {
     if start >= end {
         return Ok(());
     }
-    for (node_start, scope_id) in &scope_info.node_to_scope {
-        if *node_start < start || *node_start >= end {
+    for &(node_start, _, scope_id) in scope.function_scope_ranges() {
+        if node_start < start || node_start >= end {
             continue;
         }
-        let Some(scope) = scope_info.scopes.get(scope_id.0 as usize) else {
-            continue;
-        };
-        if !matches!(scope.kind, ScopeKind::Function)
-            || is_class_scope_descendant(scope_info, *scope_id)
-        {
+        if is_class_scope_descendant(scope, scope_id) {
             continue;
         }
-        validate_ts_this_parameter(scope_info, *scope_id)?;
+        validate_ts_this_parameter(scope, scope_id)?;
     }
     Ok(())
 }
@@ -138,10 +116,10 @@ fn lower_expression_to_temporary<'a>(
 // =============================================================================
 
 fn is_binding_in_block_direct_statements(
-    binding: &crate::scope::BindingData,
+    declaration_start: Option<u32>,
     stmts: &[oxc::Statement],
 ) -> bool {
-    let decl_start = match binding.declaration_start {
+    let decl_start = match declaration_start {
         Some(pos) => pos,
         None => return false,
     };
@@ -176,36 +154,34 @@ fn statement_end(stmt: &oxc::Statement) -> Option<u32> {
 /// Collect binding names from a pattern that are declared in the given scope.
 fn collect_binding_names_from_pattern(
     pattern: &oxc::BindingPattern,
-    scope_id: crate::scope::ScopeId,
-    scope_info: &ScopeInfo,
-    out: &mut FxHashSet<BindingId>,
+    scope_id: ScopeId,
+    scope: &ScopeResolver<'_, '_>,
+    out: &mut FxHashSet<SymbolId>,
 ) {
     match pattern {
         oxc::BindingPattern::BindingIdentifier(id) => {
-            if let Some(&binding_id) =
-                scope_info.scopes[scope_id.0 as usize].bindings.get(id.name.as_str())
-            {
-                out.insert(binding_id);
+            if let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str()) {
+                out.insert(symbol_id);
             }
         }
         oxc::BindingPattern::ObjectPattern(obj) => {
             for prop in &obj.properties {
-                collect_binding_names_from_pattern(&prop.value, scope_id, scope_info, out);
+                collect_binding_names_from_pattern(&prop.value, scope_id, scope, out);
             }
             if let Some(rest) = &obj.rest {
-                collect_binding_names_from_pattern(&rest.argument, scope_id, scope_info, out);
+                collect_binding_names_from_pattern(&rest.argument, scope_id, scope, out);
             }
         }
         oxc::BindingPattern::ArrayPattern(arr) => {
             for elem in arr.elements.iter().flatten() {
-                collect_binding_names_from_pattern(elem, scope_id, scope_info, out);
+                collect_binding_names_from_pattern(elem, scope_id, scope, out);
             }
             if let Some(rest) = &arr.rest {
-                collect_binding_names_from_pattern(&rest.argument, scope_id, scope_info, out);
+                collect_binding_names_from_pattern(&rest.argument, scope_id, scope, out);
             }
         }
         oxc::BindingPattern::AssignmentPattern(assign) => {
-            collect_binding_names_from_pattern(&assign.left, scope_id, scope_info, out);
+            collect_binding_names_from_pattern(&assign.left, scope_id, scope, out);
         }
     }
 }
@@ -221,65 +197,35 @@ fn collect_binding_names_from_pattern(
 fn lower_block_statement<'a>(
     builder: &mut HirBuilder<'a, '_>,
     statements: &'a [oxc::Statement<'a>],
-    block_node_id: u32,
-    parent_scope: Option<crate::scope::ScopeId>,
+    block_scope: Option<ScopeId>,
+    parent_scope: Option<ScopeId>,
 ) -> Result<(), CompilerError> {
-    let _ = lower_block_statement_inner(builder, statements, block_node_id, None, parent_scope);
+    let _ = lower_block_statement_inner(builder, statements, block_scope, None, parent_scope);
     Ok(())
 }
 
 fn lower_block_statement_with_scope<'a>(
     builder: &mut HirBuilder<'a, '_>,
     statements: &'a [oxc::Statement<'a>],
-    block_node_id: u32,
-    scope_override: crate::scope::ScopeId,
+    scope_override: ScopeId,
 ) -> Result<(), CompilerError> {
-    let _ =
-        lower_block_statement_inner(builder, statements, block_node_id, Some(scope_override), None);
+    let _ = lower_block_statement_inner(builder, statements, None, Some(scope_override), None);
     Ok(())
 }
 
 fn lower_block_statement_inner<'a>(
     builder: &mut HirBuilder<'a, '_>,
     statements: &'a [oxc::Statement<'a>],
-    block_node_id: u32,
-    scope_override: Option<crate::scope::ScopeId>,
-    parent_scope: Option<crate::scope::ScopeId>,
+    block_scope: Option<ScopeId>,
+    scope_override: Option<ScopeId>,
+    parent_scope: Option<ScopeId>,
 ) -> Result<(), CompilerDiagnostic> {
     use crate::scope::BindingKind as AstBindingKind;
 
-    // Look up the block's scope to identify hoistable bindings.
-    // Use the scope override if provided (for function body blocks that share the function's scope).
-    let block_scope_id = scope_override.or_else(|| {
-        let found = builder.scope_info().resolve_scope_for_node(Some(block_node_id));
-        if found.is_some() {
-            return found;
-        }
-        // Fallback for synthetic blocks (start=0 from Hermes match desugar):
-        // find a descendant scope of the parent that contains the block's declarations.
-        let mut decl_names = Vec::new();
-        for stmt in statements {
-            if let oxc::Statement::VariableDeclaration(vd) = stmt {
-                for d in &vd.declarations {
-                    if let oxc::BindingPattern::BindingIdentifier(id) = &d.id {
-                        decl_names.push(id.name.as_str());
-                    }
-                }
-            }
-        }
-        if decl_names.is_empty() {
-            return None;
-        }
-        let search_parent = parent_scope.unwrap_or_else(|| builder.function_scope());
-        let found =
-            builder.scope_info().find_block_scope_by_bindings(&decl_names, search_parent, |sid| {
-                builder.is_synthetic_scope_claimed(sid)
-            });
-        if let Some(sid) = found {
-            builder.claim_synthetic_scope(sid);
-        }
-        found
-    });
+    // Look up the block's scope to identify hoistable bindings. Use the scope
+    // override when provided (for function body blocks that share the function's
+    // scope); otherwise the block's own `scope_id` cell.
+    let block_scope_id = scope_override.or(block_scope);
 
     let scope_id = match block_scope_id {
         Some(id) => id,
@@ -303,31 +249,29 @@ fn lower_block_statement_inner<'a>(
     // branch) should NOT be hoisted at the parent level — they'll be handled when
     // that nested block is recursively lowered. This prevents DeclareContext from
     // being emitted before an `if` terminal for variables declared within the branch.
-    let hoistable: Vec<(BindingId, String, AstBindingKind, String, Option<u32>, Option<u32>)> =
-        builder
-            .scope_info()
-            .scope_bindings_with_children(scope_id)
-            .filter(|b| {
-                !matches!(b.kind, AstBindingKind::Param | AstBindingKind::Module)
-                    && b.declaration_type != "FunctionExpression"
-                    && b.declaration_type != "TypeAlias"
-                    && b.declaration_type != "OpaqueType"
-                    && b.declaration_type != "InterfaceDeclaration"
-                    && b.declaration_type != "TSTypeAliasDeclaration"
-                    && b.declaration_type != "TSInterfaceDeclaration"
-                    && b.declaration_type != "TSEnumDeclaration"
-            })
-            .map(|b| {
-                (
-                    b.id,
-                    b.name.clone(),
-                    b.kind.clone(),
-                    b.declaration_type.clone(),
-                    b.declaration_start,
-                    b.declaration_node_id,
+    let scope = builder.scope();
+    let hoistable: Vec<(SymbolId, String, AstBindingKind, DeclKind, Option<u32>)> = scope
+        .bindings_with_child_blocks(scope_id)
+        .into_iter()
+        .filter(|&sid| {
+            !matches!(scope.binding_kind(sid), AstBindingKind::Param | AstBindingKind::Module)
+                && !matches!(
+                    scope.decl_kind(sid),
+                    DeclKind::FunctionExpression
+                        | DeclKind::TSTypeAliasDeclaration
+                        | DeclKind::TSEnumDeclaration
                 )
-            })
-            .collect();
+        })
+        .map(|sid| {
+            (
+                sid,
+                scope.symbol_name(sid).to_string(),
+                scope.binding_kind(sid),
+                scope.decl_kind(sid),
+                scope.declaration_start(sid),
+            )
+        })
+        .collect();
 
     if hoistable.is_empty() {
         // No hoistable bindings, just lower statements normally
@@ -338,7 +282,7 @@ fn lower_block_statement_inner<'a>(
     }
 
     // Track which bindings have been "declared" (their declaration statement has been seen)
-    let mut declared: FxHashSet<BindingId> = FxHashSet::default();
+    let mut declared: FxHashSet<SymbolId> = FxHashSet::default();
 
     for body_stmt in statements {
         let stmt_start = statement_start(body_stmt).unwrap_or(0);
@@ -352,33 +296,27 @@ fn lower_block_statement_inner<'a>(
             // For function declarations, fnDepth starts at 1 (all refs are inside)
             vec![(stmt_start, stmt_end)]
         } else {
-            let scope_info = builder.scope_info();
-            scope_info
-                .node_to_scope
+            builder
+                .scope()
+                .function_scope_ranges()
                 .iter()
-                .filter(|&(&pos, &sid)| {
-                    pos > stmt_start
-                        && pos < stmt_end
-                        && matches!(scope_info.scopes[sid.0 as usize].kind, ScopeKind::Function)
-                })
-                .filter_map(|(&pos, _)| {
-                    scope_info.node_to_scope_end.get(&pos).map(|&end| (pos, end))
-                })
+                .filter(|&&(pos, _, _)| pos > stmt_start && pos < stmt_end)
+                .map(|&(pos, end, _)| (pos, end))
                 .collect()
         };
 
         // Find references to not-yet-declared hoistable bindings within this statement
         struct HoistInfo {
-            binding_id: BindingId,
+            binding_id: SymbolId,
             name: String,
             kind: AstBindingKind,
-            declaration_type: String,
+            declaration_type: DeclKind,
             first_ref_pos: u32,
             first_ref_nid: u32,
         }
         let mut will_hoist: Vec<HoistInfo> = Vec::new();
 
-        for (binding_id, name, kind, decl_type, _decl_start, decl_node_id) in &hoistable {
+        for (binding_id, name, kind, decl_type, decl_start) in &hoistable {
             if declared.contains(binding_id) {
                 continue;
             }
@@ -397,20 +335,16 @@ fn lower_block_statement_inner<'a>(
             // since that's the only statement type where decl_start is a declaration, not
             // a reference.
             let apply_decl_filter = !matches!(kind, AstBindingKind::Hoisted) || is_function_decl;
-            let refs_in_stmt: Vec<(u32, u32)> = builder
-                .scope_info()
-                .ref_node_id_to_binding
-                .iter()
-                .filter_map(|(&ref_nid, &ref_bid)| {
-                    if ref_bid != *binding_id {
-                        return None;
-                    }
+            let refs_in_stmt: Vec<(u32, u32)> = scope
+                .reference_positions(*binding_id)
+                .chain(decl_start.iter().copied())
+                .filter_map(|ref_nid| {
                     let entry = builder.identifier_locs().get(&ref_nid)?;
                     let ref_start = entry.start;
                     if ref_start < stmt_start || ref_start >= stmt_end {
                         return None;
                     }
-                    if apply_decl_filter && *decl_node_id == Some(ref_nid) {
+                    if apply_decl_filter && *decl_start == Some(ref_nid) {
                         return None;
                     }
                     if entry.is_jsx {
@@ -453,9 +387,8 @@ fn lower_block_statement_inner<'a>(
                 // guard must NOT apply to own-scope bindings: catch params and
                 // for-in/for-of head vars belong to the block's scope without
                 // being declared by any direct statement, and TS hoists them.
-                let binding_data = &builder.scope_info().bindings[binding_id.0 as usize];
-                if binding_data.scope != scope_id
-                    && !is_binding_in_block_direct_statements(binding_data, statements)
+                if scope.symbol_scope(*binding_id) != scope_id
+                    && !is_binding_in_block_direct_statements(*decl_start, statements)
                 {
                     continue;
                 }
@@ -483,7 +416,7 @@ fn lower_block_statement_inner<'a>(
 
         // Emit DeclareContext for hoisted bindings
         for info in &will_hoist {
-            if builder.environment().is_hoisted_identifier(info.binding_id.0) {
+            if builder.environment().is_hoisted_identifier(info.binding_id.index() as u32) {
                 continue;
             }
 
@@ -492,9 +425,9 @@ fn lower_block_statement_inner<'a>(
                 AstBindingKind::Let => InstructionKind::HoistedLet,
                 AstBindingKind::Hoisted => InstructionKind::HoistedFunction,
                 _ => {
-                    if info.declaration_type == "FunctionDeclaration" {
+                    if info.declaration_type == DeclKind::FunctionDeclaration {
                         InstructionKind::HoistedFunction
-                    } else if info.declaration_type == "VariableDeclarator" {
+                    } else if info.declaration_type == DeclKind::VariableDeclarator {
                         // Unsupported hoisting for this declaration kind
                         builder.record_error(CompilerErrorDetail {
                             category: ErrorCategory::Todo,
@@ -513,7 +446,8 @@ fn lower_block_statement_inner<'a>(
                             reason: "Unsupported declaration type for hoisting".to_string(),
                             description: Some(format!(
                                 "variable \"{}\" declared with {}",
-                                info.name, info.declaration_type
+                                info.name,
+                                info.declaration_type.as_str()
                             )),
                             loc: None,
                             suggestions: None,
@@ -539,7 +473,7 @@ fn lower_block_statement_inner<'a>(
                     loc: ref_loc,
                 },
             )?;
-            builder.environment_mut().add_hoisted_identifier(info.binding_id.0);
+            builder.environment_mut().add_hoisted_identifier(info.binding_id.index() as u32);
             // Hoisted identifiers also become context identifiers (matching TS addHoistedIdentifier)
             builder.add_context_identifier(info.binding_id);
         }
@@ -549,37 +483,26 @@ fn lower_block_statement_inner<'a>(
         match body_stmt {
             oxc::Statement::FunctionDeclaration(func) => {
                 if let Some(id) = &func.id {
-                    if let Some(&binding_id) = builder.scope_info().scopes[scope_id.0 as usize]
-                        .bindings
-                        .get(id.name.as_str())
-                    {
-                        declared.insert(binding_id);
+                    if let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str()) {
+                        declared.insert(symbol_id);
                     }
                 }
             }
             oxc::Statement::VariableDeclaration(var_decl) => {
                 for decl in &var_decl.declarations {
-                    collect_binding_names_from_pattern(
-                        &decl.id,
-                        scope_id,
-                        builder.scope_info(),
-                        &mut declared,
-                    );
+                    collect_binding_names_from_pattern(&decl.id, scope_id, scope, &mut declared);
                 }
             }
             oxc::Statement::ClassDeclaration(cls) => {
                 if let Some(id) = &cls.id {
-                    if let Some(&binding_id) = builder.scope_info().scopes[scope_id.0 as usize]
-                        .bindings
-                        .get(id.name.as_str())
-                    {
-                        declared.insert(binding_id);
+                    if let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str()) {
+                        declared.insert(symbol_id);
                     }
                 }
             }
             _ => {
                 // For other statement types (e.g. ForStatement with VariableDeclaration in init),
-                // we rely on the reference_to_binding check for forward references.
+                // we rely on the per-symbol reference check for forward references.
                 // Any bindings declared by child scopes won't be in this block's scope anyway.
             }
         }
@@ -606,7 +529,7 @@ enum FunctionBody<'a> {
 pub fn lower<'a>(
     func: &'a FunctionNode<'a>,
     _id: Option<&str>,
-    scope_info: &ScopeInfo,
+    scope: &ScopeResolver<'_, 'a>,
     env: &mut Environment<'a>,
     line_offsets: &LineOffsets,
 ) -> Result<HirFunction<'a>, CompilerError> {
@@ -652,21 +575,19 @@ pub fn lower<'a>(
         }
     };
 
-    let scope_id =
-        scope_info.resolve_scope_for_node(func.node_id()).unwrap_or(scope_info.program_scope);
+    let scope_id = func.scope_id().unwrap_or_else(|| scope.program_scope());
 
-    validate_ts_this_parameters_in_function_range(scope_info, start, end)?;
+    validate_ts_this_parameters_in_function_range(scope, start, end)?;
 
     // Build identifier location index from the AST (replaces serialized referenceLocs/jsxReferencePositions)
-    let identifier_locs = build_identifier_loc_index(func, scope_info, line_offsets);
+    let identifier_locs = build_identifier_loc_index(func, line_offsets);
 
     // Pre-compute context identifiers: variables captured across function boundaries
     let context_identifiers =
-        find_context_identifiers(func, scope_info, env, &identifier_locs, line_offsets)?;
+        find_context_identifiers(func, scope, env, &identifier_locs, line_offsets)?;
 
     // For top-level functions, context is empty (no captured refs)
-    let context_map: FxIndexMap<crate::scope::BindingId, Option<SourceLocation>> =
-        FxIndexMap::default();
+    let context_map: FxIndexMap<SymbolId, Option<SourceLocation>> = FxIndexMap::default();
 
     let (hir_func, _used_names, _child_bindings) = lower_inner(
         params,
@@ -675,7 +596,7 @@ pub fn lower<'a>(
         generator,
         is_async,
         loc,
-        scope_info,
+        scope,
         env,
         None, // no pre-existing bindings for top-level
         None, // no pre-existing used_names for top-level
@@ -703,30 +624,26 @@ fn lower_inner<'a>(
     generator: bool,
     is_async: bool,
     loc: Option<SourceLocation>,
-    scope_info: &ScopeInfo,
+    scope: &ScopeResolver<'_, 'a>,
     env: &mut Environment<'a>,
-    parent_bindings: Option<FxIndexMap<crate::scope::BindingId, IdentifierId>>,
-    parent_used_names: Option<FxIndexMap<String, crate::scope::BindingId>>,
-    context_map: FxIndexMap<crate::scope::BindingId, Option<SourceLocation>>,
-    function_scope: crate::scope::ScopeId,
-    component_scope: crate::scope::ScopeId,
-    context_identifiers: &FxHashSet<crate::scope::BindingId>,
+    parent_bindings: Option<FxIndexMap<SymbolId, IdentifierId>>,
+    parent_used_names: Option<FxIndexMap<String, SymbolId>>,
+    context_map: FxIndexMap<SymbolId, Option<SourceLocation>>,
+    function_scope: ScopeId,
+    component_scope: ScopeId,
+    context_identifiers: &FxHashSet<SymbolId>,
     is_top_level: bool,
     identifier_locs: &IdentifierLocIndex,
     line_offsets: &LineOffsets,
 ) -> Result<
-    (
-        HirFunction<'a>,
-        FxIndexMap<String, crate::scope::BindingId>,
-        FxIndexMap<crate::scope::BindingId, IdentifierId>,
-    ),
+    (HirFunction<'a>, FxIndexMap<String, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
     CompilerError,
 > {
-    validate_ts_this_parameter(scope_info, function_scope)?;
+    validate_ts_this_parameter(scope, function_scope)?;
 
     let mut builder = HirBuilder::new(
         env,
-        scope_info,
+        scope,
         function_scope,
         component_scope,
         context_identifiers.clone(),
@@ -740,9 +657,8 @@ fn lower_inner<'a>(
 
     // Build context places from the captured refs
     let mut context: Vec<Place> = Vec::new();
-    for (&binding_id, ctx_loc) in &context_map {
-        let binding = &scope_info.bindings[binding_id.0 as usize];
-        let identifier = builder.resolve_binding(&binding.name, binding_id)?;
+    for (&symbol_id, ctx_loc) in &context_map {
+        let identifier = builder.resolve_binding(scope.symbol_name(symbol_id), symbol_id)?;
         context.push(Place {
             identifier,
             effect: Effect::Unknown,
@@ -762,24 +678,23 @@ fn lower_inner<'a>(
                     ident.name.as_str(),
                 )));
             }
-            let start = ident.span.start;
             let param_loc = builder.source_location(ident.span);
             let mut binding = builder.resolve_identifier(
                 ident.name.as_str(),
-                start,
                 param_loc.clone(),
-                Some(ident.span.start),
+                builder.scope().resolve_binding_identifier(ident),
             )?;
             if !matches!(binding, VariableBinding::Identifier { .. }) {
-                if let Some((binding_id, binding_data)) = builder
-                    .scope_info()
-                    .find_binding_id_in_descendants(ident.name.as_str(), builder.function_scope())
+                if let Some(symbol_id) = builder
+                    .scope()
+                    .find_binding_in_descendants(ident.name.as_str(), builder.function_scope())
                 {
-                    let binding_kind =
-                        crate::react_compiler_lowering::convert_binding_kind(&binding_data.kind);
+                    let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
+                        &builder.scope().binding_kind(symbol_id),
+                    );
                     let identifier = builder.resolve_binding_with_loc(
                         ident.name.as_str(),
-                        binding_id,
+                        symbol_id,
                         param_loc.clone(),
                     )?;
                     binding = VariableBinding::Identifier { identifier, binding_kind };
@@ -878,14 +793,9 @@ fn lower_inner<'a>(
         }
         FunctionBody::Block(block) => {
             directives = block.directives.iter().map(|d| d.expression.value.to_string()).collect();
-            // A function body shares the function's scope (node_to_scope maps the
-            // function node, not the block), so pass it as the scope override.
-            lower_block_statement_with_scope(
-                &mut builder,
-                &block.statements,
-                block.span.start,
-                function_scope,
-            )?;
+            // A function body shares the function's scope (the scope cell lives on
+            // the function node, not the block), so pass it as the scope override.
+            lower_block_statement_with_scope(&mut builder, &block.statements, function_scope)?;
         }
     }
 
@@ -950,11 +860,10 @@ fn lower_inner<'a>(
 fn lower_identifier(
     builder: &mut HirBuilder<'_, '_>,
     name: &str,
-    start: u32,
     loc: Option<SourceLocation>,
-    node_id: Option<u32>,
+    symbol: Option<SymbolId>,
 ) -> Result<Place, CompilerError> {
-    let binding = builder.resolve_identifier(name, start, loc.clone(), node_id)?;
+    let binding = builder.resolve_identifier(name, loc.clone(), symbol)?;
     match binding {
         VariableBinding::Identifier { identifier, .. } => {
             Ok(Place { identifier, effect: Effect::Unknown, reactive: false, loc })
@@ -1396,17 +1305,18 @@ fn lower_identifier_for_assignment(
     ident_loc: Option<SourceLocation>,
     kind: InstructionKind,
     name: &str,
-    start: u32,
-    node_id: Option<u32>,
+    symbol: Option<SymbolId>,
 ) -> Result<Option<IdentifierForAssignment>, CompilerError> {
-    let mut binding = builder.resolve_identifier(name, start, ident_loc.clone(), node_id)?;
+    let mut binding = builder.resolve_identifier(name, ident_loc.clone(), symbol)?;
     if !matches!(binding, VariableBinding::Identifier { .. }) && kind != InstructionKind::Reassign {
-        if let Some((binding_id, binding_data)) =
-            builder.scope_info().find_binding_id_in_descendants(name, builder.function_scope())
+        if let Some(symbol_id) =
+            builder.scope().find_binding_in_descendants(name, builder.function_scope())
         {
-            let bk = crate::react_compiler_lowering::convert_binding_kind(&binding_data.kind);
+            let bk = crate::react_compiler_lowering::convert_binding_kind(
+                &builder.scope().binding_kind(symbol_id),
+            );
             let identifier =
-                builder.resolve_binding_with_loc(name, binding_id, ident_loc.clone())?;
+                builder.resolve_binding_with_loc(name, symbol_id, ident_loc.clone())?;
             binding = VariableBinding::Identifier { identifier, binding_kind: bk };
         }
     }
@@ -1489,7 +1399,6 @@ fn lower_binding_assignment<'a>(
 ) -> Result<Option<Place>, CompilerError> {
     match target {
         oxc::BindingPattern::BindingIdentifier(id) => {
-            let start = id.span.start;
             let id_loc = builder.source_location(id.span);
             let result = lower_identifier_for_assignment(
                 builder,
@@ -1497,8 +1406,7 @@ fn lower_binding_assignment<'a>(
                 id_loc,
                 kind,
                 id.name.as_str(),
-                start,
-                Some(start),
+                builder.scope().resolve_binding_identifier(id),
             )?;
             match result {
                 None => Ok(None),
@@ -1510,11 +1418,12 @@ fn lower_binding_assignment<'a>(
                     Ok(Some(temp))
                 }
                 Some(IdentifierForAssignment::Place(place)) => {
-                    if builder.is_context_identifier(id.name.as_str(), start, Some(start)) {
+                    if builder.is_context_identifier(builder.scope().resolve_binding_identifier(id))
+                    {
                         let is_hoisted = builder
-                            .scope_info()
-                            .resolve_reference_for_node(Some(start))
-                            .map(|b| builder.environment().is_hoisted_identifier(b.id.0))
+                            .scope()
+                            .resolve_binding_identifier(id)
+                            .map(|s| builder.environment().is_hoisted_identifier(s.index() as u32))
                             .unwrap_or(false);
                         if kind == InstructionKind::Const && !is_hoisted {
                             builder.record_error(CompilerErrorDetail {
@@ -1560,9 +1469,8 @@ fn lower_binding_assignment<'a>(
                         items.push(ArrayPatternElement::Hole);
                     }
                     Some(oxc::BindingPattern::BindingIdentifier(id)) => {
-                        let start = id.span.start;
-                        let is_context =
-                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                        let is_context = builder
+                            .is_context_identifier(builder.scope().resolve_binding_identifier(id));
                         // force_temporaries is always false on the binding path.
                         let can_use_direct =
                             matches!(assignment_style, AssignmentStyle::Assignment) || !is_context;
@@ -1574,8 +1482,7 @@ fn lower_binding_assignment<'a>(
                                 id_loc,
                                 kind,
                                 id.name.as_str(),
-                                start,
-                                Some(start),
+                                builder.scope().resolve_binding_identifier(id),
                             )? {
                                 Some(IdentifierForAssignment::Place(place)) => {
                                     items.push(ArrayPatternElement::Place(place));
@@ -1614,9 +1521,8 @@ fn lower_binding_assignment<'a>(
             if let Some(rest) = &pattern.rest {
                 match &rest.argument {
                     oxc::BindingPattern::BindingIdentifier(id) => {
-                        let start = id.span.start;
-                        let is_context =
-                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                        let is_context = builder
+                            .is_context_identifier(builder.scope().resolve_binding_identifier(id));
                         let can_use_direct =
                             matches!(assignment_style, AssignmentStyle::Assignment) || !is_context;
                         if can_use_direct {
@@ -1628,8 +1534,7 @@ fn lower_binding_assignment<'a>(
                                 id_loc,
                                 kind,
                                 id.name.as_str(),
-                                start,
-                                Some(start),
+                                builder.scope().resolve_binding_identifier(id),
                             )? {
                                 Some(IdentifierForAssignment::Place(place)) => {
                                     items
@@ -1719,9 +1624,8 @@ fn lower_binding_assignment<'a>(
 
                 match &prop.value {
                     oxc::BindingPattern::BindingIdentifier(id) => {
-                        let start = id.span.start;
-                        let is_context =
-                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                        let is_context = builder
+                            .is_context_identifier(builder.scope().resolve_binding_identifier(id));
                         let can_use_direct =
                             matches!(assignment_style, AssignmentStyle::Assignment) || !is_context;
                         if can_use_direct {
@@ -1732,8 +1636,7 @@ fn lower_binding_assignment<'a>(
                                 id_loc,
                                 kind,
                                 id.name.as_str(),
-                                start,
-                                Some(start),
+                                builder.scope().resolve_binding_identifier(id),
                             )? {
                                 Some(IdentifierForAssignment::Place(place)) => {
                                     properties.push(ObjectPropertyOrSpread::Property(
@@ -1786,9 +1689,8 @@ fn lower_binding_assignment<'a>(
             if let Some(rest) = &pattern.rest {
                 match &rest.argument {
                     oxc::BindingPattern::BindingIdentifier(id) => {
-                        let start = id.span.start;
-                        let is_context =
-                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                        let is_context = builder
+                            .is_context_identifier(builder.scope().resolve_binding_identifier(id));
                         let can_use_direct =
                             matches!(assignment_style, AssignmentStyle::Assignment) || !is_context;
                         if can_use_direct {
@@ -1800,8 +1702,7 @@ fn lower_binding_assignment<'a>(
                                 id_loc,
                                 kind,
                                 id.name.as_str(),
-                                start,
-                                Some(start),
+                                builder.scope().resolve_binding_identifier(id),
                             )? {
                                 Some(IdentifierForAssignment::Place(place)) => {
                                     properties.push(ObjectPropertyOrSpread::Spread(
@@ -2073,12 +1974,12 @@ fn assignment_target_is_local_identifier(
 ) -> Result<bool, CompilerError> {
     match maybe {
         oxc::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => {
-            let start = id.span.start;
-            if builder.is_context_identifier(id.name.as_str(), start, Some(start)) {
+            if builder.is_context_identifier(builder.scope().resolve_reference(id)) {
                 return Ok(false);
             }
             let ident_loc = builder.source_location(id.span);
-            match builder.resolve_identifier(id.name.as_str(), start, ident_loc, Some(start))? {
+            let symbol = builder.scope().resolve_reference(id);
+            match builder.resolve_identifier(id.name.as_str(), ident_loc, symbol)? {
                 VariableBinding::Identifier { .. } => Ok(true),
                 _ => Ok(false),
             }
@@ -2101,7 +2002,6 @@ fn lower_assignment_target<'a>(
 ) -> Result<Option<Place>, CompilerError> {
     match target {
         oxc::AssignmentTarget::AssignmentTargetIdentifier(id) => {
-            let start = id.span.start;
             let id_loc = builder.source_location(id.span);
             let result = lower_identifier_for_assignment(
                 builder,
@@ -2109,8 +2009,7 @@ fn lower_assignment_target<'a>(
                 id_loc,
                 kind,
                 id.name.as_str(),
-                start,
-                Some(start),
+                builder.scope().resolve_reference(id),
             )?;
             match result {
                 None => Ok(None),
@@ -2122,11 +2021,11 @@ fn lower_assignment_target<'a>(
                     Ok(Some(temp))
                 }
                 Some(IdentifierForAssignment::Place(place)) => {
-                    if builder.is_context_identifier(id.name.as_str(), start, Some(start)) {
+                    if builder.is_context_identifier(builder.scope().resolve_reference(id)) {
                         let is_hoisted = builder
-                            .scope_info()
-                            .resolve_reference_for_node(Some(start))
-                            .map(|b| builder.environment().is_hoisted_identifier(b.id.0))
+                            .scope()
+                            .resolve_reference(id)
+                            .map(|s| builder.environment().is_hoisted_identifier(s.index() as u32))
                             .unwrap_or(false);
                         if kind == InstructionKind::Const && !is_hoisted {
                             builder.record_error(CompilerErrorDetail {
@@ -2206,9 +2105,8 @@ fn lower_assignment_target<'a>(
                         items.push(ArrayPatternElement::Hole);
                     }
                     Some(oxc::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id)) => {
-                        let start = id.span.start;
                         let is_context =
-                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                            builder.is_context_identifier(builder.scope().resolve_reference(id));
                         let can_use_direct = !force_temporaries
                             && (matches!(assignment_style, AssignmentStyle::Assignment)
                                 || !is_context);
@@ -2220,8 +2118,7 @@ fn lower_assignment_target<'a>(
                                 id_loc,
                                 kind,
                                 id.name.as_str(),
-                                start,
-                                Some(start),
+                                builder.scope().resolve_reference(id),
                             )? {
                                 Some(IdentifierForAssignment::Place(place)) => {
                                     items.push(ArrayPatternElement::Place(place));
@@ -2266,9 +2163,8 @@ fn lower_assignment_target<'a>(
             if let Some(rest) = &pattern.rest {
                 match &rest.target {
                     oxc::AssignmentTarget::AssignmentTargetIdentifier(id) => {
-                        let start = id.span.start;
                         let is_context =
-                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                            builder.is_context_identifier(builder.scope().resolve_reference(id));
                         let can_use_direct = !force_temporaries
                             && (matches!(assignment_style, AssignmentStyle::Assignment)
                                 || !is_context);
@@ -2281,8 +2177,7 @@ fn lower_assignment_target<'a>(
                                 id_loc,
                                 kind,
                                 id.name.as_str(),
-                                start,
-                                Some(start),
+                                builder.scope().resolve_reference(id),
                             )? {
                                 Some(IdentifierForAssignment::Place(place)) => {
                                     items
@@ -2362,13 +2257,12 @@ fn lower_assignment_target<'a>(
                                     found = true;
                                     break;
                                 }
-                                let start = p.binding.span.start;
                                 let ident_loc = builder.source_location(p.binding.span);
+                                let symbol = builder.scope().resolve_reference(&p.binding);
                                 match builder.resolve_identifier(
                                     p.binding.name.as_str(),
-                                    start,
                                     ident_loc,
-                                    Some(start),
+                                    symbol,
                                 )? {
                                     VariableBinding::Identifier { .. } => {}
                                     _ => {
@@ -2397,7 +2291,6 @@ fn lower_assignment_target<'a>(
                         let key =
                             ObjectPropertyKey::Identifier { name: p.binding.name.to_string() };
                         let id = &p.binding;
-                        let start = id.span.start;
                         if let Some(default) = &p.init {
                             // `{foo = d}` — Babel shorthand AssignmentPattern. Lower
                             // via a promoted temporary + default followup.
@@ -2420,7 +2313,7 @@ fn lower_assignment_target<'a>(
                             continue;
                         }
                         let is_context =
-                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                            builder.is_context_identifier(builder.scope().resolve_reference(id));
                         let can_use_direct = !force_temporaries
                             && (matches!(assignment_style, AssignmentStyle::Assignment)
                                 || !is_context);
@@ -2432,8 +2325,7 @@ fn lower_assignment_target<'a>(
                                 id_loc,
                                 kind,
                                 id.name.as_str(),
-                                start,
-                                Some(start),
+                                builder.scope().resolve_reference(id),
                             )? {
                                 Some(IdentifierForAssignment::Place(place)) => {
                                     properties.push(ObjectPropertyOrSpread::Property(
@@ -2486,12 +2378,8 @@ fn lower_assignment_target<'a>(
                         };
                         match &p.binding {
                             oxc::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => {
-                                let start = id.span.start;
-                                let is_context = builder.is_context_identifier(
-                                    id.name.as_str(),
-                                    start,
-                                    Some(start),
-                                );
+                                let is_context = builder
+                                    .is_context_identifier(builder.scope().resolve_reference(id));
                                 let can_use_direct = !force_temporaries
                                     && (matches!(assignment_style, AssignmentStyle::Assignment)
                                         || !is_context);
@@ -2503,8 +2391,7 @@ fn lower_assignment_target<'a>(
                                         id_loc,
                                         kind,
                                         id.name.as_str(),
-                                        start,
-                                        Some(start),
+                                        builder.scope().resolve_reference(id),
                                     )? {
                                         Some(IdentifierForAssignment::Place(place)) => {
                                             properties.push(ObjectPropertyOrSpread::Property(
@@ -2564,9 +2451,8 @@ fn lower_assignment_target<'a>(
             if let Some(rest) = &pattern.rest {
                 match &rest.target {
                     oxc::AssignmentTarget::AssignmentTargetIdentifier(id) => {
-                        let start = id.span.start;
                         let is_context =
-                            builder.is_context_identifier(id.name.as_str(), start, Some(start));
+                            builder.is_context_identifier(builder.scope().resolve_reference(id));
                         let can_use_direct = !force_temporaries
                             && (matches!(assignment_style, AssignmentStyle::Assignment)
                                 || !is_context);
@@ -2579,8 +2465,7 @@ fn lower_assignment_target<'a>(
                                 id_loc,
                                 kind,
                                 id.name.as_str(),
-                                start,
-                                Some(start),
+                                builder.scope().resolve_reference(id),
                             )? {
                                 Some(IdentifierForAssignment::Place(place)) => {
                                     properties.push(ObjectPropertyOrSpread::Spread(
@@ -2693,7 +2578,6 @@ fn lower_identifier_followup_store(
     id: &oxc::IdentifierReference,
     value: Place,
 ) -> Result<Option<Place>, CompilerError> {
-    let start = id.span.start;
     let id_loc = builder.source_location(id.span);
     let result = lower_identifier_for_assignment(
         builder,
@@ -2701,8 +2585,7 @@ fn lower_identifier_followup_store(
         id_loc,
         kind,
         id.name.as_str(),
-        start,
-        Some(start),
+        builder.scope().resolve_reference(id),
     )?;
     match result {
         None => Ok(None),
@@ -2714,7 +2597,7 @@ fn lower_identifier_followup_store(
             Ok(Some(t))
         }
         Some(IdentifierForAssignment::Place(place)) => {
-            if builder.is_context_identifier(id.name.as_str(), start, Some(start)) {
+            if builder.is_context_identifier(builder.scope().resolve_reference(id)) {
                 let t = lower_value_to_temporary(
                     builder,
                     InstructionValue::StoreContext { lvalue: LValue { place, kind }, value, loc },
@@ -3305,112 +3188,48 @@ fn lower_function<'a>(
     func: FunctionNode<'a>,
 ) -> Result<LoweredFunction, CompilerError> {
     // Extract function parts from the AST node
-    let (params, body, id, generator, is_async, func_start, func_end, func_loc, func_node_id) =
-        match func {
-            FunctionNode::Arrow(arrow) => {
-                let body = if arrow.expression {
-                    match arrow.body.statements.first() {
-                        Some(oxc::Statement::ExpressionStatement(es)) => {
-                            FunctionBody::Expression(&es.expression)
-                        }
-                        _ => FunctionBody::Block(arrow.body.as_ref()),
+    let (params, body, id, generator, is_async, func_start, func_end, func_loc) = match func {
+        FunctionNode::Arrow(arrow) => {
+            let body = if arrow.expression {
+                match arrow.body.statements.first() {
+                    Some(oxc::Statement::ExpressionStatement(es)) => {
+                        FunctionBody::Expression(&es.expression)
                     }
-                } else {
-                    FunctionBody::Block(arrow.body.as_ref())
-                };
-                (
-                    arrow.params.as_ref(),
-                    body,
-                    None::<&str>,
-                    false,
-                    arrow.r#async,
-                    arrow.span.start,
-                    arrow.span.end,
-                    builder.source_location(arrow.span),
-                    Some(arrow.span.start),
-                )
-            }
-            FunctionNode::Function(f) => {
-                let body_ref = f.body.as_deref().expect("function expression has a body");
-                (
-                    f.params.as_ref(),
-                    FunctionBody::Block(body_ref),
-                    f.id.as_ref().map(|id| id.name.as_str()),
-                    f.generator,
-                    f.r#async,
-                    f.span.start,
-                    f.span.end,
-                    builder.source_location(f.span),
-                    Some(f.span.start),
-                )
-            }
-        };
+                    _ => FunctionBody::Block(arrow.body.as_ref()),
+                }
+            } else {
+                FunctionBody::Block(arrow.body.as_ref())
+            };
+            (
+                arrow.params.as_ref(),
+                body,
+                None::<&str>,
+                false,
+                arrow.r#async,
+                arrow.span.start,
+                arrow.span.end,
+                builder.source_location(arrow.span),
+            )
+        }
+        FunctionNode::Function(f) => {
+            let body_ref = f.body.as_deref().expect("function expression has a body");
+            (
+                f.params.as_ref(),
+                FunctionBody::Block(body_ref),
+                f.id.as_ref().map(|id| id.name.as_str()),
+                f.generator,
+                f.r#async,
+                f.span.start,
+                f.span.end,
+                builder.source_location(f.span),
+            )
+        }
+    };
 
-    // Find the function's scope. For synthetic zero-width functions (e.g., desugared
-    // match IIFEs from Hermes with start=end=0), node_to_scope won't have an entry.
-    let function_scope =
-        if let Some(scope) = builder.scope_info().resolve_scope_for_node(func_node_id) {
-            scope
-        } else if func_start < func_end {
-            builder.scope_info().program_scope
-        } else {
-            let parent = builder.function_scope();
-            let scope_info = builder.scope_info();
-            let mapped: rustc_hash::FxHashSet<crate::scope::ScopeId> =
-                scope_info.node_to_scope.values().copied().collect();
-            let param_names: Vec<String> = params
-                .items
-                .iter()
-                .filter_map(|p| {
-                    if let oxc::BindingPattern::BindingIdentifier(id) = &p.pattern {
-                        Some(id.name.to_string())
-                    } else {
-                        None
-                    }
-                })
-                .collect();
-            let mut descendants = rustc_hash::FxHashSet::default();
-            descendants.insert(parent);
-            let mut changed = true;
-            while changed {
-                changed = false;
-                for (i, scope) in scope_info.scopes.iter().enumerate() {
-                    let sid = crate::scope::ScopeId(i as u32);
-                    if let Some(p) = scope.parent {
-                        if descendants.contains(&p) && !descendants.contains(&sid) {
-                            descendants.insert(sid);
-                            changed = true;
-                        }
-                    }
-                }
-            }
-            let mut found = scope_info.program_scope;
-            for (i, scope) in scope_info.scopes.iter().enumerate() {
-                let sid = crate::scope::ScopeId(i as u32);
-                if let Some(p) = scope.parent {
-                    if descendants.contains(&p)
-                        && matches!(scope.kind, ScopeKind::Function)
-                        && !mapped.contains(&sid)
-                        && !builder.is_synthetic_scope_claimed(sid)
-                    {
-                        if !param_names.is_empty() {
-                            let all_match =
-                                param_names.iter().all(|name| scope.bindings.contains_key(name));
-                            if !all_match {
-                                continue;
-                            }
-                        }
-                        found = sid;
-                        break;
-                    }
-                }
-            }
-            builder.claim_synthetic_scope(found);
-            found
-        };
+    let function_scope = func.scope_id().unwrap_or_else(|| builder.scope().program_scope());
 
     let component_scope = builder.component_scope();
-    let scope_info = builder.scope_info();
+    let scope = builder.scope();
 
     let parent_bindings = builder.bindings().clone();
     let parent_used_names = builder.used_names().clone();
@@ -3418,25 +3237,16 @@ fn lower_function<'a>(
     let ident_locs = builder.identifier_locs();
     let line_offsets = builder.line_offsets();
 
-    // For synthetic functions with zero-width position ranges, position-based
-    // reference filtering fails. Walk the body AST to collect actual positions.
-    let ref_override = if func_start >= func_end {
-        Some(collect_identifier_node_ids_from_body(&body))
-    } else {
-        None
-    };
-
     // Gather captured context
     let captured_context = gather_captured_context(
-        scope_info,
+        scope,
         function_scope,
         component_scope,
         func_start,
         func_end,
         ident_locs,
-        ref_override.as_ref(),
     );
-    let merged_context: FxIndexMap<crate::scope::BindingId, Option<SourceLocation>> = {
+    let merged_context: FxIndexMap<SymbolId, Option<SourceLocation>> = {
         let parent_context = builder.context().clone();
         let mut merged = parent_context;
         for (k, v) in captured_context {
@@ -3445,8 +3255,7 @@ fn lower_function<'a>(
         merged
     };
 
-    // Use scope_info_and_env_mut to avoid conflicting borrows
-    let (scope_info, env) = builder.scope_info_and_env_mut();
+    let env = builder.environment_mut();
     let (hir_func, child_used_names, child_bindings) = lower_inner(
         params,
         body,
@@ -3454,7 +3263,7 @@ fn lower_function<'a>(
         generator,
         is_async,
         func_loc,
-        scope_info,
+        scope,
         env,
         Some(parent_bindings),
         Some(parent_used_names),
@@ -3486,13 +3295,11 @@ fn lower_function_declaration<'a>(
     let func_name = func_decl.id.as_ref().map(|id| id.name.to_string());
 
     // Find the function's scope
-    let function_scope = builder
-        .scope_info()
-        .resolve_scope_for_node(Some(func_decl.span.start))
-        .unwrap_or(builder.scope_info().program_scope);
+    let function_scope =
+        func_decl.scope_id.get().unwrap_or_else(|| builder.scope().program_scope());
 
     let component_scope = builder.component_scope();
-    let scope_info = builder.scope_info();
+    let scope = builder.scope();
 
     let parent_bindings = builder.bindings().clone();
     let parent_used_names = builder.used_names().clone();
@@ -3502,15 +3309,14 @@ fn lower_function_declaration<'a>(
 
     // Gather captured context
     let captured_context = gather_captured_context(
-        scope_info,
+        scope,
         function_scope,
         component_scope,
         func_start,
         func_end,
         ident_locs,
-        None,
     );
-    let merged_context: FxIndexMap<crate::scope::BindingId, Option<SourceLocation>> = {
+    let merged_context: FxIndexMap<SymbolId, Option<SourceLocation>> = {
         let parent_context = builder.context().clone();
         let mut merged = parent_context;
         for (k, v) in captured_context {
@@ -3520,7 +3326,7 @@ fn lower_function_declaration<'a>(
     };
 
     let body_ref = func_decl.body.as_deref().expect("function declaration has a body");
-    let (scope_info, env) = builder.scope_info_and_env_mut();
+    let env = builder.environment_mut();
     let (hir_func, child_used_names, child_bindings) = lower_inner(
         func_decl.params.as_ref(),
         FunctionBody::Block(body_ref),
@@ -3528,7 +3334,7 @@ fn lower_function_declaration<'a>(
         func_decl.generator,
         func_decl.r#async,
         loc.clone(),
-        scope_info,
+        scope,
         env,
         Some(parent_bindings),
         Some(parent_used_names),
@@ -3568,54 +3374,47 @@ fn lower_function_declaration<'a>(
     // e.g. synthetic scopes, or backends that split function-body scopes).
     if let Some(ref name) = func_name {
         if let Some(id_node) = &func_decl.id {
-            let start = id_node.span.start;
             let ident_loc = builder.source_location(id_node.span);
             let scope_binding = builder.get_function_declaration_binding(function_scope, name);
             let mut is_context = false;
             let binding = match scope_binding {
-                Some(binding_id) => {
-                    is_context = builder.is_context_binding(binding_id);
+                Some(symbol_id) => {
+                    is_context = builder.is_context_binding(symbol_id);
                     let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
-                        &builder.scope_info().bindings[binding_id.0 as usize].kind,
+                        &builder.scope().binding_kind(symbol_id),
                     );
                     let identifier =
-                        builder.resolve_binding_with_loc(name, binding_id, ident_loc.clone())?;
+                        builder.resolve_binding_with_loc(name, symbol_id, ident_loc.clone())?;
                     VariableBinding::Identifier { identifier, binding_kind }
                 }
                 None => {
                     let mut binding = builder.resolve_identifier(
                         name,
-                        start,
                         ident_loc.clone(),
-                        Some(id_node.span.start),
+                        builder.scope().resolve_binding_identifier(id_node),
                     )?;
                     if matches!(&binding, VariableBinding::Global { .. }) {
                         // For function redeclarations (e.g., `function x() {} function x() {}`),
-                        // the redeclaration's identifier may not be in ref_node_id_to_binding
-                        // (OXC/SWC don't map constant violations). Retry using the first
-                        // declaration's node_id from the scope chain.
+                        // the redeclaration's identifier does not resolve as a declaration
+                        // site (only the first declaration does). Retry with the binding
+                        // found on the scope chain, resolving through its first declaration.
                         let fallback = {
-                            let si = builder.scope_info();
-                            let scope_id = si
-                                .resolve_scope_for_node(Some(func_decl.span.start))
-                                .unwrap_or(si.program_scope);
-                            si.get_binding(scope_id, name).map(|bid| {
-                                let b = &si.bindings[bid.0 as usize];
-                                (b.declaration_start.unwrap_or(0), b.declaration_node_id)
-                            })
+                            let scope = builder.scope();
+                            let scope_id =
+                                func_decl.scope_id.get().unwrap_or_else(|| scope.program_scope());
+                            scope.find_binding(scope_id, name)
                         };
-                        if let Some((ds, ds_node_id)) = fallback {
-                            binding = builder.resolve_identifier(
-                                name,
-                                ds,
-                                ident_loc.clone(),
-                                ds_node_id,
-                            )?;
+                        if let Some(symbol_id) = fallback {
+                            let symbol =
+                                builder.scope().declaration_start(symbol_id).map(|_| symbol_id);
+                            binding =
+                                builder.resolve_identifier(name, ident_loc.clone(), symbol)?;
                         }
                     }
                     if matches!(&binding, VariableBinding::Identifier { .. }) {
-                        is_context =
-                            builder.is_context_identifier(name, start, Some(id_node.span.start));
+                        is_context = builder.is_context_identifier(
+                            builder.scope().resolve_binding_identifier(id_node),
+                        );
                     }
                     binding
                 }
@@ -3677,6 +3476,7 @@ fn lower_function_declaration<'a>(
 fn lower_function_for_object_method<'a>(
     builder: &mut HirBuilder<'a, '_>,
     method_span: oxc_span::Span,
+    func: &'a oxc::Function<'a>,
     params: &'a oxc::FormalParameters<'a>,
     body: &'a oxc::FunctionBody<'a>,
     generator: bool,
@@ -3686,13 +3486,10 @@ fn lower_function_for_object_method<'a>(
     let func_end = method_span.end;
     let func_loc = builder.source_location(method_span);
 
-    let function_scope = builder
-        .scope_info()
-        .resolve_scope_for_node(Some(method_span.start))
-        .unwrap_or(builder.scope_info().program_scope);
+    let function_scope = func.scope_id.get().unwrap_or_else(|| builder.scope().program_scope());
 
     let component_scope = builder.component_scope();
-    let scope_info = builder.scope_info();
+    let scope = builder.scope();
 
     let parent_bindings = builder.bindings().clone();
     let parent_used_names = builder.used_names().clone();
@@ -3701,15 +3498,14 @@ fn lower_function_for_object_method<'a>(
     let line_offsets = builder.line_offsets();
 
     let captured_context = gather_captured_context(
-        scope_info,
+        scope,
         function_scope,
         component_scope,
         func_start,
         func_end,
         ident_locs,
-        None,
     );
-    let merged_context: FxIndexMap<crate::scope::BindingId, Option<SourceLocation>> = {
+    let merged_context: FxIndexMap<SymbolId, Option<SourceLocation>> = {
         let parent_context = builder.context().clone();
         let mut merged = parent_context;
         for (k, v) in captured_context {
@@ -3718,7 +3514,7 @@ fn lower_function_for_object_method<'a>(
         merged
     };
 
-    let (scope_info, env) = builder.scope_info_and_env_mut();
+    let env = builder.environment_mut();
     let (hir_func, child_used_names, child_bindings) = lower_inner(
         params,
         FunctionBody::Block(body),
@@ -3726,7 +3522,7 @@ fn lower_function_for_object_method<'a>(
         generator,
         is_async,
         func_loc,
-        scope_info,
+        scope,
         env,
         Some(parent_bindings),
         Some(parent_used_names),
@@ -3747,69 +3543,61 @@ fn lower_function_for_object_method<'a>(
 }
 
 fn gather_captured_context(
-    scope_info: &ScopeInfo,
-    function_scope: crate::scope::ScopeId,
-    component_scope: crate::scope::ScopeId,
+    scope: &ScopeResolver<'_, '_>,
+    function_scope: ScopeId,
+    component_scope: ScopeId,
     func_start: u32,
     func_end: u32,
     identifier_locs: &IdentifierLocIndex,
-    ref_node_ids_override: Option<&FxIndexSet<u32>>,
-) -> FxIndexMap<crate::scope::BindingId, Option<SourceLocation>> {
-    let parent_scope = scope_info.scopes[function_scope.0 as usize].parent;
+) -> FxIndexMap<SymbolId, Option<SourceLocation>> {
+    let parent_scope = scope.scope_parent(function_scope);
     let pure_scopes = match parent_scope {
-        Some(parent) => capture_scopes(scope_info, parent, component_scope),
+        Some(parent) => capture_scopes(scope, parent, component_scope),
         None => FxIndexSet::default(),
     };
 
     // Collect the earliest (lowest source position) reference location for each
     // captured binding. Using the minimum position makes the result independent of
-    // ref_node_id_to_binding iteration order, matching the behavior the TS compiler
-    // gets from Babel's position-ordered traversal.
+    // reference iteration order, matching the behavior the TS compiler gets from
+    // Babel's position-ordered traversal.
     let mut captured: rustc_hash::FxHashMap<
-        crate::scope::BindingId,
+        SymbolId,
         (u32, Option<SourceLocation>), // (min_position, loc)
     > = rustc_hash::FxHashMap::default();
 
-    for (&ref_nid, &binding_id) in &scope_info.ref_node_id_to_binding {
-        if let Some(allowed) = ref_node_ids_override {
-            if !allowed.contains(&ref_nid) {
-                continue;
-            }
-        } else {
+    for symbol_id in scope.symbols() {
+        // Skip type-only bindings
+        if matches!(
+            scope.decl_kind(symbol_id),
+            DeclKind::TSTypeAliasDeclaration | DeclKind::TSEnumDeclaration
+        ) {
+            continue;
+        }
+        if !pure_scopes.contains(&scope.symbol_scope(symbol_id)) {
+            continue;
+        }
+        let declaration_start = scope.declaration_start(symbol_id);
+        for ref_nid in scope.reference_positions(symbol_id) {
             // Range check: use the position stored in identifier_locs
             let ref_start = identifier_locs.get(&ref_nid).map(|e| e.start).unwrap_or(0);
             if ref_start < func_start || ref_start >= func_end {
                 continue;
             }
-        }
-        let binding = &scope_info.bindings[binding_id.0 as usize];
-        // Skip references that are actually the binding's own declaration site
-        if binding.declaration_node_id == Some(ref_nid) {
-            continue;
-        }
-        // Skip function/class declaration names that are not expression references.
-        // Skip type-annotation references: TS's gatherCapturedContext traverse
-        // skips TypeAnnotation/TSTypeAnnotation/TypeAlias/TSTypeAliasDeclaration
-        // subtrees, so identifiers there never become captures (they DO still
-        // feed FindContextIdentifiers and the hoisting analysis, which have no
-        // such skip in TS).
-        if let Some(entry) = identifier_locs.get(&ref_nid) {
-            if entry.is_declaration_name || entry.in_type_annotation {
+            // Skip references that are actually the binding's own declaration site
+            if declaration_start == Some(ref_nid) {
                 continue;
             }
-        }
-        // Skip type-only bindings
-        if binding.declaration_type == "TypeAlias"
-            || binding.declaration_type == "OpaqueType"
-            || binding.declaration_type == "InterfaceDeclaration"
-            || binding.declaration_type == "TSTypeAliasDeclaration"
-            || binding.declaration_type == "TSInterfaceDeclaration"
-            || binding.declaration_type == "TSEnumDeclaration"
-        {
-            continue;
-        }
-        if pure_scopes.contains(&binding.scope) {
-            let ref_start = identifier_locs.get(&ref_nid).map(|e| e.start).unwrap_or(0);
+            // Skip function/class declaration names that are not expression references.
+            // Skip type-annotation references: TS's gatherCapturedContext traverse
+            // skips TypeAnnotation/TSTypeAnnotation/TypeAlias/TSTypeAliasDeclaration
+            // subtrees, so identifiers there never become captures (they DO still
+            // feed FindContextIdentifiers and the hoisting analysis, which have no
+            // such skip in TS).
+            if let Some(entry) = identifier_locs.get(&ref_nid) {
+                if entry.is_declaration_name || entry.in_type_annotation {
+                    continue;
+                }
+            }
             // Skip references whose start offset aliases the binding's own
             // declaration offset. Hermes desugars (component syntax) reuse the
             // original source offsets for generated nodes, so a sibling
@@ -3818,7 +3606,7 @@ fn gather_captured_context(
             // function's position range and alias the declaration position. In
             // real source a non-declaration reference can never share its
             // declaration's offset, so this only filters desugared aliases.
-            if binding.declaration_start == Some(ref_start) {
+            if declaration_start == Some(ref_start) {
                 continue;
             }
             let loc = identifier_locs.get(&ref_nid).map(|entry| {
@@ -3829,7 +3617,7 @@ fn gather_captured_context(
                 }
             });
             captured
-                .entry(binding.id)
+                .entry(symbol_id)
                 .and_modify(|(min_pos, existing_loc)| {
                     if ref_start < *min_pos {
                         *min_pos = ref_start;
@@ -3845,14 +3633,14 @@ fn gather_captured_context(
     let mut sorted: Vec<_> = captured.into_iter().collect();
     sorted.sort_by_key(|(_, (pos, _))| *pos);
 
-    sorted.into_iter().map(|(bid, (_, loc))| (bid, loc)).collect()
+    sorted.into_iter().map(|(sid, (_, loc))| (sid, loc)).collect()
 }
 
 fn capture_scopes(
-    scope_info: &ScopeInfo,
-    from: crate::scope::ScopeId,
-    to: crate::scope::ScopeId,
-) -> FxIndexSet<crate::scope::ScopeId> {
+    scope: &ScopeResolver<'_, '_>,
+    from: ScopeId,
+    to: ScopeId,
+) -> FxIndexSet<ScopeId> {
     let mut result = FxIndexSet::default();
     let mut current = Some(from);
     while let Some(scope_id) = current {
@@ -3860,298 +3648,9 @@ fn capture_scopes(
         if scope_id == to {
             break;
         }
-        current = scope_info.scopes[scope_id.0 as usize].parent;
+        current = scope.scope_parent(scope_id);
     }
     result
-}
-
-fn collect_identifier_node_ids_from_body(body: &FunctionBody) -> FxIndexSet<u32> {
-    let mut positions = FxIndexSet::default();
-    match body {
-        FunctionBody::Block(block) => {
-            for stmt in &block.statements {
-                collect_identifier_node_ids_from_stmt(stmt, &mut positions);
-            }
-        }
-        FunctionBody::Expression(expr) => {
-            collect_identifier_node_ids_from_expr(expr, &mut positions);
-        }
-    }
-    positions
-}
-
-fn collect_identifier_node_ids_from_stmt(stmt: &oxc::Statement, positions: &mut FxIndexSet<u32>) {
-    match stmt {
-        oxc::Statement::ExpressionStatement(s) => {
-            collect_identifier_node_ids_from_expr(&s.expression, positions)
-        }
-        oxc::Statement::ReturnStatement(s) => {
-            if let Some(arg) = &s.argument {
-                collect_identifier_node_ids_from_expr(arg, positions);
-            }
-        }
-        oxc::Statement::ThrowStatement(s) => {
-            collect_identifier_node_ids_from_expr(&s.argument, positions)
-        }
-        oxc::Statement::BlockStatement(s) => {
-            for stmt in &s.body {
-                collect_identifier_node_ids_from_stmt(stmt, positions);
-            }
-        }
-        oxc::Statement::IfStatement(s) => {
-            collect_identifier_node_ids_from_expr(&s.test, positions);
-            collect_identifier_node_ids_from_stmt(&s.consequent, positions);
-            if let Some(alt) = &s.alternate {
-                collect_identifier_node_ids_from_stmt(alt, positions);
-            }
-        }
-        oxc::Statement::VariableDeclaration(s) => {
-            for decl in &s.declarations {
-                if let Some(init) = &decl.init {
-                    collect_identifier_node_ids_from_expr(init, positions);
-                }
-            }
-        }
-        _ => {}
-    }
-}
-
-fn collect_identifier_node_ids_from_expr(expr: &oxc::Expression, positions: &mut FxIndexSet<u32>) {
-    match expr {
-        oxc::Expression::Identifier(id) => {
-            positions.insert(id.span.start);
-        }
-        oxc::Expression::CallExpression(call) => {
-            collect_identifier_node_ids_from_expr(&call.callee, positions);
-            for arg in &call.arguments {
-                if let Some(e) = arg.as_expression() {
-                    collect_identifier_node_ids_from_expr(e, positions);
-                } else if let oxc::Argument::SpreadElement(s) = arg {
-                    collect_identifier_node_ids_from_expr(&s.argument, positions);
-                }
-            }
-        }
-        oxc::Expression::BinaryExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.left, positions);
-            collect_identifier_node_ids_from_expr(&e.right, positions);
-        }
-        oxc::Expression::ConditionalExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.test, positions);
-            collect_identifier_node_ids_from_expr(&e.consequent, positions);
-            collect_identifier_node_ids_from_expr(&e.alternate, positions);
-        }
-        oxc::Expression::LogicalExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.left, positions);
-            collect_identifier_node_ids_from_expr(&e.right, positions);
-        }
-        oxc::Expression::StaticMemberExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.object, positions);
-        }
-        oxc::Expression::ComputedMemberExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.object, positions);
-        }
-        oxc::Expression::PrivateFieldExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.object, positions);
-        }
-        oxc::Expression::ChainExpression(chain) => {
-            collect_identifier_node_ids_from_chain_element(&chain.expression, positions);
-        }
-        oxc::Expression::UpdateExpression(e) => {
-            collect_identifier_node_ids_from_simple_target(&e.argument, positions);
-        }
-        oxc::Expression::FunctionExpression(func) => {
-            if let Some(body) = func.body.as_deref() {
-                for stmt in &body.statements {
-                    collect_identifier_node_ids_from_stmt(stmt, positions);
-                }
-            }
-        }
-        oxc::Expression::UnaryExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.argument, positions);
-        }
-        oxc::Expression::ParenthesizedExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.expression, positions);
-        }
-        oxc::Expression::TSAsExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.expression, positions);
-        }
-        oxc::Expression::TSSatisfiesExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.expression, positions);
-        }
-        oxc::Expression::TSTypeAssertion(e) => {
-            collect_identifier_node_ids_from_expr(&e.expression, positions);
-        }
-        oxc::Expression::TSNonNullExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.expression, positions);
-        }
-        oxc::Expression::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
-                if let Some(oxc::Statement::ExpressionStatement(es)) = arrow.body.statements.first()
-                {
-                    collect_identifier_node_ids_from_expr(&es.expression, positions);
-                }
-            } else {
-                for stmt in &arrow.body.statements {
-                    collect_identifier_node_ids_from_stmt(stmt, positions);
-                }
-            }
-        }
-        oxc::Expression::JSXElement(el) => {
-            collect_identifier_node_ids_from_jsx_element(el, positions);
-        }
-        oxc::Expression::JSXFragment(frag) => {
-            for child in &frag.children {
-                collect_identifier_node_ids_from_jsx_child(child, positions);
-            }
-        }
-        oxc::Expression::ArrayExpression(arr) => {
-            for elem in &arr.elements {
-                if let Some(e) = elem.as_expression() {
-                    collect_identifier_node_ids_from_expr(e, positions);
-                } else if let oxc::ArrayExpressionElement::SpreadElement(s) = elem {
-                    collect_identifier_node_ids_from_expr(&s.argument, positions);
-                }
-            }
-        }
-        oxc::Expression::ObjectExpression(obj) => {
-            for prop in &obj.properties {
-                match prop {
-                    oxc::ObjectPropertyKind::ObjectProperty(p) => {
-                        collect_identifier_node_ids_from_expr(&p.value, positions);
-                    }
-                    oxc::ObjectPropertyKind::SpreadProperty(s) => {
-                        collect_identifier_node_ids_from_expr(&s.argument, positions);
-                    }
-                }
-            }
-        }
-        oxc::Expression::NewExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.callee, positions);
-            for arg in &e.arguments {
-                if let Some(ex) = arg.as_expression() {
-                    collect_identifier_node_ids_from_expr(ex, positions);
-                } else if let oxc::Argument::SpreadElement(s) = arg {
-                    collect_identifier_node_ids_from_expr(&s.argument, positions);
-                }
-            }
-        }
-        oxc::Expression::AssignmentExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.right, positions);
-        }
-        oxc::Expression::TemplateLiteral(e) => {
-            for expr in &e.expressions {
-                collect_identifier_node_ids_from_expr(expr, positions);
-            }
-        }
-        oxc::Expression::SequenceExpression(e) => {
-            for expr in &e.expressions {
-                collect_identifier_node_ids_from_expr(expr, positions);
-            }
-        }
-        _ => {}
-    }
-}
-
-fn collect_identifier_node_ids_from_chain_element(
-    element: &oxc::ChainElement,
-    positions: &mut FxIndexSet<u32>,
-) {
-    match element {
-        oxc::ChainElement::CallExpression(call) => {
-            collect_identifier_node_ids_from_expr(&call.callee, positions);
-            for arg in &call.arguments {
-                if let Some(e) = arg.as_expression() {
-                    collect_identifier_node_ids_from_expr(e, positions);
-                } else if let oxc::Argument::SpreadElement(s) = arg {
-                    collect_identifier_node_ids_from_expr(&s.argument, positions);
-                }
-            }
-        }
-        oxc::ChainElement::TSNonNullExpression(e) => {
-            collect_identifier_node_ids_from_expr(&e.expression, positions);
-        }
-        oxc::ChainElement::StaticMemberExpression(m) => {
-            collect_identifier_node_ids_from_expr(&m.object, positions);
-        }
-        oxc::ChainElement::ComputedMemberExpression(m) => {
-            collect_identifier_node_ids_from_expr(&m.object, positions);
-        }
-        oxc::ChainElement::PrivateFieldExpression(m) => {
-            collect_identifier_node_ids_from_expr(&m.object, positions);
-        }
-    }
-}
-
-fn collect_identifier_node_ids_from_simple_target(
-    target: &oxc::SimpleAssignmentTarget,
-    positions: &mut FxIndexSet<u32>,
-) {
-    match target {
-        oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(id) => {
-            positions.insert(id.span.start);
-        }
-        oxc::SimpleAssignmentTarget::StaticMemberExpression(m) => {
-            collect_identifier_node_ids_from_expr(&m.object, positions);
-        }
-        oxc::SimpleAssignmentTarget::ComputedMemberExpression(m) => {
-            collect_identifier_node_ids_from_expr(&m.object, positions);
-        }
-        oxc::SimpleAssignmentTarget::PrivateFieldExpression(m) => {
-            collect_identifier_node_ids_from_expr(&m.object, positions);
-        }
-        _ => {}
-    }
-}
-
-fn collect_identifier_node_ids_from_jsx_element(
-    el: &oxc::JSXElement,
-    positions: &mut FxIndexSet<u32>,
-) {
-    if let oxc::JSXElementName::IdentifierReference(id) = &el.opening_element.name {
-        positions.insert(id.span.start);
-    }
-    for attr in &el.opening_element.attributes {
-        match attr {
-            oxc::JSXAttributeItem::Attribute(a) => {
-                if let Some(oxc::JSXAttributeValue::ExpressionContainer(c)) = &a.value {
-                    if let Some(e) = c.expression.as_expression() {
-                        collect_identifier_node_ids_from_expr(e, positions);
-                    }
-                }
-            }
-            oxc::JSXAttributeItem::SpreadAttribute(a) => {
-                collect_identifier_node_ids_from_expr(&a.argument, positions);
-            }
-        }
-    }
-    for child in &el.children {
-        collect_identifier_node_ids_from_jsx_child(child, positions);
-    }
-}
-
-fn collect_identifier_node_ids_from_jsx_child(
-    child: &oxc::JSXChild,
-    positions: &mut FxIndexSet<u32>,
-) {
-    match child {
-        oxc::JSXChild::ExpressionContainer(c) => {
-            if let Some(e) = c.expression.as_expression() {
-                collect_identifier_node_ids_from_expr(e, positions);
-            }
-        }
-        oxc::JSXChild::Element(child_el) => {
-            collect_identifier_node_ids_from_jsx_element(child_el, positions);
-        }
-        oxc::JSXChild::Fragment(frag) => {
-            for c in &frag.children {
-                collect_identifier_node_ids_from_jsx_child(c, positions);
-            }
-        }
-        oxc::JSXChild::Spread(s) => {
-            collect_identifier_node_ids_from_expr(&s.expression, positions);
-        }
-        _ => {}
-    }
 }
 
 fn lower_expression<'a>(
@@ -4161,10 +3660,9 @@ fn lower_expression<'a>(
     match expr {
         oxc::Expression::Identifier(ident) => {
             let loc = builder.source_location(ident.span);
-            let start = ident.span.start;
-            let place =
-                lower_identifier(builder, ident.name.as_str(), start, loc.clone(), Some(start))?;
-            if builder.is_context_identifier(ident.name.as_str(), start, Some(start)) {
+            let symbol = builder.scope().resolve_reference(ident);
+            let place = lower_identifier(builder, ident.name.as_str(), loc.clone(), symbol)?;
+            if builder.is_context_identifier(symbol) {
                 Ok(InstructionValue::LoadContext { place, loc })
             } else {
                 Ok(InstructionValue::LoadLocal { place, loc })
@@ -4713,8 +4211,8 @@ fn lower_expression<'a>(
                     })
                 }
                 oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                    let start = ident.span.start;
-                    if builder.is_context_identifier(ident.name.as_str(), start, Some(start)) {
+                    let symbol = builder.scope().resolve_reference(ident);
+                    if builder.is_context_identifier(symbol) {
                         builder.record_error(CompilerErrorDetail {
                             category: ErrorCategory::Todo,
                             reason: "(BuildHIR::lowerExpression) Handle UpdateExpression to variables captured within lambdas.".to_string(),
@@ -4731,9 +4229,8 @@ fn lower_expression<'a>(
                     let ident_loc = builder.source_location(ident.span);
                     let binding = builder.resolve_identifier(
                         ident.name.as_str(),
-                        start,
                         ident_loc.clone(),
-                        Some(start),
+                        symbol,
                     )?;
                     if matches!(binding, VariableBinding::Global { .. }) {
                         builder.record_error(CompilerErrorDetail {
@@ -4777,9 +4274,8 @@ fn lower_expression<'a>(
                     let value = lower_identifier(
                         builder,
                         ident.name.as_str(),
-                        start,
                         ident_loc,
-                        Some(start),
+                        builder.scope().resolve_reference(ident),
                     )?;
 
                     let operation = match update.operator {
@@ -4945,15 +4441,11 @@ fn lower_assignment_expression<'a>(
     if matches!(assign.operator, oxc::AssignmentOperator::Assign) {
         match &assign.left {
             oxc::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                let start = ident.span.start;
+                let symbol = builder.scope().resolve_reference(ident);
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
                 let ident_loc = builder.source_location(ident.span);
-                let binding = builder.resolve_identifier(
-                    ident.name.as_str(),
-                    start,
-                    ident_loc.clone(),
-                    Some(start),
-                )?;
+                let binding =
+                    builder.resolve_identifier(ident.name.as_str(), ident_loc.clone(), symbol)?;
                 match binding {
                     VariableBinding::Identifier { identifier, binding_kind } => {
                         if binding_kind == BindingKind::Const {
@@ -4978,7 +4470,7 @@ fn lower_assignment_expression<'a>(
                             effect: Effect::Unknown,
                             loc: ident_loc,
                         };
-                        if builder.is_context_identifier(ident.name.as_str(), start, Some(start)) {
+                        if builder.is_context_identifier(symbol) {
                             let temp = lower_value_to_temporary(
                                 builder,
                                 InstructionValue::StoreContext {
@@ -5141,15 +4633,10 @@ fn lower_assignment_expression<'a>(
 
         match &assign.left {
             oxc::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                let start = ident.span.start;
                 let ident_loc = builder.source_location(ident.span);
-                let left_place = lower_identifier(
-                    builder,
-                    ident.name.as_str(),
-                    start,
-                    ident_loc.clone(),
-                    Some(start),
-                )?;
+                let symbol = builder.scope().resolve_reference(ident);
+                let left_place =
+                    lower_identifier(builder, ident.name.as_str(), ident_loc.clone(), symbol)?;
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
                 let binary_place = lower_value_to_temporary(
                     builder,
@@ -5160,12 +4647,8 @@ fn lower_assignment_expression<'a>(
                         loc: loc.clone(),
                     },
                 )?;
-                let binding = builder.resolve_identifier(
-                    ident.name.as_str(),
-                    start,
-                    ident_loc.clone(),
-                    Some(start),
-                )?;
+                let binding =
+                    builder.resolve_identifier(ident.name.as_str(), ident_loc.clone(), symbol)?;
                 match binding {
                     VariableBinding::Identifier { identifier, .. } => {
                         let place = Place {
@@ -5174,7 +4657,7 @@ fn lower_assignment_expression<'a>(
                             effect: Effect::Unknown,
                             loc: ident_loc,
                         };
-                        if builder.is_context_identifier(ident.name.as_str(), start, Some(start)) {
+                        if builder.is_context_identifier(symbol) {
                             lower_value_to_temporary(
                                 builder,
                                 InstructionValue::StoreContext {
@@ -5516,13 +4999,13 @@ fn lower_jsx_element_name(
         builder: &mut HirBuilder<'_, '_>,
         tag: &str,
         span: oxc_span::Span,
+        symbol: Option<SymbolId>,
     ) -> Result<JsxTag, CompilerError> {
         let loc = builder.source_location(span);
-        let start = span.start;
         if tag.starts_with(|c: char| c.is_ascii_uppercase()) {
             // Component tag: resolve as identifier and load
-            let place = lower_identifier(builder, tag, start, loc.clone(), Some(start))?;
-            let load_value = if builder.is_context_identifier(tag, start, Some(start)) {
+            let place = lower_identifier(builder, tag, loc.clone(), symbol)?;
+            let load_value = if builder.is_context_identifier(symbol) {
                 InstructionValue::LoadContext { place, loc }
             } else {
                 InstructionValue::LoadLocal { place, loc }
@@ -5537,14 +5020,15 @@ fn lower_jsx_element_name(
 
     match name {
         oxc::JSXElementName::Identifier(id) => {
-            lower_tag_identifier(builder, id.name.as_str(), id.span)
+            lower_tag_identifier(builder, id.name.as_str(), id.span, None)
         }
         oxc::JSXElementName::IdentifierReference(id) => {
-            lower_tag_identifier(builder, id.name.as_str(), id.span)
+            let symbol = builder.scope().resolve_reference(id);
+            lower_tag_identifier(builder, id.name.as_str(), id.span, symbol)
         }
         oxc::JSXElementName::ThisExpression(this) => {
             // `<this.Foo />`-style `this` tag lowers as the identifier "this".
-            lower_tag_identifier(builder, "this", this.span)
+            lower_tag_identifier(builder, "this", this.span, None)
         }
         oxc::JSXElementName::MemberExpression(member) => {
             let place = lower_jsx_member_expression(builder, member)?;
@@ -5589,10 +5073,17 @@ fn lower_jsx_member_expression(
     let expr_loc = builder.source_location(expr.span);
     let object = match &expr.object {
         oxc::JSXMemberExpressionObject::IdentifierReference(id) => {
-            lower_jsx_member_object_identifier(builder, id.name.as_str(), id.span, &expr_loc)?
+            let symbol = builder.scope().resolve_reference(id);
+            lower_jsx_member_object_identifier(
+                builder,
+                id.name.as_str(),
+                id.span,
+                symbol,
+                &expr_loc,
+            )?
         }
         oxc::JSXMemberExpressionObject::ThisExpression(this) => {
-            lower_jsx_member_object_identifier(builder, "this", this.span, &expr_loc)?
+            lower_jsx_member_object_identifier(builder, "this", this.span, None, &expr_loc)?
         }
         oxc::JSXMemberExpressionObject::MemberExpression(inner) => {
             lower_jsx_member_expression(builder, inner)?
@@ -5614,12 +5105,12 @@ fn lower_jsx_member_object_identifier(
     builder: &mut HirBuilder<'_, '_>,
     name: &str,
     span: oxc_span::Span,
+    symbol: Option<SymbolId>,
     expr_loc: &Option<SourceLocation>,
 ) -> Result<Place, CompilerError> {
     let id_loc = builder.source_location(span);
-    let start = span.start;
-    let place = lower_identifier(builder, name, start, id_loc, Some(start))?;
-    let load_value = if builder.is_context_identifier(name, start, Some(start)) {
+    let place = lower_identifier(builder, name, id_loc, symbol)?;
+    let load_value = if builder.is_context_identifier(symbol) {
         InstructionValue::LoadContext { place, loc: expr_loc.clone() }
     } else {
         InstructionValue::LoadLocal { place, loc: expr_loc.clone() }
@@ -6154,6 +5645,7 @@ fn lower_object_method<'a>(
     let lowered_func = lower_function_for_object_method(
         builder,
         method.span,
+        func,
         &func.params,
         body,
         func.generator,
@@ -6243,14 +5735,13 @@ fn is_reorderable_expression(
 ) -> bool {
     match expr {
         oxc::Expression::Identifier(ident) => {
-            let binding = builder.scope_info().resolve_reference_for_node(Some(ident.span.start));
-            match binding {
+            match builder.scope().resolve_reference(ident) {
                 None => {
                     // global, safe to reorder
                     true
                 }
-                Some(b) => {
-                    if b.scope == builder.scope_info().program_scope {
+                Some(symbol_id) => {
+                    if builder.scope().symbol_scope(symbol_id) == builder.scope().program_scope() {
                         // Module-scope binding (ModuleLocal, imports), safe to reorder
                         true
                     } else {
@@ -6315,11 +5806,11 @@ fn is_reorderable_expression(
                 };
             }
             if let oxc::Expression::Identifier(ident) = inner {
-                match builder.scope_info().resolve_reference_for_node(Some(ident.span.start)) {
+                match builder.scope().resolve_reference(ident) {
                     None => true, // global
-                    Some(binding) => {
+                    Some(symbol_id) => {
                         // Module-scope bindings (ModuleLocal, imports) are safe to reorder
-                        binding.scope == builder.scope_info().program_scope
+                        builder.scope().symbol_scope(symbol_id) == builder.scope().program_scope()
                     }
                 }
             } else {
@@ -6444,7 +5935,7 @@ fn lower_statement<'a>(
             );
         }
         oxc::Statement::BlockStatement(block) => {
-            lower_block_statement(builder, &block.body, block.span.start, parent_scope)?;
+            lower_block_statement(builder, &block.body, block.scope_id.get(), parent_scope)?;
         }
         oxc::Statement::VariableDeclaration(var_decl) => {
             lower_variable_declaration(builder, var_decl)?;
@@ -7096,26 +6587,15 @@ fn lower_statement<'a>(
                 // Lower the catch body using lower_block_statement to get hoisting support.
                 // Use the catch clause's scope (which contains the catch param binding).
                 // Fall back to the body block's own scope if the catch clause scope is missing.
-                let catch_scope = builder
-                    .scope_info()
-                    .resolve_scope_for_node(Some(handler_clause.span.start))
-                    .or_else(|| {
-                        builder
-                            .scope_info()
-                            .resolve_scope_for_node(Some(handler_clause.body.span.start))
-                    });
+                let catch_scope =
+                    handler_clause.scope_id.get().or_else(|| handler_clause.body.scope_id.get());
                 if let Some(scope_id) = catch_scope {
-                    lower_block_statement_with_scope(
-                        builder,
-                        &handler_clause.body.body,
-                        handler_clause.body.span.start,
-                        scope_id,
-                    )?;
+                    lower_block_statement_with_scope(builder, &handler_clause.body.body, scope_id)?;
                 } else {
                     lower_block_statement(
                         builder,
                         &handler_clause.body.body,
-                        handler_clause.body.span.start,
+                        handler_clause.body.scope_id.get(),
                         parent_scope,
                     )?;
                 }
@@ -7134,7 +6614,7 @@ fn lower_statement<'a>(
                     lower_block_statement(
                         builder,
                         &try_stmt.block.body,
-                        try_stmt.block.span.start,
+                        try_stmt.block.scope_id.get(),
                         parent_scope,
                     )?;
                     Ok(())
@@ -7332,22 +6812,22 @@ fn lower_variable_declaration<'a>(
             let id_loc = builder.source_location(id.span);
             let mut binding = builder.resolve_identifier(
                 id.name.as_str(),
-                id.span.start,
                 id_loc.clone(),
-                Some(id.span.start),
+                builder.scope().resolve_binding_identifier(id),
             )?;
             if !matches!(binding, VariableBinding::Identifier { .. }) {
-                // Position-based resolution failed (synthetic $$gen vars at
-                // position 0). Try scope lookup including descendants.
-                if let Some((binding_id, binding_data)) = builder
-                    .scope_info()
-                    .find_binding_id_in_descendants(id.name.as_str(), builder.function_scope())
+                // Direct resolution failed (synthetic $$gen vars). Try scope lookup
+                // including descendants.
+                if let Some(symbol_id) = builder
+                    .scope()
+                    .find_binding_in_descendants(id.name.as_str(), builder.function_scope())
                 {
-                    let binding_kind =
-                        crate::react_compiler_lowering::convert_binding_kind(&binding_data.kind);
+                    let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
+                        &builder.scope().binding_kind(symbol_id),
+                    );
                     let identifier = builder.resolve_binding_with_loc(
                         id.name.as_str(),
-                        binding_id,
+                        symbol_id,
                         id_loc.clone(),
                     )?;
                     binding = VariableBinding::Identifier { identifier, binding_kind };
@@ -7364,11 +6844,8 @@ fn lower_variable_declaration<'a>(
                         reactive: false,
                         loc: id_loc.clone(),
                     };
-                    if builder.is_context_identifier(
-                        id.name.as_str(),
-                        id.span.start,
-                        Some(id.span.start),
-                    ) {
+                    if builder.is_context_identifier(builder.scope().resolve_binding_identifier(id))
+                    {
                         if kind == InstructionKind::Const {
                             builder.record_error(CompilerErrorDetail {
                                 reason: "Expect `const` declaration not to be reassigned"

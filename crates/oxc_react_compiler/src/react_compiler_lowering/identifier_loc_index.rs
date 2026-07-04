@@ -37,7 +37,6 @@ use oxc_ast::ast as oxc;
 use oxc_ast_visit::Visit;
 
 use crate::react_compiler_hir::SourceLocation;
-use crate::scope::ScopeInfo;
 
 use crate::react_compiler_lowering::FunctionNode;
 use crate::react_compiler_lowering::source_loc::LineOffsets;
@@ -275,12 +274,8 @@ impl<'a> Visit<'a> for IdentifierLocVisitor<'a> {
 /// re-entered (its own name, if any, is recorded explicitly).
 pub fn build_identifier_loc_index(
     func: &FunctionNode<'_>,
-    scope_info: &ScopeInfo,
     line_offsets: &LineOffsets,
 ) -> IdentifierLocIndex {
-    // The loc index is purely position-driven; scope tracking is not required.
-    let _ = scope_info;
-
     let mut visitor = IdentifierLocVisitor {
         line_offsets,
         index: FxHashMap::default(),

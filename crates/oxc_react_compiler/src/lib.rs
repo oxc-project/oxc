@@ -1,6 +1,5 @@
 use oxc_allocator::{Allocator, ArenaVec};
 
-pub mod convert_scope;
 pub mod diagnostics;
 pub mod prefilter;
 pub mod scope;
@@ -37,8 +36,8 @@ pub mod react_compiler_validation;
 
 use crate::react_compiler::entrypoint::compile_result::CompileResult;
 use crate::react_compiler::entrypoint::program::compile_program;
-use convert_scope::convert_scope_info;
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
+use scope::ScopeResolver;
 
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use crate::react_compiler::entrypoint::plugin_options::{
@@ -138,9 +137,9 @@ fn compile<'a>(
     // The codegen back-end builds oxc nodes directly via this `AstBuilder`, and the
     // compiled program is spliced/returned as an arena-allocated `Program<'a>`.
     let ast_builder = oxc_ast::builder::AstBuilder::new(allocator);
-    let scope_info = convert_scope_info(semantic, program);
+    let scope = ScopeResolver::new(semantic, program);
     // Function discovery and lowering both walk the oxc `Program` directly.
-    let result = compile_program(&ast_builder, program, scope_info, options);
+    let result = compile_program(&ast_builder, program, &scope, options);
 
     let (program_ast, diagnostics) = match result {
         CompileResult::Success { ast, diagnostics, .. } => (ast, diagnostics),

@@ -9,10 +9,11 @@ use crate::react_compiler_hir::visitors::terminal_fallthrough;
 use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
-use crate::scope::BindingId;
+use crate::scope::DeclKind;
 use crate::scope::ImportBindingKind;
 use crate::scope::ScopeId;
-use crate::scope::ScopeInfo;
+use crate::scope::ScopeResolver;
+use crate::scope::SymbolId;
 
 use oxc_span::Span;
 
@@ -133,15 +134,15 @@ pub struct HirBuilder<'a, 'b> {
     entry: BlockId,
     scopes: Vec<Scope>,
     /// Context identifiers: variables captured from an outer scope.
-    /// Maps the outer scope's BindingId to the source location where it was referenced.
-    context: FxIndexMap<BindingId, Option<SourceLocation>>,
-    /// Resolved bindings: maps a BindingId to the HIR IdentifierId created for it.
-    bindings: FxIndexMap<BindingId, IdentifierId>,
+    /// Maps the outer scope's symbol to the source location where it was referenced.
+    context: FxIndexMap<SymbolId, Option<SourceLocation>>,
+    /// Resolved bindings: maps a symbol to the HIR IdentifierId created for it.
+    bindings: FxIndexMap<SymbolId, IdentifierId>,
     /// Names already used by bindings, for collision avoidance.
     /// Maps name string -> how many times it has been used (for appending _0, _1, ...).
-    used_names: FxIndexMap<String, BindingId>,
+    used_names: FxIndexMap<String, SymbolId>,
     env: &'b mut Environment<'a>,
-    scope_info: &'b ScopeInfo,
+    scope: &'b ScopeResolver<'b, 'a>,
     exception_handler_stack: Vec<BlockId>,
     /// Flat instruction table being built up.
     instruction_table: Vec<Instruction<'a>>,
@@ -152,13 +153,10 @@ pub struct HirBuilder<'a, 'b> {
     function_scope: ScopeId,
     /// The scope of the outermost component/hook function (for gather_captured_context).
     component_scope: ScopeId,
-    /// Set of BindingIds for variables declared in scopes between component_scope
-    /// and any inner function scope, that are referenced from an inner function scope.
+    /// Symbols declared in scopes between component_scope and any inner
+    /// function scope, that are referenced from an inner function scope.
     /// These need StoreContext/LoadContext instead of StoreLocal/LoadLocal.
-    context_identifiers: rustc_hash::FxHashSet<BindingId>,
-    /// Set of ScopeIds that have been matched to synthetic blocks/functions.
-    /// Prevents the same scope from being reused for different synthetic nodes.
-    claimed_synthetic_scopes: rustc_hash::FxHashSet<ScopeId>,
+    context_identifiers: rustc_hash::FxHashSet<SymbolId>,
     /// Index mapping identifier byte offsets to source locations and JSX status.
     identifier_locs: &'b IdentifierLocIndex,
     /// Line-offset table for computing `SourceLocation`s from oxc byte spans.
@@ -175,21 +173,21 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Create a new HirBuilder.
     ///
     /// - `env`: the shared environment (counters, arenas, error accumulator)
-    /// - `scope_info`: the scope information from the AST
+    /// - `scope`: the semantic scope resolver
     /// - `function_scope`: the ScopeId of the function being compiled
     /// - `bindings`: optional pre-existing bindings (e.g., from a parent function)
     /// - `context`: optional pre-existing captured context map
     /// - `entry_block_kind`: the kind of the entry block (defaults to `Block`)
     pub fn new(
         env: &'b mut Environment<'a>,
-        scope_info: &'b ScopeInfo,
+        scope: &'b ScopeResolver<'b, 'a>,
         function_scope: ScopeId,
         component_scope: ScopeId,
-        context_identifiers: rustc_hash::FxHashSet<BindingId>,
-        bindings: Option<FxIndexMap<BindingId, IdentifierId>>,
-        context: Option<FxIndexMap<BindingId, Option<SourceLocation>>>,
+        context_identifiers: rustc_hash::FxHashSet<SymbolId>,
+        bindings: Option<FxIndexMap<SymbolId, IdentifierId>>,
+        context: Option<FxIndexMap<SymbolId, Option<SourceLocation>>>,
         entry_block_kind: Option<BlockKind>,
-        used_names: Option<FxIndexMap<String, BindingId>>,
+        used_names: Option<FxIndexMap<String, SymbolId>>,
         identifier_locs: &'b IdentifierLocIndex,
         line_offsets: &'b LineOffsets,
     ) -> Self {
@@ -204,14 +202,13 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             bindings: bindings.unwrap_or_default(),
             used_names: used_names.unwrap_or_default(),
             env,
-            scope_info,
+            scope,
             exception_handler_stack: Vec::new(),
             instruction_table: Vec::new(),
             fbt_depth: 0,
             function_scope,
             component_scope,
             context_identifiers,
-            claimed_synthetic_scopes: rustc_hash::FxHashSet::default(),
             identifier_locs,
             line_offsets,
         }
@@ -232,14 +229,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// compiled function have their own function_scope but still consider
     /// the outer component's variables as local.
     fn is_scope_within_compiled_function(&self, scope_id: ScopeId) -> bool {
-        let mut current = Some(scope_id);
-        while let Some(id) = current {
-            if id == self.component_scope {
-                return true;
-            }
-            current = self.scope_info.scopes[id.0 as usize].parent;
-        }
-        false
+        self.scope.ancestors(scope_id).any(|id| id == self.component_scope)
     }
 
     /// Access the environment.
@@ -259,9 +249,10 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         Type::TypeVar { id: type_id }
     }
 
-    /// Access the scope info.
-    pub fn scope_info(&self) -> &ScopeInfo {
-        self.scope_info
+    /// Access the scope resolver.
+    /// Returns the 'b reference to avoid conflicts with mutable borrows on self.
+    pub fn scope(&self) -> &'b ScopeResolver<'b, 'a> {
+        self.scope
     }
 
     /// Look up the source location of an identifier by its node_id.
@@ -287,33 +278,18 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     }
 
     /// Access the context map.
-    pub fn context(&self) -> &FxIndexMap<BindingId, Option<SourceLocation>> {
+    pub fn context(&self) -> &FxIndexMap<SymbolId, Option<SourceLocation>> {
         &self.context
     }
 
     /// Access the pre-computed context identifiers set.
-    pub fn context_identifiers(&self) -> &rustc_hash::FxHashSet<BindingId> {
+    pub fn context_identifiers(&self) -> &rustc_hash::FxHashSet<SymbolId> {
         &self.context_identifiers
     }
 
     /// Add a binding to the context identifiers set (used by hoisting).
-    pub fn add_context_identifier(&mut self, binding_id: BindingId) {
-        self.context_identifiers.insert(binding_id);
-    }
-
-    pub fn claim_synthetic_scope(&mut self, scope_id: ScopeId) {
-        self.claimed_synthetic_scopes.insert(scope_id);
-    }
-
-    pub fn is_synthetic_scope_claimed(&self, scope_id: ScopeId) -> bool {
-        self.claimed_synthetic_scopes.contains(&scope_id)
-    }
-
-    /// Access scope_info and environment mutably at the same time.
-    /// This is safe because they are disjoint fields, but Rust's borrow checker
-    /// can't prove this through method calls alone.
-    pub fn scope_info_and_env_mut(&mut self) -> (&ScopeInfo, &mut Environment<'a>) {
-        (self.scope_info, self.env)
+    pub fn add_context_identifier(&mut self, symbol_id: SymbolId) {
+        self.context_identifiers.insert(symbol_id);
     }
 
     /// Access the identifier location index.
@@ -329,29 +305,29 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     }
 
     /// Access the bindings map.
-    pub fn bindings(&self) -> &FxIndexMap<BindingId, IdentifierId> {
+    pub fn bindings(&self) -> &FxIndexMap<SymbolId, IdentifierId> {
         &self.bindings
     }
 
     /// Access the used names map.
-    pub fn used_names(&self) -> &FxIndexMap<String, BindingId> {
+    pub fn used_names(&self) -> &FxIndexMap<String, SymbolId> {
         &self.used_names
     }
 
     /// Merge used names from a child builder back into this builder.
     /// This ensures name deduplication works across function scopes.
-    pub fn merge_used_names(&mut self, child_used_names: FxIndexMap<String, BindingId>) {
-        for (name, binding_id) in child_used_names {
-            self.used_names.entry(name).or_insert(binding_id);
+    pub fn merge_used_names(&mut self, child_used_names: FxIndexMap<String, SymbolId>) {
+        for (name, symbol_id) in child_used_names {
+            self.used_names.entry(name).or_insert(symbol_id);
         }
     }
 
-    /// Merge bindings (binding_id -> IdentifierId) from a child builder back into this builder.
+    /// Merge bindings (symbol -> IdentifierId) from a child builder back into this builder.
     /// This matches TS behavior where parent and child share the same #bindings map by reference,
     /// so bindings resolved by the child are automatically visible to the parent.
-    pub fn merge_bindings(&mut self, child_bindings: FxIndexMap<BindingId, IdentifierId>) {
-        for (binding_id, identifier_id) in child_bindings {
-            self.bindings.entry(binding_id).or_insert(identifier_id);
+    pub fn merge_bindings(&mut self, child_bindings: FxIndexMap<SymbolId, IdentifierId>) {
+        for (symbol_id, identifier_id) in child_bindings {
+            self.bindings.entry(symbol_id).or_insert(identifier_id);
         }
     }
 
@@ -707,10 +683,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// This is used for checking if fbt/fbs JSX tags are local bindings
     /// (which is not supported).
     pub fn has_local_binding(&self, name: &str) -> bool {
-        if let Some(binding) =
-            self.scope_info.find_binding_in_descendants(name, self.component_scope)
+        if let Some(symbol_id) = self.scope.find_binding_in_descendants(name, self.component_scope)
         {
-            return binding.scope != self.scope_info.program_scope;
+            return self.scope.symbol_scope(symbol_id) != self.scope.program_scope();
         }
         false
     }
@@ -736,8 +711,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         (
             HIR,
             Vec<Instruction<'a>>,
-            FxIndexMap<String, BindingId>,
-            FxIndexMap<BindingId, IdentifierId>,
+            FxIndexMap<String, SymbolId>,
+            FxIndexMap<SymbolId, IdentifierId>,
         ),
         CompilerError,
     > {
@@ -791,7 +766,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     // M3: Binding resolution methods
     // -----------------------------------------------------------------------
 
-    /// Map a BindingId to an HIR IdentifierId.
+    /// Map a symbol to an HIR IdentifierId.
     ///
     /// On first encounter, creates a new Identifier with the given name and a fresh id.
     /// On subsequent encounters, returns the cached IdentifierId.
@@ -801,16 +776,16 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn resolve_binding(
         &mut self,
         name: &str,
-        binding_id: BindingId,
+        symbol_id: SymbolId,
     ) -> Result<IdentifierId, CompilerError> {
-        self.resolve_binding_with_loc(name, binding_id, None)
+        self.resolve_binding_with_loc(name, symbol_id, None)
     }
 
-    /// Map a BindingId to an HIR IdentifierId, with an optional source location.
+    /// Map a symbol to an HIR IdentifierId, with an optional source location.
     pub fn resolve_binding_with_loc(
         &mut self,
         name: &str,
-        binding_id: BindingId,
+        symbol_id: SymbolId,
         loc: Option<SourceLocation>,
     ) -> Result<IdentifierId, CompilerError> {
         // Check for unsupported names BEFORE the cache check.
@@ -821,7 +796,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         if name == "fbt" {
             // Check if this binding was previously resolved to a renamed version
             let should_record_fbt_error =
-                if let Some(&identifier_id) = self.bindings.get(&binding_id) {
+                if let Some(&identifier_id) = self.bindings.get(&symbol_id) {
                     // Already resolved - check if the resolved name is still "fbt"
                     match &self.env.identifiers[identifier_id.0 as usize].name {
                         Some(IdentifierName::Named(resolved_name)) => resolved_name == "fbt",
@@ -832,8 +807,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                     true
                 };
             if should_record_fbt_error {
-                let error_loc = self.scope_info.bindings[binding_id.0 as usize]
-                    .declaration_node_id
+                let error_loc = self
+                    .scope
+                    .declaration_start(symbol_id)
                     .and_then(|nid| self.get_identifier_loc(nid))
                     .or_else(|| loc.clone());
                 self.env.record_error(CompilerErrorDetail {
@@ -849,7 +825,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         }
 
         // If we've already resolved this binding, return the cached IdentifierId
-        if let Some(&identifier_id) = self.bindings.get(&binding_id) {
+        if let Some(&identifier_id) = self.bindings.get(&symbol_id) {
             return Ok(identifier_id);
         }
 
@@ -862,8 +838,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         let mut candidate = name.to_string();
         let mut index = 0u32;
         loop {
-            if let Some(&existing_binding_id) = self.used_names.get(&candidate) {
-                if existing_binding_id == binding_id {
+            if let Some(&existing_symbol_id) = self.used_names.get(&candidate) {
+                if existing_symbol_id == symbol_id {
                     // Same binding, use this name
                     break;
                 }
@@ -878,8 +854,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
         // Record rename if the candidate differs from the original name
         if candidate != name {
-            let binding = &self.scope_info.bindings[binding_id.0 as usize];
-            if let Some(decl_start) = binding.declaration_start {
+            if let Some(decl_start) = self.scope.declaration_start(symbol_id) {
                 self.env.renames.push(crate::react_compiler_hir::environment::BindingRename {
                     original: name.to_string(),
                     renamed: candidate.clone(),
@@ -895,16 +870,16 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         // Prefer the binding's declaration loc over the reference loc.
         // This matches TS behavior where Babel's resolveBinding returns the
         // binding identifier's original loc (the declaration site).
-        let binding = &self.scope_info.bindings[binding_id.0 as usize];
-        let decl_loc = binding.declaration_node_id.and_then(|nid| self.get_identifier_loc(nid));
+        let decl_loc =
+            self.scope.declaration_start(symbol_id).and_then(|nid| self.get_identifier_loc(nid));
         if let Some(ref dl) = decl_loc {
             self.env.identifiers[id.0 as usize].loc = Some(dl.clone());
         } else if let Some(ref loc) = loc {
             self.env.identifiers[id.0 as usize].loc = Some(loc.clone());
         }
 
-        self.used_names.insert(candidate, binding_id);
-        self.bindings.insert(binding_id, id);
+        self.used_names.insert(candidate, symbol_id);
+        self.bindings.insert(symbol_id, id);
         Ok(id)
     }
 
@@ -922,7 +897,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Resolve an identifier reference to a VariableBinding.
     ///
-    /// Uses ScopeInfo to determine whether the reference is:
+    /// Uses the scope resolver to determine whether the reference is:
     /// - Global (no binding found)
     /// - ImportDefault, ImportSpecifier, ImportNamespace (program-scope import binding)
     /// - ModuleLocal (program-scope non-import binding)
@@ -930,65 +905,55 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn resolve_identifier(
         &mut self,
         name: &str,
-        _start_offset: u32,
         loc: Option<SourceLocation>,
-        node_id: Option<u32>,
+        symbol: Option<SymbolId>,
     ) -> Result<VariableBinding, CompilerError> {
-        let binding_data = self.scope_info.resolve_reference_for_node(node_id);
-
-        match binding_data {
-            None => {
-                // No binding found: this is a global
-                Ok(VariableBinding::Global { name: name.to_string() })
-            }
-            Some(binding) => {
-                // Treat type-only declarations as globals so the compiler
-                // doesn't try to create/initialize HIR bindings for them.
-                // TSEnumDeclaration is included because enums inside function
-                // bodies are lowered as UnsupportedNode and their binding
-                // is never initialized in HIR.
-                if matches!(
-                    binding.declaration_type.as_str(),
-                    "TSTypeAliasDeclaration"
-                        | "TSInterfaceDeclaration"
-                        | "TSEnumDeclaration"
-                        | "TSModuleDeclaration"
-                ) {
-                    return Ok(VariableBinding::Global { name: name.to_string() });
-                }
-                if binding.scope == self.scope_info.program_scope {
-                    // Module-level binding: check import info
-                    Ok(match &binding.import {
-                        Some(import_info) => match import_info.kind {
-                            ImportBindingKind::Default => VariableBinding::ImportDefault {
-                                name: name.to_string(),
-                                module: import_info.source.clone(),
-                            },
-                            ImportBindingKind::Named => VariableBinding::ImportSpecifier {
-                                name: name.to_string(),
-                                module: import_info.source.clone(),
-                                imported: import_info
-                                    .imported
-                                    .clone()
-                                    .unwrap_or_else(|| name.to_string()),
-                            },
-                            ImportBindingKind::Namespace => VariableBinding::ImportNamespace {
-                                name: name.to_string(),
-                                module: import_info.source.clone(),
-                            },
-                        },
-                        None => VariableBinding::ModuleLocal { name: name.to_string() },
-                    })
-                } else if !self.is_scope_within_compiled_function(binding.scope) {
-                    Ok(VariableBinding::ModuleLocal { name: name.to_string() })
-                } else {
-                    let binding_id = binding.id;
-                    let binding_kind =
-                        crate::react_compiler_lowering::convert_binding_kind(&binding.kind);
-                    let identifier_id = self.resolve_binding_with_loc(name, binding_id, loc)?;
-                    Ok(VariableBinding::Identifier { identifier: identifier_id, binding_kind })
-                }
-            }
+        let Some(symbol_id) = symbol else {
+            // No binding found: this is a global
+            return Ok(VariableBinding::Global { name: name.to_string() });
+        };
+        // Treat type-only declarations as globals so the compiler
+        // doesn't try to create/initialize HIR bindings for them.
+        // TSEnumDeclaration is included because enums inside function
+        // bodies are lowered as UnsupportedNode and their binding
+        // is never initialized in HIR.
+        if matches!(
+            self.scope.decl_kind(symbol_id),
+            DeclKind::TSTypeAliasDeclaration
+                | DeclKind::TSEnumDeclaration
+                | DeclKind::TSModuleDeclaration
+        ) {
+            return Ok(VariableBinding::Global { name: name.to_string() });
+        }
+        let symbol_scope = self.scope.symbol_scope(symbol_id);
+        if symbol_scope == self.scope.program_scope() {
+            // Module-level binding: check import info
+            Ok(match self.scope.import_data(symbol_id) {
+                Some(import_info) => match import_info.kind {
+                    ImportBindingKind::Default => VariableBinding::ImportDefault {
+                        name: name.to_string(),
+                        module: import_info.source,
+                    },
+                    ImportBindingKind::Named => VariableBinding::ImportSpecifier {
+                        name: name.to_string(),
+                        module: import_info.source,
+                        imported: import_info.imported.unwrap_or_else(|| name.to_string()),
+                    },
+                    ImportBindingKind::Namespace => VariableBinding::ImportNamespace {
+                        name: name.to_string(),
+                        module: import_info.source,
+                    },
+                },
+                None => VariableBinding::ModuleLocal { name: name.to_string() },
+            })
+        } else if !self.is_scope_within_compiled_function(symbol_scope) {
+            Ok(VariableBinding::ModuleLocal { name: name.to_string() })
+        } else {
+            let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
+                &self.scope.binding_kind(symbol_id),
+            );
+            let identifier_id = self.resolve_binding_with_loc(name, symbol_id, loc)?;
+            Ok(VariableBinding::Identifier { identifier: identifier_id, binding_kind })
         }
     }
 
@@ -998,33 +963,25 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// current function's scope, but NOT in the program scope itself and NOT
     /// in the function's own scope. These are "captured" variables from an
     /// enclosing function.
-    pub fn is_context_identifier(
-        &self,
-        _name: &str,
-        _start_offset: u32,
-        node_id: Option<u32>,
-    ) -> bool {
-        let binding = self.scope_info.resolve_reference_for_node(node_id);
-
-        match binding {
+    pub fn is_context_identifier(&self, symbol: Option<SymbolId>) -> bool {
+        match symbol {
             None => false,
-            Some(binding_data) => {
-                if binding_data.scope == self.scope_info.program_scope {
+            Some(symbol_id) => {
+                if self.scope.symbol_scope(symbol_id) == self.scope.program_scope() {
                     return false;
                 }
-                self.context_identifiers.contains(&binding_data.id)
+                self.context_identifiers.contains(&symbol_id)
             }
         }
     }
 
     /// Like `is_context_identifier`, for callers that already resolved a
-    /// BindingId instead of going through a reference node.
-    pub fn is_context_binding(&self, binding_id: BindingId) -> bool {
-        let binding = &self.scope_info.bindings[binding_id.0 as usize];
-        if binding.scope == self.scope_info.program_scope {
+    /// symbol instead of going through a reference node.
+    pub fn is_context_binding(&self, symbol_id: SymbolId) -> bool {
+        if self.scope.symbol_scope(symbol_id) == self.scope.program_scope() {
             return false;
         }
-        self.context_identifiers.contains(&binding_id)
+        self.context_identifiers.contains(&symbol_id)
     }
 
     /// Resolve the binding for a function declaration's id the way TS does:
@@ -1047,10 +1004,10 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         &self,
         function_scope: ScopeId,
         name: &str,
-    ) -> Option<BindingId> {
+    ) -> Option<SymbolId> {
         // None = unresolved binding; Some(matches) = resolved, current name comparison
-        let resolved_name_matches = |bid: BindingId| -> Option<bool> {
-            let &identifier_id = self.bindings.get(&bid)?;
+        let resolved_name_matches = |sid: SymbolId| -> Option<bool> {
+            let &identifier_id = self.bindings.get(&sid)?;
             match &self.env.identifiers[identifier_id.0 as usize].name {
                 Some(IdentifierName::Named(n)) => Some(n == name),
                 _ => Some(false),
@@ -1058,28 +1015,23 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         };
         let mut current = Some(function_scope);
         while let Some(id) = current {
-            let scope = &self.scope_info.scopes[id.0 as usize];
-            let mut found = scope
-                .bindings
-                .values()
-                .copied()
-                .find(|&bid| resolved_name_matches(bid) == Some(true));
+            let mut found =
+                self.scope.bindings_in(id).find(|&sid| resolved_name_matches(sid) == Some(true));
             if found.is_none() {
-                if let Some(&bid) = scope.bindings.get(name) {
+                if let Some(sid) = self.scope.get_binding(id, name) {
                     // Skip bindings that were renamed away from `name`.
-                    if resolved_name_matches(bid) != Some(false) {
-                        found = Some(bid);
+                    if resolved_name_matches(sid) != Some(false) {
+                        found = Some(sid);
                     }
                 }
             }
-            if let Some(bid) = found {
-                let binding_scope = self.scope_info.bindings[bid.0 as usize].scope;
-                if !self.is_scope_within_compiled_function(binding_scope) {
+            if let Some(sid) = found {
+                if !self.is_scope_within_compiled_function(self.scope.symbol_scope(sid)) {
                     return None;
                 }
-                return Some(bid);
+                return Some(sid);
             }
-            current = scope.parent;
+            current = self.scope.scope_parent(id);
         }
         None
     }

@@ -26,9 +26,9 @@ use crate::react_compiler_diagnostics::ErrorCategory;
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
-use crate::scope::ScopeId;
-use crate::scope::ScopeInfo;
+use crate::scope::ScopeResolver;
 use oxc_allocator::GetAllocator;
+use oxc_syntax::scope::ScopeId;
 
 use super::compile_result::BindingRenameInfo;
 use super::compile_result::CodegenFunction;
@@ -1190,7 +1190,7 @@ fn handle_error<'a>(
 fn try_compile_function<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     source: &CompileSource,
-    scope_info: &ScopeInfo,
+    scope: &ScopeResolver<'_, '_>,
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
@@ -1214,7 +1214,7 @@ fn try_compile_function<'a>(
         ast,
         &source.fn_node,
         source.fn_name.as_deref(),
-        scope_info,
+        scope,
         source.fn_type,
         output_mode,
         env_config,
@@ -1230,7 +1230,7 @@ fn try_compile_function<'a>(
 fn process_fn<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     source: &CompileSource,
-    scope_info: &ScopeInfo,
+    scope: &ScopeResolver<'_, '_>,
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
@@ -1253,8 +1253,7 @@ fn process_fn<'a>(
     };
 
     // Attempt compilation
-    let compile_result =
-        try_compile_function(ast, source, scope_info, output_mode, env_config, context);
+    let compile_result = try_compile_function(ast, source, scope, output_mode, env_config, context);
 
     match compile_result {
         Err(err) => {
@@ -1463,7 +1462,6 @@ fn get_declarator_name(decl: &oxc::VariableDeclarator) -> Option<String> {
 /// are entered only structurally (their bodies carry no compilable functions for
 /// discovery — matching the Babel bridge, which extracted no metadata for them).
 struct DiscoveryWalker<'a, 'ast> {
-    scope_info: &'a ScopeInfo,
     opts: &'a PluginOptions,
     context: &'a mut ProgramContext,
     queue: Vec<CompileSource<'ast>>,
@@ -1474,13 +1472,8 @@ struct DiscoveryWalker<'a, 'ast> {
 }
 
 impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
-    fn new(
-        scope_info: &'a ScopeInfo,
-        opts: &'a PluginOptions,
-        context: &'a mut ProgramContext,
-    ) -> Self {
+    fn new(opts: &'a PluginOptions, context: &'a mut ProgramContext) -> Self {
         Self {
-            scope_info,
             opts,
             context,
             queue: Vec::new(),
@@ -1491,9 +1484,10 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    /// Try to push the scope a node creates. Returns whether one was pushed.
-    fn try_push_scope(&mut self, span: Span) -> bool {
-        if let Some(scope_id) = self.scope_info.resolve_scope_for_node(Some(span.start)) {
+    /// Try to push the scope a node creates (its semantic `scope_id` cell).
+    /// Returns whether one was pushed.
+    fn try_push_scope(&mut self, scope_id: Option<ScopeId>) -> bool {
+        if let Some(scope_id) = scope_id {
             self.scope_stack.push(scope_id);
             true
         } else {
@@ -1514,7 +1508,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     }
 
     fn walk_program(&mut self, program: &'ast oxc::Program<'ast>) {
-        let pushed = self.try_push_scope(program.span);
+        let pushed = self.try_push_scope(program.scope_id.get());
         for stmt in &program.body {
             self.walk_statement(stmt);
         }
@@ -1524,7 +1518,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     }
 
     fn walk_block(&mut self, block: &'ast oxc::BlockStatement<'ast>) {
-        let pushed = self.try_push_scope(block.span);
+        let pushed = self.try_push_scope(block.scope_id.get());
         for stmt in &block.body {
             self.walk_statement(stmt);
         }
@@ -1558,7 +1552,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 }
             }
             oxc::Statement::ForStatement(node) => {
-                let pushed = self.try_push_scope(node.span);
+                let pushed = self.try_push_scope(node.scope_id.get());
                 if let Some(init) = &node.init {
                     match init {
                         oxc::ForStatementInit::VariableDeclaration(decl) => {
@@ -1595,7 +1589,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 self.loop_expression_depth -= 1;
             }
             oxc::Statement::ForInStatement(node) => {
-                let pushed = self.try_push_scope(node.span);
+                let pushed = self.try_push_scope(node.scope_id.get());
                 self.walk_for_left(&node.left);
                 self.loop_expression_depth += 1;
                 self.walk_expression(&node.right);
@@ -1606,7 +1600,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 }
             }
             oxc::Statement::ForOfStatement(node) => {
-                let pushed = self.try_push_scope(node.span);
+                let pushed = self.try_push_scope(node.scope_id.get());
                 self.walk_for_left(&node.left);
                 self.loop_expression_depth += 1;
                 self.walk_expression(&node.right);
@@ -1617,7 +1611,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 }
             }
             oxc::Statement::SwitchStatement(node) => {
-                let pushed = self.try_push_scope(node.span);
+                let pushed = self.try_push_scope(node.scope_id.get());
                 self.walk_expression(&node.discriminant);
                 for case in &node.cases {
                     if let Some(test) = &case.test {
@@ -1635,7 +1629,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
             oxc::Statement::TryStatement(node) => {
                 self.walk_block(&node.block);
                 if let Some(handler) = &node.handler {
-                    let pushed = self.try_push_scope(handler.span);
+                    let pushed = self.try_push_scope(handler.scope_id.get());
                     self.walk_block(&handler.body);
                     if pushed {
                         self.scope_stack.pop();
@@ -1719,7 +1713,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     /// when `Some`, supplies the name from the enclosing variable declarator (for
     /// function expressions); `None` means use the function's own id.
     fn walk_function(&mut self, func: &'ast oxc::Function<'ast>, inferred_name: Option<String>) {
-        let pushed = self.try_push_scope(func.span);
+        let pushed = self.try_push_scope(func.scope_id.get());
 
         let original_kind = match func.r#type {
             oxc::FunctionType::FunctionDeclaration | oxc::FunctionType::TSDeclareFunction => {
@@ -1771,7 +1765,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         arrow: &'ast oxc::ArrowFunctionExpression<'ast>,
         inferred_name: Option<String>,
     ) {
-        let pushed = self.try_push_scope(arrow.span);
+        let pushed = self.try_push_scope(arrow.scope_id.get());
 
         let skip_body = if self.is_rejected_by_scope_check() {
             false
@@ -1975,7 +1969,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                     p.method || matches!(p.kind, oxc::PropertyKind::Get | oxc::PropertyKind::Set);
                 if is_method {
                     if let oxc::Expression::FunctionExpression(func) = &p.value {
-                        let pushed = self.try_push_scope(func.span);
+                        let pushed = self.try_push_scope(func.scope_id.get());
                         if let Some(body) = &func.body {
                             self.walk_function_body_block(body);
                         }
@@ -2044,9 +2038,8 @@ fn find_functions_to_compile<'ast>(
     program: &'ast oxc::Program<'ast>,
     opts: &PluginOptions,
     context: &mut ProgramContext,
-    scope: &ScopeInfo,
 ) -> Vec<CompileSource<'ast>> {
-    let mut walker = DiscoveryWalker::new(scope, opts, context);
+    let mut walker = DiscoveryWalker::new(opts, context);
     walker.walk_program(program);
     walker.queue
 }
@@ -2859,7 +2852,7 @@ fn ox_is_non_namespaced_import(import: &oxc_ast::ast::ImportDeclaration) -> bool
 pub fn compile_program<'a, 'p>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     oxc_program: &'p oxc_ast::ast::Program<'a>,
-    scope: ScopeInfo,
+    scope: &ScopeResolver<'_, '_>,
     options: PluginOptions,
 ) -> CompileResult<'a> {
     // Compute output mode once, up front
@@ -2929,7 +2922,7 @@ pub fn compile_program<'a, 'p>(
     );
 
     // Initialize known referenced names from scope bindings for UID collision detection
-    context.init_from_scope(&scope);
+    context.init_from_scope(scope);
 
     // Seed context with early ordered log entries
     context.ordered_log.extend(early_ordered_log);
@@ -2986,7 +2979,7 @@ pub fn compile_program<'a, 'p>(
     context.hook_guard_name = hook_guard_name;
 
     // Find all functions to compile
-    let queue = find_functions_to_compile(program, &options, &mut context, &scope);
+    let queue = find_functions_to_compile(program, &options, &mut context);
 
     // Clone env_config once for all function compilations (avoids per-function clone
     // while satisfying the borrow checker — compile_fn needs &mut context + &env_config)
@@ -2996,7 +2989,7 @@ pub fn compile_program<'a, 'p>(
     let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_>> = Vec::new();
 
     for source in &queue {
-        match process_fn(ast, source, &scope, output_mode, &env_config, &mut context) {
+        match process_fn(ast, source, scope, output_mode, &env_config, &mut context) {
             Ok(Some(codegen_fn)) => {
                 compiled_fns.push(CompiledFunction { kind: source.kind, source, codegen_fn });
             }

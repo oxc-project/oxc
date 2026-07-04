@@ -34,12 +34,12 @@ pub enum FunctionNode<'a> {
 }
 
 impl<'a> FunctionNode<'a> {
-    /// The node_id of the function node, equal to its `span.start`.
-    pub fn node_id(&self) -> Option<u32> {
-        Some(match self {
-            FunctionNode::Function(f) => f.span.start,
-            FunctionNode::Arrow(a) => a.span.start,
-        })
+    /// The scope the function node creates (its semantic `scope_id` cell).
+    pub fn scope_id(&self) -> Option<oxc_syntax::scope::ScopeId> {
+        match self {
+            FunctionNode::Function(f) => f.scope_id.get(),
+            FunctionNode::Arrow(a) => a.scope_id.get(),
+        }
     }
 }
 

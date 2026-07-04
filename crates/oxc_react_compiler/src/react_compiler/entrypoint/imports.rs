@@ -8,7 +8,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
 use crate::react_compiler_hir::environment::BindingRename;
-use crate::scope::ScopeInfo;
+use crate::scope::ScopeResolver;
 
 use oxc_diagnostics::Diagnostics;
 
@@ -98,12 +98,12 @@ impl ProgramContext {
 
     /// Initialize known referenced names from scope bindings.
     /// Call this after construction to seed conflict detection with program scope bindings.
-    pub fn init_from_scope(&mut self, scope: &ScopeInfo) {
+    pub fn init_from_scope(&mut self, scope: &ScopeResolver<'_, '_>) {
         // Register ALL bindings (not just program-scope) so that UID generation
         // avoids name conflicts with any binding in the file. This matches
         // Babel's generateUid() which checks all scopes.
-        for binding in &scope.bindings {
-            self.known_referenced_names.insert(binding.name.clone());
+        for symbol_id in scope.symbols() {
+            self.known_referenced_names.insert(scope.symbol_name(symbol_id).to_string());
         }
     }
 
