@@ -2,4 +2,8 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/error.call-args-destructuring-asignment-complex.js
 ---
-function Component() {}
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Invariant: Const declaration cannot be referenced as an expression", labels: One([LabeledSpan { label: Some("this is Const"), span: SourceSpan { offset: SourceOffset(61), length: 5 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

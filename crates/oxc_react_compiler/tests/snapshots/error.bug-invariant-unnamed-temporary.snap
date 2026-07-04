@@ -2,17 +2,8 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/error.bug-invariant-unnamed-temporary.js
 ---
-import { c as _c } from "react/compiler-runtime";
-import Bar from "./Bar";
-export function Foo() {
-	const $ = _c(1);
-	let t0;
-	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-		t0 = <Bar renderer={_temp} />;
-		$[0] = t0;
-	} else {
-		t0 = $[0];
-	}
-	return t0;
-}
-function _temp() {}
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Invariant: Expected temporaries to be promoted to named identifiers in an earlier pass", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(33), length: 146 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.
