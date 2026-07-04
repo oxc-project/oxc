@@ -364,6 +364,20 @@ impl DisableDirectives {
         has_match
     }
 
+    /// Merge the "used" markers from another `DisableDirectives` into this one.
+    ///
+    /// Used by the external (JS) parser path, where a file is linted twice: JS plugin
+    /// rules run against the parser's AST, and native rules run against the shadow
+    /// source. Both runs build directives from the same comments (at identical spans),
+    /// but track usage separately - merging the markers makes
+    /// `--report-unused-disable-directives` see a directive as used if either run used it.
+    pub fn merge_used_from(&self, other: &DisableDirectives) {
+        let other_used = other.used_disable_comments.borrow();
+        if !other_used.is_empty() {
+            self.used_disable_comments.borrow_mut().extend(other_used.iter().cloned());
+        }
+    }
+
     pub fn disable_rule_comments(&self) -> &[DisableRuleComment] {
         &self.disable_rule_comments
     }

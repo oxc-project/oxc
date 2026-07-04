@@ -10,6 +10,9 @@ export default [
     },
     rules: {
       "ember/template-no-let-reference": "error",
+      "no-debugger": "error",
+      eqeqeq: "error",
+      "no-unused-vars": "error",
     },
   },
 ];

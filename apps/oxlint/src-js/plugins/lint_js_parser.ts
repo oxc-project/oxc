@@ -16,6 +16,7 @@
 import { setLanguageOptionsOverride, setSourceCodeOverride, setupFileContext } from "./context.ts";
 import { setGlobalsForFile } from "./globals.ts";
 import { compileJsVisitors, walkParserAst } from "./js_ast_walk.ts";
+import { setParentsAndGetMaskedRegions } from "./js_parser_shadow.ts";
 import {
   getJsParserVisitorKeys,
   JS_PARSER_SOURCE_CODE,
@@ -34,6 +35,7 @@ import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 
 import type { AfterHook, Visitor } from "./types.ts";
+import type { MaskedRegionReport } from "./js_parser_shadow.ts";
 import type { JsParserParseResult, JsParserToken } from "./parsers.ts";
 import type { SourceCode } from "./source_code.ts";
 import type { ModuleKind } from "../generated/types.d.ts";
@@ -43,6 +45,14 @@ interface CommentReport {
   isBlock: boolean;
   start: number;
   end: number;
+}
+
+// Result of `lintFileWithJsParserImpl`, in form sent to Rust.
+interface JsParserLintResult {
+  comments: CommentReport[];
+  // Masked regions for shadow-source native linting (see `js_parser_shadow.ts`),
+  // or `null` if they could not be determined (Rust then skips native linting)
+  maskedRegions: MaskedRegionReport[] | null;
 }
 
 // Array of `after` hooks to run after traversal. This array reused for every file.
@@ -81,7 +91,7 @@ export function lintFileWithJsParser(
   workspaceUri: string | null,
 ): string {
   try {
-    const comments = lintFileWithJsParserImpl(
+    const { comments, maskedRegions } = lintFileWithJsParserImpl(
       filePath,
       sourceText,
       parserId,
@@ -94,7 +104,7 @@ export function lintFileWithJsParser(
     );
 
     // Note: `messageId` field of `DiagnosticReport` is not needed on Rust side - `serde` skips over it
-    const ret = JSON.stringify({ Success: { diagnostics, comments } });
+    const ret = JSON.stringify({ Success: { diagnostics, comments, maskedRegions } });
 
     // Empty `diagnostics` array, so it starts empty when linting next file
     diagnostics.length = 0;
@@ -121,7 +131,7 @@ export function lintFileWithJsParser(
  * @param settingsJSON - Settings for this file, as JSON string
  * @param globalsJSON - Globals for this file, as JSON string
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
- * @returns Spans of all comments in the file, in form sent to Rust
+ * @returns Comment spans and masked regions, in form sent to Rust
  * @throws {Error} If any parameters are invalid, or the parser fails to parse the file
  * @throws {*} If any rule throws
  */
@@ -135,14 +145,16 @@ function lintFileWithJsParserImpl(
   settingsJSON: string,
   globalsJSON: string,
   workspaceUri: string | null,
-): CommentReport[] {
-  // Debug asserts that input is valid
+): JsParserLintResult {
+  // Debug asserts that input is valid.
+  // Note: `ruleIds` may be empty - the file is then only parsed (comments and masked
+  // regions are still needed on Rust side for native linting of the shadow source).
   debugAssert(
     typeof filePath === "string" && filePath.length > 0,
     "`filePath` should be a non-empty string",
   );
   debugAssert(typeof sourceText === "string", "`sourceText` should be a string");
-  debugAssert(Array.isArray(ruleIds) && ruleIds.length > 0, "`ruleIds` should be non-empty array");
+  debugAssert(Array.isArray(ruleIds), "`ruleIds` should be an array");
   debugAssert(Array.isArray(optionsIds), "`optionsIds` should be an array");
   debugAssert(
     ruleIds.length === optionsIds.length,
@@ -199,6 +211,24 @@ function lintFileWithJsParserImpl(
     parserOptions: parserOptions ?? {},
   });
 
+  // Set `parent` on all AST nodes, and compute masked regions for shadow-source native
+  // linting. Setting parents must happen BEFORE running rules: ESLint pre-computes its
+  // traversal, so rules see `parent` on every node - even nodes later in the file than
+  // the node currently being visited (see `setParentsAndGetMaskedRegions` docs).
+  // A failure computing regions must not prevent JS rules from running, so it degrades
+  // to `null` (Rust then skips native linting for the file).
+  let maskedRegions: MaskedRegionReport[] | null = null;
+  try {
+    maskedRegions = setParentsAndGetMaskedRegions(
+      parseResult.ast,
+      getJsParserVisitorKeys(),
+      parseResult.scopeManager ?? null,
+      sourceText.length,
+    );
+  } catch {
+    // Leave `maskedRegions` as `null`
+  }
+
   // Get visitors for this file from all rules
   const visitors: Visitor[] = [];
   for (let i = 0, len = ruleIds.length; i < len; i++) {
@@ -252,7 +282,7 @@ function lintFileWithJsParserImpl(
 
   // Extract comments from parse result, to send to Rust.
   // They drive `eslint-disable` directive handling on Rust side.
-  return getComments(parseResult.ast.comments, sourceText);
+  return { comments: getComments(parseResult.ast.comments, sourceText), maskedRegions };
 }
 
 /**

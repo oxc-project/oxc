@@ -1,4 +1,9 @@
 {
+  "rules": {
+    "no-debugger": "error",
+    "eqeqeq": "error",
+    "no-unused-vars": "error"
+  },
   "overrides": [
     {
       "files": ["**/*.{gjs,gts}"],
