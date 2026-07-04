@@ -43,6 +43,7 @@ mod module_record;
 mod options;
 mod rule;
 mod service;
+mod shadow_source;
 mod suppression;
 pub(crate) mod timing;
 mod tsgolint;
@@ -80,7 +81,7 @@ pub use crate::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
         ExternalLinterLintFileCb, ExternalLinterLintFileWithJsParserCb, ExternalLinterLoadParserCb,
         ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb, JsComment, JsFix,
-        JsParserLintFileResult, LintFileResult, LoadParserResult, LoadPluginResult,
+        JsMaskedRegion, JsParserLintFileResult, LintFileResult, LoadParserResult, LoadPluginResult,
         convert_and_merge_js_fixes,
     },
     external_plugin_store::{
@@ -95,6 +96,7 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
+    shadow_source::ShadowLintInput,
     suppression::{OxlintSuppressionFileAction, SuppressionManager},
     timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
     tsgolint::TsGoLintState,
@@ -108,6 +110,7 @@ use crate::{
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
+    shadow_source::{MaskedRegion, build_shadow_source},
     timing::{RuleTimingRecorder, RuleTimingStat},
     utils::iter_possible_jest_call_node,
 };
@@ -370,6 +373,48 @@ impl Linter {
         js_allocator_pool: Option<&AllocatorPool>,
         rule_timing_store: Option<&RuleTimingStore>,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
+        self.run_rules::<TIMINGS>(
+            path,
+            context_sub_hosts,
+            allocator,
+            js_allocator_pool,
+            rule_timing_store,
+            true,
+        )
+    }
+
+    /// Same as [`Linter::run_with_disable_directives`], but only runs native rules,
+    /// skipping external (JS plugin) rules.
+    ///
+    /// Used for the shadow source of a file parsed by an external (JS) parser:
+    /// external rules already ran against the parser's own AST
+    /// (see [`Linter::run_with_js_parser`]), so must not run a second time.
+    pub fn run_native_rules_with_disable_directives<'a, const TIMINGS: bool>(
+        &self,
+        path: &Path,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        allocator: &'a Allocator,
+        rule_timing_store: Option<&RuleTimingStore>,
+    ) -> (Vec<Message>, Option<DisableDirectives>) {
+        self.run_rules::<TIMINGS>(
+            path,
+            context_sub_hosts,
+            allocator,
+            None,
+            rule_timing_store,
+            false,
+        )
+    }
+
+    fn run_rules<'a, const TIMINGS: bool>(
+        &self,
+        path: &Path,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        allocator: &'a Allocator,
+        js_allocator_pool: Option<&AllocatorPool>,
+        rule_timing_store: Option<&RuleTimingStore>,
+        run_external_rules: bool,
+    ) -> (Vec<Message>, Option<DisableDirectives>) {
         // Files with an external parser are parsed and linted on JS side, and do not go
         // through this path (see `run_external_rules_with_js_parser`).
         let ResolvedLinterState { rules, config, external_rules, external_parser: _ } =
@@ -468,13 +513,15 @@ impl Linter {
             // can mutably access `ctx_host` via `Rc::get_mut` without panicking due to multiple references.
             drop(rules);
 
-            self.run_external_rules(
-                &external_rules,
-                path,
-                &mut ctx_host,
-                allocator,
-                js_allocator_pool,
-            );
+            if run_external_rules {
+                self.run_external_rules(
+                    &external_rules,
+                    path,
+                    &mut ctx_host,
+                    allocator,
+                    js_allocator_pool,
+                );
+            }
 
             // Report unused directives is now handled differently with type-aware linting
 
@@ -532,10 +579,13 @@ impl Linter {
     /// Lint a file which is parsed by an external (JS) parser.
     ///
     /// The file is parsed on JS side by the parser configured in `languageOptions.parser`
-    /// of the override matching the file, and only external (JS plugin) rules run on it.
+    /// of the override matching the file, and external (JS plugin) rules run on it there.
     ///
-    /// Returns the messages, and the file's [`DisableDirectives`] (`None` if the file
-    /// was not linted, or linting failed before directives could be built).
+    /// Returns the messages, the file's [`DisableDirectives`] (`None` if the file
+    /// was not linted, or linting failed before directives could be built), and the
+    /// [`ShadowLintInput`] for running native rules on the file's shadow source
+    /// (`None` if the file has no native rules configured, or a shadow source could
+    /// not be built - native rules are then skipped for the file).
     ///
     /// # Panics
     /// Panics if no external parser is configured for the file (check with
@@ -545,7 +595,7 @@ impl Linter {
         &self,
         path: &Path,
         source_text: &str,
-    ) -> (Vec<Message>, Option<DisableDirectives>) {
+    ) -> (Vec<Message>, Option<DisableDirectives>, Option<ShadowLintInput>) {
         const BOM: &str = "\u{feff}";
         const BOM_LEN: usize = BOM.len();
 
@@ -556,8 +606,13 @@ impl Linter {
             self.external_linter.as_ref().expect("external linter should be configured");
 
         let external_rules = &resolved.external_rules;
-        if external_rules.is_empty() {
-            return (vec![], None);
+        // Native rules run on the file's shadow source (see `shadow_source` module docs).
+        // Even if no external rules are configured, the file must still be sent to JS
+        // to be parsed, as the masked regions the shadow source is built from can only
+        // be determined from the parser's AST.
+        let has_native_rules = !resolved.rules.is_empty();
+        if external_rules.is_empty() && !has_native_rules {
+            return (vec![], None, None);
         }
 
         let mut messages = vec![];
@@ -616,8 +671,37 @@ impl Linter {
             Err(err) => {
                 let message = format!("Error running JS plugin.\nFile path: {path_string}\n{err}");
                 messages.push(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
-                return (messages, None);
+                return (messages, None, None);
             }
+        };
+
+        // Build the shadow source for native rules, from the masked regions reported by JS side.
+        // `masked_regions` is `None` if JS side could not determine them - native rules are
+        // then skipped for this file (only JS plugin rules run, the previous behavior).
+        let shadow_lint_input = if has_native_rules {
+            result.masked_regions.as_ref().and_then(|regions| {
+                let regions = regions
+                    .iter()
+                    .map(|region| {
+                        // Convert UTF-16 offsets back to UTF-8, same as diagnostic spans
+                        let mut span = Span::new(region.start, region.end);
+                        span_converter.convert_span_back(&mut span);
+                        MaskedRegion {
+                            span,
+                            class_member: region.class_member,
+                            refs: region.refs.clone(),
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                build_shadow_source(original_source_text, &regions).map(|shadow_text| {
+                    ShadowLintInput {
+                        source_text: shadow_text,
+                        masked_spans: regions.iter().map(|region| region.span).collect(),
+                    }
+                })
+            })
+        } else {
+            None
         };
 
         // Build disable directives from comments reported by the parser,
@@ -718,7 +802,7 @@ impl Linter {
             );
         }
 
-        (messages, Some(disable_directives))
+        (messages, Some(disable_directives), shadow_lint_input)
     }
 
     /// Lint a file which is parsed by an external (JS) parser.
@@ -730,8 +814,8 @@ impl Linter {
         &self,
         _path: &Path,
         _source_text: &str,
-    ) -> (Vec<Message>, Option<DisableDirectives>) {
-        (vec![], None)
+    ) -> (Vec<Message>, Option<DisableDirectives>, Option<ShadowLintInput>) {
+        (vec![], None, None)
     }
 
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]

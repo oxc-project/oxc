@@ -24,7 +24,7 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic}
 use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
-use oxc_span::{SourceType, VALID_EXTENSIONS};
+use oxc_span::{SourceType, Span, VALID_EXTENSIONS};
 use oxc_str::CompactStr;
 
 use crate::{
@@ -33,6 +33,7 @@ use crate::{
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
+    shadow_source::ShadowLintInput,
     suppression::DiffManager,
     utils::read_to_arena_str,
 };
@@ -782,8 +783,19 @@ impl Runtime {
                 }
             };
 
-            let (mut messages, disable_directives) =
+            let (mut messages, disable_directives, shadow_lint_input) =
                 self.linter.run_with_js_parser(path, source_text);
+
+            // Run native rules on the shadow source (must happen before the directives are
+            // moved into the map below, so "used" markers from the native run are merged in).
+            if let Some(shadow_lint_input) = &shadow_lint_input {
+                messages.extend(self.lint_shadow_source(
+                    path,
+                    shadow_lint_input,
+                    disable_directives.as_ref(),
+                    &allocator_guard,
+                ));
+            }
 
             // Store the disable directives for this file, so unused directives can be
             // reported, same as the native path.
@@ -822,6 +834,97 @@ impl Runtime {
         });
     }
 
+    /// Run native rules on the shadow source of a file parsed by an external (JS) parser.
+    ///
+    /// The shadow source (see the `shadow_source` module docs) has the same byte length as
+    /// the original source, with custom syntax replaced in-place by valid JS placeholders,
+    /// so spans of native diagnostics map back to the original file unchanged.
+    ///
+    /// Diagnostics and fixes whose span intersects a masked region refer to placeholder
+    /// code rather than real source, and are discarded. "Used" markers from the shadow
+    /// run's disable directives are merged into `js_directives` (the directives built from
+    /// the parser's comments), so `--report-unused-disable-directives` sees a directive as
+    /// used when only a native rule used it.
+    ///
+    /// If the shadow source fails to parse (e.g. a custom node in a position where the
+    /// placeholder isn't valid JS), native linting is skipped silently: the custom parser
+    /// already accepted the file's syntax, so reporting shadow parse errors would be
+    /// confusing false positives. The file is then linted by JS plugin rules only,
+    /// the same as before shadow linting existed.
+    ///
+    /// Note: files linted through this path don't take part in the module graph,
+    /// so native rules requiring cross-file module info see no loaded modules.
+    fn lint_shadow_source<'a>(
+        &self,
+        path: &Path,
+        shadow: &'a ShadowLintInput,
+        js_directives: Option<&DisableDirectives>,
+        // The caller's allocator (which holds the original source text). Reused rather
+        // than taking a second allocator from the pool - the pool can be a fixed-size
+        // pool with one allocator per thread, so a nested `get()` would exhaust it.
+        allocator: &'a Allocator,
+    ) -> Vec<Message> {
+        // `SourceType::from_path` fails for custom extensions (e.g. `.gts`). Default to
+        // TypeScript - a superset of JavaScript for parsing purposes. If the shadow source
+        // doesn't parse with this source type, native linting is skipped below.
+        let source_type = SourceType::from_path(path).map_or_else(
+            |_| SourceType::ts(),
+            |st| if st.is_javascript() { st.with_jsx(true) } else { st },
+        );
+
+        let Ok((record, semantic, parser_tokens)) =
+            self.process_source_section(path, allocator, &shadow.source_text, source_type, false)
+        else {
+            return vec![];
+        };
+
+        let context_sub_host = ContextSubHost::new(
+            semantic,
+            record.module_record,
+            0,
+            ContextSubHostOptions {
+                parser_tokens,
+                respect_eslint_disable_directives: self.linter.respect_eslint_disable_directives(),
+                ..Default::default()
+            },
+        );
+
+        let (mut messages, shadow_directives) =
+            self.linter.run_native_rules_with_disable_directives::<false>(
+                path,
+                vec![context_sub_host],
+                allocator,
+                None,
+            );
+
+        if let (Some(js_directives), Some(shadow_directives)) = (js_directives, &shadow_directives)
+        {
+            js_directives.merge_used_from(shadow_directives);
+        }
+
+        // Discard diagnostics inside masked regions, and strip fixes which touch one
+        let masked_spans = &shadow.masked_spans;
+        let intersects_mask = |span: Span| {
+            masked_spans.iter().any(|mask| span.start < mask.end && span.end > mask.start)
+        };
+        messages.retain_mut(|message| {
+            if intersects_mask(message.span) {
+                return false;
+            }
+            let fix_touches_mask = match &message.fixes {
+                PossibleFixes::None => false,
+                PossibleFixes::Single(fix) => intersects_mask(fix.span),
+                PossibleFixes::Multiple(fixes) => fixes.iter().any(|fix| intersects_mask(fix.span)),
+            };
+            if fix_touches_mask {
+                message.fixes = PossibleFixes::None;
+            }
+            true
+        });
+
+        messages
+    }
+
     // language_server: the language server needs line and character position
     // the struct not using `oxc_diagnostic::Error, because we are just collecting information
     // and returning it to the client to let him display it.
@@ -848,9 +951,19 @@ impl Runtime {
             let allocator_guard = self.allocator_pool.get();
             match file_system.read_to_arena_str(path, &allocator_guard) {
                 Ok(source_text) => {
-                    let (messages, disable_directives) =
+                    let (messages, disable_directives, shadow_lint_input) =
                         self.linter.run_with_js_parser(path, source_text);
                     js_parser_messages.extend(messages);
+                    // Run native rules on the shadow source (before the directives are
+                    // moved into the map, so "used" markers from the native run are merged in).
+                    if let Some(shadow_lint_input) = &shadow_lint_input {
+                        js_parser_messages.extend(self.lint_shadow_source(
+                            path,
+                            shadow_lint_input,
+                            disable_directives.as_ref(),
+                            &allocator_guard,
+                        ));
+                    }
                     if let Some(disable_directives) = disable_directives {
                         self.disable_directives_map
                             .lock()

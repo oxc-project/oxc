@@ -128,6 +128,29 @@ pub struct JsParserLintFileResult {
     /// Spans of all comments in the file, as reported by the parser.
     /// Used to process disable directives on Rust side.
     pub comments: Vec<JsComment>,
+    /// Spans of top-most AST nodes whose type is unknown to Oxc (e.g. Ember's
+    /// `GlimmerTemplate`). Used to build the "shadow source" on which native rules run.
+    /// `None` if the regions could not be determined - native linting is then skipped.
+    #[serde(default)]
+    pub masked_regions: Option<Vec<JsMaskedRegion>>,
+}
+
+/// Masked region in form sent from JS to Rust. Spans are UTF-16 offsets.
+///
+/// The span of a top-most AST node which cannot be represented in Oxc's AST.
+/// In the shadow source, the region is replaced by a valid same-byte-length JS placeholder.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JsMaskedRegion {
+    pub start: u32,
+    pub end: u32,
+    /// `true` if the region is a class element (its parent node is a `ClassBody`),
+    /// which requires a `static { ... }` placeholder instead of a template literal
+    pub class_member: bool,
+    /// Names of variables referenced inside the region but declared outside all regions.
+    /// Injected into the placeholder so native rules see them as used (e.g. a component
+    /// referenced only inside an Ember `<template>` should not trigger `no-unused-vars`).
+    pub refs: Vec<String>,
 }
 
 /// Comment in form sent from JS to Rust. Spans are UTF-16 offsets.
