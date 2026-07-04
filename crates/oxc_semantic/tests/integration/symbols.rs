@@ -445,6 +445,13 @@ fn test_redeclaration() {
         .test();
 }
 
+#[test]
+fn test_function_body_redeclaration() {
+    SemanticTester::js("function f(a) { let a; }").has_error("already been declared");
+    SemanticTester::js("({ method(a) { let a; } })").has_error("already been declared");
+    SemanticTester::ts("function f<T>() { interface T {} }").has_error("already been declared");
+}
+
 // https://github.com/oxc-project/oxc/issues/18719
 #[test]
 fn test_function_var_redeclaration_in_module() {

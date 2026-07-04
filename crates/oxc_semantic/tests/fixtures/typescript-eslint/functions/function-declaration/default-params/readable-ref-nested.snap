@@ -8,10 +8,25 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
       {
         "children": [
           {
-            "children": [],
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(FunctionBody)",
+                "id": 3,
+                "node": "FunctionBody",
+                "symbols": []
+              }
+            ],
             "flags": "ScopeFlags(Function)",
             "id": 2,
             "node": "Function(<anonymous>)",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(FunctionBody)",
+            "id": 4,
+            "node": "FunctionBody",
             "symbols": []
           }
         ],
@@ -44,7 +59,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
             "id": 0,
             "name": "a",
             "node_id": 13,
-            "scope_id": 2
+            "scope_id": 3
           }
         ]
       },

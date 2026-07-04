@@ -496,11 +496,12 @@ pub fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
         return;
     }
 
-    if !ctx.current_scope_flags().is_function() {
+    if !ctx.current_scope_flags().is_function_body() {
         return;
     }
 
-    if matches!(ctx.ancestry().find_kind_by_node_id(ctx.scoping.get_node_id(ctx.current_scope_id)),
+    if let Some(parent_scope_id) = ctx.scoping.scope_parent_id(ctx.current_scope_id)
+        && matches!(ctx.ancestry().find_kind_by_node_id(ctx.scoping.get_node_id(parent_scope_id)),
         AstKind::Function(Function { params, .. })
         | AstKind::ArrowFunctionExpression(ArrowFunctionExpression { params, .. })
         if !params.is_simple_parameter_list())
@@ -622,7 +623,7 @@ pub fn check_variable_declarator_redeclaration(
     // `function a() {}; var a;` and `function b() { function a() {}; var a; }` are valid
     // in script mode, but in module mode at the top level, function declarations are
     // lexically scoped, so `function a() {}; var a;` is a redeclaration error.
-    if scope_flags.intersects(ScopeFlags::Top | ScopeFlags::Function)
+    if scope_flags.intersects(ScopeFlags::Top | ScopeFlags::FunctionBody)
         && !(ctx.source_type.is_module() && scope_flags.is_top())
     {
         return;
@@ -713,6 +714,7 @@ fn check_redeclared_function(
     let current_scope_flags = ctx.current_scope_flags();
     if prev.flags.intersects(SymbolFlags::FunctionScopedVariable | SymbolFlags::Function)
         && (current_scope_flags.is_function()
+            || current_scope_flags.is_function_body()
             || current_scope_flags.is_class_static_block()
             || (!ctx.source_type.is_module() && current_scope_flags.is_top()))
     {

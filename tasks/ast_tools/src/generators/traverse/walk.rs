@@ -244,7 +244,7 @@ fn generate_walk_for_struct(
     };
 
     quote! {
-        ///@@line_break
+    ///@@line_break
         unsafe fn #walk_fn_name<#walk_generics>(
             traverser: &mut Tr,
             node: *mut #struct_ty,
@@ -287,10 +287,10 @@ fn generate_scope_code(struct_def: &StructDef) -> (TokenStream, TokenStream, boo
 
     // Determine if this is a var-hoisting scope
     let is_var_hoisting_scope = struct_def.name() == "Function"
-        || scope.flags.contains("Top")
-        || scope.flags.contains("Function")
-        || scope.flags.contains("ClassStaticBlock")
-        || scope.flags.contains("TsModuleBlock");
+        || scope_flags_contains(&scope.flags, "Top")
+        || scope_flags_contains(&scope.flags, "Function")
+        || scope_flags_contains(&scope.flags, "ClassStaticBlock")
+        || scope_flags_contains(&scope.flags, "TsModuleBlock");
     if is_var_hoisting_scope {
         enter_code.extend(quote! {
             let previous_hoist_scope_id = ctx.current_hoist_scope_id();
@@ -307,6 +307,7 @@ fn generate_scope_code(struct_def: &StructDef) -> (TokenStream, TokenStream, boo
         "Program"
             | "BlockStatement"
             | "Function"
+            | "FunctionBody"
             | "ArrowFunctionExpression"
             | "StaticBlock"
             | "TSModuleDeclaration"
@@ -323,6 +324,13 @@ fn generate_scope_code(struct_def: &StructDef) -> (TokenStream, TokenStream, boo
     }
 
     (enter_code, exit_code, true)
+}
+
+fn scope_flags_contains(flags: &str, flag: &str) -> bool {
+    let needle = format!("ScopeFlags::{flag}");
+    flags
+        .split('|')
+        .any(|part| part.chars().filter(|c| !c.is_whitespace()).collect::<String>() == needle)
 }
 
 /// Generate the walk code for a single struct field.

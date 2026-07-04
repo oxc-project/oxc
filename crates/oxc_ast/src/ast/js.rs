@@ -1854,12 +1854,14 @@ pub struct FormalParameterRest<'a> {
 
 /// <https://tc39.es/ecma262/#prod-FunctionBody>
 #[ast(visit)]
+#[scope(flags = ScopeFlags::FunctionBody)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "BlockStatement")]
 pub struct FunctionBody<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    pub scope_id: Cell<Option<ScopeId>>,
     #[estree(prepend_to = statements)]
     pub directives: Vec<'a, Directive<'a>>,
     #[estree(rename = "body")]

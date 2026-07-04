@@ -6,7 +6,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/acce
   {
     "children": [
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(FunctionBody)",
+            "id": 2,
+            "node": "FunctionBody",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(Function)",
         "id": 1,
         "node": "Function(decorator)",
@@ -15,16 +23,32 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/acce
       {
         "children": [
           {
-            "children": [],
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode | FunctionBody)",
+                "id": 5,
+                "node": "FunctionBody",
+                "symbols": []
+              }
+            ],
             "flags": "ScopeFlags(StrictMode | Function | GetAccessor)",
-            "id": 3,
+            "id": 4,
             "node": "Function(<anonymous>)",
             "symbols": []
           },
           {
-            "children": [],
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode | FunctionBody)",
+                "id": 7,
+                "node": "FunctionBody",
+                "symbols": []
+              }
+            ],
             "flags": "ScopeFlags(StrictMode | Function | SetAccessor)",
-            "id": 4,
+            "id": 6,
             "node": "Function(<anonymous>)",
             "symbols": [
               {
@@ -38,7 +62,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/acce
           }
         ],
         "flags": "ScopeFlags(StrictMode)",
-        "id": 2,
+        "id": 3,
         "node": "Class(Foo)",
         "symbols": []
       }
@@ -58,14 +82,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/acce
             "id": 0,
             "name": "decorator",
             "node_id": 10,
-            "scope_id": 2
+            "scope_id": 3
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "decorator",
             "node_id": 19,
-            "scope_id": 2
+            "scope_id": 3
           }
         ]
       },

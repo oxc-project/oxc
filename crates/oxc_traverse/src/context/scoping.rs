@@ -1,4 +1,4 @@
-use std::str;
+use std::{cell::Cell, str};
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
@@ -149,6 +149,48 @@ impl<'a> TraverseScoping<'a> {
         let mut collector = ChildScopeCollector::new();
         collector.visit_statements(stmts);
         self.insert_scope_below(self.current_scope_id, &collector.scope_ids, flags)
+    }
+
+    /// Insert a scope into scope tree below a `Vec` of statements.
+    ///
+    /// Statements must be in provided scope.
+    /// New scope is created as child of provided scope.
+    /// All child scopes of the statement are reassigned to be children of the new scope.
+    ///
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    pub fn insert_scope_below_statements_from_scope_id(
+        &mut self,
+        stmts: &ArenaVec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        let mut collector = FunctionBodyScopeCollector::new(self.scoping.scope_flags(scope_id));
+        collector.visit_statements(stmts);
+        let new_scope_id = self.insert_scope_below(scope_id, &collector.child_scope_ids, flags);
+
+        for symbol_id in collector.binding_symbol_ids {
+            if self.scoping.symbol_scope_id(symbol_id) == scope_id
+                && !self.scoping.symbol_flags(symbol_id).is_function_scoped_declaration()
+            {
+                self.scoping.move_binding_by_symbol_id(scope_id, new_scope_id, symbol_id);
+            }
+        }
+
+        for symbol_id in collector.function_declaration_symbol_ids {
+            if self.scoping.symbol_scope_id(symbol_id) == scope_id
+                && self.scoping.scope_flags(new_scope_id).is_strict_mode()
+            {
+                self.scoping.move_binding_by_symbol_id(scope_id, new_scope_id, symbol_id);
+            }
+        }
+
+        for reference_id in collector.reference_ids {
+            if self.scoping.get_reference(reference_id).scope_id() == scope_id {
+                self.scoping.get_reference_mut(reference_id).set_scope_id(new_scope_id);
+            }
+        }
+
+        new_scope_id
     }
 
     fn insert_scope_below(
@@ -393,5 +435,172 @@ impl TraverseScoping<'_> {
 
     pub fn delete_typescript_bindings(&mut self) {
         self.scoping.delete_typescript_bindings();
+    }
+}
+
+struct FunctionBodyScopeCollector {
+    child_scope_ids: Vec<ScopeId>,
+    binding_symbol_ids: Vec<SymbolId>,
+    function_declaration_symbol_ids: Vec<SymbolId>,
+    reference_ids: Vec<ReferenceId>,
+    parent_scope_flags: ScopeFlags,
+}
+
+impl FunctionBodyScopeCollector {
+    fn new(parent_scope_flags: ScopeFlags) -> Self {
+        Self {
+            child_scope_ids: vec![],
+            binding_symbol_ids: vec![],
+            function_declaration_symbol_ids: vec![],
+            reference_ids: vec![],
+            parent_scope_flags,
+        }
+    }
+
+    fn add_scope(&mut self, scope_id: &Cell<Option<ScopeId>>) {
+        self.child_scope_ids.push(scope_id.get().unwrap());
+    }
+
+    fn add_binding(&mut self, id: &BindingIdentifier) {
+        if let Some(symbol_id) = id.symbol_id.get() {
+            self.binding_symbol_ids.push(symbol_id);
+        }
+    }
+
+    fn add_function_declaration_binding(&mut self, func: &Function) {
+        let Some(id) = &func.id else { return };
+        let Some(symbol_id) = id.symbol_id.get() else { return };
+
+        if self.parent_scope_flags.is_strict_mode() {
+            self.binding_symbol_ids.push(symbol_id);
+        } else {
+            self.function_declaration_symbol_ids.push(symbol_id);
+        }
+    }
+}
+
+impl<'a> Visit<'a> for FunctionBodyScopeCollector {
+    fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
+        self.add_binding(it);
+    }
+
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+        if let Some(reference_id) = it.reference_id.get() {
+            self.reference_ids.push(reference_id);
+        }
+    }
+
+    fn visit_function(&mut self, it: &Function<'a>, _flags: ScopeFlags) {
+        if it.is_declaration() {
+            self.add_function_declaration_binding(it);
+        }
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_function_body(&mut self, it: &FunctionBody<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_class(&mut self, it: &Class<'a>) {
+        if it.is_declaration()
+            && let Some(id) = &it.id
+        {
+            self.add_binding(id);
+        }
+        self.visit_decorators(&it.decorators);
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_for_statement(&mut self, it: &ForStatement<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_for_in_statement(&mut self, it: &ForInStatement<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_for_of_statement(&mut self, it: &ForOfStatement<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_with_statement(&mut self, it: &WithStatement<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_switch_statement(&mut self, it: &SwitchStatement<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_catch_clause(&mut self, it: &CatchClause<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_static_block(&mut self, it: &StaticBlock<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_ts_type_alias_declaration(&mut self, it: &TSTypeAliasDeclaration<'a>) {
+        self.add_binding(&it.id);
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_ts_interface_declaration(&mut self, it: &TSInterfaceDeclaration<'a>) {
+        self.add_binding(&it.id);
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_ts_enum_declaration(&mut self, it: &TSEnumDeclaration<'a>) {
+        self.add_binding(&it.id);
+        self.add_scope(&it.body.scope_id);
+    }
+
+    fn visit_ts_module_declaration(&mut self, it: &TSModuleDeclaration<'a>) {
+        if let TSModuleDeclarationName::Identifier(id) = &it.id {
+            self.add_binding(id);
+        }
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_ts_global_declaration(&mut self, it: &TSGlobalDeclaration<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_ts_function_type(&mut self, it: &TSFunctionType<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_ts_constructor_type(&mut self, it: &TSConstructorType<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_ts_mapped_type(&mut self, it: &TSMappedType<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_ts_conditional_type(&mut self, it: &TSConditionalType<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_ts_call_signature_declaration(&mut self, it: &TSCallSignatureDeclaration<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_ts_method_signature(&mut self, it: &TSMethodSignature<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    fn visit_ts_construct_signature_declaration(
+        &mut self,
+        it: &TSConstructSignatureDeclaration<'a>,
+    ) {
+        self.add_scope(&it.scope_id);
     }
 }

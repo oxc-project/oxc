@@ -13,7 +13,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
         "symbols": []
       },
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(FunctionBody)",
+            "id": 3,
+            "node": "FunctionBody",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(Function | Arrow)",
         "id": 2,
         "node": "ArrowFunctionExpression",
@@ -29,7 +37,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
                 "id": 1,
                 "name": "arg",
                 "node_id": 23,
-                "scope_id": 2
+                "scope_id": 3
               }
             ]
           }

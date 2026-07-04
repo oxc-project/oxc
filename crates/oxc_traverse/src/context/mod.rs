@@ -317,6 +317,24 @@ impl<'a, State> TraverseCtx<'a, State> {
         self.scoping.insert_scope_below_statements(stmts, flags)
     }
 
+    /// Insert a scope into scope tree below a `Vec` of statements.
+    ///
+    /// Statements must be in provided scope.
+    /// New scope is created as child of provided scope.
+    /// All child scopes of the statement are reassigned to be children of the new scope.
+    ///
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    ///
+    /// This is a shortcut for `ctx.scoping.insert_scope_below_statements_from_scope_id`.
+    pub fn insert_scope_below_statements_from_scope_id(
+        &mut self,
+        stmts: &ArenaVec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        self.scoping.insert_scope_below_statements_from_scope_id(stmts, scope_id, flags)
+    }
+
     /// Insert a scope between a parent and a child scope.
     ///
     /// For example, given the following scopes

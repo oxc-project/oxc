@@ -98,11 +98,19 @@ fn test_function_level_strict() {
 
     tester
         .has_some_symbol("x")
-        .in_scope(ScopeFlags::StrictMode | ScopeFlags::Function)
+        .in_scope(ScopeFlags::StrictMode | ScopeFlags::FunctionBody)
         .expect(|(semantic, symbol_id)| -> Result<(), &'static str> {
             let scope_id = semantic.symbol_scope(symbol_id);
-            let Some(parent_scope_id) = semantic.scoping().scope_parent_id(scope_id) else {
-                return Err("Expected x's scope to have a parent");
+            let Some(function_scope_id) = semantic.scoping().scope_parent_id(scope_id) else {
+                return Err("Expected x's scope to have a function parent");
+            };
+            let function_flags = semantic.scoping().scope_flags(function_scope_id);
+            if !function_flags.contains(ScopeFlags::Function) {
+                return Err("Expected x's scope to be nested in a function scope");
+            }
+            let Some(parent_scope_id) = semantic.scoping().scope_parent_id(function_scope_id)
+            else {
+                return Err("Expected function scope to have a parent");
             };
             let parent_flags = semantic.scoping().scope_flags(parent_scope_id);
             if parent_flags.contains(ScopeFlags::Top) {

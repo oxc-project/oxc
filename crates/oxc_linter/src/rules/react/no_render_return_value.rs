@@ -79,7 +79,12 @@ impl Rule for NoRenderReturnValue {
                 ctx.diagnostic(no_render_return_value_diagnostic(ident.span.merge(property_span)));
             }
 
-            let scope_id = parent_node.scope_id();
+            let mut scope_id = parent_node.scope_id();
+            if ctx.scoping().scope_flags(scope_id).is_function_body()
+                && let Some(parent_scope_id) = ctx.scoping().scope_parent_id(scope_id)
+            {
+                scope_id = parent_scope_id;
+            }
             if ctx.scoping().scope_flags(scope_id).is_arrow()
                 && let AstKind::ArrowFunctionExpression(e) =
                     ctx.nodes().kind(ctx.scoping().get_node_id(scope_id))

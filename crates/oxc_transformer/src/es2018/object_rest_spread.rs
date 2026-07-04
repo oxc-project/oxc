@@ -35,7 +35,7 @@ use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, GetAllocator, TakeI
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
-use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{Reference, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse};
 
@@ -564,6 +564,7 @@ impl<'a> ObjectRestSpread<'a> {
     fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = func.scope_id();
         let Some(body) = func.body.as_mut() else { return };
+        let body_scope_id = body.scope_id();
         for param in &mut func.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
                 Self::replace_rest_element(
@@ -571,6 +572,7 @@ impl<'a> ObjectRestSpread<'a> {
                     &mut param.pattern,
                     &mut body.statements,
                     scope_id,
+                    Some(body_scope_id),
                     ctx,
                 );
             }
@@ -580,6 +582,7 @@ impl<'a> ObjectRestSpread<'a> {
     // Transform `(...x) => {}`.
     fn transform_arrow(arrow: &mut ArrowFunctionExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = arrow.scope_id();
+        let body_scope_id = arrow.body.scope_id();
         for param in &mut arrow.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
                 // `({ ...args }) => { args }`
@@ -606,6 +609,7 @@ impl<'a> ObjectRestSpread<'a> {
                     &mut param.pattern,
                     &mut arrow.body.statements,
                     scope_id,
+                    Some(body_scope_id),
                     ctx,
                 );
             }
@@ -628,6 +632,7 @@ impl<'a> ObjectRestSpread<'a> {
                 &mut param.pattern,
                 &mut clause.body.body,
                 scope_id,
+                None,
                 ctx,
             );
         }
@@ -655,6 +660,7 @@ impl<'a> ObjectRestSpread<'a> {
                     &mut declarator.id,
                     &mut block.body,
                     old_scope_id,
+                    None,
                     ctx,
                 );
 
@@ -748,13 +754,19 @@ impl<'a> ObjectRestSpread<'a> {
         pattern: &mut BindingPattern<'a>,
         body: &mut ArenaVec<'a, Statement<'a>>,
         scope_id: ScopeId,
+        binding_scope_id: Option<ScopeId>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         match pattern {
             // Replace the object pattern, no need to walk the object properties.
             BindingPattern::ObjectPattern(_) => {
                 Self::replace_object_pattern_and_insert_into_block_body(
-                    kind, pattern, body, scope_id, ctx,
+                    kind,
+                    pattern,
+                    body,
+                    scope_id,
+                    binding_scope_id,
+                    ctx,
                 );
             }
             BindingPattern::AssignmentPattern(pat) => {
@@ -763,16 +775,31 @@ impl<'a> ObjectRestSpread<'a> {
                     &mut pat.left,
                     body,
                     scope_id,
+                    binding_scope_id,
                     ctx,
                 );
             }
             // Or replace all occurrences of object pattern inside array pattern.
             BindingPattern::ArrayPattern(pat) => {
                 for element in pat.elements.iter_mut().flatten() {
-                    Self::replace_rest_element(kind, element, body, scope_id, ctx);
+                    Self::replace_rest_element(
+                        kind,
+                        element,
+                        body,
+                        scope_id,
+                        binding_scope_id,
+                        ctx,
+                    );
                 }
                 if let Some(element) = &mut pat.rest {
-                    Self::replace_rest_element(kind, &mut element.argument, body, scope_id, ctx);
+                    Self::replace_rest_element(
+                        kind,
+                        &mut element.argument,
+                        body,
+                        scope_id,
+                        binding_scope_id,
+                        ctx,
+                    );
                 }
             }
             BindingPattern::BindingIdentifier(_) => {}
@@ -785,9 +812,16 @@ impl<'a> ObjectRestSpread<'a> {
         pat: &mut BindingPattern<'a>,
         body: &mut ArenaVec<'a, Statement<'a>>,
         scope_id: ScopeId,
+        binding_scope_id: Option<ScopeId>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let decl = Self::create_temporary_reference_for_binding(kind, pat, scope_id, ctx);
+        let decl = Self::create_temporary_reference_for_binding(
+            kind,
+            pat,
+            scope_id,
+            binding_scope_id,
+            ctx,
+        );
         body.insert(0, Statement::VariableDeclaration(decl));
     }
 
@@ -795,6 +829,7 @@ impl<'a> ObjectRestSpread<'a> {
         kind: VariableDeclarationKind,
         pat: &mut BindingPattern<'a>,
         scope_id: ScopeId,
+        binding_scope_id: Option<ScopeId>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
         let mut flags = kind_to_symbol_flags(kind);
@@ -807,8 +842,11 @@ impl<'a> ObjectRestSpread<'a> {
         let kind = VariableDeclarationKind::Let;
         let id = mem::replace(pat, bound_identifier.create_binding_pattern(ctx));
         id.bound_names(&mut |ident| {
-            *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
-                SymbolFlags::BlockScopedVariable;
+            let symbol_id = ident.symbol_id();
+            *ctx.scoping_mut().symbol_flags_mut(symbol_id) = SymbolFlags::BlockScopedVariable;
+            if let Some(binding_scope_id) = binding_scope_id {
+                Self::move_binding_to_scope(ident, binding_scope_id, ctx);
+            }
         });
         let init = bound_identifier.create_read_expression(ctx);
         let declarations = ArenaVec::from_value_in(
@@ -816,6 +854,53 @@ impl<'a> ObjectRestSpread<'a> {
             ctx,
         );
         VariableDeclaration::boxed(SPAN, kind, declarations, false, ctx)
+    }
+
+    fn move_binding_to_scope(
+        ident: &BindingIdentifier<'a>,
+        target_scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let symbol_id = ident.symbol_id();
+        let source_scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+        if source_scope_id == target_scope_id {
+            return;
+        }
+
+        let inaccessible_reference_ids = ctx
+            .scoping()
+            .get_resolved_reference_ids(symbol_id)
+            .iter()
+            .copied()
+            .filter(|&reference_id| {
+                let reference_scope_id = ctx.scoping().get_reference(reference_id).scope_id();
+                reference_scope_id != target_scope_id
+                    && !ctx.scoping().scope_is_descendant_of(reference_scope_id, target_scope_id)
+            })
+            .collect::<Vec<_>>();
+
+        ctx.scoping_mut().move_binding_by_symbol_id(source_scope_id, target_scope_id, symbol_id);
+
+        for reference_id in inaccessible_reference_ids {
+            let reference = ctx.scoping().get_reference(reference_id);
+            let reference_scope_id = reference.scope_id();
+            let replacement_symbol_id = ctx
+                .scoping()
+                .scope_ancestors(reference_scope_id)
+                .find_map(|scope_id| ctx.scoping().get_binding(scope_id, ident.name));
+            let scoping = ctx.scoping_mut();
+            scoping.delete_resolved_reference(symbol_id, reference_id);
+            if let Some(replacement_symbol_id) = replacement_symbol_id {
+                scoping.get_reference_mut(reference_id).set_symbol_id(replacement_symbol_id);
+                scoping.add_resolved_reference(replacement_symbol_id, reference_id);
+            } else {
+                let reference = scoping.get_reference(reference_id);
+                let unresolved_reference =
+                    Reference::new(reference.node_id(), reference.scope_id(), reference.flags());
+                *scoping.get_reference_mut(reference_id) = unresolved_reference;
+                scoping.add_root_unresolved_reference(ident.name, reference_id);
+            }
+        }
     }
 }
 

@@ -292,7 +292,15 @@ impl<'a> TypeScriptNamespace {
                 parent_stmts.push(Statement::from(declaration));
             }
         }
-        let func_body = FunctionBody::new(SPAN, directives, new_stmts, ctx);
+        *ctx.scoping_mut().scope_flags_mut(scope_id) =
+            ScopeFlags::Function | ScopeFlags::StrictMode;
+        let body_scope_id = ctx.insert_scope_below_statements_from_scope_id(
+            &new_stmts,
+            scope_id,
+            ScopeFlags::FunctionBody,
+        );
+        let func_body =
+            FunctionBody::new_with_scope_id(SPAN, body_scope_id, directives, new_stmts, ctx);
 
         parent_stmts.push(Self::transform_namespace(
             span,
@@ -350,8 +358,6 @@ impl<'a> TypeScriptNamespace {
                     scope_id,
                     ctx,
                 ));
-            *ctx.scoping_mut().scope_flags_mut(scope_id) =
-                ScopeFlags::Function | ScopeFlags::StrictMode;
             Expression::new_parenthesized_expression(span, function_expr, ctx)
         };
 

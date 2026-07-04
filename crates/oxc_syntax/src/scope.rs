@@ -44,6 +44,7 @@ bitflags! {
         const DirectEval       = 1 << 10; // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval>
         const TsConditional    = 1 << 11;
         const With             = 1 << 12; // `with (obj)`
+        const FunctionBody     = 1 << 13;
         const Var = Self::Top.bits() | Self::Function.bits() | Self::ClassStaticBlock.bits() | Self::TsModuleBlock.bits();
     }
 }
@@ -73,6 +74,11 @@ impl ScopeFlags {
     #[inline]
     pub fn is_function(self) -> bool {
         self.contains(Self::Function)
+    }
+
+    #[inline]
+    pub fn is_function_body(self) -> bool {
+        self.contains(Self::FunctionBody)
     }
 
     #[inline]

@@ -221,7 +221,18 @@ impl<'a> TypeScriptEnum {
             ctx,
         );
         let span = decl.span;
-        let body = FunctionBody::boxed(span, ArenaVec::new_in(ctx), statements, ctx);
+        let body_scope_id = ctx.insert_scope_below_statements_from_scope_id(
+            &statements,
+            func_scope_id,
+            ScopeFlags::FunctionBody,
+        );
+        let body = FunctionBody::boxed_with_scope_id(
+            span,
+            body_scope_id,
+            ArenaVec::new_in(ctx),
+            statements,
+            ctx,
+        );
         let callee = Expression::new_function_expression_with_scope_id_and_pure_and_pife(
             span,
             FunctionType::FunctionExpression,

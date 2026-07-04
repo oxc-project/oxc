@@ -6,7 +6,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/global-resoluti
   {
     "children": [
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(FunctionBody)",
+            "id": 2,
+            "node": "FunctionBody",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(Function | Arrow)",
         "id": 1,
         "node": "ArrowFunctionExpression",

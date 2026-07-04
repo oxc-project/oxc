@@ -195,14 +195,14 @@ function _() {
 
 function _() { let a; { let b; { let c; { let d; var x; } } } }
 function _() {
-	let e;
+	let t;
 	{
-		let e;
+		let t;
 		{
-			let e;
+			let t;
 			{
-				let e;
-				var t;
+				let t;
+				var e;
 			}
 		}
 	}
@@ -210,15 +210,15 @@ function _() {
 
 function _() { let a; { let b; { let c; { console.log(a); let d; var x; } } } }
 function _() {
-	let e;
+	let t;
 	{
 		let n;
 		{
 			let n;
 			{
-				console.log(e);
+				console.log(t);
 				let n;
-				var t;
+				var e;
 			}
 		}
 	}
