@@ -70,7 +70,15 @@ fn run_fixture(source: &str) -> String {
     }
 
     push_diagnostics(&mut out, "Diagnostics", result.diagnostics.as_slice());
-    if result.changed {
+    // Mirror the upstream `snap` runner, which always re-emits the program as
+    // `## Code` unless a hard error turns the output into `## Error`. So when the
+    // compiler cleanly declines to change anything (e.g. `@expectNothingCompiled`,
+    // or a file with no React-like functions), echo the reprinted source rather
+    // than the `No changes.` marker. The marker is kept only when an error was
+    // reported (parse failure or a compile diagnostic), where upstream emits no
+    // code — and echoing a parse-recovered AST would be misleading.
+    let clean = parsed.diagnostics.is_empty() && result.diagnostics.as_slice().is_empty();
+    if result.changed || clean {
         out.push_str(&Codegen::new().build(&program).code);
     } else {
         out.push_str("No changes.");

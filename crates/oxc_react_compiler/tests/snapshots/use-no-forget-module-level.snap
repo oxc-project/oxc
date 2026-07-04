@@ -2,4 +2,10 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/use-no-forget-module-level.js
 ---
-No changes.
+"use no forget";
+export default function foo(x, y) {
+	if (x) {
+		return foo(false, y);
+	}
+	return [y * 10];
+}

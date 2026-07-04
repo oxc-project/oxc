@@ -2,4 +2,16 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/todo.invalid.invalid-rules-of-hooks-191029ac48c8.js
 ---
-No changes.
+// @expectNothingCompiled @skip
+// Passed but should have failed
+// Invalid because it's dangerous.
+// Normally, this would crash, but not if you use inline requires.
+// This *must* be invalid.
+// It's expected to have some false positives, but arguably
+// they are confusing anyway due to the use*() convention
+// already being associated with Hooks.
+useState();
+if (foo) {
+	const foo = React.useCallback(() => {});
+}
+useCustomHook();

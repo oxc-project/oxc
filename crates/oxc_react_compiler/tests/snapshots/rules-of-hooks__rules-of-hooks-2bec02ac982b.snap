@@ -2,4 +2,11 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/rules-of-hooks-2bec02ac982b.js
 ---
-No changes.
+// @expectNothingCompiled @compilationMode:"infer"
+// Valid because hooks can call hooks.
+function createHook() {
+	return function useHook() {
+		useHook1();
+		useHook2();
+	};
+}

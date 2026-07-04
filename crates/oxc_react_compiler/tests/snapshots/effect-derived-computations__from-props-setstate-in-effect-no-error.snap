@@ -2,4 +2,10 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/effect-derived-computations/from-props-setstate-in-effect-no-error.js
 ---
-No changes.
+// @validateNoDerivedComputationsInEffects_exp @enableTreatSetIdentifiersAsStateSetters @loggerTestOnly @outputMode:"lint"
+function Component({ setParentState, prop }) {
+	useEffect(() => {
+		setParentState(prop);
+	}, [prop]);
+	return <div>{prop}</div>;
+}
