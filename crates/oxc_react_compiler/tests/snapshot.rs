@@ -14,9 +14,14 @@
 //! The snapshots are oxc's *own* golden output, so any change in compiler behaviour
 //! surfaces as a diff. Regenerate with `cargo insta accept` after reviewing.
 
-use std::{fs, path::Path};
+use std::{
+    ffi::OsStr,
+    fs,
+    path::{Component, Path, PathBuf},
+};
 
 use convert_case::{Case, Casing};
+use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
@@ -41,11 +46,16 @@ fn snapshots() {
     let fixtures = concat!(env!("CARGO_MANIFEST_DIR"), "/fixtures");
     insta::glob!(fixtures, "**/*.{js,cjs,mjs,ts,cts,mts,jsx,tsx}", |path| {
         let source = fs::read_to_string(path).unwrap();
+        let source = normalize_newlines(&source);
         let snapshot = run_fixture(&source);
         insta::with_settings!({ prepend_module_to_snapshot => false, snapshot_suffix => "", omit_expression => true }, {
             insta::assert_snapshot!(snapshot_name(path), snapshot);
         });
     });
+}
+
+fn normalize_newlines(source: &str) -> String {
+    source.cow_replace("\r\n", "\n").cow_replace('\r', "\n").into_owned()
 }
 
 /// Parse, analyse, compile, and render the compiled program + diagnostics.
@@ -107,13 +117,31 @@ fn push_diagnostics(out: &mut String, label: &str, diagnostics: &[impl std::fmt:
     out.push('\n');
 }
 
-/// Snapshot name = fixture path under `fixtures/`, extension dropped and `/` → `__`
-/// so nested fixtures with the same basename don't collide.
+/// Snapshot name = fixture path under `fixtures/`, extension dropped and path
+/// separators replaced with `__`, so nested fixtures with the same basename
+/// don't collide.
 fn snapshot_name(path: &Path) -> String {
-    let full = path.to_string_lossy();
-    let rel = full.rsplit_once("/fixtures/").map_or(full.as_ref(), |(_, rel)| rel);
-    let stem = rel.rsplit_once('.').map_or(rel, |(stem, _ext)| stem);
-    stem.split('/').collect::<Vec<_>>().join("__")
+    let components = path.components().collect::<Vec<_>>();
+    let start = components
+        .iter()
+        .rposition(|component| {
+            matches!(component, Component::Normal(part) if *part == OsStr::new("fixtures"))
+        })
+        .map_or(0, |index| index + 1);
+
+    let mut rel = PathBuf::new();
+    for component in &components[start..] {
+        rel.push(component.as_os_str());
+    }
+    rel.set_extension("");
+
+    rel.components()
+        .filter_map(|component| match component {
+            Component::Normal(part) => Some(part.to_string_lossy()),
+            _ => None,
+        })
+        .collect::<Vec<_>>()
+        .join("__")
 }
 
 /// Build the per-fixture `SourceType` + `PluginOptions` from the first-line pragmas.

@@ -2315,6 +2315,7 @@ name = "oxc_react_compiler"
 version = "0.138.0"
 dependencies = [
  "convert_case",
+ "cow-utils",
  "hmac-sha256",
  "indexmap",
  "insta",
