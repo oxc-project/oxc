@@ -29,7 +29,7 @@ impl<'a> Symbol<'_, 'a> {
         // occur within its own declaration since it's declared in another
         // module.
         const IMPORT: SymbolFlags = SymbolFlags::Import.union(SymbolFlags::TypeImport);
-        // note: intetionally do not use `SymbolFlags::is_type` here, since that
+        // note: intentionally do not use `SymbolFlags::is_type` here, since that
         // can return `true` for values
         const TYPE: SymbolFlags =
             SymbolFlags::TypeAlias.union(SymbolFlags::TypeParameter).union(SymbolFlags::Interface);
