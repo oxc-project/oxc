@@ -1,10 +1,9 @@
-use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FunctionBody, Statement},
+    ast::{CallExpression, Expression, ReturnStatement},
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::AstNode;
+use oxc_semantic::{AstNode, NodeId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -47,85 +46,117 @@ test('one', () => {
 ";
 
 pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    match node.kind() {
-        AstKind::CallExpression(call_expr) => {
-            check_call_expression(call_expr, node, ctx);
-        }
-        AstKind::Function(fn_decl) => {
-            let Some(func_body) = &fn_decl.body else {
-                return;
-            };
-            check_test_return_statement(func_body, ctx);
-        }
-        _ => (),
-    }
-}
+    let AstKind::ReturnStatement(return_stmt) = node.kind() else { return };
+    let Some(call_expr) = returned_expect_call(return_stmt) else { return };
 
-fn check_call_expression<'a>(
-    call_expr: &'a CallExpression<'a>,
-    node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
-) {
-    if !is_type_of_jest_fn_call(
-        call_expr,
-        &PossibleJestNode { node, original: None },
-        ctx,
-        &[JestFnKind::General(JestGeneralFnKind::Test)],
-    ) {
-        return;
-    }
-
-    for argument in &call_expr.arguments {
-        let Some(arg_expr) = argument.as_expression() else {
-            continue;
-        };
-        match arg_expr {
-            Expression::ArrowFunctionExpression(arrow_expr) => {
-                check_test_return_statement(&arrow_expr.body, ctx);
-            }
-            Expression::FunctionExpression(func_expr) => {
-                let Some(func_body) = &func_expr.body else {
-                    continue;
-                };
-                check_test_return_statement(func_body, ctx);
-            }
-            _ => {}
-        }
-    }
-}
-
-fn check_test_return_statement<'a>(
-    func_body: &ArenaBox<'_, FunctionBody<'a>>,
-    ctx: &LintContext<'a>,
-) {
-    let Some(return_stmt) =
-        func_body.statements.iter().find(|stmt| matches!(stmt, Statement::ReturnStatement(_)))
-    else {
-        return;
-    };
-
-    let Statement::ReturnStatement(stmt) = return_stmt else {
-        return;
-    };
-    let Some(Expression::CallExpression(call_expr)) = &stmt.argument else {
-        return;
-    };
-    let Some(mem_expr) = call_expr.callee.as_member_expression() else {
-        return;
-    };
-    let Expression::CallExpression(mem_call_expr) = mem_expr.object() else {
-        return;
-    };
-    let Expression::Identifier(ident) = &mem_call_expr.callee else {
-        return;
-    };
-
-    if ident.name != "expect" {
+    if !is_in_test_context(node, ctx) {
         return;
     }
 
     ctx.diagnostic(no_test_return_statement_diagnostic(Span::new(
-        return_stmt.span().start,
+        return_stmt.span.start,
         call_expr.span.start - 1,
     )));
+}
+
+fn returned_expect_call<'a>(
+    return_stmt: &'a ReturnStatement<'a>,
+) -> Option<&'a CallExpression<'a>> {
+    let Expression::CallExpression(call_expr) = return_stmt.argument.as_ref()? else {
+        return None;
+    };
+    let mem_expr = call_expr.callee.as_member_expression()?;
+    let Expression::CallExpression(mem_call_expr) = mem_expr.object() else {
+        return None;
+    };
+    let Expression::Identifier(ident) = &mem_call_expr.callee else {
+        return None;
+    };
+
+    if ident.name != "expect" {
+        return None;
+    }
+
+    Some(call_expr)
+}
+
+fn is_in_test_context<'a>(return_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let Some(function_node) = containing_function_node(return_node, ctx) else { return false };
+
+    is_direct_test_callback(function_node, ctx) || is_referenced_test_callback(function_node, ctx)
+}
+
+fn containing_function_node<'a, 'c>(
+    return_node: &AstNode<'a>,
+    ctx: &'c LintContext<'a>,
+) -> Option<&'c AstNode<'a>> {
+    ctx.nodes().ancestors(return_node.id()).find(|ancestor| {
+        matches!(ancestor.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+    })
+}
+
+fn is_direct_test_callback<'a>(function_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let call_node = ctx.nodes().parent_node(function_node.id());
+    let AstKind::CallExpression(call_expr) = call_node.kind() else { return false };
+
+    is_function_callback_argument(call_expr, function_node)
+        && is_test_call(call_expr, call_node, ctx)
+}
+
+fn is_referenced_test_callback<'a>(function_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let AstKind::Function(function) = function_node.kind() else { return false };
+    if !function.is_function_declaration() {
+        return false;
+    }
+
+    let Some(symbol_id) = function.id.as_ref().map(oxc_ast::ast::BindingIdentifier::symbol_id)
+    else {
+        return false;
+    };
+
+    ctx.semantic()
+        .symbol_references(symbol_id)
+        .any(|reference| is_reference_test_callback(reference.node_id(), ctx))
+}
+
+fn is_reference_test_callback(reference_id: NodeId, ctx: &LintContext) -> bool {
+    let call_node = ctx.nodes().parent_node(reference_id);
+    let AstKind::CallExpression(call_expr) = call_node.kind() else { return false };
+
+    is_reference_callback_argument(call_expr, ctx.nodes().kind(reference_id).span())
+        && is_test_call(call_expr, call_node, ctx)
+}
+
+fn is_function_callback_argument(call_expr: &CallExpression, function_node: &AstNode) -> bool {
+    call_expr.arguments.iter().filter_map(|arg| arg.as_expression()).any(|expr| {
+        match (expr.get_inner_expression(), function_node.kind()) {
+            (
+                Expression::ArrowFunctionExpression(arrow_expr),
+                AstKind::ArrowFunctionExpression(node),
+            ) => arrow_expr.span == node.span,
+            (Expression::FunctionExpression(func_expr), AstKind::Function(node)) => {
+                func_expr.span == node.span
+            }
+            _ => false,
+        }
+    })
+}
+
+fn is_reference_callback_argument(call_expr: &CallExpression, reference_span: Span) -> bool {
+    call_expr.arguments.iter().filter_map(|arg| arg.as_expression()).any(|expr| {
+        matches!(expr.get_inner_expression(), Expression::Identifier(ident) if ident.span == reference_span)
+    })
+}
+
+fn is_test_call<'a>(
+    call_expr: &'a CallExpression<'a>,
+    call_node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    is_type_of_jest_fn_call(
+        call_expr,
+        &PossibleJestNode { node: call_node, original: None },
+        ctx,
+        &[JestFnKind::General(JestGeneralFnKind::Test)],
+    )
 }
