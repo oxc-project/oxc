@@ -1,7 +1,7 @@
 use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::Program;
+use oxc_ast::{ast::Program, builder::AstBuilderStats};
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_diagnostics::Diagnostics;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
@@ -137,6 +137,7 @@ pub trait CompilerInterface {
             self.handle_errors(parser_return.diagnostics);
         }
 
+        let parser_stats = parser_return.stats;
         let mut program = parser_return.program;
 
         /* Isolated Declarations */
@@ -146,7 +147,7 @@ pub trait CompilerInterface {
 
         /* Semantic */
 
-        let mut semantic_return = self.semantic(&program);
+        let mut semantic_return = self.semantic(&program, parser_stats);
         if !semantic_return.diagnostics.is_empty() {
             self.handle_errors(semantic_return.diagnostics);
             return;
@@ -252,8 +253,12 @@ pub trait CompilerInterface {
         Parser::new(allocator, source_text, source_type).with_options(self.parse_options()).parse()
     }
 
-    fn semantic<'a>(&self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
-        let mut builder = SemanticBuilder::new_compiler();
+    fn semantic<'a>(
+        &self,
+        program: &'a Program<'a>,
+        parser_stats: AstBuilderStats,
+    ) -> SemanticBuilderReturn<'a> {
+        let mut builder = SemanticBuilder::new_compiler().with_stats(parser_stats);
 
         if self.transform_options().is_some() {
             // Estimate transformer will triple scopes, symbols, references

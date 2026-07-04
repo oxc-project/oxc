@@ -1,5 +1,8 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::{
+    ast::*,
+    builder::{AstBuild, NONE},
+};
 use oxc_span::GetSpan;
 use rustc_hash::FxHashMap;
 
@@ -949,7 +952,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
                 ImportOrExportSpecifier::Import(ImportSpecifier::new(
                     self.end_span(specifier_span),
-                    property_name.unwrap_or_else(|| name.clone()),
+                    property_name.unwrap_or_else(|| {
+                        self.ast.record_node();
+                        name.clone()
+                    }),
                     BindingIdentifier::new(name.span(), name.name(), self),
                     kind,
                     self,
@@ -965,7 +971,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
                 let exported = match property_name {
                     Some(property_name) => property_name,
-                    None => name.clone(),
+                    None => {
+                        self.ast.record_node();
+                        name.clone()
+                    }
                 };
                 ImportOrExportSpecifier::Export(ExportSpecifier::new(
                     self.end_span(specifier_span),

@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, builder::AstBuild};
 use oxc_span::{FileExtension, GetSpan};
 
 use crate::{
@@ -73,11 +73,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match self.cur_kind() {
             Kind::Str => {
                 let literal = self.parse_literal_string();
+                self.ast.record_symbol();
                 TSEnumMemberName::String(self.alloc(literal))
             }
             Kind::LBrack => match self.parse_computed_property_name() {
-                Expression::StringLiteral(literal) => TSEnumMemberName::ComputedString(literal),
+                Expression::StringLiteral(literal) => {
+                    self.ast.record_symbol();
+                    TSEnumMemberName::ComputedString(literal)
+                }
                 Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
+                    self.ast.record_symbol();
                     TSEnumMemberName::ComputedTemplateString(template)
                 }
                 Expression::NumericLiteral(literal) => {
@@ -103,6 +108,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             _ => {
                 let ident_name = self.parse_identifier_name();
+                self.ast.record_symbol();
                 TSEnumMemberName::Identifier(self.alloc(ident_name))
             }
         }

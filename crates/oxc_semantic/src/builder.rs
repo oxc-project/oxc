@@ -283,8 +283,8 @@ impl<'a> SemanticBuilder<'a> {
     /// If semantic analysis has already been performed on this AST, get the existing stats with
     /// [`Semantic::stats`], and pass them in with this method, to avoid the stats collection AST pass.
     #[must_use]
-    pub fn with_stats(mut self, stats: Stats) -> Self {
-        self.stats = Some(stats);
+    pub fn with_stats<S: Into<Stats>>(mut self, stats: S) -> Self {
+        self.stats = Some(stats.into());
         self
     }
 
@@ -292,9 +292,6 @@ impl<'a> SemanticBuilder<'a> {
     ///
     /// `excess_capacity` is provided as a fraction.
     /// e.g. to over-allocate by 20%, pass `0.2` as `excess_capacity`.
-    ///
-    /// Has no effect if a `Stats` object is provided with [`SemanticBuilder::with_stats`],
-    /// only if `SemanticBuilder` is calculating stats itself.
     ///
     /// This is useful when you intend to modify `Semantic`, adding more `nodes`, `scopes`, `symbols`,
     /// or `references`. Allocating excess capacity for these additions at the outset prevents
@@ -330,7 +327,7 @@ impl<'a> SemanticBuilder<'a> {
         // If user did not provide existing `Stats`, calculate them by visiting AST.
         #[cfg_attr(not(debug_assertions), expect(unused_variables))]
         let (stats, check_stats) = if let Some(stats) = self.stats {
-            (stats, None)
+            (stats.increase_by(self.excess_capacity), None)
         } else {
             let stats = Stats::count(program);
             let stats_with_excess = stats.increase_by(self.excess_capacity);

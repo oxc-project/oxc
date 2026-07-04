@@ -1138,6 +1138,7 @@ impl Runtime {
         }
 
         let semantic_ret = SemanticBuilder::new_linter()
+            .with_stats(ret.stats)
             .with_check_syntax_error(check_syntax_errors)
             .build(allocator.alloc(ret.program));
 
