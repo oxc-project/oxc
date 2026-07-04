@@ -1,0 +1,671 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:1]
+ 1 │ var bar = true, baz = false;
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:18]
+ 1 │ function foo() { var bar = true, baz = false; }
+   ·                  ────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:12]
+ 1 │ if (foo) { var bar = true, baz = false; }
+   ·            ────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:26]
+ 1 │ switch (foo) { case bar: var baz = true, quux = false; }
+   ·                          ─────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:25]
+ 1 │ switch (foo) { default: var baz = true, quux = false; }
+   ·                         ─────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:34]
+ 1 │ function foo() { var bar = true; var baz = false; }
+   ·                                  ────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:17]
+ 1 │ var a = 1; for (var b = 2;;) {}
+   ·                 ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Split initialized 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:18]
+ 1 │ function foo() { var foo = true, bar = false; }
+   ·                  ────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split uninitialized 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:18]
+ 1 │ function foo() { var foo, bar; }
+   ·                  ─────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement with uninitialized variables.
+   ╭─[one_var.tsx:1:61]
+ 1 │ function foo() { var bar, baz; var a = true; var b = false; var c, d;}
+   ·                                                             ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement with initialized variables.
+   ╭─[one_var.tsx:1:61]
+ 1 │ function foo() { var bar = true, baz = false; var a; var b; var c = true, d = false; }
+   ·                                                             ────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:18]
+ 1 │ function foo() { var bar = true, baz = false; var a, b;}
+   ·                  ────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:47]
+ 1 │ function foo() { var bar = true, baz = false; var a, b;}
+   ·                                               ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:34]
+ 1 │ function foo() { var bar = true; var baz = false; var a; var b;}
+   ·                                  ────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:51]
+ 1 │ function foo() { var bar = true; var baz = false; var a; var b;}
+   ·                                                   ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:58]
+ 1 │ function foo() { var bar = true; var baz = false; var a; var b;}
+   ·                                                          ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:37]
+ 1 │ function foo() { var a = [1, 2, 3]; var [b, c, d] = a; }
+   ·                                     ──────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'let' statement.
+   ╭─[one_var.tsx:1:29]
+ 1 │ function foo() { let a = 1; let b = 2; }
+   ·                             ──────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'const' statement.
+   ╭─[one_var.tsx:1:31]
+ 1 │ function foo() { const a = 1; const b = 2; }
+   ·                               ────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'let' declarations into multiple statements.
+   ╭─[one_var.tsx:1:18]
+ 1 │ function foo() { let a = 1, b = 2; }
+   ·                  ─────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split uninitialized 'let' declarations into multiple statements.
+   ╭─[one_var.tsx:1:18]
+ 1 │ function foo() { let a, b; }
+   ·                  ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'const' declarations into multiple statements.
+   ╭─[one_var.tsx:1:18]
+ 1 │ function foo() { const a = 1, b = 2; }
+   ·                  ───────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'let' statement.
+   ╭─[one_var.tsx:1:74]
+ 1 │ let foo = true; switch(foo) { case true: let bar = 2; break; case false: let baz = 3; break; }
+   ·                                                                          ────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:23]
+ 1 │ var one = 1, two = 2; var three;
+   ·                       ──────────
+   ╰────
+
+  ⚠ eslint(one-var): Split initialized 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:1]
+ 1 │ var i = [0], j;
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split uninitialized 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:1]
+ 1 │ var i = [0], j;
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:40]
+ 1 │ var foo = function() { var bar = true; var baz = false; }
+   ·                                        ────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:45]
+ 1 │ function foo() { var bar = true; if (qux) { var baz = false; } else { var quxx = 42; } }
+   ·                                             ────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:71]
+ 1 │ function foo() { var bar = true; if (qux) { var baz = false; } else { var quxx = 42; } }
+   ·                                                                       ──────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:15]
+ 1 │ var {} = obj; var a;
+   ·               ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:25]
+ 1 │ function f() { var a; { var {} = obj; } }
+   ·                         ─────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:15]
+ 1 │ var {} = obj; var a;
+   ·               ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:41]
+ 1 │ function f() { {{{{{ var a; }}}}} {{{{{ var b; }}}}} }
+   ·                                         ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:35]
+ 1 │ var foo = () => { var bar = true; var baz = false; }
+   ·                                   ────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:51]
+ 1 │ var foo = function() { var bar = true; if (qux) { var baz = false; } }
+   ·                                                   ────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:10]
+ 1 │ var foo; var bar;
+   ·          ────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:29]
+ 1 │ for (var x of foo) {}; for (var y of foo) {}
+   ·                             ─────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:29]
+ 1 │ for (var x in foo) {}; for (var y in foo) {}
+   ·                             ─────
+   ╰────
+
+  ⚠ eslint(one-var): Split initialized 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:1]
+ 1 │ var x = 1, y = 2; for (var z in foo) {}
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split initialized 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:1]
+ 1 │ var x = 1, y = 2; for (var z of foo) {}
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement with uninitialized variables.
+   ╭─[one_var.tsx:1:8]
+ 1 │ var x; var y; for (var z in foo) {}
+   ·        ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement with uninitialized variables.
+   ╭─[one_var.tsx:1:8]
+ 1 │ var x; var y; for (var z of foo) {}
+   ·        ──────
+   ╰────
+
+  ⚠ eslint(one-var): Split initialized 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:1]
+ 1 │ var {foo} = 1, [bar] = 2;
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'const' statement.
+   ╭─[one_var.tsx:1:29]
+ 1 │ const foo = require('foo'); const bar = require('bar');
+   ·                             ───────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split requires to be separated into a single block.
+   ╭─[one_var.tsx:1:1]
+ 1 │ var foo = require('foo'), bar;
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split requires to be separated into a single block.
+   ╭─[one_var.tsx:1:1]
+ 1 │ var foo, bar = require('bar');
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split requires to be separated into a single block.
+   ╭─[one_var.tsx:1:1]
+ 1 │ let foo, bar = require('bar');
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split requires to be separated into a single block.
+   ╭─[one_var.tsx:1:1]
+ 1 │ const foo = 0, bar = require('bar');
+   · ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split requires to be separated into a single block.
+   ╭─[one_var.tsx:1:1]
+ 1 │ var a = require('a'), b = 1; var c = require('c');
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:30]
+ 1 │ var a = require('a'), b = 1; var c = require('c');
+   ·                              ─────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split requires to be separated into a single block.
+   ╭─[one_var.tsx:1:12]
+ 1 │ var x = 1; var c = require('c'), d = 2; var e = require('e');
+   ·            ────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:12]
+ 1 │ var x = 1; var c = require('c'), d = 2; var e = require('e');
+   ·            ────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:41]
+ 1 │ var x = 1; var c = require('c'), d = 2; var e = require('e');
+   ·                                         ─────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split requires to be separated into a single block.
+   ╭─[one_var.tsx:1:23]
+ 1 │ var r = require('r'); var r2 = require('r2'), a; var b;
+   ·                       ──────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:23]
+ 1 │ var r = require('r'); var r2 = require('r2'), a; var b;
+   ·                       ──────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:50]
+ 1 │ var r = require('r'); var r2 = require('r2'), a; var b;
+   ·                                                  ──────
+   ╰────
+
+  ⚠ eslint(one-var): Split requires to be separated into a single block.
+   ╭─[one_var.tsx:1:12]
+ 1 │ var x = 1; var c = require('c'), d = 2;
+   ·            ────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:12]
+ 1 │ var x = 1; var c = require('c'), d = 2;
+   ·            ────────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:15]
+ 1 │ var a = 1, b; var c;
+   ·               ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:19]
+ 1 │ var a = 0, b = 1; var c = 2;
+   ·                   ──────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'let' statement.
+   ╭─[one_var.tsx:1:15]
+ 1 │ let a = 1, b; let c;
+   ·               ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'let' statement.
+   ╭─[one_var.tsx:1:19]
+ 1 │ let a = 0, b = 1; let c = 2;
+   ·                   ──────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'const' statement.
+   ╭─[one_var.tsx:1:21]
+ 1 │ const a = 0, b = 1; const c = 2;
+   ·                     ────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'let' declarations into multiple statements.
+   ╭─[one_var.tsx:1:20]
+ 1 │ class C { static { let x, y; } }
+   ·                    ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:20]
+ 1 │ class C { static { var x, y; } }
+   ·                    ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'let' statement.
+   ╭─[one_var.tsx:1:27]
+ 1 │ class C { static { let x; let y; } }
+   ·                           ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:27]
+ 1 │ class C { static { var x; var y; } }
+   ·                           ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'let' statement.
+   ╭─[one_var.tsx:1:32]
+ 1 │ class C { static { let x; foo; let y; } }
+   ·                                ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:32]
+ 1 │ class C { static { var x; foo; var y; } }
+   ·                                ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:38]
+ 1 │ class C { static { var x; if (foo) { var y; } } }
+   ·                                      ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'let' statement.
+   ╭─[one_var.tsx:1:27]
+ 1 │ class C { static { let x; let y; } }
+   ·                           ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:27]
+ 1 │ class C { static { var x; var y; } }
+   ·                           ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'using' statement.
+   ╭─[one_var.tsx:1:14]
+ 1 │ using a = 0; using b = 1;
+   ·              ────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'await using' statement.
+   ╭─[one_var.tsx:1:20]
+ 1 │ await using a = 0; await using b = 1;
+   ·                    ──────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'using' declarations into multiple statements.
+   ╭─[one_var.tsx:1:1]
+ 1 │ using a = 0, b = 1;
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'await using' declarations into multiple statements.
+   ╭─[one_var.tsx:1:1]
+ 1 │ await using a = 0, b = 1;
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'using' statement.
+   ╭─[one_var.tsx:1:14]
+ 1 │ using a = 0; using b = 1;
+   ·              ────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'await using' statement.
+   ╭─[one_var.tsx:1:20]
+ 1 │ await using a = 0; await using b = 1;
+   ·                    ──────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:23]
+ 1 │ function f() { var a; var b; }
+   ·                       ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:26]
+ 1 │ const f = () => { var a; var b; };
+   ·                          ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:12]
+ 1 │ var x = 1; var fs = require('fs');
+   ·            ───────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:12]
+ 1 │ var x = 1; var fs = require('fs');
+   ·            ───────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:29]
+ 1 │ switch (x) { case 1: var a; var b; }
+   ·                             ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'const' statement.
+   ╭─[one_var.tsx:1:28]
+ 1 │ export const a = 1; export const b = 2;
+   ·                            ────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'const' declarations into multiple statements.
+   ╭─[one_var.tsx:1:8]
+ 1 │ export const a = 1, b = 2;
+   ·        ───────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:20]
+ 1 │ foo(() => { var a; var b; });
+   ·                    ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:33]
+ 1 │ const obj = { method() { var a; var b; } };
+   ·                                 ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:29]
+ 1 │ class C { method() { var a; var b; } }
+   ·                             ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:35]
+ 1 │ const C = class { static { var a; var b; } };
+   ·                                   ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:40]
+ 1 │ class C { field = function () { var a; var b; }; }
+   ·                                        ──────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:10]
+ 1 │ if (foo) var x, y;
+   ·          ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Split initialized 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:10]
+ 1 │ if (foo) var x = 1, y = 1;
+   ·          ─────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:18]
+ 1 │ if (foo) {} else var x, y;
+   ·                  ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:13]
+ 1 │ while (foo) var x, y;
+   ·             ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:4]
+ 1 │ do var x, y; while (foo);
+   ·    ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:4]
+ 1 │ do var x = f(), y = b(); while (x < y);
+   ·    ─────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:10]
+ 1 │ for (;;) var x, y;
+   ·          ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:18]
+ 1 │ for (foo in bar) var x, y;
+   ·                  ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:18]
+ 1 │ for (foo of bar) var x, y;
+   ·                  ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:12]
+ 1 │ with (foo) var x, y;
+   ·            ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:8]
+ 1 │ label: var x, y;
+   ·        ─────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement with uninitialized variables.
+   ╭─[one_var.tsx:1:19]
+ 1 │ var a = 0; var b; var c; var d = 1
+   ·                   ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement with uninitialized variables.
+   ╭─[one_var.tsx:1:30]
+ 1 │ var a = 0; var b = 1; var c; var d;
+   ·                              ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement with initialized variables.
+   ╭─[one_var.tsx:1:12]
+ 1 │ var a = 0; var b = 1; var c; var d;
+   ·            ──────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:25]
+ 1 │ const a = 0; var b = 1; var c = 2; const d = 3;
+   ·                         ──────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'const' statement.
+   ╭─[one_var.tsx:1:25]
+ 1 │ let a = 0; const b = 1; const c = 1; var d = 2;
+   ·                         ────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'let' statement with initialized variables.
+   ╭─[one_var.tsx:1:31]
+ 1 │ class C { static { let a = 0; let b = 1; } }
+   ·                               ──────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement with initialized variables.
+   ╭─[one_var.tsx:1:31]
+ 1 │ class C { static { var a = 0; var b = 1; } }
+   ·                               ──────────
+   ╰────
+
+  ⚠ eslint(one-var): Split initialized 'using' declarations into multiple statements.
+   ╭─[one_var.tsx:1:1]
+ 1 │ using a = 0, b = 1;
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split initialized 'await using' declarations into multiple statements.
+   ╭─[one_var.tsx:1:1]
+ 1 │ await using a = 0, b = 1;
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:2:1]
+ 1 │ var a
+ 2 │ var b
+   · ─────
+   ╰────

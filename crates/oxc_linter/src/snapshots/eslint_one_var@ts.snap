@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.ts:1:1]
+ 1 │ declare var a, b;
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.ts:1:16]
+ 1 │ declare var a; declare var b;
+   ·                ──────────────
+   ╰────
+
+  ⚠ eslint(one-var): Split 'let' declarations into multiple statements.
+   ╭─[one_var.ts:1:1]
+ 1 │ declare let a, b;
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.ts:1:31]
+ 1 │ declare module 'pkg' { var a; var b; }
+   ·                               ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.ts:1:25]
+ 1 │ declare global { var a; var b; }
+   ·                         ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'let' statement.
+   ╭─[one_var.ts:1:25]
+ 1 │ declare global { let a; let b; }
+   ·                         ──────
+   ╰────
