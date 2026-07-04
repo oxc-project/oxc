@@ -16,10 +16,12 @@
 //! Native diagnostics and fixes therefore map back to the original file with no source
 //! mapping at all; diagnostics inside masked regions are discarded by the caller.
 //!
-//! Variables referenced only inside a region (per the parser's scope manager, e.g. a
-//! component used only inside an Ember `<template>`) are injected into the placeholder
-//! as `${ref}` interpolations (or `ref;` statements in a `static` block), so that rules
-//! like `no-unused-vars` see them as used.
+//! Usage occurring only inside a region is injected into the placeholder as `${ref}`
+//! interpolations (or `ref;` statements in a `static` block), so that native rules see
+//! it. A ref is a simple expression reported from JS side: a variable name (per the
+//! parser's scope manager, e.g. a component used only inside an Ember `<template>` -
+//! keeps `no-unused-vars` correct), `this` (keeps `class-methods-use-this` correct),
+//! or `this.#name` (keeps `no-unused-private-class-members` correct).
 
 use oxc_span::Span;
 
@@ -45,7 +47,9 @@ pub struct MaskedRegion {
     pub span: Span,
     /// `true` if the region is a class element (its parent node is a `ClassBody`)
     pub class_member: bool,
-    /// Names of variables referenced inside the region but declared outside all regions
+    /// Expressions to inject into the placeholder: variable names referenced inside
+    /// the region but declared outside all regions, `this`, or `this.#name`
+    /// (see module doc)
     pub refs: Vec<String>,
 }
 
@@ -281,6 +285,32 @@ mod tests {
         assert_eq!(shadow.len(), source.len());
         assert!(shadow.contains("static{foo;"));
         assert!(shadow.contains('}'));
+    }
+
+    #[test]
+    fn this_and_private_refs_injected() {
+        // `this` and `this.#name` refs (reported for `this` / private-name usage inside
+        // the region) are spliced like variable refs, in both placeholder styles
+        let source =
+            "class A {\n  m() {\n    return <template>{{this.foo}} x</template>;\n  }\n}\n";
+        let start = source.find('<').unwrap() as u32;
+        let end = source.rfind('>').unwrap() as u32 + 1;
+        let shadow =
+            build_shadow_source(source, &[region(start, end, false, &["this", "this.#count"])])
+                .unwrap();
+        assert_eq!(shadow.len(), source.len());
+        assert!(shadow.contains("${this}"));
+        assert!(shadow.contains("${this.#count}"));
+
+        let source = "class A {\n  <template>{{this.foo}} some text</template>\n}\n";
+        let start = source.find('<').unwrap() as u32;
+        let end = source.rfind("e>").unwrap() as u32 + 2;
+        let shadow =
+            build_shadow_source(source, &[region(start, end, true, &["this", "this.#count"])])
+                .unwrap();
+        assert_eq!(shadow.len(), source.len());
+        assert!(shadow.contains("static{this;"));
+        assert!(shadow.contains("this.#count;"));
     }
 
     #[test]

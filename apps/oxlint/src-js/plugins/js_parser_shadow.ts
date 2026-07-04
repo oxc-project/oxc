@@ -8,11 +8,23 @@
  * native rules can run on the file. Diagnostics inside masked regions are discarded
  * on Rust side.
  *
- * Each region also carries `refs`: names of variables which are referenced inside
- * the region (per the parser's scope manager) but declared outside all regions.
- * Rust injects these into the placeholder (e.g. `${ref}` inside a template literal),
- * so native rules like `no-unused-vars` see variables used only inside custom syntax
- * (e.g. a component referenced only inside an Ember `<template>`) as used.
+ * Each region also carries `refs`: expressions which must appear in the placeholder
+ * for native rules to see usage that really occurs inside the custom syntax. Rust
+ * injects these into the placeholder (e.g. `${ref}` inside a template literal).
+ * A ref is one of:
+ *
+ * - A variable name, for variables referenced inside the region (per the parser's
+ *   scope manager) but declared outside all regions - so `no-unused-vars` sees a
+ *   component referenced only inside an Ember `<template>` as used.
+ * - `this`, when the region contains a `this` usage (a `ThisExpression`, or Glimmer's
+ *   `ThisHead` for `{{this.foo}}` paths) and `this` is lexically valid at the region -
+ *   so `class-methods-use-this` doesn't flag a method whose only `this` usage is
+ *   inside its template.
+ * - `this.#name`, when the region contains a `PrivateIdentifier` usage and `#name` is
+ *   declared by an enclosing class outside all regions - so
+ *   `no-unused-private-class-members` sees the usage. (Glimmer `{{this.#x}}` paths do
+ *   NOT produce this - Glimmer resolves `#x` as a plain property name, not a private
+ *   field, so `tail` entries starting with `#` are deliberately ignored.)
  *
  * Spans are UTF-16 offsets into the source text (converted to UTF-8 on Rust side).
  */
@@ -28,7 +40,11 @@ export interface MaskedRegionReport {
   end: number;
   /** `true` if the region is a class element (parent node is a `ClassBody`) */
   classMember: boolean;
-  /** Names of variables referenced inside the region but declared outside all regions */
+  /**
+   * Expressions to inject into the placeholder so native rules see usage occurring
+   * inside the region: variable names referenced inside the region but declared
+   * outside all regions, `this`, or `this.#name` (see module doc)
+   */
   refs: string[];
 }
 
@@ -80,6 +96,16 @@ export function setParentsAndGetMaskedRegions(
   const regions: MaskedRegionReport[] = [];
   let valid = true;
 
+  // Usage detected inside each region which `collectRefs` cannot see (`this` and
+  // private names are not scope-manager references), plus the region's root node -
+  // its parent chain determines what is injectable at the region's position
+  const detections: {
+    region: MaskedRegionReport;
+    root: JsParserNode;
+    usesThis: boolean;
+    privateNames: Set<string>;
+  }[] = [];
+
   function visitNode(node: JsParserNode, parent: JsParserNode | null, insideCustom: boolean): void {
     // Set `parent` on the node, like ESLint does (plain enumerable assignment)
     node.parent = parent;
@@ -103,12 +129,14 @@ export function setParentsAndGetMaskedRegions(
         ) {
           valid = false;
         } else {
-          regions.push({
+          const region: MaskedRegionReport = {
             start: start as number,
             end: end as number,
             classMember: parent !== null && parent.type === "ClassBody",
             refs: [],
-          });
+          };
+          regions.push(region);
+          detections.push(detectInjectables(node, region));
         }
       }
     }
@@ -139,9 +167,152 @@ export function setParentsAndGetMaskedRegions(
     if (regions[i].start < regions[i - 1].end) return null;
   }
 
+  // Inject detected `this` / private-name usage. Runs before `collectRefs` so these
+  // deterministic usage facts get placeholder space first. The region root's parent
+  // chain is fully set by now, and every ancestor of a root is outside all regions
+  // (an ancestor inside another region would make that region overlap this one).
+  for (const { region, root, usesThis, privateNames } of detections) {
+    if (usesThis && hasThisContext(root)) region.refs.push("this");
+    for (const name of privateNames) {
+      // Restrict to ASCII identifiers, same as `collectRefs` (see INJECTABLE_IDENT_REGEX)
+      if (!INJECTABLE_IDENT_REGEX.test(name)) continue;
+      if (region.refs.length >= MAX_REFS_PER_REGION) break;
+      // Only inject if a class enclosing the region declares `#name` - otherwise the
+      // shadow source would reference a private name that doesn't exist in it, which
+      // is a parse error (killing native linting for the whole file).
+      if (!enclosingClassDeclaresPrivate(root, name)) continue;
+      region.refs.push(`this.#${name}`);
+    }
+  }
+
   if (regions.length > 0 && scopeManager !== null) collectRefs(regions, scopeManager);
 
   return regions;
+}
+
+/**
+ * Walk a masked region's subtree detecting usage of `this` and private names.
+ *
+ * This walk is separate from the parent-setting walk because it must see MORE of the
+ * tree: the parent-setting walk honors the parser's visitor keys (matching ESLint's
+ * traversal), but parsers often give custom nodes visitor keys that don't cover all
+ * their children (e.g. `ember-eslint-parser` declares `GlimmerPathExpression: []`,
+ * hiding the `ThisHead` node in its `head` property). Here every node-valued own
+ * property is descended into ({@link getFallbackKeys}), with a visited set guarding
+ * against cyclic references. `parent` is NOT set here - only the ESLint-equivalent
+ * traversal above assigns parents.
+ *
+ * Detected:
+ * - `ThisExpression` (standard ESTree, for parsers embedding real JS expressions) and
+ *   `ThisHead` (the Glimmer AST head of `{{this.foo}}` paths). Not counted inside
+ *   nested non-arrow functions - their `this` is not the region's `this`.
+ * - `PrivateIdentifier` (standard ESTree). Glimmer's `{{this.#x}}` deliberately does
+ *   NOT count: it puts `"#x"` in `GlimmerPathExpression.tail` as a plain string,
+ *   because Glimmer resolves it as a property named `"#x"`, not a private field.
+ *
+ * @param root - The region's root node (the top-most custom node)
+ * @param region - The masked region
+ * @returns Detection result for the region
+ */
+function detectInjectables(
+  root: JsParserNode,
+  region: MaskedRegionReport,
+): {
+  region: MaskedRegionReport;
+  root: JsParserNode;
+  usesThis: boolean;
+  privateNames: Set<string>;
+} {
+  let usesThis = false;
+  const privateNames = new Set<string>();
+  const visited = new Set<JsParserNode>();
+
+  function walk(node: JsParserNode, thisCountable: boolean): void {
+    if (visited.has(node)) return;
+    visited.add(node);
+
+    const { type } = node;
+    if (thisCountable && (type === "ThisExpression" || type === "ThisHead")) {
+      usesThis = true;
+    } else if (type === "PrivateIdentifier") {
+      const name = (node as { name?: unknown }).name;
+      if (typeof name === "string" && privateNames.size < MAX_REFS_PER_REGION) {
+        privateNames.add(name);
+      }
+    }
+
+    // A nested non-arrow function has its own `this`; private access inside it still
+    // counts (a private name resolves lexically, across function boundaries)
+    const countable =
+      thisCountable && type !== "FunctionExpression" && type !== "FunctionDeclaration";
+
+    const keys = getFallbackKeys(node);
+    for (let i = 0, keysLen = keys.length; i < keysLen; i++) {
+      const child = node[keys[i]];
+      if (Array.isArray(child)) {
+        for (let j = 0, childLen = child.length; j < childLen; j++) {
+          const element: unknown = child[j];
+          if (isNode(element)) walk(element, countable);
+        }
+      } else if (isNode(child)) {
+        walk(child, countable);
+      }
+    }
+  }
+
+  walk(root, true);
+
+  return { region, root, usesThis, privateNames };
+}
+
+/**
+ * Check if `this` is lexically valid at a region's position: some ancestor is a
+ * non-arrow function or a class body (class fields, static blocks and methods all
+ * have a `this` context; arrow functions inherit one, so the walk continues
+ * through them). At the top level of a module - where the shadow source is always
+ * parsed - `this` would trip rules like `no-invalid-this`, so it is not injected.
+ *
+ * @param root - The region's root node (with `parent` set on it and all ancestors)
+ * @returns `true` if `this` is valid at the region's position
+ */
+function hasThisContext(root: JsParserNode): boolean {
+  for (let cur = root.parent; cur != null; cur = cur.parent) {
+    const { type } = cur;
+    if (type === "FunctionDeclaration" || type === "FunctionExpression" || type === "ClassBody") {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if a class enclosing a region declares private name `#name`. Ancestors of a
+ * region root are always outside all masked regions, so a declaration found here
+ * exists in the shadow source too, and an enclosing class body also guarantees a
+ * `this.#name` expression is valid at the region's position.
+ *
+ * @param root - The region's root node (with `parent` set on it and all ancestors)
+ * @param name - The private name, without `#`
+ * @returns `true` if an enclosing class declares `#name`
+ */
+function enclosingClassDeclaresPrivate(root: JsParserNode, name: string): boolean {
+  for (let cur = root.parent; cur != null; cur = cur.parent) {
+    if (cur.type !== "ClassBody") continue;
+    const body = (cur as { body?: unknown }).body;
+    if (!Array.isArray(body)) continue;
+    for (const element of body) {
+      if (!isNode(element)) continue;
+      const key = (element as { key?: unknown }).key;
+      if (
+        isNode(key) &&
+        key.type === "PrivateIdentifier" &&
+        (key as { name?: unknown }).name === name
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /**

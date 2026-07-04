@@ -47,6 +47,15 @@
     `----
   help: Prefer === operator
 
+  x eslint(class-methods-use-this): Expected method `farewell` to have this.
+    ,-[files/this-in-template.gjs:16:3]
+ 15 | 
+ 16 |   farewell() {
+    :   ^^^^^^^^
+ 17 |     return <template><p>goodbye</p></template>;
+    `----
+  help: Consider converting method `farewell` to a static method.
+
   x ember(template-no-let-reference): update-able variables are not supported in templates, reference a const variable
    ,-[files/typescript.gts:4:11]
  3 | <template>
@@ -55,8 +64,8 @@
  5 | </template>
    `----
 
-Found 0 warnings and 6 errors.
-Finished in Xms on 6 files with 97 rules using X threads.
+Found 0 warnings and 7 errors.
+Finished in Xms on 7 files with 98 rules using X threads.
 ```
 
 # stderr
