@@ -6,7 +6,10 @@ use std::{
     process::ExitCode,
 };
 
-use crate::tsoptions::{TypeCheckCommand, get_file_names, parse_command_line, parse_config_file};
+use crate::{
+    compiler::{CompilerHost, Program},
+    tsoptions::{TypeCheckCommand, get_file_names, parse_command_line, parse_config_file},
+};
 
 /// Run the type checker from the command line.
 ///
@@ -31,17 +34,19 @@ fn tsc_compilation(command: &TypeCheckCommand) -> ExitCode {
         }
     };
 
+    let host = CompilerHost::new(cwd.clone());
     match resolve_config_file(command, &cwd) {
-        // A resolved config file: parse it (resolving `extends`) via `oxc_resolver`. Later
-        // steps will expand its file globs and type check the project.
+        // A resolved config file: parse it (resolving `extends`) via `oxc_resolver`, expand its
+        // file globs into root files, then parse + bind them into a `Program`.
         Ok(Some(config_file)) => match parse_config_file(&config_file) {
             Ok(tsconfig) => {
-                let files = get_file_names(&tsconfig);
+                let root_files = get_file_names(&tsconfig);
+                let program = Program::new(host, &root_files);
                 println!("project: {}", config_file.display());
-                for file in &files {
-                    println!("  {}", file.display());
+                for source_file in program.source_files() {
+                    println!("  {}", source_file.file_name().display());
                 }
-                println!("({} files)", files.len());
+                println!("({} files)", program.len());
                 ExitCode::SUCCESS
             }
             Err(message) => {
@@ -49,10 +54,15 @@ fn tsc_compilation(command: &TypeCheckCommand) -> ExitCode {
                 ExitCode::FAILURE
             }
         },
-        // Source files were given without a config file. Later steps will type check them
-        // directly as root files.
+        // Source files were given without a config file: parse + bind them directly as roots.
         Ok(None) => {
-            println!("files: {:?}", command.files);
+            let root_files: Vec<PathBuf> =
+                command.files.iter().map(|file| normalize(file, &cwd)).collect();
+            let program = Program::new(host, &root_files);
+            for source_file in program.source_files() {
+                println!("  {}", source_file.file_name().display());
+            }
+            println!("({} files)", program.len());
             ExitCode::SUCCESS
         }
         Err(message) => {
