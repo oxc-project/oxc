@@ -2745,6 +2745,7 @@ dependencies = [
 name = "oxc_type_checker"
 version = "0.138.0"
 dependencies = [
+ "anyhow",
  "bpaf",
  "indexmap",
  "oxc_allocator",

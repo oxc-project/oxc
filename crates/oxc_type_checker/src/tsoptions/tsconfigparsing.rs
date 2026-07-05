@@ -37,11 +37,11 @@ const ALL_SUPPORTED_EXTENSIONS: &[&[&str]] = &[
 ///
 /// # Errors
 ///
-/// Returns the `oxc_resolver` error text when the file is missing, or when the tsconfig (or
-/// any config it `extends`) is invalid.
-pub fn parse_config_file(config_file: &Path) -> Result<Arc<TsConfig>, String> {
+/// Returns an error when the file is missing, or when the tsconfig (or any config it `extends`)
+/// is invalid.
+pub fn parse_config_file(config_file: &Path) -> anyhow::Result<Arc<TsConfig>> {
     let resolver = Resolver::new(ResolveOptions::default());
-    resolver.resolve_tsconfig(config_file).map_err(|error| error.to_string())
+    Ok(resolver.resolve_tsconfig(config_file)?)
 }
 
 /// Expand a parsed `tsconfig` into the list of root files to type check.
