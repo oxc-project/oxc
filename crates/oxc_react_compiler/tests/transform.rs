@@ -13,22 +13,16 @@ fn options() -> PluginOptions {
     PluginOptions::default()
 }
 
-/// Parse `source_text` then run the compiler in place, returning the
-/// (possibly rewritten) program together with the result.
+/// Parse `source_text` then run the compiler, returning the result with the
+/// possibly rewritten program.
 fn transform_source<'a>(
     source_text: &'a str,
     source_type: SourceType,
     allocator: &'a Allocator,
     options: PluginOptions,
-) -> (Program<'a>, TransformResult<'a>) {
+) -> (Program<'a>, TransformResult) {
     let mut program = Parser::new(allocator, source_text, source_type).parse().program;
-    let mut result = {
-        let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
-        transform(&program, &semantic, allocator, options)
-    };
-    if let Some(compiled) = result.program.take() {
-        program = compiled;
-    }
+    let result = transform(&mut program, allocator, options);
     (program, result)
 }
 

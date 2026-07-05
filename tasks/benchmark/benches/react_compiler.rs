@@ -2,7 +2,6 @@ use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_react_compiler::{PluginOptions, transform};
-use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::TestFiles;
 
 fn bench_react_compiler(criterion: &mut Criterion) {
@@ -25,21 +24,11 @@ fn bench_react_compiler(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create a fresh AST for each iteration. The compiler builds
-                // semantic data and allocates the compiled program in the same arena.
+                // semantic data and mutates the program in the same arena.
                 let ParserReturn { mut program, .. } =
                     Parser::new(&allocator, source_text, source_type).parse();
 
-                runner.run(|| {
-                    let mut result = {
-                        let semantic =
-                            SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
-                        transform(&program, &semantic, &allocator, options.clone())
-                    };
-                    if let Some(compiled) = result.program.take() {
-                        program = compiled;
-                    }
-                    result
-                });
+                runner.run(|| transform(&mut program, &allocator, options.clone()));
             });
         });
     }

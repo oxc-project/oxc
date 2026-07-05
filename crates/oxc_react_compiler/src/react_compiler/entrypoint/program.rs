@@ -16,6 +16,7 @@
 
 use cow_utils::CowUtils;
 use oxc_ast::ast as oxc;
+use oxc_diagnostics::Diagnostics;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
@@ -32,7 +33,6 @@ use oxc_allocator::GetAllocator;
 use oxc_syntax::scope::ScopeId;
 
 use super::compile_result::CodegenFunction;
-use super::compile_result::CompileResult;
 use super::imports::ProgramContext;
 use super::imports::validate_restricted_imports;
 use super::pipeline;
@@ -87,6 +87,25 @@ enum CompileSourceKind {
     Original,
     #[allow(dead_code)]
     Outlined,
+}
+
+/// A prepared transform that can be applied after all immutable AST borrows
+/// from semantic analysis and function discovery have been dropped.
+pub struct CompiledProgram<'a> {
+    replacements: Vec<OxcReplacement<'a>>,
+    context: ProgramContext,
+}
+
+/// Main result type returned by the compile preparation step.
+pub enum CompileProgramResult<'a> {
+    /// Compilation succeeded, possibly with a prepared in-place transform.
+    Success {
+        compiled: Option<Box<CompiledProgram<'a>>>,
+        /// Errors and warnings accumulated during compilation.
+        diagnostics: Diagnostics,
+    },
+    /// A fatal error occurred and panicThreshold dictates it should throw.
+    Error { diagnostics: Diagnostics },
 }
 
 // -----------------------------------------------------------------------
@@ -1141,13 +1160,13 @@ fn log_error(err: &CompilerError, fn_loc: Option<Span>, context: &mut ProgramCon
 }
 
 /// Handle an error according to the panicThreshold setting.
-/// Returns Some(CompileResult::Error) if the error should be surfaced as fatal,
+/// Returns Some(CompileProgramResult::Error) if the error should be surfaced as fatal,
 /// otherwise returns None (error was logged only).
 fn handle_error<'a>(
     err: &CompilerError,
     fn_loc: Option<Span>,
     context: &mut ProgramContext,
-) -> Option<CompileResult<'a>> {
+) -> Option<CompileProgramResult<'a>> {
     // Log the error
     log_error(err, fn_loc, context);
 
@@ -1166,7 +1185,7 @@ fn handle_error<'a>(
     if should_panic || is_config_error {
         // The per-detail diagnostics were already pushed by `log_error`; the fatal
         // result just carries them. (The old JS-shim summary is dropped.)
-        Some(CompileResult::Error { diagnostics: std::mem::take(&mut context.diagnostics) })
+        Some(CompileProgramResult::Error { diagnostics: std::mem::take(&mut context.diagnostics) })
     } else {
         None
     }
@@ -1220,7 +1239,7 @@ fn try_compile_function<'a>(
 ///
 /// Returns `Ok(Some(codegen_fn))` when the function was compiled and should be applied,
 /// `Ok(None)` when the function was skipped or lint-only,
-/// or `Err(CompileResult)` if a fatal error should short-circuit the program.
+/// or `Err(CompileProgramResult)` if a fatal error should short-circuit the program.
 #[allow(clippy::result_large_err)]
 fn process_fn<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
@@ -1230,7 +1249,7 @@ fn process_fn<'a>(
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
     source_text: &str,
-) -> Result<Option<CodegenFunction<'a>>, CompileResult<'a>> {
+) -> Result<Option<CodegenFunction<'a>>, CompileProgramResult<'a>> {
     // Parse directives from the function body
     let opt_in_result =
         try_find_directive_enabling_memoization(&source.body_directives, &context.opts);
@@ -2517,18 +2536,14 @@ fn ox_clone_original_fn_as_expression<'a>(
     finder.found.map(|e| e.clone_in(ast.allocator()))
 }
 
-/// Splice every compiled oxc function into a clone of the original oxc program and
-/// add the required imports. Returns the final memoized program.
+/// Splice every compiled oxc function into the original oxc program and add the
+/// required imports.
 fn ox_splice_program<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
-    oxc_program: &oxc_ast::ast::Program<'a>,
+    program: &mut oxc_ast::ast::Program<'a>,
     replacements: &[OxcReplacement<'a>],
     context: &mut ProgramContext,
-) -> oxc_ast::ast::Program<'a> {
-    use oxc_allocator::CloneIn;
-
-    let mut program = oxc_program.clone_in(ast.allocator());
-
+) {
     // Outlined function declarations are placed differently depending on the
     // original function's syntactic kind, mirroring `insertNewOutlinedFunctionNode`
     // in TS `Program.ts`:
@@ -2557,16 +2572,16 @@ fn ox_splice_program<'a>(
         }
 
         if let Some(ref gating_config) = replacement.gating {
-            ox_apply_gated_conditional(ast, &mut program, replacement, gating_config, context);
+            ox_apply_gated_conditional(ast, program, replacement, gating_config, context);
         } else if let Some(node_id) = replacement.fn_node_id {
             let mut visitor =
                 OxcReplaceFnVisitor { ast, node_id, codegen: &replacement.codegen_fn, done: false };
-            oxc_ast_visit::VisitMut::visit_program(&mut visitor, &mut program);
+            oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
         }
 
         if !sibling_outlined_decls.is_empty() {
             if let Some(node_id) = replacement.fn_node_id {
-                ox_insert_outlined_after(&mut program, node_id, sibling_outlined_decls);
+                ox_insert_outlined_after(program, node_id, sibling_outlined_decls);
             }
         }
     }
@@ -2584,12 +2599,21 @@ fn ox_splice_program<'a>(
             old_name: "useMemoCache",
             new_name: &import_spec.name,
         };
-        oxc_ast_visit::VisitMut::visit_program(&mut visitor, &mut program);
+        oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
     }
 
-    ox_add_imports_to_program(ast, &mut program, context);
+    ox_add_imports_to_program(ast, program, context);
+}
 
-    program
+/// Apply a prepared transform to the program after compile-time borrows have
+/// been dropped.
+pub fn apply_compiled_program<'a>(
+    ast: &oxc_ast::builder::AstBuilder<'a>,
+    program: &mut oxc_ast::ast::Program<'a>,
+    compiled: CompiledProgram<'a>,
+) {
+    let CompiledProgram { replacements, mut context } = compiled;
+    ox_splice_program(ast, program, &replacements, &mut context);
 }
 
 /// Insert outlined function declarations immediately after the top-level statement
@@ -2797,8 +2821,9 @@ fn ox_is_non_namespaced_import(import: &oxc_ast::ast::ImportDeclaration) -> bool
 /// Main entry point for the React Compiler.
 ///
 /// Receives a full program AST, scope information (unused for now), and resolved options.
-/// Returns a CompileResult indicating whether the AST was modified,
-/// along with any logger events.
+/// Returns diagnostics plus an optional prepared transform. The prepared transform
+/// is applied by [`apply_compiled_program`] after all immutable AST borrows from
+/// semantic analysis have been dropped.
 ///
 /// This function implements the logic from the TS entrypoint (Program.ts):
 /// - validateRestrictedImports: check for blocklisted imports
@@ -2811,7 +2836,7 @@ pub fn compile_program<'a, 'p>(
     oxc_program: &'p oxc_ast::ast::Program<'a>,
     scope: &ScopeResolver<'_, '_>,
     options: PluginOptions,
-) -> CompileResult<'a> {
+) -> CompileProgramResult<'a> {
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
@@ -2854,7 +2879,7 @@ pub fn compile_program<'a, 'p>(
         if let Some(result) = handle_error(&err, None, &mut context) {
             return result;
         }
-        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
+        return CompileProgramResult::Success { compiled: None, diagnostics: context.diagnostics };
     }
 
     // Pre-register instrumentation imports to get stable local names.
@@ -2932,7 +2957,7 @@ pub fn compile_program<'a, 'p>(
             ));
             handle_error(&err, None, &mut context);
         }
-        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
+        return CompileProgramResult::Success { compiled: None, diagnostics: context.diagnostics };
     }
 
     // Convert compiled functions to owned oxc replacements (dropping the borrows of
@@ -2970,13 +2995,13 @@ pub fn compile_program<'a, 'p>(
         // (e.g., variable shadowing renames in lint mode). Imports are NOT added
         // when there are no replacements — matching TS behavior where
         // addImportsToProgram is only called when compiledFns.length > 0.
-        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
+        return CompileProgramResult::Success { compiled: None, diagnostics: context.diagnostics };
     }
 
-    // Build the memoized oxc program: splice each compiled oxc function in for its
-    // original (matched by `span.start == fn_node_id`), apply gating, insert outlined
-    // functions, and add the memo-cache / gating imports.
-    let compiled_program = ox_splice_program(ast, oxc_program, &replacements, &mut context);
+    let diagnostics = std::mem::take(&mut context.diagnostics);
 
-    CompileResult::Success { ast: Some(compiled_program), diagnostics: context.diagnostics }
+    CompileProgramResult::Success {
+        compiled: Some(Box::new(CompiledProgram { replacements, context })),
+        diagnostics,
+    }
 }

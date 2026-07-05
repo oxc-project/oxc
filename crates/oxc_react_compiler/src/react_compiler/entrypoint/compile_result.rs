@@ -1,25 +1,5 @@
-use oxc_diagnostics::Diagnostics;
-
 use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_hir::ReactFunctionType;
-
-/// Main result type returned by the compile function.
-///
-/// Stage 2: the compiled program is an arena-allocated oxc
-/// [`oxc_ast::ast::Program`] (lifetime `'a` of the arena), built directly by the
-/// codegen back-end (see `compile_program`) instead of the former Babel `File`.
-#[derive(Debug)]
-pub enum CompileResult<'a> {
-    /// Compilation succeeded (or no functions needed compilation).
-    /// `ast` is None if no changes were made to the program.
-    Success {
-        ast: Option<oxc_ast::ast::Program<'a>>,
-        /// Errors and warnings accumulated during compilation.
-        diagnostics: Diagnostics,
-    },
-    /// A fatal error occurred and panicThreshold dictates it should throw.
-    Error { diagnostics: Diagnostics },
-}
 
 /// Debug log entry for debugLogIRs support.
 /// Currently only supports the 'debug' variant (string values).

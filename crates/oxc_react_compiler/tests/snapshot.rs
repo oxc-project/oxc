@@ -31,7 +31,6 @@ use oxc_react_compiler::{
     HookTypeConfig, InstrumentationConfig, ObjectTypeConfig, PluginOptions, TypeConfig,
     TypeReferenceConfig, ValueKind, transform,
 };
-use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
 #[test]
@@ -63,21 +62,14 @@ fn run_fixture(source: &str) -> String {
 
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, source_type).parse();
+    let parse_diagnostics = parsed.diagnostics;
     let mut program = parsed.program;
 
     let mut out = String::new();
     // Surface parse failures rather than silently compiling a recovered/dummy AST.
-    push_diagnostics(&mut out, "Parse errors", parsed.diagnostics.as_slice());
+    push_diagnostics(&mut out, "Parse errors", parse_diagnostics.as_slice());
 
-    // `transform` borrows a `Semantic` built from the pristine program; scope the
-    // borrow so it ends before we swap in the compiled program.
-    let mut result = {
-        let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
-        transform(&program, &semantic, &allocator, options)
-    };
-    if let Some(compiled) = result.program.take() {
-        program = compiled;
-    }
+    let result = transform(&mut program, &allocator, options);
 
     push_diagnostics(&mut out, "Diagnostics", result.diagnostics.as_slice());
     // Mirror the upstream `snap` runner, which always re-emits the program as
@@ -88,7 +80,7 @@ fn run_fixture(source: &str) -> String {
     // the `No changes.` marker. The marker is kept only when a non-lint run reports
     // an error (parse failure or compile diagnostic), where upstream emits no code —
     // and echoing a parse-recovered AST would be misleading.
-    let clean = parsed.diagnostics.is_empty() && result.diagnostics.as_slice().is_empty();
+    let clean = parse_diagnostics.is_empty() && result.diagnostics.as_slice().is_empty();
     if result.changed || clean || lint_mode {
         out.push_str(&Codegen::new().build(&program).code);
     } else {

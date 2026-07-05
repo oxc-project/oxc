@@ -16,9 +16,10 @@ mod react_compiler_typeinference;
 mod react_compiler_utils;
 mod react_compiler_validation;
 
-use crate::react_compiler::entrypoint::compile_result::CompileResult;
 use crate::react_compiler::entrypoint::imports::get_react_compiler_runtime_module;
-use crate::react_compiler::entrypoint::program::compile_program;
+use crate::react_compiler::entrypoint::program::{
+    CompileProgramResult, apply_compiled_program, compile_program,
+};
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
 use scope::ScopeResolver;
 
@@ -39,7 +40,8 @@ pub use crate::react_compiler_utils::FxIndexMap;
 
 use oxc_ast::ast::Program;
 use oxc_diagnostics::Diagnostics;
-use oxc_semantic::Semantic;
+use oxc_parser::Parser;
+use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::GetSpan;
 use rustc_hash::FxHashSet;
 
@@ -65,15 +67,8 @@ impl Default for PluginOptions {
     }
 }
 
-#[derive(Default)]
-pub struct TransformResult<'a> {
-    /// The rewritten program, when the compiler memoized something.
-    ///
-    /// Callers that want in-place behavior should replace their original
-    /// `Program` with this value after the borrowed `Semantic` has gone out of
-    /// scope.
-    pub program: Option<Program<'a>>,
-    /// Whether `program` contains a rewritten program. `false` means the
+pub struct TransformResult {
+    /// Whether the program was rewritten. `false` means the
     /// compiler made no changes — no React-like functions, a bail-out, or
     /// nothing to memoize.
     pub changed: bool,
@@ -88,69 +83,81 @@ pub struct LintResult {
     pub diagnostics: Diagnostics,
 }
 
-/// Run the React Compiler on a pre-parsed program, returning a rewritten
-/// program when it memoizes something.
+/// Run the React Compiler on a pre-parsed program, rewriting it in place when
+/// it memoizes something.
 ///
 /// Must run **first**, on the pristine AST, before any other transform. The
-/// borrowed `semantic` must have been built from that same pristine AST with
-/// `SemanticBuilder::with_build_nodes(true)`.
+/// semantic model is built from that same pristine AST with
+/// `SemanticBuilder::with_build_nodes(true)` before any mutation is applied.
 pub fn transform<'a>(
-    program: &Program<'a>,
-    semantic: &Semantic<'_>,
+    program: &mut Program<'a>,
     allocator: &'a Allocator,
     options: PluginOptions,
-) -> TransformResult<'a> {
-    let (program, diagnostics) = compile(program, semantic, allocator, options);
-    let changed = program.is_some();
-    TransformResult { program, changed, diagnostics }
+) -> TransformResult {
+    let ast_builder = oxc_ast::builder::AstBuilder::new(allocator);
+    let semantic_program = parse_semantic_program(program, allocator);
+    let semantic = SemanticBuilder::new().with_build_nodes(true).build(semantic_program).semantic;
+    let result = compile(&ast_builder, semantic_program, &semantic, options);
+    drop(semantic);
+
+    match result {
+        CompileProgramResult::Success { compiled, diagnostics } => {
+            let changed = compiled.is_some();
+            if let Some(compiled) = compiled {
+                apply_compiled_program(&ast_builder, program, *compiled);
+                preserve_top_level_comments(program, allocator);
+            }
+            TransformResult { changed, diagnostics }
+        }
+        CompileProgramResult::Error { diagnostics } => {
+            TransformResult { changed: false, diagnostics }
+        }
+    }
 }
 
-/// Shared compile pipeline behind [`transform`] and [`lint`]. Borrows `program`
-/// (so `lint` can stay read-only) and returns the compiled OXC program — `None`
-/// when nothing was compiled — together with diagnostics and logger events.
+fn parse_semantic_program<'a>(program: &Program<'a>, allocator: &'a Allocator) -> &'a Program<'a> {
+    allocator
+        .alloc(Parser::new(allocator, program.source_text, program.source_type).parse().program)
+}
+
+/// Shared compile preparation behind [`transform`] and [`lint`]. It borrows the
+/// program read-only and returns an optional prepared in-place transform.
 fn compile<'a>(
+    ast_builder: &oxc_ast::builder::AstBuilder<'a>,
     program: &Program<'a>,
-    semantic: &Semantic<'_>,
-    allocator: &'a Allocator,
+    semantic: &Semantic<'a>,
     options: PluginOptions,
-) -> (Option<Program<'a>>, Diagnostics) {
+) -> CompileProgramResult<'a> {
     // Check for existing runtime imports (file already compiled).
     if has_memo_cache_function_import(program, &get_react_compiler_runtime_module(&options.target))
     {
-        return (None, Diagnostics::default());
+        return CompileProgramResult::Success {
+            compiled: None,
+            diagnostics: Diagnostics::default(),
+        };
     }
 
     // Skip files with no React-like functions, unless the mode compiles everything.
     if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
         && !has_react_like_functions(program)
     {
-        return (None, Diagnostics::default());
+        return CompileProgramResult::Success {
+            compiled: None,
+            diagnostics: Diagnostics::default(),
+        };
     }
 
     // `using`/`await using` disposal semantics aren't preserved yet — skip the file.
     if has_resource_management_declarations(program) {
-        return (None, Diagnostics::default());
+        return CompileProgramResult::Success {
+            compiled: None,
+            diagnostics: Diagnostics::default(),
+        };
     }
 
-    // The codegen back-end builds oxc nodes directly via this `AstBuilder`, and the
-    // compiled program is spliced/returned as an arena-allocated `Program<'a>`.
-    let ast_builder = oxc_ast::builder::AstBuilder::new(allocator);
     let scope = ScopeResolver::new(semantic, program);
     // Function discovery and lowering both walk the oxc `Program` directly.
-    let result = compile_program(&ast_builder, program, &scope, options);
-
-    let (program_ast, diagnostics) = match result {
-        CompileResult::Success { ast, diagnostics, .. } => (ast, diagnostics),
-        CompileResult::Error { diagnostics, .. } => (None, diagnostics),
-    };
-
-    let compiled = program_ast.map(|mut compiled: Program<'a>| {
-        compiled.source_type = program.source_type;
-        preserve_comments(&mut compiled, program, allocator);
-        compiled
-    });
-
-    (compiled, diagnostics)
+    compile_program(ast_builder, program, &scope, options)
 }
 
 fn has_memo_cache_function_import(program: &Program<'_>, module_name: &str) -> bool {
@@ -183,38 +190,25 @@ fn has_memo_cache_function_import(program: &Program<'_>, module_name: &str) -> b
     false
 }
 
-/// Carry over the comments attached to top-level statements of the compiled
-/// program, so codegen can re-emit them. The `react_compiler_ast` roundtrip
-/// drops comments, so we reuse the ones from the original `source` program
-/// (already parsed) rather than re-parsing the source.
-fn preserve_comments<'a>(
-    compiled: &mut Program<'a>,
-    source: &Program<'a>,
-    allocator: &'a Allocator,
-) {
-    // Keep only comments attached to a top-level statement; inner comments have
-    // `attached_to` positions that match no top-level statement.
+/// Preserve the old cloned-output comment behavior after an in-place transform:
+/// codegen should see only comments attached to top-level statements.
+fn preserve_top_level_comments<'a>(program: &mut Program<'a>, allocator: &'a Allocator) {
     let mut top_level_starts = FxHashSet::default();
     top_level_starts.insert(0u32);
-    for stmt in &compiled.body {
+    for stmt in &program.body {
         let start = stmt.span().start;
         if start > 0 {
             top_level_starts.insert(start);
         }
     }
 
-    // Copy only comments attached to top-level statements.
-    let mut comments = ArenaVec::with_capacity_in(source.comments.len(), &allocator);
-    for comment in &source.comments {
+    let mut comments = ArenaVec::with_capacity_in(program.comments.len(), &allocator);
+    for comment in &program.comments {
         if top_level_starts.contains(&comment.attached_to) {
             comments.push(*comment);
         }
     }
-    compiled.comments = comments;
-
-    // Codegen reads comment content from `source_text` via span offsets, so the
-    // compiled program must point at the same source as the original.
-    compiled.source_text = source.source_text;
+    program.comments = comments;
 }
 
 /// Lint a pre-parsed program — like [`transform`] but read-only: it collects
@@ -224,13 +218,17 @@ fn preserve_comments<'a>(
 /// `SemanticBuilder::with_build_nodes(true)`.
 pub fn lint<'a>(
     program: &Program<'a>,
-    semantic: &Semantic<'_>,
+    semantic: &Semantic<'a>,
     allocator: &'a Allocator,
     options: PluginOptions,
 ) -> LintResult {
     let mut options = options;
     options.no_emit = true;
 
-    let (_program, diagnostics) = compile(program, semantic, allocator, options);
+    let ast_builder = oxc_ast::builder::AstBuilder::new(allocator);
+    let diagnostics = match compile(&ast_builder, program, semantic, options) {
+        CompileProgramResult::Success { diagnostics, .. }
+        | CompileProgramResult::Error { diagnostics } => diagnostics,
+    };
     LintResult { diagnostics }
 }
