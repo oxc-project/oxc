@@ -1141,35 +1141,34 @@ impl<'a> SpreadPair<'a> {
         let rhs = if self.has_no_properties {
             // The `ObjectDestructuringEmpty` function throws a type error when destructuring null.
             // `function _objectDestructuringEmpty(t) { if (null == t) throw new TypeError("Cannot destructure " + t); }`
-            let mut arguments = ArenaVec::new_in(ctx);
-            // Add `{}`.
-            arguments.push(Argument::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx));
             // Add `(_objectDestructuringEmpty(b), b);`
-            arguments.push(Argument::new_sequence_expression(
-                SPAN,
-                {
-                    let mut sequence = ArenaVec::new_in(ctx);
-                    sequence.push(helper_call_expr(
+            let sequence = ArenaVec::from_array_in(
+                [
+                    helper_call_expr(
                         Helper::ObjectDestructuringEmpty,
                         ArenaVec::from_value_in(
                             Argument::from(reference_builder.create_read_expression(ctx)),
                             ctx,
                         ),
                         ctx,
-                    ));
-                    sequence.push(reference_builder.create_read_expression(ctx));
-                    sequence
-                },
+                    ),
+                    reference_builder.create_read_expression(ctx),
+                ],
                 ctx,
-            ));
+            );
+            let arguments = ArenaVec::from_array_in(
+                [
+                    // Add `{}`.
+                    Argument::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx),
+                    Argument::new_sequence_expression(SPAN, sequence, ctx),
+                ],
+                ctx,
+            );
             helper_call_expr(Helper::Extends, arguments, ctx)
         } else {
             // / `let { a, b, ...c } = z` -> _objectWithoutProperties(_z, ["a", "b"]);
             // / `_objectWithoutProperties(_z, ["a", "b"])`
-            let mut arguments = ArenaVec::from_value_in(
-                Argument::from(reference_builder.create_read_expression(ctx)),
-                ctx,
-            );
+            let object_argument = Argument::from(reference_builder.create_read_expression(ctx));
             let key_expression = Expression::new_array_expression(SPAN, self.keys, ctx);
 
             let key_expression = if self.all_primitives
@@ -1211,7 +1210,8 @@ impl<'a> SpreadPair<'a> {
             } else {
                 key_expression
             };
-            arguments.push(Argument::from(key_expression));
+            let arguments =
+                ArenaVec::from_array_in([object_argument, Argument::from(key_expression)], ctx);
             helper_call_expr(Helper::ObjectWithoutProperties, arguments, ctx)
         };
         (self.lhs, rhs)
