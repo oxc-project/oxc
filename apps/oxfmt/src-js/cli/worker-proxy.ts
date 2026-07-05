@@ -12,6 +12,10 @@ import type {
 let pool: Tinypool | null = null;
 
 export async function initExternalFormatter(numThreads: number): Promise<void> {
+  if (pool !== null) {
+    await pool.destroy();
+    pool = null;
+  }
   pool = new Tinypool({
     filename: new URL("./cli-worker.js", import.meta.url).href,
     minThreads: numThreads,
