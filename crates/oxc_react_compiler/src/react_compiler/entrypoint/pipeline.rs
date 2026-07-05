@@ -106,6 +106,7 @@ pub fn compile_fn<'a>(
     mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
+    source_text: &str,
 ) -> Result<CodegenFunction<'a>, CompilerError> {
     let mut env = Environment::with_config(env_config.clone());
     env.fn_type = fn_type;
@@ -114,7 +115,6 @@ pub fn compile_fn<'a>(
         CompilerOutputMode::Client => OutputMode::Client,
         CompilerOutputMode::Lint => OutputMode::Lint,
     };
-    env.code = context.code.clone();
     env.instrument_fn_name = context.instrument_fn_name.clone();
     env.instrument_gating_name = context.instrument_gating_name.clone();
     env.hook_guard_name = context.hook_guard_name.clone();
@@ -122,9 +122,7 @@ pub fn compile_fn<'a>(
 
     env.reference_node_ids = scope.all_reference_positions().clone();
 
-    let line_offsets = crate::react_compiler_lowering::source_loc::LineOffsets::new(
-        context.code.as_deref().unwrap_or(""),
-    );
+    let line_offsets = crate::react_compiler_lowering::source_loc::LineOffsets::new(source_text);
     let mut hir = lower(func, fn_name, scope, &mut env, &line_offsets)?;
 
     // Check for Invariant errors after lowering, before logging HIR.

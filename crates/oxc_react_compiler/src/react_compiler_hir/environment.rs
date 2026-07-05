@@ -64,9 +64,6 @@ pub struct Environment<'a> {
     // Output mode (Client, Ssr, Lint)
     pub output_mode: OutputMode,
 
-    // Source file code (for fast refresh hash computation)
-    pub code: Option<String>,
-
     // Pre-resolved import local names for instrumentation/hook guards.
     // Set by the program-level code before compilation.
     pub instrument_fn_name: Option<String>,
@@ -181,7 +178,6 @@ impl<'a> Environment<'a> {
             errors: CompilerError::new(),
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
-            code: None,
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,

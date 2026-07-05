@@ -1188,6 +1188,7 @@ fn try_compile_function<'a>(
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
+    source_text: &str,
 ) -> Result<CodegenFunction<'a>, CompilerError> {
     // Check for suppressions that affect this function
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
@@ -1213,6 +1214,7 @@ fn try_compile_function<'a>(
         output_mode,
         env_config,
         context,
+        source_text,
     )
 }
 
@@ -1229,6 +1231,7 @@ fn process_fn<'a>(
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
+    source_text: &str,
 ) -> Result<Option<CodegenFunction<'a>>, CompileResult<'a>> {
     // Parse directives from the function body
     let opt_in_result =
@@ -1248,7 +1251,8 @@ fn process_fn<'a>(
     };
 
     // Attempt compilation
-    let compile_result = try_compile_function(ast, source, scope, output_mode, env_config, context);
+    let compile_result =
+        try_compile_function(ast, source, scope, output_mode, env_config, context, source_text);
 
     match compile_result {
         Err(err) => {
@@ -2848,14 +2852,7 @@ pub fn compile_program<'a, 'p>(
         find_directive_disabling_memoization(&module_directives, &options).is_some();
 
     // Create program context
-    let mut context = ProgramContext::new(
-        options.clone(),
-        // Source text feeds the line-offset table (diagnostic line/col) and the fast
-        // refresh hash. The oxc front-end derives locations from it on demand.
-        Some(program.source_text.to_string()),
-        suppressions,
-        has_module_scope_opt_out,
-    );
+    let mut context = ProgramContext::new(options.clone(), suppressions, has_module_scope_opt_out);
 
     // Initialize known referenced names from scope bindings for UID collision detection
     context.init_from_scope(scope);
@@ -2917,7 +2914,15 @@ pub fn compile_program<'a, 'p>(
     let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_>> = Vec::new();
 
     for source in &queue {
-        match process_fn(ast, source, scope, output_mode, &env_config, &mut context) {
+        match process_fn(
+            ast,
+            source,
+            scope,
+            output_mode,
+            &env_config,
+            &mut context,
+            program.source_text,
+        ) {
             Ok(Some(codegen_fn)) => {
                 compiled_fns.push(CompiledFunction { kind: source.kind, source, codegen_fn });
             }

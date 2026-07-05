@@ -28,7 +28,6 @@ pub struct NonLocalImportSpecifier {
 /// Equivalent to ProgramContext class in Imports.ts.
 pub struct ProgramContext {
     pub opts: PluginOptions,
-    pub code: Option<String>,
     pub react_runtime_module: String,
     pub suppressions: Vec<SuppressionRange>,
     pub has_module_scope_opt_out: bool,
@@ -52,7 +51,6 @@ pub struct ProgramContext {
 impl ProgramContext {
     pub fn new(
         opts: PluginOptions,
-        code: Option<String>,
         suppressions: Vec<SuppressionRange>,
         has_module_scope_opt_out: bool,
     ) -> Self {
@@ -60,7 +58,6 @@ impl ProgramContext {
         let debug_enabled = opts.debug;
         Self {
             opts,
-            code,
             react_runtime_module,
             suppressions,
             has_module_scope_opt_out,
