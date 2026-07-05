@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    compiler::{CompilerHost, Program},
+    compiler::Program,
     tsoptions::{TypeCheckCommand, get_file_names, parse_command_line, parse_config_file},
     tspath::to_path,
 };
@@ -22,9 +22,9 @@ pub fn command_line() -> ExitCode {
 }
 
 /// Mirrors tsgo's `tscCompilation`: resolve the project into a config file (or root files),
-/// parse and bind those files into a [`Program`], and report the collected files.
+/// collect those files into a [`Program`], and report them.
 ///
-/// Type checking the program is a later step.
+/// Parsing and type checking the program are later steps.
 fn tsc_compilation(command: &TypeCheckCommand) -> ExitCode {
     let cwd = match std::env::current_dir() {
         Ok(cwd) => cwd,
@@ -48,17 +48,17 @@ fn tsc_compilation(command: &TypeCheckCommand) -> ExitCode {
             }
         },
         // Source files given without a config file: use them directly as roots.
-        Ok(None) => command.files.iter().map(|file| to_path(&cwd, file)).collect(),
+        Ok(None) => command.files.clone(),
         Err(message) => {
             eprintln!("{message}");
             return ExitCode::FAILURE;
         }
     };
 
-    // Parse and bind every root file into the program's file store.
-    let program = Program::new(CompilerHost::new(cwd), &root_files);
-    for source_file in program.source_files() {
-        println!("  {}", source_file.file_name().display());
+    // Collect the root files (normalized + deduplicated) into the program's file list.
+    let program = Program::new(&cwd, &root_files);
+    for file in program.files() {
+        println!("  {}", file.display());
     }
     println!("({} files)", program.len());
     ExitCode::SUCCESS

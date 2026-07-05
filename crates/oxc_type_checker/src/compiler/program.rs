@@ -2,65 +2,59 @@
 
 use std::path::{Path, PathBuf};
 
-use oxc_index::IndexSlice;
+use oxc_index::{IndexSlice, define_nonmax_u32_index_type};
 
-use super::{
-    fileloader::{ProcessedFiles, process_all_program_files},
-    host::CompilerHost,
-    source_file::{FileId, SourceFile},
-};
+use super::fileloader::{ProcessedFiles, process_all_program_files};
 
-/// A program: the source files collected from a set of root files, plus the host they were
-/// loaded from. Mirrors tsgo's `Program` (which embeds `processedFiles`).
+define_nonmax_u32_index_type! {
+    /// Index of a root file within a [`Program`].
+    ///
+    /// typescript-go has no integer file id — it keys files by their normalized `tspath.Path`.
+    /// This typed index is an oxc-side addition so files can be referenced by a cheap `u32` (and,
+    /// later, declarations by `(FileId, SymbolId)`).
+    pub struct FileId;
+}
+
+/// A program's collected root files. Mirrors tsgo's `Program` (which embeds `processedFiles`).
 ///
-/// This is the in-memory model the type checker will run over. Today it holds only the parsed +
-/// bound root files; import resolution, lib files, and checking are later steps.
+/// This is the in-memory model the type checker will run over. Today it holds only the root file
+/// list; parsing and binding the files, import resolution, and checking are later steps.
 #[derive(Debug)]
 pub struct Program {
-    host: CompilerHost,
     processed: ProcessedFiles,
 }
 
 impl Program {
-    /// Port of tsgo's `NewProgram`: read, parse, and bind each of `root_files`, collecting them
-    /// into the program's file store.
-    pub fn new(host: CompilerHost, root_files: &[PathBuf]) -> Self {
-        let processed = process_all_program_files(&host, root_files);
-        Self { host, processed }
+    /// Port of tsgo's `NewProgram`: collect `root_files` into the program's file list,
+    /// normalizing each path and deduplicating (relative paths resolve against
+    /// `current_directory`).
+    pub fn new(current_directory: &Path, root_files: &[PathBuf]) -> Self {
+        Self { processed: process_all_program_files(current_directory, root_files) }
     }
 
-    /// The host the program was loaded from.
-    pub fn host(&self) -> &CompilerHost {
-        &self.host
-    }
-
-    /// All source files, in include order (tsgo `Program.SourceFiles`).
-    pub fn source_files(&self) -> &IndexSlice<FileId, [SourceFile]> {
+    /// All root files, in include order (tsgo `Program.SourceFiles`).
+    pub fn files(&self) -> &IndexSlice<FileId, [PathBuf]> {
         &self.processed.files
     }
 
-    /// The source file with the given [`FileId`].
-    pub fn source_file(&self, id: FileId) -> &SourceFile {
+    /// The file with the given [`FileId`].
+    pub fn file(&self, id: FileId) -> &Path {
         &self.processed.files[id]
     }
 
-    /// The source file with the given normalized path (tsgo `Program.GetSourceFileByPath`).
-    pub fn get_source_file_by_path(&self, path: &Path) -> Option<&SourceFile> {
-        self.processed.files_by_path.get(path).map(|&id| &self.processed.files[id])
+    /// The [`FileId`] for a normalized path, if the program contains it (tsgo
+    /// `Program.GetSourceFileByPath`).
+    pub fn file_id(&self, path: &Path) -> Option<FileId> {
+        self.processed.files_by_path.get(path).copied()
     }
 
-    /// The number of source files.
+    /// The number of root files.
     pub fn len(&self) -> usize {
         self.processed.files.len()
     }
 
-    /// Whether the program has no source files.
+    /// Whether the program has no root files.
     pub fn is_empty(&self) -> bool {
         self.processed.files.is_empty()
-    }
-
-    /// Root files that could not be read (tsgo `missingFiles`).
-    pub fn missing_files(&self) -> &[PathBuf] {
-        &self.processed.missing_files
     }
 }

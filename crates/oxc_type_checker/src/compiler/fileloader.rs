@@ -1,8 +1,7 @@
 //! Port of typescript-go's `internal/compiler/fileloader.go`.
 //!
 //! [`process_all_program_files`] is the entry point (tsgo `processAllProgramFiles`): a
-//! [`FileLoader`] turns the root file names into [`ParseTask`]s, then hands them to a
-//! [`FilesParser`] which parses and collects them into [`ProcessedFiles`].
+//! [`FileLoader`] normalizes and deduplicates the root file names into [`ProcessedFiles`].
 
 use std::path::{Path, PathBuf};
 
@@ -11,67 +10,59 @@ use rustc_hash::FxHashMap;
 
 use crate::tspath;
 
-use super::{
-    filesparser::{FilesParser, ParseTask},
-    host::CompilerHost,
-    source_file::{FileId, SourceFile},
-};
+use super::program::FileId;
 
-/// The collected files of a program — the subset of tsgo's `processedFiles` needed to hold the
-/// parsed root files.
+/// A program's collected root files — the subset of tsgo's `processedFiles` needed before
+/// parsing: the ordered file list plus a path -> id lookup.
 ///
 /// tsgo stores `files []*ast.SourceFile` + `filesByPath map[tspath.Path]*ast.SourceFile`; here
-/// `files` is a typed [`IndexVec`] keyed by [`FileId`] and `files_by_path` maps the normalized
-/// path to that id. tsgo's other `processedFiles` tables (resolved modules, metadata, lib files,
-/// redirects, …) arrive with later steps.
+/// `files` holds the normalized root paths (parsed source files replace them once parsing lands)
+/// and `files_by_path` maps each path to its [`FileId`].
 #[derive(Debug, Default)]
 pub(super) struct ProcessedFiles {
-    /// Parsed files, in include order (tsgo `files`).
-    pub(super) files: IndexVec<FileId, SourceFile>,
+    /// Root files, in include order (tsgo `files`).
+    pub(super) files: IndexVec<FileId, PathBuf>,
     /// Normalized path -> file id (tsgo `filesByPath`).
     pub(super) files_by_path: FxHashMap<PathBuf, FileId>,
-    /// Root files that could not be read (tsgo `missingFiles`).
-    pub(super) missing_files: Vec<PathBuf>,
 }
 
-/// Turns a program's root file names into [`ParseTask`]s, mirroring tsgo's `fileLoader`.
+/// Collects a program's root files, mirroring tsgo's `fileLoader`.
 ///
-/// tsgo's `fileLoader` also owns the resolver, supported-extension lists, and lib/project-reference
-/// bookkeeping; those arrive with later steps.
-pub(super) struct FileLoader<'h> {
-    host: &'h CompilerHost,
-    root_tasks: Vec<ParseTask>,
+/// tsgo's `fileLoader` also parses each file and owns the resolver, supported-extension lists, and
+/// lib/project-reference bookkeeping; those arrive with later steps.
+struct FileLoader<'a> {
+    current_directory: &'a Path,
+    processed: ProcessedFiles,
 }
 
-impl<'h> FileLoader<'h> {
-    fn new(host: &'h CompilerHost) -> Self {
-        Self { host, root_tasks: Vec::new() }
+impl<'a> FileLoader<'a> {
+    fn new(current_directory: &'a Path) -> Self {
+        Self { current_directory, processed: ProcessedFiles::default() }
     }
 
-    /// tsgo `processAllProgramFiles`: queue every root file as a task, then parse and collect
-    /// them into the program's file store.
-    fn load(mut self, root_files: &[PathBuf]) -> ProcessedFiles {
-        for root_file in root_files {
-            self.add_root_file_task(root_file);
+    /// tsgo `fileLoader.addRootFileTask`: add a root file, keyed by its normalized absolute path,
+    /// skipping a path that was already added.
+    fn add_root_file(&mut self, file_name: &Path) {
+        let path = tspath::to_path(self.current_directory, file_name);
+        if self.processed.files_by_path.contains_key(&path) {
+            return;
         }
-        FilesParser::default().run(self.host, self.root_tasks)
-    }
-
-    /// tsgo `fileLoader.addRootFileTask`: queue a root file for parsing, keyed by its normalized
-    /// absolute path.
-    fn add_root_file_task(&mut self, file_name: &Path) {
-        let normalized = tspath::to_path(self.host.current_directory(), file_name);
-        self.root_tasks.push(ParseTask::new(normalized));
+        let id = self.processed.files.push(path.clone());
+        self.processed.files_by_path.insert(path, id);
     }
 }
 
-/// Port of tsgo's `processAllProgramFiles`.
+/// Port of tsgo's `processAllProgramFiles`: collect the root files into the program's file list.
 ///
-/// Import discovery, lib files, project references, and automatic type directives are deferred —
-/// see [`ParseTask::load`](super::filesparser).
+/// tsgo also parses each file here (and discovers imports, lib files, and project references);
+/// those are later steps.
 pub(super) fn process_all_program_files(
-    host: &CompilerHost,
+    current_directory: &Path,
     root_files: &[PathBuf],
 ) -> ProcessedFiles {
-    FileLoader::new(host).load(root_files)
+    let mut loader = FileLoader::new(current_directory);
+    for root_file in root_files {
+        loader.add_root_file(root_file);
+    }
+    loader.processed
 }
