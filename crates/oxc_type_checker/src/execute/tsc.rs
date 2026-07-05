@@ -6,7 +6,11 @@ use std::{
     process::ExitCode,
 };
 
-use crate::tsoptions::{TypeCheckCommand, get_file_names, parse_command_line, parse_config_file};
+use crate::{
+    compiler::Program,
+    tsoptions::{TypeCheckCommand, get_file_names, parse_command_line, parse_config_file},
+    tspath::to_path,
+};
 
 /// Run the type checker from the command line.
 ///
@@ -17,11 +21,10 @@ pub fn command_line() -> ExitCode {
     tsc_compilation(&command)
 }
 
-/// Mirrors tsgo's `tscCompilation`: resolve the project into a config file (or root files)
-/// and report the outcome.
+/// Mirrors tsgo's `tscCompilation`: resolve the project into a config file (or root files),
+/// collect those files into a [`Program`], and report them.
 ///
-/// For now this only prints the resolved target; parsing the `tsconfig.json` and type
-/// checking are later steps.
+/// Parsing and type checking the program are later steps.
 fn tsc_compilation(command: &TypeCheckCommand) -> ExitCode {
     let cwd = match std::env::current_dir() {
         Ok(cwd) => cwd,
@@ -31,35 +34,34 @@ fn tsc_compilation(command: &TypeCheckCommand) -> ExitCode {
         }
     };
 
-    match resolve_config_file(command, &cwd) {
-        // A resolved config file: parse it (resolving `extends`) via `oxc_resolver`. Later
-        // steps will expand its file globs and type check the project.
+    let root_files = match resolve_config_file(command, &cwd) {
+        // A resolved config file: parse it (resolving `extends`) via `oxc_resolver`, then expand
+        // its file globs into the root file list.
         Ok(Some(config_file)) => match parse_config_file(&config_file) {
             Ok(tsconfig) => {
-                let files = get_file_names(&tsconfig);
                 println!("project: {}", config_file.display());
-                for file in &files {
-                    println!("  {}", file.display());
-                }
-                println!("({} files)", files.len());
-                ExitCode::SUCCESS
+                get_file_names(&tsconfig)
             }
             Err(message) => {
                 eprintln!("{message}");
-                ExitCode::FAILURE
+                return ExitCode::FAILURE;
             }
         },
-        // Source files were given without a config file. Later steps will type check them
-        // directly as root files.
-        Ok(None) => {
-            println!("files: {:?}", command.files);
-            ExitCode::SUCCESS
-        }
+        // Source files given without a config file: use them directly as roots.
+        Ok(None) => command.files.clone(),
         Err(message) => {
             eprintln!("{message}");
-            ExitCode::FAILURE
+            return ExitCode::FAILURE;
         }
+    };
+
+    // Collect the root files (normalized + deduplicated) into the program's file list.
+    let program = Program::new(&cwd, &root_files);
+    for file in program.files() {
+        println!("  {}", file.display());
     }
+    println!("({} files)", program.len());
+    ExitCode::SUCCESS
 }
 
 /// Resolve the command line into the `tsconfig.json` (or config file) to load, mirroring
@@ -78,7 +80,7 @@ fn resolve_config_file(command: &TypeCheckCommand, cwd: &Path) -> Result<Option<
             );
         }
 
-        let file_or_directory = normalize(project, cwd);
+        let file_or_directory = to_path(cwd, project);
         if file_or_directory.is_dir() {
             // A directory: look for `tsconfig.json` inside it.
             let config_file = file_or_directory.join("tsconfig.json");
@@ -125,13 +127,4 @@ fn find_config_file(dir: &Path) -> Option<PathBuf> {
     dir.ancestors()
         .map(|ancestor| ancestor.join("tsconfig.json"))
         .find(|candidate| candidate.is_file())
-}
-
-/// Turn `path` into an absolute path against `cwd`.
-///
-// NOTE: this is a lightweight stand-in for tsgo's `tspath.NormalizePath`; a faithful
-// lexical normalization (collapsing `.`/`..` segments) is a later step.
-fn normalize(path: &Path, cwd: &Path) -> PathBuf {
-    let joined = cwd.join(path);
-    std::path::absolute(&joined).unwrap_or(joined)
 }

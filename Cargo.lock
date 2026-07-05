@@ -2643,6 +2643,7 @@ dependencies = [
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_diagnostics",
+ "oxc_index",
  "oxc_parser",
  "oxc_resolver",
  "oxc_semantic",

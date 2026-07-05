@@ -1,7 +1,12 @@
 //! Small subset of typescript-go's `internal/tspath` needed by the file-matching port.
 //!
-//! Inputs are absolute, already-normalized POSIX-style paths (this is what `oxc_resolver`
-//! hands us), so these helpers deliberately do not re-implement `.`/`..` reduction.
+//! The string helpers below operate on absolute, already-normalized POSIX-style paths (this is what
+//! `oxc_resolver` hands us) and so do not re-implement `.`/`..` reduction; [`to_path`] is the
+//! normalizer that produces such a path from an arbitrary input.
+
+use std::path::{Path, PathBuf};
+
+use oxc_resolver::PathUtil;
 
 /// The extensions recognized when stripping/replacing a file extension, longest first so
 /// `.d.ts` is matched before `.ts`. Mirrors tsgo's declaration-aware `ChangeExtension`.
@@ -50,4 +55,16 @@ pub fn change_extension(path: &str, new_extension: &str) -> String {
         }
     }
     format!("{path}{new_extension}")
+}
+
+/// tsgo `ToPath` / `GetNormalizedAbsolutePath`: resolve `file_name` against
+/// `current_directory` into an absolute, lexically-normalized path (collapsing `.`/`..`).
+///
+/// Reuses `oxc_resolver`'s [`PathUtil`]: `normalize_with` makes the path absolute (an absolute
+/// `file_name` replaces the base), and `normalize` then collapses `.`/`..` — including for an
+/// absolute `file_name`, which `normalize_with` passes through unchanged. Unlike tsgo's `ToPath`,
+/// this does not case-fold on case-insensitive file systems — case canonicalization is deferred,
+/// matching the case-sensitive matching used elsewhere.
+pub fn to_path(current_directory: &Path, file_name: &Path) -> PathBuf {
+    current_directory.normalize_with(file_name).normalize()
 }

@@ -56,6 +56,7 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::Diagnostics;
 use oxc_semantic::Semantic;
 
+pub mod compiler;
 mod diagnostics;
 pub mod execute;
 pub mod tsoptions;
