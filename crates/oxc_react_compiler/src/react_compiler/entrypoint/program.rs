@@ -16,7 +16,7 @@
 
 use cow_utils::CowUtils;
 use oxc_ast::ast as oxc;
-use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
@@ -34,7 +34,6 @@ use oxc_syntax::scope::ScopeId;
 use super::compile_result::CodegenFunction;
 use super::compile_result::CompileResult;
 use super::imports::ProgramContext;
-use super::imports::get_react_compiler_runtime_module;
 use super::imports::validate_restricted_imports;
 use super::pipeline;
 use super::plugin_options::CompilerOutputMode;
@@ -1304,44 +1303,6 @@ fn process_fn<'a>(
             Ok(Some(codegen_fn))
         }
     }
-}
-
-// -----------------------------------------------------------------------
-// Import checking
-// -----------------------------------------------------------------------
-
-/// Check if the program already has a `c` import from the React Compiler runtime module.
-/// If so, the file was already compiled and should be skipped.
-fn has_memo_cache_function_import(program: &oxc::Program, module_name: &str) -> bool {
-    for stmt in &program.body {
-        if let oxc::Statement::ImportDeclaration(import) = stmt {
-            if import.source.value == module_name {
-                if let Some(specifiers) = &import.specifiers {
-                    for specifier in specifiers {
-                        if let oxc::ImportDeclarationSpecifier::ImportSpecifier(data) = specifier {
-                            let imported_name = match &data.imported {
-                                oxc::ModuleExportName::IdentifierName(id) => Some(id.name.as_str()),
-                                oxc::ModuleExportName::IdentifierReference(id) => {
-                                    Some(id.name.as_str())
-                                }
-                                oxc::ModuleExportName::StringLiteral(s) => Some(s.value.as_str()),
-                            };
-                            if imported_name == Some("c") {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    false
-}
-
-/// Check if compilation should be skipped for this program.
-fn should_skip_compilation(program: &oxc::Program, options: &PluginOptions) -> bool {
-    let runtime_module = get_react_compiler_runtime_module(&options.target);
-    has_memo_cache_function_import(program, &runtime_module)
 }
 
 // -----------------------------------------------------------------------
@@ -2839,7 +2800,6 @@ fn ox_is_non_namespaced_import(import: &oxc_ast::ast::ImportDeclaration) -> bool
 /// along with any logger events.
 ///
 /// This function implements the logic from the TS entrypoint (Program.ts):
-/// - shouldSkipCompilation: check for existing runtime imports
 /// - validateRestrictedImports: check for blocklisted imports
 /// - findProgramSuppressions: find eslint/flow suppression comments
 /// - findFunctionsToCompile: traverse program to find components and hooks
@@ -2855,11 +2815,6 @@ pub fn compile_program<'a, 'p>(
     let output_mode = CompilerOutputMode::from_opts(&options);
 
     let program = oxc_program;
-
-    // Check for existing runtime imports (file already compiled)
-    if should_skip_compilation(program, &options) {
-        return CompileResult::Success { ast: None, diagnostics: Diagnostics::new() };
-    }
 
     // Validate restricted imports from the environment config
     let restricted_imports = options.environment.validate_blocklisted_imports.clone();

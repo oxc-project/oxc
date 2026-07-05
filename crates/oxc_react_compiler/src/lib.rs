@@ -17,6 +17,7 @@ mod react_compiler_utils;
 mod react_compiler_validation;
 
 use crate::react_compiler::entrypoint::compile_result::CompileResult;
+use crate::react_compiler::entrypoint::imports::get_react_compiler_runtime_module;
 use crate::react_compiler::entrypoint::program::compile_program;
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
 use scope::ScopeResolver;
@@ -113,6 +114,12 @@ fn compile<'a>(
     allocator: &'a Allocator,
     options: PluginOptions,
 ) -> (Option<Program<'a>>, Diagnostics) {
+    // Check for existing runtime imports (file already compiled).
+    if has_memo_cache_function_import(program, &get_react_compiler_runtime_module(&options.target))
+    {
+        return (None, Diagnostics::default());
+    }
+
     // Skip files with no React-like functions, unless the mode compiles everything.
     if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
         && !has_react_like_functions(program)
@@ -144,6 +151,36 @@ fn compile<'a>(
     });
 
     (compiled, diagnostics)
+}
+
+fn has_memo_cache_function_import(program: &Program<'_>, module_name: &str) -> bool {
+    for stmt in &program.body {
+        if let oxc_ast::ast::Statement::ImportDeclaration(import) = stmt
+            && import.source.value == module_name
+            && import.import_kind.is_value()
+            && let Some(specifiers) = &import.specifiers
+        {
+            for specifier in specifiers {
+                if let oxc_ast::ast::ImportDeclarationSpecifier::ImportSpecifier(data) = specifier
+                    && data.import_kind.is_value()
+                {
+                    let imported_name = match &data.imported {
+                        oxc_ast::ast::ModuleExportName::IdentifierName(id) => {
+                            Some(id.name.as_str())
+                        }
+                        oxc_ast::ast::ModuleExportName::IdentifierReference(id) => {
+                            Some(id.name.as_str())
+                        }
+                        oxc_ast::ast::ModuleExportName::StringLiteral(s) => Some(s.value.as_str()),
+                    };
+                    if imported_name == Some("c") {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
 }
 
 /// Carry over the comments attached to top-level statements of the compiled
