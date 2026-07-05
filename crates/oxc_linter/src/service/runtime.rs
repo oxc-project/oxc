@@ -119,7 +119,14 @@ struct ModuleContentDependent<'a> {
     section_contents: SectionContents<'a>,
 }
 
-// Safety: dependent borrows from owner. They're safe to be sent together.
+// SAFETY: `dependent` borrows from `owner` (the `Allocator`). They're safe to send together.
+//
+// One case doesn't fit that "sent together" picture: `ReplaceWith`'s panic path (in `oxc_allocator`)
+// writes a dummy backed by its own dedicated, global `'static` allocator, which does not travel with
+// this bundle. Sending is still sound, because each such dummy allocator is exclusively owned -
+// reachable only through the single value that holds it, and mutated only via `&mut` to that value -
+// so no two threads can touch one. The invariant this really rests on is single-ownership of each
+// referenced allocator, not co-location.
 unsafe impl Send for ModuleContent<'_> {}
 
 /// source text and semantic for each source section. They are in the same order as `ProcessedModule.section_module_records`
