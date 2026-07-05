@@ -53,7 +53,7 @@
 
 use std::{borrow::Cow, mem};
 
-use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::Visit;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
@@ -555,11 +555,11 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         // If the arrow's expression is true, we need to wrap the only one expression with return statement.
         if arrow.expression {
             let statement = body.statements.first_mut().unwrap();
-            let expression = match statement {
-                Statement::ExpressionStatement(es) => es.expression.take_in(ctx),
-                _ => unreachable!(),
-            };
-            *statement = Statement::new_return_statement(expression.span(), Some(expression), ctx);
+            statement.replace_with(|statement| {
+                let Statement::ExpressionStatement(es) = statement else { unreachable!() };
+                let expression = es.unbox().expression;
+                Statement::new_return_statement(expression.span(), Some(expression), ctx)
+            });
         }
 
         let params = arrow.params.take_in_box(ctx);

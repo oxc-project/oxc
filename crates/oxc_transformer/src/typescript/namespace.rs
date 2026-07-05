@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
@@ -475,20 +475,22 @@ impl<'a> TypeScriptNamespace {
                     return;
                 };
                 if let Some(init) = &mut declarator.init {
-                    declarator.init = Some(Expression::new_assignment_expression(
-                        SPAN,
-                        AssignmentOperator::Assign,
-                        SimpleAssignmentTarget::new_static_member_expression(
+                    init.replace_with(|init| {
+                        Expression::new_assignment_expression(
                             SPAN,
-                            binding.create_read_expression(ctx),
-                            IdentifierName::new(SPAN, property_name, ctx),
-                            false,
+                            AssignmentOperator::Assign,
+                            SimpleAssignmentTarget::new_static_member_expression(
+                                SPAN,
+                                binding.create_read_expression(ctx),
+                                IdentifierName::new(SPAN, property_name, ctx),
+                                false,
+                                ctx,
+                            )
+                            .into(),
+                            init,
                             ctx,
                         )
-                        .into(),
-                        init.take_in(ctx),
-                        ctx,
-                    ));
+                    });
                 }
             });
             return ArenaVec::from_value_in(Statement::VariableDeclaration(var_decl), ctx);
