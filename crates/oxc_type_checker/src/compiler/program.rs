@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use oxc_index::{IndexSlice, define_nonmax_u32_index_type};
 
-use super::fileloader::{ProcessedFiles, process_all_program_files};
+use super::fileloader::{FileLoader, ProcessedFiles};
 
 define_nonmax_u32_index_type! {
     /// Index of a root file within a [`Program`].
@@ -29,7 +29,7 @@ impl Program {
     /// normalizing each path and deduplicating (relative paths resolve against
     /// `current_directory`).
     pub fn new(current_directory: &Path, root_files: &[PathBuf]) -> Self {
-        Self { processed: process_all_program_files(current_directory, root_files) }
+        Self { processed: FileLoader::process_all_program_files(current_directory, root_files) }
     }
 
     /// All root files, in include order (tsgo `Program.SourceFiles`).

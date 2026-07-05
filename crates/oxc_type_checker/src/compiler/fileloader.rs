@@ -1,7 +1,7 @@
 //! Port of typescript-go's `internal/compiler/fileloader.go`.
 //!
-//! [`process_all_program_files`] is the entry point (tsgo `processAllProgramFiles`): a
-//! [`FileLoader`] normalizes and deduplicates the root file names into [`ProcessedFiles`].
+//! [`FileLoader::process_all_program_files`] is the entry point (tsgo `processAllProgramFiles`):
+//! it normalizes and deduplicates the root file names into [`ProcessedFiles`].
 
 use std::path::{Path, PathBuf};
 
@@ -30,12 +30,28 @@ pub(super) struct ProcessedFiles {
 ///
 /// tsgo's `fileLoader` also parses each file and owns the resolver, supported-extension lists, and
 /// lib/project-reference bookkeeping; those arrive with later steps.
-struct FileLoader<'a> {
+pub(super) struct FileLoader<'a> {
     current_directory: &'a Path,
     processed: ProcessedFiles,
 }
 
 impl<'a> FileLoader<'a> {
+    /// Port of tsgo's `processAllProgramFiles`: collect the root files into the program's file
+    /// list, normalizing and deduplicating each path.
+    ///
+    /// tsgo also parses each file here (and discovers imports, lib files, and project references);
+    /// those are later steps.
+    pub(super) fn process_all_program_files(
+        current_directory: &'a Path,
+        root_files: &[PathBuf],
+    ) -> ProcessedFiles {
+        let mut loader = Self::new(current_directory);
+        for root_file in root_files {
+            loader.add_root_file(root_file);
+        }
+        loader.processed
+    }
+
     fn new(current_directory: &'a Path) -> Self {
         Self { current_directory, processed: ProcessedFiles::default() }
     }
@@ -50,19 +66,4 @@ impl<'a> FileLoader<'a> {
         let id = self.processed.files.push(path.clone());
         self.processed.files_by_path.insert(path, id);
     }
-}
-
-/// Port of tsgo's `processAllProgramFiles`: collect the root files into the program's file list.
-///
-/// tsgo also parses each file here (and discovers imports, lib files, and project references);
-/// those are later steps.
-pub(super) fn process_all_program_files(
-    current_directory: &Path,
-    root_files: &[PathBuf],
-) -> ProcessedFiles {
-    let mut loader = FileLoader::new(current_directory);
-    for root_file in root_files {
-        loader.add_root_file(root_file);
-    }
-    loader.processed
 }
