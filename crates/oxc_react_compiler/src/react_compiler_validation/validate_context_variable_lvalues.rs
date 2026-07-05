@@ -159,10 +159,7 @@ fn validate_context_variable_lvalues_impl(
 fn format_place(place: &Place, identifiers: &[Identifier]) -> String {
     let id = place.identifier;
     let ident = &identifiers[id.0 as usize];
-    let name = match &ident.name {
-        Some(n) => n.value().to_string(),
-        None => String::new(),
-    };
+    let name = ident.name.as_ref().map_or("", |name| name.value());
     format!("{} {}${}", place.effect, name, id.0)
 }
 

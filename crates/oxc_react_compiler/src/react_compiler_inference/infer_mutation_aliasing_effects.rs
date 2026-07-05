@@ -11,6 +11,8 @@
 //! creation, aliasing, mutation, freezing, and error conditions for each
 //! instruction and terminal in the HIR.
 
+use std::borrow::Cow;
+
 use crate::react_compiler_utils::FxIndexMap;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
@@ -624,12 +626,14 @@ struct InstructionSignature {
 fn hash_effect(effect: &AliasingEffect) -> String {
     match effect {
         AliasingEffect::Apply { receiver, function, mutates_function, args, into, .. } => {
-            let args_str: Vec<String> = args
+            let args_str: Vec<Cow<'_, str>> = args
                 .iter()
                 .map(|a| match a {
-                    PlaceOrSpreadOrHole::Hole => String::new(),
-                    PlaceOrSpreadOrHole::Place(p) => format!("{}", p.identifier.0),
-                    PlaceOrSpreadOrHole::Spread(s) => format!("...{}", s.place.identifier.0),
+                    PlaceOrSpreadOrHole::Hole => Cow::Borrowed(""),
+                    PlaceOrSpreadOrHole::Place(p) => Cow::Owned(format!("{}", p.identifier.0)),
+                    PlaceOrSpreadOrHole::Spread(s) => {
+                        Cow::Owned(format!("...{}", s.place.identifier.0))
+                    }
                 })
                 .collect();
             format!(
@@ -3070,33 +3074,33 @@ fn get_hook_kind_for_type<'a>(
 }
 
 /// Format a Type for printPlace-style output, matching TS's `printType()`.
-fn format_type_for_print(ty: &Type) -> String {
+fn format_type_for_print(ty: &Type) -> Cow<'_, str> {
     match ty {
-        Type::Primitive => String::new(),
+        Type::Primitive => Cow::Borrowed(""),
         Type::Function { shape_id, return_type, .. } => {
             if let Some(sid) = shape_id {
                 let ret = format_type_for_print(return_type);
                 if ret.is_empty() {
-                    format!(":TFunction<{}>()", sid)
+                    Cow::Owned(format!(":TFunction<{}>()", sid))
                 } else {
-                    format!(":TFunction<{}>():  {}", sid, ret)
+                    Cow::Owned(format!(":TFunction<{}>():  {}", sid, ret))
                 }
             } else {
-                ":TFunction".to_string()
+                Cow::Borrowed(":TFunction")
             }
         }
         Type::Object { shape_id } => {
             if let Some(sid) = shape_id {
-                format!(":TObject<{}>", sid)
+                Cow::Owned(format!(":TObject<{}>", sid))
             } else {
-                ":TObject".to_string()
+                Cow::Borrowed(":TObject")
             }
         }
-        Type::Poly => ":TPoly".to_string(),
-        Type::Phi { .. } => ":TPhi".to_string(),
-        Type::Property { .. } => ":TProperty".to_string(),
-        Type::TypeVar { .. } => String::new(),
-        Type::ObjectMethod => ":TObjectMethod".to_string(),
+        Type::Poly => Cow::Borrowed(":TPoly"),
+        Type::Phi { .. } => Cow::Borrowed(":TPhi"),
+        Type::Property { .. } => Cow::Borrowed(":TProperty"),
+        Type::TypeVar { .. } => Cow::Borrowed(""),
+        Type::ObjectMethod => Cow::Borrowed(":TObjectMethod"),
     }
 }
 

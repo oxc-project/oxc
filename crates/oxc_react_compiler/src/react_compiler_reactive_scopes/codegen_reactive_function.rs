@@ -940,8 +940,10 @@ fn ox_codegen_reactive_scope<'a, 'h>(
     if let Some(ref early_return) = early_return_value {
         let early_ident = &cx.env.identifiers[early_return.value.0 as usize];
         let name = match &early_ident.name {
-            Some(crate::react_compiler_hir::IdentifierName::Named(n)) => n.clone(),
-            Some(crate::react_compiler_hir::IdentifierName::Promoted(n)) => n.clone(),
+            Some(
+                crate::react_compiler_hir::IdentifierName::Named(n)
+                | crate::react_compiler_hir::IdentifierName::Promoted(n),
+            ) => n.as_str(),
             None => {
                 return Err(invariant_err(
                     "Expected early return value to be promoted to a named variable",
@@ -951,14 +953,14 @@ fn ox_codegen_reactive_scope<'a, 'h>(
         };
         let test = oxc_ast::ast::Expression::new_binary_expression(
             SPAN,
-            oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, &name), &cx.ast),
+            oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, name), &cx.ast),
             oxc::BinaryOperator::StrictInequality,
             ox_symbol_for(&cx.ast, EARLY_RETURN_SENTINEL),
             &cx.ast,
         );
         let return_stmt = oxc_ast::ast::Statement::new_return_statement(
             SPAN,
-            Some(oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, &name), &cx.ast)),
+            Some(oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, name), &cx.ast)),
             &cx.ast,
         );
         let consequent = oxc_ast::ast::Statement::new_block_statement(

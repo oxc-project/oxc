@@ -67,13 +67,14 @@ impl GlobalRegistry {
 
     /// Iterate over all keys in the registry (base + extras).
     /// Keys in extras that shadow base keys appear only once.
-    pub fn keys(&self) -> impl Iterator<Item = &String> {
+    pub fn keys(&self) -> impl Iterator<Item = &str> {
         let base_keys = self
             .base
             .into_iter()
             .flat_map(|b| b.keys())
-            .filter(|k| !self.entries.contains_key(k.as_str()));
-        self.entries.keys().chain(base_keys)
+            .filter(|k| !self.entries.contains_key(k.as_str()))
+            .map(String::as_str);
+        self.entries.keys().map(String::as_str).chain(base_keys)
     }
 
     /// Consume the registry and return the inner FxHashMap.

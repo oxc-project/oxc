@@ -24,9 +24,9 @@ use crate::react_compiler_hir::dominator::{compute_post_dominator_tree, post_dom
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, PlaceOrSpread,
-    PropertyLiteral, SourceLocation, Terminal, Type, is_ref_value_type, is_set_state_type,
-    is_use_effect_event_type, is_use_effect_hook_type, is_use_insertion_effect_hook_type,
-    is_use_layout_effect_hook_type, is_use_ref_type, visitors,
+    SourceLocation, Terminal, Type, is_ref_value_type, is_set_state_type, is_use_effect_event_type,
+    is_use_effect_hook_type, is_use_insertion_effect_hook_type, is_use_layout_effect_hook_type,
+    is_use_ref_type, visitors,
 };
 
 pub fn validate_no_set_state_in_effects(
@@ -360,7 +360,7 @@ fn get_set_state_call(
                 }
 
                 if let InstructionValue::PropertyLoad { object, property, .. } = &instr.value {
-                    if *property == PropertyLiteral::String("current".to_string()) {
+                    if property.is_string("current") {
                         let obj_ident = &identifiers[object.identifier.0 as usize];
                         let obj_ty = &types[obj_ident.type_.0 as usize];
                         if is_use_ref_type(obj_ty) || is_ref_value_type(obj_ty) {
@@ -450,7 +450,7 @@ fn get_set_state_call(
 
                 // Special case: PropertyLoad of .current on ref/refValue
                 if let InstructionValue::PropertyLoad { object, property, .. } = &instr.value {
-                    if *property == PropertyLiteral::String("current".to_string()) {
+                    if property.is_string("current") {
                         let obj_ident = &identifiers[object.identifier.0 as usize];
                         let obj_ty = &types[obj_ident.type_.0 as usize];
                         if is_use_ref_type(obj_ty) || is_ref_value_type(obj_ty) {

@@ -101,11 +101,11 @@ enum CompileSourceKind {
 fn try_find_directive_enabling_memoization<'a>(
     directives: &'a [String],
     opts: &PluginOptions,
-) -> Result<Option<&'a String>, CompilerError> {
+) -> Result<Option<&'a str>, CompilerError> {
     // Check standard opt-in directives
     let opt_in = directives.iter().find(|d| OPT_IN_DIRECTIVES.contains(&d.as_str()));
     if let Some(directive) = opt_in {
-        return Ok(Some(directive));
+        return Ok(Some(directive.as_str()));
     }
 
     // Check dynamic gating directives
@@ -120,18 +120,18 @@ fn try_find_directive_enabling_memoization<'a>(
 fn find_directive_disabling_memoization<'a>(
     directives: &'a [String],
     opts: &PluginOptions,
-) -> Option<&'a String> {
+) -> Option<&'a str> {
     if let Some(ref custom_directives) = opts.custom_opt_out_directives {
-        directives.iter().find(|d| custom_directives.contains(d))
+        directives.iter().find(|d| custom_directives.contains(d)).map(String::as_str)
     } else {
-        directives.iter().find(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str()))
+        directives.iter().find(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str())).map(String::as_str)
     }
 }
 
 /// Result of a dynamic gating directive parse.
 struct DynamicGatingResult<'a> {
     #[allow(dead_code)]
-    directive: &'a String,
+    directive: &'a str,
     gating: GatingConfig,
 }
 
@@ -147,12 +147,12 @@ fn find_directives_dynamic_gating<'a>(
     };
 
     let mut errors: Vec<CompilerErrorDetail> = Vec::new();
-    let mut matches: Vec<(&'a String, String)> = Vec::new();
+    let mut matches: Vec<(&'a str, String)> = Vec::new();
 
     for directive in directives {
         if let Some(ident) = parse_dynamic_gating_directive(directive) {
             if is_valid_identifier(ident) {
-                matches.push((directive, ident.to_string()));
+                matches.push((directive.as_str(), ident.to_string()));
             } else {
                 let detail = CompilerErrorDetail::new(
                     ErrorCategory::Gating,
@@ -173,7 +173,7 @@ fn find_directives_dynamic_gating<'a>(
     }
 
     if matches.len() > 1 {
-        let names: Vec<String> = matches.iter().map(|(d, _)| (*d).clone()).collect();
+        let names: Vec<&str> = matches.iter().map(|(d, _)| *d).collect();
         let mut err = CompilerError::new();
         let detail = CompilerErrorDetail::new(
             ErrorCategory::Gating,
@@ -2295,9 +2295,9 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
                 _ => None,
             };
             if let Some(name) = replace_name {
-                let name = name.unwrap_or_else(|| "anonymous".to_string());
+                let name = name.as_deref().unwrap_or("anonymous");
                 let is_export = matches!(stmts[i], Statement::ExportNamedDeclaration(_));
-                let const_decl = self.build_const_decl(&name);
+                let const_decl = self.build_const_decl(name);
                 if is_export {
                     use oxc_span::SPAN;
                     let decl = match const_decl {

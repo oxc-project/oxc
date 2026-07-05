@@ -11,6 +11,7 @@
 //!
 //! Conditional on `env.config.enable_name_anonymous_functions`.
 
+use std::borrow::Cow;
 use std::mem::take;
 
 use rustc_hash::FxHashMap;
@@ -65,8 +66,8 @@ pub fn name_anonymous_functions(func: &mut HirFunction, env: &mut Environment) {
     if updates.is_empty() {
         return;
     }
-    let update_map: FxHashMap<FunctionId, &String> =
-        updates.iter().map(|(fid, name)| (*fid, name)).collect();
+    let update_map: FxHashMap<FunctionId, &str> =
+        updates.iter().map(|(fid, name)| (*fid, name.as_str())).collect();
 
     // Apply name updates to the inner HirFunction in the arena
     for (function_id, name) in &updates {
@@ -88,14 +89,14 @@ pub fn name_anonymous_functions(func: &mut HirFunction, env: &mut Environment) {
 /// Apply name hints to FunctionExpression instruction values.
 fn apply_name_hints_to_instructions(
     instructions: &mut [Instruction],
-    update_map: &FxHashMap<FunctionId, &String>,
+    update_map: &FxHashMap<FunctionId, &str>,
 ) {
     for instr in instructions.iter_mut() {
         if let InstructionValue::FunctionExpression { lowered_func, name_hint, .. } =
             &mut instr.value
         {
             if let Some(new_name) = update_map.get(&lowered_func.func) {
-                *name_hint = Some((*new_name).clone());
+                *name_hint = Some((*new_name).to_string());
             }
         }
     }
@@ -248,14 +249,18 @@ fn handle_call(
     let callee_ty = &env.types[callee_ident.type_.0 as usize];
     let hook_kind = env.get_hook_kind_for_type(callee_ty).ok().flatten();
 
-    let callee_name: String = if let Some(hk) = hook_kind {
+    let callee_name: Cow<'_, str> = if let Some(hk) = hook_kind {
         if *hk != HookKind::Custom {
-            hk.to_string()
+            Cow::Owned(hk.to_string())
         } else {
-            names.get(&callee_id).cloned().unwrap_or_else(|| "(anonymous)".to_string())
+            names
+                .get(&callee_id)
+                .map_or(Cow::Borrowed("(anonymous)"), |name| Cow::Borrowed(name.as_str()))
         }
     } else {
-        names.get(&callee_id).cloned().unwrap_or_else(|| "(anonymous)".to_string())
+        names
+            .get(&callee_id)
+            .map_or(Cow::Borrowed("(anonymous)"), |name| Cow::Borrowed(name.as_str()))
     };
 
     // Count how many args are tracked functions

@@ -14,8 +14,9 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     ArrayElement, BlockId, DependencyPathEntry, Effect, HirFunction, Identifier, IdentifierId,
-    InstructionKind, InstructionValue, ManualMemoDependency, ManualMemoDependencyRoot,
-    NonLocalBinding, ParamPattern, Place, PlaceOrSpread, PropertyLiteral, Terminal, Type,
+    IdentifierName, InstructionKind, InstructionValue, ManualMemoDependency,
+    ManualMemoDependencyRoot, NonLocalBinding, ParamPattern, Place, PlaceOrSpread, PropertyLiteral,
+    Terminal, Type,
 };
 
 /// Port of ValidateExhaustiveDependencies.ts
@@ -228,8 +229,8 @@ fn get_identifier_type<'a>(
     &types[ident.type_.0 as usize]
 }
 
-fn get_identifier_name(id: IdentifierId, identifiers: &[Identifier]) -> Option<String> {
-    identifiers[id.0 as usize].name.as_ref().map(|n| n.value().to_string())
+fn get_identifier_name(id: IdentifierId, identifiers: &[Identifier]) -> Option<&str> {
+    identifiers[id.0 as usize].name.as_ref().map(IdentifierName::value)
 }
 
 // =============================================================================
@@ -671,7 +672,7 @@ fn collect_dependencies(
                     let is_numeric = matches!(property, PropertyLiteral::Number(_));
                     let is_ref_current =
                         is_use_ref_type(get_identifier_type(object.identifier, identifiers, types))
-                            && *property == PropertyLiteral::String("current".to_string());
+                            && property.is_string("current");
 
                     if is_numeric || is_ref_current {
                         visit_candidate_dependency(
@@ -1128,7 +1129,7 @@ fn validate_dependencies(
             ) => {
                 let a_name = get_identifier_name(*a_id, identifiers);
                 let b_name = get_identifier_name(*b_id, identifiers);
-                match (a_name.as_deref(), b_name.as_deref()) {
+                match (a_name, b_name) {
                     (Some(an), Some(bn)) => {
                         if *a_id != *b_id {
                             an.cmp(bn)
@@ -1160,7 +1161,7 @@ fn validate_dependencies(
             ) => {
                 let a_name = ab.name();
                 let b_name = get_identifier_name(*b_id, identifiers);
-                match b_name.as_deref() {
+                match b_name {
                     Some(bn) => a_name.cmp(bn),
                     None => Ordering::Equal,
                 }
@@ -1171,7 +1172,7 @@ fn validate_dependencies(
             ) => {
                 let a_name = get_identifier_name(*a_id, identifiers);
                 let b_name = bb.name();
-                match a_name.as_deref() {
+                match a_name {
                     Some(an) => an.cmp(b_name),
                     None => Ordering::Equal,
                 }
@@ -1305,11 +1306,12 @@ fn validate_dependencies(
     // Add detail items for missing deps
     for dep in &filtered_missing {
         if let InferredDependency::Local { identifier, path: _, loc, .. } = dep {
-            let mut hint = String::new();
             let ty = get_identifier_type(*identifier, identifiers, types);
-            if is_stable_type(ty) {
-                hint = ". Refs, setState functions, and other \"stable\" values generally do not need to be added as dependencies, but this variable may change over time to point to different values".to_string();
-            }
+            let hint = if is_stable_type(ty) {
+                ". Refs, setState functions, and other \"stable\" values generally do not need to be added as dependencies, but this variable may change over time to point to different values"
+            } else {
+                ""
+            };
             let dep_str = print_inferred_dependency(dep, identifiers);
             diagnostic.details.push(CompilerDiagnosticDetail::Error {
                 loc: *loc,
@@ -1399,8 +1401,7 @@ fn print_inferred_dependency(dep: &InferredDependency, identifiers: &[Identifier
     match dep {
         InferredDependency::Global { binding } => binding.name().to_string(),
         InferredDependency::Local { identifier, path, .. } => {
-            let name = get_identifier_name(*identifier, identifiers)
-                .unwrap_or_else(|| "<unnamed>".to_string());
+            let name = get_identifier_name(*identifier, identifiers).unwrap_or("<unnamed>");
             let path_str: String = path
                 .iter()
                 .map(|p| format!("{}.{}", if p.optional { "?" } else { "" }, p.property))
@@ -1412,10 +1413,9 @@ fn print_inferred_dependency(dep: &InferredDependency, identifiers: &[Identifier
 
 fn print_manual_memo_dependency(dep: &ManualMemoDependency, identifiers: &[Identifier]) -> String {
     let name = match &dep.root {
-        ManualMemoDependencyRoot::Global { identifier_name } => identifier_name.clone(),
+        ManualMemoDependencyRoot::Global { identifier_name } => identifier_name.as_str(),
         ManualMemoDependencyRoot::NamedLocal { value, .. } => {
-            get_identifier_name(value.identifier, identifiers)
-                .unwrap_or_else(|| "<unnamed>".to_string())
+            get_identifier_name(value.identifier, identifiers).unwrap_or("<unnamed>")
         }
     };
     let path_str: String = dep

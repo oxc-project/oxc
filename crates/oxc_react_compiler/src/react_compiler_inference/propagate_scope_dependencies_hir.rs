@@ -1832,11 +1832,7 @@ impl<'a> DependencyCollectionContext<'a> {
         // Handle ref.current access
         let dep = if is_use_ref_type(
             &env.types[env.identifiers[dep.identifier.0 as usize].type_.0 as usize],
-        ) && dep
-            .path
-            .first()
-            .map(|p| p.property == PropertyLiteral::String("current".to_string()))
-            .unwrap_or(false)
+        ) && dep.path.first().map(|p| p.property.is_string("current")).unwrap_or(false)
         {
             ReactiveScopeDependency {
                 identifier: dep.identifier,

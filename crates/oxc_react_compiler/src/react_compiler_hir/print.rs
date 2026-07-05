@@ -8,6 +8,8 @@
 //! It also exports standalone formatting functions (format_loc, format_primitive, etc.)
 //! that require no state.
 
+use std::borrow::Cow;
+
 use rustc_hash::FxHashSet;
 
 use crate::react_compiler_diagnostics::CompilerError;
@@ -48,10 +50,10 @@ use crate::react_compiler_hir::type_config::ValueReason;
 // Standalone formatting functions (no state needed)
 // =============================================================================
 
-pub fn format_loc(loc: &Option<SourceLocation>) -> String {
+pub fn format_loc(loc: &Option<SourceLocation>) -> Cow<'_, str> {
     match loc {
-        Some(l) => format_loc_value(l),
-        None => "generated".to_string(),
+        Some(l) => Cow::Owned(format_loc_value(l)),
+        None => Cow::Borrowed("generated"),
     }
 }
 
@@ -85,14 +87,14 @@ pub fn format_js_string(s: &str) -> String {
     result
 }
 
-pub fn format_primitive(prim: &PrimitiveValue) -> String {
+pub fn format_primitive(prim: &PrimitiveValue) -> Cow<'_, str> {
     match prim {
-        PrimitiveValue::Null => "null".to_string(),
-        PrimitiveValue::Undefined => "undefined".to_string(),
-        PrimitiveValue::Boolean(b) => format!("{}", b),
-        PrimitiveValue::Number(n) => format_js_number(n.value()),
+        PrimitiveValue::Null => Cow::Borrowed("null"),
+        PrimitiveValue::Undefined => Cow::Borrowed("undefined"),
+        PrimitiveValue::Boolean(b) => Cow::Owned(format!("{}", b)),
+        PrimitiveValue::Number(n) => Cow::Owned(format_js_number(n.value())),
         PrimitiveValue::String(s) => match s.as_str() {
-            Some(utf8) => format_js_string(utf8),
+            Some(utf8) => Cow::Owned(format_js_string(utf8)),
             // Ill-formed strings: escape the well-formed segments exactly like
             // format_js_string and render each unpaired surrogate as \uXXXX,
             // matching what TS's JSON.stringify-based printer emits.
@@ -135,16 +137,16 @@ pub fn format_primitive(prim: &PrimitiveValue) -> String {
                     }
                 }
                 result.push('"');
-                result
+                Cow::Owned(result)
             }
         },
     }
 }
 
-pub fn format_property_literal(prop: &PropertyLiteral) -> String {
+pub fn format_property_literal(prop: &PropertyLiteral) -> Cow<'_, str> {
     match prop {
-        PropertyLiteral::String(s) => s.clone(),
-        PropertyLiteral::Number(n) => format_js_number(n.value()),
+        PropertyLiteral::String(s) => Cow::Borrowed(s.as_str()),
+        PropertyLiteral::Number(n) => Cow::Owned(format_js_number(n.value())),
     }
 }
 
@@ -472,10 +474,7 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                         .path
                         .iter()
                         .map(|p| {
-                            let prop = match &p.property {
-                                PropertyLiteral::String(s) => s.clone(),
-                                PropertyLiteral::Number(n) => format_js_number(n.value()),
-                            };
+                            let prop = format_property_literal(&p.property);
                             format!("{}{}", if p.optional { "?." } else { "." }, prop)
                         })
                         .collect();
@@ -538,41 +537,37 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
 
     pub fn format_type(&self, type_id: TypeId) -> String {
         if let Some(ty) = self.env.types.get(type_id.0 as usize) {
-            self.format_type_value(ty)
+            self.format_type_value(ty).into_owned()
         } else {
             format!("Type({})", type_id.0)
         }
     }
 
-    pub fn format_type_value(&self, ty: &Type) -> String {
+    pub fn format_type_value(&self, ty: &Type) -> Cow<'_, str> {
         match ty {
-            Type::Primitive => "Primitive".to_string(),
-            Type::Function { shape_id, return_type, is_constructor } => {
-                format!(
-                    "Function {{ shapeId: {}, return: {}, isConstructor: {} }}",
-                    match shape_id {
-                        Some(s) => format!("\"{}\"", s),
-                        None => "null".to_string(),
-                    },
-                    self.format_type_value(return_type),
-                    is_constructor
-                )
-            }
-            Type::Object { shape_id } => {
-                format!(
-                    "Object {{ shapeId: {} }}",
-                    match shape_id {
-                        Some(s) => format!("\"{}\"", s),
-                        None => "null".to_string(),
-                    }
-                )
-            }
-            Type::TypeVar { id } => format!("Type({})", id.0),
-            Type::Poly => "Poly".to_string(),
+            Type::Primitive => Cow::Borrowed("Primitive"),
+            Type::Function { shape_id, return_type, is_constructor } => Cow::Owned(format!(
+                "Function {{ shapeId: {}, return: {}, isConstructor: {} }}",
+                match shape_id {
+                    Some(s) => Cow::Owned(format!("\"{}\"", s)),
+                    None => Cow::Borrowed("null"),
+                },
+                self.format_type_value(return_type),
+                is_constructor
+            )),
+            Type::Object { shape_id } => Cow::Owned(format!(
+                "Object {{ shapeId: {} }}",
+                match shape_id {
+                    Some(s) => Cow::Owned(format!("\"{}\"", s)),
+                    None => Cow::Borrowed("null"),
+                }
+            )),
+            Type::TypeVar { id } => Cow::Owned(format!("Type({})", id.0)),
+            Type::Poly => Cow::Borrowed("Poly"),
             Type::Phi { operands } => {
                 let ops: Vec<String> =
-                    operands.iter().map(|op| self.format_type_value(op)).collect();
-                format!("Phi {{ operands: [{}] }}", ops.join(", "))
+                    operands.iter().map(|op| self.format_type_value(op).into_owned()).collect();
+                Cow::Owned(format!("Phi {{ operands: [{}] }}", ops.join(", ")))
             }
             Type::Property { object_type, object_name, property_name } => {
                 let prop_str = match property_name {
@@ -583,14 +578,14 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                         format!("computed({})", self.format_type_value(value))
                     }
                 };
-                format!(
+                Cow::Owned(format!(
                     "Property {{ objectType: {}, objectName: \"{}\", propertyName: {} }}",
                     self.format_type_value(object_type),
                     object_name,
                     prop_str
-                )
+                ))
             }
-            Type::ObjectMethod => "ObjectMethod".to_string(),
+            Type::ObjectMethod => Cow::Borrowed("ObjectMethod"),
         }
     }
 

@@ -548,18 +548,12 @@ fn compare_deps(
     if is_subpath
         && (source.path.len() == inferred.path.len()
             || (inferred.path.len() >= source.path.len()
-                && !inferred
-                    .path
-                    .iter()
-                    .any(|t| t.property == PropertyLiteral::String("current".to_string()))))
+                && !inferred.path.iter().any(|t| t.property.is_string("current"))))
     {
         CompareDependencyResult::Ok
     } else if is_subpath {
-        if source.path.iter().any(|t| t.property == PropertyLiteral::String("current".to_string()))
-            || inferred
-                .path
-                .iter()
-                .any(|t| t.property == PropertyLiteral::String("current".to_string()))
+        if source.path.iter().any(|t| t.property.is_string("current"))
+            || inferred.path.iter().any(|t| t.property.is_string("current"))
         {
             CompareDependencyResult::RefAccessDifference
         } else {
@@ -578,21 +572,20 @@ fn pretty_print_scope_dependency(
 ) -> String {
     let ident = &identifiers[dep_id.0 as usize];
     let root_str = match &ident.name {
-        Some(IdentifierName::Named(n)) => n.clone(),
-        Some(IdentifierName::Promoted(n)) => n.clone(),
-        None => "[unnamed]".to_string(),
+        Some(IdentifierName::Named(n) | IdentifierName::Promoted(n)) => n.as_str(),
+        None => "[unnamed]",
     };
     let path_str: String = dep_path
         .iter()
         .map(|entry| {
-            let prop = match &entry.property {
-                PropertyLiteral::String(s) => s.clone(),
-                PropertyLiteral::Number(n) => format!("{}", n),
-            };
-            if entry.optional { format!("?.{}", prop) } else { format!(".{}", prop) }
+            let prefix = if entry.optional { "?." } else { "." };
+            match &entry.property {
+                PropertyLiteral::String(s) => format!("{prefix}{s}"),
+                PropertyLiteral::Number(n) => format!("{prefix}{n}"),
+            }
         })
         .collect();
-    format!("{}{}", root_str, path_str)
+    format!("{root_str}{path_str}")
 }
 
 /// Pretty-print a manual memo dependency for error messages.
@@ -605,29 +598,24 @@ fn print_manual_memo_dependency(
         ManualMemoDependencyRoot::NamedLocal { value, .. } => {
             let ident = &identifiers[value.identifier.0 as usize];
             match &ident.name {
-                Some(IdentifierName::Named(n)) => n.clone(),
-                Some(IdentifierName::Promoted(n)) => n.clone(),
-                None => "[unnamed]".to_string(),
+                Some(IdentifierName::Named(n) | IdentifierName::Promoted(n)) => n.as_str(),
+                None => "[unnamed]",
             }
         }
-        ManualMemoDependencyRoot::Global { identifier_name } => identifier_name.clone(),
+        ManualMemoDependencyRoot::Global { identifier_name } => identifier_name.as_str(),
     };
     let path_str: String = dep
         .path
         .iter()
         .map(|entry| {
-            let prop = match &entry.property {
-                PropertyLiteral::String(s) => s.clone(),
-                PropertyLiteral::Number(n) => format!("{}", n),
-            };
-            if with_optional && entry.optional {
-                format!("?.{}", prop)
-            } else {
-                format!(".{}", prop)
+            let prefix = if with_optional && entry.optional { "?." } else { "." };
+            match &entry.property {
+                PropertyLiteral::String(s) => format!("{prefix}{s}"),
+                PropertyLiteral::Number(n) => format!("{prefix}{n}"),
             }
         })
         .collect();
-    format!("{}{}", root_str, path_str)
+    format!("{root_str}{path_str}")
 }
 
 fn get_compare_dependency_result_description(result: CompareDependencyResult) -> &'static str {
@@ -710,20 +698,20 @@ fn validate_inferred_dep(
             .collect::<Vec<_>>()
             .join(", ");
         let result_desc = error_diagnostic
-            .map(|d| get_compare_dependency_result_description(d).to_string())
-            .unwrap_or_else(|| "Inferred dependency not present in source".to_string());
-        format!(
+            .map(get_compare_dependency_result_description)
+            .unwrap_or("Inferred dependency not present in source");
+        Some(format!(
             "The inferred dependency was `{}`, but the source dependencies were [{}]. {}",
             dep_str, source_deps_str, result_desc
-        )
+        ))
     } else {
-        String::new()
+        None
     };
 
     let description = format!(
         "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. \
          The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. {}",
-        extra
+        extra.as_deref().unwrap_or_default()
     );
 
     let diag = CompilerDiagnostic::new(

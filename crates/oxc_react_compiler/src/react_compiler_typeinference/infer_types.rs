@@ -539,8 +539,7 @@ fn generate_instruction_types(
             let return_type = make_type(types);
             let mut shape_id = None;
             if unifier.enable_treat_set_identifiers_as_state_setters {
-                let name = get_name(names, callee.identifier);
-                if name.starts_with("set") {
+                if names.get(&callee.identifier).is_some_and(|name| name.starts_with("set")) {
                     shape_id = Some(BUILT_IN_SET_STATE_ID.to_string());
                 }
             }

@@ -13,7 +13,7 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     AliasingEffect, BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, ParamPattern,
-    Place, PrimitiveValue, PropertyLiteral, Terminal, Type, UnaryOperator, is_use_ref_type,
+    Place, PrimitiveValue, Terminal, Type, UnaryOperator, is_use_ref_type,
 };
 
 const ERROR_DESCRIPTION: &str = "React refs are values that are not needed for rendering. \
@@ -493,7 +493,7 @@ fn collect_temporaries_sidemap(
                 }
                 InstructionValue::PropertyLoad { object, property, .. } => {
                     if is_ref_type(object.identifier, identifiers, types)
-                        && *property == PropertyLiteral::String("current".to_string())
+                        && property.is_string("current")
                     {
                         continue;
                     }

@@ -1142,6 +1142,12 @@ pub enum PropertyLiteral {
     Number(FloatValue),
 }
 
+impl PropertyLiteral {
+    pub fn is_string(&self, value: &str) -> bool {
+        matches!(self, Self::String(s) if s == value)
+    }
+}
+
 impl std::fmt::Display for PropertyLiteral {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
