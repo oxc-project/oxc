@@ -99,9 +99,8 @@ pub fn memoize_fbt_and_macro_operands_in_same_scope(
     let mut macro_tags = populate_macro_tags(func, &macro_kinds);
 
     // Phase 3: Reverse data-flow to merge arguments of macro invocations
-    let macro_values = merge_macro_arguments(func, env, &mut macro_tags, &macro_kinds);
 
-    macro_values
+    merge_macro_arguments(func, env, &mut macro_tags, &macro_kinds)
 }
 
 /// Forward data-flow analysis to identify all macro tags, including
@@ -131,21 +130,22 @@ fn populate_macro_tags(
                         macro_tags.insert(lvalue_id, macro_def.clone());
                     }
                 }
-                InstructionValue::PropertyLoad { object, property, .. } => {
-                    if let PropertyLiteral::String(prop_name) = property {
-                        if let Some(macro_def) = macro_tags.get(&object.identifier).cloned() {
-                            let property_macro = if let Some(ref props) = macro_def.properties {
-                                let prop_def =
-                                    props.get(prop_name.as_str()).or_else(|| props.get("*"));
-                                match prop_def {
-                                    Some(def) => def.clone(),
-                                    None => macro_def.clone(),
-                                }
-                            } else {
-                                macro_def.clone()
-                            };
-                            macro_tags.insert(lvalue_id, property_macro);
-                        }
+                InstructionValue::PropertyLoad {
+                    object,
+                    property: PropertyLiteral::String(prop_name),
+                    ..
+                } => {
+                    if let Some(macro_def) = macro_tags.get(&object.identifier).cloned() {
+                        let property_macro = if let Some(ref props) = macro_def.properties {
+                            let prop_def = props.get(prop_name.as_str()).or_else(|| props.get("*"));
+                            match prop_def {
+                                Some(def) => def.clone(),
+                                None => macro_def.clone(),
+                            }
+                        } else {
+                            macro_def.clone()
+                        };
+                        macro_tags.insert(lvalue_id, property_macro);
                     }
                 }
                 _ => {}

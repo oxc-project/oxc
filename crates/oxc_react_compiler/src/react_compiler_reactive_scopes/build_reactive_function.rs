@@ -1334,14 +1334,11 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         let mut inner_value = result.value;
 
         // Flatten nested SequenceExpressions
-        loop {
-            match inner_value {
-                ReactiveValue::SequenceExpression { instructions: seq_instrs, value, .. } => {
-                    instructions.extend(seq_instrs);
-                    inner_value = *value;
-                }
-                _ => break,
-            }
+        while let ReactiveValue::SequenceExpression { instructions: seq_instrs, value, .. } =
+            inner_value
+        {
+            instructions.extend(seq_instrs);
+            inner_value = *value;
         }
 
         // Only add the final instruction if the innermost value is not just a LoadLocal

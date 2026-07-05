@@ -81,7 +81,7 @@ pub fn infer_reactive_scope_variables(
     });
 
     // Set loc on each scope
-    for (_group_id, state) in &scopes {
+    for state in scopes.values() {
         env.scopes[state.scope_id.0 as usize].loc = state.loc;
     }
 
@@ -108,7 +108,7 @@ pub fn infer_reactive_scope_variables(
             EvaluationOrder(max_instruction.0.max(block.terminal.evaluation_order().0));
     }
 
-    for (_group_id, state) in &scopes {
+    for state in scopes.values() {
         let scope = &env.scopes[state.scope_id.0 as usize];
         if scope.range.start == EvaluationOrder(0)
             || scope.range.end == EvaluationOrder(0)
@@ -117,7 +117,7 @@ pub fn infer_reactive_scope_variables(
         {
             return Err(CompilerDiagnostic::new(
                 ErrorCategory::Invariant,
-                &format!(
+                format!(
                     "Invalid mutable range for scope: Scope @{} has range [{}:{}] but the valid range is [1:{}]",
                     scope.id.0,
                     scope.range.start.0,

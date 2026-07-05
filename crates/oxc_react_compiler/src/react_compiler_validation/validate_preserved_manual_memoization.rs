@@ -245,10 +245,7 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
             }
 
             // TS: CompilerError.invariant(state.manualMemoState.manualMemoId === value.manualMemoId, ...)
-            if state
-                .manual_memo_state
-                .as_ref()
-                .map_or(true, |s| s.manual_memo_id != *manual_memo_id)
+            if state.manual_memo_state.as_ref().is_none_or(|s| s.manual_memo_id != *manual_memo_id)
             {
                 state.manual_memo_state = None;
                 return;
@@ -296,21 +293,21 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
                     .insert(value.identifier);
             }
         }
-        ReactiveValue::Instruction(InstructionValue::LoadLocal { place, .. }) => {
-            if state.manual_memo_state.is_some() {
-                let place_ident = &state.env.identifiers[place.identifier.0 as usize];
-                if let Some(ref lvalue) = instr.lvalue {
-                    let lvalue_ident = &state.env.identifiers[lvalue.identifier.0 as usize];
-                    if place_ident.scope.is_some() && lvalue_ident.scope.is_none() {
-                        state
-                            .manual_memo_state
-                            .as_mut()
-                            .unwrap()
-                            .reassignments
-                            .entry(lvalue_ident.declaration_id)
-                            .or_default()
-                            .insert(place.identifier);
-                    }
+        ReactiveValue::Instruction(InstructionValue::LoadLocal { place, .. })
+            if state.manual_memo_state.is_some() =>
+        {
+            let place_ident = &state.env.identifiers[place.identifier.0 as usize];
+            if let Some(ref lvalue) = instr.lvalue {
+                let lvalue_ident = &state.env.identifiers[lvalue.identifier.0 as usize];
+                if place_ident.scope.is_some() && lvalue_ident.scope.is_none() {
+                    state
+                        .manual_memo_state
+                        .as_mut()
+                        .unwrap()
+                        .reassignments
+                        .entry(lvalue_ident.declaration_id)
+                        .or_default()
+                        .insert(place.identifier);
                 }
             }
         }

@@ -96,6 +96,7 @@ use crate::react_compiler::debug_print;
 /// Currently: creates an Environment, runs BuildHIR (lowering), and produces
 /// debug output via the context. Returns a CodegenFunction with zeroed memo
 /// stats on success (codegen is not yet implemented).
+#[allow(clippy::too_many_arguments)]
 pub fn compile_fn<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     func: &FunctionNode<'_>,
@@ -117,7 +118,7 @@ pub fn compile_fn<'a>(
     env.instrument_fn_name = context.instrument_fn_name.clone();
     env.instrument_gating_name = context.instrument_gating_name.clone();
     env.hook_guard_name = context.hook_guard_name.clone();
-    env.seed_uid_known_names(&context.known_referenced_names());
+    env.seed_uid_known_names(context.known_referenced_names());
 
     env.reference_node_ids = scope.all_reference_positions().clone();
 
@@ -694,7 +695,7 @@ pub fn compile_fn<'a>(
         context.log_debug(DebugLogEntry::new("RenameVariables", debug));
     }
 
-    prune_hoisted_contexts(&mut reactive_fn, &mut env)?;
+    prune_hoisted_contexts(&mut reactive_fn, &env)?;
 
     if context.debug_enabled {
         let debug =

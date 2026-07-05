@@ -245,7 +245,7 @@ impl Env {
         let widened_value = join_ref_access_types(&value, current.unwrap_or(&RefAccessType::None));
         if current.is_none() && widened_value == RefAccessType::None {
             // No change needed
-        } else if current.map_or(true, |c| c != &widened_value) {
+        } else if current != Some(&widened_value) {
             self.changed = true;
         }
         self.data.insert(operand_id, widened_value);
@@ -1025,9 +1025,9 @@ fn validate_no_ref_access_in_render_impl(
                             found_ref_id = Some(*id);
                         }
 
-                        if matches!(&left_type, Some(RefAccessType::Nullable)) {
-                            nullish = true;
-                        } else if matches!(&right_type, Some(RefAccessType::Nullable)) {
+                        if matches!(&left_type, Some(RefAccessType::Nullable))
+                            || matches!(&right_type, Some(RefAccessType::Nullable))
+                        {
                             nullish = true;
                         }
 

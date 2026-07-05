@@ -170,6 +170,12 @@ impl ShapeRegistry {
     }
 }
 
+impl Default for ShapeRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Clone for ShapeRegistry {
     fn clone(&self) -> Self {
         Self { base: self.base, entries: self.entries.clone() }

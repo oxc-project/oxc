@@ -119,12 +119,12 @@ fn validate_impl(
                     );
                     active_manual_memo_id = None;
                 }
-                InstructionValue::CallExpression { callee, .. } => {
-                    if is_set_state_id(callee.identifier, identifiers, types)
-                        || unconditional_set_state_functions.contains(&callee.identifier)
-                    {
-                        if active_manual_memo_id.is_some() {
-                            errors.push(
+                InstructionValue::CallExpression { callee, .. }
+                    if (is_set_state_id(callee.identifier, identifiers, types)
+                        || unconditional_set_state_functions.contains(&callee.identifier)) =>
+                {
+                    if active_manual_memo_id.is_some() {
+                        errors.push(
                                 CompilerDiagnostic::new(
                                     ErrorCategory::RenderSetState,
                                     "Calling setState from useMemo may trigger an infinite loop",
@@ -138,9 +138,9 @@ fn validate_impl(
                                     identifier_name: None,
                                 }),
                             );
-                        } else if unconditional_blocks.contains(&block.id) {
-                            if enable_use_keyed_state {
-                                errors.push(
+                    } else if unconditional_blocks.contains(&block.id) {
+                        if enable_use_keyed_state {
+                            errors.push(
                                     CompilerDiagnostic::new(
                                         ErrorCategory::RenderSetState,
                                         "Cannot call setState during render",
@@ -156,8 +156,8 @@ fn validate_impl(
                                         identifier_name: None,
                                     }),
                                 );
-                            } else {
-                                errors.push(
+                        } else {
+                            errors.push(
                                     CompilerDiagnostic::new(
                                         ErrorCategory::RenderSetState,
                                         "Cannot call setState during render",
@@ -173,7 +173,6 @@ fn validate_impl(
                                         identifier_name: None,
                                     }),
                                 );
-                            }
                         }
                     }
                 }

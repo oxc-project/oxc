@@ -88,23 +88,18 @@ pub fn validate_no_set_state_in_effects(
                     let prop_type =
                         &types[identifiers[property.identifier.0 as usize].type_.0 as usize];
                     if is_use_effect_event_type(prop_type) {
-                        if let Some(first_arg) = args.first() {
-                            if let PlaceOrSpread::Place(arg_place) = first_arg {
-                                if let Some(info) = set_state_functions.get(&arg_place.identifier) {
-                                    set_state_functions
-                                        .insert(instr.lvalue.identifier, info.clone());
-                                }
+                        if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
+                            if let Some(info) = set_state_functions.get(&arg_place.identifier) {
+                                set_state_functions.insert(instr.lvalue.identifier, info.clone());
                             }
                         }
                     } else if is_use_effect_hook_type(prop_type)
                         || is_use_layout_effect_hook_type(prop_type)
                         || is_use_insertion_effect_hook_type(prop_type)
                     {
-                        if let Some(first_arg) = args.first() {
-                            if let PlaceOrSpread::Place(arg_place) = first_arg {
-                                if let Some(info) = set_state_functions.get(&arg_place.identifier) {
-                                    push_error(&mut errors, info, enable_verbose);
-                                }
+                        if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
+                            if let Some(info) = set_state_functions.get(&arg_place.identifier) {
+                                push_error(&mut errors, info, enable_verbose);
                             }
                         }
                     }
@@ -113,23 +108,18 @@ pub fn validate_no_set_state_in_effects(
                     let callee_type =
                         &types[identifiers[callee.identifier.0 as usize].type_.0 as usize];
                     if is_use_effect_event_type(callee_type) {
-                        if let Some(first_arg) = args.first() {
-                            if let PlaceOrSpread::Place(arg_place) = first_arg {
-                                if let Some(info) = set_state_functions.get(&arg_place.identifier) {
-                                    set_state_functions
-                                        .insert(instr.lvalue.identifier, info.clone());
-                                }
+                        if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
+                            if let Some(info) = set_state_functions.get(&arg_place.identifier) {
+                                set_state_functions.insert(instr.lvalue.identifier, info.clone());
                             }
                         }
                     } else if is_use_effect_hook_type(callee_type)
                         || is_use_layout_effect_hook_type(callee_type)
                         || is_use_insertion_effect_hook_type(callee_type)
                     {
-                        if let Some(first_arg) = args.first() {
-                            if let PlaceOrSpread::Place(arg_place) = first_arg {
-                                if let Some(info) = set_state_functions.get(&arg_place.identifier) {
-                                    push_error(&mut errors, info, enable_verbose);
-                                }
+                        if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
+                            if let Some(info) = set_state_functions.get(&arg_place.identifier) {
+                                push_error(&mut errors, info, enable_verbose);
                             }
                         }
                     }
@@ -361,6 +351,7 @@ fn create_ref_controlled_block_checker(
 /// Checks inner function body for direct setState calls. Returns the callee Place info
 /// if a setState call is found in the function body.
 /// Tracks ref-derived values to allow setState when the value being set comes from a ref.
+#[allow(clippy::too_many_arguments)]
 fn get_set_state_call(
     func: &HirFunction,
     set_state_functions: &mut FxHashMap<IdentifierId, SetStateInfo>,
@@ -519,44 +510,41 @@ fn get_set_state_call(
                         set_state_functions.insert(instr.lvalue.identifier, info);
                     }
                 }
-                InstructionValue::CallExpression { callee, args, .. } => {
-                    if is_set_state_type_by_id(callee.identifier, identifiers, types)
-                        || set_state_functions.contains_key(&callee.identifier)
-                    {
-                        if enable_allow_set_state_from_refs {
-                            // Check if the first argument is ref-derived
-                            if let Some(first_arg) = args.first() {
-                                if let PlaceOrSpread::Place(arg_place) = first_arg {
-                                    if is_derived_from_ref(
-                                        arg_place.identifier,
-                                        &ref_derived_values,
-                                        identifiers,
-                                        types,
-                                    ) {
-                                        // Allow setState when value is derived from ref
-                                        return Ok(None);
-                                    }
-                                }
-                            }
-                            // Check if the current block is controlled by a ref-derived condition
-                            if is_ref_controlled_block(block.id) {
-                                continue;
+                InstructionValue::CallExpression { callee, args, .. }
+                    if (is_set_state_type_by_id(callee.identifier, identifiers, types)
+                        || set_state_functions.contains_key(&callee.identifier)) =>
+                {
+                    if enable_allow_set_state_from_refs {
+                        // Check if the first argument is ref-derived
+                        if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
+                            if is_derived_from_ref(
+                                arg_place.identifier,
+                                &ref_derived_values,
+                                identifiers,
+                                types,
+                            ) {
+                                // Allow setState when value is derived from ref
+                                return Ok(None);
                             }
                         }
-                        // Get the user-visible identifier name, matching Babel's
-                        // loc.identifierName behavior. Uses declaration_id to find
-                        // the original named identifier when SSA creates unnamed copies.
-                        let callee_name = get_identifier_name_with_loc(
-                            callee.identifier,
-                            identifiers,
-                            &callee.loc,
-                            source_code,
-                        );
-                        return Ok(Some(SetStateInfo {
-                            loc: callee.loc,
-                            identifier_name: callee_name,
-                        }));
+                        // Check if the current block is controlled by a ref-derived condition
+                        if is_ref_controlled_block(block.id) {
+                            continue;
+                        }
                     }
+                    // Get the user-visible identifier name, matching Babel's
+                    // loc.identifierName behavior. Uses declaration_id to find
+                    // the original named identifier when SSA creates unnamed copies.
+                    let callee_name = get_identifier_name_with_loc(
+                        callee.identifier,
+                        identifiers,
+                        &callee.loc,
+                        source_code,
+                    );
+                    return Ok(Some(SetStateInfo {
+                        loc: callee.loc,
+                        identifier_name: callee_name,
+                    }));
                 }
                 _ => {}
             }

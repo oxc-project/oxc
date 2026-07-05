@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
@@ -36,7 +37,7 @@ pub fn validate_no_capitalized_calls(
                     if !name.is_empty()
                         && name.starts_with(|c: char| c.is_ascii_uppercase())
                         // We don't want to flag CONSTANTS()
-                        && name != name.to_uppercase()
+                        && name != name.cow_to_uppercase()
                         && !allow_list.contains(name)
                     {
                         capital_load_globals.insert(lvalue_id, name.to_string());
@@ -55,11 +56,12 @@ pub fn validate_no_capitalized_calls(
                         continue;
                     }
                 }
-                InstructionValue::PropertyLoad { property, .. } => {
-                    if let PropertyLiteral::String(prop_name) = property {
-                        if prop_name.starts_with(|c: char| c.is_ascii_uppercase()) {
-                            capitalized_properties.insert(lvalue_id, prop_name.clone());
-                        }
+                InstructionValue::PropertyLoad {
+                    property: PropertyLiteral::String(prop_name),
+                    ..
+                } => {
+                    if prop_name.starts_with(|c: char| c.is_ascii_uppercase()) {
+                        capitalized_properties.insert(lvalue_id, prop_name.clone());
                     }
                 }
                 InstructionValue::MethodCall { property, loc, .. } => {

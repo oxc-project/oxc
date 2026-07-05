@@ -116,15 +116,14 @@ fn matches_flow_suppression(value: &str) -> bool {
     let after_dollar_flow = &value[idx + "$Flow".len()..];
 
     // Match FlowFixMe (with optional word chars), FlowExpectedError, or FlowIssue
-    let after_kind = if after_dollar_flow.starts_with("FixMe") {
+    let after_kind = if let Some(rest) = after_dollar_flow.strip_prefix("FixMe") {
         // Skip "FixMe" + any word characters
-        let rest = &after_dollar_flow["FixMe".len()..];
         let word_end = rest.find(|c: char| !c.is_alphanumeric() && c != '_').unwrap_or(rest.len());
         &rest[word_end..]
-    } else if after_dollar_flow.starts_with("ExpectedError") {
-        &after_dollar_flow["ExpectedError".len()..]
-    } else if after_dollar_flow.starts_with("Issue") {
-        &after_dollar_flow["Issue".len()..]
+    } else if let Some(rest) = after_dollar_flow.strip_prefix("ExpectedError") {
+        rest
+    } else if let Some(rest) = after_dollar_flow.strip_prefix("Issue") {
+        rest
     } else {
         return false;
     };
@@ -231,7 +230,7 @@ pub fn filter_suppressions_that_affect_function(
                     .enable_comment
                     .as_ref()
                     .and_then(|c| c.end)
-                    .map_or(false, |end| end < fn_end))
+                    .is_some_and(|end| end < fn_end))
         {
             suppressions_in_scope.push(suppression);
         }
@@ -243,7 +242,7 @@ pub fn filter_suppressions_that_affect_function(
                     .enable_comment
                     .as_ref()
                     .and_then(|c| c.end)
-                    .map_or(false, |end| end > fn_end))
+                    .is_some_and(|end| end > fn_end))
         {
             suppressions_in_scope.push(suppression);
         }

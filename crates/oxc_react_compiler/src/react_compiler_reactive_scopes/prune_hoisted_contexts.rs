@@ -106,20 +106,19 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         place: &Place,
         state: &mut VisitorState,
     ) -> Result<(), CompilerError> {
-        if let Some(kind) = state.uninitialized.get(&place.identifier) {
-            if let UninitializedKind::Func { definition } = kind {
-                if *definition != Some(place.identifier) {
-                    let mut err = CompilerError::new();
-                    err.push_error_detail(
-                        CompilerErrorDetail::new(
-                            ErrorCategory::Todo,
-                            "[PruneHoistedContexts] Rewrite hoisted function references"
-                                .to_string(),
-                        )
-                        .with_loc(place.loc),
-                    );
-                    return Err(err);
-                }
+        if let Some(UninitializedKind::Func { definition }) =
+            state.uninitialized.get(&place.identifier)
+        {
+            if *definition != Some(place.identifier) {
+                let mut err = CompilerError::new();
+                err.push_error_detail(
+                    CompilerErrorDetail::new(
+                        ErrorCategory::Todo,
+                        "[PruneHoistedContexts] Rewrite hoisted function references".to_string(),
+                    )
+                    .with_loc(place.loc),
+                );
+                return Err(err);
             }
         }
         Ok(())

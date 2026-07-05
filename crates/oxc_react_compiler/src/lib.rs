@@ -6,32 +6,21 @@ pub mod scope;
 
 // Vendored React Compiler core crates (from oxc-project/forked-react-compiler),
 // each crate flattened to a module. Kept near byte-for-byte with upstream for easy
-// re-syncing, so `clippy::all` is relaxed here rather than editing the vendored code.
+// re-syncing.
 // They are `pub` so the public API may name types that originate inside them (e.g.
 // `TransformResult::events`); being `pub` also keeps `dead_code` quiet on the parts
 // the conversion layer doesn't reach, so only the few genuinely-dead private items
 // carry their own targeted `#[allow(dead_code)]`.
-#[allow(clippy::all)]
 pub mod react_compiler;
-#[allow(clippy::all)]
 pub mod react_compiler_diagnostics;
-#[allow(clippy::all)]
 pub mod react_compiler_hir;
-#[allow(clippy::all)]
 pub mod react_compiler_inference;
-#[allow(clippy::all)]
 pub mod react_compiler_lowering;
-#[allow(clippy::all)]
 pub mod react_compiler_optimization;
-#[allow(clippy::all)]
 pub mod react_compiler_reactive_scopes;
-#[allow(clippy::all)]
 pub mod react_compiler_ssa;
-#[allow(clippy::all)]
 pub mod react_compiler_typeinference;
-#[allow(clippy::all)]
 pub mod react_compiler_utils;
-#[allow(clippy::all)]
 pub mod react_compiler_validation;
 
 use crate::react_compiler::entrypoint::compile_result::CompileResult;

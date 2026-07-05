@@ -124,8 +124,7 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
     let mut fallthroughs: FxHashMap<ScopeId, BlockId> = FxHashMap::default();
     let mut active_items: Vec<ScopeId> = Vec::new();
 
-    for i in 0..items.len() {
-        let curr = items[i];
+    for &curr in &items {
         let curr_start = env.scopes[curr.0 as usize].range.start;
         let curr_end = env.scopes[curr.0 as usize].range.end;
 

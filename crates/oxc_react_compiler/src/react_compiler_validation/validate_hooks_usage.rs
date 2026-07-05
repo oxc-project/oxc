@@ -349,7 +349,7 @@ pub fn validate_hooks_usage(
                     let object_kind = get_kind_for_place(value, &value_kinds, &env.identifiers);
                     // Process instr.lvalue and all pattern operands (matching TS eachInstructionLValue)
                     let pattern_places = each_pattern_operand(&lvalue.pattern);
-                    let all_lvalues = once(instr.lvalue.clone()).chain(pattern_places.into_iter());
+                    let all_lvalues = once(instr.lvalue.clone()).chain(pattern_places);
                     for place in all_lvalues {
                         let is_hook_property =
                             ident_is_hook_name(place.identifier, &env.identifiers);

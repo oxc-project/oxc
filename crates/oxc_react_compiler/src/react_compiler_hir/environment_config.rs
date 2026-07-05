@@ -39,18 +39,13 @@ pub struct HookConfig {
     pub transitive_mixed_data: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ExhaustiveEffectDepsMode {
+    #[default]
     Off,
     All,
     MissingOnly,
     ExtraOnly,
-}
-
-impl Default for ExhaustiveEffectDepsMode {
-    fn default() -> Self {
-        Self::Off
-    }
 }
 
 /// Compiler environment configuration. Contains feature flags and settings.

@@ -20,6 +20,11 @@ use oxc_span::Span;
 use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
 use crate::react_compiler_lowering::source_loc::LineOffsets;
 
+type BuildResult<'a> = Result<
+    (HIR, Vec<Instruction<'a>>, FxIndexMap<String, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
+    CompilerError,
+>;
+
 // ---------------------------------------------------------------------------
 // Reserved word check (matches TS isReservedWord)
 // ---------------------------------------------------------------------------
@@ -178,6 +183,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// - `bindings`: optional pre-existing bindings (e.g., from a parent function)
     /// - `context`: optional pre-existing captured context map
     /// - `entry_block_kind`: the kind of the entry block (defaults to `Block`)
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         env: &'b mut Environment<'a>,
         scope: &'b ScopeResolver<'b, 'a>,
@@ -257,7 +263,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Look up the source location of an identifier by its node_id.
     pub fn get_identifier_loc(&self, node_id: u32) -> Option<SourceLocation> {
-        self.identifier_locs.get(&node_id).map(|entry| entry.loc.clone())
+        self.identifier_locs.get(&node_id).map(|entry| entry.loc)
     }
 
     /// Check whether a reference at the given byte offset corresponds to a
@@ -340,7 +346,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// after the instruction to model potential control flow to the handler,
     /// then continues in a new block.
     pub fn push(&mut self, instruction: Instruction<'a>) {
-        let loc = instruction.loc.clone();
+        let loc = instruction.loc;
         let instr_id = InstructionId(self.instruction_table.len() as u32);
         self.instruction_table.push(instruction);
         self.current.instructions.push(instr_id);
@@ -705,17 +711,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// 5. Remove unnecessary try-catch
     /// 6. Number all instructions and terminals
     /// 7. Mark predecessor blocks
-    pub fn build(
-        mut self,
-    ) -> Result<
-        (
-            HIR,
-            Vec<Instruction<'a>>,
-            FxIndexMap<String, SymbolId>,
-            FxIndexMap<SymbolId, IdentifierId>,
-        ),
-        CompilerError,
-    > {
+    pub fn build(mut self) -> BuildResult<'a> {
         let mut hir = HIR { blocks: std::mem::take(&mut self.completed), entry: self.entry };
 
         let mut instructions = std::mem::take(&mut self.instruction_table);
@@ -736,7 +732,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                     let loc = block
                         .instructions
                         .first()
-                        .and_then(|&i| instructions[i.0 as usize].loc.clone())
+                        .and_then(|&i| instructions[i.0 as usize].loc)
                         .or_else(|| block.terminal.loc().copied());
                     self.env.record_error(CompilerErrorDetail {
                         category: ErrorCategory::Todo,
@@ -811,7 +807,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                     .scope
                     .declaration_start(symbol_id)
                     .and_then(|nid| self.get_identifier_loc(nid))
-                    .or_else(|| loc.clone());
+                    .or(loc);
                 self.env.record_error(CompilerErrorDetail {
                     category: ErrorCategory::Todo,
                     reason: "Support local variables named `fbt`".to_string(),
@@ -837,19 +833,14 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         // Find a unique name: start with the original name, then try name_0, name_1, ...
         let mut candidate = name.to_string();
         let mut index = 0u32;
-        loop {
-            if let Some(&existing_symbol_id) = self.used_names.get(&candidate) {
-                if existing_symbol_id == symbol_id {
-                    // Same binding, use this name
-                    break;
-                }
-                // Name collision with a different binding, try the next suffix
-                candidate = format!("{}_{}", name, index);
-                index += 1;
-            } else {
-                // Name is available
+        while let Some(&existing_symbol_id) = self.used_names.get(&candidate) {
+            if existing_symbol_id == symbol_id {
+                // Same binding, use this name
                 break;
             }
+            // Name collision with a different binding, try the next suffix
+            candidate = format!("{}_{}", name, index);
+            index += 1;
         }
 
         // Record rename if the candidate differs from the original name
@@ -873,9 +864,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         let decl_loc =
             self.scope.declaration_start(symbol_id).and_then(|nid| self.get_identifier_loc(nid));
         if let Some(ref dl) = decl_loc {
-            self.env.identifiers[id.0 as usize].loc = Some(dl.clone());
+            self.env.identifiers[id.0 as usize].loc = Some(*dl);
         } else if let Some(ref loc) = loc {
-            self.env.identifiers[id.0 as usize].loc = Some(loc.clone());
+            self.env.identifiers[id.0 as usize].loc = Some(*loc);
         }
 
         self.used_names.insert(candidate, symbol_id);
@@ -891,7 +882,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         loc: &Option<SourceLocation>,
     ) {
         if let Some(loc_val) = loc {
-            self.env.identifiers[id.0 as usize].loc = Some(loc_val.clone());
+            self.env.identifiers[id.0 as usize].loc = Some(*loc_val);
         }
     }
 
@@ -1189,7 +1180,7 @@ pub fn remove_unnecessary_try_catch(hir: &mut HIR) {
                 &block.terminal
             {
                 if !block_ids.contains(handler) {
-                    return Some((block_id, *try_block, *handler, *fallthrough, loc.clone()));
+                    return Some((block_id, *try_block, *handler, *fallthrough, *loc));
                 }
             }
             None

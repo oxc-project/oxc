@@ -406,7 +406,7 @@ fn evaluate_instruction<'a>(
                 let operand = read(constants, value);
                 if let Some(Constant::Primitive { value: PrimitiveValue::Number(n), .. }) = operand
                 {
-                    let negated = n.value() * -1.0;
+                    let negated = -n.value();
                     let loc = *loc;
                     let result = Constant::Primitive {
                         value: PrimitiveValue::Number(FloatValue::new(negated)),

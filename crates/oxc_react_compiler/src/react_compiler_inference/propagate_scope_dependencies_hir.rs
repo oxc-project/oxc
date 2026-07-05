@@ -1740,9 +1740,7 @@ impl<'a> DependencyCollectionContext<'a> {
             return;
         }
         let decl_id = env.identifiers[identifier_id.0 as usize].declaration_id;
-        if !self.declarations.contains_key(&decl_id) {
-            self.declarations.insert(decl_id, decl.clone());
-        }
+        self.declarations.entry(decl_id).or_insert_with(|| decl.clone());
         self.reassignments.insert(identifier_id, decl);
     }
 
@@ -1902,22 +1900,20 @@ fn visit_inner_function_blocks(
     // Clone inner function's instructions and block structure to avoid
     // borrow conflicts when mutating env through handle_instruction.
     let inner_instrs: Vec<Instruction> = env.functions[func_id.0 as usize].instructions.clone();
-    let inner_blocks: Vec<(BlockId, Vec<InstructionId>, Vec<(BlockId, IdentifierId)>, Terminal)> =
-        env.functions[func_id.0 as usize]
-            .body
-            .blocks
-            .iter()
-            .map(|(bid, blk)| {
-                let phi_ops: Vec<(BlockId, IdentifierId)> = blk
-                    .phis
-                    .iter()
-                    .flat_map(|phi| {
-                        phi.operands.iter().map(|(pred, place)| (*pred, place.identifier))
-                    })
-                    .collect();
-                (*bid, blk.instructions.clone(), phi_ops, blk.terminal.clone())
-            })
-            .collect();
+    type InnerBlockSnapshot = (BlockId, Vec<InstructionId>, Vec<(BlockId, IdentifierId)>, Terminal);
+    let inner_blocks: Vec<InnerBlockSnapshot> = env.functions[func_id.0 as usize]
+        .body
+        .blocks
+        .iter()
+        .map(|(bid, blk)| {
+            let phi_ops: Vec<(BlockId, IdentifierId)> = blk
+                .phis
+                .iter()
+                .flat_map(|phi| phi.operands.iter().map(|(pred, place)| (*pred, place.identifier)))
+                .collect();
+            (*bid, blk.instructions.clone(), phi_ops, blk.terminal.clone())
+        })
+        .collect();
 
     for (inner_bid, inner_instr_ids, inner_phis, inner_terminal) in &inner_blocks {
         for &(_pred_id, op_id) in inner_phis {

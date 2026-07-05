@@ -81,8 +81,7 @@ struct IdentifierLocVisitor<'a> {
 
 impl<'a> IdentifierLocVisitor<'a> {
     fn record(&mut self, span: oxc_span::Span, is_jsx: bool, is_declaration_name: bool) {
-        let opening_element_loc =
-            if is_jsx { self.current_opening_element_loc.clone() } else { None };
+        let opening_element_loc = if is_jsx { self.current_opening_element_loc } else { None };
         // `or_insert` keeps the richer entry already recorded for a node_id.
         // Function/class names are recorded as declaration names *before* the
         // generic binding-identifier walk re-visits them, so the declaration

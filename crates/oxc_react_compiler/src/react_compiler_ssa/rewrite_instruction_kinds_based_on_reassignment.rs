@@ -319,11 +319,8 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
         let instr = &mut func.instructions[instr_id.0 as usize];
-        match &mut instr.value {
-            InstructionValue::StoreLocal { lvalue, .. } => {
-                lvalue.kind = InstructionKind::Const;
-            }
-            _ => {}
+        if let InstructionValue::StoreLocal { lvalue, .. } = &mut instr.value {
+            lvalue.kind = InstructionKind::Const;
         }
     }
 
@@ -331,11 +328,8 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
         let instr = &mut func.instructions[instr_id.0 as usize];
-        match &mut instr.value {
-            InstructionValue::StoreLocal { lvalue, .. } => {
-                lvalue.kind = InstructionKind::Reassign;
-            }
-            _ => {}
+        if let InstructionValue::StoreLocal { lvalue, .. } = &mut instr.value {
+            lvalue.kind = InstructionKind::Reassign;
         }
     }
 
@@ -349,11 +343,8 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
         let instr = &mut func.instructions[instr_id.0 as usize];
-        match &mut instr.value {
-            InstructionValue::Destructure { lvalue, .. } => {
-                lvalue.kind = kind;
-            }
-            _ => {}
+        if let InstructionValue::Destructure { lvalue, .. } = &mut instr.value {
+            lvalue.kind = kind;
         }
     }
 

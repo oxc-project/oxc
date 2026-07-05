@@ -202,7 +202,7 @@ pub fn infer_mutation_aliasing_effects(
                 let name = ident_info
                     .and_then(|ident| ident.name.as_ref())
                     .map(|n| n.value().to_string())
-                    .unwrap_or_else(|| "".to_string());
+                    .unwrap_or_default();
                 // Use usage_loc if available, otherwise fall back to identifier's own loc
                 let error_loc = usage_loc.or_else(|| ident_info.and_then(|i| i.loc));
                 // Match TS printPlace format: "<unknown> name$id:type"
@@ -356,15 +356,10 @@ impl InferenceState {
                 let vid = ValueId(from.0 | 0x80000000);
                 let mut set = FxHashSet::default();
                 set.insert(vid);
-                if !self.values.contains_key(&vid) {
-                    self.values.insert(
-                        vid,
-                        AbstractValue {
-                            kind: ValueKind::Mutable,
-                            reason: hashset_of(ValueReason::Other),
-                        },
-                    );
-                }
+                self.values.entry(vid).or_insert_with(|| AbstractValue {
+                    kind: ValueKind::Mutable,
+                    reason: hashset_of(ValueReason::Other),
+                });
                 set
             }
         };
@@ -801,10 +796,8 @@ fn find_non_mutated_destructure_spreads(
 ) -> FxHashSet<IdentifierId> {
     let mut known_frozen: FxHashSet<IdentifierId> = FxHashSet::default();
     if func.fn_type == ReactFunctionType::Component {
-        if let Some(param) = func.params.first() {
-            if let ParamPattern::Place(p) = param {
-                known_frozen.insert(p.identifier);
-            }
+        if let Some(ParamPattern::Place(p)) = func.params.first() {
+            known_frozen.insert(p.identifier);
         }
     } else {
         for param in &func.params {
@@ -1206,6 +1199,7 @@ fn freeze_function_captures_transitive(
 // applyEffect
 // =============================================================================
 
+#[allow(clippy::only_used_in_recursion)]
 fn apply_effect(
     context: &mut Context,
     state: &mut InferenceState,
@@ -1514,10 +1508,9 @@ fn apply_effect(
                         let inner_func = &env.functions[func_id.0 as usize];
                         if inner_func.aliasing_effects.is_some() {
                             // Build or retrieve the signature from the function expression
-                            if !context.function_signature_cache.contains_key(&func_id) {
-                                let sig = build_signature_from_function_expression(env, func_id);
-                                context.function_signature_cache.insert(func_id, sig);
-                            }
+                            context.function_signature_cache.entry(func_id).or_insert_with(|| {
+                                build_signature_from_function_expression(env, func_id)
+                            });
                             let sig =
                                 context.function_signature_cache.get(&func_id).unwrap().clone();
                             let inner_func = &env.functions[func_id.0 as usize];
@@ -2290,6 +2283,7 @@ fn compute_signature_for_instruction(
 // Legacy signature support
 // =============================================================================
 
+#[allow(clippy::too_many_arguments)]
 fn compute_effects_for_legacy_signature(
     state: &InferenceState,
     signature: &FunctionSignature,
@@ -2443,9 +2437,7 @@ fn get_argument_effect(
     is_spread: bool,
     spread_loc: Option<SourceLocation>,
 ) -> (Effect, Option<CompilerErrorDetail>) {
-    if !is_spread {
-        (sig_effect, None)
-    } else if sig_effect == Effect::Mutate || sig_effect == Effect::ConditionallyMutate {
+    if !is_spread || sig_effect == Effect::Mutate || sig_effect == Effect::ConditionallyMutate {
         (sig_effect, None)
     } else {
         // Spread with Freeze effect is unsupported for hook arguments
@@ -2493,7 +2485,7 @@ fn are_arguments_immutable_and_non_mutating(
                                 .iter()
                                 .any(|e| is_known_mutable_effect(*e));
                             let has_mutable_rest =
-                                fn_sig.rest_param.map_or(false, |e| is_known_mutable_effect(e));
+                                fn_sig.rest_param.is_some_and(is_known_mutable_effect);
                             return !has_mutable_param && !has_mutable_rest;
                         }
                     }
@@ -2548,6 +2540,7 @@ fn is_known_mutable_effect(effect: Effect) -> bool {
 // Aliasing signature config support (new-style signatures)
 // =============================================================================
 
+#[allow(clippy::too_many_arguments)]
 fn compute_effects_for_aliasing_signature_config(
     env: &mut Environment,
     config: &AliasingSignatureConfig,
@@ -3138,7 +3131,7 @@ fn format_type_for_print(ty: &Type) -> String {
 }
 
 fn is_phi_with_jsx(ty: &Type) -> bool {
-    if let Type::Phi { operands } = ty { operands.iter().any(|op| is_jsx_type(op)) } else { false }
+    if let Type::Phi { operands } = ty { operands.iter().any(is_jsx_type) } else { false }
 }
 
 fn place_or_spread_to_hole(pos: &PlaceOrSpread) -> PlaceOrSpreadOrHole {

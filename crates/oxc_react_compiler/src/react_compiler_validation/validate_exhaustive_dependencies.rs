@@ -34,7 +34,7 @@ pub fn validate_exhaustive_dependencies(
 ) -> Result<(), CompilerDiagnostic> {
     let reactive = collect_reactive_identifiers(func, &env.functions);
     let validate_memo = env.config.validate_exhaustive_memoization_dependencies;
-    let validate_effect = env.config.validate_exhaustive_effect_dependencies.clone();
+    let validate_effect = env.config.validate_exhaustive_effect_dependencies;
 
     let mut temporaries: FxHashMap<IdentifierId, Temporary> = FxHashMap::default();
     for param in &func.params {
@@ -61,7 +61,7 @@ pub fn validate_exhaustive_dependencies(
         start_memo: &mut start_memo,
         memo_locals: &mut memo_locals,
         validate_memo,
-        validate_effect: validate_effect.clone(),
+        validate_effect,
         reactive: &reactive,
         diagnostics: Vec::new(),
         invalid_memo_ids: FxHashSet::default(),
@@ -1105,6 +1105,7 @@ fn collect_dependencies(
 // validateDependencies
 // =============================================================================
 
+#[allow(clippy::too_many_arguments)]
 fn validate_dependencies(
     mut inferred: Vec<InferredDependency>,
     manual_dependencies: &[ManualMemoDependency],

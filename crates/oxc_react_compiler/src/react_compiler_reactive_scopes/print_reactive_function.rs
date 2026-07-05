@@ -181,6 +181,7 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
             ReactiveValue::Instruction(iv) => {
                 // Build the inner function formatter callback if we have an hir_formatter
                 let hir_formatter = self.hir_formatter;
+                #[allow(clippy::type_complexity)]
                 let inner_func_cb: Option<
                     Box<dyn Fn(&mut PrintFormatter<'_, 'h>, &HirFunction<'h>) + '_>,
                 > = hir_formatter.map(|hf| {

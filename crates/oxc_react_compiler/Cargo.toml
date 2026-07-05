@@ -46,6 +46,7 @@ oxc_syntax = { workspace = true }
 hmac-sha256 = { workspace = true }
 indexmap = { workspace = true }
 rustc-hash = { workspace = true }
+cow-utils = { workspace = true }
 
 [dev-dependencies]
 # The example and integration tests parse source and print the compiled program; the
@@ -56,7 +57,6 @@ oxc_parser = { workspace = true }
 # Snapshot testing of the compiler over the upstream fixture corpus (tests/snapshot.rs).
 insta = { workspace = true, features = ["glob"] }
 convert_case = { workspace = true }
-cow-utils = { workspace = true }
 
 # Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
 # If we enabled `disable_old_builder` feature in main dependency, feature unification would

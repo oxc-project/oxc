@@ -394,20 +394,18 @@ pub fn validate_no_derived_computations_in_effects_exp(
             }
         }
     } else if func.fn_type == ReactFunctionType::Component {
-        if let Some(param) = func.params.first() {
-            if let ParamPattern::Place(place) = param {
-                let name = identifiers[place.identifier.0 as usize].name.clone();
-                context.derivation_cache.cache.insert(
-                    place.identifier,
-                    DerivationMetadata {
-                        place_identifier: place.identifier,
-                        place_name: name,
-                        source_ids: FxIndexSet::default(),
-                        type_of_value: TypeOfValue::FromProps,
-                        is_state_source: true,
-                    },
-                );
-            }
+        if let Some(ParamPattern::Place(place)) = func.params.first() {
+            let name = identifiers[place.identifier.0 as usize].name.clone();
+            context.derivation_cache.cache.insert(
+                place.identifier,
+                DerivationMetadata {
+                    place_identifier: place.identifier,
+                    place_name: name,
+                    source_ids: FxIndexSet::default(),
+                    type_of_value: TypeOfValue::FromProps,
+                    is_state_source: true,
+                },
+            );
         }
     }
 
@@ -480,6 +478,7 @@ fn record_phi_derivations(block: &BasicBlock, context: &mut ValidationContext, e
     }
 }
 
+#[allow(clippy::only_used_in_recursion)]
 fn record_instruction_derivations(
     instr: &Instruction,
     context: &mut ValidationContext,
@@ -1204,9 +1203,7 @@ fn validate_effect_non_exp(
     // Check that the effect function only captures effect deps and setState
     for ctx in &effect_func.context {
         let ctx_ty = &tys[ids[ctx.identifier.0 as usize].type_.0 as usize];
-        if is_set_state_type(ctx_ty) {
-            continue;
-        } else if effect_deps.iter().any(|d| *d == ctx.identifier) {
+        if is_set_state_type(ctx_ty) || effect_deps.contains(&ctx.identifier) {
             continue;
         } else {
             return Vec::new();
@@ -1315,10 +1312,8 @@ fn validate_effect_non_exp(
                     return Vec::new();
                 }
             }
-            Terminal::Switch { test, .. } => {
-                if dep_values.contains_key(&test.identifier) {
-                    return Vec::new();
-                }
+            Terminal::Switch { test, .. } if dep_values.contains_key(&test.identifier) => {
+                return Vec::new();
             }
             _ => {}
         }

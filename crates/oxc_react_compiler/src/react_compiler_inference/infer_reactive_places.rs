@@ -192,7 +192,7 @@ pub fn infer_reactive_places(
                             Effect::Unknown => {
                                 return Err(CompilerDiagnostic::new(
                                     ErrorCategory::Invariant,
-                                    &format!("Unexpected unknown effect at {:?}", op_place.loc),
+                                    format!("Unexpected unknown effect at {:?}", op_place.loc),
                                     None,
                                 ));
                             }

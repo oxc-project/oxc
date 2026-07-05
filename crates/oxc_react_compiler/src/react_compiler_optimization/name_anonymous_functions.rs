@@ -242,7 +242,7 @@ fn handle_call(
     args: &[PlaceOrSpread],
     functions: &mut FxHashMap<IdentifierId, usize>,
     names: &FxHashMap<IdentifierId, String>,
-    nodes: &mut Vec<Node>,
+    nodes: &mut [Node],
 ) {
     let callee_ident = &env.identifiers[callee_id.0 as usize];
     let callee_ty = &env.types[callee_ident.type_.0 as usize];

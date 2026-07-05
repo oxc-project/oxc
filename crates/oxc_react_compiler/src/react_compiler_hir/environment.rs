@@ -1,5 +1,6 @@
 use std::mem::take;
 
+use cow_utils::CowUtils;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
@@ -492,7 +493,7 @@ impl<'a> Environment<'a> {
                                 ErrorCategory::Config,
                                 "Invalid type configuration for module",
                             )
-                            .with_description(format!("{}", first_error))
+                            .with_description(first_error.to_string())
                             .with_loc(loc),
                         )?;
                     }
@@ -536,7 +537,7 @@ impl<'a> Environment<'a> {
                                 ErrorCategory::Config,
                                 "Invalid type configuration for module",
                             )
-                            .with_description(format!("{}", first_error))
+                            .with_description(first_error.to_string())
                             .with_loc(loc),
                         )?;
                     }
@@ -757,7 +758,7 @@ impl<'a> Environment<'a> {
     }
 
     fn is_known_react_module(&self, module_name: &str) -> bool {
-        let lower = module_name.to_lowercase();
+        let lower = module_name.cow_to_lowercase();
         lower == "react" || lower == "react-dom"
     }
 
@@ -957,7 +958,7 @@ impl<'a> Environment<'a> {
     /// Looks up the identifier's type and checks its function signature.
     pub fn has_no_alias_signature(&self, identifier_id: IdentifierId) -> bool {
         let ty = &self.types[self.identifiers[identifier_id.0 as usize].type_.0 as usize];
-        self.get_function_signature(ty).ok().flatten().map_or(false, |sig| sig.no_alias)
+        self.get_function_signature(ty).ok().flatten().is_some_and(|sig| sig.no_alias)
     }
 
     /// Get the hook kind for an identifier, if its type represents a hook.

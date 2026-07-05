@@ -62,7 +62,7 @@ impl GlobalRegistry {
     }
 
     pub fn contains_key(&self, key: &str) -> bool {
-        self.entries.contains_key(key) || self.base.map_or(false, |b| b.contains_key(key))
+        self.entries.contains_key(key) || self.base.is_some_and(|b| b.contains_key(key))
     }
 
     /// Iterate over all keys in the registry (base + extras).
@@ -81,6 +81,12 @@ impl GlobalRegistry {
     pub fn into_inner(self) -> FxHashMap<String, Global> {
         debug_assert!(self.base.is_none(), "into_inner() called on overlay-mode GlobalRegistry");
         self.entries
+    }
+}
+
+impl Default for GlobalRegistry {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

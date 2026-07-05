@@ -752,7 +752,7 @@ pub fn map_instruction_value_operands(
 
 /// Maps call arguments in place.
 /// Equivalent to TS `mapCallArguments`.
-pub fn map_call_arguments(args: &mut Vec<PlaceOrSpread>, f: &mut impl FnMut(Place) -> Place) {
+pub fn map_call_arguments(args: &mut [PlaceOrSpread], f: &mut impl FnMut(Place) -> Place) {
     for arg in args.iter_mut() {
         match arg {
             PlaceOrSpread::Place(place) => {

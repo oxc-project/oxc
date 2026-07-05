@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use rustc_hash::FxHashSet;
 
 use crate::react_compiler_diagnostics::CompilerDiagnostic;
@@ -67,7 +68,7 @@ fn validate_ts_this_parameters_in_function_range(
 
 /// Get the Babel-style type name of an Expression node (e.g. "Identifier", "NumericLiteral").
 fn build_temporary_place(builder: &mut HirBuilder<'_, '_>, loc: Option<SourceLocation>) -> Place {
-    let id = builder.make_temporary(loc.clone());
+    let id = builder.make_temporary(loc);
     Place { identifier: id, reactive: false, effect: Effect::Unknown, loc }
 }
 
@@ -92,7 +93,7 @@ fn lower_value_to_temporary<'a>(
         }
     }
     let loc = value.loc().cloned();
-    let place = build_temporary_place(builder, loc.clone());
+    let place = build_temporary_place(builder, loc);
     builder.push(Instruction {
         id: EvaluationOrder(0),
         lvalue: place.clone(),
@@ -415,8 +416,8 @@ fn lower_block_statement_inner<'a>(
                 will_hoist.push(HoistInfo {
                     binding_id: *binding_id,
                     name: name.clone(),
-                    kind: kind.clone(),
-                    declaration_type: decl_type.clone(),
+                    kind: *kind,
+                    declaration_type: *decl_type,
                     first_ref_pos: hoist_ref_pos,
                     first_ref_nid: hoist_ref_nid,
                 });
@@ -470,14 +471,10 @@ fn lower_block_statement_inner<'a>(
             };
 
             // Look up the reference location for the DeclareContext instruction.
-            let ref_loc = builder.identifier_locs().get(&info.first_ref_nid).map(|e| e.loc.clone());
+            let ref_loc = builder.identifier_locs().get(&info.first_ref_nid).map(|e| e.loc);
             let identifier = builder.resolve_binding(&info.name, info.binding_id)?;
-            let place = Place {
-                effect: Effect::Unknown,
-                identifier,
-                reactive: false,
-                loc: ref_loc.clone(),
-            };
+            let place =
+                Place { effect: Effect::Unknown, identifier, reactive: false, loc: ref_loc };
             lower_value_to_temporary(
                 builder,
                 InstructionValue::DeclareContext {
@@ -532,6 +529,11 @@ enum FunctionBody<'a> {
     Block(&'a oxc::FunctionBody<'a>),
     Expression(&'a oxc::Expression<'a>),
 }
+
+type LowerInnerResult<'a> = Result<
+    (HirFunction<'a>, FxIndexMap<String, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
+    CompilerError,
+>;
 
 /// Main entry point: lower a function AST node into HIR.
 ///
@@ -629,6 +631,7 @@ pub fn lower<'a>(
 // =============================================================================
 
 /// Result of resolving an identifier for assignment.
+#[allow(clippy::too_many_arguments)]
 fn lower_inner<'a>(
     params: &'a oxc::FormalParameters<'a>,
     body: FunctionBody<'a>,
@@ -647,10 +650,7 @@ fn lower_inner<'a>(
     is_top_level: bool,
     identifier_locs: &IdentifierLocIndex,
     line_offsets: &LineOffsets,
-) -> Result<
-    (HirFunction<'a>, FxIndexMap<String, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
-    CompilerError,
-> {
+) -> LowerInnerResult<'a> {
     validate_ts_this_parameter(scope, function_scope)?;
 
     let mut builder = HirBuilder::new(
@@ -671,12 +671,7 @@ fn lower_inner<'a>(
     let mut context: Vec<Place> = Vec::new();
     for (&symbol_id, ctx_loc) in &context_map {
         let identifier = builder.resolve_binding(scope.symbol_name(symbol_id), symbol_id)?;
-        context.push(Place {
-            identifier,
-            effect: Effect::Unknown,
-            reactive: false,
-            loc: ctx_loc.clone(),
-        });
+        context.push(Place { identifier, effect: Effect::Unknown, reactive: false, loc: *ctx_loc });
     }
 
     // Process parameters.
@@ -693,7 +688,7 @@ fn lower_inner<'a>(
             let param_loc = builder.source_location(ident.span);
             let mut binding = builder.resolve_identifier(
                 ident.name.as_str(),
-                param_loc.clone(),
+                param_loc,
                 builder.scope().resolve_binding_identifier(ident),
             )?;
             if !matches!(binding, VariableBinding::Identifier { .. }) {
@@ -707,7 +702,7 @@ fn lower_inner<'a>(
                     let identifier = builder.resolve_binding_with_loc(
                         ident.name.as_str(),
                         symbol_id,
-                        param_loc.clone(),
+                        param_loc,
                     )?;
                     binding = VariableBinding::Identifier { identifier, binding_kind };
                 }
@@ -751,11 +746,11 @@ fn lower_inner<'a>(
         // param, then delegate the binding via `lower_binding_assignment` (running
         // the default ternary first when an initializer is present).
         let param_loc = builder.source_location(param.span);
-        let place = build_temporary_place(&mut builder, param_loc.clone());
+        let place = build_temporary_place(&mut builder, param_loc);
         promote_temporary(&mut builder, place.identifier);
         hir_params.push(ParamPattern::Place(place.clone()));
         let value = if let Some(initializer) = &param.initializer {
-            lower_default_to_temp(&mut builder, param_loc.clone(), initializer, place)?
+            lower_default_to_temp(&mut builder, param_loc, initializer, place)?
         } else {
             place
         };
@@ -774,7 +769,7 @@ fn lower_inner<'a>(
     // delegate the binding of the rest argument.
     if let Some(rest) = &params.rest {
         let rest_loc = builder.source_location(rest.span);
-        let place = build_temporary_place(&mut builder, rest_loc.clone());
+        let place = build_temporary_place(&mut builder, rest_loc);
         hir_params.push(ParamPattern::Spread(SpreadPattern { place: place.clone() }));
         lower_binding_assignment(
             &mut builder,
@@ -830,8 +825,7 @@ fn lower_inner<'a>(
     let (hir_body, instructions, used_names, child_bindings) = builder.build()?;
 
     // Create the returns place
-    let returns =
-        crate::react_compiler_lowering::hir_builder::create_temporary_place(env, loc.clone());
+    let returns = crate::react_compiler_lowering::hir_builder::create_temporary_place(env, loc);
 
     Ok((
         HirFunction {
@@ -875,7 +869,7 @@ fn lower_identifier(
     loc: Option<SourceLocation>,
     symbol: Option<SymbolId>,
 ) -> Result<Place, CompilerError> {
-    let binding = builder.resolve_identifier(name, loc.clone(), symbol)?;
+    let binding = builder.resolve_identifier(name, loc, symbol)?;
     match binding {
         VariableBinding::Identifier { identifier, .. } => {
             Ok(Place { identifier, effect: Effect::Unknown, reactive: false, loc })
@@ -889,7 +883,7 @@ fn lower_identifier(
                         description: Some(
                             "Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler".to_string(),
                         ),
-                        loc: loc.clone(),
+                        loc,
                         suggestions: None,
                     })?;
                 }
@@ -908,8 +902,7 @@ fn lower_identifier(
                 VariableBinding::ModuleLocal { name } => NonLocalBinding::ModuleLocal { name },
                 VariableBinding::Identifier { .. } => unreachable!(),
             };
-            let instr_value =
-                InstructionValue::LoadGlobal { binding: non_local_binding, loc: loc.clone() };
+            let instr_value = InstructionValue::LoadGlobal { binding: non_local_binding, loc };
             lower_value_to_temporary(builder, instr_value)
         }
     }
@@ -1045,7 +1038,7 @@ fn lower_member_expression_impl<'a>(
                 reason: "(BuildHIR::lowerMemberExpression) Handle private field property"
                     .to_string(),
                 description: None,
-                loc: loc.clone(),
+                loc,
                 suggestions: None,
             })?;
             Ok(LoweredMemberExpression {
@@ -1073,12 +1066,12 @@ fn lower_import_keyword_to_temporary(
         category: ErrorCategory::Todo,
         reason: "(BuildHIR::lowerExpression) Handle Import expressions".to_string(),
         description: None,
-        loc: loc.clone(),
+        loc: *loc,
         suggestions: None,
     })?;
     lower_value_to_temporary(
         builder,
-        InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: loc.clone() },
+        InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: *loc },
     )
 }
 
@@ -1094,7 +1087,7 @@ fn lower_private_name_to_temporary(
         category: ErrorCategory::Todo,
         reason: "(BuildHIR::lowerExpression) Handle PrivateName expressions".to_string(),
         description: None,
-        loc: loc.clone(),
+        loc,
         suggestions: None,
     })?;
     lower_value_to_temporary(
@@ -1267,7 +1260,7 @@ fn lower_member_expression_from_simple_target<'a>(
                 reason: "(BuildHIR::lowerMemberExpression) Handle private field property"
                     .to_string(),
                 description: None,
-                loc: loc.clone(),
+                loc,
                 suggestions: None,
             })?;
             Ok(LoweredMemberExpression {
@@ -1319,7 +1312,7 @@ fn lower_identifier_for_assignment(
     name: &str,
     symbol: Option<SymbolId>,
 ) -> Result<Option<IdentifierForAssignment>, CompilerError> {
-    let mut binding = builder.resolve_identifier(name, ident_loc.clone(), symbol)?;
+    let mut binding = builder.resolve_identifier(name, ident_loc, symbol)?;
     if !matches!(binding, VariableBinding::Identifier { .. }) && kind != InstructionKind::Reassign {
         if let Some(symbol_id) =
             builder.scope().find_binding_in_descendants(name, builder.function_scope())
@@ -1327,8 +1320,7 @@ fn lower_identifier_for_assignment(
             let bk = crate::react_compiler_lowering::convert_binding_kind(
                 &builder.scope().binding_kind(symbol_id),
             );
-            let identifier =
-                builder.resolve_binding_with_loc(name, symbol_id, ident_loc.clone())?;
+            let identifier = builder.resolve_binding_with_loc(name, symbol_id, ident_loc)?;
             binding = VariableBinding::Identifier { identifier, binding_kind: bk };
         }
     }
@@ -1341,7 +1333,7 @@ fn lower_identifier_for_assignment(
                 builder.record_error(CompilerErrorDetail {
                     reason: "Cannot reassign a `const` variable".to_string(),
                     category: ErrorCategory::Syntax,
-                    loc: loc.clone(),
+                    loc,
                     description: Some(format!("`{}` is declared as const", name)),
                     suggestions: None,
                 })?;
@@ -1414,7 +1406,7 @@ fn lower_binding_assignment<'a>(
             let id_loc = builder.source_location(id.span);
             let result = lower_identifier_for_assignment(
                 builder,
-                loc.clone(),
+                loc,
                 id_loc,
                 kind,
                 id.name.as_str(),
@@ -1442,7 +1434,7 @@ fn lower_binding_assignment<'a>(
                                 reason: "Expected `const` declaration not to be reassigned"
                                     .to_string(),
                                 category: ErrorCategory::Syntax,
-                                loc: loc.clone(),
+                                loc,
                                 suggestions: None,
                                 description: None,
                             })?;
@@ -1490,7 +1482,7 @@ fn lower_binding_assignment<'a>(
                             let id_loc = builder.source_location(id.span);
                             match lower_identifier_for_assignment(
                                 builder,
-                                id_loc.clone(),
+                                id_loc,
                                 id_loc,
                                 kind,
                                 id.name.as_str(),
@@ -1596,12 +1588,12 @@ fn lower_binding_assignment<'a>(
                         kind,
                     },
                     value: value.clone(),
-                    loc: loc.clone(),
+                    loc,
                 },
             )?;
 
             for (place, path) in followups {
-                let followup_loc = builder.source_location(path.span()).or(loc.clone());
+                let followup_loc = builder.source_location(path.span()).or(loc);
                 lower_binding_assignment(
                     builder,
                     followup_loc,
@@ -1644,7 +1636,7 @@ fn lower_binding_assignment<'a>(
                             let id_loc = builder.source_location(id.span);
                             match lower_identifier_for_assignment(
                                 builder,
-                                id_loc.clone(),
+                                id_loc,
                                 id_loc,
                                 kind,
                                 id.name.as_str(),
@@ -1771,12 +1763,12 @@ fn lower_binding_assignment<'a>(
                         kind,
                     },
                     value: value.clone(),
-                    loc: loc.clone(),
+                    loc,
                 },
             )?;
 
             for (place, path) in followups {
-                let followup_loc = builder.source_location(path.span()).or(loc.clone());
+                let followup_loc = builder.source_location(path.span()).or(loc);
                 lower_binding_assignment(
                     builder,
                     followup_loc,
@@ -1791,7 +1783,7 @@ fn lower_binding_assignment<'a>(
         oxc::BindingPattern::AssignmentPattern(pattern) => {
             // Default value: if value === undefined, use default, else use value.
             let pat_loc = builder.source_location(pattern.span);
-            let temp = lower_default_to_temp(builder, pat_loc.clone(), &pattern.right, value)?;
+            let temp = lower_default_to_temp(builder, pat_loc, &pattern.right, value)?;
             // Recursively assign the resolved value to the left pattern.
             lower_binding_assignment(builder, pat_loc, kind, &pattern.left, temp, assignment_style)
         }
@@ -1808,14 +1800,14 @@ fn lower_default_to_temp<'a>(
     default: &'a oxc::Expression<'a>,
     value: Place,
 ) -> Result<Place, CompilerError> {
-    let temp = build_temporary_place(builder, pat_loc.clone());
+    let temp = build_temporary_place(builder, pat_loc);
 
     let test_block = builder.reserve(BlockKind::Value);
     let continuation_block = builder.reserve(builder.current_block_kind());
     let continuation_id = continuation_block.id;
 
     let temp_consequent = temp.clone();
-    let pat_loc_consequent = pat_loc.clone();
+    let pat_loc_consequent = pat_loc;
     let consequent = builder.try_enter(BlockKind::Value, |builder, _| {
         let default_value = lower_reorderable_expression(builder, default)?;
         lower_value_to_temporary(
@@ -1824,19 +1816,19 @@ fn lower_default_to_temp<'a>(
                 lvalue: LValue { place: temp_consequent.clone(), kind: InstructionKind::Const },
                 value: default_value,
                 type_annotation: None,
-                loc: pat_loc_consequent.clone(),
+                loc: pat_loc_consequent,
             },
         )?;
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
             id: EvaluationOrder(0),
-            loc: pat_loc_consequent.clone(),
+            loc: pat_loc_consequent,
         })
     });
 
     let temp_alternate = temp.clone();
-    let pat_loc_alternate = pat_loc.clone();
+    let pat_loc_alternate = pat_loc;
     let value_alternate = value.clone();
     let alternate = builder.try_enter(BlockKind::Value, |builder, _| {
         lower_value_to_temporary(
@@ -1845,14 +1837,14 @@ fn lower_default_to_temp<'a>(
                 lvalue: LValue { place: temp_alternate.clone(), kind: InstructionKind::Const },
                 value: value_alternate.clone(),
                 type_annotation: None,
-                loc: pat_loc_alternate.clone(),
+                loc: pat_loc_alternate,
             },
         )?;
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
             id: EvaluationOrder(0),
-            loc: pat_loc_alternate.clone(),
+            loc: pat_loc_alternate,
         })
     });
 
@@ -1861,14 +1853,14 @@ fn lower_default_to_temp<'a>(
             test: test_block.id,
             fallthrough: continuation_id,
             id: EvaluationOrder(0),
-            loc: pat_loc.clone(),
+            loc: pat_loc,
         },
         test_block,
     );
 
     let undef = lower_value_to_temporary(
         builder,
-        InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: pat_loc.clone() },
+        InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: pat_loc },
     )?;
     let test = lower_value_to_temporary(
         builder,
@@ -1876,7 +1868,7 @@ fn lower_default_to_temp<'a>(
             left: value,
             operator: BinaryOperator::StrictEqual,
             right: undef,
-            loc: pat_loc.clone(),
+            loc: pat_loc,
         },
     )?;
     builder.terminate_with_continuation(
@@ -1911,7 +1903,7 @@ fn lower_member_assignment_target<'a>(
             category: ErrorCategory::Invariant,
             reason: "MemberExpression may only appear in an assignment expression".to_string(),
             description: None,
-            loc: loc.clone(),
+            loc,
             suggestions: None,
         })?;
         return Ok(None);
@@ -2017,7 +2009,7 @@ fn lower_assignment_target<'a>(
             let id_loc = builder.source_location(id.span);
             let result = lower_identifier_for_assignment(
                 builder,
-                loc.clone(),
+                loc,
                 id_loc,
                 kind,
                 id.name.as_str(),
@@ -2044,7 +2036,7 @@ fn lower_assignment_target<'a>(
                                 reason: "Expected `const` declaration not to be reassigned"
                                     .to_string(),
                                 category: ErrorCategory::Syntax,
-                                loc: loc.clone(),
+                                loc,
                                 suggestions: None,
                                 description: None,
                             })?;
@@ -2126,7 +2118,7 @@ fn lower_assignment_target<'a>(
                             let id_loc = builder.source_location(id.span);
                             match lower_identifier_for_assignment(
                                 builder,
-                                id_loc.clone(),
+                                id_loc,
                                 id_loc,
                                 kind,
                                 id.name.as_str(),
@@ -2239,12 +2231,12 @@ fn lower_assignment_target<'a>(
                         kind,
                     },
                     value: value.clone(),
-                    loc: loc.clone(),
+                    loc,
                 },
             )?;
 
             for (place, path) in followups {
-                lower_followup_target(builder, loc.clone(), kind, path, place, assignment_style)?;
+                lower_followup_target(builder, loc, kind, path, place, assignment_style)?;
             }
             Ok(Some(temporary))
         }
@@ -2333,7 +2325,7 @@ fn lower_assignment_target<'a>(
                             let id_loc = builder.source_location(id.span);
                             match lower_identifier_for_assignment(
                                 builder,
-                                id_loc.clone(),
+                                id_loc,
                                 id_loc,
                                 kind,
                                 id.name.as_str(),
@@ -2399,7 +2391,7 @@ fn lower_assignment_target<'a>(
                                     let id_loc = builder.source_location(id.span);
                                     match lower_identifier_for_assignment(
                                         builder,
-                                        id_loc.clone(),
+                                        id_loc,
                                         id_loc,
                                         kind,
                                         id.name.as_str(),
@@ -2540,12 +2532,12 @@ fn lower_assignment_target<'a>(
                         kind,
                     },
                     value: value.clone(),
-                    loc: loc.clone(),
+                    loc,
                 },
             )?;
 
             for (place, path) in followups {
-                lower_followup_target(builder, loc.clone(), kind, path, place, assignment_style)?;
+                lower_followup_target(builder, loc, kind, path, place, assignment_style)?;
             }
             Ok(Some(temporary))
         }
@@ -2593,7 +2585,7 @@ fn lower_identifier_followup_store(
     let id_loc = builder.source_location(id.span);
     let result = lower_identifier_for_assignment(
         builder,
-        loc.clone(),
+        loc,
         id_loc,
         kind,
         id.name.as_str(),
@@ -2710,14 +2702,14 @@ fn lower_assignment_target_default<'a>(
 ) -> Result<Option<Place>, CompilerError> {
     let pat_loc = builder.source_location(span);
 
-    let temp = build_temporary_place(builder, pat_loc.clone());
+    let temp = build_temporary_place(builder, pat_loc);
 
     let test_block = builder.reserve(BlockKind::Value);
     let continuation_block = builder.reserve(builder.current_block_kind());
     let continuation_id = continuation_block.id;
 
     let temp_consequent = temp.clone();
-    let pat_loc_consequent = pat_loc.clone();
+    let pat_loc_consequent = pat_loc;
     let consequent = builder.try_enter(BlockKind::Value, |builder, _| {
         let default_value = lower_reorderable_expression(builder, default)?;
         lower_value_to_temporary(
@@ -2726,19 +2718,19 @@ fn lower_assignment_target_default<'a>(
                 lvalue: LValue { place: temp_consequent.clone(), kind: InstructionKind::Const },
                 value: default_value,
                 type_annotation: None,
-                loc: pat_loc_consequent.clone(),
+                loc: pat_loc_consequent,
             },
         )?;
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
             id: EvaluationOrder(0),
-            loc: pat_loc_consequent.clone(),
+            loc: pat_loc_consequent,
         })
     });
 
     let temp_alternate = temp.clone();
-    let pat_loc_alternate = pat_loc.clone();
+    let pat_loc_alternate = pat_loc;
     let value_alternate = value.clone();
     let alternate = builder.try_enter(BlockKind::Value, |builder, _| {
         lower_value_to_temporary(
@@ -2747,14 +2739,14 @@ fn lower_assignment_target_default<'a>(
                 lvalue: LValue { place: temp_alternate.clone(), kind: InstructionKind::Const },
                 value: value_alternate.clone(),
                 type_annotation: None,
-                loc: pat_loc_alternate.clone(),
+                loc: pat_loc_alternate,
             },
         )?;
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
             id: EvaluationOrder(0),
-            loc: pat_loc_alternate.clone(),
+            loc: pat_loc_alternate,
         })
     });
 
@@ -2763,14 +2755,14 @@ fn lower_assignment_target_default<'a>(
             test: test_block.id,
             fallthrough: continuation_id,
             id: EvaluationOrder(0),
-            loc: pat_loc.clone(),
+            loc: pat_loc,
         },
         test_block,
     );
 
     let undef = lower_value_to_temporary(
         builder,
-        InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: pat_loc.clone() },
+        InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: pat_loc },
     )?;
     let test = lower_value_to_temporary(
         builder,
@@ -2778,7 +2770,7 @@ fn lower_assignment_target_default<'a>(
             left: value,
             operator: BinaryOperator::StrictEqual,
             right: undef,
-            loc: pat_loc.clone(),
+            loc: pat_loc,
         },
     )?;
     builder.terminate_with_continuation(
@@ -2788,7 +2780,7 @@ fn lower_assignment_target_default<'a>(
             alternate: alternate?,
             fallthrough: continuation_id,
             id: EvaluationOrder(0),
-            loc: pat_loc.clone(),
+            loc: pat_loc,
         },
         continuation_block,
     );
@@ -2855,7 +2847,7 @@ fn lower_chain_expression<'a>(
         | oxc::ChainElement::PrivateFieldExpression(_) => {
             let member = chain.expression.as_member_expression().unwrap();
             let place = lower_optional_member_expression_impl(builder, member, None)?.1;
-            Ok(InstructionValue::LoadLocal { loc: place.loc.clone(), place })
+            Ok(InstructionValue::LoadLocal { loc: place.loc, place })
         }
     }
 }
@@ -2880,7 +2872,7 @@ fn lower_chain_subexpr<'a>(
         {
             let member = expr.as_member_expression().unwrap();
             let place = lower_optional_member_expression_impl(builder, member, None)?.1;
-            Ok(InstructionValue::LoadLocal { loc: place.loc.clone(), place })
+            Ok(InstructionValue::LoadLocal { loc: place.loc, place })
         }
         oxc::Expression::CallExpression(call) if expr_contains_optional(expr) => {
             lower_optional_call_expression_impl(builder, call, None)
@@ -2901,7 +2893,7 @@ fn lower_optional_member_expression_impl<'a>(
 ) -> Result<(Place, Place), CompilerError> {
     let optional = member.optional();
     let loc = builder.source_location(member.span());
-    let place = build_temporary_place(builder, loc.clone());
+    let place = build_temporary_place(builder, loc);
     let continuation_block = builder.reserve(builder.current_block_kind());
     let continuation_id = continuation_block.id;
     let consequent = builder.reserve(BlockKind::Value);
@@ -2914,7 +2906,7 @@ fn lower_optional_member_expression_impl<'a>(
         builder.try_enter(BlockKind::Value, |builder, _block_id| {
             let temp = lower_value_to_temporary(
                 builder,
-                InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: loc.clone() },
+                InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc },
             )?;
             lower_value_to_temporary(
                 builder,
@@ -2922,14 +2914,14 @@ fn lower_optional_member_expression_impl<'a>(
                     lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                     value: temp,
                     type_annotation: None,
-                    loc: loc.clone(),
+                    loc,
                 },
             )?;
             Ok(Terminal::Goto {
                 block: continuation_id,
                 variant: GotoVariant::Break,
                 id: EvaluationOrder(0),
-                loc: loc.clone(),
+                loc,
             })
         })
     }?;
@@ -2965,7 +2957,7 @@ fn lower_optional_member_expression_impl<'a>(
             alternate,
             fallthrough: continuation_id,
             id: EvaluationOrder(0),
-            loc: loc.clone(),
+            loc,
         })
     });
 
@@ -2981,14 +2973,14 @@ fn lower_optional_member_expression_impl<'a>(
                 lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                 value: temp,
                 type_annotation: None,
-                loc: loc.clone(),
+                loc,
             },
         )?;
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
             id: EvaluationOrder(0),
-            loc: loc.clone(),
+            loc,
         })
     })?;
 
@@ -2998,7 +2990,7 @@ fn lower_optional_member_expression_impl<'a>(
             test: test_block?,
             fallthrough: continuation_id,
             id: EvaluationOrder(0),
-            loc: loc.clone(),
+            loc,
         },
         continuation_block,
     );
@@ -3015,7 +3007,7 @@ fn lower_optional_call_expression_impl<'a>(
 ) -> Result<InstructionValue<'a>, CompilerError> {
     let optional = call.optional;
     let loc = builder.source_location(call.span);
-    let place = build_temporary_place(builder, loc.clone());
+    let place = build_temporary_place(builder, loc);
     let continuation_block = builder.reserve(builder.current_block_kind());
     let continuation_id = continuation_block.id;
     let consequent = builder.reserve(BlockKind::Value);
@@ -3026,7 +3018,7 @@ fn lower_optional_call_expression_impl<'a>(
         builder.try_enter(BlockKind::Value, |builder, _block_id| {
             let temp = lower_value_to_temporary(
                 builder,
-                InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc: loc.clone() },
+                InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc },
             )?;
             lower_value_to_temporary(
                 builder,
@@ -3034,14 +3026,14 @@ fn lower_optional_call_expression_impl<'a>(
                     lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                     value: temp,
                     type_annotation: None,
-                    loc: loc.clone(),
+                    loc,
                 },
             )?;
             Ok(Terminal::Goto {
                 block: continuation_id,
                 variant: GotoVariant::Break,
                 id: EvaluationOrder(0),
-                loc: loc.clone(),
+                loc,
             })
         })
     }?;
@@ -3100,26 +3092,22 @@ fn lower_optional_call_expression_impl<'a>(
             alternate,
             fallthrough: continuation_id,
             id: EvaluationOrder(0),
-            loc: loc.clone(),
+            loc,
         })
     });
 
     // Block to evaluate if the callee is non-null/undefined.
     builder.try_enter_reserved(consequent, |builder| {
         let args = lower_arguments(builder, &call.arguments)?;
-        let temp = build_temporary_place(builder, loc.clone());
+        let temp = build_temporary_place(builder, loc);
 
         match callee_info.as_ref().unwrap() {
             CalleeInfo::CallExpression { callee } => {
                 builder.push(Instruction {
                     id: EvaluationOrder(0),
                     lvalue: temp.clone(),
-                    value: InstructionValue::CallExpression {
-                        callee: callee.clone(),
-                        args,
-                        loc: loc.clone(),
-                    },
-                    loc: loc.clone(),
+                    value: InstructionValue::CallExpression { callee: callee.clone(), args, loc },
+                    loc,
                     effects: None,
                 });
             }
@@ -3131,9 +3119,9 @@ fn lower_optional_call_expression_impl<'a>(
                         receiver: receiver.clone(),
                         property: property.clone(),
                         args,
-                        loc: loc.clone(),
+                        loc,
                     },
-                    loc: loc.clone(),
+                    loc,
                     effects: None,
                 });
             }
@@ -3145,14 +3133,14 @@ fn lower_optional_call_expression_impl<'a>(
                 lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                 value: temp,
                 type_annotation: None,
-                loc: loc.clone(),
+                loc,
             },
         )?;
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
             id: EvaluationOrder(0),
-            loc: loc.clone(),
+            loc,
         })
     })?;
 
@@ -3162,7 +3150,7 @@ fn lower_optional_call_expression_impl<'a>(
             test: test_block?,
             fallthrough: continuation_id,
             id: EvaluationOrder(0),
-            loc: loc.clone(),
+            loc,
         },
         continuation_block,
     );
@@ -3345,7 +3333,7 @@ fn lower_function_declaration<'a>(
         func_decl.id.as_ref().map(|id| id.name.as_str()),
         func_decl.generator,
         func_decl.r#async,
-        loc.clone(),
+        loc,
         scope,
         env,
         Some(parent_bindings),
@@ -3371,7 +3359,7 @@ fn lower_function_declaration<'a>(
         name_hint: None,
         lowered_func,
         expr_type: FunctionExpressionType::FunctionDeclaration,
-        loc: loc.clone(),
+        loc,
     };
     let fn_place = lower_value_to_temporary(builder, fn_value)?;
 
@@ -3396,13 +3384,13 @@ fn lower_function_declaration<'a>(
                         &builder.scope().binding_kind(symbol_id),
                     );
                     let identifier =
-                        builder.resolve_binding_with_loc(name, symbol_id, ident_loc.clone())?;
+                        builder.resolve_binding_with_loc(name, symbol_id, ident_loc)?;
                     VariableBinding::Identifier { identifier, binding_kind }
                 }
                 None => {
                     let mut binding = builder.resolve_identifier(
                         name,
-                        ident_loc.clone(),
+                        ident_loc,
                         builder.scope().resolve_binding_identifier(id_node),
                     )?;
                     if matches!(&binding, VariableBinding::Global { .. }) {
@@ -3419,8 +3407,7 @@ fn lower_function_declaration<'a>(
                         if let Some(symbol_id) = fallback {
                             let symbol =
                                 builder.scope().declaration_start(symbol_id).map(|_| symbol_id);
-                            binding =
-                                builder.resolve_identifier(name, ident_loc.clone(), symbol)?;
+                            binding = builder.resolve_identifier(name, ident_loc, symbol)?;
                         }
                     }
                     if matches!(&binding, VariableBinding::Identifier { .. }) {
@@ -3439,12 +3426,7 @@ fn lower_function_declaration<'a>(
                     // which was already set during define_binding.
                     // Use the full function declaration loc for the Place,
                     // matching the TS behavior where lowerAssignment uses stmt.node.loc
-                    let place = Place {
-                        identifier,
-                        reactive: false,
-                        effect: Effect::Unknown,
-                        loc: loc.clone(),
-                    };
+                    let place = Place { identifier, reactive: false, effect: Effect::Unknown, loc };
                     if is_context {
                         lower_value_to_temporary(
                             builder,
@@ -3622,18 +3604,14 @@ fn gather_captured_context(
                 continue;
             }
             let loc = identifier_locs.get(&ref_nid).map(|entry| {
-                if let Some(oe_loc) = &entry.opening_element_loc {
-                    oe_loc.clone()
-                } else {
-                    entry.loc.clone()
-                }
+                if let Some(oe_loc) = &entry.opening_element_loc { *oe_loc } else { entry.loc }
             });
             captured
                 .entry(symbol_id)
                 .and_modify(|(min_pos, existing_loc)| {
                     if ref_start < *min_pos {
                         *min_pos = ref_start;
-                        *existing_loc = loc.clone();
+                        *existing_loc = loc;
                     }
                 })
                 .or_insert((ref_start, loc));
@@ -3673,7 +3651,7 @@ fn lower_expression<'a>(
         oxc::Expression::Identifier(ident) => {
             let loc = builder.source_location(ident.span);
             let symbol = builder.scope().resolve_reference(ident);
-            let place = lower_identifier(builder, ident.name.as_str(), loc.clone(), symbol)?;
+            let place = lower_identifier(builder, ident.name.as_str(), loc, symbol)?;
             if builder.is_context_identifier(symbol) {
                 Ok(InstructionValue::LoadContext { place, loc })
             } else {
@@ -3750,7 +3728,7 @@ fn lower_expression<'a>(
                             category: ErrorCategory::Syntax,
                             reason: "Only object properties can be deleted".to_string(),
                             description: None,
-                            loc: loc.clone(),
+                            loc,
                             suggestions: None,
                         })?;
                         Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
@@ -3772,7 +3750,7 @@ fn lower_expression<'a>(
             let continuation_id = continuation_block.id;
             let test_block = builder.reserve(BlockKind::Value);
             let test_block_id = test_block.id;
-            let place = build_temporary_place(builder, loc.clone());
+            let place = build_temporary_place(builder, loc);
             let left_loc = builder.source_location(logical.left.span());
             let left_place = build_temporary_place(builder, left_loc);
 
@@ -3783,27 +3761,27 @@ fn lower_expression<'a>(
                         lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                         value: left_place.clone(),
                         type_annotation: None,
-                        loc: left_place.loc.clone(),
+                        loc: left_place.loc,
                     },
                 )?;
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
                     id: EvaluationOrder(0),
-                    loc: left_place.loc.clone(),
+                    loc: left_place.loc,
                 })
             });
 
             let alternate_block = builder.try_enter(BlockKind::Value, |builder, _block_id| {
                 let right = lower_expression_to_temporary(builder, &logical.right)?;
-                let right_loc = right.loc.clone();
+                let right_loc = right.loc;
                 lower_value_to_temporary(
                     builder,
                     InstructionValue::StoreLocal {
                         lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                         value: right,
                         type_annotation: None,
-                        loc: right_loc.clone(),
+                        loc: right_loc,
                     },
                 )?;
                 Ok(Terminal::Goto {
@@ -3826,7 +3804,7 @@ fn lower_expression<'a>(
                     test: test_block_id,
                     fallthrough: continuation_id,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 },
                 test_block,
             );
@@ -3835,9 +3813,9 @@ fn lower_expression<'a>(
             builder.push(Instruction {
                 id: EvaluationOrder(0),
                 lvalue: left_place.clone(),
-                value: InstructionValue::LoadLocal { place: left_value, loc: loc.clone() },
+                value: InstructionValue::LoadLocal { place: left_value, loc },
                 effects: None,
-                loc: loc.clone(),
+                loc,
             });
 
             builder.terminate_with_continuation(
@@ -3847,12 +3825,12 @@ fn lower_expression<'a>(
                     alternate: alternate_block?,
                     fallthrough: continuation_id,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 },
                 continuation_block,
             );
 
-            Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc.clone() })
+            Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc })
         }
         oxc::Expression::StaticMemberExpression(_)
         | oxc::Expression::ComputedMemberExpression(_)
@@ -3879,7 +3857,7 @@ fn lower_expression<'a>(
             let continuation_id = continuation_block.id;
             let test_block = builder.reserve(BlockKind::Value);
             let test_block_id = test_block.id;
-            let place = build_temporary_place(builder, loc.clone());
+            let place = build_temporary_place(builder, loc);
 
             // Block for the consequent (test is truthy)
             let consequent_ast_loc = builder.source_location(cond.consequent.span());
@@ -3891,7 +3869,7 @@ fn lower_expression<'a>(
                         lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                         value: consequent,
                         type_annotation: None,
-                        loc: loc.clone(),
+                        loc,
                     },
                 )?;
                 Ok(Terminal::Goto {
@@ -3912,7 +3890,7 @@ fn lower_expression<'a>(
                         lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                         value: alternate,
                         type_annotation: None,
-                        loc: loc.clone(),
+                        loc,
                     },
                 )?;
                 Ok(Terminal::Goto {
@@ -3928,7 +3906,7 @@ fn lower_expression<'a>(
                     test: test_block_id,
                     fallthrough: continuation_id,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 },
                 test_block,
             );
@@ -3942,12 +3920,12 @@ fn lower_expression<'a>(
                     alternate: alternate_block?,
                     fallthrough: continuation_id,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 },
                 continuation_block,
             );
 
-            Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc.clone() })
+            Ok(InstructionValue::LoadLocal { place: place.clone(), loc: place.loc })
         }
         oxc::Expression::SequenceExpression(seq) => {
             let loc = builder.source_location(seq.span);
@@ -3958,7 +3936,7 @@ fn lower_expression<'a>(
                     reason: "Expected sequence expression to have at least one expression"
                         .to_string(),
                     description: None,
-                    loc: loc.clone(),
+                    loc,
                     suggestions: None,
                 })?;
                 return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc });
@@ -3966,7 +3944,7 @@ fn lower_expression<'a>(
 
             let continuation_block = builder.reserve(builder.current_block_kind());
             let continuation_id = continuation_block.id;
-            let place = build_temporary_place(builder, loc.clone());
+            let place = build_temporary_place(builder, loc);
 
             let sequence_block = builder.try_enter(BlockKind::Sequence, |builder, _block_id| {
                 let mut last: Option<Place> = None;
@@ -3980,7 +3958,7 @@ fn lower_expression<'a>(
                             lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                             value: last,
                             type_annotation: None,
-                            loc: loc.clone(),
+                            loc,
                         },
                     )?;
                 }
@@ -3988,7 +3966,7 @@ fn lower_expression<'a>(
                     block: continuation_id,
                     variant: GotoVariant::Break,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 })
             });
 
@@ -3997,7 +3975,7 @@ fn lower_expression<'a>(
                     block: sequence_block?,
                     fallthrough: continuation_id,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 },
                 continuation_block,
             );
@@ -4037,7 +4015,7 @@ fn lower_expression<'a>(
                     category: ErrorCategory::Todo,
                     reason: "(BuildHIR::lowerExpression) Handle tagged template where cooked value is different from raw value".to_string(),
                     description: None,
-                    loc: loc.clone(),
+                    loc,
                     suggestions: None,
                 })?;
                 return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc });
@@ -4067,7 +4045,7 @@ fn lower_expression<'a>(
                 reason: "(BuildHIR::lowerExpression) Handle YieldExpression expressions"
                     .to_string(),
                 description: None,
-                loc: loc.clone(),
+                loc,
                 suggestions: None,
             })?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
@@ -4085,7 +4063,7 @@ fn lower_expression<'a>(
                     category: ErrorCategory::Todo,
                     reason: "(BuildHIR::lowerExpression) Handle MetaProperty expressions other than import.meta".to_string(),
                     description: None,
-                    loc: loc.clone(),
+                    loc,
                     suggestions: None,
                 })?;
                 Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
@@ -4098,7 +4076,7 @@ fn lower_expression<'a>(
                 reason: "(BuildHIR::lowerExpression) Handle ClassExpression expressions"
                     .to_string(),
                 description: None,
-                loc: loc.clone(),
+                loc,
                 suggestions: None,
             })?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
@@ -4109,7 +4087,7 @@ fn lower_expression<'a>(
                 category: ErrorCategory::Todo,
                 reason: "(BuildHIR::lowerExpression) Handle Super expressions".to_string(),
                 description: None,
-                loc: loc.clone(),
+                loc,
                 suggestions: None,
             })?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
@@ -4120,7 +4098,7 @@ fn lower_expression<'a>(
                 category: ErrorCategory::Todo,
                 reason: "(BuildHIR::lowerExpression) Handle ThisExpression expressions".to_string(),
                 description: None,
-                loc: loc.clone(),
+                loc,
                 suggestions: None,
             })?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
@@ -4192,7 +4170,7 @@ fn lower_expression<'a>(
                             operator: binary_op,
                             left: prev_value.clone(),
                             right: one,
-                            loc: member_loc.clone(),
+                            loc: member_loc,
                         },
                     )?;
 
@@ -4224,7 +4202,7 @@ fn lower_expression<'a>(
                     let result_place = if update.prefix { new_value_place } else { prev_value };
                     Ok(InstructionValue::LoadLocal {
                         place: result_place.clone(),
-                        loc: result_place.loc.clone(),
+                        loc: result_place.loc,
                     })
                 }
                 oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
@@ -4234,7 +4212,7 @@ fn lower_expression<'a>(
                             category: ErrorCategory::Todo,
                             reason: "(BuildHIR::lowerExpression) Handle UpdateExpression to variables captured within lambdas.".to_string(),
                             description: None,
-                            loc: loc.clone(),
+                            loc,
                             suggestions: None,
                         })?;
                         return Ok(InstructionValue::Primitive {
@@ -4244,11 +4222,8 @@ fn lower_expression<'a>(
                     }
 
                     let ident_loc = builder.source_location(ident.span);
-                    let binding = builder.resolve_identifier(
-                        ident.name.as_str(),
-                        ident_loc.clone(),
-                        symbol,
-                    )?;
+                    let binding =
+                        builder.resolve_identifier(ident.name.as_str(), ident_loc, symbol)?;
                     if matches!(binding, VariableBinding::Global { .. }) {
                         builder.record_error(CompilerErrorDetail {
                             category: ErrorCategory::Todo,
@@ -4256,7 +4231,7 @@ fn lower_expression<'a>(
                                 "UpdateExpression where argument is a global is not yet supported"
                                     .to_string(),
                             description: None,
-                            loc: loc.clone(),
+                            loc,
                             suggestions: None,
                         })?;
                         return Ok(InstructionValue::Primitive {
@@ -4271,7 +4246,7 @@ fn lower_expression<'a>(
                                 category: ErrorCategory::Todo,
                                 reason: "(BuildHIR::lowerExpression) Support UpdateExpression where argument is a global".to_string(),
                                 description: None,
-                                loc: loc.clone(),
+                                loc,
                                 suggestions: None,
                             })?;
                             return Ok(InstructionValue::Primitive {
@@ -4284,7 +4259,7 @@ fn lower_expression<'a>(
                         identifier,
                         effect: Effect::Unknown,
                         reactive: false,
-                        loc: ident_loc.clone(),
+                        loc: ident_loc,
                     };
 
                     // Load the current value
@@ -4321,7 +4296,7 @@ fn lower_expression<'a>(
                         category: ErrorCategory::Todo,
                         reason: "UpdateExpression with unsupported argument type".to_string(),
                         description: None,
-                        loc: loc.clone(),
+                        loc,
                         suggestions: None,
                     })?;
                     Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
@@ -4461,15 +4436,14 @@ fn lower_assignment_expression<'a>(
                 let symbol = builder.scope().resolve_reference(ident);
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
                 let ident_loc = builder.source_location(ident.span);
-                let binding =
-                    builder.resolve_identifier(ident.name.as_str(), ident_loc.clone(), symbol)?;
+                let binding = builder.resolve_identifier(ident.name.as_str(), ident_loc, symbol)?;
                 match binding {
                     VariableBinding::Identifier { identifier, binding_kind } => {
                         if binding_kind == BindingKind::Const {
                             builder.record_error(CompilerErrorDetail {
                                 reason: "Cannot reassign a `const` variable".to_string(),
                                 category: ErrorCategory::Syntax,
-                                loc: ident_loc.clone(),
+                                loc: ident_loc,
                                 description: Some(format!(
                                     "`{}` is declared as const",
                                     ident.name.as_str()
@@ -4496,7 +4470,7 @@ fn lower_assignment_expression<'a>(
                                         place: place.clone(),
                                     },
                                     value: right,
-                                    loc: place.loc.clone(),
+                                    loc: place.loc,
                                 },
                             )?;
                             Ok(InstructionValue::LoadLocal { place: temp.clone(), loc: temp.loc })
@@ -4510,7 +4484,7 @@ fn lower_assignment_expression<'a>(
                                     },
                                     value: right,
                                     type_annotation: None,
-                                    loc: place.loc.clone(),
+                                    loc: place.loc,
                                 },
                             )?;
                             Ok(InstructionValue::LoadLocal { place: temp.clone(), loc: temp.loc })
@@ -4633,7 +4607,7 @@ fn lower_assignment_expression<'a>(
                     reason: "Logical assignment operators (||=, &&=, ??=) are not yet supported"
                         .to_string(),
                     category: ErrorCategory::Todo,
-                    loc: loc.clone(),
+                    loc,
                     description: None,
                     suggestions: None,
                 })?;
@@ -4652,8 +4626,7 @@ fn lower_assignment_expression<'a>(
             oxc::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 let ident_loc = builder.source_location(ident.span);
                 let symbol = builder.scope().resolve_reference(ident);
-                let left_place =
-                    lower_identifier(builder, ident.name.as_str(), ident_loc.clone(), symbol)?;
+                let left_place = lower_identifier(builder, ident.name.as_str(), ident_loc, symbol)?;
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
                 let binary_place = lower_value_to_temporary(
                     builder,
@@ -4661,11 +4634,10 @@ fn lower_assignment_expression<'a>(
                         operator: binary_op,
                         left: left_place,
                         right,
-                        loc: loc.clone(),
+                        loc,
                     },
                 )?;
-                let binding =
-                    builder.resolve_identifier(ident.name.as_str(), ident_loc.clone(), symbol)?;
+                let binding = builder.resolve_identifier(ident.name.as_str(), ident_loc, symbol)?;
                 match binding {
                     VariableBinding::Identifier { identifier, .. } => {
                         let place = Place {
@@ -4683,7 +4655,7 @@ fn lower_assignment_expression<'a>(
                                         place: place.clone(),
                                     },
                                     value: binary_place,
-                                    loc: loc.clone(),
+                                    loc,
                                 },
                             )?;
                             Ok(InstructionValue::LoadContext { place, loc })
@@ -4697,7 +4669,7 @@ fn lower_assignment_expression<'a>(
                                     },
                                     value: binary_place,
                                     type_annotation: None,
-                                    loc: loc.clone(),
+                                    loc,
                                 },
                             )?;
                             Ok(InstructionValue::LoadLocal { place, loc })
@@ -4707,11 +4679,7 @@ fn lower_assignment_expression<'a>(
                         let name = ident.name.to_string();
                         let temp = lower_value_to_temporary(
                             builder,
-                            InstructionValue::StoreGlobal {
-                                name,
-                                value: binary_place,
-                                loc: loc.clone(),
-                            },
+                            InstructionValue::StoreGlobal { name, value: binary_place, loc },
                         )?;
                         Ok(InstructionValue::LoadLocal { place: temp.clone(), loc: temp.loc })
                     }
@@ -4733,7 +4701,7 @@ fn lower_assignment_expression<'a>(
                         operator: binary_op,
                         left: current_value,
                         right,
-                        loc: member_loc.clone(),
+                        loc: member_loc,
                     },
                 )?;
                 match lowered_property {
@@ -4756,7 +4724,7 @@ fn lower_assignment_expression<'a>(
                     reason: "Compound assignment to complex pattern is not yet supported"
                         .to_string(),
                     category: ErrorCategory::Todo,
-                    loc: loc.clone(),
+                    loc,
                     description: None,
                     suggestions: None,
                 })?;
@@ -4899,7 +4867,7 @@ fn lower_jsx_element_expr<'a>(
                 let reason = format!("<{}> tags should be module-level imports", tag_name);
                 return Err(CompilerDiagnostic::new(ErrorCategory::Invariant, &reason, None)
                     .with_detail(CompilerDiagnosticDetail::Error {
-                        loc: id_loc.clone(),
+                        loc: id_loc,
                         message: Some(reason.clone()),
                         identifier_name: None,
                     })
@@ -4934,7 +4902,7 @@ fn lower_jsx_element_expr<'a>(
                     .iter()
                     .map(|loc| CompilerDiagnosticDetail::Error {
                         message: Some(format!("Multiple `<{}:{}>` tags found", tag_name, name)),
-                        loc: loc.clone(),
+                        loc: *loc,
                         identifier_name: None,
                     })
                     .collect();
@@ -5021,7 +4989,7 @@ fn lower_jsx_element_name(
         let loc = builder.source_location(span);
         if tag.starts_with(|c: char| c.is_ascii_uppercase()) {
             // Component tag: resolve as identifier and load
-            let place = lower_identifier(builder, tag, loc.clone(), symbol)?;
+            let place = lower_identifier(builder, tag, loc, symbol)?;
             let load_value = if builder.is_context_identifier(symbol) {
                 InstructionValue::LoadContext { place, loc }
             } else {
@@ -5062,16 +5030,13 @@ fn lower_jsx_element_name(
                     reason: "Expected JSXNamespacedName to have no colons in the namespace or name"
                         .to_string(),
                     description: Some(format!("Got `{}` : `{}`", namespace, name)),
-                    loc: loc.clone(),
+                    loc,
                     suggestions: None,
                 })?;
             }
             let place = lower_value_to_temporary(
                 builder,
-                InstructionValue::Primitive {
-                    value: PrimitiveValue::String(tag.into()),
-                    loc: loc.clone(),
-                },
+                InstructionValue::Primitive { value: PrimitiveValue::String(tag.into()), loc },
             )?;
             Ok(JsxTag::Place(place))
         }
@@ -5128,9 +5093,9 @@ fn lower_jsx_member_object_identifier(
     let id_loc = builder.source_location(span);
     let place = lower_identifier(builder, name, id_loc, symbol)?;
     let load_value = if builder.is_context_identifier(symbol) {
-        InstructionValue::LoadContext { place, loc: expr_loc.clone() }
+        InstructionValue::LoadContext { place, loc: *expr_loc }
     } else {
-        InstructionValue::LoadLocal { place, loc: expr_loc.clone() }
+        InstructionValue::LoadLocal { place, loc: *expr_loc }
     };
     lower_value_to_temporary(builder, load_value)
 }
@@ -5491,7 +5456,7 @@ fn trim_jsx_text(original: &str) -> Option<String> {
         let is_last_non_empty_line = i == last_non_empty_line;
 
         // Replace rendered whitespace tabs with spaces
-        let mut trimmed_line = line.replace('\t', " ");
+        let mut trimmed_line = line.cow_replace('\t', " ").into_owned();
 
         // Trim whitespace touching a newline (leading whitespace on non-first lines)
         if !is_first_line {
@@ -5941,7 +5906,7 @@ fn lower_statement<'a>(
                     reason: "(BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch"
                         .to_string(),
                     description: None,
-                    loc: loc.clone(),
+                    loc,
                     suggestions: None,
                 })?;
             }
@@ -6024,10 +5989,10 @@ fn lower_statement<'a>(
                         // No init expression (e.g., `for (; ...)`), add a placeholder
                         let placeholder = InstructionValue::Primitive {
                             value: PrimitiveValue::Undefined,
-                            loc: loc.clone(),
+                            loc,
                         };
                         lower_value_to_temporary(builder, placeholder)?;
-                        loc.clone()
+                        loc
                     }
                     Some(oxc::ForStatementInit::VariableDeclaration(var_decl)) => {
                         let init_loc = builder.source_location(var_decl.span);
@@ -6041,7 +6006,7 @@ fn lower_statement<'a>(
                             category: ErrorCategory::Todo,
                             reason: "(BuildHIR::lowerStatement) Handle non-variable initialization in ForStatement".to_string(),
                             description: None,
-                            loc: loc.clone(),
+                            loc,
                             suggestions: None,
                         })?;
                         lower_expression_to_temporary(builder, expr)?;
@@ -6101,7 +6066,7 @@ fn lower_statement<'a>(
                     loop_block: body_block,
                     fallthrough: continuation_id,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 },
                 test_block,
             );
@@ -6116,7 +6081,7 @@ fn lower_statement<'a>(
                         alternate: continuation_id,
                         fallthrough: continuation_id,
                         id: EvaluationOrder(0),
-                        loc: loc.clone(),
+                        loc,
                     },
                     continuation_block,
                 );
@@ -6126,14 +6091,12 @@ fn lower_statement<'a>(
                     reason: "(BuildHIR::lowerStatement) Handle empty test in ForStatement"
                         .to_string(),
                     description: None,
-                    loc: loc.clone(),
+                    loc,
                     suggestions: None,
                 })?;
                 // Treat `for(;;)` as `while(true)` to keep the builder state consistent
-                let true_val = InstructionValue::Primitive {
-                    value: PrimitiveValue::Boolean(true),
-                    loc: loc.clone(),
-                };
+                let true_val =
+                    InstructionValue::Primitive { value: PrimitiveValue::Boolean(true), loc };
                 let test = lower_value_to_temporary(builder, true_val)?;
                 builder.terminate_with_continuation(
                     Terminal::Branch {
@@ -6183,7 +6146,7 @@ fn lower_statement<'a>(
                     loop_block,
                     fallthrough: continuation_id,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 },
                 conditional_block,
             );
@@ -6237,7 +6200,7 @@ fn lower_statement<'a>(
                     test: conditional_id,
                     fallthrough: continuation_id,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 },
                 conditional_block,
             );
@@ -6288,7 +6251,7 @@ fn lower_statement<'a>(
                     loop_block,
                     fallthrough: continuation_id,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 },
                 init_block,
             );
@@ -6297,20 +6260,16 @@ fn lower_statement<'a>(
             let left_loc = builder.source_location(for_in.left.span());
             let next_property = lower_value_to_temporary(
                 builder,
-                InstructionValue::NextPropertyOf { value, loc: left_loc.clone() },
+                InstructionValue::NextPropertyOf { value, loc: left_loc },
             )?;
 
-            let assign_result = lower_for_in_of_left(
-                builder,
-                &for_in.left,
-                left_loc.clone(),
-                next_property.clone(),
-            )?;
+            let assign_result =
+                lower_for_in_of_left(builder, &for_in.left, left_loc, next_property.clone())?;
             // Use the assign result (StoreLocal temp) as the test, matching TS behavior
             let test_value = assign_result.unwrap_or(next_property);
             let test = lower_value_to_temporary(
                 builder,
-                InstructionValue::LoadLocal { place: test_value, loc: left_loc.clone() },
+                InstructionValue::LoadLocal { place: test_value, loc: left_loc },
             )?;
             builder.terminate_with_continuation(
                 Terminal::Branch {
@@ -6319,7 +6278,7 @@ fn lower_statement<'a>(
                     alternate: continuation_id,
                     fallthrough: continuation_id,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 },
                 continuation_block,
             );
@@ -6338,7 +6297,7 @@ fn lower_statement<'a>(
                     category: ErrorCategory::Todo,
                     reason: "(BuildHIR::lowerStatement) Handle for-await loops".to_string(),
                     description: None,
-                    loc: loc.clone(),
+                    loc,
                     suggestions: None,
                 })?;
                 return Ok(());
@@ -6370,7 +6329,7 @@ fn lower_statement<'a>(
                     loop_block,
                     fallthrough: continuation_id,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 },
                 init_block,
             );
@@ -6378,14 +6337,14 @@ fn lower_statement<'a>(
             // Init block: GetIterator, goto test
             let iterator = lower_value_to_temporary(
                 builder,
-                InstructionValue::GetIterator { collection: value.clone(), loc: value.loc.clone() },
+                InstructionValue::GetIterator { collection: value.clone(), loc: value.loc },
             )?;
             builder.terminate_with_continuation(
                 Terminal::Goto {
                     block: test_block_id,
                     variant: GotoVariant::Break,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 },
                 test_block,
             );
@@ -6397,21 +6356,17 @@ fn lower_statement<'a>(
                 InstructionValue::IteratorNext {
                     iterator: iterator.clone(),
                     collection: value.clone(),
-                    loc: left_loc.clone(),
+                    loc: left_loc,
                 },
             )?;
 
-            let assign_result = lower_for_in_of_left(
-                builder,
-                &for_of.left,
-                left_loc.clone(),
-                advance_iterator.clone(),
-            )?;
+            let assign_result =
+                lower_for_in_of_left(builder, &for_of.left, left_loc, advance_iterator.clone())?;
             // Use the assign result (StoreLocal temp) as the test, matching TS behavior
             let test_value = assign_result.unwrap_or(advance_iterator);
             let test = lower_value_to_temporary(
                 builder,
-                InstructionValue::LoadLocal { place: test_value, loc: left_loc.clone() },
+                InstructionValue::LoadLocal { place: test_value, loc: left_loc },
             )?;
             builder.terminate_with_continuation(
                 Terminal::Branch {
@@ -6420,7 +6375,7 @@ fn lower_statement<'a>(
                     alternate: continuation_id,
                     fallthrough: continuation_id,
                     id: EvaluationOrder(0),
-                    loc: loc.clone(),
+                    loc,
                 },
                 continuation_block,
             );
@@ -6447,7 +6402,7 @@ fn lower_statement<'a>(
                             reason: "Expected at most one `default` branch in a switch statement"
                                 .to_string(),
                             description: None,
-                            loc: case_loc.clone(),
+                            loc: case_loc,
                             suggestions: None,
                         })?;
                         break;
@@ -6468,7 +6423,7 @@ fn lower_statement<'a>(
                                 block: fallthrough_target,
                                 variant: GotoVariant::Break,
                                 id: EvaluationOrder(0),
-                                loc: case_loc.clone(),
+                                loc: case_loc,
                             })
                         },
                     )
@@ -6518,7 +6473,7 @@ fn lower_statement<'a>(
                             "(BuildHIR::lowerStatement) Handle TryStatement without a catch clause"
                                 .to_string(),
                         description: None,
-                        loc: loc.clone(),
+                        loc,
                         suggestions: None,
                     })?;
                     return Ok(());
@@ -6530,7 +6485,7 @@ fn lower_statement<'a>(
                     category: ErrorCategory::Todo,
                     reason: "(BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause".to_string(),
                     description: None,
-                    loc: loc.clone(),
+                    loc,
                     suggestions: None,
                 })?;
             }
@@ -6561,13 +6516,13 @@ fn lower_statement<'a>(
                     None
                 } else {
                     let param_loc = builder.source_location(param.pattern.span());
-                    let id = builder.make_temporary(param_loc.clone());
+                    let id = builder.make_temporary(param_loc);
                     promote_temporary(builder, id);
                     let place = Place {
                         identifier: id,
                         effect: Effect::Unknown,
                         reactive: false,
-                        loc: param_loc.clone(),
+                        loc: param_loc,
                     };
                     // Emit DeclareLocal for the catch binding
                     lower_value_to_temporary(
@@ -6594,7 +6549,7 @@ fn lower_statement<'a>(
                 if let Some((ref place, pattern)) = handler_binding_for_block {
                     lower_binding_assignment(
                         builder,
-                        handler_param_loc.clone().flatten().or_else(|| handler_loc.clone()),
+                        handler_param_loc.flatten().or(handler_loc),
                         InstructionKind::Catch,
                         pattern,
                         place.clone(),
@@ -6620,7 +6575,7 @@ fn lower_statement<'a>(
                     block: continuation_id,
                     variant: GotoVariant::Break,
                     id: EvaluationOrder(0),
-                    loc: handler_loc.clone(),
+                    loc: handler_loc,
                 })
             })?;
 
@@ -6640,7 +6595,7 @@ fn lower_statement<'a>(
                     block: continuation_id,
                     variant: GotoVariant::Try,
                     id: EvaluationOrder(0),
-                    loc: try_body_loc.clone(),
+                    loc: try_body_loc,
                 })
             })?;
 
@@ -6829,7 +6784,7 @@ fn lower_variable_declaration<'a>(
             let id_loc = builder.source_location(id.span);
             let mut binding = builder.resolve_identifier(
                 id.name.as_str(),
-                id_loc.clone(),
+                id_loc,
                 builder.scope().resolve_binding_identifier(id),
             )?;
             if !matches!(binding, VariableBinding::Identifier { .. }) {
@@ -6842,11 +6797,8 @@ fn lower_variable_declaration<'a>(
                     let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
                         &builder.scope().binding_kind(symbol_id),
                     );
-                    let identifier = builder.resolve_binding_with_loc(
-                        id.name.as_str(),
-                        symbol_id,
-                        id_loc.clone(),
-                    )?;
+                    let identifier =
+                        builder.resolve_binding_with_loc(id.name.as_str(), symbol_id, id_loc)?;
                     binding = VariableBinding::Identifier { identifier, binding_kind };
                 }
             }
@@ -6855,12 +6807,8 @@ fn lower_variable_declaration<'a>(
                     // Update the identifier's loc to the declaration site
                     // (it may have been first created at a reference site during hoisting)
                     builder.set_identifier_declaration_loc(identifier, &id_loc);
-                    let place = Place {
-                        identifier,
-                        effect: Effect::Unknown,
-                        reactive: false,
-                        loc: id_loc.clone(),
-                    };
+                    let place =
+                        Place { identifier, effect: Effect::Unknown, reactive: false, loc: id_loc };
                     if builder.is_context_identifier(builder.scope().resolve_binding_identifier(id))
                     {
                         if kind == InstructionKind::Const {
@@ -6868,7 +6816,7 @@ fn lower_variable_declaration<'a>(
                                 reason: "Expect `const` declaration not to be reassigned"
                                     .to_string(),
                                 category: ErrorCategory::Syntax,
-                                loc: id_loc.clone(),
+                                loc: id_loc,
                                 description: None,
                                 suggestions: None,
                             })?;
@@ -6937,7 +6885,7 @@ fn lower_for_in_of_left<'a>(
                         var_decl.declarations.len()
                     ),
                     description: None,
-                    loc: left_loc.clone(),
+                    loc: left_loc,
                     suggestions: None,
                 })?;
             }

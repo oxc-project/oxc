@@ -50,6 +50,7 @@ pub type ReactiveBlock<'a> = Vec<ReactiveStatement<'a>>;
 
 /// TS: ReactiveStatement (discriminated union with 'kind' field)
 #[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum ReactiveStatement<'a> {
     Instruction(ReactiveInstruction<'a>),
     Terminal(ReactiveTerminalStatement<'a>),

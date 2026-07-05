@@ -703,6 +703,7 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
     /// Format an InstructionValue. The `inner_func_formatter` callback is invoked
     /// for FunctionExpression/ObjectMethod to format the inner HirFunction. If None,
     /// a placeholder is printed instead.
+    #[allow(clippy::type_complexity)]
     pub fn format_instruction_value(
         &mut self,
         value: &InstructionValue<'h>,

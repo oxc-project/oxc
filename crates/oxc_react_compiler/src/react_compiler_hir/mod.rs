@@ -187,6 +187,7 @@ pub enum ParamPattern {
 
 /// The HIR control-flow graph
 #[derive(Debug, Clone)]
+#[allow(clippy::upper_case_acronyms)]
 pub struct HIR {
     pub entry: BlockId,
     pub blocks: FxIndexMap<BlockId, BasicBlock>,
@@ -1256,12 +1257,27 @@ impl NonLocalBinding {
 #[derive(Debug, Clone)]
 pub enum Type {
     Primitive,
-    Function { shape_id: Option<String>, return_type: Box<Type>, is_constructor: bool },
-    Object { shape_id: Option<String> },
-    TypeVar { id: TypeId },
+    Function {
+        shape_id: Option<String>,
+        return_type: Box<Type>,
+        is_constructor: bool,
+    },
+    Object {
+        shape_id: Option<String>,
+    },
+    #[allow(clippy::enum_variant_names)]
+    TypeVar {
+        id: TypeId,
+    },
     Poly,
-    Phi { operands: Vec<Type> },
-    Property { object_type: Box<Type>, object_name: String, property_name: PropertyNameKind },
+    Phi {
+        operands: Vec<Type>,
+    },
+    Property {
+        object_type: Box<Type>,
+        object_name: String,
+        property_name: PropertyNameKind,
+    },
     ObjectMethod,
 }
 
@@ -1340,6 +1356,7 @@ pub enum MutationReason {
 /// Describes the aliasing/mutation/data-flow effects of an instruction or terminal.
 /// Ported from TS `AliasingEffect` in `AliasingEffects.ts`.
 #[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum AliasingEffect {
     /// Marks the given value and its direct aliases as frozen.
     Freeze { value: Place, reason: ValueReason },

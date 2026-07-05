@@ -14,6 +14,7 @@
 //! 5. Processing each function through the compilation pipeline
 //! 6. Applying compiled functions back to the AST
 
+use cow_utils::CowUtils;
 use oxc_ast::ast as oxc;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::Span;
@@ -287,12 +288,12 @@ fn is_hook_name(s: &str) -> bool {
         && bytes[0] == b'u'
         && bytes[1] == b's'
         && bytes[2] == b'e'
-        && bytes.get(3).map_or(false, |c| c.is_ascii_uppercase() || c.is_ascii_digit())
+        && bytes.get(3).is_some_and(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
 }
 
 /// Check if a name looks like a React component (starts with uppercase letter).
 fn is_component_name(name: &str) -> bool {
-    name.chars().next().map_or(false, |c| c.is_ascii_uppercase())
+    name.chars().next().is_some_and(|c| c.is_ascii_uppercase())
 }
 
 /// Check if an expression is a hook call (identifier with hook name, or
@@ -307,7 +308,7 @@ fn expr_is_hook(expr: &oxc::Expression) -> bool {
             }
             // Object must be a PascalCase identifier
             if let oxc::Expression::Identifier(obj) = &member.object {
-                obj.name.chars().next().map_or(false, |c| c.is_ascii_uppercase())
+                obj.name.chars().next().is_some_and(|c| c.is_ascii_uppercase())
             } else {
                 false
             }
@@ -513,7 +514,7 @@ fn calls_hooks_or_creates_jsx_in_stmt(stmt: &oxc::Statement) -> bool {
                 || if_stmt
                     .alternate
                     .as_ref()
-                    .map_or(false, |alt| calls_hooks_or_creates_jsx_in_stmt(alt))
+                    .is_some_and(|alt| calls_hooks_or_creates_jsx_in_stmt(alt))
         }
         oxc::Statement::ForStatement(for_stmt) => {
             if let Some(ref init) = for_stmt.init {
@@ -690,7 +691,7 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &oxc::Expression) -> bool {
         oxc::Expression::UpdateExpression(update) => match &update.argument {
             oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => false,
             target => {
-                target.as_member_expression().map_or(false, calls_hooks_or_creates_jsx_in_member)
+                target.as_member_expression().is_some_and(calls_hooks_or_creates_jsx_in_member)
             }
         },
         oxc::Expression::StaticMemberExpression(member) => {
@@ -706,10 +707,9 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &oxc::Expression) -> bool {
         oxc::Expression::AwaitExpression(await_expr) => {
             calls_hooks_or_creates_jsx_in_expr(&await_expr.argument)
         }
-        oxc::Expression::YieldExpression(yield_expr) => yield_expr
-            .argument
-            .as_ref()
-            .map_or(false, |arg| calls_hooks_or_creates_jsx_in_expr(arg)),
+        oxc::Expression::YieldExpression(yield_expr) => {
+            yield_expr.argument.as_ref().is_some_and(|arg| calls_hooks_or_creates_jsx_in_expr(arg))
+        }
         oxc::Expression::TaggedTemplateExpression(tagged) => {
             calls_hooks_or_creates_jsx_in_expr(&tagged.tag)
                 || tagged.quasi.expressions.iter().any(calls_hooks_or_creates_jsx_in_expr)
@@ -722,7 +722,7 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &oxc::Expression) -> bool {
                 calls_hooks_or_creates_jsx_in_expr(&s.argument)
             }
             oxc::ArrayExpressionElement::Elision(_) => false,
-            other => other.as_expression().map_or(false, calls_hooks_or_creates_jsx_in_expr),
+            other => other.as_expression().is_some_and(calls_hooks_or_creates_jsx_in_expr),
         }),
         oxc::Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| match prop {
             oxc::ObjectPropertyKind::SpreadProperty(s) => {
@@ -885,16 +885,16 @@ fn calls_hooks_or_creates_jsx_in_binding(pattern: &oxc::BindingPattern) -> bool 
                 || obj
                     .rest
                     .as_ref()
-                    .map_or(false, |r| calls_hooks_or_creates_jsx_in_binding(&r.argument))
+                    .is_some_and(|r| calls_hooks_or_creates_jsx_in_binding(&r.argument))
         }
         oxc::BindingPattern::ArrayPattern(arr) => {
             arr.elements
                 .iter()
-                .any(|e| e.as_ref().map_or(false, calls_hooks_or_creates_jsx_in_binding))
+                .any(|e| e.as_ref().is_some_and(calls_hooks_or_creates_jsx_in_binding))
                 || arr
                     .rest
                     .as_ref()
-                    .map_or(false, |r| calls_hooks_or_creates_jsx_in_binding(&r.argument))
+                    .is_some_and(|r| calls_hooks_or_creates_jsx_in_binding(&r.argument))
         }
         oxc::BindingPattern::AssignmentPattern(assign) => {
             calls_hooks_or_creates_jsx_in_expr(&assign.right)
@@ -984,6 +984,7 @@ enum FunctionBody<'a> {
 /// and the function's name and context.
 ///
 /// This is the Rust equivalent of `getReactFunctionType` in Program.ts.
+#[allow(clippy::too_many_arguments)]
 fn get_react_function_type(
     name: Option<&str>,
     params: &oxc::FormalParameters,
@@ -1227,6 +1228,7 @@ fn try_compile_function<'a>(
 /// Returns `Ok(Some(codegen_fn))` when the function was compiled and should be applied,
 /// `Ok(None)` when the function was skipped or lint-only,
 /// or `Err(CompileResult)` if a fatal error should short-circuit the program.
+#[allow(clippy::result_large_err)]
 fn process_fn<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     source: &CompileSource,
@@ -2701,7 +2703,7 @@ fn ox_add_imports_to_program<'a>(
     }
 
     let mut sorted_modules: Vec<_> = imports.iter().collect();
-    sorted_modules.sort_by(|(a, _), (b, _)| a.to_lowercase().cmp(&b.to_lowercase()));
+    sorted_modules.sort_by_key(|(a, _)| a.cow_to_lowercase());
 
     let is_module = matches!(program.source_type.module_kind(), oxc_span::ModuleKind::Module);
 

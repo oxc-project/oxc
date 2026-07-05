@@ -30,6 +30,7 @@ pub enum ErrorCategory {
     Config,
     Gating,
     Suppression,
+    #[allow(clippy::upper_case_acronyms)]
     FBT,
 }
 

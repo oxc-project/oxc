@@ -20,6 +20,12 @@ pub struct DisjointSet<K: Copy + Eq + Hash> {
     entries: FxIndexMap<K, K>,
 }
 
+impl<K: Copy + Eq + Hash> Default for DisjointSet<K> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<K: Copy + Eq + Hash> DisjointSet<K> {
     pub fn new() -> Self {
         DisjointSet { entries: FxIndexMap::default() }
