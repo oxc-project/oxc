@@ -241,7 +241,6 @@ fn ox_codegen_outlined<'a>(
                 reason: diag.reason,
                 description: diag.description,
                 loc,
-                suggestions: diag.suggestions,
             });
             err
         })?;
@@ -1185,7 +1184,6 @@ fn ox_codegen_for_in<'a, 'h>(
             reason: "Support non-trivial for..in inits".to_string(),
             description: None,
             loc,
-            suggestions: None,
         })?;
         return Ok(Some(oxc_ast::ast::Statement::new_empty_statement(SPAN, &cx.ast)));
     }
@@ -1246,7 +1244,6 @@ fn ox_codegen_for_of<'a, 'h>(
             reason: "Support non-trivial for..of inits".to_string(),
             description: None,
             loc,
-            suggestions: None,
         })?;
         return Ok(Some(oxc_ast::ast::Statement::new_empty_statement(SPAN, &cx.ast)));
     }
@@ -1296,7 +1293,6 @@ fn ox_extract_for_in_of_lval<'a>(
                 reason: format!("Support non-trivial {} inits", context_name),
                 description: None,
                 loc,
-                suggestions: None,
             })?;
             return Ok((
                 oxc_ast::ast::BindingPattern::new_binding_identifier(SPAN, "_", &cx.ast),
@@ -1749,7 +1745,6 @@ fn ox_codegen_instruction_value<'a, 'h>(
                             reason: "(CodegenReactiveFunction::codegenInstructionValue) Cannot declare variables in a value block".to_string(),
                             description: None,
                             loc: None,
-                            suggestions: None,
                         })?;
                         expressions.push(oxc_ast::ast::Expression::new_string_literal(
                             SPAN,
@@ -1764,7 +1759,6 @@ fn ox_codegen_instruction_value<'a, 'h>(
                             reason: "(CodegenReactiveFunction::codegenInstructionValue) Handle conversion of statement to expression".to_string(),
                             description: None,
                             loc: None,
-                            suggestions: None,
                         })?;
                         expressions.push(oxc_ast::ast::Expression::new_string_literal(
                             SPAN,
@@ -1975,7 +1969,6 @@ fn ox_codegen_base_instruction_value<'a>(
                     .with_detail(CompilerDiagnosticDetail::Error {
                         loc: property.loc,
                         message: Some(msg),
-                        identifier_name: None,
                     }),
                 );
                 return Err(err);
@@ -2504,9 +2497,6 @@ fn ox_codegen_object_property_key<'a>(
         ObjectPropertyKey::Computed { name } => {
             let expr = ox_codegen_place_to_expression(cx, name)?;
             Ok((oxc::PropertyKey::from(expr), true))
-        }
-        ObjectPropertyKey::Number { name } => {
-            Ok((oxc::PropertyKey::from(ox_number(&cx.ast, name.value())), false))
         }
     }
 }
@@ -3523,11 +3513,7 @@ fn invariant_err(reason: &str, loc: Option<DiagSourceLocation>) -> CompilerError
     let mut err = CompilerError::new();
     err.push_diagnostic(
         CompilerDiagnostic::new(ErrorCategory::Invariant, reason, None::<String>).with_detail(
-            CompilerDiagnosticDetail::Error {
-                loc,
-                message: Some(reason.to_string()),
-                identifier_name: None,
-            },
+            CompilerDiagnosticDetail::Error { loc, message: Some(reason.to_string()) },
         ),
     );
     err
@@ -3547,7 +3533,6 @@ fn invariant_err_with_detail_message(
     .with_detail(crate::react_compiler_diagnostics::CompilerDiagnosticDetail::Error {
         loc,
         message: Some(message.to_string()),
-        identifier_name: None,
     });
     err.push_diagnostic(diagnostic);
     err

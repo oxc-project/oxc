@@ -58,7 +58,6 @@ pub fn validate_locals_not_reassigned_after_render(func: &HirFunction, env: &mut
             .with_detail(CompilerDiagnosticDetail::Error {
                 loc: reassignment_place.loc,
                 message: Some(format!("Cannot reassign {} after render completes", variable_name)),
-                identifier_name: None,
             }),
         );
     }
@@ -150,7 +149,6 @@ fn get_context_reassignment(
                                     CompilerDiagnosticDetail::Error {
                                         loc: reassignment_place.loc,
                                         message: Some(format!("Cannot reassign {}", variable_name)),
-                                        identifier_name: None,
                                     },
                                 ),
                             );

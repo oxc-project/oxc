@@ -131,7 +131,6 @@ fn validate_context_variable_lvalues_impl(
                                 CompilerDiagnosticDetail::Error {
                                     loc: value.loc().copied(),
                                     message: None,
-                                    identifier_name: None,
                                 },
                             ),
                         );
@@ -186,11 +185,7 @@ fn visit(
                         "Support destructuring of context variables",
                         None,
                     )
-                    .with_detail(CompilerDiagnosticDetail::Error {
-                        loc,
-                        message: None,
-                        identifier_name: None,
-                    }),
+                    .with_detail(CompilerDiagnosticDetail::Error { loc, message: None }),
                 );
                 return Ok(());
             }
@@ -206,7 +201,6 @@ fn visit(
             .with_detail(CompilerDiagnosticDetail::Error {
                 loc: place.loc,
                 message: Some(format!("this is {}", prev_kind)),
-                identifier_name: None,
             }));
         }
     }

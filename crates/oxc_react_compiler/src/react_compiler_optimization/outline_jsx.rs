@@ -444,7 +444,6 @@ fn emit_outlined_fn<'a>(
         name_hint: None,
         fn_type: ReactFunctionType::Other,
         params: vec![ParamPattern::Place(props_obj)],
-        return_type_annotation: None,
         returns: returns_place,
         context: Vec::new(),
         body: HIR { entry: BlockId(0), blocks },

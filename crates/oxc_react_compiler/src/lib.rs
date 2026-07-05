@@ -1,27 +1,20 @@
 use oxc_allocator::{Allocator, ArenaVec};
 
-pub mod diagnostics;
-pub mod prefilter;
-pub mod scope;
+mod diagnostics;
+mod prefilter;
+mod scope;
 
-// Vendored React Compiler core crates (from oxc-project/forked-react-compiler),
-// each crate flattened to a module. Kept near byte-for-byte with upstream for easy
-// re-syncing.
-// They are `pub` so the public API may name types that originate inside them (e.g.
-// `TransformResult::events`); being `pub` also keeps `dead_code` quiet on the parts
-// the conversion layer doesn't reach, so only the few genuinely-dead private items
-// carry their own targeted `#[allow(dead_code)]`.
-pub mod react_compiler;
-pub mod react_compiler_diagnostics;
-pub mod react_compiler_hir;
-pub mod react_compiler_inference;
-pub mod react_compiler_lowering;
-pub mod react_compiler_optimization;
-pub mod react_compiler_reactive_scopes;
-pub mod react_compiler_ssa;
-pub mod react_compiler_typeinference;
-pub mod react_compiler_utils;
-pub mod react_compiler_validation;
+mod react_compiler;
+mod react_compiler_diagnostics;
+mod react_compiler_hir;
+mod react_compiler_inference;
+mod react_compiler_lowering;
+mod react_compiler_optimization;
+mod react_compiler_reactive_scopes;
+mod react_compiler_ssa;
+mod react_compiler_typeinference;
+mod react_compiler_utils;
+mod react_compiler_validation;
 
 use crate::react_compiler::entrypoint::compile_result::CompileResult;
 use crate::react_compiler::entrypoint::program::compile_program;
@@ -32,7 +25,16 @@ use scope::ScopeResolver;
 pub use crate::react_compiler::entrypoint::plugin_options::{
     CompilerOutputMode, CompilerTarget, DynamicGatingConfig, GatingConfig, PluginOptions,
 };
-pub use crate::react_compiler_hir::environment_config::EnvironmentConfig;
+pub use crate::react_compiler_hir::Effect;
+pub use crate::react_compiler_hir::environment_config::{
+    EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunctionConfig, HookConfig,
+    InstrumentationConfig,
+};
+pub use crate::react_compiler_hir::type_config::{
+    BuiltInTypeRef, FunctionTypeConfig, HookTypeConfig, ObjectTypeConfig, TypeConfig,
+    TypeReferenceConfig, ValueKind,
+};
+pub use crate::react_compiler_utils::FxIndexMap;
 
 use oxc_ast::ast::Program;
 use oxc_diagnostics::Diagnostics;

@@ -223,7 +223,7 @@ fn process_manual_memo_call<'a>(
     if is_validation_enabled {
         // Bail out when we encounter manual memoization without inline function expressions
         if !sidemap.functions.contains(&fn_place.identifier) {
-            let mut diag = CompilerDiagnostic::new(
+            let diag = CompilerDiagnostic::new(
                 ErrorCategory::UseMemo,
                 "Expected the first argument to be an inline function expression",
                 Some("Expected the first argument to be an inline function expression".to_string()),
@@ -233,10 +233,7 @@ fn process_manual_memo_call<'a>(
                 message: Some(
                     "Expected the first argument to be an inline function expression".to_string(),
                 ),
-                identifier_name: None,
             });
-            // Match TS behavior: suggestions is [] (empty array), not null
-            diag.suggestions = Some(vec![]);
             env.record_diagnostic(diag);
             return;
         }
@@ -536,7 +533,6 @@ fn extract_manual_memoization_args(
                     } else {
                         "Expected a memoization function".to_string()
                     }),
-                    identifier_name: None,
                 }),
             );
             return None;
@@ -574,7 +570,6 @@ fn extract_manual_memoization_args(
                 message: Some(format!(
                     "Expected the dependency list for {kind_name} to be an array literal"
                 )),
-                identifier_name: None,
             }),
         );
         return None;
@@ -596,7 +591,6 @@ fn extract_manual_memoization_args(
                 .with_detail(CompilerDiagnosticDetail::Error {
                     loc: dep.loc,
                     message: Some("Expected the dependency list to be an array of simple expressions (e.g. `x`, `x.y.z`, `x?.y?.z`)".to_string()),
-                    identifier_name: None,
                 }),
             );
         }

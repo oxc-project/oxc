@@ -16,9 +16,7 @@ use std::fmt;
 /// Invariant: `Repr::Utf8` holds every well-formed value and `Repr::Wtf16`
 /// only ill-formed ones (at least one unpaired surrogate). The derived
 /// `PartialEq`/`Hash` are only sound under this invariant: a well-formed
-/// value smuggled into `Wtf16` would compare unequal to its `Utf8` twin. The
-/// representation is private so the invariant holds by construction; match on
-/// [`JsString::as_ref`] to branch on well-formedness.
+/// value smuggled into `Wtf16` would compare unequal to its `Utf8` twin.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct JsString(Repr);
 
@@ -30,27 +28,12 @@ enum Repr {
     Wtf16(Vec<u16>),
 }
 
-/// Borrowed view of a [`JsString`] for callers that need to branch on
-/// well-formedness.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum JsStringRef<'a> {
-    Utf8(&'a str),
-    Wtf16(&'a [u16]),
-}
-
 impl JsString {
     /// Build from UTF-16 code units, normalizing to UTF-8 when well-formed.
     pub fn from_code_units(units: Vec<u16>) -> Self {
         match String::from_utf16(&units) {
             Ok(s) => JsString(Repr::Utf8(s)),
             Err(_) => JsString(Repr::Wtf16(units)),
-        }
-    }
-
-    pub fn as_ref(&self) -> JsStringRef<'_> {
-        match &self.0 {
-            Repr::Utf8(s) => JsStringRef::Utf8(s),
-            Repr::Wtf16(units) => JsStringRef::Wtf16(units),
         }
     }
 

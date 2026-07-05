@@ -41,11 +41,7 @@ fn invariant_error_with_loc(
 ) -> CompilerError {
     let mut err = CompilerError::new();
     let diagnostic = CompilerDiagnostic::new(ErrorCategory::Invariant, reason, description)
-        .with_detail(CompilerDiagnosticDetail::Error {
-            loc,
-            message: Some(reason.to_string()),
-            identifier_name: None,
-        });
+        .with_detail(CompilerDiagnosticDetail::Error { loc, message: Some(reason.to_string()) });
     err.push_diagnostic(diagnostic);
     err
 }

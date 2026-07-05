@@ -45,9 +45,6 @@ impl<'a> FunctionNode<'a> {
 
 // The main lower() function - delegates to build_hir
 pub use build_hir::lower;
-// Re-export post-build helper functions used by optimization passes
-pub use crate::react_compiler_hir::visitors::each_terminal_successor;
-pub use crate::react_compiler_hir::visitors::terminal_fallthrough;
 pub use hir_builder::{
     create_temporary_place, get_reverse_postordered_blocks, mark_instruction_ids,
     mark_predecessors, remove_dead_do_while_statements, remove_unnecessary_try_catch,

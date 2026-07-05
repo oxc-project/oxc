@@ -95,11 +95,7 @@ impl SSABuilder {
                 "[hoisting] EnterSSA: Expected identifier to be defined before being used",
                 Some(format!("Identifier {} is undefined", name)),
             )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                loc: old_place.loc,
-                message: None,
-                identifier_name: None,
-            }));
+            .with_detail(CompilerDiagnosticDetail::Error { loc: old_place.loc, message: None }));
         }
 
         // Do not redefine context references.
@@ -475,7 +471,6 @@ pub fn placeholder_function<'a>() -> HirFunction<'a> {
         name_hint: None,
         fn_type: ReactFunctionType::Other,
         params: Vec::new(),
-        return_type_annotation: None,
         returns: Place {
             identifier: IdentifierId(0),
             effect: Effect::Unknown,

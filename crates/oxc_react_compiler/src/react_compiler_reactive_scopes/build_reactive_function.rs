@@ -906,14 +906,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     // noop
                 }
 
-                Terminal::Unsupported { .. } => {
-                    return Err(CompilerDiagnostic::new(
-                        ErrorCategory::Invariant,
-                        "Unexpected unsupported terminal",
-                        None,
-                    ));
-                }
-
                 Terminal::Branch { test, consequent, alternate, id, loc, .. } => {
                     let consequent_block = if self.cx.is_scheduled(*consequent) {
                         if let Some(stmt) = self.visit_break(*consequent, *id, *loc)? {
@@ -1009,7 +1001,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     .with_detail(CompilerDiagnosticDetail::Error {
                         loc,
                         message: Some("Unexpected empty block with `goto` terminal".to_string()),
-                        identifier_name: None,
                     }));
                 }
                 Ok(self.extract_value_block_result(&instructions, block_id_val, loc))
@@ -1463,7 +1454,6 @@ fn terminal_loc(terminal: &Terminal) -> &Option<SourceLocation> {
         | Terminal::Label { loc, .. }
         | Terminal::Sequence { loc, .. }
         | Terminal::Unreachable { loc, .. }
-        | Terminal::Unsupported { loc, .. }
         | Terminal::MaybeThrow { loc, .. }
         | Terminal::Scope { loc, .. }
         | Terminal::PrunedScope { loc, .. }

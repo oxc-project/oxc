@@ -159,9 +159,6 @@ pub fn format_object_property_key(key: &ObjectPropertyKey) -> String {
         ObjectPropertyKey::Computed { name } => {
             format!("Computed({})", name.identifier.0)
         }
-        ObjectPropertyKey::Number { name } => {
-            format!("Number({})", format_js_number(name.value()))
-        }
     }
 }
 
@@ -246,11 +243,6 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
     pub fn line(&mut self, text: &str) {
         let indent = "  ".repeat(self.indent_level);
         self.output.push(format!("{}{}", indent, text));
-    }
-
-    /// Write a line without adding indentation (used when copying pre-formatted output)
-    pub fn line_raw(&mut self, text: &str) {
-        self.output.push(text.to_string());
     }
 
     pub fn indent(&mut self) {

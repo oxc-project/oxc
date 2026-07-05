@@ -38,14 +38,13 @@ fn detail_labels(detail: &CompilerErrorOrDiagnostic, fn_loc: Option<Span>) -> Ve
                 .details
                 .iter()
                 .filter_map(|item| match item {
-                    CompilerDiagnosticDetail::Error { loc, message, .. } => {
+                    CompilerDiagnosticDetail::Error { loc, message } => {
                         let span = loc.as_ref().and_then(loc_to_span)?;
                         Some(match message {
                             Some(message) => span.label(message.clone()),
                             None => LabeledSpan::underline(span),
                         })
                     }
-                    CompilerDiagnosticDetail::Hint { .. } => None,
                 })
                 .collect();
             if !labels.is_empty() {

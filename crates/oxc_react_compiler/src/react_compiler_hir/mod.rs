@@ -11,14 +11,13 @@ pub mod type_config;
 pub mod visitors;
 
 pub use crate::react_compiler_diagnostics::CompilerDiagnostic;
-pub use crate::react_compiler_diagnostics::ErrorCategory;
 pub use crate::react_compiler_diagnostics::GENERATED_SOURCE;
 pub use crate::react_compiler_diagnostics::Position;
 pub use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
 use oxc_ast::ast as oxc;
-pub use raw::{RawIdent, RawNode, RawTypeCategory};
+pub use raw::RawTypeCategory;
 pub use reactive::*;
 
 // =============================================================================
@@ -161,7 +160,6 @@ pub struct HirFunction<'a> {
     pub name_hint: Option<String>,
     pub fn_type: ReactFunctionType,
     pub params: Vec<ParamPattern>,
-    pub return_type_annotation: Option<String>,
     pub returns: Place,
     pub context: Vec<Place>,
     pub body: HIR,
@@ -239,10 +237,6 @@ pub struct Phi {
 
 #[derive(Debug, Clone)]
 pub enum Terminal {
-    Unsupported {
-        id: EvaluationOrder,
-        loc: Option<SourceLocation>,
-    },
     Unreachable {
         id: EvaluationOrder,
         loc: Option<SourceLocation>,
@@ -393,8 +387,7 @@ impl Terminal {
     /// Get the evaluation order of this terminal
     pub fn evaluation_order(&self) -> EvaluationOrder {
         match self {
-            Terminal::Unsupported { id, .. }
-            | Terminal::Unreachable { id, .. }
+            Terminal::Unreachable { id, .. }
             | Terminal::Throw { id, .. }
             | Terminal::Return { id, .. }
             | Terminal::Goto { id, .. }
@@ -421,8 +414,7 @@ impl Terminal {
     /// Get the source location of this terminal
     pub fn loc(&self) -> Option<&SourceLocation> {
         match self {
-            Terminal::Unsupported { loc, .. }
-            | Terminal::Unreachable { loc, .. }
+            Terminal::Unreachable { loc, .. }
             | Terminal::Throw { loc, .. }
             | Terminal::Return { loc, .. }
             | Terminal::Goto { loc, .. }
@@ -449,8 +441,7 @@ impl Terminal {
     /// Set the evaluation order of this terminal
     pub fn set_evaluation_order(&mut self, new_id: EvaluationOrder) {
         match self {
-            Terminal::Unsupported { id, .. }
-            | Terminal::Unreachable { id, .. }
+            Terminal::Unreachable { id, .. }
             | Terminal::Throw { id, .. }
             | Terminal::Return { id, .. }
             | Terminal::Goto { id, .. }
@@ -1091,11 +1082,6 @@ pub struct SpreadPattern {
     pub place: Place,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Hole {
-    Hole,
-}
-
 #[derive(Debug, Clone)]
 pub struct ArrayPattern {
     pub items: Vec<ArrayPatternElement>,
@@ -1133,7 +1119,6 @@ pub enum ObjectPropertyKey {
     String { name: String },
     Identifier { name: String },
     Computed { name: Place },
-    Number { name: FloatValue },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1187,7 +1172,6 @@ pub struct LoweredFunction {
 #[derive(Debug, Clone)]
 pub struct BuiltinTag {
     pub name: String,
-    pub loc: Option<SourceLocation>,
 }
 
 #[derive(Debug, Clone)]
@@ -1430,10 +1414,8 @@ pub struct AliasingSignature {
 
 use crate::react_compiler_hir::object_shape::BUILT_IN_ARRAY_ID;
 use crate::react_compiler_hir::object_shape::BUILT_IN_JSX_ID;
-use crate::react_compiler_hir::object_shape::BUILT_IN_MAP_ID;
 use crate::react_compiler_hir::object_shape::BUILT_IN_PROPS_ID;
 use crate::react_compiler_hir::object_shape::BUILT_IN_REF_VALUE_ID;
-use crate::react_compiler_hir::object_shape::BUILT_IN_SET_ID;
 use crate::react_compiler_hir::object_shape::BUILT_IN_USE_OPERATOR_ID;
 use crate::react_compiler_hir::object_shape::BUILT_IN_USE_REF_ID;
 
@@ -1450,16 +1432,6 @@ pub fn is_props_type(ty: &Type) -> bool {
 /// Returns true if the type is an array.
 pub fn is_array_type(ty: &Type) -> bool {
     matches!(ty, Type::Object { shape_id: Some(id) } if id == BUILT_IN_ARRAY_ID)
-}
-
-/// Returns true if the type is a Set.
-pub fn is_set_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == BUILT_IN_SET_ID)
-}
-
-/// Returns true if the type is a Map.
-pub fn is_map_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == BUILT_IN_MAP_ID)
 }
 
 /// Returns true if the type is JSX.

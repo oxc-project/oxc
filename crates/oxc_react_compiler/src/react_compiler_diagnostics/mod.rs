@@ -16,7 +16,6 @@ pub enum ErrorCategory {
     Immutability,
     Globals,
     Refs,
-    EffectDependencies,
     EffectExhaustiveDependencies,
     EffectSetState,
     EffectDerivationsOfState,
@@ -30,8 +29,6 @@ pub enum ErrorCategory {
     Config,
     Gating,
     Suppression,
-    #[allow(clippy::upper_case_acronyms)]
-    FBT,
 }
 
 /// Error severity levels
@@ -47,8 +44,7 @@ impl ErrorCategory {
     pub fn severity(&self) -> ErrorSeverity {
         match self {
             // These map to "Compilation Skipped" (Warning severity)
-            ErrorCategory::EffectDependencies
-            | ErrorCategory::IncompatibleLibrary
+            ErrorCategory::IncompatibleLibrary
             | ErrorCategory::PreserveManualMemo
             | ErrorCategory::UnsupportedSyntax => ErrorSeverity::Warning,
 
@@ -71,24 +67,6 @@ impl ErrorCategory {
             _ => self.severity(),
         }
     }
-}
-
-/// Suggestion operations for auto-fixes
-#[derive(Debug, Clone)]
-pub enum CompilerSuggestionOperation {
-    InsertBefore,
-    InsertAfter,
-    Remove,
-    Replace,
-}
-
-/// A compiler suggestion for fixing an error
-#[derive(Debug, Clone)]
-pub struct CompilerSuggestion {
-    pub op: CompilerSuggestionOperation,
-    pub range: (usize, usize),
-    pub description: String,
-    pub text: Option<String>, // None for Remove operations
 }
 
 /// Source location (matches Babel's SourceLocation format)
@@ -114,17 +92,7 @@ pub const GENERATED_SOURCE: Option<SourceLocation> = None;
 /// Detail for a diagnostic
 #[derive(Debug, Clone)]
 pub enum CompilerDiagnosticDetail {
-    Error {
-        loc: Option<SourceLocation>,
-        message: Option<String>,
-        /// The identifier name from the AST source location, if this error
-        /// points to an identifier node. Preserved for logger event serialization
-        /// to match Babel's SourceLocation.identifierName field.
-        identifier_name: Option<String>,
-    },
-    Hint {
-        message: String,
-    },
+    Error { loc: Option<SourceLocation>, message: Option<String> },
 }
 
 /// A single compiler diagnostic (new-style)
@@ -134,7 +102,6 @@ pub struct CompilerDiagnostic {
     pub reason: String,
     pub description: Option<String>,
     pub details: Vec<CompilerDiagnosticDetail>,
-    pub suggestions: Option<Vec<CompilerSuggestion>>,
 }
 
 impl CompilerDiagnostic {
@@ -143,13 +110,7 @@ impl CompilerDiagnostic {
         reason: impl Into<String>,
         description: Option<String>,
     ) -> Self {
-        Self {
-            category,
-            reason: reason.into(),
-            description,
-            details: Vec::new(),
-            suggestions: None,
-        }
+        Self { category, reason: reason.into(), description, details: Vec::new() }
     }
 
     pub fn severity(&self) -> ErrorSeverity {
@@ -169,29 +130,20 @@ impl CompilerDiagnostic {
     pub fn todo(reason: impl Into<String>, loc: Option<SourceLocation>) -> Self {
         let reason = reason.into();
         let mut diag = Self::new(ErrorCategory::Todo, reason.clone(), None);
-        diag.details.push(CompilerDiagnosticDetail::Error {
-            loc,
-            message: Some(reason),
-            identifier_name: None,
-        });
+        diag.details.push(CompilerDiagnosticDetail::Error { loc, message: Some(reason) });
         diag
     }
 
     /// Create a diagnostic from a CompilerErrorDetail.
     pub fn from_detail(detail: CompilerErrorDetail) -> Self {
         Self::new(detail.category, detail.reason.clone(), detail.description.clone()).with_detail(
-            CompilerDiagnosticDetail::Error {
-                loc: detail.loc,
-                message: Some(detail.reason),
-                identifier_name: None,
-            },
+            CompilerDiagnosticDetail::Error { loc: detail.loc, message: Some(detail.reason) },
         )
     }
 
     pub fn primary_location(&self) -> Option<&SourceLocation> {
         self.details.iter().find_map(|d| match d {
-            CompilerDiagnosticDetail::Error { loc, .. } => loc.as_ref(), // identifier_name covered by ..
-            _ => None,
+            CompilerDiagnosticDetail::Error { loc, .. } => loc.as_ref(),
         })
     }
 }
@@ -203,12 +155,11 @@ pub struct CompilerErrorDetail {
     pub reason: String,
     pub description: Option<String>,
     pub loc: Option<SourceLocation>,
-    pub suggestions: Option<Vec<CompilerSuggestion>>,
 }
 
 impl CompilerErrorDetail {
     pub fn new(category: ErrorCategory, reason: impl Into<String>) -> Self {
-        Self { category, reason: reason.into(), description: None, loc: None, suggestions: None }
+        Self { category, reason: reason.into(), description: None, loc: None }
     }
 
     pub fn with_description(mut self, description: impl Into<String>) -> Self {
@@ -263,13 +214,6 @@ impl CompilerErrorOrDiagnostic {
         match self {
             Self::Diagnostic(d) => d.severity(),
             Self::ErrorDetail(d) => d.severity(),
-        }
-    }
-
-    pub fn logged_severity(&self) -> ErrorSeverity {
-        match self {
-            Self::Diagnostic(d) => d.logged_severity(),
-            Self::ErrorDetail(d) => d.logged_severity(),
         }
     }
 }
@@ -398,7 +342,6 @@ impl From<CompilerDiagnostic> for CompilerError {
                 reason: diagnostic.reason,
                 description: diagnostic.description,
                 loc,
-                suggestions: diagnostic.suggestions,
             });
         } else {
             error.push_diagnostic(diagnostic);
@@ -434,8 +377,7 @@ impl std::error::Error for CompilerError {}
 
 pub fn format_category_heading(category: ErrorCategory) -> &'static str {
     match category {
-        ErrorCategory::EffectDependencies
-        | ErrorCategory::IncompatibleLibrary
+        ErrorCategory::IncompatibleLibrary
         | ErrorCategory::PreserveManualMemo
         | ErrorCategory::UnsupportedSyntax => "Compilation Skipped",
         ErrorCategory::Invariant => "Invariant",

@@ -36,7 +36,6 @@ pub use build_reactive_function::build_reactive_function;
 pub use codegen_reactive_function::codegen_function;
 pub use extract_scope_declarations_from_destructuring::extract_scope_declarations_from_destructuring;
 pub use merge_reactive_scopes_that_invalidate_together::merge_reactive_scopes_that_invalidate_together;
-pub use print_reactive_function::debug_reactive_function;
 pub use promote_used_temporaries::promote_used_temporaries;
 pub use propagate_early_returns::propagate_early_returns;
 pub use prune_always_invalidating_scopes::prune_always_invalidating_scopes;

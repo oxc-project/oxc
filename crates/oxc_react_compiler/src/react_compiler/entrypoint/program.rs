@@ -31,11 +31,8 @@ use crate::scope::ScopeResolver;
 use oxc_allocator::GetAllocator;
 use oxc_syntax::scope::ScopeId;
 
-use super::compile_result::BindingRenameInfo;
 use super::compile_result::CodegenFunction;
 use super::compile_result::CompileResult;
-use super::compile_result::DebugLogEntry;
-use super::compile_result::OrderedLogItem;
 use super::imports::ProgramContext;
 use super::imports::get_react_compiler_runtime_module;
 use super::imports::validate_restricted_imports;
@@ -1171,10 +1168,7 @@ fn handle_error<'a>(
     if should_panic || is_config_error {
         // The per-detail diagnostics were already pushed by `log_error`; the fatal
         // result just carries them. (The old JS-shim summary is dropped.)
-        Some(CompileResult::Error {
-            diagnostics: std::mem::take(&mut context.diagnostics),
-            ordered_log: std::mem::take(&mut context.ordered_log),
-        })
+        Some(CompileResult::Error { diagnostics: std::mem::take(&mut context.diagnostics) })
     } else {
         None
     }
@@ -2860,26 +2854,11 @@ pub fn compile_program<'a, 'p>(
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
-    // Debug log accumulated on early-return paths (before the full context exists).
-    let mut early_ordered_log: Vec<OrderedLogItem> = Vec::new();
-
-    // Log environment config for debugLogIRs
-    if options.debug {
-        early_ordered_log.push(OrderedLogItem::Debug {
-            entry: DebugLogEntry::new("EnvironmentConfig", format!("{:#?}", options.environment)),
-        });
-    }
-
     let program = oxc_program;
 
     // Check for existing runtime imports (file already compiled)
     if should_skip_compilation(program, &options) {
-        return CompileResult::Success {
-            ast: None,
-            diagnostics: Diagnostics::new(),
-            ordered_log: early_ordered_log,
-            renames: Vec::new(),
-        };
+        return CompileResult::Success { ast: None, diagnostics: Diagnostics::new() };
     }
 
     // Validate restricted imports from the environment config
@@ -2926,20 +2905,12 @@ pub fn compile_program<'a, 'p>(
     // Initialize known referenced names from scope bindings for UID collision detection
     context.init_from_scope(scope);
 
-    // Seed context with early ordered log entries
-    context.ordered_log.extend(early_ordered_log);
-
     // Validate restricted imports (needs context for handle_error)
     if let Some(err) = validate_restricted_imports(program, &restricted_imports) {
         if let Some(result) = handle_error(&err, None, &mut context) {
             return result;
         }
-        return CompileResult::Success {
-            ast: None,
-            diagnostics: context.diagnostics,
-            ordered_log: context.ordered_log,
-            renames: convert_renames(&context.renames),
-        };
+        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
     }
 
     // Pre-register instrumentation imports to get stable local names.
@@ -3014,12 +2985,7 @@ pub fn compile_program<'a, 'p>(
             ));
             handle_error(&err, None, &mut context);
         }
-        return CompileResult::Success {
-            ast: None,
-            diagnostics: context.diagnostics,
-            ordered_log: context.ordered_log,
-            renames: convert_renames(&context.renames),
-        };
+        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
     }
 
     // Convert compiled functions to owned oxc replacements (dropping the borrows of
@@ -3057,12 +3023,7 @@ pub fn compile_program<'a, 'p>(
         // (e.g., variable shadowing renames in lint mode). Imports are NOT added
         // when there are no replacements — matching TS behavior where
         // addImportsToProgram is only called when compiledFns.length > 0.
-        return CompileResult::Success {
-            ast: None,
-            diagnostics: context.diagnostics,
-            ordered_log: context.ordered_log,
-            renames: convert_renames(&context.renames),
-        };
+        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
     }
 
     // Build the memoized oxc program: splice each compiled oxc function in for its
@@ -3070,24 +3031,5 @@ pub fn compile_program<'a, 'p>(
     // functions, and add the memo-cache / gating imports.
     let compiled_program = ox_splice_program(ast, oxc_program, &replacements, &mut context);
 
-    CompileResult::Success {
-        ast: Some(compiled_program),
-        diagnostics: context.diagnostics,
-        ordered_log: context.ordered_log,
-        renames: convert_renames(&context.renames),
-    }
-}
-
-/// Convert internal BindingRename structs to the serializable BindingRenameInfo format.
-fn convert_renames(
-    renames: &[crate::react_compiler_hir::environment::BindingRename],
-) -> Vec<BindingRenameInfo> {
-    renames
-        .iter()
-        .map(|r| BindingRenameInfo {
-            original: r.original.clone(),
-            renamed: r.renamed.clone(),
-            declaration_start: r.declaration_start,
-        })
-        .collect()
+    CompileResult::Success { ast: Some(compiled_program), diagnostics: context.diagnostics }
 }
