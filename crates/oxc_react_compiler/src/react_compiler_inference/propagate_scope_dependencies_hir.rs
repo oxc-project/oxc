@@ -88,13 +88,13 @@ pub fn propagate_scope_dependencies_hir(func: &mut HirFunction, env: &mut Enviro
             hoistables.expect("[PropagateScopeDependencies] Scope not found in tracked blocks");
 
         // Step 2: Calculate hoistable dependencies using the tree.
-        let mut tree = ReactiveScopeDependencyTreeHIR::new(hoistables.iter(), env);
+        let mut tree = ReactiveScopeDependencyTreeHIR::new(hoistables.iter());
         for dep in deps {
-            tree.add_dependency(dep.clone(), env);
+            tree.add_dependency(dep.clone());
         }
 
         // Step 3: Reduce dependencies to a minimal set.
-        let candidates = tree.derive_minimal_dependencies(env);
+        let candidates = tree.derive_minimal_dependencies();
         let scope = &mut env.scopes[scope_id.0 as usize];
         for candidate_dep in candidates {
             let already_exists = scope.dependencies.iter().any(|existing_dep| {
@@ -278,7 +278,7 @@ fn collect_temporaries_sidemap_impl(
             match &instr.value {
                 InstructionValue::PropertyLoad { object, property, loc, .. } if !used_outside => {
                     if inner_fn_context.is_none() || temporaries.contains_key(&object.identifier) {
-                        let prop = get_property(object, property, false, *loc, temporaries, env);
+                        let prop = get_property(object, property, false, *loc, temporaries);
                         temporaries.insert(instr.lvalue.identifier, prop);
                     }
                 }
@@ -346,7 +346,6 @@ fn get_property(
     optional: bool,
     loc: Option<SourceLocation>,
     temporaries: &FxHashMap<IdentifierId, ReactiveScopeDependency>,
-    _env: &Environment,
 ) -> ReactiveScopeDependency {
     let resolved = temporaries.get(&object.identifier);
     if let Some(resolved) = resolved {
@@ -432,7 +431,7 @@ fn traverse_function_optional(
         }
         if let Terminal::Optional { .. } = &block.terminal {
             if !ctx.seen_optionals.contains(&block.id) {
-                traverse_optional_block(block, func, env, ctx, None);
+                traverse_optional_block(block, func, ctx, None);
             }
         }
     }
@@ -447,11 +446,7 @@ struct MatchConsequentResult {
     property_load_loc: Option<SourceLocation>,
 }
 
-fn match_optional_test_block(
-    test: &Terminal,
-    func: &HirFunction,
-    _env: &Environment,
-) -> Option<MatchConsequentResult> {
+fn match_optional_test_block(test: &Terminal, func: &HirFunction) -> Option<MatchConsequentResult> {
     let (test_place, consequent_block_id, alternate_block_id) = match test {
         Terminal::Branch { test, consequent, alternate, .. } => (test, *consequent, *alternate),
         _ => return None,
@@ -517,7 +512,6 @@ fn match_optional_test_block(
 fn traverse_optional_block(
     optional_block: &BasicBlock,
     func: &HirFunction,
-    env: &Environment,
     ctx: &mut OptionalTraversalContext,
     outer_alternate: Option<BlockId>,
 ) -> Option<IdentifierId> {
@@ -602,7 +596,7 @@ fn traverse_optional_block(
                 _ => None,
             };
             let inner_optional_result =
-                traverse_optional_block(maybe_test_block, func, env, ctx, inner_alternate);
+                traverse_optional_block(maybe_test_block, func, ctx, inner_alternate);
             let inner_optional_id = inner_optional_result?;
 
             // Check that inner optional is part of the same chain
@@ -641,7 +635,7 @@ fn traverse_optional_block(
         }
     }
 
-    let match_result = match_optional_test_block(test_terminal, func, env)?;
+    let match_result = match_optional_test_block(test_terminal, func)?;
 
     // Verify consequent goto matches optional fallthrough
     if match_result.consequent_goto != fallthrough_block_id {
@@ -1509,10 +1503,7 @@ struct ReactiveScopeDependencyTreeHIR {
 }
 
 impl ReactiveScopeDependencyTreeHIR {
-    fn new<'a>(
-        hoistable_objects: impl Iterator<Item = &'a ReactiveScopeDependency>,
-        _env: &Environment,
-    ) -> Self {
+    fn new<'a>(hoistable_objects: impl Iterator<Item = &'a ReactiveScopeDependency>) -> Self {
         let mut hoistable_roots: FxHashMap<IdentifierId, (HoistableNode, bool)> =
             FxHashMap::default();
 
@@ -1558,7 +1549,7 @@ impl ReactiveScopeDependencyTreeHIR {
         Self { hoistable_roots, dep_roots: FxIndexMap::default() }
     }
 
-    fn add_dependency(&mut self, dep: ReactiveScopeDependency, _env: &Environment) {
+    fn add_dependency(&mut self, dep: ReactiveScopeDependency) {
         let root = self.dep_roots.entry(dep.identifier).or_insert_with(|| {
             (
                 DependencyNode {
@@ -1575,30 +1566,16 @@ impl ReactiveScopeDependencyTreeHIR {
         let mut hoistable_ptr: Option<&HoistableNode> = hoistable_cursor_root.map(|(n, _)| n);
 
         for entry in &dep.path {
-            let next_hoistable: Option<&HoistableNode>;
-            let access_type: PropertyAccessType;
-
-            if entry.optional {
-                next_hoistable =
-                    hoistable_ptr.and_then(|h| h.properties.get(&entry.property).map(|e| &e.node));
-
-                if hoistable_ptr.is_some()
-                    && hoistable_ptr.unwrap().access_type == HoistableAccessType::NonNull
-                {
-                    access_type = PropertyAccessType::UnconditionalAccess;
-                } else {
-                    access_type = PropertyAccessType::OptionalAccess;
+            let next_hoistable =
+                hoistable_ptr.and_then(|h| h.properties.get(&entry.property).map(|e| &e.node));
+            let access_type = match hoistable_ptr.map(|h| h.access_type) {
+                Some(HoistableAccessType::NonNull) => PropertyAccessType::UnconditionalAccess,
+                _ if entry.optional => PropertyAccessType::OptionalAccess,
+                _ => {
+                    // Break: truncate dependency
+                    break;
                 }
-            } else if hoistable_ptr.is_some()
-                && hoistable_ptr.unwrap().access_type == HoistableAccessType::NonNull
-            {
-                next_hoistable =
-                    hoistable_ptr.and_then(|h| h.properties.get(&entry.property).map(|e| &e.node));
-                access_type = PropertyAccessType::UnconditionalAccess;
-            } else {
-                // Break: truncate dependency
-                break;
-            }
+            };
 
             // make_or_merge_property
             let child = dep_cursor.properties.entry(entry.property.clone()).or_insert_with(|| {
@@ -1621,7 +1598,7 @@ impl ReactiveScopeDependencyTreeHIR {
             merge_access(dep_cursor.access_type, PropertyAccessType::OptionalDependency);
     }
 
-    fn derive_minimal_dependencies(&self, _env: &Environment) -> Vec<ReactiveScopeDependency> {
+    fn derive_minimal_dependencies(&self) -> Vec<ReactiveScopeDependency> {
         let mut results = Vec::new();
         for (&root_id, (root_node, reactive)) in &self.dep_roots {
             collect_minimal_deps_in_subtree(root_node, *reactive, root_id, &[], &mut results);
@@ -1740,9 +1717,7 @@ impl<'a> DependencyCollectionContext<'a> {
             return;
         }
         let decl_id = env.identifiers[identifier_id.0 as usize].declaration_id;
-        if !self.declarations.contains_key(&decl_id) {
-            self.declarations.insert(decl_id, decl.clone());
-        }
+        self.declarations.entry(decl_id).or_insert_with(|| decl.clone());
         self.reassignments.insert(identifier_id, decl);
     }
 
@@ -1797,7 +1772,7 @@ impl<'a> DependencyCollectionContext<'a> {
         loc: Option<SourceLocation>,
         env: &mut Environment,
     ) {
-        let dep = get_property(object, property, optional, loc, self.temporaries, env);
+        let dep = get_property(object, property, optional, loc, self.temporaries);
         self.visit_dependency(dep, env);
     }
 
@@ -1834,11 +1809,7 @@ impl<'a> DependencyCollectionContext<'a> {
         // Handle ref.current access
         let dep = if is_use_ref_type(
             &env.types[env.identifiers[dep.identifier.0 as usize].type_.0 as usize],
-        ) && dep
-            .path
-            .first()
-            .map(|p| p.property == PropertyLiteral::String("current".to_string()))
-            .unwrap_or(false)
+        ) && dep.path.first().map(|p| p.property.is_string("current")).unwrap_or(false)
         {
             ReactiveScopeDependency {
                 identifier: dep.identifier,
@@ -1902,22 +1873,20 @@ fn visit_inner_function_blocks(
     // Clone inner function's instructions and block structure to avoid
     // borrow conflicts when mutating env through handle_instruction.
     let inner_instrs: Vec<Instruction> = env.functions[func_id.0 as usize].instructions.clone();
-    let inner_blocks: Vec<(BlockId, Vec<InstructionId>, Vec<(BlockId, IdentifierId)>, Terminal)> =
-        env.functions[func_id.0 as usize]
-            .body
-            .blocks
-            .iter()
-            .map(|(bid, blk)| {
-                let phi_ops: Vec<(BlockId, IdentifierId)> = blk
-                    .phis
-                    .iter()
-                    .flat_map(|phi| {
-                        phi.operands.iter().map(|(pred, place)| (*pred, place.identifier))
-                    })
-                    .collect();
-                (*bid, blk.instructions.clone(), phi_ops, blk.terminal.clone())
-            })
-            .collect();
+    type InnerBlockSnapshot = (BlockId, Vec<InstructionId>, Vec<(BlockId, IdentifierId)>, Terminal);
+    let inner_blocks: Vec<InnerBlockSnapshot> = env.functions[func_id.0 as usize]
+        .body
+        .blocks
+        .iter()
+        .map(|(bid, blk)| {
+            let phi_ops: Vec<(BlockId, IdentifierId)> = blk
+                .phis
+                .iter()
+                .flat_map(|phi| phi.operands.iter().map(|(pred, place)| (*pred, place.identifier)))
+                .collect();
+            (*bid, blk.instructions.clone(), phi_ops, blk.terminal.clone())
+        })
+        .collect();
 
     for (inner_bid, inner_instr_ids, inner_phis, inner_terminal) in &inner_blocks {
         for &(_pred_id, op_id) in inner_phis {

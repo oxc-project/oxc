@@ -113,7 +113,6 @@ fn record_conditional_hook_error(
                     reason,
                     description: None,
                     loc: Some(loc),
-                    suggestions: None,
                 },
             );
         }
@@ -123,7 +122,6 @@ fn record_conditional_hook_error(
             reason,
             description: None,
             loc: None,
-            suggestions: None,
         })?;
     }
     Ok(())
@@ -144,7 +142,6 @@ fn record_invalid_hook_usage_error(
                     reason,
                     description: None,
                     loc: Some(loc),
-                    suggestions: None,
                 },
             );
         }
@@ -154,7 +151,6 @@ fn record_invalid_hook_usage_error(
             reason,
             description: None,
             loc: None,
-            suggestions: None,
         })?;
     }
     Ok(())
@@ -175,7 +171,6 @@ fn record_dynamic_hook_usage_error(
                     reason,
                     description: None,
                     loc: Some(loc),
-                    suggestions: None,
                 },
             );
         }
@@ -185,7 +180,6 @@ fn record_dynamic_hook_usage_error(
             reason,
             description: None,
             loc: None,
-            suggestions: None,
         })?;
     }
     Ok(())
@@ -349,7 +343,7 @@ pub fn validate_hooks_usage(
                     let object_kind = get_kind_for_place(value, &value_kinds, &env.identifiers);
                     // Process instr.lvalue and all pattern operands (matching TS eachInstructionLValue)
                     let pattern_places = each_pattern_operand(&lvalue.pattern);
-                    let all_lvalues = once(instr.lvalue.clone()).chain(pattern_places.into_iter());
+                    let all_lvalues = once(instr.lvalue.clone()).chain(pattern_places);
                     for place in all_lvalues {
                         let is_hook_property =
                             ident_is_hook_name(place.identifier, &env.identifiers);
@@ -466,7 +460,6 @@ fn visit_function_expression(
                         reason: "Hooks must be called at the top level in the body of a function component or custom hook, and may not be called within function expressions. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)".to_string(),
                         description: Some(description),
                         loc,
-                        suggestions: None,
                     })?;
                 }
             }

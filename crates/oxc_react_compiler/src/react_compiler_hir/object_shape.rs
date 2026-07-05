@@ -107,7 +107,6 @@ impl Display for HookKind {
 pub struct FunctionSignature {
     pub positional_params: Vec<Effect>,
     pub rest_param: Option<Effect>,
-    pub return_type: Type,
     pub return_value_kind: ValueKind,
     pub return_value_reason: Option<ValueReason>,
     pub callee_effect: Effect,
@@ -170,6 +169,12 @@ impl ShapeRegistry {
     }
 }
 
+impl Default for ShapeRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Clone for ShapeRegistry {
     fn clone(&self) -> Self {
         Self { base: self.base, entries: self.entries.clone() }
@@ -210,7 +215,6 @@ pub fn add_function(
         Some(FunctionSignature {
             positional_params: sig.positional_params,
             rest_param: sig.rest_param,
-            return_type: sig.return_type,
             return_value_kind: sig.return_value_kind,
             return_value_reason: sig.return_value_reason,
             callee_effect: sig.callee_effect,
@@ -238,7 +242,6 @@ pub fn add_hook(registry: &mut ShapeRegistry, sig: HookSignatureBuilder, id: Opt
         Some(FunctionSignature {
             positional_params: sig.positional_params,
             rest_param: sig.rest_param,
-            return_type: sig.return_type,
             return_value_kind: sig.return_value_kind,
             return_value_reason: sig.return_value_reason,
             callee_effect: sig.callee_effect,

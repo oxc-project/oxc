@@ -257,8 +257,15 @@ mod scoping_cell {
         }
     }
 
-    /// SAFETY: `ScopingCell` can be `Send` because both the `Allocator` and `Vec`s / `HashMap`s
-    /// storing their data in that `Allocator` are moved to another thread together.
+    /// SAFETY: `ScopingCell` can be `Send` because both the `Allocator`, and the `Vec`s / `HashMap`s
+    /// storing their data in that `Allocator`, are moved to another thread together.
+    ///
+    /// One case doesn't fit that "moved together" picture: `ReplaceWith`'s panic path (in `oxc_allocator`)
+    /// writes a dummy backed by its own dedicated, global `'static` allocator, which does *not* travel
+    /// with this bundle. Sending is still sound, because each such dummy allocator is exclusively owned -
+    /// reachable only through the single value that holds it, and mutated only via `&mut` to that value -
+    /// so no two threads can ever touch one. The invariant this impl really rests on is single-ownership
+    /// of each referenced allocator, not co-location.
     unsafe impl Send for ScopingCell {}
 
     /// SAFETY: `ScopingCell` can be `Sync` if `ScopingInner` is `Sync`, because `ScopingCell` provides
@@ -309,12 +316,14 @@ impl Scoping {
     }
 
     /// Iterate all symbol names in insertion order.
-    pub fn symbol_names(&self) -> impl Iterator<Item = &str> + '_ {
+    pub fn symbol_names(&self) -> impl ExactSizeIterator<Item = &str> + '_ {
         self.cell.borrow_dependent().symbol_names.iter().map(Ident::as_str)
     }
 
     /// Iterate resolved reference ID lists for each symbol.
-    pub fn resolved_references(&self) -> impl Iterator<Item = &ArenaVec<'_, ReferenceId>> + '_ {
+    pub fn resolved_references(
+        &self,
+    ) -> impl ExactSizeIterator<Item = &ArenaVec<'_, ReferenceId>> + '_ {
         self.cell.borrow_dependent().resolved_references.iter()
     }
 
@@ -324,7 +333,7 @@ impl Scoping {
     /// scope.
     ///
     /// [`ScopeTree::iter_bindings_in`]: crate::scoping::Scoping::iter_bindings_in
-    pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
+    pub fn symbol_ids(&self) -> impl ExactSizeIterator<Item = SymbolId> + '_ {
         self.symbol_table.iter_ids()
     }
 
@@ -702,7 +711,7 @@ impl Scoping {
     }
 
     /// Iterate all scope IDs from the root scope through all descendants.
-    pub fn scope_descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
+    pub fn scope_descendants_from_root(&self) -> impl ExactSizeIterator<Item = ScopeId> + '_ {
         self.scope_table.iter_ids()
     }
 
@@ -862,13 +871,16 @@ impl Scoping {
     /// If you only want bindings in a specific scope, use [`iter_bindings_in`].
     ///
     /// [`iter_bindings_in`]: Scoping::iter_bindings_in
-    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, &Bindings<'_>)> + '_ {
+    pub fn iter_bindings(&self) -> impl ExactSizeIterator<Item = (ScopeId, &Bindings<'_>)> + '_ {
         self.cell.borrow_dependent().bindings.iter_enumerated()
     }
 
     /// Iterate over bindings declared inside a scope.
     #[inline]
-    pub fn iter_bindings_in(&self, scope_id: ScopeId) -> impl Iterator<Item = SymbolId> + '_ {
+    pub fn iter_bindings_in(
+        &self,
+        scope_id: ScopeId,
+    ) -> impl ExactSizeIterator<Item = SymbolId> + '_ {
         self.cell.borrow_dependent().bindings[scope_id].values().copied()
     }
 

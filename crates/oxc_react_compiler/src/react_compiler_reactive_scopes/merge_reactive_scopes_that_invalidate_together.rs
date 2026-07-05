@@ -145,9 +145,8 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
         let mut current: Option<MergedScope> = None;
         let mut merged: Vec<MergedScope> = Vec::new();
 
-        let block_len = block.len();
-        for i in 0..block_len {
-            match &block[i] {
+        for (i, statement) in block.iter().enumerate() {
+            match statement {
                 ReactiveStatement::Terminal(_) => {
                     // Don't merge across terminals
                     if let Some(c) = current.take() {
@@ -493,19 +492,14 @@ fn can_merge_scopes<'a>(
 /// Check if a type is always invalidating (guaranteed to change when inputs change).
 pub fn is_always_invalidating_type(ty: &Type) -> bool {
     match ty {
-        Type::Object { shape_id } => {
-            if let Some(id) = shape_id {
-                matches!(
-                    id.as_str(),
-                    s if s == BUILT_IN_ARRAY_ID
-                        || s == BUILT_IN_OBJECT_ID
-                        || s == BUILT_IN_FUNCTION_ID
-                        || s == BUILT_IN_JSX_ID
-                )
-            } else {
-                false
-            }
-        }
+        Type::Object { shape_id: Some(id) } => matches!(
+            id.as_str(),
+            s if s == BUILT_IN_ARRAY_ID
+                || s == BUILT_IN_OBJECT_ID
+                || s == BUILT_IN_FUNCTION_ID
+                || s == BUILT_IN_JSX_ID
+        ),
+        Type::Object { shape_id: None } => false,
         Type::Function { .. } => true,
         _ => false,
     }

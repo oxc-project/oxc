@@ -181,6 +181,7 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
             ReactiveValue::Instruction(iv) => {
                 // Build the inner function formatter callback if we have an hir_formatter
                 let hir_formatter = self.hir_formatter;
+                #[allow(clippy::type_complexity)]
                 let inner_func_cb: Option<
                     Box<dyn Fn(&mut PrintFormatter<'_, 'h>, &HirFunction<'h>) + '_>,
                 > = hir_formatter.map(|hf| {
@@ -525,10 +526,6 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
 /// Type alias for a function formatter callback that can print HIR functions.
 /// Used to format inner functions in FunctionExpression/ObjectMethod values.
 pub type HirFunctionFormatter<'h> = dyn Fn(&mut PrintFormatter<'_, 'h>, &HirFunction<'h>);
-
-pub fn debug_reactive_function<'h>(func: &ReactiveFunction<'h>, env: &Environment<'h>) -> String {
-    debug_reactive_function_with_formatter(func, env, None)
-}
 
 pub fn debug_reactive_function_with_formatter<'h>(
     func: &ReactiveFunction<'h>,

@@ -46,6 +46,7 @@ oxc_syntax = { workspace = true }
 hmac-sha256 = { workspace = true }
 indexmap = { workspace = true }
 rustc-hash = { workspace = true }
+cow-utils = { workspace = true }
 
 [dev-dependencies]
 # The example and integration tests parse source and print the compiled program; the

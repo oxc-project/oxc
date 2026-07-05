@@ -244,22 +244,21 @@ fn rewrite_instruction(
                 }
             }
         }
-        InstructionValue::StoreLocal { lvalue, type_annotation, loc, .. } => {
+        InstructionValue::StoreLocal { lvalue, type_annotation, loc, .. }
             if lvalue.kind != InstructionKind::Reassign
-                && !is_id_used(state, lvalue.place.identifier)
-            {
-                // This is a const/let declaration where the variable is accessed later,
-                // but where the value is always overwritten before being read.
-                // Rewrite to DeclareLocal so the initializer value can be DCE'd.
-                let new_lvalue = lvalue.clone();
-                let new_type_annotation = type_annotation.clone();
-                let new_loc = *loc;
-                instr.value = InstructionValue::DeclareLocal {
-                    lvalue: new_lvalue,
-                    type_annotation: new_type_annotation,
-                    loc: new_loc,
-                };
-            }
+                && !is_id_used(state, lvalue.place.identifier) =>
+        {
+            // This is a const/let declaration where the variable is accessed later,
+            // but where the value is always overwritten before being read.
+            // Rewrite to DeclareLocal so the initializer value can be DCE'd.
+            let new_lvalue = lvalue.clone();
+            let new_type_annotation = type_annotation.clone();
+            let new_loc = *loc;
+            instr.value = InstructionValue::DeclareLocal {
+                lvalue: new_lvalue,
+                type_annotation: new_type_annotation,
+                loc: new_loc,
+            };
         }
         _ => {}
     }
@@ -311,13 +310,10 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
             if env.output_mode == OutputMode::Ssr {
                 let callee_ty =
                     &env.types[env.identifiers[callee.identifier.0 as usize].type_.0 as usize];
-                if let Some(hook_kind) = env.get_hook_kind_for_type(callee_ty).ok().flatten() {
-                    match hook_kind {
-                        HookKind::UseState | HookKind::UseReducer | HookKind::UseRef => {
-                            return true;
-                        }
-                        _ => {}
-                    }
+                if let Some(HookKind::UseState | HookKind::UseReducer | HookKind::UseRef) =
+                    env.get_hook_kind_for_type(callee_ty).ok().flatten()
+                {
+                    return true;
                 }
             }
             false
@@ -326,13 +322,10 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
             if env.output_mode == OutputMode::Ssr {
                 let callee_ty =
                     &env.types[env.identifiers[property.identifier.0 as usize].type_.0 as usize];
-                if let Some(hook_kind) = env.get_hook_kind_for_type(callee_ty).ok().flatten() {
-                    match hook_kind {
-                        HookKind::UseState | HookKind::UseReducer | HookKind::UseRef => {
-                            return true;
-                        }
-                        _ => {}
-                    }
+                if let Some(HookKind::UseState | HookKind::UseReducer | HookKind::UseRef) =
+                    env.get_hook_kind_for_type(callee_ty).ok().flatten()
+                {
+                    return true;
                 }
             }
             false

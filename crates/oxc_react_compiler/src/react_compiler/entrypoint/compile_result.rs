@@ -3,14 +3,6 @@ use oxc_diagnostics::Diagnostics;
 use crate::react_compiler_diagnostics::SourceLocation;
 use crate::react_compiler_hir::ReactFunctionType;
 
-/// A variable rename from lowering, applied back to the program's scoping.
-#[derive(Debug, Clone)]
-pub struct BindingRenameInfo {
-    pub original: String,
-    pub renamed: String,
-    pub declaration_start: u32,
-}
-
 /// Main result type returned by the compile function.
 ///
 /// Stage 2: the compiled program is an arena-allocated oxc
@@ -24,33 +16,19 @@ pub enum CompileResult<'a> {
         ast: Option<oxc_ast::ast::Program<'a>>,
         /// Errors and warnings accumulated during compilation.
         diagnostics: Diagnostics,
-        /// Debug-log entries; populated only with the `debug` feature.
-        ordered_log: Vec<OrderedLogItem>,
-        /// Variable renames from lowering, for applying back to the AST.
-        renames: Vec<BindingRenameInfo>,
     },
     /// A fatal error occurred and panicThreshold dictates it should throw.
-    Error { diagnostics: Diagnostics, ordered_log: Vec<OrderedLogItem> },
-}
-
-/// A debug-log entry emitted during compilation (see `ProgramContext::log_debug`).
-#[derive(Debug, Clone)]
-pub enum OrderedLogItem {
-    Debug { entry: DebugLogEntry },
+    Error { diagnostics: Diagnostics },
 }
 
 /// Debug log entry for debugLogIRs support.
 /// Currently only supports the 'debug' variant (string values).
 #[derive(Debug, Clone)]
-pub struct DebugLogEntry {
-    pub kind: &'static str,
-    pub name: String,
-    pub value: String,
-}
+pub struct DebugLogEntry;
 
 impl DebugLogEntry {
-    pub fn new(name: impl Into<String>, value: impl Into<String>) -> Self {
-        Self { kind: "debug", name: name.into(), value: value.into() }
+    pub fn new(_name: impl Into<String>, _value: impl Into<String>) -> Self {
+        Self
     }
 }
 

@@ -214,6 +214,7 @@ impl AliasingState {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn mutate(
         &mut self,
         index: usize,
@@ -490,7 +491,7 @@ pub fn infer_mutation_aliasing_ranges(
             state.create(&phi.place, NodeValue::Phi);
             for (&pred, operand) in &phi.operands {
                 if !seen_blocks.contains(&pred) {
-                    pending_phis.entry(pred).or_insert_with(Vec::new).push(PendingPhiOperand {
+                    pending_phis.entry(pred).or_default().push(PendingPhiOperand {
                         from: operand.clone(),
                         into: phi.place.clone(),
                         index,
@@ -1032,8 +1033,7 @@ pub fn infer_mutation_aliasing_ranges(
             false, // never record errors for simulated mutations
         );
 
-        for j in 0..tracked.len() {
-            let from = &tracked[j];
+        for from in &tracked {
             if from.identifier == into.identifier || from.identifier == returns_identifier_id {
                 continue;
             }

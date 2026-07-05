@@ -159,7 +159,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     ///
     /// Shortcut for `ctx.ancestry.ancestors`.
     #[inline]
-    pub fn ancestors<'t>(&'t self) -> impl Iterator<Item = Ancestor<'a, 't>> {
+    pub fn ancestors<'t>(&'t self) -> impl ExactSizeIterator<Item = Ancestor<'a, 't>> {
         self.ancestry.ancestors()
     }
 

@@ -37,7 +37,7 @@ use std::mem;
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, TakeIn};
+use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
@@ -140,10 +140,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                     for_of_init_symbol_id,
                 );
 
-                let old_body = for_of_stmt.body.take_in(ctx);
-                let new_body = ArenaVec::from_array_in([using_stmt, old_body], ctx);
-                for_of_stmt.body =
-                    Statement::new_block_statement_with_scope_id(SPAN, new_body, scope_id, ctx);
+                for_of_stmt.body.replace_with(|old_body| {
+                    let new_body = ArenaVec::from_array_in([using_stmt, old_body], ctx);
+                    Statement::new_block_statement_with_scope_id(SPAN, new_body, scope_id, ctx)
+                });
                 return;
             }
 
@@ -168,11 +168,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                 for_of_init_symbol_id,
             );
 
-            let old_body = for_of_stmt.body.take_in(ctx);
-
-            let new_body = ArenaVec::from_array_in([using_stmt, old_body], ctx);
-            for_of_stmt.body =
-                Statement::new_block_statement_with_scope_id(SPAN, new_body, scope_id, ctx);
+            for_of_stmt.body.replace_with(|old_body| {
+                let new_body = ArenaVec::from_array_in([using_stmt, old_body], ctx);
+                Statement::new_block_statement_with_scope_id(SPAN, new_body, scope_id, ctx)
+            });
         }
     }
 
@@ -381,224 +380,235 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             return;
         }
 
-        let program_body = program.body.take_in(ctx);
+        program.body.replace_with(|program_body| {
+            let (mut program_body, inner_block): (
+                ArenaVec<'a, Statement<'a>>,
+                ArenaVec<'a, Statement<'a>>,
+            ) = program_body.into_iter().fold(
+                (ArenaVec::new_in(ctx), ArenaVec::new_in(ctx)),
+                |(mut program_body, mut inner_block), mut stmt| {
+                    let address = stmt.address();
+                    match stmt {
+                        Statement::FunctionDeclaration(_)
+                        | Statement::ImportDeclaration(_)
+                        | Statement::ExportAllDeclaration(_) => {
+                            program_body.push(stmt);
+                        }
+                        Statement::ExportDefaultDeclaration(ref mut export_default_decl) => {
+                            let (var_id, span) = match &mut export_default_decl.declaration {
+                                ExportDefaultDeclarationKind::ClassDeclaration(class_decl)
+                                    if class_decl.id.is_some() =>
+                                {
+                                    Self::preserve_class_expression_name(class_decl, ctx)
+                                }
+                                ExportDefaultDeclarationKind::FunctionDeclaration(_) => {
+                                    program_body.push(stmt);
+                                    return (program_body, inner_block);
+                                }
+                                _ => (
+                                    ctx.generate_binding_in_current_scope(
+                                        static_ident!("_default"),
+                                        SymbolFlags::FunctionScopedVariable,
+                                    ),
+                                    SPAN,
+                                ),
+                            };
 
-        let (mut program_body, inner_block): (
-            ArenaVec<'a, Statement<'a>>,
-            ArenaVec<'a, Statement<'a>>,
-        ) = program_body.into_iter().fold(
-            (ArenaVec::new_in(ctx), ArenaVec::new_in(ctx)),
-            |(mut program_body, mut inner_block), mut stmt| {
-                let address = stmt.address();
-                match stmt {
-                    Statement::FunctionDeclaration(_)
-                    | Statement::ImportDeclaration(_)
-                    | Statement::ExportAllDeclaration(_) => {
-                        program_body.push(stmt);
-                    }
-                    Statement::ExportDefaultDeclaration(ref mut export_default_decl) => {
-                        let (var_id, span) = match &mut export_default_decl.declaration {
-                            ExportDefaultDeclarationKind::ClassDeclaration(class_decl)
-                                if class_decl.id.is_some() =>
-                            {
-                                Self::preserve_class_expression_name(class_decl, ctx)
-                            }
-                            ExportDefaultDeclarationKind::FunctionDeclaration(_) => {
-                                program_body.push(stmt);
+                            let decl = mem::replace(
+                                &mut export_default_decl.declaration,
+                                ExportDefaultDeclarationKind::new_null_literal(SPAN, ctx),
+                            );
+
+                            let expr = match decl {
+                                ExportDefaultDeclarationKind::FunctionDeclaration(decl) => {
+                                    Expression::FunctionExpression(decl)
+                                }
+                                ExportDefaultDeclarationKind::ClassDeclaration(mut decl) => {
+                                    decl.r#type = ClassType::ClassExpression;
+                                    Expression::ClassExpression(decl)
+                                }
+                                _ => decl.into_expression(),
+                            };
+
+                            inner_block.push(Statement::new_variable_declaration(
+                                span,
+                                VariableDeclarationKind::Var,
+                                ArenaVec::from_value_in(
+                                    VariableDeclarator::new(
+                                        span,
+                                        VariableDeclarationKind::Var,
+                                        var_id.create_spanned_binding_pattern(span, ctx),
+                                        NONE,
+                                        Some(expr),
+                                        false,
+                                        ctx,
+                                    ),
+                                    ctx,
+                                ),
+                                false,
+                                ctx,
+                            ));
+
+                            program_body.push(Statement::new_export_named_declaration(
+                                SPAN,
+                                None,
+                                ArenaVec::from_value_in(
+                                    ExportSpecifier::new(
+                                        SPAN,
+                                        ModuleExportName::IdentifierReference(
+                                            var_id.create_read_reference(ctx),
+                                        ),
+                                        ModuleExportName::new_identifier_name(SPAN, "default", ctx),
+                                        ImportOrExportKind::Value,
+                                        ctx,
+                                    ),
+                                    ctx,
+                                ),
+                                None,
+                                ImportOrExportKind::Value,
+                                NONE,
+                                ctx,
+                            ));
+                        }
+                        Statement::ExportNamedDeclaration(export_named_declaration) => {
+                            if export_named_declaration.declaration.is_none() {
+                                program_body.push(Statement::ExportNamedDeclaration(
+                                    export_named_declaration,
+                                ));
                                 return (program_body, inner_block);
                             }
-                            _ => (
-                                ctx.generate_binding_in_current_scope(
-                                    static_ident!("_default"),
-                                    SymbolFlags::FunctionScopedVariable,
-                                ),
-                                SPAN,
-                            ),
-                        };
 
-                        let decl = mem::replace(
-                            &mut export_default_decl.declaration,
-                            ExportDefaultDeclarationKind::new_null_literal(SPAN, ctx),
-                        );
-
-                        let expr = match decl {
-                            ExportDefaultDeclarationKind::FunctionDeclaration(decl) => {
-                                Expression::FunctionExpression(decl)
-                            }
-                            ExportDefaultDeclarationKind::ClassDeclaration(mut decl) => {
-                                decl.r#type = ClassType::ClassExpression;
-                                Expression::ClassExpression(decl)
-                            }
-                            _ => decl.into_expression(),
-                        };
-
-                        inner_block.push(Statement::new_variable_declaration(
-                            span,
-                            VariableDeclarationKind::Var,
-                            ArenaVec::from_value_in(
-                                VariableDeclarator::new(
-                                    span,
-                                    VariableDeclarationKind::Var,
-                                    var_id.create_spanned_binding_pattern(span, ctx),
-                                    NONE,
-                                    Some(expr),
-                                    false,
-                                    ctx,
-                                ),
-                                ctx,
-                            ),
-                            false,
-                            ctx,
-                        ));
-
-                        program_body.push(Statement::new_export_named_declaration(
-                            SPAN,
-                            None,
-                            ArenaVec::from_value_in(
-                                ExportSpecifier::new(
-                                    SPAN,
-                                    ModuleExportName::IdentifierReference(
-                                        var_id.create_read_reference(ctx),
-                                    ),
-                                    ModuleExportName::new_identifier_name(SPAN, "default", ctx),
-                                    ImportOrExportKind::Value,
-                                    ctx,
-                                ),
-                                ctx,
-                            ),
-                            None,
-                            ImportOrExportKind::Value,
-                            NONE,
-                            ctx,
-                        ));
-                    }
-                    Statement::ExportNamedDeclaration(ref mut export_named_declaration) => {
-                        let Some(ref mut decl) = export_named_declaration.declaration else {
-                            program_body.push(stmt);
-                            return (program_body, inner_block);
-                        };
-                        if matches!(
-                            decl,
-                            Declaration::FunctionDeclaration(_)
+                            let decl = export_named_declaration.declaration.as_ref().unwrap();
+                            if matches!(
+                                decl,
+                                Declaration::FunctionDeclaration(_)
                                 | Declaration::TSTypeAliasDeclaration(_)
                                 | Declaration::TSInterfaceDeclaration(_)
                                 | Declaration::TSEnumDeclaration(_)
                                 | Declaration::TSModuleDeclaration(_)
                                 // Note: `TSGlobalDeclaration` cannot be exported
                                 | Declaration::TSImportEqualsDeclaration(_)
-                        ) {
-                            program_body.push(stmt);
+                            ) {
+                                program_body.push(Statement::ExportNamedDeclaration(
+                                    export_named_declaration,
+                                ));
 
-                            return (program_body, inner_block);
-                        }
-
-                        let export_specifiers = match decl.take_in(ctx) {
-                            Declaration::ClassDeclaration(class_decl) => {
-                                let class_binding = class_decl.id.as_ref().unwrap();
-                                let class_binding_name = class_binding.name;
-
-                                let class_binding_reference =
-                                    BoundIdentifier::from_binding_ident(class_binding)
-                                        .create_read_reference(ctx);
-
-                                inner_block.push(Self::transform_class_decl(class_decl, ctx));
-
-                                let local =
-                                    ModuleExportName::IdentifierReference(class_binding_reference);
-                                let exported = ModuleExportName::new_identifier_name(
-                                    SPAN,
-                                    class_binding_name,
-                                    ctx,
-                                );
-                                ArenaVec::from_value_in(
-                                    ExportSpecifier::new(
-                                        SPAN,
-                                        local,
-                                        exported,
-                                        ImportOrExportKind::Value,
-                                        ctx,
-                                    ),
-                                    ctx,
-                                )
+                                return (program_body, inner_block);
                             }
-                            Declaration::VariableDeclaration(mut var_decl) => {
-                                var_decl.kind = VariableDeclarationKind::Var;
-                                let mut export_specifiers = ArenaVec::new_in(ctx);
 
-                                for decl in &mut var_decl.declarations {
-                                    decl.kind = VariableDeclarationKind::Var;
+                            let export_kind = export_named_declaration.export_kind;
+
+                            let decl = export_named_declaration.unbox().declaration.unwrap();
+                            let export_specifiers = match decl {
+                                Declaration::ClassDeclaration(class_decl) => {
+                                    let class_binding = class_decl.id.as_ref().unwrap();
+                                    let class_binding_name = class_binding.name;
+
+                                    let class_binding_reference =
+                                        BoundIdentifier::from_binding_ident(class_binding)
+                                            .create_read_reference(ctx);
+
+                                    inner_block.push(Self::transform_class_decl(class_decl, ctx));
+
+                                    let local = ModuleExportName::IdentifierReference(
+                                        class_binding_reference,
+                                    );
+                                    let exported = ModuleExportName::new_identifier_name(
+                                        SPAN,
+                                        class_binding_name,
+                                        ctx,
+                                    );
+                                    ArenaVec::from_value_in(
+                                        ExportSpecifier::new(
+                                            SPAN,
+                                            local,
+                                            exported,
+                                            ImportOrExportKind::Value,
+                                            ctx,
+                                        ),
+                                        ctx,
+                                    )
                                 }
+                                Declaration::VariableDeclaration(mut var_decl) => {
+                                    var_decl.kind = VariableDeclarationKind::Var;
+                                    let mut export_specifiers = ArenaVec::new_in(ctx);
 
-                                var_decl.bound_names(&mut |ident| {
-                                    *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
-                                        SymbolFlags::FunctionScopedVariable;
+                                    for decl in &mut var_decl.declarations {
+                                        decl.kind = VariableDeclarationKind::Var;
+                                    }
 
-                                    export_specifiers.push(ExportSpecifier::new(
-                                        SPAN,
-                                        ModuleExportName::IdentifierReference(
-                                            BoundIdentifier::from_binding_ident(ident)
-                                                .create_read_reference(ctx),
-                                        ),
-                                        ModuleExportName::new_identifier_name(
-                                            SPAN, ident.name, ctx,
-                                        ),
-                                        ImportOrExportKind::Value,
-                                        ctx,
-                                    ));
-                                });
-                                inner_block.push(Statement::VariableDeclaration(var_decl));
-                                export_specifiers
+                                    var_decl.bound_names(&mut |ident| {
+                                        *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
+                                            SymbolFlags::FunctionScopedVariable;
+
+                                        export_specifiers.push(ExportSpecifier::new(
+                                            SPAN,
+                                            ModuleExportName::IdentifierReference(
+                                                BoundIdentifier::from_binding_ident(ident)
+                                                    .create_read_reference(ctx),
+                                            ),
+                                            ModuleExportName::new_identifier_name(
+                                                SPAN, ident.name, ctx,
+                                            ),
+                                            ImportOrExportKind::Value,
+                                            ctx,
+                                        ));
+                                    });
+                                    inner_block.push(Statement::VariableDeclaration(var_decl));
+                                    export_specifiers
+                                }
+                                _ => unreachable!(),
+                            };
+
+                            program_body.push(Statement::new_export_named_declaration(
+                                SPAN,
+                                None,
+                                export_specifiers,
+                                None,
+                                export_kind,
+                                NONE,
+                                ctx,
+                            ));
+                        }
+                        Statement::ClassDeclaration(class_decl) => {
+                            inner_block.push(Self::transform_class_decl(class_decl, ctx));
+                        }
+                        Statement::VariableDeclaration(ref mut var_declaration) => {
+                            if var_declaration.kind == VariableDeclarationKind::Using {
+                                self.top_level_using.insert(address, false);
+                            } else if var_declaration.kind == VariableDeclarationKind::AwaitUsing {
+                                self.top_level_using.insert(address, true);
                             }
-                            _ => unreachable!(),
-                        };
+                            var_declaration.kind = VariableDeclarationKind::Var;
 
-                        program_body.push(Statement::new_export_named_declaration(
-                            SPAN,
-                            None,
-                            export_specifiers,
-                            None,
-                            export_named_declaration.export_kind,
-                            NONE,
-                            ctx,
-                        ));
-                    }
-                    Statement::ClassDeclaration(class_decl) => {
-                        inner_block.push(Self::transform_class_decl(class_decl, ctx));
-                    }
-                    Statement::VariableDeclaration(ref mut var_declaration) => {
-                        if var_declaration.kind == VariableDeclarationKind::Using {
-                            self.top_level_using.insert(address, false);
-                        } else if var_declaration.kind == VariableDeclarationKind::AwaitUsing {
-                            self.top_level_using.insert(address, true);
+                            for decl in &mut var_declaration.declarations {
+                                decl.kind = VariableDeclarationKind::Var;
+                                decl.id.bound_names(&mut |c| {
+                                    *ctx.scoping_mut().symbol_flags_mut(c.symbol_id()) =
+                                        SymbolFlags::FunctionScopedVariable;
+                                });
+                            }
+
+                            inner_block.push(stmt);
                         }
-                        var_declaration.kind = VariableDeclarationKind::Var;
-
-                        for decl in &mut var_declaration.declarations {
-                            decl.kind = VariableDeclarationKind::Var;
-                            decl.id.bound_names(&mut |c| {
-                                *ctx.scoping_mut().symbol_flags_mut(c.symbol_id()) =
-                                    SymbolFlags::FunctionScopedVariable;
-                            });
-                        }
-
-                        inner_block.push(stmt);
+                        _ => inner_block.push(stmt),
                     }
-                    _ => inner_block.push(stmt),
-                }
 
-                (program_body, inner_block)
-            },
-        );
+                    (program_body, inner_block)
+                },
+            );
 
-        let block_scope_id = ctx.insert_scope_below_statements(&inner_block, ScopeFlags::empty());
-        program_body.push(Statement::new_block_statement_with_scope_id(
-            SPAN,
-            inner_block,
-            block_scope_id,
-            ctx,
-        ));
+            let block_scope_id =
+                ctx.insert_scope_below_statements(&inner_block, ScopeFlags::empty());
+            program_body.push(Statement::new_block_statement_with_scope_id(
+                SPAN,
+                inner_block,
+                block_scope_id,
+                ctx,
+            ));
 
-        std::mem::swap(&mut program.body, &mut program_body);
+            program_body
+        });
     }
 }
 
@@ -742,45 +752,48 @@ impl<'a> ExplicitResourceManagement<'a> {
 
         let callee = helper_load(Helper::UsingCtx, ctx);
 
-        let block = {
-            let vec = ArenaVec::from_array_in(
-                [
-                    Statement::new_variable_declaration(
-                        SPAN,
-                        VariableDeclarationKind::Var,
-                        ArenaVec::from_value_in(
-                            VariableDeclarator::new(
-                                SPAN,
-                                VariableDeclarationKind::Var,
-                                using_ctx.create_binding_pattern(ctx),
-                                NONE,
-                                Some(Expression::new_call_expression(
+        stmt.replace_with(|stmt| {
+            let block = {
+                let vec = ArenaVec::from_array_in(
+                    [
+                        Statement::new_variable_declaration(
+                            SPAN,
+                            VariableDeclarationKind::Var,
+                            ArenaVec::from_value_in(
+                                VariableDeclarator::new(
                                     SPAN,
-                                    callee,
+                                    VariableDeclarationKind::Var,
+                                    using_ctx.create_binding_pattern(ctx),
                                     NONE,
-                                    ArenaVec::new_in(ctx),
+                                    Some(Expression::new_call_expression(
+                                        SPAN,
+                                        callee,
+                                        NONE,
+                                        ArenaVec::new_in(ctx),
+                                        false,
+                                        ctx,
+                                    )),
                                     false,
                                     ctx,
-                                )),
-                                false,
+                                ),
                                 ctx,
                             ),
+                            false,
                             ctx,
                         ),
-                        false,
-                        ctx,
-                    ),
-                    stmt.take_in(ctx),
-                ],
-                ctx,
-            );
+                        stmt,
+                    ],
+                    ctx,
+                );
 
-            BlockStatement::new_with_scope_id(SPAN, vec, block_stmt_sid, ctx)
-        };
+                BlockStatement::new_with_scope_id(SPAN, vec, block_stmt_sid, ctx)
+            };
 
-        let catch = Self::create_catch_clause(&using_ctx, current_scope_id, ctx);
-        let finally = Self::create_finally_block(&using_ctx, current_scope_id, needs_await, ctx);
-        *stmt = Statement::new_try_statement(span, block, Some(catch), Some(finally), ctx);
+            let catch = Self::create_catch_clause(&using_ctx, current_scope_id, ctx);
+            let finally =
+                Self::create_finally_block(&using_ctx, current_scope_id, needs_await, ctx);
+            Statement::new_try_statement(span, block, Some(catch), Some(finally), ctx)
+        });
     }
 
     /// Transforms:

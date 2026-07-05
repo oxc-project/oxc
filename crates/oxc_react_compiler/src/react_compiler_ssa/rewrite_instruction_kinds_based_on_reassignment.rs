@@ -15,6 +15,8 @@
 //! may be converted to a `const` if the reassignment is not used and was removed
 //! by dead code elimination.
 
+use std::borrow::Cow;
+
 use rustc_hash::FxHashMap;
 
 use crate::react_compiler_diagnostics::{
@@ -41,45 +43,36 @@ fn invariant_error_with_loc(
 ) -> CompilerError {
     let mut err = CompilerError::new();
     let diagnostic = CompilerDiagnostic::new(ErrorCategory::Invariant, reason, description)
-        .with_detail(CompilerDiagnosticDetail::Error {
-            loc,
-            message: Some(reason.to_string()),
-            identifier_name: None,
-        });
+        .with_detail(CompilerDiagnosticDetail::Error { loc, message: Some(reason.to_string()) });
     err.push_diagnostic(diagnostic);
     err
 }
 
 /// Format an InstructionKind variant name (matches TS `${kind}` interpolation).
-fn format_kind(kind: Option<InstructionKind>) -> String {
+fn format_kind(kind: Option<InstructionKind>) -> &'static str {
     match kind {
-        Some(InstructionKind::Const) => "Const".to_string(),
-        Some(InstructionKind::Let) => "Let".to_string(),
-        Some(InstructionKind::Reassign) => "Reassign".to_string(),
-        Some(InstructionKind::Catch) => "Catch".to_string(),
-        Some(InstructionKind::HoistedConst) => "HoistedConst".to_string(),
-        Some(InstructionKind::HoistedLet) => "HoistedLet".to_string(),
-        Some(InstructionKind::HoistedFunction) => "HoistedFunction".to_string(),
-        Some(InstructionKind::Function) => "Function".to_string(),
-        None => "null".to_string(),
+        Some(InstructionKind::Const) => "Const",
+        Some(InstructionKind::Let) => "Let",
+        Some(InstructionKind::Reassign) => "Reassign",
+        Some(InstructionKind::Catch) => "Catch",
+        Some(InstructionKind::HoistedConst) => "HoistedConst",
+        Some(InstructionKind::HoistedLet) => "HoistedLet",
+        Some(InstructionKind::HoistedFunction) => "HoistedFunction",
+        Some(InstructionKind::Function) => "Function",
+        None => "null",
     }
 }
 
 /// Format a Place like TS `printPlace()`: `<effect> <name>$<id>[<range>]{reactive}`
 fn format_place(place: &Place, env: &Environment) -> String {
     let ident = &env.identifiers[place.identifier.0 as usize];
-    let name = match &ident.name {
-        Some(n) => n.value().to_string(),
-        None => String::new(),
-    };
-    let scope = match ident.scope {
-        Some(scope_id) => format!("_@{}", scope_id.0),
-        None => String::new(),
-    };
+    let name = ident.name.as_ref().map_or("", |name| name.value());
+    let scope =
+        ident.scope.map_or(Cow::Borrowed(""), |scope_id| Cow::Owned(format!("_@{}", scope_id.0)));
     let mutable_range = if ident.mutable_range.end.0 > ident.mutable_range.start.0 + 1 {
-        format!("[{}:{}]", ident.mutable_range.start.0, ident.mutable_range.end.0)
+        Cow::Owned(format!("[{}:{}]", ident.mutable_range.start.0, ident.mutable_range.end.0))
     } else {
-        String::new()
+        Cow::Borrowed("")
     };
     let reactive = if place.reactive { "{reactive}" } else { "" };
     format!(
@@ -319,11 +312,8 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
         let instr = &mut func.instructions[instr_id.0 as usize];
-        match &mut instr.value {
-            InstructionValue::StoreLocal { lvalue, .. } => {
-                lvalue.kind = InstructionKind::Const;
-            }
-            _ => {}
+        if let InstructionValue::StoreLocal { lvalue, .. } = &mut instr.value {
+            lvalue.kind = InstructionKind::Const;
         }
     }
 
@@ -331,11 +321,8 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
         let instr = &mut func.instructions[instr_id.0 as usize];
-        match &mut instr.value {
-            InstructionValue::StoreLocal { lvalue, .. } => {
-                lvalue.kind = InstructionKind::Reassign;
-            }
-            _ => {}
+        if let InstructionValue::StoreLocal { lvalue, .. } = &mut instr.value {
+            lvalue.kind = InstructionKind::Reassign;
         }
     }
 
@@ -349,11 +336,8 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
         let instr = &mut func.instructions[instr_id.0 as usize];
-        match &mut instr.value {
-            InstructionValue::Destructure { lvalue, .. } => {
-                lvalue.kind = kind;
-            }
-            _ => {}
+        if let InstructionValue::Destructure { lvalue, .. } = &mut instr.value {
+            lvalue.kind = kind;
         }
     }
 

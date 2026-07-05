@@ -568,13 +568,12 @@ fn promote_interposed_instruction(
 
                     match iv {
                         InstructionValue::StoreContext { lvalue, .. }
-                        | InstructionValue::StoreLocal { lvalue, .. } => {
-                            if lvalue.kind == InstructionKind::Const
-                                || lvalue.kind == InstructionKind::HoistedConst
-                            {
-                                consts.insert(lvalue.place.identifier);
-                                const_store = true;
-                            }
+                        | InstructionValue::StoreLocal { lvalue, .. }
+                            if (lvalue.kind == InstructionKind::Const
+                                || lvalue.kind == InstructionKind::HoistedConst) =>
+                        {
+                            consts.insert(lvalue.place.identifier);
+                            const_store = true;
                         }
                         _ => {}
                     }

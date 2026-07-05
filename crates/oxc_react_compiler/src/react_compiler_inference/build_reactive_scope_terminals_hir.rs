@@ -124,8 +124,7 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
     let mut fallthroughs: FxHashMap<ScopeId, BlockId> = FxHashMap::default();
     let mut active_items: Vec<ScopeId> = Vec::new();
 
-    for i in 0..items.len() {
-        let curr = items[i];
+    for &curr in &items {
         let curr_start = env.scopes[curr.0 as usize].range.start;
         let curr_end = env.scopes[curr.0 as usize].range.end;
 
@@ -329,7 +328,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
     }
 
     // Step 4: Fixup HIR to restore RPO, correct predecessors, renumber instructions
-    func.body.blocks = get_reverse_postordered_blocks(&func.body, &func.instructions);
+    func.body.blocks = get_reverse_postordered_blocks(&func.body);
     mark_predecessors(&mut func.body);
     mark_instruction_ids(&mut func.body, &mut func.instructions);
 

@@ -46,6 +46,11 @@ use crate::react_compiler_reactive_scopes::visitors::Transformed;
 use crate::react_compiler_reactive_scopes::visitors::transform_reactive_function;
 use crate::react_compiler_reactive_scopes::visitors::visit_reactive_function;
 
+type IdentifierMemoNode =
+    (MemoizationLevel, bool, FxIndexSet<DeclarationId>, FxIndexSet<ScopeId>, bool);
+type IdentifierMemoNodes = FxHashMap<DeclarationId, IdentifierMemoNode>;
+type ScopeMemoNodes = FxHashMap<ScopeId, (Vec<DeclarationId>, bool)>;
+
 // =============================================================================
 // Public entry point
 // =============================================================================
@@ -181,7 +186,7 @@ impl CollectState {
         identifier: DeclarationId,
     ) {
         if let Some(scope_id) = get_place_scope(env, id, place.identifier) {
-            let node = self.scopes.entry(scope_id).or_insert_with(|| {
+            self.scopes.entry(scope_id).or_insert_with(|| {
                 let scope_data = &env.scopes[scope_id.0 as usize];
                 let dependencies = scope_data
                     .dependencies
@@ -190,8 +195,6 @@ impl CollectState {
                     .collect();
                 ScopeNode { dependencies, seen: false }
             });
-            // Avoid unused variable warning — we needed the entry to exist
-            let _ = node;
             let identifier_node = self
                 .identifiers
                 .get_mut(&identifier)
@@ -961,10 +964,7 @@ fn compute_memoized_identifiers(state: &CollectState) -> FxHashSet<DeclarationId
     let mut memoized = FxHashSet::default();
 
     // We need mutable access to the nodes, so we clone the state into mutable structures
-    let mut identifier_nodes: FxHashMap<
-        DeclarationId,
-        (MemoizationLevel, bool, FxIndexSet<DeclarationId>, FxIndexSet<ScopeId>, bool),
-    > = state
+    let mut identifier_nodes: IdentifierMemoNodes = state
         .identifiers
         .iter()
         .map(|(id, node)| {
@@ -981,7 +981,7 @@ fn compute_memoized_identifiers(state: &CollectState) -> FxHashSet<DeclarationId
         })
         .collect();
 
-    let mut scope_nodes: FxHashMap<ScopeId, (Vec<DeclarationId>, bool)> = state
+    let mut scope_nodes: ScopeMemoNodes = state
         .scopes
         .iter()
         .map(|(id, node)| (*id, (node.dependencies.clone(), node.seen)))
@@ -990,11 +990,8 @@ fn compute_memoized_identifiers(state: &CollectState) -> FxHashSet<DeclarationId
     fn visit(
         id: DeclarationId,
         force_memoize: bool,
-        identifier_nodes: &mut FxHashMap<
-            DeclarationId,
-            (MemoizationLevel, bool, FxIndexSet<DeclarationId>, FxIndexSet<ScopeId>, bool),
-        >,
-        scope_nodes: &mut FxHashMap<ScopeId, (Vec<DeclarationId>, bool)>,
+        identifier_nodes: &mut IdentifierMemoNodes,
+        scope_nodes: &mut ScopeMemoNodes,
         memoized: &mut FxHashSet<DeclarationId>,
     ) -> bool {
         let Some(&(level, _, _, _, seen)) = identifier_nodes.get(&id) else {
@@ -1035,11 +1032,8 @@ fn compute_memoized_identifiers(state: &CollectState) -> FxHashSet<DeclarationId
 
     fn force_memoize_scope_dependencies(
         id: ScopeId,
-        identifier_nodes: &mut FxHashMap<
-            DeclarationId,
-            (MemoizationLevel, bool, FxIndexSet<DeclarationId>, FxIndexSet<ScopeId>, bool),
-        >,
-        scope_nodes: &mut FxHashMap<ScopeId, (Vec<DeclarationId>, bool)>,
+        identifier_nodes: &mut IdentifierMemoNodes,
+        scope_nodes: &mut ScopeMemoNodes,
         memoized: &mut FxHashSet<DeclarationId>,
     ) {
         let seen = scope_nodes.get(&id).expect("Expected a node for all scopes").1;
@@ -1129,7 +1123,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneScopesTransform<'a, 'e> {
             }) if store_lvalue.kind == InstructionKind::Reassign => {
                 let decl_id =
                     self.env.identifiers[store_lvalue.place.identifier.0 as usize].declaration_id;
-                let ids = self.reassignments.entry(decl_id).or_insert_with(FxHashSet::default);
+                let ids = self.reassignments.entry(decl_id).or_default();
                 ids.insert(store_value.identifier);
             }
             ReactiveValue::Instruction(InstructionValue::LoadLocal { place, .. }) => {
@@ -1142,8 +1136,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneScopesTransform<'a, 'e> {
                 if has_scope && lvalue_no_scope {
                     if let Some(lv) = &instruction.lvalue {
                         let decl_id = self.env.identifiers[lv.identifier.0 as usize].declaration_id;
-                        let ids =
-                            self.reassignments.entry(decl_id).or_insert_with(FxHashSet::default);
+                        let ids = self.reassignments.entry(decl_id).or_default();
                         ids.insert(place.identifier);
                     }
                 }

@@ -105,28 +105,23 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                 }
                             }
                         }
-                        Some(HookKind::UseState) => {
-                            if args.len() == 1 {
-                                if let PlaceOrSpread::Place(arg) = &args[0] {
-                                    let arg_type = &env.types[env.identifiers
-                                        [arg.identifier.0 as usize]
-                                        .type_
-                                        .0
-                                        as usize];
-                                    if is_primitive_type(arg_type)
-                                        || is_plain_object_type(arg_type)
-                                        || is_array_type(arg_type)
-                                    {
-                                        let lvalue_id =
-                                            env.identifiers[instr.lvalue.identifier.0 as usize].id;
-                                        inlined_state.insert(
-                                            lvalue_id,
-                                            InlinedStateReplacement::LoadLocal {
-                                                place: arg.clone(),
-                                                loc: arg.loc,
-                                            },
-                                        );
-                                    }
+                        Some(HookKind::UseState) if args.len() == 1 => {
+                            if let PlaceOrSpread::Place(arg) = &args[0] {
+                                let arg_type = &env.types
+                                    [env.identifiers[arg.identifier.0 as usize].type_.0 as usize];
+                                if is_primitive_type(arg_type)
+                                    || is_plain_object_type(arg_type)
+                                    || is_array_type(arg_type)
+                                {
+                                    let lvalue_id =
+                                        env.identifiers[instr.lvalue.identifier.0 as usize].id;
+                                    inlined_state.insert(
+                                        lvalue_id,
+                                        InlinedStateReplacement::LoadLocal {
+                                            place: arg.clone(),
+                                            loc: arg.loc,
+                                        },
+                                    );
                                 }
                             }
                         }
@@ -174,21 +169,17 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                             InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc };
                     }
                 }
-                InstructionValue::JsxExpression { tag, .. } => {
-                    if let JsxTag::Builtin(builtin) = tag {
-                        // Only optimize non-custom-element builtin tags
-                        if !builtin.name.contains('-') {
-                            let tag_name = builtin.name.clone();
-                            // Retain only props that are not known event handlers and not "ref"
-                            if let InstructionValue::JsxExpression { props, .. } = &mut instr.value
-                            {
-                                props.retain(|prop| match prop {
-                                    JsxAttribute::SpreadAttribute { .. } => true,
-                                    JsxAttribute::Attribute { name, .. } => {
-                                        !is_known_event_handler(&tag_name, name) && name != "ref"
-                                    }
-                                });
-                            }
+                InstructionValue::JsxExpression { tag: JsxTag::Builtin(builtin), .. } => {
+                    // Only optimize non-custom-element builtin tags
+                    if !builtin.name.contains('-') {
+                        // Retain only props that are not known event handlers and not "ref"
+                        if let InstructionValue::JsxExpression { props, .. } = &mut instr.value {
+                            props.retain(|prop| match prop {
+                                JsxAttribute::SpreadAttribute { .. } => true,
+                                JsxAttribute::Attribute { name, .. } => {
+                                    !is_known_event_handler(name) && name != "ref"
+                                }
+                            });
                         }
                     }
                 }
@@ -300,7 +291,7 @@ fn has_known_non_render_call(func: &HirFunction, env: &Environment) -> bool {
 }
 
 /// Returns true if the prop name matches the known event handler pattern `on[A-Z]`.
-fn is_known_event_handler(_tag: &str, prop: &str) -> bool {
+fn is_known_event_handler(prop: &str) -> bool {
     if prop.len() < 3 {
         return false;
     }

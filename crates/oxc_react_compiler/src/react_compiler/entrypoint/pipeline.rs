@@ -96,15 +96,16 @@ use crate::react_compiler::debug_print;
 /// Currently: creates an Environment, runs BuildHIR (lowering), and produces
 /// debug output via the context. Returns a CodegenFunction with zeroed memo
 /// stats on success (codegen is not yet implemented).
+#[allow(clippy::too_many_arguments)]
 pub fn compile_fn<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     func: &FunctionNode<'_>,
-    fn_name: Option<&str>,
-    scope_info: &ScopeInfo,
+    scope: &ScopeResolver<'_, '_>,
     fn_type: ReactFunctionType,
     mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
+    source_text: &str,
 ) -> Result<CodegenFunction<'a>, CompilerError> {
     let mut env = Environment::with_config(env_config.clone());
     env.fn_type = fn_type;
@@ -113,23 +114,15 @@ pub fn compile_fn<'a>(
         CompilerOutputMode::Client => OutputMode::Client,
         CompilerOutputMode::Lint => OutputMode::Lint,
     };
-    env.code = context.code.clone();
     env.instrument_fn_name = context.instrument_fn_name.clone();
     env.instrument_gating_name = context.instrument_gating_name.clone();
     env.hook_guard_name = context.hook_guard_name.clone();
-    env.seed_uid_known_names(&context.known_referenced_names());
+    env.seed_uid_known_names(context.known_referenced_names());
 
-    env.reference_node_ids = scope_info.ref_node_id_to_binding.keys().copied().collect();
+    env.reference_node_ids = scope.all_reference_positions().clone();
 
-    let line_offsets = crate::react_compiler_lowering::source_loc::LineOffsets::new(
-        context.code.as_deref().unwrap_or(""),
-    );
-    let mut hir = lower(func, fn_name, scope_info, &mut env, &line_offsets)?;
-
-    // Copy renames from lowering to context (keep on env for codegen to apply to type annotations)
-    if !env.renames.is_empty() {
-        context.renames.extend(env.renames.iter().cloned());
-    }
+    let line_offsets = crate::react_compiler_lowering::source_loc::LineOffsets::new(source_text);
+    let mut hir = lower(func, scope, &mut env, &line_offsets)?;
 
     // Check for Invariant errors after lowering, before logging HIR.
     // In TS, Invariant errors throw from recordError(), aborting lower() before
@@ -203,7 +196,6 @@ pub fn compile_fn<'a>(
             reason: diag.reason,
             description: diag.description,
             loc,
-            suggestions: diag.suggestions,
         });
         err
     })?;
@@ -264,9 +256,8 @@ pub fn compile_fn<'a>(
     }
 
     let mut inner_logs: Vec<String> = Vec::new();
-    let debug_inner = context.debug_enabled;
     let analyse_result = analyse_functions(&mut hir, &mut env, &mut |inner_func, inner_env| {
-        if debug_inner {
+        if context.debug_enabled {
             inner_logs.push(debug_print::debug_hir(inner_func, inner_env));
         }
     });
@@ -694,7 +685,7 @@ pub fn compile_fn<'a>(
         context.log_debug(DebugLogEntry::new("RenameVariables", debug));
     }
 
-    prune_hoisted_contexts(&mut reactive_fn, &mut env)?;
+    prune_hoisted_contexts(&mut reactive_fn, &env)?;
 
     if context.debug_enabled {
         let debug =
@@ -736,7 +727,6 @@ pub fn compile_fn<'a>(
             reason: "unexpected error".to_string(),
             description: None,
             loc: None,
-            suggestions: None,
         });
         return Err(err);
     }
@@ -776,15 +766,7 @@ pub fn compile_fn<'a>(
             outlined: Vec::new(),
         };
         if let Some(fn_type) = o.fn_type {
-            let fn_name = outlined_codegen.id.as_ref().map(|id| id.name.to_string());
-            match compile_outlined_fn(
-                outlined_codegen,
-                fn_name.as_deref(),
-                fn_type,
-                mode,
-                env_config,
-                context,
-            ) {
+            match compile_outlined_fn(outlined_codegen) {
                 Ok(compiled) => {
                     compiled_outlined
                         .push(OutlinedFunction { func: compiled, fn_type: Some(fn_type) });
@@ -827,13 +809,7 @@ pub fn compile_fn<'a>(
 /// functions are inserted into the program AST and re-compiled from scratch.
 pub fn compile_outlined_fn<'a>(
     codegen_fn: CodegenFunction<'a>,
-    fn_name: Option<&str>,
-    fn_type: ReactFunctionType,
-    mode: CompilerOutputMode,
-    env_config: &EnvironmentConfig,
-    context: &mut ProgramContext,
 ) -> Result<CodegenFunction<'a>, CompilerError> {
-    let _ = (fn_name, fn_type, mode, env_config, context);
     Ok(codegen_fn)
 }
 

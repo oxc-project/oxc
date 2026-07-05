@@ -5,8 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, CompilerSuggestion,
-    CompilerSuggestionOperation, ErrorCategory, Position, SourceLocation,
+    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, Position,
+    SourceLocation,
 };
 
 /// A comment's text and byte range, plus the byte-offset loc that surfaces as the
@@ -116,15 +116,14 @@ fn matches_flow_suppression(value: &str) -> bool {
     let after_dollar_flow = &value[idx + "$Flow".len()..];
 
     // Match FlowFixMe (with optional word chars), FlowExpectedError, or FlowIssue
-    let after_kind = if after_dollar_flow.starts_with("FixMe") {
+    let after_kind = if let Some(rest) = after_dollar_flow.strip_prefix("FixMe") {
         // Skip "FixMe" + any word characters
-        let rest = &after_dollar_flow["FixMe".len()..];
         let word_end = rest.find(|c: char| !c.is_alphanumeric() && c != '_').unwrap_or(rest.len());
         &rest[word_end..]
-    } else if after_dollar_flow.starts_with("ExpectedError") {
-        &after_dollar_flow["ExpectedError".len()..]
-    } else if after_dollar_flow.starts_with("Issue") {
-        &after_dollar_flow["Issue".len()..]
+    } else if let Some(rest) = after_dollar_flow.strip_prefix("ExpectedError") {
+        rest
+    } else if let Some(rest) = after_dollar_flow.strip_prefix("Issue") {
+        rest
     } else {
         return false;
     };
@@ -231,7 +230,7 @@ pub fn filter_suppressions_that_affect_function(
                     .enable_comment
                     .as_ref()
                     .and_then(|c| c.end)
-                    .map_or(false, |end| end < fn_end))
+                    .is_some_and(|end| end < fn_end))
         {
             suppressions_in_scope.push(suppression);
         }
@@ -243,7 +242,7 @@ pub fn filter_suppressions_that_affect_function(
                     .enable_comment
                     .as_ref()
                     .and_then(|c| c.end)
-                    .map_or(false, |end| end > fn_end))
+                    .is_some_and(|end| end > fn_end))
         {
             suppressions_in_scope.push(suppression);
         }
@@ -259,21 +258,13 @@ pub fn suppressions_to_compiler_error(suppressions: &[SuppressionRange]) -> Comp
     let mut error = CompilerError::new();
 
     for suppression in suppressions {
-        let (disable_start, disable_end) =
-            match (suppression.disable_comment.start, suppression.disable_comment.end) {
-                (Some(s), Some(e)) => (s, e),
-                _ => continue,
-            };
-
-        let (reason, suggestion) = match suppression.source {
-            SuppressionSource::Eslint => (
-                "React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled",
-                "Remove the ESLint suppression and address the React error",
-            ),
-            SuppressionSource::Flow => (
-                "React Compiler has skipped optimizing this component because one or more React rule violations were reported by Flow",
-                "Remove the Flow suppression and address the React error",
-            ),
+        let reason = match suppression.source {
+            SuppressionSource::Eslint => {
+                "React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled"
+            }
+            SuppressionSource::Flow => {
+                "React Compiler has skipped optimizing this component because one or more React rule violations were reported by Flow"
+            }
         };
 
         let description = format!(
@@ -284,13 +275,6 @@ pub fn suppressions_to_compiler_error(suppressions: &[SuppressionRange]) -> Comp
         let mut diagnostic =
             CompilerDiagnostic::new(ErrorCategory::Suppression, reason, Some(description));
 
-        diagnostic.suggestions = Some(vec![CompilerSuggestion {
-            description: suggestion.to_string(),
-            range: (disable_start as usize, disable_end as usize),
-            op: CompilerSuggestionOperation::Remove,
-            text: None,
-        }]);
-
         // Add error detail with location info
         let loc = suppression.disable_comment.loc.as_ref().map(|l| SourceLocation {
             start: Position { line: 0, column: 0, index: l.start_index },
@@ -300,7 +284,6 @@ pub fn suppressions_to_compiler_error(suppressions: &[SuppressionRange]) -> Comp
         diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Error {
             loc,
             message: Some("Found React rule suppression".to_string()),
-            identifier_name: None,
         });
 
         error.push_diagnostic(diagnostic);

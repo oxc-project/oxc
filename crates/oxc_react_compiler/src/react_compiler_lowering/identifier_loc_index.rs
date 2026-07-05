@@ -37,7 +37,6 @@ use oxc_ast::ast as oxc;
 use oxc_ast_visit::Visit;
 
 use crate::react_compiler_hir::SourceLocation;
-use crate::scope::ScopeInfo;
 
 use crate::react_compiler_lowering::FunctionNode;
 use crate::react_compiler_lowering::source_loc::LineOffsets;
@@ -82,8 +81,7 @@ struct IdentifierLocVisitor<'a> {
 
 impl<'a> IdentifierLocVisitor<'a> {
     fn record(&mut self, span: oxc_span::Span, is_jsx: bool, is_declaration_name: bool) {
-        let opening_element_loc =
-            if is_jsx { self.current_opening_element_loc.clone() } else { None };
+        let opening_element_loc = if is_jsx { self.current_opening_element_loc } else { None };
         // `or_insert` keeps the richer entry already recorded for a node_id.
         // Function/class names are recorded as declaration names *before* the
         // generic binding-identifier walk re-visits them, so the declaration
@@ -275,12 +273,8 @@ impl<'a> Visit<'a> for IdentifierLocVisitor<'a> {
 /// re-entered (its own name, if any, is recorded explicitly).
 pub fn build_identifier_loc_index(
     func: &FunctionNode<'_>,
-    scope_info: &ScopeInfo,
     line_offsets: &LineOffsets,
 ) -> IdentifierLocIndex {
-    // The loc index is purely position-driven; scope tracking is not required.
-    let _ = scope_info;
-
     let mut visitor = IdentifierLocVisitor {
         line_offsets,
         index: FxHashMap::default(),

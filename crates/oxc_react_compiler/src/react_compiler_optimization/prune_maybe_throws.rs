@@ -32,7 +32,7 @@ pub fn prune_maybe_throws(
     if let Some(terminal_mapping) = terminal_mapping {
         // If terminals have changed then blocks may have become newly unreachable.
         // Re-run minification of the graph (incl reordering instruction ids).
-        func.body.blocks = get_reverse_postordered_blocks(&func.body, &func.instructions);
+        func.body.blocks = get_reverse_postordered_blocks(&func.body);
         remove_unreachable_for_updates(&mut func.body);
         remove_dead_do_while_statements(&mut func.body);
         remove_unnecessary_try_catch(&mut func.body);
@@ -61,7 +61,6 @@ pub fn prune_maybe_throws(
                                 .with_detail(CompilerDiagnosticDetail::Error {
                                     loc: GENERATED_SOURCE,
                                     message: None,
-                                    identifier_name: None,
                                 })
                             })?;
                         updates.push((*predecessor, mapped_terminal));
@@ -115,10 +114,10 @@ fn prune_maybe_throws_impl(func: &mut HirFunction) -> Option<FxHashMap<BlockId, 
 }
 
 fn instruction_may_throw(instr: &Instruction) -> bool {
-    match &instr.value {
+    !matches!(
+        &instr.value,
         InstructionValue::Primitive { .. }
-        | InstructionValue::ArrayExpression { .. }
-        | InstructionValue::ObjectExpression { .. } => false,
-        _ => true,
-    }
+            | InstructionValue::ArrayExpression { .. }
+            | InstructionValue::ObjectExpression { .. }
+    )
 }

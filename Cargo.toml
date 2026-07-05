@@ -43,7 +43,17 @@ clone_on_ref_ptr = "warn"
 self_named_module_files = "warn" # "-Wclippy::mod_module_files"
 empty_drop = "warn"
 empty_structs_with_brackets = "warn"
+empty_enum_variants_with_brackets = "warn"
 exit = "warn"
+# Performance: avoid the intermediate `String` allocation of `s.push_str(&format!(..))`.
+format_push_string = "warn"
+# Casting a function item/pointer to a number is almost always a mistake (a missing call).
+fn_to_numeric_cast_any = "warn"
+unnecessary_self_imports = "warn"
+# `return Err(x)?` obscures a plain `return Err(x.into())`.
+try_err = "warn"
+# Don't name a type `Error` when it implements `std::error::Error`.
+error_impl_error = "warn"
 filetype_is_file = "warn"
 get_unwrap = "warn"
 rc_buffer = "warn"
@@ -182,6 +192,7 @@ oxc_sourcemap = "8.0.2" # Source map generation
 
 #
 allocator-api2 = "=0.2.21" # Allocator trait
+anyhow = "1.0" # Flexible error handling
 oxc-graphql-parser = "0.0.5" # GraphQL parser (direct AST; apollo-parser 0.8.6 fork aligned with graphql-js 17 syntax)
 base64 = "0.22.1" # Base64 encoding
 bitflags = "2.13.0" # Bitflag types
@@ -217,7 +228,7 @@ miette = { package = "oxc-miette", version = "3.0.0", features = [
 mimalloc-safe = "0.1.64" # Fast allocator
 nodejs-built-in-modules = "1.0.0" # Node.js built-in modules
 nonmax = "0.5.5" # Non-maximum numbers
-num-bigint = "0.4.6" # Big integers
+num-bigint = "0.5.0" # Big integers
 num-traits = "0.2.19" # Numeric traits
 papaya = "0.2.4" # Concurrent hash map
 percent-encoding = "2.3.2" # URL encoding

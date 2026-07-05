@@ -131,7 +131,6 @@ fn validate_context_variable_lvalues_impl(
                                 CompilerDiagnosticDetail::Error {
                                     loc: value.loc().copied(),
                                     message: None,
-                                    identifier_name: None,
                                 },
                             ),
                         );
@@ -160,10 +159,7 @@ fn validate_context_variable_lvalues_impl(
 fn format_place(place: &Place, identifiers: &[Identifier]) -> String {
     let id = place.identifier;
     let ident = &identifiers[id.0 as usize];
-    let name = match &ident.name {
-        Some(n) => n.value().to_string(),
-        None => String::new(),
-    };
+    let name = ident.name.as_ref().map_or("", |name| name.value());
     format!("{} {}${}", place.effect, name, id.0)
 }
 
@@ -186,11 +182,7 @@ fn visit(
                         "Support destructuring of context variables",
                         None,
                     )
-                    .with_detail(CompilerDiagnosticDetail::Error {
-                        loc,
-                        message: None,
-                        identifier_name: None,
-                    }),
+                    .with_detail(CompilerDiagnosticDetail::Error { loc, message: None }),
                 );
                 return Ok(());
             }
@@ -206,7 +198,6 @@ fn visit(
             .with_detail(CompilerDiagnosticDetail::Error {
                 loc: place.loc,
                 message: Some(format!("this is {}", prev_kind)),
-                identifier_name: None,
             }));
         }
     }

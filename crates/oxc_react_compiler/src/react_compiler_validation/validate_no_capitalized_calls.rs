@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
@@ -12,7 +13,7 @@ pub fn validate_no_capitalized_calls(
     env: &mut Environment,
 ) -> Result<(), CompilerError> {
     // Build the allow list from global registry keys + config entries
-    let mut allow_list: FxHashSet<String> = env.globals().keys().cloned().collect();
+    let mut allow_list: FxHashSet<String> = env.globals().keys().map(str::to_owned).collect();
     if let Some(config_entries) = &env.config.validate_no_capitalized_calls {
         for entry in config_entries {
             allow_list.insert(entry.clone());
@@ -36,7 +37,7 @@ pub fn validate_no_capitalized_calls(
                     if !name.is_empty()
                         && name.starts_with(|c: char| c.is_ascii_uppercase())
                         // We don't want to flag CONSTANTS()
-                        && name != name.to_uppercase()
+                        && name != name.cow_to_uppercase()
                         && !allow_list.contains(name)
                     {
                         capital_load_globals.insert(lvalue_id, name.to_string());
@@ -50,16 +51,16 @@ pub fn validate_no_capitalized_calls(
                             reason: reason.to_string(),
                             description: Some(format!("{callee_name} may be a component")),
                             loc: *loc,
-                            suggestions: None,
                         })?;
                         continue;
                     }
                 }
-                InstructionValue::PropertyLoad { property, .. } => {
-                    if let PropertyLiteral::String(prop_name) = property {
-                        if prop_name.starts_with(|c: char| c.is_ascii_uppercase()) {
-                            capitalized_properties.insert(lvalue_id, prop_name.clone());
-                        }
+                InstructionValue::PropertyLoad {
+                    property: PropertyLiteral::String(prop_name),
+                    ..
+                } => {
+                    if prop_name.starts_with(|c: char| c.is_ascii_uppercase()) {
+                        capitalized_properties.insert(lvalue_id, prop_name.clone());
                     }
                 }
                 InstructionValue::MethodCall { property, loc, .. } => {
@@ -70,7 +71,6 @@ pub fn validate_no_capitalized_calls(
                             reason: reason.to_string(),
                             description: Some(format!("{prop_name} may be a component")),
                             loc: *loc,
-                            suggestions: None,
                         })?;
                     }
                 }

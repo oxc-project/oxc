@@ -246,6 +246,10 @@ minsize:
 allocs:
   cargo allocs
 
+# Update linter timing snapshots
+lint-timings:
+  cargo lint-timings
+
 # Generate minifier size comparison
 minifier-diff:
   #!/usr/bin/env bash

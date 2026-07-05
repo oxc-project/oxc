@@ -67,6 +67,7 @@ just test         # Run unit/integration tests
 just conformance  # Run conformance tests
 just ready        # Run all checks (use after commits)
 cargo lintgen     # Regenerate linter rules enum and impls after adding/modifying rules
+cargo lint-timings # Update linter timing data after changing linter rule codegen
 # Crate-specific updates
 just ast          # Update generated files (oxc_ast changes)
 just minsize      # Update size snapshots (oxc_minifier changes)
@@ -314,6 +315,10 @@ Tests are TypeScript files in each package's `test/` directory.
 | Semantic              | `tests/` directory                      |
 | NAPI packages         | `test/` directory (Vitest)              |
 | Language Server       | Inline and `/fixtures`                  |
+
+### Linter Codegen Changes
+
+When changing linter codegen files such as `tasks/linter_codegen/**` or generated linter rule runner files under `crates/oxc_linter/src/generated/`, run `cargo lintgen` and `cargo lint-timings` so generated rule metadata and linter timing data stay in sync.
 
 ## Notes
 

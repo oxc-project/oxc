@@ -2,4 +2,8 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/repro-bailout-nopanic-shouldnt-outline.js
 ---
-No changes.
+// @panicThreshold:"none"
+"use no memo";
+function Foo() {
+	return <button onClick={() => alert("hello!")}>Click me!</button>;
+}

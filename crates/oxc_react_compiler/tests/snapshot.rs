@@ -14,23 +14,22 @@
 //! The snapshots are oxc's *own* golden output, so any change in compiler behaviour
 //! surfaces as a diff. Regenerate with `cargo insta accept` after reviewing.
 
-use std::{fs, path::Path};
+use std::{
+    ffi::OsStr,
+    fs,
+    path::{Component, Path, PathBuf},
+};
 
 use convert_case::{Case, Casing};
+use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
-use oxc_react_compiler::react_compiler_hir::Effect;
-use oxc_react_compiler::react_compiler_hir::environment_config::{
-    ExhaustiveEffectDepsMode, ExternalFunctionConfig, InstrumentationConfig,
-};
-use oxc_react_compiler::react_compiler_hir::type_config::{
-    BuiltInTypeRef, FunctionTypeConfig, HookTypeConfig, ObjectTypeConfig, TypeConfig,
-    TypeReferenceConfig, ValueKind,
-};
-use oxc_react_compiler::react_compiler_utils::FxIndexMap;
 use oxc_react_compiler::{
-    DynamicGatingConfig, EnvironmentConfig, GatingConfig, PluginOptions, transform,
+    BuiltInTypeRef, CompilerOutputMode, DynamicGatingConfig, Effect, EnvironmentConfig,
+    ExhaustiveEffectDepsMode, ExternalFunctionConfig, FunctionTypeConfig, FxIndexMap, GatingConfig,
+    HookTypeConfig, InstrumentationConfig, ObjectTypeConfig, PluginOptions, TypeConfig,
+    TypeReferenceConfig, ValueKind, transform,
 };
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -40,6 +39,7 @@ fn snapshots() {
     let fixtures = concat!(env!("CARGO_MANIFEST_DIR"), "/fixtures");
     insta::glob!(fixtures, "**/*.{js,cjs,mjs,ts,cts,mts,jsx,tsx}", |path| {
         let source = fs::read_to_string(path).unwrap();
+        let source = normalize_newlines(&source);
         let snapshot = run_fixture(&source);
         insta::with_settings!({ prepend_module_to_snapshot => false, snapshot_suffix => "", omit_expression => true }, {
             insta::assert_snapshot!(snapshot_name(path), snapshot);
@@ -47,9 +47,19 @@ fn snapshots() {
     });
 }
 
+fn normalize_newlines(source: &str) -> String {
+    source.cow_replace("\r\n", "\n").cow_replace('\r', "\n").into_owned()
+}
+
 /// Parse, analyse, compile, and render the compiled program + diagnostics.
 fn run_fixture(source: &str) -> String {
     let (source_type, options) = parse_pragma(source);
+    // In lint output mode the compiler validates without rewriting the program, so
+    // `changed` is always false. Upstream's `snap` runner still emits the (unmodified)
+    // code in that mode alongside the reported findings, so mirror that here rather
+    // than collapsing to "No changes." — otherwise every lint fixture would look like a
+    // bail-out even though the compiler ran to completion.
+    let lint_mode = CompilerOutputMode::from_opts(&options) == CompilerOutputMode::Lint;
 
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, source_type).parse();
@@ -70,7 +80,16 @@ fn run_fixture(source: &str) -> String {
     }
 
     push_diagnostics(&mut out, "Diagnostics", result.diagnostics.as_slice());
-    if result.changed {
+    // Mirror the upstream `snap` runner, which always re-emits the program as
+    // `## Code` unless a hard error turns the output into `## Error`. So when the
+    // compiler cleanly declines to change anything (e.g. `@expectNothingCompiled`,
+    // or a file with no React-like functions), or when a lint-mode run reports
+    // findings without rewriting the program, echo the reprinted source rather than
+    // the `No changes.` marker. The marker is kept only when a non-lint run reports
+    // an error (parse failure or compile diagnostic), where upstream emits no code —
+    // and echoing a parse-recovered AST would be misleading.
+    let clean = parsed.diagnostics.is_empty() && result.diagnostics.as_slice().is_empty();
+    if result.changed || clean || lint_mode {
         out.push_str(&Codegen::new().build(&program).code);
     } else {
         out.push_str("No changes.");
@@ -91,13 +110,31 @@ fn push_diagnostics(out: &mut String, label: &str, diagnostics: &[impl std::fmt:
     out.push('\n');
 }
 
-/// Snapshot name = fixture path under `fixtures/`, extension dropped and `/` → `__`
-/// so nested fixtures with the same basename don't collide.
+/// Snapshot name = fixture path under `fixtures/`, extension dropped and path
+/// separators replaced with `__`, so nested fixtures with the same basename
+/// don't collide.
 fn snapshot_name(path: &Path) -> String {
-    let full = path.to_string_lossy();
-    let rel = full.rsplit_once("/fixtures/").map_or(full.as_ref(), |(_, rel)| rel);
-    let stem = rel.rsplit_once('.').map_or(rel, |(stem, _ext)| stem);
-    stem.split('/').collect::<Vec<_>>().join("__")
+    let components = path.components().collect::<Vec<_>>();
+    let start = components
+        .iter()
+        .rposition(|component| {
+            matches!(component, Component::Normal(part) if *part == OsStr::new("fixtures"))
+        })
+        .map_or(0, |index| index + 1);
+
+    let mut rel = PathBuf::new();
+    for component in &components[start..] {
+        rel.push(component.as_os_str());
+    }
+    rel.set_extension("");
+
+    rel.components()
+        .filter_map(|component| match component {
+            Component::Normal(part) => Some(part.to_string_lossy()),
+            _ => None,
+        })
+        .collect::<Vec<_>>()
+        .join("__")
 }
 
 /// Build the per-fixture `SourceType` + `PluginOptions` from the first-line pragmas.
@@ -156,6 +193,20 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
             other => set_environment_directive(&mut options.environment, other, value),
         }
     }
+
+    // Mirror the snap runner (`packages/snap/src/compiler.ts`): the fixture corpus runs
+    // with `validatePreserveExistingMemoizationGuarantees` OFF by default — most fixtures
+    // care about compilation output, not whether manual memoization is preserved — and it
+    // is turned on only when the fixture's first line opts in via the directive. Snap keys
+    // off substring presence alone (ignoring any `:value`), so replicate that exactly and
+    // let it override whatever the directive loop parsed. Without this, fixtures that set
+    // `@enablePreserveExistingMemoizationGuarantees:false` still hit `ValidatePreservedManual-
+    // Memoization` and bail with a spurious "memoization could not be preserved" error.
+    options.environment.validate_preserve_existing_memoization_guarantees = source
+        .lines()
+        .next()
+        .unwrap_or("")
+        .contains("@validatePreserveExistingMemoizationGuarantees");
 
     // Upstream parses every (non-Flow) fixture with the TypeScript + JSX plugins,
     // regardless of extension, and as a module unless `@script` — so injected runtime

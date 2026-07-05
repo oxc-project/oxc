@@ -2,4 +2,12 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/typescript-this-param-in-uncompiled-function.ts
 ---
-No changes.
+// @expectNothingCompiled @compilationMode:"infer"
+export function Decorate() {
+	return function(_target: object, _key: string, descriptor: PropertyDescriptor) {
+		const original = descriptor.value;
+		descriptor.value = function(this: unknown) {
+			return original.apply(this, []);
+		};
+	};
+}

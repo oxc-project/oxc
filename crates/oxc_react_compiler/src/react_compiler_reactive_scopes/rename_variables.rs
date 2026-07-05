@@ -29,8 +29,8 @@ use crate::react_compiler_hir::ReactiveTerminalStatement;
 use crate::react_compiler_hir::ReactiveValue;
 use crate::react_compiler_hir::environment::Environment;
 
+use crate::react_compiler_reactive_scopes::visitors;
 use crate::react_compiler_reactive_scopes::visitors::ReactiveFunctionVisitor;
-use crate::react_compiler_reactive_scopes::visitors::{self};
 
 // =============================================================================
 // Scopes
@@ -177,14 +177,12 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
     /// TS: `visitValue(id, value, state) { this.traverseValue(id, value, state); if (value.kind === 'FunctionExpression' || value.kind === 'ObjectMethod') this.visitHirFunction(value.loweredFunc.func, state) }`
     fn visit_value(&self, id: EvaluationOrder, value: &ReactiveValue<'a>, state: &mut Scopes) {
         self.traverse_value(id, value, state);
-        if let ReactiveValue::Instruction(iv) = value {
-            match iv {
-                InstructionValue::FunctionExpression { lowered_func, .. }
-                | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    self.visit_hir_function(lowered_func.func, state);
-                }
-                _ => {}
-            }
+        if let ReactiveValue::Instruction(
+            InstructionValue::FunctionExpression { lowered_func, .. }
+            | InstructionValue::ObjectMethod { lowered_func, .. },
+        ) = value
+        {
+            self.visit_hir_function(lowered_func.func, state);
         }
     }
 }

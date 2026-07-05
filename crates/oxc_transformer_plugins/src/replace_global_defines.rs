@@ -2,7 +2,7 @@ use std::{cmp::Ordering, sync::Arc};
 
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Address, Allocator, ArenaBox, GetAddress, TakeIn, UnstableAddress};
+use oxc_allocator::{Address, Allocator, ArenaBox, GetAddress, ReplaceWith, UnstableAddress};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
@@ -290,7 +290,7 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
         // leaving an invalid `ChainExpression` with no optional elements.
         // Unwrap it to a plain expression to produce a valid AST.
         if matches!(expr, Expression::ChainExpression(_)) {
-            self.unwrap_chain_expression_if_no_optional(expr);
+            Self::unwrap_chain_expression_if_no_optional(expr);
         }
     }
 
@@ -830,7 +830,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
     /// If `expr` is a `ChainExpression` whose chain no longer contains any
     /// `optional: true` markers (because a define replacement removed them),
     /// unwrap it to a plain expression.
-    fn unwrap_chain_expression_if_no_optional(&self, expr: &mut Expression<'a>) {
+    fn unwrap_chain_expression_if_no_optional(expr: &mut Expression<'a>) {
         let Expression::ChainExpression(chain) = &*expr else { return };
 
         // Check the chain element's optional flag and get the first object/callee to walk.
@@ -878,9 +878,10 @@ impl<'a> ReplaceGlobalDefines<'a> {
         }
 
         // No optional markers remain — unwrap the chain to a plain expression.
-        let chain_expr = expr.take_in(&self.allocator);
-        let Expression::ChainExpression(chain) = chain_expr else { unreachable!() };
-        *expr = Expression::from(chain.unbox().expression);
+        expr.replace_with(|chain_expr| {
+            let Expression::ChainExpression(chain) = chain_expr else { unreachable!() };
+            Expression::from(chain.unbox().expression)
+        });
     }
 
     pub fn is_dot_define<'b>(

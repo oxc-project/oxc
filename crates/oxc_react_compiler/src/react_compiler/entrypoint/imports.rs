@@ -7,12 +7,11 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
-use crate::react_compiler_hir::environment::BindingRename;
-use crate::scope::ScopeInfo;
+use crate::scope::ScopeResolver;
 
 use oxc_diagnostics::Diagnostics;
 
-use super::compile_result::{DebugLogEntry, OrderedLogItem};
+use super::compile_result::DebugLogEntry;
 use super::plugin_options::{CompilerTarget, PluginOptions};
 use super::suppression::SuppressionRange;
 
@@ -21,7 +20,6 @@ use super::suppression::SuppressionRange;
 #[derive(Debug, Clone)]
 pub struct NonLocalImportSpecifier {
     pub name: String,
-    pub module: String,
     pub imported: String,
 }
 
@@ -30,23 +28,16 @@ pub struct NonLocalImportSpecifier {
 /// Equivalent to ProgramContext class in Imports.ts.
 pub struct ProgramContext {
     pub opts: PluginOptions,
-    pub code: Option<String>,
     pub react_runtime_module: String,
     pub suppressions: Vec<SuppressionRange>,
     pub has_module_scope_opt_out: bool,
     /// Diagnostics (errors/warnings) accumulated during compilation. Fatality is
     /// decided separately by `panicThreshold`.
     pub diagnostics: Diagnostics,
-    /// Debug-log entries (HIR dumps) emitted when the `debug` feature is enabled.
-    pub ordered_log: Vec<OrderedLogItem>,
-
     // Pre-resolved import local names for codegen
     pub instrument_fn_name: Option<String>,
     pub instrument_gating_name: Option<String>,
     pub hook_guard_name: Option<String>,
-
-    // Variable renames from lowering, to be applied back to the Babel AST
-    pub renames: Vec<BindingRename>,
 
     /// Whether debug logging is enabled (HIR formatting after each pass).
     pub debug_enabled: bool,
@@ -60,25 +51,20 @@ pub struct ProgramContext {
 impl ProgramContext {
     pub fn new(
         opts: PluginOptions,
-        code: Option<String>,
         suppressions: Vec<SuppressionRange>,
         has_module_scope_opt_out: bool,
     ) -> Self {
         let react_runtime_module = get_react_compiler_runtime_module(&opts.target);
-        let debug_enabled = opts.debug;
         Self {
+            debug_enabled: opts.debug,
             opts,
-            code,
             react_runtime_module,
             suppressions,
             has_module_scope_opt_out,
             diagnostics: Diagnostics::new(),
-            ordered_log: Vec::new(),
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
-            renames: Vec::new(),
-            debug_enabled,
             already_compiled: FxHashSet::default(),
             known_referenced_names: FxHashSet::default(),
             imports: FxHashMap::default(),
@@ -98,12 +84,12 @@ impl ProgramContext {
 
     /// Initialize known referenced names from scope bindings.
     /// Call this after construction to seed conflict detection with program scope bindings.
-    pub fn init_from_scope(&mut self, scope: &ScopeInfo) {
+    pub fn init_from_scope(&mut self, scope: &ScopeResolver<'_, '_>) {
         // Register ALL bindings (not just program-scope) so that UID generation
         // avoids name conflicts with any binding in the file. This matches
         // Babel's generateUid() which checks all scopes.
-        for binding in &scope.bindings {
-            self.known_referenced_names.insert(binding.name.clone());
+        for symbol_id in scope.symbols() {
+            self.known_referenced_names.insert(scope.symbol_name(symbol_id).to_string());
         }
     }
 
@@ -173,11 +159,7 @@ impl ProgramContext {
         }
 
         let name = self.new_uid(name_hint.unwrap_or(specifier));
-        let binding = NonLocalImportSpecifier {
-            name,
-            module: module.to_string(),
-            imported: specifier.to_string(),
-        };
+        let binding = NonLocalImportSpecifier { name, imported: specifier.to_string() };
 
         self.imports
             .entry(module.to_string())
@@ -204,9 +186,7 @@ impl ProgramContext {
     }
 
     /// Log a debug entry (for debugLogIRs support).
-    pub fn log_debug(&mut self, entry: DebugLogEntry) {
-        self.ordered_log.push(OrderedLogItem::Debug { entry });
-    }
+    pub fn log_debug(&mut self, _entry: DebugLogEntry) {}
 
     /// Check if there are any pending imports to add to the program.
     pub fn has_pending_imports(&self) -> bool {
@@ -255,7 +235,7 @@ fn is_hook_name(name: &str) -> bool {
         && bytes[0] == b'u'
         && bytes[1] == b's'
         && bytes[2] == b'e'
-        && bytes.get(3).map_or(false, |c| c.is_ascii_uppercase() || c.is_ascii_digit())
+        && bytes.get(3).is_some_and(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
 }
 
 /// Get the runtime module name based on the compiler target.

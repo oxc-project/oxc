@@ -30,74 +30,6 @@ use crate::react_compiler_hir::{
     is_use_ref_type, is_use_state_type,
 };
 
-/// Get the user-visible name for an identifier, matching Babel's
-/// loc.identifierName behavior. First checks the identifier's own name,
-/// then falls back to extracting the name from the source code at the
-/// given source location. This handles SSA identifiers whose names were
-/// lost during compiler passes.
-fn get_identifier_name_with_loc(
-    id: IdentifierId,
-    identifiers: &[Identifier],
-    loc: &Option<SourceLocation>,
-    source_code: Option<&str>,
-) -> Option<String> {
-    let ident = &identifiers[id.0 as usize];
-    match &ident.name {
-        Some(IdentifierName::Named(name)) | Some(IdentifierName::Promoted(name)) => {
-            return Some(name.clone());
-        }
-        _ => {}
-    }
-    // Fall back: find another identifier with the same declaration_id that has a name.
-    let decl_id = ident.declaration_id;
-    for other in identifiers {
-        if other.declaration_id == decl_id {
-            match &other.name {
-                Some(IdentifierName::Named(name)) | Some(IdentifierName::Promoted(name)) => {
-                    return Some(name.clone());
-                }
-                _ => {}
-            }
-        }
-    }
-    // Fall back to extracting from source code using UTF-16 code unit indices.
-    // Babel/JS positions use UTF-16 code unit offsets, but Rust strings are UTF-8,
-    // so we need to convert between the two.
-    if let (Some(loc), Some(code)) = (loc, source_code) {
-        let start_utf16 = loc.start.index? as usize;
-        let end_utf16 = loc.end.index? as usize;
-        if start_utf16 < end_utf16 {
-            // Convert UTF-16 code unit offsets to UTF-8 byte offsets
-            let mut utf16_pos = 0usize;
-            let mut byte_start = None;
-            let mut byte_end = None;
-            for (byte_idx, ch) in code.char_indices() {
-                if utf16_pos == start_utf16 {
-                    byte_start = Some(byte_idx);
-                }
-                if utf16_pos == end_utf16 {
-                    byte_end = Some(byte_idx);
-                    break;
-                }
-                utf16_pos += ch.len_utf16();
-            }
-            // Handle end at the very end of string
-            if utf16_pos == end_utf16 && byte_end.is_none() {
-                byte_end = Some(code.len());
-            }
-            if let (Some(start), Some(end)) = (byte_start, byte_end) {
-                let slice = &code[start..end];
-                if !slice.is_empty()
-                    && slice.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '$')
-                {
-                    return Some(slice.to_string());
-                }
-            }
-        }
-    }
-    None
-}
-
 const MAX_FIXPOINT_ITERATIONS: usize = 100;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -225,9 +157,7 @@ impl DerivationCache {
     }
 
     fn snapshot(&mut self) -> bool {
-        let has_changes = self.has_changes;
-        self.has_changes = false;
-        has_changes
+        std::mem::replace(&mut self.has_changes, false)
     }
 
     fn add_derivation_entry(
@@ -394,20 +324,18 @@ pub fn validate_no_derived_computations_in_effects_exp(
             }
         }
     } else if func.fn_type == ReactFunctionType::Component {
-        if let Some(param) = func.params.first() {
-            if let ParamPattern::Place(place) = param {
-                let name = identifiers[place.identifier.0 as usize].name.clone();
-                context.derivation_cache.cache.insert(
-                    place.identifier,
-                    DerivationMetadata {
-                        place_identifier: place.identifier,
-                        place_name: name,
-                        source_ids: FxIndexSet::default(),
-                        type_of_value: TypeOfValue::FromProps,
-                        is_state_source: true,
-                    },
-                );
-            }
+        if let Some(ParamPattern::Place(place)) = func.params.first() {
+            let name = identifiers[place.identifier.0 as usize].name.clone();
+            context.derivation_cache.cache.insert(
+                place.identifier,
+                DerivationMetadata {
+                    place_identifier: place.identifier,
+                    place_name: name,
+                    source_ids: FxIndexSet::default(),
+                    type_of_value: TypeOfValue::FromProps,
+                    is_state_source: true,
+                },
+            );
         }
     }
 
@@ -421,7 +349,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
             record_phi_derivations(block, &mut context, env);
             for &instr_id in &block.instructions {
                 let instr = &func.instructions[instr_id.0 as usize];
-                record_instruction_derivations(instr, &mut context, is_first_pass, func, env)?;
+                record_instruction_derivations(instr, &mut context, is_first_pass, env)?;
             }
         }
 
@@ -447,7 +375,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
         .collect();
 
     for (_key, effect_func_id, dep_elements) in &effects_cache {
-        validate_effect(*effect_func_id, dep_elements, &mut context, func, env, &mut errors);
+        validate_effect(*effect_func_id, dep_elements, &mut context, env, &mut errors);
     }
 
     Ok(errors)
@@ -480,11 +408,11 @@ fn record_phi_derivations(block: &BasicBlock, context: &mut ValidationContext, e
     }
 }
 
+#[allow(clippy::only_used_in_recursion)]
 fn record_instruction_derivations(
     instr: &Instruction,
     context: &mut ValidationContext,
     is_first_pass: bool,
-    _outer_func: &HirFunction,
     env: &Environment,
 ) -> Result<(), CompilerDiagnostic> {
     let identifiers = &env.identifiers;
@@ -513,13 +441,7 @@ fn record_instruction_derivations(
                 record_phi_derivations(block, context, env);
                 for &inner_instr_id in &block.instructions {
                     let inner_instr = &inner_func.instructions[inner_instr_id.0 as usize];
-                    record_instruction_derivations(
-                        inner_instr,
-                        context,
-                        is_first_pass,
-                        inner_func,
-                        env,
-                    )?;
+                    record_instruction_derivations(inner_instr, context, is_first_pass, env)?;
                 }
             }
         }
@@ -840,7 +762,6 @@ fn validate_effect(
     effect_func_id: FunctionId,
     dependencies: &[DepElement],
     context: &mut ValidationContext,
-    _outer_func: &HirFunction,
     env: &Environment,
     errors: &mut CompilerError,
 ) {
@@ -853,7 +774,6 @@ fn validate_effect(
     struct DerivedSetStateCall {
         callee_loc: Option<SourceLocation>,
         callee_id: IdentifierId,
-        callee_identifier_name: Option<String>,
         source_ids: FxIndexSet<IdentifierId>,
     }
 
@@ -944,18 +864,9 @@ fn validate_effect(
 
                             let arg_metadata = context.derivation_cache.cache.get(&arg0.identifier);
                             if let Some(am) = arg_metadata {
-                                // Get the user-visible identifier name, matching Babel's
-                                // loc.identifierName. Falls back to extracting from source code.
-                                let callee_ident_name = get_identifier_name_with_loc(
-                                    callee.identifier,
-                                    identifiers,
-                                    &callee.loc,
-                                    env.code.as_deref(),
-                                );
                                 effect_derived_set_state_calls.push(DerivedSetStateCall {
                                     callee_loc: callee.loc,
                                     callee_id: callee.identifier,
-                                    callee_identifier_name: callee_ident_name,
                                     source_ids: am.source_ids.clone(),
                                 });
                             }
@@ -1078,7 +989,6 @@ fn validate_effect(
                         message: Some(
                             "This should be computed during render, not in an effect".to_string(),
                         ),
-                        identifier_name: derived.callee_identifier_name.clone(),
                     }),
                 );
             }
@@ -1204,9 +1114,7 @@ fn validate_effect_non_exp(
     // Check that the effect function only captures effect deps and setState
     for ctx in &effect_func.context {
         let ctx_ty = &tys[ids[ctx.identifier.0 as usize].type_.0 as usize];
-        if is_set_state_type(ctx_ty) {
-            continue;
-        } else if effect_deps.iter().any(|d| *d == ctx.identifier) {
+        if is_set_state_type(ctx_ty) || effect_deps.contains(&ctx.identifier) {
             continue;
         } else {
             return Vec::new();
@@ -1315,10 +1223,8 @@ fn validate_effect_non_exp(
                     return Vec::new();
                 }
             }
-            Terminal::Switch { test, .. } => {
-                if dep_values.contains_key(&test.identifier) {
-                    return Vec::new();
-                }
+            Terminal::Switch { test, .. } if dep_values.contains_key(&test.identifier) => {
+                return Vec::new();
             }
             _ => {}
         }
@@ -1334,7 +1240,6 @@ fn validate_effect_non_exp(
                 reason: "Values derived from props and state should be calculated during render, not in an effect. (https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)".to_string(),
                 description: None,
                 loc: Some(loc),
-                suggestions: None,
             }
         })
         .collect()

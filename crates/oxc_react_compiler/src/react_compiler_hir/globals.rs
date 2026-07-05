@@ -62,18 +62,19 @@ impl GlobalRegistry {
     }
 
     pub fn contains_key(&self, key: &str) -> bool {
-        self.entries.contains_key(key) || self.base.map_or(false, |b| b.contains_key(key))
+        self.entries.contains_key(key) || self.base.is_some_and(|b| b.contains_key(key))
     }
 
     /// Iterate over all keys in the registry (base + extras).
     /// Keys in extras that shadow base keys appear only once.
-    pub fn keys(&self) -> impl Iterator<Item = &String> {
+    pub fn keys(&self) -> impl Iterator<Item = &str> {
         let base_keys = self
             .base
             .into_iter()
             .flat_map(|b| b.keys())
-            .filter(|k| !self.entries.contains_key(k.as_str()));
-        self.entries.keys().chain(base_keys)
+            .filter(|k| !self.entries.contains_key(k.as_str()))
+            .map(String::as_str);
+        self.entries.keys().map(String::as_str).chain(base_keys)
     }
 
     /// Consume the registry and return the inner FxHashMap.
@@ -81,6 +82,12 @@ impl GlobalRegistry {
     pub fn into_inner(self) -> FxHashMap<String, Global> {
         debug_assert!(self.base.is_none(), "into_inner() called on overlay-mode GlobalRegistry");
         self.entries
+    }
+}
+
+impl Default for GlobalRegistry {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -119,38 +126,20 @@ pub fn base_globals() -> &'static FxHashMap<String, Global> {
 // installTypeConfig — converts TypeConfig to internal Type
 // =============================================================================
 
-/// Convert a user-provided TypeConfig into an internal Type, registering shapes
-/// as needed. Ported from TS `installTypeConfig` in Globals.ts.
-/// If `errors` is provided, hook-name vs hook-type consistency validation
-/// errors are collected there.
-pub fn install_type_config(
-    _globals: &mut GlobalRegistry,
-    shapes: &mut ShapeRegistry,
-    type_config: &TypeConfig,
-    module_name: &str,
-    _loc: (),
-) -> Global {
-    install_type_config_inner(_globals, shapes, type_config, module_name, _loc, &mut None)
-}
-
 /// Like `install_type_config` but collects validation errors.
 pub fn install_type_config_with_errors(
-    _globals: &mut GlobalRegistry,
     shapes: &mut ShapeRegistry,
     type_config: &TypeConfig,
     module_name: &str,
-    _loc: (),
     errors: &mut Vec<String>,
 ) -> Global {
-    install_type_config_inner(_globals, shapes, type_config, module_name, _loc, &mut Some(errors))
+    install_type_config_inner(shapes, type_config, module_name, &mut Some(errors))
 }
 
 fn install_type_config_inner(
-    _globals: &mut GlobalRegistry,
     shapes: &mut ShapeRegistry,
     type_config: &TypeConfig,
     module_name: &str,
-    _loc: (),
     errors: &mut Option<&mut Vec<String>>,
 ) -> Global {
     match type_config {
@@ -165,14 +154,8 @@ fn install_type_config_inner(
         },
         TypeConfig::Function(func_config) => {
             // Compute return type first to avoid double-borrow of shapes
-            let return_type = install_type_config_inner(
-                _globals,
-                shapes,
-                &func_config.return_type,
-                module_name,
-                (),
-                errors,
-            );
+            let return_type =
+                install_type_config_inner(shapes, &func_config.return_type, module_name, errors);
             add_function(
                 shapes,
                 Vec::new(),
@@ -198,14 +181,8 @@ fn install_type_config_inner(
         }
         TypeConfig::Hook(hook_config) => {
             // Compute return type first to avoid double-borrow of shapes
-            let return_type = install_type_config_inner(
-                _globals,
-                shapes,
-                &hook_config.return_type,
-                module_name,
-                (),
-                errors,
-            );
+            let return_type =
+                install_type_config_inner(shapes, &hook_config.return_type, module_name, errors);
             add_hook(
                 shapes,
                 HookSignatureBuilder {
@@ -232,11 +209,9 @@ fn install_type_config_inner(
                         .iter()
                         .map(|(key, value)| {
                             let ty = install_type_config_inner(
-                                _globals,
                                 shapes,
                                 value,
                                 module_name,
-                                (),
                                 errors,
                             );
                             // Validate hook-name vs hook-type consistency (matching TS installTypeConfig)

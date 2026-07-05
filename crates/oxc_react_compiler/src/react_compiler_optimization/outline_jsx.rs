@@ -200,7 +200,7 @@ fn outline_jsx_impl<'a>(
 fn process_and_outline_jsx<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-    jsx_group: &mut Vec<JsxInstrInfo>,
+    jsx_group: &mut [JsxInstrInfo],
     globals: &FxHashMap<IdentifierId, usize>,
     rewrite_instr: &mut FxHashMap<EvaluationOrder, Vec<Instruction<'a>>>,
     outlined_fns: &mut Vec<HirFunction<'a>>,
@@ -257,7 +257,7 @@ fn collect_props<'a>(
     let mut attributes = Vec::new();
     let jsx_ids: FxHashSet<IdentifierId> = jsx_group.iter().map(|j| j.lvalue_id).collect();
 
-    let mut generate_name = |old_name: &str, _env: &mut Environment| -> String {
+    let mut generate_name = |old_name: &str| -> String {
         let mut new_name = old_name.to_string();
         while seen.contains(&new_name) {
             new_name = format!("{}{}", old_name, id_counter);
@@ -276,7 +276,7 @@ fn collect_props<'a>(
                 match attr {
                     JsxAttribute::SpreadAttribute { .. } => return None,
                     JsxAttribute::Attribute { name, place } => {
-                        let new_name = generate_name(name, env);
+                        let new_name = generate_name(name);
                         attributes.push(OutlinedJsxAttribute {
                             original_name: name.clone(),
                             new_name,
@@ -304,7 +304,7 @@ fn collect_props<'a>(
                         Some(IdentifierName::Promoted(n)) => n.clone(),
                         None => format!("#t{}", decl_id.0),
                     };
-                    let new_name = generate_name("t", env);
+                    let new_name = generate_name("t");
                     attributes.push(OutlinedJsxAttribute {
                         original_name: child_name,
                         new_name,
@@ -444,7 +444,6 @@ fn emit_outlined_fn<'a>(
         name_hint: None,
         fn_type: ReactFunctionType::Other,
         params: vec![ParamPattern::Place(props_obj)],
-        return_type_annotation: None,
         returns: returns_place,
         context: Vec::new(),
         body: HIR { entry: BlockId(0), blocks },
@@ -467,11 +466,10 @@ fn emit_load_globals<'a>(
     let mut instructions = Vec::new();
     for info in jsx_group {
         let instr = &func.instructions[info.instr_idx];
-        if let InstructionValue::JsxExpression { tag, .. } = &instr.value {
-            if let JsxTag::Place(tag_place) = tag {
-                let global_instr_idx = globals.get(&tag_place.identifier)?;
-                instructions.push(func.instructions[*global_instr_idx].clone());
-            }
+        if let InstructionValue::JsxExpression { tag: JsxTag::Place(tag_place), .. } = &instr.value
+        {
+            let global_instr_idx = globals.get(&tag_place.identifier)?;
+            instructions.push(func.instructions[*global_instr_idx].clone());
         }
     }
     Some(instructions)

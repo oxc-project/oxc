@@ -10,7 +10,6 @@ function Component(props) {
 	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
 		let y;
 		x = [];
-		;
 		try {
 			throwInput(x);
 		} catch (t0) {

@@ -81,7 +81,7 @@ pub fn infer_reactive_scope_variables(
     });
 
     // Set loc on each scope
-    for (_group_id, state) in &scopes {
+    for state in scopes.values() {
         env.scopes[state.scope_id.0 as usize].loc = state.loc;
     }
 
@@ -108,7 +108,7 @@ pub fn infer_reactive_scope_variables(
             EvaluationOrder(max_instruction.0.max(block.terminal.evaluation_order().0));
     }
 
-    for (_group_id, state) in &scopes {
+    for state in scopes.values() {
         let scope = &env.scopes[state.scope_id.0 as usize];
         if scope.range.start == EvaluationOrder(0)
             || scope.range.end == EvaluationOrder(0)
@@ -117,7 +117,7 @@ pub fn infer_reactive_scope_variables(
         {
             return Err(CompilerDiagnostic::new(
                 ErrorCategory::Invariant,
-                &format!(
+                format!(
                     "Invalid mutable range for scope: Scope @{} has range [{}:{}] but the valid range is [1:{}]",
                     scope.id.0,
                     scope.range.start.0,
@@ -258,8 +258,6 @@ pub(crate) fn find_disjoint_mutable_values(
     let mut scope_identifiers = DisjointSet::<IdentifierId>::new();
     let mut declarations: FxHashMap<DeclarationId, IdentifierId> = FxHashMap::default();
 
-    let enable_forest = env.config.enable_forest;
-
     for (_block_id, block) in &func.body.blocks {
         // Handle phi nodes
         for phi in &block.phis {
@@ -299,7 +297,7 @@ pub(crate) fn find_disjoint_mutable_values(
                     operands.push(phi_operand.identifier);
                 }
                 scope_identifiers.union(&operands);
-            } else if enable_forest {
+            } else if env.config.enable_forest {
                 for (_pred_id, phi_operand) in &phi.operands {
                     scope_identifiers.union(&[phi_id, phi_operand.identifier]);
                 }

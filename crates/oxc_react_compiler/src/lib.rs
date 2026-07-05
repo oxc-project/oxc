@@ -1,50 +1,41 @@
 use oxc_allocator::{Allocator, ArenaVec};
 
-pub mod convert_scope;
-pub mod diagnostics;
-pub mod prefilter;
-pub mod scope;
+mod diagnostics;
+mod prefilter;
+mod scope;
 
-// Vendored React Compiler core crates (from oxc-project/forked-react-compiler),
-// each crate flattened to a module. Kept near byte-for-byte with upstream for easy
-// re-syncing, so `clippy::all` is relaxed here rather than editing the vendored code.
-// They are `pub` so the public API may name types that originate inside them (e.g.
-// `TransformResult::events`); being `pub` also keeps `dead_code` quiet on the parts
-// the conversion layer doesn't reach, so only the few genuinely-dead private items
-// carry their own targeted `#[allow(dead_code)]`.
-#[allow(clippy::all)]
-pub mod react_compiler;
-#[allow(clippy::all)]
-pub mod react_compiler_diagnostics;
-#[allow(clippy::all)]
-pub mod react_compiler_hir;
-#[allow(clippy::all)]
-pub mod react_compiler_inference;
-#[allow(clippy::all)]
-pub mod react_compiler_lowering;
-#[allow(clippy::all)]
-pub mod react_compiler_optimization;
-#[allow(clippy::all)]
-pub mod react_compiler_reactive_scopes;
-#[allow(clippy::all)]
-pub mod react_compiler_ssa;
-#[allow(clippy::all)]
-pub mod react_compiler_typeinference;
-#[allow(clippy::all)]
-pub mod react_compiler_utils;
-#[allow(clippy::all)]
-pub mod react_compiler_validation;
+mod react_compiler;
+mod react_compiler_diagnostics;
+mod react_compiler_hir;
+mod react_compiler_inference;
+mod react_compiler_lowering;
+mod react_compiler_optimization;
+mod react_compiler_reactive_scopes;
+mod react_compiler_ssa;
+mod react_compiler_typeinference;
+mod react_compiler_utils;
+mod react_compiler_validation;
 
 use crate::react_compiler::entrypoint::compile_result::CompileResult;
+use crate::react_compiler::entrypoint::imports::get_react_compiler_runtime_module;
 use crate::react_compiler::entrypoint::program::compile_program;
-use convert_scope::convert_scope_info;
 use prefilter::{has_react_like_functions, has_resource_management_declarations};
+use scope::ScopeResolver;
 
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use crate::react_compiler::entrypoint::plugin_options::{
-    CompilerTarget, DynamicGatingConfig, GatingConfig, PluginOptions,
+    CompilerOutputMode, CompilerTarget, DynamicGatingConfig, GatingConfig, PluginOptions,
 };
-pub use crate::react_compiler_hir::environment_config::EnvironmentConfig;
+pub use crate::react_compiler_hir::Effect;
+pub use crate::react_compiler_hir::environment_config::{
+    EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunctionConfig, HookConfig,
+    InstrumentationConfig,
+};
+pub use crate::react_compiler_hir::type_config::{
+    BuiltInTypeRef, FunctionTypeConfig, HookTypeConfig, ObjectTypeConfig, TypeConfig,
+    TypeReferenceConfig, ValueKind,
+};
+pub use crate::react_compiler_utils::FxIndexMap;
 
 use oxc_ast::ast::Program;
 use oxc_diagnostics::Diagnostics;
@@ -123,6 +114,12 @@ fn compile<'a>(
     allocator: &'a Allocator,
     options: PluginOptions,
 ) -> (Option<Program<'a>>, Diagnostics) {
+    // Check for existing runtime imports (file already compiled).
+    if has_memo_cache_function_import(program, &get_react_compiler_runtime_module(&options.target))
+    {
+        return (None, Diagnostics::default());
+    }
+
     // Skip files with no React-like functions, unless the mode compiles everything.
     if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
         && !has_react_like_functions(program)
@@ -138,9 +135,9 @@ fn compile<'a>(
     // The codegen back-end builds oxc nodes directly via this `AstBuilder`, and the
     // compiled program is spliced/returned as an arena-allocated `Program<'a>`.
     let ast_builder = oxc_ast::builder::AstBuilder::new(allocator);
-    let scope_info = convert_scope_info(semantic, program);
+    let scope = ScopeResolver::new(semantic, program);
     // Function discovery and lowering both walk the oxc `Program` directly.
-    let result = compile_program(&ast_builder, program, scope_info, options);
+    let result = compile_program(&ast_builder, program, &scope, options);
 
     let (program_ast, diagnostics) = match result {
         CompileResult::Success { ast, diagnostics, .. } => (ast, diagnostics),
@@ -154,6 +151,36 @@ fn compile<'a>(
     });
 
     (compiled, diagnostics)
+}
+
+fn has_memo_cache_function_import(program: &Program<'_>, module_name: &str) -> bool {
+    for stmt in &program.body {
+        if let oxc_ast::ast::Statement::ImportDeclaration(import) = stmt
+            && import.source.value == module_name
+            && import.import_kind.is_value()
+            && let Some(specifiers) = &import.specifiers
+        {
+            for specifier in specifiers {
+                if let oxc_ast::ast::ImportDeclarationSpecifier::ImportSpecifier(data) = specifier
+                    && data.import_kind.is_value()
+                {
+                    let imported_name = match &data.imported {
+                        oxc_ast::ast::ModuleExportName::IdentifierName(id) => {
+                            Some(id.name.as_str())
+                        }
+                        oxc_ast::ast::ModuleExportName::IdentifierReference(id) => {
+                            Some(id.name.as_str())
+                        }
+                        oxc_ast::ast::ModuleExportName::StringLiteral(s) => Some(s.value.as_str()),
+                    };
+                    if imported_name == Some("c") {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
 }
 
 /// Carry over the comments attached to top-level statements of the compiled

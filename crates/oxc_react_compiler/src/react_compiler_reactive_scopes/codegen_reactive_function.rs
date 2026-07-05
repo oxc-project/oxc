@@ -108,16 +108,19 @@ pub fn codegen_function<'a, 'h>(
         fbt_operands,
     );
 
-    // The value-emission port covers most instruction kinds, but a few sub-emitters
-    // (function/object/JSX expressions, hook-guard wrapping, TS-type reparse) are
-    // deferred to later batches and currently raise an invariant error. Until they
-    // land — and until the emitted body is actually spliced into the program — fall
-    // back to an empty body on any emission error, preserving the pre-batch behavior
-    // (the original program is returned un-memoized by `compile_program`) without
-    // surfacing spurious diagnostics. This shim is removed once emission is complete.
+    // A few codegen sub-emitters (destructuring reassignment targets, hook-guard
+    // wrapping) are not yet ported and raise an `unimplemented` error. For those,
+    // fall back to an empty body so the function is emitted un-memoized instead of
+    // surfacing a spurious diagnostic for a construct the upstream compiler handles.
+    //
+    // Genuine invariant errors (unnamed temporaries, MethodCall property must be an
+    // unmemoized MemberExpression, const/let referenced as an expression, ...) are
+    // NOT `unimplemented` and propagate as diagnostics — matching the upstream
+    // compiler, which throws an Invariant on these inputs rather than silently
+    // emitting wrong code.
     let mut compiled = match ox_codegen_reactive_function(&mut cx, func) {
         Ok(compiled) => compiled,
-        Err(_) => OxcCompiledFunction {
+        Err(err) if err.unimplemented => OxcCompiledFunction {
             params: oxc_ast::ast::FormalParameters::boxed(
                 SPAN,
                 oxc_ast::ast::FormalParameterKind::FormalParameter,
@@ -139,6 +142,7 @@ pub fn codegen_function<'a, 'h>(
             pruned_memo_blocks: 0,
             pruned_memo_values: 0,
         },
+        Err(err) => return Err(err),
     };
 
     let cache_count = compiled.memo_slots_used;
@@ -237,7 +241,6 @@ fn ox_codegen_outlined<'a>(
                 reason: diag.reason,
                 description: diag.description,
                 loc,
-                suggestions: diag.suggestions,
             });
             err
         })?;
@@ -710,8 +713,16 @@ fn ox_codegen_block_no_reset<'a, 'h>(
                 };
                 if let Some(ref label) = term_stmt.label {
                     if !label.implicit {
+                        // Collapse a labeled block that wraps a single statement
+                        // (`bb0: { switch {} }` -> `bb0: switch {}`). A `try` is the
+                        // exception: the reference output always keeps the braces around a
+                        // labeled `try` (`bb0: { try {} catch {} }`, never `bb0: try`), as
+                        // the catch-binding declaration originally padded the block.
                         let inner = match stmt {
-                            oxc::Statement::BlockStatement(mut bs) if bs.body.len() == 1 => {
+                            oxc::Statement::BlockStatement(mut bs)
+                                if bs.body.len() == 1
+                                    && !matches!(bs.body[0], oxc::Statement::TryStatement(_)) =>
+                            {
                                 bs.body.pop().unwrap()
                             }
                             other => other,
@@ -929,8 +940,10 @@ fn ox_codegen_reactive_scope<'a, 'h>(
     if let Some(ref early_return) = early_return_value {
         let early_ident = &cx.env.identifiers[early_return.value.0 as usize];
         let name = match &early_ident.name {
-            Some(crate::react_compiler_hir::IdentifierName::Named(n)) => n.clone(),
-            Some(crate::react_compiler_hir::IdentifierName::Promoted(n)) => n.clone(),
+            Some(
+                crate::react_compiler_hir::IdentifierName::Named(n)
+                | crate::react_compiler_hir::IdentifierName::Promoted(n),
+            ) => n.as_str(),
             None => {
                 return Err(invariant_err(
                     "Expected early return value to be promoted to a named variable",
@@ -940,14 +953,14 @@ fn ox_codegen_reactive_scope<'a, 'h>(
         };
         let test = oxc_ast::ast::Expression::new_binary_expression(
             SPAN,
-            oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, &name), &cx.ast),
+            oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, name), &cx.ast),
             oxc::BinaryOperator::StrictInequality,
             ox_symbol_for(&cx.ast, EARLY_RETURN_SENTINEL),
             &cx.ast,
         );
         let return_stmt = oxc_ast::ast::Statement::new_return_statement(
             SPAN,
-            Some(oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, &name), &cx.ast)),
+            Some(oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, name), &cx.ast)),
             &cx.ast,
         );
         let consequent = oxc_ast::ast::Statement::new_block_statement(
@@ -1173,7 +1186,6 @@ fn ox_codegen_for_in<'a, 'h>(
             reason: "Support non-trivial for..in inits".to_string(),
             description: None,
             loc,
-            suggestions: None,
         })?;
         return Ok(Some(oxc_ast::ast::Statement::new_empty_statement(SPAN, &cx.ast)));
     }
@@ -1234,7 +1246,6 @@ fn ox_codegen_for_of<'a, 'h>(
             reason: "Support non-trivial for..of inits".to_string(),
             description: None,
             loc,
-            suggestions: None,
         })?;
         return Ok(Some(oxc_ast::ast::Statement::new_empty_statement(SPAN, &cx.ast)));
     }
@@ -1284,7 +1295,6 @@ fn ox_extract_for_in_of_lval<'a>(
                 reason: format!("Support non-trivial {} inits", context_name),
                 description: None,
                 loc,
-                suggestions: None,
             })?;
             return Ok((
                 oxc_ast::ast::BindingPattern::new_binding_identifier(SPAN, "_", &cx.ast),
@@ -1428,7 +1438,13 @@ fn ox_codegen_instruction_nullable<'a, 'h>(
             | InstructionValue::Destructure { .. }
             | InstructionValue::DeclareLocal { .. }
             | InstructionValue::DeclareContext { .. } => {
-                return ox_codegen_store_or_declare(cx, instr, value);
+                // `emit_store` returns an empty statement for `InstructionKind::Catch`
+                // declarations: the catch parameter is emitted from the `Try` terminal's
+                // handler binding, so the declaration itself has no textual form. Drop it
+                // (like the other instruction paths below) so it does not surface as a
+                // stray `;` at the top of the labeled block wrapping the `try`.
+                let stmt = ox_codegen_store_or_declare(cx, instr, value)?;
+                return Ok(stmt.filter(|s| !matches!(s, oxc::Statement::EmptyStatement(_))));
             }
             InstructionValue::StartMemoize { .. } | InstructionValue::FinishMemoize { .. } => {
                 return Ok(None);
@@ -1731,7 +1747,6 @@ fn ox_codegen_instruction_value<'a, 'h>(
                             reason: "(CodegenReactiveFunction::codegenInstructionValue) Cannot declare variables in a value block".to_string(),
                             description: None,
                             loc: None,
-                            suggestions: None,
                         })?;
                         expressions.push(oxc_ast::ast::Expression::new_string_literal(
                             SPAN,
@@ -1746,7 +1761,6 @@ fn ox_codegen_instruction_value<'a, 'h>(
                             reason: "(CodegenReactiveFunction::codegenInstructionValue) Handle conversion of statement to expression".to_string(),
                             description: None,
                             loc: None,
-                            suggestions: None,
                         })?;
                         expressions.push(oxc_ast::ast::Expression::new_string_literal(
                             SPAN,
@@ -1940,7 +1954,7 @@ fn ox_codegen_base_instruction_value<'a>(
                 false,
                 &cx.ast,
             );
-            let result = ox_maybe_wrap_hook_call(cx, call_expr, callee.identifier)?;
+            let result = ox_maybe_wrap_hook_call(cx, call_expr)?;
             Ok(OxValue::Expression(result))
         }
         InstructionValue::MethodCall { property, args, .. } => {
@@ -1957,7 +1971,6 @@ fn ox_codegen_base_instruction_value<'a>(
                     .with_detail(CompilerDiagnosticDetail::Error {
                         loc: property.loc,
                         message: Some(msg),
-                        identifier_name: None,
                     }),
                 );
                 return Err(err);
@@ -1971,7 +1984,7 @@ fn ox_codegen_base_instruction_value<'a>(
                 false,
                 &cx.ast,
             );
-            let result = ox_maybe_wrap_hook_call(cx, call_expr, property.identifier)?;
+            let result = ox_maybe_wrap_hook_call(cx, call_expr)?;
             Ok(OxValue::Expression(result))
         }
         InstructionValue::NewExpression { callee, args, .. } => {
@@ -2487,9 +2500,6 @@ fn ox_codegen_object_property_key<'a>(
             let expr = ox_codegen_place_to_expression(cx, name)?;
             Ok((oxc::PropertyKey::from(expr), true))
         }
-        ObjectPropertyKey::Number { name } => {
-            Ok((oxc::PropertyKey::from(ox_number(&cx.ast, name.value())), false))
-        }
     }
 }
 
@@ -2562,6 +2572,12 @@ fn ox_codegen_dependency<'a>(
 
 /// Convert a `BindingPattern` (from `ox_codegen_lvalue`) into an `AssignmentTarget`
 /// for reassignment / `StoreLocal` emission.
+///
+/// oxc models declaration binding patterns (`BindingPattern`) and assignment targets
+/// (`AssignmentTarget`) as distinct node families, so a destructuring reassignment
+/// like `[x] = arr` or `({a} = obj)` must be re-shaped from the pattern produced by
+/// `ox_codegen_lvalue` into the corresponding assignment-target tree. Mirrors Babel,
+/// which reuses the same `ArrayPattern`/`ObjectPattern` nodes as assignment LHS.
 fn ox_binding_pattern_to_assignment_target<'a>(
     cx: &OxcContext<'a, '_, '_>,
     pattern: oxc::BindingPattern<'a>,
@@ -2569,13 +2585,116 @@ fn ox_binding_pattern_to_assignment_target<'a>(
     match pattern {
         oxc::BindingPattern::BindingIdentifier(id) => {
             let id = id.unbox();
-            Ok(oxc::AssignmentTarget::AssignmentTargetIdentifier(
-                oxc_ast::ast::IdentifierReference::boxed(SPAN, id.name, &cx.ast),
+            Ok(oxc::AssignmentTarget::new_assignment_target_identifier(SPAN, id.name, &cx.ast))
+        }
+        oxc::BindingPattern::ArrayPattern(arr) => {
+            let arr = arr.unbox();
+            let mut elements: oxc_allocator::Vec<
+                'a,
+                Option<oxc::AssignmentTargetMaybeDefault<'a>>,
+            > = oxc_allocator::ArenaVec::new_in(&cx.ast);
+            for element in arr.elements {
+                match element {
+                    Some(bp) => elements.push(Some(ox_binding_pattern_to_maybe_default(cx, bp)?)),
+                    None => elements.push(None),
+                }
+            }
+            let rest = ox_binding_rest_to_assignment_rest(cx, arr.rest)?;
+            Ok(oxc::AssignmentTarget::new_array_assignment_target(SPAN, elements, rest, &cx.ast))
+        }
+        oxc::BindingPattern::ObjectPattern(obj) => {
+            let obj = obj.unbox();
+            let mut properties: oxc_allocator::Vec<'a, oxc::AssignmentTargetProperty<'a>> =
+                oxc_allocator::ArenaVec::new_in(&cx.ast);
+            for prop in obj.properties {
+                properties.push(ox_binding_property_to_assignment_property(cx, prop)?);
+            }
+            let rest = ox_binding_rest_to_assignment_rest(cx, obj.rest)?;
+            Ok(oxc::AssignmentTarget::new_object_assignment_target(SPAN, properties, rest, &cx.ast))
+        }
+        // A top-level default (`x = 1`) is not a valid assignment target on its own;
+        // defaults only appear nested and are handled by `ox_binding_pattern_to_maybe_default`.
+        oxc::BindingPattern::AssignmentPattern(_) => {
+            Err(invariant_err("Unexpected default in destructuring assignment target", None))
+        }
+    }
+}
+
+/// Convert a `BindingPattern` element into an `AssignmentTargetMaybeDefault`, turning a
+/// nested default (`[x = 1] = arr`) into an `AssignmentTargetWithDefault`.
+fn ox_binding_pattern_to_maybe_default<'a>(
+    cx: &OxcContext<'a, '_, '_>,
+    pattern: oxc::BindingPattern<'a>,
+) -> Result<oxc::AssignmentTargetMaybeDefault<'a>, CompilerError> {
+    match pattern {
+        oxc::BindingPattern::AssignmentPattern(assign) => {
+            let assign = assign.unbox();
+            let binding = ox_binding_pattern_to_assignment_target(cx, assign.left)?;
+            Ok(oxc::AssignmentTargetMaybeDefault::new_assignment_target_with_default(
+                SPAN,
+                binding,
+                assign.right,
+                &cx.ast,
             ))
         }
-        _ => {
-            Err(invariant_err("Destructuring reassignment targets are not yet ported to oxc", None))
+        other => Ok(oxc::AssignmentTargetMaybeDefault::from(
+            ox_binding_pattern_to_assignment_target(cx, other)?,
+        )),
+    }
+}
+
+/// Convert an object `BindingProperty` into an `AssignmentTargetProperty`, preserving the
+/// shorthand form (`{a}` / `{a = 1}`) vs the keyed form (`{a: b}` / `{a: b = 1}`).
+fn ox_binding_property_to_assignment_property<'a>(
+    cx: &OxcContext<'a, '_, '_>,
+    prop: oxc::BindingProperty<'a>,
+) -> Result<oxc::AssignmentTargetProperty<'a>, CompilerError> {
+    if prop.shorthand {
+        let (binding, init) = match prop.value {
+            oxc::BindingPattern::BindingIdentifier(id) => (id.unbox(), None),
+            oxc::BindingPattern::AssignmentPattern(assign) => {
+                let assign = assign.unbox();
+                let oxc::BindingPattern::BindingIdentifier(id) = assign.left else {
+                    return Err(invariant_err(
+                        "Expected an identifier in shorthand destructuring property",
+                        None,
+                    ));
+                };
+                (id.unbox(), Some(assign.right))
+            }
+            _ => {
+                return Err(invariant_err(
+                    "Expected an identifier in shorthand destructuring property",
+                    None,
+                ));
+            }
+        };
+        let reference = oxc_ast::ast::IdentifierReference::new(SPAN, binding.name, &cx.ast);
+        return Ok(oxc::AssignmentTargetProperty::new_assignment_target_property_identifier(
+            SPAN, reference, init, &cx.ast,
+        ));
+    }
+    let binding = ox_binding_pattern_to_maybe_default(cx, prop.value)?;
+    Ok(oxc::AssignmentTargetProperty::new_assignment_target_property_property(
+        SPAN,
+        prop.key,
+        binding,
+        prop.computed,
+        &cx.ast,
+    ))
+}
+
+/// Convert a binding rest element (`...x`) into an assignment-target rest.
+fn ox_binding_rest_to_assignment_rest<'a>(
+    cx: &OxcContext<'a, '_, '_>,
+    rest: Option<oxc_allocator::Box<'a, oxc::BindingRestElement<'a>>>,
+) -> Result<Option<oxc::AssignmentTargetRest<'a>>, CompilerError> {
+    match rest {
+        Some(rest) => {
+            let target = ox_binding_pattern_to_assignment_target(cx, rest.unbox().argument)?;
+            Ok(Some(oxc_ast::ast::AssignmentTargetRest::new(SPAN, target, &cx.ast)))
         }
+        None => Ok(None),
     }
 }
 
@@ -3154,14 +3273,13 @@ fn ox_convert_member_expression_to_jsx<'a>(
 fn ox_maybe_wrap_hook_call<'a>(
     cx: &OxcContext<'a, '_, '_>,
     call_expr: oxc::Expression<'a>,
-    _callee_id: IdentifierId,
 ) -> Result<oxc::Expression<'a>, CompilerError> {
     // enableEmitHookGuards wrapping is deferred to a later batch; the guard is
     // off by default, so unwrapped calls match the differential floor.
     if cx.env.hook_guard_name.is_some()
         && cx.env.output_mode == crate::react_compiler_hir::environment::OutputMode::Client
     {
-        return Err(invariant_err(
+        return Err(unimplemented_err(
             "Hook guard wrapping in oxc codegen is not yet ported (deferred to a later batch)",
             None,
         ));
@@ -3380,16 +3498,23 @@ fn invariant(
     if !condition { Err(invariant_err(reason, loc)) } else { Ok(()) }
 }
 
+/// Construct an error for a codegen sub-emitter that has not yet been ported. Unlike
+/// [`invariant_err`], `codegen_function` catches these (via `CompilerError::unimplemented`)
+/// and falls back to an empty body rather than surfacing a spurious diagnostic for a
+/// construct the upstream compiler handles. Use this only for genuinely-unported paths,
+/// never for real invariants (which must propagate and fail loudly like upstream).
+fn unimplemented_err(reason: &str, loc: Option<DiagSourceLocation>) -> CompilerError {
+    let mut err = invariant_err(reason, loc);
+    err.unimplemented = true;
+    err
+}
+
 fn invariant_err(reason: &str, loc: Option<DiagSourceLocation>) -> CompilerError {
     // Use CompilerDiagnostic (with details array) to match TS CompilerError.invariant()
     let mut err = CompilerError::new();
     err.push_diagnostic(
         CompilerDiagnostic::new(ErrorCategory::Invariant, reason, None::<String>).with_detail(
-            CompilerDiagnosticDetail::Error {
-                loc,
-                message: Some(reason.to_string()),
-                identifier_name: None,
-            },
+            CompilerDiagnosticDetail::Error { loc, message: Some(reason.to_string()) },
         ),
     );
     err
@@ -3409,7 +3534,6 @@ fn invariant_err_with_detail_message(
     .with_detail(crate::react_compiler_diagnostics::CompilerDiagnosticDetail::Error {
         loc,
         message: Some(message.to_string()),
-        identifier_name: None,
     });
     err.push_diagnostic(diagnostic);
     err

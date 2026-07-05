@@ -49,7 +49,7 @@ pub fn infer_types(
     );
     generate(func, env, &mut unifier)?;
 
-    apply_function(func, &env.functions, &mut env.identifiers, &mut env.types, &mut unifier);
+    apply_function(func, &env.functions, &mut env.identifiers, &mut env.types, &unifier);
     Ok(())
 }
 
@@ -283,25 +283,21 @@ fn generate(
 ) -> Result<(), CompilerDiagnostic> {
     // Component params
     if func.fn_type == ReactFunctionType::Component {
-        if let Some(first) = func.params.first() {
-            if let ParamPattern::Place(place) = first {
-                let ty = get_type(place.identifier, &env.identifiers);
-                unifier.unify(
-                    ty,
-                    Type::Object { shape_id: Some(BUILT_IN_PROPS_ID.to_string()) },
-                    &env.shapes,
-                )?;
-            }
+        if let Some(ParamPattern::Place(place)) = func.params.first() {
+            let ty = get_type(place.identifier, &env.identifiers);
+            unifier.unify(
+                ty,
+                Type::Object { shape_id: Some(BUILT_IN_PROPS_ID.to_string()) },
+                &env.shapes,
+            )?;
         }
-        if let Some(second) = func.params.get(1) {
-            if let ParamPattern::Place(place) = second {
-                let ty = get_type(place.identifier, &env.identifiers);
-                unifier.unify(
-                    ty,
-                    Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) },
-                    &env.shapes,
-                )?;
-            }
+        if let Some(ParamPattern::Place(place)) = func.params.get(1) {
+            let ty = get_type(place.identifier, &env.identifiers);
+            unifier.unify(
+                ty,
+                Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) },
+                &env.shapes,
+            )?;
         }
     }
 
@@ -391,25 +387,21 @@ fn generate_for_function_id(
 
     // Process params for component inner functions
     if inner.fn_type == ReactFunctionType::Component {
-        if let Some(first) = inner.params.first() {
-            if let ParamPattern::Place(place) = first {
-                let ty = get_type(place.identifier, identifiers);
-                unifier.unify(
-                    ty,
-                    Type::Object { shape_id: Some(BUILT_IN_PROPS_ID.to_string()) },
-                    shapes,
-                )?;
-            }
+        if let Some(ParamPattern::Place(place)) = inner.params.first() {
+            let ty = get_type(place.identifier, identifiers);
+            unifier.unify(
+                ty,
+                Type::Object { shape_id: Some(BUILT_IN_PROPS_ID.to_string()) },
+                shapes,
+            )?;
         }
-        if let Some(second) = inner.params.get(1) {
-            if let ParamPattern::Place(place) = second {
-                let ty = get_type(place.identifier, identifiers);
-                unifier.unify(
-                    ty,
-                    Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) },
-                    shapes,
-                )?;
-            }
+        if let Some(ParamPattern::Place(place)) = inner.params.get(1) {
+            let ty = get_type(place.identifier, identifiers);
+            unifier.unify(
+                ty,
+                Type::Object { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) },
+                shapes,
+            )?;
         }
     }
 
@@ -459,6 +451,7 @@ fn generate_for_function_id(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn generate_instruction_types(
     instr: &Instruction,
     instr_id: InstructionId,
@@ -546,8 +539,7 @@ fn generate_instruction_types(
             let return_type = make_type(types);
             let mut shape_id = None;
             if unifier.enable_treat_set_identifiers_as_state_setters {
-                let name = get_name(names, callee.identifier);
-                if name.starts_with("set") {
+                if names.get(&callee.identifier).is_some_and(|name| name.starts_with("set")) {
                     shape_id = Some(BUILT_IN_SET_STATE_ID.to_string());
                 }
             }
@@ -854,7 +846,7 @@ fn apply_function(
     func: &HirFunction,
     functions: &[HirFunction],
     identifiers: &mut [Identifier],
-    types: &mut Vec<Type>,
+    types: &mut [Type],
     unifier: &Unifier,
 ) {
     for (_block_id, block) in &func.body.blocks {
@@ -905,7 +897,7 @@ fn apply_function(
 fn resolve_identifier(
     id: IdentifierId,
     identifiers: &mut [Identifier],
-    types: &mut Vec<Type>,
+    types: &mut [Type],
     unifier: &Unifier,
 ) {
     let type_id = identifiers[id.0 as usize].type_;
@@ -918,7 +910,7 @@ fn resolve_identifier(
 fn apply_instruction_lvalues(
     value: &InstructionValue,
     identifiers: &mut [Identifier],
-    types: &mut Vec<Type>,
+    types: &mut [Type],
     unifier: &Unifier,
 ) {
     match value {
@@ -980,7 +972,7 @@ fn apply_instruction_lvalues(
 fn apply_instruction_operands(
     value: &InstructionValue,
     identifiers: &mut [Identifier],
-    types: &mut Vec<Type>,
+    types: &mut [Type],
     unifier: &Unifier,
 ) {
     match value {
@@ -1319,7 +1311,6 @@ impl Unifier {
                     reason: "there should be at least one operand".to_string(),
                     description: None,
                     details: vec![],
-                    suggestions: None,
                 });
             }
 
@@ -1362,7 +1353,6 @@ impl Unifier {
                 reason: "cycle detected".to_string(),
                 description: None,
                 details: vec![],
-                suggestions: None,
             });
         }
 

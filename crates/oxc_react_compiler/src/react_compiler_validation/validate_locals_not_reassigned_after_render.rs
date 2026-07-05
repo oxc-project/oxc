@@ -58,7 +58,6 @@ pub fn validate_locals_not_reassigned_after_render(func: &HirFunction, env: &mut
             .with_detail(CompilerDiagnosticDetail::Error {
                 loc: reassignment_place.loc,
                 message: Some(format!("Cannot reassign {} after render completes", variable_name)),
-                identifier_name: None,
             }),
         );
     }
@@ -78,6 +77,7 @@ fn format_variable_name(place: &Place, identifiers: &[Identifier]) -> String {
 /// context variable. Returns the reassigned place if found, or None.
 ///
 /// Side effects: accumulates async-function reassignment diagnostics into `diagnostics`.
+#[allow(clippy::only_used_in_recursion, clippy::too_many_arguments)]
 fn get_context_reassignment(
     func: &HirFunction,
     identifiers: &[Identifier],
@@ -149,7 +149,6 @@ fn get_context_reassignment(
                                     CompilerDiagnosticDetail::Error {
                                         loc: reassignment_place.loc,
                                         message: Some(format!("Cannot reassign {}", variable_name)),
-                                        identifier_name: None,
                                     },
                                 ),
                             );

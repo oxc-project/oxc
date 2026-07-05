@@ -14,8 +14,9 @@
 //! 5. Processing each function through the compilation pipeline
 //! 6. Applying compiled functions back to the AST
 
+use cow_utils::CowUtils;
 use oxc_ast::ast as oxc;
-use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
@@ -26,17 +27,13 @@ use crate::react_compiler_diagnostics::ErrorCategory;
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
-use crate::scope::ScopeId;
-use crate::scope::ScopeInfo;
+use crate::scope::ScopeResolver;
 use oxc_allocator::GetAllocator;
+use oxc_syntax::scope::ScopeId;
 
-use super::compile_result::BindingRenameInfo;
 use super::compile_result::CodegenFunction;
 use super::compile_result::CompileResult;
-use super::compile_result::DebugLogEntry;
-use super::compile_result::OrderedLogItem;
 use super::imports::ProgramContext;
-use super::imports::get_react_compiler_runtime_module;
 use super::imports::validate_restricted_imports;
 use super::pipeline;
 use super::plugin_options::CompilerOutputMode;
@@ -103,11 +100,11 @@ enum CompileSourceKind {
 fn try_find_directive_enabling_memoization<'a>(
     directives: &'a [String],
     opts: &PluginOptions,
-) -> Result<Option<&'a String>, CompilerError> {
+) -> Result<Option<&'a str>, CompilerError> {
     // Check standard opt-in directives
     let opt_in = directives.iter().find(|d| OPT_IN_DIRECTIVES.contains(&d.as_str()));
     if let Some(directive) = opt_in {
-        return Ok(Some(directive));
+        return Ok(Some(directive.as_str()));
     }
 
     // Check dynamic gating directives
@@ -122,18 +119,18 @@ fn try_find_directive_enabling_memoization<'a>(
 fn find_directive_disabling_memoization<'a>(
     directives: &'a [String],
     opts: &PluginOptions,
-) -> Option<&'a String> {
+) -> Option<&'a str> {
     if let Some(ref custom_directives) = opts.custom_opt_out_directives {
-        directives.iter().find(|d| custom_directives.contains(d))
+        directives.iter().find(|d| custom_directives.contains(d)).map(String::as_str)
     } else {
-        directives.iter().find(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str()))
+        directives.iter().find(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str())).map(String::as_str)
     }
 }
 
 /// Result of a dynamic gating directive parse.
 struct DynamicGatingResult<'a> {
     #[allow(dead_code)]
-    directive: &'a String,
+    directive: &'a str,
     gating: GatingConfig,
 }
 
@@ -149,12 +146,12 @@ fn find_directives_dynamic_gating<'a>(
     };
 
     let mut errors: Vec<CompilerErrorDetail> = Vec::new();
-    let mut matches: Vec<(&'a String, String)> = Vec::new();
+    let mut matches: Vec<(&'a str, String)> = Vec::new();
 
     for directive in directives {
         if let Some(ident) = parse_dynamic_gating_directive(directive) {
             if is_valid_identifier(ident) {
-                matches.push((directive, ident.to_string()));
+                matches.push((directive.as_str(), ident.to_string()));
             } else {
                 let detail = CompilerErrorDetail::new(
                     ErrorCategory::Gating,
@@ -175,7 +172,7 @@ fn find_directives_dynamic_gating<'a>(
     }
 
     if matches.len() > 1 {
-        let names: Vec<String> = matches.iter().map(|(d, _)| (*d).clone()).collect();
+        let names: Vec<&str> = matches.iter().map(|(d, _)| *d).collect();
         let mut err = CompilerError::new();
         let detail = CompilerErrorDetail::new(
             ErrorCategory::Gating,
@@ -287,12 +284,12 @@ fn is_hook_name(s: &str) -> bool {
         && bytes[0] == b'u'
         && bytes[1] == b's'
         && bytes[2] == b'e'
-        && bytes.get(3).map_or(false, |c| c.is_ascii_uppercase() || c.is_ascii_digit())
+        && bytes.get(3).is_some_and(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
 }
 
 /// Check if a name looks like a React component (starts with uppercase letter).
 fn is_component_name(name: &str) -> bool {
-    name.chars().next().map_or(false, |c| c.is_ascii_uppercase())
+    name.chars().next().is_some_and(|c| c.is_ascii_uppercase())
 }
 
 /// Check if an expression is a hook call (identifier with hook name, or
@@ -307,7 +304,7 @@ fn expr_is_hook(expr: &oxc::Expression) -> bool {
             }
             // Object must be a PascalCase identifier
             if let oxc::Expression::Identifier(obj) = &member.object {
-                obj.name.chars().next().map_or(false, |c| c.is_ascii_uppercase())
+                obj.name.chars().next().is_some_and(|c| c.is_ascii_uppercase())
             } else {
                 false
             }
@@ -463,8 +460,7 @@ fn returns_non_node_in_stmt(stmt: &oxc::Statement, result: &mut bool) {
 /// Check if a function returns non-node values.
 /// For arrow functions with expression body, checks the expression directly.
 /// For block bodies, walks the statements.
-fn returns_non_node_fn(params: &oxc::FormalParameters, body: &FunctionBody) -> bool {
-    let _ = params;
+fn returns_non_node_fn(body: &FunctionBody) -> bool {
     match body {
         FunctionBody::Block(block) => returns_non_node_in_stmts(&block.statements),
         FunctionBody::Expression(expr) => is_non_node(expr),
@@ -513,7 +509,7 @@ fn calls_hooks_or_creates_jsx_in_stmt(stmt: &oxc::Statement) -> bool {
                 || if_stmt
                     .alternate
                     .as_ref()
-                    .map_or(false, |alt| calls_hooks_or_creates_jsx_in_stmt(alt))
+                    .is_some_and(|alt| calls_hooks_or_creates_jsx_in_stmt(alt))
         }
         oxc::Statement::ForStatement(for_stmt) => {
             if let Some(ref init) = for_stmt.init {
@@ -690,7 +686,7 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &oxc::Expression) -> bool {
         oxc::Expression::UpdateExpression(update) => match &update.argument {
             oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => false,
             target => {
-                target.as_member_expression().map_or(false, calls_hooks_or_creates_jsx_in_member)
+                target.as_member_expression().is_some_and(calls_hooks_or_creates_jsx_in_member)
             }
         },
         oxc::Expression::StaticMemberExpression(member) => {
@@ -706,10 +702,9 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &oxc::Expression) -> bool {
         oxc::Expression::AwaitExpression(await_expr) => {
             calls_hooks_or_creates_jsx_in_expr(&await_expr.argument)
         }
-        oxc::Expression::YieldExpression(yield_expr) => yield_expr
-            .argument
-            .as_ref()
-            .map_or(false, |arg| calls_hooks_or_creates_jsx_in_expr(arg)),
+        oxc::Expression::YieldExpression(yield_expr) => {
+            yield_expr.argument.as_ref().is_some_and(|arg| calls_hooks_or_creates_jsx_in_expr(arg))
+        }
         oxc::Expression::TaggedTemplateExpression(tagged) => {
             calls_hooks_or_creates_jsx_in_expr(&tagged.tag)
                 || tagged.quasi.expressions.iter().any(calls_hooks_or_creates_jsx_in_expr)
@@ -722,7 +717,7 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &oxc::Expression) -> bool {
                 calls_hooks_or_creates_jsx_in_expr(&s.argument)
             }
             oxc::ArrayExpressionElement::Elision(_) => false,
-            other => other.as_expression().map_or(false, calls_hooks_or_creates_jsx_in_expr),
+            other => other.as_expression().is_some_and(calls_hooks_or_creates_jsx_in_expr),
         }),
         oxc::Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| match prop {
             oxc::ObjectPropertyKind::SpreadProperty(s) => {
@@ -885,16 +880,16 @@ fn calls_hooks_or_creates_jsx_in_binding(pattern: &oxc::BindingPattern) -> bool 
                 || obj
                     .rest
                     .as_ref()
-                    .map_or(false, |r| calls_hooks_or_creates_jsx_in_binding(&r.argument))
+                    .is_some_and(|r| calls_hooks_or_creates_jsx_in_binding(&r.argument))
         }
         oxc::BindingPattern::ArrayPattern(arr) => {
             arr.elements
                 .iter()
-                .any(|e| e.as_ref().map_or(false, calls_hooks_or_creates_jsx_in_binding))
+                .any(|e| e.as_ref().is_some_and(calls_hooks_or_creates_jsx_in_binding))
                 || arr
                     .rest
                     .as_ref()
-                    .map_or(false, |r| calls_hooks_or_creates_jsx_in_binding(&r.argument))
+                    .is_some_and(|r| calls_hooks_or_creates_jsx_in_binding(&r.argument))
         }
         oxc::BindingPattern::AssignmentPattern(assign) => {
             calls_hooks_or_creates_jsx_in_expr(&assign.right)
@@ -984,6 +979,7 @@ enum FunctionBody<'a> {
 /// and the function's name and context.
 ///
 /// This is the Rust equivalent of `getReactFunctionType` in Program.ts.
+#[allow(clippy::too_many_arguments)]
 fn get_react_function_type(
     name: Option<&str>,
     params: &oxc::FormalParameters,
@@ -1060,7 +1056,7 @@ fn get_component_or_hook_like(
             // Check if it actually looks like a component
             let is_component = calls_hooks_or_creates_jsx(params, body)
                 && is_valid_component_params(params)
-                && !returns_non_node_fn(params, body);
+                && !returns_non_node_fn(body);
             return if is_component { Some(ReactFunctionType::Component) } else { None };
         } else if is_hook_name(fn_name) {
             // Hooks have hook invocations or JSX, but can take any # of arguments
@@ -1170,10 +1166,7 @@ fn handle_error<'a>(
     if should_panic || is_config_error {
         // The per-detail diagnostics were already pushed by `log_error`; the fatal
         // result just carries them. (The old JS-shim summary is dropped.)
-        Some(CompileResult::Error {
-            diagnostics: std::mem::take(&mut context.diagnostics),
-            ordered_log: std::mem::take(&mut context.ordered_log),
-        })
+        Some(CompileResult::Error { diagnostics: std::mem::take(&mut context.diagnostics) })
     } else {
         None
     }
@@ -1190,10 +1183,11 @@ fn handle_error<'a>(
 fn try_compile_function<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     source: &CompileSource,
-    scope_info: &ScopeInfo,
+    scope: &ScopeResolver<'_, '_>,
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
+    source_text: &str,
 ) -> Result<CodegenFunction<'a>, CompilerError> {
     // Check for suppressions that affect this function
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
@@ -1213,12 +1207,12 @@ fn try_compile_function<'a>(
     pipeline::compile_fn(
         ast,
         &source.fn_node,
-        source.fn_name.as_deref(),
-        scope_info,
+        scope,
         source.fn_type,
         output_mode,
         env_config,
         context,
+        source_text,
     )
 }
 
@@ -1227,13 +1221,15 @@ fn try_compile_function<'a>(
 /// Returns `Ok(Some(codegen_fn))` when the function was compiled and should be applied,
 /// `Ok(None)` when the function was skipped or lint-only,
 /// or `Err(CompileResult)` if a fatal error should short-circuit the program.
+#[allow(clippy::result_large_err)]
 fn process_fn<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     source: &CompileSource,
-    scope_info: &ScopeInfo,
+    scope: &ScopeResolver<'_, '_>,
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
+    source_text: &str,
 ) -> Result<Option<CodegenFunction<'a>>, CompileResult<'a>> {
     // Parse directives from the function body
     let opt_in_result =
@@ -1254,7 +1250,7 @@ fn process_fn<'a>(
 
     // Attempt compilation
     let compile_result =
-        try_compile_function(ast, source, scope_info, output_mode, env_config, context);
+        try_compile_function(ast, source, scope, output_mode, env_config, context, source_text);
 
     match compile_result {
         Err(err) => {
@@ -1309,44 +1305,6 @@ fn process_fn<'a>(
             Ok(Some(codegen_fn))
         }
     }
-}
-
-// -----------------------------------------------------------------------
-// Import checking
-// -----------------------------------------------------------------------
-
-/// Check if the program already has a `c` import from the React Compiler runtime module.
-/// If so, the file was already compiled and should be skipped.
-fn has_memo_cache_function_import(program: &oxc::Program, module_name: &str) -> bool {
-    for stmt in &program.body {
-        if let oxc::Statement::ImportDeclaration(import) = stmt {
-            if import.source.value == module_name {
-                if let Some(specifiers) = &import.specifiers {
-                    for specifier in specifiers {
-                        if let oxc::ImportDeclarationSpecifier::ImportSpecifier(data) = specifier {
-                            let imported_name = match &data.imported {
-                                oxc::ModuleExportName::IdentifierName(id) => Some(id.name.as_str()),
-                                oxc::ModuleExportName::IdentifierReference(id) => {
-                                    Some(id.name.as_str())
-                                }
-                                oxc::ModuleExportName::StringLiteral(s) => Some(s.value.as_str()),
-                            };
-                            if imported_name == Some("c") {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    false
-}
-
-/// Check if compilation should be skipped for this program.
-fn should_skip_compilation(program: &oxc::Program, options: &PluginOptions) -> bool {
-    let runtime_module = get_react_compiler_runtime_module(&options.target);
-    has_memo_cache_function_import(program, &runtime_module)
 }
 
 // -----------------------------------------------------------------------
@@ -1463,7 +1421,6 @@ fn get_declarator_name(decl: &oxc::VariableDeclarator) -> Option<String> {
 /// are entered only structurally (their bodies carry no compilable functions for
 /// discovery — matching the Babel bridge, which extracted no metadata for them).
 struct DiscoveryWalker<'a, 'ast> {
-    scope_info: &'a ScopeInfo,
     opts: &'a PluginOptions,
     context: &'a mut ProgramContext,
     queue: Vec<CompileSource<'ast>>,
@@ -1474,13 +1431,8 @@ struct DiscoveryWalker<'a, 'ast> {
 }
 
 impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
-    fn new(
-        scope_info: &'a ScopeInfo,
-        opts: &'a PluginOptions,
-        context: &'a mut ProgramContext,
-    ) -> Self {
+    fn new(opts: &'a PluginOptions, context: &'a mut ProgramContext) -> Self {
         Self {
-            scope_info,
             opts,
             context,
             queue: Vec::new(),
@@ -1491,9 +1443,10 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    /// Try to push the scope a node creates. Returns whether one was pushed.
-    fn try_push_scope(&mut self, span: Span) -> bool {
-        if let Some(scope_id) = self.scope_info.resolve_scope_for_node(Some(span.start)) {
+    /// Try to push the scope a node creates (its semantic `scope_id` cell).
+    /// Returns whether one was pushed.
+    fn try_push_scope(&mut self, scope_id: Option<ScopeId>) -> bool {
+        if let Some(scope_id) = scope_id {
             self.scope_stack.push(scope_id);
             true
         } else {
@@ -1514,7 +1467,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     }
 
     fn walk_program(&mut self, program: &'ast oxc::Program<'ast>) {
-        let pushed = self.try_push_scope(program.span);
+        let pushed = self.try_push_scope(program.scope_id.get());
         for stmt in &program.body {
             self.walk_statement(stmt);
         }
@@ -1524,7 +1477,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     }
 
     fn walk_block(&mut self, block: &'ast oxc::BlockStatement<'ast>) {
-        let pushed = self.try_push_scope(block.span);
+        let pushed = self.try_push_scope(block.scope_id.get());
         for stmt in &block.body {
             self.walk_statement(stmt);
         }
@@ -1558,7 +1511,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 }
             }
             oxc::Statement::ForStatement(node) => {
-                let pushed = self.try_push_scope(node.span);
+                let pushed = self.try_push_scope(node.scope_id.get());
                 if let Some(init) = &node.init {
                     match init {
                         oxc::ForStatementInit::VariableDeclaration(decl) => {
@@ -1595,7 +1548,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 self.loop_expression_depth -= 1;
             }
             oxc::Statement::ForInStatement(node) => {
-                let pushed = self.try_push_scope(node.span);
+                let pushed = self.try_push_scope(node.scope_id.get());
                 self.walk_for_left(&node.left);
                 self.loop_expression_depth += 1;
                 self.walk_expression(&node.right);
@@ -1606,7 +1559,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 }
             }
             oxc::Statement::ForOfStatement(node) => {
-                let pushed = self.try_push_scope(node.span);
+                let pushed = self.try_push_scope(node.scope_id.get());
                 self.walk_for_left(&node.left);
                 self.loop_expression_depth += 1;
                 self.walk_expression(&node.right);
@@ -1617,7 +1570,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 }
             }
             oxc::Statement::SwitchStatement(node) => {
-                let pushed = self.try_push_scope(node.span);
+                let pushed = self.try_push_scope(node.scope_id.get());
                 self.walk_expression(&node.discriminant);
                 for case in &node.cases {
                     if let Some(test) = &case.test {
@@ -1635,7 +1588,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
             oxc::Statement::TryStatement(node) => {
                 self.walk_block(&node.block);
                 if let Some(handler) = &node.handler {
-                    let pushed = self.try_push_scope(handler.span);
+                    let pushed = self.try_push_scope(handler.scope_id.get());
                     self.walk_block(&handler.body);
                     if pushed {
                         self.scope_stack.pop();
@@ -1719,7 +1672,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     /// when `Some`, supplies the name from the enclosing variable declarator (for
     /// function expressions); `None` means use the function's own id.
     fn walk_function(&mut self, func: &'ast oxc::Function<'ast>, inferred_name: Option<String>) {
-        let pushed = self.try_push_scope(func.span);
+        let pushed = self.try_push_scope(func.scope_id.get());
 
         let original_kind = match func.r#type {
             oxc::FunctionType::FunctionDeclaration | oxc::FunctionType::TSDeclareFunction => {
@@ -1771,7 +1724,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         arrow: &'ast oxc::ArrowFunctionExpression<'ast>,
         inferred_name: Option<String>,
     ) {
-        let pushed = self.try_push_scope(arrow.span);
+        let pushed = self.try_push_scope(arrow.scope_id.get());
 
         let skip_body = if self.is_rejected_by_scope_check() {
             false
@@ -1975,7 +1928,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                     p.method || matches!(p.kind, oxc::PropertyKind::Get | oxc::PropertyKind::Set);
                 if is_method {
                     if let oxc::Expression::FunctionExpression(func) = &p.value {
-                        let pushed = self.try_push_scope(func.span);
+                        let pushed = self.try_push_scope(func.scope_id.get());
                         if let Some(body) = &func.body {
                             self.walk_function_body_block(body);
                         }
@@ -2044,9 +1997,8 @@ fn find_functions_to_compile<'ast>(
     program: &'ast oxc::Program<'ast>,
     opts: &PluginOptions,
     context: &mut ProgramContext,
-    scope: &ScopeInfo,
 ) -> Vec<CompileSource<'ast>> {
-    let mut walker = DiscoveryWalker::new(scope, opts, context);
+    let mut walker = DiscoveryWalker::new(opts, context);
     walker.walk_program(program);
     walker.queue
 }
@@ -2306,9 +2258,9 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
                 _ => None,
             };
             if let Some(name) = replace_name {
-                let name = name.unwrap_or_else(|| "anonymous".to_string());
+                let name = name.as_deref().unwrap_or("anonymous");
                 let is_export = matches!(stmts[i], Statement::ExportNamedDeclaration(_));
-                let const_decl = self.build_const_decl(&name);
+                let const_decl = self.build_const_decl(name);
                 if is_export {
                     use oxc_span::SPAN;
                     let decl = match const_decl {
@@ -2467,7 +2419,6 @@ fn ox_apply_gated_conditional<'a>(
         &gating_config.import_specifier_name,
         None,
     );
-    let gating_callee_name = gating_import.name;
 
     // Clone the original function (matched by node_id) as the fallback expression
     // BEFORE replacing it.
@@ -2484,7 +2435,7 @@ fn ox_apply_gated_conditional<'a>(
     use oxc_span::SPAN;
     let gating_expression = oxc_ast::ast::Expression::new_conditional_expression(
         SPAN,
-        ox_gating_call(ast, &gating_callee_name),
+        ox_gating_call(ast, &gating_import.name),
         compiled_expr,
         original_expr,
         ast,
@@ -2508,7 +2459,6 @@ fn ox_clone_original_fn_as_expression<'a>(
     node_id: u32,
 ) -> Option<oxc_ast::ast::Expression<'a>> {
     use oxc_allocator::CloneIn;
-    use oxc_span::SPAN;
 
     struct Finder<'a, 'b> {
         ast: &'b oxc_ast::builder::AstBuilder<'a>,
@@ -2562,7 +2512,6 @@ fn ox_clone_original_fn_as_expression<'a>(
             oxc_ast_visit::walk::walk_arrow_function_expression(self, arrow);
         }
     }
-    let _ = (SPAN, ast.allocator());
     let mut finder = Finder { ast, node_id, found: None };
     oxc_ast_visit::Visit::visit_program(&mut finder, program);
     finder.found.map(|e| e.clone_in(ast.allocator()))
@@ -2630,9 +2579,11 @@ fn ox_splice_program<'a>(
     let needs_memo_import = replacements.iter().any(|r| r.codegen_fn.memo_slots_used > 0);
     if needs_memo_import {
         let import_spec = context.add_memo_cache_import();
-        let local_name = import_spec.name;
-        let mut visitor =
-            OxcRenameIdentifierVisitor { ast, old_name: "useMemoCache", new_name: &local_name };
+        let mut visitor = OxcRenameIdentifierVisitor {
+            ast,
+            old_name: "useMemoCache",
+            new_name: &import_spec.name,
+        };
         oxc_ast_visit::VisitMut::visit_program(&mut visitor, &mut program);
     }
 
@@ -2708,7 +2659,7 @@ fn ox_add_imports_to_program<'a>(
     }
 
     let mut sorted_modules: Vec<_> = imports.iter().collect();
-    sorted_modules.sort_by(|(a, _), (b, _)| a.to_lowercase().cmp(&b.to_lowercase()));
+    sorted_modules.sort_by_key(|(a, _)| a.cow_to_lowercase());
 
     let is_module = matches!(program.source_type.module_kind(), oxc_span::ModuleKind::Module);
 
@@ -2850,7 +2801,6 @@ fn ox_is_non_namespaced_import(import: &oxc_ast::ast::ImportDeclaration) -> bool
 /// along with any logger events.
 ///
 /// This function implements the logic from the TS entrypoint (Program.ts):
-/// - shouldSkipCompilation: check for existing runtime imports
 /// - validateRestrictedImports: check for blocklisted imports
 /// - findProgramSuppressions: find eslint/flow suppression comments
 /// - findFunctionsToCompile: traverse program to find components and hooks
@@ -2859,43 +2809,16 @@ fn ox_is_non_namespaced_import(import: &oxc_ast::ast::ImportDeclaration) -> bool
 pub fn compile_program<'a, 'p>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     oxc_program: &'p oxc_ast::ast::Program<'a>,
-    scope: ScopeInfo,
+    scope: &ScopeResolver<'_, '_>,
     options: PluginOptions,
 ) -> CompileResult<'a> {
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
-    // Debug log accumulated on early-return paths (before the full context exists).
-    let mut early_ordered_log: Vec<OrderedLogItem> = Vec::new();
-
-    // Log environment config for debugLogIRs
-    if options.debug {
-        early_ordered_log.push(OrderedLogItem::Debug {
-            entry: DebugLogEntry::new("EnvironmentConfig", format!("{:#?}", options.environment)),
-        });
-    }
-
-    let program = oxc_program;
-
-    // Check for existing runtime imports (file already compiled)
-    if should_skip_compilation(program, &options) {
-        return CompileResult::Success {
-            ast: None,
-            diagnostics: Diagnostics::new(),
-            ordered_log: early_ordered_log,
-            renames: Vec::new(),
-        };
-    }
-
-    // Validate restricted imports from the environment config
-    let restricted_imports = options.environment.validate_blocklisted_imports.clone();
-
-    // Determine if we should check for eslint suppressions
-    let validate_exhaustive = options.environment.validate_exhaustive_memoization_dependencies;
-    let validate_hooks = options.environment.validate_hooks_usage;
-
     let eslint_rules: Option<Vec<String>> =
-        if validate_exhaustive && validate_hooks {
+        if options.environment.validate_exhaustive_memoization_dependencies
+            && options.environment.validate_hooks_usage
+        {
             // Don't check for ESLint suppressions if both validations are enabled
             None
         } else {
@@ -2906,79 +2829,61 @@ pub fn compile_program<'a, 'p>(
 
     // Find program-level suppressions from comments
     let suppressions = find_program_suppressions(
-        &program.comments,
-        program.source_text,
+        &oxc_program.comments,
+        oxc_program.source_text,
         eslint_rules.as_deref(),
         options.flow_suppressions,
     );
 
     // Check for module-scope opt-out directive
     let module_directives: Vec<String> =
-        program.directives.iter().map(|d| d.expression.value.to_string()).collect();
+        oxc_program.directives.iter().map(|d| d.expression.value.to_string()).collect();
     let has_module_scope_opt_out =
         find_directive_disabling_memoization(&module_directives, &options).is_some();
 
     // Create program context
-    let mut context = ProgramContext::new(
-        options.clone(),
-        // Source text feeds the line-offset table (diagnostic line/col) and the fast
-        // refresh hash. The oxc front-end derives locations from it on demand.
-        Some(program.source_text.to_string()),
-        suppressions,
-        has_module_scope_opt_out,
-    );
+    let mut context = ProgramContext::new(options.clone(), suppressions, has_module_scope_opt_out);
 
     // Initialize known referenced names from scope bindings for UID collision detection
-    context.init_from_scope(&scope);
-
-    // Seed context with early ordered log entries
-    context.ordered_log.extend(early_ordered_log);
+    context.init_from_scope(scope);
 
     // Validate restricted imports (needs context for handle_error)
-    if let Some(err) = validate_restricted_imports(program, &restricted_imports) {
+    if let Some(err) =
+        validate_restricted_imports(oxc_program, &options.environment.validate_blocklisted_imports)
+    {
         if let Some(result) = handle_error(&err, None, &mut context) {
             return result;
         }
-        return CompileResult::Success {
-            ast: None,
-            diagnostics: context.diagnostics,
-            ordered_log: context.ordered_log,
-            renames: convert_renames(&context.renames),
-        };
+        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
     }
 
     // Pre-register instrumentation imports to get stable local names.
     // These are needed before compilation so codegen can use the correct names.
-    let instrument_fn_name: Option<String>;
-    let instrument_gating_name: Option<String>;
-    let hook_guard_name: Option<String>;
+    let (instrument_fn_name, instrument_gating_name) =
+        if let Some(ref instrument_config) = options.environment.enable_emit_instrument_forget {
+            let fn_spec = context.add_import_specifier(
+                &instrument_config.fn_.source,
+                &instrument_config.fn_.import_specifier_name,
+                None,
+            );
+            let gating_name = instrument_config.gating.as_ref().map(|g| {
+                let spec = context.add_import_specifier(&g.source, &g.import_specifier_name, None);
+                spec.name.clone()
+            });
+            (Some(fn_spec.name.clone()), gating_name)
+        } else {
+            (None, None)
+        };
 
-    if let Some(ref instrument_config) = options.environment.enable_emit_instrument_forget {
-        let fn_spec = context.add_import_specifier(
-            &instrument_config.fn_.source,
-            &instrument_config.fn_.import_specifier_name,
-            None,
-        );
-        instrument_fn_name = Some(fn_spec.name.clone());
-        instrument_gating_name = instrument_config.gating.as_ref().map(|g| {
-            let spec = context.add_import_specifier(&g.source, &g.import_specifier_name, None);
+    let hook_guard_name =
+        options.environment.enable_emit_hook_guards.as_ref().map(|hook_guard_config| {
+            let spec = context.add_import_specifier(
+                &hook_guard_config.source,
+                &hook_guard_config.import_specifier_name,
+                None,
+            );
             spec.name.clone()
         });
-    } else {
-        instrument_fn_name = None;
-        instrument_gating_name = None;
-    }
-
-    if let Some(ref hook_guard_config) = options.environment.enable_emit_hook_guards {
-        let spec = context.add_import_specifier(
-            &hook_guard_config.source,
-            &hook_guard_config.import_specifier_name,
-            None,
-        );
-        hook_guard_name = Some(spec.name.clone());
-    } else {
-        hook_guard_name = None;
-    }
 
     // Store pre-resolved names on context for pipeline access
     context.instrument_fn_name = instrument_fn_name;
@@ -2986,7 +2891,7 @@ pub fn compile_program<'a, 'p>(
     context.hook_guard_name = hook_guard_name;
 
     // Find all functions to compile
-    let queue = find_functions_to_compile(program, &options, &mut context, &scope);
+    let queue = find_functions_to_compile(oxc_program, &options, &mut context);
 
     // Clone env_config once for all function compilations (avoids per-function clone
     // while satisfying the borrow checker — compile_fn needs &mut context + &env_config)
@@ -2996,7 +2901,15 @@ pub fn compile_program<'a, 'p>(
     let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_>> = Vec::new();
 
     for source in &queue {
-        match process_fn(ast, source, &scope, output_mode, &env_config, &mut context) {
+        match process_fn(
+            ast,
+            source,
+            scope,
+            output_mode,
+            &env_config,
+            &mut context,
+            oxc_program.source_text,
+        ) {
             Ok(Some(codegen_fn)) => {
                 compiled_fns.push(CompiledFunction { kind: source.kind, source, codegen_fn });
             }
@@ -3019,12 +2932,7 @@ pub fn compile_program<'a, 'p>(
             ));
             handle_error(&err, None, &mut context);
         }
-        return CompileResult::Success {
-            ast: None,
-            diagnostics: context.diagnostics,
-            ordered_log: context.ordered_log,
-            renames: convert_renames(&context.renames),
-        };
+        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
     }
 
     // Convert compiled functions to owned oxc replacements (dropping the borrows of
@@ -3062,12 +2970,7 @@ pub fn compile_program<'a, 'p>(
         // (e.g., variable shadowing renames in lint mode). Imports are NOT added
         // when there are no replacements — matching TS behavior where
         // addImportsToProgram is only called when compiledFns.length > 0.
-        return CompileResult::Success {
-            ast: None,
-            diagnostics: context.diagnostics,
-            ordered_log: context.ordered_log,
-            renames: convert_renames(&context.renames),
-        };
+        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
     }
 
     // Build the memoized oxc program: splice each compiled oxc function in for its
@@ -3075,24 +2978,5 @@ pub fn compile_program<'a, 'p>(
     // functions, and add the memo-cache / gating imports.
     let compiled_program = ox_splice_program(ast, oxc_program, &replacements, &mut context);
 
-    CompileResult::Success {
-        ast: Some(compiled_program),
-        diagnostics: context.diagnostics,
-        ordered_log: context.ordered_log,
-        renames: convert_renames(&context.renames),
-    }
-}
-
-/// Convert internal BindingRename structs to the serializable BindingRenameInfo format.
-fn convert_renames(
-    renames: &[crate::react_compiler_hir::environment::BindingRename],
-) -> Vec<BindingRenameInfo> {
-    renames
-        .iter()
-        .map(|r| BindingRenameInfo {
-            original: r.original.clone(),
-            renamed: r.renamed.clone(),
-            declaration_start: r.declaration_start,
-        })
-        .collect()
+    CompileResult::Success { ast: Some(compiled_program), diagnostics: context.diagnostics }
 }

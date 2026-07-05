@@ -61,32 +61,25 @@ pub fn validate_static_components(func: &HirFunction) -> CompilerError {
                         known_dynamic_components.insert(lvalue.place.identifier, loc);
                     }
                 }
-                InstructionValue::JsxExpression { tag, .. } => {
-                    if let JsxTag::Place(tag_place) = tag {
-                        if let Some(location) = known_dynamic_components.get(&tag_place.identifier)
-                        {
-                            let location = *location;
-                            let diagnostic = CompilerDiagnostic::new(
-                                ErrorCategory::StaticComponents,
-                                "Cannot create components during render",
-                                Some("Components created during render will reset their state each time they are created. Declare components outside of render".to_string()),
-                            )
-                            .with_detail(CompilerDiagnosticDetail::Error {
-                                loc: tag_place.loc,
-                                message: Some(
-                                    "This component is created during render".to_string(),
-                                ),
-                                identifier_name: None,
-                            })
-                            .with_detail(CompilerDiagnosticDetail::Error {
-                                loc: location,
-                                message: Some(
-                                    "The component is created during render here".to_string(),
-                                ),
-                                identifier_name: None,
-                            });
-                            error.push_diagnostic(diagnostic);
-                        }
+                InstructionValue::JsxExpression { tag: JsxTag::Place(tag_place), .. } => {
+                    if let Some(location) = known_dynamic_components.get(&tag_place.identifier) {
+                        let location = *location;
+                        let diagnostic = CompilerDiagnostic::new(
+                            ErrorCategory::StaticComponents,
+                            "Cannot create components during render",
+                            Some("Components created during render will reset their state each time they are created. Declare components outside of render".to_string()),
+                        )
+                        .with_detail(CompilerDiagnosticDetail::Error {
+                            loc: tag_place.loc,
+                            message: Some("This component is created during render".to_string()),
+                        })
+                        .with_detail(CompilerDiagnosticDetail::Error {
+                            loc: location,
+                            message: Some(
+                                "The component is created during render here".to_string(),
+                            ),
+                        });
+                        error.push_diagnostic(diagnostic);
                     }
                 }
                 _ => {}

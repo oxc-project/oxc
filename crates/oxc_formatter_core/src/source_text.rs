@@ -40,12 +40,12 @@ impl<'a> SourceText<'a> {
 
     // Byte slicing
     /// Get bytes from position to end
-    fn bytes_from(&self, position: u32) -> impl Iterator<Item = u8> {
+    fn bytes_from(&self, position: u32) -> impl ExactSizeIterator<Item = u8> {
         self.text.as_bytes()[position as usize..].iter().copied()
     }
 
     /// Get bytes from start to position in reverse
-    pub fn bytes_to(&self, position: u32) -> impl Iterator<Item = u8> {
+    pub fn bytes_to(&self, position: u32) -> impl ExactSizeIterator<Item = u8> {
         self.text.as_bytes()[..position as usize].iter().copied().rev()
     }
 
