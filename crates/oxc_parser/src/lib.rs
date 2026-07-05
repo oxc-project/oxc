@@ -678,7 +678,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             if !self.lexer.errors.is_empty() && self.cur_kind().is_eof() {
                 // Noop
             } else {
-                self.error(fatal_error.error);
+                self.error(fatal_error.error.into_diagnostic());
             }
 
             program = Program::dummy(self.allocator());
@@ -751,7 +751,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         self.bump_any();
         let expr = self.parse_expr();
         if let Some(FatalError { error, .. }) = self.fatal_error.take() {
-            return Err(error.into());
+            return Err(error.into_diagnostic().into());
         }
         self.check_unfinished_errors();
         let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Diagnostics>();

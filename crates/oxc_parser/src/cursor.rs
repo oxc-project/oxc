@@ -7,7 +7,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
-    error_handler::FatalError,
+    error_handler::{FatalError, LazyDiagnostic},
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
 };
 
@@ -164,10 +164,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[cold]
     #[inline(never)]
     fn handle_expect_failure(&mut self, expected_kind: Kind) {
-        let range = self.cur_token().span();
-        let error =
-            diagnostics::expect_token(expected_kind.to_str(), self.cur_kind().to_str(), range);
-        self.set_fatal_error(error);
+        self.set_fatal_error_lazy(LazyDiagnostic::ExpectToken {
+            expected: expected_kind.to_str(),
+            found: self.cur_kind().to_str(),
+            span: self.cur_token().span(),
+        });
     }
 
     /// # Errors
@@ -191,14 +192,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
     pub(crate) fn expect_closing(&mut self, kind: Kind, opening_span: Span) {
         if !self.at(kind) {
-            let range = self.cur_token().span();
-            let error = diagnostics::expect_closing(
-                kind.to_str(),
-                self.cur_kind().to_str(),
-                range,
+            self.set_fatal_error_lazy(LazyDiagnostic::ExpectClosing {
+                closing: kind.to_str(),
+                found: self.cur_kind().to_str(),
+                span: self.cur_token().span(),
                 opening_span,
-            );
-            self.set_fatal_error(error);
+            });
         }
         self.advance(kind);
     }
@@ -206,13 +205,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
     pub(crate) fn expect_conditional_alternative(&mut self, question_span: Span) {
         if !self.at(Kind::Colon) {
-            let range = self.cur_token().span();
-            let error = diagnostics::expect_conditional_alternative(
-                self.cur_kind().to_str(),
-                range,
+            self.set_fatal_error_lazy(LazyDiagnostic::ExpectConditionalAlternative {
+                found: self.cur_kind().to_str(),
+                span: self.cur_token().span(),
                 question_span,
-            );
-            self.set_fatal_error(error);
+            });
         }
         self.bump_any(); // bump `:`
     }
@@ -460,13 +457,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return (list, None);
             }
             if kind != separator {
-                self.set_fatal_error(diagnostics::expect_closing_or_separator(
-                    close.to_str(),
-                    separator.to_str(),
-                    kind.to_str(),
-                    self.cur_token().span(),
+                self.set_fatal_error_lazy(LazyDiagnostic::ExpectClosingOrSeparator {
+                    closing: close.to_str(),
+                    separator: separator.to_str(),
+                    found: kind.to_str(),
+                    span: self.cur_token().span(),
                     opening_span,
-                ));
+                });
                 return (list, None);
             }
             self.advance(separator);
@@ -507,13 +504,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return None;
             }
             if kind != separator {
-                self.set_fatal_error(diagnostics::expect_closing_or_separator(
-                    close.to_str(),
-                    separator.to_str(),
-                    kind.to_str(),
-                    self.cur_token().span(),
+                self.set_fatal_error_lazy(LazyDiagnostic::ExpectClosingOrSeparator {
+                    closing: close.to_str(),
+                    separator: separator.to_str(),
+                    found: kind.to_str(),
+                    span: self.cur_token().span(),
                     opening_span,
-                ));
+                });
                 return None;
             }
             self.advance(separator);
@@ -555,14 +552,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else {
                 let comma_span = self.cur_token().span();
                 if kind != Kind::Comma {
-                    let error = diagnostics::expect_closing_or_separator(
-                        close.to_str(),
-                        Kind::Comma.to_str(),
-                        kind.to_str(),
-                        comma_span,
+                    self.set_fatal_error_lazy(LazyDiagnostic::ExpectClosingOrSeparator {
+                        closing: close.to_str(),
+                        separator: Kind::Comma.to_str(),
+                        found: kind.to_str(),
+                        span: comma_span,
                         opening_span,
-                    );
-                    self.set_fatal_error(error);
+                    });
                     break;
                 }
                 self.bump_any();
