@@ -19,4 +19,4 @@ oxc_span = { workspace = true }
 project-root = { workspace = true }
 similar = { workspace = true, features = ["inline"] }
 
-ureq = { workspace = true, features = ["json", "rustls"] }
+ureq = { workspace = true, features = ["json", "native-tls", "rustls"] }
