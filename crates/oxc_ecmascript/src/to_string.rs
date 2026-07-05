@@ -62,16 +62,12 @@ impl<'a> ToJsString<'a> for StringLiteral<'a> {
 
 impl<'a> ToJsString<'a> for TemplateLiteral<'a> {
     fn to_js_string(&self, ctx: &impl GlobalContext<'a>) -> Option<Cow<'a, str>> {
-        // Fast path: a template with no interpolations is exactly its single cooked quasi.
-        // Borrow it from the arena rather than allocating a fresh `String`.
+        // A template without interpolations consists of a single quasi, which can be borrowed.
         if self.expressions.is_empty() {
             return Some(Cow::Borrowed(self.quasis[0].value.cooked.as_ref()?.as_str()));
         }
-        // Resolve the interpolated values on the stack first and bail out *before* allocating
-        // the result `String` if any of them (or any cooked quasi) isn't a constant string.
-        // The previous code allocated and pushed the first quasi on every call, even when a
-        // later interpolation turned out to be non-constant — the common case in real code,
-        // where template interpolations are usually runtime values.
+        // Resolve interpolations before allocating the result so non-constant templates can bail
+        // out early. `SmallVec` keeps the values of typical templates inline.
         let mut values = SmallVec::<[Cow<'a, str>; 8]>::new();
         let mut len = 0usize;
         for expr in &self.expressions {
