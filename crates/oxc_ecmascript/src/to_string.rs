@@ -72,7 +72,7 @@ impl<'a> ToJsString<'a> for TemplateLiteral<'a> {
         // The previous code allocated and pushed the first quasi on every call, even when a
         // later interpolation turned out to be non-constant — the common case in real code,
         // where template interpolations are usually runtime values.
-        let mut values = SmallVec::<[Cow<'a, str>; 8]>::with_capacity(self.expressions.len());
+        let mut values = SmallVec::<[Cow<'a, str>; 8]>::new();
         let mut len = 0usize;
         for expr in &self.expressions {
             let value = expr.to_js_string(ctx)?;
