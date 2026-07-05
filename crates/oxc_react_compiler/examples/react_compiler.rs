@@ -40,7 +40,7 @@ fn main() {
     let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
 
     let mut result = {
-        let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
+        let semantic = SemanticBuilder::new().with_build_nodes(false).build(&program).semantic;
         transform(&program, &semantic, &allocator, PluginOptions::default())
     };
     if let Some(compiled) = result.program.take() {

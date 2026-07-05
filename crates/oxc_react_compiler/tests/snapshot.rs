@@ -72,7 +72,7 @@ fn run_fixture(source: &str) -> String {
     // `transform` borrows a `Semantic` built from the pristine program; scope the
     // borrow so it ends before we swap in the compiled program.
     let mut result = {
-        let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
+        let semantic = SemanticBuilder::new().with_build_nodes(false).build(&program).semantic;
         transform(&program, &semantic, &allocator, options)
     };
     if let Some(compiled) = result.program.take() {

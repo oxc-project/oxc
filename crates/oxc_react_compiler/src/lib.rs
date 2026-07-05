@@ -92,8 +92,9 @@ pub struct LintResult {
 /// program when it memoizes something.
 ///
 /// Must run **first**, on the pristine AST, before any other transform. The
-/// borrowed `semantic` must have been built from that same pristine AST with
-/// `SemanticBuilder::with_build_nodes(true)`.
+/// borrowed `semantic` must have been built from that same pristine AST; the
+/// `AstNodes` table is not needed, so `SemanticBuilder::with_build_nodes(false)`
+/// is sufficient (and cheaper).
 pub fn transform<'a>(
     program: &Program<'a>,
     semantic: &Semantic<'_>,
@@ -220,8 +221,8 @@ fn preserve_comments<'a>(
 /// Lint a pre-parsed program — like [`transform`] but read-only: it collects
 /// diagnostics without rewriting the program.
 ///
-/// The borrowed `semantic` must have been built from `program` with
-/// `SemanticBuilder::with_build_nodes(true)`.
+/// The borrowed `semantic` must have been built from `program`; the `AstNodes`
+/// table is not needed, so `SemanticBuilder::with_build_nodes(false)` suffices.
 pub fn lint<'a>(
     program: &Program<'a>,
     semantic: &Semantic<'_>,

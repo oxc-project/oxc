@@ -23,7 +23,7 @@ fn transform_source<'a>(
 ) -> (Program<'a>, TransformResult<'a>) {
     let mut program = Parser::new(allocator, source_text, source_type).parse().program;
     let mut result = {
-        let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
+        let semantic = SemanticBuilder::new().with_build_nodes(false).build(&program).semantic;
         transform(&program, &semantic, allocator, options)
     };
     if let Some(compiled) = result.program.take() {

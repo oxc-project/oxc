@@ -1,13 +1,15 @@
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    BindingIdentifier, BindingPattern, ExportDefaultDeclarationKind, IdentifierReference,
-    ImportDeclaration, ModuleExportName, Program, PropertyKind, Statement, TSModuleDeclarationName,
+    BindingIdentifier, BindingPattern, ExportDefaultDeclarationKind, Expression,
+    IdentifierReference, ImportDeclaration, ModuleExportName, Program, PropertyKind, Statement,
+    TSModuleDeclarationName,
 };
-use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
+use oxc_ast_visit::Visit;
+use oxc_semantic::{NodeId, Scoping, Semantic};
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
 use oxc_syntax::symbol::SymbolFlags;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 pub use oxc_syntax::scope::ScopeId;
 pub use oxc_syntax::symbol::SymbolId;
@@ -107,7 +109,18 @@ pub enum ImportBindingKind {
 /// is derived from `Scoping` on demand.
 pub struct ScopeResolver<'s, 'a> {
     scoping: &'s Scoping,
-    nodes: &'s AstNodes<'a>,
+    /// `AstKind` of every node the resolver dereferences by id — each symbol's
+    /// declaration node, each scope's creating node, and each resolved
+    /// reference's node. Captured in a single AST walk in [`Self::new`], so the
+    /// resolver needs no semantic `AstNodes` table (semantic can be built with
+    /// `build_nodes(false)`).
+    node_kinds: FxHashMap<NodeId, AstKind<'a>>,
+    /// Import specifier node id → its enclosing `ImportDeclaration`, so
+    /// [`Self::import_data`] can read the module source without walking parents.
+    import_decls: FxHashMap<NodeId, &'a ImportDeclaration<'a>>,
+    /// Object-method function node id → the enclosing `ObjectProperty`'s start,
+    /// for the extra Function-scope window (Babel's ObjectMethod extent).
+    object_method_props: FxHashMap<NodeId, u32>,
     /// Positions of resolved identifier references, declaration identifiers, and
     /// `export default function` exports (Babel counts the export statement as a
     /// reference to the function's binding).
@@ -120,19 +133,50 @@ pub struct ScopeResolver<'s, 'a> {
 }
 
 impl<'s, 'a> ScopeResolver<'s, 'a> {
-    pub fn new(semantic: &'s Semantic<'a>, program: &Program<'_>) -> Self {
+    pub fn new(semantic: &'s Semantic<'_>, program: &'a Program<'a>) -> Self {
         let scoping = semantic.scoping();
-        let nodes = semantic.nodes();
+
+        // The node ids the resolver later dereferences: each symbol's declaration
+        // node, each resolved reference's node, and each scope's creating node.
+        // These come from `Scoping` (valid under `build_nodes(false)`); their
+        // `AstKind`s are captured below in one walk instead of via `AstNodes`.
+        let mut wanted = FxHashSet::default();
+        for symbol_id in scoping.symbol_ids() {
+            wanted.insert(scoping.symbol_declaration(symbol_id));
+            for &ref_id in scoping.get_resolved_reference_ids(symbol_id) {
+                wanted.insert(scoping.get_reference(ref_id).node_id());
+            }
+        }
+        for scope_id in scoping.scope_descendants_from_root() {
+            wanted.insert(scoping.get_node_id(scope_id));
+        }
+
+        let mut collector = NodeCollector {
+            wanted: &wanted,
+            node_kinds: FxHashMap::default(),
+            import_decls: FxHashMap::default(),
+            object_method_props: FxHashMap::default(),
+        };
+        collector.visit_program(program);
+
+        let mut resolver = Self {
+            scoping,
+            node_kinds: collector.node_kinds,
+            import_decls: collector.import_decls,
+            object_method_props: collector.object_method_props,
+            reference_positions: FxHashSet::default(),
+            function_scope_ranges: Vec::new(),
+        };
 
         let mut reference_positions = FxHashSet::default();
         for symbol_id in scoping.symbol_ids() {
             for &ref_id in scoping.get_resolved_reference_ids(symbol_id) {
                 let reference = scoping.get_reference(ref_id);
-                reference_positions.insert(nodes.get_node(reference.node_id()).kind().span().start);
+                reference_positions.insert(resolver.node_kinds[&reference.node_id()].span().start);
             }
-            let decl_node = nodes.get_node(scoping.symbol_declaration(symbol_id));
             let name = scoping.symbol_name(symbol_id);
-            if let Some(start) = find_binding_identifier_start(decl_node.kind(), name) {
+            let decl_kind = resolver.node_kinds[&scoping.symbol_declaration(symbol_id)];
+            if let Some(start) = find_binding_identifier_start(decl_kind, name) {
                 reference_positions.insert(start);
             }
         }
@@ -149,31 +193,25 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
                 reference_positions.insert(export.span.start);
             }
         }
-
-        let mut resolver =
-            Self { scoping, nodes, reference_positions, function_scope_ranges: Vec::new() };
+        resolver.reference_positions = reference_positions;
 
         let mut function_scope_ranges = Vec::new();
         for scope_id in scoping.scope_descendants_from_root() {
             if resolver.scope_kind(scope_id) != ScopeKind::Function {
                 continue;
             }
-            let node = nodes.get_node(scoping.get_node_id(scope_id));
-            let span = node.kind().span();
+            let kind = resolver.node_kinds[&scoping.get_node_id(scope_id)];
+            let span = kind.span();
             if span.end > span.start {
                 function_scope_ranges.push((span.start, span.end, scope_id));
             }
             // For function scopes inside object methods, also record a window from
             // the parent ObjectProperty's start, so range checks match Babel's
             // ObjectMethod extent (which starts at the property, not the function).
-            if let AstKind::Function(_) = node.kind() {
-                let parent = nodes.parent_node(node.id());
-                if let AstKind::ObjectProperty(prop) = parent.kind() {
-                    if prop.method || matches!(prop.kind, PropertyKind::Get | PropertyKind::Set) {
-                        let prop_start = parent.kind().span().start;
-                        if prop_start != span.start {
-                            function_scope_ranges.push((prop_start, span.end, scope_id));
-                        }
+            if let AstKind::Function(func) = kind {
+                if let Some(&prop_start) = resolver.object_method_props.get(&func.node_id()) {
+                    if prop_start != span.start {
+                        function_scope_ranges.push((prop_start, span.end, scope_id));
                     }
                 }
             }
@@ -238,8 +276,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         // Check the declaration node first — FormalParameter and CatchParameter
         // need to be detected before the FunctionScopedVariable flag check, because
         // OXC marks function parameters and catch parameters with FunctionScopedVariable.
-        let decl_node = self.nodes.get_node(self.scoping.symbol_declaration(symbol_id));
-        match decl_node.kind() {
+        match self.node_kinds[&self.scoping.symbol_declaration(symbol_id)] {
             AstKind::FormalParameter(_) => return BindingKind::Param,
             AstKind::FormalParameterRest(_) => return BindingKind::Param,
             AstKind::CatchParameter(_) => return BindingKind::Let,
@@ -300,7 +337,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
 
     /// The kind of the symbol's declaration AST node.
     pub fn decl_kind(&self, symbol_id: SymbolId) -> DeclKind {
-        match self.nodes.get_node(self.scoping.symbol_declaration(symbol_id)).kind() {
+        match self.node_kinds[&self.scoping.symbol_declaration(symbol_id)] {
             AstKind::BindingIdentifier(_) => DeclKind::BindingIdentifier,
             AstKind::VariableDeclarator(_) => DeclKind::VariableDeclarator,
             AstKind::Function(f) => {
@@ -335,16 +372,16 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
     /// declaration for redeclared symbols). `None` for declaration kinds the
     /// old conversion did not map (e.g. interfaces).
     pub fn declaration_start(&self, symbol_id: SymbolId) -> Option<u32> {
-        let decl_node = self.nodes.get_node(self.scoping.symbol_declaration(symbol_id));
-        find_binding_identifier_start(decl_node.kind(), self.symbol_name(symbol_id))
+        let kind = self.node_kinds[&self.scoping.symbol_declaration(symbol_id)];
+        find_binding_identifier_start(kind, self.symbol_name(symbol_id))
     }
 
     /// For import bindings: the source module and import details.
     pub fn import_data(&self, symbol_id: SymbolId) -> Option<ImportBindingData> {
-        let decl_node = self.nodes.get_node(self.scoping.symbol_declaration(symbol_id));
-        match decl_node.kind() {
+        let decl_id = self.scoping.symbol_declaration(symbol_id);
+        match self.node_kinds[&decl_id] {
             AstKind::ImportDefaultSpecifier(_) => {
-                let import_decl = self.find_import_declaration(decl_node.id())?;
+                let import_decl = self.import_decls.get(&decl_id)?;
                 Some(ImportBindingData {
                     source: import_decl.source.value.to_string(),
                     kind: ImportBindingKind::Default,
@@ -352,7 +389,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
                 })
             }
             AstKind::ImportNamespaceSpecifier(_) => {
-                let import_decl = self.find_import_declaration(decl_node.id())?;
+                let import_decl = self.import_decls.get(&decl_id)?;
                 Some(ImportBindingData {
                     source: import_decl.source.value.to_string(),
                     kind: ImportBindingKind::Namespace,
@@ -360,7 +397,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
                 })
             }
             AstKind::ImportSpecifier(spec) => {
-                let import_decl = self.find_import_declaration(decl_node.id())?;
+                let import_decl = self.import_decls.get(&decl_id)?;
                 let imported_name = match &spec.imported {
                     ModuleExportName::IdentifierName(ident) => ident.name.to_string(),
                     ModuleExportName::IdentifierReference(ident) => ident.name.to_string(),
@@ -376,33 +413,11 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         }
     }
 
-    /// Find the ImportDeclaration node that contains the given import specifier.
-    fn find_import_declaration(
-        &self,
-        specifier_node_id: NodeId,
-    ) -> Option<&'s ImportDeclaration<'a>> {
-        let mut current_id = specifier_node_id;
-        // Walk up the parent chain (max 10 levels to avoid infinite loop)
-        for _ in 0..10 {
-            let parent_id = self.nodes.parent_id(current_id);
-            if parent_id == current_id {
-                // Root node, no more parents
-                return None;
-            }
-            if let AstKind::ImportDeclaration(decl) = self.nodes.get_node(parent_id).kind() {
-                return Some(decl);
-            }
-            current_id = parent_id;
-        }
-        None
-    }
-
     /// Positions of the symbol's resolved references (including TS type references).
     pub fn reference_positions(&self, symbol_id: SymbolId) -> impl Iterator<Item = u32> + '_ {
-        let nodes = self.nodes;
         self.scoping().get_resolved_reference_ids(symbol_id).iter().map(move |&ref_id| {
             let reference = self.scoping().get_reference(ref_id);
-            nodes.get_node(reference.node_id()).kind().span().start
+            self.node_kinds[&reference.node_id()].span().start
         })
     }
 
@@ -433,7 +448,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             return ScopeKind::Class;
         }
         let node_id = self.scoping().get_node_id(scope_id);
-        match self.nodes.get_node(node_id).kind() {
+        match self.node_kinds[&node_id] {
             AstKind::ForStatement(_) | AstKind::ForInStatement(_) | AstKind::ForOfStatement(_) => {
                 ScopeKind::For
             }
@@ -527,6 +542,48 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             }
         }
         descendants
+    }
+}
+
+/// Single-pass walk that captures the `AstKind` of every "wanted" node (each
+/// symbol's declaration, each scope's creating node, each resolved reference),
+/// plus the import-source and object-method parent links `ScopeResolver` needs.
+/// This replaces per-id lookups into the semantic `AstNodes` table, so the
+/// borrowed `Semantic` no longer requires `build_nodes(true)`.
+struct NodeCollector<'w, 'a> {
+    wanted: &'w FxHashSet<NodeId>,
+    node_kinds: FxHashMap<NodeId, AstKind<'a>>,
+    import_decls: FxHashMap<NodeId, &'a ImportDeclaration<'a>>,
+    object_method_props: FxHashMap<NodeId, u32>,
+}
+
+impl<'a> Visit<'a> for NodeCollector<'_, 'a> {
+    fn enter_node(&mut self, kind: AstKind<'a>) {
+        let node_id = kind.node_id();
+        if self.wanted.contains(&node_id) {
+            self.node_kinds.insert(node_id, kind);
+        }
+        match kind {
+            // Record each specifier → its import declaration, so `import_data`
+            // reads the module source without a parent walk.
+            AstKind::ImportDeclaration(decl) => {
+                if let Some(specifiers) = &decl.specifiers {
+                    for specifier in specifiers {
+                        self.import_decls.insert(specifier.node_id(), decl);
+                    }
+                }
+            }
+            // Record each object method's function → the property start, for the
+            // extra Function-scope window computed in `ScopeResolver::new`.
+            AstKind::ObjectProperty(prop)
+                if prop.method || matches!(prop.kind, PropertyKind::Get | PropertyKind::Set) =>
+            {
+                if let Expression::FunctionExpression(func) = &prop.value {
+                    self.object_method_props.insert(func.node_id(), prop.span.start);
+                }
+            }
+            _ => {}
+        }
     }
 }
 

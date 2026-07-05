@@ -32,7 +32,7 @@ fn bench_react_compiler(criterion: &mut Criterion) {
                 runner.run(|| {
                     let mut result = {
                         let semantic =
-                            SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
+                            SemanticBuilder::new().with_build_nodes(false).build(&program).semantic;
                         transform(&program, &semantic, &allocator, options.clone())
                     };
                     if let Some(compiled) = result.program.take() {

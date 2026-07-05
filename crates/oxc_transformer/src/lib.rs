@@ -229,7 +229,9 @@ impl<'a> Transformer<'a> {
             return (scoping, Diagnostics::new());
         };
         let mut result = {
-            let semantic = SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
+            // The React Compiler reads scopes/symbols/references only; it needs no
+            // `AstNodes` table, so skip building it (`with_build_nodes(false)`).
+            let semantic = SemanticBuilder::new().with_build_nodes(false).build(program).semantic;
             react_compiler_transform(program, &semantic, self.allocator, options)
         };
         if !result.changed {
