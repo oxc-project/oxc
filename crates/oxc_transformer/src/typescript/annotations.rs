@@ -1,6 +1,8 @@
 use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::Str;
@@ -12,7 +14,11 @@ use oxc_syntax::{
 };
 use oxc_traverse::Traverse;
 
-use crate::{TypeScriptOptions, context::TraverseCtx, state::TransformState};
+use crate::{
+    TypeScriptOptions,
+    context::TraverseCtx,
+    state::{RemovedAmbientDeclaration, RemovedTypeScriptReference, TransformState},
+};
 
 pub struct TypeScriptAnnotations<'a> {
     // Options
@@ -62,10 +68,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
                 Statement::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
-                    decl.declaration.as_ref().is_some_and(|decl| !decl.is_typescript_syntax())
+                    let declaration = decl.declaration.as_ref().unwrap();
+                    if declaration.is_typescript_syntax() {
+                        RemovedReferenceCleaner { ctx }.visit_declaration(declaration);
+                        Self::remove_ambient_declaration_bindings(declaration, ctx);
+                        false
+                    } else {
+                        true
+                    }
                 }
                 Statement::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {
+                        RemovedReferenceCleaner { ctx }.visit_export_named_declaration(decl);
                         false
                     } else if decl.specifiers.is_empty() {
                         // `export {}` or `export {} from 'mod'`
@@ -80,11 +94,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 }
                 Statement::ExportAllDeclaration(decl) => !decl.export_kind.is_type(),
                 Statement::ExportDefaultDeclaration(decl) => {
-                    !decl.is_typescript_syntax()
+                    let keep = !decl.is_typescript_syntax()
                         && !matches!(
                             &decl.declaration,
                             ExportDefaultDeclarationKind::Identifier(ident) if Self::is_refers_to_type(ident, ctx)
-                        )
+                        );
+                    if !keep {
+                        RemovedReferenceCleaner { ctx }
+                            .visit_export_default_declaration_kind(&decl.declaration);
+                    }
+                    keep
                 }
                 Statement::ImportDeclaration(decl) => {
                     if decl.import_kind.is_type() {
@@ -370,7 +389,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         // Remove TS-only statements early to avoid traversing their children
         stmts.retain(|stmt| match stmt {
             match_declaration!(Statement) => {
-                self.should_keep_declaration(stmt.to_declaration(), ctx)
+                let declaration = stmt.to_declaration();
+                let keep = self.should_keep_declaration(declaration, ctx);
+                if !keep {
+                    RemovedReferenceCleaner { ctx }.visit_declaration(declaration);
+                }
+                keep
             }
             _ => true,
         });
@@ -509,26 +533,56 @@ impl<'a> TypeScriptAnnotations<'a> {
             | Declaration::TSInterfaceDeclaration(_)
             | Declaration::TSGlobalDeclaration(_) => false,
             // Remove `declare var/let/const`
-            Declaration::VariableDeclaration(var_decl) => !var_decl.declare,
+            Declaration::VariableDeclaration(var_decl) => {
+                if var_decl.declare {
+                    Self::remove_ambient_declaration_bindings(decl, ctx);
+                    false
+                } else {
+                    true
+                }
+            }
             // Remove `declare function` and function overload signatures (no body)
             Declaration::FunctionDeclaration(func_decl) => {
-                !func_decl.declare && func_decl.body.is_some()
+                if func_decl.declare {
+                    Self::remove_ambient_declaration_bindings(decl, ctx);
+                    false
+                } else {
+                    func_decl.body.is_some()
+                }
             }
             // Remove `declare class`
-            Declaration::ClassDeclaration(class_decl) => !class_decl.declare,
+            Declaration::ClassDeclaration(class_decl) => {
+                if class_decl.declare {
+                    Self::remove_ambient_declaration_bindings(decl, ctx);
+                    false
+                } else {
+                    true
+                }
+            }
             // Remove `declare module` or uninstantiated namespace declarations.
             // Keep instantiated `module` declarations — they have runtime
             // representation and need to be transformed.
             Declaration::TSModuleDeclaration(module_decl) => {
-                !module_decl.declare
+                let keep = !module_decl.declare
                     && !matches!(
                         &module_decl.id,
                         TSModuleDeclarationName::Identifier(ident)
                             if ctx.scoping().symbol_flags(ident.symbol_id()).is_namespace_module()
-                    )
+                    );
+                if !keep {
+                    Self::remove_ambient_declaration_bindings(decl, ctx);
+                }
+                keep
             }
             // Remove `declare enum`
-            Declaration::TSEnumDeclaration(enum_decl) => !enum_decl.declare,
+            Declaration::TSEnumDeclaration(enum_decl) => {
+                if enum_decl.declare {
+                    Self::remove_ambient_declaration_bindings(decl, ctx);
+                    false
+                } else {
+                    true
+                }
+            }
             // Remove unused import-equals (used ones are transformed by module transform)
             Declaration::TSImportEqualsDeclaration(import_equals) => {
                 let keep = import_equals.import_kind.is_value()
@@ -543,6 +597,44 @@ impl<'a> TypeScriptAnnotations<'a> {
                 }
                 keep
             }
+        }
+    }
+
+    fn remove_ambient_declaration_bindings(decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        match decl {
+            Declaration::VariableDeclaration(var_decl) if var_decl.declare => {
+                Self::remove_variable_declaration_bindings(var_decl, ctx);
+            }
+            Declaration::FunctionDeclaration(func_decl) if func_decl.declare => {
+                if let Some(id) = &func_decl.id {
+                    Self::record_removed_ambient_declaration(id, ctx);
+                }
+            }
+            Declaration::ClassDeclaration(class_decl) if class_decl.declare => {
+                if let Some(id) = &class_decl.id {
+                    Self::record_removed_ambient_declaration(id, ctx);
+                }
+            }
+            Declaration::TSEnumDeclaration(enum_decl) if enum_decl.declare => {
+                Self::record_removed_ambient_declaration(&enum_decl.id, ctx);
+            }
+            Declaration::TSModuleDeclaration(module_decl) => {
+                if let TSModuleDeclarationName::Identifier(id) = &module_decl.id {
+                    Self::record_removed_ambient_declaration(id, ctx);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn remove_variable_declaration_bindings(
+        var_decl: &VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        for decl in &var_decl.declarations {
+            decl.id.bound_names(&mut |ident| {
+                Self::record_removed_ambient_declaration(ident, ctx);
+            });
         }
     }
 
@@ -574,6 +666,17 @@ impl<'a> TypeScriptAnnotations<'a> {
 
         let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
         ctx.scoping_mut().remove_binding(scope_id, ident.name);
+    }
+
+    fn record_removed_ambient_declaration(
+        ident: &BindingIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        ctx.state.removed_ambient_declarations.push(RemovedAmbientDeclaration {
+            name: ident.name,
+            symbol_id: ident.symbol_id(),
+            span: ident.span,
+        });
     }
 
     /// Check if the given name is a JSX pragma or fragment pragma import
@@ -639,11 +742,16 @@ impl<'a> TypeScriptAnnotations<'a> {
         self.is_jsx_imports(&id.name)
     }
 
-    fn can_retain_export_specifier(specifier: &ExportSpecifier<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        if specifier.export_kind.is_type() {
-            return false;
+    fn can_retain_export_specifier(
+        specifier: &ExportSpecifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
+        let keep = !specifier.export_kind.is_type()
+            && !matches!(&specifier.local, ModuleExportName::IdentifierReference(ident) if Self::is_refers_to_type(ident, ctx));
+        if !keep {
+            RemovedReferenceCleaner { ctx }.visit_export_specifier(specifier);
         }
-        !matches!(&specifier.local, ModuleExportName::IdentifierReference(ident) if Self::is_refers_to_type(ident, ctx))
+        keep
     }
 
     fn is_refers_to_type(ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
@@ -655,6 +763,22 @@ impl<'a> TypeScriptAnnotations<'a> {
                 || scoping.symbol_flags(symbol_id).is_ambient()
                     && scoping.symbol_redeclarations(symbol_id).iter().all(|r| r.flags.is_ambient())
         })
+    }
+}
+
+struct RemovedReferenceCleaner<'a, 'ctx> {
+    ctx: &'ctx mut TraverseCtx<'a>,
+}
+
+impl<'a> Visit<'a> for RemovedReferenceCleaner<'a, '_> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        if let Some(reference_id) = ident.reference_id.get() {
+            let symbol_id = self.ctx.scoping().get_reference(reference_id).symbol_id();
+            self.ctx
+                .state
+                .removed_typescript_references
+                .push(RemovedTypeScriptReference { reference_id, symbol_id });
+        }
     }
 }
 

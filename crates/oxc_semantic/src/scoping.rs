@@ -518,26 +518,44 @@ impl Scoping {
 
     /// Remove one declaration from a merged symbol and promote the first surviving declaration.
     pub fn remove_symbol_declaration(&mut self, symbol_id: SymbolId, span: Span) {
-        let replacement = self.cell.with_dependent_mut(|_allocator, cell| {
-            let redeclarations = cell.symbol_redeclarations.get_mut(&symbol_id)?;
-            redeclarations.retain(|redeclaration| redeclaration.span != span);
+        self.remove_symbol_declarations(symbol_id, &[span]);
+    }
 
-            let first = redeclarations.first()?.clone();
+    /// Remove declarations from a merged symbol and promote the first surviving declaration.
+    ///
+    /// `spans` must be sorted by `(start, end)`.
+    /// Returns `true` if a declaration survives.
+    pub fn remove_symbol_declarations(&mut self, symbol_id: SymbolId, spans: &[Span]) -> bool {
+        let contains_span = |span: Span| {
+            spans
+                .binary_search_by_key(&(span.start, span.end), |span| (span.start, span.end))
+                .is_ok()
+        };
+
+        let replacement = self.cell.with_dependent_mut(|_allocator, cell| {
+            let Some(redeclarations) = cell.symbol_redeclarations.get_mut(&symbol_id) else {
+                return None;
+            };
+            redeclarations.retain(|redeclaration| !contains_span(redeclaration.span));
+
+            let first = redeclarations.first().cloned();
             let flags = redeclarations
                 .iter()
                 .fold(SymbolFlags::None, |flags, redeclaration| flags | redeclaration.flags);
-            let has_redeclarations = redeclarations.len() > 1;
-            if !has_redeclarations {
+            if redeclarations.len() <= 1 {
                 cell.symbol_redeclarations.remove(&symbol_id);
             }
 
-            Some((first, flags))
+            first.map(|first| (first, flags))
         });
 
         if let Some((replacement, flags)) = replacement {
             *self.symbol_table.symbol_spans_mut(symbol_id) = replacement.span;
             *self.symbol_table.symbol_declarations_mut(symbol_id) = replacement.declaration;
             *self.symbol_table.symbol_flags_mut(symbol_id) = flags;
+            true
+        } else {
+            !contains_span(self.symbol_span(symbol_id))
         }
     }
 
@@ -637,6 +655,37 @@ impl Scoping {
         });
     }
 
+    /// Convert all references resolved to a symbol into root unresolved references.
+    pub fn unresolve_symbol_references(&mut self, name: Ident<'_>, symbol_id: SymbolId) {
+        let references = &mut self.references;
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let resolved_references = &mut cell.resolved_references[symbol_id.index()];
+            if resolved_references.is_empty() {
+                return;
+            }
+            let name = name.clone_in(allocator);
+            let unresolved_references = cell
+                .root_unresolved_references
+                .entry(name)
+                .or_insert_with(|| ArenaVec::new_in(&allocator));
+            for reference_id in resolved_references.drain(..) {
+                references[reference_id].clear_symbol_id();
+                unresolved_references.push(reference_id);
+            }
+        });
+    }
+
+    /// Move all resolved references from one symbol to another.
+    pub fn rebind_symbol_references(&mut self, from: SymbolId, to: SymbolId) {
+        let references = &mut self.references;
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            while let Some(reference_id) = cell.resolved_references[from.index()].pop() {
+                references[reference_id].set_symbol_id(to);
+                cell.resolved_references[to.index()].push(reference_id);
+            }
+        });
+    }
+
     /// Remove every `ReferenceId` whose bit is set in `excluded` from each
     /// symbol's resolved-references list. O(total_references) in the worst
     /// case; short-circuits when `excluded` has no bits set.
@@ -653,6 +702,20 @@ impl Scoping {
             for reference_ids in &mut cell.resolved_references {
                 reference_ids.retain(|id| !excluded.contains(id.index()));
             }
+        });
+    }
+
+    /// Remove every `ReferenceId` whose bit is set in `excluded` from one symbol.
+    pub fn retain_symbol_references_excluding(
+        &mut self,
+        symbol_id: SymbolId,
+        excluded: &BitSet<'_>,
+    ) {
+        if excluded.is_empty() {
+            return;
+        }
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.resolved_references[symbol_id.index()].retain(|id| !excluded.contains(id.index()));
         });
     }
 

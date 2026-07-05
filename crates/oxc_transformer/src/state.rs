@@ -4,7 +4,9 @@ use std::{
 };
 
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::SourceType;
+use oxc_span::{SourceType, Span};
+use oxc_str::Ident;
+use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
 
 use crate::{
     CompilerAssumptions, HelperLoaderOptions, Module, TransformOptions,
@@ -47,6 +49,11 @@ pub struct TransformState<'a> {
     // State for multiple plugins interacting
     /// `true` if class properties plugin is enabled
     pub is_class_properties_plugin_enabled: bool,
+
+    /// Ambient declarations removed during TypeScript transformation.
+    pub(crate) removed_ambient_declarations: Vec<RemovedAmbientDeclaration<'a>>,
+    /// References contained in syntax erased during TypeScript transformation.
+    pub(crate) removed_typescript_references: Vec<RemovedTypeScriptReference>,
 }
 
 impl Default for TransformState<'_> {
@@ -65,6 +72,8 @@ impl Default for TransformState<'_> {
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
             is_class_properties_plugin_enabled: false,
+            removed_ambient_declarations: vec![],
+            removed_typescript_references: vec![],
         }
     }
 }
@@ -89,6 +98,8 @@ impl TransformState<'_> {
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
             is_class_properties_plugin_enabled: options.env.es2022.class_properties.is_some(),
+            removed_ambient_declarations: vec![],
+            removed_typescript_references: vec![],
         }
     }
 
@@ -100,4 +111,15 @@ impl TransformState<'_> {
     pub fn error(&mut self, error: OxcDiagnostic) {
         self.errors.push(error);
     }
+}
+
+pub(crate) struct RemovedAmbientDeclaration<'a> {
+    pub(crate) name: Ident<'a>,
+    pub(crate) symbol_id: SymbolId,
+    pub(crate) span: Span,
+}
+
+pub(crate) struct RemovedTypeScriptReference {
+    pub(crate) reference_id: ReferenceId,
+    pub(crate) symbol_id: Option<SymbolId>,
 }

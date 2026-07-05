@@ -7,7 +7,7 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, ArenaVec, ReplaceWith};
+use oxc_allocator::{Allocator, ArenaVec, BitSet, ReplaceWith};
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_diagnostics::Diagnostics;
 #[cfg(feature = "react_compiler")]
@@ -211,7 +211,8 @@ impl<'a> Transformer<'a> {
 
         let mut reusable_ctx = ReusableTraverseCtx::new(self.state, scoping, allocator);
         traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
-        let (mut state, scoping) = reusable_ctx.into_state_and_scoping();
+        let (mut state, mut scoping) = reusable_ctx.into_state_and_scoping();
+        update_removed_ambient_references(&mut state, &mut scoping, allocator);
         let helpers_used = state.helper_loader.used_helpers.drain().collect();
         let mut diagnostics = react_compiler_diagnostics;
         diagnostics.extend(state.take_errors());
@@ -239,6 +240,72 @@ impl<'a> Transformer<'a> {
         let scoping =
             SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
         (scoping, result.diagnostics)
+    }
+}
+
+fn update_removed_ambient_references(
+    state: &mut TransformState<'_>,
+    scoping: &mut Scoping,
+    allocator: &Allocator,
+) {
+    let mut declarations = std::mem::take(&mut state.removed_ambient_declarations);
+    declarations.sort_unstable_by_key(|declaration| {
+        (declaration.symbol_id.index(), declaration.span.start, declaration.span.end)
+    });
+
+    let mut spans = Vec::new();
+    let mut removed_bindings = Vec::new();
+    let mut start = 0;
+    while start < declarations.len() {
+        let symbol_id = declarations[start].symbol_id;
+        let name = declarations[start].name;
+        let mut end = start + 1;
+        while end < declarations.len() && declarations[end].symbol_id == symbol_id {
+            end += 1;
+        }
+
+        spans.clear();
+        spans.extend(declarations[start..end].iter().map(|declaration| declaration.span));
+        if scoping.remove_symbol_declarations(symbol_id, &spans) {
+            start = end;
+            continue;
+        }
+
+        let scope_id = scoping.symbol_scope_id(symbol_id);
+        let outer_symbol_id = scoping
+            .scope_parent_id(scope_id)
+            .and_then(|parent_scope_id| scoping.find_binding(parent_scope_id, name));
+        removed_bindings.push((symbol_id, name, scope_id, outer_symbol_id));
+        start = end;
+    }
+
+    let removed_references = std::mem::take(&mut state.removed_typescript_references);
+    let excluded = if !removed_references.is_empty() && !removed_bindings.is_empty() {
+        let mut excluded = BitSet::new_in(scoping.references_len(), allocator);
+        for reference in removed_references {
+            if reference.symbol_id.is_some_and(|symbol_id| {
+                removed_bindings
+                    .binary_search_by_key(&symbol_id, |(symbol_id, ..)| *symbol_id)
+                    .is_ok()
+            }) {
+                excluded.set_bit(reference.reference_id.index());
+            }
+        }
+        Some(excluded)
+    } else {
+        None
+    };
+
+    for (symbol_id, name, scope_id, outer_symbol_id) in removed_bindings {
+        if let Some(excluded) = &excluded {
+            scoping.retain_symbol_references_excluding(symbol_id, excluded);
+        }
+        scoping.remove_binding(scope_id, name);
+        if let Some(outer_symbol_id) = outer_symbol_id {
+            scoping.rebind_symbol_references(symbol_id, outer_symbol_id);
+        } else {
+            scoping.unresolve_symbol_references(name, symbol_id);
+        }
     }
 }
 
