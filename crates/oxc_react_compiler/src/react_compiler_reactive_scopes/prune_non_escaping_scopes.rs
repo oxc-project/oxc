@@ -186,7 +186,7 @@ impl CollectState {
         identifier: DeclarationId,
     ) {
         if let Some(scope_id) = get_place_scope(env, id, place.identifier) {
-            let node = self.scopes.entry(scope_id).or_insert_with(|| {
+            self.scopes.entry(scope_id).or_insert_with(|| {
                 let scope_data = &env.scopes[scope_id.0 as usize];
                 let dependencies = scope_data
                     .dependencies
@@ -195,8 +195,6 @@ impl CollectState {
                     .collect();
                 ScopeNode { dependencies, seen: false }
             });
-            // Avoid unused variable warning — we needed the entry to exist
-            let _ = node;
             let identifier_node = self
                 .identifiers
                 .get_mut(&identifier)

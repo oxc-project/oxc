@@ -79,7 +79,7 @@ pub fn infer_mutation_aliasing_effects(
     env: &mut Environment,
     is_function_expression: bool,
 ) -> Result<(), CompilerDiagnostic> {
-    let mut initial_state = InferenceState::empty(env, is_function_expression);
+    let mut initial_state = InferenceState::empty(is_function_expression);
 
     // Map of blocks to the last (merged) incoming state that was processed
     let mut states_by_block: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
@@ -294,7 +294,7 @@ struct InferenceState {
 }
 
 impl InferenceState {
-    fn empty(_env: &Environment, is_function_expression: bool) -> Self {
+    fn empty(is_function_expression: bool) -> Self {
         InferenceState {
             is_function_expression,
             values: FxHashMap::default(),
@@ -953,12 +953,8 @@ fn infer_block(
 
         // Compute signature if not cached
         if !context.instruction_signature_cache.contains_key(instr_idx) {
-            let sig = compute_signature_for_instruction(
-                context,
-                env,
-                &func.instructions[instr_index],
-                func,
-            );
+            let sig =
+                compute_signature_for_instruction(context, env, &func.instructions[instr_index]);
             context.instruction_signature_cache.insert(*instr_idx, sig);
         }
 
@@ -1814,7 +1810,6 @@ fn compute_signature_for_instruction(
     context: &mut Context,
     env: &Environment,
     instr: &Instruction,
-    _func: &HirFunction,
 ) -> InstructionSignature {
     let lvalue = &instr.lvalue;
     let value = &instr.value;
@@ -2266,7 +2261,7 @@ fn compute_effects_for_legacy_signature(
     lvalue: &Place,
     receiver: &Place,
     args: &[PlaceOrSpreadOrHole],
-    _loc: Option<&SourceLocation>,
+    loc: Option<&SourceLocation>,
     env: &Environment,
     function_values: &FxHashMap<ValueId, FunctionId>,
     todo_errors: &mut Vec<CompilerErrorDetail>,
@@ -2294,7 +2289,7 @@ fn compute_effects_for_legacy_signature(
             )),
         );
         diagnostic.details.push(CompilerDiagnosticDetail::Error {
-            loc: _loc.copied(),
+            loc: loc.copied(),
             message: Some("Cannot call impure function".to_string()),
         });
         effects.push(AliasingEffect::Impure { place: receiver.clone(), error: diagnostic });
@@ -2522,7 +2517,7 @@ fn compute_effects_for_aliasing_signature_config(
     receiver: &Place,
     args: &[PlaceOrSpreadOrHole],
     context: &[Place],
-    _loc: Option<&SourceLocation>,
+    loc: Option<&SourceLocation>,
     temp_cache: &mut FxHashMap<(IdentifierId, String), Place>,
 ) -> Result<Option<Vec<AliasingEffect>>, CompilerDiagnostic> {
     // Build substitutions from config strings to places
@@ -2716,7 +2711,7 @@ fn compute_effects_for_aliasing_signature_config(
                         args: apply_args,
                         into,
                         signature: None,
-                        loc: _loc.copied(),
+                        loc: loc.copied(),
                     });
                 } else {
                     return Ok(None);
@@ -2775,7 +2770,7 @@ fn compute_effects_for_aliasing_signature(
     receiver: &Place,
     args: &[PlaceOrSpreadOrHole],
     context: &[Place],
-    _loc: Option<&SourceLocation>,
+    loc: Option<&SourceLocation>,
 ) -> Result<Option<Vec<AliasingEffect>>, CompilerDiagnostic> {
     if signature.params.len() > args.len()
         || (args.len() > signature.params.len() && signature.rest.is_none())
@@ -2978,7 +2973,7 @@ fn compute_effects_for_aliasing_signature(
                         args: apply_args,
                         into: apply_into,
                         signature: s.clone(),
-                        loc: _loc.copied(),
+                        loc: loc.copied(),
                     });
                 } else {
                     return Ok(None);

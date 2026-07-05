@@ -646,7 +646,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
         let mut instructions = std::mem::take(&mut self.instruction_table);
 
-        let rpo_blocks = get_reverse_postordered_blocks(&hir, &instructions);
+        let rpo_blocks = get_reverse_postordered_blocks(&hir);
 
         // Check for unreachable blocks that contain FunctionExpression instructions.
         // These could contain hoisted declarations that we can't safely remove.
@@ -682,9 +682,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         mark_instruction_ids(&mut hir, &mut instructions);
         mark_predecessors(&mut hir);
 
-        let used_names = self.used_names;
-        let bindings = self.bindings;
-        Ok((hir, instructions, used_names, bindings))
+        Ok((hir, instructions, self.used_names, self.bindings))
     }
 
     // -----------------------------------------------------------------------
@@ -968,10 +966,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 /// Blocks not reachable through successors are removed. Blocks that are
 /// only reachable as fallthroughs (not through real successor edges) are
 /// replaced with empty blocks that have an Unreachable terminal.
-pub fn get_reverse_postordered_blocks(
-    hir: &HIR,
-    _instructions: &[Instruction],
-) -> FxIndexMap<BlockId, BasicBlock> {
+pub fn get_reverse_postordered_blocks(hir: &HIR) -> FxIndexMap<BlockId, BasicBlock> {
     let mut visited: FxIndexSet<BlockId> = FxIndexSet::default();
     let mut used: FxIndexSet<BlockId> = FxIndexSet::default();
     let mut used_fallthroughs: FxIndexSet<BlockId> = FxIndexSet::default();

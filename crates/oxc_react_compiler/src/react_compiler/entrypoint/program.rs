@@ -460,8 +460,7 @@ fn returns_non_node_in_stmt(stmt: &oxc::Statement, result: &mut bool) {
 /// Check if a function returns non-node values.
 /// For arrow functions with expression body, checks the expression directly.
 /// For block bodies, walks the statements.
-fn returns_non_node_fn(params: &oxc::FormalParameters, body: &FunctionBody) -> bool {
-    let _ = params;
+fn returns_non_node_fn(body: &FunctionBody) -> bool {
     match body {
         FunctionBody::Block(block) => returns_non_node_in_stmts(&block.statements),
         FunctionBody::Expression(expr) => is_non_node(expr),
@@ -1057,7 +1056,7 @@ fn get_component_or_hook_like(
             // Check if it actually looks like a component
             let is_component = calls_hooks_or_creates_jsx(params, body)
                 && is_valid_component_params(params)
-                && !returns_non_node_fn(params, body);
+                && !returns_non_node_fn(body);
             return if is_component { Some(ReactFunctionType::Component) } else { None };
         } else if is_hook_name(fn_name) {
             // Hooks have hook invocations or JSX, but can take any # of arguments
@@ -1208,7 +1207,6 @@ fn try_compile_function<'a>(
     pipeline::compile_fn(
         ast,
         &source.fn_node,
-        source.fn_name.as_deref(),
         scope,
         source.fn_type,
         output_mode,
@@ -2421,7 +2419,6 @@ fn ox_apply_gated_conditional<'a>(
         &gating_config.import_specifier_name,
         None,
     );
-    let gating_callee_name = gating_import.name;
 
     // Clone the original function (matched by node_id) as the fallback expression
     // BEFORE replacing it.
@@ -2438,7 +2435,7 @@ fn ox_apply_gated_conditional<'a>(
     use oxc_span::SPAN;
     let gating_expression = oxc_ast::ast::Expression::new_conditional_expression(
         SPAN,
-        ox_gating_call(ast, &gating_callee_name),
+        ox_gating_call(ast, &gating_import.name),
         compiled_expr,
         original_expr,
         ast,
@@ -2462,7 +2459,6 @@ fn ox_clone_original_fn_as_expression<'a>(
     node_id: u32,
 ) -> Option<oxc_ast::ast::Expression<'a>> {
     use oxc_allocator::CloneIn;
-    use oxc_span::SPAN;
 
     struct Finder<'a, 'b> {
         ast: &'b oxc_ast::builder::AstBuilder<'a>,
@@ -2516,7 +2512,6 @@ fn ox_clone_original_fn_as_expression<'a>(
             oxc_ast_visit::walk::walk_arrow_function_expression(self, arrow);
         }
     }
-    let _ = (SPAN, ast.allocator());
     let mut finder = Finder { ast, node_id, found: None };
     oxc_ast_visit::Visit::visit_program(&mut finder, program);
     finder.found.map(|e| e.clone_in(ast.allocator()))
@@ -2584,9 +2579,11 @@ fn ox_splice_program<'a>(
     let needs_memo_import = replacements.iter().any(|r| r.codegen_fn.memo_slots_used > 0);
     if needs_memo_import {
         let import_spec = context.add_memo_cache_import();
-        let local_name = import_spec.name;
-        let mut visitor =
-            OxcRenameIdentifierVisitor { ast, old_name: "useMemoCache", new_name: &local_name };
+        let mut visitor = OxcRenameIdentifierVisitor {
+            ast,
+            old_name: "useMemoCache",
+            new_name: &import_spec.name,
+        };
         oxc_ast_visit::VisitMut::visit_program(&mut visitor, &mut program);
     }
 
@@ -2818,17 +2815,10 @@ pub fn compile_program<'a, 'p>(
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
-    let program = oxc_program;
-
-    // Validate restricted imports from the environment config
-    let restricted_imports = options.environment.validate_blocklisted_imports.clone();
-
-    // Determine if we should check for eslint suppressions
-    let validate_exhaustive = options.environment.validate_exhaustive_memoization_dependencies;
-    let validate_hooks = options.environment.validate_hooks_usage;
-
     let eslint_rules: Option<Vec<String>> =
-        if validate_exhaustive && validate_hooks {
+        if options.environment.validate_exhaustive_memoization_dependencies
+            && options.environment.validate_hooks_usage
+        {
             // Don't check for ESLint suppressions if both validations are enabled
             None
         } else {
@@ -2839,15 +2829,15 @@ pub fn compile_program<'a, 'p>(
 
     // Find program-level suppressions from comments
     let suppressions = find_program_suppressions(
-        &program.comments,
-        program.source_text,
+        &oxc_program.comments,
+        oxc_program.source_text,
         eslint_rules.as_deref(),
         options.flow_suppressions,
     );
 
     // Check for module-scope opt-out directive
     let module_directives: Vec<String> =
-        program.directives.iter().map(|d| d.expression.value.to_string()).collect();
+        oxc_program.directives.iter().map(|d| d.expression.value.to_string()).collect();
     let has_module_scope_opt_out =
         find_directive_disabling_memoization(&module_directives, &options).is_some();
 
@@ -2858,7 +2848,9 @@ pub fn compile_program<'a, 'p>(
     context.init_from_scope(scope);
 
     // Validate restricted imports (needs context for handle_error)
-    if let Some(err) = validate_restricted_imports(program, &restricted_imports) {
+    if let Some(err) =
+        validate_restricted_imports(oxc_program, &options.environment.validate_blocklisted_imports)
+    {
         if let Some(result) = handle_error(&err, None, &mut context) {
             return result;
         }
@@ -2867,36 +2859,31 @@ pub fn compile_program<'a, 'p>(
 
     // Pre-register instrumentation imports to get stable local names.
     // These are needed before compilation so codegen can use the correct names.
-    let instrument_fn_name: Option<String>;
-    let instrument_gating_name: Option<String>;
-    let hook_guard_name: Option<String>;
+    let (instrument_fn_name, instrument_gating_name) =
+        if let Some(ref instrument_config) = options.environment.enable_emit_instrument_forget {
+            let fn_spec = context.add_import_specifier(
+                &instrument_config.fn_.source,
+                &instrument_config.fn_.import_specifier_name,
+                None,
+            );
+            let gating_name = instrument_config.gating.as_ref().map(|g| {
+                let spec = context.add_import_specifier(&g.source, &g.import_specifier_name, None);
+                spec.name.clone()
+            });
+            (Some(fn_spec.name.clone()), gating_name)
+        } else {
+            (None, None)
+        };
 
-    if let Some(ref instrument_config) = options.environment.enable_emit_instrument_forget {
-        let fn_spec = context.add_import_specifier(
-            &instrument_config.fn_.source,
-            &instrument_config.fn_.import_specifier_name,
-            None,
-        );
-        instrument_fn_name = Some(fn_spec.name.clone());
-        instrument_gating_name = instrument_config.gating.as_ref().map(|g| {
-            let spec = context.add_import_specifier(&g.source, &g.import_specifier_name, None);
+    let hook_guard_name =
+        options.environment.enable_emit_hook_guards.as_ref().map(|hook_guard_config| {
+            let spec = context.add_import_specifier(
+                &hook_guard_config.source,
+                &hook_guard_config.import_specifier_name,
+                None,
+            );
             spec.name.clone()
         });
-    } else {
-        instrument_fn_name = None;
-        instrument_gating_name = None;
-    }
-
-    if let Some(ref hook_guard_config) = options.environment.enable_emit_hook_guards {
-        let spec = context.add_import_specifier(
-            &hook_guard_config.source,
-            &hook_guard_config.import_specifier_name,
-            None,
-        );
-        hook_guard_name = Some(spec.name.clone());
-    } else {
-        hook_guard_name = None;
-    }
 
     // Store pre-resolved names on context for pipeline access
     context.instrument_fn_name = instrument_fn_name;
@@ -2904,7 +2891,7 @@ pub fn compile_program<'a, 'p>(
     context.hook_guard_name = hook_guard_name;
 
     // Find all functions to compile
-    let queue = find_functions_to_compile(program, &options, &mut context);
+    let queue = find_functions_to_compile(oxc_program, &options, &mut context);
 
     // Clone env_config once for all function compilations (avoids per-function clone
     // while satisfying the borrow checker — compile_fn needs &mut context + &env_config)
@@ -2921,7 +2908,7 @@ pub fn compile_program<'a, 'p>(
             output_mode,
             &env_config,
             &mut context,
-            program.source_text,
+            oxc_program.source_text,
         ) {
             Ok(Some(codegen_fn)) => {
                 compiled_fns.push(CompiledFunction { kind: source.kind, source, codegen_fn });

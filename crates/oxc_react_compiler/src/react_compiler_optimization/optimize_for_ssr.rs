@@ -172,13 +172,12 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                 InstructionValue::JsxExpression { tag: JsxTag::Builtin(builtin), .. } => {
                     // Only optimize non-custom-element builtin tags
                     if !builtin.name.contains('-') {
-                        let tag_name = builtin.name.clone();
                         // Retain only props that are not known event handlers and not "ref"
                         if let InstructionValue::JsxExpression { props, .. } = &mut instr.value {
                             props.retain(|prop| match prop {
                                 JsxAttribute::SpreadAttribute { .. } => true,
                                 JsxAttribute::Attribute { name, .. } => {
-                                    !is_known_event_handler(&tag_name, name) && name != "ref"
+                                    !is_known_event_handler(name) && name != "ref"
                                 }
                             });
                         }
@@ -292,7 +291,7 @@ fn has_known_non_render_call(func: &HirFunction, env: &Environment) -> bool {
 }
 
 /// Returns true if the prop name matches the known event handler pattern `on[A-Z]`.
-fn is_known_event_handler(_tag: &str, prop: &str) -> bool {
+fn is_known_event_handler(prop: &str) -> bool {
     if prop.len() < 3 {
         return false;
     }

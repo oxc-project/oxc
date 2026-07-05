@@ -55,8 +55,8 @@ impl ProgramContext {
         has_module_scope_opt_out: bool,
     ) -> Self {
         let react_runtime_module = get_react_compiler_runtime_module(&opts.target);
-        let debug_enabled = opts.debug;
         Self {
+            debug_enabled: opts.debug,
             opts,
             react_runtime_module,
             suppressions,
@@ -65,7 +65,6 @@ impl ProgramContext {
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
-            debug_enabled,
             already_compiled: FxHashSet::default(),
             known_referenced_names: FxHashSet::default(),
             imports: FxHashMap::default(),

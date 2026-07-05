@@ -100,7 +100,6 @@ use crate::react_compiler::debug_print;
 pub fn compile_fn<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     func: &FunctionNode<'_>,
-    fn_name: Option<&str>,
     scope: &ScopeResolver<'_, '_>,
     fn_type: ReactFunctionType,
     mode: CompilerOutputMode,
@@ -123,7 +122,7 @@ pub fn compile_fn<'a>(
     env.reference_node_ids = scope.all_reference_positions().clone();
 
     let line_offsets = crate::react_compiler_lowering::source_loc::LineOffsets::new(source_text);
-    let mut hir = lower(func, fn_name, scope, &mut env, &line_offsets)?;
+    let mut hir = lower(func, scope, &mut env, &line_offsets)?;
 
     // Check for Invariant errors after lowering, before logging HIR.
     // In TS, Invariant errors throw from recordError(), aborting lower() before
@@ -257,9 +256,8 @@ pub fn compile_fn<'a>(
     }
 
     let mut inner_logs: Vec<String> = Vec::new();
-    let debug_inner = context.debug_enabled;
     let analyse_result = analyse_functions(&mut hir, &mut env, &mut |inner_func, inner_env| {
-        if debug_inner {
+        if context.debug_enabled {
             inner_logs.push(debug_print::debug_hir(inner_func, inner_env));
         }
     });
@@ -768,15 +766,7 @@ pub fn compile_fn<'a>(
             outlined: Vec::new(),
         };
         if let Some(fn_type) = o.fn_type {
-            let fn_name = outlined_codegen.id.as_ref().map(|id| id.name.to_string());
-            match compile_outlined_fn(
-                outlined_codegen,
-                fn_name.as_deref(),
-                fn_type,
-                mode,
-                env_config,
-                context,
-            ) {
+            match compile_outlined_fn(outlined_codegen) {
                 Ok(compiled) => {
                     compiled_outlined
                         .push(OutlinedFunction { func: compiled, fn_type: Some(fn_type) });
@@ -819,13 +809,7 @@ pub fn compile_fn<'a>(
 /// functions are inserted into the program AST and re-compiled from scratch.
 pub fn compile_outlined_fn<'a>(
     codegen_fn: CodegenFunction<'a>,
-    fn_name: Option<&str>,
-    fn_type: ReactFunctionType,
-    mode: CompilerOutputMode,
-    env_config: &EnvironmentConfig,
-    context: &mut ProgramContext,
 ) -> Result<CodegenFunction<'a>, CompilerError> {
-    let _ = (fn_name, fn_type, mode, env_config, context);
     Ok(codegen_fn)
 }
 

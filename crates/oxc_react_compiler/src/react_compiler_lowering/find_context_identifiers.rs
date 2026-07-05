@@ -39,7 +39,6 @@ use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
 use crate::react_compiler_diagnostics::ErrorCategory;
 use crate::react_compiler_diagnostics::SourceLocation;
-use crate::react_compiler_hir::environment::Environment;
 use crate::scope::ScopeId;
 use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
@@ -54,10 +53,9 @@ struct BindingInfo {
     referenced_by_inner_fn: bool,
 }
 
-struct ContextIdentifierVisitor<'a, 'b> {
+struct ContextIdentifierVisitor<'a> {
     scope: &'a ScopeResolver<'a, 'a>,
     line_offsets: &'a LineOffsets,
-    env: &'a mut Environment<'b>,
     /// The active scope stack. Initialized with the function-being-compiled's
     /// scope and pushed/popped for every scope-creating node, mirroring the
     /// original `AstWalker`.
@@ -69,7 +67,7 @@ struct ContextIdentifierVisitor<'a, 'b> {
     error: Option<CompilerError>,
 }
 
-impl<'a, 'b> ContextIdentifierVisitor<'a, 'b> {
+impl<'a> ContextIdentifierVisitor<'a> {
     fn current_scope(&self) -> ScopeId {
         self.scope_stack.last().copied().unwrap_or_else(|| self.scope.program_scope())
     }
@@ -141,11 +139,11 @@ impl<'a, 'b> ContextIdentifierVisitor<'a, 'b> {
             return;
         }
         let loc = self.line_offsets.source_location(span);
-        self.error = Some(make_unsupported_lval_error(self.env, type_name, Some(loc)));
+        self.error = Some(make_unsupported_lval_error(type_name, Some(loc)));
     }
 }
 
-impl<'a, 'b> Visit<'a> for ContextIdentifierVisitor<'a, 'b> {
+impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
     // ---- function scopes (push BOTH the generic scope and the function stack) ----
 
     fn visit_function(&mut self, it: &oxc::Function<'a>, _flags: ScopeFlags) {
@@ -289,12 +287,11 @@ impl<'a, 'b> Visit<'a> for ContextIdentifierVisitor<'a, 'b> {
         self.visit_expression(&it.value);
     }
 
-    fn visit_class(&mut self, it: &oxc::Class<'a>) {
+    fn visit_class(&mut self, _it: &oxc::Class<'a>) {
         // The original walker did not recurse into a class's `super_class`
         // (extends) clause nor its body members; only the type-bearing parts
         // were walked, and those carried no `enter_identifier` calls. So the
         // class contributes nothing to the walker-based capture analysis.
-        let _ = it;
     }
 
     // ---- skip TS type subtrees (the original walked them as opaque RawNodes) ----
@@ -320,7 +317,7 @@ impl<'a, 'b> Visit<'a> for ContextIdentifierVisitor<'a, 'b> {
     fn visit_ts_module_declaration(&mut self, _it: &oxc::TSModuleDeclaration<'a>) {}
 }
 
-impl<'a, 'b> ContextIdentifierVisitor<'a, 'b> {
+impl<'a> ContextIdentifierVisitor<'a> {
     /// Recursively walk an assignment target to find all reassignment target
     /// identifiers, mirroring the original `walk_lval_for_reassignment`.
     fn walk_assignment_target_for_reassignment(
@@ -401,12 +398,7 @@ impl<'a, 'b> ContextIdentifierVisitor<'a, 'b> {
 /// aborting before BuildHIR ever runs or logs, so this must return Err rather
 /// than record-and-continue: otherwise Rust emits HIR debug entries for a
 /// function TS never lowered.
-fn make_unsupported_lval_error(
-    env: &mut Environment,
-    type_name: &str,
-    loc: Option<SourceLocation>,
-) -> CompilerError {
-    let _ = env;
+fn make_unsupported_lval_error(type_name: &str, loc: Option<SourceLocation>) -> CompilerError {
     let mut err = CompilerError::new();
     err.push_error_detail(CompilerErrorDetail {
         category: ErrorCategory::Todo,
@@ -443,7 +435,6 @@ fn is_captured_by_function(
 pub fn find_context_identifiers(
     func: &FunctionNode<'_>,
     scope: &ScopeResolver<'_, '_>,
-    env: &mut Environment,
     identifier_locs: &crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex,
     line_offsets: &LineOffsets,
 ) -> Result<FxHashSet<SymbolId>, CompilerError> {
@@ -452,7 +443,6 @@ pub fn find_context_identifiers(
     let mut visitor = ContextIdentifierVisitor {
         scope,
         line_offsets,
-        env,
         scope_stack: vec![func_scope],
         function_stack: Vec::new(),
         binding_info: FxHashMap::default(),

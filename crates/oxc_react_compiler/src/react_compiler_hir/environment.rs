@@ -553,11 +553,9 @@ impl<'a> Environment<'a> {
         let module_type = module_config.map(|config| {
             let mut type_errors: Vec<String> = Vec::new();
             let ty = globals::install_type_config_with_errors(
-                &mut self.globals,
                 &mut self.shapes,
                 &config,
                 module_name,
-                (),
                 &mut type_errors,
             );
             // Store errors for later reporting when the import is actually used
@@ -700,6 +698,7 @@ impl<'a> Environment<'a> {
         self.outlined_functions.push(OutlinedFunctionEntry { func, fn_type });
     }
 
+    #[cfg(feature = "debug")]
     pub(crate) fn outlined_functions(&self) -> &[OutlinedFunctionEntry<'a>] {
         &self.outlined_functions
     }

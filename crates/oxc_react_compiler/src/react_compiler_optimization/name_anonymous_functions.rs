@@ -42,15 +42,8 @@ pub fn name_anonymous_functions(func: &mut HirFunction, env: &mut Environment) {
         }
         // Whether or not we generated a name for the function at this node,
         // traverse into its nested functions to assign them names
-        let fallback;
-        let label = if let Some(ref gen_name) = node.generated_name {
-            gen_name.as_str()
-        } else if let Some(ref existing) = node.fn_name {
-            existing.as_str()
-        } else {
-            fallback = "<anonymous>";
-            fallback
-        };
+        let label =
+            node.generated_name.as_deref().or(node.fn_name.as_deref()).unwrap_or("<anonymous>");
         let next_prefix = format!("{}{} > ", prefix, label);
         for inner in &node.inner {
             visit(inner, &next_prefix, updates);
@@ -178,26 +171,10 @@ fn name_anonymous_functions_impl(func: &HirFunction, env: &Environment) -> Vec<N
                     }
                 }
                 InstructionValue::CallExpression { callee, args, .. } => {
-                    handle_call(
-                        env,
-                        func,
-                        callee.identifier,
-                        args,
-                        &mut functions,
-                        &names,
-                        &mut nodes,
-                    );
+                    handle_call(env, callee.identifier, args, &mut functions, &names, &mut nodes);
                 }
                 InstructionValue::MethodCall { property, args, .. } => {
-                    handle_call(
-                        env,
-                        func,
-                        property.identifier,
-                        args,
-                        &mut functions,
-                        &names,
-                        &mut nodes,
-                    );
+                    handle_call(env, property.identifier, args, &mut functions, &names, &mut nodes);
                 }
                 InstructionValue::JsxExpression { tag, props, .. } => {
                     for attr in props {
@@ -238,7 +215,6 @@ fn name_anonymous_functions_impl(func: &HirFunction, env: &Environment) -> Vec<N
 /// Handle CallExpression / MethodCall to generate names for function arguments.
 fn handle_call(
     env: &Environment,
-    _func: &HirFunction,
     callee_id: IdentifierId,
     args: &[PlaceOrSpread],
     functions: &mut FxHashMap<IdentifierId, usize>,

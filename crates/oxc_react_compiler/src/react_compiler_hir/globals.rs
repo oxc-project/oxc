@@ -128,22 +128,18 @@ pub fn base_globals() -> &'static FxHashMap<String, Global> {
 
 /// Like `install_type_config` but collects validation errors.
 pub fn install_type_config_with_errors(
-    _globals: &mut GlobalRegistry,
     shapes: &mut ShapeRegistry,
     type_config: &TypeConfig,
     module_name: &str,
-    _loc: (),
     errors: &mut Vec<String>,
 ) -> Global {
-    install_type_config_inner(_globals, shapes, type_config, module_name, _loc, &mut Some(errors))
+    install_type_config_inner(shapes, type_config, module_name, &mut Some(errors))
 }
 
 fn install_type_config_inner(
-    _globals: &mut GlobalRegistry,
     shapes: &mut ShapeRegistry,
     type_config: &TypeConfig,
     module_name: &str,
-    _loc: (),
     errors: &mut Option<&mut Vec<String>>,
 ) -> Global {
     match type_config {
@@ -158,14 +154,8 @@ fn install_type_config_inner(
         },
         TypeConfig::Function(func_config) => {
             // Compute return type first to avoid double-borrow of shapes
-            let return_type = install_type_config_inner(
-                _globals,
-                shapes,
-                &func_config.return_type,
-                module_name,
-                (),
-                errors,
-            );
+            let return_type =
+                install_type_config_inner(shapes, &func_config.return_type, module_name, errors);
             add_function(
                 shapes,
                 Vec::new(),
@@ -191,14 +181,8 @@ fn install_type_config_inner(
         }
         TypeConfig::Hook(hook_config) => {
             // Compute return type first to avoid double-borrow of shapes
-            let return_type = install_type_config_inner(
-                _globals,
-                shapes,
-                &hook_config.return_type,
-                module_name,
-                (),
-                errors,
-            );
+            let return_type =
+                install_type_config_inner(shapes, &hook_config.return_type, module_name, errors);
             add_hook(
                 shapes,
                 HookSignatureBuilder {
@@ -225,11 +209,9 @@ fn install_type_config_inner(
                         .iter()
                         .map(|(key, value)| {
                             let ty = install_type_config_inner(
-                                _globals,
                                 shapes,
                                 value,
                                 module_name,
-                                (),
                                 errors,
                             );
                             // Validate hook-name vs hook-type consistency (matching TS installTypeConfig)

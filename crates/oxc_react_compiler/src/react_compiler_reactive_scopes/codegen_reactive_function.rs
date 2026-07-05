@@ -1954,7 +1954,7 @@ fn ox_codegen_base_instruction_value<'a>(
                 false,
                 &cx.ast,
             );
-            let result = ox_maybe_wrap_hook_call(cx, call_expr, callee.identifier)?;
+            let result = ox_maybe_wrap_hook_call(cx, call_expr)?;
             Ok(OxValue::Expression(result))
         }
         InstructionValue::MethodCall { property, args, .. } => {
@@ -1984,7 +1984,7 @@ fn ox_codegen_base_instruction_value<'a>(
                 false,
                 &cx.ast,
             );
-            let result = ox_maybe_wrap_hook_call(cx, call_expr, property.identifier)?;
+            let result = ox_maybe_wrap_hook_call(cx, call_expr)?;
             Ok(OxValue::Expression(result))
         }
         InstructionValue::NewExpression { callee, args, .. } => {
@@ -3273,7 +3273,6 @@ fn ox_convert_member_expression_to_jsx<'a>(
 fn ox_maybe_wrap_hook_call<'a>(
     cx: &OxcContext<'a, '_, '_>,
     call_expr: oxc::Expression<'a>,
-    _callee_id: IdentifierId,
 ) -> Result<oxc::Expression<'a>, CompilerError> {
     // enableEmitHookGuards wrapping is deferred to a later batch; the guard is
     // off by default, so unwrapped calls match the differential floor.

@@ -536,11 +536,8 @@ type LowerInnerResult<'a> = Result<
 /// Main entry point: lower a function AST node into HIR.
 ///
 /// Receives a `FunctionNode` (discovered by the entrypoint) and lowers it to HIR.
-/// The `id` parameter provides the function name (which may come from the variable
-/// declarator rather than the function node itself, e.g. `const Foo = () => {}`).
 pub fn lower<'a>(
     func: &'a FunctionNode<'a>,
-    _id: Option<&str>,
     scope: &ScopeResolver<'_, 'a>,
     env: &mut Environment<'a>,
     line_offsets: &LineOffsets,
@@ -596,7 +593,7 @@ pub fn lower<'a>(
 
     // Pre-compute context identifiers: variables captured across function boundaries
     let context_identifiers =
-        find_context_identifiers(func, scope, env, &identifier_locs, line_offsets)?;
+        find_context_identifiers(func, scope, &identifier_locs, line_offsets)?;
 
     // For top-level functions, context is empty (no captured refs)
     let context_map: FxIndexMap<SymbolId, Option<SourceLocation>> = FxIndexMap::default();
@@ -1931,8 +1928,7 @@ fn lower_member_assignment_target<'a>(
             // Babel modeled `a.#b = v` as a non-computed MemberExpression with a
             // PrivateName property; the original `lower_assignment` member arm hit
             // the generic property `_` branch and bailed with this Todo.
-            let object = lower_expression_to_temporary(builder, &member.object)?;
-            let _ = object;
+            lower_expression_to_temporary(builder, &member.object)?;
             builder.record_error(CompilerErrorDetail {
                 reason:
                     "(BuildHIR::lowerAssignment) Handle PrivateName properties in MemberExpression"
@@ -2980,7 +2976,6 @@ fn lower_optional_call_expression_impl<'a>(
     call: &'a oxc::CallExpression<'a>,
     parent_alternate: Option<BlockId>,
 ) -> Result<InstructionValue<'a>, CompilerError> {
-    let optional = call.optional;
     let loc = builder.source_location(call.span);
     let place = build_temporary_place(builder, loc);
     let continuation_block = builder.reserve(builder.current_block_kind());
@@ -3121,7 +3116,7 @@ fn lower_optional_call_expression_impl<'a>(
 
     builder.terminate_with_continuation(
         Terminal::Optional {
-            optional,
+            optional: call.optional,
             test: test_block?,
             fallthrough: continuation_id,
             id: EvaluationOrder(0),
@@ -5815,7 +5810,7 @@ fn is_reorderable_expression(
 fn lower_statement<'a>(
     builder: &mut HirBuilder<'a, '_>,
     stmt: &'a oxc::Statement<'a>,
-    _label: Option<&str>,
+    label: Option<&str>,
     parent_scope: Option<crate::scope::ScopeId>,
 ) -> Result<(), CompilerDiagnostic> {
     match stmt {
@@ -5992,7 +5987,7 @@ fn lower_statement<'a>(
             let body_loc = builder.source_location(for_stmt.body.span());
             let body_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
                 builder.loop_scope(
-                    _label.map(|s| s.to_string()),
+                    label.map(|s| s.to_string()),
                     continue_target,
                     continuation_id,
                     |builder| {
@@ -6073,7 +6068,7 @@ fn lower_statement<'a>(
             let body_loc = builder.source_location(while_stmt.body.span());
             let loop_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
                 builder.loop_scope(
-                    _label.map(|s| s.to_string()),
+                    label.map(|s| s.to_string()),
                     conditional_id,
                     continuation_id,
                     |builder| {
@@ -6127,7 +6122,7 @@ fn lower_statement<'a>(
             let body_loc = builder.source_location(do_while_stmt.body.span());
             let loop_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
                 builder.loop_scope(
-                    _label.map(|s| s.to_string()),
+                    label.map(|s| s.to_string()),
                     conditional_id,
                     continuation_id,
                     |builder| {
@@ -6178,7 +6173,7 @@ fn lower_statement<'a>(
             let body_loc = builder.source_location(for_in.body.span());
             let loop_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
                 builder.loop_scope(
-                    _label.map(|s| s.to_string()),
+                    label.map(|s| s.to_string()),
                     init_block_id,
                     continuation_id,
                     |builder| {
@@ -6254,7 +6249,7 @@ fn lower_statement<'a>(
             let body_loc = builder.source_location(for_of.body.span());
             let loop_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
                 builder.loop_scope(
-                    _label.map(|s| s.to_string()),
+                    label.map(|s| s.to_string()),
                     init_block_id,
                     continuation_id,
                     |builder| {
@@ -6359,21 +6354,17 @@ fn lower_statement<'a>(
 
                 let fallthrough_target = fallthrough;
                 let block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
-                    builder.switch_scope(
-                        _label.map(|s| s.to_string()),
-                        continuation_id,
-                        |builder| {
-                            for consequent in &case.consequent {
-                                lower_statement(builder, consequent, None, parent_scope)?;
-                            }
-                            Ok(Terminal::Goto {
-                                block: fallthrough_target,
-                                variant: GotoVariant::Break,
-                                id: EvaluationOrder(0),
-                                loc: case_loc,
-                            })
-                        },
-                    )
+                    builder.switch_scope(label.map(|s| s.to_string()), continuation_id, |builder| {
+                        for consequent in &case.consequent {
+                            lower_statement(builder, consequent, None, parent_scope)?;
+                        }
+                        Ok(Terminal::Goto {
+                            block: fallthrough_target,
+                            variant: GotoVariant::Break,
+                            id: EvaluationOrder(0),
+                            loc: case_loc,
+                        })
+                    })
                 })?;
 
                 let test = if let Some(test_expr) = &case.test {

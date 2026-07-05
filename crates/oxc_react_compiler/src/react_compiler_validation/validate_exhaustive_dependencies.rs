@@ -33,8 +33,6 @@ pub fn validate_exhaustive_dependencies(
     env: &mut Environment,
 ) -> Result<(), CompilerDiagnostic> {
     let reactive = collect_reactive_identifiers(func, &env.functions);
-    let validate_memo = env.config.validate_exhaustive_memoization_dependencies;
-    let validate_effect = env.config.validate_exhaustive_effect_dependencies;
 
     let mut temporaries: FxHashMap<IdentifierId, Temporary> = FxHashMap::default();
     for param in &func.params {
@@ -60,8 +58,8 @@ pub fn validate_exhaustive_dependencies(
     let mut callbacks = Callbacks {
         start_memo: &mut start_memo,
         memo_locals: &mut memo_locals,
-        validate_memo,
-        validate_effect,
+        validate_memo: env.config.validate_exhaustive_memoization_dependencies,
+        validate_effect: env.config.validate_exhaustive_effect_dependencies,
         reactive: &reactive,
         diagnostics: Vec::new(),
         invalid_memo_ids: FxHashSet::default(),
@@ -1300,8 +1298,7 @@ fn validate_dependencies(
         return Ok(None);
     }
 
-    let mut diagnostic =
-        create_diagnostic(category, &filtered_missing, &filtered_extra, identifiers)?;
+    let mut diagnostic = create_diagnostic(category, &filtered_missing, &filtered_extra)?;
 
     // Add detail items for missing deps
     for dep in &filtered_missing {
@@ -1483,7 +1480,6 @@ fn create_diagnostic(
     category: ErrorCategory,
     missing: &[&InferredDependency],
     extra: &[&ManualMemoDependency],
-    _identifiers: &[Identifier],
 ) -> Result<CompilerDiagnostic, CompilerDiagnostic> {
     let missing_str = if !missing.is_empty() { Some("missing") } else { None };
     let extra_str = if !extra.is_empty() { Some("extra") } else { None };

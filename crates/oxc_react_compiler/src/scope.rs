@@ -381,16 +381,15 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         &self,
         specifier_node_id: NodeId,
     ) -> Option<&'s ImportDeclaration<'a>> {
-        let nodes = self.nodes;
         let mut current_id = specifier_node_id;
         // Walk up the parent chain (max 10 levels to avoid infinite loop)
         for _ in 0..10 {
-            let parent_id = nodes.parent_id(current_id);
+            let parent_id = self.nodes.parent_id(current_id);
             if parent_id == current_id {
                 // Root node, no more parents
                 return None;
             }
-            if let AstKind::ImportDeclaration(decl) = nodes.get_node(parent_id).kind() {
+            if let AstKind::ImportDeclaration(decl) = self.nodes.get_node(parent_id).kind() {
                 return Some(decl);
             }
             current_id = parent_id;

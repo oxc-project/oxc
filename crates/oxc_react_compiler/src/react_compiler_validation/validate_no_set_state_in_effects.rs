@@ -36,8 +36,6 @@ pub fn validate_no_set_state_in_effects(
     let identifiers = &env.identifiers;
     let types = &env.types;
     let functions = &env.functions;
-    let enable_verbose = env.config.enable_verbose_no_set_state_in_effect;
-    let enable_allow_set_state_from_refs = env.config.enable_allow_set_state_from_refs_in_effects;
 
     // Map from IdentifierId to the Place where the setState originated
     let mut set_state_functions: FxHashMap<IdentifierId, SetStateInfo> = FxHashMap::default();
@@ -75,7 +73,7 @@ pub fn validate_no_set_state_in_effects(
                             identifiers,
                             types,
                             functions,
-                            enable_allow_set_state_from_refs,
+                            env.config.enable_allow_set_state_from_refs_in_effects,
                             env.next_block_id_counter,
                         )?;
                         if let Some(info) = callee {
@@ -98,7 +96,11 @@ pub fn validate_no_set_state_in_effects(
                     {
                         if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
                             if let Some(info) = set_state_functions.get(&arg_place.identifier) {
-                                push_error(&mut errors, info, enable_verbose);
+                                push_error(
+                                    &mut errors,
+                                    info,
+                                    env.config.enable_verbose_no_set_state_in_effect,
+                                );
                             }
                         }
                     }
@@ -118,7 +120,11 @@ pub fn validate_no_set_state_in_effects(
                     {
                         if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
                             if let Some(info) = set_state_functions.get(&arg_place.identifier) {
-                                push_error(&mut errors, info, enable_verbose);
+                                push_error(
+                                    &mut errors,
+                                    info,
+                                    env.config.enable_verbose_no_set_state_in_effect,
+                                );
                             }
                         }
                     }

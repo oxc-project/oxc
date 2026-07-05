@@ -290,7 +290,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
 
         // If terminals have changed then blocks may have become newly unreachable.
         // Re-run minification of the graph (incl reordering instruction ids).
-        func.body.blocks = get_reverse_postordered_blocks(&func.body, &func.instructions);
+        func.body.blocks = get_reverse_postordered_blocks(&func.body);
         mark_instruction_ids(&mut func.body, &mut func.instructions);
         mark_predecessors(&mut func.body);
         merge_consecutive_blocks(func, &mut env.functions);

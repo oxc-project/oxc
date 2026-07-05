@@ -157,9 +157,7 @@ impl DerivationCache {
     }
 
     fn snapshot(&mut self) -> bool {
-        let has_changes = self.has_changes;
-        self.has_changes = false;
-        has_changes
+        std::mem::replace(&mut self.has_changes, false)
     }
 
     fn add_derivation_entry(
@@ -351,7 +349,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
             record_phi_derivations(block, &mut context, env);
             for &instr_id in &block.instructions {
                 let instr = &func.instructions[instr_id.0 as usize];
-                record_instruction_derivations(instr, &mut context, is_first_pass, func, env)?;
+                record_instruction_derivations(instr, &mut context, is_first_pass, env)?;
             }
         }
 
@@ -377,7 +375,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
         .collect();
 
     for (_key, effect_func_id, dep_elements) in &effects_cache {
-        validate_effect(*effect_func_id, dep_elements, &mut context, func, env, &mut errors);
+        validate_effect(*effect_func_id, dep_elements, &mut context, env, &mut errors);
     }
 
     Ok(errors)
@@ -415,7 +413,6 @@ fn record_instruction_derivations(
     instr: &Instruction,
     context: &mut ValidationContext,
     is_first_pass: bool,
-    _outer_func: &HirFunction,
     env: &Environment,
 ) -> Result<(), CompilerDiagnostic> {
     let identifiers = &env.identifiers;
@@ -444,13 +441,7 @@ fn record_instruction_derivations(
                 record_phi_derivations(block, context, env);
                 for &inner_instr_id in &block.instructions {
                     let inner_instr = &inner_func.instructions[inner_instr_id.0 as usize];
-                    record_instruction_derivations(
-                        inner_instr,
-                        context,
-                        is_first_pass,
-                        inner_func,
-                        env,
-                    )?;
+                    record_instruction_derivations(inner_instr, context, is_first_pass, env)?;
                 }
             }
         }
@@ -771,7 +762,6 @@ fn validate_effect(
     effect_func_id: FunctionId,
     dependencies: &[DepElement],
     context: &mut ValidationContext,
-    _outer_func: &HirFunction,
     env: &Environment,
     errors: &mut CompilerError,
 ) {

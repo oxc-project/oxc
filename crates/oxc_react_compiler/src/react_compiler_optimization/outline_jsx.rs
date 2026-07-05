@@ -257,7 +257,7 @@ fn collect_props<'a>(
     let mut attributes = Vec::new();
     let jsx_ids: FxHashSet<IdentifierId> = jsx_group.iter().map(|j| j.lvalue_id).collect();
 
-    let mut generate_name = |old_name: &str, _env: &mut Environment| -> String {
+    let mut generate_name = |old_name: &str| -> String {
         let mut new_name = old_name.to_string();
         while seen.contains(&new_name) {
             new_name = format!("{}{}", old_name, id_counter);
@@ -276,7 +276,7 @@ fn collect_props<'a>(
                 match attr {
                     JsxAttribute::SpreadAttribute { .. } => return None,
                     JsxAttribute::Attribute { name, place } => {
-                        let new_name = generate_name(name, env);
+                        let new_name = generate_name(name);
                         attributes.push(OutlinedJsxAttribute {
                             original_name: name.clone(),
                             new_name,
@@ -304,7 +304,7 @@ fn collect_props<'a>(
                         Some(IdentifierName::Promoted(n)) => n.clone(),
                         None => format!("#t{}", decl_id.0),
                     };
-                    let new_name = generate_name("t", env);
+                    let new_name = generate_name("t");
                     attributes.push(OutlinedJsxAttribute {
                         original_name: child_name,
                         new_name,
