@@ -61,7 +61,6 @@ pub fn prune_maybe_throws(
                                 .with_detail(CompilerDiagnosticDetail::Error {
                                     loc: GENERATED_SOURCE,
                                     message: None,
-                                    identifier_name: None,
                                 })
                             })?;
                         updates.push((*predecessor, mapped_terminal));

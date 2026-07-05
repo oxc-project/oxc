@@ -185,8 +185,7 @@ fn apply_constant_propagation<'a>(
                     func.body.blocks.get_mut(&block_id).unwrap().terminal = terminal;
                 }
             }
-            Terminal::Unsupported { .. }
-            | Terminal::Unreachable { .. }
+            Terminal::Unreachable { .. }
             | Terminal::Throw { .. }
             | Terminal::Return { .. }
             | Terminal::Goto { .. }

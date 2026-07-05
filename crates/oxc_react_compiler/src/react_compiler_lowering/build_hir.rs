@@ -450,7 +450,6 @@ fn lower_block_statement_inner<'a>(
                                 info.name, info.kind
                             )),
                             loc: None,
-                            suggestions: None,
                         })?;
                         continue;
                     } else {
@@ -463,7 +462,6 @@ fn lower_block_statement_inner<'a>(
                                 info.declaration_type.as_str()
                             )),
                             loc: None,
-                            suggestions: None,
                         })?;
                         continue;
                     }
@@ -731,7 +729,6 @@ fn lower_inner<'a>(
                         .with_detail(CompilerDiagnosticDetail::Error {
                             loc: builder.source_location(ident.span),
                             message: Some("Could not find binding".to_string()),
-                            identifier_name: None,
                         }),
                     );
                 }
@@ -834,7 +831,6 @@ fn lower_inner<'a>(
             name_hint: None,
             fn_type: if is_top_level { env.fn_type } else { ReactFunctionType::Other },
             params: hir_params,
-            return_type_annotation: None,
             returns,
             context,
             body: hir_body,
@@ -884,7 +880,6 @@ fn lower_identifier(
                             "Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler".to_string(),
                         ),
                         loc,
-                        suggestions: None,
                     })?;
                 }
             }
@@ -1039,7 +1034,6 @@ fn lower_member_expression_impl<'a>(
                     .to_string(),
                 description: None,
                 loc,
-                suggestions: None,
             })?;
             Ok(LoweredMemberExpression {
                 object,
@@ -1067,7 +1061,6 @@ fn lower_import_keyword_to_temporary(
         reason: "(BuildHIR::lowerExpression) Handle Import expressions".to_string(),
         description: None,
         loc: *loc,
-        suggestions: None,
     })?;
     lower_value_to_temporary(
         builder,
@@ -1088,7 +1081,6 @@ fn lower_private_name_to_temporary(
         reason: "(BuildHIR::lowerExpression) Handle PrivateName expressions".to_string(),
         description: None,
         loc,
-        suggestions: None,
     })?;
     lower_value_to_temporary(
         builder,
@@ -1261,7 +1253,6 @@ fn lower_member_expression_from_simple_target<'a>(
                     .to_string(),
                 description: None,
                 loc,
-                suggestions: None,
             })?;
             Ok(LoweredMemberExpression {
                 object,
@@ -1335,7 +1326,6 @@ fn lower_identifier_for_assignment(
                     category: ErrorCategory::Syntax,
                     loc,
                     description: Some(format!("`{}` is declared as const", name)),
-                    suggestions: None,
                 })?;
                 return Ok(None);
             }
@@ -1355,7 +1345,6 @@ fn lower_identifier_for_assignment(
                     category: ErrorCategory::Invariant,
                     loc,
                     description: None,
-                    suggestions: None,
                 })?;
                 Ok(None)
             }
@@ -1369,7 +1358,6 @@ fn lower_identifier_for_assignment(
                     category: ErrorCategory::Invariant,
                     loc,
                     description: None,
-                    suggestions: None,
                 })?;
                 Ok(None)
             }
@@ -1435,7 +1423,6 @@ fn lower_binding_assignment<'a>(
                                     .to_string(),
                                 category: ErrorCategory::Syntax,
                                 loc,
-                                suggestions: None,
                                 description: None,
                             })?;
                         }
@@ -1616,7 +1603,6 @@ fn lower_binding_assignment<'a>(
                         category: ErrorCategory::Todo,
                         loc: builder.source_location(prop.span),
                         description: None,
-                        suggestions: None,
                     })?;
                     continue;
                 }
@@ -1657,7 +1643,6 @@ fn lower_binding_assignment<'a>(
                                         category: ErrorCategory::Todo,
                                         loc: builder.source_location(id.span),
                                         description: None,
-                                        suggestions: None,
                                     })?;
                                 }
                                 None => {
@@ -1719,7 +1704,6 @@ fn lower_binding_assignment<'a>(
                                         category: ErrorCategory::Todo,
                                         loc: builder.source_location(rest.span),
                                         description: None,
-                                        suggestions: None,
                                     })?;
                                 }
                                 None => {}
@@ -1748,7 +1732,6 @@ fn lower_binding_assignment<'a>(
                             category: ErrorCategory::Todo,
                             loc: builder.source_location(rest.span),
                             description: None,
-                            suggestions: None,
                         })?;
                     }
                 }
@@ -1904,7 +1887,6 @@ fn lower_member_assignment_target<'a>(
             reason: "MemberExpression may only appear in an assignment expression".to_string(),
             description: None,
             loc,
-            suggestions: None,
         })?;
         return Ok(None);
     }
@@ -1958,7 +1940,6 @@ fn lower_member_assignment_target<'a>(
                 category: ErrorCategory::Todo,
                 loc: builder.source_location(member.field.span),
                 description: None,
-                suggestions: None,
             })?;
             let temp = lower_value_to_temporary(
                 builder,
@@ -2037,7 +2018,6 @@ fn lower_assignment_target<'a>(
                                     .to_string(),
                                 category: ErrorCategory::Syntax,
                                 loc,
-                                suggestions: None,
                                 description: None,
                             })?;
                         }
@@ -2346,7 +2326,6 @@ fn lower_assignment_target<'a>(
                                         category: ErrorCategory::Todo,
                                         loc: builder.source_location(id.span),
                                         description: None,
-                                        suggestions: None,
                                     })?;
                                 }
                                 None => {
@@ -2372,7 +2351,6 @@ fn lower_assignment_target<'a>(
                                 category: ErrorCategory::Todo,
                                 loc: builder.source_location(p.span),
                                 description: None,
-                                suggestions: None,
                             })?;
                             continue;
                         }
@@ -2412,7 +2390,6 @@ fn lower_assignment_target<'a>(
                                                 category: ErrorCategory::Todo,
                                                 loc: builder.source_location(id.span),
                                                 description: None,
-                                                suggestions: None,
                                             })?;
                                         }
                                         None => {
@@ -2482,7 +2459,6 @@ fn lower_assignment_target<'a>(
                                         category: ErrorCategory::Todo,
                                         loc: builder.source_location(rest.span),
                                         description: None,
-                                        suggestions: None,
                                     })?;
                                 }
                                 None => {}
@@ -2517,7 +2493,6 @@ fn lower_assignment_target<'a>(
                             category: ErrorCategory::Todo,
                             loc: builder.source_location(rest.span),
                             description: None,
-                            suggestions: None,
                         })?;
                     }
                 }
@@ -3457,7 +3432,6 @@ fn lower_function_declaration<'a>(
                         ),
                         description: None,
                         loc,
-                        suggestions: None,
                     })?;
                 }
             }
@@ -3729,7 +3703,6 @@ fn lower_expression<'a>(
                             reason: "Only object properties can be deleted".to_string(),
                             description: None,
                             loc,
-                            suggestions: None,
                         })?;
                         Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
                     }
@@ -3937,7 +3910,6 @@ fn lower_expression<'a>(
                         .to_string(),
                     description: None,
                     loc,
-                    suggestions: None,
                 })?;
                 return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc });
             }
@@ -4016,7 +3988,6 @@ fn lower_expression<'a>(
                     reason: "(BuildHIR::lowerExpression) Handle tagged template where cooked value is different from raw value".to_string(),
                     description: None,
                     loc,
-                    suggestions: None,
                 })?;
                 return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc });
             }
@@ -4046,7 +4017,6 @@ fn lower_expression<'a>(
                     .to_string(),
                 description: None,
                 loc,
-                suggestions: None,
             })?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
         }
@@ -4064,7 +4034,6 @@ fn lower_expression<'a>(
                     reason: "(BuildHIR::lowerExpression) Handle MetaProperty expressions other than import.meta".to_string(),
                     description: None,
                     loc,
-                    suggestions: None,
                 })?;
                 Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
             }
@@ -4077,7 +4046,6 @@ fn lower_expression<'a>(
                     .to_string(),
                 description: None,
                 loc,
-                suggestions: None,
             })?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
         }
@@ -4088,7 +4056,6 @@ fn lower_expression<'a>(
                 reason: "(BuildHIR::lowerExpression) Handle Super expressions".to_string(),
                 description: None,
                 loc,
-                suggestions: None,
             })?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
         }
@@ -4099,7 +4066,6 @@ fn lower_expression<'a>(
                 reason: "(BuildHIR::lowerExpression) Handle ThisExpression expressions".to_string(),
                 description: None,
                 loc,
-                suggestions: None,
             })?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
         }
@@ -4213,7 +4179,6 @@ fn lower_expression<'a>(
                             reason: "(BuildHIR::lowerExpression) Handle UpdateExpression to variables captured within lambdas.".to_string(),
                             description: None,
                             loc,
-                            suggestions: None,
                         })?;
                         return Ok(InstructionValue::Primitive {
                             value: PrimitiveValue::Undefined,
@@ -4232,7 +4197,6 @@ fn lower_expression<'a>(
                                     .to_string(),
                             description: None,
                             loc,
-                            suggestions: None,
                         })?;
                         return Ok(InstructionValue::Primitive {
                             value: PrimitiveValue::Undefined,
@@ -4247,7 +4211,6 @@ fn lower_expression<'a>(
                                 reason: "(BuildHIR::lowerExpression) Support UpdateExpression where argument is a global".to_string(),
                                 description: None,
                                 loc,
-                                suggestions: None,
                             })?;
                             return Ok(InstructionValue::Primitive {
                                 value: PrimitiveValue::Undefined,
@@ -4297,7 +4260,6 @@ fn lower_expression<'a>(
                         reason: "UpdateExpression with unsupported argument type".to_string(),
                         description: None,
                         loc,
-                        suggestions: None,
                     })?;
                     Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
                 }
@@ -4448,7 +4410,6 @@ fn lower_assignment_expression<'a>(
                                     "`{}` is declared as const",
                                     ident.name.as_str()
                                 )),
-                                suggestions: None,
                             })?;
                             return Ok(InstructionValue::Primitive {
                                 value: PrimitiveValue::Undefined,
@@ -4609,7 +4570,6 @@ fn lower_assignment_expression<'a>(
                     category: ErrorCategory::Todo,
                     loc,
                     description: None,
-                    suggestions: None,
                 })?;
                 return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc });
             }
@@ -4726,7 +4686,6 @@ fn lower_assignment_expression<'a>(
                     category: ErrorCategory::Todo,
                     loc,
                     description: None,
-                    suggestions: None,
                 })?;
                 Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc })
             }
@@ -4775,7 +4734,6 @@ fn lower_jsx_element_expr<'a>(
                                 ),
                                 description: None,
                                 loc: builder.source_location(id.span),
-                                suggestions: None,
                             })?;
                         }
                         name.to_string()
@@ -4869,7 +4827,6 @@ fn lower_jsx_element_expr<'a>(
                     .with_detail(CompilerDiagnosticDetail::Error {
                         loc: id_loc,
                         message: Some(reason.clone()),
-                        identifier_name: None,
                     })
                     .into());
             }
@@ -4903,7 +4860,6 @@ fn lower_jsx_element_expr<'a>(
                     .map(|loc| CompilerDiagnosticDetail::Error {
                         message: Some(format!("Multiple `<{}:{}>` tags found", tag_name, name)),
                         loc: *loc,
-                        identifier_name: None,
                     })
                     .collect();
                 let mut diag = CompilerDiagnostic::new(
@@ -4999,7 +4955,7 @@ fn lower_jsx_element_name(
             Ok(JsxTag::Place(temp))
         } else {
             // Builtin HTML tag
-            Ok(JsxTag::Builtin(BuiltinTag { name: tag.to_string(), loc }))
+            Ok(JsxTag::Builtin(BuiltinTag { name: tag.to_string() }))
         }
     }
 
@@ -5031,7 +4987,6 @@ fn lower_jsx_element_name(
                         .to_string(),
                     description: Some(format!("Got `{}` : `{}`", namespace, name)),
                     loc,
-                    suggestions: None,
                 })?;
             }
             let place = lower_value_to_temporary(
@@ -5611,7 +5566,6 @@ fn lower_object_method<'a>(
             category: ErrorCategory::Todo,
             loc: builder.source_location(method.span),
             description: None,
-            suggestions: None,
         })?;
         return Ok(None);
     }
@@ -5677,7 +5631,6 @@ fn lower_object_property_key<'a>(
                 reason: "Unsupported key type in ObjectExpression".to_string(),
                 description: None,
                 loc,
-                suggestions: None,
             })?;
             Ok(None)
         }
@@ -5700,7 +5653,6 @@ fn lower_reorderable_expression<'a>(
             ),
             description: None,
             loc: builder.source_location(expr.span()),
-            suggestions: None,
         })?;
     }
     lower_expression_to_temporary(builder, expr)
@@ -5907,7 +5859,6 @@ fn lower_statement<'a>(
                         .to_string(),
                     description: None,
                     loc,
-                    suggestions: None,
                 })?;
             }
             let fallthrough = builder.reserve(BlockKind::Block);
@@ -6007,7 +5958,6 @@ fn lower_statement<'a>(
                             reason: "(BuildHIR::lowerStatement) Handle non-variable initialization in ForStatement".to_string(),
                             description: None,
                             loc,
-                            suggestions: None,
                         })?;
                         lower_expression_to_temporary(builder, expr)?;
                         init_loc
@@ -6092,7 +6042,6 @@ fn lower_statement<'a>(
                         .to_string(),
                     description: None,
                     loc,
-                    suggestions: None,
                 })?;
                 // Treat `for(;;)` as `while(true)` to keep the builder state consistent
                 let true_val =
@@ -6298,7 +6247,6 @@ fn lower_statement<'a>(
                     reason: "(BuildHIR::lowerStatement) Handle for-await loops".to_string(),
                     description: None,
                     loc,
-                    suggestions: None,
                 })?;
                 return Ok(());
             }
@@ -6403,7 +6351,6 @@ fn lower_statement<'a>(
                                 .to_string(),
                             description: None,
                             loc: case_loc,
-                            suggestions: None,
                         })?;
                         break;
                     }
@@ -6474,7 +6421,6 @@ fn lower_statement<'a>(
                                 .to_string(),
                         description: None,
                         loc,
-                        suggestions: None,
                     })?;
                     return Ok(());
                 }
@@ -6486,7 +6432,6 @@ fn lower_statement<'a>(
                     reason: "(BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause".to_string(),
                     description: None,
                     loc,
-                    suggestions: None,
                 })?;
             }
 
@@ -6510,7 +6455,6 @@ fn lower_statement<'a>(
                                 category: ErrorCategory::Invariant,
                                 loc: id_loc,
                                 description: None,
-                                suggestions: None,
                             })?;
                     }
                     None
@@ -6693,7 +6637,6 @@ fn lower_statement<'a>(
                 reason: "JavaScript 'with' syntax is not supported".to_string(),
                 description: Some("'with' syntax is considered deprecated and removed from JavaScript standards, consider alternatives".to_string()),
                 loc: builder.source_location(with_stmt.span),
-                suggestions: None,
             })?;
         }
         oxc::Statement::ClassDeclaration(cls) => {
@@ -6704,7 +6647,6 @@ fn lower_statement<'a>(
                     "Move class declarations outside of components/hooks".to_string(),
                 ),
                 loc: builder.source_location(cls.span),
-                suggestions: None,
             })?;
         }
         oxc::Statement::ImportDeclaration(_)
@@ -6716,7 +6658,6 @@ fn lower_statement<'a>(
                 reason: "JavaScript `import` and `export` statements may only appear at the top level of a module".to_string(),
                 description: None,
                 loc: builder.source_location(stmt.span()),
-                suggestions: None,
             })?;
         }
         oxc::Statement::TSEnumDeclaration(e) => {
@@ -6760,7 +6701,6 @@ fn lower_variable_declaration<'a>(
             category: ErrorCategory::Todo,
             loc: builder.source_location(var_decl.span),
             description: None,
-            suggestions: None,
         })?;
         // Treat `var` as `let` so references to the variable don't break
     }
@@ -6818,7 +6758,6 @@ fn lower_variable_declaration<'a>(
                                 category: ErrorCategory::Syntax,
                                 loc: id_loc,
                                 description: None,
-                                suggestions: None,
                             })?;
                         }
                         lower_value_to_temporary(
@@ -6849,7 +6788,6 @@ fn lower_variable_declaration<'a>(
                         category: ErrorCategory::Invariant,
                         loc: id_loc,
                         description: None,
-                        suggestions: None,
                     })?;
                 }
             }
@@ -6859,7 +6797,6 @@ fn lower_variable_declaration<'a>(
                 category: ErrorCategory::Syntax,
                 loc: builder.source_location(declarator.span),
                 description: None,
-                suggestions: None,
             })?;
         }
     }
@@ -6886,7 +6823,6 @@ fn lower_for_in_of_left<'a>(
                     ),
                     description: None,
                     loc: left_loc,
-                    suggestions: None,
                 })?;
             }
             if let Some(declarator) = var_decl.declarations.first() {

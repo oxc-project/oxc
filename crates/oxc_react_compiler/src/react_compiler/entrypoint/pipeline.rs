@@ -127,11 +127,6 @@ pub fn compile_fn<'a>(
     );
     let mut hir = lower(func, fn_name, scope, &mut env, &line_offsets)?;
 
-    // Copy renames from lowering to context (keep on env for codegen to apply to type annotations)
-    if !env.renames.is_empty() {
-        context.renames.extend(env.renames.iter().cloned());
-    }
-
     // Check for Invariant errors after lowering, before logging HIR.
     // In TS, Invariant errors throw from recordError(), aborting lower() before
     // the HIR entry is logged. The thrown error contains ONLY the Invariant error,
@@ -204,7 +199,6 @@ pub fn compile_fn<'a>(
             reason: diag.reason,
             description: diag.description,
             loc,
-            suggestions: diag.suggestions,
         });
         err
     })?;
@@ -737,7 +731,6 @@ pub fn compile_fn<'a>(
             reason: "unexpected error".to_string(),
             description: None,
             loc: None,
-            suggestions: None,
         });
         return Err(err);
     }

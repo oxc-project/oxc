@@ -1312,7 +1312,6 @@ impl Unifier {
                     reason: "there should be at least one operand".to_string(),
                     description: None,
                     details: vec![],
-                    suggestions: None,
                 });
             }
 
@@ -1355,7 +1354,6 @@ impl Unifier {
                 reason: "cycle detected".to_string(),
                 description: None,
                 details: vec![],
-                suggestions: None,
             });
         }
 

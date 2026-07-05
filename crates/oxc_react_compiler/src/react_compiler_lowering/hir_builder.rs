@@ -83,7 +83,6 @@ pub(crate) fn reserved_identifier_diagnostic(name: &str) -> CompilerDiagnostic {
     .with_detail(CompilerDiagnosticDetail::Error {
         loc: None, // GeneratedSource in TS
         message: Some("reserved word".to_string()),
-        identifier_name: None,
     })
 }
 
@@ -266,13 +265,6 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         self.identifier_locs.get(&node_id).map(|entry| entry.loc)
     }
 
-    /// Check whether a reference at the given byte offset corresponds to a
-    /// JSXIdentifier. Scans the node_id-keyed index for an entry whose stored
-    /// `start` matches the offset.
-    pub fn is_jsx_identifier_at_pos(&self, offset: u32) -> bool {
-        self.identifier_locs.values().any(|entry| entry.start == offset && entry.is_jsx)
-    }
-
     /// Access the function scope (the scope of the function being compiled).
     pub fn function_scope(&self) -> ScopeId {
         self.function_scope
@@ -424,42 +416,6 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         new_block(id, kind)
     }
 
-    /// Save a previously reserved block as completed with the given terminal.
-    pub fn complete(&mut self, block: WipBlock, terminal: Terminal) {
-        let block_id = block.id;
-        self.completed.insert(
-            block_id,
-            BasicBlock {
-                kind: block.kind,
-                id: block_id,
-                instructions: block.instructions,
-                terminal,
-                preds: FxIndexSet::default(),
-                phis: Vec::new(),
-            },
-        );
-    }
-
-    /// Sets the given wip block as current, executes the closure to populate
-    /// it and obtain its terminal, then completes the block and restores the
-    /// previous current block.
-    pub fn enter_reserved(&mut self, wip: WipBlock, f: impl FnOnce(&mut Self) -> Terminal) {
-        let prev = std::mem::replace(&mut self.current, wip);
-        let terminal = f(self);
-        let completed_wip = std::mem::replace(&mut self.current, prev);
-        self.completed.insert(
-            completed_wip.id,
-            BasicBlock {
-                kind: completed_wip.kind,
-                id: completed_wip.id,
-                instructions: completed_wip.instructions,
-                terminal,
-                preds: FxIndexSet::default(),
-                phis: Vec::new(),
-            },
-        );
-    }
-
     /// Like `enter_reserved`, but the closure returns a `Result<Terminal, CompilerDiagnostic>`.
     pub fn try_enter_reserved(
         &mut self,
@@ -483,20 +439,6 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         Ok(())
     }
 
-    /// Create a new block, set it as current, run the closure to populate it
-    /// and obtain its terminal, complete the block, and restore the previous
-    /// current block. Returns the new block's BlockId.
-    pub fn enter(
-        &mut self,
-        kind: BlockKind,
-        f: impl FnOnce(&mut Self, BlockId) -> Terminal,
-    ) -> BlockId {
-        let wip = self.reserve(kind);
-        let wip_id = wip.id;
-        self.enter_reserved(wip, |this| f(this, wip_id));
-        wip_id
-    }
-
     /// Like `enter`, but the closure returns a `Result<Terminal, CompilerDiagnostic>`.
     pub fn try_enter(
         &mut self,
@@ -507,13 +449,6 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         let wip_id = wip.id;
         self.try_enter_reserved(wip, |this| f(this, wip_id))?;
         Ok(wip_id)
-    }
-
-    /// Push an exception handler, run the closure, then pop the handler.
-    pub fn enter_try_catch(&mut self, handler: BlockId, f: impl FnOnce(&mut Self)) {
-        self.exception_handler_stack.push(handler);
-        f(self);
-        self.exception_handler_stack.pop();
     }
 
     /// Like `enter_try_catch`, but the closure returns a `Result`.
@@ -669,11 +604,6 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         id
     }
 
-    /// Set the source location for an identifier.
-    pub fn set_identifier_loc(&mut self, id: IdentifierId, loc: Option<SourceLocation>) {
-        self.env.identifiers[id.0 as usize].loc = loc;
-    }
-
     /// Record an error on the environment.
     /// Returns `Err` for Invariant errors (matching TS throw behavior).
     pub fn record_error(&mut self, error: CompilerErrorDetail) -> Result<(), CompilerError> {
@@ -739,7 +669,6 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                         reason: "Support functions with unreachable code that may contain hoisted declarations".to_string(),
                         description: None,
                         loc,
-                        suggestions: None,
                     })?;
                 }
             }
@@ -815,7 +744,6 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                         "Local variables named `fbt` may conflict with the fbt plugin and are not yet supported".to_string(),
                     ),
                     loc: error_loc,
-                    suggestions: None,
                 })?;
             }
         }

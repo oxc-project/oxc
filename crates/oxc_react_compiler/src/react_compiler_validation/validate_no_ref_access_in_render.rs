@@ -304,7 +304,6 @@ fn validate_no_direct_ref_value_access(
                 .with_detail(CompilerDiagnosticDetail::Error {
                     loc: loc.or(operand.loc),
                     message: Some("Cannot access ref value during render".to_string()),
-                    identifier_name: None,
                 }),
             );
         }
@@ -325,7 +324,6 @@ fn validate_no_ref_value_access(errors: &mut Vec<CompilerDiagnostic>, env: &Env,
                     .with_detail(CompilerDiagnosticDetail::Error {
                         loc: loc.or(operand.loc),
                         message: Some("Cannot access ref value during render".to_string()),
-                        identifier_name: None,
                     }),
                 );
             }
@@ -339,7 +337,6 @@ fn validate_no_ref_value_access(errors: &mut Vec<CompilerDiagnostic>, env: &Env,
                     .with_detail(CompilerDiagnosticDetail::Error {
                         loc: operand.loc,
                         message: Some("Cannot access ref value during render".to_string()),
-                        identifier_name: None,
                     }),
                 );
             }
@@ -375,7 +372,6 @@ fn validate_no_ref_passed_to_function(
                             "Passing a ref to a function may read its value during render"
                                 .to_string(),
                         ),
-                        identifier_name: None,
                     }),
                 );
             }
@@ -392,7 +388,6 @@ fn validate_no_ref_passed_to_function(
                             "Passing a ref to a function may read its value during render"
                                 .to_string(),
                         ),
-                        identifier_name: None,
                     }),
                 );
             }
@@ -425,7 +420,6 @@ fn validate_no_ref_update(
                     .with_detail(CompilerDiagnosticDetail::Error {
                         loc: error_loc,
                         message: Some("Cannot update ref during render".to_string()),
-                        identifier_name: None,
                     }),
                 );
             }
@@ -445,7 +439,6 @@ fn guard_check(errors: &mut Vec<CompilerDiagnostic>, operand: &Place, env: &Env)
             .with_detail(CompilerDiagnosticDetail::Error {
                 loc: operand.loc,
                 message: Some("Cannot access ref value during render".to_string()),
-                identifier_name: None,
             }),
         );
     }
@@ -741,7 +734,6 @@ fn validate_no_ref_access_in_render_impl(
                                             message: Some(
                                                 "This function accesses a ref value".to_string(),
                                             ),
-                                            identifier_name: None,
                                         },
                                     ),
                                 );
@@ -992,17 +984,14 @@ fn validate_no_ref_access_in_render_impl(
                                         "Cannot access refs during render",
                                         Some(ERROR_DESCRIPTION.to_string()),
                                     )
-                                    .with_detail(CompilerDiagnosticDetail::Error {
-                                        loc: value.loc,
-                                        message: Some(
-                                            "Cannot access ref value during render"
-                                                .to_string(),
-                                        ),
-                                        identifier_name: None,
-                                    })
-                                    .with_detail(CompilerDiagnosticDetail::Hint {
-                                        message: "To initialize a ref only once, check that the ref is null with the pattern `if (ref.current == null) { ref.current = ... }`".to_string(),
-                                    }),
+                                    .with_detail(
+                                        CompilerDiagnosticDetail::Error {
+                                            loc: value.loc,
+                                            message: Some(
+                                                "Cannot access ref value during render".to_string(),
+                                            ),
+                                        },
+                                    ),
                                 );
                             } else {
                                 validate_no_ref_value_access(errors, ref_env, value);

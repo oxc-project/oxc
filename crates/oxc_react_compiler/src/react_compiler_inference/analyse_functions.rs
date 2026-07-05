@@ -200,7 +200,6 @@ fn placeholder_function<'a>() -> HirFunction<'a> {
         name_hint: None,
         fn_type: ReactFunctionType::Other,
         params: Vec::new(),
-        return_type_annotation: None,
         returns: Place {
             identifier: IdentifierId(0),
             effect: Effect::Unknown,

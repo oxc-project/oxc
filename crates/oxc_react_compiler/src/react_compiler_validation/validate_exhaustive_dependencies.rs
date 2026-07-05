@@ -4,8 +4,7 @@ use std::mem::{replace, take};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerSuggestion, CompilerSuggestionOperation,
-    ErrorCategory, SourceLocation,
+    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, SourceLocation,
 };
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment_config::ExhaustiveEffectDepsMode;
@@ -1300,38 +1299,8 @@ fn validate_dependencies(
         return Ok(None);
     }
 
-    // Build suggestion when we have valid index info (matches TS behavior)
-    let suggestion = manual_memo_loc.and_then(|loc| {
-        let start_index = loc.start.index?;
-        let end_index = loc.end.index?;
-        let text = format!(
-            "[{}]",
-            inferred
-                .iter()
-                .filter(|dep| {
-                    match dep {
-                        InferredDependency::Local { identifier, .. } => {
-                            let ty = get_identifier_type(*identifier, identifiers, types);
-                            !is_optional_dependency(*identifier, reactive, identifiers, types)
-                                && !is_effect_event_function_type(ty)
-                        }
-                        InferredDependency::Global { .. } => false,
-                    }
-                })
-                .map(|dep| print_inferred_dependency(dep, identifiers))
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
-        Some(CompilerSuggestion {
-            op: CompilerSuggestionOperation::Replace,
-            range: (start_index as usize, end_index as usize),
-            description: "Update dependencies".to_string(),
-            text: Some(text),
-        })
-    });
-
     let mut diagnostic =
-        create_diagnostic(category, &filtered_missing, &filtered_extra, suggestion, identifiers)?;
+        create_diagnostic(category, &filtered_missing, &filtered_extra, identifiers)?;
 
     // Add detail items for missing deps
     for dep in &filtered_missing {
@@ -1345,7 +1314,6 @@ fn validate_dependencies(
             diagnostic.details.push(CompilerDiagnosticDetail::Error {
                 loc: *loc,
                 message: Some(format!("Missing dependency `{dep_str}`{hint}")),
-                identifier_name: None,
             });
         }
     }
@@ -1360,7 +1328,6 @@ fn validate_dependencies(
                     message: Some(format!(
                         "Unnecessary dependency `{dep_str}`. Values declared outside of a component/hook should not be listed as dependencies as the component will not re-render if they change"
                     )),
-                    identifier_name: None,
                 });
             }
             ManualMemoDependencyRoot::NamedLocal { value, .. } => {
@@ -1387,7 +1354,6 @@ fn validate_dependencies(
                                 message: Some(format!(
                                     "Functions returned from `useEffectEvent` must not be included in the dependency array. Remove `{dep_str}` from the dependencies."
                                 )),
-                                identifier_name: None,
                             });
                         } else if !is_optional_dependency_inferred(
                             matching,
@@ -1402,14 +1368,12 @@ fn validate_dependencies(
                                 message: Some(format!(
                                     "Overly precise dependency `{dep_str}`, use `{inferred_str}` instead"
                                 )),
-                                identifier_name: None,
                             });
                         } else {
                             let dep_str = print_manual_memo_dependency(dep, identifiers);
                             diagnostic.details.push(CompilerDiagnosticDetail::Error {
                                 loc: dep.loc.or(manual_memo_loc),
                                 message: Some(format!("Unnecessary dependency `{dep_str}`")),
-                                identifier_name: None,
                             });
                         }
                     }
@@ -1418,21 +1382,8 @@ fn validate_dependencies(
                     diagnostic.details.push(CompilerDiagnosticDetail::Error {
                         loc: dep.loc.or(manual_memo_loc),
                         message: Some(format!("Unnecessary dependency `{dep_str}`")),
-                        identifier_name: None,
                     });
                 }
-            }
-        }
-    }
-
-    // Add hint showing inferred dependencies when a suggestion was generated
-    // (matches TS: only adds hint when suggestion != null, using suggestion.text)
-    if let Some(ref suggestions) = diagnostic.suggestions {
-        if let Some(suggestion) = suggestions.first() {
-            if let Some(ref text) = suggestion.text {
-                diagnostic.details.push(CompilerDiagnosticDetail::Hint {
-                    message: format!("Inferred dependencies: `{text}`"),
-                });
             }
         }
     }
@@ -1532,7 +1483,6 @@ fn create_diagnostic(
     category: ErrorCategory,
     missing: &[&InferredDependency],
     extra: &[&ManualMemoDependency],
-    suggestion: Option<CompilerSuggestion>,
     _identifiers: &[Identifier],
 ) -> Result<CompilerDiagnostic, CompilerDiagnostic> {
     let missing_str = if !missing.is_empty() { Some("missing") } else { None };
@@ -1594,13 +1544,7 @@ fn create_diagnostic(
         }
     };
 
-    Ok(CompilerDiagnostic {
-        category,
-        reason,
-        description: Some(description),
-        details: Vec::new(),
-        suggestions: suggestion.map(|s| vec![s]),
-    })
+    Ok(CompilerDiagnostic { category, reason, description: Some(description), details: Vec::new() })
 }
 
 /// Collect lvalue identifier ids from instruction value (for the default branch).

@@ -113,7 +113,6 @@ fn record_conditional_hook_error(
                     reason,
                     description: None,
                     loc: Some(loc),
-                    suggestions: None,
                 },
             );
         }
@@ -123,7 +122,6 @@ fn record_conditional_hook_error(
             reason,
             description: None,
             loc: None,
-            suggestions: None,
         })?;
     }
     Ok(())
@@ -144,7 +142,6 @@ fn record_invalid_hook_usage_error(
                     reason,
                     description: None,
                     loc: Some(loc),
-                    suggestions: None,
                 },
             );
         }
@@ -154,7 +151,6 @@ fn record_invalid_hook_usage_error(
             reason,
             description: None,
             loc: None,
-            suggestions: None,
         })?;
     }
     Ok(())
@@ -175,7 +171,6 @@ fn record_dynamic_hook_usage_error(
                     reason,
                     description: None,
                     loc: Some(loc),
-                    suggestions: None,
                 },
             );
         }
@@ -185,7 +180,6 @@ fn record_dynamic_hook_usage_error(
             reason,
             description: None,
             loc: None,
-            suggestions: None,
         })?;
     }
     Ok(())
@@ -466,7 +460,6 @@ fn visit_function_expression(
                         reason: "Hooks must be called at the top level in the body of a function component or custom hook, and may not be called within function expressions. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)".to_string(),
                         description: Some(description),
                         loc,
-                        suggestions: None,
                     })?;
                 }
             }

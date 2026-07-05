@@ -51,7 +51,6 @@ pub fn validate_no_capitalized_calls(
                             reason: reason.to_string(),
                             description: Some(format!("{callee_name} may be a component")),
                             loc: *loc,
-                            suggestions: None,
                         })?;
                         continue;
                     }
@@ -72,7 +71,6 @@ pub fn validate_no_capitalized_calls(
                             reason: reason.to_string(),
                             description: Some(format!("{prop_name} may be a component")),
                             loc: *loc,
-                            suggestions: None,
                         })?;
                     }
                 }

@@ -30,74 +30,6 @@ use crate::react_compiler_hir::{
     is_use_ref_type, is_use_state_type,
 };
 
-/// Get the user-visible name for an identifier, matching Babel's
-/// loc.identifierName behavior. First checks the identifier's own name,
-/// then falls back to extracting the name from the source code at the
-/// given source location. This handles SSA identifiers whose names were
-/// lost during compiler passes.
-fn get_identifier_name_with_loc(
-    id: IdentifierId,
-    identifiers: &[Identifier],
-    loc: &Option<SourceLocation>,
-    source_code: Option<&str>,
-) -> Option<String> {
-    let ident = &identifiers[id.0 as usize];
-    match &ident.name {
-        Some(IdentifierName::Named(name)) | Some(IdentifierName::Promoted(name)) => {
-            return Some(name.clone());
-        }
-        _ => {}
-    }
-    // Fall back: find another identifier with the same declaration_id that has a name.
-    let decl_id = ident.declaration_id;
-    for other in identifiers {
-        if other.declaration_id == decl_id {
-            match &other.name {
-                Some(IdentifierName::Named(name)) | Some(IdentifierName::Promoted(name)) => {
-                    return Some(name.clone());
-                }
-                _ => {}
-            }
-        }
-    }
-    // Fall back to extracting from source code using UTF-16 code unit indices.
-    // Babel/JS positions use UTF-16 code unit offsets, but Rust strings are UTF-8,
-    // so we need to convert between the two.
-    if let (Some(loc), Some(code)) = (loc, source_code) {
-        let start_utf16 = loc.start.index? as usize;
-        let end_utf16 = loc.end.index? as usize;
-        if start_utf16 < end_utf16 {
-            // Convert UTF-16 code unit offsets to UTF-8 byte offsets
-            let mut utf16_pos = 0usize;
-            let mut byte_start = None;
-            let mut byte_end = None;
-            for (byte_idx, ch) in code.char_indices() {
-                if utf16_pos == start_utf16 {
-                    byte_start = Some(byte_idx);
-                }
-                if utf16_pos == end_utf16 {
-                    byte_end = Some(byte_idx);
-                    break;
-                }
-                utf16_pos += ch.len_utf16();
-            }
-            // Handle end at the very end of string
-            if utf16_pos == end_utf16 && byte_end.is_none() {
-                byte_end = Some(code.len());
-            }
-            if let (Some(start), Some(end)) = (byte_start, byte_end) {
-                let slice = &code[start..end];
-                if !slice.is_empty()
-                    && slice.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '$')
-                {
-                    return Some(slice.to_string());
-                }
-            }
-        }
-    }
-    None
-}
-
 const MAX_FIXPOINT_ITERATIONS: usize = 100;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -852,7 +784,6 @@ fn validate_effect(
     struct DerivedSetStateCall {
         callee_loc: Option<SourceLocation>,
         callee_id: IdentifierId,
-        callee_identifier_name: Option<String>,
         source_ids: FxIndexSet<IdentifierId>,
     }
 
@@ -943,18 +874,9 @@ fn validate_effect(
 
                             let arg_metadata = context.derivation_cache.cache.get(&arg0.identifier);
                             if let Some(am) = arg_metadata {
-                                // Get the user-visible identifier name, matching Babel's
-                                // loc.identifierName. Falls back to extracting from source code.
-                                let callee_ident_name = get_identifier_name_with_loc(
-                                    callee.identifier,
-                                    identifiers,
-                                    &callee.loc,
-                                    env.code.as_deref(),
-                                );
                                 effect_derived_set_state_calls.push(DerivedSetStateCall {
                                     callee_loc: callee.loc,
                                     callee_id: callee.identifier,
-                                    callee_identifier_name: callee_ident_name,
                                     source_ids: am.source_ids.clone(),
                                 });
                             }
@@ -1077,7 +999,6 @@ fn validate_effect(
                         message: Some(
                             "This should be computed during render, not in an effect".to_string(),
                         ),
-                        identifier_name: derived.callee_identifier_name.clone(),
                     }),
                 );
             }
@@ -1329,7 +1250,6 @@ fn validate_effect_non_exp(
                 reason: "Values derived from props and state should be calculated during render, not in an effect. (https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)".to_string(),
                 description: None,
                 loc: Some(loc),
-                suggestions: None,
             }
         })
         .collect()

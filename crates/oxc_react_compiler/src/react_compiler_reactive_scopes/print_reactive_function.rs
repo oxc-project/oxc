@@ -527,10 +527,6 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
 /// Used to format inner functions in FunctionExpression/ObjectMethod values.
 pub type HirFunctionFormatter<'h> = dyn Fn(&mut PrintFormatter<'_, 'h>, &HirFunction<'h>);
 
-pub fn debug_reactive_function<'h>(func: &ReactiveFunction<'h>, env: &Environment<'h>) -> String {
-    debug_reactive_function_with_formatter(func, env, None)
-}
-
 pub fn debug_reactive_function_with_formatter<'h>(
     func: &ReactiveFunction<'h>,
     env: &Environment<'h>,

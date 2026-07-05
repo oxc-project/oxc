@@ -25,18 +25,11 @@ use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
-use oxc_react_compiler::react_compiler_hir::Effect;
-use oxc_react_compiler::react_compiler_hir::environment_config::{
-    ExhaustiveEffectDepsMode, ExternalFunctionConfig, InstrumentationConfig,
-};
-use oxc_react_compiler::react_compiler_hir::type_config::{
-    BuiltInTypeRef, FunctionTypeConfig, HookTypeConfig, ObjectTypeConfig, TypeConfig,
-    TypeReferenceConfig, ValueKind,
-};
-use oxc_react_compiler::react_compiler_utils::FxIndexMap;
 use oxc_react_compiler::{
-    CompilerOutputMode, DynamicGatingConfig, EnvironmentConfig, GatingConfig, PluginOptions,
-    transform,
+    BuiltInTypeRef, CompilerOutputMode, DynamicGatingConfig, Effect, EnvironmentConfig,
+    ExhaustiveEffectDepsMode, ExternalFunctionConfig, FunctionTypeConfig, FxIndexMap, GatingConfig,
+    HookTypeConfig, InstrumentationConfig, ObjectTypeConfig, PluginOptions, TypeConfig,
+    TypeReferenceConfig, ValueKind, transform,
 };
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;

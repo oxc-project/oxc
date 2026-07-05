@@ -7,12 +7,11 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
-use crate::react_compiler_hir::environment::BindingRename;
 use crate::scope::ScopeResolver;
 
 use oxc_diagnostics::Diagnostics;
 
-use super::compile_result::{DebugLogEntry, OrderedLogItem};
+use super::compile_result::DebugLogEntry;
 use super::plugin_options::{CompilerTarget, PluginOptions};
 use super::suppression::SuppressionRange;
 
@@ -21,7 +20,6 @@ use super::suppression::SuppressionRange;
 #[derive(Debug, Clone)]
 pub struct NonLocalImportSpecifier {
     pub name: String,
-    pub module: String,
     pub imported: String,
 }
 
@@ -37,16 +35,10 @@ pub struct ProgramContext {
     /// Diagnostics (errors/warnings) accumulated during compilation. Fatality is
     /// decided separately by `panicThreshold`.
     pub diagnostics: Diagnostics,
-    /// Debug-log entries (HIR dumps) emitted when the `debug` feature is enabled.
-    pub ordered_log: Vec<OrderedLogItem>,
-
     // Pre-resolved import local names for codegen
     pub instrument_fn_name: Option<String>,
     pub instrument_gating_name: Option<String>,
     pub hook_guard_name: Option<String>,
-
-    // Variable renames from lowering, to be applied back to the Babel AST
-    pub renames: Vec<BindingRename>,
 
     /// Whether debug logging is enabled (HIR formatting after each pass).
     pub debug_enabled: bool,
@@ -73,11 +65,9 @@ impl ProgramContext {
             suppressions,
             has_module_scope_opt_out,
             diagnostics: Diagnostics::new(),
-            ordered_log: Vec::new(),
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
-            renames: Vec::new(),
             debug_enabled,
             already_compiled: FxHashSet::default(),
             known_referenced_names: FxHashSet::default(),
@@ -173,11 +163,7 @@ impl ProgramContext {
         }
 
         let name = self.new_uid(name_hint.unwrap_or(specifier));
-        let binding = NonLocalImportSpecifier {
-            name,
-            module: module.to_string(),
-            imported: specifier.to_string(),
-        };
+        let binding = NonLocalImportSpecifier { name, imported: specifier.to_string() };
 
         self.imports
             .entry(module.to_string())
@@ -204,9 +190,7 @@ impl ProgramContext {
     }
 
     /// Log a debug entry (for debugLogIRs support).
-    pub fn log_debug(&mut self, entry: DebugLogEntry) {
-        self.ordered_log.push(OrderedLogItem::Debug { entry });
-    }
+    pub fn log_debug(&mut self, _entry: DebugLogEntry) {}
 
     /// Check if there are any pending imports to add to the program.
     pub fn has_pending_imports(&self) -> bool {

@@ -415,7 +415,6 @@ fn make_unsupported_lval_error(
         ),
         description: None,
         loc,
-        suggestions: None,
     });
     err
 }

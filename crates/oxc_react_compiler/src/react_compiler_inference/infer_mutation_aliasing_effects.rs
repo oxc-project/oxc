@@ -221,7 +221,6 @@ pub fn infer_mutation_aliasing_effects(
                 .with_detail(CompilerDiagnosticDetail::Error {
                     loc: error_loc,
                     message: Some("this is uninitialized".to_string()),
-                    identifier_name: None,
                 });
                 return Err(diag);
             }
@@ -1074,9 +1073,9 @@ fn apply_signature(
                 let context_ids: FxHashSet<IdentifierId> =
                     inner_func.context.iter().map(|p| p.identifier).collect();
                 for effect in aliasing_effects {
-                    let (mutate_value, is_mutate) = match effect {
-                        AliasingEffect::Mutate { value, .. } => (value, true),
-                        AliasingEffect::MutateTransitive { value } => (value, false),
+                    let mutate_value = match effect {
+                        AliasingEffect::Mutate { value, .. }
+                        | AliasingEffect::MutateTransitive { value } => value,
                         _ => continue,
                     };
                     if !context_ids.contains(&mutate_value.identifier) {
@@ -1103,19 +1102,7 @@ fn apply_signature(
                         diagnostic.details.push(CompilerDiagnosticDetail::Error {
                             loc: mutate_value.loc,
                             message: Some(format!("{} cannot be modified", variable)),
-                            identifier_name: None,
                         });
-                        if is_mutate {
-                            if let AliasingEffect::Mutate {
-                                reason: Some(MutationReason::AssignCurrentProperty),
-                                ..
-                            } = effect
-                            {
-                                diagnostic.details.push(CompilerDiagnosticDetail::Hint {
-                                    message: "Hint: If this value is a Ref (value returned by `useRef()`), rename the variable to end in \"Ref\".".to_string()
-                                });
-                            }
-                        }
                         effects.push(AliasingEffect::MutateFrozen {
                             place: mutate_value.clone(),
                             error: diagnostic,
@@ -1571,7 +1558,6 @@ fn apply_effect(
                         diagnostic.details.push(CompilerDiagnosticDetail::Error {
                             loc: receiver.loc,
                             message: Some(incompatible_msg.clone()),
-                            identifier_name: None,
                         });
                         // TS throws here, aborting compilation for this function
                         return Err(diagnostic);
@@ -1760,7 +1746,6 @@ fn apply_effect(
                                     "{} accessed before it is declared",
                                     variable.as_deref().unwrap_or("variable")
                                 )),
-                                identifier_name: None,
                             });
                         }
                     }
@@ -1770,7 +1755,6 @@ fn apply_effect(
                             "{} is declared here",
                             variable.as_deref().unwrap_or("variable")
                         )),
-                        identifier_name: None,
                     });
                     apply_effect(
                         context,
@@ -1797,18 +1781,7 @@ fn apply_effect(
                     diagnostic.details.push(CompilerDiagnosticDetail::Error {
                         loc: value.loc,
                         message: Some(format!("{} cannot be modified", variable)),
-                        identifier_name: None,
                     });
-
-                    if let AliasingEffect::Mutate {
-                        reason: Some(MutationReason::AssignCurrentProperty),
-                        ..
-                    } = &effect
-                    {
-                        diagnostic.details.push(CompilerDiagnosticDetail::Hint {
-                            message: "Hint: If this value is a Ref (value returned by `useRef()`), rename the variable to end in \"Ref\".".to_string(),
-                        });
-                    }
 
                     let error_kind = if abstract_value.kind == ValueKind::Frozen {
                         AliasingEffect::MutateFrozen { place: value.clone(), error: diagnostic }
@@ -2226,7 +2199,6 @@ fn compute_signature_for_instruction(
             diagnostic.details.push(CompilerDiagnosticDetail::Error {
                 loc: instr.loc,
                 message: Some(format!("{} cannot be reassigned", variable)),
-                identifier_name: None,
             });
             effects
                 .push(AliasingEffect::MutateGlobal { place: sg_value.clone(), error: diagnostic });
@@ -2320,7 +2292,6 @@ fn compute_effects_for_legacy_signature(
         diagnostic.details.push(CompilerDiagnosticDetail::Error {
             loc: _loc.copied(),
             message: Some("Cannot call impure function".to_string()),
-            identifier_name: None,
         });
         effects.push(AliasingEffect::Impure { place: receiver.clone(), error: diagnostic });
     }
@@ -2448,7 +2419,6 @@ fn get_argument_effect(
                 description: None,
                 category: ErrorCategory::Todo,
                 loc: spread_loc,
-                suggestions: None,
             })
         } else {
             None
@@ -3185,10 +3155,7 @@ fn terminal_successors(terminal: &Terminal) -> Vec<BlockId> {
         Terminal::ForOf { init, .. } | Terminal::ForIn { init, .. } => vec![*init],
         Terminal::DoWhile { loop_block, .. } => vec![*loop_block],
         Terminal::While { test, .. } => vec![*test],
-        Terminal::Return { .. }
-        | Terminal::Throw { .. }
-        | Terminal::Unreachable { .. }
-        | Terminal::Unsupported { .. } => vec![],
+        Terminal::Return { .. } | Terminal::Throw { .. } | Terminal::Unreachable { .. } => vec![],
         Terminal::Try { block, .. } => vec![*block],
         Terminal::MaybeThrow { continuation, handler, .. } => {
             let mut v = vec![*continuation];

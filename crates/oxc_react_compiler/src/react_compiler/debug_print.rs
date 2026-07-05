@@ -1,10 +1,9 @@
 use std::mem::take;
 
-use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::print::{self, PrintFormatter};
 use crate::react_compiler_hir::{
-    BasicBlock, BlockId, HirFunction, Instruction, ParamPattern, Phi, Place, Terminal,
+    BasicBlock, BlockId, HirFunction, Instruction, ParamPattern, Phi, Terminal,
 };
 
 // =============================================================================
@@ -97,15 +96,6 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
             self.fmt.line(&format!("[{}] \"{}\"", i, d));
         }
         self.fmt.dedent();
-
-        // return_type_annotation
-        self.fmt.line(&format!(
-            "returnTypeAnnotation: {}",
-            match &func.return_type_annotation {
-                Some(ann) => ann.clone(),
-                None => "null".to_string(),
-            }
-        ));
 
         self.fmt.line("");
         self.fmt.line("Blocks:");
@@ -208,13 +198,10 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                     },
                 };
                 inner.format_function(func);
-                // Write the output lines into the parent formatter
-                for line in &inner.fmt.output {
-                    fmt.line_raw(line);
-                }
-                // Copy back the seen state
-                fmt.seen_identifiers = inner.fmt.seen_identifiers;
-                fmt.seen_scopes = inner.fmt.seen_scopes;
+                let PrintFormatter { seen_identifiers, seen_scopes, output, .. } = inner.fmt;
+                fmt.output.extend(output);
+                fmt.seen_identifiers = seen_identifiers;
+                fmt.seen_scopes = seen_scopes;
             }),
         );
         self.fmt.dedent();
@@ -456,13 +443,6 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                     print::format_loc(loc)
                 ));
             }
-            Terminal::Unsupported { id, loc } => {
-                self.fmt.line(&format!(
-                    "Unsupported {{ id: {}, loc: {} }}",
-                    id.0,
-                    print::format_loc(loc)
-                ));
-            }
             Terminal::MaybeThrow { continuation, handler, id, loc, effects } => {
                 self.fmt.line("MaybeThrow {");
                 self.fmt.indent();
@@ -540,7 +520,7 @@ pub fn debug_hir<'h>(hir: &HirFunction<'h>, env: &Environment<'h>) -> String {
     printer.format_function(hir);
 
     // Print outlined functions (matches TS DebugPrintHIR.ts: printDebugHIR)
-    for outlined in env.get_outlined_functions() {
+    for outlined in env.outlined_functions() {
         printer.fmt.line("");
         printer.format_function(&outlined.func);
     }
@@ -552,17 +532,6 @@ pub fn debug_hir<'h>(hir: &HirFunction<'h>, env: &Environment<'h>) -> String {
     printer.fmt.dedent();
 
     printer.fmt.to_string_output()
-}
-
-// =============================================================================
-// Error formatting (kept for backward compatibility)
-// =============================================================================
-
-pub fn format_errors(error: &CompilerError) -> String {
-    let env = Environment::new();
-    let mut fmt = PrintFormatter::new(&env);
-    fmt.format_errors(error);
-    fmt.to_string_output()
 }
 
 /// Format an HIR function into a reactive PrintFormatter.
@@ -584,29 +553,8 @@ pub fn format_hir_function_into<'h>(
     };
     printer.format_function(func);
 
-    // Write the output lines into the reactive formatter
-    for line in &printer.fmt.output {
-        reactive_fmt.line_raw(line);
-    }
-    // Copy back the seen state
-    reactive_fmt.seen_identifiers = printer.fmt.seen_identifiers;
-    reactive_fmt.seen_scopes = printer.fmt.seen_scopes;
-}
-
-// =============================================================================
-// Helpers for effect formatting (kept for backward compatibility)
-// =============================================================================
-
-#[allow(dead_code)]
-fn format_place_short(place: &Place, env: &Environment) -> String {
-    let ident = &env.identifiers[place.identifier.0 as usize];
-    let name = match &ident.name {
-        Some(name) => name.value().to_string(),
-        None => String::new(),
-    };
-    let scope = match ident.scope {
-        Some(scope_id) => format!(":{}", scope_id.0),
-        None => String::new(),
-    };
-    format!("{}${}{}", name, place.identifier.0, scope)
+    let PrintFormatter { seen_identifiers, seen_scopes, output, .. } = printer.fmt;
+    reactive_fmt.output.extend(output);
+    reactive_fmt.seen_identifiers = seen_identifiers;
+    reactive_fmt.seen_scopes = seen_scopes;
 }
