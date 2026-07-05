@@ -8,12 +8,12 @@
 
 use std::borrow::Cow;
 
+use cow_utils::CowUtils;
+use smallvec::SmallVec;
+
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_syntax::number::ToJsString;
-use smallvec::SmallVec;
-
-use cow_utils::CowUtils;
 
 use crate::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
