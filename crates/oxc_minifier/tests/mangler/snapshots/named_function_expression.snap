@@ -1,0 +1,38 @@
+---
+source: crates/oxc_minifier/tests/mangler/mod.rs
+---
+var a = function foo(foo) { return foo + 1; };
+var a = function e(e) {
+	return e + 1;
+};
+
+var b = function bar() { var bar = 2; return bar; };
+var b = function e() {
+	var e = 2;
+	return e;
+};
+
+var c = function baz() { return baz; };
+var c = function e() {
+	return e;
+};
+
+var d = function qux() { { var qux = 3; } return qux; };
+var d = function e() {
+	{
+		var e = 3;
+	}
+	return e;
+};
+
+(function rec(rec) { return rec; })(1);
+(function e(e) {
+	return e;
+})(1);
+
+var e = function outer() { return function outer() { return outer; }; };
+var e = function t() {
+	return function t() {
+		return t;
+	};
+};

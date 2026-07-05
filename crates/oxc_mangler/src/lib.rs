@@ -14,6 +14,7 @@ use oxc_ecmascript::BoundNames;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, Stats, SymbolId};
 use oxc_span::SourceType;
 use oxc_str::{CompactStr, Ident, Str};
+use oxc_syntax::{scope::ScopeId, symbol::SymbolFlags};
 
 pub(crate) mod base54;
 mod keep_names;
@@ -593,6 +594,19 @@ impl<'a, 's> SlotAssignment<'a, 's> {
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
 
+        // Map each named-function-expression scope to its name symbol, for the
+        // orphaned-name-slot repair below. The name is bound in the function's own
+        // scope and carries `SymbolFlags::FunctionExpression`; a same-named body
+        // declaration can overwrite its entry in that scope's binding map, so it
+        // cannot be recovered from `bindings` — hence this flag-based lookup rather
+        // than reading the function node from the AST node table.
+        let mut fn_expr_name_symbols: FxHashMap<ScopeId, SymbolId> = FxHashMap::default();
+        for symbol_id in scoping.symbol_ids() {
+            if scoping.symbol_flags(symbol_id).contains(SymbolFlags::FunctionExpression) {
+                fn_expr_name_symbols.insert(scoping.symbol_scope_id(symbol_id), symbol_id);
+            }
+        }
+
         // Walk down the scope tree and assign a slot number for each symbol. Doing it as a scope
         // walk (rather than a flat symbol loop) generates better code.
         for (scope_id, bindings) in scoping.iter_bindings() {
@@ -709,15 +723,12 @@ impl<'a, 's> SlotAssignment<'a, 's> {
             // the same mangled name — safe because every body reference resolves to the
             // shadower, not the orphan. Only function expressions can host this orphaning;
             // a function declaration's name lives in the parent scope and is unaffected.
-            if scoping.scope_flags(scope_id).is_function()
-                && let Some(func) = ast_nodes.kind(scoping.get_node_id(scope_id)).as_function()
-                && func.is_expression()
-                && let Some(id) = &func.id
-                && let Some(&shadower) = bindings.get(&id.name)
-                && shadower != id.symbol_id()
+            if let Some(&fn_expr_symbol) = fn_expr_name_symbols.get(&scope_id)
+                && let Some(&shadower) = bindings.get(&scoping.symbol_ident(fn_expr_symbol))
+                && shadower != fn_expr_symbol
                 && slots[shadower.index()] != SLOT_UNASSIGNED
             {
-                slots[id.symbol_id().index()] = slots[shadower.index()];
+                slots[fn_expr_symbol.index()] = slots[shadower.index()];
             }
         }
 

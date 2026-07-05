@@ -411,3 +411,36 @@ fn annex_b_block_scoped_function() {
         insta::assert_snapshot!("annex_b_block_scoped_function", snapshot);
     });
 }
+
+#[test]
+fn named_function_expression_name() {
+    // A named function expression's own name is bound in its own scope. When a
+    // same-named parameter or body `var` shadows it, the name is orphaned out of
+    // the scope's binding map; the mangler must still give it the shadower's slot
+    // so every reference renders as one name. These exercise that repair.
+    let cases = [
+        // parameter shadows the fn-expr name
+        "var a = function foo(foo) { return foo + 1; };",
+        // body `var` shadows the fn-expr name
+        "var b = function bar() { var bar = 2; return bar; };",
+        // not shadowed: the name references itself
+        "var c = function baz() { return baz; };",
+        // hoisted `var` in a nested block shadows the name
+        "var d = function qux() { { var qux = 3; } return qux; };",
+        // immediately-invoked with a same-named parameter
+        "(function rec(rec) { return rec; })(1);",
+        // nested named fn exprs, inner shadows outer name
+        "var e = function outer() { return function outer() { return outer; }; };",
+    ];
+
+    let mut snapshot = String::new();
+    cases.into_iter().fold(&mut snapshot, |w, case| {
+        let options = MangleOptions::default();
+        write!(w, "{case}\n{}\n", mangle_script(case, &options)).unwrap();
+        w
+    });
+
+    insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
+        insta::assert_snapshot!("named_function_expression", snapshot);
+    });
+}
