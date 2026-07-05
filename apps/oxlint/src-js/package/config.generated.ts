@@ -185,6 +185,8 @@ export type CallbackReturn = string[];
 export type HandleCallbackErrConfig = string;
 export type NoMixedRequiresConfig = boolean | NoMixedRequiresOptions;
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
+export type OneVarOption = RawMode | OneVarKindConfig | OneVarInitConfig;
+export type RawMode = "always" | "never" | "consecutive";
 export type Destructuring = "any" | "all";
 export type PreferDestructuringOption = PreferDestructuringTargetOption | PreferDestructuringAssignmentConfig;
 export type TerminationMethod = string | string[];
@@ -1246,6 +1248,7 @@ export interface DummyRuleMap {
     | RuleNoConfig
     | [AllowWarnDeny, ShorthandType]
     | [AllowWarnDeny, ShorthandType, ObjectShorthandOptions];
+  "one-var"?: RuleNoConfig | [AllowWarnDeny, OneVarOption];
   "operator-assignment"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
   "oxc/approx-constant"?: RuleNoConfig;
   "oxc/bad-array-method-on-arguments"?: RuleNoConfig;
@@ -4006,6 +4009,18 @@ export interface ObjectShorthandOptions {
   avoidQuotes?: boolean;
   ignoreConstructors?: boolean;
   methodsIgnorePattern?: string;
+}
+export interface OneVarKindConfig {
+  awaitUsing?: RawMode;
+  const?: RawMode;
+  let?: RawMode;
+  separateRequires?: boolean;
+  using?: RawMode;
+  var?: RawMode;
+}
+export interface OneVarInitConfig {
+  initialized?: RawMode;
+  uninitialized?: RawMode;
 }
 export interface NoAsyncEndpointHandlersConfig {
   /**

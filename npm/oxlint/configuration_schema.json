@@ -5732,6 +5732,26 @@
             }
           ]
         },
+        "one-var": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/OneVarOption"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "operator-assignment": {
           "anyOf": [
             {
@@ -16175,6 +16195,57 @@
         }
       ]
     },
+    "OneVarInitConfig": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "initialized": {
+          "$ref": "#/definitions/RawMode"
+        },
+        "uninitialized": {
+          "$ref": "#/definitions/RawMode"
+        }
+      },
+      "additionalProperties": false
+    },
+    "OneVarKindConfig": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "awaitUsing": {
+          "$ref": "#/definitions/RawMode"
+        },
+        "const": {
+          "$ref": "#/definitions/RawMode"
+        },
+        "let": {
+          "$ref": "#/definitions/RawMode"
+        },
+        "separateRequires": {
+          "type": "boolean"
+        },
+        "using": {
+          "$ref": "#/definitions/RawMode"
+        },
+        "var": {
+          "$ref": "#/definitions/RawMode"
+        }
+      },
+      "additionalProperties": false
+    },
+    "OneVarOption": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/RawMode"
+        },
+        {
+          "$ref": "#/definitions/OneVarKindConfig"
+        },
+        {
+          "$ref": "#/definitions/OneVarInitConfig"
+        }
+      ]
+    },
     "OnlyExportComponentsConfig": {
       "type": "object",
       "properties": {
@@ -17538,6 +17609,14 @@
           ],
           "markdownDescription": "Only require the radix parameter when necessary."
         }
+      ]
+    },
+    "RawMode": {
+      "type": "string",
+      "enum": [
+        "always",
+        "never",
+        "consecutive"
       ]
     },
     "ReactCompilerConfig": {
