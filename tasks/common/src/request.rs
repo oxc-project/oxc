@@ -5,6 +5,13 @@ use ureq::{
     tls::{PemItem, RootCerts, TlsConfig, TlsProvider, parse_pem},
 };
 
+// Warp's TLS proxy requires the macOS platform verifier, while using native TLS on Linux pulls
+// OpenSSL into cross-target builds.
+#[cfg(target_os = "macos")]
+const TLS_PROVIDER: TlsProvider = TlsProvider::NativeTls;
+#[cfg(not(target_os = "macos"))]
+const TLS_PROVIDER: TlsProvider = TlsProvider::Rustls;
+
 /// detect proxy from environment variable in following order:
 /// HTTPS_PROXY | https_proxy | HTTP_PROXY | http_proxy | ALL_PROXY | all_proxy
 fn detect_proxy() -> Option<Proxy> {
@@ -54,7 +61,7 @@ fn tls_config_from_env() -> Option<TlsConfig> {
     assert!(!certificates.is_empty(), "SSL_CERT_FILE {} contains no certificates", path.display());
     Some(
         TlsConfig::builder()
-            .provider(TlsProvider::NativeTls)
+            .provider(TLS_PROVIDER)
             .root_certs(RootCerts::from(certificates))
             .build(),
     )
