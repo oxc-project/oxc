@@ -1,4 +1,4 @@
-ts compatibility: 595/663 (89.74%), 19 files skipped
+ts compatibility: 597/663 (90.05%), 19 files skipped
 
 # Failed
 
@@ -43,8 +43,6 @@ ts compatibility: 595/663 (89.74%), 19 files skipped
 | typescript/new/parentheses.ts | 💥 | 0.00% |
 | typescript/non-null/optional-chain.ts | 💥 | 85.00% |
 | typescript/object-type/comments/11307.ts | 💥 | 66.67% |
-| typescript/parentheses/await.ts | 💥 | 66.67% |
-| typescript/parentheses/yield.ts | 💥 | 50.00% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 80.00% |
 | typescript/quote-props/enums.ts | 💥💥✨ | 56.86% |
