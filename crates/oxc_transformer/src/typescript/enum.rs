@@ -180,6 +180,7 @@ impl<'a> TypeScriptEnum {
 
         let enum_name: Ident = decl.id.name;
         let func_scope_id = decl.body.scope_id();
+        ctx.scoping_mut().scope_flags_mut(func_scope_id).insert(ScopeFlags::Function);
         let param_binding =
             ctx.generate_binding(enum_name, func_scope_id, SymbolFlags::FunctionScopedVariable);
 

@@ -63,27 +63,15 @@ rebuilt        : []
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "a", "b", "c", "d", "e"]
 rebuilt        : ScopeId(1): ["A"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["B", "a", "b", "c", "d", "e"]
 rebuilt        : ScopeId(2): ["B"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["C", "a", "b", "c"]
 rebuilt        : ScopeId(3): ["C"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["D", "a", "b", "c"]
 rebuilt        : ScopeId(4): ["D"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -107,9 +95,6 @@ rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12
 Bindings mismatch:
 after transform: ScopeId(1): ["Phase", "one", "two"]
 rebuilt        : ScopeId(1): ["Phase"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Phase":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -118,9 +103,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Bindings mismatch:
 after transform: ScopeId(1): ["Phase", "one", "two"]
 rebuilt        : ScopeId(1): ["Phase"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Phase":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -159,33 +141,18 @@ Missing ReferenceId: "NestInner"
 Bindings mismatch:
 after transform: ScopeId(1): ["Foo", "a", "b", "c"]
 rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["Merge", "x"]
 rebuilt        : ScopeId(2): ["Merge"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["Merge", "y"]
 rebuilt        : ScopeId(3): ["Merge"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["NestOuter", "a", "b"]
 rebuilt        : ScopeId(4): ["NestOuter"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(6): ["NestInner", "a", "b"]
 rebuilt        : ScopeId(6): ["NestInner"]
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(0x0)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol reference IDs mismatch for "x":
 after transform: SymbolId(0): [ReferenceId(2), ReferenceId(4)]
 rebuilt        : SymbolId(0): [ReferenceId(7)]
@@ -218,9 +185,6 @@ rebuilt        : SymbolId(9): [ReferenceId(25), ReferenceId(26), ReferenceId(28)
 Bindings mismatch:
 after transform: ScopeId(2): ["Color", "Green", "Primary", "Red"]
 rebuilt        : ScopeId(1): ["Color"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Color":
 after transform: SymbolId(4): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -232,21 +196,12 @@ rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(8)]
 Bindings mismatch:
 after transform: ScopeId(1): ["LARGE", "SMALL", "Size"]
 rebuilt        : ScopeId(1): ["Size"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["Animal", "CAT", "DOG"]
 rebuilt        : ScopeId(2): ["Animal"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["AnimalSize", "LARGE_DOG", "SMALL_CAT"]
 rebuilt        : ScopeId(3): ["AnimalSize"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "Size":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -267,15 +222,9 @@ rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Bindings mismatch:
 after transform: ScopeId(1): ["NUM_1", "NUM_2", "NUM_3", "NUM_4", "NumberEnum"]
 rebuilt        : ScopeId(1): ["NumberEnum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["COMPUTED_1", "COMPUTED_2", "ComputedEnum"]
 rebuilt        : ScopeId(2): ["ComputedEnum"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "NumberEnum":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -290,15 +239,9 @@ rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "NumberEnum"]
 rebuilt        : ScopeId(1): ["NumberEnum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["C", "ComputedEnum", "D"]
 rebuilt        : ScopeId(2): ["ComputedEnum"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "NumberEnum":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -394,12 +337,6 @@ Bindings mismatch:
 after transform: ScopeId(2): ["x", "y"]
 rebuilt        : ScopeId(2): ["x"]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "x":
@@ -473,9 +410,6 @@ rebuilt        : SymbolId(0): []
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "Mixed"]
 rebuilt        : ScopeId(1): ["Mixed"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Mixed":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -484,9 +418,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Bindings mismatch:
 after transform: ScopeId(1): ["Direction", "Down", "Up"]
 rebuilt        : ScopeId(1): ["Direction"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Direction":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -500,9 +431,6 @@ rebuilt        : []
 Bindings mismatch:
 after transform: ScopeId(1): ["Runtime", "X", "Y"]
 rebuilt        : ScopeId(1): ["Runtime"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Runtime":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -511,9 +439,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "Foo"]
 rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -522,9 +447,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Bindings mismatch:
 after transform: ScopeId(1): ["Active", "Inactive", "Status"]
 rebuilt        : ScopeId(1): ["Status"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Status":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -533,15 +455,9 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "X"]
 rebuilt        : ScopeId(1): ["A"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["B", "Y"]
 rebuilt        : ScopeId(2): ["B"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -553,9 +469,6 @@ rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Bindings mismatch:
 after transform: ScopeId(1): ["Bar", "X"]
 rebuilt        : ScopeId(1): ["Bar"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Bar":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -564,9 +477,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "Foo"]
 rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -804,51 +714,27 @@ rebuilt        : ["Object", "babelHelpers", "dec"]
 Bindings mismatch:
 after transform: ScopeId(1): ["StringEnum", "bar", "foo"]
 rebuilt        : ScopeId(1): ["StringEnum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["TemplateStringEnum", "mixed", "template"]
 rebuilt        : ScopeId(2): ["TemplateStringEnum"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["NumberEnum", "a", "b"]
 rebuilt        : ScopeId(3): ["NumberEnum"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["UnaryEnum", "bitwise", "negative", "positive"]
 rebuilt        : ScopeId(4): ["UnaryEnum"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(0x0)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(6): ["UnaryOtherEnum", "bitwise", "negative", "positive"]
 rebuilt        : ScopeId(6): ["UnaryOtherEnum"]
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(0x0)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(7): ["AutoIncrementEnum", "first", "second", "third"]
 rebuilt        : ScopeId(7): ["AutoIncrementEnum"]
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(0x0)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(8): ["MixedEnum", "num", "str"]
 rebuilt        : ScopeId(8): ["MixedEnum"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(0x0)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(9): ["ComputedEnum", "computed", "expression"]
 rebuilt        : ScopeId(9): ["ComputedEnum"]
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(0x0)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
 Symbol flags mismatch for "StringEnum":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
