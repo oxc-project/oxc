@@ -15,6 +15,7 @@ import {
   setupJsParserSourceCode,
 } from "../src-js/plugins/js_parser_source_code.ts";
 import { setGlobalsForFile, resetGlobals } from "../src-js/plugins/globals.ts";
+import { resetSourceAndAst, setSourceTextForJsParser } from "../src-js/plugins/source_code.ts";
 
 import type { JsParserNode, JsParserParseResult } from "../src-js/plugins/parsers.ts";
 
@@ -49,6 +50,10 @@ beforeAll(() => {
     ast: ast as unknown as ConstructorParameters<typeof ESLintSourceCode>[0]["ast"],
   });
 
+  // `lint_js_parser.ts` sets the source text on `source_code.ts` before setup; the shared
+  // `location.ts` line tables (used by `lines` / `getLocFromIndex` / `getIndexFromLoc`) read
+  // from there.
+  setSourceTextForJsParser(CODE);
   setupJsParserSourceCode(parseResult, CODE);
   setGlobalsForFile(JSON.stringify({ globals: {}, envs: {} }));
 
@@ -289,6 +294,8 @@ describe("JS_PARSER_SOURCE_CODE", () => {
 describe("reset", () => {
   it("resetJsParserSourceCode clears state", () => {
     resetJsParserSourceCode();
+    // Production resets the shared `source_code.ts` / `location.ts` state via `resetFile`
+    resetSourceAndAst();
     resetGlobals();
     // Tests run in debug build, where accessing `text` after reset fails a debug assertion
     expect(() => JS_PARSER_SOURCE_CODE.text).toThrow("Expected non-null value");

@@ -21,6 +21,13 @@
 import { analyze } from "@typescript-eslint/scope-manager";
 import defaultVisitorKeys from "../generated/keys.ts";
 import { getFallbackKeys } from "./js_ast_walk.ts";
+import {
+  getLineColumnFromOffset,
+  getOffsetFromLineColumn,
+  initLines,
+  lines,
+  lineStartIndices,
+} from "./location.ts";
 import { addGlobalsToScopeManager } from "./scope.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
@@ -31,7 +38,7 @@ import type {
   JsParserScopeManager,
   JsParserToken,
 } from "./parsers.ts";
-import type { LineColumn, Location, Range, Ranged } from "./location.ts";
+import type { Location, Range, Ranged } from "./location.ts";
 import type { Scope, Variable } from "./scope.ts";
 
 // A node, token, or comment - anything with a `range`
@@ -79,11 +86,12 @@ let parserProvidedScopeManager: JsParserScopeManager | null = null;
 // globals added. Created lazily on first access.
 let scopeManager: JsParserScopeManager | null = null;
 
-// Lazily populated caches
+// Lazily populated caches. `lines` / `lineStartIndices` line tables (and their `initLines`
+// builder and `getLineColumnFromOffset` / `getOffsetFromLineColumn` accessors) are shared with
+// the buffer-based path via `location.ts` - it reads the same source text (set by
+// `setSourceTextForJsParser`) and is reset through `resetFile` -> `resetLinesAndLocs`.
 let indexMap: Record<number, number> | null = null;
 let tokensAndComments: JsParserToken[] | null = null;
-const lines: string[] = [];
-const lineStartIndices: number[] = [0];
 
 /**
  * Set up source code for a file parsed by a custom (JS) parser.
@@ -119,9 +127,8 @@ export function resetJsParserSourceCode(): void {
   scopeManager = null;
   indexMap = null;
   tokensAndComments = null;
-  lines.length = 0;
-  // Leave first entry (0) in place, discard the rest
-  lineStartIndices.length = 1;
+  // `lines` / `lineStartIndices` are owned by `location.ts` and reset via `resetFile`
+  // (`resetSourceAndAst` -> `resetLinesAndLocs`), so nothing to reset here.
 }
 
 /**
@@ -163,121 +170,6 @@ function mergeVisitorKeys(
       existingKeys === undefined ? parserKeys : [...new Set([...existingKeys, ...parserKeys])];
   }
   return merged;
-}
-
-// ---------------------------------------------------------------------------
-// Lines
-// ---------------------------------------------------------------------------
-
-// Pattern for splitting source text into lines. Same as `location.ts`.
-const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu;
-
-/**
- * Split source text into lines.
- * Same line-split semantics as `location.ts` `initLines`, over this module's state.
- */
-function initLines(): void {
-  debugAssertIsNonNull(text);
-
-  let lastOffset = 0,
-    offset,
-    match;
-  while ((match = LINE_BREAK_PATTERN.exec(text)) !== null) {
-    offset = match.index;
-    lines.push(text.slice(lastOffset, offset));
-    lineStartIndices.push((lastOffset = offset + match[0].length));
-  }
-  lines.push(text.slice(lastOffset));
-}
-
-/**
- * Convert a source text index into a (line, column) pair.
- * Same semantics as `location.ts` `getLineColumnFromOffset`.
- * @param offset - The index of a character in the file
- * @returns `{line, column}` location object with 1-indexed line and 0-indexed column
- * @throws {TypeError|RangeError} If non-numeric `offset`, or `offset` out of range
- */
-function getLocFromIndex(offset: number): LineColumn {
-  if (typeof offset !== "number" || offset < 0 || (offset | 0) !== offset) {
-    throw new TypeError("Expected `offset` to be a non-negative integer.");
-  }
-
-  debugAssertIsNonNull(text);
-  if (lines.length === 0) initLines();
-
-  if (offset > text.length) {
-    throw new RangeError(
-      `Index out of range (requested index ${offset}, but source text has length ${text.length}).`,
-    );
-  }
-
-  // Find first line that starts *after* `offset`, via binary search of `lineStartIndices`
-  let low = 0,
-    high = lineStartIndices.length,
-    mid: number;
-  do {
-    mid = (low + high) >> 1;
-    if (offset < lineStartIndices[mid]) {
-      high = mid;
-    } else {
-      low = mid + 1;
-    }
-  } while (low < high);
-
-  return {
-    line: low, // 1-indexed line number
-    column: offset - lineStartIndices[low - 1], // Offset from start of the line
-  };
-}
-
-/**
- * Convert a `{ line, column }` pair into a range index.
- * Same semantics as `location.ts` `getOffsetFromLineColumn`.
- * @param loc - A line/column location
- * @returns The character index of the location in the file
- * @throws {TypeError|RangeError} If `loc` is invalid or out of range
- */
-function getIndexFromLoc(loc: LineColumn): number {
-  if (loc !== null && typeof loc === "object") {
-    const { line, column } = loc;
-    if (
-      typeof line === "number" &&
-      typeof column === "number" &&
-      (line | 0) === line &&
-      (column | 0) === column
-    ) {
-      debugAssertIsNonNull(text);
-      if (lines.length === 0) initLines();
-
-      const linesCount = lineStartIndices.length;
-      if (line <= 0 || line > linesCount) {
-        throw new RangeError(
-          `Line number out of range (line ${line} requested). ` +
-            `Line numbers should be 1-based, and less than or equal to number of lines in file (${linesCount}).`,
-        );
-      }
-      if (column < 0) throw new RangeError(`Invalid column number (column ${column} requested).`);
-
-      const lineOffset = lineStartIndices[line - 1];
-      const offset = lineOffset + column;
-
-      let nextLineOffset;
-      if (line === linesCount) {
-        nextLineOffset = text.length;
-        if (offset <= nextLineOffset) return offset;
-      } else {
-        nextLineOffset = lineStartIndices[line];
-        if (offset < nextLineOffset) return offset;
-      }
-
-      throw new RangeError(
-        `Column number out of range (column ${column} requested, ` +
-          `but the length of line ${line} is ${nextLineOffset - lineOffset}).`,
-      );
-    }
-  }
-
-  throw new TypeError("Expected `loc` to be an object with integer `line` and `column` properties");
 }
 
 // ---------------------------------------------------------------------------
@@ -1222,7 +1114,23 @@ export const JS_PARSER_SOURCE_CODE = Object.freeze({
    */
   get tokensAndComments(): JsParserToken[] {
     if (tokensAndComments === null) {
-      tokensAndComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
+      // `tokens` and `comments` are each already sorted by start offset (they never
+      // overlap), so merge them linearly rather than concatenating and re-sorting.
+      const merged: JsParserToken[] = [];
+      const tokensLen = tokens.length,
+        commentsLen = comments.length;
+      let tokenIndex = 0,
+        commentIndex = 0;
+      while (tokenIndex < tokensLen && commentIndex < commentsLen) {
+        if (tokens[tokenIndex].range[0] <= comments[commentIndex].range[0]) {
+          merged.push(tokens[tokenIndex++]);
+        } else {
+          merged.push(comments[commentIndex++]);
+        }
+      }
+      while (tokenIndex < tokensLen) merged.push(tokens[tokenIndex++]);
+      while (commentIndex < commentsLen) merged.push(comments[commentIndex++]);
+      tokensAndComments = merged;
     }
     return tokensAndComments;
   },
@@ -1298,8 +1206,8 @@ export const JS_PARSER_SOURCE_CODE = Object.freeze({
     const { loc } = nodeOrToken;
     if (loc != null) return loc;
     return {
-      start: getLocFromIndex(nodeOrToken.range[0]),
-      end: getLocFromIndex(nodeOrToken.range[1]),
+      start: getLineColumnFromOffset(nodeOrToken.range[0]),
+      end: getLineColumnFromOffset(nodeOrToken.range[1]),
     };
   },
 
@@ -1317,8 +1225,9 @@ export const JS_PARSER_SOURCE_CODE = Object.freeze({
     return findNodeAt(program, index);
   },
 
-  getLocFromIndex,
-  getIndexFromLoc,
+  // ESLint's `SourceCode` exposes these under different names than `location.ts` uses
+  getLocFromIndex: getLineColumnFromOffset,
+  getIndexFromLoc: getOffsetFromLineColumn,
 
   // Comment methods
 

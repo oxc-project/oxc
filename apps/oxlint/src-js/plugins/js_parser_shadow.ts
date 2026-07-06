@@ -30,7 +30,7 @@
  */
 
 import oxcVisitorKeys from "../generated/keys.ts";
-import { getFallbackKeys } from "./js_ast_walk.ts";
+import { getFallbackKeys, isNode } from "./js_ast_walk.ts";
 
 import type { JsParserNode, JsParserProgram, JsParserScopeManager } from "./parsers.ts";
 
@@ -417,18 +417,4 @@ function getRangeStart(node: JsParserNode | null | undefined): number | null {
   const { range } = node;
   const start = Array.isArray(range) ? range[0] : (node.start as unknown);
   return Number.isInteger(start) && (start as number) >= 0 ? (start as number) : null;
-}
-
-/**
- * Check if a value is an AST node (object with a string `type` property).
- * Same check as `js_ast_walk.ts` uses.
- * @param value - Value to check
- * @returns `true` if `value` is an AST node
- */
-function isNode(value: unknown): value is JsParserNode {
-  return (
-    value !== null &&
-    typeof value === "object" &&
-    typeof (value as { type?: unknown }).type === "string"
-  );
 }
