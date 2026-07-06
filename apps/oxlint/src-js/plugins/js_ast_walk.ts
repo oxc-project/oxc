@@ -311,7 +311,7 @@ export function walkParserAst(
  * @param value - Value to check
  * @returns `true` if `value` is an AST node
  */
-function isNode(value: unknown): value is JsParserNode {
+export function isNode(value: unknown): value is JsParserNode {
   return (
     value !== null &&
     typeof value === "object" &&
