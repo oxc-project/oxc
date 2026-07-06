@@ -1,9 +1,14 @@
+// HIR metadata such as source locations and type annotations is consumed by
+// the debug IR printers. Those printers are compiled only with `debug`.
+#![cfg_attr(not(feature = "debug"), allow(dead_code))]
+
 pub mod default_module_type_provider;
 pub mod dominator;
 pub mod environment;
 pub mod environment_config;
 pub mod globals;
 pub mod object_shape;
+#[cfg(feature = "debug")]
 pub mod print;
 pub mod raw;
 pub mod reactive;

@@ -8,16 +8,9 @@ pub mod debug_print;
 pub mod debug_print {
     use crate::react_compiler_hir::HirFunction;
     use crate::react_compiler_hir::environment::Environment;
-    use crate::react_compiler_hir::print::PrintFormatter;
 
     pub fn debug_hir<'h>(_hir: &HirFunction<'h>, _env: &Environment<'h>) -> String {
         String::new()
-    }
-
-    pub fn format_hir_function_into<'h>(
-        _reactive_fmt: &mut PrintFormatter<'_, 'h>,
-        _func: &HirFunction<'h>,
-    ) {
     }
 }
 
