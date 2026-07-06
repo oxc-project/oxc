@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 3242/4720 (68.69%)
+Positive Passed: 3244/4720 (68.73%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["console", "formatHost", "os", "process", "reportDiagnostic", "reportWatchStatusChanged", "ts", "watchMain"]
@@ -4190,11 +4190,6 @@ Symbol flags mismatch for "Enum":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCrossFileCopiedGeneratedImportType.ts
-Unresolved references mismatch:
-after transform: ["Number"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringArrayPattern3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Symbol flags mismatch for "M":
@@ -5271,7 +5266,7 @@ Reference symbol mismatch for "getVariableValues":
 after transform: SymbolId(6) "getVariableValues"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Error"]
+after transform: []
 rebuilt        : ["getVariableValues"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/discriminatedUnionJsxElement.tsx
@@ -8985,9 +8980,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxComplexSignatu
 Bindings mismatch:
 after transform: ScopeId(0): ["React", "ReactSelectClass", "_jsxFileName", "_objectSpread", "createReactSingleSelect"]
 rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_objectSpread", "createReactSingleSelect"]
-Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(44), ReferenceId(242)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "ReactSelectClass":
 after transform: SymbolId(20) "ReactSelectClass"
 rebuilt        : <None>
@@ -14809,9 +14801,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxReactPropsInfe
 Bindings mismatch:
 after transform: ScopeId(0): ["Button", "CustomButton", "React", "_jsxFileName", "_objectSpread"]
 rebuilt        : ScopeId(0): ["CustomButton", "React", "_jsxFileName", "_objectSpread"]
-Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(3), ReferenceId(14)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "Button":
 after transform: SymbolId(3) "Button"
 rebuilt        : <None>
@@ -22956,11 +22945,6 @@ Unresolved references mismatch:
 after transform: ["A"]
 rebuilt        : []
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/cjsImportInES2015.ts
-Unresolved references mismatch:
-after transform: ["Error"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "a"]
@@ -23768,11 +23752,8 @@ rebuilt        : ["A", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactComponentWithDefaultTypeParameter1.tsx
 Bindings mismatch:
-after transform: ScopeId(0): ["MyComp", "React", "_jsxFileName", "_reactJsxRuntime", "x"]
-rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime", "x"]
-Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(1)]
-rebuilt        : SymbolId(2): []
+after transform: ScopeId(0): ["MyComp", "_jsxFileName", "_reactJsxRuntime", "x"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "x"]
 Reference symbol mismatch for "MyComp":
 after transform: SymbolId(2) "MyComp"
 rebuilt        : <None>
@@ -23782,11 +23763,8 @@ rebuilt        : ["MyComp", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactComponentWithDefaultTypeParameter2.tsx
 Bindings mismatch:
-after transform: ScopeId(0): ["MyComp", "React", "_jsxFileName", "_reactJsxRuntime", "x", "x1"]
-rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime", "x", "x1"]
-Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(1)]
-rebuilt        : SymbolId(2): []
+after transform: ScopeId(0): ["MyComp", "_jsxFileName", "_reactJsxRuntime", "x", "x1"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "x", "x1"]
 Reference symbol mismatch for "MyComp":
 after transform: SymbolId(2) "MyComp"
 rebuilt        : <None>
