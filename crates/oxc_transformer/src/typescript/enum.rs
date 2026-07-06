@@ -12,7 +12,7 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     reference::{ReferenceFlags, ReferenceId},
-    symbol::SymbolFlags,
+    symbol::{SymbolFlags, SymbolId},
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -21,11 +21,30 @@ use crate::{context::TraverseCtx, state::TransformState};
 pub struct TypeScriptEnum {
     optimize_const_enums: bool,
     optimize_enums: bool,
+    pending_symbol_flags: Vec<(SymbolId, SymbolFlags)>,
 }
 
 impl TypeScriptEnum {
     pub fn new(optimize_const_enums: bool, optimize_enums: bool) -> Self {
-        Self { optimize_const_enums, optimize_enums }
+        Self { optimize_const_enums, optimize_enums, pending_symbol_flags: Vec::new() }
+    }
+
+    fn pending_symbol_flags_mut(
+        &mut self,
+        symbol_id: SymbolId,
+        initial_flags: SymbolFlags,
+    ) -> &mut SymbolFlags {
+        if let Some(index) = self.pending_symbol_flags.iter().position(|&(id, _)| id == symbol_id) {
+            return &mut self.pending_symbol_flags[index].1;
+        }
+        self.pending_symbol_flags.push((symbol_id, initial_flags));
+        &mut self.pending_symbol_flags.last_mut().unwrap().1
+    }
+
+    pub fn exit_program(&mut self, ctx: &mut TraverseCtx<'_>) {
+        for (symbol_id, flags) in self.pending_symbol_flags.drain(..) {
+            *ctx.scoping_mut().symbol_flags_mut(symbol_id) = flags;
+        }
     }
 }
 
@@ -38,14 +57,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
                 if self.may_remove_enum(decl, ctx) {
                     return;
                 }
-                if let Some(new_stmt) = Self::transform_ts_enum(decl, None, ctx) {
+                if let Some(new_stmt) = self.transform_ts_enum(decl, None, ctx) {
                     *stmt = new_stmt;
                 }
             }
             Statement::ExportNamedDeclaration(export_decl) => {
                 let span = export_decl.span;
                 if let Some(Declaration::TSEnumDeclaration(decl)) = &mut export_decl.declaration
-                    && let Some(new_stmt) = Self::transform_ts_enum(decl, Some(span), ctx)
+                    && let Some(new_stmt) = self.transform_ts_enum(decl, Some(span), ctx)
                 {
                     *stmt = new_stmt;
                 }
@@ -74,7 +93,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
                 continue;
             }
             // Not removable after all (still has value references) — transform now.
-            if let Some(new_stmt) = Self::transform_ts_enum(decl, None, ctx) {
+            if let Some(new_stmt) = self.transform_ts_enum(decl, None, ctx) {
                 *stmt = new_stmt;
             }
         }
@@ -156,6 +175,7 @@ impl<'a> TypeScriptEnum {
     /// })(Foo || {});
     /// ```
     fn transform_ts_enum(
+        &mut self,
         decl: &mut TSEnumDeclaration<'a>,
         export_span: Option<Span>,
         ctx: &mut TraverseCtx<'a>,
@@ -277,6 +297,9 @@ impl<'a> TypeScriptEnum {
         );
 
         if is_already_declared {
+            let initial_flags = ctx.scoping().symbol_flags(enum_symbol_id);
+            let flags = self.pending_symbol_flags_mut(enum_symbol_id, initial_flags);
+            *flags -= SymbolFlags::Enum;
             let op = AssignmentOperator::Assign;
             let left = ctx.create_bound_ident_reference(
                 decl.id.span,
@@ -289,11 +312,12 @@ impl<'a> TypeScriptEnum {
             return Some(Statement::new_expression_statement(span, expr, ctx));
         }
 
-        let kind = if is_export || is_not_top_scope {
-            VariableDeclarationKind::Let
+        let (kind, flags) = if is_export || is_not_top_scope {
+            (VariableDeclarationKind::Let, SymbolFlags::BlockScopedVariable)
         } else {
-            VariableDeclarationKind::Var
+            (VariableDeclarationKind::Var, SymbolFlags::FunctionScopedVariable)
         };
+        *self.pending_symbol_flags_mut(enum_symbol_id, flags) = flags;
         let decls = {
             let binding = BindingPattern::new_binding_identifier_with_symbol_id(
                 decl.id.span,

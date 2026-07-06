@@ -88,6 +88,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.exit_program(program, ctx);
         self.module.exit_program(program, ctx);
+        self.r#enum.exit_program(ctx);
         ctx.scoping.delete_typescript_bindings();
     }
 
