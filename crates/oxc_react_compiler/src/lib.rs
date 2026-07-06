@@ -19,7 +19,7 @@ mod react_compiler_validation;
 use crate::react_compiler::entrypoint::compile_result::CompileResult;
 use crate::react_compiler::entrypoint::imports::get_react_compiler_runtime_module;
 use crate::react_compiler::entrypoint::program::compile_program;
-use prefilter::{has_react_like_functions, has_resource_management_declarations};
+use prefilter::has_react_like_functions;
 use scope::ScopeResolver;
 
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
@@ -124,11 +124,6 @@ fn compile<'a>(
     if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
         && !has_react_like_functions(program)
     {
-        return (None, Diagnostics::default());
-    }
-
-    // `using`/`await using` disposal semantics aren't preserved yet — skip the file.
-    if has_resource_management_declarations(program) {
         return (None, Diagnostics::default());
     }
 

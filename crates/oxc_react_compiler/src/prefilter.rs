@@ -5,7 +5,7 @@
 
 use oxc_ast::ast::{
     ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, BindingPattern,
-    CallExpression, Class, Expression, Function, Program, VariableDeclaration, VariableDeclarator,
+    CallExpression, Class, Expression, Function, Program, VariableDeclarator,
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_semantic::ScopeFlags;
@@ -13,12 +13,6 @@ use oxc_semantic::ScopeFlags;
 /// Whether the program contains a component (Uppercase name) or hook (`use[A-Z0-9]`).
 pub fn has_react_like_functions(program: &Program) -> bool {
     let mut visitor = ReactLikeVisitor { found: false, current_name: None };
-    visitor.visit_program(program);
-    visitor.found
-}
-
-pub fn has_resource_management_declarations(program: &Program) -> bool {
-    let mut visitor = ResourceManagementVisitor { found: false };
     visitor.visit_program(program);
     visitor.found
 }
@@ -39,23 +33,6 @@ fn is_component_wrapper(callee: &Expression) -> bool {
 struct ReactLikeVisitor<'a> {
     found: bool,
     current_name: Option<&'a str>,
-}
-
-struct ResourceManagementVisitor {
-    found: bool,
-}
-
-impl<'a> Visit<'a> for ResourceManagementVisitor {
-    fn visit_variable_declaration(&mut self, decl: &VariableDeclaration<'a>) {
-        if self.found {
-            return;
-        }
-        if decl.kind.is_using() {
-            self.found = true;
-            return;
-        }
-        walk::walk_variable_declaration(self, decl);
-    }
 }
 
 impl<'a> Visit<'a> for ReactLikeVisitor<'a> {

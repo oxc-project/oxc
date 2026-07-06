@@ -129,7 +129,7 @@ pub fn compile_fn<'a>(
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
     source_text: &str,
-) -> Result<CodegenFunction<'a>, CompilerError> {
+) -> Result<Option<CodegenFunction<'a>>, CompilerError> {
     let mut env = Environment::with_config(env_config.clone());
     env.fn_type = fn_type;
     env.output_mode = match mode {
@@ -153,6 +153,13 @@ pub fn compile_fn<'a>(
     // not other recorded (non-Invariant) errors.
     if env.has_invariant_errors() {
         return Err(env.take_invariant_errors());
+    }
+
+    // Lowering flags this when the function uses `using`/`await using`, whose disposal
+    // semantics aren't preserved yet. Skip compiling it silently — no diagnostic — so
+    // other functions in the file still compile.
+    if env.skip_compilation {
+        return Ok(None);
     }
 
     if context.debug_enabled {
@@ -743,7 +750,7 @@ pub fn compile_fn<'a>(
         context.merge_uid_known_names(&uid_names);
     }
 
-    Ok(CodegenFunction {
+    Ok(Some(CodegenFunction {
         loc: codegen_result.loc,
         id: codegen_result.id,
         name_hint: codegen_result.name_hint,
@@ -757,7 +764,7 @@ pub fn compile_fn<'a>(
         pruned_memo_blocks: codegen_result.pruned_memo_blocks,
         pruned_memo_values: codegen_result.pruned_memo_values,
         outlined: compiled_outlined,
-    })
+    }))
 }
 
 /// Compile an outlined function's codegen AST through the full pipeline.

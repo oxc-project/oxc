@@ -1188,7 +1188,7 @@ fn try_compile_function<'a>(
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
     source_text: &str,
-) -> Result<CodegenFunction<'a>, CompilerError> {
+) -> Result<Option<CodegenFunction<'a>>, CompilerError> {
     // Check for suppressions that affect this function
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
         let affecting = filter_suppressions_that_affect_function(&context.suppressions, start, end);
@@ -1279,7 +1279,10 @@ fn process_fn<'a>(
             }
             Ok(None)
         }
-        Ok(codegen_fn) => {
+        // Lowering silently declined to compile this function (e.g. it uses
+        // `using`/`await using`); nothing to emit, and no diagnostic.
+        Ok(None) => Ok(None),
+        Ok(Some(codegen_fn)) => {
             // Functions opted out via directive are skipped; nothing to emit.
             if !context.opts.ignore_use_no_forget && opt_out.is_some() {
                 // Do NOT register the memo cache import here — it is registered in
