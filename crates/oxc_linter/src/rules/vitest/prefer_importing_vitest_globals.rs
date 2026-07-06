@@ -15,6 +15,7 @@ use crate::{
     fixer::{RuleFix, RuleFixer},
     module_record::ImportImportName,
     rule::Rule,
+    utils::is_vitest_import_source,
 };
 
 fn prefer_importing_vitest_globals_diagnostic(
@@ -50,10 +51,6 @@ const VITEST_GLOBALS: [CompactStr; 17] = [
     CompactStr::new_const("xit"),
     CompactStr::new_const("xtest"),
 ];
-
-fn is_vitest_import_source(source: &str) -> bool {
-    matches!(source, "vitest" | "vite-plus/test" | "@effect/vitest")
-}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferImportingVitestGlobals;
