@@ -31,7 +31,10 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "TemplateElement",
 ];
 
-const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] = &["TSUnionType"];
+// `ExpressionStatement` prints leading comments in its `write` implementation,
+// so the ASI-guard semicolon can be printed before a leading type cast comment.
+const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] =
+    &["TSUnionType", "ExpressionStatement"];
 
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeAssertion",
@@ -170,20 +173,24 @@ fn generate_struct_implementation(
 
         let write_implementation = if suppressed_check.is_none() {
             write_call
-        } else if trailing_comments.is_none() {
-            quote! {
-                if is_suppressed {
-                     self.format_leading_comments(f);
-                    FormatSuppressedNode(self.span()).fmt(f);
-                     self.format_trailing_comments(f);
-                } else {
-                    #write_call
-                }
-            }
         } else {
+            // When `fmt` doesn't print leading/trailing comments itself,
+            // the suppressed path still has to print them, or the suppression comment would be lost.
+            let suppressed_leading_comments = do_not_print_leading_comment.then(|| {
+                quote! {
+                    self.format_leading_comments(f);
+                }
+            });
+            let suppressed_trailing_comments = do_not_print_comment.then(|| {
+                quote! {
+                    self.format_trailing_comments(f);
+                }
+            });
             quote! {
                 if is_suppressed {
+                    #suppressed_leading_comments
                     FormatSuppressedNode(self.span()).fmt(f);
+                    #suppressed_trailing_comments
                 } else {
                     #write_call
                 }

@@ -1,4 +1,4 @@
-js compatibility: 737/808 (91.21%), 23 files skipped
+js compatibility: 742/808 (91.83%), 23 files skipped
 
 # Failed
 
@@ -17,7 +17,6 @@ js compatibility: 737/808 (91.21%), 23 files skipped
 | js/comments/dangling.js | 💥💥 | 69.23% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/if.js | 💥💥 | 97.99% |
-| js/comments/jsdoc.js | 💥✨ | 46.15% |
 | js/comments/return-statement-2.js | 💥💥 | 77.78% |
 | js/comments/return-statement.js | 💥💥 | 97.25% |
 | js/comments/between-head-and-body/between-head-and-body.js | 💥 | 33.10% |
@@ -29,10 +28,6 @@ js compatibility: 737/808 (91.21%), 23 files skipped
 | js/comments/while-like/with.js | 💥 | 65.45% |
 | js/comments-closure-typecast/closure-compiler-type-cast.js | 💥 | 88.00% |
 | js/comments-closure-typecast/iife.js | 💥 | 76.92% |
-| js/comments-closure-typecast/no-semi/comments.js | 💥 | 70.59% |
-| js/comments-closure-typecast/no-semi/multiline.js | 💥 | 80.00% |
-| js/comments-closure-typecast/no-semi/not-on-same-line.js | 💥 | 84.85% |
-| js/comments-closure-typecast/no-semi/with-other-comments.js | 💥 | 50.00% |
 | js/explicit-resource-management/using-declarations.js | 💥 | 87.50% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 80.00% |
 | js/explicit-resource-management/valid-for-using-declaration.js | 💥 | 66.67% |
