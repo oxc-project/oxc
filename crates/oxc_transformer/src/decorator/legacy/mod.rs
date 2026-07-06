@@ -49,7 +49,8 @@ use std::borrow::Cow;
 use std::mem;
 
 use oxc_allocator::{
-    Address, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn, UnstableAddress,
+    Address, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn,
+    UnstableAddress,
 };
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::{Visit, VisitMut};
@@ -1395,14 +1396,15 @@ impl<'a> LegacyDecorator<'a> {
                 //   static [_a = a()] = 0;
                 // ```
 
-                let key_expr = key.to_expression_mut();
+                let key = key.to_expression_mut();
 
                 // Create a unique binding for the computed property key, and insert it outside of the class
-                let binding = VarDeclarationsStore::create_uid_var_based_on_node(key_expr, ctx);
+                let binding = VarDeclarationsStore::create_uid_var_based_on_node(key, ctx);
                 let operator = AssignmentOperator::Assign;
                 let left = binding.create_write_target(ctx);
-                let right = key_expr.take_in(ctx);
-                *key = PropertyKey::new_assignment_expression(SPAN, operator, left, right, ctx);
+                key.replace_with(|right| {
+                    Expression::new_assignment_expression(SPAN, operator, left, right, ctx)
+                });
                 binding.create_read_expression(ctx)
             }
         }

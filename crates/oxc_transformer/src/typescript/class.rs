@@ -1,6 +1,6 @@
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
@@ -533,16 +533,16 @@ impl<'a> TypeScript<'a> {
         if let Some(key) = key.as_expression_mut() {
             // If the key is already an expression, we need to create a new expression sequence
             // to insert the assignments into.
-            let original_key = key.take_in(ctx);
-            let new_key = Expression::new_sequence_expression(
-                SPAN,
-                ArenaVec::from_iter_in(
-                    assignments.split_off(0).into_iter().chain(std::iter::once(original_key)),
+            key.replace_with(|original_key| {
+                Expression::new_sequence_expression(
+                    SPAN,
+                    ArenaVec::from_iter_in(
+                        assignments.split_off(0).into_iter().chain(std::iter::once(original_key)),
+                        ctx,
+                    ),
                     ctx,
-                ),
-                ctx,
-            );
-            *key = new_key;
+                )
+            });
         }
     }
 

@@ -43,6 +43,7 @@ oxc_resolver = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 
+anyhow = { workspace = true }
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 indexmap = { workspace = true }
 rustc-hash = { workspace = true }

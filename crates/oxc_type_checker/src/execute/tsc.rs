@@ -6,6 +6,8 @@ use std::{
     process::ExitCode,
 };
 
+use anyhow::{Context, Result, bail};
+
 use crate::{
     compiler::Program,
     tsoptions::{TypeCheckCommand, get_file_names, parse_command_line, parse_config_file},
@@ -18,41 +20,35 @@ use crate::{
 /// `bpaf` reads `std::env::args()` and handles `--help`/`--version`/argument errors itself.
 pub fn command_line() -> ExitCode {
     let command = parse_command_line();
-    tsc_compilation(&command)
+    match tsc_compilation(&command) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            // `{:#}` prints the whole error chain (the message plus any source), matching tsc's
+            // single-line error output.
+            eprintln!("{error:#}");
+            ExitCode::FAILURE
+        }
+    }
 }
 
 /// Mirrors tsgo's `tscCompilation`: resolve the project into a config file (or root files),
 /// collect those files into a [`Program`], and report them.
 ///
 /// Parsing and type checking the program are later steps.
-fn tsc_compilation(command: &TypeCheckCommand) -> ExitCode {
-    let cwd = match std::env::current_dir() {
-        Ok(cwd) => cwd,
-        Err(err) => {
-            eprintln!("Unable to determine the current working directory: {err}");
-            return ExitCode::FAILURE;
-        }
-    };
+fn tsc_compilation(command: &TypeCheckCommand) -> Result<()> {
+    let cwd =
+        std::env::current_dir().context("Unable to determine the current working directory")?;
 
-    let root_files = match resolve_config_file(command, &cwd) {
+    let root_files = match resolve_config_file(command, &cwd)? {
         // A resolved config file: parse it (resolving `extends`) via `oxc_resolver`, then expand
         // its file globs into the root file list.
-        Ok(Some(config_file)) => match parse_config_file(&config_file) {
-            Ok(tsconfig) => {
-                println!("project: {}", config_file.display());
-                get_file_names(&tsconfig)
-            }
-            Err(message) => {
-                eprintln!("{message}");
-                return ExitCode::FAILURE;
-            }
-        },
-        // Source files given without a config file: use them directly as roots.
-        Ok(None) => command.files.clone(),
-        Err(message) => {
-            eprintln!("{message}");
-            return ExitCode::FAILURE;
+        Some(config_file) => {
+            let tsconfig = parse_config_file(&config_file)?;
+            println!("project: {}", config_file.display());
+            get_file_names(&tsconfig)
         }
+        // Source files given without a config file: use them directly as roots.
+        None => command.files.clone(),
     };
 
     // Collect the root files (normalized + deduplicated) into the program's file list.
@@ -61,7 +57,7 @@ fn tsc_compilation(command: &TypeCheckCommand) -> ExitCode {
         println!("  {}", file.display());
     }
     println!("({} files)", program.len());
-    ExitCode::SUCCESS
+    Ok(())
 }
 
 /// Resolve the command line into the `tsconfig.json` (or config file) to load, mirroring
@@ -70,14 +66,12 @@ fn tsc_compilation(command: &TypeCheckCommand) -> ExitCode {
 /// Returns:
 /// - `Ok(Some(path))` — a resolved config file to load,
 /// - `Ok(None)` — source files were given with no config file (compile them directly),
-/// - `Err(message)` — one of `tsc`'s command-line errors, ready to print.
-fn resolve_config_file(command: &TypeCheckCommand, cwd: &Path) -> Result<Option<PathBuf>, String> {
+/// - `Err(_)` — one of `tsc`'s command-line errors, ready to print.
+fn resolve_config_file(command: &TypeCheckCommand, cwd: &Path) -> Result<Option<PathBuf>> {
     if let Some(project) = &command.project {
         // TS5042
         if !command.files.is_empty() {
-            return Err(
-                "Option 'project' cannot be mixed with source files on a command line.".to_string()
-            );
+            bail!("Option 'project' cannot be mixed with source files on a command line.");
         }
 
         let file_or_directory = to_path(cwd, project);
@@ -88,33 +82,31 @@ fn resolve_config_file(command: &TypeCheckCommand, cwd: &Path) -> Result<Option<
                 Ok(Some(config_file))
             } else {
                 // TS5081
-                Err(format!(
+                bail!(
                     "Cannot find a tsconfig.json file at the current directory: {}.",
                     config_file.display()
-                ))
+                );
             }
         } else if file_or_directory.exists() {
             // An explicit config file (need not be named `tsconfig.json`).
             Ok(Some(file_or_directory))
         } else {
             // TS5058
-            Err(format!("The specified path does not exist: '{}'.", file_or_directory.display()))
+            bail!("The specified path does not exist: '{}'.", file_or_directory.display());
         }
     } else if let Some(config_file) = find_config_file(cwd) {
         if command.files.is_empty() {
             Ok(Some(config_file))
         } else {
             // TS5112: a tsconfig.json is present but source files were also specified.
-            Err("tsconfig.json is present but will not be loaded if files are specified on \
+            bail!(
+                "tsconfig.json is present but will not be loaded if files are specified on \
                  commandline. Use '--ignoreConfig' to skip this error."
-                .to_string())
+            );
         }
     } else if command.files.is_empty() {
         // TS5081 — `tsc` prints version + help here; we report the missing config instead.
-        Err(format!(
-            "Cannot find a tsconfig.json file at the current directory: {}.",
-            cwd.display()
-        ))
+        bail!("Cannot find a tsconfig.json file at the current directory: {}.", cwd.display());
     } else {
         // Source files with no config file anywhere: compile them directly.
         Ok(None)

@@ -257,8 +257,15 @@ mod scoping_cell {
         }
     }
 
-    /// SAFETY: `ScopingCell` can be `Send` because both the `Allocator` and `Vec`s / `HashMap`s
-    /// storing their data in that `Allocator` are moved to another thread together.
+    /// SAFETY: `ScopingCell` can be `Send` because both the `Allocator`, and the `Vec`s / `HashMap`s
+    /// storing their data in that `Allocator`, are moved to another thread together.
+    ///
+    /// One case doesn't fit that "moved together" picture: `ReplaceWith`'s panic path (in `oxc_allocator`)
+    /// writes a dummy backed by its own dedicated, global `'static` allocator, which does *not* travel
+    /// with this bundle. Sending is still sound, because each such dummy allocator is exclusively owned -
+    /// reachable only through the single value that holds it, and mutated only via `&mut` to that value -
+    /// so no two threads can ever touch one. The invariant this impl really rests on is single-ownership
+    /// of each referenced allocator, not co-location.
     unsafe impl Send for ScopingCell {}
 
     /// SAFETY: `ScopingCell` can be `Sync` if `ScopingInner` is `Sync`, because `ScopingCell` provides

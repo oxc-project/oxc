@@ -4,7 +4,14 @@ use crate::{Allocator, Box, GetAllocator, Vec};
 
 /// A trait to replace an existing AST node with a dummy.
 pub trait TakeIn<'a>: Dummy<'a> {
-    /// Replace node with a dummy.
+    /// Replace node with a dummy, and return the original.
+    ///
+    /// If you're taking the node out to build a new node from it and store the result back
+    /// in the same slot, prefer [`replace_with`]. `take_in` writes a dummy into the arena,
+    /// which takes up space there forever. `replace_with` avoids that (no dummy), so is faster
+    /// and uses less memory.
+    ///
+    /// [`replace_with`]: crate::ReplaceWith::replace_with
     #[must_use]
     fn take_in<A: GetAllocator<'a>>(&mut self, allocator_accessor: &A) -> Self {
         let allocator = allocator_accessor.allocator();
@@ -14,6 +21,13 @@ pub trait TakeIn<'a>: Dummy<'a> {
 
     /// Replace node with a dummy, allocate the original node into the arena,
     /// and return it as a [`Box<Self>`].
+    ///
+    /// If you're taking the node out to build a new node from it and store the result back
+    /// in the same slot, prefer [`replace_with`]. `take_in` writes a dummy into the arena,
+    /// which takes up space there forever. `replace_with` avoids that (no dummy), so is faster
+    /// and uses less memory.
+    ///
+    /// [`replace_with`]: crate::ReplaceWith::replace_with
     #[must_use]
     fn take_in_box<A: GetAllocator<'a>>(&mut self, allocator_accessor: &A) -> Box<'a, Self> {
         let allocator = allocator_accessor.allocator();
