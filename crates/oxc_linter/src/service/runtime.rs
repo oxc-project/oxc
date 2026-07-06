@@ -612,8 +612,14 @@ impl Runtime {
     ) {
         // Files with an external (JS) parser are parsed and linted entirely on JS side.
         // They are linted separately, and don't take part in the module graph.
+        // Only walk overrides per-file when some override actually configures a parser;
+        // otherwise every path is a native-parser path (skips the per-file glob walk).
         let (js_parser_paths, paths): (Vec<_>, Vec<_>) =
-            paths.into_iter().partition(|path| self.linter.has_external_parser(Path::new(path)));
+            if self.linter.has_external_parser_overrides() {
+                paths.into_iter().partition(|path| self.linter.has_external_parser(Path::new(path)))
+            } else {
+                (Vec::new(), paths)
+            };
 
         if !js_parser_paths.is_empty() {
             // Dedupe, same as `paths_set` below for the native path.
@@ -911,14 +917,28 @@ impl Runtime {
             if intersects_mask(message.span) {
                 return false;
             }
-            let fix_touches_mask = match &message.fixes {
-                PossibleFixes::None => false,
-                PossibleFixes::Single(fix) => intersects_mask(fix.span),
-                PossibleFixes::Multiple(fixes) => fixes.iter().any(|fix| intersects_mask(fix.span)),
+            // Strip fixes whose span touches a masked region (they would apply against
+            // placeholder bytes). `Multiple` fixes are mutually-exclusive alternatives (a
+            // fix plus suggestions), so drop only the touching alternatives and keep any
+            // that stay clear of every mask, rather than discarding the whole set.
+            message.fixes = match std::mem::replace(&mut message.fixes, PossibleFixes::None) {
+                PossibleFixes::None => PossibleFixes::None,
+                PossibleFixes::Single(fix) => {
+                    if intersects_mask(fix.span) {
+                        PossibleFixes::None
+                    } else {
+                        PossibleFixes::Single(fix)
+                    }
+                }
+                PossibleFixes::Multiple(mut fixes) => {
+                    fixes.retain(|fix| !intersects_mask(fix.span));
+                    match fixes.len() {
+                        0 => PossibleFixes::None,
+                        1 => PossibleFixes::Single(fixes.pop().unwrap()),
+                        _ => PossibleFixes::Multiple(fixes),
+                    }
+                }
             };
-            if fix_touches_mask {
-                message.fixes = PossibleFixes::None;
-            }
             true
         });
 
@@ -941,9 +961,14 @@ impl Runtime {
         use std::sync::Mutex;
 
         // Files with an external (JS) parser are parsed and linted entirely on JS side,
-        // same as in `run_impl`.
+        // same as in `run_impl`. Only walk overrides per-file when some override actually
+        // configures a parser; otherwise every path is a native-parser path.
         let (js_parser_paths, paths): (Vec<_>, Vec<_>) =
-            paths.into_iter().partition(|path| self.linter.has_external_parser(Path::new(path)));
+            if self.linter.has_external_parser_overrides() {
+                paths.into_iter().partition(|path| self.linter.has_external_parser(Path::new(path)))
+            } else {
+                (Vec::new(), paths)
+            };
 
         let mut js_parser_messages = Vec::<Message>::new();
         for path in &js_parser_paths {

@@ -576,6 +576,15 @@ impl Linter {
         self.external_linter.is_some() && self.config.has_external_parser(path)
     }
 
+    /// Returns `true` if any override configures an external (JS) parser via
+    /// `languageOptions.parser`.
+    ///
+    /// A cheap run-once precheck: when this is `false`, [`Linter::has_external_parser`] returns
+    /// `false` for every path, so callers can skip the per-file glob walk entirely.
+    pub fn has_external_parser_overrides(&self) -> bool {
+        self.external_linter.is_some() && self.config.has_external_parser_overrides()
+    }
+
     /// Lint a file which is parsed by an external (JS) parser.
     ///
     /// The file is parsed on JS side by the parser configured in `languageOptions.parser`
@@ -715,6 +724,14 @@ impl Linter {
                 span_converter.convert_span_back(&mut span);
                 // Skip comments with invalid spans (only possible if the parser misbehaves)
                 let text = original_source_text.get(span.start as usize..span.end as usize)?;
+                // Belt and braces: `DisableDirectivesBuilder` calls `content_span()` on every
+                // comment, which slices off the delimiters (`start + 2 .. end` for a line
+                // comment, `start + 2 .. end - 2` for a block). A span too short for its
+                // delimiters would invert and panic on slicing, so drop it. JS side filters
+                // these too, but a UTF-16 -> UTF-8 conversion also sits between there and here.
+                if span.end - span.start < if comment.is_block { 4 } else { 2 } {
+                    return None;
+                }
                 let kind = if !comment.is_block {
                     CommentKind::Line
                 } else if text.contains('\n') {
@@ -729,78 +746,17 @@ impl Linter {
             .with_respect_eslint_disable_directives(self.respect_eslint_disable_directives())
             .build(original_source_text, &comments);
 
-        for diagnostic in result.diagnostics {
-            // Convert UTF-16 offsets back to UTF-8
-            let mut span = Span::new(diagnostic.start, diagnostic.end);
-            span_converter.convert_span_back(&mut span);
-
-            let (external_rule_id, _options_id, severity) =
-                external_rules[diagnostic.rule_index as usize];
-            let (plugin_name, rule_name) = self.config.resolve_plugin_rule_names(external_rule_id);
-
-            if disable_directives.contains(&format!("{plugin_name}/{rule_name}"), span) {
-                continue;
-            }
-
-            // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
-            let mut create_fix = |fixes, fix_kind| match convert_and_merge_js_fixes(
-                fixes,
-                original_source_text,
-                &span_converter,
-                has_bom,
-            ) {
-                Ok(fix) => Some(fix.with_kind(fix_kind)),
-                Err(err) => {
-                    let fixes_type = if fix_kind.contains(FixKind::Suggestion) {
-                        "suggestions"
-                    } else {
-                        "fixes"
-                    };
-                    let message = format!(
-                        "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path_string}\n{err}"
-                    );
-                    messages.push(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
-                    None
-                }
-            };
-
-            // Convert fix
-            let fix = diagnostic.fixes.and_then(|fixes| create_fix(fixes, FixKind::Fix));
-
-            // Convert suggestions (only if fix kind allows suggestions), and combine with fix
-            let possible_fixes = if let Some(suggestions) = diagnostic.suggestions
-                && self.options.fix.can_apply(FixKind::Suggestion)
-            {
-                debug_assert!(
-                    !suggestions.is_empty(),
-                    "`diagnostic.suggestions` should be `None` if there are no suggestions"
-                );
-
-                let suggestions = suggestions.into_iter().filter_map(|suggestion| {
-                    create_fix(suggestion.fixes, FixKind::Suggestion)
-                        .map(|fix| fix.with_message(suggestion.message))
-                });
-
-                #[expect(clippy::from_iter_instead_of_collect)]
-                PossibleFixes::from_iter(iter::chain(fix, suggestions))
-            } else {
-                PossibleFixes::from(fix)
-            };
-
-            messages.push(
-                Message::new(
-                    OxcDiagnostic::error(diagnostic.message)
-                        .with_label(span)
-                        .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                        .with_severity(severity.into()),
-                    possible_fixes,
-                )
-                .with_rule(MessageRule {
-                    plugin_name: Cow::Owned(plugin_name.to_string()),
-                    rule_name: Cow::Owned(rule_name.to_string()),
-                }),
-            );
-        }
+        self.convert_external_diagnostics(
+            result.diagnostics,
+            external_rules,
+            &span_converter,
+            original_source_text,
+            has_bom,
+            path_string,
+            &disable_directives,
+            self.options.fix,
+            |message| messages.push(message),
+        );
 
         (messages, Some(disable_directives), shadow_lint_input)
     }
@@ -1130,88 +1086,17 @@ impl Linter {
         );
         match result {
             Ok(diagnostics) => {
-                for diagnostic in diagnostics {
-                    // Convert UTF-16 offsets back to UTF-8.
-                    // TODO: Validate span offsets are within bounds and `start <= end`.
-                    // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
-                    // That's possible if UTF-16 offset points to middle of a surrogate pair.
-                    let mut span = Span::new(diagnostic.start, diagnostic.end);
-                    span_converter.convert_span_back(&mut span);
-
-                    let (external_rule_id, _options_id, severity) =
-                        external_rules[diagnostic.rule_index as usize];
-                    let (plugin_name, rule_name) =
-                        self.config.resolve_plugin_rule_names(external_rule_id);
-
-                    if ctx_host
-                        .disable_directives()
-                        .contains(&format!("{plugin_name}/{rule_name}"), span)
-                    {
-                        continue;
-                    }
-
-                    // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
-                    let create_fix = |fixes, fix_kind| match convert_and_merge_js_fixes(
-                        fixes,
-                        original_source_text,
-                        &span_converter,
-                        has_bom,
-                    ) {
-                        Ok(fix) => Some(fix.with_kind(fix_kind)),
-                        Err(err) => {
-                            let fixes_type = if fix_kind.contains(FixKind::Suggestion) {
-                                "suggestions"
-                            } else {
-                                "fixes"
-                            };
-                            let message = format!(
-                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path_string}\n{err}"
-                            );
-                            ctx_host.push_diagnostic(Message::new(
-                                OxcDiagnostic::error(message),
-                                PossibleFixes::None,
-                            ));
-                            None
-                        }
-                    };
-
-                    // Convert fix
-                    let fix = diagnostic.fixes.and_then(|fixes| create_fix(fixes, FixKind::Fix));
-
-                    // Convert suggestions (only if fix kind allows suggestions), and combine with fix
-                    let possible_fixes = if let Some(suggestions) = diagnostic.suggestions
-                        && ctx_host.fix.can_apply(FixKind::Suggestion)
-                    {
-                        debug_assert!(
-                            !suggestions.is_empty(),
-                            "`diagnostic.suggestions` should be `None` if there are no suggestions"
-                        );
-
-                        let suggestions = suggestions.into_iter().filter_map(|suggestion| {
-                            create_fix(suggestion.fixes, FixKind::Suggestion)
-                                .map(|fix| fix.with_message(suggestion.message))
-                        });
-
-                        #[expect(clippy::from_iter_instead_of_collect)]
-                        PossibleFixes::from_iter(iter::chain(fix, suggestions))
-                    } else {
-                        PossibleFixes::from(fix)
-                    };
-
-                    ctx_host.push_diagnostic(
-                        Message::new(
-                            OxcDiagnostic::error(diagnostic.message)
-                                .with_label(span)
-                                .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                                .with_severity(severity.into()),
-                            possible_fixes,
-                        )
-                        .with_rule(MessageRule {
-                            plugin_name: Cow::Owned(plugin_name.to_string()),
-                            rule_name: Cow::Owned(rule_name.to_string()),
-                        }),
-                    );
-                }
+                self.convert_external_diagnostics(
+                    diagnostics,
+                    external_rules,
+                    &span_converter,
+                    original_source_text,
+                    has_bom,
+                    path_string,
+                    ctx_host.disable_directives(),
+                    ctx_host.fix,
+                    |message| ctx_host.push_diagnostic(message),
+                );
             }
             Err(err) => {
                 let message = format!("Error running JS plugin.\nFile path: {path_string}\n{err}");
@@ -1220,6 +1105,106 @@ impl Linter {
                     PossibleFixes::None,
                 ));
             }
+        }
+    }
+
+    /// Convert external (JS plugin) diagnostics into [`Message`]s and forward them to `push`.
+    ///
+    /// Shared by [`Self::run_with_js_parser`] (custom-parser files, whose AST lives on JS side)
+    /// and [`Self::convert_and_call_external_linter`] (natively-parsed files). Both receive the
+    /// same [`LintFileResult`] diagnostics with UTF-16 spans; this converts spans back to UTF-8,
+    /// resolves rule names, drops directive-disabled diagnostics, converts fixes and suggestions,
+    /// and hands each resulting [`Message`] (including any fix-conversion error messages) to
+    /// `push`. The two callers differ only in their message sink, disable directives, and fix
+    /// capability, which are passed in.
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    fn convert_external_diagnostics(
+        &self,
+        diagnostics: Vec<LintFileResult>,
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        span_converter: &Utf8ToUtf16,
+        original_source_text: &str,
+        has_bom: bool,
+        path_string: &str,
+        disable_directives: &DisableDirectives,
+        allowed_fixes: FixKind,
+        mut push: impl FnMut(Message),
+    ) {
+        for diagnostic in diagnostics {
+            // Convert UTF-16 offsets back to UTF-8.
+            // TODO: Validate span offsets are within bounds and `start <= end`.
+            // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
+            // That's possible if UTF-16 offset points to middle of a surrogate pair.
+            let mut span = Span::new(diagnostic.start, diagnostic.end);
+            span_converter.convert_span_back(&mut span);
+
+            let (external_rule_id, _options_id, severity) =
+                external_rules[diagnostic.rule_index as usize];
+            let (plugin_name, rule_name) = self.config.resolve_plugin_rule_names(external_rule_id);
+
+            if disable_directives.contains(&format!("{plugin_name}/{rule_name}"), span) {
+                continue;
+            }
+
+            // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
+            let mut create_fix = |fixes, fix_kind| match convert_and_merge_js_fixes(
+                fixes,
+                original_source_text,
+                span_converter,
+                has_bom,
+            ) {
+                Ok(fix) => Some(fix.with_kind(fix_kind)),
+                Err(err) => {
+                    let fixes_type = if fix_kind.contains(FixKind::Suggestion) {
+                        "suggestions"
+                    } else {
+                        "fixes"
+                    };
+                    let message = format!(
+                        "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path_string}\n{err}"
+                    );
+                    push(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
+                    None
+                }
+            };
+
+            // Convert fix
+            let fix = diagnostic.fixes.and_then(|fixes| create_fix(fixes, FixKind::Fix));
+
+            // Convert suggestions (only if fix kind allows suggestions), and combine with fix
+            let possible_fixes = if let Some(suggestions) = diagnostic.suggestions
+                && allowed_fixes.can_apply(FixKind::Suggestion)
+            {
+                debug_assert!(
+                    !suggestions.is_empty(),
+                    "`diagnostic.suggestions` should be `None` if there are no suggestions"
+                );
+
+                let suggestions = suggestions.into_iter().filter_map(|suggestion| {
+                    create_fix(suggestion.fixes, FixKind::Suggestion)
+                        .map(|fix| fix.with_message(suggestion.message))
+                });
+
+                #[expect(clippy::from_iter_instead_of_collect)]
+                PossibleFixes::from_iter(iter::chain(fix, suggestions))
+            } else {
+                PossibleFixes::from(fix)
+            };
+
+            // `create_fix` no longer borrows `push` past this point, so `push` can be called again
+            push(
+                Message::new(
+                    OxcDiagnostic::error(diagnostic.message)
+                        .with_label(span)
+                        .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                        .with_severity(severity.into()),
+                    possible_fixes,
+                )
+                .with_rule(MessageRule {
+                    plugin_name: Cow::Owned(plugin_name.to_string()),
+                    rule_name: Cow::Owned(rule_name.to_string()),
+                }),
+            );
         }
     }
 }

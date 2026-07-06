@@ -126,14 +126,24 @@ fn write_placeholder(out: &mut Vec<u8>, original: &[u8], region: &MaskedRegion) 
         inject_refs(&mut placeholder[7..len - 1], &region.refs, RefStyle::Statement);
     } else {
         // Expression position: template literal, with refs as `${name}` interpolations.
-        // A 1-byte region can't hold one; use `0` (a valid expression) instead.
-        if len == 1 {
-            placeholder[0] = b'0';
+        // The backticks must not overwrite a boundary newline - that would shift the line
+        // numbers of everything after the region. Place them at the first / last non-newline
+        // byte, leaving any boundary newlines outside the literal (still a valid expression,
+        // e.g. `\n` `...` `\n`). If the region is entirely newlines there is nowhere to put a
+        // literal - leave it as-is; the shadow then fails to parse and native linting is
+        // skipped for this file (graceful, same as returning `None`).
+        let open = placeholder.iter().position(|&b| b != b'\n' && b != b'\r');
+        let close = placeholder.iter().rposition(|&b| b != b'\n' && b != b'\r');
+        let (Some(open), Some(close)) = (open, close) else { return };
+        if open == close {
+            // Only one non-newline byte (includes the `len == 1` case): a lone `0` is a
+            // valid expression, and a backtick pair would not fit.
+            placeholder[open] = b'0';
             return;
         }
-        placeholder[0] = b'`';
-        placeholder[len - 1] = b'`';
-        inject_refs(&mut placeholder[1..len - 1], &region.refs, RefStyle::Interpolation);
+        placeholder[open] = b'`';
+        placeholder[close] = b'`';
+        inject_refs(&mut placeholder[open + 1..close], &region.refs, RefStyle::Interpolation);
     }
 }
 
@@ -378,6 +388,43 @@ mod tests {
             build_shadow_source(source, &[region(emoji_start + 1, emoji_start + 3, false, &[])])
                 .is_none()
         );
+    }
+
+    #[test]
+    fn expression_boundary_newline_at_start_preserved() {
+        // Region begins on a newline: the opening backtick must be placed after it, so the
+        // newline (and hence every line number after the region) is preserved.
+        let source = "x(\n<t>a</t>);\n";
+        let start = source.find('\n').unwrap() as u32;
+        let end = source.rfind('>').unwrap() as u32 + 1;
+        let shadow = build_shadow_source(source, &[region(start, end, false, &[])]).unwrap();
+        assert_eq!(shadow.len(), source.len());
+        assert_eq!(shadow.as_bytes()[start as usize], b'\n');
+        assert!(shadow.starts_with("x(\n`"));
+        assert!(shadow.ends_with("`);\n"));
+    }
+
+    #[test]
+    fn expression_boundary_newline_at_end_preserved() {
+        // Region ends on a newline: the closing backtick must be placed before it.
+        let source = "x(<t>a</t>\n);\n";
+        let start = source.find('<').unwrap() as u32;
+        let end = source.find("\n)").unwrap() as u32 + 1;
+        let shadow = build_shadow_source(source, &[region(start, end, false, &[])]).unwrap();
+        assert_eq!(shadow.len(), source.len());
+        assert_eq!(shadow.as_bytes()[(end - 1) as usize], b'\n');
+        assert!(shadow.starts_with("x(`"));
+        assert!(shadow.ends_with("`\n);\n"));
+    }
+
+    #[test]
+    fn expression_single_newline_region_left_untouched() {
+        // A degenerate 1-byte region that is a newline: `0` cannot be written without
+        // destroying the newline, so it is left as-is (shadow won't parse natively).
+        let source = "x(\n);\n";
+        let start = source.find('\n').unwrap() as u32;
+        let shadow = build_shadow_source(source, &[region(start, start + 1, false, &[])]).unwrap();
+        assert_eq!(shadow, source);
     }
 
     #[test]
