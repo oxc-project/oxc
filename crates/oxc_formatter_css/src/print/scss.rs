@@ -7,12 +7,11 @@ use oxc_css_parser::ast::{
     SassMixin, SassModuleConfig, SassParameters, SassUnaryOperatorKind, SassUse,
     SassUseNamespaceKind, SassVariableDeclaration,
 };
-
 use oxc_formatter_core::{
     Buffer,
     builders::{
         dedent, empty_line, expand_parent, group, hard_line_break, if_group_breaks, indent,
-        soft_line_break, soft_line_break_or_space, space, text,
+        line_suffix, soft_line_break, soft_line_break_or_space, space, text,
     },
     write,
 };
@@ -832,18 +831,50 @@ pub(super) fn write_sass_forward<'a>(forward: &SassForward<'a>, f: &mut CssForma
     }
 }
 
-/// `with ($var: value, ...)`: configurations always break, one item per line,
-/// without a trailing comma.
+/// `with ($var: value, ...)`:
+/// configurations always break, one item per line, without a trailing comma.
+///
+/// Comments follow Prettier's comma-group handling:
+/// - a leading `//` comment sits on its own line
+/// - a leading block comment glues to its item
+/// - a same-line trailing comment stays at the end of the item's line
+/// - and a blank line after an item's comma is preserved
+///
+/// EXCEPT an own-line trailing comment, which keeps its own line
+/// (consistent with the map printer; Prettier pulls it up — see "Known divergences").
 fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
+    // Comments between the module path and `with` stay glued to the head
+    // (`@use "a" /* c */ with (`).
+    write_config_trailing_comments(to_span(&config.with_span).start, f);
     write!(f, [space(), "with", space(), "("]);
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         write!(f, hard_line_break());
         for (i, item) in config.items.iter().enumerate() {
+            let item_span = to_span(&item.span);
             if i > 0 {
-                write!(f, ",");
-                write!(f, hard_line_break());
+                // Prettier's `isNextLineEmpty` after an item:
+                // a blank line after the comma survives, measured up to the next item or its first leading comment.
+                let comma_end = to_span(&config.comma_spans[i - 1]).end;
+                // Clamped: an own-line comment left pending by the previous
+                // item's trailing flush can start BEFORE the comma.
+                let next_start = f
+                    .context()
+                    .comments()
+                    .iter_before(item_span.start)
+                    .next()
+                    .map_or(item_span.start, |c| c.span.start)
+                    .max(comma_end);
+                if comments::classify_gap(source.bytes_range(comma_end, next_start))
+                    == comments::Gap::Blank
+                {
+                    write!(f, empty_line());
+                } else {
+                    write!(f, hard_line_break());
+                }
             }
+            // Leading comments: `//` on its own line, block glued inline
+            value::flush_value_comments(item_span.start, f);
             let span = to_span(item.variable.span());
             write!(f, [text(source.text_for(&span)), ":", space()]);
             // No first-argument gate here (cf. `write_function`):
@@ -856,7 +887,56 @@ fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormat
                 write!(f, space());
                 write!(f, text(source.text_for(&span)));
             }
+            if i + 1 < config.items.len() {
+                // An own-line comment before the comma stays pending and
+                // leads the next item instead.
+                write_config_trailing_comments(to_span(&config.comma_spans[i]).start, f);
+                write!(f, ",");
+            } else {
+                // Comments before `)` (past a trailing comma, which is dropped):
+                // same-line ones glue to the last item, own-line ones keep their line.
+                let bound = to_span(&config.span).end;
+                let mut prev_end =
+                    write_config_trailing_comments(bound, f).unwrap_or(item_span.end);
+                for &comment in f.context().comments().take_before(bound) {
+                    comments::write_gap(source.bytes_range(prev_end, comment.span.start), f);
+                    comments::write_single_comment(comment, f);
+                    prev_end = comment.span.end;
+                }
+            }
         }
     });
     write!(f, [indent(&body), hard_line_break(), ")"]);
+}
+
+/// Emits pending SAME-LINE comments before `upper_bound` glued to the just-printed
+/// content (`$a: 1 /* c */,`); an own-line comment stops the loop and stays pending.
+/// Inline `//` comments ride a `line_suffix`,
+/// so a following `,` lands before the comment text (Prettier prints `$a: 1, // c`).
+/// Returns the end offset of the last emitted comment.
+fn write_config_trailing_comments<'a>(
+    upper_bound: u32,
+    f: &mut CssFormatter<'_, 'a>,
+) -> Option<u32> {
+    let mut last_end = None;
+    while let Some(comment) = f.context().comments().peek() {
+        if comment.span.end > upper_bound
+            || value::comment_is_own_line(comment, f.context().source_text())
+        {
+            break;
+        }
+        f.context().comments().take_before(comment.span.end);
+        if comment.inline {
+            let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                write!(f, space());
+                comments::write_single_comment(comment, f);
+            });
+            write!(f, line_suffix(&content));
+        } else {
+            write!(f, space());
+            comments::write_single_comment(comment, f);
+        }
+        last_end = Some(comment.span.end);
+    }
+    last_end
 }

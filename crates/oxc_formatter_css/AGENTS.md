@@ -229,6 +229,13 @@ Notable divergences are:
     and emits non-compiling output for `key: 2 * ($a + $b)` inside `$var:` declarations (dart-sass: `Undefined operation "2 * (3px,)"`)
   - Prettier's own #18530 (math siblings in args) / #19091 (single-node scalars) fixed subsets of this;
     we extend the same rule to every non-comma-list, so these stay inline
+- SCSS: An own-line trailing comment before a list's closing `)` keeps its own line
+  - Applies to maps AND `@use`/`@forward with (...)` configs (`$e: 5\n  // c\n)` stays as-is;
+    for maps the trailing comma is also kept)
+  - Prettier pulls the comment up onto the last item's line (`$e: 5 // c`, a `lineSuffix`
+    artifact of its comma-group printing) and drops the map's trailing comma
+  - Same-line trailing comments still glue (matching Prettier);
+    moving an own-line comment up would destroy the author's visual grouping
 - SCSS: A map whose FIRST item is preceded by a block comment always breaks one-per-line
   - Prettier stops treating it as a map item (the comment becomes `groups[0]`, so `isKeyValuePairInParenGroupNode` fails) and inlines it when it fits: `$b: (/* c */ a: 1);`
   - We reproduce the map-item-ness loss for the trailing comma (dropped, like Prettier)
