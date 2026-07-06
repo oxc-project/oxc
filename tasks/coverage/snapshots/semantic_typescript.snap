@@ -172,9 +172,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/acceptableAlias1.
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
 rebuilt        : ScopeId(1): ["X", "_M"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -186,9 +183,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/aliasInaccessible
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
 rebuilt        : ScopeId(1): ["X", "_M"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -197,12 +191,6 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/aliasInaccessibleModule2.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -225,9 +213,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientClassDecla
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "C", "D", "d"]
 rebuilt        : ScopeId(0): ["D", "d"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "D":
 after transform: SymbolId(3): SymbolFlags(Class | ValueModule | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -374,9 +359,6 @@ after transform: ["require"]
 rebuilt        : ["f", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/anonterface.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -453,9 +435,6 @@ after transform: ScopeId(0): ["Data", "WinJS"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/arrowFunctionInExpressionStatement2.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -497,9 +476,6 @@ after transform: []
 rebuilt        : ["assertEqual"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assign1.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -530,12 +506,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompata
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "__test1__":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -552,12 +522,6 @@ rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability10.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "__test1__":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -575,12 +539,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompata
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "__test1__":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -597,12 +555,6 @@ rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability5.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "__test1__":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -619,12 +571,6 @@ rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability6.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "__test1__":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -641,12 +587,6 @@ rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability7.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "__test1__":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -663,12 +603,6 @@ rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability8.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "__test1__":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -685,12 +619,6 @@ rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability9.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "__test1__":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -813,12 +741,6 @@ rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesClass3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
 Symbol flags mismatch for "c5":
 after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
@@ -845,21 +767,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(0): ["m3b", "m3c", "m3d", "m3e", "m3f", "m3g"]
 rebuilt        : ScopeId(0): ["m3b", "m3c", "m3e"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(20): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
 Symbol flags mismatch for "m3b":
 after transform: SymbolId(0): SymbolFlags(Class | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
@@ -903,30 +810,18 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(0): ["m4", "m4a", "m4b", "m4c", "m4d", "m5"]
 rebuilt        : ScopeId(0): ["m4a", "m4b", "m4d", "m5"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["One", "m4a"]
 rebuilt        : ScopeId(3): ["m4a"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(6): ["One", "m4b"]
 rebuilt        : ScopeId(5): ["m4b"]
 Bindings mismatch:
 after transform: ScopeId(10): ["One", "m4c"]
 rebuilt        : ScopeId(6): ["m4c"]
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(14): ["One", "m4d"]
 rebuilt        : ScopeId(10): ["m4d"]
-Scope flags mismatch:
-after transform: ScopeId(15): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(11): ScopeFlags(Function)
 Symbol flags mismatch for "m4a":
 after transform: SymbolId(1): SymbolFlags(RegularEnum | ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -1050,9 +945,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/binopAssignmentSh
 Bindings mismatch:
 after transform: ScopeId(0): ["Test", "console"]
 rebuilt        : ScopeId(0): ["Test"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Test":
 after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -1441,9 +1333,6 @@ after transform: []
 rebuilt        : ["foo2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/circularTypeofWithFunctionModule.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "maker":
 after transform: SymbolId(1): SymbolFlags(Function | ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(Function)
@@ -1464,15 +1353,6 @@ rebuilt        : ["connect"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/classDeclarationMergedInModuleWithContinuation.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -1501,9 +1381,6 @@ after transform: ["require"]
 rebuilt        : ["console", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/classExtendingQualifiedName2.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -1540,9 +1417,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/classImplementsIm
 Bindings mismatch:
 after transform: ScopeId(0): ["M1", "M2"]
 rebuilt        : ScopeId(0): ["M2"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M2":
 after transform: SymbolId(2): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -1647,15 +1521,6 @@ rebuilt        : ["callme"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/cloduleAcrossModuleDefinitions.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -1673,9 +1538,6 @@ after transform: SymbolId(2): Span { start: 122, end: 123 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/cloduleAndTypeParameters.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(Class | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
@@ -1684,9 +1546,6 @@ after transform: SymbolId(0): [Span { start: 6, end: 9 }, Span { start: 66, end:
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/cloduleTest1.ts
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Reference symbol mismatch for "$":
 after transform: SymbolId(0) "$"
 rebuilt        : <None>
@@ -1701,9 +1560,6 @@ after transform: []
 rebuilt        : ["$"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/cloduleWithPriorUninstantiatedModule.ts
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "Moclodule":
 after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
@@ -1716,12 +1572,6 @@ rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/cloduleWithRecursiveReference.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2014,21 +1864,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithAccessorChildren.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(13): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(13): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(16): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -2041,15 +1876,6 @@ rebuilt        : SymbolId(1): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithConstructorChildren.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2061,9 +1887,6 @@ after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 111, e
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithEnumMemberConflict.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["e", "m1", "m2"]
 rebuilt        : ScopeId(2): ["e"]
@@ -2079,15 +1902,6 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithFunctionChildren.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2099,12 +1913,6 @@ after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 79, en
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithMemberClassConflict.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2119,9 +1927,6 @@ after transform: SymbolId(3): Span { start: 79, end: 81 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithMemberInterfaceConflict.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2131,9 +1936,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithMemberVariable.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2143,18 +1945,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithMethodChildren.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(11): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2167,39 +1957,6 @@ rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithModuleChildren.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(11): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(13): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(12): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(14): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(13): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2248,18 +2005,6 @@ rebuilt        : SymbolId(27): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithModuleReopening.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2280,9 +2025,6 @@ after transform: SymbolId(7): [Span { start: 192, end: 194 }, Span { start: 308,
 rebuilt        : SymbolId(9): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithPrivateMember.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2291,9 +2033,6 @@ after transform: SymbolId(0): Span { start: 10, end: 12 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithUnicodeNames.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "才能ソЫⅨ蒤郳र\u{94d}क\u{94d}ड\u{94d}राüışğİliيونيكودöÄüß才能ソЫⅨ蒤郳र\u{94d}क\u{94d}ड\u{94d}राüışğİliيونيكودöÄüßAbcd123":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2350,9 +2089,6 @@ rebuilt        : ScopeId(0): ["m4"]
 Bindings mismatch:
 after transform: ScopeId(6): ["_m", "a", "exports", "require"]
 rebuilt        : ScopeId(1): ["_m", "a"]
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m4":
 after transform: SymbolId(5): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2375,12 +2111,6 @@ after transform: SymbolId(5): Span { start: 157, end: 159 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndFunctionInGlobalFile.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "m3":
 after transform: SymbolId(2): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
@@ -2395,15 +2125,6 @@ after transform: SymbolId(5): Span { start: 215, end: 217 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndInternalModuleAliasInGlobalFile.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "mOfGloalFile":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2477,9 +2198,6 @@ rebuilt        : ["console"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndAliasInGlobal.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2532,9 +2250,6 @@ after transform: []
 rebuilt        : ["alert"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndModuleInGlobal.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "_this":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2566,9 +2281,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/commentEmitAtEndO
 Bindings mismatch:
 after transform: ScopeId(0): ["empty", "f", "foo"]
 rebuilt        : ScopeId(0): ["f", "foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "foo":
 after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -2577,15 +2289,6 @@ after transform: SymbolId(1): Span { start: 40, end: 43 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/commentInNamespaceDeclarationWithIdentifierPathName.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "hello":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2792,9 +2495,6 @@ after transform: []
 rebuilt        : ["Func"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/compoundVarDecl1.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2970,9 +2670,6 @@ after transform: ScopeId(0): ["M", "c1", "c2", "c3", "c4", "c5"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations2.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -3026,18 +2723,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumOnlyModuleMerging.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["A", "X"]
 rebuilt        : ScopeId(3): ["A"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "Outer":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -4139,27 +3827,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileGenericTy
 Bindings mismatch:
 after transform: ScopeId(0): ["_defineProperty", "templa"]
 rebuilt        : ScopeId(0): ["_defineProperty"]
-Scope flags mismatch:
-after transform: ScopeId(19): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(20): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(21): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(24): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(25): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(26): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(27): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
 Symbol flags mismatch for "dom":
 after transform: SymbolId(16): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
@@ -4240,15 +3907,6 @@ rebuilt        : SymbolId(0): []
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileInternalAliases.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "m":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -4269,9 +3927,6 @@ after transform: SymbolId(5): Span { start: 142, end: 144 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileModuleAssignmentInObjectLiteralProperty.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -4280,15 +3935,6 @@ after transform: SymbolId(0): Span { start: 10, end: 12 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileModuleContinuation.ts
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -4313,9 +3959,6 @@ rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileModuleWithPropertyOfTypeModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -4351,9 +3994,6 @@ after transform: SymbolId(3): [Span { start: 110, end: 111 }, Span { start: 143,
 rebuilt        : SymbolId(1): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofInAnonymousType.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["e", "holiday", "weekday", "weekend"]
 rebuilt        : ScopeId(3): ["e"]
@@ -4370,12 +4010,6 @@ rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -4390,21 +4024,9 @@ after transform: SymbolId(4): Span { start: 90, end: 92 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause1.ts
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(8): ["A", "W", "_C"]
 rebuilt        : ScopeId(4): ["W", "_C"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "X":
 after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -4434,18 +4056,6 @@ after transform: SymbolId(6): Span { start: 67, end: 68 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause2.ts
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "X":
 after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -4475,18 +4085,6 @@ after transform: SymbolId(6): Span { start: 67, end: 68 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithInternalModuleNameConflictsInExtendsClause3.ts
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "X":
 after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -4516,9 +4114,6 @@ after transform: SymbolId(6): Span { start: 67, end: 68 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declInput-2.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -4541,9 +4136,6 @@ after transform: SymbolId(0): [Span { start: 10, end: 13 }, Span { start: 26, en
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declInput4.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -4613,9 +4205,6 @@ rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringArrayPattern3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -4625,9 +4214,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringObjectLiteralPattern2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "m":
 after transform: SymbolId(10): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(10): SymbolFlags(BlockScopedVariable)
@@ -4651,9 +4237,6 @@ rebuilt        : SymbolId(2): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringPrivacyError.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -4730,9 +4313,6 @@ after transform: SymbolId(1): [Span { start: 93, end: 97 }, Span { start: 237, e
 rebuilt        : SymbolId(3): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitExpressionInExtends5.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Test":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -4894,30 +4474,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(11): ScopeFlags(Function)
 Symbol flags mismatch for "X":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -4975,24 +4531,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(1): ["C", "E", "_M"]
 rebuilt        : ScopeId(1): ["C", "D", "E", "_M"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(14): ["D", "f"]
 rebuilt        : ScopeId(13): ["D"]
@@ -5118,9 +4656,6 @@ after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationFunctionTypeNonlocalShouldNotBeAnError.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "foo":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -5805,27 +5340,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "AA", "M", "tmpError", "tmpOK"]
 rebuilt        : ScopeId(0): ["A", "AA", "tmpError", "tmpOK"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -5873,12 +5387,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/doubleUnderscoreE
 Bindings mismatch:
 after transform: ScopeId(1): ["(Anonymous class)", "(Anonymous function)", "Foo", "__a", "__call"]
 rebuilt        : ScopeId(1): ["Foo"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(RegularEnum | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -5919,12 +5427,6 @@ rebuilt        : ["arr", "log"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/duplicateAnonymousInners1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -5936,27 +5438,6 @@ after transform: SymbolId(0): [Span { start: 10, end: 13 }, Span { start: 154, e
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/duplicateAnonymousModuleClasses.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(12): ScopeFlags(Function)
 Symbol flags mismatch for "F":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -6014,9 +5495,6 @@ after transform: SymbolId(0): [Span { start: 50, end: 51 }, Span { start: 76, en
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/duplicateVariablesByScope.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -6182,15 +5660,9 @@ rebuilt        : ScopeId(0): []
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumAssignmentCompat4.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["BAR", "MyEnum"]
 rebuilt        : ScopeId(2): ["MyEnum"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["FOO", "MyEnum"]
 rebuilt        : ScopeId(4): ["MyEnum"]
@@ -6450,9 +5922,6 @@ after transform: ["Object"]
 rebuilt        : ["Object", "p"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest3.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -6942,15 +6411,6 @@ rebuilt        : SymbolId(1): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportImportAndClodule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "K":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -6974,9 +6434,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportImportNonIn
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "x"]
 rebuilt        : ScopeId(0): ["B", "x"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "B":
 after transform: SymbolId(2): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -7013,15 +6470,6 @@ after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 42, en
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/extBaseClass1.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -7132,12 +6580,6 @@ after transform: []
 rebuilt        : ["use"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/fatArrowSelf.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "Events":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -7230,9 +6672,6 @@ after transform: []
 rebuilt        : ["closeFile", "openFile", "someOperation"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/forInModule.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -7343,9 +6782,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/funcdecl.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["anotherFuncNoReturn", "anotherFuncNoReturnVar", "f", "f2", "fooAmbient", "m2", "overload1", "overloadAmbient", "simpleFunc", "simpleFuncVar", "withInitializedParams", "withInitializedParamsVar", "withMultiParams", "withMultiParamsVar", "withOptionalInitializedParams", "withOptionalInitializedParamsVar", "withOptionalParams", "withOptionalParamsVar", "withOverloadSignature", "withParams", "withRestParams", "withRestParamsVar", "withReturn", "withReturnVar", "withparamsVar"]
 rebuilt        : ScopeId(0): ["anotherFuncNoReturn", "anotherFuncNoReturnVar", "f", "f2", "m2", "overload1", "simpleFunc", "simpleFuncVar", "withInitializedParams", "withInitializedParamsVar", "withMultiParams", "withMultiParamsVar", "withOptionalInitializedParams", "withOptionalInitializedParamsVar", "withOptionalParams", "withOptionalParamsVar", "withOverloadSignature", "withParams", "withRestParams", "withRestParamsVar", "withReturn", "withReturnVar", "withparamsVar"]
-Scope flags mismatch:
-after transform: ScopeId(15): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(12): ScopeFlags(Function)
 Symbol span mismatch for "overload1":
 after transform: SymbolId(31): Span { start: 1000, end: 1009 }
 rebuilt        : SymbolId(31): Span { start: 1080, end: 1089 }
@@ -7360,9 +6796,6 @@ after transform: SymbolId(38): Span { start: 1210, end: 1212 }
 rebuilt        : SymbolId(36): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionCall5.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -7388,9 +6821,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionInIfState
 Bindings mismatch:
 after transform: ScopeId(1): ["_Midori"]
 rebuilt        : ScopeId(1): ["Foo", "_Midori"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["Foo"]
 rebuilt        : ScopeId(2): []
@@ -7405,18 +6835,6 @@ after transform: SymbolId(1): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(1)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionMergedWithModule.ts
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "foo":
 after transform: SymbolId(0): SymbolFlags(Function | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
@@ -7654,9 +7072,6 @@ after transform: ScopeId(0): ["foo", "test1", "test2"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionTypeArgumentArrayAssignment.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "test":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -7677,9 +7092,6 @@ rebuilt        : ["B"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/funduleOfFunctionWithoutReturnTypeAnnotation.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "fn":
 after transform: SymbolId(0): SymbolFlags(Function | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
@@ -7798,9 +7210,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericClassImple
 Bindings mismatch:
 after transform: ScopeId(0): ["bar", "foo"]
 rebuilt        : ScopeId(0): ["bar"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "bar":
 after transform: SymbolId(3): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -7812,27 +7221,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericClassPrope
 Bindings mismatch:
 after transform: ScopeId(0): ["Portal", "PortalFx", "ViewModel", "_defineProperty", "ko"]
 rebuilt        : ScopeId(0): ["Portal", "PortalFx", "ViewModel", "_defineProperty"]
-Scope flags mismatch:
-after transform: ScopeId(28): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(29): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(30): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(35): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(36): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(37): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(38): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(11): ScopeFlags(Function)
 Symbol flags mismatch for "Portal":
 after transform: SymbolId(32): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -7883,9 +7271,6 @@ after transform: ["require"]
 rebuilt        : ["ko", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericClassesInModule.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -7894,18 +7279,6 @@ after transform: SymbolId(0): Span { start: 10, end: 13 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericConstraintOnExtendedBuiltinTypes.ts
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "EndGate":
 after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule | Ambient)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -7929,18 +7302,6 @@ after transform: SymbolId(7): Span { start: 352, end: 360 }
 rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericConstraintOnExtendedBuiltinTypes2.ts
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "EndGate":
 after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -8116,9 +7477,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/getAccessorWithIm
 Bindings mismatch:
 after transform: ScopeId(0): ["MyModule", "_"]
 rebuilt        : ScopeId(0): ["MyModule"]
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "MyModule":
 after transform: SymbolId(17): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -8141,9 +7499,6 @@ after transform: []
 rebuilt        : ["cases", "fn"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/global.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -8236,15 +7591,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importAliasWithDottedName.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -8266,9 +7612,6 @@ rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importAndVariableDeclarationConflict2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -8308,12 +7651,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "C"]
 rebuilt        : ScopeId(0): ["A", "C"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -8335,12 +7672,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(1): ["_A"]
 rebuilt        : ScopeId(1): ["X", "_A"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -8419,9 +7750,6 @@ after transform: ["Array", "Symbol", "require", "window"]
 rebuilt        : ["Array", "Symbol", "error", "isAOrB", "require", "window", "x"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/indexIntoEnum.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -8861,12 +8189,6 @@ after transform: SymbolId(8): [Span { start: 149, end: 153 }, Span { start: 189,
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/inheritanceOfGenericConstructorMethod2.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -8897,9 +8219,6 @@ after transform: ScopeId(0): ["E"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/innerBoundLambdaEmit.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -8911,12 +8230,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/innerExtern.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["B", "BB", "_A"]
 rebuilt        : ScopeId(1): ["B", "_A"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -8937,9 +8250,6 @@ after transform: ["require"]
 rebuilt        : ["BB", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/innerFunc.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(2): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
@@ -9092,12 +8402,6 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasClass.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -9171,15 +8475,9 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasEnum.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["Friday", "Saturday", "Sunday", "weekend"]
 rebuilt        : ScopeId(2): ["weekend"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -9241,12 +8539,6 @@ rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasFunction.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -9301,15 +8593,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasInitializedModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -9369,9 +8652,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(0): ["a", "c"]
 rebuilt        : ScopeId(0): ["c"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "c":
 after transform: SymbolId(2): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -9392,9 +8672,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(0): ["a", "c"]
 rebuilt        : ScopeId(0): ["c"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "c":
 after transform: SymbolId(3): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -9440,12 +8717,6 @@ rebuilt        : ScopeId(0): ["x"]
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasVar.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -9470,15 +8741,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasWithDottedNameEmit.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -9508,9 +8770,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalImportUnI
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B"]
 rebuilt        : ScopeId(0): ["B"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "B":
 after transform: SymbolId(2): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -9544,9 +8803,6 @@ after transform: []
 rebuilt        : ["f"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/intersectionTypeNormalization.ts
-Scope flags mismatch:
-after transform: ScopeId(26): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(27): ["A", "a1", "a2", "a3", "a75", "a76", "a77"]
 rebuilt        : ScopeId(4): ["A"]
@@ -9914,9 +9170,6 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/letDeclarations2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -9925,9 +9178,6 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/letKeepNamesOfTopLevelItems.ts
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(3): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
@@ -9996,15 +9246,9 @@ after transform: []
 rebuilt        : ["use"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/localImportNameVsGlobalName.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["DOWN", "Key", "LEFT", "RIGHT", "UP"]
 rebuilt        : ScopeId(2): ["Key"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "Keyboard":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10180,9 +9424,6 @@ rebuilt        : ["p012"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "point":
 after transform: SymbolId(1): SymbolFlags(Function | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
@@ -10192,15 +9433,6 @@ rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations4.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10258,21 +9490,6 @@ after transform: SymbolId(4): Span { start: 197, end: 198 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedModuleDeclarationCodeGen2.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "my":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10302,21 +9519,6 @@ after transform: SymbolId(4): Span { start: 69, end: 73 }
 rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedModuleDeclarationCodeGen3.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "my":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10346,30 +9548,6 @@ after transform: SymbolId(4): Span { start: 70, end: 73 }
 rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedModuleDeclarationCodeGen4.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
 Symbol flags mismatch for "superContain":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10421,24 +9599,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10478,12 +9638,6 @@ rebuilt        : SymbolId(16): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedModuleDeclarationWithSharedExportedVar.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10577,30 +9731,15 @@ after transform: []
 rebuilt        : ["someNumber", "someString", "someValue", "unionOfEnum"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mixingFunctionAndAmbientModule1.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(8): ["My", "_C"]
 rebuilt        : ScopeId(5): ["_C"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(11): ["My", "_D"]
 rebuilt        : ScopeId(6): ["_D"]
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(15): ["My", "_E"]
 rebuilt        : ScopeId(7): ["_E"]
-Scope flags mismatch:
-after transform: ScopeId(15): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10695,24 +9834,6 @@ after transform: ["Array", "Map", "Math", "Promise", "Proxy", "Reflect", "RegExp
 rebuilt        : ["Array", "Map", "Math", "Promise", "Proxy", "Reflect", "RegExp", "Symbol", "arguments", "console", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleAliasInterface.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(15): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(14): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(18): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(16): ScopeFlags(Function)
 Symbol flags mismatch for "_modes":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10793,9 +9914,6 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleCodeGenTest3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Baz":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10828,9 +9946,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleIdentifiers.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10839,24 +9954,6 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleMemberWithoutTypeAnnotation1.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(16): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(14): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(17): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(15): ScopeFlags(Function)
 Symbol flags mismatch for "TypeScript":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10881,12 +9978,6 @@ rebuilt        : SymbolId(21): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleMemberWithoutTypeAnnotation2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "TypeScript":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10901,12 +9992,6 @@ after transform: SymbolId(1): Span { start: 44, end: 63 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleMerge.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10918,9 +10003,6 @@ after transform: SymbolId(0): [Span { start: 104, end: 105 }, Span { start: 233,
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleNoEmit.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -10995,12 +10077,6 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleScopingBug.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -11015,18 +10091,6 @@ after transform: SymbolId(6): Span { start: 213, end: 214 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "Z":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -11053,18 +10117,6 @@ after transform: SymbolId(4): Span { start: 83, end: 84 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt2.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "Z":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -11091,21 +10143,9 @@ after transform: SymbolId(4): Span { start: 83, end: 84 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt4.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(5): ["_M2", "bar"]
 rebuilt        : ScopeId(5): ["M", "_M2", "bar"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "Z":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -11141,18 +10181,6 @@ after transform: SymbolId(5): [Span { start: 101, end: 102 }, Span { start: 118,
 rebuilt        : SymbolId(9): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt6.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "Z":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -11184,9 +10212,6 @@ rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleUnassignedVariable.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Bar":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -11199,15 +10224,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(0): ["M", "console", "x"]
 rebuilt        : ScopeId(0): ["M", "x"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(2): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -11234,27 +10250,12 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleVisibilityT
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(5): ["B", "C", "E", "InnerMod", "_M", "exported_var", "someModuleFunction", "someModuleVar", "x", "y"]
 rebuilt        : ScopeId(5): ["B", "C", "E", "InnerMod", "_M", "someModuleFunction", "someModuleVar", "x", "y"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(8): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(8): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(20): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(19): ScopeFlags(Function)
 Symbol flags mismatch for "OuterMod":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -11287,9 +10288,6 @@ after transform: SymbolId(8): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(13): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleWithTryStatement1.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -11299,12 +10297,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/multiModuleClodule1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
 Symbol flags mismatch for "C":
 after transform: SymbolId(0): SymbolFlags(Class | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
@@ -11314,12 +10306,6 @@ rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/multiModuleFundule1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "C":
 after transform: SymbolId(0): SymbolFlags(Function | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
@@ -11349,12 +10335,6 @@ after transform: []
 rebuilt        : ["Moon"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/nameCollisionWithBlockScopedVariable1.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -11366,9 +10346,6 @@ after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 49, en
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/namedFunctionExpressionInModule.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Variables":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -11382,12 +10359,6 @@ after transform: ScopeId(0): ["X", "x", "x2"]
 rebuilt        : ScopeId(0): ["x", "x2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/namespaces2.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -11793,12 +10764,6 @@ after transform: []
 rebuilt        : ["call", "wrap"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/nestedModulePrivateAccess.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -11813,9 +10778,6 @@ after transform: SymbolId(2): Span { start: 51, end: 52 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/nestedSelf.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -12357,9 +11319,6 @@ after transform: SymbolId(7): [Span { start: 123, end: 124 }, Span { start: 145,
 rebuilt        : SymbolId(7): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/overloadResolutionOverNonCTLambdas.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Bugs":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -12368,9 +11327,6 @@ after transform: SymbolId(0): Span { start: 10, end: 14 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/overloadResolutionOverNonCTObjectLit.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Bugs":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -12544,12 +11500,6 @@ rebuilt        : ["Bar", "module"]
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyCheckTypeOfInvisibleModuleError.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "Outer":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -12566,12 +11516,6 @@ rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyCheckTypeOfInvisibleModuleNoError.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "Outer":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -12614,9 +11558,6 @@ after transform: SymbolId(10): Span { start: 1056, end: 1069 }
 rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyFunc.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -12664,9 +11605,6 @@ after transform: SymbolId(189): Span { start: 9967, end: 9980 }
 rebuilt        : SymbolId(118): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyGloClass.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -12689,24 +11627,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(29): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(11): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(30): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(12): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -12751,9 +11671,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyGloInterfa
 Bindings mismatch:
 after transform: ScopeId(0): ["C5_public", "m1", "m3"]
 rebuilt        : ScopeId(0): ["C5_public", "m1"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -13977,9 +12894,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(0): ["Alpha", "Beta", "x"]
 rebuilt        : ScopeId(0): ["Alpha", "x"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Alpha":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -14069,9 +12983,6 @@ after transform: []
 rebuilt        : ["Tag"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reboundBaseClassSymbol.ts
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -14113,9 +13024,6 @@ after transform: ["undefined"]
 rebuilt        : ["Base", "p", "undefined"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursiveClassInstantiationsWithDefaultConstructors.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "TypeScript2":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -14125,12 +13033,6 @@ rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursiveCloduleReference.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -14222,18 +13124,6 @@ after transform: []
 rebuilt        : ["opt1", "opt2", "opt3"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursivelySpecializedConstructorDeclaration.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "MsPortal":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -14480,12 +13370,6 @@ after transform: []
 rebuilt        : ["sepsis", "unwrap"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/returnTypeParameterWithModules.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "M1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -14692,9 +13576,6 @@ after transform: ScopeId(0): ["f", "g", "h"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/separate1-2.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "X":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -14753,9 +13634,6 @@ after transform: []
 rebuilt        : ["x"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourceMap-FileWithComments.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Shapes":
 after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -14764,9 +13642,6 @@ after transform: SymbolId(1): Span { start: 78, end: 84 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapForFunctionInInternalModuleWithCommentPrecedingStatement01.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Q":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -14775,9 +13650,6 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationClasses.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -15170,15 +14042,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "m2":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -15199,12 +14062,6 @@ after transform: SymbolId(3): Span { start: 71, end: 73 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourcemapValidationDuplicateNames.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -15221,9 +14078,6 @@ after transform: ScopeId(0): ["spected"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/specializationOfExportedClass.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -15652,9 +14506,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/stringLiteralObjectLiteralDeclaration1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m1":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -15677,9 +14528,6 @@ after transform: []
 rebuilt        : ["someVal", "someVal2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/structural1.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -15689,9 +14537,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/structuralTypeInDeclareFileForModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -15731,9 +14576,6 @@ after transform: []
 rebuilt        : ["isBar", "isNode"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/superAccessInFatArrow1.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "test":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -15845,9 +14687,6 @@ after transform: [ReferenceId(2), ReferenceId(3)]
 rebuilt        : [ReferenceId(4)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/testContainerList.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -15872,9 +14711,6 @@ after transform: ["require"]
 rebuilt        : ["Component", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/this_inside-object-literal-getters-and-setters.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "ObjectLiteral":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -15884,9 +14720,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/topLevel.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(7): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(6): SymbolFlags(BlockScopedVariable)
@@ -16644,12 +15477,6 @@ after transform: []
 rebuilt        : ["View", "_"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unexportedInstanceClassVariables.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -16794,9 +15621,6 @@ rebuilt        : ["f"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedClassesinNamespace3.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Validation":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -16805,9 +15629,6 @@ after transform: SymbolId(0): Span { start: 10, end: 20 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedInterfaceinNamespace4.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Validation":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -16817,9 +15638,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedInterfaceinNamespace5.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Validation":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -16879,12 +15697,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(1): ["B", "Point", "_A", "x"]
 rebuilt        : ScopeId(1): ["Point", "_A", "x"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -16910,9 +15722,6 @@ rebuilt        : ScopeId(0): ["a22", "anotherVar", "arrayVar", "b", "b22", "c", 
 Bindings mismatch:
 after transform: ScopeId(8): ["C", "C2", "_m", "a", "a2", "b", "b2", "b22", "b222", "b23", "b2E", "d1", "d1E", "d2", "d2E", "m", "m1", "m3", "mE", "v1", "v1E"]
 rebuilt        : ScopeId(1): ["C", "C2", "_m", "a", "a2", "b", "b2", "b22", "b222", "b23", "b2E", "m", "m1", "m3", "mE"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "m2":
 after transform: SymbolId(22): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(16): SymbolFlags(BlockScopedVariable)
@@ -16989,9 +15798,6 @@ rebuilt        : ["source"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/visSyntax.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -17106,15 +15912,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambien
 Bindings mismatch:
 after transform: ScopeId(1): ["C", "E", "M", "_M", "f", "x"]
 rebuilt        : ScopeId(1): ["_M"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(6): ["C", "E", "M", "_M2", "f", "x"]
 rebuilt        : ScopeId(2): ["_M2"]
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -17146,15 +15946,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/async/es2017/a
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "M", "_asyncToGenerator", "_f", "_f2", "_f3", "_f5", "f0", "f1", "f10", "f11", "f12", "f13", "f14", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "mp", "o", "p"]
 rebuilt        : ScopeId(0): ["C", "M", "_asyncToGenerator", "_f", "_f2", "_f3", "_f5", "f0", "f1", "f10", "f11", "f12", "f13", "f14", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "o"]
-Scope flags mismatch:
-after transform: ScopeId(25): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(53): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(58): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(54): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(59): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(55): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(19): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(33): SymbolFlags(BlockScopedVariable)
@@ -17519,15 +16310,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyn
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "M", "_asyncToGenerator", "_f", "_f2", "_f3", "_f5", "f0", "f1", "f10", "f11", "f12", "f13", "f14", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "mp", "o", "p"]
 rebuilt        : ScopeId(0): ["C", "M", "_asyncToGenerator", "_f", "_f2", "_f3", "_f5", "f0", "f1", "f10", "f11", "f12", "f13", "f14", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "o"]
-Scope flags mismatch:
-after transform: ScopeId(25): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(53): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(58): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(54): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(59): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(55): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(19): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(33): SymbolFlags(BlockScopedVariable)
@@ -17887,9 +16669,6 @@ after transform: ["arguments", "require"]
 rebuilt        : ["a", "arguments", "b", "c", "d", "e", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpression.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(4): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
@@ -17932,9 +16711,6 @@ after transform: SymbolId(9): ScopeId(4)
 rebuilt        : SymbolId(2): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/classTypes/genericSetterInClassType.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Generic":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
@@ -19106,9 +17882,6 @@ after transform: ["Cat", "Dog"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumMerging.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["A", "B", "C", "EImpl1"]
 rebuilt        : ScopeId(2): ["EImpl1"]
@@ -19121,51 +17894,27 @@ rebuilt        : ScopeId(4): ["EConst1"]
 Bindings mismatch:
 after transform: ScopeId(5): ["D", "E", "EConst1", "F"]
 rebuilt        : ScopeId(5): ["EConst1"]
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(7): ["A", "B", "C", "EComp2"]
 rebuilt        : ScopeId(7): ["EComp2"]
 Bindings mismatch:
 after transform: ScopeId(8): ["D", "E", "EComp2", "F"]
 rebuilt        : ScopeId(8): ["EComp2"]
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(10): ["A", "B", "EInit"]
 rebuilt        : ScopeId(10): ["EInit"]
 Bindings mismatch:
 after transform: ScopeId(11): ["C", "D", "E", "EInit"]
 rebuilt        : ScopeId(11): ["EInit"]
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(12): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(13): ["Blue", "Color", "Green", "Red"]
 rebuilt        : ScopeId(13): ["Color"]
-Scope flags mismatch:
-after transform: ScopeId(14): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(14): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(15): ["Blue", "Color", "Green", "Red"]
 rebuilt        : ScopeId(15): ["Color"]
-Scope flags mismatch:
-after transform: ScopeId(16): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(16): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(17): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(17): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(18): ["Blue", "Color", "Green", "Red"]
 rebuilt        : ScopeId(18): ["Color"]
-Scope flags mismatch:
-after transform: ScopeId(19): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(19): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(20): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(20): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(21): ["Color", "Yellow"]
 rebuilt        : ScopeId(21): ["Color"]
@@ -19588,9 +18337,6 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(6)
 rebuilt        : [ReferenceId(0), ReferenceId(4), ReferenceId(6)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty48.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -19600,9 +18346,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty49.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -19611,9 +18354,6 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty50.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -19625,9 +18365,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/sy
 Bindings mismatch:
 after transform: ScopeId(1): ["C", "Symbol", "_M"]
 rebuilt        : ScopeId(1): ["C", "_M"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -19636,9 +18373,6 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty56.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -20100,12 +18834,6 @@ rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesWithModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "m":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -20118,12 +18846,6 @@ rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesWithModuleES6.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "m":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -20183,9 +18905,6 @@ after transform: []
 rebuilt        : ["f", "g", "obj"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext6.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -20194,9 +18913,6 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads5.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -21902,9 +20618,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(4): ["E", "a", "b", "c"]
 rebuilt        : ScopeId(5): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(2): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
@@ -22679,18 +21392,6 @@ rebuilt        : ["g", "o"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/identifiers/scopeResolutionIdentifiers.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
 Symbol flags mismatch for "M1":
 after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
@@ -24243,21 +22944,6 @@ rebuilt        : ScopeId(9): ["foo", "x", "y"]
 Bindings mismatch:
 after transform: ScopeId(10): ["foo"]
 rebuilt        : ScopeId(10): []
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(12): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(13): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(13): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(16): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(16): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(17): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(17): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(18): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(18): ScopeFlags(Function)
 Symbol scope ID mismatch for "foo":
 after transform: SymbolId(19): ScopeId(10)
 rebuilt        : SymbolId(19): ScopeId(9)
@@ -24330,9 +23016,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/decrementOperator/decrementOperatorWithAnyOtherType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(5): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(6): SymbolFlags(BlockScopedVariable)
@@ -24342,9 +23025,6 @@ rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/incrementOperator/incrementOperatorWithAnyOtherType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(5): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(6): SymbolFlags(BlockScopedVariable)
@@ -24354,9 +23034,6 @@ rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithBooleanType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(3): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
@@ -24377,9 +23054,6 @@ rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithNumberType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(4): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
@@ -24389,9 +23063,6 @@ rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithStringType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(4): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
@@ -24400,9 +23071,6 @@ after transform: SymbolId(4): Span { start: 209, end: 210 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/asiPreventsParsingAsAmbientExternalModule02.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "container":
 after transform: SymbolId(2): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
@@ -24569,12 +23237,6 @@ rebuilt        : ScopeId(0): ["Directive", "StepResult", "_wrapAsyncGenerator", 
 Bindings mismatch:
 after transform: ScopeId(7): ["Back", "Cancel", "Directive", "LoadMore", "Noop"]
 rebuilt        : ScopeId(3): ["Directive"]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(17): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "Directive":
 after transform: SymbolId(12): SymbolFlags(RegularEnum | ValueModule)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
@@ -24690,9 +23352,6 @@ after transform: ["require"]
 rebuilt        : ["Constructor", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/AmbientModuleAndNonAmbientClassWithSameNameAndCommonRoot.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -24701,15 +23360,6 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/ClassAndModuleThatMergeWithStaticFunctionAndNonExportedFunctionThatShareAName.ts
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
 Symbol flags mismatch for "Point":
 after transform: SymbolId(0): SymbolFlags(Class | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
@@ -24730,15 +23380,6 @@ after transform: SymbolId(5): [Span { start: 253, end: 258 }, Span { start: 408,
 rebuilt        : SymbolId(7): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/ClassAndModuleThatMergeWithStaticVariableAndNonExportedVarThatShareAName.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
 Symbol flags mismatch for "Point":
 after transform: SymbolId(0): SymbolFlags(Class | ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
@@ -24762,9 +23403,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModule
 Bindings mismatch:
 after transform: ScopeId(1): ["Blue", "Red", "enumdule"]
 rebuilt        : ScopeId(1): ["enumdule"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "enumdule":
 after transform: SymbolId(0): SymbolFlags(RegularEnum | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -24773,9 +23411,6 @@ after transform: SymbolId(0): [Span { start: 5, end: 13 }, Span { start: 43, end
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/FunctionAndModuleWithSameNameAndDifferentCommonRoot.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -24784,9 +23419,6 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/ModuleAndEnumWithSameNameAndCommonRoot.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["Blue", "Red", "enumdule"]
 rebuilt        : ScopeId(4): ["enumdule"]
@@ -24807,12 +23439,6 @@ rebuilt        : ScopeId(0): ["l", "p"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedLocalVarsOfTheSameName.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -24832,15 +23458,6 @@ after transform: ScopeId(0): ["A", "X", "l", "p"]
 rebuilt        : ScopeId(0): ["l", "p"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesWithTheSameNameAndDifferentCommonRoot.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "Root":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -24861,12 +23478,6 @@ after transform: SymbolId(3): Span { start: 157, end: 162 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesWithTheSameNameAndSameCommonRoot.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -24885,18 +23496,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "C", "D", "E"]
 rebuilt        : ScopeId(0): ["A", "C", "D", "E"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -24926,9 +23525,6 @@ after transform: SymbolId(14): Span { start: 528, end: 529 }
 rebuilt        : SymbolId(14): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportClassWhichExtendsInterfaceWithInaccessibleType.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -24939,9 +23535,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithAccessibleTypesInTypeParameterConstraintsClassHeritageListMemberTypeAnnotations.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -24957,9 +23550,6 @@ rebuilt        : ScopeId(0): []
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithInaccessibleTypeInTypeParameterConstraint.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -24969,12 +23559,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportModuleWithAccessibleTypesOnItsExportedMembers.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -24991,9 +23575,6 @@ rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportObjectLiteralAndObjectTypeLiteralWithAccessibleTypesInMemberTypeAnnotations.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -25003,9 +23584,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportVariableWithAccessibleTypeInTypeAnnotation.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -25016,9 +23594,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportVariableWithInaccessibleTypeInTypeAnnotation.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -25032,30 +23607,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(1): ["B", "Point", "_A", "x"]
 rebuilt        : ScopeId(1): ["Point", "_A", "x"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(13): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(11): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(16): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(14): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(18): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(15): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -25106,9 +23657,6 @@ after transform: SymbolId(26): Span { start: 1040, end: 1041 }
 rebuilt        : SymbolId(30): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/asiPreventsParsingAsNamespace03.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "container":
 after transform: SymbolId(2): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
@@ -25118,12 +23666,6 @@ rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/asiPreventsParsingAsNamespace05.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "a":
 after transform: SymbolId(1): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -25139,18 +23681,6 @@ rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/nestedModules.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -25828,9 +24358,6 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/everyTypeWithInitializer.ts
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(6): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
@@ -25853,9 +24380,6 @@ after transform: ["Symbol"]
 rebuilt        : ["Symbol", "dec"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/throwStatements/throwStatements.ts
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(6): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
@@ -26664,21 +25188,9 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-Scope flags mismatch:
-after transform: ScopeId(19): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(19): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(26): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(25): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(30): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(29): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(32): ["A", "e1"]
 rebuilt        : ScopeId(31): ["e1"]
-Scope flags mismatch:
-after transform: ScopeId(33): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(32): ScopeFlags(Function)
 Symbol flags mismatch for "M":
 after transform: SymbolId(35): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(34): SymbolFlags(BlockScopedVariable)
@@ -27137,12 +25649,6 @@ after transform: SymbolId(3): [Span { start: 87, end: 88 }, Span { start: 117, e
 rebuilt        : SymbolId(2): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloads01.ts
-Scope flags mismatch:
-after transform: ScopeId(13): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(14): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol span mismatch for "getFalsyPrimitive":
 after transform: SymbolId(1): Span { start: 64, end: 81 }
 rebuilt        : SymbolId(0): Span { start: 515, end: 532 }
@@ -27163,12 +25669,6 @@ after transform: SymbolId(21): Span { start: 1271, end: 1278 }
 rebuilt        : SymbolId(14): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloads02.ts
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(13): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol span mismatch for "getFalsyPrimitive":
 after transform: SymbolId(0): Span { start: 9, end: 26 }
 rebuilt        : SymbolId(0): Span { start: 460, end: 477 }
@@ -27537,9 +26037,6 @@ after transform: ["undefined"]
 rebuilt        : ["foo", "undefined"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeAliases/asiPreventsParsingAsTypeAlias02.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "container":
 after transform: SymbolId(3): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
@@ -27767,12 +26264,6 @@ rebuilt        : ScopeId(0): ["A", "A2", "CC", "E", "_defineProperty", "a", "f",
 Bindings mismatch:
 after transform: ScopeId(33): ["A", "E"]
 rebuilt        : ScopeId(5): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(37): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(41): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(49): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
@@ -27849,12 +26340,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(18): ["A", "E"]
 rebuilt        : ScopeId(5): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(21): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(24): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(19): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
@@ -27872,12 +26357,6 @@ after transform: SymbolId(25): [Span { start: 1133, end: 1134 }, Span { start: 1
 rebuilt        : SymbolId(8): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithObjectMembers.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Symbol flags mismatch for "SimpleTypes":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -27911,12 +26390,6 @@ after transform: SymbolId(4): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/bestCommonType/heterogeneousArrayLiterals.ts
-Scope flags mismatch:
-after transform: ScopeId(15): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(18): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(29): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(32): ScopeFlags(Function)
 Symbol flags mismatch for "Derived":
 after transform: SymbolId(15): SymbolFlags(Class | ValueModule)
 rebuilt        : SymbolId(16): SymbolFlags(Class)
@@ -27996,12 +26469,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(8): ["A", "E"]
 rebuilt        : ScopeId(9): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(11): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(14): ScopeFlags(Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(26): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(23): SymbolFlags(FunctionScopedVariable)
@@ -28024,12 +26491,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 Bindings mismatch:
 after transform: ScopeId(18): ["A", "E"]
 rebuilt        : ScopeId(5): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(21): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(24): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(19): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
@@ -28050,9 +26511,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRela
 Bindings mismatch:
 after transform: ScopeId(1): ["_CallSignature", "foo1", "foo2", "r", "r2", "r3", "r4"]
 rebuilt        : ScopeId(1): ["_CallSignature", "r", "r2", "r3", "r4"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "CallSignature":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -32572,12 +31030,6 @@ after transform: []
 rebuilt        : ["foo"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericCallWithOverloadedFunctionTypedArguments.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "NonGenericParameter":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)

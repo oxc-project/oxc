@@ -350,8 +350,10 @@ impl<'a> TypeScriptNamespace {
                     scope_id,
                     ctx,
                 ));
-            *ctx.scoping_mut().scope_flags_mut(scope_id) =
-                ScopeFlags::Function | ScopeFlags::StrictMode;
+
+            let strict_mode = (ctx.scoping().scope_flags(scope_id) | ctx.current_scope_flags())
+                & ScopeFlags::StrictMode;
+            *ctx.scoping_mut().scope_flags_mut(scope_id) = ScopeFlags::Function | strict_mode;
             Expression::new_parenthesized_expression(span, function_expr, ctx)
         };
 
