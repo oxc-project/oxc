@@ -770,13 +770,12 @@ struct RemovedReferenceCleaner<'a, 'ctx> {
 
 impl<'a> Visit<'a> for RemovedReferenceCleaner<'a, '_> {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        if let Some(reference_id) = ident.reference_id.get() {
-            let symbol_id = self.ctx.scoping().get_reference(reference_id).symbol_id();
-            self.ctx
-                .state
-                .removed_typescript_references
-                .push(RemovedTypeScriptReference { reference_id, symbol_id });
-        }
+        let reference_id = ident.reference_id();
+        let symbol_id = self.ctx.scoping().get_reference(reference_id).symbol_id();
+        self.ctx
+            .state
+            .removed_typescript_references
+            .push(RemovedTypeScriptReference { reference_id, symbol_id });
     }
 }
 
