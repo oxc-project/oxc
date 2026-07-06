@@ -1074,8 +1074,13 @@ impl Runtime {
         allocator: &'a Allocator,
         mut out_sections: Option<&mut SectionContents<'a>>,
     ) -> SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]> {
+        // When no partial loader matches, the whole file is a single, complete source
+        // (a plain `.js`/`.ts`/etc.). Use `new` (not `partial`) so it is correctly
+        // reported as non-partial: `is_from_partial_loader()` must return `false` for
+        // whole files. Only sources carved out by a `PartialLoader` (Vue/Svelte/Astro
+        // `<script>` blocks, Glimmer templates) are partial.
         let section_sources = PartialLoader::parse(ext, source_text, allocator)
-            .unwrap_or_else(|| vec![JavaScriptSource::partial(source_text, source_type, 0)]);
+            .unwrap_or_else(|| vec![JavaScriptSource::new(source_text, source_type)]);
 
         let mut section_module_records = SmallVec::<
             [Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1],

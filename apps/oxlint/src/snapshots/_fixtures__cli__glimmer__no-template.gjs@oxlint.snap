@@ -1,0 +1,22 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: fixtures/cli/glimmer/no-template.gjs
+working directory: 
+----------
+
+  ! eslint(no-unused-vars): Variable 'unused' is declared but never used. Unused variables should start with a '_'.
+   ,-[fixtures/cli/glimmer/no-template.gjs:4:7]
+ 3 | // normally here (unlike a template-bearing Glimmer file, where they are skipped).
+ 4 | const unused = 1;
+   :       ^^^|^^
+   :          `-- 'unused' is declared here
+   `----
+  help: Consider removing this declaration.
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 1 file with 95 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

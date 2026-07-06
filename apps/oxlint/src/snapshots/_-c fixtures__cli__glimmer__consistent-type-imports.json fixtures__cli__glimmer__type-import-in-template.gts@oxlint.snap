@@ -1,0 +1,22 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c fixtures/cli/glimmer/consistent-type-imports.json fixtures/cli/glimmer/type-import-in-template.gts
+working directory: 
+----------
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+    ,-[fixtures/cli/glimmer/type-import-in-template.gts:11:1]
+ 10 | 
+ 11 | debugger;
+    : ^^^^^^^^^
+ 12 | 
+    `----
+  help: Remove the debugger statement
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 2 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

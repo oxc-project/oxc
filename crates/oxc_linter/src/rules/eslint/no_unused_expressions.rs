@@ -72,11 +72,12 @@ declare_oxc_lint!(
 
 impl Rule for NoUnusedExpressions {
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        // Glimmer (`.gjs`/`.gts`) is only skipped when the source came from the partial
-        // loader, which replaces each `<template>` with a synthesized `undefined`
-        // placeholder — in statement position (e.g. a template-only component) that is a
-        // bare expression statement this rule would flag. Other pipelines (e.g. a custom
-        // parser) don't produce the placeholder, so the rule stays enabled there.
+        // Base: only consider partial-loader-extracted sources for exclusion. Then opt
+        // in the Glimmer (`.gjs`/`.gts`) extensions specifically: their loader replaces
+        // each `<template>` with a synthesized `undefined` placeholder that is a bare
+        // expression statement this rule would otherwise flag. Vue/Svelte/Astro
+        // `<script>` blocks are not rewritten that way, so they keep running (broadening
+        // the exclusion to them is left to a separate change).
         !(ctx.is_from_partial_loader()
             && ctx.file_extension().is_some_and(|ext| ext == "gjs" || ext == "gts"))
     }

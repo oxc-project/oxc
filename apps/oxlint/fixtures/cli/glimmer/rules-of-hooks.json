@@ -1,0 +1,10 @@
+{
+  "plugins": ["eslint", "react"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "no-debugger": "error",
+    "react/rules-of-hooks": "error"
+  }
+}

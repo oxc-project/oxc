@@ -195,7 +195,15 @@ impl<'a> GlimmerPartialLoader<'a> {
         // `.gts` uses `SourceType::ts()` whose unambiguous module kind is resolved to
         // a module by the parser on the first ESM construct.
         let source_type = if ext == "gts" { SourceType::ts() } else { SourceType::mjs() };
-        let cleaned = self.strip_templates();
+        let regions = template_regions(self.source_text);
+        if regions.is_empty() {
+            // No `<template>` block: nothing is rewritten, so this is a plain, complete
+            // JS/TS file. Return it as a whole (non-partial) source — `is_partial()`
+            // is `false` — so rules that are skipped for template-rewritten Glimmer
+            // sources still run here.
+            return vec![JavaScriptSource::new(self.source_text, source_type)];
+        }
+        let cleaned = self.strip_templates(&regions);
         vec![JavaScriptSource::partial(cleaned, source_type, 0)]
     }
 
@@ -204,16 +212,14 @@ impl<'a> GlimmerPartialLoader<'a> {
     /// byte offsets and line/column information for surrounding JS code remain
     /// accurate for diagnostic reporting. See the module-level docs for the
     /// substitution invariants and the known limitations of this byte-level scan.
-    fn strip_templates(&self) -> &'a str {
-        let regions = template_regions(self.source_text);
-        if regions.is_empty() {
-            return self.source_text;
-        }
-
+    ///
+    /// `regions` must be the non-empty [`template_regions`] of this loader's source;
+    /// the caller handles the template-less case (see [`Self::parse`]).
+    fn strip_templates(&self, regions: &[(usize, usize)]) -> &'a str {
         let source_bytes = self.source_text.as_bytes();
         let mut builder = StringBuilder::with_capacity_in(source_bytes.len(), self.allocator);
         let mut cursor = 0;
-        for (region_start, region_end) in regions {
+        for &(region_start, region_end) in regions {
             builder.push_str(&self.source_text[cursor..region_start]);
             // 10-byte opener `<template>` -> 10-byte `undefined `; see module-level
             // docs for why this exact identifier was chosen.
@@ -277,6 +283,8 @@ mod test {
         assert!(result.source_type.is_module());
         assert!(!result.source_type.is_unambiguous());
         assert_eq!(result.start, 0);
+        // No `<template>`: returned as a whole, non-partial source.
+        assert!(!result.is_partial());
     }
 
     #[test]
@@ -287,6 +295,8 @@ mod test {
         assert!(result.source_type.is_typescript());
         assert!(result.source_type.is_unambiguous());
         assert_eq!(result.start, 0);
+        // No `<template>`: returned as a whole, non-partial source.
+        assert!(!result.is_partial());
     }
 
     #[test]
@@ -296,6 +306,8 @@ mod test {
         let result = parse_gjs(source_text, &allocator);
         assert!(!result.source_text.contains("<h1>"));
         assert!(result.source_text.starts_with("import x from 'y';\n"));
+        // A `<template>` was rewritten, so this is a partial (loader-derived) source.
+        assert!(result.is_partial());
         // <template> is replaced with `undefined ` — valid JS, same byte length
         assert!(result.source_text.contains("undefined "));
         let orig_nl = source_text.chars().filter(|&c| c == '\n').count();
@@ -355,6 +367,8 @@ export default class MyComponent extends Component {
         assert!(!result.source_text.contains("<p>"));
         assert!(result.source_text.contains("const A ="));
         assert!(result.source_text.contains("const B ="));
+        // Both stripped regions must leave valid JS behind, not just remove the markup.
+        assert_cleaned_parses(source_text, "gjs");
     }
 
     #[test]
@@ -398,20 +412,10 @@ export default class MyComponent extends Component {
         assert_cleaned_parses("import x from 'y';\nexport const v = x;\n", "gjs");
     }
 
-    /// Byte offsets of tokens *after* a `<template>` block must be unchanged after
-    /// stripping; this is what makes diagnostic spans correct without a remap.
-    #[test]
-    fn test_byte_offsets_preserved_after_template() {
-        let allocator = Allocator::new();
-        let source_text = "<template>x</template>;\nconst bar = 1;\n";
-        let result = parse_gjs(source_text, &allocator);
-
-        let orig_offset = source_text.find("bar").expect("token in original");
-        let cleaned_offset = result.source_text.find("bar").expect("token in cleaned");
-        assert_eq!(orig_offset, cleaned_offset);
-        assert_eq!(source_text.len(), result.source_text.len());
-    }
-
+    /// Byte offsets of tokens *after* `<template>` blocks must be unchanged after
+    /// stripping; this is what makes diagnostic spans correct without a remap. Uses two
+    /// templates so it also pins the cumulative offset math across multiple regions (the
+    /// single-template case is a strict subset of this one).
     #[test]
     fn test_byte_offsets_preserved_across_multiple_templates() {
         let allocator = Allocator::new();
@@ -421,6 +425,7 @@ export default class MyComponent extends Component {
         let orig_offset = source_text.find("foo").expect("token in original");
         let cleaned_offset = result.source_text.find("foo").expect("token in cleaned");
         assert_eq!(orig_offset, cleaned_offset);
+        assert_eq!(source_text.len(), result.source_text.len());
     }
 
     /// An unclosed `<template>` with no `</template>` anywhere after it produces no

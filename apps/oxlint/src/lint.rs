@@ -1079,6 +1079,45 @@ mod test {
     }
 
     #[test]
+    fn lint_glimmer_no_template_file() {
+        // A `.gjs` with no `<template>` block is returned by the loader as a whole,
+        // non-partial source, so template-sensitive rules still run: `no-unused-vars`
+        // must flag the unused `const`.
+        let args = &["fixtures/cli/glimmer/no-template.gjs"];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn lint_glimmer_gts_consistent_type_imports() {
+        // `typescript/consistent-type-imports` must be skipped for loader-derived
+        // Glimmer TS: `Button` is used as a value in the blanked-out template but
+        // looks type-only after stripping, so the rule would emit an incorrect
+        // `import type` fix. Other native rules (`no-debugger`) still run. The rule
+        // is not in the default set, so an explicit config enables it.
+        let args = &[
+            "-c",
+            "fixtures/cli/glimmer/consistent-type-imports.json",
+            "fixtures/cli/glimmer/type-import-in-template.gts",
+        ];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn lint_glimmer_rules_of_hooks() {
+        // `react/rules-of-hooks` must be skipped for loader-derived Glimmer sources:
+        // `useThing` calls a hook conditionally, which the rule would otherwise flag,
+        // but `useX` helpers are common in Ember. Other native rules (`no-debugger`)
+        // still run. The rule is not in the default set, so an explicit config
+        // enables it.
+        let args = &[
+            "-c",
+            "fixtures/cli/glimmer/rules-of-hooks.json",
+            "fixtures/cli/glimmer/hook-in-template.gjs",
+        ];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
     fn lint_svelte_module_and_instance_scripts() {
         let output =
             Tester::new().test_output_verbose(&["fixtures/cli/svelte/module-script.svelte"]);

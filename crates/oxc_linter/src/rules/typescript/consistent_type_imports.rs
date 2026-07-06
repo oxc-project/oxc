@@ -330,16 +330,10 @@ impl Rule for ConsistentTypeImports {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        // Glimmer TS (`.gts`) is only skipped when the source came from the partial loader,
-        // which blanks out templates: an import used only as a value in a template would
-        // look type-only and get an incorrect `import type` fix. Other pipelines (e.g. a
-        // custom parser) keep template usage visible.
-        ctx.source_type().is_typescript()
-            && !(ctx
-                .file_extension()
-                .is_some_and(|ext| ext == "vue" || ext == "svelte" || ext == "astro")
-                || (ctx.is_from_partial_loader()
-                    && ctx.file_extension().is_some_and(|ext| ext == "gts")))
+        // Skip any partial-loader-extracted source (Vue/Svelte/Astro `<script>` blocks,
+        // Glimmer `<template>` files): an import used only as a value in the template
+        // looks type-only after extraction and would get an incorrect `import type` fix.
+        ctx.source_type().is_typescript() && !ctx.is_from_partial_loader()
     }
 }
 
