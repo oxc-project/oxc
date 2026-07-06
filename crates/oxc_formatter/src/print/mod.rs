@@ -717,7 +717,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
                         test,
                         (update.is_none()).then_some(FormatCommentForEmptyStatement(body)),
                         ";",
-                        soft_line_break_or_space(),
+                        update.is_some().then_some(soft_line_break_or_space()),
                         update,
                         FormatCommentForEmptyStatement(body)
                     ))),
