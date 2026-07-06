@@ -2,7 +2,7 @@ use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
-use oxc_semantic::{Reference, SymbolFlags};
+use oxc_semantic::{Reference, Scoping, SymbolFlags};
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{
@@ -58,14 +58,10 @@ impl TypeScriptAnnotations<'_> {
     }
 }
 
-pub struct RemovedTypeScriptSemantics<'a> {
-    pub declarations: Vec<RemovedAmbientDeclaration<'a>>,
-}
-
-pub struct RemovedAmbientDeclaration<'a> {
-    pub name: Ident<'a>,
-    pub symbol_id: SymbolId,
-    pub span: Span,
+struct RemovedAmbientDeclaration<'a> {
+    name: Ident<'a>,
+    symbol_id: SymbolId,
+    span: Span,
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
@@ -530,9 +526,45 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 }
 
 impl<'a> TypeScriptAnnotations<'a> {
-    pub(crate) fn take_removed_semantics(&mut self) -> RemovedTypeScriptSemantics<'a> {
-        RemovedTypeScriptSemantics {
-            declarations: std::mem::take(&mut self.removed_ambient_declarations),
+    pub(super) fn update_removed_ambient_references(&mut self, scoping: &mut Scoping) {
+        let mut declarations = std::mem::take(&mut self.removed_ambient_declarations);
+        declarations.sort_unstable_by_key(|declaration| {
+            (declaration.symbol_id.index(), declaration.span.start, declaration.span.end)
+        });
+
+        let mut spans = Vec::new();
+        let mut removed_bindings = Vec::new();
+        let mut start = 0;
+        while start < declarations.len() {
+            let symbol_id = declarations[start].symbol_id;
+            let name = declarations[start].name;
+            let mut end = start + 1;
+            while end < declarations.len() && declarations[end].symbol_id == symbol_id {
+                end += 1;
+            }
+
+            spans.clear();
+            spans.extend(declarations[start..end].iter().map(|declaration| declaration.span));
+            if scoping.remove_symbol_declarations(symbol_id, &spans) {
+                start = end;
+                continue;
+            }
+
+            let scope_id = scoping.symbol_scope_id(symbol_id);
+            let outer_symbol_id = scoping
+                .scope_parent_id(scope_id)
+                .and_then(|parent_scope_id| scoping.find_binding(parent_scope_id, name));
+            removed_bindings.push((symbol_id, name, scope_id, outer_symbol_id));
+            start = end;
+        }
+
+        for (symbol_id, name, scope_id, outer_symbol_id) in removed_bindings {
+            scoping.remove_binding(scope_id, name);
+            if let Some(outer_symbol_id) = outer_symbol_id {
+                scoping.rebind_symbol_references(symbol_id, outer_symbol_id);
+            } else {
+                scoping.unresolve_symbol_references(name, symbol_id);
+            }
         }
     }
 

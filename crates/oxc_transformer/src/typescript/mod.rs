@@ -1,5 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_semantic::Scoping;
 use oxc_traverse::Traverse;
 
 use crate::{context::TraverseCtx, state::TransformState};
@@ -13,7 +14,6 @@ mod namespace;
 mod options;
 mod rewrite_extensions;
 
-pub use annotations::RemovedTypeScriptSemantics;
 use annotations::TypeScriptAnnotations;
 use r#enum::TypeScriptEnum;
 use module::TypeScriptModule;
@@ -71,8 +71,8 @@ impl<'a> TypeScript<'a> {
         }
     }
 
-    pub(crate) fn take_removed_semantics(&mut self) -> RemovedTypeScriptSemantics<'a> {
-        self.annotations.take_removed_semantics()
+    pub(super) fn finalize_semantics(&mut self, scoping: &mut Scoping) {
+        self.annotations.update_removed_ambient_references(scoping);
     }
 }
 
