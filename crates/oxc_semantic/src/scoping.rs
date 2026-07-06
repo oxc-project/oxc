@@ -523,19 +523,15 @@ impl Scoping {
 
     /// Remove declarations from a merged symbol and promote the first surviving declaration.
     ///
-    /// `spans` must be sorted by `(start, end)`.
+    /// `spans` contains the declarations to remove.
     /// Returns `true` if a declaration survives.
     pub fn remove_symbol_declarations(&mut self, symbol_id: SymbolId, spans: &[Span]) -> bool {
-        let contains_span = |span: Span| {
-            spans
-                .binary_search_by_key(&(span.start, span.end), |span| (span.start, span.end))
-                .is_ok()
-        };
+        let is_removed_span = |span: Span| spans.contains(&span);
 
         let replacement = self.cell.with_dependent_mut(|_allocator, cell| {
             let redeclarations = cell.symbol_redeclarations.get_mut(&symbol_id)?;
 
-            redeclarations.retain(|redeclaration| !contains_span(redeclaration.span));
+            redeclarations.retain(|redeclaration| !is_removed_span(redeclaration.span));
 
             let first = redeclarations.first().cloned();
             let flags = redeclarations
@@ -554,7 +550,7 @@ impl Scoping {
             *self.symbol_table.symbol_flags_mut(symbol_id) = flags;
             true
         } else {
-            !contains_span(self.symbol_span(symbol_id))
+            !is_removed_span(self.symbol_span(symbol_id))
         }
     }
 
