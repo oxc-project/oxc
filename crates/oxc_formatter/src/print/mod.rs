@@ -70,6 +70,7 @@ use crate::{
         conditional::ConditionalLike,
         expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        is_keyword_property_key,
         object::{format_property_key, should_preserve_quote},
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
@@ -1588,22 +1589,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSSignature<'a, '_> {
                 }
             }
             Semicolons::AsNeeded => {
-                // Needs semicolon anyway when:
-                // 1. It's a non-computed property signature with type annotation followed by
-                //    a call signature that has type parameters
-                //    e.g for: `a: string; <T>() => void`
-                // 2. It's a non-computed property signature without type annotation followed by
-                //    a call signature or method signature
-                //    e.g for: `a; () => void` or `a; method(): void`
+                // Needs semicolon anyway when omitting it would change how the members parse:
+                // 1. It's a property signature without type annotation named `static`, `get` or `set`,
+                //    which would otherwise parse as a modifier or accessor of the following member
+                // 2. It's a property signature without type annotation followed by
+                //    a call signature, e.g. `a` + `(): void` -> `a(): void`
                 let needs_semicolon = matches!(
-                    self.signature.as_ref(), TSSignature::TSPropertySignature(property) if !property.computed
-                    && self.next_signature.is_some_and(|signature| match signature.as_ref() {
-                        TSSignature::TSCallSignatureDeclaration(call) => {
-                            property.type_annotation.is_none() || call.type_parameters.is_some()
-                        }
-                        TSSignature::TSMethodSignature(_) => property.type_annotation.is_none(),
-                        _ => false,
-                    })
+                    self.signature.as_ref(), TSSignature::TSPropertySignature(property)
+                    if property.type_annotation.is_none()
+                    && (is_keyword_property_key(&property.key)
+                        || self.next_signature.is_some_and(|next| {
+                            matches!(next.as_ref(), TSSignature::TSCallSignatureDeclaration(_))
+                        }))
                 );
 
                 if needs_semicolon {
