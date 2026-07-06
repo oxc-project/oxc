@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 3235/4720 (68.54%)
+Positive Passed: 3236/4720 (68.56%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["console", "formatHost", "os", "process", "reportDiagnostic", "reportWatchStatusChanged", "ts", "watchMain"]
@@ -16950,20 +16950,6 @@ Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["Mup", "require"]
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticAutoAccessorsWithDecorators.ts
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(7): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(7): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(8): Some(ScopeId(0))
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnum1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b", "c", "d", "e", "f", "g", "h"]
@@ -17379,18 +17365,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/cla
 Bindings mismatch:
 after transform: ScopeId(0): ["C1", "C2", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_decorateParam", "_x", "_x2", "decorator"]
 rebuilt        : ScopeId(0): ["C1", "C2", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_decorateParam", "_x", "_x2"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(4): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(4))
-rebuilt        : ScopeId(8): Some(ScopeId(0))
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
@@ -17466,66 +17440,6 @@ after transform: ["Number", "Symbol", "require"]
 rebuilt        : ["Number", "Symbol", "decorator", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/legacyDecorators-contextualTypes.ts
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(15): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(2))
-rebuilt        : ScopeId(15): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(16): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(7): Some(ScopeId(2))
-rebuilt        : ScopeId(16): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(17): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(10): Some(ScopeId(2))
-rebuilt        : ScopeId(17): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(18): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(11): Some(ScopeId(2))
-rebuilt        : ScopeId(18): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(19): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(12): Some(ScopeId(2))
-rebuilt        : ScopeId(19): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(14): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(20): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(14): Some(ScopeId(2))
-rebuilt        : ScopeId(20): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(17): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(21): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(17): Some(ScopeId(2))
-rebuilt        : ScopeId(21): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(18): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(22): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(18): Some(ScopeId(2))
-rebuilt        : ScopeId(22): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(20): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(23): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(20): Some(ScopeId(2))
-rebuilt        : ScopeId(23): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(22): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(24): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(22): Some(ScopeId(2))
-rebuilt        : ScopeId(24): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(26): ScopeFlags(Function | Arrow)
@@ -19392,12 +19306,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/c
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "C", "_a", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_f", "_f2", "dec", "f"]
 rebuilt        : ScopeId(0): ["A", "B", "C", "_a", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_f", "_f2"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(7): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(7): Some(ScopeId(0))
 Symbol span mismatch for "A":
 after transform: SymbolId(2): Span { start: 119, end: 120 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
@@ -20144,126 +20052,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/e
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "_C_brand", "_b_accessor_storage", "_b_accessor_storage2", "_c", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_classPrivateMethodInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_f", "_g", "_get_a", "_get_b", "_get_x", "_get_y", "_set_a", "_set_b", "_set_x", "_set_y", "_y_accessor_storage", "_y_accessor_storage2", "_z"]
 rebuilt        : ScopeId(0): ["C", "_C_brand", "_b_accessor_storage2", "_c", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_classPrivateMethodInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_f", "_g", "_get_a", "_get_b", "_get_x", "_get_y", "_set_a", "_set_b", "_set_x", "_set_y", "_y_accessor_storage2", "_z"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(23): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(2))
-rebuilt        : ScopeId(23): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(24): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(2))
-rebuilt        : ScopeId(24): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(25): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(7): Some(ScopeId(2))
-rebuilt        : ScopeId(25): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(26): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(9): Some(ScopeId(2))
-rebuilt        : ScopeId(26): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(27): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(11): Some(ScopeId(2))
-rebuilt        : ScopeId(27): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(13): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(28): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(13): Some(ScopeId(2))
-rebuilt        : ScopeId(28): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(15): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(29): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(15): Some(ScopeId(2))
-rebuilt        : ScopeId(29): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(16): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(30): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(16): Some(ScopeId(2))
-rebuilt        : ScopeId(30): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(17): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(31): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(17): Some(ScopeId(2))
-rebuilt        : ScopeId(31): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(18): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(32): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(18): Some(ScopeId(2))
-rebuilt        : ScopeId(32): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(19): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(33): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(19): Some(ScopeId(2))
-rebuilt        : ScopeId(33): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(21): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(34): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(21): Some(ScopeId(2))
-rebuilt        : ScopeId(34): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(23): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(35): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(23): Some(ScopeId(2))
-rebuilt        : ScopeId(35): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(25): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(36): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(25): Some(ScopeId(2))
-rebuilt        : ScopeId(36): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(27): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(37): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(27): Some(ScopeId(2))
-rebuilt        : ScopeId(37): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(29): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(38): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(29): Some(ScopeId(2))
-rebuilt        : ScopeId(38): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(31): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(39): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(31): Some(ScopeId(2))
-rebuilt        : ScopeId(39): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(32): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(40): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(32): Some(ScopeId(2))
-rebuilt        : ScopeId(40): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(33): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(41): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(33): Some(ScopeId(2))
-rebuilt        : ScopeId(41): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(34): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(42): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(34): Some(ScopeId(2))
-rebuilt        : ScopeId(42): Some(ScopeId(0))
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 23, end: 24 }
 rebuilt        : SymbolId(10): Span { start: 0, end: 0 }

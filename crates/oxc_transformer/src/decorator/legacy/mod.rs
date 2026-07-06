@@ -1420,6 +1420,14 @@ impl<'a> LegacyDecorator<'a> {
         descriptor: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
+        // Member decorators are evaluated outside the class body. Their expressions may contain
+        // functions (e.g. `@((target, context) => {})`), so move those scopes along with the
+        // decorator expression when it is emitted after the class.
+        if let Some(parent_scope_id) = ctx.scoping().scope_parent_id(ctx.current_scope_id()) {
+            let mut visitor = ReparentDecoratorScopes { parent_scope_id, ctx };
+            visitor.visit_expression(&decorations);
+        }
+
         let arguments = ArenaVec::from_array_in(
             [
                 Argument::from(decorations),
@@ -1544,5 +1552,46 @@ impl<'a> ClassReferenceChanger<'a, '_> {
         });
 
         binding.create_read_reference(self.ctx)
+    }
+}
+
+/// Reparent the first scope introduced by a decorator expression when the expression is moved out
+/// of a class body.
+struct ReparentDecoratorScopes<'a, 'ctx> {
+    parent_scope_id: ScopeId,
+    ctx: &'ctx mut TraverseCtx<'a>,
+}
+
+impl Visit<'_> for ReparentDecoratorScopes<'_, '_> {
+    fn visit_function(&mut self, func: &Function<'_>, _flags: ScopeFlags) {
+        self.reparent(
+            func.scope_id(),
+            func.body.as_ref().is_some_and(|body| body.has_use_strict_directive()),
+        );
+    }
+
+    fn visit_arrow_function_expression(&mut self, func: &ArrowFunctionExpression<'_>) {
+        self.reparent(func.scope_id(), func.body.has_use_strict_directive());
+    }
+
+    fn visit_class(&mut self, class: &Class<'_>) {
+        // Decorators are evaluated outside the class scope, so scopes in them are also direct
+        // children of the scope containing this class expression.
+        self.visit_decorators(&class.decorators);
+        self.reparent(class.scope_id(), true);
+    }
+}
+
+impl ReparentDecoratorScopes<'_, '_> {
+    fn reparent(&mut self, scope_id: ScopeId, has_use_strict_directive: bool) {
+        let parent_is_strict =
+            self.ctx.scoping().scope_flags(self.parent_scope_id).is_strict_mode();
+        self.ctx.scoping_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));
+        let flags = self.ctx.scoping_mut().scope_flags_mut(scope_id);
+        if has_use_strict_directive || parent_is_strict {
+            flags.insert(ScopeFlags::StrictMode);
+        } else {
+            flags.remove(ScopeFlags::StrictMode);
+        }
     }
 }
