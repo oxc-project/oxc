@@ -512,6 +512,31 @@ impl Scoping {
         });
     }
 
+    /// Remove one declaration from a merged symbol and promote the first surviving declaration.
+    pub fn remove_symbol_declaration(&mut self, symbol_id: SymbolId, span: Span) {
+        let replacement = self.cell.with_dependent_mut(|_allocator, cell| {
+            let redeclarations = cell.symbol_redeclarations.get_mut(&symbol_id)?;
+            redeclarations.retain(|redeclaration| redeclaration.span != span);
+
+            let first = redeclarations.first()?.clone();
+            let flags = redeclarations
+                .iter()
+                .fold(SymbolFlags::None, |flags, redeclaration| flags | redeclaration.flags);
+            let has_redeclarations = redeclarations.len() > 1;
+            if !has_redeclarations {
+                cell.symbol_redeclarations.remove(&symbol_id);
+            }
+
+            Some((first, flags))
+        });
+
+        if let Some((replacement, flags)) = replacement {
+            *self.symbol_table.symbol_spans_mut(symbol_id) = replacement.span;
+            *self.symbol_table.symbol_declarations_mut(symbol_id) = replacement.declaration;
+            *self.symbol_table.symbol_flags_mut(symbol_id) = flags;
+        }
+    }
+
     #[inline]
     /// Create and store a reference entry.
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
@@ -997,7 +1022,30 @@ impl Scoping {
 
     /// Remove bindings that exist only in TypeScript type space.
     pub fn delete_typescript_bindings(&mut self) {
+        #[expect(
+            clippy::inline_always,
+            reason = "Hot predicate called for every semantic reference"
+        )]
+        #[inline(always)]
+        fn is_typescript_reference(reference: &Reference) -> bool {
+            let flags = reference.flags();
+            (flags.is_type() && !flags.is_value()) || flags.is_value_as_type()
+        }
+
+        let references = &self.references;
+
         self.cell.with_dependent_mut(|_allocator, cell| {
+            for reference_ids in &mut cell.resolved_references {
+                reference_ids
+                    .retain(|reference_id| !is_typescript_reference(&references[*reference_id]));
+            }
+
+            cell.root_unresolved_references.retain(|_name, reference_ids| {
+                reference_ids
+                    .retain(|reference_id| !is_typescript_reference(&references[*reference_id]));
+                !reference_ids.is_empty()
+            });
+
             for bindings in &mut cell.bindings {
                 bindings.retain(|_name, symbol_id| {
                     let flags = *self.symbol_table.symbol_flags(*symbol_id);

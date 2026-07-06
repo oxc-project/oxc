@@ -1,10 +1,11 @@
 commit: 1fb0b771
 
-Passed: 700/1165
+Passed: 742/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-export-namespace-from
+* babel-plugin-transform-optional-chaining
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
 
@@ -192,7 +193,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (212/269)
+# babel-plugin-transform-class-properties (214/269)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -231,16 +232,6 @@ x Output mismatch
 
 * class-name-tdz/typescript-type/input.ts
 x Output mismatch
-
-* compile-to-class/constructor-collision-ignores-types/input.js
-Unresolved references mismatch:
-after transform: ["T", "babelHelpers"]
-rebuilt        : ["babelHelpers"]
-
-* compile-to-class/constructor-collision-ignores-types-loose/input.js
-Unresolved references mismatch:
-after transform: ["T"]
-rebuilt        : []
 
 * nested-class/super-call-in-decorator/input.js
 x Output mismatch
@@ -898,23 +889,6 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-optional-chaining (42/45)
-* transparent-expr-wrappers/ts-as-function-call-loose/input.ts
-Unresolved references mismatch:
-after transform: ["A", "B", "foo"]
-rebuilt        : ["foo"]
-
-* transparent-expr-wrappers/ts-as-member-expression/input.ts
-Unresolved references mismatch:
-after transform: ["ExampleType", "ExampleType2", "a"]
-rebuilt        : ["a"]
-
-* transparent-expr-wrappers/ts-parenthesized-expression-member-call/input.ts
-Unresolved references mismatch:
-after transform: ["ExampleType", "o"]
-rebuilt        : ["o"]
-
-
 # babel-plugin-transform-async-generator-functions (19/20)
 * async-generators/class-private-method/input.js
 x Output mismatch
@@ -1085,14 +1059,9 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-preset-typescript (8/12)
+# babel-preset-typescript (9/12)
 * node-extensions/import-in-cts/input.cts
 x Output mismatch
-
-* node-extensions/type-assertion-in-ts/input.ts
-Unresolved references mismatch:
-after transform: ["T", "x"]
-rebuilt        : ["x"]
 
 * opts/rewriteImportExtensions/input.ts
 x Output mismatch
@@ -1101,17 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (54/157)
-* cast/as-expression/input.ts
-Unresolved references mismatch:
-after transform: ["T", "x"]
-rebuilt        : ["x"]
-
-* cast/type-assertion/input.ts
-Unresolved references mismatch:
-after transform: ["T", "x"]
-rebuilt        : ["x"]
-
+# babel-plugin-transform-typescript (90/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1161,11 +1120,6 @@ rebuilt        : ["x"]
   help: Allowed modifiers are: private, protected, public, static, abstract,
         override
 
-
-* class/head/input.ts
-Unresolved references mismatch:
-after transform: ["D", "I"]
-rebuilt        : ["D"]
 
 * class/parameter-properties-late-super/input.ts
 x Output mismatch
@@ -1456,9 +1410,6 @@ x Output mismatch
 Symbol flags mismatch for "N":
 after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol reference IDs mismatch for "N":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
-rebuilt        : SymbolId(0): [ReferenceId(1)]
 Symbol redeclarations mismatch for "N":
 after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(0): []
@@ -1470,18 +1421,12 @@ rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol span mismatch for "Signal":
 after transform: SymbolId(0): Span { start: 14, end: 20 }
 rebuilt        : SymbolId(0): Span { start: 54, end: 60 }
-Symbol reference IDs mismatch for "Signal":
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3)]
-rebuilt        : SymbolId(0): [ReferenceId(1)]
 Symbol redeclarations mismatch for "Signal":
 after transform: SymbolId(0): [Span { start: 14, end: 20 }, Span { start: 54, end: 60 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Signal2":
 after transform: SymbolId(3): SymbolFlags(Class | Function | Ambient)
 rebuilt        : SymbolId(2): SymbolFlags(Function)
-Symbol reference IDs mismatch for "Signal2":
-after transform: SymbolId(3): [ReferenceId(4), ReferenceId(7)]
-rebuilt        : SymbolId(2): [ReferenceId(3)]
 Symbol redeclarations mismatch for "Signal2":
 after transform: SymbolId(3): [Span { start: 147, end: 154 }, Span { start: 225, end: 232 }]
 rebuilt        : SymbolId(2): []
@@ -1522,42 +1467,9 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "None":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "None":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
-rebuilt        : SymbolId(0): [ReferenceId(1)]
-
-* exports/imported-types/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C"]
-rebuilt        : ScopeId(0): ["C"]
-
-* exports/imported-types-only-remove-type-imports/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C"]
-rebuilt        : ScopeId(0): ["C"]
 
 * exports/interface/input.ts
 x Output mismatch
-
-* exports/issue-9916-1/input.ts
-Unresolved references mismatch:
-after transform: ["PromiseLike"]
-rebuilt        : []
-
-* exports/issue-9916-2/input.ts
-Unresolved references mismatch:
-after transform: ["PromiseLike"]
-rebuilt        : []
-
-* exports/issue-9916-3/input.ts
-Unresolved references mismatch:
-after transform: ["PromiseLike"]
-rebuilt        : []
-
-* exports/type-only-export-specifier-1/input.ts
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
 
 * function/overloads/input.ts
 Symbol span mismatch for "f":
@@ -1575,65 +1487,7 @@ Symbol redeclarations mismatch for "f":
 after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
 rebuilt        : SymbolId(0): []
 
-* imports/elide-preact/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["FooBar", "Fragment", "h", "x"]
-rebuilt        : ScopeId(0): ["x"]
-
-* imports/elide-preact-no-1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Fragment", "h", "render"]
-rebuilt        : ScopeId(0): ["Fragment", "h"]
-
-* imports/elide-preact-no-2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Fragment", "render"]
-rebuilt        : ScopeId(0): ["Fragment"]
-
-* imports/elide-react/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["React", "x"]
-rebuilt        : ScopeId(0): ["x"]
-
-* imports/elide-type-referenced-in-imports-equal-no/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["nsa", "nsb"]
-rebuilt        : ScopeId(0): []
-
-* imports/elide-typeof/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "x"]
-rebuilt        : ScopeId(0): ["x"]
-
-* imports/elision/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C", "D", "Used", "Used2", "Used3", "x", "y", "z"]
-rebuilt        : ScopeId(0): ["Used", "Used2", "Used3", "x", "y", "z"]
-
-* imports/elision-export-type/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "T", "T1"]
-rebuilt        : ScopeId(0): ["A", "B"]
-
-* imports/elision-locations/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C", "Class", "D", "E", "F", "G", "H", "x", "y"]
-rebuilt        : ScopeId(0): ["A", "Class", "x", "y"]
-
-* imports/elision-qualifiedname/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "x"]
-rebuilt        : ScopeId(0): ["x"]
-
-* imports/elision-rename/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["B", "x"]
-rebuilt        : ScopeId(0): ["x"]
-
 * imports/enum-id/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "Enum"]
-rebuilt        : ScopeId(0): ["Enum"]
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "Enum"]
 rebuilt        : ScopeId(1): ["Enum"]
@@ -1655,86 +1509,13 @@ Symbol flags mismatch for "Enum":
 after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
-* imports/import-removed-exceptions/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["H", "I", "I2", "J", "a", "b", "c2", "d", "d2", "e", "e4"]
-rebuilt        : ScopeId(0): []
-
-* imports/import-type/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "T", "Types"]
-rebuilt        : ScopeId(0): []
-
-* imports/import-type-func-with-duplicate-name/input.ts
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(Function | TypeImport)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol span mismatch for "Foo":
-after transform: SymbolId(0): Span { start: 13, end: 16 }
-rebuilt        : SymbolId(0): Span { start: 70, end: 73 }
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 13, end: 16 }, Span { start: 70, end: 73 }]
-rebuilt        : SymbolId(0): []
-Symbol flags mismatch for "Foo2":
-after transform: SymbolId(1): SymbolFlags(Function | TypeImport)
-rebuilt        : SymbolId(1): SymbolFlags(Function)
-Symbol span mismatch for "Foo2":
-after transform: SymbolId(1): Span { start: 43, end: 47 }
-rebuilt        : SymbolId(1): Span { start: 87, end: 91 }
-Symbol redeclarations mismatch for "Foo2":
-after transform: SymbolId(1): [Span { start: 43, end: 47 }, Span { start: 87, end: 91 }]
-rebuilt        : SymbolId(1): []
-
-* imports/import-type-not-removed/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B"]
-rebuilt        : ScopeId(0): []
-
-* imports/only-remove-type-imports/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2", "L3", "a", "b", "c2", "d", "d2", "e", "e4", "x"]
-rebuilt        : ScopeId(0): ["L2", "a", "b", "c2", "d", "d2", "e", "e4", "x"]
-
-* imports/property-signature/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "obj"]
-rebuilt        : ScopeId(0): ["obj"]
-
-* imports/type-only-export-specifier-1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["bar", "baz", "foo"]
-rebuilt        : ScopeId(0): []
-
 * imports/type-only-export-specifier-2/input.ts
 x Output mismatch
 
-* imports/type-only-import-specifier-1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo1", "Foo2"]
-rebuilt        : ScopeId(0): ["Foo1"]
-
-* imports/type-only-import-specifier-2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo1", "Foo2"]
-rebuilt        : ScopeId(0): []
-
-* imports/type-only-import-specifier-3/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo1", "Foo2"]
-rebuilt        : ScopeId(0): []
-
-* imports/type-only-import-specifier-4/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
-
 * namespace/alias/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["AliasModule", "LongNameModule", "babel", "bar", "baz", "node", "some", "str"]
+after transform: ScopeId(0): ["AliasModule", "LongNameModule", "bar", "baz", "node", "some", "str"]
 rebuilt        : ScopeId(0): ["AliasModule", "bar", "baz", "node", "some", "str"]
-Symbol reference IDs mismatch for "AliasModule":
-after transform: SymbolId(8): [ReferenceId(2), ReferenceId(3), ReferenceId(4)]
-rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(2)]
 Reference symbol mismatch for "LongNameModule":
 after transform: SymbolId(0) "LongNameModule"
 rebuilt        : <None>
@@ -2341,31 +2122,6 @@ x Output mismatch
 
 * regression/15768/input.ts
 x Output mismatch
-
-* type-arguments/call/input.ts
-Unresolved references mismatch:
-after transform: ["T", "f"]
-rebuilt        : ["f"]
-
-* type-arguments/expr/input.ts
-Unresolved references mismatch:
-after transform: ["T", "f"]
-rebuilt        : ["f"]
-
-* type-arguments/new/input.ts
-Unresolved references mismatch:
-after transform: ["C", "T"]
-rebuilt        : ["C"]
-
-* type-arguments/optional-call/input.ts
-Unresolved references mismatch:
-after transform: ["Q", "T", "f", "x"]
-rebuilt        : ["f", "x"]
-
-* type-arguments/tagged-template/input.ts
-Unresolved references mismatch:
-after transform: ["T", "f"]
-rebuilt        : ["f"]
 
 
 # babel-preset-react (4/10)

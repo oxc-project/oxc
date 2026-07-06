@@ -1,11 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 69/69 (100.00%)
-Positive Passed: 55/69 (79.71%)
-semantic Error: tasks/coverage/misc/pass/conditional-arrow-alternate-return-type.ts
-Unresolved references mismatch:
-after transform: ["Pick", "Record"]
-rebuilt        : []
-
+AST Parsed     : 70/70 (100.00%)
+Positive Passed: 62/70 (88.57%)
 semantic Error: tasks/coverage/misc/pass/declare-let-private.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["private"]
@@ -21,16 +16,6 @@ rebuilt        : ScopeId(7): Some(ScopeId(0))
 Unresolved reference IDs mismatch for "String":
 after transform: [ReferenceId(11), ReferenceId(12)]
 rebuilt        : [ReferenceId(18)]
-
-semantic Error: tasks/coverage/misc/pass/oxc-1288.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["from"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/misc/pass/oxc-1289.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["infer", "target", "type"]
-rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/misc/pass/oxc-13284.js
 Bindings mismatch:
@@ -116,9 +101,6 @@ semantic Error: tasks/coverage/misc/pass/oxc-13284.ts
 Symbol reference IDs mismatch for "_super":
 after transform: SymbolId(18): [ReferenceId(14)]
 rebuilt        : SymbolId(9): []
-Unresolved references mismatch:
-after transform: ["Super", "WeakMap", "require", "super"]
-rebuilt        : ["Super", "WeakMap", "require"]
 
 semantic Error: tasks/coverage/misc/pass/oxc-2562.ts
 Symbol span mismatch for "HooksController":
@@ -128,71 +110,13 @@ Symbol span mismatch for "HooksController":
 after transform: SymbolId(1): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(2): Span { start: 67, end: 82 }
 
-semantic Error: tasks/coverage/misc/pass/oxc-3443.tsx
-Unresolved references mismatch:
-after transform: ["F"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/misc/pass/oxc-3910.ts
-Unresolved references mismatch:
-after transform: ["ServicesAccessor"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/misc/pass/oxc-3948-1.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["BrowserWorkingCopyBackupTracker", "CancellationToken", "DisposableStore", "EditorPart", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "IInstantiationService", "ILifecycleService", "ILogService", "IUntitledTextResourceEditorInput", "IWorkingCopyBackup", "IWorkingCopyBackupService", "IWorkingCopyEditorHandler", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "_decorate", "_decorateMetadata", "_decorateParam", "_defineProperty", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
-rebuilt        : ScopeId(0): ["BrowserWorkingCopyBackupTracker", "DisposableStore", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "ILifecycleService", "ILogService", "IWorkingCopyBackupService", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "_decorate", "_decorateMetadata", "_decorateParam", "_defineProperty", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
-Symbol reference IDs mismatch for "URI":
-after transform: SymbolId(1): [ReferenceId(109), ReferenceId(117), ReferenceId(156), ReferenceId(158), ReferenceId(160), ReferenceId(162)]
-rebuilt        : SymbolId(1): [ReferenceId(196), ReferenceId(198), ReferenceId(200), ReferenceId(202)]
-Symbol reference IDs mismatch for "IEditorService":
-after transform: SymbolId(2): [ReferenceId(23), ReferenceId(24), ReferenceId(67), ReferenceId(184), ReferenceId(358), ReferenceId(359)]
-rebuilt        : SymbolId(2): [ReferenceId(38), ReferenceId(60), ReferenceId(62), ReferenceId(95), ReferenceId(223)]
-Symbol reference IDs mismatch for "IEditorGroupsService":
-after transform: SymbolId(4): [ReferenceId(25), ReferenceId(26), ReferenceId(57), ReferenceId(176), ReferenceId(361), ReferenceId(362)]
-rebuilt        : SymbolId(3): [ReferenceId(40), ReferenceId(63), ReferenceId(65), ReferenceId(86), ReferenceId(216)]
-Symbol reference IDs mismatch for "EditorService":
-after transform: SymbolId(5): [ReferenceId(61), ReferenceId(64), ReferenceId(178), ReferenceId(181)]
-rebuilt        : SymbolId(4): [ReferenceId(92), ReferenceId(220)]
-Symbol reference IDs mismatch for "IWorkingCopyBackupService":
-after transform: SymbolId(7): [ReferenceId(11), ReferenceId(12), ReferenceId(51), ReferenceId(170), ReferenceId(340), ReferenceId(341)]
-rebuilt        : SymbolId(5): [ReferenceId(26), ReferenceId(42), ReferenceId(44), ReferenceId(80), ReferenceId(210)]
-Symbol reference IDs mismatch for "IFilesConfigurationService":
-after transform: SymbolId(10): [ReferenceId(13), ReferenceId(14), ReferenceId(343), ReferenceId(344)]
-rebuilt        : SymbolId(8): [ReferenceId(28), ReferenceId(45), ReferenceId(47)]
-Symbol reference IDs mismatch for "IWorkingCopyService":
-after transform: SymbolId(11): [ReferenceId(15), ReferenceId(16), ReferenceId(346), ReferenceId(347)]
-rebuilt        : SymbolId(9): [ReferenceId(30), ReferenceId(48), ReferenceId(50)]
-Symbol reference IDs mismatch for "ILogService":
-after transform: SymbolId(13): [ReferenceId(19), ReferenceId(20), ReferenceId(352), ReferenceId(353)]
-rebuilt        : SymbolId(10): [ReferenceId(34), ReferenceId(54), ReferenceId(56)]
-Symbol reference IDs mismatch for "ILifecycleService":
-after transform: SymbolId(14): [ReferenceId(17), ReferenceId(18), ReferenceId(349), ReferenceId(350)]
-rebuilt        : SymbolId(11): [ReferenceId(32), ReferenceId(51), ReferenceId(53)]
-Symbol reference IDs mismatch for "UntitledTextEditorInput":
-after transform: SymbolId(17): [ReferenceId(38), ReferenceId(87)]
-rebuilt        : SymbolId(13): [ReferenceId(67)]
-Symbol reference IDs mismatch for "InMemoryTestWorkingCopyBackupService":
-after transform: SymbolId(19): [ReferenceId(43), ReferenceId(46), ReferenceId(165)]
-rebuilt        : SymbolId(15): [ReferenceId(75), ReferenceId(205)]
-Symbol reference IDs mismatch for "TestServiceAccessor":
-after transform: SymbolId(21): [ReferenceId(40), ReferenceId(155), ReferenceId(1), ReferenceId(71), ReferenceId(188)]
-rebuilt        : SymbolId(17): [ReferenceId(99), ReferenceId(227)]
-Symbol reference IDs mismatch for "IWorkingCopyEditorService":
-after transform: SymbolId(32): [ReferenceId(21), ReferenceId(22), ReferenceId(355), ReferenceId(356)]
-rebuilt        : SymbolId(26): [ReferenceId(36), ReferenceId(57), ReferenceId(59)]
 Symbol span mismatch for "TestWorkingCopyBackupTracker":
 after transform: SymbolId(39): Span { start: 3208, end: 3236 }
 rebuilt        : SymbolId(38): Span { start: 0, end: 0 }
-Symbol reference IDs mismatch for "TestWorkingCopyBackupTracker":
-after transform: SymbolId(39): [ReferenceId(42), ReferenceId(154), ReferenceId(74), ReferenceId(215), ReferenceId(376), ReferenceId(378)]
-rebuilt        : SymbolId(38): [ReferenceId(23), ReferenceId(66), ReferenceId(102), ReferenceId(254)]
 Symbol span mismatch for "TestWorkingCopyBackupTracker":
 after transform: SymbolId(136): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(39): Span { start: 3208, end: 3236 }
-Unresolved reference IDs mismatch for "Promise":
-after transform: [ReferenceId(36), ReferenceId(39), ReferenceId(82), ReferenceId(114), ReferenceId(153), ReferenceId(282)]
-rebuilt        : [ReferenceId(327)]
 
 semantic Error: tasks/coverage/misc/pass/oxc-4449.ts
 Bindings mismatch:
@@ -275,9 +199,4 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/misc/pass/oxc-9215.ts
-Unresolved references mismatch:
-after transform: ["a", "b", "d", "e"]
-rebuilt        : ["a", "b", "e"]
 
