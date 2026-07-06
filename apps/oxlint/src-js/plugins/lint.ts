@@ -35,7 +35,9 @@ import type { RuleTiming } from "./timing.ts";
 export const buffers: (BufferWithArrays | null)[] = [];
 
 // Array of `after` hooks to run after traversal. This array reused for every file.
-const afterHooks: AfterHook[] = [];
+// Also used by the custom-parser path (`lint_js_parser.ts`); the two flows never interleave
+// (both synchronous on the main JS thread, one file at a time), so they share one array.
+export const afterHooks: AfterHook[] = [];
 
 // Reusable property descriptor for updating `options` value on rule context objects.
 // `value` is updated before each call. Other attributes are omitted to retain existing values.
@@ -306,7 +308,7 @@ export function lintFileImpl(
  *
  * @param shouldThrowIfError - `true` if any errors thrown in after hooks should be re-thrown
  */
-function runAfterHooks(shouldThrowIfError: boolean) {
+export function runAfterHooks(shouldThrowIfError: boolean) {
   const afterHooksLen = afterHooks.length;
   if (afterHooksLen === 0) return;
 

@@ -23,7 +23,7 @@ import {
   resetJsParserSourceCode,
   setupJsParserSourceCode,
 } from "./js_parser_source_code.ts";
-import { resetFile } from "./lint.ts";
+import { afterHooks, resetFile, runAfterHooks } from "./lint.ts";
 import { registeredRules } from "./load.ts";
 import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
 import { registeredParsers } from "./parsers.ts";
@@ -34,7 +34,7 @@ import { switchWorkspace } from "./workspace.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 
-import type { AfterHook, Visitor } from "./types.ts";
+import type { Visitor } from "./types.ts";
 import type { MaskedRegionReport } from "./js_parser_shadow.ts";
 import type { JsParserParseResult, JsParserToken } from "./parsers.ts";
 import type { SourceCode } from "./source_code.ts";
@@ -55,9 +55,7 @@ interface JsParserLintResult {
   maskedRegions: MaskedRegionReport[] | null;
 }
 
-// Array of `after` hooks to run after traversal. This array reused for every file.
-// Same purpose as `afterHooks` in `lint.ts` (which is module-private, so duplicated here).
-const afterHooks: AfterHook[] = [];
+// `afterHooks` / `runAfterHooks` are shared with the buffer-based path (`lint.ts`).
 
 // Reusable property descriptor for updating `options` value on rule context objects.
 const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
@@ -403,44 +401,16 @@ function getComments(
       }
     }
 
+    // Rust strips comment delimiters blindly when extracting a comment's content
+    // (`content_span` = `Span::new(start + 2, end - 2)` for blocks, `start + 2` for line
+    // comments). A span too short for its delimiters would invert there and panic, so drop
+    // it. Realigned spans above always satisfy this; only an un-realigned span from a
+    // misbehaving parser can be too short.
+    if (end - start < (isBlock ? 4 : 2)) continue;
+
     comments.push({ isBlock, start, end });
   }
   return comments;
-}
-
-/**
- * Run any `after` hooks.
- *
- * Same logic as `runAfterHooks` in `lint.ts` (which is module-private, so duplicated here).
- * See that function for explanation of why hooks always run, and errors are re-thrown at the end.
- *
- * @param shouldThrowIfError - `true` if any errors thrown in after hooks should be re-thrown
- */
-function runAfterHooks(shouldThrowIfError: boolean): void {
-  const afterHooksLen = afterHooks.length;
-  if (afterHooksLen === 0) return;
-
-  // Run `after` hooks
-  let error: unknown;
-  let didError = false;
-
-  for (let i = 0; i < afterHooksLen; i++) {
-    try {
-      // Don't call hook with `afterHooks` array as `this`, or user could mess with it
-      (0, afterHooks[i])();
-    } catch (err) {
-      if (didError === false) {
-        error = err;
-        didError = true;
-      }
-    }
-  }
-
-  // Reset array, ready for next file
-  afterHooks.length = 0;
-
-  // If error was thrown in any `after` hooks, re-throw it
-  if (didError && shouldThrowIfError) throw error;
 }
 
 /**
