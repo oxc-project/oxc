@@ -2,7 +2,7 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2171/2236 (97.09%)
+Positive Passed: 2172/2236 (97.14%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
@@ -140,11 +140,6 @@ rebuilt        : ScopeId(0): ["C", "D", "a", "b"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts
 A required parameter cannot follow an optional parameter.
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/overloads/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["f"]
-rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-require/input.ts
 Bindings mismatch:

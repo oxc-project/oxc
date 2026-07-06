@@ -602,20 +602,20 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     fn remove_ambient_declaration_bindings(decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
         match decl {
-            Declaration::VariableDeclaration(var_decl) if var_decl.declare => {
+            Declaration::VariableDeclaration(var_decl) => {
                 Self::remove_variable_declaration_bindings(var_decl, ctx);
             }
-            Declaration::FunctionDeclaration(func_decl) if func_decl.declare => {
+            Declaration::FunctionDeclaration(func_decl) => {
                 if let Some(id) = &func_decl.id {
                     Self::record_removed_ambient_declaration(id, ctx);
                 }
             }
-            Declaration::ClassDeclaration(class_decl) if class_decl.declare => {
+            Declaration::ClassDeclaration(class_decl) => {
                 if let Some(id) = &class_decl.id {
                     Self::record_removed_ambient_declaration(id, ctx);
                 }
             }
-            Declaration::TSEnumDeclaration(enum_decl) if enum_decl.declare => {
+            Declaration::TSEnumDeclaration(enum_decl) => {
                 Self::record_removed_ambient_declaration(&enum_decl.id, ctx);
             }
             Declaration::TSModuleDeclaration(module_decl) => {
@@ -632,8 +632,8 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         var_decl.bound_names(&mut |ident| {
-                Self::record_removed_ambient_declaration(ident, ctx);
-            });
+            Self::record_removed_ambient_declaration(ident, ctx);
+        });
     }
 
     fn remove_import_declaration_bindings(decl: &ImportDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {

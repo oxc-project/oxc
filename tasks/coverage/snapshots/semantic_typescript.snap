@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4173/4720 (88.41%)
+Positive Passed: 4174/4720 (88.43%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -1317,7 +1317,7 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 12, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 73, end: 76 }
 Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 42, end: 45 }, Span { start: 73, end: 76 }]
+after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 73, end: 76 }]
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/extBaseClass1.ts
@@ -2813,20 +2813,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedInterfaceinNamespace5.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedLocalsAndParametersOverloadSignatures.ts
-Symbol span mismatch for "func":
-after transform: SymbolId(0): Span { start: 16, end: 20 }
-rebuilt        : SymbolId(0): Span { start: 94, end: 98 }
-Symbol redeclarations mismatch for "func":
-after transform: SymbolId(0): [Span { start: 16, end: 20 }, Span { start: 94, end: 98 }]
-rebuilt        : SymbolId(0): []
-Symbol span mismatch for "genericFunc":
-after transform: SymbolId(17): Span { start: 523, end: 534 }
-rebuilt        : SymbolId(8): Span { start: 606, end: 617 }
-Symbol redeclarations mismatch for "genericFunc":
-after transform: SymbolId(17): [Span { start: 523, end: 534 }, Span { start: 606, end: 617 }]
-rebuilt        : SymbolId(8): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/usingModuleWithExportImportInValuePosition.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
