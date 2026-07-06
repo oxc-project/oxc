@@ -28,7 +28,7 @@ use oxc_span::{SourceType, Span, VALID_EXTENSIONS};
 use oxc_str::CompactStr;
 
 use crate::{
-    Fixer, Linter, Message, PossibleFixes, RuleTimingStore,
+    Fix, Fixer, Linter, Message, PossibleFixes, RuleTimingStore,
     context::{ContextSubHost, ContextSubHostOptions},
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
@@ -797,6 +797,7 @@ impl Runtime {
             if let Some(shadow_lint_input) = &shadow_lint_input {
                 messages.extend(self.lint_shadow_source(
                     path,
+                    source_text,
                     shadow_lint_input,
                     disable_directives.as_ref(),
                     &allocator_guard,
@@ -846,11 +847,16 @@ impl Runtime {
     /// the original source, with custom syntax replaced in-place by valid JS placeholders,
     /// so spans of native diagnostics map back to the original file unchanged.
     ///
-    /// Diagnostics and fixes whose span intersects a masked region refer to placeholder
-    /// code rather than real source, and are discarded. "Used" markers from the shadow
-    /// run's disable directives are merged into `js_directives` (the directives built from
-    /// the parser's comments), so `--report-unused-disable-directives` sees a directive as
-    /// used when only a native rule used it.
+    /// Any diagnostic whose span intersects a masked region is discarded. Such a diagnostic
+    /// may be about the placeholder itself (which is not real source), so dropping it is a
+    /// deliberate tradeoff: it also drops the occasional diagnostic on an enclosing real
+    /// construct (e.g. `max-lines-per-function` on a function that contains a template), but
+    /// keeping intersecting diagnostics would surface placeholder-induced false positives
+    /// (e.g. `no-unused-expressions` on the template literal placeholder). Fixes touching a
+    /// mask are stripped for the same reason (see below). "Used" markers from the shadow run's
+    /// disable directives are merged into `js_directives` (the directives built from the
+    /// parser's comments), so `--report-unused-disable-directives` sees a directive as used
+    /// when only a native rule used it.
     ///
     /// If the shadow source fails to parse (e.g. a custom node in a position where the
     /// placeholder isn't valid JS), native linting is skipped silently: the custom parser
@@ -863,6 +869,9 @@ impl Runtime {
     fn lint_shadow_source<'a>(
         &self,
         path: &Path,
+        // Original (pre-shadow) source text. Same byte length as the shadow, identical outside
+        // masked regions. Used to tell whether a fix's content leaked placeholder bytes.
+        original_source_text: &str,
         shadow: &'a ShadowLintInput,
         js_directives: Option<&DisableDirectives>,
         // The caller's allocator (which holds the original source text). Reused rather
@@ -913,25 +922,43 @@ impl Runtime {
         let intersects_mask = |span: Span| {
             masked_spans.iter().any(|mask| span.start < mask.end && span.end > mask.start)
         };
+        // A fix whose span is clear of every mask can still leak placeholder bytes if its
+        // *content* was copied from a masked region of the shadow (e.g. a rule that moves
+        // code). Applying it under `--fix` would then write placeholder bytes into the real
+        // file, and the span check cannot catch it. A masked region's placeholder differs from
+        // the real source it replaced, so if the placeholder text appears verbatim in the fix
+        // content but nowhere in the original source, the content must have come from the
+        // shadow - drop the fix. A placeholder that also occurs naturally in the source is
+        // indistinguishable from legitimate content and is left alone (writing those bytes back
+        // is harmless - they already exist in the original). No shipped rule is known to leak
+        // this way; this is defense-in-depth.
+        let fix_leaks_placeholder = |fix: &Fix| {
+            !fix.content.is_empty()
+                && masked_spans.iter().any(|mask| {
+                    let placeholder = &shadow.source_text[mask.start as usize..mask.end as usize];
+                    fix.content.contains(placeholder) && !original_source_text.contains(placeholder)
+                })
+        };
+        let fix_survives = |fix: &Fix| !intersects_mask(fix.span) && !fix_leaks_placeholder(fix);
         messages.retain_mut(|message| {
             if intersects_mask(message.span) {
                 return false;
             }
-            // Strip fixes whose span touches a masked region (they would apply against
-            // placeholder bytes). `Multiple` fixes are mutually-exclusive alternatives (a
-            // fix plus suggestions), so drop only the touching alternatives and keep any
-            // that stay clear of every mask, rather than discarding the whole set.
+            // Strip fixes whose span touches a masked region, or whose content leaked
+            // placeholder bytes. `Multiple` fixes are mutually-exclusive alternatives (a fix
+            // plus suggestions), so drop only the offending alternatives and keep any that
+            // survive, rather than discarding the whole set.
             message.fixes = match std::mem::replace(&mut message.fixes, PossibleFixes::None) {
                 PossibleFixes::None => PossibleFixes::None,
                 PossibleFixes::Single(fix) => {
-                    if intersects_mask(fix.span) {
-                        PossibleFixes::None
-                    } else {
+                    if fix_survives(&fix) {
                         PossibleFixes::Single(fix)
+                    } else {
+                        PossibleFixes::None
                     }
                 }
                 PossibleFixes::Multiple(mut fixes) => {
-                    fixes.retain(|fix| !intersects_mask(fix.span));
+                    fixes.retain(&fix_survives);
                     match fixes.len() {
                         0 => PossibleFixes::None,
                         1 => PossibleFixes::Single(fixes.pop().unwrap()),
@@ -984,6 +1011,7 @@ impl Runtime {
                     if let Some(shadow_lint_input) = &shadow_lint_input {
                         js_parser_messages.extend(self.lint_shadow_source(
                             path,
+                            source_text,
                             shadow_lint_input,
                             disable_directives.as_ref(),
                             &allocator_guard,

@@ -1,0 +1,10 @@
+// Regression test for non-ASCII ref injection. The toy parser turns the template literal
+// into a `CustomTemplate` node, so it becomes a masked region. `café` is referenced only
+// inside that region, so its usage is invisible to `no-unused-vars` unless the ref is
+// injected into the shadow placeholder - which requires the injectable-identifier filter to
+// accept the non-ASCII name. `trulyUnusedÜ` is used nowhere, so it must still be reported:
+// that proves `no-unused-vars` is active and that only the template-used `café` is spared.
+const café = 42;
+const trulyUnusedÜ = 99;
+
+export const output = `value: ${café}`;

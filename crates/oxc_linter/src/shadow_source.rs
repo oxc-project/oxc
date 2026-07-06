@@ -35,8 +35,10 @@ pub struct ShadowLintInput {
     /// original file unchanged.
     pub source_text: String,
     /// Byte spans of the masked regions. Native diagnostics whose span intersects one of
-    /// these are discarded (they refer to placeholder code, not real source). Sorted by
-    /// start offset.
+    /// these are discarded: the diagnostic may be about the placeholder rather than real
+    /// source, and dropping intersecting diagnostics avoids placeholder-induced false
+    /// positives (at the cost of also dropping the occasional diagnostic on an enclosing
+    /// real construct). Sorted by start offset.
     pub masked_spans: Vec<Span>,
 }
 

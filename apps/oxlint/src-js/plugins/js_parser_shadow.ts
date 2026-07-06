@@ -53,10 +53,12 @@ export interface MaskedRegionReport {
 const MAX_REFS_PER_REGION = 64;
 
 // Valid JS identifier that can be injected into a placeholder without breaking its syntax.
-// Restricted to ASCII so the injected bytes can never exceed the region's byte length
-// budget in surprising ways, and conservatively excludes reserved words that are valid
-// binding names only in sloppy mode (the shadow source is always parsed as a module).
-const INJECTABLE_IDENT_REGEX = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+// Matches the full ECMAScript identifier grammar (including non-ASCII identifiers, e.g. a
+// component named `café`), so unicode component names referenced only inside custom syntax
+// are still marked used. Rust splices the ref by its UTF-8 byte length and drops it if it
+// does not fit the placeholder, so multi-byte names are safe. Reserved words that are valid
+// binding names only in sloppy mode are excluded conservatively (the shadow is a module).
+const INJECTABLE_IDENT_REGEX = /^[$_\p{ID_Start}][$\p{ID_Continue}]*$/u;
 const NON_INJECTABLE_NAMES = new Set(["arguments", "eval", "yield", "await", "let", "static"]);
 
 /**
@@ -174,7 +176,7 @@ export function setParentsAndGetMaskedRegions(
   for (const { region, root, usesThis, privateNames } of detections) {
     if (usesThis && hasThisContext(root)) region.refs.push("this");
     for (const name of privateNames) {
-      // Restrict to ASCII identifiers, same as `collectRefs` (see INJECTABLE_IDENT_REGEX)
+      // Validate the private field name is a plain identifier, same as `collectRefs`
       if (!INJECTABLE_IDENT_REGEX.test(name)) continue;
       if (region.refs.length >= MAX_REFS_PER_REGION) break;
       // Only inject if a class enclosing the region declares `#name` - otherwise the
