@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 245/397
+Passed: 246/398
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -504,7 +504,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (11/105)
+# legacy-decorators (12/106)
 * oxc/accessor/input.ts
 x Output mismatch
 

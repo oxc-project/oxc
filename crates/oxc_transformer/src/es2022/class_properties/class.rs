@@ -452,8 +452,11 @@ impl<'a> ClassProperties<'a> {
         if let Some(temp_binding) = &class_details.bindings.temp {
             // Binding for class name is required
             if let Some(ident) = &class.id {
-                // Insert `var _Class` statement, if it wasn't already in entry phase
-                if !class_details.bindings.temp_var_is_created {
+                // For an anonymous class, `temp_var_is_created` assumes the class itself will bind
+                // the temp. If another transform changed the class ID, declare the temp separately.
+                if !class_details.bindings.temp_var_is_created
+                    || ident.symbol_id() != temp_binding.symbol_id
+                {
                     ctx.state.var_declarations.insert_var(temp_binding, &ctx.ast);
                 }
 
