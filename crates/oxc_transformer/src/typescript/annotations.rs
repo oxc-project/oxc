@@ -631,11 +631,9 @@ impl<'a> TypeScriptAnnotations<'a> {
         var_decl: &VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        for decl in &var_decl.declarations {
-            decl.id.bound_names(&mut |ident| {
+        var_decl.bound_names(&mut |ident| {
                 Self::record_removed_ambient_declaration(ident, ctx);
             });
-        }
     }
 
     fn remove_import_declaration_bindings(decl: &ImportDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
