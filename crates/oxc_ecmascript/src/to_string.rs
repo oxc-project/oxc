@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::ast::*;
 use oxc_syntax::operator::UnaryOperator;
+use smallvec::SmallVec;
 
 use crate::{
     GlobalContext, ToBoolean,
@@ -61,14 +62,28 @@ impl<'a> ToJsString<'a> for StringLiteral<'a> {
 
 impl<'a> ToJsString<'a> for TemplateLiteral<'a> {
     fn to_js_string(&self, ctx: &impl GlobalContext<'a>) -> Option<Cow<'a, str>> {
-        let mut str = String::new();
+        // A template without interpolations consists of a single quasi, which can be borrowed.
+        if self.expressions.is_empty() {
+            return Some(Cow::Borrowed(self.quasis[0].value.cooked.as_ref()?.as_str()));
+        }
+        // Resolve interpolations before allocating the result so non-constant templates can bail
+        // out early. `SmallVec` keeps the values of typical templates inline.
+        let mut values = SmallVec::<[Cow<'a, str>; 8]>::new();
+        let mut len = 0usize;
+        for expr in &self.expressions {
+            let value = expr.to_js_string(ctx)?;
+            len += value.len();
+            values.push(value);
+        }
+        for quasi in &self.quasis {
+            len += quasi.value.cooked.as_ref()?.len();
+        }
+        let mut str = String::with_capacity(len);
         for (i, quasi) in self.quasis.iter().enumerate() {
-            str.push_str(quasi.value.cooked.as_ref()?);
-
-            if i < self.expressions.len() {
-                let expr = &self.expressions[i];
-                let value = expr.to_js_string(ctx)?;
-                str.push_str(&value);
+            // Presence of every cooked value was verified in the loop above.
+            str.push_str(quasi.value.cooked.as_ref().unwrap());
+            if let Some(value) = values.get(i) {
+                str.push_str(value);
             }
         }
         Some(Cow::Owned(str))
