@@ -463,8 +463,18 @@ impl<'a> ClassProperties<'a> {
                 // Insert `_Class = Class` after class.
                 // TODO(improve-on-babel): Could just insert `var _Class = Class;` after class,
                 // rather than separate `var _Class` declaration.
-                let class_name =
-                    BoundIdentifier::from_binding_ident(ident).create_read_expression(ctx);
+                let class_name_binding = class_details
+                    .bindings
+                    .name
+                    .as_ref()
+                    .expect("class declaration with a temp always has a name binding");
+                // Preserve a later name assigned to an anonymous class. Named classes use the
+                // outer binding captured on entry, rather than a rewritten inner class binding.
+                let class_name = if class_name_binding.symbol_id == temp_binding.symbol_id {
+                    BoundIdentifier::from_binding_ident(ident).create_read_expression(ctx)
+                } else {
+                    class_name_binding.create_read_expression(ctx)
+                };
                 let expr = create_assignment(temp_binding, class_name, SPAN, ctx);
                 let stmt = Statement::new_expression_statement(SPAN, expr, ctx);
                 self.insert_after_stmts.insert(0, stmt);
