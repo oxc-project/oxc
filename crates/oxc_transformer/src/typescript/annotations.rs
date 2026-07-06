@@ -58,14 +58,14 @@ impl TypeScriptAnnotations<'_> {
     }
 }
 
-pub(crate) struct RemovedTypeScriptSemantics<'a> {
-    pub(crate) declarations: Vec<RemovedAmbientDeclaration<'a>>,
+pub struct RemovedTypeScriptSemantics<'a> {
+    pub declarations: Vec<RemovedAmbientDeclaration<'a>>,
 }
 
-pub(crate) struct RemovedAmbientDeclaration<'a> {
-    pub(crate) name: Ident<'a>,
-    pub(crate) symbol_id: SymbolId,
-    pub(crate) span: Span,
+pub struct RemovedAmbientDeclaration<'a> {
+    pub name: Ident<'a>,
+    pub symbol_id: SymbolId,
+    pub span: Span,
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {

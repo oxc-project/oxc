@@ -13,7 +13,7 @@ mod namespace;
 mod options;
 mod rewrite_extensions;
 
-pub(crate) use annotations::RemovedTypeScriptSemantics;
+pub use annotations::RemovedTypeScriptSemantics;
 use annotations::TypeScriptAnnotations;
 use r#enum::TypeScriptEnum;
 use module::TypeScriptModule;
