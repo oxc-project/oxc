@@ -5,7 +5,7 @@ use oxc_span::{SPAN, Span};
 use oxc_syntax::{
     operator::{AssignmentOperator, LogicalOperator},
     scope::{ScopeFlags, ScopeId},
-    symbol::SymbolFlags,
+    symbol::{SymbolFlags, SymbolId},
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -19,11 +19,30 @@ use super::{
 pub struct TypeScriptNamespace {
     // Options
     allow_namespaces: bool,
+    pending_symbol_flags: Vec<(SymbolId, SymbolFlags)>,
 }
 
 impl TypeScriptNamespace {
     pub fn new(options: &TypeScriptOptions) -> Self {
-        Self { allow_namespaces: options.allow_namespaces }
+        Self { allow_namespaces: options.allow_namespaces, pending_symbol_flags: Vec::new() }
+    }
+
+    fn pending_symbol_flags_mut(
+        &mut self,
+        symbol_id: SymbolId,
+        initial_flags: SymbolFlags,
+    ) -> &mut SymbolFlags {
+        if let Some(index) = self.pending_symbol_flags.iter().position(|&(id, _)| id == symbol_id) {
+            return &mut self.pending_symbol_flags[index].1;
+        }
+        self.pending_symbol_flags.push((symbol_id, initial_flags));
+        &mut self.pending_symbol_flags.last_mut().unwrap().1
+    }
+
+    fn apply_pending_symbol_flags(&mut self, ctx: &mut TraverseCtx<'_>) {
+        for (symbol_id, flags) in self.pending_symbol_flags.drain(..) {
+            *ctx.scoping_mut().symbol_flags_mut(symbol_id) = flags;
+        }
     }
 }
 
@@ -85,13 +104,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
         }
 
         program.body = new_stmts;
+        self.apply_pending_symbol_flags(ctx);
     }
 }
 
 impl<'a> TypeScriptNamespace {
-    #[expect(clippy::self_only_used_in_recursion)]
     fn handle_nested(
-        &self,
+        &mut self,
         decl: ArenaBox<'a, TSModuleDeclaration<'a>>,
         is_export: bool,
         parent_stmts: &mut ArenaVec<'a, Statement<'a>>,
@@ -281,10 +300,16 @@ impl<'a> TypeScriptNamespace {
             }
         }
 
-        if !Self::is_redeclaration_namespace(&ident, ctx) {
-            let binding_span = ident.span;
-            ctx.scoping_mut().set_symbol_span(binding.symbol_id, binding_span);
-            let declaration = Self::create_variable_declaration(&binding, span, binding_span, ctx);
+        if Self::is_redeclaration_namespace(&ident, ctx) {
+            let symbol_id = ident.symbol_id();
+            let initial_flags = ctx.scoping().symbol_flags(symbol_id);
+            let flags = self.pending_symbol_flags_mut(symbol_id, initial_flags);
+            *flags -= SymbolFlags::ValueModule | SymbolFlags::NamespaceModule;
+        } else {
+            *self.pending_symbol_flags_mut(binding.symbol_id, SymbolFlags::BlockScopedVariable) =
+                SymbolFlags::BlockScopedVariable;
+            ctx.scoping_mut().set_symbol_span(binding.symbol_id, ident.span);
+            let declaration = Self::create_variable_declaration(&binding, span, ident.span, ctx);
             if is_export {
                 let export_named_decl =
                     ExportNamedDeclaration::boxed_plain_declaration(span, declaration, ctx);
