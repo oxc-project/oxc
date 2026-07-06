@@ -3118,6 +3118,12 @@ impl RuleRunner for crate::rules::unicorn::no_array_for_each::NoArrayForEach {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_array_from_fill::NoArrayFromFill {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner
     for crate::rules::unicorn::no_array_method_this_argument::NoArrayMethodThisArgument
 {

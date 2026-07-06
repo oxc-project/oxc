@@ -1517,6 +1517,7 @@ export interface DummyRuleMap {
   "unicorn/no-array-callback-reference"?: RuleNoConfig;
   "unicorn/no-array-fill-with-reference-type"?: RuleNoConfig;
   "unicorn/no-array-for-each"?: RuleNoConfig;
+  "unicorn/no-array-from-fill"?: RuleNoConfig;
   "unicorn/no-array-method-this-argument"?: RuleNoConfig;
   "unicorn/no-array-reduce"?: RuleNoConfig | [AllowWarnDeny, NoArrayReduce];
   "unicorn/no-array-reverse"?: RuleNoConfig | [AllowWarnDeny, NoArrayReverse];

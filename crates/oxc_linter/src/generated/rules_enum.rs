@@ -620,6 +620,7 @@ pub use crate::rules::unicorn::no_anonymous_default_export::NoAnonymousDefaultEx
 pub use crate::rules::unicorn::no_array_callback_reference::NoArrayCallbackReference as UnicornNoArrayCallbackReference;
 pub use crate::rules::unicorn::no_array_fill_with_reference_type::NoArrayFillWithReferenceType as UnicornNoArrayFillWithReferenceType;
 pub use crate::rules::unicorn::no_array_for_each::NoArrayForEach as UnicornNoArrayForEach;
+pub use crate::rules::unicorn::no_array_from_fill::NoArrayFromFill as UnicornNoArrayFromFill;
 pub use crate::rules::unicorn::no_array_method_this_argument::NoArrayMethodThisArgument as UnicornNoArrayMethodThisArgument;
 pub use crate::rules::unicorn::no_array_reduce::NoArrayReduce as UnicornNoArrayReduce;
 pub use crate::rules::unicorn::no_array_reverse::NoArrayReverse as UnicornNoArrayReverse;
@@ -1345,6 +1346,7 @@ pub enum RuleEnum {
     UnicornNoArrayCallbackReference(UnicornNoArrayCallbackReference),
     UnicornNoArrayFillWithReferenceType(UnicornNoArrayFillWithReferenceType),
     UnicornNoArrayForEach(UnicornNoArrayForEach),
+    UnicornNoArrayFromFill(UnicornNoArrayFromFill),
     UnicornNoArrayMethodThisArgument(UnicornNoArrayMethodThisArgument),
     UnicornNoArrayReduce(UnicornNoArrayReduce),
     UnicornNoArrayReverse(UnicornNoArrayReverse),
@@ -2254,7 +2256,8 @@ const UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID: usize =
 const UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID: usize =
     UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID + 1usize;
 const UNICORN_NO_ARRAY_FOR_EACH_ID: usize = UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID + 1usize;
-const UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID: usize = UNICORN_NO_ARRAY_FOR_EACH_ID + 1usize;
+const UNICORN_NO_ARRAY_FROM_FILL_ID: usize = UNICORN_NO_ARRAY_FOR_EACH_ID + 1usize;
+const UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID: usize = UNICORN_NO_ARRAY_FROM_FILL_ID + 1usize;
 const UNICORN_NO_ARRAY_REDUCE_ID: usize = UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID + 1usize;
 const UNICORN_NO_ARRAY_REVERSE_ID: usize = UNICORN_NO_ARRAY_REDUCE_ID + 1usize;
 const UNICORN_NO_ARRAY_SORT_ID: usize = UNICORN_NO_ARRAY_REVERSE_ID + 1usize;
@@ -3234,6 +3237,7 @@ impl RuleEnum {
                 UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID
             }
             Self::UnicornNoArrayForEach(_) => UNICORN_NO_ARRAY_FOR_EACH_ID,
+            Self::UnicornNoArrayFromFill(_) => UNICORN_NO_ARRAY_FROM_FILL_ID,
             Self::UnicornNoArrayMethodThisArgument(_) => UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID,
             Self::UnicornNoArrayReduce(_) => UNICORN_NO_ARRAY_REDUCE_ID,
             Self::UnicornNoArrayReverse(_) => UNICORN_NO_ARRAY_REVERSE_ID,
@@ -4206,6 +4210,7 @@ impl RuleEnum {
                 UnicornNoArrayFillWithReferenceType::NAME
             }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::NAME,
+            Self::UnicornNoArrayFromFill(_) => UnicornNoArrayFromFill::NAME,
             Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::NAME,
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::NAME,
             Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::NAME,
@@ -5196,6 +5201,7 @@ impl RuleEnum {
                 UnicornNoArrayFillWithReferenceType::CATEGORY
             }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::CATEGORY,
+            Self::UnicornNoArrayFromFill(_) => UnicornNoArrayFromFill::CATEGORY,
             Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::CATEGORY,
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::CATEGORY,
             Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::CATEGORY,
@@ -6189,6 +6195,7 @@ impl RuleEnum {
                 UnicornNoArrayFillWithReferenceType::FIX
             }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::FIX,
+            Self::UnicornNoArrayFromFill(_) => UnicornNoArrayFromFill::FIX,
             Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::FIX,
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::FIX,
             Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::FIX,
@@ -7282,6 +7289,7 @@ impl RuleEnum {
                 UnicornNoArrayFillWithReferenceType::documentation()
             }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::documentation(),
+            Self::UnicornNoArrayFromFill(_) => UnicornNoArrayFromFill::documentation(),
             Self::UnicornNoArrayMethodThisArgument(_) => {
                 UnicornNoArrayMethodThisArgument::documentation()
             }
@@ -9191,6 +9199,8 @@ impl RuleEnum {
             }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::config_schema(generator)
                 .or_else(|| UnicornNoArrayForEach::schema(generator)),
+            Self::UnicornNoArrayFromFill(_) => UnicornNoArrayFromFill::config_schema(generator)
+                .or_else(|| UnicornNoArrayFromFill::schema(generator)),
             Self::UnicornNoArrayMethodThisArgument(_) => {
                 UnicornNoArrayMethodThisArgument::config_schema(generator)
                     .or_else(|| UnicornNoArrayMethodThisArgument::schema(generator))
@@ -10739,6 +10749,7 @@ impl RuleEnum {
             Self::UnicornNoArrayCallbackReference(_) => "unicorn",
             Self::UnicornNoArrayFillWithReferenceType(_) => "unicorn",
             Self::UnicornNoArrayForEach(_) => "unicorn",
+            Self::UnicornNoArrayFromFill(_) => "unicorn",
             Self::UnicornNoArrayMethodThisArgument(_) => "unicorn",
             Self::UnicornNoArrayReduce(_) => "unicorn",
             Self::UnicornNoArrayReverse(_) => "unicorn",
@@ -12652,6 +12663,9 @@ impl RuleEnum {
             Self::UnicornNoArrayForEach(_) => {
                 Ok(Self::UnicornNoArrayForEach(UnicornNoArrayForEach::from_configuration(value)?))
             }
+            Self::UnicornNoArrayFromFill(_) => {
+                Ok(Self::UnicornNoArrayFromFill(UnicornNoArrayFromFill::from_configuration(value)?))
+            }
             Self::UnicornNoArrayMethodThisArgument(_) => {
                 Ok(Self::UnicornNoArrayMethodThisArgument(
                     UnicornNoArrayMethodThisArgument::from_configuration(value)?,
@@ -14314,6 +14328,7 @@ impl RuleEnum {
             Self::UnicornNoArrayCallbackReference(rule) => rule.to_configuration(),
             Self::UnicornNoArrayFillWithReferenceType(rule) => rule.to_configuration(),
             Self::UnicornNoArrayForEach(rule) => rule.to_configuration(),
+            Self::UnicornNoArrayFromFill(rule) => rule.to_configuration(),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.to_configuration(),
             Self::UnicornNoArrayReduce(rule) => rule.to_configuration(),
             Self::UnicornNoArrayReverse(rule) => rule.to_configuration(),
@@ -15165,6 +15180,7 @@ impl RuleEnum {
             Self::UnicornNoArrayCallbackReference(rule) => rule.run(node, ctx),
             Self::UnicornNoArrayFillWithReferenceType(rule) => rule.run(node, ctx),
             Self::UnicornNoArrayForEach(rule) => rule.run(node, ctx),
+            Self::UnicornNoArrayFromFill(rule) => rule.run(node, ctx),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.run(node, ctx),
             Self::UnicornNoArrayReduce(rule) => rule.run(node, ctx),
             Self::UnicornNoArrayReverse(rule) => rule.run(node, ctx),
@@ -16026,6 +16042,7 @@ impl RuleEnum {
             Self::UnicornNoArrayCallbackReference(rule) => rule.run_once(ctx),
             Self::UnicornNoArrayFillWithReferenceType(rule) => rule.run_once(ctx),
             Self::UnicornNoArrayForEach(rule) => rule.run_once(ctx),
+            Self::UnicornNoArrayFromFill(rule) => rule.run_once(ctx),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.run_once(ctx),
             Self::UnicornNoArrayReduce(rule) => rule.run_once(ctx),
             Self::UnicornNoArrayReverse(rule) => rule.run_once(ctx),
@@ -16966,6 +16983,7 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::UnicornNoArrayForEach(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoArrayFromFill(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoArrayReduce(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoArrayReverse(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17866,6 +17884,7 @@ impl RuleEnum {
             Self::UnicornNoArrayCallbackReference(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayFillWithReferenceType(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayForEach(rule) => rule.should_run(ctx),
+            Self::UnicornNoArrayFromFill(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayReduce(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayReverse(rule) => rule.should_run(ctx),
@@ -18920,6 +18939,7 @@ impl RuleEnum {
                 UnicornNoArrayFillWithReferenceType::IS_TSGOLINT_RULE
             }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::IS_TSGOLINT_RULE,
+            Self::UnicornNoArrayFromFill(_) => UnicornNoArrayFromFill::IS_TSGOLINT_RULE,
             Self::UnicornNoArrayMethodThisArgument(_) => {
                 UnicornNoArrayMethodThisArgument::IS_TSGOLINT_RULE
             }
@@ -20050,6 +20070,7 @@ impl RuleEnum {
                 UnicornNoArrayFillWithReferenceType::VERSION
             }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::VERSION,
+            Self::UnicornNoArrayFromFill(_) => UnicornNoArrayFromFill::VERSION,
             Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::VERSION,
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::VERSION,
             Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::VERSION,
@@ -21091,6 +21112,7 @@ impl RuleEnum {
                 UnicornNoArrayFillWithReferenceType::HAS_CONFIG
             }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::HAS_CONFIG,
+            Self::UnicornNoArrayFromFill(_) => UnicornNoArrayFromFill::HAS_CONFIG,
             Self::UnicornNoArrayMethodThisArgument(_) => {
                 UnicornNoArrayMethodThisArgument::HAS_CONFIG
             }
@@ -22105,6 +22127,7 @@ impl RuleEnum {
                 UnicornNoArrayFillWithReferenceType::INFO
             }
             Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::INFO,
+            Self::UnicornNoArrayFromFill(_) => UnicornNoArrayFromFill::INFO,
             Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::INFO,
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::INFO,
             Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::INFO,
@@ -22996,6 +23019,7 @@ impl RuleEnum {
             Self::UnicornNoArrayCallbackReference(rule) => rule.types_info(),
             Self::UnicornNoArrayFillWithReferenceType(rule) => rule.types_info(),
             Self::UnicornNoArrayForEach(rule) => rule.types_info(),
+            Self::UnicornNoArrayFromFill(rule) => rule.types_info(),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.types_info(),
             Self::UnicornNoArrayReduce(rule) => rule.types_info(),
             Self::UnicornNoArrayReverse(rule) => rule.types_info(),
@@ -23844,6 +23868,7 @@ impl RuleEnum {
             Self::UnicornNoArrayCallbackReference(rule) => rule.run_info(),
             Self::UnicornNoArrayFillWithReferenceType(rule) => rule.run_info(),
             Self::UnicornNoArrayForEach(rule) => rule.run_info(),
+            Self::UnicornNoArrayFromFill(rule) => rule.run_info(),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.run_info(),
             Self::UnicornNoArrayReduce(rule) => rule.run_info(),
             Self::UnicornNoArrayReverse(rule) => rule.run_info(),
@@ -24790,6 +24815,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             UnicornNoArrayFillWithReferenceType::default(),
         ),
         RuleEnum::UnicornNoArrayForEach(UnicornNoArrayForEach::default()),
+        RuleEnum::UnicornNoArrayFromFill(UnicornNoArrayFromFill::default()),
         RuleEnum::UnicornNoArrayMethodThisArgument(UnicornNoArrayMethodThisArgument::default()),
         RuleEnum::UnicornNoArrayReduce(UnicornNoArrayReduce::default()),
         RuleEnum::UnicornNoArrayReverse(UnicornNoArrayReverse::default()),

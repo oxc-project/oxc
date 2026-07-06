@@ -544,6 +544,7 @@ unicorn/no-anonymous-default-export                        |  13007
 unicorn/no-array-callback-reference                        |  62606
 unicorn/no-array-fill-with-reference-type                  |  62606
 unicorn/no-array-for-each                                  |  62606
+unicorn/no-array-from-fill                                 |  62606
 unicorn/no-array-method-this-argument                      |  62606
 unicorn/no-array-reduce                                    |  62606
 unicorn/no-array-reverse                                   |  62606

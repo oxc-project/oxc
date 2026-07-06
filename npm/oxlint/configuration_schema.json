@@ -8812,6 +8812,9 @@
         "unicorn/no-array-for-each": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-array-from-fill": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-array-method-this-argument": {
           "$ref": "#/definitions/RuleNoConfig"
         },
