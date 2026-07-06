@@ -18455,14 +18455,8 @@ rebuilt        : SymbolId(0): [ReferenceId(0)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/accessor/decoratorOnClassAccessor1.es6.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["_decorate", "_decorateMetadata", "dec"]
+after transform: ScopeId(0): ["_decorate", "_decorateMetadata", "_default", "dec"]
 rebuilt        : ScopeId(0): ["_decorate", "_decorateMetadata", "_default"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_default"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_default":
-after transform: SymbolId(6): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(0)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -18623,14 +18617,8 @@ rebuilt        : ["_Class", "dec"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/method/decoratorOnClassMethod1.es6.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["_decorate", "_decorateMetadata", "dec"]
+after transform: ScopeId(0): ["_decorate", "_decorateMetadata", "_default", "dec"]
 rebuilt        : ScopeId(0): ["_decorate", "_decorateMetadata", "_default"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_default"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_default":
-after transform: SymbolId(6): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(0)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -18640,14 +18628,8 @@ rebuilt        : ["Function", "dec"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/method/parameter/decoratorOnClassMethodParameter1.es6.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["_decorate", "_decorateMetadata", "_decorateParam", "dec"]
+after transform: ScopeId(0): ["_decorate", "_decorateMetadata", "_decorateParam", "_default", "dec"]
 rebuilt        : ScopeId(0): ["_decorate", "_decorateMetadata", "_decorateParam", "_default"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_default"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_default":
-after transform: SymbolId(7): ScopeId(2)
-rebuilt        : SymbolId(3): ScopeId(0)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -18657,14 +18639,8 @@ rebuilt        : ["Function", "Number", "dec"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/property/decoratorOnClassProperty1.es6.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["_decorate", "_decorateMetadata", "_defineProperty", "dec"]
+after transform: ScopeId(0): ["_decorate", "_decorateMetadata", "_default", "_defineProperty", "dec"]
 rebuilt        : ScopeId(0): ["_decorate", "_decorateMetadata", "_default", "_defineProperty"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_default"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_default":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(3): ScopeId(0)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>

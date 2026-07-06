@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 244/397
+Passed: 245/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -504,7 +504,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (10/105)
+# legacy-decorators (11/105)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -555,29 +555,9 @@ after transform: ["WeakMap", "babelHelpers"]
 rebuilt        : ["WeakMap", "a", "babelHelpers", "dec"]
 
 * oxc/class-without-name-with-decorated_class/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["dec"]
-rebuilt        : ScopeId(0): ["_default", "dec"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_default"]
-rebuilt        : ScopeId(1): []
 Symbol flags mismatch for "_default":
 after transform: SymbolId(1): SymbolFlags(Class)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
-Symbol scope ID mismatch for "_default":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(0)
-
-* oxc/class-without-name-with-decorated_element/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["dec"]
-rebuilt        : ScopeId(0): ["_default", "dec"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_default"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_default":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(0)
 
 * oxc/metadata/abstract-class/input.ts
 Symbol span mismatch for "AbstractClass":
