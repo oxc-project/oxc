@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 4174/4720 (88.43%)
+Positive Passed: 4173/4720 (88.41%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -2936,6 +2936,11 @@ rebuilt        : SymbolId(0): Span { start: 55, end: 60 }
 Symbol redeclarations mismatch for "Mixin":
 after transform: SymbolId(0): [Span { start: 10, end: 15 }, Span { start: 55, end: 60 }]
 rebuilt        : SymbolId(0): []
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAccessors5.ts
+Unresolved references mismatch:
+after transform: ["GetterA", "GetterB"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/mixinClassesAnnotated.ts
 Bindings mismatch:

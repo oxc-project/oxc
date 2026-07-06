@@ -1,14 +1,13 @@
 use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
-use oxc_semantic::{Reference, Scoping, SymbolFlags};
+use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{
     operator::AssignmentOperator,
-    reference::{ReferenceFlags, ReferenceId},
+    reference::ReferenceFlags,
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
@@ -30,7 +29,6 @@ pub struct TypeScriptAnnotations<'a> {
     jsx_fragment_import_name: String,
 
     removed_ambient_declarations: Vec<RemovedAmbientDeclaration<'a>>,
-    removed_typescript_references: Vec<RemovedTypeScriptReference>,
 }
 
 impl TypeScriptAnnotations<'_> {
@@ -56,25 +54,18 @@ impl TypeScriptAnnotations<'_> {
             jsx_element_import_name,
             jsx_fragment_import_name,
             removed_ambient_declarations: vec![],
-            removed_typescript_references: vec![],
         }
     }
 }
 
 pub(crate) struct RemovedTypeScriptSemantics<'a> {
     pub(crate) declarations: Vec<RemovedAmbientDeclaration<'a>>,
-    pub(crate) references: Vec<RemovedTypeScriptReference>,
 }
 
 pub(crate) struct RemovedAmbientDeclaration<'a> {
     pub(crate) name: Ident<'a>,
     pub(crate) symbol_id: SymbolId,
     pub(crate) span: Span,
-}
-
-pub(crate) struct RemovedTypeScriptReference {
-    pub(crate) reference_id: ReferenceId,
-    pub(crate) symbol_id: Option<SymbolId>,
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
@@ -87,7 +78,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 Statement::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
                     let declaration = decl.declaration.as_ref().unwrap();
                     if declaration.is_typescript_syntax() {
-                        self.removed_reference_cleaner(ctx).visit_declaration(declaration);
                         self.remove_ambient_declaration_bindings(declaration);
                         false
                     } else {
@@ -96,7 +86,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 }
                 Statement::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {
-                        self.removed_reference_cleaner(ctx).visit_export_named_declaration(decl);
                         false
                     } else if decl.specifiers.is_empty() {
                         // `export {}` or `export {} from 'mod'`
@@ -104,23 +93,24 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                         true
                     } else {
                         decl.specifiers
-                            .retain(|specifier| self.can_retain_export_specifier(specifier, ctx));
+                            .retain(|specifier| Self::retain_export_specifier(specifier, ctx));
                         // Keep the export declaration if there are still specifiers after removing type exports
                         !decl.specifiers.is_empty()
                     }
                 }
                 Statement::ExportAllDeclaration(decl) => !decl.export_kind.is_type(),
                 Statement::ExportDefaultDeclaration(decl) => {
-                    let keep = !decl.is_typescript_syntax()
-                        && !matches!(
-                            &decl.declaration,
-                            ExportDefaultDeclarationKind::Identifier(ident) if Self::is_refers_to_type(ident, ctx)
-                        );
-                    if !keep {
-                        self.removed_reference_cleaner(ctx)
-                            .visit_export_default_declaration_kind(&decl.declaration);
+                    if decl.is_typescript_syntax() {
+                        false
+                    } else if let ExportDefaultDeclarationKind::Identifier(ident) =
+                        &decl.declaration
+                        && Self::is_refers_to_type(ident, ctx)
+                    {
+                        ctx.scoping_mut().delete_reference(ident.reference_id());
+                        false
+                    } else {
+                        true
                     }
-                    keep
                 }
                 Statement::ImportDeclaration(decl) => {
                     if decl.import_kind.is_type() {
@@ -150,7 +140,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                                 };
                                 // If `only_remove_type_imports` is true, then we can return `true` to keep it because
                                 // it is not a type import, otherwise we need to check if the identifier is referenced
-                                if self.only_remove_type_imports || self.has_value_reference(id, ctx) {
+                                if self.only_remove_type_imports
+                                    || self.has_value_reference(id, ctx)
+                                {
                                     true
                                 } else {
                                     Self::remove_binding(id, ctx);
@@ -407,11 +399,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         stmts.retain(|stmt| match stmt {
             match_declaration!(Statement) => {
                 let declaration = stmt.to_declaration();
-                let keep = self.should_keep_declaration(declaration, ctx);
-                if !keep {
-                    self.removed_reference_cleaner(ctx).visit_declaration(declaration);
-                }
-                keep
+                self.should_keep_declaration(declaration, ctx)
             }
             _ => true,
         });
@@ -545,7 +533,6 @@ impl<'a> TypeScriptAnnotations<'a> {
     pub(crate) fn take_removed_semantics(&mut self) -> RemovedTypeScriptSemantics<'a> {
         RemovedTypeScriptSemantics {
             declarations: std::mem::take(&mut self.removed_ambient_declarations),
-            references: std::mem::take(&mut self.removed_typescript_references),
         }
     }
 
@@ -699,16 +686,6 @@ impl<'a> TypeScriptAnnotations<'a> {
         });
     }
 
-    fn removed_reference_cleaner<'s>(
-        &'s mut self,
-        ctx: &'s TraverseCtx<'a>,
-    ) -> RemovedReferenceCleaner<'s> {
-        RemovedReferenceCleaner {
-            scoping: ctx.scoping(),
-            removed_references: &mut self.removed_typescript_references,
-        }
-    }
-
     /// Check if the given name is a JSX pragma or fragment pragma import
     /// and if the file contains JSX elements or fragments
     fn is_jsx_imports(&self, name: &str) -> bool {
@@ -772,17 +749,16 @@ impl<'a> TypeScriptAnnotations<'a> {
         self.is_jsx_imports(&id.name)
     }
 
-    fn can_retain_export_specifier(
-        &mut self,
-        specifier: &ExportSpecifier<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> bool {
-        let keep = !specifier.export_kind.is_type()
-            && !matches!(&specifier.local, ModuleExportName::IdentifierReference(ident) if Self::is_refers_to_type(ident, ctx));
-        if !keep {
-            self.removed_reference_cleaner(ctx).visit_export_specifier(specifier);
+    fn retain_export_specifier(specifier: &ExportSpecifier<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+        let ModuleExportName::IdentifierReference(ident) = &specifier.local else {
+            return !specifier.export_kind.is_type();
+        };
+        if specifier.export_kind.is_type() || Self::is_refers_to_type(ident, ctx) {
+            ctx.scoping_mut().delete_reference(ident.reference_id());
+            false
+        } else {
+            true
         }
-        keep
     }
 
     fn is_refers_to_type(ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
@@ -794,19 +770,6 @@ impl<'a> TypeScriptAnnotations<'a> {
                 || scoping.symbol_flags(symbol_id).is_ambient()
                     && scoping.symbol_redeclarations(symbol_id).iter().all(|r| r.flags.is_ambient())
         })
-    }
-}
-
-struct RemovedReferenceCleaner<'ctx> {
-    scoping: &'ctx Scoping,
-    removed_references: &'ctx mut Vec<RemovedTypeScriptReference>,
-}
-
-impl<'a> Visit<'a> for RemovedReferenceCleaner<'_> {
-    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        let reference_id = ident.reference_id();
-        let symbol_id = self.scoping.get_reference(reference_id).symbol_id();
-        self.removed_references.push(RemovedTypeScriptReference { reference_id, symbol_id });
     }
 }
 

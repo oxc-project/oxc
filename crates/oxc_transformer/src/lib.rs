@@ -7,7 +7,7 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, ArenaVec, BitSet, ReplaceWith};
+use oxc_allocator::{Allocator, ArenaVec, ReplaceWith};
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_diagnostics::Diagnostics;
 #[cfg(feature = "react_compiler")]
@@ -214,7 +214,7 @@ impl<'a> Transformer<'a> {
         let removed_semantics =
             transformer.x0_typescript.as_mut().map(TypeScript::take_removed_semantics);
         let (mut state, mut scoping) = reusable_ctx.into_state_and_scoping();
-        update_removed_ambient_references(removed_semantics, &mut scoping, allocator);
+        update_removed_ambient_references(removed_semantics, &mut scoping);
         let helpers_used = state.helper_loader.used_helpers.drain().collect();
         let mut diagnostics = react_compiler_diagnostics;
         diagnostics.extend(state.take_errors());
@@ -248,11 +248,8 @@ impl<'a> Transformer<'a> {
 fn update_removed_ambient_references(
     removed_semantics: Option<RemovedTypeScriptSemantics<'_>>,
     scoping: &mut Scoping,
-    allocator: &Allocator,
 ) {
-    let Some(RemovedTypeScriptSemantics { mut declarations, references: removed_references }) =
-        removed_semantics
-    else {
+    let Some(RemovedTypeScriptSemantics { mut declarations }) = removed_semantics else {
         return;
     };
     declarations.sort_unstable_by_key(|declaration| {
@@ -285,26 +282,7 @@ fn update_removed_ambient_references(
         start = end;
     }
 
-    let excluded = if !removed_references.is_empty() && !removed_bindings.is_empty() {
-        let mut excluded = BitSet::new_in(scoping.references_len(), allocator);
-        for reference in removed_references {
-            if reference.symbol_id.is_some_and(|symbol_id| {
-                removed_bindings
-                    .binary_search_by_key(&symbol_id, |(symbol_id, ..)| *symbol_id)
-                    .is_ok()
-            }) {
-                excluded.set_bit(reference.reference_id.index());
-            }
-        }
-        Some(excluded)
-    } else {
-        None
-    };
-
     for (symbol_id, name, scope_id, outer_symbol_id) in removed_bindings {
-        if let Some(excluded) = &excluded {
-            scoping.retain_symbol_references_excluding(symbol_id, excluded);
-        }
         scoping.remove_binding(scope_id, name);
         if let Some(outer_symbol_id) = outer_symbol_id {
             scoping.rebind_symbol_references(symbol_id, outer_symbol_id);

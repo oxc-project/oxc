@@ -704,20 +704,6 @@ impl Scoping {
         });
     }
 
-    /// Remove every `ReferenceId` whose bit is set in `excluded` from one symbol.
-    pub fn retain_symbol_references_excluding(
-        &mut self,
-        symbol_id: SymbolId,
-        excluded: &BitSet<'_>,
-    ) {
-        if excluded.is_empty() {
-            return;
-        }
-        self.cell.with_dependent_mut(|_allocator, cell| {
-            cell.resolved_references[symbol_id.index()].retain(|id| !excluded.contains(id.index()));
-        });
-    }
-
     /// Reserve additional capacity for symbols, references, and scopes.
     pub fn reserve(
         &mut self,
