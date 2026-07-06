@@ -2424,6 +2424,32 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_ts_method_signature(&mut self, sig: &TSMethodSignature<'a>) {
+        let kind = AstKind::TSMethodSignature(self.alloc(sig));
+        self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty(), &sig.scope_id);
+        self.visit_span(&sig.span);
+        if sig.computed {
+            // interface A { [prop](): string }
+            //                ^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
+            self.current_reference_flags = ReferenceFlags::ValueAsType;
+        }
+        self.visit_property_key(&sig.key);
+        self.current_reference_flags = ReferenceFlags::empty();
+        if let Some(type_parameters) = &sig.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        if let Some(this_param) = &sig.this_param {
+            self.visit_ts_this_parameter(this_param);
+        }
+        self.visit_formal_parameters(&sig.params);
+        if let Some(return_type) = &sig.return_type {
+            self.visit_ts_type_annotation(return_type);
+        }
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
     fn visit_import_specifier(&mut self, specifier: &ImportSpecifier<'a>) {
         let kind = AstKind::ImportSpecifier(self.alloc(specifier));
         self.enter_node(kind);

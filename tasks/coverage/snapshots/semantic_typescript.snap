@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 3235/4720 (68.54%)
+Positive Passed: 3241/4720 (68.67%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["console", "formatHost", "os", "process", "reportDiagnostic", "reportWatchStatusChanged", "ts", "watchMain"]
@@ -703,7 +703,7 @@ Reference symbol mismatch for "g":
 after transform: SymbolId(10) "g"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Symbol", "arguments", "require"]
+after transform: ["arguments", "require"]
 rebuilt        : ["arguments", "authorPromise", "g", "mapper", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3.ts
@@ -2580,9 +2580,6 @@ rebuilt        : ScopeId(0): ["Props", "k"]
 Bindings mismatch:
 after transform: ScopeId(1): ["Props", "k"]
 rebuilt        : ScopeId(1): ["Props"]
-Symbol reference IDs mismatch for "k":
-after transform: SymbolId(0): [ReferenceId(3), ReferenceId(5), ReferenceId(13)]
-rebuilt        : SymbolId(0): [ReferenceId(9)]
 Symbol flags mismatch for "Props":
 after transform: SymbolId(1): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
@@ -3709,11 +3706,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Promise", "Set", "require"]
 rebuilt        : ["Promise", "Set", "ctor", "require", "x"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/controlFlowInstanceofWithSymbolHasInstance.ts
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(40), ReferenceId(45)]
-rebuilt        : [ReferenceId(30), ReferenceId(34)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/controlFlowManyConsecutiveConditionsNoTimeout.ts
 Bindings mismatch:
@@ -7121,7 +7113,7 @@ Reference symbol mismatch for "offer":
 after transform: SymbolId(5) "offer"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Symbol"]
+after transform: []
 rebuilt        : ["fn", "offer"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericCallAtYieldExpressionInGenericCall3.ts
@@ -7141,7 +7133,7 @@ Reference symbol mismatch for "gen":
 after transform: SymbolId(20) "gen"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Symbol"]
+after transform: []
 rebuilt        : ["gen", "runPromise", "traverse"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericCallInferenceConditionalType1.ts
@@ -18246,11 +18238,6 @@ Unresolved reference IDs mismatch for "Symbol":
 after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 rebuilt        : [ReferenceId(0)]
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolDeclarationEmit5.ts
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty13.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "_Symbol$iterator", "_defineProperty", "bar", "foo", "i"]
@@ -18307,11 +18294,6 @@ Unresolved references mismatch:
 after transform: ["Symbol", "require"]
 rebuilt        : ["Symbol", "bar", "foo", "require"]
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty20.ts
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(1), ReferenceId(3), ReferenceId(5)]
-rebuilt        : [ReferenceId(0), ReferenceId(2)]
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty22.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["foo"]
@@ -18322,9 +18304,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Symbol"]
 rebuilt        : ["Symbol", "foo"]
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(0), ReferenceId(9)]
-rebuilt        : [ReferenceId(1)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty40.ts
 Unresolved reference IDs mismatch for "Symbol":
@@ -18384,11 +18363,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/sy
 Bindings mismatch:
 after transform: ScopeId(0): ["mySymbol"]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty8.ts
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/superCallBeforeThisAccessing1.ts
 Bindings mismatch:
@@ -24163,11 +24137,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["A", "B", "C"]
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Symbols/parserSymbolProperty2.ts
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Symbols/parserSymbolProperty3.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["C"]
@@ -24180,11 +24149,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascr
 Bindings mismatch:
 after transform: ScopeId(0): ["C"]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Symbols/parserSymbolProperty8.ts
 Unresolved references mismatch:
 after transform: ["Symbol"]
 rebuilt        : []
