@@ -16,7 +16,7 @@ catalog:
   "@types/node": 24.1.0
   cross-env: ^10.1.0
   degit: 3.4.7
-  eslint: 10.5.0
+  eslint: 10.6.0
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.21
   rolldown: 1.1.4
