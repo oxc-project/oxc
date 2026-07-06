@@ -13,6 +13,7 @@ mod namespace;
 mod options;
 mod rewrite_extensions;
 
+pub(crate) use annotations::RemovedTypeScriptSemantics;
 use annotations::TypeScriptAnnotations;
 use r#enum::TypeScriptEnum;
 use module::TypeScriptModule;
@@ -68,6 +69,10 @@ impl<'a> TypeScript<'a> {
             remove_class_fields_without_initializer: !options.allow_declare_fields
                 || options.remove_class_fields_without_initializer,
         }
+    }
+
+    pub(crate) fn take_removed_semantics(&mut self) -> RemovedTypeScriptSemantics<'a> {
+        self.annotations.take_removed_semantics()
     }
 }
 

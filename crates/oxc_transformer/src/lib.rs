@@ -60,7 +60,7 @@ use jsx::Jsx;
 use regexp::RegExp;
 use rustc_hash::FxHashMap;
 use state::TransformState;
-use typescript::TypeScript;
+use typescript::{RemovedTypeScriptSemantics, TypeScript};
 
 use crate::plugins::Plugins;
 pub use crate::{
@@ -211,8 +211,10 @@ impl<'a> Transformer<'a> {
 
         let mut reusable_ctx = ReusableTraverseCtx::new(self.state, scoping, allocator);
         traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
+        let removed_semantics =
+            transformer.x0_typescript.as_mut().map(TypeScript::take_removed_semantics);
         let (mut state, mut scoping) = reusable_ctx.into_state_and_scoping();
-        update_removed_ambient_references(&mut state, &mut scoping, allocator);
+        update_removed_ambient_references(removed_semantics, &mut scoping, allocator);
         let helpers_used = state.helper_loader.used_helpers.drain().collect();
         let mut diagnostics = react_compiler_diagnostics;
         diagnostics.extend(state.take_errors());
@@ -244,11 +246,15 @@ impl<'a> Transformer<'a> {
 }
 
 fn update_removed_ambient_references(
-    state: &mut TransformState<'_>,
+    removed_semantics: Option<RemovedTypeScriptSemantics<'_>>,
     scoping: &mut Scoping,
     allocator: &Allocator,
 ) {
-    let mut declarations = std::mem::take(&mut state.removed_ambient_declarations);
+    let Some(RemovedTypeScriptSemantics { mut declarations, references: removed_references }) =
+        removed_semantics
+    else {
+        return;
+    };
     declarations.sort_unstable_by_key(|declaration| {
         (declaration.symbol_id.index(), declaration.span.start, declaration.span.end)
     });
@@ -279,7 +285,6 @@ fn update_removed_ambient_references(
         start = end;
     }
 
-    let removed_references = std::mem::take(&mut state.removed_typescript_references);
     let excluded = if !removed_references.is_empty() && !removed_bindings.is_empty() {
         let mut excluded = BitSet::new_in(scoping.references_len(), allocator);
         for reference in removed_references {
