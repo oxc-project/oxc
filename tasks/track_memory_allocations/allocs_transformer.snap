@@ -1,6 +1,6 @@
 File                       | File size      || Sys allocs     | Sys reallocs   || Arena allocs   | Arena reallocs 
 ---------------------------------------------------------------------------------------------------------------------------
-checker.ts                 | 2.92 MB        ||             18 |              0 ||           1959 |              5
+checker.ts                 | 2.92 MB        ||             19 |              6 ||           1959 |              5
 
 App.tsx                    | 415.34 kB      ||             23 |              2 ||            618 |             17
 
@@ -10,7 +10,7 @@ pdf.mjs                    | 567.30 kB      ||             13 |              0 |
 
 antd.js                    | 6.69 MB        ||             13 |              0 ||              2 |              0
 
-binder.ts                  | 193.08 kB      ||             15 |              0 ||            154 |              0
+binder.ts                  | 193.08 kB      ||             16 |              1 ||            154 |              0
 
-kitchen-sink.tsx           | 732.90 kB      ||            182 |              3 ||           6132 |            280
+kitchen-sink.tsx           | 732.90 kB      ||            186 |             12 ||           6133 |            280
 

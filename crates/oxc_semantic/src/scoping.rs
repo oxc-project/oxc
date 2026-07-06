@@ -533,9 +533,8 @@ impl Scoping {
         };
 
         let replacement = self.cell.with_dependent_mut(|_allocator, cell| {
-            let Some(redeclarations) = cell.symbol_redeclarations.get_mut(&symbol_id) else {
-                return None;
-            };
+            let redeclarations = cell.symbol_redeclarations.get_mut(&symbol_id)?;
+
             redeclarations.retain(|redeclaration| !contains_span(redeclaration.span));
 
             let first = redeclarations.first().cloned();
