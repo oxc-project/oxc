@@ -1,4 +1,4 @@
-ts compatibility: 594/662 (89.73%), 19 files skipped
+ts compatibility: 595/663 (89.74%), 19 files skipped
 
 # Failed
 
