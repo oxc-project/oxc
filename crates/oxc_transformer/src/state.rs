@@ -113,13 +113,13 @@ impl TransformState<'_> {
     }
 }
 
-pub(crate) struct RemovedAmbientDeclaration<'a> {
+pub struct RemovedAmbientDeclaration<'a> {
     pub(crate) name: Ident<'a>,
     pub(crate) symbol_id: SymbolId,
     pub(crate) span: Span,
 }
 
-pub(crate) struct RemovedTypeScriptReference {
+pub struct RemovedTypeScriptReference {
     pub(crate) reference_id: ReferenceId,
     pub(crate) symbol_id: Option<SymbolId>,
 }
