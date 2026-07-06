@@ -2450,6 +2450,38 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_property_definition(&mut self, prop: &PropertyDefinition<'a>) {
+        let kind = AstKind::PropertyDefinition(self.alloc(prop));
+        self.enter_node(kind);
+        self.visit_span(&prop.span);
+        self.visit_decorators(&prop.decorators);
+        if prop.computed
+            && (prop.declare
+                || prop.r#type.is_abstract()
+                || self
+                    .ancestry()
+                    .ancestor_kinds()
+                    .find_map(|kind| match kind {
+                        AstKind::Class(class) => Some(class.declare),
+                        _ => None,
+                    })
+                    .unwrap_or(false))
+        {
+            // class A { declare [prop]: string }
+            //                   ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
+            self.current_reference_flags = ReferenceFlags::ValueAsType;
+        }
+        self.visit_property_key(&prop.key);
+        self.current_reference_flags = ReferenceFlags::empty();
+        if let Some(type_annotation) = &prop.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &prop.value {
+            self.visit_expression(value);
+        }
+        self.leave_node(kind);
+    }
+
     fn visit_import_specifier(&mut self, specifier: &ImportSpecifier<'a>) {
         let kind = AstKind::ImportSpecifier(self.alloc(specifier));
         self.enter_node(kind);

@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 246/398
+Passed: 247/398
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -34,7 +34,7 @@ after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (28/33)
+# babel-plugin-transform-class-properties (29/33)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -46,11 +46,6 @@ x Output mismatch
 
 * static-super-tagged-template/input.js
 x Output mismatch
-
-* typescript/declare-computed-keys/input.ts
-Symbol reference IDs mismatch for "KEY1":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
-rebuilt        : SymbolId(1): []
 
 
 # babel-plugin-transform-typescript (26/60)

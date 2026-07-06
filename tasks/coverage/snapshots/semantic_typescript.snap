@@ -2,7 +2,7 @@ commit: 7964e22f
 
 semantic_typescript Summary:
 AST Parsed     : 4720/4720 (100.00%)
-Positive Passed: 3241/4720 (68.67%)
+Positive Passed: 3242/4720 (68.69%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["console", "formatHost", "os", "process", "reportDiagnostic", "reportWatchStatusChanged", "ts", "watchMain"]
@@ -6288,11 +6288,6 @@ Symbol scope ID mismatch for "_class":
 after transform: SymbolId(8): ScopeId(0)
 rebuilt        : SymbolId(14): ScopeId(3)
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/esNextWeakRefs_IterableWeakMap.ts
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(8), ReferenceId(74), ReferenceId(88), ReferenceId(91)]
-rebuilt        : [ReferenceId(93), ReferenceId(96)]
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/expandoFunctionNestedAssigmentsDeclared.ts
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(Function | ValueModule | Ambient)
@@ -6738,9 +6733,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/forwardRefInTypeD
 Bindings mismatch:
 after transform: ScopeId(0): ["Cls1", "Cls2", "Foo5", "_defineProperty", "foo4", "obj1", "obj2", "s", "s1", "s2", "s3", "s4", "s5"]
 rebuilt        : ScopeId(0): ["Cls2", "_defineProperty", "obj2", "s1", "s2", "s3", "s4", "s5"]
-Symbol reference IDs mismatch for "s5":
-after transform: SymbolId(9): [ReferenceId(4)]
-rebuilt        : SymbolId(5): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/freshLiteralInference.ts
 Bindings mismatch:
@@ -8950,9 +8942,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Error", "Number", "Symbol", "arguments", "require", "undefined"]
 rebuilt        : ["Error", "Number", "Symbol", "arguments", "map", "require", "set", "undefined"]
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(10), ReferenceId(19)]
-rebuilt        : [ReferenceId(17)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jqueryInference.ts
 Bindings mismatch:
@@ -17444,9 +17433,6 @@ rebuilt        : ScopeId(0): ["Foo", "_b", "_decorate", "_decorateMetadata", "b"
 Symbol reference IDs mismatch for "_b":
 after transform: SymbolId(7): [ReferenceId(11), ReferenceId(12)]
 rebuilt        : SymbolId(2): [ReferenceId(13)]
-Symbol reference IDs mismatch for "b":
-after transform: SymbolId(3): [ReferenceId(3)]
-rebuilt        : SymbolId(3): []
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
@@ -24149,9 +24135,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascr
 Bindings mismatch:
 after transform: ScopeId(0): ["C"]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/salsa/inferingFromAny.ts
 Bindings mismatch:
