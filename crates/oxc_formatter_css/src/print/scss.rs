@@ -818,13 +818,24 @@ pub(super) fn write_sass_forward<'a>(forward: &SassForward<'a>, f: &mut CssForma
                 write!(f, [space(), "hide", space()]);
             }
         }
-        for (i, member) in visibility.members.iter().enumerate() {
-            if i > 0 {
-                write!(f, [",", space()]);
+        // Members are fill chunks (Prettier's no-open paren-group params path):
+        // pack as many per line as fit, continuation lines indent at +2.
+        let members = &visibility.members;
+        let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            let mut filler = f.fill();
+            for (i, member) in members.iter().enumerate() {
+                let entry = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                    let span = to_span(member.span());
+                    write!(f, text(source.text_for(&span)));
+                    if i + 1 < members.len() {
+                        write!(f, ",");
+                    }
+                });
+                filler.entry(&soft_line_break_or_space(), &entry);
             }
-            let span = to_span(member.span());
-            write!(f, text(source.text_for(&span)));
-        }
+            filler.finish();
+        });
+        write!(f, group(&indent(&body)));
     }
     if let Some(config) = &forward.config {
         write_sass_module_config(config, f);

@@ -201,6 +201,18 @@ Notable divergences are:
 - `@nest <selector-list>` continuation lines indent at +2 (same class as the `:not(...)` entry above)
   - Prettier lands at +4 (comma-separated selectors) / +6 (wrapped selector parts) — an artifact of its generic at-rule params indent
   - Ours matches how selector lists indent everywhere else; layout-only, deprecated syntax, triggers only on width overflow
+- SCSS: `@forward` with `show`/`hide` members AND a `with (...)` config
+  - Prettier parses the whole prelude as ONE comma list, so the config's forced break spills into the member commas
+    (`show b,\n  c with (` even when the head fits) and the config body lands one level deeper (+4 body / +2 `)`)
+  - We break members only on width overflow (fill, matching Prettier's break positions when no config is present)
+    and keep the config at the standalone `with (...)` indent (+2 body / 0 `)`, same as `@use`)
+  - Layout-only, rare combo; pinned in `forward-members-wrap.scss`
+- SCSS: `@use`/`@forward` head seams (`as <ns>`, `as <prefix>-*`, `show`/`hide` before the FIRST member) never break
+  - Prettier treats every top-level space in the value-parsed params as a `line`,
+    so an overflowing `@use "path" as long-name;` breaks before `as` at +2
+    (and a no-comma overflow inside one chunk breaks after `show` at +4)
+  - We break only at the member commas; an overflow confined to the head stays on one line
+  - Same overflow class as the members fix, bounded to these two printers; extend the group over the seams if reported
 - `<general-enclosed>` media preludes (`@media (not all)`, `(screen and (color))` unparsable as `<media-condition>`) normalize whitespace fully
   - Source gap → one space, paren inner edges tight
   - Prettier only collapses space RUNS inside the unparsable paren, leaving `(not ( screen and ( color ) ))`
