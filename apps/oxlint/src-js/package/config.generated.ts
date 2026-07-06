@@ -1220,9 +1220,7 @@ export interface DummyRuleMap {
   "no-with"?: RuleNoConfig;
   "node/callback-return"?: RuleNoConfig | [AllowWarnDeny, CallbackReturn];
   "node/exports-style"?:
-    | RuleNoConfig
-    | [AllowWarnDeny, ExportsStyleMode]
-    | [AllowWarnDeny, ExportsStyleMode, ExportsStyleOptions];
+    RuleNoConfig | [AllowWarnDeny, ExportsStyleMode] | [AllowWarnDeny, ExportsStyleMode, ExportsStyleOptions];
   "node/global-require"?: RuleNoConfig;
   "node/handle-callback-err"?: RuleNoConfig | [AllowWarnDeny, HandleCallbackErrConfig];
   "node/no-exports-assign"?: RuleNoConfig;
