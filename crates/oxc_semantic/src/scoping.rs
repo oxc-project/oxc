@@ -358,8 +358,6 @@ impl Scoping {
     }
 
     /// Rename a symbol.
-    ///
-    /// Returns the old name.
     #[inline]
     pub fn set_symbol_name(&mut self, symbol_id: SymbolId, name: Ident<'_>) {
         self.cell.with_dependent_mut(|allocator, cell| {
