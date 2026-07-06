@@ -352,6 +352,13 @@ function parseWithJsParser(
  * such that Rust recovers exactly `value` as the comment's text. For standard JS comments,
  * this leaves the span unchanged.
  *
+ * Limitation: realignment locates `value` in the source with `indexOf`. A parser that
+ * normalizes `value` (e.g. strips `\r` from `\r\n`, or decodes HTML entities) so it no longer
+ * occurs verbatim in the source defeats this, and the span is sent unchanged - for a non-JS
+ * comment that means its delimiters are miscounted and an `eslint-disable` directive inside it
+ * is silently ignored. Parsers oxlint targets (e.g. `ember-eslint-parser`) report verbatim
+ * `value`, so this does not arise in practice.
+ *
  * @param parserComments - Comments from parser output (`ast.comments`), or `undefined`
  * @param sourceText - Source text of the file
  * @returns Comments in form sent to Rust

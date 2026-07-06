@@ -1,0 +1,13 @@
+{
+  "rules": {
+    "no-unused-vars": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.custom"],
+      "languageOptions": {
+        "parser": "./parser.mjs"
+      }
+    }
+  ]
+}
