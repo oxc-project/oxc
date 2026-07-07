@@ -90,9 +90,29 @@ The `;` rule applies to statement _terminators_ only, never to member _separator
   we follow Prettier for now. If Prettier extends the rule to them, follow;
   each is a small mechanical `FormatContentWithSemicolon` adoption
 
-When the content's source parentheses survive in the output (return/throw arguments),
+When the content's source parentheses survive in the output
+(return/throw arguments, sequence/assignment in the prettier#19263 positions),
 comments inside them belong to the content and stay there;
 only comments after the closing paren may move behind the terminator (see `Comments::end_including_source_parens`).
+
+The "which positions keep their parens" table is intentionally encoded twice:
+
+- `keeps_trailing_comment_inside_parens` (statement side, walks down the rightmost expression)
+- and `write_trailing_comments_inside_parens` (expression side, matches on the parent) in `print/semicolon.rs`
+
+The statement side promises not to hide/move the comment; the expression side actually prints it.
+Change them together: if they drift, the comment silently lands elsewhere (no assert catches it),
+so pin every position change in a fixture.
+
+The move-behind-the-terminator policy has four deliberate variants.
+When extending to a new node, pick by measuring Prettier, not by analogy:
+
+| Site                                                        | Source `;` required?      | Own-line comment before `;`              |
+| ----------------------------------------------------------- | ------------------------- | ---------------------------------------- |
+| Statements (`FormatContentWithSemicolon`)                   | yes (ASI: no move)        | deferred to the next node's leading pass |
+| return/throw (`ReturnAndThrowStatement`)                    | no (moves even under ASI) | printed as dangling                      |
+| Class property/accessor (`FormatClassElementWithSemicolon`) | yes                       | cancels the move (stays own-line)        |
+| Bodyless methods (`MethodDefinition`)                       | yes                       | cancels the move                         |
 
 Never let it cross:
 

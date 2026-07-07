@@ -116,6 +116,12 @@ class Cls {
   e = 5;
 }
 
+// A definite/optional marker between the content end and the `;`
+class Markers {
+  x!: number /* m1 */;
+  z? /* m2 */;
+}
+
 // Bodyless method signatures (overloads, abstract, ambient) move the comment
 // behind the semicolon too; an own-line comment stays in place
 class Overloads {

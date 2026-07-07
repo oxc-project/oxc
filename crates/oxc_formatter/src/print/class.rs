@@ -636,6 +636,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClassElementWithSemicolon<'a,
                     unreachable!("Only `PropertyDefinition` and `AccessorProperty` can reach here");
                 }
             };
+            // A definite/optional marker may sit between `content_end` and the `;`
+            // (`z? /* e */;` -> `content_end` is after `z`);
+            // the comment still ends up behind the semicolon like Prettier.
             let content_end = value_end.or(type_annotation_end).unwrap_or(key_end);
             // An own-line comment before the semicolon stays attached to the value
             // (`x = 1 \n /* own */;` keeps the comment on its own line like Prettier),

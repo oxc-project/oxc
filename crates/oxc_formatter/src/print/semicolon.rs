@@ -1,6 +1,7 @@
-use oxc_ast::ast::Comment;
+use oxc_ast::ast::{Comment, Expression};
 
 use crate::{
+    ast_nodes::AstNodes,
     formatter::{Buffer, Format, JsFormatContext, JsFormatter, trivia::FormatTrailingComments},
     options::Semicolons,
     utils::format_node_without_trailing_comments::format_content_without_comments_after,
@@ -47,6 +48,59 @@ pub fn trailing_comments_to_move_behind_semicolon<'a>(
         return None;
     }
     Some(trailing_comments)
+}
+
+/// Whether a trailing comment sitting right before the closing source paren of
+/// the rightmost sub-expression stays inside the re-printed parentheses,
+/// instead of moving behind the semicolon.
+///
+/// Mirrors Prettier's `handleParenthesizedExpressionTrailingComment` (prettier#19263):
+/// a parenthesized sequence/assignment keeps the comment when it is a variable declarator initializer,
+/// a `return` argument, an arrow expression body, or an assignment's right-hand side.
+/// Positions where the parentheses survive in the output. (Notably not `throw` and not a plain expression statement.)
+/// The sequence/assignment itself prints the comment before its closing paren.
+///
+/// `gated` is `true` when `expr` itself sits in one of those positions.
+pub fn keeps_trailing_comment_inside_parens(expr: &Expression<'_>, gated: bool) -> bool {
+    match expr {
+        Expression::SequenceExpression(_) => gated,
+        Expression::AssignmentExpression(assignment) => {
+            gated
+                || match &assignment.right {
+                    Expression::SequenceExpression(_) => true,
+                    right => keeps_trailing_comment_inside_parens(right, false),
+                }
+        }
+        Expression::ArrowFunctionExpression(arrow) if arrow.expression => arrow
+            .get_expression()
+            .is_some_and(|body| keeps_trailing_comment_inside_parens(body, true)),
+        _ => false,
+    }
+}
+
+/// The printing half of [`keeps_trailing_comment_inside_parens`]:
+/// sequence/assignment call this at the end of their `write` to print the comments
+/// sitting right before their closing source paren inside the parentheses.
+///
+/// `is_sequence` distinguishes the one asymmetric position:
+/// only a sequence keeps its parens as an assignment's right-hand side.
+pub fn write_trailing_comments_inside_parens<'a>(
+    f: &mut JsFormatter<'_, 'a>,
+    parent: &AstNodes<'a>,
+    node_end: u32,
+    is_sequence: bool,
+) {
+    let parens_survive = match parent {
+        AstNodes::VariableDeclarator(_) | AstNodes::ReturnStatement(_) => true,
+        AstNodes::AssignmentExpression(_) => is_sequence,
+        AstNodes::ExpressionStatement(statement) => statement.is_arrow_function_body(),
+        _ => false,
+    };
+    if parens_survive
+        && let Some(comments) = f.context().comments().comments_before_closing_paren(node_end)
+    {
+        write!(f, FormatTrailingComments::Comments(comments));
+    }
 }
 
 /// Formats `content` followed by an `OptionalSemicolon`,

@@ -1,18 +1,15 @@
-js compatibility: 755/808 (93.44%), 23 files skipped
+js compatibility: 760/808 (94.06%), 23 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | js/arrows/issue-17421.js | 💥💥 | 90.43% |
-| js/arrows/parenthesized-body/issue-18776.js | 💥 | 85.71% |
-| js/arrows/parenthesized-body/issue-19261.js | 💥 | 77.78% |
 | js/assignment-comments/indentable-block-comment.js | 💥 | 12.50% |
 | js/call/no-argument/no-arguments.js | 💥 | 57.53% |
 | js/chain-expression/member-chain.js | 💥 | 57.14% |
 | js/comments/15661.js | 💥💥 | 43.53% |
 | js/comments/break-continue-statements-2.js | 💥💥 | 87.18% |
-| js/comments/break-continue-statements-3.js | 💥💥 | 95.77% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/if.js | 💥💥 | 97.99% |
 | js/comments/return-statement-2.js | 💥💥 | 77.78% |
@@ -41,7 +38,6 @@ js compatibility: 755/808 (93.44%), 23 files skipped
 | js/logical-expressions/in-unary-expression.js | 💥 | 33.33% |
 | js/new-expression/parentheses.js | 💥 | 33.33% |
 | js/no-semi/debugger-statement.js | 💥💥 | 91.18% |
-| js/no-semi/do-while-statement.js | 💥💥 | 92.50% |
 | js/no-semi/for-in-statement.js | 💥💥 | 63.89% |
 | js/no-semi/for-of-statement.js | 💥💥 | 66.67% |
 | js/no-semi/for-statement.js | 💥💥 | 63.89% |
@@ -50,7 +46,6 @@ js compatibility: 755/808 (93.44%), 23 files skipped
 | js/no-semi/return-statement.js | 💥💥 | 67.65% |
 | js/no-semi/while-statement.js | 💥💥 | 63.89% |
 | js/no-semi/with-statement.js | 💥💥 | 63.89% |
-| js/sequence-expression/parenthesized-trailing-comment.js | 💥 | 88.57% |
 | js/template-literals/expression-break.js | 💥 | 80.00% |
 | js/template-literals/expressions.js | 💥 | 97.64% |
 | js/test-declarations/jest-each.js | 💥💥 | 95.71% |
