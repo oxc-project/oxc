@@ -84,7 +84,7 @@ pub(super) fn generate_walk(schema: &Schema, config: &WalkConfig) -> TokenStream
 
     // Without TS walks, there are no identical match arms left in enum walk functions
     let maybe_match_same_arms =
-        if config.include_ts { quote!( clippy::match_same_arms, ) } else { quote!() };
+        if config.include_ts { quote!(clippy::match_same_arms,) } else { quote!() };
 
     quote! {
         #![expect(
