@@ -46,6 +46,13 @@
     },
     "jest": {
       "version": null
+    },
+    "compat": {
+      "browsers": null,
+      "targets": null,
+      "polyfills": [],
+      "lintAllEsApis": false,
+      "ignoreConditionalChecks": false
     }
   },
   "env": {

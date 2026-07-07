@@ -1,6 +1,9 @@
-use std::sync::{Arc, LazyLock, Mutex};
+use std::{
+    hash::BuildHasherDefault,
+    sync::{Arc, LazyLock},
+};
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxHashSet, FxHasher};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -15,7 +18,7 @@ use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::compat::{
-        BrowserTarget, COMPAT_DATA, FailingRule, RuleMap, RuleMaps, determine_targets_from_config,
+        BrowserTarget, COMPAT_DATA, FailingRule, RuleMaps, determine_targets_from_config,
         get_rules_for_targets, parse_browserslist_version,
     },
 };
@@ -46,20 +49,9 @@ declare_oxc_lint!(
     /// Ensures cross-browser API compatibility: reports usage of browser APIs
     /// (and, optionally, ECMAScript APIs) that are not supported by the
     /// configured browser targets. This is a native port of
-    /// [eslint-plugin-compat](https://github.com/amilajack/eslint-plugin-compat).
-    ///
-    /// Browser targets are configured with browserslist queries through the
-    /// `compat` settings (`settings.compat.browsers` or
-    /// `settings.compat.targets`) or through the rule's single string option.
-    /// When no targets are configured, the browserslist `defaults` query is
-    /// used.
-    ///
-    /// APIs guarded by a feature-detection conditional (e.g.
-    /// `if (window.fetch) { fetch() }`) are not reported unless
-    /// `settings.compat.ignoreConditionalChecks` is `true`. APIs listed in
-    /// `settings.compat.polyfills` are not reported either; the special entry
-    /// `"es:all"` excludes all ECMAScript APIs from linting (see
-    /// `settings.compat.lintAllEsApis`).
+    /// [eslint-plugin-compat](https://github.com/amilajack/eslint-plugin-compat),
+    /// backed by the same data sources ([MDN browser-compat-data](https://github.com/mdn/browser-compat-data)
+    /// via `ast-metadata-inferer`, and [caniuse](https://caniuse.com)).
     ///
     /// ### Why is this bad?
     ///
@@ -80,11 +72,72 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule
     /// (with `{ "settings": { "compat": { "browsers": ["ie 11"] } } }`):
     /// ```javascript
+    /// // Feature-detection guards are recognized:
     /// if (window.fetch) {
     ///   fetch("/api");
     /// }
+    /// // Supported by every configured target:
     /// document.querySelector("body");
     /// ```
+    ///
+    /// ### Settings
+    ///
+    /// The rule is configured through the `compat` namespace of `settings`
+    /// (this differs from eslint-plugin-compat, which reads top-level
+    /// settings keys):
+    ///
+    /// ```json
+    /// {
+    ///   "plugins": ["compat"],
+    ///   "rules": { "compat/compat": "error" },
+    ///   "settings": {
+    ///     "compat": {
+    ///       "browsers": ["defaults", "not ie < 11"],
+    ///       "polyfills": ["Promise", "WebAssembly.compile", "fetch"],
+    ///       "lintAllEsApis": false,
+    ///       "ignoreConditionalChecks": false
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// #### `browsers` / `targets`
+    ///
+    /// The browserslist queries to lint against: a single query string
+    /// (`"defaults, not ie < 9"`), a list of queries (`["chrome 70",
+    /// "firefox 60"]`), or an object with `production`/`development` query
+    /// lists (their union is linted). `browsers` takes precedence over
+    /// `targets`. Alternatively, a single query string can be passed as the
+    /// rule's option: `"compat/compat": ["error", "defaults, not ie < 9"]`
+    /// (settings take precedence over the option).
+    ///
+    /// When no targets are configured at all, the browserslist `defaults`
+    /// query is used. Note: unlike eslint-plugin-compat, browserslist
+    /// configuration is **not** discovered from `package.json`
+    /// (`"browserslist"` field) or `.browserslistrc` files; declare your
+    /// targets in the oxlint settings shown above.
+    ///
+    /// #### `polyfills`
+    ///
+    /// APIs that are polyfilled and must not be reported. Entries can name a
+    /// whole API (`"Promise"`, `"fetch"`), a static member
+    /// (`"WebAssembly.compile"`, `"Promise.all"`), or an instance member
+    /// (`"Array.push"`, `"String.at"` — written without `.prototype.`,
+    /// matching the compat data's naming). The special entry `"es:all"`
+    /// excludes all ECMAScript APIs from linting (for codebases transpiled
+    /// with Babel/core-js or similar).
+    ///
+    /// #### `lintAllEsApis`
+    ///
+    /// Lint ECMAScript APIs (e.g. `Array.from`, `Object.values`) in addition
+    /// to web platform APIs, even when `polyfills` contains `"es:all"`.
+    ///
+    /// #### `ignoreConditionalChecks`
+    ///
+    /// By default, API usage inside an `if` statement is treated as
+    /// feature-detected and is not reported (e.g.
+    /// `if ('fetch' in window) { fetch() }`). Set this to `true` to report
+    /// incompatible APIs even inside conditionals.
     Compat,
     compat,
     suspicious,
@@ -95,21 +148,25 @@ declare_oxc_lint!(
 
 type ResolvedTargets = Result<Arc<[BrowserTarget]>, String>;
 
-/// Cache of resolved browserslist targets, keyed by the joined queries.
-static TARGETS_CACHE: LazyLock<Mutex<FxHashMap<String, ResolvedTargets>>> =
-    LazyLock::new(|| Mutex::new(FxHashMap::default()));
+/// Cache of resolved browserslist targets, keyed by the joined queries. A
+/// lock-free map is used so that files linted in parallel do not contend once
+/// the cache is warm.
+static TARGETS_CACHE: LazyLock<
+    papaya::HashMap<String, ResolvedTargets, BuildHasherDefault<FxHasher>>,
+> = LazyLock::new(papaya::HashMap::default);
 
 fn resolve_targets(queries: &[String]) -> ResolvedTargets {
     let key = queries.join("\u{0}");
-    let mut cache = TARGETS_CACHE.lock().unwrap();
-    cache
-        .entry(key)
-        .or_insert_with(|| {
-            determine_targets_from_config(queries)
-                .map(|targets| parse_browserslist_version(&targets).into())
-                .map_err(|error| error.to_string())
-        })
-        .clone()
+    let cache = TARGETS_CACHE.pin();
+    if let Some(targets) = cache.get(key.as_str()) {
+        return targets.clone();
+    }
+    // Resolve outside of any lock; a rare concurrent resolution of the same
+    // key is cheaper than serializing all files behind a mutex.
+    let targets = determine_targets_from_config(queries)
+        .map(|targets| parse_browserslist_version(&targets).into())
+        .map_err(|error| error.to_string());
+    cache.get_or_insert(key, targets).clone()
 }
 
 fn is_polyfilled(polyfills: &FxHashSet<&str>, rule: &FailingRule) -> bool {
@@ -157,25 +214,6 @@ fn push_proto_chain<'a>(expr: &Expression<'a>, chain: &mut Vec<&'a str>) {
     }
 }
 
-/// Secondary lookup for built-in `obj.prop` when the map was keyed with
-/// different casing for `object` (e.g. `Crypto` in the metadata vs `crypto`
-/// in the AST). The property name must still match the source exactly.
-fn find_member_rule_by_global_object_casing<'m>(
-    rules_map: &'m RuleMap,
-    object_name: &str,
-    property_name: &str,
-) -> Option<&'m Arc<FailingRule>> {
-    for (key, rule) in rules_map.iter() {
-        if let Some((key_object, key_property)) = key.split_once('.')
-            && key_object.eq_ignore_ascii_case(object_name)
-            && key_property == property_name
-        {
-            return Some(rule);
-        }
-    }
-    None
-}
-
 /// A deferred error: the name used for the local-binding filter (mirroring
 /// `getName` in the reference), the failing rule, and the span to report.
 type DeferredError<'a> = (Option<&'a str>, Arc<FailingRule>, Span);
@@ -185,6 +223,11 @@ struct CompatChecker<'a, 'r> {
     polyfills: FxHashSet<&'a str>,
     ignore_conditional_checks: bool,
     errors: Vec<DeferredError<'a>>,
+    /// Reusable buffer for `object.property` / proto-chain-id lookup keys,
+    /// avoiding a heap allocation per member expression.
+    key_scratch: String,
+    /// Reusable buffer for proto chain segments.
+    chain_scratch: Vec<&'a str>,
 }
 
 impl<'a> CompatChecker<'a, '_> {
@@ -208,8 +251,13 @@ impl<'a> CompatChecker<'a, '_> {
         rule: &Arc<FailingRule>,
         span: Span,
     ) {
+        // Cheap set lookups first; the ancestor walk only runs for
+        // candidates that are not polyfilled.
+        if is_polyfilled(&self.polyfills, rule) {
+            return;
+        }
         if self.ignore_conditional_checks || !is_inside_if_statement(nodes, node_id) {
-            self.handle_failing_rule(filter_name, rule, span);
+            self.errors.push((filter_name, Arc::clone(rule), span));
         }
     }
 
@@ -219,36 +267,51 @@ impl<'a> CompatChecker<'a, '_> {
         node_id: NodeId,
         member: &oxc_ast::ast::StaticMemberExpression<'a>,
     ) {
+        let maps = self.rule_maps;
         let object_name = identifier_name(&member.object);
         if let Some(object_name) =
             object_name.filter(|name| !matches!(*name, "window" | "globalThis"))
         {
             let property_name = member.property.name.as_str();
-            let is_browser_global = COMPAT_DATA.browser_globals.contains(object_name);
-            let mut failing_rule = self
-                .rule_maps
+            self.key_scratch.clear();
+            self.key_scratch.push_str(object_name);
+            self.key_scratch.push('.');
+            self.key_scratch.push_str(property_name);
+            let mut failing_rule = maps
                 .member_expression
-                .get(format!("{object_name}.{property_name}").as_str())
-                .or_else(|| self.rule_maps.member_expression.get(object_name));
-            if failing_rule.is_none() && is_browser_global {
-                failing_rule = find_member_rule_by_global_object_casing(
-                    &self.rule_maps.member_expression,
-                    object_name,
-                    property_name,
-                );
-            }
-            if let Some(rule) = failing_rule
-                && !is_browser_global
-                && rule.object != object_name
-            {
-                failing_rule = None;
+                .get(self.key_scratch.as_str())
+                .or_else(|| maps.member_expression.get(object_name));
+            // Only consult the (potentially allocating) browser-globals data
+            // when a rule was found or a case-insensitive fallback is needed.
+            if failing_rule.is_none() {
+                if !COMPAT_DATA.browser_globals.contains(object_name) {
+                    return;
+                }
+                // Case-insensitive fallback for browser globals (`crypto` in
+                // the AST vs `Crypto` in the metadata); O(1) via the
+                // precomputed lowercase index.
+                self.key_scratch.clear();
+                for ch in object_name.chars() {
+                    self.key_scratch.push(ch.to_ascii_lowercase());
+                }
+                self.key_scratch.push('.');
+                self.key_scratch.push_str(property_name);
+                failing_rule =
+                    maps.member_expression_by_lower_object.get(self.key_scratch.as_str());
+            } else if !COMPAT_DATA.browser_globals.contains(object_name) {
+                // For non-global objects the rule must match the object name
+                // exactly (e.g. a local `intersectionObserver` variable must
+                // not match the `IntersectionObserver` rule).
+                if failing_rule.is_some_and(|rule| rule.object != object_name) {
+                    failing_rule = None;
+                }
             }
             if let Some(rule) = failing_rule {
-                let rule = Arc::clone(rule);
-                self.check_guarded(nodes, node_id, Some(object_name), &rule, member.span);
+                self.check_guarded(nodes, node_id, Some(object_name), rule, member.span);
             }
         } else {
-            let mut chain = Vec::new();
+            self.chain_scratch.clear();
+            let mut chain = std::mem::take(&mut self.chain_scratch);
             match &member.object {
                 Expression::NewExpression(new_expr) => {
                     push_proto_chain(&new_expr.callee, &mut chain);
@@ -259,27 +322,33 @@ impl<'a> CompatChecker<'a, '_> {
                 object => push_proto_chain(object, &mut chain),
             }
             chain.push(member.property.name.as_str());
-            let chain: &[&str] = if matches!(chain.first(), Some(&"window" | &"globalThis")) {
+            let segments: &[&str] = if matches!(chain.first(), Some(&"window" | &"globalThis")) {
                 &chain[1..]
             } else {
                 &chain
             };
-            let proto_chain_id = chain.join(".");
-            if let Some(rule) = self.rule_maps.member_expression.get(&proto_chain_id) {
-                let rule = Arc::clone(rule);
-                self.check_guarded(nodes, node_id, object_name, &rule, member.span);
+            self.key_scratch.clear();
+            for (i, segment) in segments.iter().enumerate() {
+                if i > 0 {
+                    self.key_scratch.push('.');
+                }
+                self.key_scratch.push_str(segment);
+            }
+            self.chain_scratch = chain;
+            if let Some(rule) = maps.member_expression.get(self.key_scratch.as_str()) {
+                self.check_guarded(nodes, node_id, object_name, rule, member.span);
             }
         }
     }
 
     fn check_literal(&mut self, raw: &str, span: Span) {
-        for (syntax, rule) in self.rule_maps.literal.iter() {
+        let maps = self.rule_maps;
+        for (syntax, rule) in maps.literal.iter() {
             if raw.contains(syntax) {
-                let rule = Arc::clone(rule);
                 // Mirrors the reference: literal checks are not suppressed by
                 // feature-detection conditionals, and are filtered against a
                 // local binding named `Literal` (the ESTree node type).
-                self.handle_failing_rule(Some("Literal"), &rule, span);
+                self.handle_failing_rule(Some("Literal"), rule, span);
                 return;
             }
         }
@@ -315,47 +384,55 @@ impl Rule for Compat {
         let lint_all_es_apis = settings.lint_all_es_apis || !polyfills.contains("es:all");
         let rule_maps = get_rules_for_targets(&targets, lint_all_es_apis);
 
+        // Every configured target supports every known API: nothing can be
+        // reported, skip the file entirely.
+        if rule_maps.is_empty() {
+            return;
+        }
+
+        let maps: &RuleMaps = &rule_maps;
         let mut checker = CompatChecker {
-            rule_maps: &rule_maps,
+            rule_maps: maps,
             polyfills,
             ignore_conditional_checks: settings.ignore_conditional_checks,
             errors: Vec::new(),
+            key_scratch: String::new(),
+            chain_scratch: Vec::new(),
         };
+        let check_literals = !maps.literal.is_empty();
+        let check_members = !maps.member_expression.is_empty();
 
         let nodes = ctx.nodes();
         for node in nodes.iter() {
             match node.kind() {
                 AstKind::NewExpression(expr) => {
                     if let Some(name) = identifier_name(&expr.callee)
-                        && let Some(rule) = checker.rule_maps.new_expression.get(name)
+                        && let Some(rule) = maps.new_expression.get(name)
                     {
-                        let rule = Arc::clone(rule);
-                        checker.check_guarded(nodes, node.id(), Some(name), &rule, expr.span);
+                        checker.check_guarded(nodes, node.id(), Some(name), rule, expr.span);
                     }
                 }
                 AstKind::CallExpression(expr) => {
                     if let Some(name) = identifier_name(&expr.callee)
-                        && let Some(rule) = checker.rule_maps.call_expression.get(name)
+                        && let Some(rule) = maps.call_expression.get(name)
                     {
-                        let rule = Arc::clone(rule);
-                        checker.check_guarded(nodes, node.id(), Some(name), &rule, expr.span);
+                        checker.check_guarded(nodes, node.id(), Some(name), rule, expr.span);
                     }
                 }
                 AstKind::ExpressionStatement(stmt) => {
                     if let Some(name) = identifier_name(&stmt.expression)
-                        && let Some(rule) = checker.rule_maps.expression_statement.get(name)
+                        && let Some(rule) = maps.expression_statement.get(name)
                     {
-                        let rule = Arc::clone(rule);
-                        checker.check_guarded(nodes, node.id(), Some(name), &rule, stmt.span);
+                        checker.check_guarded(nodes, node.id(), Some(name), rule, stmt.span);
                     }
                 }
-                AstKind::StaticMemberExpression(member) => {
+                AstKind::StaticMemberExpression(member) if check_members => {
                     checker.check_member_expression(nodes, node.id(), member);
                 }
-                AstKind::RegExpLiteral(lit) => {
+                AstKind::RegExpLiteral(lit) if check_literals => {
                     checker.check_literal(ctx.source_range(lit.span), lit.span);
                 }
-                AstKind::StringLiteral(lit) => {
+                AstKind::StringLiteral(lit) if check_literals => {
                     let is_regexp_argument = match nodes.parent_kind(node.id()) {
                         AstKind::NewExpression(parent) => {
                             identifier_name(&parent.callee) == Some("RegExp")
@@ -373,8 +450,13 @@ impl Rule for Compat {
             }
         }
 
+        if checker.errors.is_empty() {
+            return;
+        }
+
         // Do not report errors for locally-bound identifiers
-        // (e.g. `import { Set } from 'immutable'; new Set();`).
+        // (e.g. `import { Set } from 'immutable'; new Set();`). Most files
+        // have no errors, so the binding set is only built on demand.
         let scoping = ctx.scoping();
         let local_bindings: FxHashSet<&str> = scoping.symbol_names().collect();
         for (filter_name, rule, span) in checker.errors {

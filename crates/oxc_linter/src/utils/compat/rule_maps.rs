@@ -5,9 +5,13 @@
 //! for a resolved set of browser targets, precompute the set of APIs ("rules")
 //! that fail at least one target, keyed for O(1) lookup per AST node.
 
-use std::sync::{Arc, LazyLock, Mutex};
+use std::{
+    hash::BuildHasherDefault,
+    sync::{Arc, LazyLock},
+};
 
-use rustc_hash::FxHashMap;
+use cow_utils::CowUtils;
+use rustc_hash::{FxHashMap, FxHasher};
 
 use super::{
     data::COMPAT_DATA,
@@ -56,6 +60,10 @@ impl RuleMap {
         self.index.get(key).map(|&i| &self.entries[i].1)
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = (&str, &Arc<FailingRule>)> {
         self.entries.iter().map(|(key, rule)| (key.as_str(), rule))
     }
@@ -72,8 +80,27 @@ pub struct RuleMaps {
     pub expression_statement: RuleMap,
     /// Keyed by proto chain id and `object.property`.
     pub member_expression: RuleMap,
+    /// Secondary index of `member_expression` for the case-insensitive
+    /// browser-global fallback: keyed by `lowercased(object).property` for
+    /// every dotted key, first match (in `member_expression` insertion order)
+    /// wins. Replaces the reference's linear scan
+    /// (`findMemberRuleByGlobalObjectCasing`) with an O(1) lookup.
+    pub member_expression_by_lower_object: FxHashMap<String, Arc<FailingRule>>,
     /// Keyed by literal syntax fragment, e.g. `?<=` (RegExp lookbehind).
     pub literal: RuleMap,
+}
+
+impl RuleMaps {
+    /// Returns `true` when no API fails any configured target, in which case
+    /// the rule has nothing to lint for this file.
+    pub fn is_empty(&self) -> bool {
+        // `expression_statement` and the lowercase index are projections of
+        // the other maps and cannot be non-empty on their own.
+        self.call_expression.is_empty()
+            && self.new_expression.is_empty()
+            && self.member_expression.is_empty()
+            && self.literal.is_empty()
+    }
 }
 
 /// One entry of the CanIUse provider list.
@@ -262,24 +289,46 @@ fn build_rule_maps(targets: &[BrowserTarget], lint_all_es_apis: bool) -> RuleMap
         }
     }
 
+    // Build the case-insensitive index in `member_expression` insertion order
+    // so that the first matching entry wins, exactly like the reference's
+    // linear scan.
+    for (key, rule) in maps.member_expression.iter() {
+        if let Some((object, property)) = key.split_once('.') {
+            let lower_key = format!("{}.{property}", object.cow_to_ascii_lowercase());
+            maps.member_expression_by_lower_object
+                .entry(lower_key)
+                .or_insert_with(|| Arc::clone(rule));
+        }
+    }
+
     maps
 }
 
 /// Cache of rule maps, keyed by the resolved targets and the ES-API-inclusion
 /// flag (mirroring `getRulesForTargets`' memoization, including the
-/// regression fix that keys on both arguments).
-type RuleMapsCache = FxHashMap<(String, bool), Arc<RuleMaps>>;
-static RULE_MAPS_CACHE: LazyLock<Mutex<RuleMapsCache>> =
-    LazyLock::new(|| Mutex::new(FxHashMap::default()));
+/// regression fix that keys on both arguments). A lock-free map is used so
+/// that files linted in parallel do not contend once the cache is warm.
+type RuleMapsCache = papaya::HashMap<String, Arc<RuleMaps>, BuildHasherDefault<FxHasher>>;
+static RULE_MAPS_CACHE: LazyLock<RuleMapsCache> = LazyLock::new(RuleMapsCache::default);
 
 /// Get (or compute and cache) the rule maps for a set of resolved targets.
 pub fn get_rules_for_targets(targets: &[BrowserTarget], lint_all_es_apis: bool) -> Arc<RuleMaps> {
-    let key =
-        targets.iter().map(|t| format!("{} {}", t.target, t.version)).collect::<Vec<_>>().join(",");
-    let mut cache = RULE_MAPS_CACHE.lock().unwrap();
-    Arc::clone(
-        cache
-            .entry((key, lint_all_es_apis))
-            .or_insert_with(|| Arc::new(build_rule_maps(targets, lint_all_es_apis))),
-    )
+    // The cache key encodes both the resolved targets and the
+    // ES-API-inclusion flag (the `getRulesForTargets` memoization regression).
+    let mut key = String::with_capacity(targets.len() * 12 + 1);
+    key.push(if lint_all_es_apis { '1' } else { '0' });
+    for target in targets {
+        key.push(',');
+        key.push_str(&target.target);
+        key.push(' ');
+        key.push_str(&target.version);
+    }
+    let cache = RULE_MAPS_CACHE.pin();
+    if let Some(maps) = cache.get(key.as_str()) {
+        return Arc::clone(maps);
+    }
+    // Build outside of any lock; a rare concurrent build of the same key is
+    // cheaper than serializing all files behind a mutex during the build.
+    let maps = Arc::new(build_rule_maps(targets, lint_all_es_apis));
+    Arc::clone(cache.get_or_insert(key, maps))
 }

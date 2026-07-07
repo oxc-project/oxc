@@ -7,5 +7,5 @@ pub mod support;
 pub mod targets;
 
 pub use data::COMPAT_DATA;
-pub use rule_maps::{FailingRule, RuleMap, RuleMaps, get_rules_for_targets};
+pub use rule_maps::{FailingRule, RuleMaps, get_rules_for_targets};
 pub use targets::{BrowserTarget, determine_targets_from_config, parse_browserslist_version};
