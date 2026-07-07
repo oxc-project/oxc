@@ -42,10 +42,8 @@ use crate::react_compiler_lowering::FunctionNode;
 
 /// Source location and whether the identifier is a JSXIdentifier.
 pub struct IdentifierLocEntry {
-    /// The byte offset of the identifier (base.start). Stored here so that
-    /// callers iterating by node_id can still do position-range containment
-    /// checks without a separate bridge map.
-    pub start: u32,
+    /// The identifier's span. `span.start` is the node_id (also the map key), so
+    /// callers can do position-range containment checks without a separate field.
     pub span: Span,
     pub is_jsx: bool,
     /// For JSX identifiers that are the root name of a JSXOpeningElement,
@@ -85,7 +83,6 @@ impl IdentifierLocVisitor {
         // generic binding-identifier walk re-visits them, so the declaration
         // entry wins, matching the original visitor.
         self.index.entry(span.start).or_insert(IdentifierLocEntry {
-            start: span.start,
             span,
             is_jsx,
             opening_element_span,

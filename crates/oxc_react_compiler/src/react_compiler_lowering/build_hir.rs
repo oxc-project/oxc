@@ -352,7 +352,7 @@ fn lower_block_statement_inner<'a>(
                 .chain(decl_start.iter().copied())
                 .filter_map(|ref_nid| {
                     let entry = builder.identifier_spans().get(&ref_nid)?;
-                    let ref_start = entry.start;
+                    let ref_start = entry.span.start;
                     if ref_start < stmt_start || ref_start >= stmt_end {
                         return None;
                     }
@@ -3470,7 +3470,7 @@ fn gather_captured_context(
         let declaration_start = scope.declaration_start(symbol_id);
         for ref_nid in scope.reference_positions(symbol_id) {
             // Range check: use the position stored in identifier_spans
-            let ref_start = identifier_spans.get(&ref_nid).map(|e| e.start).unwrap_or(0);
+            let ref_start = identifier_spans.get(&ref_nid).map(|e| e.span.start).unwrap_or(0);
             if ref_start < func_start || ref_start >= func_end {
                 continue;
             }

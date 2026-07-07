@@ -498,7 +498,7 @@ pub fn find_context_identifiers(
                 continue;
             }
             let ref_pos = match identifier_spans.get(&ref_nid) {
-                Some(entry) => entry.start,
+                Some(entry) => entry.span.start,
                 None => continue,
             };
             // Check if ref_pos is inside a nested function scope
