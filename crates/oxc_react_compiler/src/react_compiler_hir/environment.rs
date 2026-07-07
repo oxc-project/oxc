@@ -1,3 +1,4 @@
+use std::cell::OnceCell;
 use std::mem::take;
 
 use cow_utils::CowUtils;
@@ -75,6 +76,9 @@ pub struct Environment<'a> {
     pub instrument_fn_name: Option<String>,
     pub instrument_gating_name: Option<String>,
     pub hook_guard_name: Option<String>,
+    /// Pre-resolved local name for the memo cache import; set before compilation so
+    /// codegen emits it directly (see `ProgramContext::reserve_memo_cache_name`).
+    pub memo_cache_name: OnceCell<String>,
 
     // Renames: tracks variable renames from lowering (original_name → new_name)
     // keyed by binding declaration position, for applying back to the Babel AST.
@@ -188,6 +192,7 @@ impl<'a> Environment<'a> {
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
+            memo_cache_name: OnceCell::new(),
             renames: Vec::new(),
             reference_node_ids: FxHashSet::default(),
             hoisted_identifiers: FxHashSet::default(),

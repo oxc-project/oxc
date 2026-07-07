@@ -2304,22 +2304,6 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
     }
 }
 
-/// Visitor that renames every identifier reference matching `old_name` to `new_name`.
-/// Mirrors the Babel `RenameIdentifierVisitor` (used to rename `useMemoCache`).
-struct OxcRenameIdentifierVisitor<'a, 'b> {
-    ast: &'b AstBuilder<'a>,
-    old_name: &'b str,
-    new_name: &'b str,
-}
-
-impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcRenameIdentifierVisitor<'a, 'b> {
-    fn visit_identifier_reference(&mut self, ident: &mut oxc::IdentifierReference<'a>) {
-        if ident.name == self.old_name {
-            ident.name = ox_atom(self.ast, self.new_name).into();
-        }
-    }
-}
-
 /// Allocate a `&'a str` in the arena (satisfies the builders' `Into<Ident>` /
 /// `IntoIn` slots; convert to `Atom` via `.into()` where a bare `Atom` is needed).
 fn ox_atom<'a>(ast: &AstBuilder<'a>, s: &str) -> &'a str {
@@ -2501,16 +2485,12 @@ fn ox_splice_program<'a>(
     // the top level.
     program.body.extend(appended_outlined_decls);
 
-    // Register the memo cache import and rename `useMemoCache` references.
+    // Register the memo cache import for emission if any function used it. Its local
+    // name was reserved up front and emitted directly by codegen, so there is no
+    // placeholder to rename here.
     let needs_memo_import = replacements.iter().any(|r| r.codegen_fn.memo_slots_used > 0);
     if needs_memo_import {
-        let import_spec = context.add_memo_cache_import();
-        let mut visitor = OxcRenameIdentifierVisitor {
-            ast,
-            old_name: "useMemoCache",
-            new_name: &import_spec.name,
-        };
-        oxc_ast_visit::VisitMut::visit_program(&mut visitor, &mut program);
+        context.register_memo_cache_import();
     }
 
     ox_add_imports_to_program(ast, &mut program, context);
@@ -2816,6 +2796,15 @@ pub fn compile_program<'a, 'p>(
     context.instrument_fn_name = instrument_fn_name;
     context.instrument_gating_name = instrument_gating_name;
     context.hook_guard_name = hook_guard_name;
+
+    // Reserve the memo cache import's local name up front so codegen can emit it
+    // directly, without a placeholder that a later pass renames. Memoization is
+    // enabled in every mode except SSR (`enable_memoization`), and lint mode can
+    // reach codegen too (`reportAllBailouts` leaves `skip_lint_codegen` off), so
+    // reserve whenever the name might be emitted.
+    if output_mode != CompilerOutputMode::Ssr {
+        context.reserve_memo_cache_name();
+    }
 
     // Find all functions to compile
     let queue = find_functions_to_compile(program, &options, &mut context);

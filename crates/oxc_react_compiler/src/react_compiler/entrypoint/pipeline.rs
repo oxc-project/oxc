@@ -111,6 +111,7 @@ pub fn compile_fn<'a>(
     env.instrument_fn_name = context.instrument_fn_name.clone();
     env.instrument_gating_name = context.instrument_gating_name.clone();
     env.hook_guard_name = context.hook_guard_name.clone();
+    env.memo_cache_name = context.memo_cache_name.clone();
     env.seed_uid_known_names(context.known_referenced_names());
 
     env.reference_node_ids = scope.all_reference_positions().clone();

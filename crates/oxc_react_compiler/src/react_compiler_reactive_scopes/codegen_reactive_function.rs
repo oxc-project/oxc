@@ -148,10 +148,23 @@ pub fn codegen_function<'a, 'h>(
     let cache_count = compiled.memo_slots_used;
     if cache_count != 0 {
         let cache_name = cx.synthesize_name("$");
-        // const $ = useMemoCache(N)
+        // const $ = _c(N) — the memo cache import's local name was reserved up front
+        // (`ProgramContext::reserve_memo_cache_name`) and threaded in via `env`, so
+        // it is emitted directly here rather than as a placeholder renamed later.
+        // Reached only when memoization is enabled (every mode except SSR), which is
+        // exactly the condition under which the name is reserved up front — so it is
+        // always set here.
+        let memo_cache_callee = ox_str(
+            ast,
+            cx.env
+                .memo_cache_name
+                .get()
+                .expect("memo cache import name is reserved for memoizing (non-SSR) compilation")
+                .as_str(),
+        );
         let use_memo_cache = oxc_ast::ast::Expression::new_call_expression(
             SPAN,
-            oxc_ast::ast::Expression::new_identifier(SPAN, "useMemoCache", ast),
+            oxc_ast::ast::Expression::new_identifier(SPAN, memo_cache_callee, ast),
             None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterInstantiation>>,
             oxc_allocator::ArenaVec::from_value_in(
                 oxc_ast::ast::Argument::from(ox_number(ast, cache_count as f64)),

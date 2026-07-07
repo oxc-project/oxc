@@ -4,6 +4,8 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
+use std::cell::OnceCell;
+
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
@@ -37,6 +39,11 @@ pub struct ProgramContext {
     pub instrument_fn_name: Option<String>,
     pub instrument_gating_name: Option<String>,
     pub hook_guard_name: Option<String>,
+    /// Pre-reserved local name for the memo cache import (`c` from the runtime).
+    /// Set once before compilation so codegen can emit it directly; the import
+    /// statement is only registered for emission once compilation confirms the
+    /// cache is actually used. Empty in non-Client modes (no memo slots).
+    pub memo_cache_name: OnceCell<String>,
 
     // Internal state
     already_compiled: FxHashSet<u32>,
@@ -60,6 +67,7 @@ impl ProgramContext {
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
+            memo_cache_name: OnceCell::new(),
             already_compiled: FxHashSet::default(),
             known_referenced_names: FxHashSet::default(),
             imports: FxHashMap::default(),
@@ -130,10 +138,34 @@ impl ProgramContext {
         }
     }
 
-    /// Add the memo cache import (the `c` function from the compiler runtime).
-    pub fn add_memo_cache_import(&mut self) -> NonLocalImportSpecifier {
+    /// Reserve the memo cache import's local name (`c` from the runtime) up front,
+    /// before compilation, so codegen can emit it directly instead of a placeholder
+    /// that a later pass rewrites. Does not register the import for emission — call
+    /// [`register_memo_cache_import`](Self::register_memo_cache_import) once
+    /// compilation confirms the cache is actually used.
+    ///
+    /// Unlike Babel (which allocates this name last, at program exit, and renames a
+    /// `useMemoCache` placeholder), reserving up front decides the name before the
+    /// generated UIDs exist. The two only differ when a generated name would compete
+    /// for the `_c` family — i.e. the source contains an identifier that sanitizes to
+    /// base `"c"`; otherwise the result is byte-identical.
+    pub fn reserve_memo_cache_name(&mut self) {
+        let name = self.new_uid("_c");
+        // Set exactly once, before compilation.
+        let _ = self.memo_cache_name.set(name);
+    }
+
+    /// Register the (already-reserved) memo cache import for emission, reusing the
+    /// name from [`reserve_memo_cache_name`](Self::reserve_memo_cache_name). No-op if
+    /// no name was reserved (non-Client modes never allocate memo slots).
+    pub fn register_memo_cache_import(&mut self) {
+        let Some(name) = self.memo_cache_name.get().cloned() else { return };
         let module = self.react_runtime_module.clone();
-        self.add_import_specifier(&module, "c", Some("_c"))
+        self.imports
+            .entry(module)
+            .or_default()
+            .entry("c".to_string())
+            .or_insert(NonLocalImportSpecifier { name, imported: "c".to_string() });
     }
 
     /// Add an import specifier, reusing an existing one if it was already added.
