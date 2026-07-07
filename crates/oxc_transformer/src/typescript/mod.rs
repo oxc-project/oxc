@@ -71,7 +71,7 @@ impl<'a> TypeScript<'a> {
         }
     }
 
-    pub(super) fn finalize_semantics(&mut self, scoping: &mut Scoping) {
+    pub(super) fn finalize_scoping(&mut self, scoping: &mut Scoping) {
         self.annotations.update_removed_ambient_references(scoping);
     }
 }
