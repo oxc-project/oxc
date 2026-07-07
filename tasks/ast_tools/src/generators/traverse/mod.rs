@@ -39,10 +39,18 @@ impl Generator for TraverseGenerator {
             },
             Output::Rust {
                 path: output_path(TRAVERSE_CRATE_PATH, "ancestor.rs"),
-                tokens: ancestor::generate_ancestor(schema),
+                tokens: ancestor::generate_ancestor(schema, /* include_ts */ true),
             },
         ]
     }
+}
+
+/// Whether an AST type is TypeScript type-level syntax, which cannot appear in a type-stripped AST.
+///
+/// `Decorator` is also defined in `ts.rs`, but decorators are runtime syntax, so it is not
+/// considered a TS type here.
+pub(super) fn is_ts_type_name(name: &str) -> bool {
+    name.starts_with("TS") || name.starts_with("JSDoc")
 }
 
 pub(super) fn generate_walk_traverse(schema: &Schema) -> TokenStream {
@@ -53,8 +61,8 @@ pub(super) fn generate_walk_minifier(schema: &Schema) -> TokenStream {
     walk::generate_walk(schema, &walk::WalkConfig::minifier())
 }
 
-pub(super) fn generate_ancestor(schema: &Schema) -> TokenStream {
-    ancestor::generate_ancestor(schema)
+pub(super) fn generate_ancestor(schema: &Schema, include_ts: bool) -> TokenStream {
+    ancestor::generate_ancestor(schema, include_ts)
 }
 
 pub(super) struct TraverseTraitConfig {
@@ -62,6 +70,9 @@ pub(super) struct TraverseTraitConfig {
     pub trait_generics: TokenStream,
     pub ctx_ty: TokenStream,
     pub ctx_use: TokenStream,
+    /// Whether to generate `enter_*` / `exit_*` methods for TS type-level syntax.
+    /// The minifier only operates on type-stripped ASTs, so it excludes them.
+    pub include_ts: bool,
 }
 
 impl TraverseTraitConfig {
@@ -71,6 +82,7 @@ impl TraverseTraitConfig {
             trait_generics: quote! { <'a, State> },
             ctx_ty: quote! { TraverseCtx<'a, State> },
             ctx_use: quote! { use crate::TraverseCtx; },
+            include_ts: true,
         }
     }
 
@@ -80,6 +92,7 @@ impl TraverseTraitConfig {
             trait_generics: quote! { <'a> },
             ctx_ty: quote! { TraverseCtx<'a> },
             ctx_use: quote! { use crate::TraverseCtx; },
+            include_ts: false,
         }
     }
 }
@@ -97,6 +110,9 @@ pub(super) fn generate_traverse_trait(
 
     for type_def in schema.structs_and_enums() {
         if !is_ast_type_with_visitor(type_def, schema) {
+            continue;
+        }
+        if !config.include_ts && is_ts_type_name(type_def.name()) {
             continue;
         }
 

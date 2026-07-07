@@ -2,7 +2,6 @@ use std::str;
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
 use oxc_semantic::{NodeId, Reference, Scoping};
 use oxc_span::SPAN;
 use oxc_str::Ident;
@@ -12,9 +11,11 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use super::{
-    bound_identifier::BoundIdentifier, scopes_collector::ChildScopeCollector, uid::UidGenerator,
-};
+use oxc_ast_visit::Visit;
+
+use crate::generated::scopes_collector::ChildScopeCollector;
+
+use super::{bound_identifier::BoundIdentifier, uid::UidGenerator};
 
 /// Traverse scope context.
 ///

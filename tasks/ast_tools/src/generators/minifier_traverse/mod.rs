@@ -4,6 +4,10 @@
 //! * `traverse.rs` - `MinifierTraverse` trait with `enter_*` / `exit_*` methods.
 //! * `walk.rs` - Unsafe `walk_*` functions for AST traversal.
 //! * `ancestor.rs` - Ancestor tracking types and offset constants.
+//!
+//! The minifier only operates on type-stripped ASTs, so unlike `oxc_traverse`, its traverse
+//! runtime excludes TS type-level syntax entirely (no `enter_ts_*` / `exit_ts_*` methods,
+//! no `walk_ts_*` functions, no TS `Ancestor` variants). TS nodes, if present, are not walked.
 
 use super::traverse::{self, TraverseTraitConfig};
 use crate::{
@@ -32,7 +36,7 @@ impl Generator for MinifierTraverseGenerator {
             },
             Output::Rust {
                 path: output_path(MINIFIER_CRATE_PATH, "ancestor.rs"),
-                tokens: traverse::generate_ancestor(schema),
+                tokens: traverse::generate_ancestor(schema, /* include_ts */ false),
             },
         ]
     }

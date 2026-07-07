@@ -24,7 +24,6 @@ mod drop_diff;
 mod ecma_context;
 mod maybe_bound_identifier;
 mod reusable;
-mod scopes_collector;
 mod scoping;
 mod uid;
 use ancestry::PopToken;

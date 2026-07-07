@@ -19,8 +19,13 @@ use crate::{
     utils::upper_case_first,
 };
 
+use super::is_ts_type_name;
+
 /// Generate all ancestor-related code.
-pub fn generate_ancestor(schema: &Schema) -> TokenStream {
+///
+/// With `include_ts` off, TS type-level syntax gets no `Ancestor` variants, matching the
+/// walk functions which do not walk TS nodes.
+pub fn generate_ancestor(schema: &Schema, include_ts: bool) -> TokenStream {
     let mut ancestor_type_variants = quote!();
     let mut ancestor_enum_variants = quote!();
     let mut is_functions = quote!();
@@ -37,13 +42,20 @@ pub fn generate_ancestor(schema: &Schema) -> TokenStream {
         if !struct_def.visit.has_visitor() {
             continue;
         }
+        if !include_ts && is_ts_type_name(struct_def.name()) {
+            continue;
+        }
 
         // Get visited fields (fields whose innermost type has a visitor)
         let visited_fields: Vec<(usize, &FieldDef)> = struct_def
             .fields
             .iter()
             .enumerate()
-            .filter(|(_, field)| field_is_visited(field, schema))
+            .filter(|(_, field)| {
+                field_is_visited(field, schema)
+                    && (include_ts
+                        || !is_ts_type_name(field.type_def(schema).innermost_type(schema).name()))
+            })
             .collect();
 
         if visited_fields.is_empty() {

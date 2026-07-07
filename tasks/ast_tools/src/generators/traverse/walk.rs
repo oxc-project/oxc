@@ -17,7 +17,7 @@ use crate::{
 
 use super::{
     ancestor::{get_visited_fields, is_ast_type_with_visitor},
-    traverse_snake_name,
+    is_ts_type_name, traverse_snake_name,
 };
 
 pub(super) struct WalkConfig {
@@ -25,6 +25,9 @@ pub(super) struct WalkConfig {
     pub trait_bound: TokenStream,
     pub ctx_ty: TokenStream,
     pub has_state: bool,
+    /// Whether to walk TS type-level syntax.
+    /// The minifier only operates on type-stripped ASTs, so its walk skips TS nodes entirely.
+    pub include_ts: bool,
 }
 
 impl WalkConfig {
@@ -34,6 +37,7 @@ impl WalkConfig {
             trait_bound: quote! { Tr: Traverse<'a, State> },
             ctx_ty: quote! { TraverseCtx<'a, State> },
             has_state: true,
+            include_ts: true,
         }
     }
 
@@ -49,6 +53,7 @@ impl WalkConfig {
             trait_bound: quote! { Tr: Traverse<'a> },
             ctx_ty: quote! { TraverseCtx<'a> },
             has_state: false,
+            include_ts: false,
         }
     }
 }
@@ -64,6 +69,9 @@ pub(super) fn generate_walk(schema: &Schema, config: &WalkConfig) -> TokenStream
         if !is_ast_type_with_visitor(type_def, schema) {
             continue;
         }
+        if !config.include_ts && is_ts_type_name(type_def.name()) {
+            continue;
+        }
         match type_def {
             StructOrEnum::Struct(struct_def) => {
                 walk_methods.extend(generate_walk_for_struct(struct_def, schema, config));
@@ -74,6 +82,10 @@ pub(super) fn generate_walk(schema: &Schema, config: &WalkConfig) -> TokenStream
         }
     }
 
+    // Without TS walks, there are no identical match arms left in enum walk functions
+    let maybe_match_same_arms =
+        if config.include_ts { quote!( clippy::match_same_arms, ) } else { quote!() };
+
     quote! {
         #![expect(
             clippy::semicolon_if_nothing_returned,
@@ -81,7 +93,7 @@ pub(super) fn generate_walk(schema: &Schema, config: &WalkConfig) -> TokenStream
             clippy::ref_as_ptr,
             clippy::cast_ptr_alignment,
             clippy::borrow_as_ptr,
-            clippy::match_same_arms,
+            #maybe_match_same_arms
             unsafe_op_in_unsafe_fn,
         )]
 
@@ -153,7 +165,12 @@ fn generate_walk_for_struct(
     let exit_fn_name = format_ident!("exit_{snake_name}");
     let struct_ty = struct_def.ty(schema);
 
-    let visited_fields = get_visited_fields(struct_def, schema);
+    let mut visited_fields = get_visited_fields(struct_def, schema);
+    if !config.include_ts {
+        visited_fields.retain(|(_, field)| {
+            !is_ts_type_name(field.type_def(schema).innermost_type(schema).name())
+        });
+    }
 
     // Scope handling
     let (enter_scope_code, exit_scope_code, scope_id_field_exists) =
@@ -534,6 +551,9 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
     let enum_ident = enum_def.ident();
 
     let mut match_arms = quote!();
+    // TS variants are not walked when `include_ts` is off. They still need match arms
+    // to keep the match exhaustive, so collect them into a single no-op arm.
+    let mut ts_noop_patterns: Vec<TokenStream> = Vec::new();
 
     // Own variants
     for variant in &enum_def.variants {
@@ -550,9 +570,15 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
             continue;
         }
 
+        let variant_ident = variant.ident();
+
+        if !config.include_ts && is_ts_type_name(inner_type.name()) {
+            ts_noop_patterns.push(quote!(#enum_ident::#variant_ident(_)));
+            continue;
+        }
+
         let inner_snake = inner_type.snake_name();
         let walk_fn = format_ident!("walk_{inner_snake}");
-        let variant_ident = variant.ident();
 
         let node_expr = if field_type.is_box() {
             quote!((&mut **node) as *mut _)
@@ -567,13 +593,24 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
 
     // Inherited variants
     for inherited_enum in enum_def.inherits_enums(schema) {
-        let inherited_snake = inherited_enum.snake_name();
-        let walk_inherited_fn = format_ident!("walk_{inherited_snake}");
-
         // Collect all variant patterns from inherited enum (recursively)
         let patterns = collect_inherited_patterns(&enum_ident, inherited_enum, schema);
+
+        if !config.include_ts && is_ts_type_name(inherited_enum.name()) {
+            ts_noop_patterns.extend(patterns);
+            continue;
+        }
+
+        let inherited_snake = inherited_enum.snake_name();
+        let walk_inherited_fn = format_ident!("walk_{inherited_snake}");
         match_arms.extend(quote! {
             #(#patterns)|* => #walk_inherited_fn(traverser, node as *mut _, ctx),
+        });
+    }
+
+    if !ts_noop_patterns.is_empty() {
+        match_arms.extend(quote! {
+            #(#ts_noop_patterns)|* => {}
         });
     }
 
