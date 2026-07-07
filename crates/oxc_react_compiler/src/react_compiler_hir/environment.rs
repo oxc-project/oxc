@@ -240,7 +240,7 @@ impl<'a> Environment<'a> {
             mutable_range,
             scope: None,
             type_: type_id,
-            loc: None,
+            span: None,
         });
         id
     }
@@ -258,7 +258,7 @@ impl<'a> Environment<'a> {
             reassignments: Vec::new(),
             early_return_value: None,
             merged: Vec::new(),
-            loc: None,
+            span: None,
         });
         id
     }
@@ -354,12 +354,12 @@ impl<'a> Environment<'a> {
 
     /// Resolve a non-local binding to its type. Ported from TS `getGlobalDeclaration`.
     ///
-    /// The `loc` parameter is used for error diagnostics when validating module type
+    /// The `span` parameter is used for error diagnostics when validating module type
     /// configurations. Pass `None` if no source location is available.
     pub fn get_global_declaration(
         &mut self,
         binding: &NonLocalBinding,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     ) -> Result<Option<Global>, CompilerError> {
         match binding {
             NonLocalBinding::ModuleLocal { name, .. } => {
@@ -399,7 +399,7 @@ impl<'a> Environment<'a> {
                                 "Invalid type configuration for module",
                             )
                             .with_description(first_error.to_string())
-                            .with_loc(loc),
+                            .with_span(span),
                         )?;
                     }
                 }
@@ -443,7 +443,7 @@ impl<'a> Environment<'a> {
                                 "Invalid type configuration for module",
                             )
                             .with_description(first_error.to_string())
-                            .with_loc(loc),
+                            .with_span(span),
                         )?;
                     }
                 }
@@ -470,7 +470,7 @@ impl<'a> Environment<'a> {
                                     module,
                                     if expect_hook { "to be a hook" } else { "not to be a hook" }
                                 ))
-                                .with_loc(loc),
+                                .with_span(span),
                             )?;
                         }
                         return Ok(Some(imported_type));

@@ -198,14 +198,14 @@ fn handle_rewrite(
                 block: *block_id,
                 scope: *scope_id,
                 id: *instr_id,
-                loc: None,
+                span: None,
             }
         }
         TerminalRewriteInfo::EndScope { instr_id, fallthrough_id } => Terminal::Goto {
             variant: GotoVariant::Break,
             block: *fallthrough_id,
             id: *instr_id,
-            loc: None,
+            span: None,
         },
     };
 

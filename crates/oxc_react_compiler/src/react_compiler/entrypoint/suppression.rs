@@ -5,11 +5,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, Position,
-    SourceLocation,
+    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, Span,
 };
 
-/// A comment's text and byte range, plus the byte-offset loc that surfaces as the
+/// A comment's text and byte range, plus the byte-offset span that surfaces as the
 /// labeled span on a suppression diagnostic. The former Babel front-end carried
 /// this on `CommentData`; the oxc front-end builds it directly from oxc comments.
 #[derive(Debug, Clone)]
@@ -17,7 +16,7 @@ pub struct CommentData {
     pub value: String,
     pub start: Option<u32>,
     pub end: Option<u32>,
-    pub loc: Option<CommentLoc>,
+    pub span: Option<CommentLoc>,
 }
 
 #[derive(Debug, Clone)]
@@ -60,8 +59,8 @@ fn comment_data(comment: &oxc_ast::ast::Comment, source_text: &str) -> CommentDa
         end: Some(comment.span.end),
         // Only the byte `index` is load-bearing here: it surfaces as the labeled
         // span offset/length on the suppression diagnostic. Line/column are unused
-        // by downstream consumers of this loc.
-        loc: Some(CommentLoc {
+        // by downstream consumers of this span.
+        span: Some(CommentLoc {
             start_index: Some(comment.span.start),
             end_index: Some(comment.span.end),
         }),
@@ -276,13 +275,14 @@ pub fn suppressions_to_compiler_error(suppressions: &[SuppressionRange]) -> Comp
             CompilerDiagnostic::new(ErrorCategory::Suppression, reason, Some(description));
 
         // Add error detail with location info
-        let loc = suppression.disable_comment.loc.as_ref().map(|l| SourceLocation {
-            start: Position { line: 0, column: 0, index: l.start_index },
-            end: Position { line: 0, column: 0, index: l.end_index },
-        });
+        let span = suppression
+            .disable_comment
+            .span
+            .as_ref()
+            .and_then(|l| Some(Span::new(l.start_index?, l.end_index?)));
 
         diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Error {
-            loc,
+            span,
             message: Some("Found React rule suppression".to_string()),
         });
 

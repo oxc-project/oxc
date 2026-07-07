@@ -244,7 +244,7 @@ fn rewrite_instruction(
                 }
             }
         }
-        InstructionValue::StoreLocal { lvalue, type_annotation, loc, .. }
+        InstructionValue::StoreLocal { lvalue, type_annotation, span, .. }
             if lvalue.kind != InstructionKind::Reassign
                 && !is_id_used(state, lvalue.place.identifier) =>
         {
@@ -253,11 +253,11 @@ fn rewrite_instruction(
             // Rewrite to DeclareLocal so the initializer value can be DCE'd.
             let new_lvalue = lvalue.clone();
             let new_type_annotation = type_annotation.clone();
-            let new_loc = *loc;
+            let new_span = *span;
             instr.value = InstructionValue::DeclareLocal {
                 lvalue: new_lvalue,
                 type_annotation: new_type_annotation,
-                loc: new_loc,
+                span: new_span,
             };
         }
         _ => {}

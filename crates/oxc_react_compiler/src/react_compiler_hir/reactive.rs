@@ -15,7 +15,7 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 
-use crate::react_compiler_diagnostics::SourceLocation;
+use crate::react_compiler_diagnostics::Span;
 
 use crate::react_compiler_hir::{
     AliasingEffect, BlockId, EvaluationOrder, InstructionValue, LogicalOperator, ParamPattern,
@@ -30,7 +30,7 @@ use crate::react_compiler_hir::{
 /// TS: ReactiveFunction in HIR.ts
 #[derive(Debug, Clone)]
 pub struct ReactiveFunction<'a> {
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
     pub id: Option<String>,
     pub name_hint: Option<String>,
     pub params: Vec<ParamPattern>,
@@ -69,7 +69,7 @@ pub struct ReactiveInstruction<'a> {
     pub lvalue: Option<Place>,
     pub value: ReactiveValue<'a>,
     pub effects: Option<Vec<AliasingEffect>>,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
 }
 
 /// Extends InstructionValue with compound expression types that were
@@ -85,7 +85,7 @@ pub enum ReactiveValue<'a> {
         operator: LogicalOperator,
         left: Box<ReactiveValue<'a>>,
         right: Box<ReactiveValue<'a>>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
 
     /// TS: ReactiveTernaryValue
@@ -93,7 +93,7 @@ pub enum ReactiveValue<'a> {
         test: Box<ReactiveValue<'a>>,
         consequent: Box<ReactiveValue<'a>>,
         alternate: Box<ReactiveValue<'a>>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
 
     /// TS: ReactiveSequenceValue
@@ -101,7 +101,7 @@ pub enum ReactiveValue<'a> {
         instructions: Vec<ReactiveInstruction<'a>>,
         id: EvaluationOrder,
         value: Box<ReactiveValue<'a>>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
 
     /// TS: ReactiveOptionalCallValue
@@ -109,7 +109,7 @@ pub enum ReactiveValue<'a> {
         id: EvaluationOrder,
         value: Box<ReactiveValue<'a>>,
         optional: bool,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
 }
 
@@ -152,41 +152,41 @@ pub enum ReactiveTerminal<'a> {
         target: BlockId,
         id: EvaluationOrder,
         target_kind: ReactiveTerminalTargetKind,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Continue {
         target: BlockId,
         id: EvaluationOrder,
         target_kind: ReactiveTerminalTargetKind,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Return {
         value: Place,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Throw {
         value: Place,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Switch {
         test: Place,
         cases: Vec<ReactiveSwitchCase<'a>>,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     DoWhile {
         loop_block: ReactiveBlock<'a>,
         test: ReactiveValue<'a>,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     While {
         test: ReactiveValue<'a>,
         loop_block: ReactiveBlock<'a>,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     For {
         init: ReactiveValue<'a>,
@@ -194,39 +194,39 @@ pub enum ReactiveTerminal<'a> {
         update: Option<ReactiveValue<'a>>,
         loop_block: ReactiveBlock<'a>,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     ForOf {
         init: ReactiveValue<'a>,
         test: ReactiveValue<'a>,
         loop_block: ReactiveBlock<'a>,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     ForIn {
         init: ReactiveValue<'a>,
         loop_block: ReactiveBlock<'a>,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     If {
         test: Place,
         consequent: ReactiveBlock<'a>,
         alternate: Option<ReactiveBlock<'a>>,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Label {
         block: ReactiveBlock<'a>,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Try {
         block: ReactiveBlock<'a>,
         handler_binding: Option<Place>,
         handler: ReactiveBlock<'a>,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
 }
 

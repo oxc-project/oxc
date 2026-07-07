@@ -133,7 +133,7 @@ fn validate_impl(
                                     ),
                                 )
                                 .with_detail(CompilerDiagnosticDetail::Error {
-                                    loc: callee.loc,
+                                    span: callee.span,
                                     message: Some("Found setState() within useMemo()".to_string()),
                                 }),
                             );
@@ -150,7 +150,7 @@ fn validate_impl(
                                         ),
                                     )
                                     .with_detail(CompilerDiagnosticDetail::Error {
-                                        loc: callee.loc,
+                                        span: callee.span,
                                         message: Some("Found setState() in render".to_string()),
                                     }),
                                 );
@@ -166,7 +166,7 @@ fn validate_impl(
                                         ),
                                     )
                                     .with_detail(CompilerDiagnosticDetail::Error {
-                                        loc: callee.loc,
+                                        span: callee.span,
                                         message: Some("Found setState() in render".to_string()),
                                     }),
                                 );

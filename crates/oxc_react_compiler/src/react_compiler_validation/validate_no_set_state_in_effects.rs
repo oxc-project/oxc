@@ -23,8 +23,8 @@ use crate::react_compiler_hir::Pattern;
 use crate::react_compiler_hir::dominator::{compute_post_dominator_tree, post_dominator_frontier};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
-    BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, PlaceOrSpread,
-    SourceLocation, Terminal, Type, is_ref_value_type, is_set_state_type, is_use_effect_event_type,
+    BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, PlaceOrSpread, Span,
+    Terminal, Type, is_ref_value_type, is_set_state_type, is_use_effect_event_type,
     is_use_effect_hook_type, is_use_insertion_effect_hook_type, is_use_layout_effect_hook_type,
     is_use_ref_type, visitors,
 };
@@ -139,7 +139,7 @@ pub fn validate_no_set_state_in_effects(
 
 #[derive(Debug, Clone)]
 struct SetStateInfo {
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
 }
 
 fn is_set_state_type_by_id(
@@ -175,7 +175,7 @@ fn push_error(errors: &mut CompilerError, info: &SetStateInfo, enable_verbose: b
                 ),
             )
             .with_detail(CompilerDiagnosticDetail::Error {
-                loc: info.loc,
+                span: info.span,
                 message: Some(
                     "Avoid calling setState() directly within an effect".to_string(),
                 ),
@@ -196,7 +196,7 @@ fn push_error(errors: &mut CompilerError, info: &SetStateInfo, enable_verbose: b
                 ),
             )
             .with_detail(CompilerDiagnosticDetail::Error {
-                loc: info.loc,
+                span: info.span,
                 message: Some(
                     "Avoid calling setState() directly within an effect".to_string(),
                 ),
@@ -502,7 +502,7 @@ fn get_set_state_call(
                             continue;
                         }
                     }
-                    return Ok(Some(SetStateInfo { loc: callee.loc }));
+                    return Ok(Some(SetStateInfo { span: callee.span }));
                 }
                 _ => {}
             }

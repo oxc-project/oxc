@@ -15,21 +15,15 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_span::Span;
 
 use crate::react_compiler_diagnostics::{
-    CompilerDiagnosticDetail, CompilerErrorOrDiagnostic, ErrorSeverity, SourceLocation,
+    CompilerDiagnosticDetail, CompilerErrorOrDiagnostic, ErrorSeverity,
 };
 
-/// Byte-offset span for a source location. Locations that flow through the oxc
-/// frontend carry offsets in `Position::index`; synthetic locations yield `None`.
-fn loc_to_span(loc: &SourceLocation) -> Option<Span> {
-    Some(Span::new(loc.start.index?, loc.end.index?))
-}
-
 /// Labels for a detail: the detail's own location (`ErrorDetail`) or its sub-detail
-/// locations (`Diagnostic`), falling back to the enclosing function (`fn_loc`).
-fn detail_labels(detail: &CompilerErrorOrDiagnostic, fn_loc: Option<Span>) -> Vec<LabeledSpan> {
+/// locations (`Diagnostic`), falling back to the enclosing function (`fn_span`).
+fn detail_labels(detail: &CompilerErrorOrDiagnostic, fn_span: Option<Span>) -> Vec<LabeledSpan> {
     match detail {
         CompilerErrorOrDiagnostic::ErrorDetail(d) => {
-            if let Some(span) = d.loc.as_ref().and_then(loc_to_span) {
+            if let Some(span) = d.span {
                 return vec![LabeledSpan::underline(span)];
             }
         }
@@ -38,8 +32,8 @@ fn detail_labels(detail: &CompilerErrorOrDiagnostic, fn_loc: Option<Span>) -> Ve
                 .details
                 .iter()
                 .filter_map(|item| match item {
-                    CompilerDiagnosticDetail::Error { loc, message } => {
-                        let span = loc.as_ref().and_then(loc_to_span)?;
+                    CompilerDiagnosticDetail::Error { span, message } => {
+                        let span = (*span)?;
                         Some(match message {
                             Some(message) => span.label(message.clone()),
                             None => LabeledSpan::underline(span),
@@ -52,16 +46,16 @@ fn detail_labels(detail: &CompilerErrorOrDiagnostic, fn_loc: Option<Span>) -> Ve
             }
         }
     }
-    fn_loc.map(|span| vec![LabeledSpan::underline(span)]).unwrap_or_default()
+    fn_span.map(|span| vec![LabeledSpan::underline(span)]).unwrap_or_default()
 }
 
 /// One internal error detail → an [`OxcDiagnostic`] at its display severity
-/// (`Error`/`Warning`/`Hint`; `Off` is suppressed → `None`). `fn_loc` supplies a
+/// (`Error`/`Warning`/`Hint`; `Off` is suppressed → `None`). `fn_span` supplies a
 /// fallback label when the detail carries no location of its own.
 #[cold]
 pub fn detail_to_diagnostic(
     detail: &CompilerErrorOrDiagnostic,
-    fn_loc: Option<Span>,
+    fn_span: Option<Span>,
 ) -> Option<OxcDiagnostic> {
     let (category, reason, description, severity) = match detail {
         CompilerErrorOrDiagnostic::Diagnostic(d) => {
@@ -84,7 +78,7 @@ pub fn detail_to_diagnostic(
         diagnostic = diagnostic.with_help(description.clone());
     }
 
-    let labels = detail_labels(detail, fn_loc);
+    let labels = detail_labels(detail, fn_span);
     if !labels.is_empty() {
         diagnostic = diagnostic.with_labels(labels);
     }

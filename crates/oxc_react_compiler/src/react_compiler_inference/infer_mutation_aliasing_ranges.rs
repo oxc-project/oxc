@@ -27,7 +27,7 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     AliasingEffect, BlockId, Effect, EvaluationOrder, FunctionId, HirFunction, IdentifierId,
-    InstructionValue, MutationReason, ParamPattern, Place, SourceLocation, Terminal, is_jsx_type,
+    InstructionValue, MutationReason, ParamPattern, Place, Span, Terminal, is_jsx_type,
     is_primitive_type,
 };
 
@@ -64,7 +64,7 @@ struct Edge {
 #[derive(Debug, Clone)]
 struct MutationInfo {
     kind: MutationKind,
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
 }
 
 #[derive(Debug, Clone)]
@@ -222,7 +222,7 @@ impl AliasingState {
         end: Option<EvaluationOrder>, // None for simulated mutations
         transitive: bool,
         start_kind: MutationKind,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
         reason: Option<MutationReason>,
         env: &mut Environment,
         should_record_errors: bool,
@@ -284,20 +284,20 @@ impl AliasingState {
             if entry.transitive {
                 match &node.transitive {
                     None => {
-                        node.transitive = Some(MutationInfo { kind: entry.kind, loc });
+                        node.transitive = Some(MutationInfo { kind: entry.kind, span });
                     }
                     Some(existing) if existing.kind < entry.kind => {
-                        node.transitive = Some(MutationInfo { kind: entry.kind, loc });
+                        node.transitive = Some(MutationInfo { kind: entry.kind, span });
                     }
                     _ => {}
                 }
             } else {
                 match &node.local {
                     None => {
-                        node.local = Some(MutationInfo { kind: entry.kind, loc });
+                        node.local = Some(MutationInfo { kind: entry.kind, span });
                     }
                     Some(existing) if existing.kind < entry.kind => {
-                        node.local = Some(MutationInfo { kind: entry.kind, loc });
+                        node.local = Some(MutationInfo { kind: entry.kind, span });
                     }
                     _ => {}
                 }
@@ -660,7 +660,7 @@ pub fn infer_mutation_aliasing_ranges(
             Some(EvaluationOrder(mutation.id.0 + 1)),
             mutation.transitive,
             mutation.kind,
-            mutation.place.loc,
+            mutation.place.span,
             mutation.reason.clone(),
             env,
             should_record_errors,
@@ -1027,7 +1027,7 @@ pub fn infer_mutation_aliasing_ranges(
             None, // simulated mutation
             true,
             MutationKind::Conditional,
-            into.loc,
+            into.span,
             None,
             env,
             false, // never record errors for simulated mutations
@@ -1078,12 +1078,12 @@ fn collect_param_effects(
         match local.kind {
             MutationKind::Conditional => {
                 function_effects.push(AliasingEffect::MutateConditionally {
-                    value: Place { loc: local.loc, ..place.clone() },
+                    value: Place { span: local.span, ..place.clone() },
                 });
             }
             MutationKind::Definite => {
                 function_effects.push(AliasingEffect::Mutate {
-                    value: Place { loc: local.loc, ..place.clone() },
+                    value: Place { span: local.span, ..place.clone() },
                     reason: node.mutation_reason.clone(),
                 });
             }
@@ -1095,12 +1095,12 @@ fn collect_param_effects(
         match transitive.kind {
             MutationKind::Conditional => {
                 function_effects.push(AliasingEffect::MutateTransitiveConditionally {
-                    value: Place { loc: transitive.loc, ..place.clone() },
+                    value: Place { span: transitive.span, ..place.clone() },
                 });
             }
             MutationKind::Definite => {
                 function_effects.push(AliasingEffect::MutateTransitive {
-                    value: Place { loc: transitive.loc, ..place.clone() },
+                    value: Place { span: transitive.span, ..place.clone() },
                 });
             }
             MutationKind::None => {}

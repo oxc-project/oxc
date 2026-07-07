@@ -128,7 +128,6 @@ pub fn compile_fn<'a>(
     mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
-    source_text: &str,
 ) -> Result<Option<CodegenFunction<'a>>, CompilerError> {
     let mut env = Environment::with_config(env_config.clone());
     env.fn_type = fn_type;
@@ -144,8 +143,7 @@ pub fn compile_fn<'a>(
 
     env.reference_node_ids = scope.all_reference_positions().clone();
 
-    let line_offsets = crate::react_compiler_lowering::source_loc::LineOffsets::new(source_text);
-    let mut hir = lower(func, scope, &mut env, &line_offsets)?;
+    let mut hir = lower(func, scope, &mut env)?;
 
     // Check for Invariant errors after lowering, before logging HIR.
     // In TS, Invariant errors throw from recordError(), aborting lower() before
@@ -219,13 +217,13 @@ pub fn compile_fn<'a>(
     }
 
     enter_ssa(&mut hir, &mut env).map_err(|diag| {
-        let loc = diag.primary_location().cloned();
+        let span = diag.primary_location().cloned();
         let mut err = CompilerError::new();
         err.push_error_detail(CompilerErrorDetail {
             category: diag.category,
             reason: diag.reason,
             description: diag.description,
-            loc,
+            span,
         });
         err
     })?;
@@ -692,7 +690,7 @@ pub fn compile_fn<'a>(
             category: ErrorCategory::Invariant,
             reason: "unexpected error".to_string(),
             description: None,
-            loc: None,
+            span: None,
         });
         return Err(err);
     }
@@ -717,7 +715,7 @@ pub fn compile_fn<'a>(
     let mut compiled_outlined: Vec<OutlinedFunction<'a>> = Vec::new();
     for o in codegen_result.outlined {
         let outlined_codegen = CodegenFunction {
-            loc: o.func.loc,
+            span: o.func.span,
             id: o.func.id,
             name_hint: o.func.name_hint,
             params: o.func.params,
@@ -751,7 +749,7 @@ pub fn compile_fn<'a>(
     }
 
     Ok(Some(CodegenFunction {
-        loc: codegen_result.loc,
+        span: codegen_result.span,
         id: codegen_result.id,
         name_hint: codegen_result.name_hint,
         params: codegen_result.params,

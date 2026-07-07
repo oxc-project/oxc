@@ -12,7 +12,7 @@
 use rustc_hash::FxHashMap;
 
 use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, SourceLocation,
+    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, Span,
 };
 use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, JsxTag};
 
@@ -22,15 +22,14 @@ use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, Jsx
 /// Called via `env.logErrors()` pattern in Pipeline.ts.
 pub fn validate_static_components(func: &HirFunction) -> CompilerError {
     let mut error = CompilerError::new();
-    let mut known_dynamic_components: FxHashMap<IdentifierId, Option<SourceLocation>> =
-        FxHashMap::default();
+    let mut known_dynamic_components: FxHashMap<IdentifierId, Option<Span>> = FxHashMap::default();
 
     for (_block_id, block) in &func.body.blocks {
         // Process phis: propagate dynamic component knowledge through phi nodes
         'phis: for phi in &block.phis {
             for (_pred, operand) in &phi.operands {
-                if let Some(loc) = known_dynamic_components.get(&operand.identifier) {
-                    known_dynamic_components.insert(phi.place.identifier, *loc);
+                if let Some(span) = known_dynamic_components.get(&operand.identifier) {
+                    known_dynamic_components.insert(phi.place.identifier, *span);
                     continue 'phis;
                 }
             }
@@ -43,22 +42,22 @@ pub fn validate_static_components(func: &HirFunction) -> CompilerError {
             let value = &instr.value;
 
             match value {
-                InstructionValue::FunctionExpression { loc, .. }
-                | InstructionValue::NewExpression { loc, .. }
-                | InstructionValue::MethodCall { loc, .. }
-                | InstructionValue::CallExpression { loc, .. } => {
-                    known_dynamic_components.insert(lvalue_id, *loc);
+                InstructionValue::FunctionExpression { span, .. }
+                | InstructionValue::NewExpression { span, .. }
+                | InstructionValue::MethodCall { span, .. }
+                | InstructionValue::CallExpression { span, .. } => {
+                    known_dynamic_components.insert(lvalue_id, *span);
                 }
                 InstructionValue::LoadLocal { place, .. } => {
-                    if let Some(loc) = known_dynamic_components.get(&place.identifier) {
-                        known_dynamic_components.insert(lvalue_id, *loc);
+                    if let Some(span) = known_dynamic_components.get(&place.identifier) {
+                        known_dynamic_components.insert(lvalue_id, *span);
                     }
                 }
                 InstructionValue::StoreLocal { lvalue, value: val, .. } => {
-                    if let Some(loc) = known_dynamic_components.get(&val.identifier) {
-                        let loc = *loc;
-                        known_dynamic_components.insert(lvalue_id, loc);
-                        known_dynamic_components.insert(lvalue.place.identifier, loc);
+                    if let Some(span) = known_dynamic_components.get(&val.identifier) {
+                        let span = *span;
+                        known_dynamic_components.insert(lvalue_id, span);
+                        known_dynamic_components.insert(lvalue.place.identifier, span);
                     }
                 }
                 InstructionValue::JsxExpression { tag: JsxTag::Place(tag_place), .. } => {
@@ -70,11 +69,11 @@ pub fn validate_static_components(func: &HirFunction) -> CompilerError {
                             Some("Components created during render will reset their state each time they are created. Declare components outside of render".to_string()),
                         )
                         .with_detail(CompilerDiagnosticDetail::Error {
-                            loc: tag_place.loc,
+                            span: tag_place.span,
                             message: Some("This component is created during render".to_string()),
                         })
                         .with_detail(CompilerDiagnosticDetail::Error {
-                            loc: location,
+                            span: location,
                             message: Some(
                                 "The component is created during render here".to_string(),
                             ),

@@ -21,8 +21,8 @@ use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
-    DeclarationId, EvaluationOrder, HirFunction, IdentifierId, InstructionValue, Pattern, Position,
-    ScopeId, SourceLocation, is_primitive_type,
+    DeclarationId, EvaluationOrder, HirFunction, IdentifierId, InstructionValue, Pattern, ScopeId,
+    Span, is_primitive_type,
 };
 use crate::react_compiler_utils::DisjointSet;
 
@@ -49,14 +49,14 @@ pub fn infer_reactive_scope_variables(
 
     scope_identifiers.for_each(|identifier_id, group_id| {
         let ident_range = env.identifiers[identifier_id.0 as usize].mutable_range.clone();
-        let ident_loc = env.identifiers[identifier_id.0 as usize].loc;
+        let ident_span = env.identifiers[identifier_id.0 as usize].span;
 
         let state = scopes.entry(group_id).or_insert_with(|| {
             let scope_id = env.next_scope_id();
             // Initialize scope range from the first member
             let scope = &mut env.scopes[scope_id.0 as usize];
             scope.range = ident_range.clone();
-            ScopeState { scope_id, loc: ident_loc }
+            ScopeState { scope_id, span: ident_span }
         });
 
         // Update scope range
@@ -73,16 +73,16 @@ pub fn infer_reactive_scope_variables(
         }
 
         // Merge location
-        state.loc = merge_location(state.loc, ident_loc);
+        state.span = merge_location(state.span, ident_span);
 
         // Assign the scope to this identifier
         let scope_id = state.scope_id;
         env.identifiers[identifier_id.0 as usize].scope = Some(scope_id);
     });
 
-    // Set loc on each scope
+    // Set span on each scope
     for state in scopes.values() {
-        env.scopes[state.scope_id.0 as usize].loc = state.loc;
+        env.scopes[state.scope_id.0 as usize].span = state.span;
     }
 
     // Update each identifier's mutable_range to match its scope's range
@@ -134,33 +134,16 @@ pub fn infer_reactive_scope_variables(
 
 struct ScopeState {
     scope_id: ScopeId,
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
 }
 
 /// Merge two source locations, preferring non-None values.
 /// Corresponds to TS `mergeLocation`.
-fn merge_location(l: Option<SourceLocation>, r: Option<SourceLocation>) -> Option<SourceLocation> {
+fn merge_location(l: Option<Span>, r: Option<Span>) -> Option<Span> {
     match (l, r) {
         (None, r) => r,
         (l, None) => l,
-        (Some(l), Some(r)) => Some(SourceLocation {
-            start: Position {
-                line: l.start.line.min(r.start.line),
-                column: l.start.column.min(r.start.column),
-                index: match (l.start.index, r.start.index) {
-                    (Some(a), Some(b)) => Some(a.min(b)),
-                    (a, b) => a.or(b),
-                },
-            },
-            end: Position {
-                line: l.end.line.max(r.end.line),
-                column: l.end.column.max(r.end.column),
-                index: match (l.end.index, r.end.index) {
-                    (Some(a), Some(b)) => Some(a.max(b)),
-                    (a, b) => a.or(b),
-                },
-            },
-        }),
+        (Some(l), Some(r)) => Some(Span::new(l.start.min(r.start), l.end.max(r.end))),
     }
 }
 

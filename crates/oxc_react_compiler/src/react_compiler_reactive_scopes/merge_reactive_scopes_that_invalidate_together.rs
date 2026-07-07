@@ -456,7 +456,7 @@ fn can_merge_scopes<'a>(
             identifier: decl.identifier,
             reactive: true,
             path: Vec::new(),
-            loc: None,
+            span: None,
         })
         .collect();
 

@@ -195,7 +195,7 @@ where
 /// read — the real function is swapped back immediately after processing.
 fn placeholder_function<'a>() -> HirFunction<'a> {
     HirFunction {
-        loc: None,
+        span: None,
         id: None,
         name_hint: None,
         fn_type: ReactFunctionType::Other,
@@ -204,7 +204,7 @@ fn placeholder_function<'a>() -> HirFunction<'a> {
             identifier: IdentifierId(0),
             effect: Effect::Unknown,
             reactive: false,
-            loc: None,
+            span: None,
         },
         context: Vec::new(),
         body: HIR { entry: BlockId(0), blocks: FxIndexMap::default() },

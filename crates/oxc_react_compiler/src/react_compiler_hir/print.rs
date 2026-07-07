@@ -5,7 +5,7 @@
 //! `crate::react_compiler_reactive_scopes::print_reactive_function` (reactive printer)
 //! delegate to for shared formatting logic.
 //!
-//! It also exports standalone formatting functions (format_loc, format_primitive, etc.)
+//! It also exports standalone formatting functions (format_span, format_primitive, etc.)
 //! that require no state.
 
 use std::borrow::Cow;
@@ -14,7 +14,7 @@ use rustc_hash::FxHashSet;
 
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
-use crate::react_compiler_diagnostics::SourceLocation;
+use crate::react_compiler_diagnostics::Span;
 
 use crate::react_compiler_hir::AliasingEffect;
 use crate::react_compiler_hir::ArrayElement;
@@ -50,15 +50,16 @@ use crate::react_compiler_hir::type_config::ValueReason;
 // Standalone formatting functions (no state needed)
 // =============================================================================
 
-pub fn format_loc(loc: &Option<SourceLocation>) -> Cow<'_, str> {
-    match loc {
-        Some(l) => Cow::Owned(format_loc_value(l)),
+pub fn format_span(span: &Option<Span>) -> Cow<'_, str> {
+    match span {
+        Some(l) => Cow::Owned(format_span_value(l)),
         None => Cow::Borrowed("generated"),
     }
 }
 
-pub fn format_loc_value(loc: &SourceLocation) -> String {
-    format!("{}:{}-{}:{}", loc.start.line, loc.start.column, loc.end.line, loc.end.column)
+pub fn format_span_value(span: &Span) -> String {
+    // Byte-offset span (`start-end`); line/column are derived by miette at render time.
+    format!("{}-{}", span.start, span.end)
 }
 
 /// Format a string like JS `JSON.stringify`: escape control chars and quotes
@@ -375,12 +376,12 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
         let is_seen = self.seen_identifiers.contains(&place.identifier);
         if is_seen {
             self.line(&format!(
-                "{}: Place {{ identifier: Identifier({}), effect: {}, reactive: {}, loc: {} }}",
+                "{}: Place {{ identifier: Identifier({}), effect: {}, reactive: {}, span: {} }}",
                 field_name,
                 place.identifier.0,
                 place.effect,
                 place.reactive,
-                format_loc(&place.loc)
+                format_span(&place.span)
             ));
         } else {
             self.line(&format!("{}: Place {{", field_name));
@@ -391,7 +392,7 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
             self.dedent();
             self.line(&format!("effect: {}", place.effect));
             self.line(&format!("reactive: {}", place.reactive));
-            self.line(&format!("loc: {}", format_loc(&place.loc)));
+            self.line(&format!("span: {}", format_span(&place.span)));
             self.dedent();
             self.line("}");
         }
@@ -436,7 +437,7 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
             None => self.line("scope: null"),
         }
         self.line(&format!("type: {}", self.format_type(ident.type_)));
-        self.line(&format!("loc: {}", format_loc(&ident.loc)));
+        self.line(&format!("span: {}", format_span(&ident.span)));
         self.dedent();
         self.line("}");
     }
@@ -459,7 +460,7 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                 let reassignments = scope.reassignments.clone();
                 let early_return_value = scope.early_return_value.clone();
                 let merged = scope.merged.clone();
-                let loc = scope.loc;
+                let span = scope.span;
 
                 self.line(&format!("{}: Scope {{", field_name));
                 self.indent();
@@ -509,7 +510,7 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     self.line("earlyReturnValue:");
                     self.indent();
                     self.line(&format!("value: {}", early_return.value.0));
-                    self.line(&format!("loc: {}", format_loc(&early_return.loc)));
+                    self.line(&format!("span: {}", format_span(&early_return.span)));
                     self.line(&format!("label: bb{}", early_return.label.0));
                     self.dedent();
                 } else {
@@ -520,8 +521,8 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                 let merged_str: Vec<String> = merged.iter().map(|s| s.0.to_string()).collect();
                 self.line(&format!("merged: [{}]", merged_str.join(", ")));
 
-                // loc
-                self.line(&format!("loc: {}", format_loc(&loc)));
+                // span
+                self.line(&format!("span: {}", format_span(&span)));
 
                 self.dedent();
                 self.line("}");
@@ -629,7 +630,7 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     }
                 }
                 self.dedent();
-                self.line(&format!("loc: {}", format_loc(&arr.loc)));
+                self.line(&format!("span: {}", format_span(&arr.span)));
                 self.dedent();
                 self.line("}");
             }
@@ -658,7 +659,7 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     }
                 }
                 self.dedent();
-                self.line(&format!("loc: {}", format_loc(&obj.loc)));
+                self.line(&format!("span: {}", format_span(&obj.span)));
                 self.dedent();
                 self.line("}");
             }
@@ -697,7 +698,7 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
         inner_func_formatter: Option<&dyn Fn(&mut PrintFormatter<'_, 'h>, &HirFunction<'h>)>,
     ) {
         match value {
-            InstructionValue::ArrayExpression { elements, loc } => {
+            InstructionValue::ArrayExpression { elements, span } => {
                 self.line("ArrayExpression {");
                 self.indent();
                 self.line("elements:");
@@ -719,11 +720,11 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     }
                 }
                 self.dedent();
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::ObjectExpression { properties, loc } => {
+            InstructionValue::ObjectExpression { properties, span } => {
                 self.line("ObjectExpression {");
                 self.indent();
                 self.line("properties:");
@@ -748,30 +749,30 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     }
                 }
                 self.dedent();
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::UnaryExpression { operator, value: val, loc } => {
+            InstructionValue::UnaryExpression { operator, value: val, span } => {
                 self.line("UnaryExpression {");
                 self.indent();
                 self.line(&format!("operator: \"{}\"", operator));
                 self.format_place_field("value", val);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::BinaryExpression { operator, left, right, loc } => {
+            InstructionValue::BinaryExpression { operator, left, right, span } => {
                 self.line("BinaryExpression {");
                 self.indent();
                 self.line(&format!("operator: \"{}\"", operator));
                 self.format_place_field("left", left);
                 self.format_place_field("right", right);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::NewExpression { callee, args, loc } => {
+            InstructionValue::NewExpression { callee, args, span } => {
                 self.line("NewExpression {");
                 self.indent();
                 self.format_place_field("callee", callee);
@@ -781,11 +782,11 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     self.format_argument(arg, i);
                 }
                 self.dedent();
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::CallExpression { callee, args, loc } => {
+            InstructionValue::CallExpression { callee, args, span } => {
                 self.line("CallExpression {");
                 self.indent();
                 self.format_place_field("callee", callee);
@@ -795,11 +796,11 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     self.format_argument(arg, i);
                 }
                 self.dedent();
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::MethodCall { receiver, property, args, loc } => {
+            InstructionValue::MethodCall { receiver, property, args, span } => {
                 self.line("MethodCall {");
                 self.indent();
                 self.format_place_field("receiver", receiver);
@@ -810,22 +811,22 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     self.format_argument(arg, i);
                 }
                 self.dedent();
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::JSXText { value: val, loc } => {
+            InstructionValue::JSXText { value: val, span } => {
                 self.line(&format!(
-                    "JSXText {{ value: {}, loc: {} }}",
+                    "JSXText {{ value: {}, span: {} }}",
                     format_js_string(val),
-                    format_loc(loc)
+                    format_span(span)
                 ));
             }
-            InstructionValue::Primitive { value: prim, loc } => {
+            InstructionValue::Primitive { value: prim, span } => {
                 self.line(&format!(
-                    "Primitive {{ value: {}, loc: {} }}",
+                    "Primitive {{ value: {}, span: {} }}",
                     format_primitive(prim),
-                    format_loc(loc)
+                    format_span(span)
                 ));
             }
             InstructionValue::TypeCastExpression {
@@ -834,7 +835,7 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                 type_annotation_name,
                 type_annotation_kind,
                 type_annotation: _,
-                loc,
+                span,
             } => {
                 self.line("TypeCastExpression {");
                 self.indent();
@@ -846,7 +847,7 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                 if let Some(annotation_kind) = type_annotation_kind {
                     self.line(&format!("typeAnnotationKind: \"{}\"", annotation_kind));
                 }
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
@@ -854,9 +855,9 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                 tag,
                 props,
                 children,
-                loc,
-                opening_loc,
-                closing_loc,
+                span,
+                opening_span,
+                closing_span,
             } => {
                 self.line("JsxExpression {");
                 self.indent();
@@ -900,13 +901,13 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     }
                     None => self.line("children: null"),
                 }
-                self.line(&format!("openingLoc: {}", format_loc(opening_loc)));
-                self.line(&format!("closingLoc: {}", format_loc(closing_loc)));
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("openingLoc: {}", format_span(opening_span)));
+                self.line(&format!("closingLoc: {}", format_span(closing_span)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::JsxFragment { children, loc } => {
+            InstructionValue::JsxFragment { children, span } => {
                 self.line("JsxFragment {");
                 self.indent();
                 self.line("children:");
@@ -915,27 +916,27 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     self.format_place_field(&format!("[{}]", i), child);
                 }
                 self.dedent();
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::UnsupportedNode { node_type, loc, .. } => match node_type {
+            InstructionValue::UnsupportedNode { node_type, span, .. } => match node_type {
                 Some(t) => self.line(&format!(
-                    "UnsupportedNode {{ type: {:?}, loc: {} }}",
+                    "UnsupportedNode {{ type: {:?}, span: {} }}",
                     t,
-                    format_loc(loc)
+                    format_span(span)
                 )),
-                None => self.line(&format!("UnsupportedNode {{ loc: {} }}", format_loc(loc))),
+                None => self.line(&format!("UnsupportedNode {{ span: {} }}", format_span(span))),
             },
-            InstructionValue::LoadLocal { place, loc } => {
+            InstructionValue::LoadLocal { place, span } => {
                 self.line("LoadLocal {");
                 self.indent();
                 self.format_place_field("place", place);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::DeclareLocal { lvalue, type_annotation, loc } => {
+            InstructionValue::DeclareLocal { lvalue, type_annotation, span } => {
                 self.line("DeclareLocal {");
                 self.indent();
                 self.format_lvalue("lvalue", lvalue);
@@ -946,11 +947,11 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                         None => "null".to_string(),
                     }
                 ));
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::DeclareContext { lvalue, loc } => {
+            InstructionValue::DeclareContext { lvalue, span } => {
                 self.line("DeclareContext {");
                 self.indent();
                 self.line("lvalue:");
@@ -958,11 +959,11 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                 self.line(&format!("kind: {:?}", lvalue.kind));
                 self.format_place_field("place", &lvalue.place);
                 self.dedent();
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::StoreLocal { lvalue, value: val, type_annotation, loc } => {
+            InstructionValue::StoreLocal { lvalue, value: val, type_annotation, span } => {
                 self.line("StoreLocal {");
                 self.indent();
                 self.format_lvalue("lvalue", lvalue);
@@ -974,19 +975,19 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                         None => "null".to_string(),
                     }
                 ));
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::LoadContext { place, loc } => {
+            InstructionValue::LoadContext { place, span } => {
                 self.line("LoadContext {");
                 self.indent();
                 self.format_place_field("place", place);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::StoreContext { lvalue, value: val, loc } => {
+            InstructionValue::StoreContext { lvalue, value: val, span } => {
                 self.line("StoreContext {");
                 self.indent();
                 self.line("lvalue:");
@@ -995,11 +996,11 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                 self.format_place_field("place", &lvalue.place);
                 self.dedent();
                 self.format_place_field("value", val);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::Destructure { lvalue, value: val, loc } => {
+            InstructionValue::Destructure { lvalue, value: val, span } => {
                 self.line("Destructure {");
                 self.indent();
                 self.line("lvalue:");
@@ -1008,80 +1009,80 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                 self.format_pattern(&lvalue.pattern);
                 self.dedent();
                 self.format_place_field("value", val);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::PropertyLoad { object, property, loc } => {
+            InstructionValue::PropertyLoad { object, property, span } => {
                 self.line("PropertyLoad {");
                 self.indent();
                 self.format_place_field("object", object);
                 self.line(&format!("property: \"{}\"", format_property_literal(property)));
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::PropertyStore { object, property, value: val, loc } => {
+            InstructionValue::PropertyStore { object, property, value: val, span } => {
                 self.line("PropertyStore {");
                 self.indent();
                 self.format_place_field("object", object);
                 self.line(&format!("property: \"{}\"", format_property_literal(property)));
                 self.format_place_field("value", val);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::PropertyDelete { object, property, loc } => {
+            InstructionValue::PropertyDelete { object, property, span } => {
                 self.line("PropertyDelete {");
                 self.indent();
                 self.format_place_field("object", object);
                 self.line(&format!("property: \"{}\"", format_property_literal(property)));
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::ComputedLoad { object, property, loc } => {
+            InstructionValue::ComputedLoad { object, property, span } => {
                 self.line("ComputedLoad {");
                 self.indent();
                 self.format_place_field("object", object);
                 self.format_place_field("property", property);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::ComputedStore { object, property, value: val, loc } => {
+            InstructionValue::ComputedStore { object, property, value: val, span } => {
                 self.line("ComputedStore {");
                 self.indent();
                 self.format_place_field("object", object);
                 self.format_place_field("property", property);
                 self.format_place_field("value", val);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::ComputedDelete { object, property, loc } => {
+            InstructionValue::ComputedDelete { object, property, span } => {
                 self.line("ComputedDelete {");
                 self.indent();
                 self.format_place_field("object", object);
                 self.format_place_field("property", property);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::LoadGlobal { binding, loc } => {
+            InstructionValue::LoadGlobal { binding, span } => {
                 self.line("LoadGlobal {");
                 self.indent();
                 self.line(&format!("binding: {}", format_non_local_binding(binding)));
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::StoreGlobal { name, value: val, loc } => {
+            InstructionValue::StoreGlobal { name, value: val, span } => {
                 self.line("StoreGlobal {");
                 self.indent();
                 self.line(&format!("name: \"{}\"", name));
                 self.format_place_field("value", val);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
@@ -1090,7 +1091,7 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                 name_hint,
                 lowered_func,
                 expr_type,
-                loc,
+                span,
             } => {
                 self.line("FunctionExpression {");
                 self.indent();
@@ -1116,11 +1117,11 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                 } else {
                     self.line(&format!("  <function {}>", lowered_func.func.0));
                 }
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::ObjectMethod { loc, lowered_func } => {
+            InstructionValue::ObjectMethod { span, lowered_func } => {
                 self.line("ObjectMethod {");
                 self.indent();
                 self.line("loweredFunc:");
@@ -1130,11 +1131,11 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                 } else {
                     self.line(&format!("  <function {}>", lowered_func.func.0));
                 }
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::TaggedTemplateExpression { tag, quasis, subexprs, loc } => {
+            InstructionValue::TaggedTemplateExpression { tag, quasis, subexprs, span } => {
                 self.line("TaggedTemplateExpression {");
                 self.indent();
                 self.format_place_field("tag", tag);
@@ -1173,11 +1174,11 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     }
                     self.dedent();
                 }
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::TemplateLiteral { subexprs, quasis, loc } => {
+            InstructionValue::TemplateLiteral { subexprs, quasis, span } => {
                 self.line("TemplateLiteral {");
                 self.indent();
                 self.line("subexprs:");
@@ -1200,88 +1201,88 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     ));
                 }
                 self.dedent();
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::RegExpLiteral { pattern, flags, loc } => {
+            InstructionValue::RegExpLiteral { pattern, flags, span } => {
                 self.line(&format!(
-                    "RegExpLiteral {{ pattern: \"{}\", flags: \"{}\", loc: {} }}",
+                    "RegExpLiteral {{ pattern: \"{}\", flags: \"{}\", span: {} }}",
                     pattern,
                     flags,
-                    format_loc(loc)
+                    format_span(span)
                 ));
             }
-            InstructionValue::MetaProperty { meta, property, loc } => {
+            InstructionValue::MetaProperty { meta, property, span } => {
                 self.line(&format!(
-                    "MetaProperty {{ meta: \"{}\", property: \"{}\", loc: {} }}",
+                    "MetaProperty {{ meta: \"{}\", property: \"{}\", span: {} }}",
                     meta,
                     property,
-                    format_loc(loc)
+                    format_span(span)
                 ));
             }
-            InstructionValue::Await { value: val, loc } => {
+            InstructionValue::Await { value: val, span } => {
                 self.line("Await {");
                 self.indent();
                 self.format_place_field("value", val);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::GetIterator { collection, loc } => {
+            InstructionValue::GetIterator { collection, span } => {
                 self.line("GetIterator {");
                 self.indent();
                 self.format_place_field("collection", collection);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::IteratorNext { iterator, collection, loc } => {
+            InstructionValue::IteratorNext { iterator, collection, span } => {
                 self.line("IteratorNext {");
                 self.indent();
                 self.format_place_field("iterator", iterator);
                 self.format_place_field("collection", collection);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::NextPropertyOf { value: val, loc } => {
+            InstructionValue::NextPropertyOf { value: val, span } => {
                 self.line("NextPropertyOf {");
                 self.indent();
                 self.format_place_field("value", val);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::Debugger { loc } => {
-                self.line(&format!("Debugger {{ loc: {} }}", format_loc(loc)));
+            InstructionValue::Debugger { span } => {
+                self.line(&format!("Debugger {{ span: {} }}", format_span(span)));
             }
-            InstructionValue::PostfixUpdate { lvalue, operation, value: val, loc } => {
+            InstructionValue::PostfixUpdate { lvalue, operation, value: val, span } => {
                 self.line("PostfixUpdate {");
                 self.indent();
                 self.format_place_field("lvalue", lvalue);
                 self.line(&format!("operation: \"{}\"", operation));
                 self.format_place_field("value", val);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::PrefixUpdate { lvalue, operation, value: val, loc } => {
+            InstructionValue::PrefixUpdate { lvalue, operation, value: val, span } => {
                 self.line("PrefixUpdate {");
                 self.indent();
                 self.format_place_field("lvalue", lvalue);
                 self.line(&format!("operation: \"{}\"", operation));
                 self.format_place_field("value", val);
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
             InstructionValue::StartMemoize {
                 manual_memo_id,
                 deps,
-                deps_loc: _,
+                deps_span: _,
                 has_invalid_deps: _,
-                loc,
+                span,
             } => {
                 self.line("StartMemoize {");
                 self.indent();
@@ -1319,17 +1320,17 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     }
                     None => self.line("deps: null"),
                 }
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
-            InstructionValue::FinishMemoize { manual_memo_id, decl, pruned, loc } => {
+            InstructionValue::FinishMemoize { manual_memo_id, decl, pruned, span } => {
                 self.line("FinishMemoize {");
                 self.indent();
                 self.line(&format!("manualMemoId: {}", manual_memo_id));
                 self.format_place_field("decl", decl);
                 self.line(&format!("pruned: {}", pruned));
-                self.line(&format!("loc: {}", format_loc(loc)));
+                self.line(&format!("span: {}", format_span(span)));
                 self.dedent();
                 self.line("}");
             }
@@ -1362,11 +1363,11 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                         }
                     ));
                     self.line(&format!("category: {:?}", d.category));
-                    let loc = d.primary_location();
+                    let span = d.primary_location();
                     self.line(&format!(
-                        "loc: {}",
-                        match loc {
-                            Some(l) => format_loc_value(l),
+                        "span: {}",
+                        match span {
+                            Some(l) => format_span_value(l),
                             None => "null".to_string(),
                         }
                     ));
@@ -1383,9 +1384,9 @@ impl<'a, 'h> PrintFormatter<'a, 'h> {
                     ));
                     self.line(&format!("category: {:?}", d.category));
                     self.line(&format!(
-                        "loc: {}",
-                        match &d.loc {
-                            Some(l) => format_loc_value(l),
+                        "span: {}",
+                        match &d.span {
+                            Some(l) => format_span_value(l),
                             None => "null".to_string(),
                         }
                     ));

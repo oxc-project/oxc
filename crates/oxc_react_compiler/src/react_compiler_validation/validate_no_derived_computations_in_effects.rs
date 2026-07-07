@@ -26,8 +26,8 @@ use crate::react_compiler_hir::visitors::{
 use crate::react_compiler_hir::{
     ArrayElement, BlockId, Effect, EvaluationOrder, FunctionId, HirFunction, Identifier,
     IdentifierId, IdentifierName, InstructionValue, ParamPattern, PlaceOrSpread, ReactFunctionType,
-    ReturnVariant, SourceLocation, Type, is_set_state_type, is_use_effect_hook_type,
-    is_use_ref_type, is_use_state_type,
+    ReturnVariant, Span, Type, is_set_state_type, is_use_effect_hook_type, is_use_ref_type,
+    is_use_state_type,
 };
 
 const MAX_FIXPOINT_ITERATIONS: usize = 100;
@@ -58,7 +58,7 @@ struct EffectMetadata {
 #[derive(Debug, Clone)]
 struct DepElement {
     identifier: IdentifierId,
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
 }
 
 struct ValidationContext {
@@ -69,30 +69,7 @@ struct ValidationContext {
     derivation_cache: DerivationCache,
     effects_cache: FxHashMap<IdentifierId, EffectMetadata>,
     set_state_loads: FxHashMap<IdentifierId, Option<IdentifierId>>,
-    set_state_usages: FxHashMap<IdentifierId, FxHashSet<LocKey>>,
-}
-
-/// A hashable key for SourceLocation to use in FxHashSet
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct LocKey {
-    start_line: u32,
-    start_col: u32,
-    end_line: u32,
-    end_col: u32,
-}
-
-impl LocKey {
-    fn from_loc(loc: &Option<SourceLocation>) -> Self {
-        match loc {
-            Some(loc) => LocKey {
-                start_line: loc.start.line,
-                start_col: loc.start.column,
-                end_line: loc.end.line,
-                end_col: loc.end.column,
-            },
-            None => LocKey { start_line: 0, start_col: 0, end_line: 0, end_col: 0 },
-        }
-    }
+    set_state_usages: FxHashMap<IdentifierId, FxHashSet<Span>>,
 }
 
 #[derive(Debug, Clone)]
@@ -244,7 +221,7 @@ fn maybe_record_set_state_for_instr(
     instr: &Instruction,
     env: &Environment,
     set_state_loads: &mut FxHashMap<IdentifierId, Option<IdentifierId>>,
-    set_state_usages: &mut FxHashMap<IdentifierId, FxHashSet<LocKey>>,
+    set_state_usages: &mut FxHashMap<IdentifierId, FxHashSet<Span>>,
 ) {
     let identifiers = &env.identifiers;
     let types = &env.types;
@@ -276,7 +253,7 @@ fn maybe_record_set_state_for_instr(
         if let Some(root_id) = root {
             set_state_usages.entry(root_id).or_insert_with(|| {
                 let mut set = FxHashSet::default();
-                set.insert(LocKey::from_loc(&instr.lvalue.loc));
+                set.insert(instr.lvalue.span.unwrap_or_default());
                 set
             });
         }
@@ -512,7 +489,7 @@ fn record_instruction_derivations(
                 .iter()
                 .filter_map(|el| match el {
                     ArrayElement::Place(p) => {
-                        Some(DepElement { identifier: p.identifier, loc: p.loc })
+                        Some(DepElement { identifier: p.identifier, span: p.span })
                     }
                     _ => None,
                 })
@@ -523,14 +500,14 @@ fn record_instruction_derivations(
     }
 
     // Collect operand derivations
-    for (operand_id, operand_loc) in each_instruction_operand(instr, env) {
+    for (operand_id, operand_span) in each_instruction_operand(instr, env) {
         // Track setState usages
         if context.set_state_loads.contains_key(&operand_id) {
             let root =
                 get_root_set_state(operand_id, &context.set_state_loads, &mut FxHashSet::default());
             if let Some(root_id) = root {
                 if let Some(usages) = context.set_state_usages.get_mut(&root_id) {
-                    usages.insert(LocKey::from_loc(&operand_loc));
+                    usages.insert(operand_span.unwrap_or_default());
                 }
             }
         }
@@ -596,15 +573,15 @@ struct OperandWithEffect {
     effect: Effect,
 }
 
-/// Collects operand (IdentifierId, loc) pairs from an instruction.
-/// Thin wrapper around canonical `each_instruction_operand` that maps Places to (id, loc) pairs.
+/// Collects operand (IdentifierId, span) pairs from an instruction.
+/// Thin wrapper around canonical `each_instruction_operand` that maps Places to (id, span) pairs.
 fn each_instruction_operand(
     instr: &Instruction,
     env: &Environment,
-) -> Vec<(IdentifierId, Option<SourceLocation>)> {
+) -> Vec<(IdentifierId, Option<Span>)> {
     canonical_each_instruction_operand(instr, env)
         .into_iter()
-        .map(|place| (place.identifier, place.loc))
+        .map(|place| (place.identifier, place.span))
         .collect()
 }
 
@@ -772,13 +749,13 @@ fn validate_effect(
     let mut seen_blocks: FxHashSet<BlockId> = FxHashSet::default();
 
     struct DerivedSetStateCall {
-        callee_loc: Option<SourceLocation>,
+        callee_span: Option<Span>,
         callee_id: IdentifierId,
         source_ids: FxIndexSet<IdentifierId>,
     }
 
     let mut effect_derived_set_state_calls: Vec<DerivedSetStateCall> = Vec::new();
-    let mut effect_set_state_usages: FxHashMap<IdentifierId, FxHashSet<LocKey>> =
+    let mut effect_set_state_usages: FxHashMap<IdentifierId, FxHashSet<Span>> =
         FxHashMap::default();
 
     // Consider setStates in the effect's dependency array as being part of effectSetStateUsages
@@ -787,7 +764,7 @@ fn validate_effect(
             get_root_set_state(dep.identifier, &context.set_state_loads, &mut FxHashSet::default());
         if let Some(root_id) = root {
             let mut set = FxHashSet::default();
-            set.insert(LocKey::from_loc(&dep.loc));
+            set.insert(dep.span.unwrap_or_default());
             effect_set_state_usages.insert(root_id, set);
         }
     }
@@ -829,7 +806,7 @@ fn validate_effect(
             );
 
             // Track setState usages for operands
-            for (operand_id, operand_loc) in each_instruction_operand(instr, env) {
+            for (operand_id, operand_span) in each_instruction_operand(instr, env) {
                 if context.set_state_loads.contains_key(&operand_id) {
                     let root = get_root_set_state(
                         operand_id,
@@ -838,7 +815,7 @@ fn validate_effect(
                     );
                     if let Some(root_id) = root {
                         if let Some(usages) = effect_set_state_usages.get_mut(&root_id) {
-                            usages.insert(LocKey::from_loc(&operand_loc));
+                            usages.insert(operand_span.unwrap_or_default());
                         }
                     }
                 }
@@ -865,7 +842,7 @@ fn validate_effect(
                             let arg_metadata = context.derivation_cache.cache.get(&arg0.identifier);
                             if let Some(am) = arg_metadata {
                                 effect_derived_set_state_calls.push(DerivedSetStateCall {
-                                    callee_loc: callee.loc,
+                                    callee_span: callee.span,
                                     callee_id: callee.identifier,
                                     source_ids: am.source_ids.clone(),
                                 });
@@ -985,7 +962,7 @@ fn validate_effect(
                         Some(description),
                     )
                     .with_detail(CompilerDiagnosticDetail::Error {
-                        loc: derived.callee_loc,
+                        span: derived.callee_span,
                         message: Some(
                             "This should be computed during render, not in an effect".to_string(),
                         ),
@@ -1089,7 +1066,7 @@ pub fn validate_no_derived_computations_in_effects(
     };
 
     // Phase 2: Validate each collected effect and record error details.
-    // Uses ErrorDetail (flat loc format) to match TS behavior where
+    // Uses ErrorDetail (flat span format) to match TS behavior where
     // env.recordError(new CompilerErrorDetail({...})) is used.
     for (func_id, resolved_deps) in effects_to_validate {
         let details = validate_effect_non_exp(
@@ -1134,7 +1111,7 @@ fn validate_effect_non_exp(
         dep_values.insert(*dep, vec![*dep]);
     }
 
-    let mut set_state_locs: Vec<SourceLocation> = Vec::new();
+    let mut set_state_spans: Vec<Span> = Vec::new();
 
     for (_, block) in &effect_func.body.blocks {
         for &pred in &block.preds {
@@ -1193,8 +1170,8 @@ fn validate_effect_non_exp(
                                 if let Some(deps) = dep_values.get(&arg.identifier) {
                                     let dep_set: FxHashSet<_> = deps.iter().collect();
                                     if dep_set.len() == effect_deps.len() {
-                                        if let Some(loc) = callee.loc {
-                                            set_state_locs.push(loc);
+                                        if let Some(span) = callee.span {
+                                            set_state_spans.push(span);
                                         }
                                     } else {
                                         return Vec::new();
@@ -1232,14 +1209,14 @@ fn validate_effect_non_exp(
         seen_blocks.insert(block.id);
     }
 
-    set_state_locs
+    set_state_spans
         .into_iter()
-        .map(|loc| {
+        .map(|span| {
             CompilerErrorDetail {
                 category: ErrorCategory::EffectDerivationsOfState,
                 reason: "Values derived from props and state should be calculated during render, not in an effect. (https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)".to_string(),
                 description: None,
-                loc: Some(loc),
+                span: Some(span),
             }
         })
         .collect()

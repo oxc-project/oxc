@@ -88,9 +88,9 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
         let block = &func.body.blocks[&id];
         let terminal = &block.terminal;
 
-        let (scope_block, fallthrough, eval_id, loc, scope) = match terminal {
-            Terminal::Scope { block, fallthrough, id, loc, scope } => {
-                (*block, *fallthrough, *id, *loc, *scope)
+        let (scope_block, fallthrough, eval_id, span, scope) = match terminal {
+            Terminal::Scope { block, fallthrough, id, span, scope } => {
+                (*block, *fallthrough, *id, *span, *scope)
             }
             _ => {
                 return Err(CompilerDiagnostic::new(
@@ -109,9 +109,9 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
         {
             // This was a scope just for a hook call, which doesn't need memoization.
             // Flatten it away. We rely on PruneUnusedLabels to do the actual flattening.
-            Terminal::Label { block: scope_block, fallthrough, id: eval_id, loc }
+            Terminal::Label { block: scope_block, fallthrough, id: eval_id, span }
         } else {
-            Terminal::PrunedScope { block: scope_block, fallthrough, scope, id: eval_id, loc }
+            Terminal::PrunedScope { block: scope_block, fallthrough, scope, id: eval_id, span }
         };
 
         let block_mut = func.body.blocks.get_mut(&id).unwrap();

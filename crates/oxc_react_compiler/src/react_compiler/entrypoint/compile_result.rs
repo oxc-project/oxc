@@ -1,6 +1,6 @@
 use oxc_diagnostics::Diagnostics;
 
-use crate::react_compiler_diagnostics::SourceLocation;
+use crate::react_compiler_diagnostics::Span;
 use crate::react_compiler_hir::ReactFunctionType;
 
 /// Main result type returned by the compile function.
@@ -40,7 +40,7 @@ impl DebugLogEntry {
 /// and the pipeline threads up to `compile_program`.
 #[derive(Debug)]
 pub struct CodegenFunction<'a> {
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
     pub id: Option<oxc_ast::ast::BindingIdentifier<'a>>,
     pub name_hint: Option<String>,
     pub params: oxc_allocator::Box<'a, oxc_ast::ast::FormalParameters<'a>>,

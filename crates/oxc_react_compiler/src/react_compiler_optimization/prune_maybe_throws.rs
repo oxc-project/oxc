@@ -59,7 +59,7 @@ pub fn prune_maybe_throws(
                                     )),
                                 )
                                 .with_detail(CompilerDiagnosticDetail::Error {
-                                    loc: GENERATED_SOURCE,
+                                    span: GENERATED_SOURCE,
                                     message: None,
                                 })
                             })?;

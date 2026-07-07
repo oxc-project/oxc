@@ -128,7 +128,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                     // Capture the lvalue from the call instruction
                     let call_lvalue = func.instructions[instr_id.0 as usize].lvalue.clone();
                     let block_terminal_id = func.body.blocks[&block_id].terminal.evaluation_order();
-                    let block_terminal_loc = func.body.blocks[&block_id].terminal.loc().cloned();
+                    let block_terminal_span = func.body.blocks[&block_id].terminal.span().cloned();
                     let block_kind = func.body.blocks[&block_id].kind;
 
                     // Create a new block which will contain code following the IIFE call
@@ -159,7 +159,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                         func.body.blocks.get_mut(&block_id).unwrap().terminal = Terminal::Goto {
                             block: inner_entry,
                             id: block_terminal_id,
-                            loc: block_terminal_loc,
+                            span: block_terminal_span,
                             variant: GotoVariant::Break,
                         };
 
@@ -181,17 +181,17 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                             }
                             inner_block.preds.clear();
 
-                            if let Terminal::Return { value, id: ret_id, loc: ret_loc, .. } =
+                            if let Terminal::Return { value, id: ret_id, span: ret_span, .. } =
                                 &inner_block.terminal
                             {
                                 // Replace return with LoadLocal + goto
                                 let load_instr = Instruction {
                                     id: EvaluationOrder(0),
-                                    loc: *ret_loc,
+                                    span: *ret_span,
                                     lvalue: call_lvalue.clone(),
                                     value: InstructionValue::LoadLocal {
                                         place: value.clone(),
-                                        loc: *ret_loc,
+                                        span: *ret_span,
                                     },
                                     effects: None,
                                 };
@@ -200,11 +200,11 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                                 inner_block.instructions.push(load_instr_id);
 
                                 let ret_id = *ret_id;
-                                let ret_loc = *ret_loc;
+                                let ret_span = *ret_span;
                                 inner_block.terminal = Terminal::Goto {
                                     block: continuation_block_id,
                                     id: ret_id,
-                                    loc: ret_loc,
+                                    span: ret_span,
                                     variant: GotoVariant::Break,
                                 };
                             }
@@ -220,7 +220,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                             block: inner_entry,
                             id: EvaluationOrder(0),
                             fallthrough: continuation_block_id,
-                            loc: block_terminal_loc,
+                            span: block_terminal_span,
                         };
 
                         // Declare the IIFE temporary
@@ -332,17 +332,17 @@ fn rewrite_block<'a>(
     return_target: BlockId,
     return_value: &Place,
 ) {
-    if let Terminal::Return { value, loc: ret_loc, .. } = &block.terminal {
-        let store_lvalue = create_temporary_place(env, *ret_loc);
+    if let Terminal::Return { value, span: ret_span, .. } = &block.terminal {
+        let store_lvalue = create_temporary_place(env, *ret_span);
         let store_instr = Instruction {
             id: EvaluationOrder(0),
-            loc: *ret_loc,
+            span: *ret_span,
             lvalue: store_lvalue,
             value: InstructionValue::StoreLocal {
                 lvalue: LValue { kind: InstructionKind::Reassign, place: return_value.clone() },
                 value: value.clone(),
                 type_annotation: None,
-                loc: *ret_loc,
+                span: *ret_span,
             },
             effects: None,
         };
@@ -350,12 +350,12 @@ fn rewrite_block<'a>(
         instructions.push(store_instr);
         block.instructions.push(store_instr_id);
 
-        let ret_loc = *ret_loc;
+        let ret_span = *ret_span;
         block.terminal = Terminal::Goto {
             block: return_target,
             id: EvaluationOrder(0),
             variant: GotoVariant::Break,
-            loc: ret_loc,
+            span: ret_span,
         };
     }
 }
@@ -367,15 +367,15 @@ fn declare_temporary<'a>(
     block_id: BlockId,
     result: &Place,
 ) {
-    let declare_lvalue = create_temporary_place(env, result.loc);
+    let declare_lvalue = create_temporary_place(env, result.span);
     let declare_instr = Instruction {
         id: EvaluationOrder(0),
-        loc: GENERATED_SOURCE,
+        span: GENERATED_SOURCE,
         lvalue: declare_lvalue,
         value: InstructionValue::DeclareLocal {
             lvalue: LValue { place: result.clone(), kind: InstructionKind::Let },
             type_annotation: None,
-            loc: result.loc,
+            span: result.span,
         },
         effects: None,
     };

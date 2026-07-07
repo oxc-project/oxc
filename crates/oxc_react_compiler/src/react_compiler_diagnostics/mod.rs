@@ -2,6 +2,11 @@ pub mod js_string;
 
 pub use js_string::JsString;
 
+/// HIR source location: a byte-offset [`Span`]. Line/column are derived on demand
+/// by the diagnostic layer (miette) at render time, so they are not stored. A
+/// synthetic node with no source position is `None` in the surrounding `Option`.
+pub use oxc_span::Span;
+
 /// Error categories matching the TS ErrorCategory enum
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorCategory {
@@ -69,30 +74,13 @@ impl ErrorCategory {
     }
 }
 
-/// Source location (matches Babel's SourceLocation format)
-/// This is the HIR source location, separate from AST's BaseNode location.
-/// GeneratedSource is represented as None.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SourceLocation {
-    pub start: Position,
-    pub end: Position,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Position {
-    pub line: u32,
-    pub column: u32,
-    /// Byte offset in the source file. Preserved for logger event serialization.
-    pub index: Option<u32>,
-}
-
-/// Sentinel value for generated/synthetic source locations
-pub const GENERATED_SOURCE: Option<SourceLocation> = None;
+/// Sentinel value for generated/synthetic source locations (a node with no span).
+pub const GENERATED_SOURCE: Option<Span> = None;
 
 /// Detail for a diagnostic
 #[derive(Debug, Clone)]
 pub enum CompilerDiagnosticDetail {
-    Error { loc: Option<SourceLocation>, message: Option<String> },
+    Error { span: Option<Span>, message: Option<String> },
 }
 
 /// A single compiler diagnostic (new-style)
@@ -127,23 +115,23 @@ impl CompilerDiagnostic {
     }
 
     /// Create a Todo diagnostic (matches TS `CompilerError.throwTodo()`).
-    pub fn todo(reason: impl Into<String>, loc: Option<SourceLocation>) -> Self {
+    pub fn todo(reason: impl Into<String>, span: Option<Span>) -> Self {
         let reason = reason.into();
         let mut diag = Self::new(ErrorCategory::Todo, reason.clone(), None);
-        diag.details.push(CompilerDiagnosticDetail::Error { loc, message: Some(reason) });
+        diag.details.push(CompilerDiagnosticDetail::Error { span, message: Some(reason) });
         diag
     }
 
     /// Create a diagnostic from a CompilerErrorDetail.
     pub fn from_detail(detail: CompilerErrorDetail) -> Self {
         Self::new(detail.category, detail.reason.clone(), detail.description.clone()).with_detail(
-            CompilerDiagnosticDetail::Error { loc: detail.loc, message: Some(detail.reason) },
+            CompilerDiagnosticDetail::Error { span: detail.span, message: Some(detail.reason) },
         )
     }
 
-    pub fn primary_location(&self) -> Option<&SourceLocation> {
+    pub fn primary_location(&self) -> Option<&Span> {
         self.details.iter().find_map(|d| match d {
-            CompilerDiagnosticDetail::Error { loc, .. } => loc.as_ref(),
+            CompilerDiagnosticDetail::Error { span, .. } => span.as_ref(),
         })
     }
 }
@@ -154,12 +142,12 @@ pub struct CompilerErrorDetail {
     pub category: ErrorCategory,
     pub reason: String,
     pub description: Option<String>,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
 }
 
 impl CompilerErrorDetail {
     pub fn new(category: ErrorCategory, reason: impl Into<String>) -> Self {
-        Self { category, reason: reason.into(), description: None, loc: None }
+        Self { category, reason: reason.into(), description: None, span: None }
     }
 
     pub fn with_description(mut self, description: impl Into<String>) -> Self {
@@ -167,8 +155,8 @@ impl CompilerErrorDetail {
         self
     }
 
-    pub fn with_loc(mut self, loc: Option<SourceLocation>) -> Self {
-        self.loc = loc;
+    pub fn with_span(mut self, span: Option<Span>) -> Self {
+        self.span = span;
         self
     }
 
@@ -280,22 +268,20 @@ impl CompilerError {
         self.details
             .iter()
             .map(|d| {
-                let (category, reason, description, loc) = match d {
+                let (category, reason, description) = match d {
                     CompilerErrorOrDiagnostic::Diagnostic(d) => {
-                        let loc = d.primary_location().cloned();
-                        (d.category, &d.reason, &d.description, loc)
+                        (d.category, &d.reason, &d.description)
                     }
                     CompilerErrorOrDiagnostic::ErrorDetail(d) => {
-                        (d.category, &d.reason, &d.description, d.loc)
+                        (d.category, &d.reason, &d.description)
                     }
                 };
                 let mut buf = format!("{}: {}", format_category_heading(category), reason);
                 if let Some(desc) = description {
                     buf.push_str(&format!(". {}.", desc));
                 }
-                if let Some(loc) = loc {
-                    buf.push_str(&format!(" ({}:{})", loc.start.line, loc.start.column));
-                }
+                // The byte-offset location is rendered by miette from the attached
+                // label span at print time; no line:column suffix is stored.
                 buf
             })
             .collect::<Vec<_>>()
@@ -332,16 +318,16 @@ impl From<CompilerError> for CompilerDiagnostic {
 impl From<CompilerDiagnostic> for CompilerError {
     fn from(diagnostic: CompilerDiagnostic) -> Self {
         let mut error = CompilerError::new();
-        // Todo diagnostics should produce ErrorDetail (flat loc format), matching
+        // Todo diagnostics should produce ErrorDetail (flat span format), matching
         // the TS behavior where CompilerError.throwTodo() creates a CompilerErrorDetail
-        // with loc directly on it, not a CompilerDiagnostic with sub-details.
+        // with span directly on it, not a CompilerDiagnostic with sub-details.
         if diagnostic.category == ErrorCategory::Todo {
-            let loc = diagnostic.primary_location().cloned();
+            let span = diagnostic.primary_location().cloned();
             error.push_error_detail(CompilerErrorDetail {
                 category: diagnostic.category,
                 reason: diagnostic.reason,
                 description: diagnostic.description,
-                loc,
+                span,
             });
         } else {
             error.push_diagnostic(diagnostic);

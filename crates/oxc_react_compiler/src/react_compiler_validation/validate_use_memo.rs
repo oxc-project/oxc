@@ -1,7 +1,7 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, SourceLocation,
+    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, Span,
 };
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{
@@ -28,7 +28,7 @@ pub fn validate_use_memo(func: &HirFunction, env: &mut Environment) -> CompilerE
 /// Information about a FunctionExpression needed for validation.
 struct FuncExprInfo {
     func_id: FunctionId,
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
 }
 
 fn validate_use_memo_impl(
@@ -41,7 +41,7 @@ fn validate_use_memo_impl(
     let mut use_memos: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut react: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut func_exprs: FxHashMap<IdentifierId, FuncExprInfo> = FxHashMap::default();
-    let mut unused_use_memos: FxHashMap<IdentifierId, (SourceLocation, Option<String>)> =
+    let mut unused_use_memos: FxHashMap<IdentifierId, (Span, Option<String>)> =
         FxHashMap::default();
 
     for (_block_id, block) in &func.body.blocks {
@@ -75,10 +75,10 @@ fn validate_use_memo_impl(
                         }
                     }
                 }
-                InstructionValue::FunctionExpression { lowered_func, loc, .. } => {
+                InstructionValue::FunctionExpression { lowered_func, span, .. } => {
                     func_exprs.insert(
                         lvalue.identifier,
-                        FuncExprInfo { func_id: lowered_func.func, loc: *loc },
+                        FuncExprInfo { func_id: lowered_func.func, span: *span },
                     );
                 }
                 InstructionValue::CallExpression { callee, args, .. } => {
@@ -123,7 +123,7 @@ fn validate_use_memo_impl(
 
     // Report unused useMemo results
     if !unused_use_memos.is_empty() {
-        for (loc, _) in unused_use_memos.values() {
+        for (span, _) in unused_use_memos.values() {
             void_memo_errors.push_diagnostic(
                 CompilerDiagnostic::new(
                     ErrorCategory::VoidUseMemo,
@@ -134,7 +134,7 @@ fn validate_use_memo_impl(
                     ),
                 )
                 .with_detail(CompilerDiagnosticDetail::Error {
-                    loc: Some(*loc),
+                    span: Some(*span),
                     message: Some("useMemo() result is unused".to_string()),
                 }),
             );
@@ -151,7 +151,7 @@ fn handle_possible_use_memo_call(
     void_memo_errors: &mut CompilerError,
     use_memos: &FxHashSet<IdentifierId>,
     func_exprs: &FxHashMap<IdentifierId, FuncExprInfo>,
-    unused_use_memos: &mut FxHashMap<IdentifierId, (SourceLocation, Option<String>)>,
+    unused_use_memos: &mut FxHashMap<IdentifierId, (Span, Option<String>)>,
     callee: &Place,
     args: &[PlaceOrSpread],
     lvalue: &Place,
@@ -177,9 +177,9 @@ fn handle_possible_use_memo_call(
     // Validate no parameters
     if !body_func.params.is_empty() {
         let first_param = &body_func.params[0];
-        let loc = match first_param {
-            ParamPattern::Place(place) => place.loc,
-            ParamPattern::Spread(spread) => spread.place.loc,
+        let span = match first_param {
+            ParamPattern::Place(place) => place.span,
+            ParamPattern::Spread(spread) => spread.place.span,
         };
         errors.push_diagnostic(
             CompilerDiagnostic::new(
@@ -191,7 +191,7 @@ fn handle_possible_use_memo_call(
                 ),
             )
             .with_detail(CompilerDiagnosticDetail::Error {
-                loc,
+                span,
                 message: Some("Callbacks with parameters are not supported".to_string()),
             }),
         );
@@ -209,7 +209,7 @@ fn handle_possible_use_memo_call(
                 ),
             )
             .with_detail(CompilerDiagnosticDetail::Error {
-                loc: body_info.loc,
+                span: body_info.span,
                 message: Some("Async and generator functions are not supported".to_string()),
             }),
         );
@@ -229,15 +229,15 @@ fn handle_possible_use_memo_call(
                 ),
             )
             .with_detail(CompilerDiagnosticDetail::Error {
-                loc: body_info.loc,
+                span: body_info.span,
                 message: Some("useMemo() callbacks must return a value".to_string()),
             }),
         );
     } else if validate_no_void_use_memo {
-        if let Some(callee_loc) = callee.loc {
+        if let Some(callee_span) = callee.span {
             // The callee is always useMemo/React.useMemo since we checked is_use_memo above.
-            // The identifierName in Babel's AST SourceLocation is "useMemo".
-            unused_use_memos.insert(lvalue.identifier, (callee_loc, Some("useMemo".to_string())));
+            // The identifierName in Babel's AST Span is "useMemo".
+            unused_use_memos.insert(lvalue.identifier, (callee_span, Some("useMemo".to_string())));
         }
     }
 }
@@ -261,7 +261,7 @@ fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Comp
                             ),
                         )
                         .with_detail(CompilerDiagnosticDetail::Error {
-                            loc: lvalue.place.loc,
+                            span: lvalue.place.span,
                             message: Some("Cannot reassign variable".to_string()),
                         }),
                     );

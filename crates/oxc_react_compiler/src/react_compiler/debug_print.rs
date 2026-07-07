@@ -42,7 +42,7 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
         self.fmt.line(&format!("fn_type: {:?}", func.fn_type));
         self.fmt.line(&format!("generator: {}", func.generator));
         self.fmt.line(&format!("is_async: {}", func.is_async));
-        self.fmt.line(&format!("loc: {}", print::format_loc(&func.loc)));
+        self.fmt.line(&format!("span: {}", print::format_span(&func.span)));
 
         // params
         self.fmt.line("params:");
@@ -216,7 +216,7 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
             }
             None => self.fmt.line("effects: null"),
         }
-        self.fmt.line(&format!("loc: {}", print::format_loc(&instr.loc)));
+        self.fmt.line(&format!("span: {}", print::format_span(&instr.span)));
         self.fmt.dedent();
         self.fmt.line("}");
     }
@@ -227,7 +227,7 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
 
     fn format_terminal(&mut self, terminal: &Terminal) {
         match terminal {
-            Terminal::If { test, consequent, alternate, fallthrough, id, loc } => {
+            Terminal::If { test, consequent, alternate, fallthrough, id, span } => {
                 self.fmt.line("If {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -235,11 +235,11 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.fmt.line(&format!("consequent: bb{}", consequent.0));
                 self.fmt.line(&format!("alternate: bb{}", alternate.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Branch { test, consequent, alternate, fallthrough, id, loc } => {
+            Terminal::Branch { test, consequent, alternate, fallthrough, id, span } => {
                 self.fmt.line("Branch {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -247,52 +247,52 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.fmt.line(&format!("consequent: bb{}", consequent.0));
                 self.fmt.line(&format!("alternate: bb{}", alternate.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Logical { operator, test, fallthrough, id, loc } => {
+            Terminal::Logical { operator, test, fallthrough, id, span } => {
                 self.fmt.line("Logical {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.line(&format!("operator: \"{}\"", operator));
                 self.fmt.line(&format!("test: bb{}", test.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Ternary { test, fallthrough, id, loc } => {
+            Terminal::Ternary { test, fallthrough, id, span } => {
                 self.fmt.line("Ternary {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.line(&format!("test: bb{}", test.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Optional { optional, test, fallthrough, id, loc } => {
+            Terminal::Optional { optional, test, fallthrough, id, span } => {
                 self.fmt.line("Optional {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.line(&format!("optional: {}", optional));
                 self.fmt.line(&format!("test: bb{}", test.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Throw { value, id, loc } => {
+            Terminal::Throw { value, id, span } => {
                 self.fmt.line("Throw {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.format_place_field("value", value);
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Return { value, return_variant, id, loc, effects } => {
+            Terminal::Return { value, return_variant, id, span, effects } => {
                 self.fmt.line("Return {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -309,21 +309,21 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                     }
                     None => self.fmt.line("effects: null"),
                 }
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Goto { block, variant, id, loc } => {
+            Terminal::Goto { block, variant, id, span } => {
                 self.fmt.line("Goto {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.line(&format!("block: bb{}", block.0));
                 self.fmt.line(&format!("variant: {:?}", variant));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Switch { test, cases, fallthrough, id, loc } => {
+            Terminal::Switch { test, cases, fallthrough, id, span } => {
                 self.fmt.line("Switch {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -348,33 +348,33 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 }
                 self.fmt.dedent();
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::DoWhile { loop_block, test, fallthrough, id, loc } => {
+            Terminal::DoWhile { loop_block, test, fallthrough, id, span } => {
                 self.fmt.line("DoWhile {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.line(&format!("loop: bb{}", loop_block.0));
                 self.fmt.line(&format!("test: bb{}", test.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::While { test, loop_block, fallthrough, id, loc } => {
+            Terminal::While { test, loop_block, fallthrough, id, span } => {
                 self.fmt.line("While {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.line(&format!("test: bb{}", test.0));
                 self.fmt.line(&format!("loop: bb{}", loop_block.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::For { init, test, update, loop_block, fallthrough, id, loc } => {
+            Terminal::For { init, test, update, loop_block, fallthrough, id, span } => {
                 self.fmt.line("For {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -389,11 +389,11 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 ));
                 self.fmt.line(&format!("loop: bb{}", loop_block.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::ForOf { init, test, loop_block, fallthrough, id, loc } => {
+            Terminal::ForOf { init, test, loop_block, fallthrough, id, span } => {
                 self.fmt.line("ForOf {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -401,49 +401,49 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.fmt.line(&format!("test: bb{}", test.0));
                 self.fmt.line(&format!("loop: bb{}", loop_block.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::ForIn { init, loop_block, fallthrough, id, loc } => {
+            Terminal::ForIn { init, loop_block, fallthrough, id, span } => {
                 self.fmt.line("ForIn {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.line(&format!("init: bb{}", init.0));
                 self.fmt.line(&format!("loop: bb{}", loop_block.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Label { block, fallthrough, id, loc } => {
+            Terminal::Label { block, fallthrough, id, span } => {
                 self.fmt.line("Label {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.line(&format!("block: bb{}", block.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Sequence { block, fallthrough, id, loc } => {
+            Terminal::Sequence { block, fallthrough, id, span } => {
                 self.fmt.line("Sequence {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.line(&format!("block: bb{}", block.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Unreachable { id, loc } => {
+            Terminal::Unreachable { id, span } => {
                 self.fmt.line(&format!(
-                    "Unreachable {{ id: {}, loc: {} }}",
+                    "Unreachable {{ id: {}, span: {} }}",
                     id.0,
-                    print::format_loc(loc)
+                    print::format_span(span)
                 ));
             }
-            Terminal::MaybeThrow { continuation, handler, id, loc, effects } => {
+            Terminal::MaybeThrow { continuation, handler, id, span, effects } => {
                 self.fmt.line("MaybeThrow {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -466,33 +466,33 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                     }
                     None => self.fmt.line("effects: null"),
                 }
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Scope { fallthrough, block, scope, id, loc } => {
+            Terminal::Scope { fallthrough, block, scope, id, span } => {
                 self.fmt.line("Scope {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.format_scope_field("scope", *scope);
                 self.fmt.line(&format!("block: bb{}", block.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::PrunedScope { fallthrough, block, scope, id, loc } => {
+            Terminal::PrunedScope { fallthrough, block, scope, id, span } => {
                 self.fmt.line("PrunedScope {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.format_scope_field("scope", *scope);
                 self.fmt.line(&format!("block: bb{}", block.0));
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            Terminal::Try { block, handler_binding, handler, fallthrough, id, loc } => {
+            Terminal::Try { block, handler_binding, handler, fallthrough, id, span } => {
                 self.fmt.line("Try {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -503,7 +503,7 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                     None => self.fmt.line("handlerBinding: null"),
                 }
                 self.fmt.line(&format!("fallthrough: bb{}", fallthrough.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }

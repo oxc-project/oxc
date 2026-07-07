@@ -53,7 +53,7 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
         ));
         self.fmt.line(&format!("generator: {}", func.generator));
         self.fmt.line(&format!("is_async: {}", func.is_async));
-        self.fmt.line(&format!("loc: {}", print::format_loc(&func.loc)));
+        self.fmt.line(&format!("span: {}", print::format_span(&func.span)));
 
         // params
         self.fmt.line("params:");
@@ -169,7 +169,7 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
             }
             None => self.fmt.line("effects: null"),
         }
-        self.fmt.line(&format!("loc: {}", print::format_loc(&instr.loc)));
+        self.fmt.line(&format!("span: {}", print::format_span(&instr.span)));
     }
 
     // =========================================================================
@@ -197,7 +197,7 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                     }),
                 );
             }
-            ReactiveValue::LogicalExpression { operator, left, right, loc } => {
+            ReactiveValue::LogicalExpression { operator, left, right, span } => {
                 self.fmt.line("LogicalExpression {");
                 self.fmt.indent();
                 self.fmt.line(&format!("operator: \"{}\"", operator));
@@ -209,11 +209,11 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.fmt.indent();
                 self.format_reactive_value(right);
                 self.fmt.dedent();
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveValue::ConditionalExpression { test, consequent, alternate, loc } => {
+            ReactiveValue::ConditionalExpression { test, consequent, alternate, span } => {
                 self.fmt.line("ConditionalExpression {");
                 self.fmt.indent();
                 self.fmt.line("test:");
@@ -228,11 +228,11 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.fmt.indent();
                 self.format_reactive_value(alternate);
                 self.fmt.dedent();
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveValue::SequenceExpression { instructions, id, value, loc } => {
+            ReactiveValue::SequenceExpression { instructions, id, value, span } => {
                 self.fmt.line("SequenceExpression {");
                 self.fmt.indent();
                 self.fmt.line("instructions:");
@@ -249,11 +249,11 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.fmt.indent();
                 self.format_reactive_value(value);
                 self.fmt.dedent();
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveValue::OptionalExpression { id, value, optional, loc } => {
+            ReactiveValue::OptionalExpression { id, value, optional, span } => {
                 self.fmt.line("OptionalExpression {");
                 self.fmt.indent();
                 self.fmt.line(&format!("id: {}", id.0));
@@ -262,7 +262,7 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.format_reactive_value(value);
                 self.fmt.dedent();
                 self.fmt.line(&format!("optional: {}", optional));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
@@ -291,45 +291,45 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
 
     fn format_reactive_terminal(&mut self, terminal: &ReactiveTerminal<'h>) {
         match terminal {
-            ReactiveTerminal::Break { target, id, target_kind, loc } => {
+            ReactiveTerminal::Break { target, id, target_kind, span } => {
                 self.fmt.line("Break {");
                 self.fmt.indent();
                 self.fmt.line(&format!("target: bb{}", target.0));
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.line(&format!("targetKind: \"{}\"", target_kind));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::Continue { target, id, target_kind, loc } => {
+            ReactiveTerminal::Continue { target, id, target_kind, span } => {
                 self.fmt.line("Continue {");
                 self.fmt.indent();
                 self.fmt.line(&format!("target: bb{}", target.0));
                 self.fmt.line(&format!("id: {}", id.0));
                 self.fmt.line(&format!("targetKind: \"{}\"", target_kind));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::Return { value, id, loc } => {
+            ReactiveTerminal::Return { value, id, span } => {
                 self.fmt.line("Return {");
                 self.fmt.indent();
                 self.fmt.format_place_field("value", value);
                 self.fmt.line(&format!("id: {}", id.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::Throw { value, id, loc } => {
+            ReactiveTerminal::Throw { value, id, span } => {
                 self.fmt.line("Throw {");
                 self.fmt.indent();
                 self.fmt.format_place_field("value", value);
                 self.fmt.line(&format!("id: {}", id.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::Switch { test, cases, id, loc } => {
+            ReactiveTerminal::Switch { test, cases, id, span } => {
                 self.fmt.line("Switch {");
                 self.fmt.indent();
                 self.fmt.format_place_field("test", test);
@@ -360,11 +360,11 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 }
                 self.fmt.dedent();
                 self.fmt.line(&format!("id: {}", id.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::DoWhile { loop_block, test, id, loc } => {
+            ReactiveTerminal::DoWhile { loop_block, test, id, span } => {
                 self.fmt.line("DoWhile {");
                 self.fmt.indent();
                 self.fmt.line("loop:");
@@ -376,11 +376,11 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.format_reactive_value(test);
                 self.fmt.dedent();
                 self.fmt.line(&format!("id: {}", id.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::While { test, loop_block, id, loc } => {
+            ReactiveTerminal::While { test, loop_block, id, span } => {
                 self.fmt.line("While {");
                 self.fmt.indent();
                 self.fmt.line("test:");
@@ -392,11 +392,11 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.format_reactive_block(loop_block);
                 self.fmt.dedent();
                 self.fmt.line(&format!("id: {}", id.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::For { init, test, update, loop_block, id, loc } => {
+            ReactiveTerminal::For { init, test, update, loop_block, id, span } => {
                 self.fmt.line("For {");
                 self.fmt.indent();
                 self.fmt.line("init:");
@@ -421,11 +421,11 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.format_reactive_block(loop_block);
                 self.fmt.dedent();
                 self.fmt.line(&format!("id: {}", id.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::ForOf { init, test, loop_block, id, loc } => {
+            ReactiveTerminal::ForOf { init, test, loop_block, id, span } => {
                 self.fmt.line("ForOf {");
                 self.fmt.indent();
                 self.fmt.line("init:");
@@ -441,11 +441,11 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.format_reactive_block(loop_block);
                 self.fmt.dedent();
                 self.fmt.line(&format!("id: {}", id.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::ForIn { init, loop_block, id, loc } => {
+            ReactiveTerminal::ForIn { init, loop_block, id, span } => {
                 self.fmt.line("ForIn {");
                 self.fmt.indent();
                 self.fmt.line("init:");
@@ -457,11 +457,11 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.format_reactive_block(loop_block);
                 self.fmt.dedent();
                 self.fmt.line(&format!("id: {}", id.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::If { test, consequent, alternate, id, loc } => {
+            ReactiveTerminal::If { test, consequent, alternate, id, span } => {
                 self.fmt.line("If {");
                 self.fmt.indent();
                 self.fmt.format_place_field("test", test);
@@ -479,11 +479,11 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                     None => self.fmt.line("alternate: null"),
                 }
                 self.fmt.line(&format!("id: {}", id.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::Label { block, id, loc } => {
+            ReactiveTerminal::Label { block, id, span } => {
                 self.fmt.line("Label {");
                 self.fmt.indent();
                 self.fmt.line("block:");
@@ -491,11 +491,11 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.format_reactive_block(block);
                 self.fmt.dedent();
                 self.fmt.line(&format!("id: {}", id.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }
-            ReactiveTerminal::Try { block, handler_binding, handler, id, loc } => {
+            ReactiveTerminal::Try { block, handler_binding, handler, id, span } => {
                 self.fmt.line("Try {");
                 self.fmt.indent();
                 self.fmt.line("block:");
@@ -511,7 +511,7 @@ impl<'a, 'h> DebugPrinter<'a, 'h> {
                 self.format_reactive_block(handler);
                 self.fmt.dedent();
                 self.fmt.line(&format!("id: {}", id.0));
-                self.fmt.line(&format!("loc: {}", print::format_loc(loc)));
+                self.fmt.line(&format!("span: {}", print::format_span(span)));
                 self.fmt.dedent();
                 self.fmt.line("}");
             }

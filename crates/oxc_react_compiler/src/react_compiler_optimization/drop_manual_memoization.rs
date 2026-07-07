@@ -37,7 +37,7 @@ use crate::react_compiler_hir::NonLocalBinding;
 use crate::react_compiler_hir::Place;
 use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PropertyLiteral;
-use crate::react_compiler_hir::SourceLocation;
+use crate::react_compiler_hir::Span;
 use crate::react_compiler_hir::Terminal;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_lowering::create_temporary_place;
@@ -77,14 +77,14 @@ struct IdentifierSidemap {
 
 #[derive(Debug, Clone)]
 struct MaybeDepsListInfo {
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
     deps: Vec<Place>,
 }
 
 struct ExtractedMemoArgs {
     fn_place: Place,
     deps_list: Option<Vec<ManualMemoDependency>>,
-    deps_loc: Option<SourceLocation>,
+    deps_span: Option<Span>,
 }
 
 // =============================================================================
@@ -212,12 +212,12 @@ fn process_manual_memo_call<'a>(
         return;
     };
 
-    let ExtractedMemoArgs { fn_place, deps_list, deps_loc } = memo_details;
+    let ExtractedMemoArgs { fn_place, deps_list, deps_span } = memo_details;
 
-    let loc = func.instructions[instr_id.0 as usize].value.loc().cloned();
+    let span = func.instructions[instr_id.0 as usize].value.span().cloned();
 
     // Replace the instruction value with the memoization replacement
-    let replacement = get_manual_memoization_replacement(&fn_place, loc, manual_memo.kind);
+    let replacement = get_manual_memoization_replacement(&fn_place, span, manual_memo.kind);
     func.instructions[instr_id.0 as usize].value = replacement;
 
     if is_validation_enabled {
@@ -229,7 +229,7 @@ fn process_manual_memo_call<'a>(
                 Some("Expected the first argument to be an inline function expression".to_string()),
             )
             .with_detail(CompilerDiagnosticDetail::Error {
-                loc: fn_place.loc,
+                span: fn_place.span,
                 message: Some(
                     "Expected the first argument to be an inline function expression".to_string(),
                 ),
@@ -245,7 +245,7 @@ fn process_manual_memo_call<'a>(
                 identifier: fn_place.identifier,
                 effect: Effect::Unknown,
                 reactive: false,
-                loc: fn_place.loc,
+                span: fn_place.span,
             }
         };
 
@@ -256,7 +256,7 @@ fn process_manual_memo_call<'a>(
             &fn_place,
             env,
             deps_list,
-            deps_loc,
+            deps_span,
             &memo_decl,
             manual_memo_id,
         );
@@ -338,9 +338,10 @@ fn collect_temporaries(
                 .collect();
 
             if let Some(deps) = all_places {
-                sidemap
-                    .maybe_deps_lists
-                    .insert(lvalue_id, MaybeDepsListInfo { loc: instr.value.loc().cloned(), deps });
+                sidemap.maybe_deps_lists.insert(
+                    lvalue_id,
+                    MaybeDepsListInfo { span: instr.value.span().cloned(), deps },
+                );
             }
         }
         _ => {}
@@ -373,12 +374,12 @@ pub fn collect_maybe_memo_dependencies(
     env: &Environment<'_>,
 ) -> Option<ManualMemoDependency> {
     match value {
-        InstructionValue::LoadGlobal { binding, loc, .. } => Some(ManualMemoDependency {
+        InstructionValue::LoadGlobal { binding, span, .. } => Some(ManualMemoDependency {
             root: ManualMemoDependencyRoot::Global { identifier_name: binding.name().to_string() },
             path: vec![],
-            loc: *loc,
+            span: *span,
         }),
-        InstructionValue::PropertyLoad { object, property, loc, .. } => {
+        InstructionValue::PropertyLoad { object, property, span, .. } => {
             maybe_deps.get(&object.identifier).map(|object_dep| ManualMemoDependency {
                 root: object_dep.root.clone(),
                 path: {
@@ -386,11 +387,11 @@ pub fn collect_maybe_memo_dependencies(
                     path.push(DependencyPathEntry {
                         property: property.clone(),
                         optional,
-                        loc: *loc,
+                        span: *span,
                     });
                     path
                 },
-                loc: *loc,
+                span: *span,
             })
         }
         InstructionValue::LoadLocal { place, .. } | InstructionValue::LoadContext { place, .. } => {
@@ -406,7 +407,7 @@ pub fn collect_maybe_memo_dependencies(
                         constant: false,
                     },
                     path: vec![],
-                    loc: place.loc,
+                    span: place.span,
                 })
             } else {
                 None
@@ -438,12 +439,12 @@ pub fn collect_maybe_memo_dependencies(
 
 fn get_manual_memoization_replacement<'a>(
     fn_place: &Place,
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
     kind: ManualMemoKind,
 ) -> InstructionValue<'a> {
     if kind == ManualMemoKind::UseMemo {
         // Replace with Call fn() - invoke the memo function directly
-        InstructionValue::CallExpression { callee: fn_place.clone(), args: vec![], loc }
+        InstructionValue::CallExpression { callee: fn_place.clone(), args: vec![], span }
     } else {
         // Replace with LoadLocal fn - just reference the function
         InstructionValue::LoadLocal {
@@ -451,9 +452,9 @@ fn get_manual_memoization_replacement<'a>(
                 identifier: fn_place.identifier,
                 effect: Effect::Unknown,
                 reactive: false,
-                loc,
+                span,
             },
-            loc,
+            span,
         }
     }
 }
@@ -462,33 +463,33 @@ fn make_manual_memoization_markers<'a>(
     fn_expr: &Place,
     env: &mut Environment<'a>,
     deps_list: Option<Vec<ManualMemoDependency>>,
-    deps_loc: Option<SourceLocation>,
+    deps_span: Option<Span>,
     memo_decl: &Place,
     manual_memo_id: u32,
 ) -> (Instruction<'a>, Instruction<'a>) {
     let start = Instruction {
         id: EvaluationOrder(0),
-        lvalue: create_temporary_place(env, fn_expr.loc),
+        lvalue: create_temporary_place(env, fn_expr.span),
         value: InstructionValue::StartMemoize {
             manual_memo_id,
             deps: deps_list,
-            deps_loc: Some(deps_loc),
+            deps_span: Some(deps_span),
             has_invalid_deps: false,
-            loc: fn_expr.loc,
+            span: fn_expr.span,
         },
-        loc: fn_expr.loc,
+        span: fn_expr.span,
         effects: None,
     };
     let finish = Instruction {
         id: EvaluationOrder(0),
-        lvalue: create_temporary_place(env, fn_expr.loc),
+        lvalue: create_temporary_place(env, fn_expr.span),
         value: InstructionValue::FinishMemoize {
             manual_memo_id,
             decl: memo_decl.clone(),
             pruned: false,
-            loc: fn_expr.loc,
+            span: fn_expr.span,
         },
-        loc: fn_expr.loc,
+        span: fn_expr.span,
         effects: None,
     };
     (start, finish)
@@ -515,7 +516,7 @@ fn extract_manual_memoization_args(
     let fn_place = match args.first() {
         Some(PlaceOrSpread::Place(p)) => p.clone(),
         _ => {
-            let loc = instr.value.loc().cloned();
+            let span = instr.value.span().cloned();
             env.record_diagnostic(
                 CompilerDiagnostic::new(
                     ErrorCategory::UseMemo,
@@ -527,7 +528,7 @@ fn extract_manual_memoization_args(
                     }),
                 )
                 .with_detail(CompilerDiagnosticDetail::Error {
-                    loc,
+                    span,
                     message: Some(if kind == ManualMemoKind::UseCallback {
                         "Expected a callback function".to_string()
                     } else {
@@ -542,7 +543,7 @@ fn extract_manual_memoization_args(
     // Get the second arg (deps list), if present
     let deps_list_place = args.get(1);
     if deps_list_place.is_none() {
-        return Some(ExtractedMemoArgs { fn_place, deps_list: None, deps_loc: None });
+        return Some(ExtractedMemoArgs { fn_place, deps_list: None, deps_span: None });
     }
 
     let deps_list_id = match deps_list_place {
@@ -553,9 +554,9 @@ fn extract_manual_memoization_args(
     let maybe_deps_list = deps_list_id.and_then(|id| sidemap.maybe_deps_lists.get(&id));
 
     if maybe_deps_list.is_none() {
-        let loc = match deps_list_place {
-            Some(PlaceOrSpread::Place(p)) => p.loc,
-            _ => instr.loc,
+        let span = match deps_list_place {
+            Some(PlaceOrSpread::Place(p)) => p.span,
+            _ => instr.span,
         };
         env.record_diagnostic(
             CompilerDiagnostic::new(
@@ -566,7 +567,7 @@ fn extract_manual_memoization_args(
                 )),
             )
             .with_detail(CompilerDiagnosticDetail::Error {
-                loc,
+                span,
                 message: Some(format!(
                     "Expected the dependency list for {kind_name} to be an array literal"
                 )),
@@ -589,14 +590,14 @@ fn extract_manual_memoization_args(
                     Some("Expected the dependency list to be an array of simple expressions (e.g. `x`, `x.y.z`, `x?.y?.z`)".to_string()),
                 )
                 .with_detail(CompilerDiagnosticDetail::Error {
-                    loc: dep.loc,
+                    span: dep.span,
                     message: Some("Expected the dependency list to be an array of simple expressions (e.g. `x`, `x.y.z`, `x?.y?.z`)".to_string()),
                 }),
             );
         }
     }
 
-    Some(ExtractedMemoArgs { fn_place, deps_list: Some(deps_list), deps_loc: deps_info.loc })
+    Some(ExtractedMemoArgs { fn_place, deps_list: Some(deps_list), deps_span: deps_info.span })
 }
 
 // =============================================================================

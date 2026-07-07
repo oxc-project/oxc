@@ -116,7 +116,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                         ErrorCategory::Todo,
                         "[PruneHoistedContexts] Rewrite hoisted function references".to_string(),
                     )
-                    .with_loc(place.loc),
+                    .with_span(place.span),
                 );
                 return Err(err);
             }
@@ -167,7 +167,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                                         "[PruneHoistedContexts] Unexpected hoisted function"
                                             .to_string(),
                                     )
-                                    .with_loc(instruction.loc),
+                                    .with_span(instruction.span),
                                 );
                                 return Err(err);
                             }
@@ -182,7 +182,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                                 ErrorCategory::Todo,
                                 "[PruneHoistedContexts] Unexpected kind".to_string(),
                             )
-                            .with_loc(instruction.loc),
+                            .with_span(instruction.span),
                         );
                         return Err(err);
                     }

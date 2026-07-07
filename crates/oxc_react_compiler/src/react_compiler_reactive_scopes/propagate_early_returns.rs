@@ -12,7 +12,7 @@
 
 use std::mem::take;
 
-use crate::react_compiler_diagnostics::{CompilerError, SourceLocation};
+use crate::react_compiler_diagnostics::{CompilerError, Span};
 use crate::react_compiler_hir::{
     BlockId, Effect, EvaluationOrder, IdentifierId, IdentifierName, InstructionKind,
     InstructionValue, LValue, NonLocalBinding, Place, PlaceOrSpread, PrimitiveValue,
@@ -48,7 +48,7 @@ pub fn propagate_early_returns<'a>(func: &mut ReactiveFunction<'a>, env: &mut En
 #[derive(Debug, Clone)]
 struct EarlyReturnInfo {
     value: IdentifierId,
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
     label: BlockId,
 }
 
@@ -113,16 +113,16 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
     ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
         if state.within_reactive_scope {
             if let ReactiveTerminal::Return { value, .. } = &stmt.terminal {
-                let loc = value.loc;
+                let span = value.span;
 
                 let early_return_value = if let Some(ref existing) = state.early_return_value {
                     existing.clone()
                 } else {
                     // Create a new early return identifier
-                    let identifier_id = create_temporary_place_id(self.env, loc);
+                    let identifier_id = create_temporary_place_id(self.env, span);
                     promote_temporary(self.env, identifier_id);
                     let label = self.env.next_block_id();
-                    EarlyReturnInfo { value: identifier_id, loc, label }
+                    EarlyReturnInfo { value: identifier_id, span, label }
                 };
 
                 state.early_return_value = Some(early_return_value.clone());
@@ -141,15 +141,15 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                                     identifier: early_return_value.value,
                                     effect: Effect::Capture,
                                     reactive: true,
-                                    loc,
+                                    span,
                                 },
                             },
                             value: return_value,
                             type_annotation: None,
-                            loc,
+                            span,
                         }),
                         effects: None,
-                        loc,
+                        span,
                     }),
                     // Break to the label
                     ReactiveStatement::Terminal(ReactiveTerminalStatement {
@@ -157,7 +157,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                             target: early_return_value.label,
                             id: EvaluationOrder(0),
                             target_kind: ReactiveTerminalTargetKind::Labeled,
-                            loc,
+                            span,
                         },
                         label: None,
                     }),
@@ -181,12 +181,12 @@ fn apply_early_return_to_scope<'a>(
     early_return: &EarlyReturnInfo,
 ) {
     let scope_id = scope_block.scope;
-    let loc = early_return.loc;
+    let span = early_return.span;
 
     // Set early return value on the scope
     env.scopes[scope_id.0 as usize].early_return_value = Some(ReactiveScopeEarlyReturn {
         value: early_return.value,
-        loc: early_return.loc,
+        span: early_return.span,
         label: early_return.label,
     });
 
@@ -197,10 +197,10 @@ fn apply_early_return_to_scope<'a>(
     ));
 
     // Create temporary places for the sentinel initialization
-    let sentinel_temp = create_temporary_place_id(env, loc);
-    let symbol_temp = create_temporary_place_id(env, loc);
-    let for_temp = create_temporary_place_id(env, loc);
-    let arg_temp = create_temporary_place_id(env, loc);
+    let sentinel_temp = create_temporary_place_id(env, span);
+    let symbol_temp = create_temporary_place_id(env, span);
+    let for_temp = create_temporary_place_id(env, span);
+    let arg_temp = create_temporary_place_id(env, span);
 
     let original_instructions = take(&mut scope_block.instructions);
 
@@ -212,14 +212,14 @@ fn apply_early_return_to_scope<'a>(
                 identifier: symbol_temp,
                 effect: Effect::Unknown,
                 reactive: false,
-                loc: None, // GeneratedSource
+                span: None, // GeneratedSource
             }),
             value: ReactiveValue::Instruction(InstructionValue::LoadGlobal {
                 binding: NonLocalBinding::Global { name: "Symbol".to_string() },
-                loc,
+                span,
             }),
             effects: None,
-            loc,
+            span,
         }),
         // PropertyLoad Symbol.for
         ReactiveStatement::Instruction(ReactiveInstruction {
@@ -228,20 +228,20 @@ fn apply_early_return_to_scope<'a>(
                 identifier: for_temp,
                 effect: Effect::Unknown,
                 reactive: false,
-                loc: None, // GeneratedSource
+                span: None, // GeneratedSource
             }),
             value: ReactiveValue::Instruction(InstructionValue::PropertyLoad {
                 object: Place {
                     identifier: symbol_temp,
                     effect: Effect::Unknown,
                     reactive: false,
-                    loc: None, // GeneratedSource
+                    span: None, // GeneratedSource
                 },
                 property: PropertyLiteral::String("for".to_string()),
-                loc,
+                span,
             }),
             effects: None,
-            loc,
+            span,
         }),
         // Primitive: the sentinel string
         ReactiveStatement::Instruction(ReactiveInstruction {
@@ -250,14 +250,14 @@ fn apply_early_return_to_scope<'a>(
                 identifier: arg_temp,
                 effect: Effect::Unknown,
                 reactive: false,
-                loc: None, // GeneratedSource
+                span: None, // GeneratedSource
             }),
             value: ReactiveValue::Instruction(InstructionValue::Primitive {
                 value: PrimitiveValue::String(EARLY_RETURN_SENTINEL.into()),
-                loc,
+                span,
             }),
             effects: None,
-            loc,
+            span,
         }),
         // MethodCall: Symbol.for("react.early_return_sentinel")
         ReactiveStatement::Instruction(ReactiveInstruction {
@@ -266,31 +266,31 @@ fn apply_early_return_to_scope<'a>(
                 identifier: sentinel_temp,
                 effect: Effect::Unknown,
                 reactive: false,
-                loc: None, // GeneratedSource
+                span: None, // GeneratedSource
             }),
             value: ReactiveValue::Instruction(InstructionValue::MethodCall {
                 receiver: Place {
                     identifier: symbol_temp,
                     effect: Effect::Unknown,
                     reactive: false,
-                    loc: None, // GeneratedSource
+                    span: None, // GeneratedSource
                 },
                 property: Place {
                     identifier: for_temp,
                     effect: Effect::Unknown,
                     reactive: false,
-                    loc: None, // GeneratedSource
+                    span: None, // GeneratedSource
                 },
                 args: vec![PlaceOrSpread::Place(Place {
                     identifier: arg_temp,
                     effect: Effect::Unknown,
                     reactive: false,
-                    loc: None, // GeneratedSource
+                    span: None, // GeneratedSource
                 })],
-                loc,
+                span,
             }),
             effects: None,
-            loc,
+            span,
         }),
         // StoreLocal: let earlyReturnValue = sentinel
         ReactiveStatement::Instruction(ReactiveInstruction {
@@ -303,20 +303,20 @@ fn apply_early_return_to_scope<'a>(
                         identifier: early_return.value,
                         effect: Effect::ConditionallyMutate,
                         reactive: true,
-                        loc,
+                        span,
                     },
                 },
                 value: Place {
                     identifier: sentinel_temp,
                     effect: Effect::Unknown,
                     reactive: false,
-                    loc: None, // GeneratedSource
+                    span: None, // GeneratedSource
                 },
                 type_annotation: None,
-                loc,
+                span,
             }),
             effects: None,
-            loc,
+            span,
         }),
         // Label terminal wrapping the original instructions
         ReactiveStatement::Terminal(ReactiveTerminalStatement {
@@ -324,7 +324,7 @@ fn apply_early_return_to_scope<'a>(
             terminal: ReactiveTerminal::Label {
                 block: original_instructions,
                 id: EvaluationOrder(0),
-                loc: None, // GeneratedSource
+                span: None, // GeneratedSource
             },
         }),
     ];
@@ -334,9 +334,9 @@ fn apply_early_return_to_scope<'a>(
 // Helper: create a temporary place identifier
 // =============================================================================
 
-fn create_temporary_place_id(env: &mut Environment, loc: Option<SourceLocation>) -> IdentifierId {
+fn create_temporary_place_id(env: &mut Environment, span: Option<Span>) -> IdentifierId {
     let id = env.next_identifier_id();
-    env.identifiers[id.0 as usize].loc = loc;
+    env.identifiers[id.0 as usize].span = span;
     id
 }
 
