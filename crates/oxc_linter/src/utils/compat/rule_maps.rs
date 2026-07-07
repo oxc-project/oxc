@@ -69,6 +69,15 @@ impl RuleMap {
     }
 }
 
+/// Member-expression rules for one object name: `rest` is keyed by the part
+/// of the rule key after the first `.` (the property, or the joined remaining
+/// proto chain); `object_only` holds a rule whose key is the bare object.
+#[derive(Debug, Default)]
+pub struct MemberObjectRules {
+    pub rest: FxHashMap<String, Arc<FailingRule>>,
+    pub object_only: Option<Arc<FailingRule>>,
+}
+
 /// The per-node-type rule maps for a resolved set of targets.
 #[derive(Debug, Default)]
 pub struct RuleMaps {
@@ -78,28 +87,27 @@ pub struct RuleMaps {
     pub new_expression: RuleMap,
     /// Keyed by expression name, e.g. a bare `fetch;` statement.
     pub expression_statement: RuleMap,
-    /// Keyed by proto chain id and `object.property`.
-    pub member_expression: RuleMap,
-    /// Secondary index of `member_expression` for the case-insensitive
-    /// browser-global fallback: keyed by `lowercased(object).property` for
-    /// every dotted key, first match (in `member_expression` insertion order)
-    /// wins. Replaces the reference's linear scan
-    /// (`findMemberRuleByGlobalObjectCasing`) with an O(1) lookup.
-    pub member_expression_by_lower_object: FxHashMap<String, Arc<FailingRule>>,
+    /// Member-expression rules keyed by the first segment of the rule key
+    /// (proto chain id or `object.property`). The two-level structure lets a
+    /// single short-string lookup on the object name reject non-matching
+    /// member expressions without building a concatenated key.
+    pub member_expression: FxHashMap<String, MemberObjectRules>,
+    /// Case-insensitive index of `member_expression` for the browser-global
+    /// fallback: outer key is the lowercased object name, inner key the exact
+    /// property; first match (in reference insertion order) wins. Replaces
+    /// the reference's linear scan (`findMemberRuleByGlobalObjectCasing`)
+    /// with O(1) lookups.
+    pub member_expression_by_lower_object: FxHashMap<String, FxHashMap<String, Arc<FailingRule>>>,
     /// Keyed by literal syntax fragment, e.g. `?<=` (RegExp lookbehind).
     pub literal: RuleMap,
 }
 
 impl RuleMaps {
-    /// Returns `true` when no API fails any configured target, in which case
-    /// the rule has nothing to lint for this file.
-    pub fn is_empty(&self) -> bool {
-        // `expression_statement` and the lowercase index are projections of
-        // the other maps and cannot be non-empty on their own.
-        self.call_expression.is_empty()
-            && self.new_expression.is_empty()
-            && self.member_expression.is_empty()
-            && self.literal.is_empty()
+    /// Looks up a member rule by object and the rest of the key (mirroring
+    /// `rulesMap.get(`${object}.${property}`) ?? rulesMap.get(object)`).
+    pub fn get_member_rule(&self, object: &str, rest: &str) -> Option<&Arc<FailingRule>> {
+        let rules = self.member_expression.get(object)?;
+        rules.rest.get(rest).or(rules.object_only.as_ref())
     }
 }
 
@@ -272,32 +280,45 @@ fn build_rule_maps(targets: &[BrowserTarget], lint_all_es_apis: bool) -> RuleMap
     for rule in by_type.member_expression.iter().chain(&by_type.call_expression) {
         maps.expression_statement.insert_if_absent(&rule.object, rule);
     }
+    // Mirrors the reference's member map insertion order (proto chain id and
+    // `object.property` keys, first match wins), split on the first `.` into
+    // a two-level map for cheap object-name rejection. The case-insensitive
+    // index (browser-global fallback) is built in the same order so the first
+    // matching entry wins, exactly like the reference's linear scan.
+    let insert_member = |maps: &mut RuleMaps, key: &str, rule: &Arc<FailingRule>| {
+        let (object, rest) = key.split_once('.').unwrap_or((key, ""));
+        let entry = maps.member_expression.entry(object.to_string()).or_default();
+        if rest.is_empty() {
+            if entry.object_only.is_none() {
+                entry.object_only = Some(Arc::clone(rule));
+            }
+        } else {
+            if !entry.rest.contains_key(rest) {
+                entry.rest.insert(rest.to_string(), Arc::clone(rule));
+            }
+            let lower = maps
+                .member_expression_by_lower_object
+                .entry(object.cow_to_ascii_lowercase().into_owned())
+                .or_default();
+            if !lower.contains_key(rest) {
+                lower.insert(rest.to_string(), Arc::clone(rule));
+            }
+        }
+    };
     for rule in by_type
         .member_expression
         .iter()
         .chain(&by_type.call_expression)
         .chain(&by_type.new_expression)
     {
-        maps.member_expression.insert_if_absent(&rule.proto_chain_id, rule);
+        insert_member(&mut maps, &rule.proto_chain_id, rule);
         let key = rule_property(rule)
             .map_or_else(|| rule.object.clone(), |property| format!("{}.{property}", rule.object));
-        maps.member_expression.insert_if_absent(&key, rule);
+        insert_member(&mut maps, &key, rule);
     }
     for (rule, syntaxes) in &by_type.literal {
         for syntax in *syntaxes {
             maps.literal.insert_if_absent(syntax, rule);
-        }
-    }
-
-    // Build the case-insensitive index in `member_expression` insertion order
-    // so that the first matching entry wins, exactly like the reference's
-    // linear scan.
-    for (key, rule) in maps.member_expression.iter() {
-        if let Some((object, property)) = key.split_once('.') {
-            let lower_key = format!("{}.{property}", object.cow_to_ascii_lowercase());
-            maps.member_expression_by_lower_object
-                .entry(lower_key)
-                .or_insert_with(|| Arc::clone(rule));
         }
     }
 

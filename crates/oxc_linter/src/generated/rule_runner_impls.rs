@@ -215,8 +215,16 @@ impl RuleRunner for crate::rules::import::unambiguous::Unambiguous {
 }
 
 impl RuleRunner for crate::rules::compat::compat::Compat {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ExpressionStatement,
+        AstType::NewExpression,
+        AstType::Program,
+        AstType::RegExpLiteral,
+        AstType::StaticMemberExpression,
+        AstType::StringLiteral,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::eslint::accessor_pairs::AccessorPairs {

@@ -1,19 +1,24 @@
 use std::{
+    cell::RefCell,
     hash::BuildHasherDefault,
+    rc::Rc,
     sync::{Arc, LazyLock},
 };
 
+use cow_utils::CowUtils;
 use rustc_hash::{FxHashSet, FxHasher};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use smallvec::SmallVec;
 
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNodes, NodeId};
+use oxc_semantic::{AstNodes, IsGlobalReference, NodeId};
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     config::BrowserslistTargetsConfig,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
@@ -78,7 +83,15 @@ declare_oxc_lint!(
     /// }
     /// // Supported by every configured target:
     /// document.querySelector("body");
+    /// // Locally-bound identifiers are not the global API:
+    /// import { Set } from "immutable";
+    /// new Set();
     /// ```
+    ///
+    /// Shadowing is scope-aware: a local binding only suppresses reports for
+    /// references that actually resolve to it (unlike eslint-plugin-compat,
+    /// where any binding anywhere in the file suppresses all same-named
+    /// reports file-wide).
     ///
     /// ### Settings
     ///
@@ -169,7 +182,7 @@ fn resolve_targets(queries: &[String]) -> ResolvedTargets {
     cache.get_or_insert(key, targets).clone()
 }
 
-fn is_polyfilled(polyfills: &FxHashSet<&str>, rule: &FailingRule) -> bool {
+fn is_polyfilled(polyfills: &FxHashSet<String>, rule: &FailingRule) -> bool {
     !polyfills.is_empty()
         && (polyfills.contains(rule.id.as_str())
             || polyfills.contains(rule.proto_chain_id.as_str())
@@ -187,7 +200,7 @@ fn identifier_name<'a>(expr: &Expression<'a>) -> Option<&'a str> {
 /// Port of `protoChainFromMemberExpression` from eslint-plugin-compat's
 /// `src/helpers.ts`. Nodes without a name produce an empty segment (mirroring
 /// `undefined` in the reference), which never matches a rule.
-fn push_proto_chain<'a>(expr: &Expression<'a>, chain: &mut Vec<&'a str>) {
+fn push_proto_chain<'a>(expr: &Expression<'a>, chain: &mut SmallVec<[&'a str; 8]>) {
     match expr {
         Expression::StaticMemberExpression(member) => {
             match &member.object {
@@ -214,143 +227,190 @@ fn push_proto_chain<'a>(expr: &Expression<'a>, chain: &mut Vec<&'a str>) {
     }
 }
 
-/// A deferred error: the name used for the local-binding filter (mirroring
-/// `getName` in the reference), the failing rule, and the span to report.
-type DeferredError<'a> = (Option<&'a str>, Arc<FailingRule>, Span);
-
-struct CompatChecker<'a, 'r> {
-    rule_maps: &'r RuleMaps,
-    polyfills: FxHashSet<&'a str>,
+/// Per-file lint state: the (globally cached) rule maps for the resolved
+/// targets plus the per-config polyfill set and flags. Stored in a
+/// thread-local, tagged by source-text and rule-instance pointers: each file
+/// is processed sequentially on one thread, so all `run` invocations after
+/// `Program` hit the cached state.
+struct FileState {
+    maps: Arc<RuleMaps>,
+    polyfills: FxHashSet<String>,
     ignore_conditional_checks: bool,
-    errors: Vec<DeferredError<'a>>,
-    /// Reusable buffer for `object.property` / proto-chain-id lookup keys,
-    /// avoiding a heap allocation per member expression.
-    key_scratch: String,
-    /// Reusable buffer for proto chain segments.
-    chain_scratch: Vec<&'a str>,
+    /// Browserslist resolution error, reported once on the `Program` node.
+    error: Option<String>,
 }
 
-impl<'a> CompatChecker<'a, '_> {
-    fn handle_failing_rule(
-        &mut self,
-        filter_name: Option<&'a str>,
-        rule: &Arc<FailingRule>,
-        span: Span,
-    ) {
-        if is_polyfilled(&self.polyfills, rule) {
+thread_local! {
+    static FILE_STATE: RefCell<Option<(usize, usize, Rc<FileState>)>> = const { RefCell::new(None) };
+}
+
+impl Compat {
+    fn file_state(&self, ctx: &LintContext) -> Rc<FileState> {
+        let tag = (ctx.source_text().as_ptr() as usize, std::ptr::from_ref(self) as usize);
+        FILE_STATE.with(|slot| {
+            let mut slot = slot.borrow_mut();
+            if let Some((source, rule, state)) = slot.as_ref()
+                && (*source, *rule) == tag
+            {
+                return Rc::clone(state);
+            }
+            let state = Rc::new(self.compute_file_state(ctx));
+            *slot = Some((tag.0, tag.1, Rc::clone(&state)));
+            state
+        })
+    }
+
+    fn compute_file_state(&self, ctx: &LintContext) -> FileState {
+        let settings = &ctx.settings().compat;
+        let queries: Vec<String> = settings
+            .browsers
+            .as_ref()
+            .or(settings.targets.as_ref())
+            .map(BrowserslistTargetsConfig::to_queries)
+            .or_else(|| self.0.0.clone().map(|query| vec![query]))
+            .unwrap_or_default();
+
+        let polyfills: FxHashSet<String> = settings.polyfills.iter().cloned().collect();
+        let ignore_conditional_checks = settings.ignore_conditional_checks;
+
+        match resolve_targets(&queries) {
+            Ok(targets) => {
+                let lint_all_es_apis = settings.lint_all_es_apis || !polyfills.contains("es:all");
+                FileState {
+                    maps: get_rules_for_targets(&targets, lint_all_es_apis),
+                    polyfills,
+                    ignore_conditional_checks,
+                    error: None,
+                }
+            }
+            Err(error) => FileState {
+                maps: Arc::new(RuleMaps::default()),
+                polyfills,
+                ignore_conditional_checks,
+                error: Some(error),
+            },
+        }
+    }
+}
+
+fn check_guarded(
+    state: &FileState,
+    ctx: &LintContext,
+    node_id: NodeId,
+    rule: &FailingRule,
+    span: Span,
+) {
+    // Cheap set lookups first; the ancestor walk only runs for candidates
+    // that are not polyfilled.
+    if is_polyfilled(&state.polyfills, rule) {
+        return;
+    }
+    if state.ignore_conditional_checks || !is_inside_if_statement(ctx.nodes(), node_id) {
+        ctx.diagnostic(compat_diagnostic(&rule.error_name, &rule.unsupported_targets, span));
+    }
+}
+
+fn check_literal(state: &FileState, ctx: &LintContext, raw: &str, span: Span) {
+    for (syntax, rule) in state.maps.literal.iter() {
+        if raw.contains(syntax) {
+            // Mirrors the reference: literal checks are not suppressed by
+            // feature-detection conditionals.
+            if !is_polyfilled(&state.polyfills, rule) {
+                ctx.diagnostic(compat_diagnostic(
+                    &rule.error_name,
+                    &rule.unsupported_targets,
+                    span,
+                ));
+            }
             return;
         }
-        self.errors.push((filter_name, Arc::clone(rule), span));
     }
+}
 
-    fn check_guarded(
-        &mut self,
-        nodes: &AstNodes,
-        node_id: NodeId,
-        filter_name: Option<&'a str>,
-        rule: &Arc<FailingRule>,
-        span: Span,
-    ) {
-        // Cheap set lookups first; the ancestor walk only runs for
-        // candidates that are not polyfilled.
-        if is_polyfilled(&self.polyfills, rule) {
+fn check_member_expression<'a>(
+    compat: &Compat,
+    ctx: &LintContext<'a>,
+    node_id: NodeId,
+    member: &oxc_ast::ast::StaticMemberExpression<'a>,
+) {
+    if let Expression::Identifier(object) = &member.object
+        && !matches!(object.name.as_str(), "window" | "globalThis")
+    {
+        // Locally-bound objects can never be the global API. The reference
+        // implementation reports and then filters these against the file's
+        // bindings at `Program:exit`; resolving the reference up front is
+        // equivalent for in-scope bindings (and scope-aware), and lets the
+        // common case (`localVar.prop`) bail before any map lookup.
+        if !object.is_global_reference(ctx.scoping()) {
             return;
         }
-        if self.ignore_conditional_checks || !is_inside_if_statement(nodes, node_id) {
-            self.errors.push((filter_name, Arc::clone(rule), span));
+        let state = compat.file_state(ctx);
+        let maps = &state.maps;
+        if maps.member_expression.is_empty() {
+            return;
         }
-    }
-
-    fn check_member_expression(
-        &mut self,
-        nodes: &AstNodes,
-        node_id: NodeId,
-        member: &oxc_ast::ast::StaticMemberExpression<'a>,
-    ) {
-        let maps = self.rule_maps;
-        let object_name = identifier_name(&member.object);
-        if let Some(object_name) =
-            object_name.filter(|name| !matches!(*name, "window" | "globalThis"))
-        {
-            let property_name = member.property.name.as_str();
-            self.key_scratch.clear();
-            self.key_scratch.push_str(object_name);
-            self.key_scratch.push('.');
-            self.key_scratch.push_str(property_name);
-            let mut failing_rule = maps
-                .member_expression
-                .get(self.key_scratch.as_str())
-                .or_else(|| maps.member_expression.get(object_name));
-            // Only consult the (potentially allocating) browser-globals data
-            // when a rule was found or a case-insensitive fallback is needed.
-            if failing_rule.is_none() {
-                if !COMPAT_DATA.browser_globals.contains(object_name) {
-                    return;
-                }
-                // Case-insensitive fallback for browser globals (`crypto` in
-                // the AST vs `Crypto` in the metadata); O(1) via the
-                // precomputed lowercase index.
-                self.key_scratch.clear();
-                for ch in object_name.chars() {
-                    self.key_scratch.push(ch.to_ascii_lowercase());
-                }
-                self.key_scratch.push('.');
-                self.key_scratch.push_str(property_name);
-                failing_rule =
-                    maps.member_expression_by_lower_object.get(self.key_scratch.as_str());
-            } else if !COMPAT_DATA.browser_globals.contains(object_name) {
-                // For non-global objects the rule must match the object name
-                // exactly (e.g. a local `intersectionObserver` variable must
-                // not match the `IntersectionObserver` rule).
-                if failing_rule.is_some_and(|rule| rule.object != object_name) {
-                    failing_rule = None;
-                }
-            }
-            if let Some(rule) = failing_rule {
-                self.check_guarded(nodes, node_id, Some(object_name), rule, member.span);
-            }
-        } else {
-            self.chain_scratch.clear();
-            let mut chain = std::mem::take(&mut self.chain_scratch);
-            match &member.object {
-                Expression::NewExpression(new_expr) => {
-                    push_proto_chain(&new_expr.callee, &mut chain);
-                }
-                Expression::CallExpression(call) => push_proto_chain(&call.callee, &mut chain),
-                Expression::ArrayExpression(_) => chain.push("Array"),
-                Expression::StringLiteral(_) => chain.push("String"),
-                object => push_proto_chain(object, &mut chain),
-            }
-            chain.push(member.property.name.as_str());
-            let segments: &[&str] = if matches!(chain.first(), Some(&"window" | &"globalThis")) {
-                &chain[1..]
-            } else {
-                &chain
-            };
-            self.key_scratch.clear();
-            for (i, segment) in segments.iter().enumerate() {
-                if i > 0 {
-                    self.key_scratch.push('.');
-                }
-                self.key_scratch.push_str(segment);
-            }
-            self.chain_scratch = chain;
-            if let Some(rule) = maps.member_expression.get(self.key_scratch.as_str()) {
-                self.check_guarded(nodes, node_id, object_name, rule, member.span);
-            }
-        }
-    }
-
-    fn check_literal(&mut self, raw: &str, span: Span) {
-        let maps = self.rule_maps;
-        for (syntax, rule) in maps.literal.iter() {
-            if raw.contains(syntax) {
-                // Mirrors the reference: literal checks are not suppressed by
-                // feature-detection conditionals, and are filtered against a
-                // local binding named `Literal` (the ESTree node type).
-                self.handle_failing_rule(Some("Literal"), rule, span);
+        let object_name = object.name.as_str();
+        let property_name = member.property.name.as_str();
+        let mut failing_rule = maps.get_member_rule(object_name, property_name);
+        if failing_rule.is_none() {
+            // Case-insensitive fallback for browser globals (`crypto` in the
+            // AST vs `Crypto` in the metadata); O(1) via the precomputed
+            // lowercase index. `cow_to_ascii_lowercase` does not allocate for
+            // already-lowercase names.
+            if !COMPAT_DATA.browser_globals.contains(object_name) {
                 return;
             }
+            failing_rule = maps
+                .member_expression_by_lower_object
+                .get(object_name.cow_to_ascii_lowercase().as_ref())
+                .and_then(|rules| rules.get(property_name));
+        } else if !COMPAT_DATA.browser_globals.contains(object_name)
+            && failing_rule.is_some_and(|rule| rule.object != object_name)
+        {
+            // For non-global objects the rule must match the object name
+            // exactly (e.g. a local `intersectionObserver` variable must not
+            // match the `IntersectionObserver` rule).
+            failing_rule = None;
+        }
+        if let Some(rule) = failing_rule {
+            check_guarded(&state, ctx, node_id, rule, member.span);
+        }
+    } else {
+        // `window.x` / `globalThis.x` / chained or computed objects: build
+        // the proto chain (mirroring `protoChainFromMemberExpression`).
+        if let Expression::Identifier(object) = &member.object
+            && !object.is_global_reference(ctx.scoping())
+        {
+            // A local binding named `window`/`globalThis`; the reference
+            // filters these reports against the file's bindings.
+            return;
+        }
+        let state = compat.file_state(ctx);
+        if state.maps.member_expression.is_empty() {
+            return;
+        }
+        let mut chain: SmallVec<[&str; 8]> = SmallVec::new();
+        match &member.object {
+            Expression::NewExpression(new_expr) => push_proto_chain(&new_expr.callee, &mut chain),
+            Expression::CallExpression(call) => push_proto_chain(&call.callee, &mut chain),
+            Expression::ArrayExpression(_) => chain.push("Array"),
+            Expression::StringLiteral(_) => chain.push("String"),
+            object => push_proto_chain(object, &mut chain),
+        }
+        chain.push(member.property.name.as_str());
+        let segments: &[&str] = if matches!(chain.first(), Some(&"window" | &"globalThis")) {
+            &chain[1..]
+        } else {
+            &chain
+        };
+        let [object_name, rest @ ..] = segments else { return };
+        // Cheap first-segment rejection before joining the rest of the chain.
+        if !state.maps.member_expression.contains_key(*object_name) {
+            return;
+        }
+        let rest = rest.join(".");
+        if let Some(rule) = state.maps.get_member_rule(object_name, &rest) {
+            check_guarded(&state, ctx, node_id, rule, member.span);
         }
     }
 }
@@ -361,111 +421,75 @@ impl Rule for Compat {
         Ok(Self(Box::new(config.into_inner())))
     }
 
-    fn run_once(&self, ctx: &LintContext) {
-        let settings = &ctx.settings().compat;
-
-        let queries: Vec<String> = settings
-            .browsers
-            .as_ref()
-            .or(settings.targets.as_ref())
-            .map(BrowserslistTargetsConfig::to_queries)
-            .or_else(|| self.0.0.clone().map(|query| vec![query]))
-            .unwrap_or_default();
-
-        let targets = match resolve_targets(&queries) {
-            Ok(targets) => targets,
-            Err(error) => {
-                ctx.diagnostic(invalid_browserslist_diagnostic(&error));
-                return;
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::Program(_) => {
+                // Warm the per-file state and surface browserslist
+                // configuration errors once per file.
+                let state = self.file_state(ctx);
+                if let Some(error) = &state.error {
+                    ctx.diagnostic(invalid_browserslist_diagnostic(error));
+                }
             }
-        };
-
-        let polyfills: FxHashSet<&str> = settings.polyfills.iter().map(String::as_str).collect();
-        let lint_all_es_apis = settings.lint_all_es_apis || !polyfills.contains("es:all");
-        let rule_maps = get_rules_for_targets(&targets, lint_all_es_apis);
-
-        // Every configured target supports every known API: nothing can be
-        // reported, skip the file entirely.
-        if rule_maps.is_empty() {
-            return;
-        }
-
-        let maps: &RuleMaps = &rule_maps;
-        let mut checker = CompatChecker {
-            rule_maps: maps,
-            polyfills,
-            ignore_conditional_checks: settings.ignore_conditional_checks,
-            errors: Vec::new(),
-            key_scratch: String::new(),
-            chain_scratch: Vec::new(),
-        };
-        let check_literals = !maps.literal.is_empty();
-        let check_members = !maps.member_expression.is_empty();
-
-        let nodes = ctx.nodes();
-        for node in nodes.iter() {
-            match node.kind() {
-                AstKind::NewExpression(expr) => {
-                    if let Some(name) = identifier_name(&expr.callee)
-                        && let Some(rule) = maps.new_expression.get(name)
-                    {
-                        checker.check_guarded(nodes, node.id(), Some(name), rule, expr.span);
+            AstKind::NewExpression(expr) => {
+                if let Expression::Identifier(ident) = &expr.callee
+                    && ident.is_global_reference(ctx.scoping())
+                {
+                    let state = self.file_state(ctx);
+                    if let Some(rule) = state.maps.new_expression.get(ident.name.as_str()) {
+                        check_guarded(&state, ctx, node.id(), rule, expr.span);
                     }
                 }
-                AstKind::CallExpression(expr) => {
-                    if let Some(name) = identifier_name(&expr.callee)
-                        && let Some(rule) = maps.call_expression.get(name)
-                    {
-                        checker.check_guarded(nodes, node.id(), Some(name), rule, expr.span);
-                    }
-                }
-                AstKind::ExpressionStatement(stmt) => {
-                    if let Some(name) = identifier_name(&stmt.expression)
-                        && let Some(rule) = maps.expression_statement.get(name)
-                    {
-                        checker.check_guarded(nodes, node.id(), Some(name), rule, stmt.span);
-                    }
-                }
-                AstKind::StaticMemberExpression(member) if check_members => {
-                    checker.check_member_expression(nodes, node.id(), member);
-                }
-                AstKind::RegExpLiteral(lit) if check_literals => {
-                    checker.check_literal(ctx.source_range(lit.span), lit.span);
-                }
-                AstKind::StringLiteral(lit) if check_literals => {
-                    let is_regexp_argument = match nodes.parent_kind(node.id()) {
-                        AstKind::NewExpression(parent) => {
-                            identifier_name(&parent.callee) == Some("RegExp")
-                        }
-                        AstKind::CallExpression(parent) => {
-                            identifier_name(&parent.callee) == Some("RegExp")
-                        }
-                        _ => false,
-                    };
-                    if is_regexp_argument {
-                        checker.check_literal(ctx.source_range(lit.span), lit.span);
-                    }
-                }
-                _ => {}
             }
-        }
-
-        if checker.errors.is_empty() {
-            return;
-        }
-
-        // Do not report errors for locally-bound identifiers
-        // (e.g. `import { Set } from 'immutable'; new Set();`). Most files
-        // have no errors, so the binding set is only built on demand.
-        let scoping = ctx.scoping();
-        let local_bindings: FxHashSet<&str> = scoping.symbol_names().collect();
-        for (filter_name, rule, span) in checker.errors {
-            if let Some(name) = filter_name
-                && local_bindings.contains(name)
-            {
-                continue;
+            AstKind::CallExpression(expr) => {
+                if let Expression::Identifier(ident) = &expr.callee
+                    && ident.is_global_reference(ctx.scoping())
+                {
+                    let state = self.file_state(ctx);
+                    if let Some(rule) = state.maps.call_expression.get(ident.name.as_str()) {
+                        check_guarded(&state, ctx, node.id(), rule, expr.span);
+                    }
+                }
             }
-            ctx.diagnostic(compat_diagnostic(&rule.error_name, &rule.unsupported_targets, span));
+            AstKind::ExpressionStatement(stmt) => {
+                if let Expression::Identifier(ident) = &stmt.expression
+                    && ident.is_global_reference(ctx.scoping())
+                {
+                    let state = self.file_state(ctx);
+                    if let Some(rule) = state.maps.expression_statement.get(ident.name.as_str()) {
+                        check_guarded(&state, ctx, node.id(), rule, stmt.span);
+                    }
+                }
+            }
+            AstKind::StaticMemberExpression(member) => {
+                check_member_expression(self, ctx, node.id(), member);
+            }
+            AstKind::RegExpLiteral(lit) => {
+                let state = self.file_state(ctx);
+                if !state.maps.literal.is_empty() {
+                    check_literal(&state, ctx, ctx.source_range(lit.span), lit.span);
+                }
+            }
+            AstKind::StringLiteral(lit) => {
+                // Only strings passed to `RegExp(...)` / `new RegExp(...)`
+                // are candidates; check the parent before touching any state.
+                let is_regexp_argument = match ctx.nodes().parent_kind(node.id()) {
+                    AstKind::NewExpression(parent) => {
+                        identifier_name(&parent.callee) == Some("RegExp")
+                    }
+                    AstKind::CallExpression(parent) => {
+                        identifier_name(&parent.callee) == Some("RegExp")
+                    }
+                    _ => false,
+                };
+                if is_regexp_argument {
+                    let state = self.file_state(ctx);
+                    if !state.maps.literal.is_empty() {
+                        check_literal(&state, ctx, ctx.source_range(lit.span), lit.span);
+                    }
+                }
+            }
+            _ => {}
         }
     }
 }
