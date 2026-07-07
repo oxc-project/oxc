@@ -23,7 +23,13 @@ doctest = false
 
 [dependencies]
 cow-utils = { workspace = true }
-oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize", "conformance", "fancy"] }
+oxc = { workspace = true, features = [
+  "full",
+  "isolated_declarations",
+  "serialize",
+  "conformance",
+  "fancy",
+] }
 oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 oxc_estree_tokens = { workspace = true }
 oxc_formatter = { workspace = true }
