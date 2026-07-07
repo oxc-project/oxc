@@ -1288,7 +1288,7 @@ export function getTokenByRangeStart<Options extends RangeOptions | null | undef
   //
   // Note: Source text is limited to 1 GiB max, so offsets cannot exceed 2^30.
   // This makes it safe to use `>> 1` for division by 2 (which is faster than `>>> 1`).
-  for (let lo = 0, hi = len; lo < hi; ) {
+  for (let lo = 0, hi = len; lo < hi;) {
     const mid = (lo + hi) >> 1;
     const tokenStart = int32[mid << 2];
     if (tokenStart < offset) {
@@ -1546,7 +1546,7 @@ export function firstTokenAtOrAfter(
   startIndex: number,
   length: number,
 ): number {
-  for (let endIndex = length; startIndex < endIndex; ) {
+  for (let endIndex = length; startIndex < endIndex;) {
     const mid = (startIndex + endIndex) >> 1;
     if (int32[mid << 2] < offset) {
       startIndex = mid + 1;
