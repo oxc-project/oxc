@@ -45,14 +45,6 @@ impl Generator for TraverseGenerator {
     }
 }
 
-/// Whether an AST type is TypeScript type-level syntax, which cannot appear in a type-stripped AST.
-///
-/// `Decorator` is also defined in `ts.rs`, but decorators are runtime syntax, so it is not
-/// considered a TS type here.
-pub(super) fn is_ts_type_name(name: &str) -> bool {
-    name.starts_with("TS") || name.starts_with("JSDoc")
-}
-
 pub(super) fn generate_walk_traverse(schema: &Schema) -> TokenStream {
     walk::generate_walk(schema, &walk::WalkConfig::traverse())
 }
@@ -112,7 +104,7 @@ pub(super) fn generate_traverse_trait(
         if !is_ast_type_with_visitor(type_def, schema) {
             continue;
         }
-        if !config.include_ts && is_ts_type_name(type_def.name()) {
+        if !config.include_ts && type_def.is_ts() {
             continue;
         }
 

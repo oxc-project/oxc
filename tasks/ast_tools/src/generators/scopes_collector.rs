@@ -16,7 +16,6 @@ use crate::{
 
 use super::{
     define_generator,
-    traverse::is_ts_type_name,
     visit::{INLINE_LIMIT, Target, VisitorOutputs, generate_visit_type},
 };
 
@@ -34,33 +33,13 @@ impl Generator for ScopesCollectorGenerator {
         vec![
             Output::Rust {
                 path: output_path(TRAVERSE_CRATE_PATH, "scopes_collector.rs"),
-                tokens: generate(schema, &CollectorConfig::traverse()),
+                tokens: generate(schema, /* include_ts */ true),
             },
             Output::Rust {
                 path: output_path(MINIFIER_CRATE_PATH, "scopes_collector.rs"),
-                tokens: generate(schema, &CollectorConfig::minifier()),
+                tokens: generate(schema, /* include_ts */ false),
             },
         ]
-    }
-}
-
-/// Configuration for a `ChildScopeCollector` output.
-struct CollectorConfig {
-    /// `use` statement importing the `Visit` trait the collector implements.
-    visit_use: TokenStream,
-    /// Whether to visit TS type-level syntax.
-    /// The minifier only operates on type-stripped ASTs, so its collector skips TS nodes,
-    /// and implements the minifier's JS-only `Visit` trait.
-    include_ts: bool,
-}
-
-impl CollectorConfig {
-    fn traverse() -> Self {
-        Self { visit_use: quote! { use oxc_ast_visit::Visit; }, include_ts: true }
-    }
-
-    fn minifier() -> Self {
-        Self { visit_use: quote! { use crate::generated::visit::Visit; }, include_ts: false }
     }
 }
 
@@ -248,20 +227,27 @@ impl<'s> ScopesCalculator<'s> {
 }
 
 /// Generate `ChildScopeCollector`.
-fn generate(schema: &Schema, config: &CollectorConfig) -> TokenStream {
+///
+/// With `include_ts` off, TS type-level syntax is not visited, and the collector implements
+/// the minifier's JS-only `Visit` trait. The minifier only operates on type-stripped ASTs.
+fn generate(schema: &Schema, include_ts: bool) -> TokenStream {
     // Get `TypeId` for `ScopeId`
     let scope_id_type_id = schema.type_names["ScopeId"];
 
     let visit_methods = schema.structs_and_enums().filter_map(|type_def| {
-        generate_visit_method_for_type(type_def, scope_id_type_id, config, schema)
+        generate_visit_method_for_type(type_def, scope_id_type_id, include_ts, schema)
     });
 
-    let visit_use = &config.visit_use;
+    let visit_use = if include_ts {
+        quote! { use oxc_ast_visit::Visit; }
+    } else {
+        quote! { use crate::generated::visit::Visit; }
+    };
 
     // Single-arm matches only occur in enums whose sole scope-containing variant is
     // a TS type, which the JS-only collector excludes
     let maybe_single_match_else =
-        if config.include_ts { quote!( , clippy::single_match_else ) } else { quote!() };
+        if include_ts { quote!( , clippy::single_match_else ) } else { quote!() };
 
     quote! {
         #![expect(
@@ -328,19 +314,21 @@ impl VisitorOutputs for VisitOnly {
 fn generate_visit_method_for_type(
     type_def: StructOrEnum<'_>,
     scope_id_type_id: TypeId,
-    config: &CollectorConfig,
+    include_ts: bool,
     schema: &Schema,
 ) -> Option<TokenStream> {
     // TS types have no visitor in the JS-only `Visit` trait, so no method to override
-    if !config.include_ts && is_ts_type_name(type_def.name()) {
+    if !include_ts && type_def.is_ts() {
         return None;
     }
 
     match type_def {
         StructOrEnum::Struct(struct_def) => {
-            generate_visit_method_for_struct(struct_def, scope_id_type_id, config, schema)
+            generate_visit_method_for_struct(struct_def, scope_id_type_id, include_ts, schema)
         }
-        StructOrEnum::Enum(enum_def) => generate_visit_method_for_enum(enum_def, config, schema),
+        StructOrEnum::Enum(enum_def) => {
+            generate_visit_method_for_enum(enum_def, include_ts, schema)
+        }
     }
 }
 
@@ -351,7 +339,7 @@ fn generate_visit_method_for_type(
 fn generate_visit_method_for_struct(
     struct_def: &StructDef,
     scope_id_type_id: TypeId,
-    config: &CollectorConfig,
+    include_ts: bool,
     schema: &Schema,
 ) -> Option<TokenStream> {
     // Get visit method name. Exit if struct is not visited.
@@ -385,7 +373,7 @@ fn generate_visit_method_for_struct(
                 continue;
             };
 
-            if let Some(visit) = generate_visit_stmt_for_struct_field(field, config, schema) {
+            if let Some(visit) = generate_visit_stmt_for_struct_field(field, include_ts, schema) {
                 stmts.extend(visit);
                 stmt_count += 1;
             }
@@ -405,7 +393,7 @@ fn generate_visit_method_for_struct(
         let mut body = quote!();
         let mut stmt_count = 0;
         for field in &struct_def.fields {
-            if let Some(visit) = generate_visit_stmt_for_struct_field(field, config, schema) {
+            if let Some(visit) = generate_visit_stmt_for_struct_field(field, include_ts, schema) {
                 body.extend(visit);
                 stmt_count += 1;
             }
@@ -457,7 +445,7 @@ fn generate_visit_method_for_struct(
 /// Generate statement to visit a struct field if it contains a scope.
 fn generate_visit_stmt_for_struct_field(
     field: &FieldDef,
-    config: &CollectorConfig,
+    include_ts: bool,
     schema: &Schema,
 ) -> Option<TokenStream> {
     let field_type = field.type_def(schema);
@@ -473,7 +461,7 @@ fn generate_visit_stmt_for_struct_field(
     }
 
     // Skip TS type-level fields for the JS-only collector
-    if !config.include_ts && is_ts_type_name(innermost_type.name()) {
+    if !include_ts && innermost_type.is_ts() {
         return None;
     }
 
@@ -497,7 +485,7 @@ fn generate_visit_stmt_for_struct_field(
 /// (either the enum is not visited, or the default `visit_*` method can be used).
 fn generate_visit_method_for_enum(
     enum_def: &EnumDef,
-    config: &CollectorConfig,
+    include_ts: bool,
     schema: &Schema,
 ) -> Option<TokenStream> {
     // Get visit method name. Exit if enum is not visited.
@@ -519,8 +507,7 @@ fn generate_visit_method_for_enum(
                     _ => false,
                 };
                 // TS variants are not visited by the JS-only collector
-                let contains_scope = contains_scope
-                    && (config.include_ts || !is_ts_type_name(innermost_type.name()));
+                let contains_scope = contains_scope && (include_ts || !innermost_type.is_ts());
 
                 let visit = if contains_scope {
                     generate_visit_type(

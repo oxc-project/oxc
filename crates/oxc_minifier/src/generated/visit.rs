@@ -1,7 +1,6 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/minifier_traverse/mod.rs`.
 
-#![allow(dead_code, clippy::match_wildcard_for_single_variants)]
 //! Visitor Pattern
 //!
 //! See:
@@ -9,7 +8,12 @@
 //! * [rustc visitor](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_ast/src/visit.rs)
 
 #![expect(unused_variables, clippy::semicolon_if_nothing_returned)]
-#![allow(clippy::needless_pass_by_ref_mut, clippy::trivially_copy_pass_by_ref)]
+#![allow(
+    dead_code,
+    clippy::match_wildcard_for_single_variants,
+    clippy::needless_pass_by_ref_mut,
+    clippy::trivially_copy_pass_by_ref
+)]
 
 use std::cell::Cell;
 

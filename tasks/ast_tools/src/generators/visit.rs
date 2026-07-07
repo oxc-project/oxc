@@ -15,10 +15,7 @@ use crate::{
     utils::{create_ident, create_ident_tokens, create_safe_ident},
 };
 
-use super::{
-    AttrLocation, AttrPart, AttrPositions, attr_positions, define_generator,
-    traverse::is_ts_type_name,
-};
+use super::{AttrLocation, AttrPart, AttrPositions, attr_positions, define_generator};
 
 /// Visitors with less than this number of fields/variants will be marked `#[inline]`.
 ///
@@ -191,7 +188,7 @@ pub(super) fn generate_visit_js(schema: &Schema) -> TokenStream {
     builder.generate();
     let VisitBuilder { visit_methods, walk_fns, .. } = builder;
 
-    let output = generate_output(
+    generate_output(
         &create_safe_ident("Visit"),
         &visit_methods,
         &walk_fns,
@@ -199,18 +196,17 @@ pub(super) fn generate_visit_js(schema: &Schema) -> TokenStream {
         &alloc_fn_tokens(),
         &create_safe_ident("AstKind"),
         &quote!(AstKind<'a>),
-        /* expect_match_same_arms */ false,
-    );
-
-    // `dead_code`: unlike `oxc_ast_visit`, this trait is crate-private, so visitors which are
-    // only reachable from TS nodes (and `visit_argument`, bypassed by `walk_arguments`) are
-    // dead code.
-    // `match_wildcard_for_single_variants`: enums with a single TS variant get a `_` arm
-    // covering just that variant.
-    quote! {
-        #![allow(dead_code, clippy::match_wildcard_for_single_variants)]
-        #output
-    }
+        // No `clippy::match_same_arms` expectation: identical arms only exist in TS enum walks
+        /* extra_expect */
+        &quote!(),
+        // `dead_code`: unlike `oxc_ast_visit`, this trait is crate-private, so visitors which
+        // are only reachable from TS nodes (and `visit_argument`, bypassed by `walk_arguments`)
+        // are dead code.
+        // `match_wildcard_for_single_variants`: enums with a single TS variant get a `_` arm
+        // covering just that variant.
+        /* extra_allow */
+        &quote!(dead_code, clippy::match_wildcard_for_single_variants,),
+    )
 }
 
 /// Generate `alloc` method for `Visit` trait.
@@ -246,7 +242,8 @@ fn generate_outputs(schema: &Schema) -> (/* Visit */ TokenStream, /* VisitMut */
         &alloc_fn,
         &create_safe_ident("AstKind"),
         &quote!(AstKind<'a>),
-        /* expect_match_same_arms */ true,
+        /* extra_expect */ &quote!(clippy::match_same_arms,),
+        /* extra_allow */ &quote!(),
     );
 
     // Generate `VisitMut` trait
@@ -258,7 +255,8 @@ fn generate_outputs(schema: &Schema) -> (/* Visit */ TokenStream, /* VisitMut */
         &quote!(),
         &create_safe_ident("AstType"),
         &quote!(AstType),
-        /* expect_match_same_arms */ true,
+        /* extra_expect */ &quote!(clippy::match_same_arms,),
+        /* extra_allow */ &quote!(),
     );
 
     (visit_output, visit_mut_output)
@@ -273,12 +271,9 @@ fn generate_output(
     maybe_alloc: &TokenStream,
     ast_kind_or_type_ident: &Ident,
     ast_kind_or_type_ty: &TokenStream,
-    expect_match_same_arms: bool,
+    extra_expect: &TokenStream,
+    extra_allow: &TokenStream,
 ) -> TokenStream {
-    // Identical match arms only exist in TS enum walks, which the JS-only visitor excludes
-    let maybe_match_same_arms =
-        if expect_match_same_arms { quote!(clippy::match_same_arms,) } else { quote!() };
-
     quote! {
         //! Visitor Pattern
         //!
@@ -289,10 +284,11 @@ fn generate_output(
         //!@@line_break
         #![expect(
             unused_variables,
-            #maybe_match_same_arms
+            #extra_expect
             clippy::semicolon_if_nothing_returned,
         )]
         #![allow(
+            #extra_allow
             clippy::needless_pass_by_ref_mut,
             clippy::trivially_copy_pass_by_ref,
         )]
@@ -394,7 +390,7 @@ impl VisitBuilder<'_> {
         // Exit if this struct is not visited
         let Some(visitor_names) = &struct_def.visit.visitor_names else { return };
 
-        if !self.include_ts && is_ts_type_name(struct_def.name()) {
+        if !self.include_ts && struct_def.is_ts() {
             return;
         }
 
@@ -532,7 +528,7 @@ impl VisitBuilder<'_> {
         let field_type = field.type_def(self.schema);
 
         // Skip TS type-level fields for the JS-only visitor
-        if !self.include_ts && is_ts_type_name(field_type.innermost_type(self.schema).name()) {
+        if !self.include_ts && field_type.innermost_type(self.schema).is_ts() {
             return None;
         }
         let field_ident = field.ident();
@@ -577,7 +573,7 @@ impl VisitBuilder<'_> {
         // Exit if this enum is not visited
         let Some(visitor_names) = &enum_def.visit.visitor_names else { return };
 
-        if !self.include_ts && is_ts_type_name(enum_def.name()) {
+        if !self.include_ts && enum_def.is_ts() {
             return;
         }
 
@@ -612,9 +608,7 @@ impl VisitBuilder<'_> {
                 let variant_type = variant.field_type(self.schema)?;
 
                 // Skip TS variants for the JS-only visitor. They fall into the catch-all arm.
-                if !self.include_ts
-                    && is_ts_type_name(variant_type.innermost_type(self.schema).name())
-                {
+                if !self.include_ts && variant_type.innermost_type(self.schema).is_ts() {
                     return None;
                 }
 
@@ -640,7 +634,7 @@ impl VisitBuilder<'_> {
 
         let (inherits_match_arms, inherits_match_arms_mut): (TokenStream, TokenStream) = enum_def
             .inherits_enums(self.schema)
-            .filter(|inherits_type| self.include_ts || !is_ts_type_name(inherits_type.name()))
+            .filter(|inherits_type| self.include_ts || !inherits_type.is_ts())
             .map(|inherits_type| {
                 let inner_visit_fn_ident = inherits_type.visit.visitor_ident();
                 let Some(inner_visit_fn_ident) = inner_visit_fn_ident else {
@@ -720,9 +714,7 @@ impl VisitBuilder<'_> {
         // Exit if this `Vec` does not have its own visitor
         let Some(visitor_names) = &vec_def.visit.visitor_names else { return };
 
-        if !self.include_ts
-            && is_ts_type_name(vec_def.inner_type(self.schema).innermost_type(self.schema).name())
-        {
+        if !self.include_ts && vec_def.inner_type(self.schema).innermost_type(self.schema).is_ts() {
             return;
         }
 

@@ -19,8 +19,6 @@ use crate::{
     utils::upper_case_first,
 };
 
-use super::is_ts_type_name;
-
 /// Generate all ancestor-related code.
 ///
 /// With `include_ts` off, TS type-level syntax gets no `Ancestor` variants, matching the
@@ -42,7 +40,7 @@ pub fn generate_ancestor(schema: &Schema, include_ts: bool) -> TokenStream {
         if !struct_def.visit.has_visitor() {
             continue;
         }
-        if !include_ts && is_ts_type_name(struct_def.name()) {
+        if !include_ts && struct_def.is_ts() {
             continue;
         }
 
@@ -53,8 +51,7 @@ pub fn generate_ancestor(schema: &Schema, include_ts: bool) -> TokenStream {
             .enumerate()
             .filter(|(_, field)| {
                 field_is_visited(field, schema)
-                    && (include_ts
-                        || !is_ts_type_name(field.type_def(schema).innermost_type(schema).name()))
+                    && (include_ts || !field.type_def(schema).innermost_type(schema).is_ts())
             })
             .collect();
 

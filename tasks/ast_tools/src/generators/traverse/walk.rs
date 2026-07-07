@@ -17,7 +17,7 @@ use crate::{
 
 use super::{
     ancestor::{get_visited_fields, is_ast_type_with_visitor},
-    is_ts_type_name, traverse_snake_name,
+    traverse_snake_name,
 };
 
 pub(super) struct WalkConfig {
@@ -69,7 +69,7 @@ pub(super) fn generate_walk(schema: &Schema, config: &WalkConfig) -> TokenStream
         if !is_ast_type_with_visitor(type_def, schema) {
             continue;
         }
-        if !config.include_ts && is_ts_type_name(type_def.name()) {
+        if !config.include_ts && type_def.is_ts() {
             continue;
         }
         match type_def {
@@ -167,9 +167,7 @@ fn generate_walk_for_struct(
 
     let mut visited_fields = get_visited_fields(struct_def, schema);
     if !config.include_ts {
-        visited_fields.retain(|(_, field)| {
-            !is_ts_type_name(field.type_def(schema).innermost_type(schema).name())
-        });
+        visited_fields.retain(|(_, field)| !field.type_def(schema).innermost_type(schema).is_ts());
     }
 
     // Scope handling
@@ -572,7 +570,7 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
 
         let variant_ident = variant.ident();
 
-        if !config.include_ts && is_ts_type_name(inner_type.name()) {
+        if !config.include_ts && inner_type.is_ts() {
             ts_noop_patterns.push(quote!(#enum_ident::#variant_ident(_)));
             continue;
         }
@@ -596,7 +594,7 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
         // Collect all variant patterns from inherited enum (recursively)
         let patterns = collect_inherited_patterns(&enum_ident, inherited_enum, schema);
 
-        if !config.include_ts && is_ts_type_name(inherited_enum.name()) {
+        if !config.include_ts && inherited_enum.is_ts() {
             ts_noop_patterns.extend(patterns);
             continue;
         }

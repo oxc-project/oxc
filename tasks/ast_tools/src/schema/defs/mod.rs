@@ -37,6 +37,16 @@ pub trait Def {
     /// Get type name.
     fn name(&self) -> &str;
 
+    /// Get whether this type is TypeScript type-level syntax (`TS*` / `JSDoc*` types),
+    /// which cannot appear in a type-stripped AST.
+    ///
+    /// `Decorator` is also defined in `ts.rs`, but decorators are runtime syntax,
+    /// so it is not considered a TS type.
+    fn is_ts(&self) -> bool {
+        let name = self.name();
+        name.starts_with("TS") || name.starts_with("JSDoc")
+    }
+
     /// Get all traits which have derives generated for this type.
     fn generated_derives(&self) -> Derives;
 
