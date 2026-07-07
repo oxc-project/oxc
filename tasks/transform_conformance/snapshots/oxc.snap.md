@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 254/398
+Passed: 256/398
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (26/60)
+# babel-plugin-transform-typescript (28/60)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -197,9 +197,6 @@ rebuilt        : SymbolId(0): [ReferenceId(5)]
 Bindings mismatch:
 after transform: ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok"]
 rebuilt        : ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok", "T"]
-Symbol flags mismatch for "Name":
-after transform: SymbolId(7): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol flags mismatch for "T":
 after transform: SymbolId(9): SymbolFlags(Function | TypeAlias)
 rebuilt        : SymbolId(8): SymbolFlags(Function)
@@ -210,37 +207,15 @@ Symbol redeclarations mismatch for "T":
 after transform: SymbolId(9): [Span { start: 205, end: 206 }, Span { start: 226, end: 227 }]
 rebuilt        : SymbolId(8): []
 
-* namespace/export-import-=/input.ts
-Symbol flags mismatch for "N1":
-after transform: SymbolId(1): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
-
 * namespace/import-=/input.ts
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(2)]
-Symbol flags mismatch for "N1":
-after transform: SymbolId(1): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "N2":
-after transform: SymbolId(4): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
-
-* namespace/preserve-import-=/input.ts
-Symbol flags mismatch for "N1":
-after transform: SymbolId(1): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "N2":
-after transform: SymbolId(4): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 
 * namespace/redeclaration-with-enum/input.ts
 Bindings mismatch:
 after transform: ScopeId(2): ["x", "y"]
 rebuilt        : ScopeId(2): ["x"]
-Symbol flags mismatch for "x":
-after transform: SymbolId(0): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "x":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 39, end: 40 }]
 rebuilt        : SymbolId(0): []
@@ -249,31 +224,16 @@ after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 83, en
 rebuilt        : SymbolId(3): []
 
 * namespace/redeclaration-with-interface/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["Foo"]
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(Interface | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 41, end: 44 }]
 rebuilt        : SymbolId(0): []
 
 * namespace/redeclaration-with-type-alias/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["Foo"]
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(TypeAlias | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 39, end: 42 }, Span { start: 87, end: 90 }]
 rebuilt        : SymbolId(0): []
 
 * namespace/redeclaration-with-type-only-namespace/input.ts
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 62, end: 65 }]
 rebuilt        : SymbolId(0): []
