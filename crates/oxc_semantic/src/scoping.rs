@@ -693,6 +693,10 @@ impl Scoping {
 
     /// Get the body scopes for an enum declaration symbol.
     /// Returns multiple scopes for merged enum declarations.
+    ///
+    /// Unlike the enum bits in `SymbolFlags`, this stays valid after the transformer
+    /// lowers the enum to a `var`/`let` binding, so it identifies enums at any point
+    /// during a transform.
     pub fn get_enum_body_scopes(&self, symbol_id: SymbolId) -> Option<&[ScopeId]> {
         self.enum_data.get_body_scopes(symbol_id)
     }
@@ -701,6 +705,19 @@ impl Scoping {
     /// Appends to the list (supports merged enum declarations).
     pub(crate) fn add_enum_body_scope(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
         self.enum_data.add_body_scope(symbol_id, scope_id);
+    }
+
+    /// Whether the symbol is a `const enum` declaration.
+    ///
+    /// Returns `false` for regular enums and non-enum symbols alike — gate on
+    /// [`Self::get_enum_body_scopes`] to identify enums.
+    pub fn is_const_enum(&self, symbol_id: SymbolId) -> bool {
+        self.enum_data.is_const_enum(symbol_id)
+    }
+
+    /// Mark a symbol as a `const enum` declaration.
+    pub(crate) fn add_const_enum(&mut self, symbol_id: SymbolId) {
+        self.enum_data.add_const_enum(symbol_id);
     }
 }
 
