@@ -36,13 +36,13 @@ use super::compile_result::CompileResult;
 use super::imports::ProgramContext;
 use super::imports::validate_restricted_imports;
 use super::pipeline;
-use super::plugin_options::CompilerOutputMode;
-use super::plugin_options::GatingConfig;
-use super::plugin_options::PluginOptions;
 use super::suppression::SuppressionRange;
 use super::suppression::filter_suppressions_that_affect_function;
 use super::suppression::find_program_suppressions;
 use super::suppression::suppressions_to_compiler_error;
+use crate::options::{
+    CompilationMode, CompilerOutputMode, GatingConfig, PanicThreshold, PluginOptions,
+};
 
 // -----------------------------------------------------------------------
 // Constants
@@ -1018,25 +1018,24 @@ fn get_react_function_type(
         None
     };
 
-    match opts.compilation_mode.as_str() {
-        "annotation" => {
+    match opts.compilation_mode {
+        CompilationMode::Annotation => {
             // opt-ins were checked above
             None
         }
-        "infer" => {
+        CompilationMode::Infer => {
             // Check if this is a component or hook-like function
             component_syntax_type
                 .or_else(|| get_component_or_hook_like(name, params, body, parent_callee_name))
         }
-        "syntax" => {
+        CompilationMode::Syntax => {
             // In syntax mode, only compile declared components/hooks
             component_syntax_type
         }
-        "all" => Some(
+        CompilationMode::All => Some(
             get_component_or_hook_like(name, params, body, parent_callee_name)
                 .unwrap_or(ReactFunctionType::Other),
         ),
-        _ => None,
     }
 }
 
@@ -1151,10 +1150,10 @@ fn handle_error<'a>(
     // Log the error
     log_error(err, fn_loc, context);
 
-    let should_panic = match context.opts.panic_threshold.as_str() {
-        "all_errors" => true,
-        "critical_errors" => err.has_errors(),
-        _ => false,
+    let should_panic = match context.opts.panic_threshold {
+        PanicThreshold::AllErrors => true,
+        PanicThreshold::CriticalErrors => err.has_errors(),
+        PanicThreshold::None => false,
     };
 
     // Config errors always cause a panic
@@ -1301,7 +1300,7 @@ fn process_fn<'a>(
             }
 
             // Check annotation mode
-            if context.opts.compilation_mode == "annotation" && opt_in.is_none() {
+            if context.opts.compilation_mode == CompilationMode::Annotation && opt_in.is_none() {
                 return Ok(None);
             }
 
@@ -1461,7 +1460,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     /// function's own scope is on the stack, so a top-level function has
     /// `len == 2` (program + function); deeper means a nested scope.
     fn is_rejected_by_scope_check(&self) -> bool {
-        self.opts.compilation_mode == "all"
+        self.opts.compilation_mode == CompilationMode::All
             && (self.scope_stack.len() > 2 || self.loop_expression_depth > 0)
     }
 

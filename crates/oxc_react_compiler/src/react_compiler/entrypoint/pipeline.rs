@@ -85,7 +85,7 @@ use super::compile_result::CodegenFunction;
 use super::compile_result::DebugLogEntry;
 use super::compile_result::OutlinedFunction;
 use super::imports::ProgramContext;
-use super::plugin_options::CompilerOutputMode;
+use crate::options::CompilerOutputMode;
 use crate::react_compiler::debug_print;
 
 #[cfg(feature = "debug")]

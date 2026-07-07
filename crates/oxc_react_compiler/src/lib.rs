@@ -1,6 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 
 mod diagnostics;
+mod options;
 mod prefilter;
 mod scope;
 
@@ -23,8 +24,9 @@ use prefilter::has_react_like_functions;
 use scope::ScopeResolver;
 
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
-pub use crate::react_compiler::entrypoint::plugin_options::{
-    CompilerOutputMode, CompilerTarget, DynamicGatingConfig, GatingConfig, PluginOptions,
+pub use crate::options::{
+    CompilationMode, CompilerOutputMode, CompilerTarget, DynamicGatingConfig, GatingConfig,
+    PanicThreshold, PluginOptions,
 };
 pub use crate::react_compiler_hir::Effect;
 pub use crate::react_compiler_hir::environment_config::{
@@ -42,28 +44,6 @@ use oxc_diagnostics::Diagnostics;
 use oxc_semantic::Semantic;
 use oxc_span::GetSpan;
 use rustc_hash::FxHashSet;
-
-impl Default for PluginOptions {
-    /// The compiler's standard defaults. Override fields with struct-update syntax:
-    /// `PluginOptions { ..Default::default() }`.
-    fn default() -> Self {
-        PluginOptions {
-            compilation_mode: "infer".to_string(),
-            panic_threshold: "none".to_string(),
-            target: CompilerTarget::Version("19".to_string()),
-            gating: None,
-            dynamic_gating: None,
-            no_emit: false,
-            output_mode: None,
-            eslint_suppression_rules: None,
-            flow_suppressions: true,
-            ignore_use_no_forget: false,
-            custom_opt_out_directives: None,
-            environment: EnvironmentConfig::default(),
-            debug: false,
-        }
-    }
-}
 
 #[derive(Default)]
 pub struct TransformResult<'a> {
@@ -121,7 +101,7 @@ fn compile<'a>(
     }
 
     // Skip files with no React-like functions, unless the mode compiles everything.
-    if !matches!(options.compilation_mode.as_str(), "all" | "annotation")
+    if !matches!(options.compilation_mode, CompilationMode::All | CompilationMode::Annotation)
         && !has_react_like_functions(program)
     {
         return (None, Diagnostics::default());
