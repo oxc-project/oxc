@@ -1449,7 +1449,7 @@ fn apply_effect(
                         .or_insert_with(ValueId::new);
                     state.initialize(
                         value_id,
-                        AbstractValue { kind: from_value.kind, reason: from_value.reason.clone() },
+                        AbstractValue { kind: from_value.kind, reason: from_value.reason },
                     );
                     state.define(into.identifier, value_id);
                 }
@@ -1462,7 +1462,7 @@ fn apply_effect(
                         .or_insert_with(ValueId::new);
                     state.initialize(
                         value_id,
-                        AbstractValue { kind: from_value.kind, reason: from_value.reason.clone() },
+                        AbstractValue { kind: from_value.kind, reason: from_value.reason },
                     );
                     state.define(into.identifier, value_id);
                 }

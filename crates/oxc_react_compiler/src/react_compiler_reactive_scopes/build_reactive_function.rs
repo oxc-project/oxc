@@ -1229,7 +1229,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         } else {
             ValueBlockResult {
                 block: block_id,
-                place: place.clone(),
+                place,
                 value: ReactiveValue::SequenceExpression {
                     instructions: remaining,
                     id,

@@ -1519,7 +1519,7 @@ fn lower_binding_assignment<'a>(
                 builder,
                 InstructionValue::Destructure {
                     lvalue: LValuePattern { pattern: Pattern::Array(ArrayPattern { items }), kind },
-                    value: value.clone(),
+                    value,
                     span,
                 },
             )?;
@@ -1689,7 +1689,7 @@ fn lower_binding_assignment<'a>(
                         pattern: Pattern::Object(ObjectPattern { properties }),
                         kind,
                     },
-                    value: value.clone(),
+                    value,
                     span,
                 },
             )?;
@@ -2146,7 +2146,7 @@ fn lower_assignment_target<'a>(
                 builder,
                 InstructionValue::Destructure {
                     lvalue: LValuePattern { pattern: Pattern::Array(ArrayPattern { items }), kind },
-                    value: value.clone(),
+                    value,
                     span,
                 },
             )?;
@@ -2441,7 +2441,7 @@ fn lower_assignment_target<'a>(
                         pattern: Pattern::Object(ObjectPattern { properties }),
                         kind,
                     },
-                    value: value.clone(),
+                    value,
                     span,
                 },
             )?;
@@ -4067,7 +4067,7 @@ fn lower_expression<'a>(
                             InstructionValue::PropertyStore {
                                 object,
                                 property: prop_literal,
-                                value: updated.clone(),
+                                value: updated,
                                 span: member_span,
                             },
                         )?,
@@ -4076,7 +4076,7 @@ fn lower_expression<'a>(
                             InstructionValue::ComputedStore {
                                 object,
                                 property: prop_place,
-                                value: updated.clone(),
+                                value: updated,
                                 span: member_span,
                             },
                         )?,
@@ -4745,7 +4745,7 @@ fn lower_jsx_element_expr<'a>(
                 return Err(CompilerDiagnostic::new(ErrorCategory::Invariant, &reason, None)
                     .with_detail(CompilerDiagnosticDetail::Error {
                         span: id_span,
-                        message: Some(reason.clone()),
+                        message: Some(reason),
                     })
                     .into());
             }
@@ -6220,11 +6220,7 @@ fn lower_statement<'a>(
             let left_span = builder.source_location(for_of.left.span());
             let advance_iterator = lower_value_to_temporary(
                 builder,
-                InstructionValue::IteratorNext {
-                    iterator: iterator.clone(),
-                    collection: value.clone(),
-                    span: left_span,
-                },
+                InstructionValue::IteratorNext { iterator, collection: value, span: left_span },
             )?;
 
             let assign_result =

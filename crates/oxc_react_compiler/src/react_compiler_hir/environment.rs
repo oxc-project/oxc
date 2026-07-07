@@ -398,7 +398,7 @@ impl<'a> Environment<'a> {
                                 ErrorCategory::Config,
                                 "Invalid type configuration for module",
                             )
-                            .with_description(first_error.to_string())
+                            .with_description(first_error)
                             .with_span(span),
                         )?;
                     }
@@ -442,7 +442,7 @@ impl<'a> Environment<'a> {
                                 ErrorCategory::Config,
                                 "Invalid type configuration for module",
                             )
-                            .with_description(first_error.to_string())
+                            .with_description(first_error)
                             .with_span(span),
                         )?;
                     }

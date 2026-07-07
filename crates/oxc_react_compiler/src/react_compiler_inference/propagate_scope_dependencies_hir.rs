@@ -646,7 +646,7 @@ fn traverse_optional_block(
         identifier: base_object.identifier,
         reactive: base_object.reactive,
         path: {
-            let mut p = base_object.path.clone();
+            let mut p = base_object.path;
             p.push(DependencyPathEntry {
                 property: match_result.property.clone(),
                 optional: is_optional,

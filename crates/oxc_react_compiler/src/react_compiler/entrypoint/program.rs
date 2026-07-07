@@ -2795,9 +2795,9 @@ pub fn compile_program<'a, 'p>(
             );
             let gating_name = instrument_config.gating.as_ref().map(|g| {
                 let spec = context.add_import_specifier(&g.source, &g.import_specifier_name, None);
-                spec.name.clone()
+                spec.name
             });
-            (Some(fn_spec.name.clone()), gating_name)
+            (Some(fn_spec.name), gating_name)
         } else {
             (None, None)
         };
@@ -2809,7 +2809,7 @@ pub fn compile_program<'a, 'p>(
                 &hook_guard_config.import_specifier_name,
                 None,
             );
-            spec.name.clone()
+            spec.name
         });
 
     // Store pre-resolved names on context for pipeline access
@@ -2820,15 +2820,11 @@ pub fn compile_program<'a, 'p>(
     // Find all functions to compile
     let queue = find_functions_to_compile(program, &options, &mut context);
 
-    // Clone env_config once for all function compilations (avoids per-function clone
-    // while satisfying the borrow checker — compile_fn needs &mut context + &env_config)
-    let env_config = options.environment.clone();
-
     // Process each function and collect compiled results
     let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_>> = Vec::new();
 
     for source in &queue {
-        match process_fn(&ast, source, &scope, output_mode, &env_config, &mut context) {
+        match process_fn(&ast, source, &scope, output_mode, &options.environment, &mut context) {
             Ok(Some(codegen_fn)) => {
                 compiled_fns.push(CompiledFunction { kind: source.kind, source, codegen_fn });
             }
