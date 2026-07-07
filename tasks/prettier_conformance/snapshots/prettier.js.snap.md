@@ -1,4 +1,4 @@
-js compatibility: 752/808 (93.07%), 23 files skipped
+js compatibility: 754/808 (93.32%), 23 files skipped
 
 # Failed
 
@@ -13,7 +13,6 @@ js compatibility: 752/808 (93.07%), 23 files skipped
 | js/comments/15661.js | 💥💥 | 43.53% |
 | js/comments/break-continue-statements-2.js | 💥💥 | 87.18% |
 | js/comments/break-continue-statements-3.js | 💥💥 | 95.77% |
-| js/comments/break-continue-statements.js | 💥✨ | 40.91% |
 | js/comments/dangling.js | 💥💥 | 69.23% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/if.js | 💥💥 | 97.99% |
@@ -30,8 +29,7 @@ js compatibility: 752/808 (93.07%), 23 files skipped
 | js/comments-closure-typecast/iife.js | 💥 | 76.92% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 85.71% |
 | js/for/9812-2.js | 💥 | 58.33% |
-| js/for/continue-and-break-comment-1.js | 💥 | 97.89% |
-| js/for/continue-and-break-comment-without-blocks.js | 💥 | 41.51% |
+| js/for/continue-and-break-comment-without-blocks.js | 💥 | 42.77% |
 | js/for-of/comments.js | 💥 | 50.00% |
 | js/function/iife.js | 💥 | 14.89% |
 | js/function/issue-12967.js | 💥 | 0.00% |
@@ -44,7 +42,7 @@ js compatibility: 752/808 (93.07%), 23 files skipped
 | js/logical-expressions/in-unary-expression.js | 💥 | 33.33% |
 | js/new-expression/parentheses.js | 💥 | 33.33% |
 | js/no-semi/debugger-statement.js | 💥💥 | 91.18% |
-| js/no-semi/do-while-statement.js | 💥💥 | 61.36% |
+| js/no-semi/do-while-statement.js | 💥💥 | 92.50% |
 | js/no-semi/for-in-statement.js | 💥💥 | 63.89% |
 | js/no-semi/for-of-statement.js | 💥💥 | 66.67% |
 | js/no-semi/for-statement.js | 💥💥 | 63.89% |

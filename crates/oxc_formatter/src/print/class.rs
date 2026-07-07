@@ -18,7 +18,9 @@ use crate::{
     print::{function::should_group_function_parameters, semicolon::OptionalSemicolon},
     utils::{
         assignment_like::AssignmentLike,
-        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        format_node_without_trailing_comments::{
+            FormatNodeWithoutTrailingComments, format_content_without_comments_after,
+        },
         is_keyword_property_key,
         object::{format_property_key, should_preserve_quote},
     },
@@ -126,17 +128,38 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
             f,
         );
 
+        let needs_semicolon = self.r#type().is_abstract()
+            || matches!(value.r#type, FunctionType::TSEmptyBodyFunctionExpression);
+
         if let Some(body) = &value.body() {
             write!(f, body);
-        } else {
-            let comments = f.context().comments().comments_before(self.span.end);
-            write!(f, FormatTrailingComments::Comments(comments));
+            if needs_semicolon {
+                write!(f, OptionalSemicolon);
+            }
+            return;
         }
 
-        if self.r#type().is_abstract()
-            || matches!(value.r#type, FunctionType::TSEmptyBodyFunctionExpression)
+        let node_end = self.span.end;
+        let content_end = f.comments().end_including_source_parens(
+            value.return_type().map_or_else(|| value.params().span.end, |rt| rt.span.end),
+            node_end,
+        );
+        let comments = f.context().comments().comments_before(node_end);
+        // With an actual semicolon in the source, same-line comments between the
+        // signature end and the semicolon move behind it like Prettier:
+        // `m(): void /* c */;` -> `m(): void; /* c */`
+        // An own-line comment stays in place, like class properties.
+        if needs_semicolon
+            && f.comments().has_semicolon_in_range(content_end, node_end)
+            && !comments.iter().any(|comment| comment.preceded_by_newline())
+            && !f.comments().has_trailing_suppression_comment(content_end)
         {
-            write!(f, OptionalSemicolon);
+            write!(f, [OptionalSemicolon, FormatTrailingComments::Comments(comments)]);
+        } else {
+            write!(f, FormatTrailingComments::Comments(comments));
+            if needs_semicolon {
+                write!(f, OptionalSemicolon);
+            }
         }
     }
 }
@@ -595,7 +618,47 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClassElementWithSemicolon<'a,
             && !f.comments().is_suppressed(self.element.span().start);
 
         if needs_semi {
-            write!(f, [FormatNodeWithoutTrailingComments(self.element), ";"]);
+            // With an actual semicolon in the source, same-line comments between the
+            // content end and the semicolon move behind it like Prettier:
+            // `x = 1 /* c */;` -> `x = 1; /* c */`
+            // (same rule as `FormatContentWithSemicolon`, but the class element owns
+            // its own semicolon machinery, so the logic is inlined here)
+            let node_end = self.element.span().end;
+            let content_end = match self.element.as_ref() {
+                ClassElement::PropertyDefinition(def) => def
+                    .value
+                    .as_ref()
+                    .map(|value| value.span().end)
+                    .or_else(|| def.type_annotation.as_ref().map(|ta| ta.span.end))
+                    .unwrap_or_else(|| def.key.span().end),
+                ClassElement::AccessorProperty(def) => def
+                    .value
+                    .as_ref()
+                    .map(|value| value.span().end)
+                    .or_else(|| def.type_annotation.as_ref().map(|ta| ta.span.end))
+                    .unwrap_or_else(|| def.key.span().end),
+                _ => {
+                    unreachable!("Only `PropertyDefinition` and `AccessorProperty` can reach here");
+                }
+            };
+            // An own-line comment before the semicolon stays attached to the value
+            // (`x = 1 \n /* own */;` keeps the comment on its own line like Prettier).
+            let has_own_line_comment_before_semicolon = f
+                .comments()
+                .comments_before_character(content_end, b';')
+                .iter()
+                .any(|comment| comment.preceded_by_newline());
+            if f.comments().has_semicolon_in_range(content_end, node_end)
+                && !has_own_line_comment_before_semicolon
+                && !f.comments().has_trailing_suppression_comment(content_end)
+            {
+                let trailing_comments =
+                    f.context().comments().end_of_line_comments_after(content_end);
+                format_content_without_comments_after(self.element, content_end, f);
+                write!(f, [";", FormatTrailingComments::Comments(trailing_comments)]);
+            } else {
+                write!(f, [FormatNodeWithoutTrailingComments(self.element), ";"]);
+            }
             // Print trailing comments after the semicolon
             match self.element.as_ast_nodes() {
                 AstNodes::PropertyDefinition(prop) => {

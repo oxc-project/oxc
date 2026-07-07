@@ -1,4 +1,4 @@
-ts compatibility: 602/663 (90.80%), 19 files skipped
+ts compatibility: 604/663 (91.10%), 19 files skipped
 
 # Failed
 
@@ -21,7 +21,6 @@ ts compatibility: 602/663 (90.80%), 19 files skipped
 | typescript/chain-expression/new-expression.ts | 💥 | 80.88% |
 | typescript/chain-expression/tagged-template-literals.ts | 💥 | 80.00% |
 | typescript/chain-expression/test.ts | 💥 | 50.00% |
-| typescript/class/empty-method-body.ts | 💥 | 83.33% |
 | typescript/class-and-interface/empty/empty.ts | 💥 | 77.14% |
 | typescript/class-and-interface/heritage-break/member-expression-like.ts | 💥 | 75.00% |
 | typescript/comments/mapped-types.ts | 💥 | 85.71% |
@@ -32,7 +31,6 @@ ts compatibility: 602/663 (90.80%), 19 files skipped
 | typescript/conformance/types/union/unionTypeCallSignatures.ts | 💥 | 85.25% |
 | typescript/conformance/types/union/unionTypeConstructSignatures.ts | 💥 | 91.62% |
 | typescript/conformance/types/union/unionTypeIndexSignature.ts | 💥 | 83.64% |
-| typescript/interface2/comments-ts-only/18278.ts | 💥 | 95.65% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 85.64% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 67.44% |
 | typescript/intersection/consistent-with-flow/single-member.ts | 💥 | 78.00% |

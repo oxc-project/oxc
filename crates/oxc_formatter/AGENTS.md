@@ -76,6 +76,20 @@ Above all, prioritize consistency, and always consider whether the divergence is
 Repositioning a comment is allowed only relative to formatter-owned punctuation
 (e.g. printing `;` before a same-line trailing comment, see `FormatContentWithSemicolon`).
 
+The `;` rule applies to statement _terminators_ only, never to member _separators_:
+
+- Terminator: the `;` cannot be replaced by `,` — statements, class members
+  (property/accessor via `FormatClassElementWithSemicolon`, bodyless methods in `MethodDefinition`).
+  A same-line trailing comment moves behind it
+- Separator: interface / type literal members and index signatures (`;` is interchangeable with `,`),
+  enum members' `,` — the comment stays before it, same as any list separator.
+  This matches Prettier and is the principled line, not an emulated quirk
+- Known gap, intentionally not covered: TS-only statements
+  (`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`).
+  They are terminators by the rule above, but Prettier does not move their comments (yet);
+  we follow Prettier for now. If Prettier extends the rule to them, follow;
+  each is a small mechanical `FormatContentWithSemicolon` adoption
+
 When the content's source parentheses survive in the output (return/throw arguments),
 comments inside them belong to the content and stay there;
 only comments after the closing paren may move behind the terminator (see `Comments::end_including_source_parens`).

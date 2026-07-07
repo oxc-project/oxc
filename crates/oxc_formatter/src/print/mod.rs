@@ -616,17 +616,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, DoWhileStatement<'a>> {
         } else {
             write!(f, hard_line_break());
         }
-        write!(
-            f,
-            [
-                "while",
-                space(),
-                "(",
-                group(&soft_block_indent(&self.test())),
-                ")",
-                OptionalSemicolon
-            ]
-        );
+
+        // Comments inside the parens belong to the test and stay there;
+        // only comments between `)` and `;` move behind the semicolon.
+        let node_end = self.span().end;
+        let rparen_end = f.comments().end_including_source_parens(self.test().span().end, node_end);
+        let content = format_with(|f| {
+            write!(f, ["while", space(), "(", group(&soft_block_indent(&self.test())), ")"]);
+        });
+        write!(f, FormatContentWithSemicolon::new(&content, rparen_end, node_end));
     }
 }
 
@@ -877,21 +875,23 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ContinueStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, "continue");
         if let Some(label) = self.label() {
-            write!(f, [space(), label]);
+            let content = format_with(|f| write!(f, ["continue", space(), label]));
+            write!(f, FormatContentWithSemicolon::new(&content, label.span().end, self.span().end));
+        } else {
+            write!(f, ["continue", OptionalSemicolon]);
         }
-        write!(f, OptionalSemicolon);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BreakStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, "break");
         if let Some(label) = self.label() {
-            write!(f, [space(), label]);
+            let content = format_with(|f| write!(f, ["break", space(), label]));
+            write!(f, FormatContentWithSemicolon::new(&content, label.span().end, self.span().end));
+        } else {
+            write!(f, ["break", OptionalSemicolon]);
         }
-        write!(f, OptionalSemicolon);
     }
 }
 
