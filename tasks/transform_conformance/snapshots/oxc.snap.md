@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 247/398
+Passed: 254/398
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -469,7 +469,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (12/106)
+# legacy-decorators (19/106)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -524,14 +524,6 @@ Symbol flags mismatch for "_default":
 after transform: SymbolId(1): SymbolFlags(Class)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 
-* oxc/metadata/abstract-class/input.ts
-Symbol span mismatch for "AbstractClass":
-after transform: SymbolId(2): Span { start: 69, end: 82 }
-rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol span mismatch for "AbstractClass":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(3): Span { start: 69, end: 82 }
-
 * oxc/metadata/ambient-declared-class/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["Ambient", "Source", "dec"]
@@ -548,22 +540,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "babelHelpers"]
 rebuilt        : ["Ambient", "Object", "babelHelpers", "dec"]
-
-* oxc/metadata/bound-type-reference/input.ts
-Symbol span mismatch for "Example":
-after transform: SymbolId(1): Span { start: 87, end: 94 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Symbol span mismatch for "Example":
-after transform: SymbolId(3): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(2): Span { start: 87, end: 94 }
-
-* oxc/metadata/class-and-method-decorators/input.ts
-Symbol span mismatch for "Problem":
-after transform: SymbolId(4): Span { start: 90, end: 97 }
-rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
-Symbol span mismatch for "Problem":
-after transform: SymbolId(5): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(5): Span { start: 90, end: 97 }
 
 * oxc/metadata/class-expression-via-const/input.ts
 Bindings mismatch:
@@ -595,12 +571,6 @@ rebuilt        : ["Object", "babelHelpers", "dec"]
 Bindings mismatch:
 after transform: ScopeId(0): ["MyService", "dec"]
 rebuilt        : ScopeId(0): ["MyService"]
-Symbol span mismatch for "MyService":
-after transform: SymbolId(1): Span { start: 54, end: 63 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "MyService":
-after transform: SymbolId(7): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 54, end: 63 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -721,12 +691,6 @@ rebuilt        : ["Function", "Number", "Object", "String", "babelHelpers", "dec
 Bindings mismatch:
 after transform: ScopeId(0): ["Cls", "Foo", "dec"]
 rebuilt        : ScopeId(0): ["Cls", "Foo"]
-Symbol span mismatch for "Cls":
-after transform: SymbolId(7): Span { start: 145, end: 148 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Symbol span mismatch for "Cls":
-after transform: SymbolId(12): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(2): Span { start: 145, end: 148 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(3) "dec"
 rebuilt        : <None>
@@ -778,12 +742,6 @@ rebuilt        : [ReferenceId(8)]
 Bindings mismatch:
 after transform: ScopeId(0): ["Foo", "methodDecorator", "paramDecorator"]
 rebuilt        : ScopeId(0): ["Foo"]
-Symbol span mismatch for "Foo":
-after transform: SymbolId(4): Span { start: 107, end: 110 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "Foo":
-after transform: SymbolId(11): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 107, end: 110 }
 Reference symbol mismatch for "methodDecorator":
 after transform: SymbolId(0) "methodDecorator"
 rebuilt        : <None>
@@ -828,18 +786,12 @@ rebuilt        : ScopeId(4): []
 Symbol reference IDs mismatch for "dec":
 after transform: SymbolId(0): [ReferenceId(4), ReferenceId(0), ReferenceId(1), ReferenceId(3)]
 rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(10)]
-Symbol span mismatch for "Cls":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 46, end: 49 }
 Symbol scope ID mismatch for "Cls":
 after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(1): ScopeId(0)
 Symbol reference IDs mismatch for "Cls":
 after transform: SymbolId(4): []
 rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(7)]
-Symbol span mismatch for "Cls2":
-after transform: SymbolId(5): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(2): Span { start: 116, end: 120 }
 Symbol scope ID mismatch for "Cls2":
 after transform: SymbolId(5): ScopeId(3)
 rebuilt        : SymbolId(2): ScopeId(0)
@@ -891,26 +843,12 @@ rebuilt        : ["Object", "babelHelpers", "dec"]
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "Foo", "dec"]
 rebuilt        : ScopeId(0): ["A", "Foo"]
-Symbol span mismatch for "Foo":
-after transform: SymbolId(2): Span { start: 72, end: 75 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Symbol span mismatch for "Foo":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(2): Span { start: 72, end: 75 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Error", "Object", "babelHelpers"]
 rebuilt        : ["Error", "Object", "babelHelpers", "dec"]
-
-* oxc/metadata/this/input.ts
-Symbol span mismatch for "Example":
-after transform: SymbolId(0): Span { start: 6, end: 13 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "Example":
-after transform: SymbolId(2): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 6, end: 13 }
 
 * oxc/metadata/typescript-syntax/input.ts
 
@@ -926,26 +864,12 @@ rebuilt        : SymbolId(1): Span { start: 6, end: 13 }
 
 
 * oxc/metadata/unbound-type-reference/input.ts
-Symbol span mismatch for "Example":
-after transform: SymbolId(0): Span { start: 6, end: 13 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "Example":
-after transform: SymbolId(2): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 6, end: 13 }
 Reference flags mismatch for "UnboundTypeReference":
 after transform: ReferenceId(2): ReferenceFlags(Read | Type)
 rebuilt        : ReferenceId(5): ReferenceFlags(Read)
 Reference flags mismatch for "UnboundTypeReference":
 after transform: ReferenceId(3): ReferenceFlags(Read | Type)
 rebuilt        : ReferenceId(7): ReferenceFlags(Read)
-
-* oxc/metadata/without-decorator/input.ts
-Symbol span mismatch for "C":
-after transform: SymbolId(2): Span { start: 106, end: 107 }
-rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(3): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(3): Span { start: 106, end: 107 }
 
 * oxc/static-field/input.ts
 Scope flags mismatch:
@@ -954,46 +878,14 @@ rebuilt        : ScopeId(4): ScopeFlags(StrictMode | ClassStaticBlock)
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(0))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
-Symbol span mismatch for "Foo":
-after transform: SymbolId(2): Span { start: 103, end: 106 }
-rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8)]
 rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(8)]
-Symbol span mismatch for "Foo":
-after transform: SymbolId(3): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(4): Span { start: 103, end: 106 }
 
 * oxc/static-field-with-class-properties/input.ts
-Symbol span mismatch for "Foo":
-after transform: SymbolId(2): Span { start: 103, end: 106 }
-rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
 rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
-Symbol span mismatch for "Foo":
-after transform: SymbolId(3): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(4): Span { start: 103, end: 106 }
-
-* oxc/with-class-private-properties/input.ts
-Symbol span mismatch for "C":
-after transform: SymbolId(0): Span { start: 11, end: 12 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(5): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 11, end: 12 }
-Symbol span mismatch for "D":
-after transform: SymbolId(1): Span { start: 85, end: 86 }
-rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol span mismatch for "D":
-after transform: SymbolId(6): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(3): Span { start: 85, end: 86 }
-Symbol span mismatch for "E":
-after transform: SymbolId(2): Span { start: 167, end: 168 }
-rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
-Symbol span mismatch for "E":
-after transform: SymbolId(7): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(5): Span { start: 167, end: 168 }
 
 * oxc/with-class-private-properties-unnamed-default-export/input.ts
 Symbol flags mismatch for "_default":
@@ -1074,14 +966,6 @@ x Output mismatch
 * typescript/accessor/decoratorOnClassAccessor8/input.ts
 x Output mismatch
 
-* typescript/constructableDecoratorOnClass01/input.ts
-Symbol span mismatch for "C":
-after transform: SymbolId(1): Span { start: 74, end: 75 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(2): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(2): Span { start: 74, end: 75 }
-
 * typescript/constructor/decoratorOnClassConstructor1/input.ts
 x Output mismatch
 
@@ -1089,24 +973,6 @@ x Output mismatch
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "C", "dec"]
 rebuilt        : ScopeId(0): ["A", "B", "C"]
-Symbol span mismatch for "A":
-after transform: SymbolId(1): Span { start: 139, end: 140 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "A":
-after transform: SymbolId(5): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 139, end: 140 }
-Symbol span mismatch for "B":
-after transform: SymbolId(2): Span { start: 157, end: 158 }
-rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol span mismatch for "B":
-after transform: SymbolId(6): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(3): Span { start: 157, end: 158 }
-Symbol span mismatch for "C":
-after transform: SymbolId(4): Span { start: 205, end: 206 }
-rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(7): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(6): Span { start: 205, end: 206 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -1124,12 +990,6 @@ rebuilt        : ["Number", "babelHelpers", "dec"]
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "dec"]
 rebuilt        : ScopeId(0): ["C"]
-Symbol span mismatch for "C":
-after transform: SymbolId(4): Span { start: 155, end: 156 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(6): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 155, end: 156 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -1169,12 +1029,6 @@ x Output mismatch
 Bindings mismatch:
 after transform: ScopeId(0): ["Something", "Testing123", "forwardRef"]
 rebuilt        : ScopeId(0): ["Testing123"]
-Symbol span mismatch for "Testing123":
-after transform: SymbolId(3): Span { start: 241, end: 251 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "Testing123":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 241, end: 251 }
 Reference symbol mismatch for "Something":
 after transform: SymbolId(2) "Something"
 rebuilt        : <None>
@@ -1189,12 +1043,6 @@ x Output mismatch
 Bindings mismatch:
 after transform: ScopeId(0): ["Something", "Testing123", "forwardRef"]
 rebuilt        : ScopeId(0): ["Testing123"]
-Symbol span mismatch for "Testing123":
-after transform: SymbolId(3): Span { start: 239, end: 249 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "Testing123":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 239, end: 249 }
 Reference symbol mismatch for "Something":
 after transform: SymbolId(2) "Something"
 rebuilt        : <None>
@@ -1214,12 +1062,6 @@ rebuilt        : ScopeId(4): Some(ScopeId(0))
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "dec"]
 rebuilt        : ScopeId(0): ["C"]
-Symbol span mismatch for "C":
-after transform: SymbolId(3): Span { start: 99, end: 100 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 99, end: 100 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -1231,12 +1073,6 @@ rebuilt        : ["babelHelpers", "dec"]
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "dec"]
 rebuilt        : ScopeId(0): ["C"]
-Symbol span mismatch for "C":
-after transform: SymbolId(3): Span { start: 127, end: 128 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 127, end: 128 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -1248,12 +1084,6 @@ rebuilt        : ["babelHelpers", "dec"]
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "dec"]
 rebuilt        : ScopeId(0): ["C"]
-Symbol span mismatch for "C":
-after transform: SymbolId(3): Span { start: 127, end: 128 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 127, end: 128 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -1265,12 +1095,6 @@ rebuilt        : ["babelHelpers", "dec"]
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "dec"]
 rebuilt        : ScopeId(0): ["C"]
-Symbol span mismatch for "C":
-after transform: SymbolId(3): Span { start: 107, end: 108 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 107, end: 108 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -1282,12 +1106,6 @@ rebuilt        : ["babelHelpers", "dec"]
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "dec"]
 rebuilt        : ScopeId(0): ["C"]
-Symbol span mismatch for "C":
-after transform: SymbolId(3): Span { start: 107, end: 108 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 107, end: 108 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -1299,12 +1117,6 @@ rebuilt        : ["babelHelpers", "dec"]
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "dec"]
 rebuilt        : ScopeId(0): ["C"]
-Symbol span mismatch for "C":
-after transform: SymbolId(3): Span { start: 134, end: 135 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(4): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(1): Span { start: 134, end: 135 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>

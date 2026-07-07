@@ -2,25 +2,13 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2128/2236 (95.17%)
+Positive Passed: 2129/2236 (95.21%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
-Symbol span mismatch for "C":
-after transform: SymbolId(0): Span { start: 65, end: 66 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(1): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(2): Span { start: 65, end: 66 }
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-before-export/input.js
-Symbol span mismatch for "C":
-after transform: SymbolId(0): Span { start: 65, end: 66 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Symbol span mismatch for "C":
-after transform: SymbolId(1): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(2): Span { start: 65, end: 66 }
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
@@ -210,14 +198,6 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Bindings mismatch:
 after transform: ScopeId(0): ["x"]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/decorators/type-arguments/input.ts
-Symbol span mismatch for "Test":
-after transform: SymbolId(0): Span { start: 27, end: 31 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Symbol span mismatch for "Test":
-after transform: SymbolId(1): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(2): Span { start: 27, end: 31 }
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/const/input.ts
 Symbol flags mismatch for "E":
