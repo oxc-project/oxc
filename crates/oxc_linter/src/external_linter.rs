@@ -55,8 +55,10 @@ pub type ExternalLinterLintFileWithJsParserCb = Arc<
         dyn Fn(
                 // File path of file to lint
                 String,
-                // Source text of the file
+                // Source text of the file (with BOM stripped, if present)
                 String,
+                // `true` if the original file started with a Unicode BOM
+                bool,
                 // Parser ID
                 u32,
                 // Parser options JSON (`None` if no `parserOptions` configured)

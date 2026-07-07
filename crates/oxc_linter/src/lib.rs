@@ -666,6 +666,7 @@ impl Linter {
         let result = (external_linter.lint_file_with_js_parser)(
             path_string.to_owned(),
             source_text.to_string(),
+            has_bom,
             external_parser.parser_id.raw(),
             external_parser.parser_options_json.as_ref().map(ToString::to_string),
             external_rules.iter().map(|(rule_id, _, _)| rule_id.raw()).collect(),

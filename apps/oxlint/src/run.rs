@@ -63,7 +63,8 @@ pub type JsLintFileWithJsParserCb = ThreadsafeFunction<
     // Arguments
     FnArgs<(
         String,         // Absolute path of file to lint
-        String,         // Source text of the file
+        String,         // Source text of the file (with BOM stripped, if present)
+        bool,           // `true` if the original file started with a Unicode BOM
         u32,            // Parser ID
         Option<String>, // Parser options, as JSON string (`None` if not configured)
         Vec<u32>,       // Array of rule IDs
@@ -78,6 +79,7 @@ pub type JsLintFileWithJsParserCb = ThreadsafeFunction<
     FnArgs<(
         String,
         String,
+        bool,
         u32,
         Option<String>,
         Vec<u32>,
