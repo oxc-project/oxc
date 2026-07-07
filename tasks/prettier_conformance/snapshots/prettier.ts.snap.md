@@ -1,4 +1,4 @@
-ts compatibility: 604/663 (91.10%), 19 files skipped
+ts compatibility: 605/663 (91.25%), 19 files skipped
 
 # Failed
 
@@ -21,7 +21,7 @@ ts compatibility: 604/663 (91.10%), 19 files skipped
 | typescript/chain-expression/new-expression.ts | 💥 | 80.88% |
 | typescript/chain-expression/tagged-template-literals.ts | 💥 | 80.00% |
 | typescript/chain-expression/test.ts | 💥 | 50.00% |
-| typescript/class-and-interface/empty/empty.ts | 💥 | 77.14% |
+| typescript/class-and-interface/empty/empty.ts | 💥 | 87.10% |
 | typescript/class-and-interface/heritage-break/member-expression-like.ts | 💥 | 75.00% |
 | typescript/comments/mapped-types.ts | 💥 | 85.71% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
@@ -45,7 +45,6 @@ ts compatibility: 604/663 (91.10%), 19 files skipped
 | typescript/template-literals/member-expression.ts | 💥 | 55.00% |
 | typescript/tsx/attribute-blank-lines.tsx | 💥 | 0.00% |
 | typescript/tsx/optional-chaining.tsx | 💥 | 73.33% |
-| typescript/tuple/dangling-comments.ts | 💥💥💥 | 83.33% |
 | typescript/type-parameters-arguments/10732.ts | 💥 | 50.00% |
 | typescript/type-parameters-arguments/18041.ts | 💥 | 91.43% |
 | typescript/type-parameters-arguments/18604.ts | 💥 | 60.00% |

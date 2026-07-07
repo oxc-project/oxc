@@ -1,4 +1,4 @@
-js compatibility: 754/808 (93.32%), 23 files skipped
+js compatibility: 755/808 (93.44%), 23 files skipped
 
 # Failed
 
@@ -13,7 +13,6 @@ js compatibility: 754/808 (93.32%), 23 files skipped
 | js/comments/15661.js | 💥💥 | 43.53% |
 | js/comments/break-continue-statements-2.js | 💥💥 | 87.18% |
 | js/comments/break-continue-statements-3.js | 💥💥 | 95.77% |
-| js/comments/dangling.js | 💥💥 | 69.23% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/if.js | 💥💥 | 97.99% |
 | js/comments/return-statement-2.js | 💥💥 | 77.78% |
@@ -22,7 +21,7 @@ js compatibility: 754/808 (93.32%), 23 files skipped
 | js/comments/between-head-and-body/empty-statement.js | 💥 | 51.25% |
 | js/comments/between-head-and-body/non-block.js | 💥 | 82.86% |
 | js/comments/first-argument/first-argument.js | 💥 | 92.98% |
-| js/comments/in-list/dangling-comment-in-list.js | 💥 | 83.06% |
+| js/comments/in-list/dangling-comment-in-list.js | 💥 | 95.91% |
 | js/comments/while-like/while.js | 💥 | 82.35% |
 | js/comments/while-like/with.js | 💥 | 65.45% |
 | js/comments-closure-typecast/closure-compiler-type-cast.js | 💥 | 88.00% |

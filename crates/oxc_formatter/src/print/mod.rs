@@ -318,7 +318,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrayAssignmentTarget<'a>> {
         write!(f, "[");
 
         if self.elements.is_empty() && self.rest.is_none() {
-            write!(f, [format_dangling_comments(self.span()).with_block_indent()]);
+            write!(f, [format_dangling_comments(self.span()).with_soft_block_indent()]);
         } else {
             write!(
                 f,
@@ -619,8 +619,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, DoWhileStatement<'a>> {
 
         // Comments inside the parens belong to the test and stay there;
         // only comments between `)` and `;` move behind the semicolon.
+        // Scan for the `)` only when a comment is actually around;
+        // otherwise `FormatContentWithSemicolon` prints as-is from either position.
         let node_end = self.span().end;
-        let rparen_end = f.comments().end_including_source_parens(self.test().span().end, node_end);
+        let test_end = self.test().span().end;
+        let rparen_end = if f.comments().has_comment_in_range(test_end, node_end) {
+            f.comments().end_including_source_parens(test_end, node_end)
+        } else {
+            test_end
+        };
         let content = format_with(|f| {
             write!(f, ["while", space(), "(", group(&soft_block_indent(&self.test())), ")"]);
         });
@@ -1143,7 +1150,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.members().is_empty() {
-            write!(f, format_dangling_comments(self.span()).with_block_indent());
+            write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
         } else {
             write!(f, block_indent(self.members()));
         }
