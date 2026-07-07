@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["apps/*", "crates/*", "napi/*", "tasks/*"]
-exclude = ["apps/shared", "tasks/lint_rules", "tasks/e2e"]
+exclude = ["apps/shared", "tasks/lint_rules", "tasks/e2e", "tasks/linter_compat_data"]
 
 [workspace.package]
 authors = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]

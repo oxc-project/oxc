@@ -1,5 +1,6 @@
 Rule                                                       |  Calls
 -----------------------------------------------------------+-------
+compat/compat                                              |      7
 eslint/accessor-pairs                                      |  77955
 eslint/array-callback-return                               |  16812
 eslint/arrow-body-style                                    |   2529

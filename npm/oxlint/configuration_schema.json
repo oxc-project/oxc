@@ -142,6 +142,13 @@
         },
         "jest": {
           "version": null
+        },
+        "compat": {
+          "browsers": null,
+          "targets": null,
+          "polyfills": [],
+          "lintAllEsApis": false,
+          "ignoreConditionalChecks": false
         }
       },
       "allOf": [
@@ -1114,6 +1121,59 @@
         }
       ]
     },
+    "BrowserslistEnvTargets": {
+      "description": "Environment-specific browserslist queries.",
+      "type": "object",
+      "properties": {
+        "development": {
+          "description": "Browserslist queries for the development environment.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Browserslist queries for the development environment."
+        },
+        "production": {
+          "description": "Browserslist queries for the production environment.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Browserslist queries for the production environment."
+        }
+      },
+      "markdownDescription": "Environment-specific browserslist queries."
+    },
+    "BrowserslistTargetsConfig": {
+      "description": "Browserslist targets: either a single query string, a list of queries, or\nan object with `production`/`development` query lists.",
+      "anyOf": [
+        {
+          "description": "A single browserslist query, e.g. `\"defaults, not ie < 9\"`.",
+          "type": "string",
+          "markdownDescription": "A single browserslist query, e.g. `\"defaults, not ie < 9\"`."
+        },
+        {
+          "description": "A list of browserslist queries, e.g. `[\"chrome 70\", \"firefox 60\"]`.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of browserslist queries, e.g. `[\"chrome 70\", \"firefox 60\"]`."
+        },
+        {
+          "description": "Environment-specific browserslist queries; the resolved targets are the\nunion of all environments.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/BrowserslistEnvTargets"
+            }
+          ],
+          "markdownDescription": "Environment-specific browserslist queries; the resolved targets are the\nunion of all environments."
+        }
+      ],
+      "markdownDescription": "Browserslist targets: either a single query string, a list of queries, or\nan object with `production`/`development` query lists."
+    },
     "ButtonHasType": {
       "type": "object",
       "properties": {
@@ -1463,6 +1523,54 @@
           "markdownDescription": "Allow certain safe comparisons to use `==`/`!=` (`typeof`, literals, nullish)."
         }
       ]
+    },
+    "CompatPluginSettings": {
+      "description": "Configure browser compatibility checking for the `compat` plugin.\n\nThis mirrors the settings of\n[eslint-plugin-compat](https://github.com/amilajack/eslint-plugin-compat),\nnamespaced under `compat`.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"compat\": {\n\"browsers\": [\"defaults\", \"not ie < 11\"],\n\"polyfills\": [\"Promise\", \"fetch\"]\n}\n}\n}\n```",
+      "type": "object",
+      "properties": {
+        "browsers": {
+          "description": "The browserslist targets to lint against, e.g. `\"defaults, not ie < 9\"`\nor `[\"chrome 70\", \"firefox 60\"]`.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/BrowserslistTargetsConfig"
+            }
+          ],
+          "markdownDescription": "The browserslist targets to lint against, e.g. `\"defaults, not ie < 9\"`\nor `[\"chrome 70\", \"firefox 60\"]`."
+        },
+        "ignoreConditionalChecks": {
+          "description": "Report incompatible API usage even when it is wrapped in a conditional\n(feature-detection) check such as `if (window.fetch) { ... }`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Report incompatible API usage even when it is wrapped in a conditional\n(feature-detection) check such as `if (window.fetch) { ... }`."
+        },
+        "lintAllEsApis": {
+          "description": "Lint all ECMAScript APIs, regardless of the `es:all` polyfill entry.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Lint all ECMAScript APIs, regardless of the `es:all` polyfill entry."
+        },
+        "polyfills": {
+          "description": "APIs that are polyfilled and should not be reported, e.g.\n`[\"Promise\", \"WebAssembly.compile\", \"fetch\"]`.\nThe special entry `\"es:all\"` disables linting of all ECMAScript APIs.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "APIs that are polyfilled and should not be reported, e.g.\n`[\"Promise\", \"WebAssembly.compile\", \"fetch\"]`.\nThe special entry `\"es:all\"` disables linting of all ECMAScript APIs."
+        },
+        "targets": {
+          "description": "Alias for `browsers`. `browsers` takes precedence when both are set.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/BrowserslistTargetsConfig"
+            }
+          ],
+          "markdownDescription": "Alias for `browsers`. `browsers` takes precedence when both are set."
+        }
+      },
+      "markdownDescription": "Configure browser compatibility checking for the `compat` plugin.\n\nThis mirrors the settings of\n[eslint-plugin-compat](https://github.com/amilajack/eslint-plugin-compat),\nnamespaced under `compat`.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"compat\": {\n\"browsers\": [\"defaults\", \"not ie < 11\"],\n\"polyfills\": [\"Promise\", \"fetch\"]\n}\n}\n}\n```"
     },
     "ComplexityConfig": {
       "type": "object",
@@ -2285,6 +2393,26 @@
                 },
                 {
                   "$ref": "#/definitions/ClassMethodsUseThisConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "compat/compat": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "type": "string"
                 }
               ],
               "maxItems": 2,
@@ -12408,7 +12536,8 @@
         "react-perf",
         "promise",
         "node",
-        "vue"
+        "vue",
+        "compat"
       ]
     },
     "LintPlugins": {
@@ -16479,6 +16608,20 @@
       "description": "Configure the behavior of linter plugins.\n\nHere's an example if you're using Next.js in a monorepo:\n\n```json\n{\n\"settings\": {\n\"next\": {\n\"rootDir\": \"apps/dashboard/\"\n},\n\"react\": {\n\"linkComponents\": [\n{ \"name\": \"Link\", \"linkAttribute\": \"to\" }\n]\n},\n\"jsx-a11y\": {\n\"components\": {\n\"Link\": \"a\",\n\"Button\": \"button\"\n}\n}\n}\n}\n```",
       "type": "object",
       "properties": {
+        "compat": {
+          "default": {
+            "browsers": null,
+            "targets": null,
+            "polyfills": [],
+            "lintAllEsApis": false,
+            "ignoreConditionalChecks": false
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/CompatPluginSettings"
+            }
+          ]
+        },
         "jest": {
           "default": {
             "version": null

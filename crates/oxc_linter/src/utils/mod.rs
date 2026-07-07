@@ -15,6 +15,7 @@ use oxc_str::static_ident;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 mod comment;
+pub mod compat;
 mod config;
 mod control_flow;
 mod express;
