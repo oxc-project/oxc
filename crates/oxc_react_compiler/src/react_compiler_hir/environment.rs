@@ -58,6 +58,12 @@ pub struct Environment<'a> {
     // Error accumulation
     pub errors: CompilerError,
 
+    // Set during lowering when the function uses syntax the compiler can't handle
+    // yet (currently `using`/`await using`, whose disposal semantics aren't
+    // preserved). Signals the pipeline to skip compiling this function silently —
+    // no diagnostic — while other functions in the file still compile.
+    pub skip_compilation: bool,
+
     // Function type classification (Component, Hook, Other)
     pub fn_type: ReactFunctionType,
 
@@ -176,6 +182,7 @@ impl<'a> Environment<'a> {
             scopes: Vec::new(),
             functions: Vec::new(),
             errors: CompilerError::new(),
+            skip_compilation: false,
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
             instrument_fn_name: None,

@@ -5,7 +5,8 @@
 
 use oxc_ast::ast::{
     ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, BindingPattern,
-    CallExpression, Class, Expression, Function, Program, VariableDeclaration, VariableDeclarator,
+    CallExpression, Class, Expression, Function, ImportDeclarationSpecifier, ModuleExportName,
+    Program, Statement, VariableDeclarator,
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_semantic::ScopeFlags;
@@ -17,10 +18,32 @@ pub fn has_react_like_functions(program: &Program) -> bool {
     visitor.found
 }
 
-pub fn has_resource_management_declarations(program: &Program) -> bool {
-    let mut visitor = ResourceManagementVisitor { found: false };
-    visitor.visit_program(program);
-    visitor.found
+/// Whether the program already imports the `c` memo-cache helper from `module_name`
+/// — i.e. the file has already been compiled and must be skipped.
+pub fn has_memo_cache_function_import(program: &Program, module_name: &str) -> bool {
+    for stmt in &program.body {
+        if let Statement::ImportDeclaration(import) = stmt
+            && import.source.value == module_name
+            && import.import_kind.is_value()
+            && let Some(specifiers) = &import.specifiers
+        {
+            for specifier in specifiers {
+                if let ImportDeclarationSpecifier::ImportSpecifier(data) = specifier
+                    && data.import_kind.is_value()
+                {
+                    let imported_name = match &data.imported {
+                        ModuleExportName::IdentifierName(id) => Some(id.name.as_str()),
+                        ModuleExportName::IdentifierReference(id) => Some(id.name.as_str()),
+                        ModuleExportName::StringLiteral(s) => Some(s.value.as_str()),
+                    };
+                    if imported_name == Some("c") {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
 }
 
 use crate::react_compiler_hir::environment::is_react_like_name;
@@ -39,23 +62,6 @@ fn is_component_wrapper(callee: &Expression) -> bool {
 struct ReactLikeVisitor<'a> {
     found: bool,
     current_name: Option<&'a str>,
-}
-
-struct ResourceManagementVisitor {
-    found: bool,
-}
-
-impl<'a> Visit<'a> for ResourceManagementVisitor {
-    fn visit_variable_declaration(&mut self, decl: &VariableDeclaration<'a>) {
-        if self.found {
-            return;
-        }
-        if decl.kind.is_using() {
-            self.found = true;
-            return;
-        }
-        walk::walk_variable_declaration(self, decl);
-    }
 }
 
 impl<'a> Visit<'a> for ReactLikeVisitor<'a> {

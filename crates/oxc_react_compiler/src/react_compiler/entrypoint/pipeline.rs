@@ -11,12 +11,10 @@
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
 use crate::react_compiler_diagnostics::ErrorCategory;
-use crate::react_compiler_hir::HirFunction;
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
-use crate::react_compiler_hir::print::PrintFormatter;
 use crate::react_compiler_inference::align_method_call_scopes;
 use crate::react_compiler_inference::align_object_method_scopes;
 use crate::react_compiler_inference::align_reactive_scopes_to_block_scopes_hir;
@@ -51,7 +49,6 @@ use crate::react_compiler_reactive_scopes::build_reactive_function;
 use crate::react_compiler_reactive_scopes::codegen_function;
 use crate::react_compiler_reactive_scopes::extract_scope_declarations_from_destructuring;
 use crate::react_compiler_reactive_scopes::merge_reactive_scopes_that_invalidate_together;
-use crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter;
 use crate::react_compiler_reactive_scopes::promote_used_temporaries;
 use crate::react_compiler_reactive_scopes::propagate_early_returns;
 use crate::react_compiler_reactive_scopes::prune_always_invalidating_scopes;
@@ -88,8 +85,34 @@ use super::compile_result::CodegenFunction;
 use super::compile_result::DebugLogEntry;
 use super::compile_result::OutlinedFunction;
 use super::imports::ProgramContext;
-use super::plugin_options::CompilerOutputMode;
+use crate::options::CompilerOutputMode;
 use crate::react_compiler::debug_print;
+
+#[cfg(feature = "debug")]
+macro_rules! log_reactive_debug {
+    ($context:expr, $name:literal, $reactive_fn:expr, $env:expr) => {
+        if $context.debug_enabled {
+            fn hir_formatter<'h>(
+                fmt: &mut crate::react_compiler_hir::print::PrintFormatter<'_, 'h>,
+                func: &crate::react_compiler_hir::HirFunction<'h>,
+            ) {
+                debug_print::format_hir_function_into(fmt, func);
+            }
+
+            let debug = crate::react_compiler_reactive_scopes::print_reactive_function::debug_reactive_function_with_formatter(
+                $reactive_fn,
+                $env,
+                Some(&hir_formatter),
+            );
+            $context.log_debug(DebugLogEntry::new($name, debug));
+        }
+    };
+}
+
+#[cfg(not(feature = "debug"))]
+macro_rules! log_reactive_debug {
+    ($context:expr, $name:literal, $reactive_fn:expr, $env:expr) => {};
+}
 
 /// Run the compilation pipeline on a single function.
 ///
@@ -106,7 +129,7 @@ pub fn compile_fn<'a>(
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
     source_text: &str,
-) -> Result<CodegenFunction<'a>, CompilerError> {
+) -> Result<Option<CodegenFunction<'a>>, CompilerError> {
     let mut env = Environment::with_config(env_config.clone());
     env.fn_type = fn_type;
     env.output_mode = match mode {
@@ -130,6 +153,13 @@ pub fn compile_fn<'a>(
     // not other recorded (non-Invariant) errors.
     if env.has_invariant_errors() {
         return Err(env.take_invariant_errors());
+    }
+
+    // Lowering flags this when the function uses `using`/`await using`, whose disposal
+    // semantics aren't preserved yet. Skip compiling it silently — no diagnostic — so
+    // other functions in the file still compile.
+    if env.skip_compilation {
+        return Ok(None);
     }
 
     if context.debug_enabled {
@@ -560,15 +590,7 @@ pub fn compile_fn<'a>(
 
     let mut reactive_fn = build_reactive_function(&hir, &env)?;
 
-    fn hir_formatter<'h>(fmt: &mut PrintFormatter<'_, 'h>, func: &HirFunction<'h>) {
-        debug_print::format_hir_function_into(fmt, func);
-    }
-
-    if context.debug_enabled {
-        let debug_reactive =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context.log_debug(DebugLogEntry::new("BuildReactiveFunction", debug_reactive));
-    }
+    log_reactive_debug!(context, "BuildReactiveFunction", &reactive_fn, &env);
 
     assert_well_formed_break_targets(&reactive_fn, &env);
     if context.debug_enabled {
@@ -577,11 +599,7 @@ pub fn compile_fn<'a>(
 
     prune_unused_labels(&mut reactive_fn, &env)?;
 
-    if context.debug_enabled {
-        let debug_prune_labels_reactive =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context.log_debug(DebugLogEntry::new("PruneUnusedLabels", debug_prune_labels_reactive));
-    }
+    log_reactive_debug!(context, "PruneUnusedLabels", &reactive_fn, &env);
 
     assert_scope_instructions_within_scopes(&reactive_fn, &env)?;
     if context.debug_enabled {
@@ -591,87 +609,43 @@ pub fn compile_fn<'a>(
 
     prune_non_escaping_scopes(&mut reactive_fn, &mut env)?;
 
-    if context.debug_enabled {
-        let debug =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context.log_debug(DebugLogEntry::new("PruneNonEscapingScopes", debug));
-    }
+    log_reactive_debug!(context, "PruneNonEscapingScopes", &reactive_fn, &env);
 
     prune_non_reactive_dependencies(&mut reactive_fn, &mut env);
 
-    if context.debug_enabled {
-        let debug_prune_non_reactive =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context.log_debug(DebugLogEntry::new(
-            "PruneNonReactiveDependencies",
-            debug_prune_non_reactive,
-        ));
-    }
+    log_reactive_debug!(context, "PruneNonReactiveDependencies", &reactive_fn, &env);
 
     prune_unused_scopes(&mut reactive_fn, &env)?;
 
-    if context.debug_enabled {
-        let debug_prune_unused_scopes =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context.log_debug(DebugLogEntry::new("PruneUnusedScopes", debug_prune_unused_scopes));
-    }
+    log_reactive_debug!(context, "PruneUnusedScopes", &reactive_fn, &env);
 
     merge_reactive_scopes_that_invalidate_together(&mut reactive_fn, &mut env)?;
 
-    if context.debug_enabled {
-        let debug =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context.log_debug(DebugLogEntry::new("MergeReactiveScopesThatInvalidateTogether", debug));
-    }
+    log_reactive_debug!(context, "MergeReactiveScopesThatInvalidateTogether", &reactive_fn, &env);
 
     prune_always_invalidating_scopes(&mut reactive_fn, &env)?;
 
-    if context.debug_enabled {
-        let debug_prune_always_inv =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context
-            .log_debug(DebugLogEntry::new("PruneAlwaysInvalidatingScopes", debug_prune_always_inv));
-    }
+    log_reactive_debug!(context, "PruneAlwaysInvalidatingScopes", &reactive_fn, &env);
 
     propagate_early_returns(&mut reactive_fn, &mut env);
 
-    if context.debug_enabled {
-        let debug =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context.log_debug(DebugLogEntry::new("PropagateEarlyReturns", debug));
-    }
+    log_reactive_debug!(context, "PropagateEarlyReturns", &reactive_fn, &env);
 
     prune_unused_lvalues(&mut reactive_fn, &env);
 
-    if context.debug_enabled {
-        let debug_prune_lvalues =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context.log_debug(DebugLogEntry::new("PruneUnusedLValues", debug_prune_lvalues));
-    }
+    log_reactive_debug!(context, "PruneUnusedLValues", &reactive_fn, &env);
 
     promote_used_temporaries(&mut reactive_fn, &mut env);
 
-    if context.debug_enabled {
-        let debug =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context.log_debug(DebugLogEntry::new("PromoteUsedTemporaries", debug));
-    }
+    log_reactive_debug!(context, "PromoteUsedTemporaries", &reactive_fn, &env);
 
     extract_scope_declarations_from_destructuring(&mut reactive_fn, &mut env)?;
 
-    if context.debug_enabled {
-        let debug =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context.log_debug(DebugLogEntry::new("ExtractScopeDeclarationsFromDestructuring", debug));
-    }
+    log_reactive_debug!(context, "ExtractScopeDeclarationsFromDestructuring", &reactive_fn, &env);
 
     stabilize_block_ids(&mut reactive_fn, &mut env);
 
-    if context.debug_enabled {
-        let debug_stabilize =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context.log_debug(DebugLogEntry::new("StabilizeBlockIds", debug_stabilize));
-    }
+    log_reactive_debug!(context, "StabilizeBlockIds", &reactive_fn, &env);
 
     let unique_identifiers = rename_variables(&mut reactive_fn, &mut env);
 
@@ -679,19 +653,11 @@ pub fn compile_fn<'a>(
         context.add_new_reference(name.clone());
     }
 
-    if context.debug_enabled {
-        let debug =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context.log_debug(DebugLogEntry::new("RenameVariables", debug));
-    }
+    log_reactive_debug!(context, "RenameVariables", &reactive_fn, &env);
 
     prune_hoisted_contexts(&mut reactive_fn, &env)?;
 
-    if context.debug_enabled {
-        let debug =
-            debug_reactive_function_with_formatter(&reactive_fn, &env, Some(&hir_formatter));
-        context.log_debug(DebugLogEntry::new("PruneHoistedContexts", debug));
-    }
+    log_reactive_debug!(context, "PruneHoistedContexts", &reactive_fn, &env);
 
     if env.config.enable_preserve_existing_memoization_guarantees
         || env.config.validate_preserve_existing_memoization_guarantees
@@ -784,7 +750,7 @@ pub fn compile_fn<'a>(
         context.merge_uid_known_names(&uid_names);
     }
 
-    Ok(CodegenFunction {
+    Ok(Some(CodegenFunction {
         loc: codegen_result.loc,
         id: codegen_result.id,
         name_hint: codegen_result.name_hint,
@@ -798,7 +764,7 @@ pub fn compile_fn<'a>(
         pruned_memo_blocks: codegen_result.pruned_memo_blocks,
         pruned_memo_values: codegen_result.pruned_memo_values,
         outlined: compiled_outlined,
-    })
+    }))
 }
 
 /// Compile an outlined function's codegen AST through the full pipeline.

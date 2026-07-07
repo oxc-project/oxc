@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.139.0] - 2026-07-06
+
+### 🚀 Features
+
+- 260425f semantic/examples: Include unresolved references (#24214) (camc314)
+- 7db7a29 allocator: Add `ReplaceWith` trait (#24012) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e8b50ee transformer: Clean up semantics for stripped TypeScript syntax (#24180) (camc314)
+
+### ⚡ Performance
+
+- c59f2fe rust: Return impl ExactSizeIterator from slice-backed accessors (#24144) (Boshen)
+
 ## [0.138.0] - 2026-06-29
 
 ### 🐛 Bug Fixes

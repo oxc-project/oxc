@@ -1,4 +1,4 @@
-ts compatibility: 594/662 (89.73%), 19 files skipped
+ts compatibility: 599/663 (90.35%), 19 files skipped
 
 # Failed
 
@@ -34,8 +34,6 @@ ts compatibility: 594/662 (89.73%), 19 files skipped
 | typescript/conformance/types/union/unionTypeCallSignatures.ts | 💥 | 85.25% |
 | typescript/conformance/types/union/unionTypeConstructSignatures.ts | 💥 | 91.62% |
 | typescript/conformance/types/union/unionTypeIndexSignature.ts | 💥 | 83.64% |
-| typescript/interface/no-semi/14040.ts | 💥 | 97.47% |
-| typescript/interface/no-semi/18858.ts | 💥 | 94.44% |
 | typescript/interface2/comments-ts-only/18278.ts | 💥 | 95.65% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 85.64% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 67.44% |
@@ -43,8 +41,6 @@ ts compatibility: 594/662 (89.73%), 19 files skipped
 | typescript/new/parentheses.ts | 💥 | 0.00% |
 | typescript/non-null/optional-chain.ts | 💥 | 85.00% |
 | typescript/object-type/comments/11307.ts | 💥 | 66.67% |
-| typescript/parentheses/await.ts | 💥 | 66.67% |
-| typescript/parentheses/yield.ts | 💥 | 50.00% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 80.00% |
 | typescript/quote-props/enums.ts | 💥💥✨ | 56.86% |

@@ -12,6 +12,15 @@ import type {
 let pool: Tinypool | null = null;
 
 export async function initExternalFormatter(numThreads: number): Promise<void> {
+  // In LSP mode, this can be called repeatedly for the lifetime of the process.
+  // e.g. on every workspace folder build, config-triggered rebuild, etc
+  // The pool is a process-wide singleton shared across workspace folders,
+  // so reuse it instead of creating a new one, which would leak the previous pool's `child_process`.
+  // (https://github.com/oxc-project/oxc/issues/24147)
+  // Destroying here is not safe either: another workspace folder may have formats in-flight.
+  // NOTE: `numThreads` never changes within a single session, so the pool size is left as-is.
+  if (pool !== null) return;
+
   pool = new Tinypool({
     filename: new URL("./cli-worker.js", import.meta.url).href,
     minThreads: numThreads,

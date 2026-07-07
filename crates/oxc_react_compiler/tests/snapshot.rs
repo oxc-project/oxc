@@ -26,10 +26,10 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
 use oxc_react_compiler::{
-    BuiltInTypeRef, CompilerOutputMode, DynamicGatingConfig, Effect, EnvironmentConfig,
-    ExhaustiveEffectDepsMode, ExternalFunctionConfig, FunctionTypeConfig, FxIndexMap, GatingConfig,
-    HookTypeConfig, InstrumentationConfig, ObjectTypeConfig, PluginOptions, TypeConfig,
-    TypeReferenceConfig, ValueKind, transform,
+    BuiltInTypeRef, CompilationMode, CompilerOutputMode, DynamicGatingConfig, Effect,
+    EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunctionConfig, FunctionTypeConfig,
+    FxIndexMap, GatingConfig, HookTypeConfig, InstrumentationConfig, ObjectTypeConfig,
+    PanicThreshold, PluginOptions, TypeConfig, TypeReferenceConfig, ValueKind, transform,
 };
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -141,8 +141,8 @@ fn snapshot_name(path: &Path) -> String {
 fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
     // Upstream `snap` defaults: compile everything, surface every error.
     let mut options = PluginOptions {
-        compilation_mode: "all".to_string(),
-        panic_threshold: "all_errors".to_string(),
+        compilation_mode: CompilationMode::All,
+        panic_threshold: PanicThreshold::AllErrors,
         ..PluginOptions::default()
     };
     // Mirror the snap runner's test `moduleTypeProvider`; unlisted modules fall back to
@@ -163,16 +163,16 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
         match key {
             "script" => is_script = true,
             "compilationMode" => {
-                if let Some(v) = value {
-                    options.compilation_mode = unquote(v);
+                if let Some(v) = value.and_then(|v| unquote(v).parse().ok()) {
+                    options.compilation_mode = v;
                 }
             }
             "panicThreshold" => {
-                if let Some(v) = value {
-                    options.panic_threshold = unquote(v);
+                if let Some(v) = value.and_then(|v| unquote(v).parse().ok()) {
+                    options.panic_threshold = v;
                 }
             }
-            "outputMode" => options.output_mode = value.map(unquote),
+            "outputMode" => options.output_mode = value.and_then(|v| unquote(v).parse().ok()),
             // Fixed test default (upstream `testComplexPluginOptionDefaults`).
             "gating" => {
                 options.gating = Some(GatingConfig {

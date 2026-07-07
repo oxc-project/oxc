@@ -19,6 +19,7 @@ use crate::{
     utils::{
         assignment_like::AssignmentLike,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        is_keyword_property_key,
         object::{format_property_key, should_preserve_quote},
     },
     write,
@@ -543,7 +544,7 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
         if let ClassElement::PropertyDefinition(def) = element.as_ref()
             && def.value.is_none()
             && def.type_annotation.is_none()
-            && matches!(&def.key, PropertyKey::StaticIdentifier(ident) if matches!(ident.name.as_str(), "static" | "get" | "set") )
+            && is_keyword_property_key(&def.key)
         {
             return true;
         }

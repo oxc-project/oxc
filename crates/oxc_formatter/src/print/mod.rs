@@ -70,11 +70,13 @@ use crate::{
         conditional::ConditionalLike,
         expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        is_keyword_property_key,
         object::{format_property_key, should_preserve_quote},
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         suppressed::FormatSuppressedNode,
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
+        typecast::is_type_cast_node,
     },
     write,
 };
@@ -539,6 +541,11 @@ fn expression_statement_needs_semicolon<'a>(
                     }
                     _ => false,
                 }
+                // A type cast comment forces parentheses around the expression,
+                // so the line starts with `(` even though `needs_parentheses` is false:
+                // `/** @type {string} */ (this.s).length`
+                // Checked last: this scans source text/comments, unlike the checks above.
+                || is_type_cast_node(expr, f).is_some()
         }
         ExpressionLeftSide::AssignmentTarget(assignment) => {
             matches!(
@@ -563,12 +570,27 @@ fn expression_statement_needs_semicolon<'a>(
 impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let span = self.span();
-        // Check if we need a leading semicolon to prevent ASI issues
-        if f.options().semicolons == Semicolons::AsNeeded
-            && expression_statement_needs_semicolon(self, f)
+        // Check if we need a leading semicolon to prevent ASI issues.
+        // Leading comments are printed here rather than in the generated `fmt`
+        // so the semicolon can go before a type cast comment;
+        // otherwise the cast is detached from its expression and the parentheses get dropped on the next format:
+        // `;/** @type {string[]} */ ([]).forEach(...)`
+        let needs_semicolon = f.options().semicolons == Semicolons::AsNeeded
+            && expression_statement_needs_semicolon(self, f);
+        let leading_comments = f.context().comments().comments_before(span.start);
+        // Split off a trailing type cast comment so the semicolon lands before it
+        let split = if needs_semicolon
+            && leading_comments.last().is_some_and(|last| f.comments().is_type_cast_comment(last))
         {
+            leading_comments.len() - 1
+        } else {
+            leading_comments.len()
+        };
+        write!(f, FormatLeadingComments::Comments(&leading_comments[..split]));
+        if needs_semicolon {
             write!(f, ";");
         }
+        write!(f, FormatLeadingComments::Comments(&leading_comments[split..]));
 
         if f.comments().has_trailing_suppression_comment(span.end) {
             // Preserve original text when the statement has an inline suppression comment:
@@ -696,7 +718,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
                         test,
                         (update.is_none()).then_some(FormatCommentForEmptyStatement(body)),
                         ";",
-                        soft_line_break_or_space(),
+                        update.is_some().then_some(soft_line_break_or_space()),
                         update,
                         FormatCommentForEmptyStatement(body)
                     ))),
@@ -1567,22 +1589,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSSignature<'a, '_> {
                 }
             }
             Semicolons::AsNeeded => {
-                // Needs semicolon anyway when:
-                // 1. It's a non-computed property signature with type annotation followed by
-                //    a call signature that has type parameters
-                //    e.g for: `a: string; <T>() => void`
-                // 2. It's a non-computed property signature without type annotation followed by
-                //    a call signature or method signature
-                //    e.g for: `a; () => void` or `a; method(): void`
+                // Needs semicolon anyway when omitting it would change how the members parse:
+                // 1. It's a property signature without type annotation named `static`, `get` or `set`,
+                //    which would otherwise parse as a modifier or accessor of the following member
+                // 2. It's a property signature without type annotation followed by
+                //    a call signature, e.g. `a` + `(): void` -> `a(): void`
                 let needs_semicolon = matches!(
-                    self.signature.as_ref(), TSSignature::TSPropertySignature(property) if !property.computed
-                    && self.next_signature.is_some_and(|signature| match signature.as_ref() {
-                        TSSignature::TSCallSignatureDeclaration(call) => {
-                            property.type_annotation.is_none() || call.type_parameters.is_some()
-                        }
-                        TSSignature::TSMethodSignature(_) => property.type_annotation.is_none(),
-                        _ => false,
-                    })
+                    self.signature.as_ref(), TSSignature::TSPropertySignature(property)
+                    if property.type_annotation.is_none()
+                    && (is_keyword_property_key(&property.key)
+                        || self.next_signature.is_some_and(|next| {
+                            matches!(next.as_ref(), TSSignature::TSCallSignatureDeclaration(_))
+                        }))
                 );
 
                 if needs_semicolon {

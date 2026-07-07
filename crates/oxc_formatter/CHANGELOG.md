@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.58.0] - 2026-07-06
+
+### 🚀 Features
+
+- 89ec3d9 formatter_core: Add literal line and root indention primitives (#24051) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 1fe6546 formatter: Omit unneeded `;` for type members with `no-semi` (#24212) (leaysgur)
+- 0ad7316 formatter: Print space for `ForStatement`.`update` only if exists (#24211) (leaysgur)
+- 3abbed5 formatter: Print `;` before jsdoc type-cast parens with no-semi (#24208) (leaysgur)
+- d3b9591 formatter: Add parens around `await/yield` with `<T>` (#24202) (leaysgur)
+
 ## [0.57.0] - 2026-06-29
 
 ### 🐛 Bug Fixes

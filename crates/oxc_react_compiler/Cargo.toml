@@ -11,7 +11,7 @@
 
 [package]
 name = "oxc_react_compiler"
-version = "0.138.0"
+version = "0.139.0"
 publish = true
 authors.workspace = true
 categories.workspace = true

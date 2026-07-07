@@ -13,8 +13,17 @@
 //    (or maybe don't - what does this option mean?)
 
 import { transformFileAsync } from "@babel/core";
-import { readdir, readFile, rename, writeFile } from "fs/promises";
-import { extname, join as pathJoin } from "path";
+import { readdir, readFile, rename, writeFile } from "node:fs/promises";
+import { extname, join as pathJoin } from "node:path";
+
+type Plugin = string | [string, Record<string, unknown>];
+type Options = {
+  presets?: Plugin[];
+  plugins?: Plugin[];
+  assumptions?: Record<string, boolean>;
+  externalHelpers?: boolean;
+  [key: string]: unknown;
+};
 
 const PACKAGES = [
   "babel-plugin-transform-class-properties",
@@ -56,20 +65,24 @@ for (const packageName of PACKAGES) {
 
 /**
  * Update fixtures in directory, and its sub-directories.
- * @param {string} dirPath - Path to directory containing fixtures
- * @param {object} options - Transform options from parent directory
- * @param {boolean} hasChangedOptions - `true` if transform options from parent directory have changed
- * @returns {Promise<undefined>}
  */
-async function updateDir(dirPath, options, hasChangedOptions) {
+async function updateDir(
+  dirPath: string,
+  options: Options,
+  hasChangedOptions: boolean,
+): Promise<void> {
   if (IGNORED_FIXTURES.some((p) => dirPath.endsWith(p))) {
     return;
   }
 
   const files = await readdir(dirPath, { withFileTypes: true });
 
-  const dirFiles = [],
-    filenames = { options: null, input: null, output: null };
+  const dirFiles: string[] = [];
+  const filenames: Record<"options" | "input" | "output", string | null> = {
+    options: null,
+    input: null,
+    output: null,
+  };
 
   // Find files in dir
   for (const file of files) {
@@ -79,14 +92,16 @@ async function updateDir(dirPath, options, hasChangedOptions) {
     } else {
       const ext = extname(filename),
         type = ext === "" ? filename : filename.slice(0, -ext.length);
-      if (Object.hasOwn(filenames, type)) filenames[type] = filename;
+      if (type === "options" || type === "input" || type === "output") {
+        filenames[type] = filename;
+      }
     }
   }
 
   // Update options, save to file, and merge options with parent
   if (filenames.options) {
     const path = pathJoin(dirPath, filenames.options);
-    const localOptions = JSON.parse(await readFile(path, "utf8"));
+    const localOptions: Options = JSON.parse(await readFile(path, "utf8"));
     if (updateOptions(localOptions)) {
       hasChangedOptions = true;
       await backupFile(path);
@@ -96,7 +111,7 @@ async function updateDir(dirPath, options, hasChangedOptions) {
   }
 
   // Run Babel with updated options/input
-  if (filenames.output && hasChangedOptions) {
+  if (filenames.input && filenames.output && hasChangedOptions) {
     const inputPath = pathJoin(dirPath, filenames.input),
       outputPath = pathJoin(dirPath, filenames.output);
 
@@ -117,17 +132,14 @@ async function updateDir(dirPath, options, hasChangedOptions) {
   }
 }
 
-/**
- * Remove unsupported presets + plugins from `options`.
- * @param {Object} options - Options object
- * @returns {boolean} - `true` if `options` has been altered.
- */
-function updateOptions(options) {
+// Remove unsupported presets + plugins from `options`.
+function updateOptions(options: Options): boolean {
   let hasChangedOptions = false;
 
-  function filter(key, filterOut) {
-    if (!options[key]) return;
-    options[key] = options[key].filter((plugin) => {
+  function filter(key: "presets" | "plugins", filterOut: string[]): void {
+    const plugins = options[key];
+    if (!plugins) return;
+    options[key] = plugins.filter((plugin) => {
       if (filterOut.includes(getName(plugin))) {
         hasChangedOptions = true;
         return false;
@@ -152,7 +164,7 @@ function updateOptions(options) {
 // Babel 8 deprecates plugin-level `loose` options in favor of top-level assumptions.
 // Keep these generated fixture updates aligned with Babel's migration docs:
 // https://babeljs.io/docs/assumptions/
-function migrateDeprecatedLooseOptions(options) {
+function migrateDeprecatedLooseOptions(options: Options): boolean {
   const { plugins } = options;
   if (!plugins) return false;
 
@@ -199,12 +211,12 @@ function migrateDeprecatedLooseOptions(options) {
 }
 
 // Ensure all class plugins are enabled if any of class related plugins are enabled
-function ensureAllClassPluginsEnabled(options) {
+function ensureAllClassPluginsEnabled(options: Options): boolean {
   const { plugins } = options;
   if (!plugins) return false;
 
-  const already_enabled = [];
-  let pluginOptions;
+  const already_enabled: string[] = [];
+  let pluginOptions: Record<string, unknown> | undefined;
   plugins.forEach((plugin) => {
     const pluginName = getName(plugin);
     if (CLASS_PLUGINS.includes(pluginName)) {
@@ -233,13 +245,8 @@ function ensureAllClassPluginsEnabled(options) {
   }
 }
 
-/**
- * Transform input with Babel.
- * @param {string} inputPath - Path of input file
- * @param {object} options - Transform options
- * @returns {Promise<string>}
- */
-async function transform(inputPath, options) {
+// Transform input with Babel.
+async function transform(inputPath: string, options: Options): Promise<string> {
   options = {
     ...options,
     configFile: false,
@@ -252,7 +259,7 @@ async function transform(inputPath, options) {
   delete options.validateLogs;
   delete options.SKIP_ON_PUBLISH;
 
-  function prefixName(plugin, type) {
+  function prefixName(plugin: Plugin, type: "preset" | "plugin"): Plugin {
     if (Array.isArray(plugin)) {
       plugin = [...plugin];
       plugin[0] = `@babel/${type}-${plugin[0]}`;
@@ -281,26 +288,18 @@ async function transform(inputPath, options) {
     ]);
   }
 
-  const { code } = await transformFileAsync(inputPath, options);
-  return code;
+  const result = await transformFileAsync(inputPath, options);
+  return result?.code ?? "";
 }
 
-/**
- * Get name of plugin/preset.
- * @param {string|Array} stringOrArray - Input
- * @returns {string} - Name of plugin/preset
- */
-function getName(stringOrArray) {
+// Get name of plugin/preset.
+function getName(stringOrArray: Plugin): string {
   if (Array.isArray(stringOrArray)) return stringOrArray[0];
   return stringOrArray;
 }
 
-/**
- * Backup file.
- * @param {string} path - Original path
- * @returns {Promise<undefined>}
- */
-async function backupFile(path) {
+// Backup file.
+async function backupFile(path: string): Promise<void> {
   const ext = extname(path),
     backupPath = `${path.slice(0, -ext.length)}.original${ext}`;
   await rename(path, backupPath);

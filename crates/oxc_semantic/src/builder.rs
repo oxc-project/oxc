@@ -957,7 +957,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
         if let Some(super_class) = &class.super_class {
+            if class.declare {
+                self.current_reference_flags = ReferenceFlags::ValueAsType;
+            }
             self.visit_expression(super_class);
+            self.current_reference_flags = ReferenceFlags::empty();
         }
         if let Some(super_type_parameters) = &class.super_type_arguments {
             self.visit_ts_type_parameter_instantiation(super_type_parameters);
@@ -2421,6 +2425,64 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_annotation(type_annotation);
         }
         self.current_reference_flags = ReferenceFlags::empty();
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_method_signature(&mut self, sig: &TSMethodSignature<'a>) {
+        let kind = AstKind::TSMethodSignature(self.alloc(sig));
+        self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty(), &sig.scope_id);
+        self.visit_span(&sig.span);
+        if sig.computed {
+            // interface A { [prop](): string }
+            //                ^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
+            self.current_reference_flags = ReferenceFlags::ValueAsType;
+        }
+        self.visit_property_key(&sig.key);
+        self.current_reference_flags = ReferenceFlags::empty();
+        if let Some(type_parameters) = &sig.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        if let Some(this_param) = &sig.this_param {
+            self.visit_ts_this_parameter(this_param);
+        }
+        self.visit_formal_parameters(&sig.params);
+        if let Some(return_type) = &sig.return_type {
+            self.visit_ts_type_annotation(return_type);
+        }
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_property_definition(&mut self, prop: &PropertyDefinition<'a>) {
+        let kind = AstKind::PropertyDefinition(self.alloc(prop));
+        self.enter_node(kind);
+        self.visit_span(&prop.span);
+        self.visit_decorators(&prop.decorators);
+        if prop.computed
+            && (prop.declare
+                || prop.r#type.is_abstract()
+                || self
+                    .ancestry()
+                    .ancestor_kinds()
+                    .find_map(|kind| match kind {
+                        AstKind::Class(class) => Some(class.declare),
+                        _ => None,
+                    })
+                    .unwrap_or(false))
+        {
+            // class A { declare [prop]: string }
+            //                   ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
+            self.current_reference_flags = ReferenceFlags::ValueAsType;
+        }
+        self.visit_property_key(&prop.key);
+        self.current_reference_flags = ReferenceFlags::empty();
+        if let Some(type_annotation) = &prop.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &prop.value {
+            self.visit_expression(value);
+        }
         self.leave_node(kind);
     }
 

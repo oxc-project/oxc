@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.58.0] - 2026-07-06
+
+### 🚀 Features
+
+- 0ccd8a1 formatter_graphql: Update oxc-graphql-parser 0.0.5 (#24106) (leaysgur)
+- 0e5bcc9 formatter_graphql: Update oxc-graphql-parser 0.0.4 (#24039) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- e1ece97 formatter_graphql: Break `implements` list by print-width (#23997) (leaysgur)
+
 ## [0.57.0] - 2026-06-29
 
 ### 💥 BREAKING CHANGES

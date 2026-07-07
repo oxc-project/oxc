@@ -6695,6 +6695,14 @@ fn lower_variable_declaration<'a>(
         })?;
         // Treat `var` as `let` so references to the variable don't break
     }
+    if matches!(var_decl.kind, VK::Using | VK::AwaitUsing) {
+        // `using`/`await using` disposal semantics aren't preserved yet. Flag the
+        // function to be skipped (silently, no diagnostic) once lowering finishes,
+        // rather than miscompiling it. It's still lowered as `const` below so the HIR
+        // stays valid until the pipeline checks the flag. Other functions in the file
+        // are unaffected.
+        builder.environment_mut().skip_compilation = true;
+    }
     let kind = match var_decl.kind {
         VK::Let | VK::Var => InstructionKind::Let,
         VK::Const | VK::Using | VK::AwaitUsing => InstructionKind::Const,

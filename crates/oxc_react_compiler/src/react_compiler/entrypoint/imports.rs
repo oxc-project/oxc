@@ -12,8 +12,8 @@ use crate::scope::ScopeResolver;
 use oxc_diagnostics::Diagnostics;
 
 use super::compile_result::DebugLogEntry;
-use super::plugin_options::{CompilerTarget, PluginOptions};
 use super::suppression::SuppressionRange;
+use crate::options::{CompilerTarget, PluginOptions};
 
 /// An import specifier tracked by ProgramContext.
 /// Corresponds to NonLocalImportSpecifier in the TS compiler.
