@@ -18,8 +18,7 @@ use std::fmt::Result as FmtResult;
 use crate::react_compiler_diagnostics::Span;
 
 use crate::react_compiler_hir::{
-    AliasingEffect, BlockId, EvaluationOrder, InstructionValue, LogicalOperator, ParamPattern,
-    Place, ScopeId,
+    BlockId, EvaluationOrder, InstructionValue, LogicalOperator, ParamPattern, Place, ScopeId,
 };
 
 // =============================================================================
@@ -68,7 +67,6 @@ pub struct ReactiveInstruction<'a> {
     pub id: EvaluationOrder,
     pub lvalue: Option<Place>,
     pub value: ReactiveValue<'a>,
-    pub effects: Option<Vec<AliasingEffect>>,
     pub span: Option<Span>,
 }
 
@@ -85,7 +83,6 @@ pub enum ReactiveValue<'a> {
         operator: LogicalOperator,
         left: Box<ReactiveValue<'a>>,
         right: Box<ReactiveValue<'a>>,
-        span: Option<Span>,
     },
 
     /// TS: ReactiveTernaryValue
@@ -93,7 +90,6 @@ pub enum ReactiveValue<'a> {
         test: Box<ReactiveValue<'a>>,
         consequent: Box<ReactiveValue<'a>>,
         alternate: Box<ReactiveValue<'a>>,
-        span: Option<Span>,
     },
 
     /// TS: ReactiveSequenceValue
@@ -101,16 +97,10 @@ pub enum ReactiveValue<'a> {
         instructions: Vec<ReactiveInstruction<'a>>,
         id: EvaluationOrder,
         value: Box<ReactiveValue<'a>>,
-        span: Option<Span>,
     },
 
     /// TS: ReactiveOptionalCallValue
-    OptionalExpression {
-        id: EvaluationOrder,
-        value: Box<ReactiveValue<'a>>,
-        optional: bool,
-        span: Option<Span>,
-    },
+    OptionalExpression { value: Box<ReactiveValue<'a>>, optional: bool },
 }
 
 // =============================================================================
@@ -152,41 +142,34 @@ pub enum ReactiveTerminal<'a> {
         target: BlockId,
         id: EvaluationOrder,
         target_kind: ReactiveTerminalTargetKind,
-        span: Option<Span>,
     },
     Continue {
         target: BlockId,
         id: EvaluationOrder,
         target_kind: ReactiveTerminalTargetKind,
-        span: Option<Span>,
     },
     Return {
         value: Place,
         id: EvaluationOrder,
-        span: Option<Span>,
     },
     Throw {
         value: Place,
         id: EvaluationOrder,
-        span: Option<Span>,
     },
     Switch {
         test: Place,
         cases: Vec<ReactiveSwitchCase<'a>>,
         id: EvaluationOrder,
-        span: Option<Span>,
     },
     DoWhile {
         loop_block: ReactiveBlock<'a>,
         test: ReactiveValue<'a>,
         id: EvaluationOrder,
-        span: Option<Span>,
     },
     While {
         test: ReactiveValue<'a>,
         loop_block: ReactiveBlock<'a>,
         id: EvaluationOrder,
-        span: Option<Span>,
     },
     For {
         init: ReactiveValue<'a>,
@@ -194,7 +177,6 @@ pub enum ReactiveTerminal<'a> {
         update: Option<ReactiveValue<'a>>,
         loop_block: ReactiveBlock<'a>,
         id: EvaluationOrder,
-        span: Option<Span>,
     },
     ForOf {
         init: ReactiveValue<'a>,
@@ -214,19 +196,16 @@ pub enum ReactiveTerminal<'a> {
         consequent: ReactiveBlock<'a>,
         alternate: Option<ReactiveBlock<'a>>,
         id: EvaluationOrder,
-        span: Option<Span>,
     },
     Label {
         block: ReactiveBlock<'a>,
         id: EvaluationOrder,
-        span: Option<Span>,
     },
     Try {
         block: ReactiveBlock<'a>,
         handler_binding: Option<Place>,
         handler: ReactiveBlock<'a>,
         id: EvaluationOrder,
-        span: Option<Span>,
     },
 }
 

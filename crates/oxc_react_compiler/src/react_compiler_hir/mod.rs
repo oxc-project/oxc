@@ -1,15 +1,9 @@
-// HIR metadata such as source locations and type annotations is consumed by
-// the debug IR printers. Those printers are compiled only with `debug`.
-#![cfg_attr(not(feature = "debug"), allow(dead_code))]
-
 pub mod default_module_type_provider;
 pub mod dominator;
 pub mod environment;
 pub mod environment_config;
 pub mod globals;
 pub mod object_shape;
-#[cfg(feature = "debug")]
-pub mod print;
 pub mod raw;
 pub mod reactive;
 pub mod type_config;
@@ -566,7 +560,6 @@ pub enum InstructionValue<'a> {
     },
     DeclareLocal {
         lvalue: LValue,
-        type_annotation: Option<String>,
         span: Option<Span>,
     },
     DeclareContext {
@@ -576,7 +569,6 @@ pub enum InstructionValue<'a> {
     StoreLocal {
         lvalue: LValue,
         value: Place,
-        type_annotation: Option<String>,
         span: Option<Span>,
     },
     StoreContext {
@@ -626,8 +618,6 @@ pub enum InstructionValue<'a> {
     },
     TypeCastExpression {
         value: Place,
-        type_: Type,
-        type_annotation_name: Option<String>,
         type_annotation_kind: Option<String>,
         /// The original oxc AST type annotation subtree, preserved for codegen,
         /// which re-emits it by cloning into the output allocator (and applying any
@@ -778,7 +768,6 @@ pub enum InstructionValue<'a> {
         span: Option<Span>,
     },
     UnsupportedNode {
-        node_type: Option<String>,
         /// The borrowed oxc statement node preserved verbatim, so codegen can clone
         /// it into the output allocator and re-emit it (e.g. an inline TS `enum`,
         /// which has runtime semantics but no HIR representation).
@@ -1089,7 +1078,6 @@ pub struct SpreadPattern {
 #[derive(Debug, Clone)]
 pub struct ArrayPattern {
     pub items: Vec<ArrayPatternElement>,
-    pub span: Option<Span>,
 }
 
 #[derive(Debug, Clone)]
@@ -1102,7 +1090,6 @@ pub enum ArrayPatternElement {
 #[derive(Debug, Clone)]
 pub struct ObjectPattern {
     pub properties: Vec<ObjectPropertyOrSpread>,
-    pub span: Option<Span>,
 }
 
 #[derive(Debug, Clone)]
@@ -1278,7 +1265,7 @@ pub enum Type {
 #[derive(Debug, Clone)]
 pub enum PropertyNameKind {
     Literal { value: PropertyLiteral },
-    Computed { value: Box<Type> },
+    Computed,
 }
 
 // =============================================================================

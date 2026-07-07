@@ -705,11 +705,6 @@ impl<'a> Environment<'a> {
         self.outlined_functions.push(OutlinedFunctionEntry { func, fn_type });
     }
 
-    #[cfg(feature = "debug")]
-    pub(crate) fn outlined_functions(&self) -> &[OutlinedFunctionEntry<'a>] {
-        &self.outlined_functions
-    }
-
     /// Take the outlined functions, leaving the vec empty.
     pub fn take_outlined_functions(&mut self) -> Vec<OutlinedFunctionEntry<'a>> {
         take(&mut self.outlined_functions)

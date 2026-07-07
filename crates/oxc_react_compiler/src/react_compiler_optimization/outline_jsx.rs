@@ -607,7 +607,7 @@ fn emit_destructure_props<'a>(
         lvalue,
         value: InstructionValue::Destructure {
             lvalue: LValuePattern {
-                pattern: Pattern::Object(ObjectPattern { properties, span: None }),
+                pattern: Pattern::Object(ObjectPattern { properties }),
                 kind: InstructionKind::Let,
             },
             value: props_obj.clone(),

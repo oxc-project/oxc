@@ -73,7 +73,6 @@ pub trait ReactiveFunctionVisitor<'a> {
                     id: instr.id,
                     lvalue: Some(instr.lvalue.clone()),
                     value: ReactiveValue::Instruction(instr.value.clone()),
-                    effects: None,
                     span: instr.span,
                 };
                 self.visit_instruction(&reactive_instr, state);
@@ -654,7 +653,6 @@ pub trait ReactiveFunctionTransform<'a> {
                     id: EvaluationOrder(0),
                     lvalue: None,
                     value: ReactiveValue::Instruction(InstructionValue::Debugger { span: None }),
-                    effects: None,
                     span: None,
                 }),
             );
