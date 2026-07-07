@@ -1,3 +1,4 @@
+// oxlint-disable no-console
 // Generates the embedded compat dataset consumed by the `compat/compat` lint rule
 // (`crates/oxc_linter/src/utils/compat/compat_data.json`).
 //
