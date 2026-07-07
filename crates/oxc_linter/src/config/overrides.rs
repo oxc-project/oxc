@@ -228,16 +228,27 @@ mod test {
             Some(json!({ "ecmaFeatures": { "jsx": true } }))
         );
 
-        // `languageOptions` without `parser` is valid (e.g. only `parserOptions`)
-        let config: OxlintOverride = from_value(json!({
-            "files": ["**/*.ts"],
-            "languageOptions": {
-                "parserOptions": { "project": true },
-            },
-        }))
-        .unwrap();
-        let language_options = config.language_options.unwrap();
-        assert!(language_options.parser.is_none());
+        // `parserOptions` without `parser` is rejected: oxlint's native parser ignores it, so
+        // accepting it silently would be inert config (unlike ESLint, which applies it to its
+        // built-in parser).
+        assert!(
+            from_value::<OxlintOverride>(json!({
+                "files": ["**/*.ts"],
+                "languageOptions": {
+                    "parserOptions": { "project": true },
+                },
+            }))
+            .is_err()
+        );
+
+        // Unsupported ESLint `languageOptions` keys are rejected.
+        assert!(
+            from_value::<OxlintOverride>(json!({
+                "files": ["**/*.gjs"],
+                "languageOptions": { "globals": { "foo": "readonly" } },
+            }))
+            .is_err()
+        );
 
         // Unknown fields in `languageOptions` are rejected
         assert!(
