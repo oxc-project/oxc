@@ -2,7 +2,7 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use crate::print::semicolon::OptionalSemicolon;
+use crate::print::semicolon::FormatContentWithSemicolon;
 use crate::utils::assignment_like::AssignmentLike;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -19,7 +19,6 @@ use super::FormatWrite;
 impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let semicolon = match self.parent() {
-            AstNodes::ExportNamedDeclaration(_) => false,
             AstNodes::ForStatement(stmt) => {
                 stmt.init().is_some_and(|init| init.span() != self.span())
             }
@@ -32,15 +31,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
             write!(f, ["declare", space()]);
         }
 
-        write!(
-            f,
-            group(&format_args!(
-                self.kind().as_str(),
-                space(),
-                self.declarations(),
-                semicolon.then_some(OptionalSemicolon)
-            ))
-        );
+        let declarations = self.declarations();
+        let format_declarations = format_with(|f| {
+            if semicolon {
+                let declarations_end =
+                    declarations.as_ref().last().map_or(self.span().end, |d| d.span().end);
+                write!(
+                    f,
+                    FormatContentWithSemicolon::new(
+                        declarations,
+                        declarations_end,
+                        self.span().end
+                    )
+                );
+            } else {
+                write!(f, declarations);
+            }
+        });
+        write!(f, group(&format_args!(self.kind().as_str(), space(), format_declarations)));
     }
 }
 

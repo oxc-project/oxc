@@ -1,4 +1,4 @@
-ts compatibility: 599/663 (90.35%), 19 files skipped
+ts compatibility: 602/663 (90.80%), 19 files skipped
 
 # Failed
 
@@ -6,10 +6,8 @@ ts compatibility: 599/663 (90.35%), 19 files skipped
 | :-------- | :--------------: | :---------: |
 | jsx/attribute-blank-lines/attribute-blank-lines.js | 💥💥 | 62.82% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 89.47% |
-| typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/arrow/return-type/18588.ts | 💥 | 58.82% |
 | typescript/as/as.ts | 💥 | 97.74% |
-| typescript/as/as-const/as-const.ts | 💥 | 90.91% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 93.33% |
 | typescript/as/comments/17407.ts | 💥 | 47.06% |
 | typescript/assignment/lone-arg.ts | 💥 | 41.18% |
@@ -37,7 +35,7 @@ ts compatibility: 599/663 (90.35%), 19 files skipped
 | typescript/interface2/comments-ts-only/18278.ts | 💥 | 95.65% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 85.64% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 67.44% |
-| typescript/intersection/consistent-with-flow/single-member.ts | 💥 | 76.00% |
+| typescript/intersection/consistent-with-flow/single-member.ts | 💥 | 78.00% |
 | typescript/new/parentheses.ts | 💥 | 0.00% |
 | typescript/non-null/optional-chain.ts | 💥 | 85.00% |
 | typescript/object-type/comments/11307.ts | 💥 | 66.67% |
@@ -67,7 +65,6 @@ ts compatibility: 599/663 (90.35%), 19 files skipped
 | typescript/union/consistent-with-flow/single-type.ts | 💥 | 95.00% |
 | typescript/union/single-type/comments.ts | 💥 | 11.11% |
 | typescript/union/single-type/single-type-2.ts | 💥 | 72.73% |
-| typescript/webhost/webtsc.ts | 💥 | 99.08% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
 

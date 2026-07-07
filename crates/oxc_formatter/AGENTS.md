@@ -71,6 +71,31 @@ Two directions: xxx-in-js (css/graphql/html in template literals) and js-in-xxx 
 
 Above all, prioritize consistency, and always consider whether the divergence is a Prettier bug.
 
+### Comment placement invariants
+
+Repositioning a comment is allowed only relative to formatter-owned punctuation
+(e.g. printing `;` before a same-line trailing comment, see `FormatContentWithSemicolon`).
+
+When the content's source parentheses survive in the output (return/throw arguments),
+comments inside them belong to the content and stay there;
+only comments after the closing paren may move behind the terminator (see `Comments::end_including_source_parens`).
+
+Never let it cross:
+
+- A line boundary: line-based directives (`eslint-disable-line`, ...) must keep their meaning
+  - Line comments are printed via `line_suffix`, and own-line comments stay own-line (they become the next node's leading comments)
+  - Both are structural guarantees, keep them
+- User content (code, other comments):
+  - e.g. Prettier relocates a comment after a trailing array hole backward across commas to the last real element, that is an attachment artifact, not a rule
+  - We keep the comment in place and diverge intentionally
+- A suppression comment's target: `prettier-ignore` / `oxfmt-ignore` needs its original text
+  preserved
+  - When hiding comments from a node (`limit_comments_up_to`), check `has_trailing_suppression_comment` first, or the node loses its suppression
+
+Prettier's comment _attachment_ is position-heuristic and sometimes asymmetric
+(e.g. it moves `export type T = string /* c */;`'s comment behind the semicolon but not the non-exported form).
+When that happens, prefer one uniform rule over emulating the asymmetry, and pin the intentional divergence in a fixture with a note.
+
 ## Verification
 
 ```sh

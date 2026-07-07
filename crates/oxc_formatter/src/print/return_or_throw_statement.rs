@@ -7,6 +7,7 @@ use crate::{
     format_args,
     formatter::prelude::*,
     print::{ExpressionLeftSide, semicolon::OptionalSemicolon},
+    utils::format_node_without_trailing_comments::format_content_without_comments_after,
     write,
 };
 
@@ -60,24 +61,35 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
         write!(f, self.keyword());
 
         if let Some(argument) = self.argument() {
-            write!(f, [space(), FormatAdjacentArgument(argument)]);
+            write!(f, space());
+            // Comments inside the argument's source parentheses belong to the argument
+            // and stay in place (`return (\n  a && b // c\n);` keeps the comment inside, like Prettier);
+            // only comments after the closing paren are dangling comments.
+            let argument_end =
+                f.comments().end_including_source_parens(argument.span().end, self.span().end);
+            if f.comments().has_trailing_suppression_comment(argument_end) {
+                // Keep a trailing suppression comment visible to the argument,
+                // so it preserves its original text.
+                write!(f, FormatAdjacentArgument(argument));
+            } else {
+                // Hide the argument's dangling comments so they are printed
+                // after the semicolon by the dangling comments logic below.
+                format_content_without_comments_after(
+                    &FormatAdjacentArgument(argument),
+                    argument_end,
+                    f,
+                );
+            }
         }
 
+        // The semicolon goes before the dangling comments, like Prettier:
+        // `return foo /* comment */;` -> `return foo; /* comment */`
         let dangling_comments = f.context().comments().comments_before(self.span().end);
 
-        let is_last_comment_line =
-            dangling_comments.last().is_some_and(|comment| comment.is_line());
-
-        if is_last_comment_line {
-            write!(f, OptionalSemicolon);
-        }
+        write!(f, OptionalSemicolon);
 
         if !dangling_comments.is_empty() {
             write!(f, [space(), format_dangling_comments(self.span())]);
-        }
-
-        if !is_last_comment_line {
-            write!(f, OptionalSemicolon);
         }
     }
 }

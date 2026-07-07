@@ -89,7 +89,7 @@ use self::{
     object_pattern_like::ObjectPatternLike,
     program::FormatStatementsWithImports,
     return_or_throw_statement::FormatAdjacentArgument,
-    semicolon::OptionalSemicolon,
+    semicolon::{FormatContentWithSemicolon, OptionalSemicolon},
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
 };
 
@@ -599,7 +599,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
             return;
         }
 
-        write!(f, [self.expression(), OptionalSemicolon]);
+        let expression = self.expression();
+        write!(
+            f,
+            FormatContentWithSemicolon::new(expression, expression.span().end, self.span().end)
+        );
     }
 }
 
@@ -1405,7 +1409,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterDeclaration<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAliasDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, [AssignmentLike::TSTypeAliasDeclaration(self), OptionalSemicolon]);
+        let content = AssignmentLike::TSTypeAliasDeclaration(self);
+        write!(
+            f,
+            FormatContentWithSemicolon::new(
+                &content,
+                self.type_annotation.span().end,
+                self.span.end
+            )
+        );
     }
 }
 
