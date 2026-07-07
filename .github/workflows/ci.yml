@@ -490,7 +490,14 @@ jobs:
             pnpm
       - run: rustup component add clippy
       - run: cargo lint -- -D warnings
-      - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
+      # Catch lints which only fire with `debug_assertions` off (i.e. release mode),
+      # e.g. code becoming unused when a `#[cfg(debug_assertions)]` block vanishes.
+      # Main-only and without `--all-targets`: these failures are rare and a post-merge
+      # failure pinpoints the culprit commit, so not worth doubling clippy time on every PR.
+      # `--all-targets` is omitted because test/bench code is never built in release mode
+      # with `-D warnings`.
+      - if: ${{ github.ref_name == 'main' }}
+        run: cargo clippy --all-features --profile dev-no-debug-assertions -- -D warnings
       - run: pnpm --filter oxlint-app build-js
       - run: pnpm --filter oxfmt-app build-js
       - run: node --run lint
