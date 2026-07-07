@@ -40,6 +40,12 @@ pub(crate) mod import {
     pub mod unambiguous;
 }
 
+/// <https://github.com/amilajack/eslint-plugin-compat>
+pub(crate) mod compat {
+    #[expect(clippy::module_inception)]
+    pub mod compat;
+}
+
 /// <https://github.com/eslint/eslint>
 pub(crate) mod eslint {
     pub mod accessor_pairs;

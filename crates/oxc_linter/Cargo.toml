@@ -62,6 +62,7 @@ language-tags = { workspace = true }
 lazy-regex = { workspace = true }
 memchr = { workspace = true }
 nodejs-built-in-modules = { workspace = true }
+oxc-browserslist = { workspace = true }
 papaya = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }

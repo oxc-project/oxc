@@ -56,7 +56,8 @@ export type LintPluginOptionsSchema =
   | "react-perf"
   | "promise"
   | "node"
-  | "vue";
+  | "vue"
+  | "compat";
 export type LintPlugins = LintPluginOptionsSchema[];
 export type RuleNoConfig = AllowWarnDeny | [AllowWarnDeny];
 export type Mode2 = "as-needed" | "always" | "never";
@@ -399,6 +400,11 @@ export type NextTickOption = "promise" | "callback";
 export type CaseType2 = "camelCase" | "snake_case";
 export type AllowYoda = "never" | "always";
 export type OxlintOverrides = OxlintOverride[];
+/**
+ * Browserslist targets: either a single query string, a list of queries, or
+ * an object with `production`/`development` query lists.
+ */
+export type BrowserslistTargetsConfig = string | string[] | BrowserslistEnvTargets;
 export type JestVersionSchema = number | string;
 export type TagNamePreference =
   | (
@@ -868,6 +874,7 @@ export interface DummyRuleMap {
   "block-scoped-var"?: RuleNoConfig;
   "capitalized-comments"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever] | [AllowWarnDeny, AlwaysNever, OptionsJsonEnum];
   "class-methods-use-this"?: RuleNoConfig | [AllowWarnDeny, ClassMethodsUseThisConfig];
+  "compat/compat"?: RuleNoConfig | [AllowWarnDeny, string];
   complexity?: RuleNoConfig | [AllowWarnDeny, ComplexityConfigEnum];
   "constructor-super"?: RuleNoConfig;
   curly?: RuleNoConfig | [AllowWarnDeny, CurlyType] | [AllowWarnDeny, CurlyType, CurlyConsistent];
@@ -6500,12 +6507,80 @@ export interface YodaOptions {
  * ```
  */
 export interface OxlintPluginSettings {
+  compat?: CompatPluginSettings;
   jest?: JestPluginSettings;
   jsdoc?: JSDocPluginSettings;
   "jsx-a11y"?: JSXA11YPluginSettings;
   next?: NextPluginSettings;
   react?: ReactPluginSettings;
   vitest?: VitestPluginSettings;
+  [k: string]: unknown | undefined;
+}
+/**
+ * Configure browser compatibility checking for the `compat` plugin.
+ *
+ * This mirrors the settings of
+ * [eslint-plugin-compat](https://github.com/amilajack/eslint-plugin-compat),
+ * namespaced under `compat`.
+ *
+ * Example:
+ *
+ * ```json
+ * {
+ *   "settings": {
+ *     "compat": {
+ *       "browsers": [
+ *         "defaults",
+ *         "not ie < 11"
+ *       ],
+ *       "polyfills": [
+ *         "Promise",
+ *         "fetch"
+ *       ]
+ *     }
+ *   }
+ * }
+ * ```
+ */
+export interface CompatPluginSettings {
+  /**
+   * The browserslist targets to lint against, e.g. `"defaults, not ie < 9"`
+   * or `["chrome 70", "firefox 60"]`.
+   */
+  browsers?: BrowserslistTargetsConfig;
+  /**
+   * Report incompatible API usage even when it is wrapped in a conditional
+   * (feature-detection) check such as `if (window.fetch) { ... }`.
+   */
+  ignoreConditionalChecks?: boolean;
+  /**
+   * Lint all ECMAScript APIs, regardless of the `es:all` polyfill entry.
+   */
+  lintAllEsApis?: boolean;
+  /**
+   * APIs that are polyfilled and should not be reported, e.g.
+   * `["Promise", "WebAssembly.compile", "fetch"]`.
+   * The special entry `"es:all"` disables linting of all ECMAScript APIs.
+   */
+  polyfills?: string[];
+  /**
+   * Alias for `browsers`. `browsers` takes precedence when both are set.
+   */
+  targets?: BrowserslistTargetsConfig;
+  [k: string]: unknown | undefined;
+}
+/**
+ * Environment-specific browserslist queries.
+ */
+export interface BrowserslistEnvTargets {
+  /**
+   * Browserslist queries for the development environment.
+   */
+  development?: string[];
+  /**
+   * Browserslist queries for the production environment.
+   */
+  production?: string[];
   [k: string]: unknown | undefined;
 }
 /**

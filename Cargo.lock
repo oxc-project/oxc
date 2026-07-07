@@ -2175,6 +2175,7 @@ dependencies = [
  "markdown",
  "memchr",
  "nodejs-built-in-modules",
+ "oxc-browserslist",
  "oxc-schemars",
  "oxc_allocator",
  "oxc_ast",

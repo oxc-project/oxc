@@ -607,7 +607,7 @@ omitted, the base config's plugins are used.
 
 ##### overrides[n].plugins[n]
 
-type: `"eslint" | "react" | "unicorn" | "typescript" | "oxc" | "import" | "jsdoc" | "jest" | "vitest" | "jsx-a11y" | "nextjs" | "react-perf" | "promise" | "node" | "vue"`
+type: `"eslint" | "react" | "unicorn" | "typescript" | "oxc" | "import" | "jsdoc" | "jest" | "vitest" | "jsx-a11y" | "nextjs" | "react-perf" | "promise" | "node" | "vue" | "compat"`
 
 
 
@@ -637,7 +637,7 @@ The `plugins` array should reflect all of the plugins you want to use.
 
 ### plugins[n]
 
-type: `"eslint" | "react" | "unicorn" | "typescript" | "oxc" | "import" | "jsdoc" | "jest" | "vitest" | "jsx-a11y" | "nextjs" | "react-perf" | "promise" | "node" | "vue"`
+type: `"eslint" | "react" | "unicorn" | "typescript" | "oxc" | "import" | "jsdoc" | "jest" | "vitest" | "jsx-a11y" | "nextjs" | "react-perf" | "promise" | "node" | "vue" | "compat"`
 
 
 
@@ -710,6 +710,102 @@ Here's an example if you're using Next.js in a monorepo:
   }
 }
 ```
+
+
+### settings.compat
+
+type: `object`
+
+
+Configure browser compatibility checking for the `compat` plugin.
+
+This mirrors the settings of
+[eslint-plugin-compat](https://github.com/amilajack/eslint-plugin-compat),
+namespaced under `compat`.
+
+Example:
+
+```json
+{
+  "settings": {
+    "compat": {
+      "browsers": [
+        "defaults",
+        "not ie < 11"
+      ],
+      "polyfills": [
+        "Promise",
+        "fetch"
+      ]
+    }
+  }
+}
+```
+
+
+#### settings.compat.browsers
+
+type: `array | string`
+
+default: `null`
+
+The browserslist targets to lint against, e.g. `"defaults, not ie < 9"`
+or `["chrome 70", "firefox 60"]`.
+
+
+##### settings.compat.browsers[n]
+
+type: `string`
+
+
+
+
+
+#### settings.compat.ignoreConditionalChecks
+
+type: `boolean`
+
+default: `false`
+
+Report incompatible API usage even when it is wrapped in a conditional
+(feature-detection) check such as `if (window.fetch) { ... }`.
+
+
+#### settings.compat.lintAllEsApis
+
+type: `boolean`
+
+default: `false`
+
+Lint all ECMAScript APIs, regardless of the `es:all` polyfill entry.
+
+
+#### settings.compat.polyfills
+
+type: `string[]`
+
+default: `[]`
+
+APIs that are polyfilled and should not be reported, e.g.
+`["Promise", "WebAssembly.compile", "fetch"]`.
+The special entry `"es:all"` disables linting of all ECMAScript APIs.
+
+
+#### settings.compat.targets
+
+type: `array | string`
+
+default: `null`
+
+Alias for `browsers`. `browsers` takes precedence when both are set.
+
+
+##### settings.compat.targets[n]
+
+type: `string`
+
+
+
 
 
 ### settings.jest
