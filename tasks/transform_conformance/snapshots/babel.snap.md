@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 750/1165
+Passed: 761/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (98/157)
+# babel-plugin-transform-typescript (109/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1159,23 +1159,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["P"]
 rebuilt        : ScopeId(0): []
 
-* enum/boolean-value/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "E"]
-rebuilt        : ScopeId(1): ["E"]
-
-* enum/constant-folding/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r"]
-rebuilt        : ScopeId(1): ["E"]
-
 * enum/enum-merging-inner-references/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Animals", "Cat", "Dog"]
-rebuilt        : ScopeId(1): ["Animals"]
-Bindings mismatch:
-after transform: ScopeId(2): ["Animals", "CatDog"]
-rebuilt        : ScopeId(2): ["Animals"]
 Symbol redeclarations mismatch for "Animals":
 after transform: SymbolId(0): [Span { start: 5, end: 12 }, Span { start: 41, end: 48 }]
 rebuilt        : SymbolId(0): []
@@ -1184,15 +1168,6 @@ after transform: ["Cat", "Dog"]
 rebuilt        : []
 
 * enum/enum-merging-inner-references-shadow/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Animals", "Cat"]
-rebuilt        : ScopeId(1): ["Animals"]
-Bindings mismatch:
-after transform: ScopeId(2): ["Animals", "Dog"]
-rebuilt        : ScopeId(2): ["Animals"]
-Bindings mismatch:
-after transform: ScopeId(3): ["Animals", "CatDog"]
-rebuilt        : ScopeId(3): ["Animals"]
 Symbol reference IDs mismatch for "Cat":
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
@@ -1204,25 +1179,9 @@ after transform: SymbolId(2): [Span { start: 38, end: 45 }, Span { start: 65, en
 rebuilt        : SymbolId(2): []
 
 * enum/export/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "E"]
-rebuilt        : ScopeId(1): ["E"]
-Bindings mismatch:
-after transform: ScopeId(2): ["B", "E"]
-rebuilt        : ScopeId(2): ["E"]
 Symbol redeclarations mismatch for "E":
 after transform: SymbolId(0): [Span { start: 12, end: 13 }, Span { start: 40, end: 41 }]
 rebuilt        : SymbolId(0): []
-
-* enum/inferred/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "x", "y"]
-rebuilt        : ScopeId(1): ["E"]
-
-* enum/inner-references/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "a", "b"]
-rebuilt        : ScopeId(1): ["E"]
 
 * enum/mix-references/input.ts
 x Output mismatch
@@ -1230,57 +1189,22 @@ x Output mismatch
 * enum/non-constant-member-reference/input.ts
 Missing ReferenceId: "Foo"
 Missing ReferenceId: "Foo"
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "C", "D", "Foo"]
-rebuilt        : ScopeId(1): ["Foo"]
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(7): [ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
 rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(12)]
 
-* enum/non-foldable-constant/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "a", "b"]
-rebuilt        : ScopeId(1): ["E"]
-
 * enum/non-scoped/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["E", "x", "y"]
-rebuilt        : ScopeId(1): ["E"]
-Bindings mismatch:
-after transform: ScopeId(2): ["E", "z"]
-rebuilt        : ScopeId(2): ["E"]
 Symbol redeclarations mismatch for "E":
 after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 40, end: 41 }]
 rebuilt        : SymbolId(0): []
 
 * enum/outer-references/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["IPC", "SERVER", "SOCKET", "socketType"]
-rebuilt        : ScopeId(1): ["socketType"]
-Bindings mismatch:
-after transform: ScopeId(2): ["IPC", "SERVER", "SOCKET", "UV_READABLE", "UV_WRITABLE", "constants"]
-rebuilt        : ScopeId(2): ["constants"]
 Symbol reference IDs mismatch for "socketType":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(10)]
 rebuilt        : SymbolId(0): [ReferenceId(7)]
 
 * enum/reverse-mappings-syntactically-determinable/input.ts
 x Output mismatch
-
-* enum/string-value/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "A2", "B", "B2", "E"]
-rebuilt        : ScopeId(1): ["E"]
-
-* enum/string-value-template/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "E"]
-rebuilt        : ScopeId(1): ["E"]
-
-* enum/string-values-computed/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "E"]
-rebuilt        : ScopeId(1): ["E"]
 
 * enum/ts5.0-const-foldable/input.ts
 x Output mismatch
@@ -1314,12 +1238,6 @@ rebuilt        : SymbolId(2): []
 Bindings mismatch:
 after transform: ScopeId(0): ["BB", "BB2", "C", "C2", "E", "N", "f", "foo", "x"]
 rebuilt        : ScopeId(0): ["BB", "BB2", "C2", "foo"]
-Bindings mismatch:
-after transform: ScopeId(11): ["BB", "K"]
-rebuilt        : ScopeId(2): ["BB"]
-Bindings mismatch:
-after transform: ScopeId(12): ["BB", "L"]
-rebuilt        : ScopeId(3): ["BB"]
 Symbol redeclarations mismatch for "BB":
 after transform: SymbolId(10): [Span { start: 445, end: 447 }, Span { start: 461, end: 463 }]
 rebuilt        : SymbolId(1): []
@@ -1343,16 +1261,6 @@ Symbol redeclarations mismatch for "f":
 after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
 rebuilt        : SymbolId(0): []
 
-* imports/enum-id/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "Enum"]
-rebuilt        : ScopeId(1): ["Enum"]
-
-* imports/enum-value/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Enum", "id"]
-rebuilt        : ScopeId(1): ["Enum"]
-
 * imports/type-only-export-specifier-2/input.ts
 x Output mismatch
 
@@ -1373,9 +1281,6 @@ after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 22, end:
 rebuilt        : SymbolId(0): []
 
 * namespace/clobber-enum/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "C"]
-rebuilt        : ScopeId(1): ["A"]
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 30, end: 31 }]
 rebuilt        : SymbolId(0): []
@@ -1439,12 +1344,6 @@ rebuilt        : SymbolId(0): []
 
 
 * namespace/nested/input.ts
-Bindings mismatch:
-after transform: ScopeId(9): ["H", "I", "J", "K"]
-rebuilt        : ScopeId(9): ["H"]
-Bindings mismatch:
-after transform: ScopeId(13): ["L", "M"]
-rebuilt        : ScopeId(13): ["L"]
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 22, end: 23 }]
 rebuilt        : SymbolId(0): []
@@ -1462,9 +1361,6 @@ rebuilt        : SymbolId(14): []
 Bindings mismatch:
 after transform: ScopeId(1): ["B", "G", "_A"]
 rebuilt        : ScopeId(1): ["G", "_A"]
-Bindings mismatch:
-after transform: ScopeId(4): ["G", "H"]
-rebuilt        : ScopeId(2): ["G"]
 
 * namespace/same-name/input.ts
 Symbol redeclarations mismatch for "N":
@@ -1491,18 +1387,7 @@ x Output mismatch
 * optimize-const-enums/exported/input.ts
 x Output mismatch
 
-* optimize-const-enums/local/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "x", "y"]
-rebuilt        : ScopeId(1): ["A"]
-
 * optimize-const-enums/merged/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "x", "y"]
-rebuilt        : ScopeId(1): ["A"]
-Bindings mismatch:
-after transform: ScopeId(2): ["A", "z"]
-rebuilt        : ScopeId(2): ["A"]
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 11, end: 12 }, Span { start: 36, end: 37 }]
 rebuilt        : SymbolId(0): []

@@ -1041,7 +1041,7 @@ impl Scoping {
         });
     }
 
-    /// Remove bindings that exist only in TypeScript type space.
+    /// Remove bindings that exist only in TypeScript syntax.
     pub fn delete_typescript_bindings(&mut self) {
         #[expect(
             clippy::inline_always,
@@ -1073,7 +1073,8 @@ impl Scoping {
                     !flags.intersects(
                         SymbolFlags::TypeAlias
                             | SymbolFlags::Interface
-                            | SymbolFlags::TypeParameter,
+                            | SymbolFlags::TypeParameter
+                            | SymbolFlags::EnumMember,
                     )
                 });
             }

@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 256/398
+Passed: 267/398
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,41 +48,19 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (28/60)
+# babel-plugin-transform-typescript (38/60)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
 rebuilt        : []
 
 * computed-constant-value/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "a", "b", "c", "d", "e"]
-rebuilt        : ScopeId(1): ["A"]
-Bindings mismatch:
-after transform: ScopeId(2): ["B", "a", "b", "c", "d", "e"]
-rebuilt        : ScopeId(2): ["B"]
-Bindings mismatch:
-after transform: ScopeId(3): ["C", "a", "b", "c"]
-rebuilt        : ScopeId(3): ["C"]
-Bindings mismatch:
-after transform: ScopeId(4): ["D", "a", "b", "c"]
-rebuilt        : ScopeId(4): ["D"]
 Unresolved references mismatch:
 after transform: ["Infinity", "NaN"]
 rebuilt        : ["Infinity"]
 Unresolved reference IDs mismatch for "Infinity":
 after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(8), ReferenceId(11), ReferenceId(14), ReferenceId(18)]
 rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12)]
-
-* const-enum-mixed-refs/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Phase", "one", "two"]
-rebuilt        : ScopeId(1): ["Phase"]
-
-* const-enum-value-ref-kept/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Phase", "one", "two"]
-rebuilt        : ScopeId(1): ["Phase"]
 
 * declare-and-definite-with-initializer/input.ts
 
@@ -115,21 +93,6 @@ rebuilt        : ScopeId(0): []
 Missing ReferenceId: "Foo"
 Missing ReferenceId: "Merge"
 Missing ReferenceId: "NestInner"
-Bindings mismatch:
-after transform: ScopeId(1): ["Foo", "a", "b", "c"]
-rebuilt        : ScopeId(1): ["Foo"]
-Bindings mismatch:
-after transform: ScopeId(2): ["Merge", "x"]
-rebuilt        : ScopeId(2): ["Merge"]
-Bindings mismatch:
-after transform: ScopeId(3): ["Merge", "y"]
-rebuilt        : ScopeId(3): ["Merge"]
-Bindings mismatch:
-after transform: ScopeId(4): ["NestOuter", "a", "b"]
-rebuilt        : ScopeId(4): ["NestOuter"]
-Bindings mismatch:
-after transform: ScopeId(6): ["NestInner", "a", "b"]
-rebuilt        : ScopeId(6): ["NestInner"]
 Symbol reference IDs mismatch for "x":
 after transform: SymbolId(0): [ReferenceId(2), ReferenceId(4)]
 rebuilt        : SymbolId(0): [ReferenceId(7)]
@@ -147,23 +110,11 @@ after transform: SymbolId(18): [ReferenceId(31), ReferenceId(32), ReferenceId(33
 rebuilt        : SymbolId(9): [ReferenceId(25), ReferenceId(26), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(31)]
 
 * enum-string-alias-member/input.ts
-Bindings mismatch:
-after transform: ScopeId(2): ["Color", "Green", "Primary", "Red"]
-rebuilt        : ScopeId(1): ["Color"]
 Symbol reference IDs mismatch for "Color":
 after transform: SymbolId(4): [ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(12)]
 rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(8)]
 
 * enum-template-literal/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["LARGE", "SMALL", "Size"]
-rebuilt        : ScopeId(1): ["Size"]
-Bindings mismatch:
-after transform: ScopeId(2): ["Animal", "CAT", "DOG"]
-rebuilt        : ScopeId(2): ["Animal"]
-Bindings mismatch:
-after transform: ScopeId(3): ["AnimalSize", "LARGE_DOG", "SMALL_CAT"]
-rebuilt        : ScopeId(3): ["AnimalSize"]
 Symbol reference IDs mismatch for "Size":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(7)]
 rebuilt        : SymbolId(0): [ReferenceId(3)]
@@ -172,23 +123,11 @@ after transform: SymbolId(3): [ReferenceId(1), ReferenceId(3), ReferenceId(11)]
 rebuilt        : SymbolId(2): [ReferenceId(7)]
 
 * enum-template-literal-number/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["NUM_1", "NUM_2", "NUM_3", "NUM_4", "NumberEnum"]
-rebuilt        : ScopeId(1): ["NumberEnum"]
-Bindings mismatch:
-after transform: ScopeId(2): ["COMPUTED_1", "COMPUTED_2", "ComputedEnum"]
-rebuilt        : ScopeId(2): ["ComputedEnum"]
 Symbol reference IDs mismatch for "NumberEnum":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(13)]
 rebuilt        : SymbolId(0): [ReferenceId(9)]
 
 * enum-template-literal-trailing-quasi/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "NumberEnum"]
-rebuilt        : ScopeId(1): ["NumberEnum"]
-Bindings mismatch:
-after transform: ScopeId(2): ["C", "ComputedEnum", "D"]
-rebuilt        : ScopeId(2): ["ComputedEnum"]
 Symbol reference IDs mismatch for "NumberEnum":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(8)]
 rebuilt        : SymbolId(0): [ReferenceId(5)]
@@ -213,9 +152,6 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(2)]
 
 * namespace/redeclaration-with-enum/input.ts
-Bindings mismatch:
-after transform: ScopeId(2): ["x", "y"]
-rebuilt        : ScopeId(2): ["x"]
 Symbol redeclarations mismatch for "x":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 39, end: 40 }]
 rebuilt        : SymbolId(0): []
@@ -238,53 +174,10 @@ Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 62, end: 65 }]
 rebuilt        : SymbolId(0): []
 
-* optimize-enums/auto-increment-after-string/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "Mixed"]
-rebuilt        : ScopeId(1): ["Mixed"]
-
-* optimize-enums/exported-not-removed/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Direction", "Down", "Up"]
-rebuilt        : ScopeId(1): ["Direction"]
-
 * optimize-enums/merged-enum/input.ts
 Unresolved references mismatch:
 after transform: ["A"]
 rebuilt        : []
-
-* optimize-enums/non-evaluable-kept/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Runtime", "X", "Y"]
-rebuilt        : ScopeId(1): ["Runtime"]
-
-* optimize-enums/optional-chain-value-kept/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "Foo"]
-rebuilt        : ScopeId(1): ["Foo"]
-
-* optimize-enums/passed-as-argument-kept/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Active", "Inactive", "Status"]
-rebuilt        : ScopeId(1): ["Status"]
-
-* optimize-enums/re-exported-not-removed/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "X"]
-rebuilt        : ScopeId(1): ["A"]
-Bindings mismatch:
-after transform: ScopeId(2): ["B", "Y"]
-rebuilt        : ScopeId(2): ["B"]
-
-* optimize-enums/typeof-kept/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["Bar", "X"]
-rebuilt        : ScopeId(1): ["Bar"]
-
-* optimize-enums/value-usage-kept/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "B", "Foo"]
-rebuilt        : ScopeId(1): ["Foo"]
 
 * redeclarations/input.ts
 Bindings mismatch:
@@ -345,7 +238,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (19/106)
+# legacy-decorators (20/106)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -464,32 +357,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "babelHelpers"]
 rebuilt        : ["Object", "babelHelpers", "dec"]
-
-* oxc/metadata/enum-types/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["StringEnum", "bar", "foo"]
-rebuilt        : ScopeId(1): ["StringEnum"]
-Bindings mismatch:
-after transform: ScopeId(2): ["TemplateStringEnum", "mixed", "template"]
-rebuilt        : ScopeId(2): ["TemplateStringEnum"]
-Bindings mismatch:
-after transform: ScopeId(3): ["NumberEnum", "a", "b"]
-rebuilt        : ScopeId(3): ["NumberEnum"]
-Bindings mismatch:
-after transform: ScopeId(4): ["UnaryEnum", "bitwise", "negative", "positive"]
-rebuilt        : ScopeId(4): ["UnaryEnum"]
-Bindings mismatch:
-after transform: ScopeId(6): ["UnaryOtherEnum", "bitwise", "negative", "positive"]
-rebuilt        : ScopeId(6): ["UnaryOtherEnum"]
-Bindings mismatch:
-after transform: ScopeId(7): ["AutoIncrementEnum", "first", "second", "third"]
-rebuilt        : ScopeId(7): ["AutoIncrementEnum"]
-Bindings mismatch:
-after transform: ScopeId(8): ["MixedEnum", "num", "str"]
-rebuilt        : ScopeId(8): ["MixedEnum"]
-Bindings mismatch:
-after transform: ScopeId(9): ["ComputedEnum", "computed", "expression"]
-rebuilt        : ScopeId(9): ["ComputedEnum"]
 
 * oxc/metadata/erased-import-no-type-keyword/input.ts
 Bindings mismatch:

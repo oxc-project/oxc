@@ -1,6 +1,6 @@
 semantic_misc Summary:
 AST Parsed     : 70/70 (100.00%)
-Positive Passed: 65/70 (92.86%)
+Positive Passed: 66/70 (94.29%)
 semantic Error: tasks/coverage/misc/pass/declare-let-private.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["private"]
@@ -89,30 +89,4 @@ semantic Error: tasks/coverage/misc/pass/oxc-13284.ts
 Symbol reference IDs mismatch for "_super":
 after transform: SymbolId(18): [ReferenceId(14)]
 rebuilt        : SymbolId(9): []
-
-semantic Error: tasks/coverage/misc/pass/oxc-4449.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "baz"]
-rebuilt        : ScopeId(1): ["A"]
-Bindings mismatch:
-after transform: ScopeId(2): ["B", "baz"]
-rebuilt        : ScopeId(2): ["B"]
-Bindings mismatch:
-after transform: ScopeId(3): ["C", "baz"]
-rebuilt        : ScopeId(3): ["C"]
-Bindings mismatch:
-after transform: ScopeId(4): ["D", "baz"]
-rebuilt        : ScopeId(4): ["D"]
-Bindings mismatch:
-after transform: ScopeId(5): ["E", "baz"]
-rebuilt        : ScopeId(5): ["E"]
-Bindings mismatch:
-after transform: ScopeId(6): ["F", "baz"]
-rebuilt        : ScopeId(6): ["F"]
-Bindings mismatch:
-after transform: ScopeId(7): ["G", "baz"]
-rebuilt        : ScopeId(7): ["G"]
-Bindings mismatch:
-after transform: ScopeId(8): ["H", "baz"]
-rebuilt        : ScopeId(8): ["H"]
 
