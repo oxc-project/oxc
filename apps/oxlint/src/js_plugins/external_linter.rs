@@ -295,6 +295,7 @@ fn wrap_lint_file_with_js_parser(
     Arc::new(Box::new(
         move |file_path: String,
               source_text: String,
+              has_bom: bool,
               parser_id: u32,
               parser_options_json: Option<String>,
               rule_ids: Vec<u32>,
@@ -309,6 +310,7 @@ fn wrap_lint_file_with_js_parser(
                 FnArgs::from((
                     file_path,
                     source_text,
+                    has_bom,
                     parser_id,
                     parser_options_json,
                     rule_ids,

@@ -70,6 +70,8 @@ type CursorWithCountOptions = number | FilterFn | CountOptions | null | undefine
 
 // Source text of file
 let text: string | null = null;
+// `true` if the original file started with a Unicode BOM (stripped from `text` on Rust side)
+let hasBOM = false;
 // AST produced by the parser
 let program: JsParserProgram | null = null;
 // Tokens and comments from the parser output, each sorted by range
@@ -99,12 +101,15 @@ let tokensAndComments: JsParserToken[] | null = null;
  * @param parseResult - Result of parser's `parseForESLint` method
  *   (for `parse`-only parsers, wrap the AST as `{ ast }`)
  * @param sourceText - Source text of file
+ * @param hasBOMInput - `true` if the original file started with a Unicode BOM
  */
 export function setupJsParserSourceCode(
   parseResult: JsParserParseResult,
   sourceText: string,
+  hasBOMInput: boolean,
 ): void {
   text = sourceText;
+  hasBOM = hasBOMInput;
   program = parseResult.ast;
   tokens = program.tokens ?? [];
   comments = program.comments ?? [];
@@ -118,6 +123,7 @@ export function setupJsParserSourceCode(
  */
 export function resetJsParserSourceCode(): void {
   text = null;
+  hasBOM = false;
   program = null;
   tokens = [];
   comments = [];
@@ -1048,11 +1054,11 @@ export const JS_PARSER_SOURCE_CODE = Object.freeze({
   /**
    * `true` if file has Unicode BOM.
    *
-   * Always `false` for files parsed by a custom parser - Rust strips the BOM from the source text
-   * before sending it to JS.
+   * Rust strips the BOM from the source text before sending it to JS, but reports whether the
+   * original file had one via the `hasBOM` flag passed to `setupJsParserSourceCode`.
    */
   get hasBOM(): boolean {
-    return false;
+    return hasBOM;
   },
 
   /**
