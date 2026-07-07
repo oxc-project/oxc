@@ -20,8 +20,7 @@ mod react_compiler_validation;
 use crate::react_compiler::entrypoint::compile_result::CompileResult;
 use crate::react_compiler::entrypoint::imports::get_react_compiler_runtime_module;
 use crate::react_compiler::entrypoint::program::compile_program;
-use prefilter::has_react_like_functions;
-use scope::ScopeResolver;
+use prefilter::{has_memo_cache_function_import, has_react_like_functions};
 
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use crate::options::{
@@ -85,6 +84,24 @@ pub fn transform<'a>(
     TransformResult { program, changed, diagnostics }
 }
 
+/// Lint a pre-parsed program — like [`transform`] but read-only: it collects
+/// diagnostics without rewriting the program.
+///
+/// The borrowed `semantic` must have been built from `program` with
+/// `SemanticBuilder::with_build_nodes(true)`.
+pub fn lint<'a>(
+    program: &Program<'a>,
+    semantic: &Semantic<'_>,
+    allocator: &'a Allocator,
+    options: PluginOptions,
+) -> LintResult {
+    let mut options = options;
+    options.no_emit = true;
+
+    let (_program, diagnostics) = compile(program, semantic, allocator, options);
+    LintResult { diagnostics }
+}
+
 /// Shared compile pipeline behind [`transform`] and [`lint`]. Borrows `program`
 /// (so `lint` can stay read-only) and returns the compiled OXC program — `None`
 /// when nothing was compiled — together with diagnostics and logger events.
@@ -107,12 +124,7 @@ fn compile<'a>(
         return (None, Diagnostics::default());
     }
 
-    // The codegen back-end builds oxc nodes directly via this `AstBuilder`, and the
-    // compiled program is spliced/returned as an arena-allocated `Program<'a>`.
-    let ast_builder = oxc_ast::builder::AstBuilder::new(allocator);
-    let scope = ScopeResolver::new(semantic, program);
-    // Function discovery and lowering both walk the oxc `Program` directly.
-    let result = compile_program(&ast_builder, program, &scope, options);
+    let result = compile_program(allocator, semantic, program, options);
 
     let (program_ast, diagnostics) = match result {
         CompileResult::Success { ast, diagnostics, .. } => (ast, diagnostics),
@@ -126,36 +138,6 @@ fn compile<'a>(
     });
 
     (compiled, diagnostics)
-}
-
-fn has_memo_cache_function_import(program: &Program<'_>, module_name: &str) -> bool {
-    for stmt in &program.body {
-        if let oxc_ast::ast::Statement::ImportDeclaration(import) = stmt
-            && import.source.value == module_name
-            && import.import_kind.is_value()
-            && let Some(specifiers) = &import.specifiers
-        {
-            for specifier in specifiers {
-                if let oxc_ast::ast::ImportDeclarationSpecifier::ImportSpecifier(data) = specifier
-                    && data.import_kind.is_value()
-                {
-                    let imported_name = match &data.imported {
-                        oxc_ast::ast::ModuleExportName::IdentifierName(id) => {
-                            Some(id.name.as_str())
-                        }
-                        oxc_ast::ast::ModuleExportName::IdentifierReference(id) => {
-                            Some(id.name.as_str())
-                        }
-                        oxc_ast::ast::ModuleExportName::StringLiteral(s) => Some(s.value.as_str()),
-                    };
-                    if imported_name == Some("c") {
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-    false
 }
 
 /// Carry over the comments attached to top-level statements of the compiled
@@ -190,22 +172,4 @@ fn preserve_comments<'a>(
     // Codegen reads comment content from `source_text` via span offsets, so the
     // compiled program must point at the same source as the original.
     compiled.source_text = source.source_text;
-}
-
-/// Lint a pre-parsed program — like [`transform`] but read-only: it collects
-/// diagnostics without rewriting the program.
-///
-/// The borrowed `semantic` must have been built from `program` with
-/// `SemanticBuilder::with_build_nodes(true)`.
-pub fn lint<'a>(
-    program: &Program<'a>,
-    semantic: &Semantic<'_>,
-    allocator: &'a Allocator,
-    options: PluginOptions,
-) -> LintResult {
-    let mut options = options;
-    options.no_emit = true;
-
-    let (_program, diagnostics) = compile(program, semantic, allocator, options);
-    LintResult { diagnostics }
 }
