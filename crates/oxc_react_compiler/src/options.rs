@@ -159,10 +159,6 @@ pub struct PluginOptions {
     /// Compiler environment: feature flags, validation toggles, and custom hook/type
     /// definitions for the compilation passes. See [`EnvironmentConfig`].
     pub environment: EnvironmentConfig,
-
-    /// Enable debug logging (HIR formatting after each pass).
-    /// Only set to true when a logger with debugLogIRs is configured on the JS side.
-    pub debug: bool,
 }
 
 impl Default for PluginOptions {
@@ -182,7 +178,6 @@ impl Default for PluginOptions {
             ignore_use_no_forget: false,
             custom_opt_out_directives: None,
             environment: EnvironmentConfig::default(),
-            debug: false,
         }
     }
 }

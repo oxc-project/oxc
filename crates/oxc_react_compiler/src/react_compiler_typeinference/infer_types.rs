@@ -209,7 +209,7 @@ fn resolve_property_type(
                 .or_else(|| if is_hook_name(s) { custom_hook_type.cloned() } else { None }),
             PropertyLiteral::Number(_) => shape.properties.get("*").cloned(),
         },
-        PropertyNameKind::Computed { .. } => shape.properties.get("*").cloned(),
+        PropertyNameKind::Computed => shape.properties.get("*").cloned(),
     }
 }
 
@@ -608,16 +608,15 @@ fn generate_instruction_types(
             )?;
         }
 
-        InstructionValue::ComputedLoad { object, property, .. } => {
+        InstructionValue::ComputedLoad { object, .. } => {
             let object_type = get_type(object.identifier, identifiers);
             let object_name = get_name(names, object.identifier);
-            let prop_type = get_type(property.identifier, identifiers);
             unifier.unify(
                 left,
                 Type::Property {
                     object_type: Box::new(object_type),
                     object_name,
-                    property_name: PropertyNameKind::Computed { value: Box::new(prop_type) },
+                    property_name: PropertyNameKind::Computed,
                 },
                 shapes,
             )?;

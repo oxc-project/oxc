@@ -1084,51 +1084,6 @@ fn lower_private_name_to_temporary(
     )
 }
 
-/// Babel/ESTree node-type tag for an oxc TS type, used as a
-/// `TypeCastExpression`'s `type_annotation_name` (mirrors `get_type_annotation_name`,
-/// which reads the unwrapped type's tag).
-fn ts_type_node_type(ty: &oxc::TSType) -> &'static str {
-    match ty {
-        oxc::TSType::TSAnyKeyword(_) => "TSAnyKeyword",
-        oxc::TSType::TSBigIntKeyword(_) => "TSBigIntKeyword",
-        oxc::TSType::TSBooleanKeyword(_) => "TSBooleanKeyword",
-        oxc::TSType::TSIntrinsicKeyword(_) => "TSIntrinsicKeyword",
-        oxc::TSType::TSNeverKeyword(_) => "TSNeverKeyword",
-        oxc::TSType::TSNullKeyword(_) => "TSNullKeyword",
-        oxc::TSType::TSNumberKeyword(_) => "TSNumberKeyword",
-        oxc::TSType::TSObjectKeyword(_) => "TSObjectKeyword",
-        oxc::TSType::TSStringKeyword(_) => "TSStringKeyword",
-        oxc::TSType::TSSymbolKeyword(_) => "TSSymbolKeyword",
-        oxc::TSType::TSThisType(_) => "TSThisType",
-        oxc::TSType::TSUndefinedKeyword(_) => "TSUndefinedKeyword",
-        oxc::TSType::TSUnknownKeyword(_) => "TSUnknownKeyword",
-        oxc::TSType::TSVoidKeyword(_) => "TSVoidKeyword",
-        oxc::TSType::TSArrayType(_) => "TSArrayType",
-        oxc::TSType::TSUnionType(_) => "TSUnionType",
-        oxc::TSType::TSParenthesizedType(_) => "TSParenthesizedType",
-        oxc::TSType::TSLiteralType(_) => "TSLiteralType",
-        oxc::TSType::TSTypeReference(_) => "TSTypeReference",
-        oxc::TSType::TSTypeOperatorType(_) => "TSTypeOperator",
-        oxc::TSType::TSTupleType(_) => "TSTupleType",
-        oxc::TSType::TSIntersectionType(_) => "TSIntersectionType",
-        oxc::TSType::TSTypeLiteral(_) => "TSTypeLiteral",
-        oxc::TSType::TSTypeQuery(_) => "TSTypeQuery",
-        oxc::TSType::TSFunctionType(_) => "TSFunctionType",
-        oxc::TSType::TSConstructorType(_) => "TSConstructorType",
-        oxc::TSType::TSConditionalType(_) => "TSConditionalType",
-        oxc::TSType::TSIndexedAccessType(_) => "TSIndexedAccessType",
-        oxc::TSType::TSInferType(_) => "TSInferType",
-        oxc::TSType::TSImportType(_) => "TSImportType",
-        oxc::TSType::TSMappedType(_) => "TSMappedType",
-        oxc::TSType::TSNamedTupleMember(_) => "TSNamedTupleMember",
-        oxc::TSType::TSTemplateLiteralType(_) => "TSTemplateLiteralType",
-        oxc::TSType::TSTypePredicate(_) => "TSTypePredicate",
-        oxc::TSType::JSDocNullableType(_) => "JSDocNullableType",
-        oxc::TSType::JSDocNonNullableType(_) => "JSDocNonNullableType",
-        oxc::TSType::JSDocUnknownType(_) => "JSDocUnknownType",
-    }
-}
-
 /// Coarse classification of an oxc TS type, mirroring `lower_type_annotation`
 /// (array / primitive / everything else).
 fn classify_ts_type(ty: &oxc::TSType) -> crate::react_compiler_hir::RawTypeCategory {
@@ -1177,12 +1132,11 @@ fn lower_type_cast_expression<'a>(
 ) -> Result<InstructionValue<'a>, CompilerError> {
     let span = builder.source_location(span);
     let value = lower_expression_to_temporary(builder, expression)?;
-    let type_ = lower_ts_type(builder, type_annotation);
-    let type_annotation_name = Some(ts_type_node_type(type_annotation).to_string());
+    // `lower_ts_type` allocates a type var (via `make_type`); keep the call for
+    // behavior parity even though the resulting type is no longer stored.
+    lower_ts_type(builder, type_annotation);
     Ok(InstructionValue::TypeCastExpression {
         value,
-        type_,
-        type_annotation_name,
         type_annotation_kind: Some(type_annotation_kind.to_string()),
         type_annotation: Some(type_annotation),
         span,
@@ -1437,7 +1391,6 @@ fn lower_binding_assignment<'a>(
                             InstructionValue::StoreLocal {
                                 lvalue: LValue { place, kind },
                                 value,
-                                type_annotation: None,
                                 span,
                             },
                         )?;
@@ -1562,14 +1515,10 @@ fn lower_binding_assignment<'a>(
                 }
             }
 
-            let pattern_span = builder.source_location(pattern.span);
             let temporary = lower_value_to_temporary(
                 builder,
                 InstructionValue::Destructure {
-                    lvalue: LValuePattern {
-                        pattern: Pattern::Array(ArrayPattern { items, span: pattern_span }),
-                        kind,
-                    },
+                    lvalue: LValuePattern { pattern: Pattern::Array(ArrayPattern { items }), kind },
                     value: value.clone(),
                     span,
                 },
@@ -1733,12 +1682,11 @@ fn lower_binding_assignment<'a>(
                 }
             }
 
-            let pattern_span = builder.source_location(pattern.span);
             let temporary = lower_value_to_temporary(
                 builder,
                 InstructionValue::Destructure {
                     lvalue: LValuePattern {
-                        pattern: Pattern::Object(ObjectPattern { properties, span: pattern_span }),
+                        pattern: Pattern::Object(ObjectPattern { properties }),
                         kind,
                     },
                     value: value.clone(),
@@ -1794,7 +1742,6 @@ fn lower_default_to_temp<'a>(
             InstructionValue::StoreLocal {
                 lvalue: LValue { place: temp_consequent.clone(), kind: InstructionKind::Const },
                 value: default_value,
-                type_annotation: None,
                 span: pat_span_consequent,
             },
         )?;
@@ -1815,7 +1762,6 @@ fn lower_default_to_temp<'a>(
             InstructionValue::StoreLocal {
                 lvalue: LValue { place: temp_alternate.clone(), kind: InstructionKind::Const },
                 value: value_alternate.clone(),
-                type_annotation: None,
                 span: pat_span_alternate,
             },
         )?;
@@ -2031,7 +1977,6 @@ fn lower_assignment_target<'a>(
                             InstructionValue::StoreLocal {
                                 lvalue: LValue { place, kind },
                                 value,
-                                type_annotation: None,
                                 span,
                             },
                         )?;
@@ -2197,14 +2142,10 @@ fn lower_assignment_target<'a>(
                 }
             }
 
-            let pattern_span = builder.source_location(pattern.span);
             let temporary = lower_value_to_temporary(
                 builder,
                 InstructionValue::Destructure {
-                    lvalue: LValuePattern {
-                        pattern: Pattern::Array(ArrayPattern { items, span: pattern_span }),
-                        kind,
-                    },
+                    lvalue: LValuePattern { pattern: Pattern::Array(ArrayPattern { items }), kind },
                     value: value.clone(),
                     span,
                 },
@@ -2493,12 +2434,11 @@ fn lower_assignment_target<'a>(
                 }
             }
 
-            let pattern_span = builder.source_location(pattern.span);
             let temporary = lower_value_to_temporary(
                 builder,
                 InstructionValue::Destructure {
                     lvalue: LValuePattern {
-                        pattern: Pattern::Object(ObjectPattern { properties, span: pattern_span }),
+                        pattern: Pattern::Object(ObjectPattern { properties }),
                         kind,
                     },
                     value: value.clone(),
@@ -2580,12 +2520,7 @@ fn lower_identifier_followup_store(
             } else {
                 let t = lower_value_to_temporary(
                     builder,
-                    InstructionValue::StoreLocal {
-                        lvalue: LValue { place, kind },
-                        value,
-                        type_annotation: None,
-                        span,
-                    },
+                    InstructionValue::StoreLocal { lvalue: LValue { place, kind }, value, span },
                 )?;
                 Ok(Some(t))
             }
@@ -2687,7 +2622,6 @@ fn lower_assignment_target_default<'a>(
             InstructionValue::StoreLocal {
                 lvalue: LValue { place: temp_consequent.clone(), kind: InstructionKind::Const },
                 value: default_value,
-                type_annotation: None,
                 span: pat_span_consequent,
             },
         )?;
@@ -2708,7 +2642,6 @@ fn lower_assignment_target_default<'a>(
             InstructionValue::StoreLocal {
                 lvalue: LValue { place: temp_alternate.clone(), kind: InstructionKind::Const },
                 value: value_alternate.clone(),
-                type_annotation: None,
                 span: pat_span_alternate,
             },
         )?;
@@ -2883,7 +2816,6 @@ fn lower_optional_member_expression_impl<'a>(
                 InstructionValue::StoreLocal {
                     lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                     value: temp,
-                    type_annotation: None,
                     span,
                 },
             )?;
@@ -2942,7 +2874,6 @@ fn lower_optional_member_expression_impl<'a>(
             InstructionValue::StoreLocal {
                 lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                 value: temp,
-                type_annotation: None,
                 span,
             },
         )?;
@@ -2994,7 +2925,6 @@ fn lower_optional_call_expression_impl<'a>(
                 InstructionValue::StoreLocal {
                     lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                     value: temp,
-                    type_annotation: None,
                     span,
                 },
             )?;
@@ -3101,7 +3031,6 @@ fn lower_optional_call_expression_impl<'a>(
             InstructionValue::StoreLocal {
                 lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                 value: temp,
-                type_annotation: None,
                 span,
             },
         )?;
@@ -3414,7 +3343,6 @@ fn lower_function_declaration<'a>(
                             InstructionValue::StoreLocal {
                                 lvalue: LValue { kind: InstructionKind::Function, place },
                                 value: fn_place,
-                                type_annotation: None,
                                 span,
                             },
                         )?;
@@ -3728,7 +3656,6 @@ fn lower_expression<'a>(
                     InstructionValue::StoreLocal {
                         lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                         value: left_place.clone(),
-                        type_annotation: None,
                         span: left_place.span,
                     },
                 )?;
@@ -3748,7 +3675,6 @@ fn lower_expression<'a>(
                     InstructionValue::StoreLocal {
                         lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                         value: right,
-                        type_annotation: None,
                         span: right_span,
                     },
                 )?;
@@ -3836,7 +3762,6 @@ fn lower_expression<'a>(
                     InstructionValue::StoreLocal {
                         lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                         value: consequent,
-                        type_annotation: None,
                         span,
                     },
                 )?;
@@ -3857,7 +3782,6 @@ fn lower_expression<'a>(
                     InstructionValue::StoreLocal {
                         lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                         value: alternate,
-                        type_annotation: None,
                         span,
                     },
                 )?;
@@ -3924,7 +3848,6 @@ fn lower_expression<'a>(
                         InstructionValue::StoreLocal {
                             lvalue: LValue { kind: InstructionKind::Const, place: place.clone() },
                             value: last,
-                            type_annotation: None,
                             span,
                         },
                     )?;
@@ -4440,7 +4363,6 @@ fn lower_assignment_expression<'a>(
                                         place: place.clone(),
                                     },
                                     value: right,
-                                    type_annotation: None,
                                     span: place.span,
                                 },
                             )?;
@@ -4626,7 +4548,6 @@ fn lower_assignment_expression<'a>(
                                         place: place.clone(),
                                     },
                                     value: binary_place,
-                                    type_annotation: None,
                                     span,
                                 },
                             )?;
@@ -6467,7 +6388,6 @@ fn lower_statement<'a>(
                         builder,
                         InstructionValue::DeclareLocal {
                             lvalue: LValue { kind: InstructionKind::Catch, place: place.clone() },
-                            type_annotation: None,
                             span: param_span,
                         },
                     )?;
@@ -6660,14 +6580,7 @@ fn lower_statement<'a>(
             // back-end can clone it verbatim into the output allocator (matching
             // the original Babel front-end, which wrapped the enum the same way).
             let span = builder.source_location(e.span);
-            lower_value_to_temporary(
-                builder,
-                InstructionValue::UnsupportedNode {
-                    node_type: Some("TSEnumDeclaration".to_string()),
-                    stmt,
-                    span,
-                },
-            )?;
+            lower_value_to_temporary(builder, InstructionValue::UnsupportedNode { stmt, span })?;
         }
         _ => {
             // Remaining statements are skipped: bodyless FunctionDeclaration
@@ -6781,15 +6694,10 @@ fn lower_variable_declaration<'a>(
                             },
                         )?;
                     } else {
-                        let type_annotation = declarator
-                            .type_annotation
-                            .as_ref()
-                            .map(|ann| ts_type_node_type(&ann.type_annotation).to_string());
                         lower_value_to_temporary(
                             builder,
                             InstructionValue::DeclareLocal {
                                 lvalue: LValue { kind, place },
-                                type_annotation,
                                 span: id_span,
                             },
                         )?;

@@ -155,10 +155,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                         value: ReactiveValue::Instruction(InstructionValue::StoreLocal {
                             lvalue: LValue { kind: InstructionKind::Reassign, place: original },
                             value: temporary,
-                            type_annotation: None,
                             span: destr_span,
                         }),
-                        effects: None,
                         span: instr_span,
                     });
                 }

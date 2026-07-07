@@ -341,7 +341,6 @@ fn rewrite_block<'a>(
             value: InstructionValue::StoreLocal {
                 lvalue: LValue { kind: InstructionKind::Reassign, place: return_value.clone() },
                 value: value.clone(),
-                type_annotation: None,
                 span: *ret_span,
             },
             effects: None,
@@ -374,7 +373,6 @@ fn declare_temporary<'a>(
         lvalue: declare_lvalue,
         value: InstructionValue::DeclareLocal {
             lvalue: LValue { place: result.clone(), kind: InstructionKind::Let },
-            type_annotation: None,
             span: result.span,
         },
         effects: None,

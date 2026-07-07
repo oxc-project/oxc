@@ -21,17 +21,6 @@ pub enum CompileResult<'a> {
     Error { diagnostics: Diagnostics },
 }
 
-/// Debug log entry for debugLogIRs support.
-/// Currently only supports the 'debug' variant (string values).
-#[derive(Debug, Clone)]
-pub struct DebugLogEntry;
-
-impl DebugLogEntry {
-    pub fn new(_name: impl Into<String>, _value: impl Into<String>) -> Self {
-        Self
-    }
-}
-
 /// Codegen output for a single compiled function.
 ///
 /// Stage 2: the generated AST fields are now arena-allocated oxc nodes (lifetime

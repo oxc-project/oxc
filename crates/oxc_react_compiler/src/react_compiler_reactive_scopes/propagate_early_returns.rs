@@ -145,10 +145,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                                 },
                             },
                             value: return_value,
-                            type_annotation: None,
                             span,
                         }),
-                        effects: None,
                         span,
                     }),
                     // Break to the label
@@ -157,7 +155,6 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                             target: early_return_value.label,
                             id: EvaluationOrder(0),
                             target_kind: ReactiveTerminalTargetKind::Labeled,
-                            span,
                         },
                         label: None,
                     }),
@@ -218,7 +215,6 @@ fn apply_early_return_to_scope<'a>(
                 binding: NonLocalBinding::Global { name: "Symbol".to_string() },
                 span,
             }),
-            effects: None,
             span,
         }),
         // PropertyLoad Symbol.for
@@ -240,7 +236,6 @@ fn apply_early_return_to_scope<'a>(
                 property: PropertyLiteral::String("for".to_string()),
                 span,
             }),
-            effects: None,
             span,
         }),
         // Primitive: the sentinel string
@@ -256,7 +251,6 @@ fn apply_early_return_to_scope<'a>(
                 value: PrimitiveValue::String(EARLY_RETURN_SENTINEL.into()),
                 span,
             }),
-            effects: None,
             span,
         }),
         // MethodCall: Symbol.for("react.early_return_sentinel")
@@ -289,7 +283,6 @@ fn apply_early_return_to_scope<'a>(
                 })],
                 span,
             }),
-            effects: None,
             span,
         }),
         // StoreLocal: let earlyReturnValue = sentinel
@@ -312,10 +305,8 @@ fn apply_early_return_to_scope<'a>(
                     reactive: false,
                     span: None, // GeneratedSource
                 },
-                type_annotation: None,
                 span,
             }),
-            effects: None,
             span,
         }),
         // Label terminal wrapping the original instructions
@@ -324,7 +315,6 @@ fn apply_early_return_to_scope<'a>(
             terminal: ReactiveTerminal::Label {
                 block: original_instructions,
                 id: EvaluationOrder(0),
-                span: None, // GeneratedSource
             },
         }),
     ];

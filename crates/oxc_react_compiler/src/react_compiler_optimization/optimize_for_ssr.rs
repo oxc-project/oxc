@@ -195,7 +195,6 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                     let store = InstructionValue::StoreLocal {
                                         lvalue: LValue { place: first_place.clone(), kind },
                                         value: value.clone(),
-                                        type_annotation: None,
                                         span,
                                     };
                                     instr.value = store;
