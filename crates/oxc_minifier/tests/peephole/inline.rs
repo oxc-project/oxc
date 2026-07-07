@@ -197,19 +197,6 @@ fn readonly_var_script_mode() {
     );
 }
 
-#[test]
-fn readonly_var_after_type_declaration() {
-    // Type-only declarations (`type`, `interface`) are erased and run no code,
-    // so they don't end the declarative prelude — a following readonly var
-    // stays inlineable.
-    test_options_source_type(
-        "type T = number; interface I {} var b = 2; function f() { return b; } log(f());",
-        "type T = number; interface I {} function f() { return 2; } log(f());",
-        SourceType::ts().with_module(true),
-        &CompressOptions::smallest(),
-    );
-}
-
 // A write-once falsy `var` flag read only in boolean context folds even past a
 // dirty declarative prelude — the bundled `var hydrating = false` shape read by
 // `if (hydrating)` throughout a framework runtime (Svelte/Vue, #14001). The

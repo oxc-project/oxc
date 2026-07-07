@@ -17,7 +17,7 @@ mod remove_unused_private_members;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
-use oxc_ast_visit::{Visit, walk::walk_call_expression};
+use crate::generated::visit::{Visit, walk::walk_call_expression};
 use oxc_semantic::Scoping;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
@@ -100,15 +100,13 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// A `Declaration` runs no user code at evaluation: function/type/interface
-    /// declarations are inert, and a `var`/`let`/`const` is declarative only when
-    /// every declarator is a simple binding with a literal (or no) initializer.
-    /// Classes, enums, and TS modules run user code, so they are not declarative.
+    /// A `Declaration` runs no user code at evaluation: function declarations
+    /// are inert, and a `var`/`let`/`const` is declarative only when every
+    /// declarator is a simple binding with a literal (or no) initializer.
+    /// Classes run user code, so they are not declarative.
     fn is_declarative_declaration(decl: &Declaration<'a>) -> bool {
         match decl {
-            Declaration::FunctionDeclaration(_)
-            | Declaration::TSTypeAliasDeclaration(_)
-            | Declaration::TSInterfaceDeclaration(_) => true,
+            Declaration::FunctionDeclaration(_) => true,
             Declaration::VariableDeclaration(decl) => {
                 Self::is_declarative_variable_declaration(decl)
             }

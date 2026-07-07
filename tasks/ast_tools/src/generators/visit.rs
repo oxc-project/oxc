@@ -15,7 +15,10 @@ use crate::{
     utils::{create_ident, create_ident_tokens, create_safe_ident},
 };
 
-use super::{AttrLocation, AttrPart, AttrPositions, attr_positions, define_generator};
+use super::{
+    AttrLocation, AttrPart, AttrPositions, attr_positions, define_generator,
+    traverse::is_ts_type_name,
+};
 
 /// Visitors with less than this number of fields/variants will be marked `#[inline]`.
 ///
@@ -178,15 +181,41 @@ fn parse_scope_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
     Ok(())
 }
 
-/// Generate outputs for `Visit` and `VisitMut`.
-fn generate_outputs(schema: &Schema) -> (/* Visit */ TokenStream, /* VisitMut */ TokenStream) {
-    // Generate `visit_*` methods and `walk_*` functions for both `Visit` and `VisitMut`
-    let mut builder = VisitBuilder::new(schema);
+/// Generate output for the JS-only `Visit` trait in `oxc_minifier`.
+///
+/// Same as the `Visit` trait in `oxc_ast_visit`, but without TS type-level syntax
+/// (no `visit_ts_*` methods, no `walk_ts_*` functions).
+/// The minifier only operates on type-stripped ASTs; TS nodes, if present, are not walked.
+pub(super) fn generate_visit_js(schema: &Schema) -> TokenStream {
+    let mut builder = VisitBuilder::new(schema, /* include_ts */ false);
     builder.generate();
-    let VisitBuilder { visit_methods, walk_fns, visit_mut_methods, walk_mut_fns, .. } = builder;
+    let VisitBuilder { visit_methods, walk_fns, .. } = builder;
 
-    // Generate `Visit` trait
-    let alloc_fn = quote! {
+    let output = generate_output(
+        &create_safe_ident("Visit"),
+        &visit_methods,
+        &walk_fns,
+        &create_safe_ident("walk"),
+        &alloc_fn_tokens(),
+        &create_safe_ident("AstKind"),
+        &quote!(AstKind<'a>),
+        /* expect_match_same_arms */ false,
+    );
+
+    // `dead_code`: unlike `oxc_ast_visit`, this trait is crate-private, so visitors which are
+    // only reachable from TS nodes (and `visit_argument`, bypassed by `walk_arguments`) are
+    // dead code.
+    // `match_wildcard_for_single_variants`: enums with a single TS variant get a `_` arm
+    // covering just that variant.
+    quote! {
+        #![allow(dead_code, clippy::match_wildcard_for_single_variants)]
+        #output
+    }
+}
+
+/// Generate `alloc` method for `Visit` trait.
+fn alloc_fn_tokens() -> TokenStream {
+    quote! {
         ///@@line_break
         #[inline]
         fn alloc<T>(&self, t: &T) -> &'a T {
@@ -197,7 +226,18 @@ fn generate_outputs(schema: &Schema) -> (/* Visit */ TokenStream, /* VisitMut */
                 std::mem::transmute(t)
             }
         }
-    };
+    }
+}
+
+/// Generate outputs for `Visit` and `VisitMut`.
+fn generate_outputs(schema: &Schema) -> (/* Visit */ TokenStream, /* VisitMut */ TokenStream) {
+    // Generate `visit_*` methods and `walk_*` functions for both `Visit` and `VisitMut`
+    let mut builder = VisitBuilder::new(schema, /* include_ts */ true);
+    builder.generate();
+    let VisitBuilder { visit_methods, walk_fns, visit_mut_methods, walk_mut_fns, .. } = builder;
+
+    // Generate `Visit` trait
+    let alloc_fn = alloc_fn_tokens();
     let visit_output = generate_output(
         &create_safe_ident("Visit"),
         &visit_methods,
@@ -206,6 +246,7 @@ fn generate_outputs(schema: &Schema) -> (/* Visit */ TokenStream, /* VisitMut */
         &alloc_fn,
         &create_safe_ident("AstKind"),
         &quote!(AstKind<'a>),
+        /* expect_match_same_arms */ true,
     );
 
     // Generate `VisitMut` trait
@@ -217,6 +258,7 @@ fn generate_outputs(schema: &Schema) -> (/* Visit */ TokenStream, /* VisitMut */
         &quote!(),
         &create_safe_ident("AstType"),
         &quote!(AstType),
+        /* expect_match_same_arms */ true,
     );
 
     (visit_output, visit_mut_output)
@@ -231,7 +273,12 @@ fn generate_output(
     maybe_alloc: &TokenStream,
     ast_kind_or_type_ident: &Ident,
     ast_kind_or_type_ty: &TokenStream,
+    expect_match_same_arms: bool,
 ) -> TokenStream {
+    // Identical match arms only exist in TS enum walks, which the JS-only visitor excludes
+    let maybe_match_same_arms =
+        if expect_match_same_arms { quote!(clippy::match_same_arms,) } else { quote!() };
+
     quote! {
         //! Visitor Pattern
         //!
@@ -242,7 +289,7 @@ fn generate_output(
         //!@@line_break
         #![expect(
             unused_variables,
-            clippy::match_same_arms,
+            #maybe_match_same_arms
             clippy::semicolon_if_nothing_returned,
         )]
         #![allow(
@@ -296,6 +343,9 @@ fn generate_output(
 /// Generator of `visit_*` methods and `walk_*` functions for `Visit` and `VisitMut`.
 struct VisitBuilder<'s> {
     schema: &'s Schema,
+    /// Whether to generate visitors for TS type-level syntax.
+    /// `false` for the JS-only `Visit` trait in `oxc_minifier`.
+    include_ts: bool,
     /// `visit_*` methods for `Visit`
     visit_methods: TokenStream,
     /// `visit_*` methods for `VisitMut`
@@ -308,9 +358,10 @@ struct VisitBuilder<'s> {
 
 impl<'s> VisitBuilder<'s> {
     /// Create new [`VisitBuilder`].
-    fn new(schema: &'s Schema) -> Self {
+    fn new(schema: &'s Schema, include_ts: bool) -> Self {
         Self {
             schema,
+            include_ts,
             visit_methods: quote!(),
             walk_fns: quote!(),
             visit_mut_methods: quote!(),
@@ -342,6 +393,10 @@ impl VisitBuilder<'_> {
     fn generate_struct_visitor(&mut self, struct_def: &StructDef) {
         // Exit if this struct is not visited
         let Some(visitor_names) = &struct_def.visit.visitor_names else { return };
+
+        if !self.include_ts && is_ts_type_name(struct_def.name()) {
+            return;
+        }
 
         // Generate visit methods
         let struct_ty = struct_def.ty(self.schema);
@@ -475,6 +530,11 @@ impl VisitBuilder<'_> {
     ) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
         // Generate `visit_*` method call for struct field
         let field_type = field.type_def(self.schema);
+
+        // Skip TS type-level fields for the JS-only visitor
+        if !self.include_ts && is_ts_type_name(field_type.innermost_type(self.schema).name()) {
+            return None;
+        }
         let field_ident = field.ident();
         let VisitAndVisitMut { mut visit, mut visit_mut } = generate_visit_type(
             field_type,
@@ -517,6 +577,10 @@ impl VisitBuilder<'_> {
         // Exit if this enum is not visited
         let Some(visitor_names) = &enum_def.visit.visitor_names else { return };
 
+        if !self.include_ts && is_ts_type_name(enum_def.name()) {
+            return;
+        }
+
         // Generate visit methods
         let enum_ty = enum_def.ty(self.schema);
         let visit_fn_ident = visitor_names.visitor_ident();
@@ -546,6 +610,14 @@ impl VisitBuilder<'_> {
             .iter()
             .filter_map(|variant| {
                 let variant_type = variant.field_type(self.schema)?;
+
+                // Skip TS variants for the JS-only visitor. They fall into the catch-all arm.
+                if !self.include_ts
+                    && is_ts_type_name(variant_type.innermost_type(self.schema).name())
+                {
+                    return None;
+                }
+
                 let VisitAndVisitMut { visit, visit_mut } = generate_visit_type(
                     variant_type,
                     &Target::Reference(create_ident_tokens("it")),
@@ -568,6 +640,7 @@ impl VisitBuilder<'_> {
 
         let (inherits_match_arms, inherits_match_arms_mut): (TokenStream, TokenStream) = enum_def
             .inherits_enums(self.schema)
+            .filter(|inherits_type| self.include_ts || !is_ts_type_name(inherits_type.name()))
             .map(|inherits_type| {
                 let inner_visit_fn_ident = inherits_type.visit.visitor_ident();
                 let Some(inner_visit_fn_ident) = inner_visit_fn_ident else {
@@ -646,6 +719,12 @@ impl VisitBuilder<'_> {
     fn generate_vec_visitor(&mut self, vec_def: &VecDef) {
         // Exit if this `Vec` does not have its own visitor
         let Some(visitor_names) = &vec_def.visit.visitor_names else { return };
+
+        if !self.include_ts
+            && is_ts_type_name(vec_def.inner_type(self.schema).innermost_type(self.schema).name())
+        {
+            return;
+        }
 
         // Generate visit methods
         let vec_ty = vec_def.ty(self.schema);

@@ -20,7 +20,7 @@ use crate::{
     symbol_value::SymbolValue,
 };
 
-use oxc_ast_visit::Visit;
+use crate::generated::visit::Visit;
 
 use super::{TraverseCtx, drop_diff::DropDiff};
 

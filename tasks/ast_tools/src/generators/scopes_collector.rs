@@ -49,10 +49,8 @@ struct CollectorConfig {
     /// `use` statement importing the `Visit` trait the collector implements.
     visit_use: TokenStream,
     /// Whether to visit TS type-level syntax.
-    ///
-    /// Note: the minifier's collector also visits TS, unlike its traverse walk.
-    /// The minifier accepts type-annotated ASTs, and TS types contain scopes
-    /// (e.g. `TSConditionalType`), which scope re-parenting must locate.
+    /// The minifier only operates on type-stripped ASTs, so its collector skips TS nodes,
+    /// and implements the minifier's JS-only `Visit` trait.
     include_ts: bool,
 }
 
@@ -62,7 +60,7 @@ impl CollectorConfig {
     }
 
     fn minifier() -> Self {
-        Self { visit_use: quote! { use oxc_ast_visit::Visit; }, include_ts: true }
+        Self { visit_use: quote! { use crate::generated::visit::Visit; }, include_ts: false }
     }
 }
 
@@ -260,13 +258,18 @@ fn generate(schema: &Schema, config: &CollectorConfig) -> TokenStream {
 
     let visit_use = &config.visit_use;
 
+    // Single-arm matches only occur in enums whose sole scope-containing variant is
+    // a TS type, which the JS-only collector excludes
+    let maybe_single_match_else =
+        if config.include_ts { quote!( , clippy::single_match_else ) } else { quote!() };
+
     quote! {
         #![expect(
             unused_variables,
             clippy::semicolon_if_nothing_returned,
             clippy::match_wildcard_for_single_variants,
-            clippy::match_same_arms,
-            clippy::single_match_else
+            clippy::match_same_arms
+            #maybe_single_match_else
         )]
 
         ///@@line_break

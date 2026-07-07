@@ -1,9 +1,9 @@
 use std::{iter, ops::ControlFlow};
 
 use crate::generated::ancestor::Ancestor;
+use crate::generated::visit::Visit;
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
@@ -20,14 +20,9 @@ use super::PeepholeOptimizations;
 /// with no initializers, which `KeepVar` re-emits unchanged at the end of
 /// the block. Flagging such an identity drop as a real change would
 /// oscillate the peephole fixed-point loop forever.
-///
-/// A TS type annotation disqualifies the identity classification: `KeepVar`'s
-/// re-emit strips annotations, and an annotation can hold resolved references
-/// (computed keys in a type literal) that must go through the drop walk.
 fn dead_drop_mutates_ast(stmt: &Statement<'_>) -> bool {
     !matches!(stmt, Statement::VariableDeclaration(decl)
-        if decl.kind.is_var()
-            && decl.declarations.iter().all(|d| d.init.is_none() && d.type_annotation.is_none()))
+        if decl.kind.is_var() && decl.declarations.iter().all(|d| d.init.is_none()))
 }
 
 impl<'a> PeepholeOptimizations {

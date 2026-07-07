@@ -1,9 +1,9 @@
+use crate::generated::visit::Visit;
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::{
     ast::*,
     builder::{GetAstBuilder, NONE},
 };
-use oxc_ast_visit::Visit;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
 use oxc_str::Str;

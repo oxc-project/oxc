@@ -11,9 +11,7 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use oxc_ast_visit::Visit;
-
-use crate::generated::scopes_collector::ChildScopeCollector;
+use crate::generated::{scopes_collector::ChildScopeCollector, visit::Visit};
 
 use super::{bound_identifier::BoundIdentifier, uid::UidGenerator};
 
@@ -385,9 +383,5 @@ impl TraverseScoping<'_> {
     #[inline]
     pub(crate) fn set_current_block_scope_id(&mut self, scope_id: ScopeId) {
         self.current_block_scope_id = scope_id;
-    }
-
-    pub fn delete_typescript_bindings(&mut self) {
-        self.scoping.delete_typescript_bindings();
     }
 }

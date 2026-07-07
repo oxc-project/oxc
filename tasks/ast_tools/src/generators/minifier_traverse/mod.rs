@@ -1,13 +1,14 @@
 //! Generator for minifier-local traverse runtime.
 //!
-//! Generates 3 files in `oxc_minifier` crate:
+//! Generates 4 files in `oxc_minifier` crate:
 //! * `traverse.rs` - `MinifierTraverse` trait with `enter_*` / `exit_*` methods.
 //! * `walk.rs` - Unsafe `walk_*` functions for AST traversal.
 //! * `ancestor.rs` - Ancestor tracking types and offset constants.
+//! * `visit.rs` - JS-only `Visit` trait for the minifier's internal visitors.
 //!
-//! The minifier only operates on type-stripped ASTs, so unlike `oxc_traverse`, its traverse
-//! runtime excludes TS type-level syntax entirely (no `enter_ts_*` / `exit_ts_*` methods,
-//! no `walk_ts_*` functions, no TS `Ancestor` variants). TS nodes, if present, are not walked.
+//! The minifier only operates on type-stripped ASTs, so unlike `oxc_traverse` / `oxc_ast_visit`,
+//! its traverse runtime and `Visit` trait exclude TS type-level syntax entirely (no `*_ts_*`
+//! methods, no TS walks, no TS `Ancestor` variants). TS nodes, if present, are not walked.
 
 use super::traverse::{self, TraverseTraitConfig};
 use crate::{
@@ -37,6 +38,10 @@ impl Generator for MinifierTraverseGenerator {
             Output::Rust {
                 path: output_path(MINIFIER_CRATE_PATH, "ancestor.rs"),
                 tokens: traverse::generate_ancestor(schema, /* include_ts */ false),
+            },
+            Output::Rust {
+                path: output_path(MINIFIER_CRATE_PATH, "visit.rs"),
+                tokens: super::visit::generate_visit_js(schema),
             },
         ]
     }

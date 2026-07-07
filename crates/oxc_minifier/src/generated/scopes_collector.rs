@@ -5,14 +5,13 @@
     unused_variables,
     clippy::semicolon_if_nothing_returned,
     clippy::match_wildcard_for_single_variants,
-    clippy::match_same_arms,
-    clippy::single_match_else
+    clippy::match_same_arms
 )]
 
 use std::cell::Cell;
 
+use crate::generated::visit::Visit;
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 /// Visitor that locates all child scopes.
@@ -68,11 +67,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Expression::PrivateInExpression(it) => self.visit_private_in_expression(it),
             Expression::JSXElement(it) => self.visit_jsx_element(it),
             Expression::JSXFragment(it) => self.visit_jsx_fragment(it),
-            Expression::TSAsExpression(it) => self.visit_ts_as_expression(it),
-            Expression::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
-            Expression::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
-            Expression::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
-            Expression::TSInstantiationExpression(it) => self.visit_ts_instantiation_expression(it),
             Expression::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
             Expression::ComputedMemberExpression(it) => self.visit_computed_member_expression(it),
             Expression::StaticMemberExpression(it) => self.visit_static_member_expression(it),
@@ -89,6 +83,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `TSAsExpression`
+                // `TSSatisfiesExpression`
+                // `TSTypeAssertion`
+                // `TSNonNullExpression`
+                // `TSInstantiationExpression`
             }
         }
     }
@@ -163,17 +162,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             ArrayExpressionElement::PrivateInExpression(it) => self.visit_private_in_expression(it),
             ArrayExpressionElement::JSXElement(it) => self.visit_jsx_element(it),
             ArrayExpressionElement::JSXFragment(it) => self.visit_jsx_fragment(it),
-            ArrayExpressionElement::TSAsExpression(it) => self.visit_ts_as_expression(it),
-            ArrayExpressionElement::TSSatisfiesExpression(it) => {
-                self.visit_ts_satisfies_expression(it)
-            }
-            ArrayExpressionElement::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
-            ArrayExpressionElement::TSNonNullExpression(it) => {
-                self.visit_ts_non_null_expression(it)
-            }
-            ArrayExpressionElement::TSInstantiationExpression(it) => {
-                self.visit_ts_instantiation_expression(it)
-            }
             ArrayExpressionElement::V8IntrinsicExpression(it) => {
                 self.visit_v8_intrinsic_expression(it)
             }
@@ -199,6 +187,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `TSAsExpression`
+                // `TSSatisfiesExpression`
+                // `TSTypeAssertion`
+                // `TSNonNullExpression`
+                // `TSInstantiationExpression`
             }
         }
     }
@@ -248,13 +241,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             PropertyKey::PrivateInExpression(it) => self.visit_private_in_expression(it),
             PropertyKey::JSXElement(it) => self.visit_jsx_element(it),
             PropertyKey::JSXFragment(it) => self.visit_jsx_fragment(it),
-            PropertyKey::TSAsExpression(it) => self.visit_ts_as_expression(it),
-            PropertyKey::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
-            PropertyKey::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
-            PropertyKey::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
-            PropertyKey::TSInstantiationExpression(it) => {
-                self.visit_ts_instantiation_expression(it)
-            }
             PropertyKey::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
             PropertyKey::ComputedMemberExpression(it) => self.visit_computed_member_expression(it),
             PropertyKey::StaticMemberExpression(it) => self.visit_static_member_expression(it),
@@ -273,6 +259,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `TSAsExpression`
+                // `TSSatisfiesExpression`
+                // `TSTypeAssertion`
+                // `TSNonNullExpression`
+                // `TSInstantiationExpression`
             }
         }
     }
@@ -285,9 +276,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_tagged_template_expression(&mut self, it: &TaggedTemplateExpression<'a>) {
         self.visit_expression(&it.tag);
-        if let Some(type_arguments) = &it.type_arguments {
-            self.visit_ts_type_parameter_instantiation(type_arguments);
-        }
         self.visit_template_literal(&it.quasi);
     }
 
@@ -315,18 +303,12 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
         self.visit_expression(&it.callee);
-        if let Some(type_arguments) = &it.type_arguments {
-            self.visit_ts_type_parameter_instantiation(type_arguments);
-        }
         self.visit_arguments(&it.arguments);
     }
 
     #[inline]
     fn visit_new_expression(&mut self, it: &NewExpression<'a>) {
         self.visit_expression(&it.callee);
-        if let Some(type_arguments) = &it.type_arguments {
-            self.visit_ts_type_parameter_instantiation(type_arguments);
-        }
         self.visit_arguments(&it.arguments);
     }
 
@@ -370,11 +352,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Argument::PrivateInExpression(it) => self.visit_private_in_expression(it),
             Argument::JSXElement(it) => self.visit_jsx_element(it),
             Argument::JSXFragment(it) => self.visit_jsx_fragment(it),
-            Argument::TSAsExpression(it) => self.visit_ts_as_expression(it),
-            Argument::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
-            Argument::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
-            Argument::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
-            Argument::TSInstantiationExpression(it) => self.visit_ts_instantiation_expression(it),
             Argument::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
             Argument::ComputedMemberExpression(it) => self.visit_computed_member_expression(it),
             Argument::StaticMemberExpression(it) => self.visit_static_member_expression(it),
@@ -391,6 +368,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `TSAsExpression`
+                // `TSSatisfiesExpression`
+                // `TSTypeAssertion`
+                // `TSNonNullExpression`
+                // `TSInstantiationExpression`
             }
         }
     }
@@ -435,12 +417,9 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.visit_expression(&it.right);
     }
 
+    #[inline]
     fn visit_assignment_target(&mut self, it: &AssignmentTarget<'a>) {
         match it {
-            AssignmentTarget::TSAsExpression(it) => self.visit_ts_as_expression(it),
-            AssignmentTarget::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
-            AssignmentTarget::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
-            AssignmentTarget::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
             AssignmentTarget::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }
@@ -451,20 +430,17 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             _ => {
                 // Remaining variants do not contain scopes:
                 // `AssignmentTargetIdentifier`
+                // `TSAsExpression`
+                // `TSSatisfiesExpression`
+                // `TSNonNullExpression`
+                // `TSTypeAssertion`
             }
         }
     }
 
+    #[inline]
     fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {
         match it {
-            SimpleAssignmentTarget::TSAsExpression(it) => self.visit_ts_as_expression(it),
-            SimpleAssignmentTarget::TSSatisfiesExpression(it) => {
-                self.visit_ts_satisfies_expression(it)
-            }
-            SimpleAssignmentTarget::TSNonNullExpression(it) => {
-                self.visit_ts_non_null_expression(it)
-            }
-            SimpleAssignmentTarget::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
             SimpleAssignmentTarget::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }
@@ -477,6 +453,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             _ => {
                 // Remaining variants do not contain scopes:
                 // `AssignmentTargetIdentifier`
+                // `TSAsExpression`
+                // `TSSatisfiesExpression`
+                // `TSNonNullExpression`
+                // `TSTypeAssertion`
             }
         }
     }
@@ -509,14 +489,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(it) => {
                 self.visit_assignment_target_with_default(it)
             }
-            AssignmentTargetMaybeDefault::TSAsExpression(it) => self.visit_ts_as_expression(it),
-            AssignmentTargetMaybeDefault::TSSatisfiesExpression(it) => {
-                self.visit_ts_satisfies_expression(it)
-            }
-            AssignmentTargetMaybeDefault::TSNonNullExpression(it) => {
-                self.visit_ts_non_null_expression(it)
-            }
-            AssignmentTargetMaybeDefault::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
             AssignmentTargetMaybeDefault::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }
@@ -535,6 +507,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             _ => {
                 // Remaining variants do not contain scopes:
                 // `AssignmentTargetIdentifier`
+                // `TSAsExpression`
+                // `TSSatisfiesExpression`
+                // `TSNonNullExpression`
+                // `TSTypeAssertion`
             }
         }
     }
@@ -585,6 +561,20 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     #[inline]
+    fn visit_chain_element(&mut self, it: &ChainElement<'a>) {
+        match it {
+            ChainElement::CallExpression(it) => self.visit_call_expression(it),
+            ChainElement::ComputedMemberExpression(it) => self.visit_computed_member_expression(it),
+            ChainElement::StaticMemberExpression(it) => self.visit_static_member_expression(it),
+            ChainElement::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
+            _ => {
+                // Remaining variants do not contain scopes:
+                // `TSNonNullExpression`
+            }
+        }
+    }
+
+    #[inline]
     fn visit_parenthesized_expression(&mut self, it: &ParenthesizedExpression<'a>) {
         self.visit_expression(&it.expression);
     }
@@ -611,23 +601,23 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 self.visit_function(it, flags)
             }
             Statement::ClassDeclaration(it) => self.visit_class(it),
-            Statement::TSTypeAliasDeclaration(it) => self.visit_ts_type_alias_declaration(it),
-            Statement::TSInterfaceDeclaration(it) => self.visit_ts_interface_declaration(it),
-            Statement::TSEnumDeclaration(it) => self.visit_ts_enum_declaration(it),
-            Statement::TSModuleDeclaration(it) => self.visit_ts_module_declaration(it),
-            Statement::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
             Statement::ExportDefaultDeclaration(it) => self.visit_export_default_declaration(it),
             Statement::ExportNamedDeclaration(it) => self.visit_export_named_declaration(it),
-            Statement::TSExportAssignment(it) => self.visit_ts_export_assignment(it),
             _ => {
                 // Remaining variants do not contain scopes:
                 // `BreakStatement`
                 // `ContinueStatement`
                 // `DebuggerStatement`
                 // `EmptyStatement`
+                // `TSTypeAliasDeclaration`
+                // `TSInterfaceDeclaration`
+                // `TSEnumDeclaration`
+                // `TSModuleDeclaration`
+                // `TSGlobalDeclaration`
                 // `TSImportEqualsDeclaration`
                 // `ImportDeclaration`
                 // `ExportAllDeclaration`
+                // `TSExportAssignment`
                 // `TSNamespaceExportDeclaration`
             }
         }
@@ -648,6 +638,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.add_scope(&it.scope_id);
     }
 
+    #[inline]
     fn visit_declaration(&mut self, it: &Declaration<'a>) {
         match it {
             Declaration::VariableDeclaration(it) => self.visit_variable_declaration(it),
@@ -656,13 +647,13 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 self.visit_function(it, flags)
             }
             Declaration::ClassDeclaration(it) => self.visit_class(it),
-            Declaration::TSTypeAliasDeclaration(it) => self.visit_ts_type_alias_declaration(it),
-            Declaration::TSInterfaceDeclaration(it) => self.visit_ts_interface_declaration(it),
-            Declaration::TSEnumDeclaration(it) => self.visit_ts_enum_declaration(it),
-            Declaration::TSModuleDeclaration(it) => self.visit_ts_module_declaration(it),
-            Declaration::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
             _ => {
                 // Remaining variants do not contain scopes:
+                // `TSTypeAliasDeclaration`
+                // `TSInterfaceDeclaration`
+                // `TSEnumDeclaration`
+                // `TSModuleDeclaration`
+                // `TSGlobalDeclaration`
                 // `TSImportEqualsDeclaration`
             }
         }
@@ -676,9 +667,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_variable_declarator(&mut self, it: &VariableDeclarator<'a>) {
         self.visit_binding_pattern(&it.id);
-        if let Some(type_annotation) = &it.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
         if let Some(init) = &it.init {
             self.visit_expression(init);
         }
@@ -756,13 +744,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             ForStatementInit::PrivateInExpression(it) => self.visit_private_in_expression(it),
             ForStatementInit::JSXElement(it) => self.visit_jsx_element(it),
             ForStatementInit::JSXFragment(it) => self.visit_jsx_fragment(it),
-            ForStatementInit::TSAsExpression(it) => self.visit_ts_as_expression(it),
-            ForStatementInit::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
-            ForStatementInit::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
-            ForStatementInit::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
-            ForStatementInit::TSInstantiationExpression(it) => {
-                self.visit_ts_instantiation_expression(it)
-            }
             ForStatementInit::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
             ForStatementInit::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
@@ -781,6 +762,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `TSAsExpression`
+                // `TSSatisfiesExpression`
+                // `TSTypeAssertion`
+                // `TSNonNullExpression`
+                // `TSInstantiationExpression`
             }
         }
     }
@@ -793,10 +779,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_for_statement_left(&mut self, it: &ForStatementLeft<'a>) {
         match it {
             ForStatementLeft::VariableDeclaration(it) => self.visit_variable_declaration(it),
-            ForStatementLeft::TSAsExpression(it) => self.visit_ts_as_expression(it),
-            ForStatementLeft::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
-            ForStatementLeft::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
-            ForStatementLeft::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
             ForStatementLeft::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }
@@ -807,6 +789,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             _ => {
                 // Remaining variants do not contain scopes:
                 // `AssignmentTargetIdentifier`
+                // `TSAsExpression`
+                // `TSSatisfiesExpression`
+                // `TSNonNullExpression`
+                // `TSTypeAssertion`
             }
         }
     }
@@ -882,9 +868,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_catch_parameter(&mut self, it: &CatchParameter<'a>) {
         self.visit_binding_pattern(&it.pattern);
-        if let Some(type_annotation) = &it.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
     }
 
     #[inline(always)]
@@ -957,9 +940,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
         self.visit_decorators(&it.decorators);
         self.visit_binding_pattern(&it.pattern);
-        if let Some(type_annotation) = &it.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
         if let Some(initializer) = &it.initializer {
             self.visit_expression(initializer);
         }
@@ -969,9 +949,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_formal_parameter_rest(&mut self, it: &FormalParameterRest<'a>) {
         self.visit_decorators(&it.decorators);
         self.visit_binding_rest_element(&it.rest);
-        if let Some(type_annotation) = &it.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
     }
 
     #[inline]
@@ -1003,6 +980,20 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     #[inline]
+    fn visit_class_element(&mut self, it: &ClassElement<'a>) {
+        match it {
+            ClassElement::StaticBlock(it) => self.visit_static_block(it),
+            ClassElement::MethodDefinition(it) => self.visit_method_definition(it),
+            ClassElement::PropertyDefinition(it) => self.visit_property_definition(it),
+            ClassElement::AccessorProperty(it) => self.visit_accessor_property(it),
+            _ => {
+                // Remaining variants do not contain scopes:
+                // `TSIndexSignature`
+            }
+        }
+    }
+
+    #[inline]
     fn visit_method_definition(&mut self, it: &MethodDefinition<'a>) {
         self.visit_decorators(&it.decorators);
         self.visit_property_key(&it.key);
@@ -1021,9 +1012,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_property_definition(&mut self, it: &PropertyDefinition<'a>) {
         self.visit_decorators(&it.decorators);
         self.visit_property_key(&it.key);
-        if let Some(type_annotation) = &it.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
         if let Some(value) = &it.value {
             self.visit_expression(value);
         }
@@ -1048,11 +1036,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             ModuleDeclaration::ExportNamedDeclaration(it) => {
                 self.visit_export_named_declaration(it)
             }
-            ModuleDeclaration::TSExportAssignment(it) => self.visit_ts_export_assignment(it),
             _ => {
                 // Remaining variants do not contain scopes:
                 // `ImportDeclaration`
                 // `ExportAllDeclaration`
+                // `TSExportAssignment`
                 // `TSNamespaceExportDeclaration`
             }
         }
@@ -1062,9 +1050,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_accessor_property(&mut self, it: &AccessorProperty<'a>) {
         self.visit_decorators(&it.decorators);
         self.visit_property_key(&it.key);
-        if let Some(type_annotation) = &it.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
         if let Some(value) = &it.value {
             self.visit_expression(value);
         }
@@ -1147,9 +1132,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 self.visit_function(it, flags)
             }
             ExportDefaultDeclarationKind::ClassDeclaration(it) => self.visit_class(it),
-            ExportDefaultDeclarationKind::TSInterfaceDeclaration(it) => {
-                self.visit_ts_interface_declaration(it)
-            }
             ExportDefaultDeclarationKind::TemplateLiteral(it) => self.visit_template_literal(it),
             ExportDefaultDeclarationKind::ArrayExpression(it) => self.visit_array_expression(it),
             ExportDefaultDeclarationKind::ArrowFunctionExpression(it) => {
@@ -1193,17 +1175,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             }
             ExportDefaultDeclarationKind::JSXElement(it) => self.visit_jsx_element(it),
             ExportDefaultDeclarationKind::JSXFragment(it) => self.visit_jsx_fragment(it),
-            ExportDefaultDeclarationKind::TSAsExpression(it) => self.visit_ts_as_expression(it),
-            ExportDefaultDeclarationKind::TSSatisfiesExpression(it) => {
-                self.visit_ts_satisfies_expression(it)
-            }
-            ExportDefaultDeclarationKind::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
-            ExportDefaultDeclarationKind::TSNonNullExpression(it) => {
-                self.visit_ts_non_null_expression(it)
-            }
-            ExportDefaultDeclarationKind::TSInstantiationExpression(it) => {
-                self.visit_ts_instantiation_expression(it)
-            }
             ExportDefaultDeclarationKind::V8IntrinsicExpression(it) => {
                 self.visit_v8_intrinsic_expression(it)
             }
@@ -1218,6 +1189,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             }
             _ => {
                 // Remaining variants do not contain scopes:
+                // `TSInterfaceDeclaration`
                 // `BooleanLiteral`
                 // `NullLiteral`
                 // `NumericLiteral`
@@ -1228,6 +1200,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `TSAsExpression`
+                // `TSSatisfiesExpression`
+                // `TSTypeAssertion`
+                // `TSNonNullExpression`
+                // `TSInstantiationExpression`
             }
         }
     }
@@ -1280,9 +1257,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_jsx_opening_element(&mut self, it: &JSXOpeningElement<'a>) {
-        if let Some(type_arguments) = &it.type_arguments {
-            self.visit_ts_type_parameter_instantiation(type_arguments);
-        }
         self.visit_jsx_attribute_items(&it.attributes);
     }
 
@@ -1362,13 +1336,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             JSXExpression::PrivateInExpression(it) => self.visit_private_in_expression(it),
             JSXExpression::JSXElement(it) => self.visit_jsx_element(it),
             JSXExpression::JSXFragment(it) => self.visit_jsx_fragment(it),
-            JSXExpression::TSAsExpression(it) => self.visit_ts_as_expression(it),
-            JSXExpression::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
-            JSXExpression::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
-            JSXExpression::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
-            JSXExpression::TSInstantiationExpression(it) => {
-                self.visit_ts_instantiation_expression(it)
-            }
             JSXExpression::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
             JSXExpression::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
@@ -1388,6 +1355,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `TSAsExpression`
+                // `TSSatisfiesExpression`
+                // `TSTypeAssertion`
+                // `TSNonNullExpression`
+                // `TSInstantiationExpression`
             }
         }
     }
@@ -1457,567 +1429,8 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     #[inline]
-    fn visit_ts_this_parameter(&mut self, it: &TSThisParameter<'a>) {
-        if let Some(type_annotation) = &it.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
-    }
-
-    #[inline]
-    fn visit_ts_enum_declaration(&mut self, it: &TSEnumDeclaration<'a>) {
-        self.visit_ts_enum_body(&it.body);
-    }
-
-    #[inline]
-    fn visit_ts_enum_body(&mut self, it: &TSEnumBody<'a>) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_enum_member(&mut self, it: &TSEnumMember<'a>) {
-        self.visit_ts_enum_member_name(&it.id);
-        if let Some(initializer) = &it.initializer {
-            self.visit_expression(initializer);
-        }
-    }
-
-    #[inline]
-    fn visit_ts_enum_member_name(&mut self, it: &TSEnumMemberName<'a>) {
-        match it {
-            TSEnumMemberName::ComputedTemplateString(it) => self.visit_template_literal(it),
-            _ => {
-                // Remaining variants do not contain scopes:
-                // `Identifier`
-                // `String`
-                // `ComputedString`
-            }
-        }
-    }
-
-    #[inline]
-    fn visit_ts_type_annotation(&mut self, it: &TSTypeAnnotation<'a>) {
-        self.visit_ts_type(&it.type_annotation);
-    }
-
-    #[inline]
-    fn visit_ts_literal_type(&mut self, it: &TSLiteralType<'a>) {
-        self.visit_ts_literal(&it.literal);
-    }
-
-    #[inline]
-    fn visit_ts_literal(&mut self, it: &TSLiteral<'a>) {
-        match it {
-            TSLiteral::TemplateLiteral(it) => self.visit_template_literal(it),
-            TSLiteral::UnaryExpression(it) => self.visit_unary_expression(it),
-            _ => {
-                // Remaining variants do not contain scopes:
-                // `BooleanLiteral`
-                // `NumericLiteral`
-                // `BigIntLiteral`
-                // `StringLiteral`
-            }
-        }
-    }
-
-    fn visit_ts_type(&mut self, it: &TSType<'a>) {
-        match it {
-            TSType::TSArrayType(it) => self.visit_ts_array_type(it),
-            TSType::TSConditionalType(it) => self.visit_ts_conditional_type(it),
-            TSType::TSConstructorType(it) => self.visit_ts_constructor_type(it),
-            TSType::TSFunctionType(it) => self.visit_ts_function_type(it),
-            TSType::TSImportType(it) => self.visit_ts_import_type(it),
-            TSType::TSIndexedAccessType(it) => self.visit_ts_indexed_access_type(it),
-            TSType::TSInferType(it) => self.visit_ts_infer_type(it),
-            TSType::TSIntersectionType(it) => self.visit_ts_intersection_type(it),
-            TSType::TSLiteralType(it) => self.visit_ts_literal_type(it),
-            TSType::TSMappedType(it) => self.visit_ts_mapped_type(it),
-            TSType::TSNamedTupleMember(it) => self.visit_ts_named_tuple_member(it),
-            TSType::TSTemplateLiteralType(it) => self.visit_ts_template_literal_type(it),
-            TSType::TSTupleType(it) => self.visit_ts_tuple_type(it),
-            TSType::TSTypeLiteral(it) => self.visit_ts_type_literal(it),
-            TSType::TSTypeOperatorType(it) => self.visit_ts_type_operator(it),
-            TSType::TSTypePredicate(it) => self.visit_ts_type_predicate(it),
-            TSType::TSTypeQuery(it) => self.visit_ts_type_query(it),
-            TSType::TSTypeReference(it) => self.visit_ts_type_reference(it),
-            TSType::TSUnionType(it) => self.visit_ts_union_type(it),
-            TSType::TSParenthesizedType(it) => self.visit_ts_parenthesized_type(it),
-            TSType::JSDocNullableType(it) => self.visit_js_doc_nullable_type(it),
-            TSType::JSDocNonNullableType(it) => self.visit_js_doc_non_nullable_type(it),
-            _ => {
-                // Remaining variants do not contain scopes:
-                // `TSAnyKeyword`
-                // `TSBigIntKeyword`
-                // `TSBooleanKeyword`
-                // `TSIntrinsicKeyword`
-                // `TSNeverKeyword`
-                // `TSNullKeyword`
-                // `TSNumberKeyword`
-                // `TSObjectKeyword`
-                // `TSStringKeyword`
-                // `TSSymbolKeyword`
-                // `TSUndefinedKeyword`
-                // `TSUnknownKeyword`
-                // `TSVoidKeyword`
-                // `TSThisType`
-                // `JSDocUnknownType`
-            }
-        }
-    }
-
-    #[inline]
-    fn visit_ts_conditional_type(&mut self, it: &TSConditionalType<'a>) {
-        self.visit_ts_type(&it.check_type);
-        self.add_scope(&it.scope_id);
-        self.visit_ts_type(&it.false_type);
-    }
-
-    #[inline]
-    fn visit_ts_union_type(&mut self, it: &TSUnionType<'a>) {
-        self.visit_ts_types(&it.types);
-    }
-
-    #[inline]
-    fn visit_ts_intersection_type(&mut self, it: &TSIntersectionType<'a>) {
-        self.visit_ts_types(&it.types);
-    }
-
-    #[inline]
-    fn visit_ts_parenthesized_type(&mut self, it: &TSParenthesizedType<'a>) {
-        self.visit_ts_type(&it.type_annotation);
-    }
-
-    #[inline]
-    fn visit_ts_type_operator(&mut self, it: &TSTypeOperator<'a>) {
-        self.visit_ts_type(&it.type_annotation);
-    }
-
-    #[inline]
-    fn visit_ts_array_type(&mut self, it: &TSArrayType<'a>) {
-        self.visit_ts_type(&it.element_type);
-    }
-
-    #[inline]
-    fn visit_ts_indexed_access_type(&mut self, it: &TSIndexedAccessType<'a>) {
-        self.visit_ts_type(&it.object_type);
-        self.visit_ts_type(&it.index_type);
-    }
-
-    #[inline]
-    fn visit_ts_tuple_type(&mut self, it: &TSTupleType<'a>) {
-        self.visit_ts_tuple_elements(&it.element_types);
-    }
-
-    #[inline]
-    fn visit_ts_named_tuple_member(&mut self, it: &TSNamedTupleMember<'a>) {
-        self.visit_ts_tuple_element(&it.element_type);
-    }
-
-    #[inline]
-    fn visit_ts_optional_type(&mut self, it: &TSOptionalType<'a>) {
-        self.visit_ts_type(&it.type_annotation);
-    }
-
-    #[inline]
-    fn visit_ts_rest_type(&mut self, it: &TSRestType<'a>) {
-        self.visit_ts_type(&it.type_annotation);
-    }
-
-    fn visit_ts_tuple_element(&mut self, it: &TSTupleElement<'a>) {
-        match it {
-            TSTupleElement::TSOptionalType(it) => self.visit_ts_optional_type(it),
-            TSTupleElement::TSRestType(it) => self.visit_ts_rest_type(it),
-            TSTupleElement::TSArrayType(it) => self.visit_ts_array_type(it),
-            TSTupleElement::TSConditionalType(it) => self.visit_ts_conditional_type(it),
-            TSTupleElement::TSConstructorType(it) => self.visit_ts_constructor_type(it),
-            TSTupleElement::TSFunctionType(it) => self.visit_ts_function_type(it),
-            TSTupleElement::TSImportType(it) => self.visit_ts_import_type(it),
-            TSTupleElement::TSIndexedAccessType(it) => self.visit_ts_indexed_access_type(it),
-            TSTupleElement::TSInferType(it) => self.visit_ts_infer_type(it),
-            TSTupleElement::TSIntersectionType(it) => self.visit_ts_intersection_type(it),
-            TSTupleElement::TSLiteralType(it) => self.visit_ts_literal_type(it),
-            TSTupleElement::TSMappedType(it) => self.visit_ts_mapped_type(it),
-            TSTupleElement::TSNamedTupleMember(it) => self.visit_ts_named_tuple_member(it),
-            TSTupleElement::TSTemplateLiteralType(it) => self.visit_ts_template_literal_type(it),
-            TSTupleElement::TSTupleType(it) => self.visit_ts_tuple_type(it),
-            TSTupleElement::TSTypeLiteral(it) => self.visit_ts_type_literal(it),
-            TSTupleElement::TSTypeOperatorType(it) => self.visit_ts_type_operator(it),
-            TSTupleElement::TSTypePredicate(it) => self.visit_ts_type_predicate(it),
-            TSTupleElement::TSTypeQuery(it) => self.visit_ts_type_query(it),
-            TSTupleElement::TSTypeReference(it) => self.visit_ts_type_reference(it),
-            TSTupleElement::TSUnionType(it) => self.visit_ts_union_type(it),
-            TSTupleElement::TSParenthesizedType(it) => self.visit_ts_parenthesized_type(it),
-            TSTupleElement::JSDocNullableType(it) => self.visit_js_doc_nullable_type(it),
-            TSTupleElement::JSDocNonNullableType(it) => self.visit_js_doc_non_nullable_type(it),
-            _ => {
-                // Remaining variants do not contain scopes:
-                // `TSAnyKeyword`
-                // `TSBigIntKeyword`
-                // `TSBooleanKeyword`
-                // `TSIntrinsicKeyword`
-                // `TSNeverKeyword`
-                // `TSNullKeyword`
-                // `TSNumberKeyword`
-                // `TSObjectKeyword`
-                // `TSStringKeyword`
-                // `TSSymbolKeyword`
-                // `TSUndefinedKeyword`
-                // `TSUnknownKeyword`
-                // `TSVoidKeyword`
-                // `TSThisType`
-                // `JSDocUnknownType`
-            }
-        }
-    }
-
-    #[inline(always)]
-    fn visit_ts_any_keyword(&mut self, it: &TSAnyKeyword) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_string_keyword(&mut self, it: &TSStringKeyword) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_boolean_keyword(&mut self, it: &TSBooleanKeyword) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_number_keyword(&mut self, it: &TSNumberKeyword) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_never_keyword(&mut self, it: &TSNeverKeyword) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_intrinsic_keyword(&mut self, it: &TSIntrinsicKeyword) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_unknown_keyword(&mut self, it: &TSUnknownKeyword) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_null_keyword(&mut self, it: &TSNullKeyword) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_undefined_keyword(&mut self, it: &TSUndefinedKeyword) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_void_keyword(&mut self, it: &TSVoidKeyword) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_symbol_keyword(&mut self, it: &TSSymbolKeyword) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_this_type(&mut self, it: &TSThisType) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_object_keyword(&mut self, it: &TSObjectKeyword) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_big_int_keyword(&mut self, it: &TSBigIntKeyword) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline]
-    fn visit_ts_type_reference(&mut self, it: &TSTypeReference<'a>) {
-        if let Some(type_arguments) = &it.type_arguments {
-            self.visit_ts_type_parameter_instantiation(type_arguments);
-        }
-    }
-
-    #[inline(always)]
-    fn visit_ts_type_name(&mut self, it: &TSTypeName<'a>) {
-        // Enum does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_qualified_name(&mut self, it: &TSQualifiedName<'a>) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline]
-    fn visit_ts_type_parameter_instantiation(&mut self, it: &TSTypeParameterInstantiation<'a>) {
-        self.visit_ts_types(&it.params);
-    }
-
-    #[inline]
-    fn visit_ts_type_parameter(&mut self, it: &TSTypeParameter<'a>) {
-        if let Some(constraint) = &it.constraint {
-            self.visit_ts_type(constraint);
-        }
-        if let Some(default) = &it.default {
-            self.visit_ts_type(default);
-        }
-    }
-
-    #[inline]
-    fn visit_ts_type_parameter_declaration(&mut self, it: &TSTypeParameterDeclaration<'a>) {
-        self.visit_ts_type_parameters(&it.params);
-    }
-
-    #[inline]
-    fn visit_ts_type_alias_declaration(&mut self, it: &TSTypeAliasDeclaration<'a>) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_class_implements(&mut self, it: &TSClassImplements<'a>) {
-        if let Some(type_arguments) = &it.type_arguments {
-            self.visit_ts_type_parameter_instantiation(type_arguments);
-        }
-    }
-
-    #[inline]
-    fn visit_ts_interface_declaration(&mut self, it: &TSInterfaceDeclaration<'a>) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_interface_body(&mut self, it: &TSInterfaceBody<'a>) {
-        self.visit_ts_signatures(&it.body);
-    }
-
-    #[inline]
-    fn visit_ts_property_signature(&mut self, it: &TSPropertySignature<'a>) {
-        self.visit_property_key(&it.key);
-        if let Some(type_annotation) = &it.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
-    }
-
-    #[inline]
-    fn visit_ts_index_signature(&mut self, it: &TSIndexSignature<'a>) {
-        self.visit_ts_index_signature_names(&it.parameters);
-        self.visit_ts_type_annotation(&it.type_annotation);
-    }
-
-    #[inline]
-    fn visit_ts_call_signature_declaration(&mut self, it: &TSCallSignatureDeclaration<'a>) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_method_signature(&mut self, it: &TSMethodSignature<'a>) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_construct_signature_declaration(
-        &mut self,
-        it: &TSConstructSignatureDeclaration<'a>,
-    ) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_index_signature_name(&mut self, it: &TSIndexSignatureName<'a>) {
-        self.visit_ts_type_annotation(&it.type_annotation);
-    }
-
-    #[inline]
-    fn visit_ts_interface_heritage(&mut self, it: &TSInterfaceHeritage<'a>) {
-        self.visit_expression(&it.expression);
-        if let Some(type_arguments) = &it.type_arguments {
-            self.visit_ts_type_parameter_instantiation(type_arguments);
-        }
-    }
-
-    #[inline]
-    fn visit_ts_type_predicate(&mut self, it: &TSTypePredicate<'a>) {
-        if let Some(type_annotation) = &it.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
-    }
-
-    #[inline(always)]
-    fn visit_ts_type_predicate_name(&mut self, it: &TSTypePredicateName<'a>) {
-        // Enum does not contain a scope. Halt traversal.
-    }
-
-    #[inline]
-    fn visit_ts_module_declaration(&mut self, it: &TSModuleDeclaration<'a>) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline(always)]
-    fn visit_ts_module_declaration_name(&mut self, it: &TSModuleDeclarationName<'a>) {
-        // Enum does not contain a scope. Halt traversal.
-    }
-
-    #[inline]
-    fn visit_ts_global_declaration(&mut self, it: &TSGlobalDeclaration<'a>) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_module_block(&mut self, it: &TSModuleBlock<'a>) {
-        self.visit_statements(&it.body);
-    }
-
-    #[inline]
-    fn visit_ts_type_literal(&mut self, it: &TSTypeLiteral<'a>) {
-        self.visit_ts_signatures(&it.members);
-    }
-
-    #[inline]
-    fn visit_ts_infer_type(&mut self, it: &TSInferType<'a>) {
-        self.visit_ts_type_parameter(&it.type_parameter);
-    }
-
-    #[inline]
-    fn visit_ts_type_query(&mut self, it: &TSTypeQuery<'a>) {
-        self.visit_ts_type_query_expr_name(&it.expr_name);
-        if let Some(type_arguments) = &it.type_arguments {
-            self.visit_ts_type_parameter_instantiation(type_arguments);
-        }
-    }
-
-    #[inline]
-    fn visit_ts_type_query_expr_name(&mut self, it: &TSTypeQueryExprName<'a>) {
-        match it {
-            TSTypeQueryExprName::TSImportType(it) => self.visit_ts_import_type(it),
-            _ => {
-                // Remaining variants do not contain scopes:
-                // `IdentifierReference`
-                // `QualifiedName`
-                // `ThisExpression`
-            }
-        }
-    }
-
-    #[inline]
-    fn visit_ts_import_type(&mut self, it: &TSImportType<'a>) {
-        if let Some(options) = &it.options {
-            self.visit_object_expression(options);
-        }
-        if let Some(type_arguments) = &it.type_arguments {
-            self.visit_ts_type_parameter_instantiation(type_arguments);
-        }
-    }
-
-    #[inline(always)]
-    fn visit_ts_import_type_qualifier(&mut self, it: &TSImportTypeQualifier<'a>) {
-        // Enum does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_import_type_qualified_name(&mut self, it: &TSImportTypeQualifiedName<'a>) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline]
-    fn visit_ts_function_type(&mut self, it: &TSFunctionType<'a>) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_constructor_type(&mut self, it: &TSConstructorType<'a>) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_mapped_type(&mut self, it: &TSMappedType<'a>) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_template_literal_type(&mut self, it: &TSTemplateLiteralType<'a>) {
-        self.visit_ts_types(&it.types);
-    }
-
-    #[inline]
-    fn visit_ts_as_expression(&mut self, it: &TSAsExpression<'a>) {
-        self.visit_expression(&it.expression);
-        self.visit_ts_type(&it.type_annotation);
-    }
-
-    #[inline]
-    fn visit_ts_satisfies_expression(&mut self, it: &TSSatisfiesExpression<'a>) {
-        self.visit_expression(&it.expression);
-        self.visit_ts_type(&it.type_annotation);
-    }
-
-    #[inline]
-    fn visit_ts_type_assertion(&mut self, it: &TSTypeAssertion<'a>) {
-        self.visit_ts_type(&it.type_annotation);
-        self.visit_expression(&it.expression);
-    }
-
-    #[inline(always)]
-    fn visit_ts_import_equals_declaration(&mut self, it: &TSImportEqualsDeclaration<'a>) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_module_reference(&mut self, it: &TSModuleReference<'a>) {
-        // Enum does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_external_module_reference(&mut self, it: &TSExternalModuleReference<'a>) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline]
-    fn visit_ts_non_null_expression(&mut self, it: &TSNonNullExpression<'a>) {
-        self.visit_expression(&it.expression);
-    }
-
-    #[inline]
     fn visit_decorator(&mut self, it: &Decorator<'a>) {
         self.visit_expression(&it.expression);
-    }
-
-    #[inline]
-    fn visit_ts_export_assignment(&mut self, it: &TSExportAssignment<'a>) {
-        self.visit_expression(&it.expression);
-    }
-
-    #[inline(always)]
-    fn visit_ts_namespace_export_declaration(&mut self, it: &TSNamespaceExportDeclaration<'a>) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline]
-    fn visit_ts_instantiation_expression(&mut self, it: &TSInstantiationExpression<'a>) {
-        self.visit_expression(&it.expression);
-        self.visit_ts_type_parameter_instantiation(&it.type_arguments);
-    }
-
-    #[inline]
-    fn visit_js_doc_nullable_type(&mut self, it: &JSDocNullableType<'a>) {
-        self.visit_ts_type(&it.type_annotation);
-    }
-
-    #[inline]
-    fn visit_js_doc_non_nullable_type(&mut self, it: &JSDocNonNullableType<'a>) {
-        self.visit_ts_type(&it.type_annotation);
-    }
-
-    #[inline(always)]
-    fn visit_js_doc_unknown_type(&mut self, it: &JSDocUnknownType) {
-        // Struct does not contain a scope. Halt traversal.
     }
 
     #[inline(always)]

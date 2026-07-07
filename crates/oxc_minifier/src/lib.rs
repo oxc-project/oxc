@@ -1,6 +1,6 @@
 //! # Oxc Minifier
 //!
-//! High-performance JavaScript/TypeScript minifier focused on maximum compression.
+//! High-performance JavaScript minifier focused on maximum compression.
 //!
 //! ## Overview
 //!
@@ -8,6 +8,10 @@
 //! to achieve the smallest possible output while maintaining correctness. It draws
 //! inspiration from industry-leading minifiers like Closure Compiler, Terser, esbuild,
 //! and SWC.
+//!
+//! The input AST must contain no TypeScript syntax: run the TypeScript transform
+//! (`oxc_transformer`) first to strip types. The minifier does not visit TS nodes —
+//! passing an AST with TS syntax produces unspecified (though memory-safe) output.
 //!
 //! ## Features
 //!
