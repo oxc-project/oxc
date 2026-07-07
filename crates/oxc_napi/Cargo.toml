@@ -40,5 +40,11 @@ oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 [build-dependencies]
 napi-build = { workspace = true }
 
+[features]
+# Render pretty codeframes in `OxcError` via miette's graphical renderer.
+# Off by default so library consumers (e.g. bundlers embedding these bindings)
+# don't link the renderer; without it `codeframe` is `None`.
+fancy = ["oxc_diagnostics/fancy"]
+
 [package.metadata.cargo-shear]
 ignored = ["napi"]

@@ -64,7 +64,9 @@ pub type Severity = miette::Severity;
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 
 use miette::{Diagnostic, SourceCode};
-pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, Labels, NamedSource};
+#[cfg(feature = "fancy")]
+pub use miette::{GraphicalReportHandler, GraphicalTheme};
+pub use miette::{LabeledSpan, Labels, NamedSource};
 
 /// A collection of [`OxcDiagnostic`]s.
 ///

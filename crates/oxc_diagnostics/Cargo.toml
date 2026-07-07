@@ -21,5 +21,12 @@ cow-utils = { workspace = true }
 miette = { workspace = true }
 percent-encoding = { workspace = true }
 
+[features]
+# Enable miette's graphical report renderer and re-export `GraphicalReportHandler`
+# / `GraphicalTheme`. Off by default: the renderer (plus textwrap/owo-colors) is
+# only needed by CLIs that print codeframes to a terminal, and it otherwise ends
+# up linked into every downstream binary that formats a `miette::Report`.
+fancy = ["miette/fancy-no-syscall"]
+
 [lib]
 doctest = false

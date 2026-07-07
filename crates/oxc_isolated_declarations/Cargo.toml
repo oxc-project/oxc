@@ -38,6 +38,10 @@ insta = { workspace = true, features = ["glob"] }
 oxc_codegen = { workspace = true, features = ["sourcemap"] }
 oxc_parser = { workspace = true }
 
+# Snapshot tests render diagnostics through miette's default hook; enable the
+# graphical renderer for tests only so downstream consumers don't link it.
+oxc_diagnostics = { workspace = true, features = ["fancy"] }
+
 # Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
 # If we enabled `disable_old_builder` feature in main dependency, feature unification would
 # cause it to be activated for `oxc_ast` for the user too.

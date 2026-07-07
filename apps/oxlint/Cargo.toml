@@ -31,11 +31,11 @@ oxc_allocator = { workspace = true, features = ["fixed_size"] }
 oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_config = { workspace = true }
-oxc_diagnostics = { workspace = true }
+oxc_diagnostics = { workspace = true, features = ["fancy"] }
 oxc_estree_tokens = { workspace = true }
 oxc_language_server = { workspace = true }
 oxc_linter = { workspace = true }
-oxc_napi = { workspace = true }
+oxc_napi = { workspace = true, features = ["fancy"] }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
@@ -44,7 +44,7 @@ oxc_str = { workspace = true }
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
-miette = { workspace = true }
+miette = { workspace = true, features = ["fancy-no-syscall"] }
 napi = { workspace = true, features = ["async"], optional = true }
 tracing = { workspace = true }
 napi-derive = { workspace = true, optional = true }

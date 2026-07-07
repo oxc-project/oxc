@@ -13,7 +13,9 @@ use oxc::{
 };
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_str::{Str, format_str};
+use oxc_str::Str;
+#[cfg(feature = "fancy")]
+use oxc_str::format_str;
 
 /// The main struct containing all deserializable data in raw transfer.
 #[ast]
@@ -101,8 +103,19 @@ impl<'a> Error<'a> {
         let message = Str::from_in(diagnostic.message.as_ref(), allocator);
         let help_message =
             diagnostic.help.as_ref().map(|help| Str::from_in(help.as_ref(), allocator));
-        let report = diagnostic.with_source_code(Arc::clone(named_source));
-        let codeframe = format_str!(allocator, "{report:?}");
+        // Rendering the codeframe requires miette's graphical renderer, which is
+        // only linked when the `fancy` feature is enabled.
+        #[cfg(feature = "fancy")]
+        let codeframe = {
+            let report = diagnostic.with_source_code(Arc::clone(named_source));
+            format_str!(allocator, "{report:?}")
+        };
+        #[cfg(not(feature = "fancy"))]
+        let codeframe = {
+            let _ = named_source;
+            drop(diagnostic);
+            Str::from_in("", allocator)
+        };
 
         #[expect(clippy::inconsistent_struct_constructor)] // `#[ast]` macro re-orders struct fields
         Self { severity, message, labels, help_message, codeframe }

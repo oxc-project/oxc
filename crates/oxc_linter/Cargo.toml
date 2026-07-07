@@ -86,3 +86,7 @@ markdown = { workspace = true }
 # If we enabled `disable_old_builder` feature in main dependency, feature unification would
 # cause it to be activated for `oxc_ast` for the user too.
 oxc_ast = { workspace = true, features = ["disable_old_builder"] }
+
+# The tester renders diagnostics with `GraphicalReportHandler`; enable the renderer
+# for tests only so downstream consumers don't link it.
+oxc_diagnostics = { workspace = true, features = ["fancy"] }

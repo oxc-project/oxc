@@ -222,9 +222,7 @@ language-tags = "0.3.2" # Language tag parsing
 lazy-regex = "3.6.0" # Lazy regex compilation
 markdown = "1.0.0" # Markdown parsing
 memchr = "2.8.2" # Fast byte searching
-miette = { package = "oxc-miette", version = "3.0.0", features = [
-  "fancy-no-syscall",
-] } # Error reporting
+miette = { package = "oxc-miette", version = "3.0.0" } # Error reporting; graphical renderer is opt-in via `oxc_diagnostics/fancy`
 mimalloc-safe = "0.1.64" # Fast allocator
 nodejs-built-in-modules = "1.0.0" # Node.js built-in modules
 nonmax = "0.5.5" # Non-maximum numbers

@@ -54,8 +54,11 @@ mimalloc-safe = { workspace = true, optional = true, features = [
 napi-build = { workspace = true }
 
 [features]
-default = []
+default = ["fancy"]
 allocator = ["dep:mimalloc-safe"]
+# Pretty codeframes in errors. Downstream embedders (e.g. rolldown) can opt out
+# with `default-features = false` to avoid linking miette's graphical renderer.
+fancy = ["oxc_napi/fancy"]
 tokens = ["dep:oxc_estree_tokens"]
 
 [package.metadata.cargo-shear]

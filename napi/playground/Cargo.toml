@@ -38,7 +38,7 @@ oxc_compat = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_formatter_core = { workspace = true }
 oxc_linter = { workspace = true }
-oxc_napi = { workspace = true }
+oxc_napi = { workspace = true, features = ["fancy"] }
 oxc_transformer_plugins = { workspace = true }
 
 napi = { workspace = true, features = ["async"] }

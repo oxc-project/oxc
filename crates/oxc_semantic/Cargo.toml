@@ -50,6 +50,10 @@ serde_json = { workspace = true }
 # cause it to be activated for `oxc_ast` for the user too.
 oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 
+# The example and conformance tests render diagnostics with `GraphicalReportHandler`;
+# enable the renderer for tests/examples only so downstream consumers don't link it.
+oxc_diagnostics = { workspace = true, features = ["fancy"] }
+
 [features]
 default = []
 cfg = ["dep:oxc_cfg"]

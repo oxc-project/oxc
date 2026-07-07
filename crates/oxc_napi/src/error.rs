@@ -37,6 +37,9 @@ impl OxcError {
         diagnostics.into_iter().map(|e| Self::from_diagnostic(&source, e)).collect()
     }
 
+    /// Rendering the codeframe requires miette's graphical renderer, which is
+    /// only linked when the `fancy` feature is enabled.
+    #[cfg(feature = "fancy")]
     pub fn from_diagnostic(
         named_source: &Arc<NamedSource<String>>,
         diagnostic: OxcDiagnostic,
@@ -44,6 +47,18 @@ impl OxcError {
         let mut error = Self::from(&diagnostic);
         let codeframe = diagnostic.with_source_code(Arc::clone(named_source));
         error.codeframe = Some(format!("{codeframe:?}"));
+        error
+    }
+
+    /// Without the `fancy` feature the graphical renderer is not linked and
+    /// `codeframe` stays `None`.
+    #[cfg(not(feature = "fancy"))]
+    pub fn from_diagnostic(
+        _named_source: &Arc<NamedSource<String>>,
+        diagnostic: OxcDiagnostic,
+    ) -> Self {
+        let error = Self::from(&diagnostic);
+        drop(diagnostic);
         error
     }
 }

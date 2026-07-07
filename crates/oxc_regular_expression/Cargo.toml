@@ -34,5 +34,9 @@ unicode-id-start = { workspace = true }
 [dev-dependencies]
 insta = { workspace = true }
 
+# The diagnostics tests render with `GraphicalReportHandler`; enable the renderer
+# for tests only so downstream consumers don't link it.
+oxc_diagnostics = { workspace = true, features = ["fancy"] }
+
 [package.metadata.cargo-shear]
 ignored-paths = ["src/generated/derive_get_address.rs"]

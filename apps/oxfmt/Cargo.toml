@@ -30,14 +30,14 @@ doctest = false
 oxc_allocator = { workspace = true, features = ["pool"] }
 oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 oxc_config = { workspace = true }
-oxc_diagnostics = { workspace = true }
+oxc_diagnostics = { workspace = true, features = ["fancy"] }
 oxc_formatter = { workspace = true }
 oxc_formatter_core = { workspace = true }
 oxc_formatter_css = { workspace = true }
 oxc_formatter_graphql = { workspace = true }
 oxc_formatter_json = { workspace = true }
 oxc_language_server = { workspace = true }
-oxc_napi = { workspace = true }
+oxc_napi = { workspace = true, features = ["fancy"] }
 oxc_span = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
@@ -46,7 +46,7 @@ editorconfig-parser = { workspace = true }
 fast-glob = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 json-strip-comments = { workspace = true }
-miette = { workspace = true }
+miette = { workspace = true, features = ["fancy-no-syscall"] }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
