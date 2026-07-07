@@ -345,6 +345,12 @@ impl Scoping {
         *self.symbol_table.symbol_spans(symbol_id)
     }
 
+    /// Set the span of `symbol_id`.
+    #[inline]
+    pub fn set_symbol_span(&mut self, symbol_id: SymbolId, span: Span) {
+        *self.symbol_table.symbol_spans_mut(symbol_id) = span;
+    }
+
     /// Get the identifier name a symbol is bound to.
     #[inline]
     pub fn symbol_name(&self, symbol_id: SymbolId) -> &str {
