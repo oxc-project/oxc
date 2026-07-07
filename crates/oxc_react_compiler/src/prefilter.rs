@@ -5,7 +5,8 @@
 
 use oxc_ast::ast::{
     ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, BindingPattern,
-    CallExpression, Class, Expression, Function, Program, VariableDeclarator,
+    CallExpression, Class, Expression, Function, ImportDeclarationSpecifier, ModuleExportName,
+    Program, Statement, VariableDeclarator,
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_semantic::ScopeFlags;
@@ -15,6 +16,34 @@ pub fn has_react_like_functions(program: &Program) -> bool {
     let mut visitor = ReactLikeVisitor { found: false, current_name: None };
     visitor.visit_program(program);
     visitor.found
+}
+
+/// Whether the program already imports the `c` memo-cache helper from `module_name`
+/// — i.e. the file has already been compiled and must be skipped.
+pub fn has_memo_cache_function_import(program: &Program, module_name: &str) -> bool {
+    for stmt in &program.body {
+        if let Statement::ImportDeclaration(import) = stmt
+            && import.source.value == module_name
+            && import.import_kind.is_value()
+            && let Some(specifiers) = &import.specifiers
+        {
+            for specifier in specifiers {
+                if let ImportDeclarationSpecifier::ImportSpecifier(data) = specifier
+                    && data.import_kind.is_value()
+                {
+                    let imported_name = match &data.imported {
+                        ModuleExportName::IdentifierName(id) => Some(id.name.as_str()),
+                        ModuleExportName::IdentifierReference(id) => Some(id.name.as_str()),
+                        ModuleExportName::StringLiteral(s) => Some(s.value.as_str()),
+                    };
+                    if imported_name == Some("c") {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
 }
 
 use crate::react_compiler_hir::environment::is_react_like_name;
