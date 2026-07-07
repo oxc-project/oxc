@@ -8,6 +8,8 @@ use oxc_span::GetSpan;
 use super::chain_member::ChainMember;
 use crate::formatter::{Format, JsFormatter, prelude::*};
 
+/// Sized for the common cases: `a.b()` (3 members) and `a.b.c()` (4).
+/// Longer chains spill to the heap, same as `Vec` did before.
 pub(super) type ChainMembers<'a, 'b> = SmallVec<[ChainMember<'a, 'b>; 4]>;
 type Groups<'a, 'b> = SmallVec<[MemberChainGroup<'a, 'b>; 4]>;
 
