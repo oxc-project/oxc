@@ -345,6 +345,25 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         }
     }
 
+    /// Insert `wip` into `completed` as a finished block terminated by `terminal`.
+    ///
+    /// Kept non-generic (and out-of-line) so the block-completion machinery compiles
+    /// once instead of being duplicated into every generic `try_enter*` instantiation.
+    #[inline(never)]
+    fn complete_block(&mut self, wip: WipBlock, terminal: Terminal) {
+        self.completed.insert(
+            wip.id,
+            BasicBlock {
+                kind: wip.kind,
+                id: wip.id,
+                instructions: wip.instructions,
+                terminal,
+                preds: FxIndexSet::default(),
+                phis: Vec::new(),
+            },
+        );
+    }
+
     /// Terminate the current block with the given terminal and start a new block.
     ///
     /// If `next_block_kind` is `Some`, a new current block is created with that kind.
@@ -358,17 +377,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             std::mem::replace(&mut self.current, new_block(BlockId(u32::MAX), BlockKind::Block));
         let block_id = wip.id;
 
-        self.completed.insert(
-            block_id,
-            BasicBlock {
-                kind: wip.kind,
-                id: block_id,
-                instructions: wip.instructions,
-                terminal,
-                preds: FxIndexSet::default(),
-                phis: Vec::new(),
-            },
-        );
+        self.complete_block(wip, terminal);
 
         if let Some(kind) = next_block_kind {
             let next_id = self.env.next_block_id();
@@ -381,18 +390,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// a previously reserved block as the new current block.
     pub fn terminate_with_continuation(&mut self, terminal: Terminal, continuation: WipBlock) {
         let wip = std::mem::replace(&mut self.current, continuation);
-        let block_id = wip.id;
-        self.completed.insert(
-            block_id,
-            BasicBlock {
-                kind: wip.kind,
-                id: block_id,
-                instructions: wip.instructions,
-                terminal,
-                preds: FxIndexSet::default(),
-                phis: Vec::new(),
-            },
-        );
+        self.complete_block(wip, terminal);
     }
 
     /// Reserve a new block so it can be referenced before construction.
@@ -412,17 +410,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         let prev = std::mem::replace(&mut self.current, wip);
         let terminal = f(self)?;
         let completed_wip = std::mem::replace(&mut self.current, prev);
-        self.completed.insert(
-            completed_wip.id,
-            BasicBlock {
-                kind: completed_wip.kind,
-                id: completed_wip.id,
-                instructions: completed_wip.instructions,
-                terminal,
-                preds: FxIndexSet::default(),
-                phis: Vec::new(),
-            },
-        );
+        self.complete_block(completed_wip, terminal);
         Ok(())
     }
 
