@@ -282,7 +282,9 @@ impl<'a> TypeScriptNamespace {
         }
 
         if !Self::is_redeclaration_namespace(&ident, ctx) {
-            let declaration = Self::create_variable_declaration(&binding, span, ctx);
+            let binding_span = ident.span;
+            ctx.scoping_mut().set_symbol_span(binding.symbol_id, binding_span);
+            let declaration = Self::create_variable_declaration(&binding, span, binding_span, ctx);
             if is_export {
                 let export_named_decl =
                     ExportNamedDeclaration::boxed_plain_declaration(span, declaration, ctx);
@@ -310,11 +312,12 @@ impl<'a> TypeScriptNamespace {
     fn create_variable_declaration(
         binding: &BoundIdentifier<'a>,
         span: Span,
+        binding_span: Span,
         ctx: &TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {
-            let pattern = binding.create_binding_pattern(ctx);
+            let pattern = binding.create_spanned_binding_pattern(binding_span, ctx);
             let decl = VariableDeclarator::new(span, kind, pattern, NONE, None, false, ctx);
             ArenaVec::from_value_in(decl, ctx)
         };
