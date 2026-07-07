@@ -332,8 +332,16 @@ pub fn compile_fn<'a>(
         validate_preserved_manual_memoization(&reactive_fn, &mut env);
     }
 
-    let codegen_result =
-        codegen_function(ast, &reactive_fn, &mut env, unique_identifiers, fbt_operands)?;
+    // In lint mode the emitted program is thrown away by `process_fn` — the rule
+    // only collects diagnostics — so skip `codegen_function`, the pass that
+    // rebuilds each compiled function's AST. Every diagnostic-producing validation
+    // has already run above; only the end-of-pipeline bookkeeping (error surfacing
+    // and UID merge) remains, and that runs below regardless of mode.
+    let codegen_result = if env.output_mode == OutputMode::Lint {
+        None
+    } else {
+        Some(codegen_function(ast, &reactive_fn, &mut env, unique_identifiers, fbt_operands)?)
+    };
 
     // NOTE: we intentionally do NOT register the memo cache import here.
     // The import is registered in apply_compiled_functions() only for functions
@@ -371,6 +379,14 @@ pub fn compile_fn<'a>(
         }
         return Err(env.take_errors());
     }
+
+    // Lint mode skipped codegen above, so there is no emitted function to return.
+    let Some(codegen_result) = codegen_result else {
+        if let Some(uid_names) = env.take_uid_known_names() {
+            context.merge_uid_known_names(&uid_names);
+        }
+        return Ok(None);
+    };
 
     // Re-compile outlined functions through the full pipeline.
     // This mirrors TS behavior where outlined functions from JSX outlining

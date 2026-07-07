@@ -2880,18 +2880,14 @@ pub fn compile_program<'a, 'p>(
     // Drop the discovery results (and their borrows of `file.program`).
     drop(queue);
 
-    if replacements.is_empty() {
-        // No functions to replace. Return renames for the Babel plugin to apply
-        // (e.g., variable shadowing renames in lint mode). Imports are NOT added
-        // when there are no replacements — matching TS behavior where
-        // addImportsToProgram is only called when compiledFns.length > 0.
-        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
+    // `ast` is `None` when nothing was compiled — always so in lint mode, which
+    // applies nothing — skipping `ox_splice_program`'s whole-program clone. Splicing
+    // each compiled function in for its original (matched by `span.start ==
+    // fn_node_id`) is also what inserts the memo-cache / gating imports, so (matching
+    // TS `addImportsToProgram`) they're added only when there are replacements.
+    CompileResult::Success {
+        ast: (!replacements.is_empty())
+            .then(|| ox_splice_program(&ast, program, &replacements, &mut context)),
+        diagnostics: context.diagnostics,
     }
-
-    // Build the memoized oxc program: splice each compiled oxc function in for its
-    // original (matched by `span.start == fn_node_id`), apply gating, insert outlined
-    // functions, and add the memo-cache / gating imports.
-    let compiled_program = ox_splice_program(&ast, program, &replacements, &mut context);
-
-    CompileResult::Success { ast: Some(compiled_program), diagnostics: context.diagnostics }
 }
