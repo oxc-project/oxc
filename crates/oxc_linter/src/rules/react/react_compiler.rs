@@ -121,7 +121,12 @@ impl Rule for ReactCompiler {
 
     fn run_once(&self, ctx: &LintContext) {
         let program = ctx.nodes().program();
-        let options = react_compiler_options();
+        let mut options = react_compiler_options();
+        // Codegen only produces bailout/invariant diagnostics; when we're not
+        // reporting bailouts we keep only errors (and compiler invariants are meant
+        // to stay internal), so skip the codegen AST rebuild entirely. With
+        // `reportAllBailouts` we need those codegen bailouts, so let codegen run.
+        options.skip_lint_codegen = !self.report_all_bailouts;
 
         let result = oxc_react_compiler::lint(program, ctx.semantic(), ctx.allocator(), options);
 

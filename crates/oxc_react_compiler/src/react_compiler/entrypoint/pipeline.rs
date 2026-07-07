@@ -333,11 +333,15 @@ pub fn compile_fn<'a>(
     }
 
     // In lint mode the emitted program is thrown away by `process_fn` — the rule
-    // only collects diagnostics — so skip `codegen_function`, the pass that
-    // rebuilds each compiled function's AST. Every diagnostic-producing validation
-    // has already run above; only the end-of-pipeline bookkeeping (error surfacing
-    // and UID merge) remains, and that runs below regardless of mode.
-    let codegen_result = if env.output_mode == OutputMode::Lint {
+    // only collects diagnostics — so `skip_lint_codegen` callers skip
+    // `codegen_function`, the pass that rebuilds each compiled function's AST. Every
+    // diagnostic-producing validation has already run above; only the end-of-pipeline
+    // bookkeeping (error surfacing and UID merge) remains, and that runs below
+    // regardless of mode. Skipping also drops codegen's own bailout/invariant
+    // diagnostics, so callers reporting bailouts leave `skip_lint_codegen` off and
+    // fall through to run codegen here.
+    let skip_codegen = env.output_mode == OutputMode::Lint && context.opts.skip_lint_codegen;
+    let codegen_result = if skip_codegen {
         None
     } else {
         Some(codegen_function(ast, &reactive_fn, &mut env, unique_identifiers, fbt_operands)?)

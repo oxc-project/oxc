@@ -137,6 +137,14 @@ pub struct PluginOptions {
     /// when `no_emit` is set).
     pub output_mode: Option<CompilerOutputMode>,
 
+    /// Lint-mode optimization: skip `codegen_function` (the pass that rebuilds each
+    /// compiled function's AST) because lint discards the emitted program. Only
+    /// consulted in lint mode. Skipping also drops every codegen-stage diagnostic —
+    /// bailout `Todo`s (e.g. unsupported `for..in`/`for..of` inits) and internal
+    /// `Invariant`s — so callers that surface bailouts (e.g. `reportAllBailouts`)
+    /// must leave this `false`.
+    pub skip_lint_codegen: bool,
+
     /// ESLint rule names whose `eslint-disable` comments make the compiler skip the
     /// function they cover, so it doesn't optimize code the author has already
     /// flagged. `None` uses the defaults (`react-hooks/exhaustive-deps` and
@@ -173,6 +181,7 @@ impl Default for PluginOptions {
             dynamic_gating: None,
             no_emit: false,
             output_mode: None,
+            skip_lint_codegen: false,
             eslint_suppression_rules: None,
             flow_suppressions: true,
             ignore_use_no_forget: false,
