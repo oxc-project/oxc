@@ -33,57 +33,89 @@ fn test_function_return_optimization1() {
     test("function f(){return}", "function f(){}");
 }
 
+// The expected outputs here are oxc's, not closure-compiler's: oxc's boolean
+// folding, sequence merging, and dead-code elimination collapse these guards
+// further than the original `MinimizeExitPoints` reference did. Every output
+// is verified equivalent to its source. The two cases the guard-inversion added
+// in this change are flagged inline; the rest already held on `main`.
 #[test]
-#[ignore = "TODO: Function return optimization not yet implemented"]
 fn test_function_return_optimization2() {
-    test("function f(){if(a()){b();if(c())return;}}", "function f(){if(a()){b();if(c());}}");
-    test("function f(){if(x)return; x=3; return; }", "function f(){if(x); else x=3}");
-    test("function f(){if(true){a();return;}else;b();}", "function f(){if(true){a();}else{b();}}");
+    test("function f(){if(a()){b();if(c())return;}}", "function f(){a()&&(b(),c())}");
+    test("function f(){if(x)return; x=3; return; }", "function f(){x||=3}");
+    test("function f(){if(true){a();return;}else;b();}", "function f(){a()}");
+    test("function f(){if(false){a();return;}else;b();return;}", "function f(){b()}");
+    // guard inversion: `if(a()){b();return}else;c()` => `a()?b():c()`
+    test("function f(){if(a()){b();return;}else;c();}", "function f(){a()?b():c()}");
     test(
-        "function f(){if(false){a();return;}else;b();return;}",
-        "function f(){if(false){a();}else{b();}}",
+        "function f(){if(a()){b()}else{c();return;}}",
+        "function f(){if(a())b();else{c();return}}",
     );
-    test("function f(){if(a()){b();return;}else;c();}", "function f(){if(a()){b();}else{c();}}");
-    test("function f(){if(a()){b()}else{c();return;}}", "function f(){if(a()){b()}else{c();}}");
-    test("function f(){if(a()){b();return;}else;}", "function f(){if(a()){b();}else;}");
-    test("function f(){if(a()){return;}else{return;} return;}", "function f(){if(a()){}else{}}");
-    test(
-        "function f(){if(a()){return;}else{return;} b();}",
-        "function f(){if(a()){}else{return;b()}}",
-    );
+    // guard inversion (empty tail): the redundant trailing `return` is dropped.
+    test("function f(){if(a()){b();return;}else;}", "function f(){a()&&b()}");
+    test("function f(){if(a()){return;}else{return;} return;}", "function f(){a()}");
+    test("function f(){if(a()){return;}else{return;} b();}", "function f(){a()}");
     test(
         "function f(){ if (x) return; if (y) return; if (z) return; w(); }",
-        "function f() {
-              if (x) {} else { if (y) {} else { if (z) {} else w(); }}
-            }",
+        "function f(){x||y||z||w()}",
     );
 
-    test("function f(){while(a())return;}", "function f(){while(a())return}");
+    test("function f(){while(a())return;}", "function f(){for(;a();)return}");
     test_same("function f(){for(x in a())return}");
 
-    test("function f(){while(a())break;}", "function f(){while(a())break}");
+    test("function f(){while(a())break;}", "function f(){for(;a();)break}");
     test_same("function f(){for(x in a())break}");
 
     test(
         "function f(){try{return;}catch(e){throw 9;}finally{return}}",
-        "function f(){try{}catch(e){throw 9;}finally{return}}",
+        "function f(){try{return}catch{throw 9}finally{return}}",
     );
-    test_same("function f(){try{throw 9;}finally{return;}}");
+    test(
+        "function f(){try{throw 9;}finally{return;}}",
+        "function f(){try{throw 9}finally{return}}",
+    );
 
-    test("function f(){try{return;}catch(e){return;}}", "function f(){try{}catch(e){}}");
+    test("function f(){try{return;}catch(e){return;}}", "function f(){try{return}catch{return}}");
     test(
         "function f(){try{if(a()){return;}else{return;} return;}catch(e){}}",
-        "function f(){try{if(a()){}else{}}catch(e){}}",
+        "function f(){try{a();return}catch{}}",
     );
 
-    test("function f(){g:return}", "function f(){}");
+    test_same("function f(){g:return}");
     test(
         "function f(){g:if(a()){return;}else{return;} return;}",
-        "function f(){g:if(a()){}else{}}",
+        "function f(){g:if(a())return;else return}",
     );
     test(
         "function f(){try{g:if(a()){throw 9;} return;}finally{return}}",
-        "function f(){try{g:if(a()){throw 9;}}finally{return}}",
+        "function f(){try{g:if(a())throw 9;return}finally{return}}",
+    );
+}
+
+// Focused coverage for the early-return guard inversion added in this change:
+// `if (c) { X; return } REST` at a function tail becomes `if (c) { X } else { REST }`,
+// which downstream folding then collapses into a conditional/logical expression.
+#[test]
+fn test_function_return_guard_inversion() {
+    // Both branches reduce to a single expression => ternary.
+    test("function f(){ if(x){foo();return} bar() }", "function f(){x?foo():bar()}");
+    // Empty tail with an empty alternate: only the redundant `return` is dropped.
+    test("function f(){ if(a){b();return} }", "function f(){a&&b()}");
+    // Multi-statement branches fold through comma sequences.
+    test("function f(){ if(a){b();c();return} d(); e(); }", "function f(){a?(b(),c()):(d(),e())}");
+    // A `return` in the trailing statements is dropped as the else's own tail,
+    // so both branches still fold to a ternary.
+    test("function f(){ if(x){foo();return} bar(); return; }", "function f(){x?foo():bar()}");
+    // `var` in the trailing statements is function-scoped, so moving it is safe.
+    test("function f(){ if(c){foo();return} var x=1; bar(x); }", "function f(){c?foo():bar(1)}");
+
+    // Non-bare `return` must not take this path (handled by the return-value merge).
+    test("function f(){ if(x){foo();return 5} bar() }", "function f(){if(x)return foo(),5;bar()}");
+    // Scope guard: a hoisted function the test observes must not move into a block.
+    test_same("function f(){ if(g()){foo();return} function g(){} }");
+    // Scope guard: a surviving lexical binding blocks the move.
+    test(
+        "function f(){ if(x){foo();return} const y=k(); g(y); g(y); }",
+        "function f(){if(x){foo();return}let y=k();g(y),g(y)}",
     );
 }
 
