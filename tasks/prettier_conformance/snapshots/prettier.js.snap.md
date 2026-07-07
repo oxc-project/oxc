@@ -1,4 +1,4 @@
-js compatibility: 749/808 (92.70%), 23 files skipped
+js compatibility: 750/808 (92.82%), 23 files skipped
 
 # Failed
 
@@ -35,7 +35,6 @@ js compatibility: 749/808 (92.70%), 23 files skipped
 | js/for-of/comments.js | 💥 | 50.00% |
 | js/function/iife.js | 💥 | 14.89% |
 | js/function/issue-12967.js | 💥 | 0.00% |
-| js/identifier/for-of/let.js | 💥 | 92.31% |
 | js/if/blank-lines.js | 💥 | 94.83% |
 | js/if/comment-between-condition-and-body.js | 💥 | 92.11% |
 | js/if/if_comments.js | 💥 | 91.89% |

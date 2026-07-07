@@ -72,33 +72,54 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
             return false;
         }
 
+        // `(type) satisfies never;` and similar keyword-at-statement-start cast cases
+        // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/parentheses/identifier.js#L84-L107>
+        let needs_parens_in_cast_chain = || {
+            let mut parent = self.parent();
+            while matches!(parent, AstNodes::TSSatisfiesExpression(_) | AstNodes::TSAsExpression(_))
+            {
+                parent = parent.parent();
+            }
+
+            // Needs at least one `satisfies`/`as` wrapper, with a statement right outside it
+            !ptr::eq(self.parent(), parent)
+                && matches!(
+                    parent, AstNodes::ExpressionStatement(stmt) if !stmt.is_arrow_function_body()
+                )
+        };
+
         match self.name.as_str() {
             "async" => {
                 matches!(self.parent(), AstNodes::ForOfStatement(stmt) if !stmt.r#await && stmt.left.span().contains_inclusive(self.span))
             }
             "let" => {
-                // `let[a]` at statement start looks like a lexical declaration, needs parens
-                // Only applies when `let` is the object of a computed member expression
-                if !matches!(self.parent(), AstNodes::ComputedMemberExpression(m) if m.object.span() == self.span())
-                {
-                    // Not `let[...]` - check special cases only
-                    return self.ancestors().any(|parent| match parent {
-                        AstNodes::ForOfStatement(s) => s.left.span().contains_inclusive(self.span),
-                        AstNodes::ForInStatement(s) => {
-                            s.left.span().contains_inclusive(self.span)
-                                && !matches!(self.parent(), AstNodes::StaticMemberExpression(_))
-                        }
-                        AstNodes::TSSatisfiesExpression(e) => e.expression.span() == self.span(),
-                        _ => false,
-                    });
+                // `(let) satisfies X;`, `(let) as X;` at statement start
+                if needs_parens_in_cast_chain() {
+                    return true;
                 }
 
-                // Check if `let[...]` is at the leftmost position of a statement
+                // `let` needs parens when it is the leftmost token of:
+                // - a computed member expression at statement start or in a `for(;;)` init,
+                //   which would parse as a lexical declaration, e.g. `(let)[a] = 1`
+                // - a `for-in`/`for-of` head, which cannot start with `let`,
+                //   e.g. `for ((let).a in x)`, `for ((let) of x)`
+                let is_computed_member_object = matches!(
+                    self.parent(),
+                    AstNodes::ComputedMemberExpression(m)
+                        if m.object.span() == self.span() && !m.optional
+                );
+
+                // Check if `let` is at the leftmost position of the relevant construct
                 let mut child_span = self.span;
                 for parent in self.ancestors() {
                     let dominated = match parent {
-                        AstNodes::ExpressionStatement(s) => return !s.is_arrow_function_body(),
-                        AstNodes::ForStatement(_) => return true,
+                        AstNodes::ExpressionStatement(s) => {
+                            return is_computed_member_object && !s.is_arrow_function_body();
+                        }
+                        AstNodes::ForStatement(s) => {
+                            return is_computed_member_object
+                                && matches!(&s.init, Some(init) if init.span() == child_span);
+                        }
                         AstNodes::ForOfStatement(s) => {
                             return s.left.span().contains_inclusive(self.span);
                         }
@@ -117,6 +138,12 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                             s.expressions.first().is_some_and(|e| e.span() == child_span)
                         }
                         AstNodes::TaggedTemplateExpression(t) => t.tag.span() == child_span,
+                        AstNodes::UpdateExpression(u) => {
+                            !u.prefix && u.argument.span() == child_span
+                        }
+                        AstNodes::TSAsExpression(e) => e.expression.span() == child_span,
+                        AstNodes::TSSatisfiesExpression(e) => e.expression.span() == child_span,
+                        AstNodes::TSNonNullExpression(e) => e.expression.span() == child_span,
                         _ => false,
                     };
                     if !dominated {
@@ -127,8 +154,7 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                 false
             }
             name => {
-                // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/needs-parens.js#L123-L133>
-                if !matches!(
+                matches!(
                     name,
                     "await"
                         | "interface"
@@ -138,27 +164,7 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                         | "component"
                         | "hook"
                         | "type"
-                ) {
-                    return false;
-                }
-
-                let mut parent = self.parent();
-                while matches!(
-                    parent,
-                    AstNodes::TSSatisfiesExpression(_) | AstNodes::TSAsExpression(_)
-                ) {
-                    parent = parent.parent();
-                }
-
-                // Early return if the parent isn't a `TSSatisfiesExpression` or `TSAsExpression`
-                if ptr::eq(self.parent(), parent) {
-                    return false;
-                }
-
-                matches!(
-                    parent, AstNodes::ExpressionStatement(stmt) if
-                        !stmt.is_arrow_function_body()
-                )
+                ) && needs_parens_in_cast_chain()
             }
         }
     }
