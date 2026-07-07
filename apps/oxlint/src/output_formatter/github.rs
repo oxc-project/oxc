@@ -1,4 +1,8 @@
 use std::borrow::Cow;
+use std::path::{Path, PathBuf};
+
+#[cfg(windows)]
+use cow_utils::CowUtils;
 
 use oxc_diagnostics::{
     Error, Severity,
@@ -6,7 +10,7 @@ use oxc_diagnostics::{
 };
 
 use super::default::get_diagnostic_result_output;
-use crate::output_formatter::InternalFormatter;
+use crate::output_formatter::{InternalFormatter, get_repo_path_prefix};
 
 #[derive(Debug)]
 pub struct GithubOutputFormatter;
@@ -17,13 +21,23 @@ impl InternalFormatter for GithubOutputFormatter {
     }
 
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
-        Box::new(GithubReporter)
+        Box::new(GithubReporter::default())
     }
 }
 
 /// Formats reports using [GitHub Actions
 /// annotations](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message). Useful for reporting in CI.
-struct GithubReporter;
+struct GithubReporter {
+    /// Path prefix to prepend to CWD-relative paths to make them repo-relative.
+    /// `None` if CWD is the git root or if we're not in a git repository.
+    repo_path_prefix: Option<PathBuf>,
+}
+
+impl GithubReporter {
+    fn default() -> Self {
+        Self { repo_path_prefix: get_repo_path_prefix() }
+    }
+}
 
 impl DiagnosticReporter for GithubReporter {
     fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
@@ -35,17 +49,34 @@ impl DiagnosticReporter for GithubReporter {
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
-        Some(format_github(&error))
+        Some(format_github(&error, self.repo_path_prefix.as_deref()))
     }
 }
 
-fn format_github(diagnostic: &Error) -> String {
+fn format_github(diagnostic: &Error, repo_path_prefix: Option<&Path>) -> String {
     let Info { start, end, filename, message, severity, rule_id } = Info::new(diagnostic);
     let severity = match severity {
         Severity::Error => "error",
         Severity::Warning | miette::Severity::Advice => "warning",
     };
     let title = rule_id.map_or(Cow::Borrowed("oxlint"), Cow::Owned);
+    // GitHub Actions resolves relative annotation paths against the workspace
+    // (repository) root, not the process CWD, so adjust accordingly.
+    let filename = match repo_path_prefix {
+        Some(prefix) if !filename.is_empty() => {
+            // only do the path swap on Windows
+            #[cfg(windows)]
+            {
+                let combined = prefix.join(&filename);
+                combined.to_string_lossy().cow_replace('\\', "/").into_owned()
+            }
+            #[cfg(not(windows))]
+            {
+                prefix.join(&filename).to_string_lossy().to_string()
+            }
+        }
+        _ => filename,
+    };
     let filename = escape_property(&filename);
 
     if filename.is_empty() {
@@ -101,6 +132,7 @@ fn escape_property(value: &str) -> String {
 
 #[cfg(test)]
 mod test {
+    use std::path::Path;
     use std::time::Duration;
 
     use oxc_diagnostics::{
@@ -109,7 +141,7 @@ mod test {
     };
     use oxc_span::Span;
 
-    use super::{GithubOutputFormatter, GithubReporter};
+    use super::{GithubOutputFormatter, GithubReporter, format_github};
     use crate::output_formatter::{InternalFormatter, LintCommandInfo};
 
     #[test]
@@ -147,7 +179,7 @@ mod test {
 
     #[test]
     fn reporter_finish() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter { repo_path_prefix: None };
 
         let result = reporter.finish(&DiagnosticResult::default());
 
@@ -156,7 +188,7 @@ mod test {
 
     #[test]
     fn reporter_finish_with_errors() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter { repo_path_prefix: None };
 
         let result = reporter.finish(&DiagnosticResult::new(2, 1, false));
 
@@ -165,7 +197,7 @@ mod test {
 
     #[test]
     fn reporter_error() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter { repo_path_prefix: None };
         let error = OxcDiagnostic::warn("error message")
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
@@ -180,8 +212,52 @@ mod test {
     }
 
     #[test]
+    fn format_github_with_prefix() {
+        let error = OxcDiagnostic::warn("error message")
+            .with_label(Span::new(0, 8))
+            .with_source_code(NamedSource::new("example.js", "debugger;"));
+
+        let result = format_github(&error, Some(Path::new("packages/foo")));
+
+        assert_eq!(
+            result,
+            "::warning file=packages/foo/example.js,line=1,endLine=1,col=1,endColumn=9,title=oxlint::error message\n"
+        );
+    }
+
+    #[test]
+    fn format_github_without_prefix() {
+        let error = OxcDiagnostic::warn("error message")
+            .with_label(Span::new(0, 8))
+            .with_source_code(NamedSource::new("example.js", "debugger;"));
+
+        let result = format_github(&error, None);
+
+        assert_eq!(
+            result,
+            "::warning file=example.js,line=1,endLine=1,col=1,endColumn=9,title=oxlint::error message\n"
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn format_github_windows_normalization() {
+        let error = OxcDiagnostic::warn("error message")
+            .with_label(Span::new(0, 8))
+            .with_source_code(NamedSource::new("example.js", "debugger;"));
+
+        // Windows-style prefix with backslashes should be normalized to forward slashes
+        let result = format_github(&error, Some(Path::new(r"packages\foo")));
+
+        assert_eq!(
+            result,
+            "::warning file=packages/foo/example.js,line=1,endLine=1,col=1,endColumn=9,title=oxlint::error message\n"
+        );
+    }
+
+    #[test]
     fn reporter_error_without_labels_omits_file_and_location() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter { repo_path_prefix: None };
         let error = OxcDiagnostic::warn("warning message")
             .with_error_code("scope", "rule")
             .with_help("help message")
@@ -194,8 +270,20 @@ mod test {
     }
 
     #[test]
+    fn format_github_fileless_error_ignores_prefix() {
+        let error = OxcDiagnostic::warn("warning message")
+            .with_error_code("scope", "rule")
+            .with_help("help message")
+            .with_note("note message");
+
+        let result = format_github(&error.into(), Some(Path::new("packages/foo")));
+
+        assert_eq!(result, "::warning title=scope(rule)::warning message\n");
+    }
+
+    #[test]
     fn reporter_fileless_error_uses_error_annotation() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter { repo_path_prefix: None };
         let error = OxcDiagnostic::error("error message")
             .with_error_code("scope", "rule")
             .with_help("help message")
@@ -214,7 +302,8 @@ mod test {
             .with_label(Span::new(0, 1300))
             .with_source_code(NamedSource::new("file://test.ts", source_text));
 
-        let (mut service, sender) = DiagnosticService::new(Box::new(GithubReporter));
+        let (mut service, sender) =
+            DiagnosticService::new(Box::new(GithubReporter { repo_path_prefix: None }));
         sender.send(vec![diagnostic]).unwrap();
         drop(sender);
 
