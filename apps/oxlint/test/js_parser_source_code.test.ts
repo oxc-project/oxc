@@ -35,9 +35,10 @@ const CODE = [
 
 let eslintSourceCode: ESLintSourceCode;
 let ast: JsParserParseResult["ast"];
+let parseResult: JsParserParseResult;
 
 beforeAll(() => {
-  const parseResult = parseForESLint(CODE, {
+  parseResult = parseForESLint(CODE, {
     range: true,
     loc: true,
     tokens: true,
@@ -54,7 +55,7 @@ beforeAll(() => {
   // `location.ts` line tables (used by `lines` / `getLocFromIndex` / `getIndexFromLoc`) read
   // from there.
   setSourceTextForJsParser(CODE);
-  setupJsParserSourceCode(parseResult, CODE);
+  setupJsParserSourceCode(parseResult, CODE, false);
   setGlobalsForFile(JSON.stringify({ globals: {}, envs: {} }));
 
   // Walk the AST to set `parent` pointers on all nodes, as `lint_js_parser.ts` does
@@ -82,6 +83,15 @@ describe("JS_PARSER_SOURCE_CODE", () => {
     expect(JS_PARSER_SOURCE_CODE.lineStartIndices).toEqual(
       (eslintSourceCode as unknown as { lineStartIndices: number[] }).lineStartIndices,
     );
+  });
+
+  it("hasBOM reflects the flag passed to setupJsParserSourceCode", () => {
+    // Rust strips the BOM before sending source text, but reports whether the original file
+    // had one. Re-setup with the flag set, then restore shared state for the other tests.
+    setupJsParserSourceCode(parseResult, CODE, true);
+    expect(JS_PARSER_SOURCE_CODE.hasBOM).toBe(true);
+    setupJsParserSourceCode(parseResult, CODE, false);
+    expect(JS_PARSER_SOURCE_CODE.hasBOM).toBe(false);
   });
 
   it("getLocFromIndex / getIndexFromLoc match ESLint", () => {

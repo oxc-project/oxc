@@ -131,7 +131,8 @@ function lintFileWrapper(
  * Delegates to `lintFileWithJsParser`, which was lazy-loaded by `loadParserWrapper`.
  *
  * @param filePath - Absolute path of file being linted
- * @param sourceText - Source text of the file
+ * @param sourceText - Source text of the file (with BOM stripped, if present)
+ * @param hasBOM - `true` if the original file started with a Unicode BOM
  * @param parserId - ID of parser to parse the file with
  * @param parserOptionsJSON - Parser options as JSON, or `null` if not configured
  * @param ruleIds - IDs of rules to run on this file
@@ -144,6 +145,7 @@ function lintFileWrapper(
 function lintFileWithJsParserWrapper(
   filePath: string,
   sourceText: string,
+  hasBOM: boolean,
   parserId: number,
   parserOptionsJSON: string | null | undefined,
   ruleIds: number[],
@@ -163,6 +165,7 @@ function lintFileWithJsParserWrapper(
   return lintFileWithJsParser(
     filePath,
     sourceText,
+    hasBOM,
     parserId,
     parserOptionsJSON,
     ruleIds,

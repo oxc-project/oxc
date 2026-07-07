@@ -23,9 +23,7 @@ import {
   resetJsParserSourceCode,
   setupJsParserSourceCode,
 } from "./js_parser_source_code.ts";
-import { afterHooks, resetFile, runAfterHooks } from "./lint.ts";
-import { registeredRules } from "./load.ts";
-import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
+import { buildRuleVisitors, resetFile, runAfterHooks } from "./lint.ts";
 import { registeredParsers } from "./parsers.ts";
 import { diagnostics } from "./report.ts";
 import { setSettingsForFile } from "./settings.ts";
@@ -55,10 +53,9 @@ interface JsParserLintResult {
   maskedRegions: MaskedRegionReport[] | null;
 }
 
-// `afterHooks` / `runAfterHooks` are shared with the buffer-based path (`lint.ts`).
-
-// Reusable property descriptor for updating `options` value on rule context objects.
-const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
+// `buildRuleVisitors` (rule iteration + hooks) and `runAfterHooks` are shared with the
+// buffer-based path (`lint.ts`); the two flows never interleave (both synchronous on the main
+// JS thread, one file at a time), so sharing `lint.ts`'s `afterHooks` array is safe.
 
 /**
  * Lint a file which is parsed by a custom (JS) parser.
@@ -68,6 +65,7 @@ const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
  *
  * @param filePath - Absolute path of file being linted
  * @param sourceText - Source text of the file (BOM already stripped on Rust side)
+ * @param hasBOM - `true` if the original file started with a Unicode BOM
  * @param parserId - ID of parser to parse the file with
  * @param parserOptionsJSON - Parser options as JSON, or `null` if not configured
  * @param ruleIds - IDs of rules to run on this file
@@ -80,6 +78,7 @@ const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
 export function lintFileWithJsParser(
   filePath: string,
   sourceText: string,
+  hasBOM: boolean,
   parserId: number,
   parserOptionsJSON: string | null,
   ruleIds: number[],
@@ -92,6 +91,7 @@ export function lintFileWithJsParser(
     const { comments, maskedRegions } = lintFileWithJsParserImpl(
       filePath,
       sourceText,
+      hasBOM,
       parserId,
       parserOptionsJSON,
       ruleIds,
@@ -122,6 +122,7 @@ export function lintFileWithJsParser(
  *
  * @param filePath - Absolute path of file being linted
  * @param sourceText - Source text of the file
+ * @param hasBOM - `true` if the original file started with a Unicode BOM
  * @param parserId - ID of parser to parse the file with
  * @param parserOptionsJSON - Parser options as JSON, or `null` if not configured
  * @param ruleIds - IDs of rules to run on this file
@@ -136,6 +137,7 @@ export function lintFileWithJsParser(
 function lintFileWithJsParserImpl(
   filePath: string,
   sourceText: string,
+  hasBOM: boolean,
   parserId: number,
   parserOptionsJSON: string | null,
   ruleIds: number[],
@@ -152,6 +154,7 @@ function lintFileWithJsParserImpl(
     "`filePath` should be a non-empty string",
   );
   debugAssert(typeof sourceText === "string", "`sourceText` should be a string");
+  debugAssert(typeof hasBOM === "boolean", "`hasBOM` should be a boolean");
   debugAssert(Array.isArray(ruleIds), "`ruleIds` should be an array");
   debugAssert(Array.isArray(optionsIds), "`optionsIds` should be an array");
   debugAssert(
@@ -160,22 +163,9 @@ function lintFileWithJsParserImpl(
   );
   debugAssert(parserId < registeredParsers.length, "Parser ID out of bounds");
 
-  // The order rules run in is indeterminate.
-  // To make order predictable in tests, in debug builds, sort rules by ID in ascending order.
-  // i.e. rules run in same order as they're defined in plugin.
-  let ruleIndexes: number[] | undefined;
-  if (DEBUG) {
-    const rules = ruleIds.map((ruleId, index) => ({ ruleId, optionsId: optionsIds[index], index }));
-    rules.sort((rule1, rule2) => rule1.ruleId - rule2.ruleId);
-    ruleIds = rules.map((rule) => rule.ruleId);
-    optionsIds = rules.map((rule) => rule.optionsId);
-    ruleIndexes = rules.map((rule) => rule.index);
-  }
-
   // Switch to requested workspace.
   // In CLI, `workspaceUri` is `null`, and there's only 1 workspace, so no need to switch.
   if (workspaceUri !== null) switchWorkspace(workspaceUri);
-  debugAssertIsNonNull(allOptions, "`allOptions` should be initialized");
 
   // Pass file path to context module, so `Context`s know what file is being linted
   setupFileContext(filePath);
@@ -201,7 +191,7 @@ function lintFileWithJsParserImpl(
   // and make `context.sourceCode` return it instead of the buffer-based `SOURCE_CODE`.
   // Also override `context.languageOptions` / `context.parserOptions` - the buffer-based
   // singletons read `sourceType` etc. from the buffer, which does not exist for this path.
-  setupJsParserSourceCode(parseResult, sourceText);
+  setupJsParserSourceCode(parseResult, sourceText, hasBOM);
   setSourceCodeOverride(JS_PARSER_SOURCE_CODE as unknown as SourceCode);
   setLanguageOptionsOverride({
     sourceType: (parseResult.ast.sourceType ?? "module") as ModuleKind,
@@ -227,46 +217,9 @@ function lintFileWithJsParserImpl(
     // Leave `maskedRegions` as `null`
   }
 
-  // Get visitors for this file from all rules
+  // Get visitors for this file from all rules, collecting them for the string-keyed walk
   const visitors: Visitor[] = [];
-  for (let i = 0, len = ruleIds.length; i < len; i++) {
-    const ruleId = ruleIds[i];
-    debugAssert(ruleId < registeredRules.length, "Rule ID out of bounds");
-    const ruleDetails = registeredRules[ruleId];
-
-    // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
-    // In debug build, use `ruleIndexes`, because `ruleIds` has been re-ordered.
-    ruleDetails.ruleIndex = DEBUG ? ruleIndexes![i] : i;
-
-    // Set `options` for rule
-    const optionsId = optionsIds[i];
-    debugAssert(optionsId < allOptions.length, "Options ID out of bounds");
-
-    // If the rule has no user-provided options, use the plugin-provided default options.
-    // Reuse `OPTIONS_DESCRIPTOR` object to avoid unnecessarily creating a temporary object each time.
-    OPTIONS_DESCRIPTOR.value =
-      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId];
-    Object.defineProperty(ruleDetails.context, "options", OPTIONS_DESCRIPTOR);
-
-    let { visitor } = ruleDetails;
-    if (visitor === null) {
-      // Rule defined with `create` method
-      debugAssertIsNonNull(ruleDetails.rule.create);
-      visitor = ruleDetails.rule.create(ruleDetails.context);
-    } else {
-      // Rule defined with `createOnce` method
-      const { beforeHook, afterHook } = ruleDetails;
-      if (beforeHook !== null) {
-        // If `before` hook returns `false`, skip this rule
-        const shouldRun = beforeHook();
-        if (shouldRun === false) continue;
-      }
-      // Note: If `before` hook returned `false`, `after` hook is not called
-      if (afterHook !== null) afterHooks.push(afterHook);
-    }
-
-    visitors.push(visitor);
-  }
+  buildRuleVisitors(ruleIds, optionsIds, (visitor) => visitors.push(visitor));
 
   // Compile visitors into string-keyed dispatch, and walk the AST.
   // Skip the walk if no visitors visit any nodes.

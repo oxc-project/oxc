@@ -65,7 +65,7 @@ export type JsLintFileCb =
 
 /** JS callback to lint a file which is parsed by a custom (JS) parser. */
 export type JsLintFileWithJsParserCb =
-  ((arg0: string, arg1: string, arg2: number, arg3: string | undefined | null, arg4: Array<number>, arg5: Array<number>, arg6: string, arg7: string, arg8?: string | undefined | null) => string)
+  ((arg0: string, arg1: string, arg2: boolean, arg3: number, arg4: string | undefined | null, arg5: Array<number>, arg6: Array<number>, arg7: string, arg8: string, arg9?: string | undefined | null) => string)
 
 /** JS callback to load JavaScript config files. */
 export type JsLoadJsConfigsCb =
