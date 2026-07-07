@@ -595,6 +595,49 @@ type: `string`
 Path or package name of the plugin
 
 
+#### overrides[n].languageOptions
+
+type: `object`
+
+
+Language options for files matched by this override, mirroring ESLint's
+`languageOptions`.
+
+Allows routing matched files to an external (JS) parser, for file types which
+oxlint's native parser cannot parse (e.g. Ember's `.gjs`/`.gts` files).
+
+
+##### overrides[n].languageOptions.parser
+
+type: `string`
+
+
+External parser for files matched by this override.
+
+A module specifier (path, package name, or URL), resolved the same way as `jsPlugins`
+entries. The module must export an ESLint-compatible parser
+(an object with a `parseForESLint` or `parse` method).
+
+The bare string form is intentional and forward-compatible: a future object form or a
+separate `languagePlugins` key (per RFC #21936) can be added alongside it without a
+breaking change, mirroring ESLint's own `languageOptions.parser` / `language` split.
+
+Files matched by an override with a `parser` are parsed by that parser instead of
+oxlint's native parser. Only JS plugin rules run on such files.
+
+
+##### overrides[n].languageOptions.parserOptions
+
+
+
+Options passed verbatim to the external `parser`.
+
+Only takes effect when `parser` is also set. Unlike ESLint (which applies
+`parserOptions` to its built-in parser too), oxlint's native parser does not read them,
+so `parserOptions` without `parser` is rejected as a config error rather than silently
+having no effect.
+
+
 #### overrides[n].plugins
 
 type: `array`
