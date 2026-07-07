@@ -50,6 +50,7 @@
     "n/prefer-global/url-search-params": "No need to implement, the same policy can be enforced with generic restriction rules such as `no-restricted-imports` and `no-restricted-globals`.",
     "import/order": "Not implementing this in Oxlint as its behavior is covered very well by [Oxfmt's import sorting](https://oxc.rs/docs/guide/usage/formatter/sorting.html).",
     "unicorn/template-indent": "Stylistic rule.",
+    "unicorn/no-non-function-verb-prefix": "Requires type information. Not currently possible to implement in oxlint.",
 
     "jsdoc/type-formatting": "Experimental rule in the original plugin, may reconsider once stable.",
     "jsdoc/convert-to-jsdoc-comments": "Experimental rule in the original plugin, may reconsider once stable.",
