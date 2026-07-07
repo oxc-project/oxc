@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, ArenaVec};
+use oxc_allocator::Allocator;
 
 mod diagnostics;
 mod options;
@@ -133,24 +133,25 @@ fn compile<'a>(
 
     let compiled = program_ast.map(|mut compiled: Program<'a>| {
         compiled.source_type = program.source_type;
-        preserve_comments(&mut compiled, program, allocator);
+        prune_inner_comments(&mut compiled);
         compiled
     });
 
     (compiled, diagnostics)
 }
 
-/// Carry over the comments attached to top-level statements of the compiled
-/// program, so codegen can re-emit them. The `react_compiler_ast` roundtrip
-/// drops comments, so we reuse the ones from the original `source` program
-/// (already parsed) rather than re-parsing the source.
-fn preserve_comments<'a>(
-    compiled: &mut Program<'a>,
-    source: &Program<'a>,
-    allocator: &'a Allocator,
-) {
-    // Keep only comments attached to a top-level statement; inner comments have
-    // `attached_to` positions that match no top-level statement.
+/// Drop comments left dangling by compilation.
+///
+/// `ox_splice_program` clones the source program — `comments` and `source_text`
+/// included — so `compiled` already carries every original comment. The compiled
+/// functions were rebuilt with fresh spans, though, so a comment that pointed
+/// inside one no longer lines up with any statement and codegen would re-emit it
+/// at a stale position. Keep only the comments still anchored to a top-level
+/// statement.
+fn prune_inner_comments(compiled: &mut Program<'_>) {
+    if compiled.comments.is_empty() {
+        return;
+    }
     let mut top_level_starts = FxHashSet::default();
     top_level_starts.insert(0u32);
     for stmt in &compiled.body {
@@ -159,17 +160,5 @@ fn preserve_comments<'a>(
             top_level_starts.insert(start);
         }
     }
-
-    // Copy only comments attached to top-level statements.
-    let mut comments = ArenaVec::with_capacity_in(source.comments.len(), &allocator);
-    for comment in &source.comments {
-        if top_level_starts.contains(&comment.attached_to) {
-            comments.push(*comment);
-        }
-    }
-    compiled.comments = comments;
-
-    // Codegen reads comment content from `source_text` via span offsets, so the
-    // compiled program must point at the same source as the original.
-    compiled.source_text = source.source_text;
+    compiled.comments.retain(|comment| top_level_starts.contains(&comment.attached_to));
 }
