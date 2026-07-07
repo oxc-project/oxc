@@ -29,6 +29,48 @@ const ALL_SUPPORTED_EXTENSIONS: &[&[&str]] = &[
     &[".mts", ".d.mts", ".mjs"],
 ];
 
+/// tsgo `tspath.SupportedTSExtensionsWithJsonFlat`: the extensions of resolved imports that are
+/// *not* considered JavaScript files by `resolveImportsAndModuleAugmentations`'s gating.
+pub const SUPPORTED_TS_EXTENSIONS_WITH_JSON_FLAT: &[&str] =
+    &[".ts", ".tsx", ".d.ts", ".cts", ".d.cts", ".mts", ".d.mts", ".json"];
+
+/// tsgo `CompilerOptions.GetAllowJS`: `allowJs` if set, otherwise fall back to `checkJs`.
+pub fn get_allow_js(options: &CompilerOptions) -> bool {
+    options.allow_js.unwrap_or(options.check_js == Some(true))
+}
+
+/// tsgo `CompilerOptions.GetResolveJsonModule`: the explicit value when set; otherwise `true`
+/// unless the module-resolution kind is `node16` (tsgo's `GetModuleResolutionKind` resolves
+/// every other default to `Bundler` or `nodenext`, both of which resolve JSON modules).
+///
+/// `oxc_resolver` does not expose `moduleResolution`, but tsc rejects
+/// `moduleResolution: node16/nodenext` unless `module` is set to a matching value
+/// (TS5109/TS5110), so deriving the kind from `module` alone is equivalent.
+pub fn get_resolve_json_module(options: &CompilerOptions) -> bool {
+    if let Some(explicit) = options.resolve_json_module {
+        return explicit;
+    }
+    !options.module.as_deref().is_some_and(|module| {
+        module.eq_ignore_ascii_case("node16") || module.eq_ignore_ascii_case("node18")
+    })
+}
+
+/// tsgo `GetSupportedExtensions`: JS extensions are added when `allowJs` (or `checkJs`) is on.
+pub fn get_supported_extensions(options: &CompilerOptions) -> &'static [&'static [&'static str]] {
+    if get_allow_js(options) { ALL_SUPPORTED_EXTENSIONS } else { SUPPORTED_TS_EXTENSIONS }
+}
+
+/// tsgo `GetSupportedExtensionsWithJsonIfResolveJsonModule`, flattened: every supported
+/// extension, plus `.json` when JSON modules resolve.
+pub fn get_supported_extensions_with_json_flat(options: &CompilerOptions) -> Vec<&'static str> {
+    let mut extensions: Vec<&'static str> =
+        get_supported_extensions(options).iter().flat_map(|group| group.iter().copied()).collect();
+    if get_resolve_json_module(options) {
+        extensions.push(".json");
+    }
+    extensions
+}
+
 /// Parse the `tsconfig.json` at `config_file`, resolving its `extends` chain.
 ///
 /// Mirrors tsgo's `GetParsedCommandLineOfConfigFile`, but delegates the JSONC parse and the
@@ -55,14 +97,11 @@ pub fn parse_config_file(config_file: &Path) -> anyhow::Result<Arc<TsConfig>> {
 pub fn get_file_names(tsconfig: &TsConfig) -> Vec<PathBuf> {
     let base = tsconfig.directory();
     let options = &tsconfig.compiler_options;
-    let extension_groups = supported_extension_groups(options);
+    let extension_groups = get_supported_extensions(options);
 
-    // Flat suffix list for the directory walk, plus `.json` when `resolveJsonModule` is on.
-    let mut walk_extensions: Vec<&str> =
-        extension_groups.iter().flat_map(|group| group.iter().copied()).collect();
-    if options.resolve_json_module == Some(true) {
-        walk_extensions.push(".json");
-    }
+    // Flat suffix list for the directory walk, plus `.json` when JSON modules resolve
+    // (tsgo walks with `GetSupportedExtensionsWithJsonIfResolveJsonModule`).
+    let walk_extensions = get_supported_extensions_with_json_flat(options);
 
     // Literal `files` are always included and cannot be removed by `include`/`exclude`.
     let mut literal_files = Vec::new();
@@ -134,13 +173,6 @@ pub fn get_file_names(tsconfig: &TsConfig) -> Vec<PathBuf> {
     result.extend(wildcard_files.into_values());
     result.extend(json_files.into_values());
     result
-}
-
-/// tsgo `GetSupportedExtensions`: JS extensions are added when `allowJs` (or `checkJs`) is on.
-fn supported_extension_groups(options: &CompilerOptions) -> &'static [&'static [&'static str]] {
-    // tsgo `GetAllowJS`: use `allowJs` if set, otherwise fall back to `checkJs`.
-    let allow_js = options.allow_js.unwrap_or(options.check_js == Some(true));
-    if allow_js { ALL_SUPPORTED_EXTENSIONS } else { SUPPORTED_TS_EXTENSIONS }
 }
 
 /// tsgo `hasFileWithHigherPriorityExtension`.

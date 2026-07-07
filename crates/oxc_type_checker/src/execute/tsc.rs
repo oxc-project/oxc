@@ -9,7 +9,7 @@ use std::{
 use anyhow::{Context, Result, bail};
 
 use crate::{
-    compiler::Program,
+    compiler::{Program, ProgramOptions},
     tsoptions::{TypeCheckCommand, get_file_names, parse_command_line, parse_config_file},
     tspath::to_path,
 };
@@ -39,22 +39,23 @@ fn tsc_compilation(command: &TypeCheckCommand) -> Result<()> {
     let cwd =
         std::env::current_dir().context("Unable to determine the current working directory")?;
 
-    let root_files = match resolve_config_file(command, &cwd)? {
-        // A resolved config file: parse it (resolving `extends`) via `oxc_resolver`, then expand
-        // its file globs into the root file list.
+    let (root_files, config) = match resolve_config_file(command, &cwd)? {
+        // A resolved config file: parse it (resolving `extends`) via `oxc_resolver`, expand its
+        // file globs into the root file list, and keep the parsed config to drive module
+        // resolution and the compiler-option gates.
         Some(config_file) => {
             let tsconfig = parse_config_file(&config_file)?;
             println!("project: {}", config_file.display());
-            get_file_names(&tsconfig)
+            (get_file_names(&tsconfig), Some(tsconfig))
         }
         // Source files given without a config file: use them directly as roots.
-        None => command.files.clone(),
+        None => (command.files.clone(), None),
     };
 
-    // Collect the root files (normalized + deduplicated) into the program's file list.
-    let program = Program::new(&cwd, &root_files);
+    // Parse the roots, follow their imports to load every dependent file, and collect them.
+    let program = Program::new(ProgramOptions { current_directory: cwd, root_files, config });
     for file in program.files() {
-        println!("  {}", file.display());
+        println!("  {}", file.file_name().display());
     }
     println!("({} files)", program.len());
     Ok(())
