@@ -9241,7 +9241,7 @@ snapshots:
       svelte: 5.56.4(@typescript-eslint/types@8.62.1)
       vite-plus: 0.2.2(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.1))(terser@5.44.1)(tsx@4.22.5)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.5))
 
-  oxfmt@0.58.0(svelte@5.56.4(@typescript-eslint/types@8.62.0))(vite-plus@0.2.2(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
+  oxfmt@0.58.0(svelte@5.56.4(@typescript-eslint/types@8.62.1))(vite-plus@0.2.2(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.1))(terser@5.44.1)(tsx@4.22.5)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.5))):
     dependencies:
       tinypool: 2.1.0
     optionalDependencies:
@@ -9264,8 +9264,8 @@ snapshots:
       '@oxfmt/binding-win32-arm64-msvc': 0.58.0
       '@oxfmt/binding-win32-ia32-msvc': 0.58.0
       '@oxfmt/binding-win32-x64-msvc': 0.58.0
-      svelte: 5.56.4(@typescript-eslint/types@8.62.0)
-      vite-plus: 0.2.2(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
+      svelte: 5.56.4(@typescript-eslint/types@8.62.1)
+      vite-plus: 0.2.2(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.1))(terser@5.44.1)(tsx@4.22.5)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.5))
 
   oxlint-tsgolint@0.24.0:
     optionalDependencies:
@@ -9348,7 +9348,7 @@ snapshots:
       oxlint-tsgolint: 0.24.0
       vite-plus: 0.2.2(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.1))(terser@5.44.1)(tsx@4.22.5)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.5))
 
-  oxlint@1.73.0(oxlint-tsgolint@0.24.0)(vite-plus@0.2.2(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))):
+  oxlint@1.73.0(oxlint-tsgolint@0.24.0)(vite-plus@0.2.2(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.1))(terser@5.44.1)(tsx@4.22.5)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.5))):
     optionalDependencies:
       '@oxlint/binding-android-arm-eabi': 1.73.0
       '@oxlint/binding-android-arm64': 1.73.0
@@ -9370,7 +9370,7 @@ snapshots:
       '@oxlint/binding-win32-ia32-msvc': 1.73.0
       '@oxlint/binding-win32-x64-msvc': 1.73.0
       oxlint-tsgolint: 0.24.0
-      vite-plus: 0.2.2(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.0))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4))
+      vite-plus: 0.2.2(@arethetypeswrong/core@0.18.4)(@types/node@25.0.2)(@vitest/browser-playwright@4.1.9)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.1))(terser@5.44.1)(tsx@4.22.5)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.5))
 
   p-limit@3.1.0:
     dependencies:

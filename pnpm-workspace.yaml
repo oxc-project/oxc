@@ -30,7 +30,7 @@ overrides:
 allowBuilds:
   "@vscode/vsce-sign@2.0.8": true
   esbuild@0.27.7: true
-  esbuild@0.28.0: true
+  esbuild@0.28.1: true
   "@nestjs/core@11.1.9": false
 
 verifyDepsBeforeRun: install
