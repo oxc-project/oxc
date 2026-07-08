@@ -224,6 +224,7 @@ pub(super) unsafe fn scan_quoted(
 #[inline(always)]
 unsafe fn lic_verify_at(src: *const u8, q: usize) -> bool {
     let c1 = *src.add(q + 1);
+    // spellchecker:disable-next-line
     (c1 == b'l' && core::slice::from_raw_parts(src.add(q + 2), 6) == b"icense")
         || (c1 == b'p' && core::slice::from_raw_parts(src.add(q + 2), 7) == b"reserve")
 }

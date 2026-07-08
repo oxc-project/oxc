@@ -46,6 +46,7 @@ fn contains_license_or_preserve(hay: &[u8]) -> bool {
     while i < lim {
         if hay[i] == b'@' {
             match hay[i + 1] {
+                // spellchecker:disable-next-line
                 b'l' if &hay[i + 2..i + 8] == b"icense" => return true,
                 b'p' if &hay[i + 2..i + 9] == b"reserve" => return true,
                 _ => {}

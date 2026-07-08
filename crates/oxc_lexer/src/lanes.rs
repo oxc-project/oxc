@@ -977,7 +977,9 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                 wi += 1;
             }
             b'0' => {
+                // spellchecker:disable-next-line
                 let nd = i < be && (*src.add(i as usize)).is_ascii_digit();
+                // spellchecker:disable-next-line
                 if !nd {
                     *out.add(wi as usize) = 0;
                     wi += 1;

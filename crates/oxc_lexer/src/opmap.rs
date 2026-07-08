@@ -441,6 +441,7 @@ impl KwSet {
             }
         }
         for neg in [
+            // spellchecker:off
             "lets",
             "iff",
             "i",
@@ -456,6 +457,7 @@ impl KwSet {
             "intrinsics",
             "undefine",
             "satisfiess",
+            // spellchecker:on
         ] {
             let mut buf = [0u8; 16];
             buf[..neg.len()].copy_from_slice(neg.as_bytes());

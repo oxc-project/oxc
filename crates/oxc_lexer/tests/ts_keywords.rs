@@ -112,6 +112,7 @@ fn ts_key_separates_narrow_key_collisions() {
 #[test]
 fn near_misses_stay_ident() {
     for w in [
+        // spellchecker:off
         "types",
         "strin",
         "stringg",
@@ -128,6 +129,7 @@ fn near_misses_stay_ident() {
         "prototype",
         "Number",
         "String",
+        // spellchecker:on
     ] {
         assert_eq!(first_kind(w, true), k::IDENT, "ts near-miss: {w}");
         assert_eq!(first_kind(w, false), k::IDENT, "js near-miss: {w}");
