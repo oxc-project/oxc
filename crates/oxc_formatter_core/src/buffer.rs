@@ -357,6 +357,10 @@ fn clean_interned<'ast>(
     }
 }
 
+/// NOTE: Materializing twin of [`RemoveSoftLinesBuffer::write_element`]: applies the same soft-line-removal rules,
+/// but pushes into a new `Interned` body (borrowed input, clones) instead of streaming owned elements to the inner buffer.
+/// Kept separate so the streaming path avoids clones and this stays non-generic (no monomorphization per context).
+/// The two `match`es must stay rule-for-rule in sync.
 fn push_cleaned_element<'ast>(
     element: &FormatElement<'ast>,
     cleaned: &mut ArenaVec<'ast, FormatElement<'ast>>,
@@ -371,8 +375,8 @@ fn push_cleaned_element<'ast>(
         FormatElement::Tag(Tag::EndConditionalContent) => {
             condition_content_stack.pop();
         }
-        // All content within an expanded conditional gets dropped. If there's a
-        // matching flat variant, that will still get kept.
+        // All content within an expanded conditional gets dropped.
+        // If there's a matching flat variant, that will still get kept.
         _ if condition_content_stack
             .last()
             .is_some_and(|condition| condition.mode == PrintMode::Expanded) => {}
@@ -408,6 +412,7 @@ fn push_cleaned_element<'ast>(
 }
 
 impl<'ast, C> Buffer<'ast, C> for RemoveSoftLinesBuffer<'_, 'ast, C> {
+    // Streaming twin of `push_cleaned_element`; see the note there before changing either.
     fn write_element(&mut self, element: FormatElement<'ast>) {
         match element {
             FormatElement::Tag(Tag::StartConditionalContent(condition)) => {
@@ -416,8 +421,8 @@ impl<'ast, C> Buffer<'ast, C> for RemoveSoftLinesBuffer<'_, 'ast, C> {
             FormatElement::Tag(Tag::EndConditionalContent) => {
                 self.conditional_content_stack.pop();
             }
-            // All content within an expanded conditional gets dropped. If there's a
-            // matching flat variant, that will still get kept.
+            // All content within an expanded conditional gets dropped.
+            // If there's a matching flat variant, that will still get kept.
             _ if self.is_in_expanded_conditional_content() => {}
 
             FormatElement::Line(LineMode::Soft) => {}
