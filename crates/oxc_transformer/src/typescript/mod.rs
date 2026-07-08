@@ -72,7 +72,9 @@ impl<'a> TypeScript<'a> {
     }
 
     pub(super) fn finalize_scoping(&mut self, scoping: &mut Scoping) {
+        self.annotations.update_removed_declarations(scoping);
         self.namespace.update_removed_bindings(scoping);
+        scoping.delete_typescript_bindings();
     }
 }
 
@@ -93,7 +95,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.exit_program(program, ctx);
         self.module.exit_program(program, ctx);
-        ctx.scoping.delete_typescript_bindings();
     }
 
     fn enter_arrow_function_expression(
