@@ -193,7 +193,7 @@ oxc_sourcemap = "8.0.2" # Source map generation
 #
 allocator-api2 = "=0.2.21" # Allocator trait
 anyhow = "1.0" # Flexible error handling
-oxc-graphql-parser = "0.0.5" # GraphQL parser (direct AST; apollo-parser 0.8.6 fork aligned with graphql-js 17 syntax)
+oxc-graphql-parser = "0.0.6" # GraphQL parser (direct AST; apollo-parser 0.8.6 fork aligned with graphql-js 17 syntax)
 base64 = "0.22.1" # Base64 encoding
 bitflags = "2.13.0" # Bitflag types
 bpaf = "0.9.26" # CLI parser
