@@ -978,6 +978,20 @@ fn test() {
             import {y} from './foo'",
             None,
         ),
+        // Merging multiple named specifiers from both imports.
+        (
+            r"import {a,b} from 'foo'; import {c,d} from 'foo'",
+            r"import {a,b,c,d} from 'foo'; ",
+            None,
+        ),
+        // A top-level type import merges into a value import as inline type specifiers.
+        (
+            r"import type {a,b} from 'foo'; import {c,d} from 'foo'",
+            r"import {type a,type b,c,d} from 'foo'; ",
+            Some(json!([{ "prefer-inline": true }])),
+        ),
+        // A trailing comma in the first import is preserved when appending specifiers.
+        (r"import {a,} from 'foo'; import {b} from 'foo'", r"import {a,b} from 'foo'; ", None),
     ];
 
     Tester::new(NoDuplicates::NAME, NoDuplicates::PLUGIN, pass, fail)
