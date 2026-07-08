@@ -1605,6 +1605,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-response-static-json"?: RuleNoConfig;
   "unicorn/prefer-set-has"?: RuleNoConfig;
   "unicorn/prefer-set-size"?: RuleNoConfig;
+  "unicorn/prefer-simple-condition-first"?: RuleNoConfig;
   "unicorn/prefer-single-call"?: RuleNoConfig | [AllowWarnDeny, PreferSingleCallConfig];
   "unicorn/prefer-spread"?: RuleNoConfig;
   "unicorn/prefer-string-raw"?: RuleNoConfig;
