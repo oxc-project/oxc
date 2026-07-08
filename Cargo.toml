@@ -193,7 +193,7 @@ oxc_sourcemap = "8.0.2" # Source map generation
 #
 allocator-api2 = "=0.2.21" # Allocator trait
 anyhow = "1.0" # Flexible error handling
-oxc-graphql-parser = "0.0.5" # GraphQL parser (direct AST; apollo-parser 0.8.6 fork aligned with graphql-js 17 syntax)
+oxc-graphql-parser = "0.0.6" # GraphQL parser (direct AST; apollo-parser 0.8.6 fork aligned with graphql-js 17 syntax)
 base64 = "0.22.1" # Base64 encoding
 bitflags = "2.13.0" # Bitflag types
 bpaf = "0.9.26" # CLI parser
@@ -239,7 +239,7 @@ pico-args = "0.5.0" # Minimal argument parser
 prettyplease = "0.2.37" # Rust code formatting
 project-root = "0.2.2" # Project root detection
 quickcheck = "1.1.0" # Property-based testing
-oxc-css-parser = "0.0.5" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `template_placeholder` typed placeholders for css-in-js + valid-syntax coverage fixes (see crates/oxc_formatter_css/AGENTS.md))
+oxc-css-parser = "0.0.6" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `template_placeholder` typed placeholders for css-in-js + valid-syntax coverage fixes (see crates/oxc_formatter_css/AGENTS.md))
 rand = "0.10.2" # Random number generation
 rayon = "1.12.0" # Data parallelism
 ropey = "1.6.1" # Rope text structure

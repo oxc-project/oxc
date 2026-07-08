@@ -169,7 +169,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         Expression::ArrowFunctionExpression(_)
                         | Expression::ArrayExpression(_)
                         | Expression::ObjectExpression(_) => {
-                            !f.comments().has_leading_own_line_comment(body.span().start)
+                            !has_own_line_comment_before_body(arrow, f)
                         }
                         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
                         _ => {
@@ -500,6 +500,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
             )
         });
 
+        // An own-line comment before the tail body forces the body onto its own line even for the kinds above,
+        // matching Prettier's `shouldPutBodyOnSameLine`.
+        // Sequence expressions are excluded:
+        // their body formatting already places the leading comment (see `format_sequence_with_leading_comment`).
+        let tail_body_has_leading_own_line_comment =
+            !matches!(tail.get_expression(), Some(Expression::SequenceExpression(_)))
+                && has_own_line_comment_before_body(tail, f);
+        let body_on_separate_line = body_on_separate_line || tail_body_has_leading_own_line_comment;
+
+        // Each non-tail arrow's "body" is the next arrow in the chain,
+        // so this covers own-line comments before any chain link as well as before the tail body.
+        let should_expand_grouped_tail = is_grouped_call_arg_layout
+            && (tail_body_has_leading_own_line_comment
+                || std::iter::once(self.head)
+                    .chain(self.middle.iter().copied())
+                    .any(|arrow| has_own_line_comment_before_body(arrow, f)));
+
         // If the arrow chain will break onto multiple lines, either because
         // it's a callee or because the body is printed on its own line, then
         // the signatures should be expanded first.
@@ -682,7 +699,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
             write!(f, [space(), "=>"]);
 
             if is_grouped_call_arg_layout {
-                write!(f, [group(&format_tail_body)]);
+                // Prettier does not print curried arrows as a chain when expanding the last call argument (prettier#14633);
+                // an own-line comment then forces the non-hug arrow layout,
+                // which appends the trailing comma and puts the closing `)` on its own line.
+                // Emulate that outcome on the chain.
+                if should_expand_grouped_tail {
+                    write!(
+                        f,
+                        [group(&format_args!(
+                            indent_if_group_breaks(&format_tail_body, group_id),
+                            FormatTrailingCommas::All,
+                            soft_line_break()
+                        ))
+                        .should_expand(true)]
+                    );
+                } else {
+                    write!(f, [group(&format_tail_body)]);
+                }
             } else {
                 write!(f, [indent_if_group_breaks(&format_tail_body, group_id)]);
             }
@@ -694,6 +727,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
 
         write!(f, [group(&format_inner)]);
     }
+}
+
+/// Whether an own-line comment sits between the arrow's `=>` and its body.
+///
+/// Queried by position (see `Comments::has_own_line_comment_in_range`) because
+/// as a grouped call argument this decision runs again in the re-format pass.
+/// An own-line comment cannot appear before the `=>` (no line terminator is allowed there),
+/// so any hit in this range belongs to the body.
+fn has_own_line_comment_before_body<'a>(
+    arrow: &AstNode<'a, ArrowFunctionExpression<'a>>,
+    f: &JsFormatter<'_, 'a>,
+) -> bool {
+    let signature_end =
+        arrow.return_type().map_or_else(|| arrow.params().span().end, |rt| rt.span().end);
+    f.comments().has_own_line_comment_in_range(signature_end, arrow.body().span().start)
 }
 
 fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {

@@ -1,11 +1,9 @@
-ts compatibility: 605/663 (91.25%), 19 files skipped
+ts compatibility: 608/663 (91.70%), 19 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| jsx/attribute-blank-lines/attribute-blank-lines.js | 💥💥 | 62.82% |
-| jsx/jsx/quotes.js | 💥💥💥💥 | 89.47% |
 | typescript/arrow/return-type/18588.ts | 💥 | 58.82% |
 | typescript/as/as.ts | 💥 | 97.74% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 93.33% |
@@ -43,7 +41,6 @@ ts compatibility: 605/663 (91.25%), 19 files skipped
 | typescript/quote-props/interfaces.ts | 💥✨✨ | 30.30% |
 | typescript/quote-props/type-literal.ts | 💥✨✨ | 30.30% |
 | typescript/template-literals/member-expression.ts | 💥 | 55.00% |
-| typescript/tsx/attribute-blank-lines.tsx | 💥 | 0.00% |
 | typescript/tsx/optional-chaining.tsx | 💥 | 73.33% |
 | typescript/type-parameters-arguments/10732.ts | 💥 | 50.00% |
 | typescript/type-parameters-arguments/18041.ts | 💥 | 91.43% |

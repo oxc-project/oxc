@@ -1,4 +1,4 @@
-js compatibility: 760/808 (94.06%), 23 files skipped
+js compatibility: 762/808 (94.31%), 23 files skipped
 
 # Failed
 
@@ -50,8 +50,6 @@ js compatibility: 760/808 (94.06%), 23 files skipped
 | js/template-literals/expressions.js | 💥 | 97.64% |
 | js/test-declarations/jest-each.js | 💥💥 | 95.71% |
 | js/unary-expression/comments.js | 💥 | 96.47% |
-| jsx/attribute-blank-lines/attribute-blank-lines.js | 💥💥 | 62.82% |
-| jsx/jsx/quotes.js | 💥💥💥💥 | 89.47% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
 

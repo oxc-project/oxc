@@ -310,13 +310,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXEmptyExpression> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, JSXAttributeItem<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let line_break = if f.options().attribute_position == AttributePosition::Multiline {
-            hard_line_break()
+        if f.options().attribute_position == AttributePosition::Multiline {
+            f.join_nodes_with_hardline().entries(self.iter());
         } else {
-            soft_line_break_or_space()
-        };
-
-        f.join_with(&line_break).entries(self.iter());
+            f.join_nodes_with_soft_line().entries(self.iter());
+        }
     }
 }
 
