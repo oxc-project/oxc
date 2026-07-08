@@ -18,7 +18,9 @@ mod react_compiler_utils;
 mod react_compiler_validation;
 
 use crate::react_compiler::entrypoint::compile_result::CompileResult;
-use crate::react_compiler::entrypoint::imports::get_react_compiler_runtime_module;
+use crate::react_compiler::entrypoint::imports::{
+    get_react_compiler_runtime_module, validate_restricted_imports,
+};
 use crate::react_compiler::entrypoint::program::compile_program;
 use prefilter::{has_memo_cache_function_import, has_react_like_functions};
 
@@ -122,6 +124,13 @@ fn compile<'a>(
         && !has_react_like_functions(program)
     {
         return (None, Diagnostics::default());
+    }
+
+    // Blocklisted imports fail the whole file: report and bail without compiling.
+    if let Some(diagnostics) =
+        validate_restricted_imports(program, &options.environment.validate_blocklisted_imports)
+    {
+        return (None, diagnostics);
     }
 
     let result = compile_program(allocator, semantic, program, options);
