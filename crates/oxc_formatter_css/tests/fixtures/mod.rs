@@ -173,12 +173,20 @@ fn parse_error_is_err() {
     let css = CssFormatOptions::default();
     let scss = CssFormatOptions { variant: CssVariant::Scss, ..css };
     for (source, options) in [
-        // NOTE: an unclosed block (`a {\n  color: red;\n`)
-        // Prettier rejects the unclosed block ("Unclosed block"), but we don't.
-        //
         // Top-level declaration: valid only as an embedded css-in-js fragment
         // (`format_to_ir`); standalone files must reject it like Dart Sass does.
         ("display: flex;", scss),
+        // EOF/newline-unclosed constructs: oxc-css-parser (0.0.6+) recovers to a
+        // valid AST but records the spec parse error, so they bail like every
+        // other recoverable error. Prettier rejects all of these too ("Unclosed
+        // block" / "Unclosed string" / "Unclosed bracket"); formatting them
+        // would corrupt the input (`;` appended inside the unclosed construct).
+        ("a {\n  color: red;\n", css),
+        ("@media (min-width: 500px) {\n", css),
+        ("a { content: \"abc", css),
+        ("a {\n  content: \"\n}", css),
+        ("a { width: calc(100% - 10px", css),
+        ("a { --x: {", css),
         // css-in-js `${}` markers in value position...
         ("a { color: `PLACEHOLDER-0`; }", scss),
         // ...and in selector position stay errors in the STANDALONE entry
