@@ -799,12 +799,6 @@ impl<'a> PeepholeOptimizations {
         }
         let Expression::AssignmentExpression(assign_expr) = &*e else { unreachable!() };
 
-        // Track `__proto__` and computed member writes before checking side effects.
-        // Even if this expression has side effects and can't be removed, we need to
-        // record proto writes so that subsequent property writes on the same symbol
-        // are preserved (the `__proto__` assignment may install setters).
-        Self::track_proto_write(assign_expr, ctx);
-
         let Some(symbol_id) = Self::resolve_member_assign_object_symbol(assign_expr, ctx) else {
             return false;
         };
@@ -940,38 +934,6 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Track `__proto__` and computed member writes on local bindings.
-    /// Must be called before side-effect checks so that proto writes with
-    /// side-effectful RHS still mark the symbol.
-    fn track_proto_write(assign_expr: &AssignmentExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Skip when property_write_side_effects is true (default) — the optimization
-        // that drops member writes is disabled, so tracking is unnecessary.
-        if ctx.state.options.treeshake.property_write_side_effects {
-            return;
-        }
-        // Match only potential `__proto__` writes: explicit `a.__proto__` or
-        // computed `a[b]` (where the key could evaluate to `"__proto__"`).
-        let object = match &assign_expr.left {
-            AssignmentTarget::StaticMemberExpression(e) if e.property.name == "__proto__" => {
-                &e.object
-            }
-            // Computed key like `a[b]` could be `"__proto__"`
-            AssignmentTarget::ComputedMemberExpression(e) => &e.object,
-            _ => return,
-        };
-        let Expression::Identifier(ident) = object else { return };
-        let reference_id = ident.reference_id();
-        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
-            return;
-        };
-        // Only mark if there are other member writes — if __proto__ is the only
-        // reference, the setter is installed but never triggered, so dropping is safe.
-        let ref_count = ctx.scoping().get_resolved_reference_ids(symbol_id).len();
-        if ref_count > 1 {
-            ctx.state.proto_write_symbols.insert(symbol_id);
-        }
-    }
-
     /// Resolve the symbol ID of a member assignment's base object identifier.
     /// Returns `None` for chained access (`a.b.c`), non-identifier bases, or
     /// non-member assignment targets.
@@ -995,15 +957,22 @@ impl<'a> PeepholeOptimizations {
     /// `symbol_id` is the resolved base-object symbol
     /// (`resolve_member_assign_object_symbol`).
     ///
-    /// Three conditions must hold:
+    /// Four conditions must hold:
     /// 1. The target is a single-level member expression (`A.foo`, not `a.b.c`)
     /// 2. ALL references to the symbol are member write targets
     /// 3. The symbol creates a fresh value (not an alias) and is not exported
-    /// 4. The symbol has no `__proto__` member writes (which could install setters)
+    /// 4. No `__proto__` write may have installed a setter that another
+    ///    reference could trigger
     fn is_member_assign_to_unused_binding(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        // If this symbol has `__proto__` or computed member writes, don't drop any
-        // property writes — the `__proto__` assignment may have installed setters.
-        if ctx.state.proto_write_symbols.contains(&symbol_id) {
+        // A potential `__proto__` write anywhere in the program (`PROTO_WRITTEN`
+        // is seeded by `Normalize`, so traversal order doesn't matter) may have
+        // installed a setter that a sibling property write triggers. Bail while
+        // any OTHER reference exists; when the candidate is the symbol's only
+        // remaining reference, it either is the proto write itself or the proto
+        // write is already gone, so no setter can ever fire.
+        if ctx.state.symbol_facts.has(symbol_id, SymbolFact::PROTO_WRITTEN)
+            && ctx.scoping().get_resolved_reference_ids(symbol_id).len() > 1
+        {
             return false;
         }
 

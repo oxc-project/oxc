@@ -123,12 +123,10 @@ impl<'a> Traverse<'a> for Normalize {
         Self::set_no_side_effects_to_call_expr(e, ctx);
     }
 
-    // The three hooks below seed the `MEMBER_WRITE_HAZARD` fact in
-    // `MinifierState::symbol_facts` (see its docs). Normalize always runs before
-    // the fixed-point loop, so the loop starts with a program-wide,
-    // execution-order-independent view of hazardous member writes. Skipped in DCE
-    // mode — the default-path drop of write-only property assignments that
-    // consumes the fact is full-minify only.
+    // The three hooks below seed `MinifierState::symbol_facts` (see its docs)
+    // with a program-wide, execution-order-independent view of member writes
+    // before the fixed-point loop runs. `MinifierState::seeds_symbol_facts`
+    // says when any consumer is live.
 
     /// Covers `=` / compound / logical assignment lefts, destructuring member
     /// targets (`[o.x] = arr`), and for-in/of lefts (`for (o.x in y)`).
@@ -137,7 +135,7 @@ impl<'a> Traverse<'a> for Normalize {
         node: &mut AssignmentTarget<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.state.dce {
+        if !ctx.state.seeds_symbol_facts() {
             return;
         }
         let Some(target) = node.as_simple_assignment_target() else { return };
@@ -152,7 +150,7 @@ impl<'a> Traverse<'a> for Normalize {
 
     /// `o.x++` / `--o.x` read the property before writing.
     fn exit_update_expression(&mut self, e: &mut UpdateExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if !ctx.state.seeds_symbol_facts() {
             return;
         }
         Self::record_simple_target_member_write_hazard(
@@ -166,13 +164,14 @@ impl<'a> Traverse<'a> for Normalize {
     /// single-level delete is harmless — but a CHAINED delete (`delete a.b.c`)
     /// reads the intermediate object `a.b`, hazarding the base `a`.
     fn exit_unary_expression(&mut self, e: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
+        if !ctx.state.seeds_symbol_facts() {
             return;
         }
         if e.operator.is_delete()
             && let Some(member) = e.argument.get_inner_expression().as_member_expression()
         {
-            // Both flags false: the hazard applies only when depth > 1.
+            // Both flags false: `delete` installs no setter, so the hazard applies
+            // only when depth > 1 (the chained intermediate object).
             Self::record_member_write_hazard(
                 member.object(),
                 /* key_is_unsafe */ false,
@@ -540,61 +539,55 @@ impl<'a> Normalize {
         is_read_modify: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let (object, key_is_unsafe) = match target {
-            SimpleAssignmentTarget::StaticMemberExpression(e) => {
-                (&e.object, e.property.name == "__proto__")
-            }
-            SimpleAssignmentTarget::ComputedMemberExpression(e) => {
-                (&e.object, !PeepholeOptimizations::member_key_is_safe(&e.expression))
+        // Direct member targets, or the inner member of TS wrappers
+        // (`(o.x as any) = 1`); plain identifier targets have no member write.
+        let Some(member) = target.as_member_expression().or_else(|| {
+            target
+                .get_expression()
+                .map(Expression::get_inner_expression)
+                .and_then(Expression::as_member_expression)
+        }) else {
+            return;
+        };
+        let key_is_unsafe = match member {
+            MemberExpression::StaticMemberExpression(e) => e.property.name == "__proto__",
+            MemberExpression::ComputedMemberExpression(e) => {
+                !PeepholeOptimizations::member_key_is_safe(&e.expression)
             }
             // Private fields can't be `__proto__` and aren't affected by the
             // prototype chain.
-            SimpleAssignmentTarget::PrivateFieldExpression(e) => (&e.object, false),
-            // TS wrappers (`(o.x as any) = 1`): unwrap to the inner member.
-            SimpleAssignmentTarget::TSAsExpression(_)
-            | SimpleAssignmentTarget::TSSatisfiesExpression(_)
-            | SimpleAssignmentTarget::TSNonNullExpression(_)
-            | SimpleAssignmentTarget::TSTypeAssertion(_) => {
-                let Some(member) = target
-                    .get_expression()
-                    .map(Expression::get_inner_expression)
-                    .and_then(Expression::as_member_expression)
-                else {
-                    return;
-                };
-                let key_is_unsafe = match member {
-                    MemberExpression::StaticMemberExpression(e) => e.property.name == "__proto__",
-                    MemberExpression::ComputedMemberExpression(e) => {
-                        !PeepholeOptimizations::member_key_is_safe(&e.expression)
-                    }
-                    MemberExpression::PrivateFieldExpression(_) => false,
-                };
-                Self::record_member_write_hazard(
-                    member.object(),
-                    key_is_unsafe,
-                    is_read_modify,
-                    ctx,
-                );
-                return;
-            }
-            SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => return,
+            MemberExpression::PrivateFieldExpression(_) => false,
         };
-        Self::record_member_write_hazard(object, key_is_unsafe, is_read_modify, ctx);
+        Self::record_member_write_hazard(member.object(), key_is_unsafe, is_read_modify, ctx);
     }
 
     /// Record the base symbol of a hazardous member write in
-    /// the `MEMBER_WRITE_HAZARD` fact in `MinifierState::symbol_facts`. `object`
-    /// is the member expression's object; walking it to the base identifier
-    /// determines the chain depth. The hazard applies iff the op reads the property
+    /// `MinifierState::symbol_facts`. `object` is the member expression's object;
+    /// walking it to the base identifier determines the chain depth.
+    ///
+    /// Sets `MEMBER_WRITE_HAZARD` iff the op reads the property
     /// (`is_read_modify`), the write is chained (`a.b.c = 1` — dropping the
-    /// intermediate `a.b = {}` would throw), or the key may be `"__proto__"`
-    /// (`key_is_unsafe` — the write may install setters).
+    /// intermediate `a.b = {}` would throw), or the key may be `"__proto__"` or a
+    /// non-literal computed value (`key_is_unsafe` — the write may install
+    /// setters).
+    ///
+    /// Additionally sets `PROTO_WRITTEN` for the same unsafe keys — a purely
+    /// syntactic fact; the sole-reference exemption is applied at the consumer
+    /// (`is_member_assign_to_unused_binding`), where the reference count is
+    /// current rather than frozen at seed time.
     fn record_member_write_hazard(
         object: &Expression<'a>,
         key_is_unsafe: bool,
         is_read_modify: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        // In DCE mode only `PROTO_WRITTEN` has a live consumer (the opt-in
+        // drop); `MEMBER_WRITE_HAZARD`'s default-path reader is full-minify
+        // only. Skip hazard-only work (safe-key read-modify ops, chained
+        // writes, chained deletes) before walking the chain.
+        if ctx.state.dce && !key_is_unsafe {
+            return;
+        }
         let mut depth = 1u32;
         let mut object = object;
         let base = loop {
@@ -617,7 +610,11 @@ impl<'a> Normalize {
         let Some(symbol_id) = ctx.scoping().get_reference(base.reference_id()).symbol_id() else {
             return;
         };
-        ctx.state.symbol_facts.insert(symbol_id, SymbolFact::MEMBER_WRITE_HAZARD);
+        let mut facts = SymbolFact::MEMBER_WRITE_HAZARD;
+        if key_is_unsafe {
+            facts |= SymbolFact::PROTO_WRITTEN;
+        }
+        ctx.state.symbol_facts.insert(symbol_id, facts);
     }
 
     fn remove_unused_use_strict_directive(body: &mut FunctionBody<'a>, ctx: &TraverseCtx<'a>) {

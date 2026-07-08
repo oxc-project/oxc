@@ -898,6 +898,13 @@ fn test_property_write_side_effects() {
         "const a = {}; a[b] = { set a(v) { console.log('setter'); } }, a.a = 1;",
         &options,
     );
+    // Literal non-string keys can't coerce to `"__proto__"` but are kept
+    // conservatively — see `SymbolFact::PROTO_WRITTEN` docs.
+    test_options(
+        "const a = {}; a[null] = 1; a.a = 1;",
+        "const a = {}; a[null] = 1, a.a = 1;",
+        &options,
+    );
 
     // `__proto__` in object literal initializer installs setters via prototype chain
     test_same_options(
@@ -910,14 +917,27 @@ fn test_property_write_side_effects() {
         &options,
     );
 
-    // TODO: `__proto__` assignment inside a hoisted function — setter is installed when f() is called.
-    // This case is not handled yet because the `__proto__` write inside the function body
-    // is encountered after `obj.a = 1` during traversal. Uncomment when two-pass tracking
-    // is implemented.
-    // test_same_options(
-    //     "const obj = {}; f(); obj.a = 1; function f() { obj.__proto__ = { set a(v) { console.log('hello'); } }; }",
-    //     &options,
-    // );
+    // `__proto__` assignment inside a hoisted function — traversal reaches the
+    // function body only AFTER `obj.a = 1`, so the old per-pass tracking never saw
+    // it in time and wrongly dropped `obj.a = 1`. `PROTO_WRITTEN` is seeded by
+    // `Normalize` before the fixed-point loop, so it is caught regardless of
+    // order. `f` has an observable side effect (`g()`), so it is not tree-shaken:
+    // the setter really is installed when `f()` runs, and the sibling `obj.a = 1`
+    // that would trigger it must survive.
+    test_options(
+        "const obj = {}; f(); obj.a = 1; function f() { g(); obj.__proto__ = { set a(v) { console.log('hello'); } }; }",
+        "const obj = {};\nf(), obj.a = 1;\nfunction f() {\n\tg(), obj.__proto__ = { set a(v) {\n\t\tconsole.log('hello');\n\t} };\n}\n",
+        &options,
+    );
+
+    // Destructuring proto write (`[o.__proto__] = [x]`) is now caught by the
+    // Normalize scan (the old per-pass tracking only saw `=` assignments), so the
+    // sibling `o.a = 1` is kept.
+    test_options(
+        "var o = {}; [o.__proto__] = [x]; o.a = 1;",
+        "var o = {};\n[o.__proto__] = [x], o.a = 1;\n",
+        &options,
+    );
 
     // Default options (property_write_side_effects: true) also drop these now —
     // see `test_drop_write_only_property_assignments_by_default`.
@@ -997,8 +1017,8 @@ fn test_drop_write_only_property_assignments_by_default() {
     test_smallest("var a = {}; a.b = {}; a.b.c = 1;", "var a = {}; a.b = {}, a.b.c = 1;");
 
     // `__proto__` write in a hoisted function runs before the property write —
-    // the hazard scan is execution-order independent (unlike the per-pass
-    // `proto_write_symbols` used by the opt-in path).
+    // the hazard scan is execution-order independent because `Normalize` seeds
+    // the facts before the fixed-point loop.
     test_smallest(
         "const obj = {}; f(); obj.a = 1; function f() { obj.__proto__ = { set a(v) { console.log(v); } }; }",
         "const obj = {}; f(), obj.a = 1; function f() { obj.__proto__ = { set a(v) { console.log(v); } }; }",
