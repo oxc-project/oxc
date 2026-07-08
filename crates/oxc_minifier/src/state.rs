@@ -8,7 +8,7 @@ use oxc_span::SourceType;
 use oxc_str::Str;
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
-use crate::{CompressOptions, symbol_value::SymbolValues};
+use crate::{CompressOptions, symbol_facts::PersistentSymbolFacts, symbol_value::SymbolValues};
 
 /// Dirty data accumulated by the `replace_*` / `drop_*` helper calls between
 /// two consumption points. Live from `MinifierState::new` so the pre-loop
@@ -80,6 +80,11 @@ pub struct MinifierState<'a> {
     /// setters that make subsequent property writes side-effectful.
     pub proto_write_symbols: FxHashSet<SymbolId>,
 
+    /// Program-wide, monotone per-symbol facts (currently the member-write
+    /// hazard consumed by the DEFAULT-mode write-only property drop). See
+    /// [`PersistentSymbolFacts`] for the lifecycle contract every fact obeys.
+    pub symbol_facts: PersistentSymbolFacts,
+
     /// One frame per enclosing function body (program root at the bottom).
     /// `(body_scope, body_unsafe)`. While `body_unsafe` is false, the next
     /// `var x = <literal>;` whose declarator sits at `body_scope` is safe to
@@ -123,6 +128,7 @@ impl<'a> MinifierState<'a> {
             symbol_values: SymbolValues::new(scoping.symbols_len()),
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
+            symbol_facts: PersistentSymbolFacts::default(),
             body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
             mutated: false,
             dirty: PassDirty::new(scoping.references_len(), allocator),

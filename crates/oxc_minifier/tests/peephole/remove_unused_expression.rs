@@ -1,8 +1,10 @@
 use oxc_ecmascript::side_effects::PropertyReadSideEffects;
+use oxc_span::SourceType;
 
 use crate::{
     CompressOptions, CompressOptionsUnused, TreeShakeOptions, default_options, test, test_options,
     test_options_source_type, test_same, test_same_options, test_same_options_source_type,
+    test_same_smallest, test_smallest,
 };
 
 #[test]
@@ -751,8 +753,10 @@ fn test_property_write_side_effects() {
         &options,
     );
 
-    // Should keep if the assignment RHS has side effects
-    test_same_options("function A() {} A.foo = sideEffect();", &options);
+    // Assignment RHS with side effects: the RHS is hoisted, the write dropped
+    // (same as the default path — see
+    // `test_drop_write_only_property_assignments_by_default`).
+    test_options("function A() {} A.foo = sideEffect();", "sideEffect();", &options);
 
     // Property assignment on global (not local binding) should be kept
     test_same_options("globalObj.foo = 1;", &options);
@@ -861,8 +865,10 @@ fn test_property_write_side_effects() {
     // Non-static setters are fine — property writes on the class itself won't trigger them
     test_options("class A { set foo(v) { console.log(v); } } A.bar = 1;", "", &options);
 
-    // Static getter (not setter) is fine to drop
-    test_options("class A { static get foo() { return 1; } } A.bar = 1;", "", &options);
+    // A static getter (get-only) makes a write to its key throw in strict mode,
+    // so a class with any static accessor is no longer treated as a fresh value —
+    // its writes are kept (conservative for an unrelated key like `bar`, sound).
+    test_same_options("class A { static get foo() { return 1; } } A.bar = 1;", &options);
 
     // __proto__ assignment can install setters that make subsequent property writes
     // side-effectful. When both __proto__ write and property write exist, preserve all.
@@ -913,10 +919,170 @@ fn test_property_write_side_effects() {
     //     &options,
     // );
 
-    // Default options (property_write_side_effects: true) should NOT drop these
+    // Default options (property_write_side_effects: true) also drop these now —
+    // see `test_drop_write_only_property_assignments_by_default`.
     let default_opts =
         CompressOptions { unused: CompressOptionsUnused::Remove, ..CompressOptions::smallest() };
-    test_same_options("function A() {} A.from = () => {};", &default_opts);
+    test_options("function A() {} A.from = () => {};", "", &default_opts);
+}
+
+#[test]
+fn test_drop_write_only_property_assignments_by_default() {
+    // Under DEFAULT options (`property_write_side_effects: true` untouched —
+    // that stays rolldown's tree-shaking knob), full-minify mode drops property
+    // assignments whose base is a provably-unused, fresh, non-escaping local
+    // binding (terser parity). See `docs/ASSUMPTIONS.md`.
+
+    // Headline: one `displayName` write must not keep an entire module alive.
+    // (The `(function(){...})()` wrapper itself survives only because plain-
+    // function IIFE inlining is a separate, pre-existing limitation —
+    // `substitute_iife_call` unwraps arrow bodies only.)
+    test_smallest(
+        "(function() { var r = require('react'); var o = function(e, t) { return r.create(e, t); }; o.displayName = 'X'; })();",
+        "(function() { require('react'); })();",
+    );
+    test_smallest(
+        "(() => { var r = require('react'); var o = function(e, t) { return r.create(e, t); }; o.displayName = 'X'; })();",
+        "require('react');",
+    );
+
+    // Pure RHS: the whole statement drops, for every fresh-value init shape.
+    test_smallest("var o = {}; o.x = 1;", "");
+    test_smallest("var o = []; o.x = 1;", "");
+    test_smallest("var o = () => {}; o.x = 1;", "");
+    test_smallest("var o = function() {}; o.x = 1;", "");
+    test_smallest("var o = class {}; o.x = 1;", "");
+    test_smallest("function o() {} o.x = 1;", "");
+
+    // Impure RHS: the RHS is hoisted in place, the write dropped.
+    test_smallest("var o = {}; o.x = impure();", "impure();");
+
+    // Value position: a plain assignment's value IS the RHS value.
+    test_smallest("var o = {}; use(o.x = impure());", "use(impure());");
+
+    // Computed keys: literal string/number keys are safe...
+    test_smallest("var o = {}; o['x'] = 1;", "");
+    test_smallest("var o = {}; o[0] = 1;", "");
+    // ...but expression keys could evaluate to `"__proto__"` (installing
+    // setters) or have their own effects, and `__proto__` itself never drops.
+    test_same_smallest("var o = {}; o[k()] = 1;");
+    test_same_smallest("var o = {}; o[b] = 1;");
+    test_same_smallest("var o = {}; o.__proto__ = x;");
+    test_smallest("var o = {}; o['__proto__'] = x;", "var o = {}; o.__proto__ = x;");
+
+    // Escapes: any non-member-write use of the binding blocks the drop.
+    test_smallest("var o = {}; o.x = 1; use(o);", "var o = {}; o.x = 1, use(o);");
+    test_same_smallest("var o = {}; o.x = o;");
+    test_same_smallest("var o = {}; o.x = () => o;");
+    test_same_smallest("export var o = {}; o.x = 1;");
+
+    // Read-modify interference (hazard): compound/logical/update ops READ the
+    // property, so sibling plain writes must survive — dropping
+    // `o.x = { valueOf: f }` would delete the observable `f()` call from
+    // `+=`'s coercion.
+    test_smallest(
+        "var o = {}; o.x = { valueOf: f }; o.x += 1;",
+        "var o = {}; o.x = { valueOf: f }, o.x += 1;",
+    );
+    test_same_smallest("var o = {}; o.x += 1;");
+    test_smallest("var o = {}; o.y ||= 2; o.x = 1;", "var o = {}; o.y ||= 2, o.x = 1;");
+    test_smallest("var o = {}; o.x++; o.y = 1;", "var o = {}; o.x++, o.y = 1;");
+    // Formed-compound staleness: the loop rewrites `o.y = o.y + 1` to
+    // `o.y += 1` (dropping the plain read that blocked the counts predicate);
+    // the hazard set must still block the sibling plain write.
+    test_smallest("var o = {}; o.x = evil; o.y = o.y + 1;", "var o = {}; o.x = evil, o.y += 1;");
+
+    // Chained-write base (hazard): dropping `a.b = {}` while `a.b.c = 1`
+    // survives would throw at runtime.
+    test_smallest("var a = {}; a.b = {}; a.b.c = 1;", "var a = {}; a.b = {}, a.b.c = 1;");
+
+    // `__proto__` write in a hoisted function runs before the property write —
+    // the hazard scan is execution-order independent (unlike the per-pass
+    // `proto_write_symbols` used by the opt-in path).
+    test_smallest(
+        "const obj = {}; f(); obj.a = 1; function f() { obj.__proto__ = { set a(v) { console.log(v); } }; }",
+        "const obj = {}; f(), obj.a = 1; function f() { obj.__proto__ = { set a(v) { console.log(v); } }; }",
+    );
+
+    // Single-level `delete` neither reads the property nor triggers setters:
+    // the plain write drops, the delete stays.
+    test_smallest("var o = {}; o.x = 1; delete o.x;", "var o = {}; delete o.x;");
+    // Chained delete reads the intermediate object — everything stays.
+    test_smallest("var a = {}; a.b = {}; delete a.b.c;", "var a = {}; a.b = {}, delete a.b.c;");
+
+    // Setter observation via the object itself: not a fresh value.
+    test_same_smallest("class A { static set foo(v) { console.log(v); } } A.foo = 1;");
+    test_same_smallest("var o = { set x(v) { console.log(v) } }; o.x = 1;");
+
+    // Gates.
+    // Script-mode top-level vars are global state.
+    test_same_options_source_type(
+        "var o = {}; o.x = 1;",
+        SourceType::cjs().with_script(true),
+        &CompressOptions::smallest(),
+    );
+    // Direct eval can observe anything.
+    test_smallest(
+        "export function f() { var o = {}; o.x = 1; eval(''); }",
+        "export function f() { var o = {}; o.x = 1, eval(''); }",
+    );
+    // --- Kind-aware key denylist ---
+    // A write that would throw a strict-mode `TypeError`, or observably coerce,
+    // is NOT dead even though the base binding is otherwise unused.
+
+    // Function objects (fn-expr / arrow / fn-decl): `name` and `length` are
+    // non-writable own props; `caller` / `arguments` are the %ThrowTypeError%
+    // poison. Class objects (class-expr / class-decl) share those. All throw.
+    for (form, sep) in [
+        ("var o = function() {}", ";"),
+        ("var o = () => {}", ";"),
+        ("function o() {}", ""),
+        ("var o = class {}", ";"),
+        ("class o {}", ""),
+    ] {
+        for key in ["caller", "arguments", "name", "length"] {
+            test_same_smallest(&format!("{form}{sep} o.{key} = 1;"));
+        }
+    }
+
+    // A class's `prototype` is non-writable (throws), so it stays. A plain
+    // function's `prototype` IS writable, so that write still drops.
+    test_same_smallest("var o = class {}; o.prototype = 1;");
+    test_same_smallest("class o {} o.prototype = 1;");
+    test_smallest("var f = function() {}; f.prototype = {};", "");
+    test_smallest("function f() {} f.prototype = {};", "");
+
+    // Array `length`: `a.length = -1` throws a `RangeError`; `a.length = {...}`
+    // runs a `valueOf` coercion. Both kept; a computed string key counts too.
+    test_same_smallest("var a = []; a.length = -1;");
+    test_same_smallest("var a = []; a.length = { valueOf() { g(); } };");
+    test_smallest("var a = []; a['length'] = 1;", "var a = []; a.length = 1;");
+    // A numeric index write is an ordinary array write — still drops.
+    test_smallest("var a = []; a[0] = 1;", "");
+
+    // `name` / `length` on an object literal are ordinary writable props: the
+    // denylist is kind-scoped, so Object-kind bases still drop.
+    test_smallest("var o = {}; o.length = 5;", "");
+    test_smallest("var o = {}; o.name = 'n';", "");
+
+    // Instance-private write (`o.#x = 1`) is a brand check that throws unless
+    // `o` is an instance of the declaring class — a fresh literal never is.
+    test_same_smallest("export class C { #x; m() { var o = {}; o.#x = 1; } }");
+
+    // A class with a static block, a static getter, or a decorator is not a
+    // fresh value (arbitrary code runs / a write to that key throws), so a
+    // later write to it survives.
+    test_same_smallest("class o { static { g(); } } o.x = 1;");
+    test_same_smallest("class o { static get foo() { return 1; } } o.foo = 1;");
+    test_same_smallest("@dec class o {} o.x = 1;");
+
+    // unused: Keep (default_options()) / KeepAssign keep the write.
+    test_same("function A() {} A.from = () => {};");
+    let keep_assign = CompressOptions {
+        unused: CompressOptionsUnused::KeepAssign,
+        ..CompressOptions::smallest()
+    };
+    test_same_options("function A() {} A.from = () => {};", &keep_assign);
 }
 
 #[test]

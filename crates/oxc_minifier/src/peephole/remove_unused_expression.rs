@@ -1,6 +1,9 @@
 use std::iter;
 
-use crate::{CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor};
+use crate::{
+    CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor, symbol_facts::SymbolFact,
+    symbol_value::FreshValueKind,
+};
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
@@ -778,14 +781,23 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    /// Try to remove a member expression assignment (e.g. `A.from = () => {}`).
-    /// Checks side-effect analysis (respects `property_write_side_effects`) and
-    /// verifies the root object is an unused local binding.
-    fn remove_unused_member_assignment(e: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+    /// Try to remove a member expression assignment (e.g. `A.from = () => {}`)
+    /// whose root object is an unused local binding.
+    ///
+    /// Two paths:
+    /// - Opt-in (`property_write_side_effects: false`): the whole assignment is
+    ///   side-effect free, so `is_member_assign_to_unused_binding` alone decides.
+    /// - Default: property writes count as side effects in general, but a plain
+    ///   `=` write to a safe single-level member of a provably-unused fresh
+    ///   local is unobservable (terser parity) — unless the symbol carries a
+    ///   member-write hazard (compound/update/chained ops, potential
+    ///   `__proto__` setters) — the `MEMBER_WRITE_HAZARD` fact in
+    ///   `MinifierState::symbol_facts`. See `docs/ASSUMPTIONS.md`.
+    fn remove_unused_member_assignment(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         if Self::keep_top_level_var_in_script_mode(ctx) {
             return false;
         }
-        let Expression::AssignmentExpression(assign_expr) = e else { unreachable!() };
+        let Expression::AssignmentExpression(assign_expr) = &*e else { unreachable!() };
 
         // Track `__proto__` and computed member writes before checking side effects.
         // Even if this expression has side effects and can't be removed, we need to
@@ -793,10 +805,139 @@ impl<'a> PeepholeOptimizations {
         // are preserved (the `__proto__` assignment may install setters).
         Self::track_proto_write(assign_expr, ctx);
 
-        if e.may_have_side_effects(ctx) {
+        let Some(symbol_id) = Self::resolve_member_assign_object_symbol(assign_expr, ctx) else {
+            return false;
+        };
+
+        if !e.may_have_side_effects(ctx) {
+            // Opt-in path (`property_write_side_effects: false`) — with a pure
+            // RHS the whole assignment is free; only the binding check remains.
+            return Self::is_member_assign_to_unused_binding(symbol_id, ctx);
+        }
+
+        // Default path. Full-minify only: in DCE (tree-shaking) mode rolldown
+        // owns `property_write_side_effects` as its opt-in knob.
+        if ctx.state.dce {
             return false;
         }
-        Self::is_member_assign_to_unused_binding(assign_expr, ctx)
+        if ctx.current_scope_flags().contains_direct_eval() {
+            return false;
+        }
+        let Expression::AssignmentExpression(assign_expr) = &*e else { unreachable!() };
+        // Compound / logical assignments READ the property (getters, coercion).
+        if assign_expr.operator != AssignmentOperator::Assign {
+            return false;
+        }
+        // Single-level member with a key that provably isn't `__proto__`.
+        if !Self::member_write_shape_is_safe(&assign_expr.left) {
+            return false;
+        }
+        if !Self::is_member_assign_to_unused_binding(symbol_id, ctx) {
+            return false;
+        }
+        // Kind-aware key denylist: writing certain keys on a fresh
+        // function/class/array throws a strict-mode `TypeError` or has an
+        // observable value-domain effect (see `member_write_key_denied`), so the
+        // write is not dead even though the binding is otherwise unused.
+        let kind = ctx
+            .state
+            .symbol_values
+            .get_symbol_value(symbol_id)
+            .map_or(FreshValueKind::None, |sv| sv.kind);
+        if Self::member_write_key_denied(&assign_expr.left, kind) {
+            return false;
+        }
+        // Program-wide, execution-order-independent hazards: another member op
+        // on this symbol reads the property or may install setters.
+        if ctx.state.symbol_facts.has(symbol_id, SymbolFact::MEMBER_WRITE_HAZARD) {
+            return false;
+        }
+        if !assign_expr.right.may_have_side_effects(ctx) {
+            // Pure RHS: the statement-position caller drops the whole thing.
+            return true;
+        }
+        // Impure RHS: hoist it in place (take FIRST so surviving RHS refs stay
+        // live; `replace_expression`'s DropDiff walk then marks only the LHS
+        // refs dead). Safe in value positions too — a plain `=` assignment's
+        // value IS the RHS value.
+        let Expression::AssignmentExpression(assign_expr) = e else { unreachable!() };
+        let new_expr = assign_expr.right.take_in(ctx);
+        ctx.replace_expression(e, new_expr);
+        false
+    }
+
+    /// Whether a member assignment target is a single-level member write
+    /// (`o.x`, `o["x"]`, `o[0]` — object is an identifier) whose key provably
+    /// isn't `"__proto__"` (which would swap the prototype chain and could
+    /// install setters). Non-literal computed keys (`o[k]`, `o[k()]`) are unsafe:
+    /// they may evaluate to `"__proto__"`.
+    ///
+    /// Private-field writes (`o.#x = 1`) are NOT safe: they are a brand check
+    /// that throws a `TypeError` unless `o` is an instance of the class that
+    /// declares `#x`, which a fresh object / function / class / array literal
+    /// never is — so the write always throws and must be kept.
+    fn member_write_shape_is_safe(target: &AssignmentTarget<'a>) -> bool {
+        match target {
+            AssignmentTarget::StaticMemberExpression(e) => {
+                matches!(e.object, Expression::Identifier(_)) && e.property.name != "__proto__"
+            }
+            AssignmentTarget::ComputedMemberExpression(e) => {
+                matches!(e.object, Expression::Identifier(_))
+                    && Self::member_key_is_safe(&e.expression)
+            }
+            _ => false,
+        }
+    }
+
+    /// The property key name a safe-shaped member write targets, when it is a
+    /// static identifier (`o.length`) or a computed string literal (`o["length"]`).
+    /// `None` for a numeric computed key (`o[0]`), whose `ToString` can never
+    /// equal one of the denied names. Used by the kind-aware key denylist.
+    fn member_write_key_name<'k>(target: &'k AssignmentTarget<'a>) -> Option<&'k str> {
+        match target {
+            AssignmentTarget::StaticMemberExpression(e) => Some(e.property.name.as_str()),
+            AssignmentTarget::ComputedMemberExpression(e) => match &e.expression {
+                Expression::StringLiteral(s) => Some(s.value.as_str()),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
+    /// Whether writing `key` on a fresh value of `kind` throws a strict-mode
+    /// `TypeError` or has an observable value-domain effect, so the write is NOT
+    /// dead even on an otherwise-unused binding:
+    /// - `Function` / `Class`: `caller` / `arguments` (the `%ThrowTypeError%`
+    ///   poison) and the non-writable own `name` / `length` all throw on write;
+    /// - `Class` additionally: `prototype` is non-writable (a plain function's
+    ///   `prototype` IS writable, so it stays droppable);
+    /// - `Array`: `length` can throw a `RangeError` (`a.length = -1`) or run a
+    ///   `valueOf` coercion (`a.length = { valueOf() {...} }`).
+    ///
+    /// `Object` literals have ordinary writable properties, so nothing is denied.
+    fn member_write_key_denied(target: &AssignmentTarget<'a>, kind: FreshValueKind) -> bool {
+        let Some(key) = Self::member_write_key_name(target) else { return false };
+        match kind {
+            FreshValueKind::Function => {
+                matches!(key, "caller" | "arguments" | "name" | "length")
+            }
+            FreshValueKind::Class => {
+                matches!(key, "caller" | "arguments" | "name" | "length" | "prototype")
+            }
+            FreshValueKind::Array => key == "length",
+            FreshValueKind::Object | FreshValueKind::None => false,
+        }
+    }
+
+    /// Whether a computed member key provably isn't `"__proto__"`:
+    /// a string literal other than `"__proto__"`, or a number (whose string
+    /// coercion can never be `"__proto__"`).
+    pub(crate) fn member_key_is_safe(key: &Expression<'a>) -> bool {
+        match key {
+            Expression::StringLiteral(s) => s.value != "__proto__",
+            Expression::NumericLiteral(_) => true,
+            _ => false,
+        }
     }
 
     /// Track `__proto__` and computed member writes on local bindings.
@@ -851,20 +992,15 @@ impl<'a> PeepholeOptimizations {
 
     /// Check if a member expression assignment (e.g. `A.from = () => {}`) targets
     /// a local binding whose only references are property-write targets.
+    /// `symbol_id` is the resolved base-object symbol
+    /// (`resolve_member_assign_object_symbol`).
     ///
     /// Three conditions must hold:
     /// 1. The target is a single-level member expression (`A.foo`, not `a.b.c`)
     /// 2. ALL references to the symbol are member write targets
     /// 3. The symbol creates a fresh value (not an alias) and is not exported
     /// 4. The symbol has no `__proto__` member writes (which could install setters)
-    fn is_member_assign_to_unused_binding(
-        assign_expr: &AssignmentExpression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> bool {
-        let Some(symbol_id) = Self::resolve_member_assign_object_symbol(assign_expr, ctx) else {
-            return false;
-        };
-
+    fn is_member_assign_to_unused_binding(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
         // If this symbol has `__proto__` or computed member writes, don't drop any
         // property writes — the `__proto__` assignment may have installed setters.
         if ctx.state.proto_write_symbols.contains(&symbol_id) {
@@ -875,7 +1011,7 @@ impl<'a> PeepholeOptimizations {
         let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
             return false;
         };
-        if !sv.is_fresh_value || sv.exported {
+        if sv.kind == FreshValueKind::None || sv.exported {
             return false;
         }
         // Check: all references are member write targets (O(1) via pre-computed count).
