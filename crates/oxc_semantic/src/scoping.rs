@@ -516,6 +516,13 @@ impl Scoping {
         });
     }
 
+    /// Remove all redeclaration metadata for a symbol.
+    pub fn clear_symbol_redeclarations(&mut self, symbol_id: SymbolId) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.symbol_redeclarations.remove(&symbol_id);
+        });
+    }
+
     /// Remove one declaration from a merged symbol and promote the first surviving declaration.
     pub fn remove_symbol_declaration(&mut self, symbol_id: SymbolId, span: Span) {
         let replacement = self.cell.with_dependent_mut(|_allocator, cell| {

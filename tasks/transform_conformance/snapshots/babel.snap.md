@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 761/1165
+Passed: 766/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (109/157)
+# babel-plugin-transform-typescript (114/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1275,19 +1275,9 @@ Unresolved references mismatch:
 after transform: ["console"]
 rebuilt        : ["LongNameModule", "console"]
 
-* namespace/clobber-class/input.ts
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 22, end: 23 }]
-rebuilt        : SymbolId(0): []
-
 * namespace/clobber-enum/input.ts
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 30, end: 31 }]
-rebuilt        : SymbolId(0): []
-
-* namespace/clobber-export/input.ts
-Symbol redeclarations mismatch for "N":
-after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 35, end: 36 }]
 rebuilt        : SymbolId(0): []
 
 * namespace/declare/input.ts
@@ -1314,11 +1304,6 @@ Bindings mismatch:
 after transform: ScopeId(0): ["Platform"]
 rebuilt        : ScopeId(0): []
 
-* namespace/multiple/input.ts
-Symbol redeclarations mismatch for "N":
-after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 33, end: 34 }]
-rebuilt        : SymbolId(0): []
-
 * namespace/mutable-fail/input.ts
 
   ! Namespaces exporting non-const are not supported by Oxc. Change
@@ -1343,29 +1328,10 @@ rebuilt        : SymbolId(0): []
    `----
 
 
-* namespace/nested/input.ts
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 22, end: 23 }]
-rebuilt        : SymbolId(0): []
-Symbol redeclarations mismatch for "M":
-after transform: SymbolId(4): [Span { start: 110, end: 111 }, Span { start: 129, end: 130 }]
-rebuilt        : SymbolId(6): []
-Symbol redeclarations mismatch for "D":
-after transform: SymbolId(6): [Span { start: 181, end: 182 }, Span { start: 207, end: 208 }]
-rebuilt        : SymbolId(9): []
-Symbol redeclarations mismatch for "F":
-after transform: SymbolId(12): [Span { start: 308, end: 309 }, Span { start: 325, end: 326 }]
-rebuilt        : SymbolId(14): []
-
 * namespace/nested-namespace/input.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["B", "G", "_A"]
 rebuilt        : ScopeId(1): ["G", "_A"]
-
-* namespace/same-name/input.ts
-Symbol redeclarations mismatch for "N":
-after transform: SymbolId(3): [Span { start: 59, end: 60 }, Span { start: 115, end: 116 }, Span { start: 166, end: 167 }]
-rebuilt        : SymbolId(5): []
 
 * optimize-const-enums/custom-values-exported/input.ts
 x Output mismatch
