@@ -16114,7 +16114,7 @@ Reference symbol mismatch for "lhs0":
 after transform: SymbolId(32) "lhs0"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Symbol"]
+after transform: []
 rebuilt        : ["A", "B", "Rhs10", "Rhs11", "Rhs12", "Rhs13", "Rhs7", "Rhs8", "Rhs9", "lhs0", "lhs1", "lhs2", "lhs3", "lhs4", "obj", "rhs0", "rhs1", "rhs14", "rhs15", "rhs2", "rhs3", "rhs4", "rhs5", "rhs6"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/functionExpressionContextualTyping3.ts
@@ -18567,9 +18567,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascr
 Bindings mismatch:
 after transform: ScopeId(0): ["C"]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Symbols/parserSymbolProperty4.ts
 Bindings mismatch:
