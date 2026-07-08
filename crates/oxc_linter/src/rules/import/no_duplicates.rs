@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, cell::OnceCell};
 
 use itertools::Itertools;
 use oxc_ast::{
@@ -120,14 +120,8 @@ impl Rule for NoDuplicates {
 
         // Map each import statement span to its declaration node so the fixer can inspect
         // specifiers, default names and brace positions when merging duplicates.
-        let import_declarations: FxHashMap<Span, &'a ImportDeclaration<'a>> = ctx
-            .nodes()
-            .iter()
-            .filter_map(|node| match node.kind() {
-                AstKind::ImportDeclaration(decl) => Some((decl.span, decl)),
-                _ => None,
-            })
-            .collect();
+        let import_declarations: OnceCell<FxHashMap<Span, &'a ImportDeclaration<'a>>> =
+            OnceCell::new();
 
         let groups = module_record
             .requested_modules
@@ -246,9 +240,21 @@ impl Rule for NoDuplicates {
     }
 }
 
+fn build_import_declarations<'a>(
+    ctx: &LintContext<'a>,
+) -> FxHashMap<Span, &'a ImportDeclaration<'a>> {
+    ctx.nodes()
+        .iter()
+        .filter_map(|node| match node.kind() {
+            AstKind::ImportDeclaration(decl) => Some((decl.span, decl)),
+            _ => None,
+        })
+        .collect()
+}
+
 fn check_duplicates<'a>(
     ctx: &LintContext<'a>,
-    import_declarations: &FxHashMap<Span, &'a ImportDeclaration<'a>>,
+    import_declarations: &OnceCell<FxHashMap<Span, &'a ImportDeclaration<'a>>>,
     prefer_inline: bool,
     requested_modules: Option<&Vec<&RequestedModule>>,
 ) {
@@ -262,6 +268,7 @@ fn check_duplicates<'a>(
     let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
     let diagnostic = no_duplicates_diagnostic(module_name, first, labels);
 
+    let import_declarations = import_declarations.get_or_init(|| build_import_declarations(ctx));
     let decls: Vec<&ImportDeclaration<'a>> = requested_modules
         .iter()
         .filter_map(|m| import_declarations.get(&m.statement_span).copied())
