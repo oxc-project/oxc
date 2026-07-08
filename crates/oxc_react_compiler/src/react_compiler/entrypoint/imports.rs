@@ -11,7 +11,6 @@ use crate::scope::ScopeResolver;
 
 use oxc_diagnostics::Diagnostics;
 
-use super::compile_result::DebugLogEntry;
 use super::suppression::SuppressionRange;
 use crate::options::{CompilerTarget, PluginOptions};
 
@@ -39,9 +38,6 @@ pub struct ProgramContext {
     pub instrument_gating_name: Option<String>,
     pub hook_guard_name: Option<String>,
 
-    /// Whether debug logging is enabled (HIR formatting after each pass).
-    pub debug_enabled: bool,
-
     // Internal state
     already_compiled: FxHashSet<u32>,
     known_referenced_names: FxHashSet<String>,
@@ -56,7 +52,6 @@ impl ProgramContext {
     ) -> Self {
         let react_runtime_module = get_react_compiler_runtime_module(&opts.target);
         Self {
-            debug_enabled: opts.debug,
             opts,
             react_runtime_module,
             suppressions,
@@ -184,9 +179,6 @@ impl ProgramContext {
     pub fn merge_uid_known_names(&mut self, names: &FxHashSet<String>) {
         self.known_referenced_names.extend(names.iter().cloned());
     }
-
-    /// Log a debug entry (for debugLogIRs support).
-    pub fn log_debug(&mut self, _entry: DebugLogEntry) {}
 
     /// Check if there are any pending imports to add to the program.
     pub fn has_pending_imports(&self) -> bool {

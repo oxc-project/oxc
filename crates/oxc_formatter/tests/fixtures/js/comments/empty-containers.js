@@ -1,0 +1,31 @@
+// An empty container holding a single one-line block comment stays inline,
+// regardless of source line breaks (Prettier >= 3.9)
+const arr = [/* only */];
+const collapses = [
+  /* collapses */
+];
+const obj = {/* obj */};
+const [/* apat */] = x;
+const {/* opat */} = y;
+[/* aat */] = z;
+({/* oat */} = w);
+call(/* args */);
+function params(/* params */) {}
+
+// A line comment, multiple comments, or a multi-line comment still expand
+const lineComment = [
+  // line
+];
+const multiple = [/* a */ /* b */];
+const multiLine = [
+  /* multi
+     line */
+];
+
+// Statement-like bodies always expand
+function body() {/* body */}
+class Body {/* body */}
+class WithStatic {
+  static {/* static */}
+}
+try {/* try */} catch {/* catch */}

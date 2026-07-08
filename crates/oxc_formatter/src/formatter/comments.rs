@@ -248,6 +248,92 @@ impl<'a> Comments<'a> {
         comments
     }
 
+    /// Comments sitting between `pos` and a closing source paren:
+    /// the run of comments after `pos` separated only by whitespace,
+    /// whose next non-whitespace character is `)`.
+    /// `None` when there is no such comment or another token intervenes.
+    ///
+    /// Lexical byte scan: the range starting at `pos` must contain only trivia and punctuation.
+    /// (e.g. an expression end up to the statement end)
+    /// A range containing a string literal would false-match a `)` inside it.
+    pub(crate) fn comments_before_closing_paren(&self, pos: u32) -> Option<&'a [Comment]> {
+        let comments = self.comments_after(pos);
+
+        let mut pos = pos;
+        let mut count = 0;
+        for comment in comments {
+            if comment.span.start < pos
+                || !self
+                    .source_text
+                    .all_bytes_match(pos, comment.span.start, |b| b.is_ascii_whitespace())
+            {
+                break;
+            }
+            count += 1;
+            pos = comment.span.end;
+        }
+
+        (count > 0 && self.source_text.next_non_whitespace_byte_is(pos, b')'))
+            .then(|| &comments[..count])
+    }
+
+    /// Whether the source has a `;` between the given positions,
+    /// ignoring `;` bytes inside comments (e.g. `foo /* ; */`).
+    /// `false` when the source relies on ASI.
+    ///
+    /// Lexical byte scan: the range must contain only trivia and punctuation.
+    /// (e.g. a content end up to the statement end)
+    /// A range containing a string literal would false-match a `;` inside it.
+    pub(crate) fn has_semicolon_in_range(&self, start: u32, end: u32) -> bool {
+        let mut pos = start;
+        for comment in self.comments_in_range(start, end) {
+            // A comment ending exactly at `start` lies before the range
+            if comment.span.start < pos {
+                continue;
+            }
+            if self.source_text.bytes_contain(pos, comment.span.start, b';') {
+                return true;
+            }
+            pos = comment.span.end;
+        }
+        self.source_text.bytes_contain(pos, end, b';')
+    }
+
+    /// End of the content including its source parentheses:
+    /// the position after the last `)` between `content_end` and `node_end` (`)` bytes inside comments don't count),
+    /// or `content_end` itself when the content is not parenthesized.
+    ///
+    /// Comments before this position sit inside the parentheses and belong to the content;
+    /// only comments after it may move behind the semicolon.
+    ///
+    /// Lexical byte scan: the range must contain only trivia and punctuation.
+    /// (e.g. a content end up to the statement end)
+    /// A range containing a string literal would false-match a `)` inside it.
+    pub(crate) fn end_including_source_parens(&self, content_end: u32, node_end: u32) -> u32 {
+        #[expect(clippy::cast_possible_truncation)] // Offsets fit in `u32`, source length does
+        let position_after_last_close_paren = |from: u32, to: u32| {
+            let offset = self.source_text.bytes_range(from, to).iter().rposition(|&b| b == b')')?;
+            Some(from + offset as u32 + 1)
+        };
+
+        let mut end = content_end;
+        let mut pos = content_end;
+        for comment in self.comments_in_range(content_end, node_end) {
+            // A comment ending exactly at `content_end` lies within the content
+            if comment.span.start < pos {
+                continue;
+            }
+            if let Some(position) = position_after_last_close_paren(pos, comment.span.start) {
+                end = position;
+            }
+            pos = comment.span.end;
+        }
+        if let Some(position) = position_after_last_close_paren(pos, node_end) {
+            end = position;
+        }
+        end
+    }
+
     /// Checks if there are any comments between the given positions.
     pub fn has_comment_in_range(&self, start: u32, end: u32) -> bool {
         self.comments_before_iter(end).any(|comment| comment.span.end > start)

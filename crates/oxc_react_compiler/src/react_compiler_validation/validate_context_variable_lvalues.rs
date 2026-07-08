@@ -129,7 +129,7 @@ fn validate_context_variable_lvalues_impl(
                             )
                             .with_detail(
                                 CompilerDiagnosticDetail::Error {
-                                    loc: value.loc().copied(),
+                                    span: value.span().copied(),
                                     message: None,
                                 },
                             ),
@@ -175,14 +175,15 @@ fn visit(
         let is_context = kind == VarRefKind::Context;
         if was_context != is_context {
             if *prev_kind == VarRefKind::Destructure || kind == VarRefKind::Destructure {
-                let loc = if kind == VarRefKind::Destructure { place.loc } else { prev_place.loc };
+                let span =
+                    if kind == VarRefKind::Destructure { place.span } else { prev_place.span };
                 errors.push_diagnostic(
                     CompilerDiagnostic::new(
                         ErrorCategory::Todo,
                         "Support destructuring of context variables",
                         None,
                     )
-                    .with_detail(CompilerDiagnosticDetail::Error { loc, message: None }),
+                    .with_detail(CompilerDiagnosticDetail::Error { span, message: None }),
                 );
                 return Ok(());
             }
@@ -196,7 +197,7 @@ fn visit(
                 )),
             )
             .with_detail(CompilerDiagnosticDetail::Error {
-                loc: place.loc,
+                span: place.span,
                 message: Some(format!("this is {}", prev_kind)),
             }));
         }

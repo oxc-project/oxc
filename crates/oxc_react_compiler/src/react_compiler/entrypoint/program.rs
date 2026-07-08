@@ -71,7 +71,7 @@ struct CompileSource<'a> {
     original_kind: OriginalFnKind,
     /// Byte span of the discovered function, used as the fallback labeled span in
     /// compile-error diagnostics.
-    fn_ast_loc: Option<Span>,
+    fn_ast_span: Option<Span>,
     fn_start: Option<u32>,
     fn_end: Option<u32>,
     fn_node_id: Option<u32>,
@@ -1091,7 +1091,7 @@ fn get_callee_name_if_react_api<'e>(callee: &'e oxc::Expression) -> Option<&'e s
 // -----------------------------------------------------------------------
 
 /// Push a compiler error's per-detail diagnostics onto the context.
-fn log_error(err: &CompilerError, fn_loc: Option<Span>, context: &mut ProgramContext) {
+fn log_error(err: &CompilerError, fn_span: Option<Span>, context: &mut ProgramContext) {
     // Detect simulated unknown exception (throwUnknownException__testonly). In TS,
     // non-CompilerError exceptions surface as a pipeline error carrying the error
     // message rather than a per-detail compiler error.
@@ -1105,7 +1105,7 @@ fn log_error(err: &CompilerError, fn_loc: Option<Span>, context: &mut ProgramCon
     if is_simulated_unknown {
         let mut diagnostic =
             OxcDiagnostic::error("[ReactCompiler] Pipeline error: Error: unexpected error");
-        if let Some(span) = fn_loc {
+        if let Some(span) = fn_span {
             diagnostic = diagnostic.with_label(span);
         }
         context.diagnostics.push(diagnostic);
@@ -1113,7 +1113,7 @@ fn log_error(err: &CompilerError, fn_loc: Option<Span>, context: &mut ProgramCon
     }
 
     for detail in &err.details {
-        if let Some(diagnostic) = crate::diagnostics::detail_to_diagnostic(detail, fn_loc) {
+        if let Some(diagnostic) = crate::diagnostics::detail_to_diagnostic(detail, fn_span) {
             context.diagnostics.push(diagnostic);
         }
     }
@@ -1124,11 +1124,11 @@ fn log_error(err: &CompilerError, fn_loc: Option<Span>, context: &mut ProgramCon
 /// otherwise returns None (error was logged only).
 fn handle_error<'a>(
     err: &CompilerError,
-    fn_loc: Option<Span>,
+    fn_span: Option<Span>,
     context: &mut ProgramContext,
 ) -> Option<CompileResult<'a>> {
     // Log the error
-    log_error(err, fn_loc, context);
+    log_error(err, fn_span, context);
 
     let should_panic = match context.opts.panic_threshold {
         PanicThreshold::AllErrors => true,
@@ -1166,7 +1166,6 @@ fn try_compile_function<'a>(
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
-    source_text: &str,
 ) -> Result<Option<CodegenFunction<'a>>, CompilerError> {
     // Check for suppressions that affect this function
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
@@ -1191,7 +1190,6 @@ fn try_compile_function<'a>(
         output_mode,
         env_config,
         context,
-        source_text,
     )
 }
 
@@ -1208,7 +1206,6 @@ fn process_fn<'a>(
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
-    source_text: &str,
 ) -> Result<Option<CodegenFunction<'a>>, CompileResult<'a>> {
     // Parse directives from the function body
     let opt_in_result =
@@ -1220,7 +1217,7 @@ fn process_fn<'a>(
         Ok(d) => d,
         Err(err) => {
             // Apply panic threshold logic (same as compilation errors)
-            if let Some(result) = handle_error(&err, source.fn_ast_loc, context) {
+            if let Some(result) = handle_error(&err, source.fn_ast_span, context) {
                 return Err(result);
             }
             return Ok(None);
@@ -1228,8 +1225,7 @@ fn process_fn<'a>(
     };
 
     // Attempt compilation
-    let compile_result =
-        try_compile_function(ast, source, scope, output_mode, env_config, context, source_text);
+    let compile_result = try_compile_function(ast, source, scope, output_mode, env_config, context);
 
     match compile_result {
         Err(err) => {
@@ -1241,7 +1237,7 @@ fn process_fn<'a>(
                     "[ReactCompiler] Unexpected error: {}",
                     err.to_string_for_event()
                 ));
-                if let Some(span) = source.fn_ast_loc {
+                if let Some(span) = source.fn_ast_span {
                     diagnostic = diagnostic.with_label(span);
                 }
                 context.diagnostics.push(diagnostic);
@@ -1249,10 +1245,10 @@ fn process_fn<'a>(
 
             if opt_out.is_some() {
                 // If there's an opt-out, just log the error (don't escalate)
-                log_error(&err, source.fn_ast_loc, context);
+                log_error(&err, source.fn_ast_span, context);
             } else {
                 // Apply panic threshold logic
-                if let Some(result) = handle_error(&err, source.fn_ast_loc, context) {
+                if let Some(result) = handle_error(&err, source.fn_ast_span, context) {
                     return Err(result);
                 }
             }
@@ -1361,7 +1357,7 @@ fn try_make_compile_source<'a>(
         // The function source location flows into compile-error diagnostics as the
         // fallback labeled span (offset/length). Only the byte `index` is
         // load-bearing; line/column/filename never reach the example's output.
-        fn_ast_loc: Some(span),
+        fn_ast_span: Some(span),
         fn_start: Some(span.start),
         fn_end: Some(span.end),
         fn_node_id: Some(node_id),
@@ -2799,9 +2795,9 @@ pub fn compile_program<'a, 'p>(
             );
             let gating_name = instrument_config.gating.as_ref().map(|g| {
                 let spec = context.add_import_specifier(&g.source, &g.import_specifier_name, None);
-                spec.name.clone()
+                spec.name
             });
-            (Some(fn_spec.name.clone()), gating_name)
+            (Some(fn_spec.name), gating_name)
         } else {
             (None, None)
         };
@@ -2813,7 +2809,7 @@ pub fn compile_program<'a, 'p>(
                 &hook_guard_config.import_specifier_name,
                 None,
             );
-            spec.name.clone()
+            spec.name
         });
 
     // Store pre-resolved names on context for pipeline access
@@ -2824,23 +2820,11 @@ pub fn compile_program<'a, 'p>(
     // Find all functions to compile
     let queue = find_functions_to_compile(program, &options, &mut context);
 
-    // Clone env_config once for all function compilations (avoids per-function clone
-    // while satisfying the borrow checker — compile_fn needs &mut context + &env_config)
-    let env_config = options.environment.clone();
-
     // Process each function and collect compiled results
     let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_>> = Vec::new();
 
     for source in &queue {
-        match process_fn(
-            &ast,
-            source,
-            &scope,
-            output_mode,
-            &env_config,
-            &mut context,
-            program.source_text,
-        ) {
+        match process_fn(&ast, source, &scope, output_mode, &options.environment, &mut context) {
             Ok(Some(codegen_fn)) => {
                 compiled_fns.push(CompiledFunction { kind: source.kind, source, codegen_fn });
             }
@@ -2896,18 +2880,14 @@ pub fn compile_program<'a, 'p>(
     // Drop the discovery results (and their borrows of `file.program`).
     drop(queue);
 
-    if replacements.is_empty() {
-        // No functions to replace. Return renames for the Babel plugin to apply
-        // (e.g., variable shadowing renames in lint mode). Imports are NOT added
-        // when there are no replacements — matching TS behavior where
-        // addImportsToProgram is only called when compiledFns.length > 0.
-        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
+    // `ast` is `None` when nothing was compiled — always so in lint mode, which
+    // applies nothing — skipping `ox_splice_program`'s whole-program clone. Splicing
+    // each compiled function in for its original (matched by `span.start ==
+    // fn_node_id`) is also what inserts the memo-cache / gating imports, so (matching
+    // TS `addImportsToProgram`) they're added only when there are replacements.
+    CompileResult::Success {
+        ast: (!replacements.is_empty())
+            .then(|| ox_splice_program(&ast, program, &replacements, &mut context)),
+        diagnostics: context.diagnostics,
     }
-
-    // Build the memoized oxc program: splice each compiled oxc function in for its
-    // original (matched by `span.start == fn_node_id`), apply gating, insert outlined
-    // functions, and add the memo-cache / gating imports.
-    let compiled_program = ox_splice_program(&ast, program, &replacements, &mut context);
-
-    CompileResult::Success { ast: Some(compiled_program), diagnostics: context.diagnostics }
 }

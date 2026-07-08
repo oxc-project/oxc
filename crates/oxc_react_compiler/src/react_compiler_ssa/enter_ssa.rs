@@ -69,11 +69,11 @@ impl SSABuilder {
         let old = &env.identifiers[old_id.0 as usize];
         let declaration_id = old.declaration_id;
         let name = old.name.clone();
-        let loc = old.loc;
+        let span = old.span;
         let new_ident = &mut env.identifiers[new_id.0 as usize];
         new_ident.declaration_id = declaration_id;
         new_ident.name = name;
-        new_ident.loc = loc;
+        new_ident.span = span;
         new_id
     }
 
@@ -95,7 +95,7 @@ impl SSABuilder {
                 "[hoisting] EnterSSA: Expected identifier to be defined before being used",
                 Some(format!("Identifier {} is undefined", name)),
             )
-            .with_detail(CompilerDiagnosticDetail::Error { loc: old_place.loc, message: None }));
+            .with_detail(CompilerDiagnosticDetail::Error { span: old_place.span, message: None }));
         }
 
         // Do not redefine context references.
@@ -109,7 +109,7 @@ impl SSABuilder {
             identifier: new_id,
             effect: old_place.effect,
             reactive: old_place.reactive,
-            loc: old_place.loc,
+            span: old_place.span,
         })
     }
 
@@ -144,7 +144,7 @@ impl SSABuilder {
             identifier: new_id,
             effect: old_place.effect,
             reactive: old_place.reactive,
-            loc: old_place.loc,
+            span: old_place.span,
         }
     }
 
@@ -174,7 +174,7 @@ impl SSABuilder {
                 identifier: new_id,
                 effect: old_place.effect,
                 reactive: old_place.reactive,
-                loc: old_place.loc,
+                span: old_place.span,
             };
             let state = self.states.get_mut(&block_id).unwrap();
             state.incomplete_phis.push(IncompletePhi { old_place: old_place.clone(), new_place });
@@ -195,7 +195,7 @@ impl SSABuilder {
             identifier: new_id,
             effect: old_place.effect,
             reactive: old_place.reactive,
-            loc: old_place.loc,
+            span: old_place.span,
         };
         self.add_phi(block_id, old_place, &new_place, env);
         new_id
@@ -219,7 +219,7 @@ impl SSABuilder {
                     identifier: pred_id,
                     effect: old_place.effect,
                     reactive: old_place.reactive,
-                    loc: old_place.loc,
+                    span: old_place.span,
                 },
             );
         }
@@ -466,7 +466,7 @@ fn enter_ssa_impl(
 /// read — the real function is swapped back immediately after processing.
 pub fn placeholder_function<'a>() -> HirFunction<'a> {
     HirFunction {
-        loc: None,
+        span: None,
         id: None,
         name_hint: None,
         fn_type: ReactFunctionType::Other,
@@ -475,7 +475,7 @@ pub fn placeholder_function<'a>() -> HirFunction<'a> {
             identifier: IdentifierId(0),
             effect: Effect::Unknown,
             reactive: false,
-            loc: None,
+            span: None,
         },
         context: Vec::new(),
         body: HIR { entry: BlockId(0), blocks: FxIndexMap::default() },

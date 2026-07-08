@@ -18,7 +18,6 @@ use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
 use crate::react_compiler_diagnostics::ErrorCategory;
-use crate::react_compiler_diagnostics::SourceLocation as DiagSourceLocation;
 use crate::react_compiler_hir::ArrayElement;
 use crate::react_compiler_hir::ArrayPattern;
 use crate::react_compiler_hir::BlockId;
@@ -52,6 +51,7 @@ use crate::react_compiler_hir::reactive::ReactiveStatement;
 use crate::react_compiler_hir::reactive::ReactiveTerminal;
 use crate::react_compiler_hir::reactive::ReactiveTerminalTargetKind;
 use crate::react_compiler_hir::reactive::ReactiveValue;
+use oxc_span::Span;
 
 use crate::react_compiler_reactive_scopes::build_reactive_function::build_reactive_function;
 use crate::react_compiler_reactive_scopes::prune_hoisted_contexts::prune_hoisted_contexts;
@@ -200,7 +200,7 @@ pub fn codegen_function<'a, 'h>(
     let outlined = ox_codegen_outlined(ast, env, fbt_operands_for_outlined)?;
 
     Ok(OxcCodegenFunction {
-        loc: func.loc,
+        span: func.span,
         id,
         name_hint: func.name_hint.clone(),
         params: compiled.params,
@@ -234,13 +234,13 @@ fn ox_codegen_outlined<'a>(
     let mut outlined = Vec::with_capacity(entries.len());
     for entry in entries {
         let mut reactive_function = build_reactive_function(&entry.func, env).map_err(|diag| {
-            let loc = diag.primary_location().cloned();
+            let span = diag.primary_location().cloned();
             let mut err = CompilerError::new();
             err.push_error_detail(crate::react_compiler_diagnostics::CompilerErrorDetail {
                 category: diag.category,
                 reason: diag.reason,
                 description: diag.description,
-                loc,
+                span,
             });
             err
         })?;
@@ -311,10 +311,7 @@ struct OxcContext<'a, 'env, 'h> {
     next_cache_index: u32,
     declarations: FxHashSet<DeclarationId>,
     temp: OxcTemporaries<'a>,
-    object_methods: FxHashMap<
-        IdentifierId,
-        (InstructionValue<'h>, Option<crate::react_compiler_diagnostics::SourceLocation>),
-    >,
+    object_methods: FxHashMap<IdentifierId, (InstructionValue<'h>, Option<Span>)>,
     unique_identifiers: FxHashSet<String>,
     #[allow(dead_code)]
     fbt_operands: FxHashSet<IdentifierId>,
@@ -947,7 +944,7 @@ fn ox_codegen_reactive_scope<'a, 'h>(
             None => {
                 return Err(invariant_err(
                     "Expected early return value to be promoted to a named variable",
-                    early_return.loc,
+                    early_return.span,
                 ));
             }
         };
@@ -1132,11 +1129,11 @@ fn ox_codegen_terminal<'a, 'h>(
                 &cx.ast,
             )))
         }
-        ReactiveTerminal::ForIn { init, loop_block, loc, .. } => {
-            ox_codegen_for_in(cx, init, loop_block, *loc)
+        ReactiveTerminal::ForIn { init, loop_block, span, .. } => {
+            ox_codegen_for_in(cx, init, loop_block, *span)
         }
-        ReactiveTerminal::ForOf { init, test, loop_block, loc, .. } => {
-            ox_codegen_for_of(cx, init, test, loop_block, *loc)
+        ReactiveTerminal::ForOf { init, test, loop_block, span, .. } => {
+            ox_codegen_for_of(cx, init, test, loop_block, *span)
         }
         ReactiveTerminal::Label { block, .. } => {
             let body = ox_codegen_block_statement(cx, block)?;
@@ -1175,7 +1172,7 @@ fn ox_codegen_for_in<'a, 'h>(
     cx: &mut OxcContext<'a, '_, 'h>,
     init: &ReactiveValue<'h>,
     loop_block: &ReactiveBlock<'h>,
-    loc: Option<DiagSourceLocation>,
+    span: Option<Span>,
 ) -> Result<Option<oxc::Statement<'a>>, CompilerError> {
     let ReactiveValue::SequenceExpression { instructions, .. } = init else {
         return Err(invariant_err("Expected a sequence expression init for for..in", None));
@@ -1185,14 +1182,14 @@ fn ox_codegen_for_in<'a, 'h>(
             category: ErrorCategory::Todo,
             reason: "Support non-trivial for..in inits".to_string(),
             description: None,
-            loc,
+            span,
         })?;
         return Ok(Some(oxc_ast::ast::Statement::new_empty_statement(SPAN, &cx.ast)));
     }
     let iterable_collection = &instructions[0];
     let iterable_item = &instructions[1];
     let instr_value = get_instruction_value(&iterable_item.value)?;
-    let (lval, var_decl_kind) = ox_extract_for_in_of_lval(cx, instr_value, "for..in", loc)?;
+    let (lval, var_decl_kind) = ox_extract_for_in_of_lval(cx, instr_value, "for..in", span)?;
     let right = ox_codegen_instruction_value_to_expression(cx, &iterable_collection.value)?;
     let body = ox_codegen_block_statement(cx, loop_block)?;
     let body = oxc::Statement::BlockStatement(oxc_allocator::ArenaBox::new_in(body, &cx.ast));
@@ -1221,7 +1218,7 @@ fn ox_codegen_for_of<'a, 'h>(
     init: &ReactiveValue<'h>,
     test: &ReactiveValue<'h>,
     loop_block: &ReactiveBlock<'h>,
-    loc: Option<DiagSourceLocation>,
+    span: Option<Span>,
 ) -> Result<Option<oxc::Statement<'a>>, CompilerError> {
     let ReactiveValue::SequenceExpression { instructions: init_instrs, .. } = init else {
         return Err(invariant_err("Expected a sequence expression init for for..of", None));
@@ -1245,13 +1242,13 @@ fn ox_codegen_for_of<'a, 'h>(
             category: ErrorCategory::Todo,
             reason: "Support non-trivial for..of inits".to_string(),
             description: None,
-            loc,
+            span,
         })?;
         return Ok(Some(oxc_ast::ast::Statement::new_empty_statement(SPAN, &cx.ast)));
     }
     let iterable_item = &test_instrs[1];
     let instr_value = get_instruction_value(&iterable_item.value)?;
-    let (lval, var_decl_kind) = ox_extract_for_in_of_lval(cx, instr_value, "for..of", loc)?;
+    let (lval, var_decl_kind) = ox_extract_for_in_of_lval(cx, instr_value, "for..of", span)?;
 
     let right = ox_codegen_place_to_expression(cx, collection)?;
     let body = ox_codegen_block_statement(cx, loop_block)?;
@@ -1280,7 +1277,7 @@ fn ox_extract_for_in_of_lval<'a>(
     cx: &mut OxcContext<'a, '_, '_>,
     instr_value: &InstructionValue,
     context_name: &str,
-    loc: Option<DiagSourceLocation>,
+    span: Option<Span>,
 ) -> Result<(oxc::BindingPattern<'a>, oxc::VariableDeclarationKind), CompilerError> {
     let (lval, kind) = match instr_value {
         InstructionValue::StoreLocal { lvalue, .. } => {
@@ -1294,7 +1291,7 @@ fn ox_extract_for_in_of_lval<'a>(
                 category: ErrorCategory::Todo,
                 reason: format!("Support non-trivial {} inits", context_name),
                 description: None,
-                loc,
+                span,
             })?;
             return Ok((
                 oxc_ast::ast::BindingPattern::new_binding_identifier(SPAN, "_", &cx.ast),
@@ -1406,8 +1403,8 @@ fn ox_codegen_for_init<'a, 'h>(
 // `codegen_base_instruction_value`, `codegen_place`, `codegen_lvalue`,
 // `codegen_argument`, `codegen_dependency`) to build oxc nodes via `AstBuilder`.
 // The HIR-driven control flow is identical; only node construction differs. Since
-// oxc tracks positions by `Span` (not Babel-style locs), the per-node loc
-// propagation (`apply_loc_to_value` / place-loc overrides) collapses to `SPAN`.
+// oxc tracks positions by `Span` (not Babel-style locs), the per-node span
+// propagation (`apply_loc_to_value` / place-span overrides) collapses to `SPAN`.
 //
 // `FunctionExpression` / `ObjectExpression` / JSX / non-trivial `TypeCastExpression`
 // emission are deferred to later batches and currently raise an invariant error
@@ -1452,14 +1449,14 @@ fn ox_codegen_instruction_nullable<'a, 'h>(
             InstructionValue::Debugger { .. } => {
                 return Ok(Some(oxc_ast::ast::Statement::new_debugger_statement(SPAN, &cx.ast)));
             }
-            InstructionValue::ObjectMethod { loc, .. } => {
+            InstructionValue::ObjectMethod { span, .. } => {
                 invariant(
                     instr.lvalue.is_some(),
                     "Expected object methods to have a temp lvalue",
                     None,
                 )?;
                 let lvalue = instr.lvalue.as_ref().unwrap();
-                cx.object_methods.insert(lvalue.identifier, (value.clone(), *loc));
+                cx.object_methods.insert(lvalue.identifier, (value.clone(), *span));
                 return Ok(None);
             }
             InstructionValue::UnsupportedNode { stmt, .. } => {
@@ -1531,7 +1528,7 @@ fn ox_emit_store<'a, 'h>(
                 return Err(invariant_err_with_detail_message(
                     "Const declaration cannot be referenced as an expression",
                     "this is Const",
-                    instr.loc,
+                    instr.span,
                 ));
             }
             let lval = ox_codegen_lvalue(cx, lvalue)?;
@@ -1581,7 +1578,7 @@ fn ox_emit_store<'a, 'h>(
                 return Err(invariant_err_with_detail_message(
                     "Const declaration cannot be referenced as an expression",
                     "this is Let",
-                    instr.loc,
+                    instr.span,
                 ));
             }
             let lval = ox_codegen_lvalue(cx, lvalue)?;
@@ -1746,7 +1743,7 @@ fn ox_codegen_instruction_value<'a, 'h>(
                             category: ErrorCategory::Todo,
                             reason: "(CodegenReactiveFunction::codegenInstructionValue) Cannot declare variables in a value block".to_string(),
                             description: None,
-                            loc: None,
+                            span: None,
                         })?;
                         expressions.push(oxc_ast::ast::Expression::new_string_literal(
                             SPAN,
@@ -1760,7 +1757,7 @@ fn ox_codegen_instruction_value<'a, 'h>(
                             category: ErrorCategory::Todo,
                             reason: "(CodegenReactiveFunction::codegenInstructionValue) Handle conversion of statement to expression".to_string(),
                             description: None,
-                            loc: None,
+                            span: None,
                         })?;
                         expressions.push(oxc_ast::ast::Expression::new_string_literal(
                             SPAN,
@@ -1969,7 +1966,7 @@ fn ox_codegen_base_instruction_value<'a>(
                         None,
                     )
                     .with_detail(CompilerDiagnosticDetail::Error {
-                        loc: property.loc,
+                        span: property.span,
                         message: Some(msg),
                     }),
                 );
@@ -2395,7 +2392,7 @@ fn ox_codegen_place<'a>(
                 "[Codegen] No value found for temporary, identifier id={}",
                 place.identifier.0
             ),
-            place.loc,
+            place.span,
         ));
     }
     let name = ox_identifier_name(cx.env, place.identifier)?;
@@ -3490,12 +3487,8 @@ fn get_instruction_value<'x, 'a>(
     }
 }
 
-fn invariant(
-    condition: bool,
-    reason: &str,
-    loc: Option<DiagSourceLocation>,
-) -> Result<(), CompilerError> {
-    if !condition { Err(invariant_err(reason, loc)) } else { Ok(()) }
+fn invariant(condition: bool, reason: &str, span: Option<Span>) -> Result<(), CompilerError> {
+    if !condition { Err(invariant_err(reason, span)) } else { Ok(()) }
 }
 
 /// Construct an error for a codegen sub-emitter that has not yet been ported. Unlike
@@ -3503,18 +3496,18 @@ fn invariant(
 /// and falls back to an empty body rather than surfacing a spurious diagnostic for a
 /// construct the upstream compiler handles. Use this only for genuinely-unported paths,
 /// never for real invariants (which must propagate and fail loudly like upstream).
-fn unimplemented_err(reason: &str, loc: Option<DiagSourceLocation>) -> CompilerError {
-    let mut err = invariant_err(reason, loc);
+fn unimplemented_err(reason: &str, span: Option<Span>) -> CompilerError {
+    let mut err = invariant_err(reason, span);
     err.unimplemented = true;
     err
 }
 
-fn invariant_err(reason: &str, loc: Option<DiagSourceLocation>) -> CompilerError {
+fn invariant_err(reason: &str, span: Option<Span>) -> CompilerError {
     // Use CompilerDiagnostic (with details array) to match TS CompilerError.invariant()
     let mut err = CompilerError::new();
     err.push_diagnostic(
         CompilerDiagnostic::new(ErrorCategory::Invariant, reason, None::<String>).with_detail(
-            CompilerDiagnosticDetail::Error { loc, message: Some(reason.to_string()) },
+            CompilerDiagnosticDetail::Error { span, message: Some(reason.to_string()) },
         ),
     );
     err
@@ -3523,7 +3516,7 @@ fn invariant_err(reason: &str, loc: Option<DiagSourceLocation>) -> CompilerError
 fn invariant_err_with_detail_message(
     reason: &str,
     message: &str,
-    loc: Option<DiagSourceLocation>,
+    span: Option<Span>,
 ) -> CompilerError {
     let mut err = CompilerError::new();
     let diagnostic = crate::react_compiler_diagnostics::CompilerDiagnostic::new(
@@ -3532,7 +3525,7 @@ fn invariant_err_with_detail_message(
         None::<String>,
     )
     .with_detail(crate::react_compiler_diagnostics::CompilerDiagnosticDetail::Error {
-        loc,
+        span,
         message: Some(message.to_string()),
     });
     err.push_diagnostic(diagnostic);

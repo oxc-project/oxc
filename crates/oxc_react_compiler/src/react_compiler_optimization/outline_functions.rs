@@ -107,10 +107,10 @@ pub fn outline_functions(
                 env.outline_function(outlined_func, None);
 
                 // Replace the instruction value with LoadGlobal
-                let loc = func.instructions[instr_idx].value.loc().cloned();
+                let span = func.instructions[instr_idx].value.span().cloned();
                 func.instructions[instr_idx].value = InstructionValue::LoadGlobal {
                     binding: NonLocalBinding::Global { name: generated_name },
-                    loc,
+                    span,
                 };
             }
         }

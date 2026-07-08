@@ -16,12 +16,12 @@ catalog:
   "@types/node": 24.1.0
   cross-env: ^10.1.0
   degit: 3.4.7
-  eslint: 10.5.0
+  eslint: 10.6.0
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.21
   rolldown: 1.1.4
   tsdown: 0.22.3
-  vite-plus: 0.2.2
+  vite-plus: 0.2.3
   vitest: 4.1.9
 
 overrides:
@@ -30,7 +30,7 @@ overrides:
 allowBuilds:
   "@vscode/vsce-sign@2.0.8": true
   esbuild@0.27.7: true
-  esbuild@0.28.0: true
+  esbuild@0.28.1: true
   "@nestjs/core@11.1.9": false
 
 verifyDepsBeforeRun: install

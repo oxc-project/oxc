@@ -1,15 +1,9 @@
-// HIR metadata such as source locations and type annotations is consumed by
-// the debug IR printers. Those printers are compiled only with `debug`.
-#![cfg_attr(not(feature = "debug"), allow(dead_code))]
-
 pub mod default_module_type_provider;
 pub mod dominator;
 pub mod environment;
 pub mod environment_config;
 pub mod globals;
 pub mod object_shape;
-#[cfg(feature = "debug")]
-pub mod print;
 pub mod raw;
 pub mod reactive;
 pub mod type_config;
@@ -17,8 +11,7 @@ pub mod visitors;
 
 pub use crate::react_compiler_diagnostics::CompilerDiagnostic;
 pub use crate::react_compiler_diagnostics::GENERATED_SOURCE;
-pub use crate::react_compiler_diagnostics::Position;
-pub use crate::react_compiler_diagnostics::SourceLocation;
+pub use crate::react_compiler_diagnostics::Span;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
 use oxc_ast::ast as oxc;
@@ -160,7 +153,7 @@ pub fn format_js_number(n: f64) -> String {
 /// A function lowered to HIR form
 #[derive(Debug, Clone)]
 pub struct HirFunction<'a> {
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
     pub id: Option<String>,
     pub name_hint: Option<String>,
     pub fn_type: ReactFunctionType,
@@ -244,25 +237,25 @@ pub struct Phi {
 pub enum Terminal {
     Unreachable {
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Throw {
         value: Place,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Return {
         value: Place,
         return_variant: ReturnVariant,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
         effects: Option<Vec<AliasingEffect>>,
     },
     Goto {
         block: BlockId,
         variant: GotoVariant,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     If {
         test: Place,
@@ -270,7 +263,7 @@ pub enum Terminal {
         alternate: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Branch {
         test: Place,
@@ -278,28 +271,28 @@ pub enum Terminal {
         alternate: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Switch {
         test: Place,
         cases: Vec<Case>,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     DoWhile {
         loop_block: BlockId,
         test: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     While {
         test: BlockId,
         loop_block: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     For {
         init: BlockId,
@@ -308,7 +301,7 @@ pub enum Terminal {
         loop_block: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     ForOf {
         init: BlockId,
@@ -316,52 +309,52 @@ pub enum Terminal {
         loop_block: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     ForIn {
         init: BlockId,
         loop_block: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Logical {
         operator: LogicalOperator,
         test: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Ternary {
         test: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Optional {
         optional: bool,
         test: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Label {
         block: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Sequence {
         block: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     MaybeThrow {
         continuation: BlockId,
         handler: Option<BlockId>,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
         effects: Option<Vec<AliasingEffect>>,
     },
     Try {
@@ -370,21 +363,21 @@ pub enum Terminal {
         handler: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Scope {
         fallthrough: BlockId,
         block: BlockId,
         scope: ScopeId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     PrunedScope {
         fallthrough: BlockId,
         block: BlockId,
         scope: ScopeId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
 }
 
@@ -417,29 +410,29 @@ impl Terminal {
     }
 
     /// Get the source location of this terminal
-    pub fn loc(&self) -> Option<&SourceLocation> {
+    pub fn span(&self) -> Option<&Span> {
         match self {
-            Terminal::Unreachable { loc, .. }
-            | Terminal::Throw { loc, .. }
-            | Terminal::Return { loc, .. }
-            | Terminal::Goto { loc, .. }
-            | Terminal::If { loc, .. }
-            | Terminal::Branch { loc, .. }
-            | Terminal::Switch { loc, .. }
-            | Terminal::DoWhile { loc, .. }
-            | Terminal::While { loc, .. }
-            | Terminal::For { loc, .. }
-            | Terminal::ForOf { loc, .. }
-            | Terminal::ForIn { loc, .. }
-            | Terminal::Logical { loc, .. }
-            | Terminal::Ternary { loc, .. }
-            | Terminal::Optional { loc, .. }
-            | Terminal::Label { loc, .. }
-            | Terminal::Sequence { loc, .. }
-            | Terminal::MaybeThrow { loc, .. }
-            | Terminal::Try { loc, .. }
-            | Terminal::Scope { loc, .. }
-            | Terminal::PrunedScope { loc, .. } => loc.as_ref(),
+            Terminal::Unreachable { span, .. }
+            | Terminal::Throw { span, .. }
+            | Terminal::Return { span, .. }
+            | Terminal::Goto { span, .. }
+            | Terminal::If { span, .. }
+            | Terminal::Branch { span, .. }
+            | Terminal::Switch { span, .. }
+            | Terminal::DoWhile { span, .. }
+            | Terminal::While { span, .. }
+            | Terminal::For { span, .. }
+            | Terminal::ForOf { span, .. }
+            | Terminal::ForIn { span, .. }
+            | Terminal::Logical { span, .. }
+            | Terminal::Ternary { span, .. }
+            | Terminal::Optional { span, .. }
+            | Terminal::Label { span, .. }
+            | Terminal::Sequence { span, .. }
+            | Terminal::MaybeThrow { span, .. }
+            | Terminal::Try { span, .. }
+            | Terminal::Scope { span, .. }
+            | Terminal::PrunedScope { span, .. } => span.as_ref(),
         }
     }
 
@@ -517,7 +510,7 @@ pub struct Instruction<'a> {
     pub id: EvaluationOrder,
     pub lvalue: Place,
     pub value: InstructionValue<'a>,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
     pub effects: Option<Vec<AliasingEffect>>,
 }
 
@@ -559,164 +552,160 @@ pub enum Pattern {
 pub enum InstructionValue<'a> {
     LoadLocal {
         place: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     LoadContext {
         place: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     DeclareLocal {
         lvalue: LValue,
-        type_annotation: Option<String>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     DeclareContext {
         lvalue: LValue,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     StoreLocal {
         lvalue: LValue,
         value: Place,
-        type_annotation: Option<String>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     StoreContext {
         lvalue: LValue,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Destructure {
         lvalue: LValuePattern,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Primitive {
         value: PrimitiveValue,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     JSXText {
         value: String,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     BinaryExpression {
         operator: BinaryOperator,
         left: Place,
         right: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     NewExpression {
         callee: Place,
         args: Vec<PlaceOrSpread>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     CallExpression {
         callee: Place,
         args: Vec<PlaceOrSpread>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     MethodCall {
         receiver: Place,
         property: Place,
         args: Vec<PlaceOrSpread>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     UnaryExpression {
         operator: UnaryOperator,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     TypeCastExpression {
         value: Place,
-        type_: Type,
-        type_annotation_name: Option<String>,
         type_annotation_kind: Option<String>,
         /// The original oxc AST type annotation subtree, preserved for codegen,
         /// which re-emits it by cloning into the output allocator (and applying any
         /// identifier renames via the environment for the rare rename case).
         type_annotation: Option<&'a oxc::TSType<'a>>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     JsxExpression {
         tag: JsxTag,
         props: Vec<JsxAttribute>,
         children: Option<Vec<Place>>,
-        loc: Option<SourceLocation>,
-        opening_loc: Option<SourceLocation>,
-        closing_loc: Option<SourceLocation>,
+        span: Option<Span>,
+        opening_span: Option<Span>,
+        closing_span: Option<Span>,
     },
     ObjectExpression {
         properties: Vec<ObjectPropertyOrSpread>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     ObjectMethod {
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
         lowered_func: LoweredFunction,
     },
     ArrayExpression {
         elements: Vec<ArrayElement>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     JsxFragment {
         children: Vec<Place>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     RegExpLiteral {
         pattern: String,
         flags: String,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     MetaProperty {
         meta: String,
         property: String,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     PropertyStore {
         object: Place,
         property: PropertyLiteral,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     PropertyLoad {
         object: Place,
         property: PropertyLiteral,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     PropertyDelete {
         object: Place,
         property: PropertyLiteral,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     ComputedStore {
         object: Place,
         property: Place,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     ComputedLoad {
         object: Place,
         property: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     ComputedDelete {
         object: Place,
         property: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     LoadGlobal {
         binding: NonLocalBinding,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     StoreGlobal {
         name: String,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     FunctionExpression {
         name: Option<String>,
         name_hint: Option<String>,
         lowered_func: LoweredFunction,
         expr_type: FunctionExpressionType,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     TaggedTemplateExpression {
         tag: Place,
@@ -726,114 +715,113 @@ pub enum InstructionValue<'a> {
         // interpolations (a deliberate divergence from the TS reference).
         quasis: Vec<TemplateQuasi>,
         subexprs: Vec<Place>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     TemplateLiteral {
         subexprs: Vec<Place>,
         quasis: Vec<TemplateQuasi>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Await {
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     GetIterator {
         collection: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     IteratorNext {
         iterator: Place,
         collection: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     NextPropertyOf {
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     PrefixUpdate {
         lvalue: Place,
         operation: UpdateOperator,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     PostfixUpdate {
         lvalue: Place,
         operation: UpdateOperator,
         value: Place,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     Debugger {
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     StartMemoize {
         manual_memo_id: u32,
         deps: Option<Vec<ManualMemoDependency>>,
-        deps_loc: Option<Option<SourceLocation>>,
+        deps_span: Option<Option<Span>>,
         has_invalid_deps: bool,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     FinishMemoize {
         manual_memo_id: u32,
         decl: Place,
         pruned: bool,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     UnsupportedNode {
-        node_type: Option<String>,
         /// The borrowed oxc statement node preserved verbatim, so codegen can clone
         /// it into the output allocator and re-emit it (e.g. an inline TS `enum`,
         /// which has runtime semantics but no HIR representation).
         stmt: &'a oxc::Statement<'a>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
 }
 
 impl<'a> InstructionValue<'a> {
-    pub fn loc(&self) -> Option<&SourceLocation> {
+    pub fn span(&self) -> Option<&Span> {
         match self {
-            InstructionValue::LoadLocal { loc, .. }
-            | InstructionValue::LoadContext { loc, .. }
-            | InstructionValue::DeclareLocal { loc, .. }
-            | InstructionValue::DeclareContext { loc, .. }
-            | InstructionValue::StoreLocal { loc, .. }
-            | InstructionValue::StoreContext { loc, .. }
-            | InstructionValue::Destructure { loc, .. }
-            | InstructionValue::Primitive { loc, .. }
-            | InstructionValue::JSXText { loc, .. }
-            | InstructionValue::BinaryExpression { loc, .. }
-            | InstructionValue::NewExpression { loc, .. }
-            | InstructionValue::CallExpression { loc, .. }
-            | InstructionValue::MethodCall { loc, .. }
-            | InstructionValue::UnaryExpression { loc, .. }
-            | InstructionValue::TypeCastExpression { loc, .. }
-            | InstructionValue::JsxExpression { loc, .. }
-            | InstructionValue::ObjectExpression { loc, .. }
-            | InstructionValue::ObjectMethod { loc, .. }
-            | InstructionValue::ArrayExpression { loc, .. }
-            | InstructionValue::JsxFragment { loc, .. }
-            | InstructionValue::RegExpLiteral { loc, .. }
-            | InstructionValue::MetaProperty { loc, .. }
-            | InstructionValue::PropertyStore { loc, .. }
-            | InstructionValue::PropertyLoad { loc, .. }
-            | InstructionValue::PropertyDelete { loc, .. }
-            | InstructionValue::ComputedStore { loc, .. }
-            | InstructionValue::ComputedLoad { loc, .. }
-            | InstructionValue::ComputedDelete { loc, .. }
-            | InstructionValue::LoadGlobal { loc, .. }
-            | InstructionValue::StoreGlobal { loc, .. }
-            | InstructionValue::FunctionExpression { loc, .. }
-            | InstructionValue::TaggedTemplateExpression { loc, .. }
-            | InstructionValue::TemplateLiteral { loc, .. }
-            | InstructionValue::Await { loc, .. }
-            | InstructionValue::GetIterator { loc, .. }
-            | InstructionValue::IteratorNext { loc, .. }
-            | InstructionValue::NextPropertyOf { loc, .. }
-            | InstructionValue::PrefixUpdate { loc, .. }
-            | InstructionValue::PostfixUpdate { loc, .. }
-            | InstructionValue::Debugger { loc, .. }
-            | InstructionValue::StartMemoize { loc, .. }
-            | InstructionValue::FinishMemoize { loc, .. }
-            | InstructionValue::UnsupportedNode { loc, .. } => loc.as_ref(),
+            InstructionValue::LoadLocal { span, .. }
+            | InstructionValue::LoadContext { span, .. }
+            | InstructionValue::DeclareLocal { span, .. }
+            | InstructionValue::DeclareContext { span, .. }
+            | InstructionValue::StoreLocal { span, .. }
+            | InstructionValue::StoreContext { span, .. }
+            | InstructionValue::Destructure { span, .. }
+            | InstructionValue::Primitive { span, .. }
+            | InstructionValue::JSXText { span, .. }
+            | InstructionValue::BinaryExpression { span, .. }
+            | InstructionValue::NewExpression { span, .. }
+            | InstructionValue::CallExpression { span, .. }
+            | InstructionValue::MethodCall { span, .. }
+            | InstructionValue::UnaryExpression { span, .. }
+            | InstructionValue::TypeCastExpression { span, .. }
+            | InstructionValue::JsxExpression { span, .. }
+            | InstructionValue::ObjectExpression { span, .. }
+            | InstructionValue::ObjectMethod { span, .. }
+            | InstructionValue::ArrayExpression { span, .. }
+            | InstructionValue::JsxFragment { span, .. }
+            | InstructionValue::RegExpLiteral { span, .. }
+            | InstructionValue::MetaProperty { span, .. }
+            | InstructionValue::PropertyStore { span, .. }
+            | InstructionValue::PropertyLoad { span, .. }
+            | InstructionValue::PropertyDelete { span, .. }
+            | InstructionValue::ComputedStore { span, .. }
+            | InstructionValue::ComputedLoad { span, .. }
+            | InstructionValue::ComputedDelete { span, .. }
+            | InstructionValue::LoadGlobal { span, .. }
+            | InstructionValue::StoreGlobal { span, .. }
+            | InstructionValue::FunctionExpression { span, .. }
+            | InstructionValue::TaggedTemplateExpression { span, .. }
+            | InstructionValue::TemplateLiteral { span, .. }
+            | InstructionValue::Await { span, .. }
+            | InstructionValue::GetIterator { span, .. }
+            | InstructionValue::IteratorNext { span, .. }
+            | InstructionValue::NextPropertyOf { span, .. }
+            | InstructionValue::PrefixUpdate { span, .. }
+            | InstructionValue::PostfixUpdate { span, .. }
+            | InstructionValue::Debugger { span, .. }
+            | InstructionValue::StartMemoize { span, .. }
+            | InstructionValue::FinishMemoize { span, .. }
+            | InstructionValue::UnsupportedNode { span, .. } => span.as_ref(),
         }
     }
 }
@@ -961,7 +949,7 @@ pub struct TemplateQuasi {
 pub struct ManualMemoDependency {
     pub root: ManualMemoDependencyRoot,
     pub path: Vec<DependencyPathEntry>,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
 }
 
 #[derive(Debug, Clone)]
@@ -974,7 +962,7 @@ pub enum ManualMemoDependencyRoot {
 pub struct DependencyPathEntry {
     pub property: PropertyLiteral,
     pub optional: bool,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
 }
 
 // =============================================================================
@@ -986,7 +974,7 @@ pub struct Place {
     pub identifier: IdentifierId,
     pub effect: Effect,
     pub reactive: bool,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
 }
 
 #[derive(Debug, Clone)]
@@ -997,7 +985,7 @@ pub struct Identifier {
     pub mutable_range: MutableRange,
     pub scope: Option<ScopeId>,
     pub type_: TypeId,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
 }
 
 #[derive(Debug, Clone)]
@@ -1090,7 +1078,6 @@ pub struct SpreadPattern {
 #[derive(Debug, Clone)]
 pub struct ArrayPattern {
     pub items: Vec<ArrayPatternElement>,
-    pub loc: Option<SourceLocation>,
 }
 
 #[derive(Debug, Clone)]
@@ -1103,7 +1090,6 @@ pub enum ArrayPatternElement {
 #[derive(Debug, Clone)]
 pub struct ObjectPattern {
     pub properties: Vec<ObjectPropertyOrSpread>,
-    pub loc: Option<SourceLocation>,
 }
 
 #[derive(Debug, Clone)]
@@ -1279,7 +1265,7 @@ pub enum Type {
 #[derive(Debug, Clone)]
 pub enum PropertyNameKind {
     Literal { value: PropertyLiteral },
-    Computed { value: Box<Type> },
+    Computed,
 }
 
 // =============================================================================
@@ -1307,7 +1293,7 @@ pub struct ReactiveScope {
     pub merged: Vec<ScopeId>,
 
     /// Source location spanning the scope
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
 }
 
 /// A dependency of a reactive scope.
@@ -1316,7 +1302,7 @@ pub struct ReactiveScopeDependency {
     pub identifier: IdentifierId,
     pub reactive: bool,
     pub path: Vec<DependencyPathEntry>,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
 }
 
 /// A declaration produced by a reactive scope.
@@ -1330,7 +1316,7 @@ pub struct ReactiveScopeDeclaration {
 #[derive(Debug, Clone)]
 pub struct ReactiveScopeEarlyReturn {
     pub value: IdentifierId,
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
     pub label: BlockId,
 }
 
@@ -1385,7 +1371,7 @@ pub enum AliasingEffect {
         args: Vec<PlaceOrSpreadOrHole>,
         into: Place,
         signature: Option<FunctionSignature>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     },
     /// Function expression creation with captures.
     CreateFunction { captures: Vec<Place>, function_id: FunctionId, into: Place },

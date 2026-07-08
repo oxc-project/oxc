@@ -868,7 +868,7 @@ pub fn each_terminal_operand_ids(terminal: &Terminal) -> Vec<IdentifierId> {
 /// Does NOT handle FunctionExpression/ObjectMethod context — callers handle those separately.
 pub fn for_each_instruction_value_operand_mut(
     value: &mut InstructionValue,
-    f: &mut impl FnMut(&mut Place),
+    f: &mut dyn FnMut(&mut Place),
 ) {
     match value {
         InstructionValue::BinaryExpression { left, right, .. } => {
@@ -1025,7 +1025,7 @@ pub fn for_each_instruction_value_operand_mut(
 }
 
 /// In-place mutation of call arguments.
-pub fn for_each_call_argument_mut(args: &mut [PlaceOrSpread], f: &mut impl FnMut(&mut Place)) {
+pub fn for_each_call_argument_mut(args: &mut [PlaceOrSpread], f: &mut dyn FnMut(&mut Place)) {
     for arg in args.iter_mut() {
         match arg {
             PlaceOrSpread::Place(place) => f(place),
@@ -1039,7 +1039,7 @@ pub fn for_each_call_argument_mut(args: &mut [PlaceOrSpread], f: &mut impl FnMut
 /// top-level lvalue — use `for_each_instruction_lvalue_mut` for that.
 pub fn for_each_instruction_value_lvalue_mut(
     value: &mut InstructionValue,
-    f: &mut impl FnMut(&mut Place),
+    f: &mut dyn FnMut(&mut Place),
 ) {
     match value {
         InstructionValue::DeclareContext { lvalue, .. }
@@ -1061,7 +1061,7 @@ pub fn for_each_instruction_value_lvalue_mut(
 
 /// In-place mutation of the instruction's lvalue and value's lvalues.
 /// Matches the same variants as TS `mapInstructionLValues` (skips DeclareContext/StoreContext).
-pub fn for_each_instruction_lvalue_mut(instr: &mut Instruction, f: &mut impl FnMut(&mut Place)) {
+pub fn for_each_instruction_lvalue_mut(instr: &mut Instruction, f: &mut dyn FnMut(&mut Place)) {
     match &mut instr.value {
         InstructionValue::DeclareLocal { lvalue, .. }
         | InstructionValue::StoreLocal { lvalue, .. } => {
@@ -1080,7 +1080,7 @@ pub fn for_each_instruction_lvalue_mut(instr: &mut Instruction, f: &mut impl FnM
 }
 
 /// In-place mutation of pattern operands.
-pub fn for_each_pattern_operand_mut(pattern: &mut Pattern, f: &mut impl FnMut(&mut Place)) {
+pub fn for_each_pattern_operand_mut(pattern: &mut Pattern, f: &mut dyn FnMut(&mut Place)) {
     match pattern {
         Pattern::Array(arr) => {
             for item in arr.items.iter_mut() {
@@ -1103,7 +1103,7 @@ pub fn for_each_pattern_operand_mut(pattern: &mut Pattern, f: &mut impl FnMut(&m
 }
 
 /// In-place mutation of terminal operand places.
-pub fn for_each_terminal_operand_mut(terminal: &mut Terminal, f: &mut impl FnMut(&mut Place)) {
+pub fn for_each_terminal_operand_mut(terminal: &mut Terminal, f: &mut dyn FnMut(&mut Place)) {
     match terminal {
         Terminal::If { test, .. } | Terminal::Branch { test, .. } => {
             f(test);

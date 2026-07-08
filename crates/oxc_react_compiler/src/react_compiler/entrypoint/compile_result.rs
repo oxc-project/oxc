@@ -1,6 +1,6 @@
 use oxc_diagnostics::Diagnostics;
 
-use crate::react_compiler_diagnostics::SourceLocation;
+use crate::react_compiler_diagnostics::Span;
 use crate::react_compiler_hir::ReactFunctionType;
 
 /// Main result type returned by the compile function.
@@ -21,17 +21,6 @@ pub enum CompileResult<'a> {
     Error { diagnostics: Diagnostics },
 }
 
-/// Debug log entry for debugLogIRs support.
-/// Currently only supports the 'debug' variant (string values).
-#[derive(Debug, Clone)]
-pub struct DebugLogEntry;
-
-impl DebugLogEntry {
-    pub fn new(_name: impl Into<String>, _value: impl Into<String>) -> Self {
-        Self
-    }
-}
-
 /// Codegen output for a single compiled function.
 ///
 /// Stage 2: the generated AST fields are now arena-allocated oxc nodes (lifetime
@@ -40,7 +29,7 @@ impl DebugLogEntry {
 /// and the pipeline threads up to `compile_program`.
 #[derive(Debug)]
 pub struct CodegenFunction<'a> {
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
     pub id: Option<oxc_ast::ast::BindingIdentifier<'a>>,
     pub name_hint: Option<String>,
     pub params: oxc_allocator::Box<'a, oxc_ast::ast::FormalParameters<'a>>,

@@ -96,7 +96,7 @@ export type lType /* Comment */ =
   // Comment
   "VALUE";
 
-export type mType = "VALUE" /* Comment */;
+export type mType = "VALUE"; /* Comment */
 
 export type nType = /* Comment */ "VALUE"; // Comment
 
@@ -145,7 +145,7 @@ export type lType /* Comment */ =
   // Comment
   "VALUE";
 
-export type mType = "VALUE" /* Comment */;
+export type mType = "VALUE"; /* Comment */
 
 export type nType = /* Comment */ "VALUE"; // Comment
 

@@ -32,8 +32,8 @@ pub fn validate_no_jsx_in_try_statement(func: &HirFunction) -> CompilerError {
             for &instr_id in &block.instructions {
                 let instr = &func.instructions[instr_id.0 as usize];
                 match &instr.value {
-                    InstructionValue::JsxExpression { loc, .. }
-                    | InstructionValue::JsxFragment { loc, .. } => {
+                    InstructionValue::JsxExpression { span, .. }
+                    | InstructionValue::JsxFragment { span, .. } => {
                         error.push_diagnostic(
                             CompilerDiagnostic::new(
                                 ErrorCategory::ErrorBoundaries,
@@ -43,7 +43,7 @@ pub fn validate_no_jsx_in_try_statement(func: &HirFunction) -> CompilerError {
                                 ),
                             )
                             .with_detail(CompilerDiagnosticDetail::Error {
-                                loc: *loc,
+                                span: *span,
                                 message: Some(
                                     "Avoid constructing JSX within try/catch".to_string(),
                                 ),

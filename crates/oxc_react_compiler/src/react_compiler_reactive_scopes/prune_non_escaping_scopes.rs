@@ -814,7 +814,7 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                     identifier: *identifier_id,
                     effect: Effect::Read,
                     reactive: false,
-                    loc: None,
+                    span: None,
                 },
                 *operand_id,
             );
@@ -846,7 +846,7 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                     identifier: lv.place_identifier,
                     effect: Effect::Read,
                     reactive: false,
-                    loc: None,
+                    span: None,
                 },
                 lvalue_id,
             );

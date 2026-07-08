@@ -8,7 +8,7 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, SourceLocation,
+    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, Span,
 };
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
@@ -22,7 +22,7 @@ use crate::react_compiler_hir::{
 #[derive(Debug, Clone)]
 struct MutationInfo {
     value_identifier: IdentifierId,
-    value_loc: Option<SourceLocation>,
+    value_span: Option<Span>,
 }
 
 /// Validates that functions with known mutations (ie due to types) cannot be passed
@@ -110,7 +110,7 @@ fn check_no_freezing_known_mutable_functions(
                                             instr.lvalue.identifier,
                                             MutationInfo {
                                                 value_identifier: value.identifier,
-                                                value_loc: value.loc,
+                                                value_span: value.span,
                                             },
                                         );
                                         break 'effects;
@@ -191,14 +191,14 @@ fn check_operand_for_freeze_violation(
                     )),
                 )
                 .with_detail(CompilerDiagnosticDetail::Error {
-                    loc: operand.loc,
+                    span: operand.span,
                     message: Some(format!(
                         "This function may (indirectly) reassign or modify {} after render",
                         variable_name
                     )),
                 })
                 .with_detail(CompilerDiagnosticDetail::Error {
-                    loc: mutation_info.value_loc,
+                    span: mutation_info.value_span,
                     message: Some(format!("This modifies {}", variable_name)),
                 }),
             );

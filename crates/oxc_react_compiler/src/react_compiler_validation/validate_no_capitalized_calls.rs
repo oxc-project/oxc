@@ -43,14 +43,14 @@ pub fn validate_no_capitalized_calls(
                         capital_load_globals.insert(lvalue_id, name.to_string());
                     }
                 }
-                InstructionValue::CallExpression { callee, loc, .. } => {
+                InstructionValue::CallExpression { callee, span, .. } => {
                     let callee_id = callee.identifier;
                     if let Some(callee_name) = capital_load_globals.get(&callee_id) {
                         env.record_error(CompilerErrorDetail {
                             category: ErrorCategory::CapitalizedCalls,
                             reason: reason.to_string(),
                             description: Some(format!("{callee_name} may be a component")),
-                            loc: *loc,
+                            span: *span,
                         })?;
                         continue;
                     }
@@ -63,14 +63,14 @@ pub fn validate_no_capitalized_calls(
                         capitalized_properties.insert(lvalue_id, prop_name.clone());
                     }
                 }
-                InstructionValue::MethodCall { property, loc, .. } => {
+                InstructionValue::MethodCall { property, span, .. } => {
                     let property_id = property.identifier;
                     if let Some(prop_name) = capitalized_properties.get(&property_id) {
                         env.record_error(CompilerErrorDetail {
                             category: ErrorCategory::CapitalizedCalls,
                             reason: reason.to_string(),
                             description: Some(format!("{prop_name} may be a component")),
-                            loc: *loc,
+                            span: *span,
                         })?;
                     }
                 }
