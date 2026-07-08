@@ -1446,13 +1446,10 @@ mod test {
         assert_eq!(parent_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
 
         // Test 3: Child config that extends parent without specifying plugins
-        // Should inherit parent's plugins and apply the default plugins from the child config
+        // Should inherit only the parent's plugins
         let child_no_plugins_config =
             config_store_from_path("fixtures/extends_config/plugins/child_no_plugins.json");
-        assert_eq!(
-            child_no_plugins_config.plugins(),
-            LintPlugins::REACT | LintPlugins::TYPESCRIPT | LintPlugins::OXC | LintPlugins::UNICORN
-        );
+        assert_eq!(child_no_plugins_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
 
         // Test 4: Child config that extends parent and specifies additional plugins
         // Should have parent's plugins plus its own
@@ -1523,14 +1520,11 @@ mod test {
             "Extending a config with a plugin is the same as adding it directly"
         );
 
-        // Test 9: Child Config with plugins extends parent with default plugins (not specified by user)
+        // Test 9: Child config with plugins extends parent without plugins
         let child_with_plugins_parent_no_plugin_config = config_store_from_path(
             "fixtures/extends_config/plugins/child_with_plugins_parent_default_plugin.json",
         );
-        assert_eq!(
-            child_with_plugins_parent_no_plugin_config.plugins(),
-            LintPlugins::JEST | LintPlugins::UNICORN | LintPlugins::TYPESCRIPT | LintPlugins::OXC
-        );
+        assert_eq!(child_with_plugins_parent_no_plugin_config.plugins(), LintPlugins::JEST);
     }
 
     #[test]

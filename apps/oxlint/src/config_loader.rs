@@ -757,7 +757,7 @@ fn nested_respect_eslint_disable_directives_not_supported(path: &Path) -> OxcDia
 mod test {
     use std::path::PathBuf;
 
-    use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore};
+    use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore, LintPlugins};
 
     use super::{ConfigLoadError, ConfigLoader};
     #[cfg(feature = "napi")]
@@ -967,6 +967,34 @@ mod test {
         );
         assert!(errors.is_empty());
         assert_eq!(configs.len(), 1);
+    }
+
+    #[test]
+    fn test_nested_json_config_extends_preserves_explicit_plugins() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let base_path = root_dir.path().join(".oxlintrc.json");
+        let nested_path = root_dir.path().join("test/.oxlintrc.json");
+        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &base_path,
+            r#"{
+                "categories": { "correctness": "error" },
+                "options": { "typeAware": true },
+                "plugins": ["unicorn", "oxc", "import", "promise"]
+            }"#,
+        )
+        .unwrap();
+        std::fs::write(&nested_path, r#"{ "extends": ["../.oxlintrc.json"] }"#).unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let (configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            [DiscoveredConfigFile::Json(nested_path)],
+        );
+        assert!(errors.is_empty());
+        assert_eq!(configs.len(), 1);
+        assert!(!configs[0].config.plugins().contains(LintPlugins::TYPESCRIPT));
     }
 
     #[cfg(feature = "napi")]

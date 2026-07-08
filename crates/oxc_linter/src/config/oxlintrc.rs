@@ -408,8 +408,8 @@ impl Oxlintrc {
 
         let plugins = match (self.plugins, other.plugins) {
             (Some(self_plugins), Some(other_plugins)) => Some(self_plugins | other_plugins),
-            (Some(self_plugins), None) => Some(self_plugins | LintPlugins::default()),
-            (None, Some(other_plugins)) => Some(other_plugins | LintPlugins::default()),
+            (Some(self_plugins), None) => Some(self_plugins),
+            (None, Some(other_plugins)) => Some(other_plugins),
             (None, None) => None,
         };
 
@@ -722,6 +722,26 @@ mod test {
         let config: Oxlintrc =
             serde_json::from_str(r#"{ "plugins": ["typescript", "@typescript-eslint"] }"#).unwrap();
         assert_eq!(config.plugins, Some(LintPlugins::TYPESCRIPT));
+    }
+
+    #[test]
+    fn test_oxlintrc_merge_does_not_add_default_plugins() {
+        let child: Oxlintrc = serde_json::from_str(r"{}").unwrap();
+        let base: Oxlintrc =
+            serde_json::from_str(r#"{ "plugins": ["unicorn", "oxc", "import", "promise"] }"#)
+                .unwrap();
+        let merged = child.merge(base);
+
+        assert_eq!(
+            merged.plugins,
+            Some(
+                LintPlugins::UNICORN
+                    | LintPlugins::OXC
+                    | LintPlugins::IMPORT
+                    | LintPlugins::PROMISE
+            )
+        );
+        assert!(!merged.plugins.unwrap().contains(LintPlugins::TYPESCRIPT));
     }
 
     #[test]
