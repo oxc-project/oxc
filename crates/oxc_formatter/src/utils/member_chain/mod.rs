@@ -13,7 +13,7 @@ use crate::{
         is_long_curried_call,
         member_chain::{
             chain_member::{CallExpressionPosition, ChainMember},
-            groups::{MemberChainGroup, MemberChainGroupsBuilder, TailChainGroups},
+            groups::{ChainMembers, MemberChainGroup, MemberChainGroupsBuilder, TailChainGroups},
             simple_argument::SimpleArgument,
         },
     },
@@ -36,7 +36,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         call_expression: &'b AstNode<'a, CallExpression<'a>>,
         f: &JsFormatter<'_, 'a>,
     ) -> Self {
-        let mut chain_members = chain_members_iter(call_expression, f).collect::<Vec<_>>();
+        let mut chain_members = chain_members_iter(call_expression, f).collect::<ChainMembers>();
         chain_members.reverse();
 
         // as explained before, the first group is particular, so we calculate it

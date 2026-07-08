@@ -44,6 +44,21 @@ impl<'a> PeepholeOptimizations {
                 let new_expr = e.argument.take_in(ctx);
                 ctx.replace_expression(expr, new_expr);
             }
+            // `!(a == b || c == d)` => `a != b && c != d`
+            // `!(a == b && c == d)` => `a != b || c != d`
+            // De Morgan's law, only when every comparison in the `&&`/`||` chain
+            // inverts its operator in place (equality operators; relational ones
+            // are unsound under NaN) and inversion does not add parentheses.
+            // The fold is exact and involutive: a later `minimize_not` restores
+            // the original chain at no cost, so shapes that consume the `!` for
+            // free (branch swaps, `!!` collapses) are unaffected.
+            Expression::LogicalExpression(logical_expr)
+                if Self::de_morgan_paren_delta(logical_expr).is_some_and(|delta| delta <= 0) =>
+            {
+                Self::de_morgan_invert_logical(logical_expr);
+                let new_expr = e.argument.take_in(ctx);
+                ctx.replace_expression(expr, new_expr);
+            }
             // "!(a, b)" => "a, !b"
             Expression::SequenceExpression(sequence_expr) => {
                 if let Some(last_expr) = sequence_expr.expressions.last_mut() {
@@ -55,6 +70,55 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             _ => {}
+        }
+    }
+
+    /// Character delta from parentheses added or removed by De Morgan's law
+    /// (flipping `&&` <-> `||` changes which nested operands need parens), or
+    /// `None` if some operand cannot invert its operator in place.
+    fn de_morgan_paren_delta(e: &LogicalExpression<'a>) -> Option<i32> {
+        if !matches!(e.operator, LogicalOperator::And | LogicalOperator::Or) {
+            return None;
+        }
+        let mut delta = 0;
+        for side in [&e.left, &e.right] {
+            match side {
+                Expression::BinaryExpression(b) if b.operator.is_equality() => {}
+                Expression::LogicalExpression(child) => {
+                    delta += Self::de_morgan_paren_delta(child)?;
+                    // `&&` under `||` prints bare but its inversion (`||` under
+                    // `&&`) needs parens; the reverse drops parens.
+                    match (e.operator, child.operator) {
+                        (LogicalOperator::Or, LogicalOperator::And) => delta += 2,
+                        (LogicalOperator::And, LogicalOperator::Or) => delta -= 2,
+                        _ => {}
+                    }
+                }
+                _ => return None,
+            }
+        }
+        Some(delta)
+    }
+
+    /// Apply De Morgan's law in place. Only called on chains approved by
+    /// [`Self::de_morgan_paren_delta`].
+    fn de_morgan_invert_logical(e: &mut LogicalExpression<'a>) {
+        e.operator = if e.operator == LogicalOperator::And {
+            LogicalOperator::Or
+        } else {
+            LogicalOperator::And
+        };
+        Self::de_morgan_invert(&mut e.left);
+        Self::de_morgan_invert(&mut e.right);
+    }
+
+    fn de_morgan_invert(expr: &mut Expression<'a>) {
+        match expr {
+            Expression::BinaryExpression(e) => {
+                e.operator = e.operator.equality_inverse_operator().unwrap();
+            }
+            Expression::LogicalExpression(e) => Self::de_morgan_invert_logical(e),
+            _ => unreachable!(),
         }
     }
 }

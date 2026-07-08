@@ -7,17 +7,15 @@
 //!
 //! This module is a port of Program.ts from the TypeScript compiler. It orchestrates
 //! the compilation of a program by:
-//! 1. Checking if compilation should be skipped
-//! 2. Validating restricted imports
-//! 3. Finding program-level suppressions
-//! 4. Discovering functions to compile (components, hooks)
-//! 5. Processing each function through the compilation pipeline
-//! 6. Applying compiled functions back to the AST
+//! 1. Finding program-level suppressions
+//! 2. Discovering functions to compile (components, hooks)
+//! 3. Processing each function through the compilation pipeline
+//! 4. Applying compiled functions back to the AST
 
 use cow_utils::CowUtils;
 use oxc_ast::ast as oxc;
 use oxc_ast::builder::AstBuilder;
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SPAN, Span};
 use rustc_hash::FxHashMap;
 
@@ -36,7 +34,6 @@ use oxc_syntax::scope::ScopeId;
 use super::compile_result::CodegenFunction;
 use super::compile_result::CompileResult;
 use super::imports::ProgramContext;
-use super::imports::validate_restricted_imports;
 use super::pipeline;
 use super::suppression::SuppressionRange;
 use super::suppression::filter_suppressions_that_affect_function;
@@ -115,13 +112,13 @@ fn try_find_directive_enabling_memoization<'a>(
 
 /// Check if any opt-out directive is present in the given directives.
 fn find_directive_disabling_memoization<'a>(
-    directives: &'a [String],
-    opts: &PluginOptions,
+    mut directives: impl Iterator<Item = &'a str>,
+    custom_opt_out_directives: Option<&[String]>,
 ) -> Option<&'a str> {
-    if let Some(ref custom_directives) = opts.custom_opt_out_directives {
-        directives.iter().find(|d| custom_directives.contains(d)).map(String::as_str)
+    if let Some(custom_directives) = custom_opt_out_directives {
+        directives.find(|d| custom_directives.iter().any(|c| c == d))
     } else {
-        directives.iter().find(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str())).map(String::as_str)
+        directives.find(|d| OPT_OUT_DIRECTIVES.contains(d))
     }
 }
 
@@ -1090,8 +1087,8 @@ fn get_callee_name_if_react_api<'e>(callee: &'e oxc::Expression) -> Option<&'e s
 // Error handling
 // -----------------------------------------------------------------------
 
-/// Push a compiler error's per-detail diagnostics onto the context.
-fn log_error(err: &CompilerError, fn_span: Option<Span>, context: &mut ProgramContext) {
+/// Push a compiler error's per-detail diagnostics onto the accumulator.
+fn log_error(err: &CompilerError, fn_span: Option<Span>, diagnostics: &mut Diagnostics) {
     // Detect simulated unknown exception (throwUnknownException__testonly). In TS,
     // non-CompilerError exceptions surface as a pipeline error carrying the error
     // message rather than a per-detail compiler error.
@@ -1108,13 +1105,13 @@ fn log_error(err: &CompilerError, fn_span: Option<Span>, context: &mut ProgramCo
         if let Some(span) = fn_span {
             diagnostic = diagnostic.with_label(span);
         }
-        context.diagnostics.push(diagnostic);
+        diagnostics.push(diagnostic);
         return;
     }
 
     for detail in &err.details {
         if let Some(diagnostic) = crate::diagnostics::detail_to_diagnostic(detail, fn_span) {
-            context.diagnostics.push(diagnostic);
+            diagnostics.push(diagnostic);
         }
     }
 }
@@ -1125,12 +1122,13 @@ fn log_error(err: &CompilerError, fn_span: Option<Span>, context: &mut ProgramCo
 fn handle_error<'a>(
     err: &CompilerError,
     fn_span: Option<Span>,
-    context: &mut ProgramContext,
+    panic_threshold: PanicThreshold,
+    diagnostics: &mut Diagnostics,
 ) -> Option<CompileResult<'a>> {
     // Log the error
-    log_error(err, fn_span, context);
+    log_error(err, fn_span, diagnostics);
 
-    let should_panic = match context.opts.panic_threshold {
+    let should_panic = match panic_threshold {
         PanicThreshold::AllErrors => true,
         PanicThreshold::CriticalErrors => err.has_errors(),
         PanicThreshold::None => false,
@@ -1145,7 +1143,7 @@ fn handle_error<'a>(
     if should_panic || is_config_error {
         // The per-detail diagnostics were already pushed by `log_error`; the fatal
         // result just carries them. (The old JS-shim summary is dropped.)
-        Some(CompileResult::Error { diagnostics: std::mem::take(&mut context.diagnostics) })
+        Some(CompileResult::Error { diagnostics: std::mem::take(diagnostics) })
     } else {
         None
     }
@@ -1210,14 +1208,22 @@ fn process_fn<'a>(
     // Parse directives from the function body
     let opt_in_result =
         try_find_directive_enabling_memoization(&source.body_directives, &context.opts);
-    let opt_out = find_directive_disabling_memoization(&source.body_directives, &context.opts);
+    let opt_out = find_directive_disabling_memoization(
+        source.body_directives.iter().map(String::as_str),
+        context.opts.custom_opt_out_directives.as_deref(),
+    );
 
     // If parsing opt-in directive fails, handle the error and skip
     let opt_in = match opt_in_result {
         Ok(d) => d,
         Err(err) => {
             // Apply panic threshold logic (same as compilation errors)
-            if let Some(result) = handle_error(&err, source.fn_ast_span, context) {
+            if let Some(result) = handle_error(
+                &err,
+                source.fn_ast_span,
+                context.opts.panic_threshold,
+                &mut context.diagnostics,
+            ) {
                 return Err(result);
             }
             return Ok(None);
@@ -1245,10 +1251,15 @@ fn process_fn<'a>(
 
             if opt_out.is_some() {
                 // If there's an opt-out, just log the error (don't escalate)
-                log_error(&err, source.fn_ast_span, context);
+                log_error(&err, source.fn_ast_span, &mut context.diagnostics);
             } else {
                 // Apply panic threshold logic
-                if let Some(result) = handle_error(&err, source.fn_ast_span, context) {
+                if let Some(result) = handle_error(
+                    &err,
+                    source.fn_ast_span,
+                    context.opts.panic_threshold,
+                    &mut context.diagnostics,
+                ) {
                     return Err(result);
                 }
             }
@@ -2723,7 +2734,6 @@ fn ox_is_non_namespaced_import(import: &oxc::ImportDeclaration) -> bool {
 /// modified, along with any logger events.
 ///
 /// This function implements the logic from the TS entrypoint (Program.ts):
-/// - validateRestrictedImports: check for blocklisted imports
 /// - findProgramSuppressions: find eslint/flow suppression comments
 /// - findFunctionsToCompile: traverse program to find components and hooks
 /// - processFn: per-function compilation with directive and suppression handling
@@ -2763,26 +2773,17 @@ pub fn compile_program<'a, 'p>(
     );
 
     // Check for module-scope opt-out directive
-    let module_directives: Vec<String> =
-        program.directives.iter().map(|d| d.expression.value.to_string()).collect();
-    let has_module_scope_opt_out =
-        find_directive_disabling_memoization(&module_directives, &options).is_some();
+    let has_module_scope_opt_out = find_directive_disabling_memoization(
+        program.directives.iter().map(|d| d.expression.value.as_str()),
+        options.custom_opt_out_directives.as_deref(),
+    )
+    .is_some();
 
     // Create program context
     let mut context = ProgramContext::new(options.clone(), suppressions, has_module_scope_opt_out);
 
     // Initialize known referenced names from scope bindings for UID collision detection
     context.init_from_scope(&scope);
-
-    // Validate restricted imports (needs context for handle_error)
-    if let Some(err) =
-        validate_restricted_imports(program, &options.environment.validate_blocklisted_imports)
-    {
-        if let Some(result) = handle_error(&err, None, &mut context) {
-            return result;
-        }
-        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
-    }
 
     // Pre-register instrumentation imports to get stable local names.
     // These are needed before compilation so codegen can use the correct names.
@@ -2845,7 +2846,7 @@ pub fn compile_program<'a, 'p>(
                 ErrorCategory::Invariant,
                 "Unexpected compiled functions when module scope opt-out is present",
             ));
-            handle_error(&err, None, &mut context);
+            handle_error(&err, None, context.opts.panic_threshold, &mut context.diagnostics);
         }
         return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
     }

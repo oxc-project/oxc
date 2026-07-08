@@ -356,6 +356,21 @@ impl<'a> Comments<'a> {
         self.comments_before_iter(start).any(|comment| comment.followed_by_newline())
     }
 
+    /// Position-based variant of [`Self::has_leading_own_line_comment`]:
+    /// checks ALL comments within `(start, end)`, including already-printed ones.
+    ///
+    /// Layout decisions evaluated more than once for the same node must use this:
+    /// grouped call arguments re-format the grouped function with its body reused from cache
+    /// after the first pass has already consumed the comments,
+    /// so a cursor-based query would give the two passes different answers.
+    pub fn has_own_line_comment_in_range(&self, start: u32, end: u32) -> bool {
+        let first = self.inner.partition_point(|comment| comment.span.start < start);
+        self.inner[first..]
+            .iter()
+            .take_while(|comment| comment.span.end <= end)
+            .any(|comment| comment.followed_by_newline())
+    }
+
     pub fn has_end_of_line_comment_after(&self, pos: u32) -> bool {
         !self.end_of_line_comments_after(pos).is_empty()
     }

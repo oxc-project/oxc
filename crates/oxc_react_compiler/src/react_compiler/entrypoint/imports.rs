@@ -6,7 +6,10 @@
  */
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
+use crate::diagnostics::detail_to_diagnostic;
+use crate::react_compiler_diagnostics::{
+    CompilerErrorDetail, CompilerErrorOrDiagnostic, ErrorCategory,
+};
 use crate::scope::ScopeResolver;
 
 use oxc_diagnostics::Diagnostics;
@@ -192,17 +195,17 @@ impl ProgramContext {
 }
 
 /// Check for blocklisted import modules.
-/// Returns a CompilerError if any blocklisted imports are found.
+/// Returns diagnostics if any blocklisted imports are found.
 pub fn validate_restricted_imports(
     program: &oxc_ast::ast::Program,
     blocklisted: &Option<Vec<String>>,
-) -> Option<CompilerError> {
+) -> Option<Diagnostics> {
     let blocklisted = match blocklisted {
         Some(b) if !b.is_empty() => b,
         _ => return None,
     };
     let restricted: FxHashSet<&str> = blocklisted.iter().map(|s| s.as_str()).collect();
-    let mut error = CompilerError::new();
+    let mut diagnostics = Diagnostics::new();
 
     for stmt in &program.body {
         if let oxc_ast::ast::Statement::ImportDeclaration(import) = stmt {
@@ -212,12 +215,15 @@ pub fn validate_restricted_imports(
                     "Bailing out due to blocklisted import",
                 )
                 .with_description(format!("Import from module {}", import.source.value));
-                error.push_error_detail(detail);
+                let detail = CompilerErrorOrDiagnostic::ErrorDetail(detail);
+                if let Some(diagnostic) = detail_to_diagnostic(&detail, None) {
+                    diagnostics.push(diagnostic);
+                }
             }
         }
     }
 
-    if error.has_any_errors() { Some(error) } else { None }
+    if diagnostics.is_empty() { None } else { Some(diagnostics) }
 }
 
 /// Check if a name follows the React hook naming convention (use[A-Z0-9]...).
