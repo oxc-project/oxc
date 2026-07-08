@@ -1945,6 +1945,7 @@ dependencies = [
  "oxc_estree_tokens",
  "oxc_formatter",
  "oxc_formatter_core",
+ "oxc_lexer",
  "oxc_tasks_common",
  "oxc_tasks_transform_checker",
  "phf",
@@ -2153,6 +2154,17 @@ dependencies = [
  "tokio",
  "tower-lsp-server",
  "tracing",
+]
+
+[[package]]
+name = "oxc_lexer"
+version = "0.139.0"
+dependencies = [
+ "memchr",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_span",
+ "oxc_syntax",
 ]
 
 [[package]]
