@@ -516,28 +516,48 @@ impl Scoping {
         });
     }
 
+    /// Remove all redeclaration metadata for a symbol.
+    pub fn clear_symbol_redeclarations(&mut self, symbol_id: SymbolId) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.symbol_redeclarations.remove(&symbol_id);
+        });
+    }
+
     /// Remove one declaration from a merged symbol and promote the first surviving declaration.
     pub fn remove_symbol_declaration(&mut self, symbol_id: SymbolId, span: Span) {
+        self.remove_symbol_declarations(symbol_id, &[span]);
+    }
+
+    /// Remove declarations from a merged symbol and promote the first surviving declaration.
+    ///
+    /// `spans` contains the declarations to remove.
+    /// Returns `true` if a declaration survives.
+    pub fn remove_symbol_declarations(&mut self, symbol_id: SymbolId, spans: &[Span]) -> bool {
+        let is_removed_span = |span: Span| spans.contains(&span);
+
         let replacement = self.cell.with_dependent_mut(|_allocator, cell| {
             let redeclarations = cell.symbol_redeclarations.get_mut(&symbol_id)?;
-            redeclarations.retain(|redeclaration| redeclaration.span != span);
 
-            let first = redeclarations.first()?.clone();
+            redeclarations.retain(|redeclaration| !is_removed_span(redeclaration.span));
+
+            let first = redeclarations.first().cloned();
             let flags = redeclarations
                 .iter()
                 .fold(SymbolFlags::None, |flags, redeclaration| flags | redeclaration.flags);
-            let has_redeclarations = redeclarations.len() > 1;
-            if !has_redeclarations {
+            if redeclarations.len() <= 1 {
                 cell.symbol_redeclarations.remove(&symbol_id);
             }
 
-            Some((first, flags))
+            first.map(|first| (first, flags))
         });
 
         if let Some((replacement, flags)) = replacement {
             *self.symbol_table.symbol_spans_mut(symbol_id) = replacement.span;
             *self.symbol_table.symbol_declarations_mut(symbol_id) = replacement.declaration;
             *self.symbol_table.symbol_flags_mut(symbol_id) = flags;
+            true
+        } else {
+            !is_removed_span(self.symbol_span(symbol_id))
         }
     }
 
@@ -634,6 +654,37 @@ impl Scoping {
             let reference_ids = &mut cell.resolved_references[symbol_id.index()];
             let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
             reference_ids.swap_remove(index);
+        });
+    }
+
+    /// Convert all references resolved to a symbol into root unresolved references.
+    pub fn unresolve_symbol_references(&mut self, name: Ident<'_>, symbol_id: SymbolId) {
+        let references = &mut self.references;
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let resolved_references = &mut cell.resolved_references[symbol_id.index()];
+            if resolved_references.is_empty() {
+                return;
+            }
+            let name = name.clone_in(allocator);
+            let unresolved_references = cell
+                .root_unresolved_references
+                .entry(name)
+                .or_insert_with(|| ArenaVec::new_in(&allocator));
+            for reference_id in resolved_references.drain(..) {
+                references[reference_id].clear_symbol_id();
+                unresolved_references.push(reference_id);
+            }
+        });
+    }
+
+    /// Move all resolved references from one symbol to another.
+    pub fn rebind_symbol_references(&mut self, from: SymbolId, to: SymbolId) {
+        let references = &mut self.references;
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            while let Some(reference_id) = cell.resolved_references[from.index()].pop() {
+                references[reference_id].set_symbol_id(to);
+                cell.resolved_references[to.index()].push(reference_id);
+            }
         });
     }
 
@@ -1076,6 +1127,8 @@ impl Scoping {
                             | SymbolFlags::TypeParameter
                             | SymbolFlags::EnumMember,
                     )
+                    // let is_type_only = flags.is_type() && !flags.is_value();
+                    // !is_type_only && !flags.is_enum_member()
                 });
             }
         });
