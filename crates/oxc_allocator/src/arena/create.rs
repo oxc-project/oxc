@@ -414,6 +414,9 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         let start_ptr = unsafe { alloc::alloc(layout) };
         let start_ptr = NonNull::new(start_ptr)?;
 
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        crate::tracking::record_chunk_allocation();
+
         // The `ChunkFooter` is at the end of the chunk.
         // SAFETY: We allocated `new_size_without_footer + CHUNK_FOOTER_SIZE` bytes, starting at `start_ptr`,
         // so `start_ptr + new_size_without_footer` is within that allocation.

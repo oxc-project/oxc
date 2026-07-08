@@ -9,9 +9,27 @@
 //! feature is *not* enabled. The reason for the 2nd feature is to ensure that compiling with `--all-features`
 //! will not load this module.
 
-use std::cell::Cell;
+use std::{
+    cell::Cell,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 use crate::{Allocator, arena::Arena};
+
+/// Number of chunks all [`Arena`]s have requested from the system allocator, in total.
+///
+/// This is a global counter, not a per-arena one, because short-lived arenas
+/// (e.g. the arena backing `oxc_semantic`'s `Scoping`) are often created and dropped inside
+/// the operation being measured, so their counters cannot be read after the operation completes.
+static NUM_CHUNK_ALLOC: AtomicUsize = AtomicUsize::new(0);
+
+/// Record that a chunk was allocated from the system allocator.
+pub fn record_chunk_allocation() {
+    // Counter maxes out at `usize::MAX`, but if there's that many allocations,
+    // the exact number is not important
+    let _ = NUM_CHUNK_ALLOC
+        .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |count| Some(count.saturating_add(1)));
+}
 
 /// Counters of allocations and reallocations made in an [`Allocator`].
 #[derive(Default, Debug)]
@@ -72,5 +90,11 @@ impl Allocator {
     #[doc(hidden)]
     pub fn get_allocation_stats(&self) -> (usize, usize) {
         self.arena().get_allocation_stats()
+    }
+
+    /// Get number of chunks all [`Arena`]s have requested from the system allocator, in total.
+    #[doc(hidden)]
+    pub fn global_chunk_allocation_count() -> usize {
+        NUM_CHUNK_ALLOC.load(Ordering::Relaxed)
     }
 }
