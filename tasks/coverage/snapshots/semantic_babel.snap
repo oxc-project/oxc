@@ -2,7 +2,7 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2146/2236 (95.97%)
+Positive Passed: 2157/2236 (96.47%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
@@ -143,11 +143,6 @@ Identifier `x` has already been declared
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
 Function implementation is missing or not immediately following the declaration.
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["N"]
-rebuilt        : ScopeId(0): []
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/const/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["x", "y"]
@@ -171,11 +166,6 @@ rebuilt        : ScopeId(0): []
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/let/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["x"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/valid-namespace-var/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["valid_namespace_var"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/var/input.ts
@@ -223,11 +213,6 @@ Bindings mismatch:
 after transform: ScopeId(0): ["a", "b"]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-value-declaration/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "D", "E", "a", "b"]
-rebuilt        : ScopeId(0): ["C", "D", "a", "b"]
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["f"]
@@ -251,66 +236,22 @@ Bindings mismatch:
 after transform: ScopeId(0): ["B", "b"]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["N"]
-rebuilt        : ScopeId(0): []
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare-export-named/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["N", "x"]
-rebuilt        : ScopeId(0): ["x"]
 Symbol reference IDs mismatch for "x":
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare-export-named-declaration/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["N"]
-rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-export-named-declaration/input.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-import-equals-internal/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["N"]
-rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["N"]
 rebuilt        : []
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-nested/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-nested-declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
 Ambient modules cannot be nested in other modules or namespaces.
 Ambient modules cannot be nested in other modules or namespaces.
-Bindings mismatch:
-after transform: ScopeId(0): ["M", "N"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["N"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-export/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["X"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/namespace-as-or-satisfies-brackets/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["as", "satisfies"]
-rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/callable-class/input.ts
 Symbol flags mismatch for "C":
@@ -336,11 +277,6 @@ rebuilt        : ScopeId(0): []
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-declare-function-before/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-namespace/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["N"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/function-type-before-declaration/input.ts
@@ -431,7 +367,7 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-equals-var/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["M"]
+after transform: ScopeId(0): []
 rebuilt        : ScopeId(0): ["a"]
 Symbol flags mismatch for "a":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | Import)

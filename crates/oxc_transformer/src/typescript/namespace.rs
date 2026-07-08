@@ -1,11 +1,13 @@
 use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_ecmascript::BoundNames;
+use oxc_semantic::Scoping;
 use oxc_span::{SPAN, Span};
+use oxc_str::Ident;
 use oxc_syntax::{
     operator::{AssignmentOperator, LogicalOperator},
     scope::{ScopeFlags, ScopeId},
-    symbol::SymbolFlags,
+    symbol::{SymbolFlags, SymbolId},
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -16,18 +18,25 @@ use super::{
     diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
 };
 
-pub struct TypeScriptNamespace {
+pub struct TypeScriptNamespace<'a> {
     // Options
     allow_namespaces: bool,
+
+    removed_bindings: Vec<RemovedNamespaceBinding<'a>>,
 }
 
-impl TypeScriptNamespace {
+struct RemovedNamespaceBinding<'a> {
+    name: Ident<'a>,
+    symbol_id: SymbolId,
+}
+
+impl TypeScriptNamespace<'_> {
     pub fn new(options: &TypeScriptOptions) -> Self {
-        Self { allow_namespaces: options.allow_namespaces }
+        Self { allow_namespaces: options.allow_namespaces, removed_bindings: vec![] }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // namespace declaration is only allowed at the top level
@@ -88,10 +97,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
     }
 }
 
-impl<'a> TypeScriptNamespace {
-    #[expect(clippy::self_only_used_in_recursion)]
+impl<'a> TypeScriptNamespace<'a> {
     fn handle_nested(
-        &self,
+        &mut self,
         decl: ArenaBox<'a, TSModuleDeclaration<'a>>,
         is_export: bool,
         parent_stmts: &mut ArenaVec<'a, Statement<'a>>,
@@ -99,6 +107,11 @@ impl<'a> TypeScriptNamespace {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if decl.declare {
+            if let TSModuleDeclarationName::Identifier(id) = &decl.id
+                && !Self::has_runtime_declaration(id.symbol_id(), ctx)
+            {
+                self.record_removed_binding(id);
+            }
             return;
         }
 
@@ -123,6 +136,7 @@ impl<'a> TypeScriptNamespace {
         let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
         if redeclarations.is_empty() {
             if ctx.scoping().symbol_flags(symbol_id).is_namespace_module() {
+                self.record_removed_binding(&ident);
                 return;
             }
         } else {
@@ -151,6 +165,9 @@ impl<'a> TypeScriptNamespace {
             let current_declaration_flags =
                 redeclarations.iter().find(|rd| rd.span == ident.span).unwrap().flags;
             if current_declaration_flags.is_namespace_module() {
+                if !Self::has_runtime_declaration(symbol_id, ctx) {
+                    self.record_removed_binding(&ident);
+                }
                 return;
             }
         }
@@ -541,6 +558,37 @@ impl<'a> TypeScriptNamespace {
         let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
         // Find first value declaration because only value declaration will emit JS code.
         redeclarations.iter().find(|rd| rd.flags.is_value()).is_some_and(|rd| rd.span != id.span)
+    }
+
+    fn record_removed_binding(&mut self, id: &BindingIdentifier<'a>) {
+        self.removed_bindings
+            .push(RemovedNamespaceBinding { name: id.name, symbol_id: id.symbol_id() });
+    }
+
+    fn has_runtime_declaration(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
+        if redeclarations.is_empty() {
+            let flags = ctx.scoping().symbol_flags(symbol_id);
+            return flags.is_value() && !flags.is_ambient();
+        }
+        redeclarations.iter().any(|redeclaration| {
+            redeclaration.flags.is_value() && !redeclaration.flags.is_ambient()
+        })
+    }
+
+    pub(super) fn update_removed_bindings(&mut self, scoping: &mut Scoping) {
+        let mut removed_bindings = std::mem::take(&mut self.removed_bindings);
+        removed_bindings.sort_unstable_by_key(|binding| binding.symbol_id.index());
+        removed_bindings.dedup_by_key(|binding| binding.symbol_id);
+
+        for RemovedNamespaceBinding { name, symbol_id } in &removed_bindings {
+            let scope_id = scoping.symbol_scope_id(*symbol_id);
+            scoping.remove_binding(scope_id, *name);
+        }
+
+        for RemovedNamespaceBinding { name, symbol_id } in removed_bindings {
+            scoping.resolve_symbol_references(name, symbol_id);
+        }
     }
 }
 
