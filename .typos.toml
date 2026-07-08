@@ -42,6 +42,7 @@ extend-exclude = [
 [default]
 extend-ignore-re = [
   "(?Rm)^.*(#|//)\\s*spellchecker:disable-line$",
+  "(?Rm)^\\s*(#|//)\\s*spellchecker:disable-next-line\\s*\\n.*",
   "(?s)(#|//)\\s*spellchecker:off.*?\\n\\s*(#|//)\\s*spellchecker:on",
 ]
 
