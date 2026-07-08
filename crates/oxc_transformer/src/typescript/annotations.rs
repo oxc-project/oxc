@@ -28,7 +28,7 @@ pub struct TypeScriptAnnotations<'a> {
     jsx_element_import_name: String,
     jsx_fragment_import_name: String,
 
-    removed_ambient_declarations: Vec<RemovedAmbientDeclaration<'a>>,
+    removed_declarations: Vec<RemovedDeclaration<'a>>,
 }
 
 impl TypeScriptAnnotations<'_> {
@@ -53,12 +53,12 @@ impl TypeScriptAnnotations<'_> {
             has_jsx_fragment: false,
             jsx_element_import_name,
             jsx_fragment_import_name,
-            removed_ambient_declarations: vec![],
+            removed_declarations: vec![],
         }
     }
 }
 
-struct RemovedAmbientDeclaration<'a> {
+struct RemovedDeclaration<'a> {
     name: Ident<'a>,
     symbol_id: SymbolId,
     span: Span,
@@ -74,7 +74,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 Statement::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
                     let declaration = decl.declaration.as_ref().unwrap();
                     if declaration.is_typescript_syntax() {
-                        self.remove_ambient_declaration_bindings(declaration);
+                        self.record_removed_declaration_bindings(declaration);
                         false
                     } else {
                         true
@@ -526,8 +526,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 }
 
 impl<'a> TypeScriptAnnotations<'a> {
-    pub(super) fn update_removed_ambient_references(&mut self, scoping: &mut Scoping) {
-        let mut declarations = std::mem::take(&mut self.removed_ambient_declarations);
+    pub(super) fn update_removed_declarations(&mut self, scoping: &mut Scoping) {
+        let mut declarations = std::mem::take(&mut self.removed_declarations);
         declarations.sort_unstable_by_key(|declaration| {
             (declaration.symbol_id.index(), declaration.span.start, declaration.span.end)
         });
@@ -575,14 +575,17 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         match decl {
-            // Remove type aliases, interfaces, and `declare global {}`
-            Declaration::TSTypeAliasDeclaration(_)
-            | Declaration::TSInterfaceDeclaration(_)
-            | Declaration::TSGlobalDeclaration(_) => false,
+            // Remove type aliases and interfaces.
+            Declaration::TSTypeAliasDeclaration(_) | Declaration::TSInterfaceDeclaration(_) => {
+                self.record_removed_declaration_bindings(decl);
+                false
+            }
+            // Remove `declare global {}`.
+            Declaration::TSGlobalDeclaration(_) => false,
             // Remove `declare var/let/const`
             Declaration::VariableDeclaration(var_decl) => {
                 if var_decl.declare {
-                    self.remove_ambient_declaration_bindings(decl);
+                    self.record_removed_declaration_bindings(decl);
                     false
                 } else {
                     true
@@ -590,17 +593,16 @@ impl<'a> TypeScriptAnnotations<'a> {
             }
             // Remove `declare function` and function overload signatures (no body)
             Declaration::FunctionDeclaration(func_decl) => {
-                if func_decl.declare {
-                    self.remove_ambient_declaration_bindings(decl);
-                    false
-                } else {
-                    func_decl.body.is_some()
+                let keep = !func_decl.declare && func_decl.body.is_some();
+                if !keep {
+                    self.record_removed_declaration_bindings(decl);
                 }
+                keep
             }
             // Remove `declare class`
             Declaration::ClassDeclaration(class_decl) => {
                 if class_decl.declare {
-                    self.remove_ambient_declaration_bindings(decl);
+                    self.record_removed_declaration_bindings(decl);
                     false
                 } else {
                     true
@@ -617,14 +619,14 @@ impl<'a> TypeScriptAnnotations<'a> {
                             if ctx.scoping().symbol_flags(ident.symbol_id()).is_namespace_module()
                     );
                 if !keep {
-                    self.remove_ambient_declaration_bindings(decl);
+                    self.record_removed_declaration_bindings(decl);
                 }
                 keep
             }
             // Remove `declare enum`
             Declaration::TSEnumDeclaration(enum_decl) => {
                 if enum_decl.declare {
-                    self.remove_ambient_declaration_bindings(decl);
+                    self.record_removed_declaration_bindings(decl);
                     false
                 } else {
                     true
@@ -647,36 +649,42 @@ impl<'a> TypeScriptAnnotations<'a> {
         }
     }
 
-    fn remove_ambient_declaration_bindings(&mut self, decl: &Declaration<'a>) {
+    fn record_removed_declaration_bindings(&mut self, decl: &Declaration<'a>) {
         match decl {
             Declaration::VariableDeclaration(var_decl) => {
-                self.remove_variable_declaration_bindings(var_decl);
+                self.record_removed_variable_declaration_bindings(var_decl);
             }
             Declaration::FunctionDeclaration(func_decl) => {
                 if let Some(id) = &func_decl.id {
-                    self.record_removed_ambient_declaration(id);
+                    self.record_removed_declaration(id);
                 }
             }
             Declaration::ClassDeclaration(class_decl) => {
                 if let Some(id) = &class_decl.id {
-                    self.record_removed_ambient_declaration(id);
+                    self.record_removed_declaration(id);
                 }
             }
             Declaration::TSEnumDeclaration(enum_decl) => {
-                self.record_removed_ambient_declaration(&enum_decl.id);
+                self.record_removed_declaration(&enum_decl.id);
             }
             Declaration::TSModuleDeclaration(module_decl) => {
                 if let TSModuleDeclarationName::Identifier(id) = &module_decl.id {
-                    self.record_removed_ambient_declaration(id);
+                    self.record_removed_declaration(id);
                 }
+            }
+            Declaration::TSTypeAliasDeclaration(type_alias) => {
+                self.record_removed_declaration(&type_alias.id);
+            }
+            Declaration::TSInterfaceDeclaration(interface) => {
+                self.record_removed_declaration(&interface.id);
             }
             _ => {}
         }
     }
 
-    fn remove_variable_declaration_bindings(&mut self, var_decl: &VariableDeclaration<'a>) {
+    fn record_removed_variable_declaration_bindings(&mut self, var_decl: &VariableDeclaration<'a>) {
         var_decl.bound_names(&mut |ident| {
-            self.record_removed_ambient_declaration(ident);
+            self.record_removed_declaration(ident);
         });
     }
 
@@ -710,8 +718,8 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx.scoping_mut().remove_binding(scope_id, ident.name);
     }
 
-    fn record_removed_ambient_declaration(&mut self, ident: &BindingIdentifier<'a>) {
-        self.removed_ambient_declarations.push(RemovedAmbientDeclaration {
+    fn record_removed_declaration(&mut self, ident: &BindingIdentifier<'a>) {
+        self.removed_declarations.push(RemovedDeclaration {
             name: ident.name,
             symbol_id: ident.symbol_id(),
             span: ident.span,

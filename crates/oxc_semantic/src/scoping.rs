@@ -516,6 +516,13 @@ impl Scoping {
         });
     }
 
+    /// Remove all redeclaration metadata for a symbol.
+    pub fn clear_symbol_redeclarations(&mut self, symbol_id: SymbolId) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.symbol_redeclarations.remove(&symbol_id);
+        });
+    }
+
     /// Remove one declaration from a merged symbol and promote the first surviving declaration.
     pub fn remove_symbol_declaration(&mut self, symbol_id: SymbolId, span: Span) {
         self.remove_symbol_declarations(symbol_id, &[span]);
@@ -1120,6 +1127,8 @@ impl Scoping {
                             | SymbolFlags::TypeParameter
                             | SymbolFlags::EnumMember,
                     )
+                    // let is_type_only = flags.is_type() && !flags.is_value();
+                    // !is_type_only && !flags.is_enum_member()
                 });
             }
         });

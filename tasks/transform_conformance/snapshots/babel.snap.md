@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 767/1165
+Passed: 774/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (115/157)
+# babel-plugin-transform-typescript (122/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1205,22 +1205,6 @@ rebuilt        : SymbolId(1): []
 * exports/interface/input.ts
 x Output mismatch
 
-* function/overloads/input.ts
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
-rebuilt        : SymbolId(0): []
-
-* function/overloads-exports/input.mjs
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
-rebuilt        : SymbolId(0): []
-
 * imports/type-only-export-specifier-2/input.ts
 x Output mismatch
 
@@ -1235,19 +1219,9 @@ Unresolved references mismatch:
 after transform: ["console"]
 rebuilt        : ["LongNameModule", "console"]
 
-* namespace/clobber-class/input.ts
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 22, end: 23 }]
-rebuilt        : SymbolId(0): []
-
 * namespace/clobber-enum/input.ts
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 30, end: 31 }]
-rebuilt        : SymbolId(0): []
-
-* namespace/clobber-export/input.ts
-Symbol redeclarations mismatch for "N":
-after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 35, end: 36 }]
 rebuilt        : SymbolId(0): []
 
 * namespace/declare/input.ts
@@ -1270,11 +1244,6 @@ rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 Bindings mismatch:
 after transform: ScopeId(0): ["Platform"]
 rebuilt        : ScopeId(0): []
-
-* namespace/multiple/input.ts
-Symbol redeclarations mismatch for "N":
-after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 33, end: 34 }]
-rebuilt        : SymbolId(0): []
 
 * namespace/mutable-fail/input.ts
 
@@ -1300,29 +1269,10 @@ rebuilt        : SymbolId(0): []
    `----
 
 
-* namespace/nested/input.ts
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 6, end: 7 }, Span { start: 22, end: 23 }]
-rebuilt        : SymbolId(0): []
-Symbol redeclarations mismatch for "M":
-after transform: SymbolId(4): [Span { start: 110, end: 111 }, Span { start: 129, end: 130 }]
-rebuilt        : SymbolId(6): []
-Symbol redeclarations mismatch for "D":
-after transform: SymbolId(6): [Span { start: 181, end: 182 }, Span { start: 207, end: 208 }]
-rebuilt        : SymbolId(9): []
-Symbol redeclarations mismatch for "F":
-after transform: SymbolId(12): [Span { start: 308, end: 309 }, Span { start: 325, end: 326 }]
-rebuilt        : SymbolId(14): []
-
 * namespace/nested-namespace/input.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["B", "G", "_A"]
 rebuilt        : ScopeId(1): ["G", "_A"]
-
-* namespace/same-name/input.ts
-Symbol redeclarations mismatch for "N":
-after transform: SymbolId(3): [Span { start: 59, end: 60 }, Span { start: 115, end: 116 }, Span { start: 166, end: 167 }]
-rebuilt        : SymbolId(5): []
 
 * optimize-const-enums/custom-values-exported/input.ts
 x Output mismatch

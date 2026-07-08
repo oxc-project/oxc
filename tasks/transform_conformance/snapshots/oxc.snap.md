@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 322/398
+Passed: 325/398
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (39/60)
+# babel-plugin-transform-typescript (42/60)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -131,15 +131,6 @@ rebuilt        : SymbolId(0): [ReferenceId(5)]
 Bindings mismatch:
 after transform: ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok"]
 rebuilt        : ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok", "T"]
-Symbol flags mismatch for "T":
-after transform: SymbolId(9): SymbolFlags(Function | TypeAlias)
-rebuilt        : SymbolId(8): SymbolFlags(Function)
-Symbol span mismatch for "T":
-after transform: SymbolId(9): Span { start: 205, end: 206 }
-rebuilt        : SymbolId(8): Span { start: 226, end: 227 }
-Symbol redeclarations mismatch for "T":
-after transform: SymbolId(9): [Span { start: 205, end: 206 }, Span { start: 226, end: 227 }]
-rebuilt        : SymbolId(8): []
 
 * namespace/import-=/input.ts
 Symbol reference IDs mismatch for "A":
@@ -154,21 +145,6 @@ Symbol redeclarations mismatch for "y":
 after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(3): []
 
-* namespace/redeclaration-with-interface/input.ts
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 41, end: 44 }]
-rebuilt        : SymbolId(0): []
-
-* namespace/redeclaration-with-type-alias/input.ts
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 39, end: 42 }, Span { start: 87, end: 90 }]
-rebuilt        : SymbolId(0): []
-
-* namespace/redeclaration-with-type-only-namespace/input.ts
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 62, end: 65 }]
-rebuilt        : SymbolId(0): []
-
 * optimize-enums/merged-enum/input.ts
 Unresolved references mismatch:
 after transform: ["A"]
@@ -178,18 +154,6 @@ rebuilt        : []
 Bindings mismatch:
 after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): ["A", "B", "T"]
-Symbol flags mismatch for "T":
-after transform: SymbolId(1): SymbolFlags(Import | TypeAlias)
-rebuilt        : SymbolId(1): SymbolFlags(Import)
-Symbol redeclarations mismatch for "T":
-after transform: SymbolId(1): [Span { start: 149, end: 150 }, Span { start: 170, end: 171 }]
-rebuilt        : SymbolId(1): []
-Symbol flags mismatch for "B":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol redeclarations mismatch for "B":
-after transform: SymbolId(2): [Span { start: 289, end: 290 }, Span { start: 304, end: 305 }]
-rebuilt        : SymbolId(2): []
 
 * remove-class-properties-without-initializer/input.ts
 Unresolved references mismatch:
