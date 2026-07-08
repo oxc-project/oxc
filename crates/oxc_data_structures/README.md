@@ -10,6 +10,7 @@ This crate provides specialized data structures and utilities that are used thro
 
 - **Stacks**: Efficient stack types, optimized for fast `push`, `pop`, and `last`
 - **Code buffer**: Efficient string building with segment tracking
+- **Multi-column Vec**: Multi-column SoA Vec type `MultiVec`
 - **Inline strings**: Memory-efficient string storage for short strings
 - **Slice iterators**: Enhanced iteration capabilities for slices
 - **Rope data structure**: Efficient text manipulation for large documents

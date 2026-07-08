@@ -234,6 +234,7 @@ nonmax = "0.5.5" # Non-maximum numbers
 num-bigint = "0.5.0" # Big integers
 num-traits = "0.2.19" # Numeric traits
 papaya = "0.2.4" # Concurrent hash map
+pastey = "0.2.3" # Identifier concatenation in declarative macros
 percent-encoding = "2.3.2" # URL encoding
 petgraph = { version = "0.8.3", default-features = false } # Graph data structures
 phf = "0.14.0" # Perfect hash function

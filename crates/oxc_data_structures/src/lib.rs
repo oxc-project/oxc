@@ -18,6 +18,9 @@ pub mod fieldless_enum;
 #[cfg(feature = "inline_string")]
 pub mod inline_string;
 
+#[cfg(feature = "multi_vec")]
+pub mod multi_vec;
+
 #[cfg(feature = "non_null")]
 pub mod non_null;
 
@@ -36,5 +39,8 @@ pub mod str;
 #[cfg(feature = "string_ext")]
 pub mod string_ext;
 
-#[cfg(feature = "types")]
+// Gated on `any(test, ...)` because `implements!` is used in `multi_vec`'s unit tests,
+// and unit tests cannot enable features.
+// This enables `cargo test -p oxc_data_structures --features multi_vec`.
+#[cfg(any(test, feature = "types"))]
 pub mod types;

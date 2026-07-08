@@ -1957,6 +1957,8 @@ dependencies = [
 name = "oxc_data_structures"
 version = "0.140.0"
 dependencies = [
+ "oxc_index",
+ "pastey",
  "ropey",
 ]
 
@@ -2879,6 +2881,12 @@ dependencies = [
  "smallvec",
  "windows-link",
 ]
+
+[[package]]
+name = "pastey"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ee67f1008b1ba2321834326597b8e186293b049a023cdef258527550b9935b4"
 
 [[package]]
 name = "pem-rfc7468"
