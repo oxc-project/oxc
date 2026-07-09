@@ -129,10 +129,10 @@ fn check_logical_condition(expr: &Expression<'_>) -> CheckLevel {
         }
 
         _ => {
-            if !is_safe_order(expr) {
-                CheckLevel::SafeOrder
-            } else {
+            if is_safe_order(expr) {
                 CheckLevel::Pending
+            } else {
+                CheckLevel::SafeOrder
             }
         }
     }
@@ -151,17 +151,17 @@ fn is_safe_order(expr: &Expression<'_>) -> bool {
         | Expression::AwaitExpression(_)
         | Expression::YieldExpression(_)
         | Expression::ImportExpression(_)
-        | Expression::TaggedTemplateExpression(_) => false,
+        | Expression::TaggedTemplateExpression(_) 
 
         // Member access can throw if object is nullish
-        Expression::StaticMemberExpression(_) => false,
-        Expression::ComputedMemberExpression(_) => false,
+        |Expression::StaticMemberExpression(_) 
+        |Expression::ComputedMemberExpression(_) 
 
         //  Optional chaining still produces values and can trigger getters
-        Expression::ChainExpression(_) => false,
+        |Expression::ChainExpression(_)
 
         // BinaryExpression: conservatively unsafe (type coercion, in/instanceof throw)
-        Expression::BinaryExpression(_) => false,
+        |Expression::BinaryExpression(_) => false,
 
         Expression::UnaryExpression(unary) => is_safe_order(&unary.argument),
         Expression::LogicalExpression(logical) => {
