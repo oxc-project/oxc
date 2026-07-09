@@ -97,10 +97,11 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
     // would otherwise carry this body's large stack frame + callee-saved spills on every call.
     #[inline(never)]
     fn cover(expr: ArrayExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        let mut elements = ArenaVec::new_in(p);
+        let len = expr.elements.len();
+        // Exact capacity known from the expression being converted.
+        let mut elements = ArenaVec::with_capacity_in(len, p);
         let mut rest = None;
 
-        let len = expr.elements.len();
         for (i, elem) in expr.elements.into_iter().enumerate() {
             match elem {
                 match_expression!(ArrayExpressionElement) => {
@@ -174,10 +175,11 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
     // inlining this large body into the hot `AssignmentTarget::cover` dispatcher.
     #[inline(never)]
     fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        let mut properties = ArenaVec::new_in(p);
+        let len = expr.properties.len();
+        // Exact capacity known from the expression being converted.
+        let mut properties = ArenaVec::with_capacity_in(len, p);
         let mut rest = None;
 
-        let len = expr.properties.len();
         for (i, elem) in expr.properties.into_iter().enumerate() {
             match elem {
                 ObjectPropertyKind::ObjectProperty(property) => {

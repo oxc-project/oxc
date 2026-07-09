@@ -34,6 +34,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         in_ts_namespace_body: bool,
     ) -> (ArenaVec<'a, Directive<'a>>, ArenaVec<'a, Statement<'a>>) {
+        // Empty blocks stay allocation-free; reserve once the first item arrives so short
+        // bodies avoid the empty-Vec 1→2→4→8 growth chain.
         let mut directives = ArenaVec::new_in(self);
         let mut statements = ArenaVec::new_in(self);
 
@@ -93,6 +95,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             [string.span.start as usize + 1..string.span.end as usize - 1];
                         let directive =
                             Directive::new(expr.span, (*string).clone(), Str::from(src), self);
+                        if directives.capacity() == 0 {
+                            // Directive prologues are almost always short.
+                            directives.reserve(4);
+                        }
                         directives.push(directive);
                         continue;
                     }
@@ -111,6 +117,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 self.error(diagnostics::statement_in_ambient_context(stmt.span()));
                 reported_ambient_statement = true;
+            }
+            if statements.capacity() == 0 {
+                // Top-level and nested statement lists; 8 covers typical short bodies.
+                statements.reserve(8);
             }
             statements.push(stmt);
         }
@@ -750,6 +760,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::using_declaration_not_allowed_in_switch_bare_case(
                     stmt.span(),
                 ));
+            }
+            if consequent.capacity() == 0 {
+                consequent.reserve(4);
             }
             consequent.push(stmt);
         }

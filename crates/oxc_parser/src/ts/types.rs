@@ -1261,6 +1261,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
 
+            if properties.capacity() == 0 {
+                properties.reserve(4);
+            }
+
             // Check for spread element
             if self.at(Kind::Dot3) {
                 let spread_span = self.cur_token().span();

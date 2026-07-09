@@ -70,6 +70,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         func_kind: FunctionKind,
         opening_span: Span,
     ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
+        // Empty param lists stay allocation-free; reserve on first param.
         let mut list = ArenaVec::new_in(self);
         let mut rest: Option<ArenaBox<'a, FormalParameterRest<'a>>> = None;
         let mut first = true;
@@ -143,6 +144,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     self,
                 ));
             } else {
+                if list.capacity() == 0 {
+                    list.reserve(4);
+                }
                 list.push(self.parse_formal_parameter_with_decorators(func_kind, span, decorators));
             }
         }

@@ -235,6 +235,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         in_jsx_child: bool,
     ) -> (ArenaVec<'a, JSXChild<'a>>, JSXClosing<'a>) {
+        // Empty children stay allocation-free; reserve once the first child arrives.
         let mut children = ArenaVec::new_in(self);
         loop {
             if self.fatal_error.is_some() {
@@ -243,7 +244,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return (children, JSXClosing::Fragment(closing));
             }
 
-            match self.cur_kind() {
+            let child = match self.cur_kind() {
                 Kind::LAngle => {
                     let span = self.start_span();
                     self.bump_any(); // bump `<`
@@ -251,25 +252,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
                     // <> open nested fragment
                     if kind == Kind::RAngle {
-                        children.push(JSXChild::Fragment(self.parse_jsx_fragment(span, true)));
-                        continue;
-                    }
-
+                        JSXChild::Fragment(self.parse_jsx_fragment(span, true))
                     // <ident open nested element
-                    if kind == Kind::Ident || kind.is_any_keyword() {
-                        children.push(JSXChild::Element(self.parse_jsx_element(span, true)));
-                        continue;
-                    }
-
+                    } else if kind == Kind::Ident || kind.is_any_keyword() {
+                        JSXChild::Element(self.parse_jsx_element(span, true))
                     // </ closing tag - parse it inline and return
-                    if kind == Kind::Slash {
+                    } else if kind == Kind::Slash {
                         self.bump_any(); // bump `/`
                         let closing = self.parse_jsx_closing_inline(span, in_jsx_child);
                         return (children, closing);
+                    } else {
+                        // Unexpected token after `<`
+                        return (children, self.unexpected());
                     }
-
-                    // Unexpected token after `<`
-                    return (children, self.unexpected());
                 }
                 Kind::LCurly => {
                     let span_start = self.start_span();
@@ -277,25 +272,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
                     // {...expr}
                     if self.eat(Kind::Dot3) {
-                        children.push(JSXChild::Spread(self.parse_jsx_spread_child(span_start)));
-                        continue;
-                    }
-                    // {expr}
-                    children.push(JSXChild::ExpressionContainer(
-                        self.parse_jsx_expression_container(
+                        JSXChild::Spread(self.parse_jsx_spread_child(span_start))
+                    } else {
+                        // {expr}
+                        JSXChild::ExpressionContainer(self.parse_jsx_expression_container(
                             span_start, /* in_jsx_child */ true,
-                        ),
-                    ));
+                        ))
+                    }
                 }
                 // text
-                Kind::JSXText => {
-                    children.push(JSXChild::Text(self.parse_jsx_text()));
-                }
+                Kind::JSXText => JSXChild::Text(self.parse_jsx_text()),
                 _ => {
                     // Unexpected token in JSX children
                     return (children, self.unexpected());
                 }
+            };
+            if children.capacity() == 0 {
+                children.reserve(4);
             }
+            children.push(child);
         }
     }
 
@@ -397,6 +392,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 _ => JSXAttributeItem::Attribute(self.parse_jsx_attribute()),
             };
+            if attributes.capacity() == 0 {
+                attributes.reserve(4);
+            }
             attributes.push(attribute);
         }
         attributes

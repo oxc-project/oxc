@@ -11,6 +11,15 @@ use crate::{
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
 };
 
+/// Initial capacity for comma-separated lists (call args, array/object elements, type params, …).
+///
+/// Empty `ArenaVec`s grow 1 → 2 → 4 → 8 (see `RawVec::grow_amortized`), so a short list of 3–5
+/// items pays for several arena reallocs. Pre-sizing to 4 covers the common case in one alloc.
+const DELIMITED_LIST_CAPACITY: usize = 4;
+
+/// Initial capacity for brace-delimited bodies (blocks, class bodies, switch case lists, …).
+const BODY_LIST_CAPACITY: usize = 8;
+
 #[derive(Clone)]
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
@@ -390,6 +399,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
+        // Keep empty bodies (`{}`) allocation-free; reserve only once the first element arrives.
         let mut list = ArenaVec::new_in(self);
         loop {
             let kind = self.cur_kind();
@@ -398,6 +408,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 || self.fatal_error.is_some()
             {
                 break;
+            }
+            if list.capacity() == 0 {
+                list.reserve(BODY_LIST_CAPACITY);
             }
             list.push(f(self));
         }
@@ -422,6 +435,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 break;
             }
             if let Some(e) = f(self) {
+                if list.capacity() == 0 {
+                    list.reserve(BODY_LIST_CAPACITY);
+                }
                 list.push(e);
             } else {
                 break;
@@ -441,15 +457,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     where
         F: FnMut(&mut Self) -> T,
     {
-        let mut list = ArenaVec::new_in(self);
         // Cache cur_kind() to avoid redundant calls in compound checks
         let kind = self.cur_kind();
         if kind == close
             || matches!(kind, Kind::Eof | Kind::Undetermined)
             || self.fatal_error.is_some()
         {
-            return (list, None);
+            // Empty list — no allocation.
+            return (ArenaVec::new_in(self), None);
         }
+        let mut list = ArenaVec::with_capacity_in(DELIMITED_LIST_CAPACITY, self);
         list.push(f(self));
         loop {
             let kind = self.cur_kind();
@@ -496,6 +513,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             || self.fatal_error.is_some()
         {
             return None;
+        }
+        if list.capacity() == 0 {
+            list.reserve(DELIMITED_LIST_CAPACITY);
         }
         list.push(f(self));
         loop {
@@ -585,6 +605,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if kind == Kind::Dot3 {
                 rest.replace(parse_rest(self));
             } else {
+                if list.capacity() == 0 {
+                    list.reserve(DELIMITED_LIST_CAPACITY);
+                }
                 list.push(parse_element(self));
             }
         }
