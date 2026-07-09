@@ -4878,7 +4878,7 @@ function deserializeBoxObjectAssignmentTarget(pos) {
 }
 
 function deserializeOptionAssignmentTargetMaybeDefault(pos) {
-  return uint8[pos] === 51 ? null : deserializeAssignmentTargetMaybeDefault(pos);
+  return uint8[pos] === 255 ? null : deserializeAssignmentTargetMaybeDefault(pos);
 }
 
 function deserializeVecOptionAssignmentTargetMaybeDefault(pos) {
@@ -4928,7 +4928,7 @@ function deserializeBoxAssignmentTargetPropertyProperty(pos) {
 }
 
 function deserializeOptionExpression(pos) {
-  return uint8[pos] === 51 ? null : deserializeExpression(pos);
+  return uint8[pos] === 255 ? null : deserializeExpression(pos);
 }
 
 function deserializeBoxBlockStatement(pos) {
@@ -5054,11 +5054,11 @@ function deserializeOptionBoxTSTypeAnnotation(pos) {
 }
 
 function deserializeOptionStatement(pos) {
-  return uint8[pos] === 70 ? null : deserializeStatement(pos);
+  return uint8[pos] === 255 ? null : deserializeStatement(pos);
 }
 
 function deserializeOptionForStatementInit(pos) {
-  return uint8[pos] === 65 ? null : deserializeForStatementInit(pos);
+  return uint8[pos] === 255 ? null : deserializeForStatementInit(pos);
 }
 
 function deserializeOptionLabelIdentifier(pos) {
@@ -5096,7 +5096,7 @@ function deserializeOptionBoxBlockStatement(pos) {
 }
 
 function deserializeOptionCatchParameter(pos) {
-  return uint8[pos + 16] === 4 ? null : deserializeCatchParameter(pos);
+  return uint8[pos + 16] === 255 ? null : deserializeCatchParameter(pos);
 }
 
 function deserializeBoxBindingIdentifier(pos) {
@@ -5138,7 +5138,7 @@ function deserializeOptionBoxBindingRestElement(pos) {
 }
 
 function deserializeOptionBindingPattern(pos) {
-  return uint8[pos] === 4 ? null : deserializeBindingPattern(pos);
+  return uint8[pos] === 255 ? null : deserializeBindingPattern(pos);
 }
 
 function deserializeVecOptionBindingPattern(pos) {
@@ -5364,7 +5364,7 @@ function deserializeOptionStringLiteral(pos) {
 }
 
 function deserializeOptionModuleExportName(pos) {
-  return uint8[pos] === 3 ? null : deserializeModuleExportName(pos);
+  return uint8[pos] === 255 ? null : deserializeModuleExportName(pos);
 }
 
 function deserializeF64(pos) {
@@ -5438,7 +5438,7 @@ function deserializeBoxJSXSpreadAttribute(pos) {
 }
 
 function deserializeOptionJSXAttributeValue(pos) {
-  return uint8[pos] === 4 ? null : deserializeJSXAttributeValue(pos);
+  return uint8[pos] === 255 ? null : deserializeJSXAttributeValue(pos);
 }
 
 function deserializeBoxJSXExpressionContainer(pos) {
@@ -5650,7 +5650,7 @@ function deserializeBoxTSQualifiedName(pos) {
 }
 
 function deserializeOptionTSType(pos) {
-  return uint8[pos] === 38 ? null : deserializeTSType(pos);
+  return uint8[pos] === 255 ? null : deserializeTSType(pos);
 }
 
 function deserializeVecTSTypeParameter(pos) {
@@ -5748,7 +5748,7 @@ function deserializeBoxTSImportTypeQualifiedName(pos) {
 }
 
 function deserializeOptionTSMappedTypeModifierOperator(pos) {
-  return uint8[pos] === 3 ? null : deserializeTSMappedTypeModifierOperator(pos);
+  return uint8[pos] === 255 ? null : deserializeTSMappedTypeModifierOperator(pos);
 }
 
 function deserializeBoxTSExternalModuleReference(pos) {
