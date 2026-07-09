@@ -217,6 +217,11 @@ impl NoLoopFunc {
             return false;
         }
 
+        // catch variables are safe because they are scoped to their catch block
+        if flags.is_catch_variable() {
+            return false;
+        }
+
         // Import bindings are always safe (immutable)
         if flags.is_import() {
             return false;
@@ -676,6 +681,8 @@ fn test() {
         "for (var i = 0; i < 10; ++i) { using foo = bar(i); (function() { foo; }) }",
         "for (var i = 0; i < 10; ++i) { await using foo = bar(i); (function() { foo; }) }",
         "for (let i = 0; i < 10; ++i) { for (let x in xs.filter(x => x != i)) {  } }",
+        "for (var i=0; i<l; i++) { try { } catch (e) { (function() { e; }) }  }",
+        "while (i<l) { try { } catch (e) { (function() { e; }) }  }",
         "let a = 0; for (let i=0; i<l; i++) { (function() { a; }); }",
         "let a = 0; for (let i in {}) { (function() { a; }); }",
         "let a = 0; for (let i of {}) { (function() { a; }); }",
