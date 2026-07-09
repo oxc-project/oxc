@@ -46,7 +46,7 @@ fn tsc_compilation(command: &TypeCheckCommand) -> Result<()> {
         Some(config_file) => {
             let tsconfig = parse_config_file(&config_file)?;
             println!("project: {}", config_file.display());
-            (tsconfig.file_names(), Some(tsconfig))
+            (tsconfig.file_names().to_vec(), Some(tsconfig))
         }
         // Source files given without a config file: use them directly as roots.
         None => (command.files.clone(), None),

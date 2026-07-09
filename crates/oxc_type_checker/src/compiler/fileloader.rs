@@ -78,7 +78,7 @@ impl FileLoader {
     fn new(opts: &ProgramOptions) -> Self {
         let default_options = CompilerOptions::default();
         let options =
-            opts.config.as_ref().map_or(&default_options, |config| &config.compiler_options);
+            opts.config.as_ref().map_or(&default_options, |config| config.compiler_options());
         Self {
             host: CompilerHost::new(opts.current_directory.clone()),
             resolver: build_resolver(opts.config.as_ref().map(|config| config.path())),

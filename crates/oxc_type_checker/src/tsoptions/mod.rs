@@ -4,6 +4,7 @@
 //! expansion of a config's file specs into the project's root file list.
 
 mod commandlineparser;
+mod enummaps;
 mod parsinghelpers;
 mod tsconfigparsing;
 
