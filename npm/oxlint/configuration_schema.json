@@ -3523,6 +3523,26 @@
         "jsdoc/implements-on-classes": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jsdoc/multiline-blocks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MultilineBlocksConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "jsdoc/no-defaults": {
           "anyOf": [
             {
@@ -12993,6 +13013,73 @@
             "type": "string"
           },
           "markdownDescription": "List of hover-out mouse event handlers that require corresponding keyboard event handlers."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MultilineBlocksConfig": {
+      "type": "object",
+      "properties": {
+        "allowMultipleTags": {
+          "description": "When `noMultilineBlocks` is set, do not report a multiline block that\nholds multiple tags (or a description together with a tag), since such a\nblock cannot be collapsed onto a single line.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "When `noMultilineBlocks` is set, do not report a multiline block that\nholds multiple tags (or a description together with a tag), since such a\nblock cannot be collapsed onto a single line."
+        },
+        "minimumLengthForMultiline": {
+          "description": "When `noMultilineBlocks` is set, a multiline block is permitted if its\nblock description is at least this many characters long. When unset the\nlength never permits a multiline block.",
+          "default": 18446744073709551615,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "When `noMultilineBlocks` is set, a multiline block is permitted if its\nblock description is at least this many characters long. When unset the\nlength never permits a multiline block."
+        },
+        "multilineTags": {
+          "description": "When `noMultilineBlocks` is set, the presence of one of these tags\npermits a multiline block. `\"*\"` permits any tag.",
+          "default": [
+            "*"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "When `noMultilineBlocks` is set, the presence of one of these tags\npermits a multiline block. `\"*\"` permits any tag."
+        },
+        "noFinalLineText": {
+          "description": "For multiline blocks, report any non-whitespace text preceding the `*/`\non the final line.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "For multiline blocks, report any non-whitespace text preceding the `*/`\non the final line."
+        },
+        "noMultilineBlocks": {
+          "description": "If `true`, multiline blocks are reported unless permitted by\n`minimumLengthForMultiline`, `multilineTags`, or `allowMultipleTags`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If `true`, multiline blocks are reported unless permitted by\n`minimumLengthForMultiline`, `multilineTags`, or `allowMultipleTags`."
+        },
+        "noSingleLineBlocks": {
+          "description": "If `true`, any single line block is reported, except one whose leading\ntag is listed in `singleLineTags`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If `true`, any single line block is reported, except one whose leading\ntag is listed in `singleLineTags`."
+        },
+        "noZeroLineText": {
+          "description": "For multiline blocks, report any non-whitespace text immediately after\nthe `/**` on the first line.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "For multiline blocks, report any non-whitespace text immediately after\nthe `/**` on the first line."
+        },
+        "singleLineTags": {
+          "description": "Tags nevertheless allowed as single line blocks when `noSingleLineBlocks`\nis set. `\"*\"` allows any block that carries a tag.",
+          "default": [
+            "lends",
+            "type"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Tags nevertheless allowed as single line blocks when `noSingleLineBlocks`\nis set. `\"*\"` allows any block that carries a tag."
         }
       },
       "additionalProperties": false

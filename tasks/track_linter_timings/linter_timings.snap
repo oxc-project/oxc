@@ -281,6 +281,7 @@ jsdoc/check-property-names                                 |      7
 jsdoc/check-tag-names                                      |      7
 jsdoc/empty-tags                                           |      7
 jsdoc/implements-on-classes                                |  16812
+jsdoc/multiline-blocks                                     |      7
 jsdoc/no-defaults                                          |  16812
 jsdoc/require-param                                        |  16812
 jsdoc/require-param-description                            |  16812
