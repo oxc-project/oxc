@@ -525,26 +525,37 @@ impl Scoping {
 
     /// Remove one declaration from a merged symbol and promote the first surviving declaration.
     pub fn remove_symbol_declaration(&mut self, symbol_id: SymbolId, span: Span) {
+        self.remove_symbol_declarations(symbol_id, &[span]);
+    }
+
+    /// Remove declarations from a merged symbol and promote the first surviving declaration.
+    ///
+    /// Returns `true` if a declaration survives.
+    pub fn remove_symbol_declarations(&mut self, symbol_id: SymbolId, spans: &[Span]) -> bool {
+        let is_removed = |span: Span| spans.contains(&span);
+
         let replacement = self.cell.with_dependent_mut(|_allocator, cell| {
             let redeclarations = cell.symbol_redeclarations.get_mut(&symbol_id)?;
-            redeclarations.retain(|redeclaration| redeclaration.span != span);
+            redeclarations.retain(|redeclaration| !is_removed(redeclaration.span));
 
-            let first = redeclarations.first()?.clone();
+            let first = redeclarations.first().cloned();
             let flags = redeclarations
                 .iter()
                 .fold(SymbolFlags::None, |flags, redeclaration| flags | redeclaration.flags);
-            let has_redeclarations = redeclarations.len() > 1;
-            if !has_redeclarations {
+            if redeclarations.len() <= 1 {
                 cell.symbol_redeclarations.remove(&symbol_id);
             }
 
-            Some((first, flags))
+            first.map(|first| (first, flags))
         });
 
         if let Some((replacement, flags)) = replacement {
             *self.symbol_table.symbol_spans_mut(symbol_id) = replacement.span;
             *self.symbol_table.symbol_declarations_mut(symbol_id) = replacement.declaration;
             *self.symbol_table.symbol_flags_mut(symbol_id) = flags;
+            true
+        } else {
+            !is_removed(self.symbol_span(symbol_id))
         }
     }
 
@@ -681,6 +692,17 @@ impl Scoping {
                     .entry(name)
                     .or_insert_with(|| ArenaVec::new_in(&allocator))
                     .extend(unresolved_reference_ids);
+            }
+        });
+    }
+
+    /// Move all resolved references from one symbol to another.
+    pub fn rebind_symbol_references(&mut self, from: SymbolId, to: SymbolId) {
+        let references = &mut self.references;
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            while let Some(reference_id) = cell.resolved_references[from.index()].pop() {
+                references[reference_id].set_symbol_id(to);
+                cell.resolved_references[to.index()].push(reference_id);
             }
         });
     }
@@ -1118,12 +1140,7 @@ impl Scoping {
             for bindings in &mut cell.bindings {
                 bindings.retain(|_name, symbol_id| {
                     let flags = *self.symbol_table.symbol_flags(*symbol_id);
-                    !flags.intersects(
-                        SymbolFlags::TypeAlias
-                            | SymbolFlags::Interface
-                            | SymbolFlags::TypeParameter
-                            | SymbolFlags::EnumMember,
-                    )
+                    !(flags.is_type() && !flags.is_value()) && !flags.is_enum_member()
                 });
             }
         });
