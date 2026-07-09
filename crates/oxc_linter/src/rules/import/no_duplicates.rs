@@ -119,8 +119,6 @@ impl Rule for NoDuplicates {
     fn run_once<'a>(&self, ctx: &LintContext<'a>) {
         let module_record = ctx.module_record();
 
-        // Map each import statement span to its declaration node so the fixer can inspect
-        // specifiers, default names and brace positions when merging duplicates.
         let mut import_declarations: Option<FxHashMap<Span, &'a ImportDeclaration<'a>>> = None;
 
         let groups = module_record
