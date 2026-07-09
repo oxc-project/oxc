@@ -1,6 +1,10 @@
 use std::{borrow::Cow, cell::OnceCell};
 
 use itertools::Itertools;
+use rustc_hash::{FxHashMap, FxHashSet};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{ImportDeclaration, ImportDeclarationSpecifier},
@@ -8,9 +12,6 @@ use oxc_ast::{
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::{FxHashMap, FxHashSet};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,
