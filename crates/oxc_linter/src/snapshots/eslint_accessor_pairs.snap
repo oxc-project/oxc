@@ -1367,19 +1367,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Define a setter for this property
 
-  ⚠ eslint(accessor-pairs): Getter is defined without a setter
-   ╭─[accessor_pairs.tsx:1:17]
- 1 │ A = class { get a() {} }, { set a(foo) {} }
-   ·                 ─
-   ╰────
-  help: Define a setter for this property
-
   ⚠ eslint(accessor-pairs): Setter is defined without a getter
    ╭─[accessor_pairs.tsx:1:33]
  1 │ A = class { get a() {} }, { set a(foo) {} }
    ·                                 ─
    ╰────
   help: Define a getter for this property
+
+  ⚠ eslint(accessor-pairs): Getter is defined without a setter
+   ╭─[accessor_pairs.tsx:1:17]
+ 1 │ A = class { get a() {} }, { set a(foo) {} }
+   ·                 ─
+   ╰────
+  help: Define a setter for this property
 
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:11]
