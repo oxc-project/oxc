@@ -1,4 +1,4 @@
-ts compatibility: 611/663 (92.16%), 19 files skipped
+ts compatibility: 617/663 (93.06%), 19 files skipped
 
 # Failed
 
@@ -11,14 +11,9 @@ ts compatibility: 611/663 (92.16%), 19 files skipped
 | typescript/assignment/lone-arg.ts | 💥 | 41.18% |
 | typescript/call/callee-comments.ts | 💥 | 75.00% |
 | typescript/cast/18406.ts | 💥 | 84.21% |
-| typescript/chain-expression/call-expression.ts | 💥 | 80.00% |
 | typescript/chain-expression/issue-15785-1.ts | 💥 | 66.67% |
 | typescript/chain-expression/issue-15785-2.ts | 💥 | 77.78% |
-| typescript/chain-expression/member-chain.ts | 💥 | 60.61% |
-| typescript/chain-expression/member-expression.ts | 💥 | 79.45% |
-| typescript/chain-expression/new-expression.ts | 💥 | 80.88% |
-| typescript/chain-expression/tagged-template-literals.ts | 💥 | 80.00% |
-| typescript/chain-expression/test.ts | 💥 | 50.00% |
+| typescript/chain-expression/member-chain.ts | 💥 | 69.70% |
 | typescript/class-and-interface/empty/empty.ts | 💥 | 87.10% |
 | typescript/class-and-interface/heritage-break/member-expression-like.ts | 💥 | 75.00% |
 | typescript/comments/mapped-types.ts | 💥 | 85.71% |
@@ -33,7 +28,6 @@ ts compatibility: 611/663 (92.16%), 19 files skipped
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 67.44% |
 | typescript/intersection/consistent-with-flow/single-member.ts | 💥 | 78.00% |
 | typescript/new/parentheses.ts | 💥 | 0.00% |
-| typescript/non-null/optional-chain.ts | 💥 | 85.00% |
 | typescript/object-type/comments/11307.ts | 💥 | 66.67% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 80.00% |
