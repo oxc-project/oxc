@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use super::CompilerOptions;
+use super::{CompilerOptions, ProjectReference};
 
 /// tsgo `core.ParsedOptions`: the result of parsing a project configuration.
 ///
@@ -16,7 +16,7 @@ pub struct ParsedOptions {
     /// The project's root files (tsgo `FileNames`), absolute, in spec order (literal `files`
     /// first, then `include` matches).
     pub file_names: Vec<PathBuf>,
-    /// `references[].path`, resolved to absolute paths (tsgo `ProjectReferences`).
-    /// Not consumed yet — project references are a later program-loading step.
-    pub project_references: Vec<PathBuf>,
+    /// The root config's `references` (tsgo `ProjectReferences`). Not consumed yet —
+    /// project references are a later program-loading step.
+    pub project_references: Vec<ProjectReference>,
 }

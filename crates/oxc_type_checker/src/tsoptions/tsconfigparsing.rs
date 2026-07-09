@@ -33,7 +33,8 @@ use serde_json::{Map, Value};
 use crate::{
     core::{
         CompilerOptions, CompilerOptionsPathsMap, JsxEmit, ModuleDetectionKind, ModuleKind,
-        ModuleResolutionKind, NewLineKind, ParsedOptions, ScriptTarget, for_each_compiler_option,
+        ModuleResolutionKind, NewLineKind, ParsedOptions, ProjectReference, ScriptTarget,
+        for_each_compiler_option,
     },
     tspath::{change_extension, file_extension_is, file_extension_is_one_of, to_path},
     vfs::vfsmatch::{SpecMatcher, read_directory},
@@ -72,16 +73,6 @@ impl ParsedConfig {
         &self.config_path
     }
 
-    /// The root config file's directory — what `${configDir}` and relative specs resolve
-    /// against.
-    ///
-    /// # Panics
-    ///
-    /// * When the config path is misconfigured (has no parent directory).
-    pub fn directory(&self) -> &Path {
-        self.config_path.parent().expect("config path is an absolute file path")
-    }
-
     /// tsgo `ParsedCommandLine.CompilerOptions`: the merged `compilerOptions`.
     pub fn compiler_options(&self) -> &CompilerOptions {
         &self.parsed_options.compiler_options
@@ -95,7 +86,7 @@ impl ParsedConfig {
 
     /// tsgo `ParsedCommandLine.ProjectReferences`. Not consumed yet — project references
     /// are a later program-loading step.
-    pub fn project_references(&self) -> &[PathBuf] {
+    pub fn project_references(&self) -> &[ProjectReference] {
         &self.parsed_options.project_references
     }
 }
@@ -123,16 +114,24 @@ pub fn parse_config_file(config_file: &Path) -> Result<Arc<ParsedConfig>> {
         config_path.push("tsconfig.json");
     }
 
+    let config_dir = config_path.parent().expect("config path is an absolute file path");
+    let json = read_json_config_file(&config_path)?;
+    // tsgo `getProjectReferences`: references never inherit through `extends`, so they are
+    // read once here at the worker level, from the root raw config only.
+    let project_references = match json.as_object() {
+        Some(root) => get_project_references(root, config_dir),
+        None => Vec::new(),
+    };
+
     let mut resolution_stack = Vec::new();
     // The node_modules resolver for bare `extends` specifiers, built on first use and shared
     // down the whole `extends` chain.
     let extends_resolver = OnceCell::new();
-    let parsed = parse_config(&config_path, &mut resolution_stack, &extends_resolver)?;
+    let parsed = parse_config(&config_path, json, &mut resolution_stack, &extends_resolver)?;
 
     // Finalization on the root config (tsgo `parseJsonConfigFileContentWorker`): stamp the
     // config path, substitute `${configDir}` values against the root config's directory, and
     // expand the file specs into the root file list.
-    let config_dir = config_path.parent().expect("config path is an absolute file path");
     let mut compiler_options = parsed.options;
     compiler_options.config_file_path = Some(config_path.clone());
     handle_option_config_dir_template_substitution(&mut compiler_options, config_dir);
@@ -144,11 +143,7 @@ pub fn parse_config_file(config_file: &Path) -> Result<Arc<ParsedConfig>> {
         get_file_names_from_config_specs(files, include, exclude, config_dir, &compiler_options);
 
     Ok(Arc::new(ParsedConfig {
-        parsed_options: ParsedOptions {
-            compiler_options,
-            file_names,
-            project_references: parsed.references,
-        },
+        parsed_options: ParsedOptions { compiler_options, file_names, project_references },
         config_path,
     }))
 }
@@ -166,14 +161,14 @@ struct ParsedTsconfig {
     files: Option<Vec<String>>,
     include: Option<Vec<String>>,
     exclude: Option<Vec<String>>,
-    /// Own `references[].path`, absolute (never inherited).
-    references: Vec<PathBuf>,
 }
 
-/// tsgo `parseConfig`: parse one config file and merge its `extends` chain — extended configs
-/// first (in `extends` array order, later entries winning), the config's own values last.
+/// tsgo `parseConfig`: parse one config's JSON (already read — the caller reads the file, as
+/// tsgo's `getExtendedConfig` does) and merge its `extends` chain — extended configs first
+/// (in `extends` array order, later entries winning), the config's own values last.
 fn parse_config(
     config_path: &Path,
+    json: Value,
     resolution_stack: &mut Vec<PathBuf>,
     extends_resolver: &OnceCell<Resolver>,
 ) -> Result<ParsedTsconfig> {
@@ -188,7 +183,6 @@ fn parse_config(
         bail!("Circularity detected while resolving configuration: {chain}");
     }
 
-    let json = read_json_config_file(config_path)?;
     let Value::Object(root) = json else {
         bail!("The root value of '{}' must be an object.", config_path.display());
     };
@@ -199,7 +193,6 @@ fn parse_config(
     let own_files = top_level_specs(&root, "files");
     let own_include = top_level_specs(&root, "include");
     let own_exclude = top_level_specs(&root, "exclude");
-    let references = project_references(&root, config_dir);
     let extended_paths = get_extends_config_path_or_array(&root, config_dir, extends_resolver)?;
 
     if extended_paths.is_empty() {
@@ -209,7 +202,6 @@ fn parse_config(
             files: own_files,
             include: own_include,
             exclude: own_exclude,
-            references,
         });
     }
 
@@ -219,7 +211,9 @@ fn parse_config(
     let mut inherited_include: Option<Vec<String>> = None;
     let mut inherited_exclude: Option<Vec<String>> = None;
     for extended_path in &extended_paths {
-        let extended = parse_config(extended_path, resolution_stack, extends_resolver)?;
+        let extended_json = read_json_config_file(extended_path)?;
+        let extended =
+            parse_config(extended_path, extended_json, resolution_stack, extends_resolver)?;
         merge_compiler_options(&mut options, &extended.options, &extended.own_explicit_nulls);
         // tsgo `applyExtendedConfig`: file specs are inherited wholesale, each relative spec
         // staying anchored to the config that defined it.
@@ -243,7 +237,6 @@ fn parse_config(
         files: own_files.or(inherited_files),
         include: own_include.or(inherited_include),
         exclude: own_exclude.or(inherited_exclude),
-        references,
     })
 }
 
@@ -274,17 +267,31 @@ fn top_level_specs(root: &JsonObject, key: &str) -> Option<Vec<String>> {
     Some(items.iter().filter_map(Value::as_str).map(str::to_string).collect())
 }
 
-/// Own `references[].path` resolved against the config's directory (tsgo reads `references`
-/// from the raw config only — it does not flow through `extends`).
-fn project_references(root: &JsonObject, config_dir: &Path) -> Vec<PathBuf> {
+/// tsgo `getProjectReferences` (in `parseJsonConfigFileContentWorker`): the root config's
+/// `references`, each `path` resolved against the root config's directory. Entries without a
+/// non-empty string `path` are skipped, as in tsgo (which diagnoses them; we don't diagnose
+/// yet).
+fn get_project_references(root: &JsonObject, base_path: &Path) -> Vec<ProjectReference> {
     root.get("references")
         .and_then(Value::as_array)
         .map(|items| {
             items
                 .iter()
                 .filter_map(Value::as_object)
-                .filter_map(|reference| reference.get("path").and_then(Value::as_str))
-                .map(|path| to_path(config_dir, Path::new(path)))
+                .filter_map(|reference| {
+                    let path = reference.get("path")?.as_str()?;
+                    if path.is_empty() {
+                        return None;
+                    }
+                    Some(ProjectReference {
+                        path: to_path(base_path, Path::new(path)),
+                        original_path: path.to_string(),
+                        circular: reference
+                            .get("circular")
+                            .and_then(Value::as_bool)
+                            .unwrap_or(false),
+                    })
+                })
                 .collect()
         })
         .unwrap_or_default()
@@ -511,6 +518,18 @@ fn get_substituted_path_with_config_dir_template(value: &str, config_dir: &Path)
     to_path(config_dir, Path::new(rest))
 }
 
+/// The in-place form of the above for an already-parsed path option value; a no-op for
+/// values without the `${configDir}` prefix.
+fn substitute_config_dir_in_path(value: &mut PathBuf, config_dir: &Path) {
+    let substituted = value
+        .to_str()
+        .filter(|text| starts_with_config_dir_template(text))
+        .map(|text| get_substituted_path_with_config_dir_template(text, config_dir));
+    if let Some(substituted) = substituted {
+        *value = substituted;
+    }
+}
+
 /// tsgo `normalizeNonListOptionValue` for path-typed options: `${configDir}`-prefixed values
 /// survive as written until the post-merge substitution; everything else is absolutized
 /// against the directory of the config file that defined it.
@@ -616,25 +635,13 @@ for_each_compiler_option!(define_convert_compiler_options);
 macro_rules! substitute_field {
     ($options:ident, $config_dir:ident, $field:ident, path) => {
         if let Some(value) = &mut $options.$field {
-            let substituted = value
-                .to_str()
-                .filter(|text| starts_with_config_dir_template(text))
-                .map(|text| get_substituted_path_with_config_dir_template(text, $config_dir));
-            if let Some(substituted) = substituted {
-                *value = substituted;
-            }
+            substitute_config_dir_in_path(value, $config_dir);
         }
     };
     ($options:ident, $config_dir:ident, $field:ident, path_list) => {
         if let Some(values) = &mut $options.$field {
             for value in values.iter_mut() {
-                let substituted = value
-                    .to_str()
-                    .filter(|text| starts_with_config_dir_template(text))
-                    .map(|text| get_substituted_path_with_config_dir_template(text, $config_dir));
-                if let Some(substituted) = substituted {
-                    *value = substituted;
-                }
+                substitute_config_dir_in_path(value, $config_dir);
             }
         }
     };
@@ -753,7 +760,8 @@ fn extension_group_for<'a>(file: &str, extension_groups: &[&'a [&'a str]]) -> Ve
     group
 }
 
-/// Whether an include spec specifically targets `.json` files (e.g. `**/*.json`, `a.json`).
+/// Whether an include spec specifically targets `.json` files (e.g. `**/*.json`, `a.json`) —
+/// tsgo checks `HasSuffix(include, tspath.ExtensionJson)`.
 fn is_json_spec(spec: &str) -> bool {
-    Path::new(spec).extension().is_some_and(|ext| ext == "json")
+    file_extension_is(spec, ".json")
 }

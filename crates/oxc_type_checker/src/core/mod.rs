@@ -2,6 +2,7 @@
 
 mod compileroptions;
 mod parsedoptions;
+mod projectreference;
 
 pub(crate) use compileroptions::for_each_compiler_option;
 pub use compileroptions::{
@@ -9,3 +10,4 @@ pub use compileroptions::{
     ModuleResolutionKind, NewLineKind, ScriptTarget,
 };
 pub use parsedoptions::ParsedOptions;
+pub use projectreference::ProjectReference;
