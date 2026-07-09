@@ -2,4 +2,16 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/class-component-with-render-helper.js
 ---
-No changes.
+// @expectNothingCompiled @compilationMode:"infer"
+class Component {
+	_renderMessage = () => {
+		const Message = () => {
+			const message = this.state.message;
+			return <div>{message}</div>;
+		};
+		return <Message />;
+	};
+	render() {
+		return this._renderMessage();
+	}
+}

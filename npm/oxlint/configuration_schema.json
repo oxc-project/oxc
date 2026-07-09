@@ -8671,6 +8671,26 @@
             }
           ]
         },
+        "unicorn/explicit-timer-delay": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExplicitTimerDelayMode"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "unicorn/filename-case": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -8802,6 +8822,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/no-await-in-promise-methods": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "unicorn/no-confusing-array-with": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/no-console-spaces": {
@@ -10734,6 +10757,26 @@
         }
       },
       "additionalProperties": false
+    },
+    "ExplicitTimerDelayMode": {
+      "oneOf": [
+        {
+          "description": "Require explicit `delay` argument for clarity.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Require explicit `delay` argument for clarity."
+        },
+        {
+          "description": "Disallow explicit `0` delay, prefer implicit default.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallow explicit `0` delay, prefer implicit default."
+        }
+      ]
     },
     "ExtensionRule": {
       "description": "Extension rule configuration; Copy to avoid extra indirection.",
@@ -16900,15 +16943,12 @@
           "markdownDescription": "An array of function names that should also be treated as test blocks."
         },
         "assertFunctionNames": {
-          "description": "A list of function names that should be treated as assertion functions.",
-          "default": [
-            "expect"
-          ],
+          "description": "A list of function names that should be treated as assertion functions.\nDefault: `[\"expect\"]`",
           "type": "array",
           "items": {
             "type": "string"
           },
-          "markdownDescription": "A list of function names that should be treated as assertion functions."
+          "markdownDescription": "A list of function names that should be treated as assertion functions.\nDefault: `[\"expect\"]`"
         }
       },
       "additionalProperties": false

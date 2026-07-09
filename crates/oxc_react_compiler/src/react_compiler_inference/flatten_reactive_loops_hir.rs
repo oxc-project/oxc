@@ -36,19 +36,17 @@ pub fn flatten_reactive_loops_hir(func: &mut HirFunction) {
             | Terminal::While { fallthrough, .. } => {
                 active_loops.push(*fallthrough);
             }
-            Terminal::Scope { block, fallthrough, scope, id, loc } => {
-                if !active_loops.is_empty() {
-                    let new_terminal = Terminal::PrunedScope {
-                        block: *block,
-                        fallthrough: *fallthrough,
-                        scope: *scope,
-                        id: *id,
-                        loc: *loc,
-                    };
-                    // We need to drop the borrow and reborrow mutably
-                    let block_mut = func.body.blocks.get_mut(&block_id).unwrap();
-                    block_mut.terminal = new_terminal;
-                }
+            Terminal::Scope { block, fallthrough, scope, id, span } if !active_loops.is_empty() => {
+                let new_terminal = Terminal::PrunedScope {
+                    block: *block,
+                    fallthrough: *fallthrough,
+                    scope: *scope,
+                    id: *id,
+                    span: *span,
+                };
+                // We need to drop the borrow and reborrow mutably
+                let block_mut = func.body.blocks.get_mut(&block_id).unwrap();
+                block_mut.terminal = new_terminal;
             }
             // All other terminal kinds: no action needed
             _ => {}

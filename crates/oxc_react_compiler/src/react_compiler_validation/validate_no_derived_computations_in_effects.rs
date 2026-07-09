@@ -13,9 +13,9 @@
 use crate::react_compiler_utils::{FxIndexMap, FxIndexSet};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, CompilerErrorDetail, ErrorCategory,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::{CompilerError, ErrorCategory};
 use crate::react_compiler_hir::BasicBlock;
 use crate::react_compiler_hir::Instruction;
 use crate::react_compiler_hir::Terminal;
@@ -26,77 +26,9 @@ use crate::react_compiler_hir::visitors::{
 use crate::react_compiler_hir::{
     ArrayElement, BlockId, Effect, EvaluationOrder, FunctionId, HirFunction, Identifier,
     IdentifierId, IdentifierName, InstructionValue, ParamPattern, PlaceOrSpread, ReactFunctionType,
-    ReturnVariant, SourceLocation, Type, is_set_state_type, is_use_effect_hook_type,
-    is_use_ref_type, is_use_state_type,
+    ReturnVariant, Span, Type, is_set_state_type, is_use_effect_hook_type, is_use_ref_type,
+    is_use_state_type,
 };
-
-/// Get the user-visible name for an identifier, matching Babel's
-/// loc.identifierName behavior. First checks the identifier's own name,
-/// then falls back to extracting the name from the source code at the
-/// given source location. This handles SSA identifiers whose names were
-/// lost during compiler passes.
-fn get_identifier_name_with_loc(
-    id: IdentifierId,
-    identifiers: &[Identifier],
-    loc: &Option<SourceLocation>,
-    source_code: Option<&str>,
-) -> Option<String> {
-    let ident = &identifiers[id.0 as usize];
-    match &ident.name {
-        Some(IdentifierName::Named(name)) | Some(IdentifierName::Promoted(name)) => {
-            return Some(name.clone());
-        }
-        _ => {}
-    }
-    // Fall back: find another identifier with the same declaration_id that has a name.
-    let decl_id = ident.declaration_id;
-    for other in identifiers {
-        if other.declaration_id == decl_id {
-            match &other.name {
-                Some(IdentifierName::Named(name)) | Some(IdentifierName::Promoted(name)) => {
-                    return Some(name.clone());
-                }
-                _ => {}
-            }
-        }
-    }
-    // Fall back to extracting from source code using UTF-16 code unit indices.
-    // Babel/JS positions use UTF-16 code unit offsets, but Rust strings are UTF-8,
-    // so we need to convert between the two.
-    if let (Some(loc), Some(code)) = (loc, source_code) {
-        let start_utf16 = loc.start.index? as usize;
-        let end_utf16 = loc.end.index? as usize;
-        if start_utf16 < end_utf16 {
-            // Convert UTF-16 code unit offsets to UTF-8 byte offsets
-            let mut utf16_pos = 0usize;
-            let mut byte_start = None;
-            let mut byte_end = None;
-            for (byte_idx, ch) in code.char_indices() {
-                if utf16_pos == start_utf16 {
-                    byte_start = Some(byte_idx);
-                }
-                if utf16_pos == end_utf16 {
-                    byte_end = Some(byte_idx);
-                    break;
-                }
-                utf16_pos += ch.len_utf16();
-            }
-            // Handle end at the very end of string
-            if utf16_pos == end_utf16 && byte_end.is_none() {
-                byte_end = Some(code.len());
-            }
-            if let (Some(start), Some(end)) = (byte_start, byte_end) {
-                let slice = &code[start..end];
-                if !slice.is_empty()
-                    && slice.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '$')
-                {
-                    return Some(slice.to_string());
-                }
-            }
-        }
-    }
-    None
-}
 
 const MAX_FIXPOINT_ITERATIONS: usize = 100;
 
@@ -126,7 +58,7 @@ struct EffectMetadata {
 #[derive(Debug, Clone)]
 struct DepElement {
     identifier: IdentifierId,
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
 }
 
 struct ValidationContext {
@@ -137,30 +69,7 @@ struct ValidationContext {
     derivation_cache: DerivationCache,
     effects_cache: FxHashMap<IdentifierId, EffectMetadata>,
     set_state_loads: FxHashMap<IdentifierId, Option<IdentifierId>>,
-    set_state_usages: FxHashMap<IdentifierId, FxHashSet<LocKey>>,
-}
-
-/// A hashable key for SourceLocation to use in FxHashSet
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct LocKey {
-    start_line: u32,
-    start_col: u32,
-    end_line: u32,
-    end_col: u32,
-}
-
-impl LocKey {
-    fn from_loc(loc: &Option<SourceLocation>) -> Self {
-        match loc {
-            Some(loc) => LocKey {
-                start_line: loc.start.line,
-                start_col: loc.start.column,
-                end_line: loc.end.line,
-                end_col: loc.end.column,
-            },
-            None => LocKey { start_line: 0, start_col: 0, end_line: 0, end_col: 0 },
-        }
-    }
+    set_state_usages: FxHashMap<IdentifierId, FxHashSet<Span>>,
 }
 
 #[derive(Debug, Clone)]
@@ -225,9 +134,7 @@ impl DerivationCache {
     }
 
     fn snapshot(&mut self) -> bool {
-        let has_changes = self.has_changes;
-        self.has_changes = false;
-        has_changes
+        std::mem::replace(&mut self.has_changes, false)
     }
 
     fn add_derivation_entry(
@@ -314,7 +221,7 @@ fn maybe_record_set_state_for_instr(
     instr: &Instruction,
     env: &Environment,
     set_state_loads: &mut FxHashMap<IdentifierId, Option<IdentifierId>>,
-    set_state_usages: &mut FxHashMap<IdentifierId, FxHashSet<LocKey>>,
+    set_state_usages: &mut FxHashMap<IdentifierId, FxHashSet<Span>>,
 ) {
     let identifiers = &env.identifiers;
     let types = &env.types;
@@ -346,7 +253,7 @@ fn maybe_record_set_state_for_instr(
         if let Some(root_id) = root {
             set_state_usages.entry(root_id).or_insert_with(|| {
                 let mut set = FxHashSet::default();
-                set.insert(LocKey::from_loc(&instr.lvalue.loc));
+                set.insert(instr.lvalue.span.unwrap_or_default());
                 set
             });
         }
@@ -364,7 +271,7 @@ fn is_mutable_at(
 pub fn validate_no_derived_computations_in_effects_exp(
     func: &HirFunction,
     env: &Environment,
-) -> Result<CompilerError, CompilerDiagnostic> {
+) -> Result<CompilerError, OxcDiagnostic> {
     let identifiers = &env.identifiers;
 
     let mut context = ValidationContext {
@@ -394,20 +301,18 @@ pub fn validate_no_derived_computations_in_effects_exp(
             }
         }
     } else if func.fn_type == ReactFunctionType::Component {
-        if let Some(param) = func.params.first() {
-            if let ParamPattern::Place(place) = param {
-                let name = identifiers[place.identifier.0 as usize].name.clone();
-                context.derivation_cache.cache.insert(
-                    place.identifier,
-                    DerivationMetadata {
-                        place_identifier: place.identifier,
-                        place_name: name,
-                        source_ids: FxIndexSet::default(),
-                        type_of_value: TypeOfValue::FromProps,
-                        is_state_source: true,
-                    },
-                );
-            }
+        if let Some(ParamPattern::Place(place)) = func.params.first() {
+            let name = identifiers[place.identifier.0 as usize].name.clone();
+            context.derivation_cache.cache.insert(
+                place.identifier,
+                DerivationMetadata {
+                    place_identifier: place.identifier,
+                    place_name: name,
+                    source_ids: FxIndexSet::default(),
+                    type_of_value: TypeOfValue::FromProps,
+                    is_state_source: true,
+                },
+            );
         }
     }
 
@@ -421,7 +326,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
             record_phi_derivations(block, &mut context, env);
             for &instr_id in &block.instructions {
                 let instr = &func.instructions[instr_id.0 as usize];
-                record_instruction_derivations(instr, &mut context, is_first_pass, func, env)?;
+                record_instruction_derivations(instr, &mut context, is_first_pass, env)?;
             }
         }
 
@@ -447,7 +352,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
         .collect();
 
     for (_key, effect_func_id, dep_elements) in &effects_cache {
-        validate_effect(*effect_func_id, dep_elements, &mut context, func, env, &mut errors);
+        validate_effect(*effect_func_id, dep_elements, &mut context, env, &mut errors);
     }
 
     Ok(errors)
@@ -480,13 +385,13 @@ fn record_phi_derivations(block: &BasicBlock, context: &mut ValidationContext, e
     }
 }
 
+#[allow(clippy::only_used_in_recursion)]
 fn record_instruction_derivations(
     instr: &Instruction,
     context: &mut ValidationContext,
     is_first_pass: bool,
-    _outer_func: &HirFunction,
     env: &Environment,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let identifiers = &env.identifiers;
     let types = &env.types;
     let functions = &env.functions;
@@ -513,13 +418,7 @@ fn record_instruction_derivations(
                 record_phi_derivations(block, context, env);
                 for &inner_instr_id in &block.instructions {
                     let inner_instr = &inner_func.instructions[inner_instr_id.0 as usize];
-                    record_instruction_derivations(
-                        inner_instr,
-                        context,
-                        is_first_pass,
-                        inner_func,
-                        env,
-                    )?;
+                    record_instruction_derivations(inner_instr, context, is_first_pass, env)?;
                 }
             }
         }
@@ -590,7 +489,7 @@ fn record_instruction_derivations(
                 .iter()
                 .filter_map(|el| match el {
                     ArrayElement::Place(p) => {
-                        Some(DepElement { identifier: p.identifier, loc: p.loc })
+                        Some(DepElement { identifier: p.identifier, span: p.span })
                     }
                     _ => None,
                 })
@@ -601,14 +500,14 @@ fn record_instruction_derivations(
     }
 
     // Collect operand derivations
-    for (operand_id, operand_loc) in each_instruction_operand(instr, env) {
+    for (operand_id, operand_span) in each_instruction_operand(instr, env) {
         // Track setState usages
         if context.set_state_loads.contains_key(&operand_id) {
             let root =
                 get_root_set_state(operand_id, &context.set_state_loads, &mut FxHashSet::default());
             if let Some(root_id) = root {
                 if let Some(usages) = context.set_state_usages.get_mut(&root_id) {
-                    usages.insert(LocKey::from_loc(&operand_loc));
+                    usages.insert(operand_span.unwrap_or_default());
                 }
             }
         }
@@ -658,11 +557,7 @@ fn record_instruction_derivations(
                 }
             }
         } else if matches!(operand.effect, Effect::Unknown) {
-            return Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
-                "Unexpected unknown effect",
-                None,
-            ));
+            return Err(ErrorCategory::Invariant.diagnostic("Unexpected unknown effect"));
         }
         // Freeze | Read => no-op
     }
@@ -674,15 +569,15 @@ struct OperandWithEffect {
     effect: Effect,
 }
 
-/// Collects operand (IdentifierId, loc) pairs from an instruction.
-/// Thin wrapper around canonical `each_instruction_operand` that maps Places to (id, loc) pairs.
+/// Collects operand (IdentifierId, span) pairs from an instruction.
+/// Thin wrapper around canonical `each_instruction_operand` that maps Places to (id, span) pairs.
 fn each_instruction_operand(
     instr: &Instruction,
     env: &Environment,
-) -> Vec<(IdentifierId, Option<SourceLocation>)> {
+) -> Vec<(IdentifierId, Option<Span>)> {
     canonical_each_instruction_operand(instr, env)
         .into_iter()
-        .map(|place| (place.identifier, place.loc))
+        .map(|place| (place.identifier, place.span))
         .collect()
 }
 
@@ -840,7 +735,6 @@ fn validate_effect(
     effect_func_id: FunctionId,
     dependencies: &[DepElement],
     context: &mut ValidationContext,
-    _outer_func: &HirFunction,
     env: &Environment,
     errors: &mut CompilerError,
 ) {
@@ -851,14 +745,13 @@ fn validate_effect(
     let mut seen_blocks: FxHashSet<BlockId> = FxHashSet::default();
 
     struct DerivedSetStateCall {
-        callee_loc: Option<SourceLocation>,
+        callee_span: Option<Span>,
         callee_id: IdentifierId,
-        callee_identifier_name: Option<String>,
         source_ids: FxIndexSet<IdentifierId>,
     }
 
     let mut effect_derived_set_state_calls: Vec<DerivedSetStateCall> = Vec::new();
-    let mut effect_set_state_usages: FxHashMap<IdentifierId, FxHashSet<LocKey>> =
+    let mut effect_set_state_usages: FxHashMap<IdentifierId, FxHashSet<Span>> =
         FxHashMap::default();
 
     // Consider setStates in the effect's dependency array as being part of effectSetStateUsages
@@ -867,7 +760,7 @@ fn validate_effect(
             get_root_set_state(dep.identifier, &context.set_state_loads, &mut FxHashSet::default());
         if let Some(root_id) = root {
             let mut set = FxHashSet::default();
-            set.insert(LocKey::from_loc(&dep.loc));
+            set.insert(dep.span.unwrap_or_default());
             effect_set_state_usages.insert(root_id, set);
         }
     }
@@ -909,7 +802,7 @@ fn validate_effect(
             );
 
             // Track setState usages for operands
-            for (operand_id, operand_loc) in each_instruction_operand(instr, env) {
+            for (operand_id, operand_span) in each_instruction_operand(instr, env) {
                 if context.set_state_loads.contains_key(&operand_id) {
                     let root = get_root_set_state(
                         operand_id,
@@ -918,7 +811,7 @@ fn validate_effect(
                     );
                     if let Some(root_id) = root {
                         if let Some(usages) = effect_set_state_usages.get_mut(&root_id) {
-                            usages.insert(LocKey::from_loc(&operand_loc));
+                            usages.insert(operand_span.unwrap_or_default());
                         }
                     }
                 }
@@ -944,18 +837,9 @@ fn validate_effect(
 
                             let arg_metadata = context.derivation_cache.cache.get(&arg0.identifier);
                             if let Some(am) = arg_metadata {
-                                // Get the user-visible identifier name, matching Babel's
-                                // loc.identifierName. Falls back to extracting from source code.
-                                let callee_ident_name = get_identifier_name_with_loc(
-                                    callee.identifier,
-                                    identifiers,
-                                    &callee.loc,
-                                    env.code.as_deref(),
-                                );
                                 effect_derived_set_state_calls.push(DerivedSetStateCall {
-                                    callee_loc: callee.loc,
+                                    callee_span: callee.span,
                                     callee_id: callee.identifier,
-                                    callee_identifier_name: callee_ident_name,
                                     source_ids: am.source_ids.clone(),
                                 });
                             }
@@ -1067,19 +951,15 @@ fn validate_effect(
                     trees.join("\n"),
                 );
 
-                errors.push_diagnostic(
-                    CompilerDiagnostic::new(
-                        ErrorCategory::EffectDerivationsOfState,
-                        "You might not need an effect. Derive values in render, not effects.",
-                        Some(description),
-                    )
-                    .with_detail(CompilerDiagnosticDetail::Error {
-                        loc: derived.callee_loc,
-                        message: Some(
-                            "This should be computed during render, not in an effect".to_string(),
-                        ),
-                        identifier_name: derived.callee_identifier_name.clone(),
-                    }),
+                errors.push(
+                    ErrorCategory::EffectDerivationsOfState
+                        .diagnostic(
+                            "You might not need an effect. Derive values in render, not effects.",
+                        )
+                        .with_help(description)
+                        .with_labels(derived.callee_span.map(|s| {
+                            s.label("This should be computed during render, not in an effect")
+                        })),
                 );
             }
         }
@@ -1179,8 +1059,7 @@ pub fn validate_no_derived_computations_in_effects(
     };
 
     // Phase 2: Validate each collected effect and record error details.
-    // Uses ErrorDetail (flat loc format) to match TS behavior where
-    // env.recordError(new CompilerErrorDetail({...})) is used.
+    // Matches TS behavior where env.recordError(new CompilerErrorDetail({...})) is used.
     for (func_id, resolved_deps) in effects_to_validate {
         let details = validate_effect_non_exp(
             &env.functions[func_id.0 as usize],
@@ -1200,13 +1079,11 @@ fn validate_effect_non_exp(
     effect_deps: &[IdentifierId],
     ids: &[Identifier],
     tys: &[Type],
-) -> Vec<CompilerErrorDetail> {
+) -> Vec<OxcDiagnostic> {
     // Check that the effect function only captures effect deps and setState
     for ctx in &effect_func.context {
         let ctx_ty = &tys[ids[ctx.identifier.0 as usize].type_.0 as usize];
-        if is_set_state_type(ctx_ty) {
-            continue;
-        } else if effect_deps.iter().any(|d| *d == ctx.identifier) {
+        if is_set_state_type(ctx_ty) || effect_deps.contains(&ctx.identifier) {
             continue;
         } else {
             return Vec::new();
@@ -1226,7 +1103,7 @@ fn validate_effect_non_exp(
         dep_values.insert(*dep, vec![*dep]);
     }
 
-    let mut set_state_locs: Vec<SourceLocation> = Vec::new();
+    let mut set_state_spans: Vec<Span> = Vec::new();
 
     for (_, block) in &effect_func.body.blocks {
         for &pred in &block.preds {
@@ -1285,8 +1162,8 @@ fn validate_effect_non_exp(
                                 if let Some(deps) = dep_values.get(&arg.identifier) {
                                     let dep_set: FxHashSet<_> = deps.iter().collect();
                                     if dep_set.len() == effect_deps.len() {
-                                        if let Some(loc) = callee.loc {
-                                            set_state_locs.push(loc);
+                                        if let Some(span) = callee.span {
+                                            set_state_spans.push(span);
                                         }
                                     } else {
                                         return Vec::new();
@@ -1315,10 +1192,8 @@ fn validate_effect_non_exp(
                     return Vec::new();
                 }
             }
-            Terminal::Switch { test, .. } => {
-                if dep_values.contains_key(&test.identifier) {
-                    return Vec::new();
-                }
+            Terminal::Switch { test, .. } if dep_values.contains_key(&test.identifier) => {
+                return Vec::new();
             }
             _ => {}
         }
@@ -1326,16 +1201,14 @@ fn validate_effect_non_exp(
         seen_blocks.insert(block.id);
     }
 
-    set_state_locs
+    set_state_spans
         .into_iter()
-        .map(|loc| {
-            CompilerErrorDetail {
-                category: ErrorCategory::EffectDerivationsOfState,
-                reason: "Values derived from props and state should be calculated during render, not in an effect. (https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)".to_string(),
-                description: None,
-                loc: Some(loc),
-                suggestions: None,
-            }
+        .map(|span| {
+            ErrorCategory::EffectDerivationsOfState
+                .diagnostic(
+                    "Values derived from props and state should be calculated during render, not in an effect. (https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)",
+                )
+                .with_label(span)
         })
         .collect()
 }

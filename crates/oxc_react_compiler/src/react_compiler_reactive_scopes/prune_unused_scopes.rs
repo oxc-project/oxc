@@ -9,7 +9,7 @@
 
 use std::mem::take;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use crate::diagnostics::CompilerError;
 use crate::react_compiler_hir::{
     PrunedReactiveScopeBlock, ReactiveFunction, ReactiveScope, ReactiveScopeBlock,
     ReactiveStatement, ReactiveTerminal, ReactiveTerminalStatement, ScopeId,

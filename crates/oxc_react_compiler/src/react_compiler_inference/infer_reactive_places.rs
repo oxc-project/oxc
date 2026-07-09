@@ -14,9 +14,10 @@
 //! 4. Mutation with reactive operands
 //! 5. Conditional assignment based on reactive control flow
 
+use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::dominator::{
     PostDominator, compute_post_dominator_tree, post_dominator_frontier,
 };
@@ -42,7 +43,7 @@ use crate::react_compiler_inference::infer_reactive_scope_variables::find_disjoi
 pub fn infer_reactive_places(
     func: &mut HirFunction,
     env: &mut Environment,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let mut aliased_identifiers = find_disjoint_mutable_values(func, env);
     let mut reactive_map = ReactivityMap::new(&mut aliased_identifiers);
     let mut stable_sidemap = StableSidemap::new();
@@ -190,11 +191,10 @@ pub fn infer_reactive_places(
                                 // no-op
                             }
                             Effect::Unknown => {
-                                return Err(CompilerDiagnostic::new(
-                                    ErrorCategory::Invariant,
-                                    &format!("Unexpected unknown effect at {:?}", op_place.loc),
-                                    None,
-                                ));
+                                return Err(ErrorCategory::Invariant.diagnostic(format!(
+                                    "Unexpected unknown effect at {:?}",
+                                    op_place.span
+                                )));
                             }
                         }
                     }
@@ -401,7 +401,7 @@ use crate::react_compiler_hir::is_use_operator_type;
 fn get_hook_kind_for_type<'a>(
     env: &'a Environment,
     ty: &Type,
-) -> Result<Option<&'a HookKind>, CompilerDiagnostic> {
+) -> Result<Option<&'a HookKind>, OxcDiagnostic> {
     env.get_hook_kind_for_type(ty)
 }
 

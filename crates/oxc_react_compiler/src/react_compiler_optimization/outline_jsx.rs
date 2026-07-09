@@ -200,7 +200,7 @@ fn outline_jsx_impl<'a>(
 fn process_and_outline_jsx<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-    jsx_group: &mut Vec<JsxInstrInfo>,
+    jsx_group: &mut [JsxInstrInfo],
     globals: &FxHashMap<IdentifierId, usize>,
     rewrite_instr: &mut FxHashMap<EvaluationOrder, Vec<Instruction<'a>>>,
     outlined_fns: &mut Vec<HirFunction<'a>>,
@@ -257,7 +257,7 @@ fn collect_props<'a>(
     let mut attributes = Vec::new();
     let jsx_ids: FxHashSet<IdentifierId> = jsx_group.iter().map(|j| j.lvalue_id).collect();
 
-    let mut generate_name = |old_name: &str, _env: &mut Environment| -> String {
+    let mut generate_name = |old_name: &str| -> String {
         let mut new_name = old_name.to_string();
         while seen.contains(&new_name) {
             new_name = format!("{}{}", old_name, id_counter);
@@ -276,7 +276,7 @@ fn collect_props<'a>(
                 match attr {
                     JsxAttribute::SpreadAttribute { .. } => return None,
                     JsxAttribute::Attribute { name, place } => {
-                        let new_name = generate_name(name, env);
+                        let new_name = generate_name(name);
                         attributes.push(OutlinedJsxAttribute {
                             original_name: name.clone(),
                             new_name,
@@ -304,7 +304,7 @@ fn collect_props<'a>(
                         Some(IdentifierName::Promoted(n)) => n.clone(),
                         None => format!("#t{}", decl_id.0),
                     };
-                    let new_name = generate_name("t", env);
+                    let new_name = generate_name("t");
                     attributes.push(OutlinedJsxAttribute {
                         original_name: child_name,
                         new_name,
@@ -338,16 +338,16 @@ fn emit_outlined_jsx<'a>(
         Some(IdentifierName::Promoted(format!("#T{}", decl_id.0)));
 
     let load_place =
-        Place { identifier: load_id, effect: Effect::Unknown, reactive: false, loc: None };
+        Place { identifier: load_id, effect: Effect::Unknown, reactive: false, span: None };
 
     let load_jsx = Instruction {
         id: EvaluationOrder(0),
         lvalue: load_place.clone(),
         value: InstructionValue::LoadGlobal {
             binding: NonLocalBinding::ModuleLocal { name: outlined_tag.to_string() },
-            loc: None,
+            span: None,
         },
-        loc: None,
+        span: None,
         effects: None,
     };
 
@@ -361,11 +361,11 @@ fn emit_outlined_jsx<'a>(
             tag: JsxTag::Place(load_place),
             props,
             children: None,
-            loc: None,
-            opening_loc: None,
-            closing_loc: None,
+            span: None,
+            opening_span: None,
+            closing_span: None,
         },
-        loc: None,
+        span: None,
         effects: None,
     };
 
@@ -387,7 +387,7 @@ fn emit_outlined_fn<'a>(
     env.identifiers[props_obj_id.0 as usize].name =
         Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
     let props_obj =
-        Place { identifier: props_obj_id, effect: Effect::Unknown, reactive: false, loc: None };
+        Place { identifier: props_obj_id, effect: Effect::Unknown, reactive: false, span: None };
 
     // Create destructure instruction
     let destructure_instr = emit_destructure_props(env, &props_obj, &old_to_new_props);
@@ -419,7 +419,7 @@ fn emit_outlined_fn<'a>(
     // Create return place
     let returns_id = env.next_identifier_id();
     let returns_place =
-        Place { identifier: returns_id, effect: Effect::Unknown, reactive: false, loc: None };
+        Place { identifier: returns_id, effect: Effect::Unknown, reactive: false, span: None };
 
     let block = BasicBlock {
         kind: BlockKind::Block,
@@ -430,7 +430,7 @@ fn emit_outlined_fn<'a>(
             value: last_lvalue,
             return_variant: ReturnVariant::Explicit,
             id: EvaluationOrder(0),
-            loc: None,
+            span: None,
             effects: None,
         },
         phis: Vec::new(),
@@ -444,7 +444,6 @@ fn emit_outlined_fn<'a>(
         name_hint: None,
         fn_type: ReactFunctionType::Other,
         params: vec![ParamPattern::Place(props_obj)],
-        return_type_annotation: None,
         returns: returns_place,
         context: Vec::new(),
         body: HIR { entry: BlockId(0), blocks },
@@ -453,7 +452,7 @@ fn emit_outlined_fn<'a>(
         is_async: false,
         directives: Vec::new(),
         aliasing_effects: Some(vec![]),
-        loc: None,
+        span: None,
     };
 
     Some(outlined_fn)
@@ -467,11 +466,10 @@ fn emit_load_globals<'a>(
     let mut instructions = Vec::new();
     for info in jsx_group {
         let instr = &func.instructions[info.instr_idx];
-        if let InstructionValue::JsxExpression { tag, .. } = &instr.value {
-            if let JsxTag::Place(tag_place) = tag {
-                let global_instr_idx = globals.get(&tag_place.identifier)?;
-                instructions.push(func.instructions[*global_instr_idx].clone());
-            }
+        if let InstructionValue::JsxExpression { tag: JsxTag::Place(tag_place), .. } = &instr.value
+        {
+            let global_instr_idx = globals.get(&tag_place.identifier)?;
+            instructions.push(func.instructions[*global_instr_idx].clone());
         }
     }
     Some(instructions)
@@ -491,9 +489,9 @@ fn emit_updated_jsx<'a>(
             tag,
             props,
             children,
-            loc,
-            opening_loc,
-            closing_loc,
+            span,
+            opening_span,
+            closing_span,
         } = &instr.value
         {
             let mut new_props = Vec::new();
@@ -542,11 +540,11 @@ fn emit_updated_jsx<'a>(
                     tag: tag.clone(),
                     props: new_props,
                     children: new_children,
-                    loc: *loc,
-                    opening_loc: *opening_loc,
-                    closing_loc: *closing_loc,
+                    span: *span,
+                    opening_span: *opening_span,
+                    closing_span: *closing_span,
                 },
-                loc: instr.loc,
+                span: instr.span,
                 effects: instr.effects.clone(),
             });
         }
@@ -571,7 +569,7 @@ fn create_old_to_new_props_mapping(
             Some(IdentifierName::Named(old_prop.new_name.clone()));
 
         let new_place =
-            Place { identifier: new_id, effect: Effect::Unknown, reactive: false, loc: None };
+            Place { identifier: new_id, effect: Effect::Unknown, reactive: false, span: None };
 
         old_to_new.insert(
             old_prop.place.identifier,
@@ -602,20 +600,20 @@ fn emit_destructure_props<'a>(
 
     let lvalue_id = env.next_identifier_id();
     let lvalue =
-        Place { identifier: lvalue_id, effect: Effect::Unknown, reactive: false, loc: None };
+        Place { identifier: lvalue_id, effect: Effect::Unknown, reactive: false, span: None };
 
     Instruction {
         id: EvaluationOrder(0),
         lvalue,
         value: InstructionValue::Destructure {
             lvalue: LValuePattern {
-                pattern: Pattern::Object(ObjectPattern { properties, loc: None }),
+                pattern: Pattern::Object(ObjectPattern { properties }),
                 kind: InstructionKind::Let,
             },
             value: props_obj.clone(),
-            loc: None,
+            span: None,
         },
-        loc: None,
+        span: None,
         effects: None,
     }
 }

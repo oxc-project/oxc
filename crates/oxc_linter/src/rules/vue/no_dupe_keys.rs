@@ -378,9 +378,7 @@ fn collect_props_bindings<'a>(
 fn collect_binding_symbol_ids(pattern: &BindingPattern, ids: &mut Vec<SymbolId>) {
     match pattern {
         BindingPattern::BindingIdentifier(id) => {
-            if let Some(sym) = id.symbol_id.get() {
-                ids.push(sym);
-            }
+            ids.push(id.symbol_id());
         }
         BindingPattern::ObjectPattern(obj) => {
             for prop in &obj.properties {

@@ -9,7 +9,7 @@
 
 use std::mem::replace;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use crate::diagnostics::CompilerError;
 use crate::react_compiler_hir::visitors::{
     each_instruction_value_lvalue, each_instruction_value_operand, each_terminal_operand,
 };
@@ -73,8 +73,7 @@ pub trait ReactiveFunctionVisitor<'a> {
                     id: instr.id,
                     lvalue: Some(instr.lvalue.clone()),
                     value: ReactiveValue::Instruction(instr.value.clone()),
-                    effects: None,
-                    loc: instr.loc,
+                    span: instr.span,
                 };
                 self.visit_instruction(&reactive_instr, state);
                 // Recurse into nested functions
@@ -653,9 +652,8 @@ pub trait ReactiveFunctionTransform<'a> {
                 ReactiveStatement::Instruction(ReactiveInstruction {
                     id: EvaluationOrder(0),
                     lvalue: None,
-                    value: ReactiveValue::Instruction(InstructionValue::Debugger { loc: None }),
-                    effects: None,
-                    loc: None,
+                    value: ReactiveValue::Instruction(InstructionValue::Debugger { span: None }),
+                    span: None,
                 }),
             );
             let transformed = match &mut stmt {

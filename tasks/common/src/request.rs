@@ -1,6 +1,16 @@
-use std::time::Duration;
+use std::{fs, path::PathBuf, time::Duration};
 
-use ureq::{Agent, Proxy};
+use ureq::{
+    Agent, Proxy,
+    tls::{PemItem, RootCerts, TlsConfig, TlsProvider, parse_pem},
+};
+
+// Warp's TLS proxy requires the macOS platform verifier, while using native TLS on Linux pulls
+// OpenSSL into cross-target builds.
+#[cfg(target_os = "macos")]
+const TLS_PROVIDER: TlsProvider = TlsProvider::NativeTls;
+#[cfg(not(target_os = "macos"))]
+const TLS_PROVIDER: TlsProvider = TlsProvider::Rustls;
 
 /// detect proxy from environment variable in following order:
 /// HTTPS_PROXY | https_proxy | HTTP_PROXY | http_proxy | ALL_PROXY | all_proxy
@@ -18,11 +28,43 @@ fn detect_proxy() -> Option<Proxy> {
 
 /// build a agent with proxy automatically detected
 pub fn agent() -> Agent {
-    let config = Agent::config_builder()
-        .proxy(detect_proxy())
-        .timeout_global(Some(Duration::from_secs(10)))
-        .build();
+    let mut config =
+        Agent::config_builder().proxy(detect_proxy()).timeout_global(Some(Duration::from_secs(10)));
+    if let Some(tls_config) = tls_config_from_env() {
+        config = config.tls_config(tls_config);
+    }
+    let config = config.build();
     Agent::new_with_config(config)
+}
+
+/// Use the custom root certificate bundle specified by `SSL_CERT_FILE`, when set.
+///
+/// This is useful for environments where HTTPS traffic is inspected by a proxy with a private
+/// certificate authority. The file must contain one or more PEM-encoded certificates.
+fn tls_config_from_env() -> Option<TlsConfig> {
+    let path = std::env::var_os("SSL_CERT_FILE")
+        .map(PathBuf::from)
+        .filter(|path| !path.as_os_str().is_empty())?;
+    let pem = fs::read(&path)
+        .unwrap_or_else(|error| panic!("failed to read SSL_CERT_FILE {}: {error}", path.display()));
+    let certificates = parse_pem(&pem)
+        .map(|item| {
+            item.unwrap_or_else(|error| {
+                panic!("failed to parse SSL_CERT_FILE {}: {error}", path.display())
+            })
+        })
+        .filter_map(|item| match item {
+            PemItem::Certificate(certificate) => Some(certificate),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    assert!(!certificates.is_empty(), "SSL_CERT_FILE {} contains no certificates", path.display());
+    Some(
+        TlsConfig::builder()
+            .provider(TLS_PROVIDER)
+            .root_certs(RootCerts::from(certificates))
+            .build(),
+    )
 }
 
 /// Build an agent for talking to servers on localhost.

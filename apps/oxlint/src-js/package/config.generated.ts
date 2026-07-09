@@ -326,13 +326,7 @@ export type True = true;
 export type AllowConstantLoopConditions = boolean | AllowConstantLoopConditionsMode;
 export type AllowConstantLoopConditionsMode = "never" | "always" | "only-allowed-literals";
 export type Modifier =
-  | "private"
-  | "private readonly"
-  | "protected"
-  | "protected readonly"
-  | "public"
-  | "public readonly"
-  | "readonly";
+  "private" | "private readonly" | "protected" | "protected readonly" | "public" | "public readonly" | "readonly";
 export type Prefer2 = "class-property" | "parameter-property";
 /**
  * Represents the different ways `ignorePrimitives` can be specified in JSON.
@@ -347,6 +341,7 @@ export type PathOption = "always" | "never";
 export type TypesOption = "always" | "never" | "prefer-import";
 export type BomOptionType = "always" | "never";
 export type NonZero = "greater-than" | "not-equal";
+export type ExplicitTimerDelayMode = "always" | "never";
 export type ModuleStylesOverride =
   | (
       | false
@@ -896,9 +891,7 @@ export interface DummyRuleMap {
   "func-style"?: RuleNoConfig | [AllowWarnDeny, Style] | [AllowWarnDeny, Style, FuncStyleConfig];
   "getter-return"?: RuleNoConfig | [AllowWarnDeny, GetterReturn];
   "grouped-accessor-pairs"?:
-    | RuleNoConfig
-    | [AllowWarnDeny, PairOrder]
-    | [AllowWarnDeny, PairOrder, GroupedAccessorPairsConfig];
+    RuleNoConfig | [AllowWarnDeny, PairOrder] | [AllowWarnDeny, PairOrder, GroupedAccessorPairsConfig];
   "guard-for-in"?: RuleNoConfig;
   "id-length"?: RuleNoConfig | [AllowWarnDeny, IdLengthConfig];
   "id-match"?: RuleNoConfig | [AllowWarnDeny, string] | [AllowWarnDeny, string, IdMatchOptions];
@@ -943,9 +936,7 @@ export interface DummyRuleMap {
   "import/prefer-default-export"?: RuleNoConfig | [AllowWarnDeny, PreferDefaultExport];
   "import/unambiguous"?: RuleNoConfig;
   "init-declarations"?:
-    | RuleNoConfig
-    | [AllowWarnDeny, AlwaysNever]
-    | [AllowWarnDeny, AlwaysNever, InitDeclarationsConfig];
+    RuleNoConfig | [AllowWarnDeny, AlwaysNever] | [AllowWarnDeny, AlwaysNever, InitDeclarationsConfig];
   "jest/consistent-test-it"?: RuleNoConfig | [AllowWarnDeny, ConsistentTestItConfig];
   "jest/expect-expect"?: RuleNoConfig | [AllowWarnDeny, ExpectExpectConfig];
   "jest/max-expects"?: RuleNoConfig | [AllowWarnDeny, MaxExpectsConfig];
@@ -1054,14 +1045,11 @@ export interface DummyRuleMap {
   "jsx-a11y/no-autofocus"?: RuleNoConfig | [AllowWarnDeny, NoAutofocus];
   "jsx-a11y/no-distracting-elements"?: RuleNoConfig | [AllowWarnDeny, NoDistractingElementsConfig];
   "jsx-a11y/no-interactive-element-to-noninteractive-role"?:
-    | RuleNoConfig
-    | [AllowWarnDeny, NoInteractiveElementToNoninteractiveRoleConfig];
+    RuleNoConfig | [AllowWarnDeny, NoInteractiveElementToNoninteractiveRoleConfig];
   "jsx-a11y/no-noninteractive-element-interactions"?:
-    | RuleNoConfig
-    | [AllowWarnDeny, NoNoninteractiveElementInteractionsConfig];
+    RuleNoConfig | [AllowWarnDeny, NoNoninteractiveElementInteractionsConfig];
   "jsx-a11y/no-noninteractive-element-to-interactive-role"?:
-    | RuleNoConfig
-    | [AllowWarnDeny, NoNoninteractiveElementToInteractiveRoleConfig];
+    RuleNoConfig | [AllowWarnDeny, NoNoninteractiveElementToInteractiveRoleConfig];
   "jsx-a11y/no-noninteractive-tabindex"?: RuleNoConfig | [AllowWarnDeny, NoNoninteractiveTabindexConfig];
   "jsx-a11y/no-redundant-roles"?: RuleNoConfig | [AllowWarnDeny, NoRedundantRolesConfig];
   "jsx-a11y/no-static-element-interactions"?: RuleNoConfig | [AllowWarnDeny, NoStaticElementInteractionsConfig];
@@ -1071,9 +1059,7 @@ export interface DummyRuleMap {
   "jsx-a11y/scope"?: RuleNoConfig;
   "jsx-a11y/tabindex-no-positive"?: RuleNoConfig;
   "logical-assignment-operators"?:
-    | RuleNoConfig
-    | [AllowWarnDeny, AlwaysNever]
-    | [AllowWarnDeny, AlwaysNever, LogicalAssignmentOperatorsConfig];
+    RuleNoConfig | [AllowWarnDeny, AlwaysNever] | [AllowWarnDeny, AlwaysNever, LogicalAssignmentOperatorsConfig];
   "max-classes-per-file"?: RuleNoConfig | [AllowWarnDeny, MaxClassesPerFileConfigEnum];
   "max-depth"?: RuleNoConfig | [AllowWarnDeny, MaxDepthConfigEnum];
   "max-lines"?: RuleNoConfig | [AllowWarnDeny, MaxLinesConfigEnum];
@@ -1185,8 +1171,7 @@ export interface DummyRuleMap {
   "no-restricted-exports"?: RuleNoConfig | [AllowWarnDeny, NoRestrictedExportsConfig];
   "no-restricted-globals"?: DummyRule;
   "no-restricted-imports"?:
-    | RuleNoConfig
-    | [AllowWarnDeny, NoRestrictedImportsConfigEnum, ...NoRestrictedImportsConfigEnum[]];
+    RuleNoConfig | [AllowWarnDeny, NoRestrictedImportsConfigEnum, ...NoRestrictedImportsConfigEnum[]];
   "no-restricted-properties"?: RuleNoConfig | [AllowWarnDeny, PropertyDetails, ...PropertyDetails[]];
   "no-return-assign"?: RuleNoConfig | [AllowWarnDeny, NoReturnAssignMode];
   "no-script-url"?: RuleNoConfig;
@@ -1242,9 +1227,7 @@ export interface DummyRuleMap {
   "node/no-process-env"?: RuleNoConfig | [AllowWarnDeny, NoProcessEnvConfig];
   "node/no-sync"?: RuleNoConfig | [AllowWarnDeny, NoSyncConfig];
   "object-shorthand"?:
-    | RuleNoConfig
-    | [AllowWarnDeny, ShorthandType]
-    | [AllowWarnDeny, ShorthandType, ObjectShorthandOptions];
+    RuleNoConfig | [AllowWarnDeny, ShorthandType] | [AllowWarnDeny, ShorthandType, ObjectShorthandOptions];
   "operator-assignment"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
   "oxc/approx-constant"?: RuleNoConfig;
   "oxc/bad-array-method-on-arguments"?: RuleNoConfig;
@@ -1441,8 +1424,7 @@ export interface DummyRuleMap {
   "typescript/no-restricted-types"?: RuleNoConfig | [AllowWarnDeny, NoRestrictedTypesConfig];
   "typescript/no-this-alias"?: RuleNoConfig | [AllowWarnDeny, NoThisAliasConfig];
   "typescript/no-unnecessary-boolean-literal-compare"?:
-    | RuleNoConfig
-    | [AllowWarnDeny, NoUnnecessaryBooleanLiteralCompareConfig];
+    RuleNoConfig | [AllowWarnDeny, NoUnnecessaryBooleanLiteralCompareConfig];
   "typescript/no-unnecessary-condition"?: RuleNoConfig | [AllowWarnDeny, NoUnnecessaryConditionConfig];
   "typescript/no-unnecessary-parameter-property-assignment"?: RuleNoConfig;
   "typescript/no-unnecessary-qualifier"?: RuleNoConfig;
@@ -1514,6 +1496,7 @@ export interface DummyRuleMap {
   "unicorn/error-message"?: RuleNoConfig;
   "unicorn/escape-case"?: RuleNoConfig;
   "unicorn/explicit-length-check"?: RuleNoConfig | [AllowWarnDeny, ExplicitLengthCheck];
+  "unicorn/explicit-timer-delay"?: RuleNoConfig | [AllowWarnDeny, ExplicitTimerDelayMode];
   "unicorn/filename-case"?: DummyRule;
   "unicorn/import-style"?: RuleNoConfig | [AllowWarnDeny, ImportStyleConfig];
   "unicorn/max-nested-calls"?: RuleNoConfig | [AllowWarnDeny, MaxNestedCalls];
@@ -1530,6 +1513,7 @@ export interface DummyRuleMap {
   "unicorn/no-array-sort"?: RuleNoConfig | [AllowWarnDeny, NoArraySort];
   "unicorn/no-await-expression-member"?: RuleNoConfig;
   "unicorn/no-await-in-promise-methods"?: RuleNoConfig;
+  "unicorn/no-confusing-array-with"?: RuleNoConfig;
   "unicorn/no-console-spaces"?: RuleNoConfig;
   "unicorn/no-document-cookie"?: RuleNoConfig;
   "unicorn/no-empty-file"?: RuleNoConfig;
@@ -2391,6 +2375,7 @@ export interface PreferEndingWithAnExpectConfig {
   additionalTestBlockFunctions?: string[];
   /**
    * A list of function names that should be treated as assertion functions.
+   * Default: `["expect"]`
    */
   assertFunctionNames?: string[];
 }

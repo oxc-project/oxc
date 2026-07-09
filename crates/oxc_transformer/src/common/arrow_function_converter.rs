@@ -91,7 +91,7 @@ use compact_str::CompactString;
 use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
@@ -444,11 +444,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
                 return;
             }
 
-            let Expression::ArrowFunctionExpression(arrow_function_expr) = expr.take_in(ctx) else {
-                unreachable!()
-            };
-
-            *expr = Self::transform_arrow_function_expression(arrow_function_expr, ctx);
+            expr.replace_with(|expr| {
+                let Expression::ArrowFunctionExpression(arrow_function_expr) = expr else {
+                    unreachable!()
+                };
+                Self::transform_arrow_function_expression(arrow_function_expr, ctx)
+            });
         }
     }
 
@@ -1356,8 +1357,10 @@ impl<'a> ConstructorBodyThisAfterSuperInserter<'a, '_> {
     fn transform_super_call_expression(&mut self, expr: &mut Expression<'a>) {
         let assignment = self.create_assignment_to_this_temp_var();
         let span = expr.span();
-        let exprs = ArenaVec::from_array_in([expr.take_in(self.ctx), assignment], self.ctx);
-        *expr = Expression::new_sequence_expression(span, exprs, self.ctx);
+        expr.replace_with(|expr| {
+            let exprs = ArenaVec::from_array_in([expr, assignment], self.ctx);
+            Expression::new_sequence_expression(span, exprs, self.ctx)
+        });
     }
 
     /// `_this = this`

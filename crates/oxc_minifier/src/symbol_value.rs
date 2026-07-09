@@ -2,6 +2,31 @@ use oxc_ecmascript::constant_evaluation::ConstantValue;
 use oxc_index::IndexVec;
 use oxc_syntax::symbol::SymbolId;
 
+/// The kind of fresh value a binding was initialized with, or `None` when the
+/// value may alias another binding (or is untracked).
+///
+/// A fresh value cannot alias another binding, so a property write to a
+/// provably-unused fresh local is normally unobservable and droppable. But the
+/// *kind* matters: writing certain keys on a function/class/array throws a
+/// strict-mode `TypeError` (non-writable own properties, the `caller` /
+/// `arguments` poison) or has an observable value-domain effect (`Array`
+/// `length`). The kind drives the key denylist in
+/// `remove_unused_member_assignment` that keeps those writes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FreshValueKind {
+    /// Not a fresh value (may alias another binding), or not tracked.
+    None,
+    /// Function expression, arrow function, or function declaration
+    /// (including generator and async forms).
+    Function,
+    /// Class expression or class declaration.
+    Class,
+    /// Object literal.
+    Object,
+    /// Array literal.
+    Array,
+}
+
 #[derive(Debug)]
 pub struct SymbolValue<'a> {
     /// Initialized constant value evaluated from expressions.
@@ -19,10 +44,11 @@ pub struct SymbolValue<'a> {
     /// Always <= `read_references_count`.
     pub member_write_target_read_count: u32,
 
-    /// Whether the symbol's value is guaranteed fresh (cannot alias another binding).
-    /// True for function/class declarations and variable declarations initialized
-    /// with object/array/function/class literals.
-    pub is_fresh_value: bool,
+    /// The kind of fresh value the symbol holds (cannot alias another binding),
+    /// or `FreshValueKind::None` when the value may alias. Set for function/class
+    /// declarations and variable declarations initialized with
+    /// object/array/function/class literals. See `FreshValueKind`.
+    pub kind: FreshValueKind,
 
     /// The symbol is provably falsy in **boolean context** but not necessarily
     /// foldable in value context. Set for a write-once binding with a falsy

@@ -700,3 +700,14 @@ fn fold_coalesce_on_tracked_non_nullish_binding() {
 fn test_fold_if_keep_var_filter_converges() {
     test_same("function f() {\n\tif (0) var x, y;\n\ty = 1;\n\treturn y;\n}\nf();");
 }
+
+// DCE mode is rolldown's per-module tree-shaking preprocess; the DEFAULT-mode
+// drop of write-only property assignments (full minify only) must stay off
+// here — `treeshake.property_write_side_effects: false` is rolldown's own knob
+// for opting in.
+#[test]
+fn dce_keeps_write_only_property_assignments() {
+    test_same(
+        "(function() {\n\tvar r = require(\"react\");\n\tvar o = function(e, t) {\n\t\treturn r.create(e, t);\n\t};\n\to.displayName = \"X\";\n})();",
+    );
+}

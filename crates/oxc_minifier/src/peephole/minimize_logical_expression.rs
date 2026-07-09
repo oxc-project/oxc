@@ -4,7 +4,7 @@ use oxc_compat::ESFeature;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, GetSpan, SPAN};
 
-use crate::TraverseCtx;
+use crate::{TraverseCtx, symbol_facts::SymbolFact};
 
 use super::PeepholeOptimizations;
 
@@ -288,13 +288,34 @@ impl<'a> PeepholeOptimizations {
     ///
     /// When creating AssignmentTargetIdentifier from normal expressions, the identifier only has ReferenceFlags::Write.
     /// But assignment expressions changes the value, so we should add ReferenceFlags::Read.
+    ///
+    /// This is the single choke point where the fixed-point loop FORMS new
+    /// compound/logical assignments (`o.x = o.x + 1` → `o.x += 1`,
+    /// `o.x = o.x || y` → `o.x ||= y`). For member targets, the formed
+    /// operator READS the property, so the base symbol is also inserted into
+    /// the program-wide member-write hazard set — Normalize only saw the
+    /// plain-`=` source shape (whose blocking RHS read this rewrite consumes),
+    /// and the default-mode drop of write-only property assignments must not
+    /// remove a sibling plain write whose value the formed read observes.
     pub fn mark_assignment_target_as_read(
         assign_target: &AssignmentTarget,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if let AssignmentTarget::AssignmentTargetIdentifier(id) = assign_target {
-            let reference = ctx.scoping_mut().get_reference_mut(id.reference_id());
-            reference.flags_mut().insert(ReferenceFlags::Read);
+        let object = match assign_target {
+            AssignmentTarget::AssignmentTargetIdentifier(id) => {
+                let reference = ctx.scoping_mut().get_reference_mut(id.reference_id());
+                reference.flags_mut().insert(ReferenceFlags::Read);
+                return;
+            }
+            AssignmentTarget::StaticMemberExpression(e) => &e.object,
+            AssignmentTarget::ComputedMemberExpression(e) => &e.object,
+            AssignmentTarget::PrivateFieldExpression(e) => &e.object,
+            _ => return,
+        };
+        if let Expression::Identifier(ident) = object.get_inner_expression()
+            && let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+        {
+            ctx.state.symbol_facts.insert(symbol_id, SymbolFact::MEMBER_WRITE_HAZARD);
         }
     }
 }

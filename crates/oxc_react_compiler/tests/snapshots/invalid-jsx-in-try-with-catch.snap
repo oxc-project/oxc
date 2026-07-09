@@ -6,4 +6,13 @@ Diagnostics:
 
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] ErrorBoundaries: Avoid constructing JSX within try/catch", labels: One([LabeledSpan { label: Some("Avoid constructing JSX within try/catch"), span: SourceSpan { offset: SourceOffset(123), length: 7 }, primary: false }]), help: Some("React does not immediately render components when JSX is rendered, so any errors from this component will not be caught by the try/catch. To catch errors in rendering a given component, wrap that component in an error boundary. (https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
-No changes.
+// @loggerTestOnly @validateNoJSXInTryStatements @outputMode:"lint"
+function Component(props) {
+	let el;
+	try {
+		el = <div />;
+	} catch {
+		return null;
+	}
+	return el;
+}

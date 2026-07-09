@@ -12,7 +12,7 @@ use std::mem::take;
 
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use crate::diagnostics::CompilerError;
 use crate::react_compiler_hir::{
     BlockId, ReactiveFunction, ReactiveStatement, ReactiveTerminal, ReactiveTerminalStatement,
     ReactiveTerminalTargetKind, environment::Environment,
@@ -69,8 +69,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         }
 
         // Is this terminal reachable via a break/continue to its label?
-        let is_reachable_label =
-            stmt.label.as_ref().map_or(false, |label| state.contains(&label.id));
+        let is_reachable_label = stmt.label.as_ref().is_some_and(|label| state.contains(&label.id));
 
         if let ReactiveTerminal::Label { block, .. } = &mut stmt.terminal {
             if !is_reachable_label {

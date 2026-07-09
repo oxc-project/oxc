@@ -228,7 +228,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             if let Some(body) =
                                 decl.body.as_mut().and_then(|body| body.as_module_block_mut())
                             {
-                                self.strip_export_keyword(&mut body.body);
+                                Self::strip_export_keyword(&mut body.body);
                             }
 
                             // We need to visit the module declaration to collect all references
@@ -435,7 +435,7 @@ impl<'a> IsolatedDeclarations<'a> {
         } else if self.scope.is_ts_module_block() {
             // If we are in a module block and we don't need to add `export {}`, in that case we need to remove `export` keyword from all ExportNamedDeclaration
             // <https://github.com/microsoft/TypeScript/blob/a709f9899c2a544b6de65a0f2623ecbbe1394eab/src/compiler/transformers/declarations.ts#L1556-L1563>
-            self.strip_export_keyword(&mut new_stmts);
+            Self::strip_export_keyword(&mut new_stmts);
         }
 
         new_stmts

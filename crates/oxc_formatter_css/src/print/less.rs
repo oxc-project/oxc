@@ -1,12 +1,9 @@
 //! Less-specific printing: variable declarations, mixins, lookups, guards.
 
-use oxc_css_parser::{
-    Spanned,
-    ast::{
-        ComponentValue, LessCondition, LessConditionalQualifiedRule, LessDetachedRuleset,
-        LessMixinArgument, LessMixinCall, LessMixinDefinition, LessMixinName, LessNamespaceValue,
-        LessNamespaceValueCallee, LessVariableDeclaration, SimpleBlock,
-    },
+use oxc_css_parser::ast::{
+    ComponentValue, LessCondition, LessConditionalQualifiedRule, LessDetachedRuleset,
+    LessMixinArgument, LessMixinCall, LessMixinDefinition, LessMixinName, LessNamespaceValue,
+    LessNamespaceValueCallee, LessVariableDeclaration, SimpleBlock,
 };
 
 use oxc_formatter_core::{
@@ -174,7 +171,7 @@ fn write_less_mixin_call<'a>(call: &LessMixinCall<'a>, f: &mut CssFormatter<'_, 
     let source = f.context().source_text();
     for child in &call.callee.children {
         if let Some(combinator) = &child.combinator {
-            let span = to_span(combinator.span());
+            let span = to_span(&combinator.span);
             write!(f, [space(), text(source.text_for(&span)), space()]);
         }
         write_mixin_name(&child.name, f);
@@ -213,7 +210,7 @@ fn write_less_condition<'a>(condition: &LessCondition<'a>, f: &mut CssFormatter<
     match condition {
         LessCondition::Binary(binary) => {
             write_less_condition(&binary.left, f);
-            let op_span = to_span(binary.op.span());
+            let op_span = to_span(&binary.op.span);
             write!(f, [space(), text(source.text_for(&op_span)), space()]);
             write_less_condition(&binary.right, f);
         }

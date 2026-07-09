@@ -72,33 +72,54 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
             return false;
         }
 
+        // `(type) satisfies never;` and similar keyword-at-statement-start cast cases
+        // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/parentheses/identifier.js#L84-L107>
+        let needs_parens_in_cast_chain = || {
+            let mut parent = self.parent();
+            while matches!(parent, AstNodes::TSSatisfiesExpression(_) | AstNodes::TSAsExpression(_))
+            {
+                parent = parent.parent();
+            }
+
+            // Needs at least one `satisfies`/`as` wrapper, with a statement right outside it
+            !ptr::eq(self.parent(), parent)
+                && matches!(
+                    parent, AstNodes::ExpressionStatement(stmt) if !stmt.is_arrow_function_body()
+                )
+        };
+
         match self.name.as_str() {
             "async" => {
                 matches!(self.parent(), AstNodes::ForOfStatement(stmt) if !stmt.r#await && stmt.left.span().contains_inclusive(self.span))
             }
             "let" => {
-                // `let[a]` at statement start looks like a lexical declaration, needs parens
-                // Only applies when `let` is the object of a computed member expression
-                if !matches!(self.parent(), AstNodes::ComputedMemberExpression(m) if m.object.span() == self.span())
-                {
-                    // Not `let[...]` - check special cases only
-                    return self.ancestors().any(|parent| match parent {
-                        AstNodes::ForOfStatement(s) => s.left.span().contains_inclusive(self.span),
-                        AstNodes::ForInStatement(s) => {
-                            s.left.span().contains_inclusive(self.span)
-                                && !matches!(self.parent(), AstNodes::StaticMemberExpression(_))
-                        }
-                        AstNodes::TSSatisfiesExpression(e) => e.expression.span() == self.span(),
-                        _ => false,
-                    });
+                // `(let) satisfies X;`, `(let) as X;` at statement start
+                if needs_parens_in_cast_chain() {
+                    return true;
                 }
 
-                // Check if `let[...]` is at the leftmost position of a statement
+                // `let` needs parens when it is the leftmost token of:
+                // - a computed member expression at statement start or in a `for(;;)` init,
+                //   which would parse as a lexical declaration, e.g. `(let)[a] = 1`
+                // - a `for-in`/`for-of` head, which cannot start with `let`,
+                //   e.g. `for ((let).a in x)`, `for ((let) of x)`
+                let is_computed_member_object = matches!(
+                    self.parent(),
+                    AstNodes::ComputedMemberExpression(m)
+                        if m.object.span() == self.span() && !m.optional
+                );
+
+                // Check if `let` is at the leftmost position of the relevant construct
                 let mut child_span = self.span;
                 for parent in self.ancestors() {
                     let dominated = match parent {
-                        AstNodes::ExpressionStatement(s) => return !s.is_arrow_function_body(),
-                        AstNodes::ForStatement(_) => return true,
+                        AstNodes::ExpressionStatement(s) => {
+                            return is_computed_member_object && !s.is_arrow_function_body();
+                        }
+                        AstNodes::ForStatement(s) => {
+                            return is_computed_member_object
+                                && matches!(&s.init, Some(init) if init.span() == child_span);
+                        }
                         AstNodes::ForOfStatement(s) => {
                             return s.left.span().contains_inclusive(self.span);
                         }
@@ -117,6 +138,12 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                             s.expressions.first().is_some_and(|e| e.span() == child_span)
                         }
                         AstNodes::TaggedTemplateExpression(t) => t.tag.span() == child_span,
+                        AstNodes::UpdateExpression(u) => {
+                            !u.prefix && u.argument.span() == child_span
+                        }
+                        AstNodes::TSAsExpression(e) => e.expression.span() == child_span,
+                        AstNodes::TSSatisfiesExpression(e) => e.expression.span() == child_span,
+                        AstNodes::TSNonNullExpression(e) => e.expression.span() == child_span,
                         _ => false,
                     };
                     if !dominated {
@@ -127,8 +154,7 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                 false
             }
             name => {
-                // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/needs-parens.js#L123-L133>
-                if !matches!(
+                matches!(
                     name,
                     "await"
                         | "interface"
@@ -138,27 +164,7 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                         | "component"
                         | "hook"
                         | "type"
-                ) {
-                    return false;
-                }
-
-                let mut parent = self.parent();
-                while matches!(
-                    parent,
-                    AstNodes::TSSatisfiesExpression(_) | AstNodes::TSAsExpression(_)
-                ) {
-                    parent = parent.parent();
-                }
-
-                // Early return if the parent isn't a `TSSatisfiesExpression` or `TSAsExpression`
-                if ptr::eq(self.parent(), parent) {
-                    return false;
-                }
-
-                matches!(
-                    parent, AstNodes::ExpressionStatement(stmt) if
-                        !stmt.is_arrow_function_body()
-                )
+                ) && needs_parens_in_cast_chain()
             }
         }
     }
@@ -294,7 +300,12 @@ impl NeedsParentheses<'_> for AstNode<'_, ObjectExpression<'_>> {
 impl NeedsParentheses<'_> for AstNode<'_, TaggedTemplateExpression<'_>> {
     #[inline]
     fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
-        false
+        // `class A extends (tag`x`) {}`; keep in sync with the wrapped-in-`!` case
+        // in `class_extends_needs_parens_through_non_null`.
+        is_class_extends(self.span, self.parent())
+            // `new (import("foo")`bar`)()`; a tag containing a call/import
+            // cannot appear in a new callee without parens
+            || (self.is_new_callee() && member_chain_callee_needs_parens(&self.tag))
     }
 }
 
@@ -700,13 +711,6 @@ impl NeedsParentheses<'_> for AstNode<'_, ChainExpression<'_>> {
         if f.comments().is_type_cast_node(self) {
             return false;
         }
-
-        // When ChainExpression contains TSNonNullExpression as its child,
-        // we handle parentheses manually in write() to print `(a?.b)!` instead of `(a?.b!)`
-        if matches!(self.expression, ChainElement::TSNonNullExpression(_)) {
-            return false;
-        }
-
         // Check if chain expression needs parens based on how it's being accessed
         chain_expression_needs_parens(self.span, self.parent())
     }
@@ -715,25 +719,20 @@ impl NeedsParentheses<'_> for AstNode<'_, ChainExpression<'_>> {
 /// Check if a ChainExpression needs parentheses based on its parent context.
 ///
 /// Parentheses are needed when the chain is:
+/// - The expression of a non-null assertion (`(a?.b)!`, in any position);
+///   this preserves the distinction from `a?.b!` (`ChainElement::TSNonNullExpression`)
 /// - The callee of a non-optional call expression
 /// - The callee of a new expression
 /// - The object of a non-optional member expression
 /// - The tag of a tagged template expression
-///
-/// For `(a?.b)!.c`, the parent is TSNonNullExpression, so we check the grandparent.
-pub fn chain_expression_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
+fn chain_expression_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
     match parent {
+        AstNodes::TSNonNullExpression(_) | AstNodes::TaggedTemplateExpression(_) => true,
         AstNodes::NewExpression(new) => new.is_callee_span(span),
         AstNodes::CallExpression(call) => call.is_callee_span(span) && !call.optional,
         AstNodes::StaticMemberExpression(member) => !member.optional,
         AstNodes::ComputedMemberExpression(member) => {
             !member.optional && member.object.span() == span
-        }
-        AstNodes::TaggedTemplateExpression(_) => true,
-        // Handle `(a?.b)!.c` - when ChainExpression is wrapped in TSNonNullExpression.
-        // Use the TSNonNullExpression's span when checking the grandparent.
-        AstNodes::TSNonNullExpression(non_null) => {
-            chain_expression_needs_parens(non_null.span, parent.parent())
         }
         _ => false,
     }
@@ -919,9 +918,44 @@ fn type_cast_like_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
 
 impl NeedsParentheses<'_> for AstNode<'_, TSNonNullExpression<'_>> {
     fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
-        let parent = self.parent();
-        is_class_extends(self.span, parent)
-            || (self.is_new_callee() && member_chain_callee_needs_parens(&self.expression))
+        (self.is_new_callee() && member_chain_callee_needs_parens(&self.expression))
+            // `class A extends ({}!) {}` needs parens, `class A extends B! {}` does not:
+            // like Prettier, judge by the expression under the `!`, not the `!` itself.
+            || (is_class_extends(self.span, self.parent())
+                && class_extends_needs_parens_through_non_null(&self.expression))
+    }
+}
+
+/// The `superClass` expressions Prettier wraps in parentheses (`parent-needs-parentheses.js`),
+/// applied to the expression under `!` wrappers.
+/// Chain contents are call/member expressions, which never need them.
+///
+/// The grammar is `extends LeftHandSideExpression`.
+/// So most variants below are REQUIRED, without parens the output is a syntax error (e.g. `extends a + b`).
+fn class_extends_needs_parens_through_non_null(expression: &Expression<'_>) -> bool {
+    match expression {
+        Expression::TSNonNullExpression(non_null) => {
+            class_extends_needs_parens_through_non_null(&non_null.expression)
+        }
+        Expression::ClassExpression(class) => !class.decorators.is_empty(),
+        Expression::ArrowFunctionExpression(_)
+        | Expression::AssignmentExpression(_)
+        | Expression::AwaitExpression(_)
+        | Expression::BinaryExpression(_)
+        | Expression::ConditionalExpression(_)
+        | Expression::LogicalExpression(_)
+        | Expression::SequenceExpression(_)
+        | Expression::UnaryExpression(_)
+        | Expression::UpdateExpression(_)
+        | Expression::YieldExpression(_)
+        // NOTE: These three are readability style only, since they are LeftHandSideExpressions and parse bare:
+        // - `ObjectExpression` (`extends {} {}`, confusable with the class body)
+        // - `NewExpression` (`extends new A() {}`, confusable with a constructor call)
+        // - `TaggedTemplateExpression` (`extends tag`x` {}`, confusable with a template literal)
+        | Expression::ObjectExpression(_)
+        | Expression::NewExpression(_)
+        | Expression::TaggedTemplateExpression(_) => true,
+        _ => false,
     }
 }
 
@@ -1001,11 +1035,12 @@ fn member_chain_callee_needs_parens(e: &Expression) -> bool {
     std::iter::successors(Some(e), |e| match e {
         Expression::ComputedMemberExpression(e) => Some(&e.object),
         Expression::StaticMemberExpression(e) => Some(&e.object),
+        Expression::PrivateFieldExpression(e) => Some(&e.object),
         Expression::TaggedTemplateExpression(e) => Some(&e.tag),
         Expression::TSNonNullExpression(e) => Some(&e.expression),
         _ => None,
     })
-    .any(|object| matches!(object, Expression::CallExpression(_)))
+    .any(|object| matches!(object, Expression::CallExpression(_) | Expression::ImportExpression(_)))
 }
 
 #[derive(Clone, Copy)]
@@ -1162,7 +1197,8 @@ fn await_or_yield_needs_parens(span: Span, node: &AstNodes<'_>) -> bool {
             | AstNodes::SpreadElement(_)
             | AstNodes::LogicalExpression(_)
             | AstNodes::BinaryExpression(_)
-            | AstNodes::PrivateInExpression(_),
+            | AstNodes::PrivateInExpression(_)
+            | AstNodes::TSInstantiationExpression(_),
     ) {
         return true;
     }

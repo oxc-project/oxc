@@ -16,7 +16,6 @@ function Component(props) {
 	return t0;
 }
 function _temp() {
-	;
 	try {
 		return [];
 	} catch (t0) {

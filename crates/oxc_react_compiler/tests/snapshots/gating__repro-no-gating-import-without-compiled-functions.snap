@@ -2,4 +2,6 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/gating/repro-no-gating-import-without-compiled-functions.js
 ---
-No changes.
+// @expectNothingCompiled @gating
+import { isForgetEnabled_Fixtures } from "ReactForgetFeatureFlag";
+export default 42;

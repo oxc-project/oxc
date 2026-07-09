@@ -5000,7 +5000,7 @@ function walkBoxObjectAssignmentTarget(pos, ast, visitors) {
 }
 
 function walkOptionAssignmentTargetMaybeDefault(pos, ast, visitors) {
-  if (!(ast.buffer[pos] === 51)) walkAssignmentTargetMaybeDefault(pos, ast, visitors);
+  if (!(ast.buffer[pos] === 255)) walkAssignmentTargetMaybeDefault(pos, ast, visitors);
 }
 
 function walkVecOptionAssignmentTargetMaybeDefault(pos, ast, visitors) {
@@ -5038,7 +5038,7 @@ function walkBoxAssignmentTargetPropertyProperty(pos, ast, visitors) {
 }
 
 function walkOptionExpression(pos, ast, visitors) {
-  if (!(ast.buffer[pos] === 51)) walkExpression(pos, ast, visitors);
+  if (!(ast.buffer[pos] === 255)) walkExpression(pos, ast, visitors);
 }
 
 function walkBoxBlockStatement(pos, ast, visitors) {
@@ -5162,11 +5162,11 @@ function walkOptionBoxTSTypeAnnotation(pos, ast, visitors) {
 }
 
 function walkOptionStatement(pos, ast, visitors) {
-  if (!(ast.buffer[pos] === 70)) walkStatement(pos, ast, visitors);
+  if (!(ast.buffer[pos] === 255)) walkStatement(pos, ast, visitors);
 }
 
 function walkOptionForStatementInit(pos, ast, visitors) {
-  if (!(ast.buffer[pos] === 65)) walkForStatementInit(pos, ast, visitors);
+  if (!(ast.buffer[pos] === 255)) walkForStatementInit(pos, ast, visitors);
 }
 
 function walkOptionLabelIdentifier(pos, ast, visitors) {
@@ -5200,7 +5200,7 @@ function walkOptionBoxBlockStatement(pos, ast, visitors) {
 }
 
 function walkOptionCatchParameter(pos, ast, visitors) {
-  if (!(ast.buffer[pos + 16] === 4)) walkCatchParameter(pos, ast, visitors);
+  if (!(ast.buffer[pos + 16] === 255)) walkCatchParameter(pos, ast, visitors);
 }
 
 function walkBoxBindingIdentifier(pos, ast, visitors) {
@@ -5231,7 +5231,7 @@ function walkVecBindingProperty(pos, ast, visitors) {
 }
 
 function walkOptionBindingPattern(pos, ast, visitors) {
-  if (!(ast.buffer[pos] === 4)) walkBindingPattern(pos, ast, visitors);
+  if (!(ast.buffer[pos] === 255)) walkBindingPattern(pos, ast, visitors);
 }
 
 function walkVecOptionBindingPattern(pos, ast, visitors) {
@@ -5441,7 +5441,7 @@ function walkOptionStringLiteral(pos, ast, visitors) {
 }
 
 function walkOptionModuleExportName(pos, ast, visitors) {
-  if (!(ast.buffer[pos] === 3)) walkModuleExportName(pos, ast, visitors);
+  if (!(ast.buffer[pos] === 255)) walkModuleExportName(pos, ast, visitors);
 }
 
 function walkBoxJSXOpeningElement(pos, ast, visitors) {
@@ -5504,7 +5504,7 @@ function walkBoxJSXSpreadAttribute(pos, ast, visitors) {
 }
 
 function walkOptionJSXAttributeValue(pos, ast, visitors) {
-  if (!(ast.buffer[pos] === 4)) walkJSXAttributeValue(pos, ast, visitors);
+  if (!(ast.buffer[pos] === 255)) walkJSXAttributeValue(pos, ast, visitors);
 }
 
 function walkBoxJSXExpressionContainer(pos, ast, visitors) {
@@ -5713,7 +5713,7 @@ function walkBoxTSQualifiedName(pos, ast, visitors) {
 }
 
 function walkOptionTSType(pos, ast, visitors) {
-  if (!(ast.buffer[pos] === 38)) walkTSType(pos, ast, visitors);
+  if (!(ast.buffer[pos] === 255)) walkTSType(pos, ast, visitors);
 }
 
 function walkVecTSTypeParameter(pos, ast, visitors) {

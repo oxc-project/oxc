@@ -4,12 +4,11 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, CompilerSuggestion,
-    CompilerSuggestionOperation, ErrorCategory, Position, SourceLocation,
-};
+use oxc_span::Span;
 
-/// A comment's text and byte range, plus the byte-offset loc that surfaces as the
+use crate::diagnostics::{CompilerError, ErrorCategory};
+
+/// A comment's text and byte range, plus the byte-offset span that surfaces as the
 /// labeled span on a suppression diagnostic. The former Babel front-end carried
 /// this on `CommentData`; the oxc front-end builds it directly from oxc comments.
 #[derive(Debug, Clone)]
@@ -17,7 +16,7 @@ pub struct CommentData {
     pub value: String,
     pub start: Option<u32>,
     pub end: Option<u32>,
-    pub loc: Option<CommentLoc>,
+    pub span: Option<CommentLoc>,
 }
 
 #[derive(Debug, Clone)]
@@ -60,8 +59,8 @@ fn comment_data(comment: &oxc_ast::ast::Comment, source_text: &str) -> CommentDa
         end: Some(comment.span.end),
         // Only the byte `index` is load-bearing here: it surfaces as the labeled
         // span offset/length on the suppression diagnostic. Line/column are unused
-        // by downstream consumers of this loc.
-        loc: Some(CommentLoc {
+        // by downstream consumers of this span.
+        span: Some(CommentLoc {
             start_index: Some(comment.span.start),
             end_index: Some(comment.span.end),
         }),
@@ -116,15 +115,14 @@ fn matches_flow_suppression(value: &str) -> bool {
     let after_dollar_flow = &value[idx + "$Flow".len()..];
 
     // Match FlowFixMe (with optional word chars), FlowExpectedError, or FlowIssue
-    let after_kind = if after_dollar_flow.starts_with("FixMe") {
+    let after_kind = if let Some(rest) = after_dollar_flow.strip_prefix("FixMe") {
         // Skip "FixMe" + any word characters
-        let rest = &after_dollar_flow["FixMe".len()..];
         let word_end = rest.find(|c: char| !c.is_alphanumeric() && c != '_').unwrap_or(rest.len());
         &rest[word_end..]
-    } else if after_dollar_flow.starts_with("ExpectedError") {
-        &after_dollar_flow["ExpectedError".len()..]
-    } else if after_dollar_flow.starts_with("Issue") {
-        &after_dollar_flow["Issue".len()..]
+    } else if let Some(rest) = after_dollar_flow.strip_prefix("ExpectedError") {
+        rest
+    } else if let Some(rest) = after_dollar_flow.strip_prefix("Issue") {
+        rest
     } else {
         return false;
     };
@@ -231,7 +229,7 @@ pub fn filter_suppressions_that_affect_function(
                     .enable_comment
                     .as_ref()
                     .and_then(|c| c.end)
-                    .map_or(false, |end| end < fn_end))
+                    .is_some_and(|end| end < fn_end))
         {
             suppressions_in_scope.push(suppression);
         }
@@ -243,7 +241,7 @@ pub fn filter_suppressions_that_affect_function(
                     .enable_comment
                     .as_ref()
                     .and_then(|c| c.end)
-                    .map_or(false, |end| end > fn_end))
+                    .is_some_and(|end| end > fn_end))
         {
             suppressions_in_scope.push(suppression);
         }
@@ -259,21 +257,13 @@ pub fn suppressions_to_compiler_error(suppressions: &[SuppressionRange]) -> Comp
     let mut error = CompilerError::new();
 
     for suppression in suppressions {
-        let (disable_start, disable_end) =
-            match (suppression.disable_comment.start, suppression.disable_comment.end) {
-                (Some(s), Some(e)) => (s, e),
-                _ => continue,
-            };
-
-        let (reason, suggestion) = match suppression.source {
-            SuppressionSource::Eslint => (
-                "React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled",
-                "Remove the ESLint suppression and address the React error",
-            ),
-            SuppressionSource::Flow => (
-                "React Compiler has skipped optimizing this component because one or more React rule violations were reported by Flow",
-                "Remove the Flow suppression and address the React error",
-            ),
+        let reason = match suppression.source {
+            SuppressionSource::Eslint => {
+                "React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled"
+            }
+            SuppressionSource::Flow => {
+                "React Compiler has skipped optimizing this component because one or more React rule violations were reported by Flow"
+            }
         };
 
         let description = format!(
@@ -281,29 +271,19 @@ pub fn suppressions_to_compiler_error(suppressions: &[SuppressionRange]) -> Comp
             suppression.disable_comment.value.trim()
         );
 
-        let mut diagnostic =
-            CompilerDiagnostic::new(ErrorCategory::Suppression, reason, Some(description));
+        // Label the suppression comment's location when known
+        let span = suppression
+            .disable_comment
+            .span
+            .as_ref()
+            .and_then(|l| Some(Span::new(l.start_index?, l.end_index?)));
 
-        diagnostic.suggestions = Some(vec![CompilerSuggestion {
-            description: suggestion.to_string(),
-            range: (disable_start as usize, disable_end as usize),
-            op: CompilerSuggestionOperation::Remove,
-            text: None,
-        }]);
-
-        // Add error detail with location info
-        let loc = suppression.disable_comment.loc.as_ref().map(|l| SourceLocation {
-            start: Position { line: 0, column: 0, index: l.start_index },
-            end: Position { line: 0, column: 0, index: l.end_index },
-        });
-
-        diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Error {
-            loc,
-            message: Some("Found React rule suppression".to_string()),
-            identifier_name: None,
-        });
-
-        error.push_diagnostic(diagnostic);
+        error.push(
+            ErrorCategory::Suppression
+                .diagnostic(reason)
+                .with_help(description)
+                .with_labels(span.map(|s| s.label("Found React rule suppression"))),
+        );
     }
 
     error

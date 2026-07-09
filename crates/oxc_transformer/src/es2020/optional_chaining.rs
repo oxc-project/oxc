@@ -49,7 +49,7 @@
 
 use std::mem;
 
-use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse};
@@ -387,11 +387,10 @@ impl<'a> OptionalChaining<'a> {
             } else {
                 // `foo.bar` -> `_foo$bar = foo.bar`
                 let binding = VarDeclarationsStore::create_uid_var_based_on_node(object, ctx);
-                *object = Self::create_assignment_expression(
-                    binding.create_write_target(ctx),
-                    object.take_in(ctx),
-                    ctx,
-                );
+                let write_target = binding.create_write_target(ctx);
+                object.replace_with(|object| {
+                    Self::create_assignment_expression(write_target, object, ctx)
+                });
                 binding.create_read_expression(ctx)
             };
             Argument::from(context)
@@ -552,9 +551,10 @@ impl<'a> OptionalChaining<'a> {
             if ident.name == "eval" {
                 // `eval?.()` is an indirect eval call transformed to `(0,eval)()`
                 let zero = Expression::new_number_0(ctx);
-                let original_callee = expr.take_in(ctx);
-                let expressions = ArenaVec::from_array_in([zero, original_callee], ctx);
-                *expr = Expression::new_sequence_expression(SPAN, expressions, ctx);
+                expr.replace_with(|original_callee| {
+                    let expressions = ArenaVec::from_array_in([zero, original_callee], ctx);
+                    Expression::new_sequence_expression(SPAN, expressions, ctx)
+                });
             }
 
             let left1 = binding.create_read_expression(ctx);
@@ -666,11 +666,10 @@ impl<'a> OptionalChaining<'a> {
                         let binding =
                             VarDeclarationsStore::create_uid_var_based_on_node(object, ctx);
                         // `(_foo = foo)`
-                        *object = Self::create_assignment_expression(
-                            binding.create_write_target(ctx),
-                            object.take_in(ctx),
-                            ctx,
-                        );
+                        let write_target = binding.create_write_target(ctx);
+                        object.replace_with(|object| {
+                            Self::create_assignment_expression(write_target, object, ctx)
+                        });
                         binding.to_maybe_bound_identifier()
                     });
                 self.set_binding_context(binding);

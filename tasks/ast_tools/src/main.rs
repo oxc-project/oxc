@@ -248,6 +248,7 @@ const DERIVES: &[&(dyn Derive + Sync)] = &[
     &derives::DeriveCloneIn,
     &derives::DeriveDummy,
     &derives::DeriveTakeIn,
+    &derives::DeriveReplaceWith,
     &derives::DeriveGetAddress,
     &derives::DeriveUnstableAddress,
     &derives::DeriveGetSpan,

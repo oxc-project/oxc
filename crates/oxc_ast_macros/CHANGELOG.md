@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.139.0] - 2026-07-06
+
+### 🚀 Features
+
+- 7db7a29 allocator: Add `ReplaceWith` trait (#24012) (overlookmotel)
+
+### 📚 Documentation
+
+- 37cbf88 ast_macros: Document fields of `StructDetails` (#23959) (overlookmotel)
+
 ## [0.135.0] - 2026-06-08
 
 ### 💥 BREAKING CHANGES

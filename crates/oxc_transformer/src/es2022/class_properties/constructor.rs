@@ -101,7 +101,7 @@
 
 use std::iter;
 
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, ReplaceWith};
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{ast::*, builder::NONE};
@@ -612,21 +612,22 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
         });
 
         let ctx = &mut *self.ctx;
-        let super_call = expr.take_in(ctx);
-        *expr = Expression::new_call_expression(
-            span,
-            Expression::new_static_member_expression(
-                SPAN,
-                super_binding.create_read_expression(ctx),
-                IdentifierName::new(SPAN, "call", ctx),
+        expr.replace_with(|super_call| {
+            Expression::new_call_expression(
+                span,
+                Expression::new_static_member_expression(
+                    SPAN,
+                    super_binding.create_read_expression(ctx),
+                    IdentifierName::new(SPAN, "call", ctx),
+                    false,
+                    ctx,
+                ),
+                NONE,
+                ArenaVec::from_value_in(Argument::from(super_call), ctx),
                 false,
                 ctx,
-            ),
-            NONE,
-            ArenaVec::from_value_in(Argument::from(super_call), ctx),
-            false,
-            ctx,
-        );
+            )
+        });
     }
 }
 

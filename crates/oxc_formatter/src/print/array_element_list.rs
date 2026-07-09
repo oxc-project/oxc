@@ -6,8 +6,10 @@ use crate::{
     FormatTrailingCommas,
     ast_nodes::AstNode,
     formatter::{
-        Buffer, Format, GroupId, JsFormatContext, JsFormatter, prelude::*,
+        Buffer, Format, GroupId, JsFormatContext, JsFormatter,
+        prelude::*,
         separated::FormatSeparatedIter,
+        trivia::{DanglingIndentMode, FormatDanglingComments},
     },
     utils::array::write_array_node,
     write,
@@ -72,6 +74,19 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
                 f,
             ),
         }
+
+        // Comments that no element consumed as a trailing comment
+        // (e.g. after a trailing hole: `[,, /* comment */]`)
+        // would otherwise escape the brackets; print them right before the `]` like Prettier
+        let dangling_comments =
+            f.context().comments().comments_before(self.elements.parent().span().end);
+        write!(
+            f,
+            FormatDanglingComments::Comments {
+                comments: dangling_comments,
+                indent: DanglingIndentMode::None
+            }
+        );
     }
 }
 

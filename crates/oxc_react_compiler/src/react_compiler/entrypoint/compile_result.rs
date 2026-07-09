@@ -1,15 +1,8 @@
 use oxc_diagnostics::Diagnostics;
 
-use crate::react_compiler_diagnostics::SourceLocation;
-use crate::react_compiler_hir::ReactFunctionType;
+use oxc_span::Span;
 
-/// A variable rename from lowering, applied back to the program's scoping.
-#[derive(Debug, Clone)]
-pub struct BindingRenameInfo {
-    pub original: String,
-    pub renamed: String,
-    pub declaration_start: u32,
-}
+use crate::react_compiler_hir::ReactFunctionType;
 
 /// Main result type returned by the compile function.
 ///
@@ -24,34 +17,9 @@ pub enum CompileResult<'a> {
         ast: Option<oxc_ast::ast::Program<'a>>,
         /// Errors and warnings accumulated during compilation.
         diagnostics: Diagnostics,
-        /// Debug-log entries; populated only with the `debug` feature.
-        ordered_log: Vec<OrderedLogItem>,
-        /// Variable renames from lowering, for applying back to the AST.
-        renames: Vec<BindingRenameInfo>,
     },
     /// A fatal error occurred and panicThreshold dictates it should throw.
-    Error { diagnostics: Diagnostics, ordered_log: Vec<OrderedLogItem> },
-}
-
-/// A debug-log entry emitted during compilation (see `ProgramContext::log_debug`).
-#[derive(Debug, Clone)]
-pub enum OrderedLogItem {
-    Debug { entry: DebugLogEntry },
-}
-
-/// Debug log entry for debugLogIRs support.
-/// Currently only supports the 'debug' variant (string values).
-#[derive(Debug, Clone)]
-pub struct DebugLogEntry {
-    pub kind: &'static str,
-    pub name: String,
-    pub value: String,
-}
-
-impl DebugLogEntry {
-    pub fn new(name: impl Into<String>, value: impl Into<String>) -> Self {
-        Self { kind: "debug", name: name.into(), value: value.into() }
-    }
+    Error { diagnostics: Diagnostics },
 }
 
 /// Codegen output for a single compiled function.
@@ -62,7 +30,7 @@ impl DebugLogEntry {
 /// and the pipeline threads up to `compile_program`.
 #[derive(Debug)]
 pub struct CodegenFunction<'a> {
-    pub loc: Option<SourceLocation>,
+    pub span: Option<Span>,
     pub id: Option<oxc_ast::ast::BindingIdentifier<'a>>,
     pub name_hint: Option<String>,
     pub params: oxc_allocator::Box<'a, oxc_ast::ast::FormalParameters<'a>>,

@@ -13,9 +13,7 @@ pub mod validate_preserved_manual_memoization;
 pub mod validate_static_components;
 pub mod validate_use_memo;
 
-pub use validate_context_variable_lvalues::{
-    validate_context_variable_lvalues, validate_context_variable_lvalues_with_errors,
-};
+pub use validate_context_variable_lvalues::validate_context_variable_lvalues;
 pub use validate_exhaustive_dependencies::validate_exhaustive_dependencies;
 pub use validate_hooks_usage::validate_hooks_usage;
 pub use validate_locals_not_reassigned_after_render::validate_locals_not_reassigned_after_render;

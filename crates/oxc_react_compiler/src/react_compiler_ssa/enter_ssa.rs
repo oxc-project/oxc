@@ -2,9 +2,9 @@ use std::mem::{replace, take};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::*;
@@ -69,11 +69,11 @@ impl SSABuilder {
         let old = &env.identifiers[old_id.0 as usize];
         let declaration_id = old.declaration_id;
         let name = old.name.clone();
-        let loc = old.loc;
+        let span = old.span;
         let new_ident = &mut env.identifiers[new_id.0 as usize];
         new_ident.declaration_id = declaration_id;
         new_ident.name = name;
-        new_ident.loc = loc;
+        new_ident.span = span;
         new_id
     }
 
@@ -81,7 +81,7 @@ impl SSABuilder {
         &mut self,
         old_place: &Place,
         env: &mut Environment,
-    ) -> Result<Place, CompilerDiagnostic> {
+    ) -> Result<Place, OxcDiagnostic> {
         let old_id = old_place.identifier;
 
         if self.unknown.contains(&old_id) {
@@ -90,16 +90,12 @@ impl SSABuilder {
                 Some(name) => format!("{}${}", name.value(), old_id.0),
                 None => format!("${}", old_id.0),
             };
-            return Err(CompilerDiagnostic::new(
-                ErrorCategory::Todo,
-                "[hoisting] EnterSSA: Expected identifier to be defined before being used",
-                Some(format!("Identifier {} is undefined", name)),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                loc: old_place.loc,
-                message: None,
-                identifier_name: None,
-            }));
+            return Err(ErrorCategory::Todo
+                .diagnostic(
+                    "[hoisting] EnterSSA: Expected identifier to be defined before being used",
+                )
+                .with_help(format!("Identifier {} is undefined", name))
+                .with_labels(old_place.span));
         }
 
         // Do not redefine context references.
@@ -113,7 +109,7 @@ impl SSABuilder {
             identifier: new_id,
             effect: old_place.effect,
             reactive: old_place.reactive,
-            loc: old_place.loc,
+            span: old_place.span,
         })
     }
 
@@ -122,7 +118,7 @@ impl SSABuilder {
         &mut self,
         old_place: &Place,
         env: &mut Environment,
-    ) -> Result<Place, CompilerDiagnostic> {
+    ) -> Result<Place, OxcDiagnostic> {
         let old_id = old_place.identifier;
         let new_place = self.define_place(old_place, env)?;
         self.context.insert(old_id);
@@ -148,7 +144,7 @@ impl SSABuilder {
             identifier: new_id,
             effect: old_place.effect,
             reactive: old_place.reactive,
-            loc: old_place.loc,
+            span: old_place.span,
         }
     }
 
@@ -178,7 +174,7 @@ impl SSABuilder {
                 identifier: new_id,
                 effect: old_place.effect,
                 reactive: old_place.reactive,
-                loc: old_place.loc,
+                span: old_place.span,
             };
             let state = self.states.get_mut(&block_id).unwrap();
             state.incomplete_phis.push(IncompletePhi { old_place: old_place.clone(), new_place });
@@ -199,7 +195,7 @@ impl SSABuilder {
             identifier: new_id,
             effect: old_place.effect,
             reactive: old_place.reactive,
-            loc: old_place.loc,
+            span: old_place.span,
         };
         self.add_phi(block_id, old_place, &new_place, env);
         new_id
@@ -223,7 +219,7 @@ impl SSABuilder {
                     identifier: pred_id,
                     effect: old_place.effect,
                     reactive: old_place.reactive,
-                    loc: old_place.loc,
+                    span: old_place.span,
                 },
             );
         }
@@ -252,7 +248,7 @@ impl SSABuilder {
 // Public entry point
 // =============================================================================
 
-pub fn enter_ssa(func: &mut HirFunction, env: &mut Environment) -> Result<(), CompilerDiagnostic> {
+pub fn enter_ssa(func: &mut HirFunction, env: &mut Environment) -> Result<(), OxcDiagnostic> {
     let mut builder = SSABuilder::new(&func.body.blocks);
     let root_entry = func.body.entry;
     enter_ssa_impl(func, &mut builder, env, root_entry)?;
@@ -284,7 +280,7 @@ fn enter_ssa_impl(
     builder: &mut SSABuilder,
     env: &mut Environment,
     root_entry: BlockId,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let mut visited_blocks: FxHashSet<BlockId> = FxHashSet::default();
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
 
@@ -292,11 +288,8 @@ fn enter_ssa_impl(
         let block_id = *block_id;
 
         if visited_blocks.contains(&block_id) {
-            return Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
-                format!("found a cycle! visiting bb{} again", block_id.0),
-                None,
-            ));
+            return Err(ErrorCategory::Invariant
+                .diagnostic(format!("found a cycle! visiting bb{} again", block_id.0)));
         }
 
         visited_blocks.insert(block_id);
@@ -305,10 +298,8 @@ fn enter_ssa_impl(
         // Handle params at the root entry
         if block_id == root_entry {
             if !func.context.is_empty() {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
+                return Err(ErrorCategory::Invariant.diagnostic(
                     "Expected function context to be empty for outer function declarations",
-                    None,
                 ));
             }
             let params = take(&mut func.params);
@@ -357,7 +348,7 @@ fn enter_ssa_impl(
             // Map lvalues (skip DeclareContext/StoreContext — context variables
             // don't participate in SSA renaming)
             let instr = &mut func.instructions[instr_idx];
-            let mut lvalue_err: Option<CompilerDiagnostic> = None;
+            let mut lvalue_err: Option<OxcDiagnostic> = None;
             visitors::for_each_instruction_lvalue_mut(instr, &mut |place| {
                 if lvalue_err.is_none() {
                     match builder.define_place(place, env) {
@@ -386,10 +377,8 @@ fn enter_ssa_impl(
                 let entry_block = inner_func.body.blocks.get_mut(&inner_entry).unwrap();
 
                 if !entry_block.preds.is_empty() {
-                    return Err(CompilerDiagnostic::new(
-                        ErrorCategory::Invariant,
+                    return Err(ErrorCategory::Invariant.diagnostic(
                         "Expected function expression entry block to have zero predecessors",
-                        None,
                     ));
                 }
                 entry_block.preds.insert(block_id);
@@ -470,17 +459,16 @@ fn enter_ssa_impl(
 /// read — the real function is swapped back immediately after processing.
 pub fn placeholder_function<'a>() -> HirFunction<'a> {
     HirFunction {
-        loc: None,
+        span: None,
         id: None,
         name_hint: None,
         fn_type: ReactFunctionType::Other,
         params: Vec::new(),
-        return_type_annotation: None,
         returns: Place {
             identifier: IdentifierId(0),
             effect: Effect::Unknown,
             reactive: false,
-            loc: None,
+            span: None,
         },
         context: Vec::new(),
         body: HIR { entry: BlockId(0), blocks: FxIndexMap::default() },

@@ -125,13 +125,9 @@ pub fn is_promise_constructor(new_expr: &NewExpression) -> bool {
 pub fn get_promise_constructor_inline_executor<'a>(
     new_expr: &'a NewExpression<'a>,
 ) -> Option<&'a Expression<'a>> {
-    if !is_promise_constructor(new_expr) {
-        return None;
+    if is_promise_constructor(new_expr) && new_expr.arguments.len() == 1 {
+        return new_expr.arguments[0].as_expression().filter(|expr| expr.is_function());
     }
-    if new_expr.arguments.len() != 1 {
-        return None;
-    }
-    new_expr.arguments[0]
-        .as_expression()
-        .and_then(|expr| if expr.is_function() { Some(expr) } else { None })
+
+    None
 }

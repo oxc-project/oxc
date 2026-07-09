@@ -153,11 +153,11 @@ fn collect_scope_info(func: &HirFunction, env: &Environment) -> ScopeInfo {
     // Convert to sorted vecs (descending by id for pop-from-end)
     let mut scope_starts: Vec<ScopeStartEntry> =
         scope_starts_map.into_iter().map(|(id, scopes)| ScopeStartEntry { id, scopes }).collect();
-    scope_starts.sort_by(|a, b| b.id.cmp(&a.id));
+    scope_starts.sort_by_key(|a| std::cmp::Reverse(a.id));
 
     let mut scope_ends: Vec<ScopeEndEntry> =
         scope_ends_map.into_iter().map(|(id, scopes)| ScopeEndEntry { id, scopes }).collect();
-    scope_ends.sort_by(|a, b| b.id.cmp(&a.id));
+    scope_ends.sort_by_key(|a| std::cmp::Reverse(a.id));
 
     ScopeInfo { scope_starts, scope_ends, place_scopes }
 }
@@ -173,55 +173,47 @@ fn visit_instruction_id(
     env: &Environment,
 ) {
     // Handle all scopes that end at this instruction
-    if let Some(top) = scope_info.scope_ends.last() {
-        if top.id <= id {
-            let scope_end_entry = scope_info.scope_ends.pop().unwrap();
+    if let Some(scope_end_entry) = scope_info.scope_ends.pop_if(|top| top.id <= id) {
+        // Sort scopes by start descending (matching active_scopes order)
+        let mut scopes_sorted = scope_end_entry.scopes;
+        scopes_sorted.sort_by(|a, b| {
+            let a_start = env.scopes[a.0 as usize].range.start;
+            let b_start = env.scopes[b.0 as usize].range.start;
+            b_start.cmp(&a_start)
+        });
 
-            // Sort scopes by start descending (matching active_scopes order)
-            let mut scopes_sorted = scope_end_entry.scopes;
-            scopes_sorted.sort_by(|a, b| {
-                let a_start = env.scopes[a.0 as usize].range.start;
-                let b_start = env.scopes[b.0 as usize].range.start;
-                b_start.cmp(&a_start)
-            });
-
-            for scope in &scopes_sorted {
-                let idx = state.active_scopes.iter().position(|s| s == scope);
-                if let Some(idx) = idx {
-                    // Detect and merge all overlapping scopes
-                    if idx != state.active_scopes.len() - 1 {
-                        let mut to_union: Vec<ScopeId> = vec![*scope];
-                        to_union.extend_from_slice(&state.active_scopes[idx + 1..]);
-                        state.joined.union(&to_union);
-                    }
-                    state.active_scopes.remove(idx);
+        for scope in &scopes_sorted {
+            let idx = state.active_scopes.iter().position(|s| s == scope);
+            if let Some(idx) = idx {
+                // Detect and merge all overlapping scopes
+                if idx != state.active_scopes.len() - 1 {
+                    let mut to_union: Vec<ScopeId> = vec![*scope];
+                    to_union.extend_from_slice(&state.active_scopes[idx + 1..]);
+                    state.joined.union(&to_union);
                 }
+                state.active_scopes.remove(idx);
             }
         }
     }
 
     // Handle all scopes that begin at this instruction
-    if let Some(top) = scope_info.scope_starts.last() {
-        if top.id <= id {
-            let scope_start_entry = scope_info.scope_starts.pop().unwrap();
+    if let Some(scope_start_entry) = scope_info.scope_starts.pop_if(|top| top.id <= id) {
+        // Sort by end descending
+        let mut scopes_sorted = scope_start_entry.scopes;
+        scopes_sorted.sort_by(|a, b| {
+            let a_end = env.scopes[a.0 as usize].range.end;
+            let b_end = env.scopes[b.0 as usize].range.end;
+            b_end.cmp(&a_end)
+        });
 
-            // Sort by end descending
-            let mut scopes_sorted = scope_start_entry.scopes;
-            scopes_sorted.sort_by(|a, b| {
-                let a_end = env.scopes[a.0 as usize].range.end;
-                let b_end = env.scopes[b.0 as usize].range.end;
-                b_end.cmp(&a_end)
-            });
+        state.active_scopes.extend_from_slice(&scopes_sorted);
 
-            state.active_scopes.extend_from_slice(&scopes_sorted);
-
-            // Merge all identical scopes (same start and end)
-            for i in 1..scopes_sorted.len() {
-                let prev = scopes_sorted[i - 1];
-                let curr = scopes_sorted[i];
-                if env.scopes[prev.0 as usize].range.end == env.scopes[curr.0 as usize].range.end {
-                    state.joined.union(&[prev, curr]);
-                }
+        // Merge all identical scopes (same start and end)
+        for i in 1..scopes_sorted.len() {
+            let prev = scopes_sorted[i - 1];
+            let curr = scopes_sorted[i];
+            if env.scopes[prev.0 as usize].range.end == env.scopes[curr.0 as usize].range.end {
+                state.joined.union(&[prev, curr]);
             }
         }
     }

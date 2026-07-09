@@ -1,6 +1,7 @@
+use cow_utils::CowUtils;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
+use crate::diagnostics::{CompilerError, ErrorCategory};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, PropertyLiteral};
 
@@ -12,7 +13,7 @@ pub fn validate_no_capitalized_calls(
     env: &mut Environment,
 ) -> Result<(), CompilerError> {
     // Build the allow list from global registry keys + config entries
-    let mut allow_list: FxHashSet<String> = env.globals().keys().cloned().collect();
+    let mut allow_list: FxHashSet<String> = env.globals().keys().map(str::to_owned).collect();
     if let Some(config_entries) = &env.config.validate_no_capitalized_calls {
         for entry in config_entries {
             allow_list.insert(entry.clone());
@@ -36,42 +37,41 @@ pub fn validate_no_capitalized_calls(
                     if !name.is_empty()
                         && name.starts_with(|c: char| c.is_ascii_uppercase())
                         // We don't want to flag CONSTANTS()
-                        && name != name.to_uppercase()
+                        && name != name.cow_to_uppercase()
                         && !allow_list.contains(name)
                     {
                         capital_load_globals.insert(lvalue_id, name.to_string());
                     }
                 }
-                InstructionValue::CallExpression { callee, loc, .. } => {
+                InstructionValue::CallExpression { callee, span, .. } => {
                     let callee_id = callee.identifier;
                     if let Some(callee_name) = capital_load_globals.get(&callee_id) {
-                        env.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::CapitalizedCalls,
-                            reason: reason.to_string(),
-                            description: Some(format!("{callee_name} may be a component")),
-                            loc: *loc,
-                            suggestions: None,
-                        })?;
+                        env.record_error(
+                            ErrorCategory::CapitalizedCalls
+                                .diagnostic(reason)
+                                .with_help(format!("{callee_name} may be a component"))
+                                .with_labels(*span),
+                        )?;
                         continue;
                     }
                 }
-                InstructionValue::PropertyLoad { property, .. } => {
-                    if let PropertyLiteral::String(prop_name) = property {
-                        if prop_name.starts_with(|c: char| c.is_ascii_uppercase()) {
-                            capitalized_properties.insert(lvalue_id, prop_name.clone());
-                        }
+                InstructionValue::PropertyLoad {
+                    property: PropertyLiteral::String(prop_name),
+                    ..
+                } => {
+                    if prop_name.starts_with(|c: char| c.is_ascii_uppercase()) {
+                        capitalized_properties.insert(lvalue_id, prop_name.clone());
                     }
                 }
-                InstructionValue::MethodCall { property, loc, .. } => {
+                InstructionValue::MethodCall { property, span, .. } => {
                     let property_id = property.identifier;
                     if let Some(prop_name) = capitalized_properties.get(&property_id) {
-                        env.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::CapitalizedCalls,
-                            reason: reason.to_string(),
-                            description: Some(format!("{prop_name} may be a component")),
-                            loc: *loc,
-                            suggestions: None,
-                        })?;
+                        env.record_error(
+                            ErrorCategory::CapitalizedCalls
+                                .diagnostic(reason)
+                                .with_help(format!("{prop_name} may be a component"))
+                                .with_labels(*span),
+                        )?;
                     }
                 }
                 _ => {}

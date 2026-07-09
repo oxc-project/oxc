@@ -18,7 +18,7 @@
 //! * every reference / binding identifier → `is_jsx = false`
 //! * function / class declaration & expression names → `is_declaration_name = true`
 //! * JSX element-name identifiers → `is_jsx = true` plus the enclosing
-//!   `JSXOpeningElement`'s loc as `opening_element_loc`
+//!   `JSXOpeningElement`'s span as `opening_element_span`
 //! * identifiers inside TS type subtrees → `in_type_annotation = true`
 //!
 //! Positions deliberately NOT recorded, matching the original walker:
@@ -36,11 +36,9 @@ use rustc_hash::FxHashMap;
 use oxc_ast::ast as oxc;
 use oxc_ast_visit::Visit;
 
-use crate::react_compiler_hir::SourceLocation;
-use crate::scope::ScopeInfo;
+use crate::react_compiler_hir::Span;
 
 use crate::react_compiler_lowering::FunctionNode;
-use crate::react_compiler_lowering::source_loc::LineOffsets;
 
 /// Source location and whether the identifier is a JSXIdentifier.
 pub struct IdentifierLocEntry {
@@ -48,11 +46,11 @@ pub struct IdentifierLocEntry {
     /// callers iterating by node_id can still do position-range containment
     /// checks without a separate bridge map.
     pub start: u32,
-    pub loc: SourceLocation,
+    pub span: Span,
     pub is_jsx: bool,
     /// For JSX identifiers that are the root name of a JSXOpeningElement,
-    /// stores the JSXOpeningElement's loc (which spans the full tag).
-    pub opening_element_loc: Option<SourceLocation>,
+    /// stores the JSXOpeningElement's span (which spans the full tag).
+    pub opening_element_span: Option<Span>,
     /// True if this identifier is the name of a function/class declaration
     /// (not an expression reference). Used by `gather_captured_context` to
     /// skip non-expression positions, matching the TS behavior where the
@@ -70,38 +68,36 @@ pub struct IdentifierLocEntry {
 /// and JSXIdentifier nodes in a function's AST.
 pub type IdentifierLocIndex = FxHashMap<u32, IdentifierLocEntry>;
 
-struct IdentifierLocVisitor<'a> {
-    line_offsets: &'a LineOffsets,
+struct IdentifierLocVisitor {
     index: IdentifierLocIndex,
-    /// Tracks the current JSXOpeningElement's loc while walking its name.
-    current_opening_element_loc: Option<SourceLocation>,
+    /// Tracks the current JSXOpeningElement's span while walking its name.
+    current_opening_element_span: Option<Span>,
     /// Depth of TS type subtrees currently being walked. Identifiers recorded
     /// while this is non-zero get `in_type_annotation = true`.
     type_depth: u32,
 }
 
-impl<'a> IdentifierLocVisitor<'a> {
+impl IdentifierLocVisitor {
     fn record(&mut self, span: oxc_span::Span, is_jsx: bool, is_declaration_name: bool) {
-        let opening_element_loc =
-            if is_jsx { self.current_opening_element_loc.clone() } else { None };
+        let opening_element_span = if is_jsx { self.current_opening_element_span } else { None };
         // `or_insert` keeps the richer entry already recorded for a node_id.
         // Function/class names are recorded as declaration names *before* the
         // generic binding-identifier walk re-visits them, so the declaration
         // entry wins, matching the original visitor.
         self.index.entry(span.start).or_insert(IdentifierLocEntry {
             start: span.start,
-            loc: self.line_offsets.source_location(span),
+            span,
             is_jsx,
-            opening_element_loc,
+            opening_element_span,
             is_declaration_name,
             in_type_annotation: self.type_depth > 0,
         });
     }
 
     /// Record the JSX element name identifiers (and only those) while the
-    /// `current_opening_element_loc` is set, mirroring the original
+    /// `current_opening_element_span` is set, mirroring the original
     /// `walk_jsx_element_name` / `walk_jsx_member_expression`.
-    fn record_jsx_element_name(&mut self, name: &oxc::JSXElementName<'a>) {
+    fn record_jsx_element_name<'a>(&mut self, name: &oxc::JSXElementName<'a>) {
         match name {
             oxc::JSXElementName::Identifier(id) => self.record(id.span, true, false),
             oxc::JSXElementName::IdentifierReference(id) => self.record(id.span, true, false),
@@ -112,7 +108,7 @@ impl<'a> IdentifierLocVisitor<'a> {
         }
     }
 
-    fn record_jsx_member_expression(&mut self, expr: &oxc::JSXMemberExpression<'a>) {
+    fn record_jsx_member_expression<'a>(&mut self, expr: &oxc::JSXMemberExpression<'a>) {
         match &expr.object {
             oxc::JSXMemberExpressionObject::IdentifierReference(id) => {
                 self.record(id.span, true, false);
@@ -126,7 +122,7 @@ impl<'a> IdentifierLocVisitor<'a> {
     }
 }
 
-impl<'a> Visit<'a> for IdentifierLocVisitor<'a> {
+impl<'a> Visit<'a> for IdentifierLocVisitor {
     fn visit_identifier_reference(&mut self, it: &oxc::IdentifierReference<'a>) {
         self.record(it.span, false, false);
     }
@@ -193,16 +189,15 @@ impl<'a> Visit<'a> for IdentifierLocVisitor<'a> {
     }
 
     fn visit_jsx_element(&mut self, it: &oxc::JSXElement<'a>) {
-        // Mirror the original walker: the opening element's loc is active only
+        // Mirror the original walker: the opening element's span is active only
         // while walking the element name (and its type arguments); it is cleared
         // before attributes and children.
-        self.current_opening_element_loc =
-            Some(self.line_offsets.source_location(it.opening_element.span));
+        self.current_opening_element_span = Some(it.opening_element.span);
         self.record_jsx_element_name(&it.opening_element.name);
         if let Some(type_args) = &it.opening_element.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_args);
         }
-        self.current_opening_element_loc = None;
+        self.current_opening_element_span = None;
 
         // The original walker visited only attribute VALUES and spread arguments,
         // never attribute names, and had no closing-element handling.
@@ -273,18 +268,10 @@ impl<'a> Visit<'a> for IdentifierLocVisitor<'a> {
 /// Walks the function's params (`FormalParameters`) and body, mirroring the
 /// original Babel `IdentifierLocVisitor`: the function node itself is not
 /// re-entered (its own name, if any, is recorded explicitly).
-pub fn build_identifier_loc_index(
-    func: &FunctionNode<'_>,
-    scope_info: &ScopeInfo,
-    line_offsets: &LineOffsets,
-) -> IdentifierLocIndex {
-    // The loc index is purely position-driven; scope tracking is not required.
-    let _ = scope_info;
-
+pub fn build_identifier_loc_index(func: &FunctionNode<'_>) -> IdentifierLocIndex {
     let mut visitor = IdentifierLocVisitor {
-        line_offsets,
         index: FxHashMap::default(),
-        current_opening_element_loc: None,
+        current_opening_element_span: None,
         type_depth: 0,
     };
 

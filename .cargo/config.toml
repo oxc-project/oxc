@@ -8,6 +8,7 @@ coverage = "run -p oxc_coverage --profile coverage --"
 benchmark = "bench -p oxc_benchmark"
 minsize = "run -p oxc_minsize --profile coverage --"
 allocs = "run -p oxc_track_memory_allocations --profile coverage --"
+lint-timings = "run -p oxc_track_linter_timings --profile coverage --"
 rule = "run -p rulegen"
 lintgen = "run -p oxc_linter_codegen"
 

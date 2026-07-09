@@ -7,7 +7,6 @@
 //!
 //! Ported from TypeScript `src/Utils/DisjointSet.ts`.
 
-use rustc_hash::FxHashSet;
 use std::hash::Hash;
 
 use crate::react_compiler_utils::FxIndexMap;
@@ -18,6 +17,12 @@ use crate::react_compiler_utils::FxIndexMap;
 /// Uses `FxIndexMap` to preserve insertion order (matching TS `Map` behavior).
 pub struct DisjointSet<K: Copy + Eq + Hash> {
     entries: FxIndexMap<K, K>,
+}
+
+impl<K: Copy + Eq + Hash> Default for DisjointSet<K> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<K: Copy + Eq + Hash> DisjointSet<K> {
@@ -74,27 +79,6 @@ impl<K: Copy + Eq + Hash> DisjointSet<K> {
         Some(self.find(item))
     }
 
-    /// Returns true if the item is present in the set.
-    ///
-    /// Corresponds to TS `has(item: T): boolean`.
-    pub fn has(&self, item: K) -> bool {
-        self.entries.contains_key(&item)
-    }
-
-    /// Forces the set into canonical form (all items pointing directly to their
-    /// root) and returns a map of items to their roots.
-    ///
-    /// Corresponds to TS `canonicalize(): Map<T, T>`.
-    pub fn canonicalize(&mut self) -> FxIndexMap<K, K> {
-        let mut result = FxIndexMap::default();
-        let keys: Vec<K> = self.entries.keys().copied().collect();
-        for item in keys {
-            let root = self.find(item);
-            result.insert(item, root);
-        }
-        result
-    }
-
     /// Calls the provided callback once for each item in the disjoint set,
     /// passing the item and the group root to which it belongs.
     ///
@@ -108,39 +92,5 @@ impl<K: Copy + Eq + Hash> DisjointSet<K> {
             let group = self.find(item);
             f(item, group);
         }
-    }
-
-    /// Groups all items by their root and returns the groups as a list of sets.
-    ///
-    /// Corresponds to TS `buildSets(): Array<Set<T>>`.
-    pub fn build_sets(&mut self) -> Vec<FxHashSet<K>> {
-        let mut group_to_index: FxIndexMap<K, usize> = FxIndexMap::default();
-        let mut sets: Vec<FxHashSet<K>> = Vec::new();
-        let keys: Vec<K> = self.entries.keys().copied().collect();
-        for item in keys {
-            let group = self.find(item);
-            let idx = match group_to_index.get(&group) {
-                Some(&idx) => idx,
-                None => {
-                    let idx = sets.len();
-                    group_to_index.insert(group, idx);
-                    sets.push(FxHashSet::default());
-                    idx
-                }
-            };
-            sets[idx].insert(item);
-        }
-        sets
-    }
-
-    /// Returns the number of items in the set.
-    ///
-    /// Corresponds to TS `get size(): number`.
-    pub fn len(&self) -> usize {
-        self.entries.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.entries.is_empty()
     }
 }

@@ -2,16 +2,8 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/error.invalid-type-provider-hooklike-module-default-not-hook.js
 ---
-import { c as _c } from "react/compiler-runtime";
-import foo from "useDefaultExportNotTypedAsHook";
-function Component() {
-	const $ = _c(1);
-	let t0;
-	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-		t0 = <div>{foo()}</div>;
-		$[0] = t0;
-	} else {
-		t0 = $[0];
-	}
-	return t0;
-}
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Config: Invalid type configuration for module", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(89), length: 3 }, primary: false }]), help: Some("Expected type for `import ... from 'useDefaultExportNotTypedAsHook'` to be a hook based on the module name"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

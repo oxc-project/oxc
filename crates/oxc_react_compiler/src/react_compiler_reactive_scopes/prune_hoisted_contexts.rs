@@ -10,7 +10,7 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
+use crate::diagnostics::{CompilerError, ErrorCategory};
 use crate::react_compiler_hir::{
     EvaluationOrder, IdentifierId, InstructionKind, InstructionValue, Place, ReactiveFunction,
     ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveValue,
@@ -106,20 +106,17 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         place: &Place,
         state: &mut VisitorState,
     ) -> Result<(), CompilerError> {
-        if let Some(kind) = state.uninitialized.get(&place.identifier) {
-            if let UninitializedKind::Func { definition } = kind {
-                if *definition != Some(place.identifier) {
-                    let mut err = CompilerError::new();
-                    err.push_error_detail(
-                        CompilerErrorDetail::new(
-                            ErrorCategory::Todo,
-                            "[PruneHoistedContexts] Rewrite hoisted function references"
-                                .to_string(),
-                        )
-                        .with_loc(place.loc),
-                    );
-                    return Err(err);
-                }
+        if let Some(UninitializedKind::Func { definition }) =
+            state.uninitialized.get(&place.identifier)
+        {
+            if *definition != Some(place.identifier) {
+                let mut err = CompilerError::new();
+                err.push(
+                    ErrorCategory::Todo
+                        .diagnostic("[PruneHoistedContexts] Rewrite hoisted function references")
+                        .with_labels(place.span),
+                );
+                return Err(err);
             }
         }
         Ok(())
@@ -162,13 +159,12 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                         if let Some(kind) = state.uninitialized.get(&lvalue_id) {
                             if !matches!(kind, UninitializedKind::Func { .. }) {
                                 let mut err = CompilerError::new();
-                                err.push_error_detail(
-                                    CompilerErrorDetail::new(
-                                        ErrorCategory::Invariant,
-                                        "[PruneHoistedContexts] Unexpected hoisted function"
-                                            .to_string(),
-                                    )
-                                    .with_loc(instruction.loc),
+                                err.push(
+                                    ErrorCategory::Invariant
+                                        .diagnostic(
+                                            "[PruneHoistedContexts] Unexpected hoisted function",
+                                        )
+                                        .with_labels(instruction.span),
                                 );
                                 return Err(err);
                             }
@@ -178,12 +174,10 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                         }
                     } else {
                         let mut err = CompilerError::new();
-                        err.push_error_detail(
-                            CompilerErrorDetail::new(
-                                ErrorCategory::Todo,
-                                "[PruneHoistedContexts] Unexpected kind".to_string(),
-                            )
-                            .with_loc(instruction.loc),
+                        err.push(
+                            ErrorCategory::Todo
+                                .diagnostic("[PruneHoistedContexts] Unexpected kind")
+                                .with_labels(instruction.span),
                         );
                         return Err(err);
                     }

@@ -88,7 +88,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
-use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, ReplaceWith};
 use oxc_ast::{
     ast::*,
     builder::{AstBuilder, NONE},
@@ -551,11 +551,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a> {
         if !expr.is_jsx() {
             return;
         }
-        *expr = match expr.take_in(ctx) {
+        expr.replace_with(|expr| match expr {
             Expression::JSXElement(e) => self.transform_jsx_element(e, ctx),
             Expression::JSXFragment(e) => self.transform_jsx(e.span, None, e.unbox().children, ctx),
             _ => unreachable!(),
-        };
+        });
     }
 }
 

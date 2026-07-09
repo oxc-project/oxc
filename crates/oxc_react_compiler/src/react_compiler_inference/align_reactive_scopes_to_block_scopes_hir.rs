@@ -131,7 +131,7 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
 
         // Visit instruction lvalues and operands
         let block = func.body.blocks.get(&block_id).unwrap();
-        let instr_ids: Vec<InstructionId> = block.instructions.iter().copied().collect();
+        let instr_ids: Vec<InstructionId> = block.instructions.to_vec();
         for &instr_id in &instr_ids {
             let instr = &func.instructions[instr_id.0 as usize];
             let eval_order = instr.id;

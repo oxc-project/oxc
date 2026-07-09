@@ -14,11 +14,12 @@
 //!   vars, aliasing between params/context-vars/return-value)
 //! - The legacy `Effect` to store on each Place
 
+use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_utils::FxIndexMap;
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::type_config::{ValueKind, ValueReason};
 use crate::react_compiler_hir::visitors::{
@@ -27,7 +28,7 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     AliasingEffect, BlockId, Effect, EvaluationOrder, FunctionId, HirFunction, IdentifierId,
-    InstructionValue, MutationReason, ParamPattern, Place, SourceLocation, Terminal, is_jsx_type,
+    InstructionValue, MutationReason, ParamPattern, Place, Span, Terminal, is_jsx_type,
     is_primitive_type,
 };
 
@@ -64,7 +65,7 @@ struct Edge {
 #[derive(Debug, Clone)]
 struct MutationInfo {
     kind: MutationKind,
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
 }
 
 #[derive(Debug, Clone)]
@@ -214,6 +215,7 @@ impl AliasingState {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn mutate(
         &mut self,
         index: usize,
@@ -221,7 +223,7 @@ impl AliasingState {
         end: Option<EvaluationOrder>, // None for simulated mutations
         transitive: bool,
         start_kind: MutationKind,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
         reason: Option<MutationReason>,
         env: &mut Environment,
         should_record_errors: bool,
@@ -283,20 +285,20 @@ impl AliasingState {
             if entry.transitive {
                 match &node.transitive {
                     None => {
-                        node.transitive = Some(MutationInfo { kind: entry.kind, loc });
+                        node.transitive = Some(MutationInfo { kind: entry.kind, span });
                     }
                     Some(existing) if existing.kind < entry.kind => {
-                        node.transitive = Some(MutationInfo { kind: entry.kind, loc });
+                        node.transitive = Some(MutationInfo { kind: entry.kind, span });
                     }
                     _ => {}
                 }
             } else {
                 match &node.local {
                     None => {
-                        node.local = Some(MutationInfo { kind: entry.kind, loc });
+                        node.local = Some(MutationInfo { kind: entry.kind, span });
                     }
                     Some(existing) if existing.kind < entry.kind => {
-                        node.local = Some(MutationInfo { kind: entry.kind, loc });
+                        node.local = Some(MutationInfo { kind: entry.kind, span });
                     }
                     _ => {}
                 }
@@ -429,7 +431,7 @@ pub fn infer_mutation_aliasing_ranges(
     func: &mut HirFunction,
     env: &mut Environment,
     is_function_expression: bool,
-) -> Result<Vec<AliasingEffect>, CompilerDiagnostic> {
+) -> Result<Vec<AliasingEffect>, OxcDiagnostic> {
     let mut function_effects: Vec<AliasingEffect> = Vec::new();
 
     // =========================================================================
@@ -490,7 +492,7 @@ pub fn infer_mutation_aliasing_ranges(
             state.create(&phi.place, NodeValue::Phi);
             for (&pred, operand) in &phi.operands {
                 if !seen_blocks.contains(&pred) {
-                    pending_phis.entry(pred).or_insert_with(Vec::new).push(PendingPhiOperand {
+                    pending_phis.entry(pred).or_default().push(PendingPhiOperand {
                         from: operand.clone(),
                         into: phi.place.clone(),
                         index,
@@ -659,7 +661,7 @@ pub fn infer_mutation_aliasing_ranges(
             Some(EvaluationOrder(mutation.id.0 + 1)),
             mutation.transitive,
             mutation.kind,
-            mutation.place.loc,
+            mutation.place.span,
             mutation.reason.clone(),
             env,
             should_record_errors,
@@ -867,10 +869,8 @@ pub fn infer_mutation_aliasing_ranges(
                         operand_effects.insert(value.identifier, Effect::Store);
                     }
                     AliasingEffect::Apply { .. } => {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
+                        return Err(ErrorCategory::Invariant.diagnostic(
                             "[AnalyzeFunctions] Expected Apply effects to be replaced with more precise effects",
-                            None,
                         ));
                     }
                     AliasingEffect::MutateTransitive { value, .. }
@@ -1026,14 +1026,13 @@ pub fn infer_mutation_aliasing_ranges(
             None, // simulated mutation
             true,
             MutationKind::Conditional,
-            into.loc,
+            into.span,
             None,
             env,
             false, // never record errors for simulated mutations
         );
 
-        for j in 0..tracked.len() {
-            let from = &tracked[j];
+        for from in &tracked {
             if from.identifier == into.identifier || from.identifier == returns_identifier_id {
                 continue;
             }
@@ -1078,12 +1077,12 @@ fn collect_param_effects(
         match local.kind {
             MutationKind::Conditional => {
                 function_effects.push(AliasingEffect::MutateConditionally {
-                    value: Place { loc: local.loc, ..place.clone() },
+                    value: Place { span: local.span, ..place.clone() },
                 });
             }
             MutationKind::Definite => {
                 function_effects.push(AliasingEffect::Mutate {
-                    value: Place { loc: local.loc, ..place.clone() },
+                    value: Place { span: local.span, ..place.clone() },
                     reason: node.mutation_reason.clone(),
                 });
             }
@@ -1095,12 +1094,12 @@ fn collect_param_effects(
         match transitive.kind {
             MutationKind::Conditional => {
                 function_effects.push(AliasingEffect::MutateTransitiveConditionally {
-                    value: Place { loc: transitive.loc, ..place.clone() },
+                    value: Place { span: transitive.span, ..place.clone() },
                 });
             }
             MutationKind::Definite => {
                 function_effects.push(AliasingEffect::MutateTransitive {
-                    value: Place { loc: transitive.loc, ..place.clone() },
+                    value: Place { span: transitive.span, ..place.clone() },
                 });
             }
             MutationKind::None => {}

@@ -11,13 +11,11 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, SourceLocation,
-};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     ArrayPatternElement, Effect, ObjectPropertyOrSpread, Pattern, PropertyLiteral,
-    PrunedReactiveScopeBlock, ReactiveTerminalStatement,
+    PrunedReactiveScopeBlock, ReactiveTerminalStatement, Span,
 };
 use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, Identifier, IdentifierId, IdentifierName, InstructionKind,
@@ -31,7 +29,7 @@ struct ManualMemoBlockState {
     /// Reassigned temporaries (declaration_id -> set of identifier ids that were reassigned to it).
     reassignments: FxHashMap<DeclarationId, FxHashSet<IdentifierId>>,
     /// Source location of the StartMemoize instruction.
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
     /// Declarations produced within this manual memo block.
     decls: FxHashSet<DeclarationId>,
     /// Normalized deps from source (useMemo/useCallback dep array).
@@ -142,7 +140,7 @@ fn visit_scope(scope_block: &ReactiveScopeBlock, state: &mut VisitorState<'_, '_
         if let Some(ref deps_from_source) = memo_state.deps_from_source {
             let scope = &state.env.scopes[scope_block.scope.0 as usize];
             let deps = scope.dependencies.clone();
-            let memo_loc = memo_state.loc;
+            let memo_span = memo_state.span;
             let decls = memo_state.decls.clone();
             let deps_from_source = deps_from_source.clone();
             let temporaries = state.temporaries.clone();
@@ -154,7 +152,7 @@ fn visit_scope(scope_block: &ReactiveScopeBlock, state: &mut VisitorState<'_, '_
                     &decls,
                     &deps_from_source,
                     state.env,
-                    memo_loc,
+                    memo_span,
                 );
             }
         }
@@ -198,7 +196,7 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
             let deps_from_source = deps.clone();
 
             state.manual_memo_state = Some(ManualMemoBlockState {
-                loc: instr.loc,
+                span: instr.span,
                 decls: FxHashSet::default(),
                 deps_from_source,
                 manual_memo_id: *manual_memo_id,
@@ -206,28 +204,24 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
             });
 
             // Check that each dependency's scope has completed before the memo
-            // TS: for (const {identifier, loc} of eachInstructionValueOperand(value))
+            // TS: for (const {identifier, span} of eachInstructionValueOperand(value))
             let operand_places = start_memoize_operands(deps);
             for place in &operand_places {
                 let ident = &state.env.identifiers[place.identifier.0 as usize];
                 if let Some(scope_id) = ident.scope {
                     if !state.scopes.contains(&scope_id) && !state.pruned_scopes.contains(&scope_id)
                     {
-                        let diag = CompilerDiagnostic::new(
-                            ErrorCategory::PreserveManualMemo,
-                            "Existing memoization could not be preserved",
-                            Some(
+                        let diag = ErrorCategory::PreserveManualMemo
+                            .diagnostic("Existing memoization could not be preserved")
+                            .with_help(
                                 "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. \
-                                 This dependency may be mutated later, which could cause the value to change unexpectedly".to_string(),
-                            ),
-                        )
-                        .with_detail(CompilerDiagnosticDetail::Error {
-                            loc: place.loc,
-                            message: Some(
-                                "This dependency may be modified later".to_string(),
-                            ),
-                            identifier_name: None,
-                        });
+                                 This dependency may be mutated later, which could cause the value to change unexpectedly",
+                            )
+                            .with_labels(
+                                place
+                                    .span
+                                    .map(|s| s.label("This dependency may be modified later")),
+                            );
                         state.env.record_diagnostic(diag);
                     }
                 }
@@ -245,10 +239,7 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
             }
 
             // TS: CompilerError.invariant(state.manualMemoState.manualMemoId === value.manualMemoId, ...)
-            if state
-                .manual_memo_state
-                .as_ref()
-                .map_or(true, |s| s.manual_memo_id != *manual_memo_id)
+            if state.manual_memo_state.as_ref().is_none_or(|s| s.manual_memo_id != *manual_memo_id)
             {
                 state.manual_memo_state = None;
                 return;
@@ -270,13 +261,13 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
 
                     for id in decls_to_check {
                         if is_unmemoized(id, &state.scopes, &state.env.identifiers) {
-                            record_unmemoized_error(decl.loc, state.env);
+                            record_unmemoized_error(decl.span, state.env);
                         }
                     }
                 } else {
                     // Single identifier with scope
                     if is_unmemoized(decl.identifier, &state.scopes, &state.env.identifiers) {
-                        record_unmemoized_error(decl.loc, state.env);
+                        record_unmemoized_error(decl.span, state.env);
                     }
                 }
             }
@@ -296,21 +287,21 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
                     .insert(value.identifier);
             }
         }
-        ReactiveValue::Instruction(InstructionValue::LoadLocal { place, .. }) => {
-            if state.manual_memo_state.is_some() {
-                let place_ident = &state.env.identifiers[place.identifier.0 as usize];
-                if let Some(ref lvalue) = instr.lvalue {
-                    let lvalue_ident = &state.env.identifiers[lvalue.identifier.0 as usize];
-                    if place_ident.scope.is_some() && lvalue_ident.scope.is_none() {
-                        state
-                            .manual_memo_state
-                            .as_mut()
-                            .unwrap()
-                            .reassignments
-                            .entry(lvalue_ident.declaration_id)
-                            .or_default()
-                            .insert(place.identifier);
-                    }
+        ReactiveValue::Instruction(InstructionValue::LoadLocal { place, .. })
+            if state.manual_memo_state.is_some() =>
+        {
+            let place_ident = &state.env.identifiers[place.identifier.0 as usize];
+            if let Some(ref lvalue) = instr.lvalue {
+                let lvalue_ident = &state.env.identifiers[lvalue.identifier.0 as usize];
+                if place_ident.scope.is_some() && lvalue_ident.scope.is_none() {
+                    state
+                        .manual_memo_state
+                        .as_mut()
+                        .unwrap()
+                        .reassignments
+                        .entry(lvalue_ident.declaration_id)
+                        .or_default()
+                        .insert(place.identifier);
                 }
             }
         }
@@ -318,19 +309,13 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
     }
 }
 
-fn record_unmemoized_error(loc: Option<SourceLocation>, env: &mut Environment) {
-    let diag = CompilerDiagnostic::new(
-        ErrorCategory::PreserveManualMemo,
-        "Existing memoization could not be preserved",
-        Some(
-            "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output".to_string(),
-        ),
-    )
-    .with_detail(CompilerDiagnosticDetail::Error {
-        loc,
-        message: Some("Could not preserve existing memoization".to_string()),
-        identifier_name: None,
-    });
+fn record_unmemoized_error(span: Option<Span>, env: &mut Environment) {
+    let diag = ErrorCategory::PreserveManualMemo
+        .diagnostic("Existing memoization could not be preserved")
+        .with_help(
+            "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output",
+        )
+        .with_labels(span.map(|s| s.label("Could not preserve existing memoization")));
     env.record_diagnostic(diag);
 }
 
@@ -365,7 +350,7 @@ fn record_temporaries(instr: &ReactiveInstruction, state: &mut VisitorState<'_, 
                     constant: false,
                 },
                 path: Vec::new(),
-                loc: lvalue.loc,
+                span: lvalue.span,
             },
         );
     }
@@ -418,7 +403,7 @@ fn record_deps_in_value(value: &ReactiveValue, state: &mut VisitorState<'_, '_>)
                                         constant: false,
                                     },
                                     path: Vec::new(),
-                                    loc: lvalue.place.loc,
+                                    span: lvalue.place.span,
                                 },
                             );
                         }
@@ -438,7 +423,7 @@ fn record_deps_in_value(value: &ReactiveValue, state: &mut VisitorState<'_, '_>)
                                             constant: false,
                                         },
                                         path: Vec::new(),
-                                        loc: place.loc,
+                                        span: place.span,
                                     },
                                 );
                             }
@@ -553,18 +538,12 @@ fn compare_deps(
     if is_subpath
         && (source.path.len() == inferred.path.len()
             || (inferred.path.len() >= source.path.len()
-                && !inferred
-                    .path
-                    .iter()
-                    .any(|t| t.property == PropertyLiteral::String("current".to_string()))))
+                && !inferred.path.iter().any(|t| t.property.is_string("current"))))
     {
         CompareDependencyResult::Ok
     } else if is_subpath {
-        if source.path.iter().any(|t| t.property == PropertyLiteral::String("current".to_string()))
-            || inferred
-                .path
-                .iter()
-                .any(|t| t.property == PropertyLiteral::String("current".to_string()))
+        if source.path.iter().any(|t| t.property.is_string("current"))
+            || inferred.path.iter().any(|t| t.property.is_string("current"))
         {
             CompareDependencyResult::RefAccessDifference
         } else {
@@ -583,21 +562,20 @@ fn pretty_print_scope_dependency(
 ) -> String {
     let ident = &identifiers[dep_id.0 as usize];
     let root_str = match &ident.name {
-        Some(IdentifierName::Named(n)) => n.clone(),
-        Some(IdentifierName::Promoted(n)) => n.clone(),
-        None => "[unnamed]".to_string(),
+        Some(IdentifierName::Named(n) | IdentifierName::Promoted(n)) => n.as_str(),
+        None => "[unnamed]",
     };
     let path_str: String = dep_path
         .iter()
         .map(|entry| {
-            let prop = match &entry.property {
-                PropertyLiteral::String(s) => s.clone(),
-                PropertyLiteral::Number(n) => format!("{}", n),
-            };
-            if entry.optional { format!("?.{}", prop) } else { format!(".{}", prop) }
+            let prefix = if entry.optional { "?." } else { "." };
+            match &entry.property {
+                PropertyLiteral::String(s) => format!("{prefix}{s}"),
+                PropertyLiteral::Number(n) => format!("{prefix}{n}"),
+            }
         })
         .collect();
-    format!("{}{}", root_str, path_str)
+    format!("{root_str}{path_str}")
 }
 
 /// Pretty-print a manual memo dependency for error messages.
@@ -610,29 +588,24 @@ fn print_manual_memo_dependency(
         ManualMemoDependencyRoot::NamedLocal { value, .. } => {
             let ident = &identifiers[value.identifier.0 as usize];
             match &ident.name {
-                Some(IdentifierName::Named(n)) => n.clone(),
-                Some(IdentifierName::Promoted(n)) => n.clone(),
-                None => "[unnamed]".to_string(),
+                Some(IdentifierName::Named(n) | IdentifierName::Promoted(n)) => n.as_str(),
+                None => "[unnamed]",
             }
         }
-        ManualMemoDependencyRoot::Global { identifier_name } => identifier_name.clone(),
+        ManualMemoDependencyRoot::Global { identifier_name } => identifier_name.as_str(),
     };
     let path_str: String = dep
         .path
         .iter()
         .map(|entry| {
-            let prop = match &entry.property {
-                PropertyLiteral::String(s) => s.clone(),
-                PropertyLiteral::Number(n) => format!("{}", n),
-            };
-            if with_optional && entry.optional {
-                format!("?.{}", prop)
-            } else {
-                format!(".{}", prop)
+            let prefix = if with_optional && entry.optional { "?." } else { "." };
+            match &entry.property {
+                PropertyLiteral::String(s) => format!("{prefix}{s}"),
+                PropertyLiteral::Number(n) => format!("{prefix}{n}"),
             }
         })
         .collect();
-    format!("{}{}", root_str, path_str)
+    format!("{root_str}{path_str}")
 }
 
 fn get_compare_dependency_result_description(result: CompareDependencyResult) -> &'static str {
@@ -655,13 +628,13 @@ fn validate_inferred_dep(
     decls_within_memo_block: &FxHashSet<DeclarationId>,
     valid_deps_in_memo_block: &[ManualMemoDependency],
     env: &mut Environment,
-    memo_location: Option<SourceLocation>,
+    memo_location: Option<Span>,
 ) {
     // Normalize the dependency through temporaries
     let normalized_dep = if let Some(temp) = temporaries.get(&dep_id) {
         let mut path = temp.path.clone();
         path.extend_from_slice(dep_path);
-        ManualMemoDependency { root: temp.root.clone(), path, loc: temp.loc }
+        ManualMemoDependency { root: temp.root.clone(), path, span: temp.span }
     } else {
         let ident = &env.identifiers[dep_id.0 as usize];
         // TS: CompilerError.invariant(dep.identifier.name?.kind === 'named', ...)
@@ -674,12 +647,12 @@ fn validate_inferred_dep(
                     identifier: dep_id,
                     effect: Effect::Read,
                     reactive: false,
-                    loc: ident.loc,
+                    span: ident.span,
                 },
                 constant: false,
             },
             path: dep_path.to_vec(),
-            loc: ident.loc,
+            span: ident.span,
         }
     };
 
@@ -715,31 +688,27 @@ fn validate_inferred_dep(
             .collect::<Vec<_>>()
             .join(", ");
         let result_desc = error_diagnostic
-            .map(|d| get_compare_dependency_result_description(d).to_string())
-            .unwrap_or_else(|| "Inferred dependency not present in source".to_string());
-        format!(
+            .map(get_compare_dependency_result_description)
+            .unwrap_or("Inferred dependency not present in source");
+        Some(format!(
             "The inferred dependency was `{}`, but the source dependencies were [{}]. {}",
             dep_str, source_deps_str, result_desc
-        )
+        ))
     } else {
-        String::new()
+        None
     };
 
     let description = format!(
         "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. \
          The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. {}",
-        extra
+        extra.as_deref().unwrap_or_default()
     );
 
-    let diag = CompilerDiagnostic::new(
-        ErrorCategory::PreserveManualMemo,
-        "Existing memoization could not be preserved",
-        Some(description.trim().to_string()),
-    )
-    .with_detail(CompilerDiagnosticDetail::Error {
-        loc: memo_location,
-        message: Some("Could not preserve existing manual memoization".to_string()),
-        identifier_name: None,
-    });
+    let diag = ErrorCategory::PreserveManualMemo
+        .diagnostic("Existing memoization could not be preserved")
+        .with_help(description.trim().to_string())
+        .with_labels(
+            memo_location.map(|s| s.label("Could not preserve existing manual memoization")),
+        );
     env.record_diagnostic(diag);
 }

@@ -26,7 +26,9 @@
 //!
 //! Analogous to TS `ReactiveScopes/FlattenScopesWithHooksOrUseHIR.ts`.
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BlockId, HirFunction, InstructionValue, Terminal, Type, is_use_operator_type,
@@ -39,7 +41,7 @@ use crate::react_compiler_hir::{
 pub fn flatten_scopes_with_hooks_or_use_hir(
     func: &mut HirFunction,
     env: &Environment,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let mut active_scopes: Vec<ActiveScope> = Vec::new();
     let mut prune: Vec<BlockId> = Vec::new();
 
@@ -88,16 +90,13 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
         let block = &func.body.blocks[&id];
         let terminal = &block.terminal;
 
-        let (scope_block, fallthrough, eval_id, loc, scope) = match terminal {
-            Terminal::Scope { block, fallthrough, id, loc, scope } => {
-                (*block, *fallthrough, *id, *loc, *scope)
+        let (scope_block, fallthrough, eval_id, span, scope) = match terminal {
+            Terminal::Scope { block, fallthrough, id, span, scope } => {
+                (*block, *fallthrough, *id, *span, *scope)
             }
             _ => {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    format!("Expected block bb{} to end in a scope terminal", id.0),
-                    None,
-                ));
+                return Err(ErrorCategory::Invariant
+                    .diagnostic(format!("Expected block bb{} to end in a scope terminal", id.0)));
             }
         };
 
@@ -109,9 +108,9 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
         {
             // This was a scope just for a hook call, which doesn't need memoization.
             // Flatten it away. We rely on PruneUnusedLabels to do the actual flattening.
-            Terminal::Label { block: scope_block, fallthrough, id: eval_id, loc }
+            Terminal::Label { block: scope_block, fallthrough, id: eval_id, span }
         } else {
-            Terminal::PrunedScope { block: scope_block, fallthrough, scope, id: eval_id, loc }
+            Terminal::PrunedScope { block: scope_block, fallthrough, scope, id: eval_id, span }
         };
 
         let block_mut = func.body.blocks.get_mut(&id).unwrap();
@@ -125,6 +124,6 @@ struct ActiveScope {
     fallthrough: BlockId,
 }
 
-fn is_hook_or_use(env: &Environment, ty: &Type) -> Result<bool, CompilerDiagnostic> {
+fn is_hook_or_use(env: &Environment, ty: &Type) -> Result<bool, OxcDiagnostic> {
     Ok(env.get_hook_kind_for_type(ty)?.is_some() || is_use_operator_type(ty))
 }

@@ -7,9 +7,9 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{
     each_instruction_lvalue_ids, each_instruction_value_operand, each_terminal_operand,
@@ -23,7 +23,7 @@ use crate::react_compiler_hir::{
 /// binding from one render but does not update.
 pub fn validate_locals_not_reassigned_after_render(func: &HirFunction, env: &mut Environment) {
     let mut context_variables: FxHashSet<IdentifierId> = FxHashSet::default();
-    let mut diagnostics: Vec<CompilerDiagnostic> = Vec::new();
+    let mut diagnostics: Vec<OxcDiagnostic> = Vec::new();
 
     let reassignment = get_context_reassignment(
         func,
@@ -46,20 +46,16 @@ pub fn validate_locals_not_reassigned_after_render(func: &HirFunction, env: &mut
     if let Some(reassignment_place) = reassignment {
         let variable_name = format_variable_name(&reassignment_place, &env.identifiers);
         env.record_diagnostic(
-            CompilerDiagnostic::new(
-                ErrorCategory::Immutability,
-                "Cannot reassign variable after render completes",
-                Some(format!(
+            ErrorCategory::Immutability
+                .diagnostic("Cannot reassign variable after render completes")
+                .with_help(format!(
                     "Reassigning {} after render has completed can cause inconsistent \
                      behavior on subsequent renders. Consider using state instead",
                     variable_name
-                )),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                loc: reassignment_place.loc,
-                message: Some(format!("Cannot reassign {} after render completes", variable_name)),
-                identifier_name: None,
-            }),
+                ))
+                .with_labels(reassignment_place.span.map(|s| {
+                    s.label(format!("Cannot reassign {} after render completes", variable_name))
+                })),
         );
     }
 }
@@ -78,6 +74,7 @@ fn format_variable_name(place: &Place, identifiers: &[Identifier]) -> String {
 /// context variable. Returns the reassigned place if found, or None.
 ///
 /// Side effects: accumulates async-function reassignment diagnostics into `diagnostics`.
+#[allow(clippy::only_used_in_recursion, clippy::too_many_arguments)]
 fn get_context_reassignment(
     func: &HirFunction,
     identifiers: &[Identifier],
@@ -87,7 +84,7 @@ fn get_context_reassignment(
     context_variables: &mut FxHashSet<IdentifierId>,
     is_function_expression: bool,
     is_async: bool,
-    diagnostics: &mut Vec<CompilerDiagnostic>,
+    diagnostics: &mut Vec<OxcDiagnostic>,
 ) -> Option<Place> {
     // Maps identifiers to the place that they reassign
     let mut reassigning_functions: FxHashMap<IdentifierId, Place> = FxHashMap::default();
@@ -135,23 +132,16 @@ fn get_context_reassignment(
                             let variable_name =
                                 format_variable_name(reassignment_place, identifiers);
                             diagnostics.push(
-                                CompilerDiagnostic::new(
-                                    ErrorCategory::Immutability,
-                                    "Cannot reassign variable in async function",
-                                    Some(
+                                ErrorCategory::Immutability
+                                    .diagnostic("Cannot reassign variable in async function")
+                                    .with_help(
                                         "Reassigning a variable in an async function can cause \
                                          inconsistent behavior on subsequent renders. \
-                                         Consider using state instead"
-                                            .to_string(),
-                                    ),
-                                )
-                                .with_detail(
-                                    CompilerDiagnosticDetail::Error {
-                                        loc: reassignment_place.loc,
-                                        message: Some(format!("Cannot reassign {}", variable_name)),
-                                        identifier_name: None,
-                                    },
-                                ),
+                                         Consider using state instead",
+                                    )
+                                    .with_labels(reassignment_place.span.map(|s| {
+                                        s.label(format!("Cannot reassign {}", variable_name))
+                                    })),
                             );
                             // Return null (don't propagate further) — matches TS behavior
                             return None;

@@ -1,19 +1,18 @@
 use std::mem::take;
 
+use cow_utils::CowUtils;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerDiagnostic;
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::{CompilerError, ErrorCategory};
 
 use crate::react_compiler_hir::default_module_type_provider::default_module_type_provider;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
+use crate::react_compiler_hir::globals;
 use crate::react_compiler_hir::globals::Global;
 use crate::react_compiler_hir::globals::GlobalRegistry;
-use crate::react_compiler_hir::globals::{self};
 use crate::react_compiler_hir::object_shape::BUILT_IN_MIXED_READONLY_ID;
 use crate::react_compiler_hir::object_shape::FunctionSignature;
 use crate::react_compiler_hir::object_shape::HookKind;
@@ -57,14 +56,17 @@ pub struct Environment<'a> {
     // Error accumulation
     pub errors: CompilerError,
 
+    // Set during lowering when the function uses syntax the compiler can't handle
+    // yet (currently `using`/`await using`, whose disposal semantics aren't
+    // preserved). Signals the pipeline to skip compiling this function silently —
+    // no diagnostic — while other functions in the file still compile.
+    pub skip_compilation: bool,
+
     // Function type classification (Component, Hook, Other)
     pub fn_type: ReactFunctionType,
 
     // Output mode (Client, Ssr, Lint)
     pub output_mode: OutputMode,
-
-    // Source file code (for fast refresh hash computation)
-    pub code: Option<String>,
 
     // Pre-resolved import local names for instrumentation/hook guards.
     // Set by the program-level code before compilation.
@@ -178,9 +180,9 @@ impl<'a> Environment<'a> {
             scopes: Vec::new(),
             functions: Vec::new(),
             errors: CompilerError::new(),
+            skip_compilation: false,
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
-            code: None,
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
@@ -201,52 +203,6 @@ impl<'a> Environment<'a> {
             outlined_functions: Vec::new(),
             uid_known_names: None,
             config,
-        }
-    }
-
-    /// Create a child Environment for compiling an outlined function.
-    ///
-    /// The child shares the same config, globals, and shapes, and receives copies of
-    /// all arenas (identifiers, types, scopes, functions) so that references from
-    /// the outlined HIR remain valid. Block/scope counters start past the cloned
-    /// data to avoid ID conflicts.
-    pub fn for_outlined_fn(&self, fn_type: ReactFunctionType) -> Self {
-        Self {
-            // Start block counter past any existing blocks in the outlined function.
-            // The outlined function has BlockId(0), parent may have more. Use parent's
-            // counter which is guaranteed to be > any block ID in the outlined function.
-            next_block_id_counter: self.next_block_id_counter,
-            // Scope counter must be consistent with scopes vec length
-            next_scope_id_counter: self.scopes.len() as u32,
-            next_mutable_range_id_counter: self.next_mutable_range_id_counter,
-            identifiers: self.identifiers.clone(),
-            types: self.types.clone(),
-            scopes: self.scopes.clone(),
-            functions: self.functions.clone(),
-            errors: CompilerError::new(),
-            fn_type,
-            output_mode: self.output_mode,
-            code: self.code.clone(),
-            instrument_fn_name: self.instrument_fn_name.clone(),
-            instrument_gating_name: self.instrument_gating_name.clone(),
-            hook_guard_name: self.hook_guard_name.clone(),
-            renames: Vec::new(),
-            reference_node_ids: FxHashSet::default(),
-            hoisted_identifiers: FxHashSet::default(),
-            validate_preserve_existing_memoization_guarantees: self
-                .validate_preserve_existing_memoization_guarantees,
-            validate_no_set_state_in_render: self.validate_no_set_state_in_render,
-            enable_preserve_existing_memoization_guarantees: self
-                .enable_preserve_existing_memoization_guarantees,
-            globals: self.globals.clone(),
-            shapes: self.shapes.clone(),
-            module_types: self.module_types.clone(),
-            module_type_errors: self.module_type_errors.clone(),
-            config: self.config.clone(),
-            default_nonmutating_hook: self.default_nonmutating_hook.clone(),
-            default_mutating_hook: self.default_mutating_hook.clone(),
-            outlined_functions: Vec::new(),
-            uid_known_names: self.uid_known_names.clone(),
         }
     }
 
@@ -282,7 +238,7 @@ impl<'a> Environment<'a> {
             mutable_range,
             scope: None,
             type_: type_id,
-            loc: None,
+            span: None,
         });
         id
     }
@@ -300,7 +256,7 @@ impl<'a> Environment<'a> {
             reassignments: Vec::new(),
             early_return_value: None,
             merged: Vec::new(),
-            loc: None,
+            span: None,
         });
         id
     }
@@ -323,28 +279,21 @@ impl<'a> Environment<'a> {
         id
     }
 
-    pub fn record_error(&mut self, detail: CompilerErrorDetail) -> Result<(), CompilerError> {
-        if detail.category == ErrorCategory::Invariant {
-            let detail_clone = detail.clone();
-            self.errors.push_error_detail(detail);
-            let mut err = CompilerError::new();
-            err.push_error_detail(detail_clone);
-            return Err(err);
+    pub fn record_error(&mut self, diagnostic: OxcDiagnostic) -> Result<(), CompilerError> {
+        if ErrorCategory::Invariant.matches(&diagnostic) {
+            self.errors.push(diagnostic.clone());
+            return Err(CompilerError::from(diagnostic));
         }
-        self.errors.push_error_detail(detail);
+        self.errors.push(diagnostic);
         Ok(())
     }
 
-    pub fn record_diagnostic(&mut self, diagnostic: CompilerDiagnostic) {
-        self.errors.push_diagnostic(diagnostic);
+    pub fn record_diagnostic(&mut self, diagnostic: OxcDiagnostic) {
+        self.errors.push(diagnostic);
     }
 
     pub fn has_errors(&self) -> bool {
         self.errors.has_any_errors()
-    }
-
-    pub fn error_count(&self) -> usize {
-        self.errors.details.len()
     }
 
     /// Check if any recorded errors have Invariant category.
@@ -352,10 +301,6 @@ impl<'a> Environment<'a> {
     /// which aborts the current operation.
     pub fn has_invariant_errors(&self) -> bool {
         self.errors.has_invariant_errors()
-    }
-
-    pub fn errors(&self) -> &CompilerError {
-        &self.errors
     }
 
     pub fn take_errors(&mut self) -> CompilerError {
@@ -366,16 +311,6 @@ impl<'a> Environment<'a> {
         errors
     }
 
-    /// Take errors added after position `since_count`, leaving earlier errors in place.
-    /// Used to detect new errors added by a specific pass.
-    pub fn take_errors_since(&mut self, since_count: usize) -> CompilerError {
-        let mut taken = CompilerError::new();
-        if self.errors.details.len() > since_count {
-            taken.details = self.errors.details.split_off(since_count);
-        }
-        taken
-    }
-
     /// Take only the Invariant errors, leaving non-Invariant errors in place.
     /// In TS, Invariant errors throw as a separate CompilerError, so only
     /// the Invariant error is surfaced.
@@ -383,53 +318,15 @@ impl<'a> Environment<'a> {
         let mut invariant = CompilerError::new();
         let mut remaining = CompilerError::new();
         let old = take(&mut self.errors);
-        for detail in old.details {
-            let is_invariant = match &detail {
-                CompilerErrorOrDiagnostic::Diagnostic(d) => d.category == ErrorCategory::Invariant,
-                CompilerErrorOrDiagnostic::ErrorDetail(d) => d.category == ErrorCategory::Invariant,
-            };
-            if is_invariant {
-                invariant.details.push(detail);
+        for diagnostic in old.diagnostics {
+            if ErrorCategory::Invariant.matches(&diagnostic) {
+                invariant.push(diagnostic);
             } else {
-                remaining.details.push(detail);
+                remaining.push(diagnostic);
             }
         }
         self.errors = remaining;
         invariant
-    }
-
-    /// Check if any recorded errors have Todo category.
-    /// In TS, Todo errors throw immediately via CompilerError.throwTodo().
-    pub fn has_todo_errors(&self) -> bool {
-        self.errors.details.iter().any(|d| match d {
-            CompilerErrorOrDiagnostic::Diagnostic(d) => d.category == ErrorCategory::Todo,
-            CompilerErrorOrDiagnostic::ErrorDetail(d) => d.category == ErrorCategory::Todo,
-        })
-    }
-
-    /// Take errors that would have been thrown in TS (Invariant and Todo),
-    /// leaving other accumulated errors in place.
-    pub fn take_thrown_errors(&mut self) -> CompilerError {
-        let mut thrown = CompilerError::new();
-        let mut remaining = CompilerError::new();
-        let old = take(&mut self.errors);
-        for detail in old.details {
-            let is_thrown = match &detail {
-                CompilerErrorOrDiagnostic::Diagnostic(d) => {
-                    d.category == ErrorCategory::Invariant || d.category == ErrorCategory::Todo
-                }
-                CompilerErrorOrDiagnostic::ErrorDetail(d) => {
-                    d.category == ErrorCategory::Invariant || d.category == ErrorCategory::Todo
-                }
-            };
-            if is_thrown {
-                thrown.details.push(detail);
-            } else {
-                remaining.details.push(detail);
-            }
-        }
-        self.errors = remaining;
-        thrown
     }
 
     /// Check if a binding has been hoisted (via DeclareContext) already.
@@ -448,12 +345,12 @@ impl<'a> Environment<'a> {
 
     /// Resolve a non-local binding to its type. Ported from TS `getGlobalDeclaration`.
     ///
-    /// The `loc` parameter is used for error diagnostics when validating module type
+    /// The `span` parameter is used for error diagnostics when validating module type
     /// configurations. Pass `None` if no source location is available.
     pub fn get_global_declaration(
         &mut self,
         binding: &NonLocalBinding,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     ) -> Result<Option<Global>, CompilerError> {
         match binding {
             NonLocalBinding::ModuleLocal { name, .. } => {
@@ -488,12 +385,10 @@ impl<'a> Environment<'a> {
                 if let Some(errors) = self.module_type_errors.remove(module.as_str()) {
                     if let Some(first_error) = errors.into_iter().next() {
                         self.record_error(
-                            CompilerErrorDetail::new(
-                                ErrorCategory::Config,
-                                "Invalid type configuration for module",
-                            )
-                            .with_description(format!("{}", first_error))
-                            .with_loc(loc),
+                            ErrorCategory::Config
+                                .diagnostic("Invalid type configuration for module")
+                                .with_help(first_error)
+                                .with_labels(span),
                         )?;
                     }
                 }
@@ -532,12 +427,10 @@ impl<'a> Environment<'a> {
                 if let Some(errors) = self.module_type_errors.remove(module.as_str()) {
                     if let Some(first_error) = errors.into_iter().next() {
                         self.record_error(
-                            CompilerErrorDetail::new(
-                                ErrorCategory::Config,
-                                "Invalid type configuration for module",
-                            )
-                            .with_description(format!("{}", first_error))
-                            .with_loc(loc),
+                            ErrorCategory::Config
+                                .diagnostic("Invalid type configuration for module")
+                                .with_help(first_error)
+                                .with_labels(span),
                         )?;
                     }
                 }
@@ -555,16 +448,14 @@ impl<'a> Environment<'a> {
                             self.get_hook_kind_for_type(&imported_type).ok().flatten().is_some();
                         if expect_hook != is_hook {
                             self.record_error(
-                                CompilerErrorDetail::new(
-                                    ErrorCategory::Config,
-                                    "Invalid type configuration for module",
-                                )
-                                .with_description(format!(
-                                    "Expected type for `import ... from '{}'` {} based on the module name",
-                                    module,
-                                    if expect_hook { "to be a hook" } else { "not to be a hook" }
-                                ))
-                                .with_loc(loc),
+                                ErrorCategory::Config
+                                    .diagnostic("Invalid type configuration for module")
+                                    .with_help(format!(
+                                        "Expected type for `import ... from '{}'` {} based on the module name",
+                                        module,
+                                        if expect_hook { "to be a hook" } else { "not to be a hook" }
+                                    ))
+                                    .with_labels(span),
                             )?;
                         }
                         return Ok(Some(imported_type));
@@ -603,108 +494,21 @@ impl<'a> Environment<'a> {
         None
     }
 
-    /// Get the type of a named property on a receiver type.
-    /// Ported from TS `getPropertyType`.
-    pub fn get_property_type(
-        &mut self,
-        receiver: &Type,
-        property: &str,
-    ) -> Result<Option<Type>, CompilerDiagnostic> {
-        let shape_id = match receiver {
-            Type::Object { shape_id } | Type::Function { shape_id, .. } => shape_id.as_deref(),
-            _ => None,
-        };
-        if let Some(shape_id) = shape_id {
-            let shape = self.shapes.get(shape_id).ok_or_else(|| {
-                CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    format!("[HIR] Forget internal error: cannot resolve shape {}", shape_id),
-                    None,
-                )
-            })?;
-            if let Some(ty) = shape.properties.get(property) {
-                return Ok(Some(ty.clone()));
-            }
-            // Fall through to wildcard
-            if let Some(ty) = shape.properties.get("*") {
-                return Ok(Some(ty.clone()));
-            }
-            // If property name looks like a hook, return custom hook type
-            if is_hook_name(property) {
-                return Ok(Some(self.get_custom_hook_type()));
-            }
-            return Ok(None);
-        }
-        // No shape ID — if property looks like a hook, return custom hook type
-        if is_hook_name(property) {
-            return Ok(Some(self.get_custom_hook_type()));
-        }
-        Ok(None)
-    }
-
-    /// Get the type of a numeric property on a receiver type.
-    /// Ported from the numeric branch of TS `getPropertyType`.
-    pub fn get_property_type_numeric(
-        &self,
-        receiver: &Type,
-    ) -> Result<Option<Type>, CompilerDiagnostic> {
-        let shape_id = match receiver {
-            Type::Object { shape_id } | Type::Function { shape_id, .. } => shape_id.as_deref(),
-            _ => None,
-        };
-        if let Some(shape_id) = shape_id {
-            let shape = self.shapes.get(shape_id).ok_or_else(|| {
-                CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    format!("[HIR] Forget internal error: cannot resolve shape {}", shape_id),
-                    None,
-                )
-            })?;
-            return Ok(shape.properties.get("*").cloned());
-        }
-        Ok(None)
-    }
-
-    /// Get the fallthrough (wildcard `*`) property type for computed property access.
-    /// Ported from TS `getFallthroughPropertyType`.
-    pub fn get_fallthrough_property_type(
-        &self,
-        receiver: &Type,
-    ) -> Result<Option<Type>, CompilerDiagnostic> {
-        let shape_id = match receiver {
-            Type::Object { shape_id } | Type::Function { shape_id, .. } => shape_id.as_deref(),
-            _ => None,
-        };
-        if let Some(shape_id) = shape_id {
-            let shape = self.shapes.get(shape_id).ok_or_else(|| {
-                CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    format!("[HIR] Forget internal error: cannot resolve shape {}", shape_id),
-                    None,
-                )
-            })?;
-            return Ok(shape.properties.get("*").cloned());
-        }
-        Ok(None)
-    }
-
     /// Get the function signature for a function type.
     /// Ported from TS `getFunctionSignature`.
     pub fn get_function_signature(
         &self,
         ty: &Type,
-    ) -> Result<Option<&FunctionSignature>, CompilerDiagnostic> {
+    ) -> Result<Option<&FunctionSignature>, OxcDiagnostic> {
         let shape_id = match ty {
             Type::Function { shape_id, .. } => shape_id.as_deref(),
             _ => return Ok(None),
         };
         if let Some(shape_id) = shape_id {
             let shape = self.shapes.get(shape_id).ok_or_else(|| {
-                CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    format!("[HIR] Forget internal error: cannot resolve shape {}", shape_id),
-                    None,
-                )
+                ErrorCategory::Invariant.diagnostic(format!(
+                    "[HIR] Forget internal error: cannot resolve shape {shape_id}"
+                ))
             })?;
             return Ok(shape.function_type.as_ref());
         }
@@ -713,10 +517,7 @@ impl<'a> Environment<'a> {
 
     /// Get the hook kind for a type, if it represents a hook.
     /// Ported from TS `getHookKindForType` in HIR.ts.
-    pub fn get_hook_kind_for_type(
-        &self,
-        ty: &Type,
-    ) -> Result<Option<&HookKind>, CompilerDiagnostic> {
+    pub fn get_hook_kind_for_type(&self, ty: &Type) -> Result<Option<&HookKind>, OxcDiagnostic> {
         Ok(self.get_function_signature(ty)?.and_then(|sig| sig.hook_kind.as_ref()))
     }
 
@@ -739,11 +540,9 @@ impl<'a> Environment<'a> {
         let module_type = module_config.map(|config| {
             let mut type_errors: Vec<String> = Vec::new();
             let ty = globals::install_type_config_with_errors(
-                &mut self.globals,
                 &mut self.shapes,
                 &config,
                 module_name,
-                (),
                 &mut type_errors,
             );
             // Store errors for later reporting when the import is actually used
@@ -757,7 +556,7 @@ impl<'a> Environment<'a> {
     }
 
     fn is_known_react_module(&self, module_name: &str) -> bool {
-        let lower = module_name.to_lowercase();
+        let lower = module_name.cow_to_lowercase();
         lower == "react" || lower == "react-dom"
     }
 
@@ -779,11 +578,6 @@ impl<'a> Environment<'a> {
     /// property resolution fallback when a property name looks like a hook.
     pub fn get_custom_hook_type_opt(&mut self) -> Option<Global> {
         Some(self.get_custom_hook_type())
-    }
-
-    /// Get a reference to the shapes registry.
-    pub fn shapes(&self) -> &ShapeRegistry {
-        &self.shapes
     }
 
     /// Get a reference to the globals registry.
@@ -891,11 +685,6 @@ impl<'a> Environment<'a> {
         self.outlined_functions.push(OutlinedFunctionEntry { func, fn_type });
     }
 
-    /// Get the outlined functions accumulated during compilation.
-    pub fn get_outlined_functions(&self) -> &[OutlinedFunctionEntry<'a>] {
-        &self.outlined_functions
-    }
-
     /// Take the outlined functions, leaving the vec empty.
     pub fn take_outlined_functions(&mut self) -> Vec<OutlinedFunctionEntry<'a>> {
         take(&mut self.outlined_functions)
@@ -920,36 +709,6 @@ impl<'a> Environment<'a> {
     }
 
     // =========================================================================
-    // Name resolution helpers
-    // =========================================================================
-
-    /// Get the user-visible name for an identifier.
-    ///
-    /// First checks the identifier's own name. If None, looks for another
-    /// identifier with the same `declaration_id` that has a name. This handles
-    /// SSA identifiers that don't carry names but share a declaration_id with
-    /// the original named identifier from lowering.
-    ///
-    /// This is analogous to `identifierName` on Babel's SourceLocation,
-    /// which the parser sets on every identifier node.
-    pub fn identifier_name_for_id(&self, id: IdentifierId) -> Option<String> {
-        let ident = &self.identifiers[id.0 as usize];
-        if let Some(name) = &ident.name {
-            return Some(name.value().to_string());
-        }
-        // Fall back: find another identifier with the same declaration_id that has a Named name
-        let decl_id = ident.declaration_id;
-        for other in &self.identifiers {
-            if other.declaration_id == decl_id {
-                if let Some(IdentifierName::Named(name)) = &other.name {
-                    return Some(name.clone());
-                }
-            }
-        }
-        None
-    }
-
-    // =========================================================================
     // ID-based type helper methods
     // =========================================================================
 
@@ -957,7 +716,7 @@ impl<'a> Environment<'a> {
     /// Looks up the identifier's type and checks its function signature.
     pub fn has_no_alias_signature(&self, identifier_id: IdentifierId) -> bool {
         let ty = &self.types[self.identifiers[identifier_id.0 as usize].type_.0 as usize];
-        self.get_function_signature(ty).ok().flatten().map_or(false, |sig| sig.no_alias)
+        self.get_function_signature(ty).ok().flatten().is_some_and(|sig| sig.no_alias)
     }
 
     /// Get the hook kind for an identifier, if its type represents a hook.
@@ -965,7 +724,7 @@ impl<'a> Environment<'a> {
     pub fn get_hook_kind_for_id(
         &self,
         identifier_id: IdentifierId,
-    ) -> Result<Option<&HookKind>, CompilerDiagnostic> {
+    ) -> Result<Option<&HookKind>, OxcDiagnostic> {
         let ty = &self.types[self.identifiers[identifier_id.0 as usize].type_.0 as usize];
         self.get_hook_kind_for_type(ty)
     }
@@ -988,17 +747,4 @@ pub fn is_hook_name(name: &str) -> bool {
     }
     let fourth_char = name.as_bytes()[3];
     fourth_char.is_ascii_uppercase() || fourth_char.is_ascii_digit()
-}
-
-/// Returns true if the name follows React naming conventions (component or hook).
-/// Components start with an uppercase letter; hooks match `use[A-Z0-9]`.
-pub fn is_react_like_name(name: &str) -> bool {
-    if name.is_empty() {
-        return false;
-    }
-    let first_char = name.as_bytes()[0];
-    if first_char.is_ascii_uppercase() {
-        return true;
-    }
-    is_hook_name(name)
 }

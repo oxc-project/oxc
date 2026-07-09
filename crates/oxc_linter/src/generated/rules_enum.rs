@@ -607,6 +607,7 @@ pub use crate::rules::unicorn::empty_brace_spaces::EmptyBraceSpaces as UnicornEm
 pub use crate::rules::unicorn::error_message::ErrorMessage as UnicornErrorMessage;
 pub use crate::rules::unicorn::escape_case::EscapeCase as UnicornEscapeCase;
 pub use crate::rules::unicorn::explicit_length_check::ExplicitLengthCheck as UnicornExplicitLengthCheck;
+pub use crate::rules::unicorn::explicit_timer_delay::ExplicitTimerDelay as UnicornExplicitTimerDelay;
 pub use crate::rules::unicorn::filename_case::FilenameCase as UnicornFilenameCase;
 pub use crate::rules::unicorn::import_style::ImportStyle as UnicornImportStyle;
 pub use crate::rules::unicorn::max_nested_calls::MaxNestedCalls as UnicornMaxNestedCalls;
@@ -623,6 +624,7 @@ pub use crate::rules::unicorn::no_array_reverse::NoArrayReverse as UnicornNoArra
 pub use crate::rules::unicorn::no_array_sort::NoArraySort as UnicornNoArraySort;
 pub use crate::rules::unicorn::no_await_expression_member::NoAwaitExpressionMember as UnicornNoAwaitExpressionMember;
 pub use crate::rules::unicorn::no_await_in_promise_methods::NoAwaitInPromiseMethods as UnicornNoAwaitInPromiseMethods;
+pub use crate::rules::unicorn::no_confusing_array_with::NoConfusingArrayWith as UnicornNoConfusingArrayWith;
 pub use crate::rules::unicorn::no_console_spaces::NoConsoleSpaces as UnicornNoConsoleSpaces;
 pub use crate::rules::unicorn::no_document_cookie::NoDocumentCookie as UnicornNoDocumentCookie;
 pub use crate::rules::unicorn::no_empty_file::NoEmptyFile as UnicornNoEmptyFile;
@@ -1328,6 +1330,7 @@ pub enum RuleEnum {
     UnicornErrorMessage(UnicornErrorMessage),
     UnicornEscapeCase(UnicornEscapeCase),
     UnicornExplicitLengthCheck(UnicornExplicitLengthCheck),
+    UnicornExplicitTimerDelay(UnicornExplicitTimerDelay),
     UnicornFilenameCase(UnicornFilenameCase),
     UnicornImportStyle(UnicornImportStyle),
     UnicornMaxNestedCalls(UnicornMaxNestedCalls),
@@ -1344,6 +1347,7 @@ pub enum RuleEnum {
     UnicornNoArraySort(UnicornNoArraySort),
     UnicornNoAwaitExpressionMember(UnicornNoAwaitExpressionMember),
     UnicornNoAwaitInPromiseMethods(UnicornNoAwaitInPromiseMethods),
+    UnicornNoConfusingArrayWith(UnicornNoConfusingArrayWith),
     UnicornNoConsoleSpaces(UnicornNoConsoleSpaces),
     UnicornNoDocumentCookie(UnicornNoDocumentCookie),
     UnicornNoEmptyFile(UnicornNoEmptyFile),
@@ -2230,7 +2234,8 @@ const UNICORN_EMPTY_BRACE_SPACES_ID: usize = UNICORN_CUSTOM_ERROR_DEFINITION_ID 
 const UNICORN_ERROR_MESSAGE_ID: usize = UNICORN_EMPTY_BRACE_SPACES_ID + 1usize;
 const UNICORN_ESCAPE_CASE_ID: usize = UNICORN_ERROR_MESSAGE_ID + 1usize;
 const UNICORN_EXPLICIT_LENGTH_CHECK_ID: usize = UNICORN_ESCAPE_CASE_ID + 1usize;
-const UNICORN_FILENAME_CASE_ID: usize = UNICORN_EXPLICIT_LENGTH_CHECK_ID + 1usize;
+const UNICORN_EXPLICIT_TIMER_DELAY_ID: usize = UNICORN_EXPLICIT_LENGTH_CHECK_ID + 1usize;
+const UNICORN_FILENAME_CASE_ID: usize = UNICORN_EXPLICIT_TIMER_DELAY_ID + 1usize;
 const UNICORN_IMPORT_STYLE_ID: usize = UNICORN_FILENAME_CASE_ID + 1usize;
 const UNICORN_MAX_NESTED_CALLS_ID: usize = UNICORN_IMPORT_STYLE_ID + 1usize;
 const UNICORN_NEW_FOR_BUILTINS_ID: usize = UNICORN_MAX_NESTED_CALLS_ID + 1usize;
@@ -2249,7 +2254,8 @@ const UNICORN_NO_ARRAY_SORT_ID: usize = UNICORN_NO_ARRAY_REVERSE_ID + 1usize;
 const UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID: usize = UNICORN_NO_ARRAY_SORT_ID + 1usize;
 const UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID: usize =
     UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID + 1usize;
-const UNICORN_NO_CONSOLE_SPACES_ID: usize = UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID + 1usize;
+const UNICORN_NO_CONFUSING_ARRAY_WITH_ID: usize = UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID + 1usize;
+const UNICORN_NO_CONSOLE_SPACES_ID: usize = UNICORN_NO_CONFUSING_ARRAY_WITH_ID + 1usize;
 const UNICORN_NO_DOCUMENT_COOKIE_ID: usize = UNICORN_NO_CONSOLE_SPACES_ID + 1usize;
 const UNICORN_NO_EMPTY_FILE_ID: usize = UNICORN_NO_DOCUMENT_COOKIE_ID + 1usize;
 const UNICORN_NO_HEX_ESCAPE_ID: usize = UNICORN_NO_EMPTY_FILE_ID + 1usize;
@@ -3204,6 +3210,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UNICORN_ERROR_MESSAGE_ID,
             Self::UnicornEscapeCase(_) => UNICORN_ESCAPE_CASE_ID,
             Self::UnicornExplicitLengthCheck(_) => UNICORN_EXPLICIT_LENGTH_CHECK_ID,
+            Self::UnicornExplicitTimerDelay(_) => UNICORN_EXPLICIT_TIMER_DELAY_ID,
             Self::UnicornFilenameCase(_) => UNICORN_FILENAME_CASE_ID,
             Self::UnicornImportStyle(_) => UNICORN_IMPORT_STYLE_ID,
             Self::UnicornMaxNestedCalls(_) => UNICORN_MAX_NESTED_CALLS_ID,
@@ -3222,6 +3229,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => UNICORN_NO_ARRAY_SORT_ID,
             Self::UnicornNoAwaitExpressionMember(_) => UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID,
             Self::UnicornNoAwaitInPromiseMethods(_) => UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID,
+            Self::UnicornNoConfusingArrayWith(_) => UNICORN_NO_CONFUSING_ARRAY_WITH_ID,
             Self::UnicornNoConsoleSpaces(_) => UNICORN_NO_CONSOLE_SPACES_ID,
             Self::UnicornNoDocumentCookie(_) => UNICORN_NO_DOCUMENT_COOKIE_ID,
             Self::UnicornNoEmptyFile(_) => UNICORN_NO_EMPTY_FILE_ID,
@@ -4171,6 +4179,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::NAME,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::NAME,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::NAME,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::NAME,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::NAME,
             Self::UnicornImportStyle(_) => UnicornImportStyle::NAME,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::NAME,
@@ -4189,6 +4198,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::NAME,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::NAME,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::NAME,
+            Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::NAME,
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::NAME,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::NAME,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::NAME,
@@ -5156,6 +5166,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::CATEGORY,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::CATEGORY,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::CATEGORY,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::CATEGORY,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::CATEGORY,
             Self::UnicornImportStyle(_) => UnicornImportStyle::CATEGORY,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::CATEGORY,
@@ -5174,6 +5185,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::CATEGORY,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::CATEGORY,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::CATEGORY,
+            Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::CATEGORY,
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::CATEGORY,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::CATEGORY,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::CATEGORY,
@@ -6144,6 +6156,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::FIX,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::FIX,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::FIX,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::FIX,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::FIX,
             Self::UnicornImportStyle(_) => UnicornImportStyle::FIX,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::FIX,
@@ -6162,6 +6175,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::FIX,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::FIX,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::FIX,
+            Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::FIX,
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::FIX,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::FIX,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::FIX,
@@ -7224,6 +7238,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::documentation(),
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::documentation(),
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::documentation(),
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::documentation(),
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::documentation(),
             Self::UnicornImportStyle(_) => UnicornImportStyle::documentation(),
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::documentation(),
@@ -7254,6 +7269,7 @@ impl RuleEnum {
             Self::UnicornNoAwaitInPromiseMethods(_) => {
                 UnicornNoAwaitInPromiseMethods::documentation()
             }
+            Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::documentation(),
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::documentation(),
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::documentation(),
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::documentation(),
@@ -9108,6 +9124,10 @@ impl RuleEnum {
                 UnicornExplicitLengthCheck::config_schema(generator)
                     .or_else(|| UnicornExplicitLengthCheck::schema(generator))
             }
+            Self::UnicornExplicitTimerDelay(_) => {
+                UnicornExplicitTimerDelay::config_schema(generator)
+                    .or_else(|| UnicornExplicitTimerDelay::schema(generator))
+            }
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::config_schema(generator)
                 .or_else(|| UnicornFilenameCase::schema(generator)),
             Self::UnicornImportStyle(_) => UnicornImportStyle::config_schema(generator)
@@ -9155,6 +9175,10 @@ impl RuleEnum {
             Self::UnicornNoAwaitInPromiseMethods(_) => {
                 UnicornNoAwaitInPromiseMethods::config_schema(generator)
                     .or_else(|| UnicornNoAwaitInPromiseMethods::schema(generator))
+            }
+            Self::UnicornNoConfusingArrayWith(_) => {
+                UnicornNoConfusingArrayWith::config_schema(generator)
+                    .or_else(|| UnicornNoConfusingArrayWith::schema(generator))
             }
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::config_schema(generator)
                 .or_else(|| UnicornNoConsoleSpaces::schema(generator)),
@@ -10664,6 +10688,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => "unicorn",
             Self::UnicornEscapeCase(_) => "unicorn",
             Self::UnicornExplicitLengthCheck(_) => "unicorn",
+            Self::UnicornExplicitTimerDelay(_) => "unicorn",
             Self::UnicornFilenameCase(_) => "unicorn",
             Self::UnicornImportStyle(_) => "unicorn",
             Self::UnicornMaxNestedCalls(_) => "unicorn",
@@ -10680,6 +10705,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => "unicorn",
             Self::UnicornNoAwaitExpressionMember(_) => "unicorn",
             Self::UnicornNoAwaitInPromiseMethods(_) => "unicorn",
+            Self::UnicornNoConfusingArrayWith(_) => "unicorn",
             Self::UnicornNoConsoleSpaces(_) => "unicorn",
             Self::UnicornNoDocumentCookie(_) => "unicorn",
             Self::UnicornNoEmptyFile(_) => "unicorn",
@@ -12544,6 +12570,9 @@ impl RuleEnum {
             Self::UnicornExplicitLengthCheck(_) => Ok(Self::UnicornExplicitLengthCheck(
                 UnicornExplicitLengthCheck::from_configuration(value)?,
             )),
+            Self::UnicornExplicitTimerDelay(_) => Ok(Self::UnicornExplicitTimerDelay(
+                UnicornExplicitTimerDelay::from_configuration(value)?,
+            )),
             Self::UnicornFilenameCase(_) => {
                 Ok(Self::UnicornFilenameCase(UnicornFilenameCase::from_configuration(value)?))
             }
@@ -12595,6 +12624,9 @@ impl RuleEnum {
             )),
             Self::UnicornNoAwaitInPromiseMethods(_) => Ok(Self::UnicornNoAwaitInPromiseMethods(
                 UnicornNoAwaitInPromiseMethods::from_configuration(value)?,
+            )),
+            Self::UnicornNoConfusingArrayWith(_) => Ok(Self::UnicornNoConfusingArrayWith(
+                UnicornNoConfusingArrayWith::from_configuration(value)?,
             )),
             Self::UnicornNoConsoleSpaces(_) => {
                 Ok(Self::UnicornNoConsoleSpaces(UnicornNoConsoleSpaces::from_configuration(value)?))
@@ -14217,6 +14249,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.to_configuration(),
             Self::UnicornEscapeCase(rule) => rule.to_configuration(),
             Self::UnicornExplicitLengthCheck(rule) => rule.to_configuration(),
+            Self::UnicornExplicitTimerDelay(rule) => rule.to_configuration(),
             Self::UnicornFilenameCase(rule) => rule.to_configuration(),
             Self::UnicornImportStyle(rule) => rule.to_configuration(),
             Self::UnicornMaxNestedCalls(rule) => rule.to_configuration(),
@@ -14233,6 +14266,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(rule) => rule.to_configuration(),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.to_configuration(),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.to_configuration(),
+            Self::UnicornNoConfusingArrayWith(rule) => rule.to_configuration(),
             Self::UnicornNoConsoleSpaces(rule) => rule.to_configuration(),
             Self::UnicornNoDocumentCookie(rule) => rule.to_configuration(),
             Self::UnicornNoEmptyFile(rule) => rule.to_configuration(),
@@ -15063,6 +15097,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.run(node, ctx),
             Self::UnicornEscapeCase(rule) => rule.run(node, ctx),
             Self::UnicornExplicitLengthCheck(rule) => rule.run(node, ctx),
+            Self::UnicornExplicitTimerDelay(rule) => rule.run(node, ctx),
             Self::UnicornFilenameCase(rule) => rule.run(node, ctx),
             Self::UnicornImportStyle(rule) => rule.run(node, ctx),
             Self::UnicornMaxNestedCalls(rule) => rule.run(node, ctx),
@@ -15079,6 +15114,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(rule) => rule.run(node, ctx),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.run(node, ctx),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.run(node, ctx),
+            Self::UnicornNoConfusingArrayWith(rule) => rule.run(node, ctx),
             Self::UnicornNoConsoleSpaces(rule) => rule.run(node, ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.run(node, ctx),
             Self::UnicornNoEmptyFile(rule) => rule.run(node, ctx),
@@ -15919,6 +15955,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.run_once(ctx),
             Self::UnicornEscapeCase(rule) => rule.run_once(ctx),
             Self::UnicornExplicitLengthCheck(rule) => rule.run_once(ctx),
+            Self::UnicornExplicitTimerDelay(rule) => rule.run_once(ctx),
             Self::UnicornFilenameCase(rule) => rule.run_once(ctx),
             Self::UnicornImportStyle(rule) => rule.run_once(ctx),
             Self::UnicornMaxNestedCalls(rule) => rule.run_once(ctx),
@@ -15935,6 +15972,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(rule) => rule.run_once(ctx),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.run_once(ctx),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.run_once(ctx),
+            Self::UnicornNoConfusingArrayWith(rule) => rule.run_once(ctx),
             Self::UnicornNoConsoleSpaces(rule) => rule.run_once(ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.run_once(ctx),
             Self::UnicornNoEmptyFile(rule) => rule.run_once(ctx),
@@ -16852,6 +16890,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornEscapeCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornExplicitLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornExplicitTimerDelay(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornFilenameCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornImportStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornMaxNestedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16870,6 +16909,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoConfusingArrayWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoConsoleSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoEmptyFile(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17749,6 +17789,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.should_run(ctx),
             Self::UnicornEscapeCase(rule) => rule.should_run(ctx),
             Self::UnicornExplicitLengthCheck(rule) => rule.should_run(ctx),
+            Self::UnicornExplicitTimerDelay(rule) => rule.should_run(ctx),
             Self::UnicornFilenameCase(rule) => rule.should_run(ctx),
             Self::UnicornImportStyle(rule) => rule.should_run(ctx),
             Self::UnicornMaxNestedCalls(rule) => rule.should_run(ctx),
@@ -17765,6 +17806,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(rule) => rule.should_run(ctx),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.should_run(ctx),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.should_run(ctx),
+            Self::UnicornNoConfusingArrayWith(rule) => rule.should_run(ctx),
             Self::UnicornNoConsoleSpaces(rule) => rule.should_run(ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.should_run(ctx),
             Self::UnicornNoEmptyFile(rule) => rule.should_run(ctx),
@@ -18788,6 +18830,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::IS_TSGOLINT_RULE,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::IS_TSGOLINT_RULE,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::IS_TSGOLINT_RULE,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::IS_TSGOLINT_RULE,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::IS_TSGOLINT_RULE,
             Self::UnicornImportStyle(_) => UnicornImportStyle::IS_TSGOLINT_RULE,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::IS_TSGOLINT_RULE,
@@ -18818,6 +18861,7 @@ impl RuleEnum {
             Self::UnicornNoAwaitInPromiseMethods(_) => {
                 UnicornNoAwaitInPromiseMethods::IS_TSGOLINT_RULE
             }
+            Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::IS_TSGOLINT_RULE,
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::IS_TSGOLINT_RULE,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::IS_TSGOLINT_RULE,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::IS_TSGOLINT_RULE,
@@ -19917,6 +19961,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::VERSION,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::VERSION,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::VERSION,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::VERSION,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::VERSION,
             Self::UnicornImportStyle(_) => UnicornImportStyle::VERSION,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::VERSION,
@@ -19935,6 +19980,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::VERSION,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::VERSION,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::VERSION,
+            Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::VERSION,
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::VERSION,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::VERSION,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::VERSION,
@@ -20951,6 +20997,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::HAS_CONFIG,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::HAS_CONFIG,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::HAS_CONFIG,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::HAS_CONFIG,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::HAS_CONFIG,
             Self::UnicornImportStyle(_) => UnicornImportStyle::HAS_CONFIG,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::HAS_CONFIG,
@@ -20971,6 +21018,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::HAS_CONFIG,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::HAS_CONFIG,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::HAS_CONFIG,
+            Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::HAS_CONFIG,
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::HAS_CONFIG,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::HAS_CONFIG,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::HAS_CONFIG,
@@ -21960,6 +22008,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::INFO,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::INFO,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::INFO,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::INFO,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::INFO,
             Self::UnicornImportStyle(_) => UnicornImportStyle::INFO,
             Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::INFO,
@@ -21978,6 +22027,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::INFO,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::INFO,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::INFO,
+            Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::INFO,
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::INFO,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::INFO,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::INFO,
@@ -22848,6 +22898,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.types_info(),
             Self::UnicornEscapeCase(rule) => rule.types_info(),
             Self::UnicornExplicitLengthCheck(rule) => rule.types_info(),
+            Self::UnicornExplicitTimerDelay(rule) => rule.types_info(),
             Self::UnicornFilenameCase(rule) => rule.types_info(),
             Self::UnicornImportStyle(rule) => rule.types_info(),
             Self::UnicornMaxNestedCalls(rule) => rule.types_info(),
@@ -22864,6 +22915,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(rule) => rule.types_info(),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.types_info(),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.types_info(),
+            Self::UnicornNoConfusingArrayWith(rule) => rule.types_info(),
             Self::UnicornNoConsoleSpaces(rule) => rule.types_info(),
             Self::UnicornNoDocumentCookie(rule) => rule.types_info(),
             Self::UnicornNoEmptyFile(rule) => rule.types_info(),
@@ -23691,6 +23743,7 @@ impl RuleEnum {
             Self::UnicornErrorMessage(rule) => rule.run_info(),
             Self::UnicornEscapeCase(rule) => rule.run_info(),
             Self::UnicornExplicitLengthCheck(rule) => rule.run_info(),
+            Self::UnicornExplicitTimerDelay(rule) => rule.run_info(),
             Self::UnicornFilenameCase(rule) => rule.run_info(),
             Self::UnicornImportStyle(rule) => rule.run_info(),
             Self::UnicornMaxNestedCalls(rule) => rule.run_info(),
@@ -23707,6 +23760,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(rule) => rule.run_info(),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.run_info(),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.run_info(),
+            Self::UnicornNoConfusingArrayWith(rule) => rule.run_info(),
             Self::UnicornNoConsoleSpaces(rule) => rule.run_info(),
             Self::UnicornNoDocumentCookie(rule) => rule.run_info(),
             Self::UnicornNoEmptyFile(rule) => rule.run_info(),
@@ -24630,6 +24684,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornErrorMessage(UnicornErrorMessage::default()),
         RuleEnum::UnicornEscapeCase(UnicornEscapeCase::default()),
         RuleEnum::UnicornExplicitLengthCheck(UnicornExplicitLengthCheck::default()),
+        RuleEnum::UnicornExplicitTimerDelay(UnicornExplicitTimerDelay::default()),
         RuleEnum::UnicornFilenameCase(UnicornFilenameCase::default()),
         RuleEnum::UnicornImportStyle(UnicornImportStyle::default()),
         RuleEnum::UnicornMaxNestedCalls(UnicornMaxNestedCalls::default()),
@@ -24648,6 +24703,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornNoArraySort(UnicornNoArraySort::default()),
         RuleEnum::UnicornNoAwaitExpressionMember(UnicornNoAwaitExpressionMember::default()),
         RuleEnum::UnicornNoAwaitInPromiseMethods(UnicornNoAwaitInPromiseMethods::default()),
+        RuleEnum::UnicornNoConfusingArrayWith(UnicornNoConfusingArrayWith::default()),
         RuleEnum::UnicornNoConsoleSpaces(UnicornNoConsoleSpaces::default()),
         RuleEnum::UnicornNoDocumentCookie(UnicornNoDocumentCookie::default()),
         RuleEnum::UnicornNoEmptyFile(UnicornNoEmptyFile::default()),

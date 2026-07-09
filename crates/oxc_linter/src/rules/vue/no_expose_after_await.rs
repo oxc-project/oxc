@@ -127,11 +127,11 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
                 return None;
             }
             let binding_id = prop.value.get_binding_identifier()?;
-            binding_id.symbol_id.get().map(ExposeBinding::Expose)
+            Some(ExposeBinding::Expose(binding_id.symbol_id()))
         }),
         // `setup(_, ctx)` — whole context bound to a name
         BindingPattern::BindingIdentifier(binding_id) => {
-            binding_id.symbol_id.get().map(ExposeBinding::Ctx)
+            Some(ExposeBinding::Ctx(binding_id.symbol_id()))
         }
         _ => None,
     };

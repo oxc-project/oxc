@@ -11,7 +11,7 @@
 
 [package]
 name = "oxc_react_compiler"
-version = "0.138.0"
+version = "0.139.0"
 publish = true
 authors.workspace = true
 categories.workspace = true
@@ -27,11 +27,6 @@ description = "oxc integration for the Rust port of React Compiler"
 doctest = false
 test = false
 
-[features]
-# Compile in the HIR debug printer (`react_compiler::debug_print`). Off by default;
-# the runtime `PluginOptions::debug` flag only produces output when this is enabled.
-debug = []
-
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
@@ -46,6 +41,7 @@ oxc_syntax = { workspace = true }
 hmac-sha256 = { workspace = true }
 indexmap = { workspace = true }
 rustc-hash = { workspace = true }
+cow-utils = { workspace = true }
 
 [dev-dependencies]
 # The example and integration tests parse source and print the compiled program; the
@@ -73,6 +69,10 @@ disallowed_types = "allow" # `react_compiler_ast`'s `ScopeInfo`/`ScopeData` fiel
 collapsible_if = "allow"
 needless_return = "allow"
 unnecessary_unwrap = "allow"
+result_large_err = "allow" # `Result<T, OxcDiagnostic>` everywhere; same trade-off as the workspace allow
+for_kv_map = "allow"
+question_mark = "allow"
+unneeded_wildcard_pattern = "allow"
 
 # The vendored modules' doc comments reference types like `Vec<PatternLike>`
 # without backticks; relax rustdoc for them rather than editing upstream code.

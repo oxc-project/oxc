@@ -15,14 +15,15 @@
 //! 3. MergeOverlappingReactiveScopes ensures scopes do not overlap.
 //! 4. BuildReactiveBlocks groups the statements for each scope.
 
+use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
-    DeclarationId, EvaluationOrder, HirFunction, IdentifierId, InstructionValue, Pattern, Position,
-    ScopeId, SourceLocation, is_primitive_type,
+    DeclarationId, EvaluationOrder, HirFunction, IdentifierId, InstructionValue, Pattern, ScopeId,
+    Span, is_primitive_type,
 };
 use crate::react_compiler_utils::DisjointSet;
 
@@ -39,7 +40,7 @@ use crate::react_compiler_utils::DisjointSet;
 pub fn infer_reactive_scope_variables(
     func: &mut HirFunction,
     env: &mut Environment,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     // Phase 1: find disjoint sets of co-mutating identifiers
     let mut scope_identifiers = find_disjoint_mutable_values(func, env);
 
@@ -49,14 +50,14 @@ pub fn infer_reactive_scope_variables(
 
     scope_identifiers.for_each(|identifier_id, group_id| {
         let ident_range = env.identifiers[identifier_id.0 as usize].mutable_range.clone();
-        let ident_loc = env.identifiers[identifier_id.0 as usize].loc;
+        let ident_span = env.identifiers[identifier_id.0 as usize].span;
 
         let state = scopes.entry(group_id).or_insert_with(|| {
             let scope_id = env.next_scope_id();
             // Initialize scope range from the first member
             let scope = &mut env.scopes[scope_id.0 as usize];
             scope.range = ident_range.clone();
-            ScopeState { scope_id, loc: ident_loc }
+            ScopeState { scope_id, span: ident_span }
         });
 
         // Update scope range
@@ -73,16 +74,16 @@ pub fn infer_reactive_scope_variables(
         }
 
         // Merge location
-        state.loc = merge_location(state.loc, ident_loc);
+        state.span = merge_location(state.span, ident_span);
 
         // Assign the scope to this identifier
         let scope_id = state.scope_id;
         env.identifiers[identifier_id.0 as usize].scope = Some(scope_id);
     });
 
-    // Set loc on each scope
-    for (_group_id, state) in &scopes {
-        env.scopes[state.scope_id.0 as usize].loc = state.loc;
+    // Set span on each scope
+    for state in scopes.values() {
+        env.scopes[state.scope_id.0 as usize].span = state.span;
     }
 
     // Update each identifier's mutable_range to match its scope's range
@@ -108,24 +109,20 @@ pub fn infer_reactive_scope_variables(
             EvaluationOrder(max_instruction.0.max(block.terminal.evaluation_order().0));
     }
 
-    for (_group_id, state) in &scopes {
+    for state in scopes.values() {
         let scope = &env.scopes[state.scope_id.0 as usize];
         if scope.range.start == EvaluationOrder(0)
             || scope.range.end == EvaluationOrder(0)
             || max_instruction == EvaluationOrder(0)
             || scope.range.end.0 > max_instruction.0 + 1
         {
-            return Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
-                &format!(
-                    "Invalid mutable range for scope: Scope @{} has range [{}:{}] but the valid range is [1:{}]",
-                    scope.id.0,
-                    scope.range.start.0,
-                    scope.range.end.0,
-                    max_instruction.0 + 1,
-                ),
-                None,
-            ));
+            return Err(ErrorCategory::Invariant.diagnostic(format!(
+                "Invalid mutable range for scope: Scope @{} has range [{}:{}] but the valid range is [1:{}]",
+                scope.id.0,
+                scope.range.start.0,
+                scope.range.end.0,
+                max_instruction.0 + 1,
+            )));
         }
     }
 
@@ -134,33 +131,16 @@ pub fn infer_reactive_scope_variables(
 
 struct ScopeState {
     scope_id: ScopeId,
-    loc: Option<SourceLocation>,
+    span: Option<Span>,
 }
 
 /// Merge two source locations, preferring non-None values.
 /// Corresponds to TS `mergeLocation`.
-fn merge_location(l: Option<SourceLocation>, r: Option<SourceLocation>) -> Option<SourceLocation> {
+fn merge_location(l: Option<Span>, r: Option<Span>) -> Option<Span> {
     match (l, r) {
         (None, r) => r,
         (l, None) => l,
-        (Some(l), Some(r)) => Some(SourceLocation {
-            start: Position {
-                line: l.start.line.min(r.start.line),
-                column: l.start.column.min(r.start.column),
-                index: match (l.start.index, r.start.index) {
-                    (Some(a), Some(b)) => Some(a.min(b)),
-                    (a, b) => a.or(b),
-                },
-            },
-            end: Position {
-                line: l.end.line.max(r.end.line),
-                column: l.end.column.max(r.end.column),
-                index: match (l.end.index, r.end.index) {
-                    (Some(a), Some(b)) => Some(a.max(b)),
-                    (a, b) => a.or(b),
-                },
-            },
-        }),
+        (Some(l), Some(r)) => Some(Span::new(l.start.min(r.start), l.end.max(r.end))),
     }
 }
 
@@ -258,8 +238,6 @@ pub(crate) fn find_disjoint_mutable_values(
     let mut scope_identifiers = DisjointSet::<IdentifierId>::new();
     let mut declarations: FxHashMap<DeclarationId, IdentifierId> = FxHashMap::default();
 
-    let enable_forest = env.config.enable_forest;
-
     for (_block_id, block) in &func.body.blocks {
         // Handle phi nodes
         for phi in &block.phis {
@@ -299,7 +277,7 @@ pub(crate) fn find_disjoint_mutable_values(
                     operands.push(phi_operand.identifier);
                 }
                 scope_identifiers.union(&operands);
-            } else if enable_forest {
+            } else if env.config.enable_forest {
                 for (_pred_id, phi_operand) in &phi.operands {
                     scope_identifiers.union(&[phi_id, phi_operand.identifier]);
                 }

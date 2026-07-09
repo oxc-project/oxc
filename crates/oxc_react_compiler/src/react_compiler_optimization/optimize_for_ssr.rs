@@ -24,8 +24,8 @@ use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
 use crate::react_compiler_hir::{
     ArrayPatternElement, HirFunction, IdentifierId, InstructionValue, JsxAttribute, JsxTag, LValue,
-    Pattern, Place, PlaceOrSpread, PrimitiveValue, SourceLocation, is_array_type,
-    is_plain_object_type, is_primitive_type, is_set_state_type, is_start_transition_type,
+    Pattern, Place, PlaceOrSpread, PrimitiveValue, Span, is_array_type, is_plain_object_type,
+    is_primitive_type, is_set_state_type, is_start_transition_type,
 };
 
 /// Optimizes a function for SSR by inlining state hooks, removing effects,
@@ -80,7 +80,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                         lvalue_id,
                                         InlinedStateReplacement::LoadLocal {
                                             place: arg.clone(),
-                                            loc: arg.loc,
+                                            span: arg.span,
                                         },
                                     );
                                 }
@@ -93,40 +93,35 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                 {
                                     let lvalue_id =
                                         env.identifiers[instr.lvalue.identifier.0 as usize].id;
-                                    let call_loc = instr.value.loc().copied();
+                                    let call_span = instr.value.span().copied();
                                     inlined_state.insert(
                                         lvalue_id,
                                         InlinedStateReplacement::CallExpression {
                                             callee: initializer.clone(),
                                             arg: arg.clone(),
-                                            loc: call_loc,
+                                            span: call_span,
                                         },
                                     );
                                 }
                             }
                         }
-                        Some(HookKind::UseState) => {
-                            if args.len() == 1 {
-                                if let PlaceOrSpread::Place(arg) = &args[0] {
-                                    let arg_type = &env.types[env.identifiers
-                                        [arg.identifier.0 as usize]
-                                        .type_
-                                        .0
-                                        as usize];
-                                    if is_primitive_type(arg_type)
-                                        || is_plain_object_type(arg_type)
-                                        || is_array_type(arg_type)
-                                    {
-                                        let lvalue_id =
-                                            env.identifiers[instr.lvalue.identifier.0 as usize].id;
-                                        inlined_state.insert(
-                                            lvalue_id,
-                                            InlinedStateReplacement::LoadLocal {
-                                                place: arg.clone(),
-                                                loc: arg.loc,
-                                            },
-                                        );
-                                    }
+                        Some(HookKind::UseState) if args.len() == 1 => {
+                            if let PlaceOrSpread::Place(arg) = &args[0] {
+                                let arg_type = &env.types
+                                    [env.identifiers[arg.identifier.0 as usize].type_.0 as usize];
+                                if is_primitive_type(arg_type)
+                                    || is_plain_object_type(arg_type)
+                                    || is_array_type(arg_type)
+                                {
+                                    let lvalue_id =
+                                        env.identifiers[instr.lvalue.identifier.0 as usize].id;
+                                    inlined_state.insert(
+                                        lvalue_id,
+                                        InlinedStateReplacement::LoadLocal {
+                                            place: arg.clone(),
+                                            span: arg.span,
+                                        },
+                                    );
                                 }
                             }
                         }
@@ -166,46 +161,41 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
         for &instr_id in &block.instructions {
             let instr = &mut func.instructions[instr_id.0 as usize];
             match &instr.value {
-                InstructionValue::FunctionExpression { lowered_func, loc, .. } => {
+                InstructionValue::FunctionExpression { lowered_func, span, .. } => {
                     let inner_func = &env.functions[lowered_func.func.0 as usize];
                     if has_known_non_render_call(inner_func, env) {
-                        let loc = *loc;
+                        let span = *span;
                         instr.value =
-                            InstructionValue::Primitive { value: PrimitiveValue::Undefined, loc };
+                            InstructionValue::Primitive { value: PrimitiveValue::Undefined, span };
                     }
                 }
-                InstructionValue::JsxExpression { tag, .. } => {
-                    if let JsxTag::Builtin(builtin) = tag {
-                        // Only optimize non-custom-element builtin tags
-                        if !builtin.name.contains('-') {
-                            let tag_name = builtin.name.clone();
-                            // Retain only props that are not known event handlers and not "ref"
-                            if let InstructionValue::JsxExpression { props, .. } = &mut instr.value
-                            {
-                                props.retain(|prop| match prop {
-                                    JsxAttribute::SpreadAttribute { .. } => true,
-                                    JsxAttribute::Attribute { name, .. } => {
-                                        !is_known_event_handler(&tag_name, name) && name != "ref"
-                                    }
-                                });
-                            }
+                InstructionValue::JsxExpression { tag: JsxTag::Builtin(builtin), .. } => {
+                    // Only optimize non-custom-element builtin tags
+                    if !builtin.name.contains('-') {
+                        // Retain only props that are not known event handlers and not "ref"
+                        if let InstructionValue::JsxExpression { props, .. } = &mut instr.value {
+                            props.retain(|prop| match prop {
+                                JsxAttribute::SpreadAttribute { .. } => true,
+                                JsxAttribute::Attribute { name, .. } => {
+                                    !is_known_event_handler(name) && name != "ref"
+                                }
+                            });
                         }
                     }
                 }
-                InstructionValue::Destructure { value, lvalue, loc } => {
+                InstructionValue::Destructure { value, lvalue, span } => {
                     let value_id = env.identifiers[value.identifier.0 as usize].id;
                     if inlined_state.contains_key(&value_id) {
                         // Invariant: destructuring pattern must be ArrayPattern with at least one Identifier item
                         if let Pattern::Array(arr) = &lvalue.pattern {
                             if !arr.items.is_empty() {
                                 if let ArrayPatternElement::Place(first_place) = &arr.items[0] {
-                                    let loc = *loc;
+                                    let span = *span;
                                     let kind = lvalue.kind;
                                     let store = InstructionValue::StoreLocal {
                                         lvalue: LValue { place: first_place.clone(), kind },
                                         value: value.clone(),
-                                        type_annotation: None,
-                                        loc,
+                                        span,
                                     };
                                     instr.value = store;
                                 }
@@ -213,17 +203,17 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                         }
                     }
                 }
-                InstructionValue::MethodCall { property, args, loc, .. }
-                | InstructionValue::CallExpression { callee: property, args, loc, .. } => {
+                InstructionValue::MethodCall { property, args, span, .. }
+                | InstructionValue::CallExpression { callee: property, args, span, .. } => {
                     let callee_id = property.identifier;
                     let hook_kind = get_hook_kind(env, callee_id);
                     match hook_kind {
                         Some(HookKind::UseEffectEvent) => {
                             if args.len() == 1 {
                                 if let PlaceOrSpread::Place(arg) = &args[0] {
-                                    let loc = *loc;
+                                    let span = *span;
                                     instr.value =
-                                        InstructionValue::LoadLocal { place: arg.clone(), loc };
+                                        InstructionValue::LoadLocal { place: arg.clone(), span };
                                 }
                             }
                         }
@@ -232,30 +222,30 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                             | HookKind::UseLayoutEffect
                             | HookKind::UseInsertionEffect,
                         ) => {
-                            let loc = *loc;
+                            let span = *span;
                             instr.value = InstructionValue::Primitive {
                                 value: PrimitiveValue::Undefined,
-                                loc,
+                                span,
                             };
                         }
                         Some(HookKind::UseReducer | HookKind::UseState) => {
                             let lvalue_id = env.identifiers[instr.lvalue.identifier.0 as usize].id;
                             if let Some(replacement) = inlined_state.get(&lvalue_id) {
                                 instr.value = match replacement {
-                                    InlinedStateReplacement::LoadLocal { place, loc } => {
+                                    InlinedStateReplacement::LoadLocal { place, span } => {
                                         InstructionValue::LoadLocal {
                                             place: place.clone(),
-                                            loc: *loc,
+                                            span: *span,
                                         }
                                     }
                                     InlinedStateReplacement::CallExpression {
                                         callee,
                                         arg,
-                                        loc,
+                                        span,
                                     } => InstructionValue::CallExpression {
                                         callee: callee.clone(),
                                         args: vec![PlaceOrSpread::Place(arg.clone())],
-                                        loc: *loc,
+                                        span: *span,
                                     },
                                 };
                             }
@@ -273,9 +263,9 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
 #[derive(Debug, Clone)]
 enum InlinedStateReplacement {
     /// Replace with `LoadLocal { place }` — used for useState and useReducer(reducer, initialArg)
-    LoadLocal { place: Place, loc: Option<SourceLocation> },
+    LoadLocal { place: Place, span: Option<Span> },
     /// Replace with `CallExpression { callee, args: [arg] }` — used for useReducer(reducer, initialArg, init)
-    CallExpression { callee: Place, arg: Place, loc: Option<SourceLocation> },
+    CallExpression { callee: Place, arg: Place, span: Option<Span> },
 }
 
 /// Returns true if the function body contains a call to setState or startTransition.
@@ -300,7 +290,7 @@ fn has_known_non_render_call(func: &HirFunction, env: &Environment) -> bool {
 }
 
 /// Returns true if the prop name matches the known event handler pattern `on[A-Z]`.
-fn is_known_event_handler(_tag: &str, prop: &str) -> bool {
+fn is_known_event_handler(prop: &str) -> bool {
     if prop.len() < 3 {
         return false;
     }

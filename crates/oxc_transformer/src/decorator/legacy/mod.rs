@@ -49,7 +49,8 @@ use std::borrow::Cow;
 use std::mem;
 
 use oxc_allocator::{
-    Address, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn, UnstableAddress,
+    Address, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn,
+    UnstableAddress,
 };
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::{Visit, VisitMut};
@@ -338,7 +339,7 @@ impl<'a> LegacyDecorator<'a> {
             Some(if let Some(ident) = class.id.as_ref() {
                 BoundIdentifier::from_binding_ident(ident)
             } else {
-                ctx.generate_uid_in_current_scope("class", SymbolFlags::Class)
+                ctx.generate_uid("class", class.scope_id(), SymbolFlags::Class)
             })
         } else {
             None
@@ -593,7 +594,9 @@ impl<'a> LegacyDecorator<'a> {
             if let Some(ident) = class.id() {
                 BoundIdentifier::from_binding_ident(ident)
             } else {
-                ctx.generate_uid_in_current_scope("default", SymbolFlags::Class)
+                let class_scope_id = class.scope_id().get().unwrap();
+                let outer_scope_id = ctx.scoping().scope_parent_id(class_scope_id).unwrap();
+                ctx.generate_uid("default", outer_scope_id, SymbolFlags::Class)
             }
         });
 
@@ -886,11 +889,17 @@ impl<'a> LegacyDecorator<'a> {
         // Now: `class C {}` -> `let C = class C {}`
         // After: `class C {}` -> `let C = class {}`
         let class_binding = class.id.as_ref().map(|ident| {
-            let new_class_binding =
-                ctx.generate_binding(ident.name, class.scope_id(), SymbolFlags::Class);
+            let binding_span = ident.span;
+            let new_class_binding = ctx.generate_spanned_binding(
+                ident.name,
+                binding_span,
+                class.scope_id(),
+                SymbolFlags::Class,
+            );
             let old_class_symbol_id = ident.symbol_id.replace(Some(new_class_binding.symbol_id));
             let old_class_symbol_id = old_class_symbol_id.expect("class always has a symbol id");
 
+            ctx.scoping_mut().set_symbol_span(old_class_symbol_id, binding_span);
             *ctx.scoping_mut().symbol_flags_mut(old_class_symbol_id) =
                 SymbolFlags::BlockScopedVariable;
             BoundIdentifier::new(ident.name, old_class_symbol_id)
@@ -1002,6 +1011,7 @@ impl<'a> LegacyDecorator<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let span = class.span;
+        let binding_span = ctx.scoping().symbol_span(binding.symbol_id);
         class.r#type = ClassType::ClassExpression;
         let initializer = Self::get_class_initializer(
             Expression::ClassExpression(class.take_in_box(ctx)),
@@ -1011,7 +1021,7 @@ impl<'a> LegacyDecorator<'a> {
         let declarator = VariableDeclarator::new(
             SPAN,
             VariableDeclarationKind::Let,
-            binding.create_binding_pattern(ctx),
+            binding.create_spanned_binding_pattern(binding_span, ctx),
             NONE,
             Some(initializer),
             false,
@@ -1395,14 +1405,15 @@ impl<'a> LegacyDecorator<'a> {
                 //   static [_a = a()] = 0;
                 // ```
 
-                let key_expr = key.to_expression_mut();
+                let key = key.to_expression_mut();
 
                 // Create a unique binding for the computed property key, and insert it outside of the class
-                let binding = VarDeclarationsStore::create_uid_var_based_on_node(key_expr, ctx);
+                let binding = VarDeclarationsStore::create_uid_var_based_on_node(key, ctx);
                 let operator = AssignmentOperator::Assign;
                 let left = binding.create_write_target(ctx);
-                let right = key_expr.take_in(ctx);
-                *key = PropertyKey::new_assignment_expression(SPAN, operator, left, right, ctx);
+                key.replace_with(|right| {
+                    Expression::new_assignment_expression(SPAN, operator, left, right, ctx)
+                });
                 binding.create_read_expression(ctx)
             }
         }

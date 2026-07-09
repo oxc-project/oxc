@@ -35,11 +35,11 @@ pub fn optimize_props_method_calls(func: &mut HirFunction, env: &Environment) {
             if should_replace {
                 // Take the old value out, replacing with a temporary.
                 // The if-let is guaranteed to match since we checked above.
-                let old = replace(&mut instr.value, InstructionValue::Debugger { loc: None });
+                let old = replace(&mut instr.value, InstructionValue::Debugger { span: None });
                 match old {
-                    InstructionValue::MethodCall { property, args, loc, .. } => {
+                    InstructionValue::MethodCall { property, args, span, .. } => {
                         instr.value =
-                            InstructionValue::CallExpression { callee: property, args, loc };
+                            InstructionValue::CallExpression { callee: property, args, span };
                     }
                     _ => unreachable!(),
                 }

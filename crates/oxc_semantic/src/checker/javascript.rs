@@ -159,8 +159,7 @@ pub fn check_identifier(
 ) {
     // reserved keywords are allowed in ambient contexts
     fn is_allowed_context(symbol_id: Option<SymbolId>, ctx: &SemanticBuilder<'_>) -> bool {
-        ctx.source_type.is_typescript_definition()
-            || is_current_node_ambient_binding(symbol_id, ctx)
+        ctx.source_type.is_typescript_definition() || is_in_ambient_context(symbol_id, ctx)
     }
 
     match name {
@@ -192,7 +191,7 @@ pub fn check_identifier(
     }
 }
 
-fn is_current_node_ambient_binding(symbol_id: Option<SymbolId>, ctx: &SemanticBuilder<'_>) -> bool {
+fn is_in_ambient_context(symbol_id: Option<SymbolId>, ctx: &SemanticBuilder<'_>) -> bool {
     if ctx.current_scope_flags().is_ts_module_block() {
         return true;
     }
@@ -200,14 +199,14 @@ fn is_current_node_ambient_binding(symbol_id: Option<SymbolId>, ctx: &SemanticBu
     if let Some(symbol_id) = symbol_id
         && ctx.scoping.symbol_flags(symbol_id).contains(SymbolFlags::Ambient)
     {
-        true
-    } else if let AstKind::BindingIdentifier(id) = ctx.ancestry().current_kind()
-        && let Some(symbol_id) = id.symbol_id.get()
-    {
-        ctx.scoping.symbol_flags(symbol_id).contains(SymbolFlags::Ambient)
-    } else {
-        false
+        return true;
     }
+
+    ctx.ancestry().ancestor_kinds().any(|kind| match kind {
+        AstKind::VariableDeclaration(decl) => decl.declare,
+        AstKind::PropertyDefinition(prop) => prop.declare,
+        _ => false,
+    })
 }
 
 pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder<'_>) {

@@ -9,25 +9,24 @@
 
 use std::mem::discriminant;
 
+use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, SourceLocation,
-};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BasicBlock, BlockId, EvaluationOrder, GotoVariant, HirFunction, InstructionId,
     InstructionValue, Place, PrimitiveValue, PrunedReactiveScopeBlock, ReactiveBlock,
     ReactiveFunction, ReactiveInstruction, ReactiveLabel, ReactiveScopeBlock, ReactiveStatement,
     ReactiveSwitchCase, ReactiveTerminal, ReactiveTerminalStatement, ReactiveTerminalTargetKind,
-    ReactiveValue, Terminal,
+    ReactiveValue, Span, Terminal,
 };
 
 /// Convert the HIR CFG into a tree-structured ReactiveFunction.
 pub fn build_reactive_function<'a>(
     hir: &HirFunction<'a>,
     env: &Environment<'a>,
-) -> Result<ReactiveFunction<'a>, CompilerDiagnostic> {
+) -> Result<ReactiveFunction<'a>, OxcDiagnostic> {
     let mut ctx = Context::new(hir);
     let mut driver = Driver { cx: &mut ctx, hir, env };
 
@@ -36,7 +35,7 @@ pub fn build_reactive_function<'a>(
     driver.visit_block(entry_block_id, &mut body)?;
 
     Ok(ReactiveFunction {
-        loc: hir.loc,
+        span: hir.span,
         id: hir.id.clone(),
         name_hint: hir.name_hint.clone(),
         params: hir.params.clone(),
@@ -140,15 +139,12 @@ impl<'a, 'h> Context<'a, 'h> {
         !matches!(block.terminal, Terminal::Unreachable { .. })
     }
 
-    fn schedule(&mut self, block: BlockId, target_type: &str) -> Result<u32, CompilerDiagnostic> {
+    fn schedule(&mut self, block: BlockId, target_type: &str) -> Result<u32, OxcDiagnostic> {
         let id = self.next_schedule_id;
         self.next_schedule_id += 1;
         if self.scheduled.contains(&block) {
-            return Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
-                format!("Break block is already scheduled: bb{}", block.0),
-                None,
-            ));
+            return Err(ErrorCategory::Invariant
+                .diagnostic(format!("Break block is already scheduled: bb{}", block.0)));
         }
         self.scheduled.insert(block);
         let target = match target_type {
@@ -156,11 +152,8 @@ impl<'a, 'h> Context<'a, 'h> {
             "switch" => ControlFlowTarget::Switch { block, id },
             "case" => ControlFlowTarget::Case { block, id },
             _ => {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    format!("Unknown target type: {}", target_type),
-                    None,
-                ));
+                return Err(ErrorCategory::Invariant
+                    .diagnostic(format!("Unknown target type: {}", target_type)));
             }
         };
         self.control_flow_stack.push(target);
@@ -172,17 +165,16 @@ impl<'a, 'h> Context<'a, 'h> {
         fallthrough_block: BlockId,
         continue_block: BlockId,
         loop_block: Option<BlockId>,
-    ) -> Result<u32, CompilerDiagnostic> {
+    ) -> Result<u32, OxcDiagnostic> {
         let id = self.next_schedule_id;
         self.next_schedule_id += 1;
         let owns_block = !self.scheduled.contains(&fallthrough_block);
         self.scheduled.insert(fallthrough_block);
         if self.scheduled.contains(&continue_block) {
-            return Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
-                format!("Continue block is already scheduled: bb{}", continue_block.0),
-                None,
-            ));
+            return Err(ErrorCategory::Invariant.diagnostic(format!(
+                "Continue block is already scheduled: bb{}",
+                continue_block.0
+            )));
         }
         self.scheduled.insert(continue_block);
         let mut owns_loop = false;
@@ -202,14 +194,10 @@ impl<'a, 'h> Context<'a, 'h> {
         Ok(id)
     }
 
-    fn unschedule(&mut self, schedule_id: u32) -> Result<(), CompilerDiagnostic> {
+    fn unschedule(&mut self, schedule_id: u32) -> Result<(), OxcDiagnostic> {
         let last = self.control_flow_stack.pop().expect("Can only unschedule the last target");
         if last.id() != schedule_id {
-            return Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
-                "Can only unschedule the last target".to_string(),
-                None,
-            ));
+            return Err(ErrorCategory::Invariant.diagnostic("Can only unschedule the last target"));
         }
         match &last {
             ControlFlowTarget::Loop { block, continue_block, loop_block, owns_loop, .. } => {
@@ -230,7 +218,7 @@ impl<'a, 'h> Context<'a, 'h> {
         Ok(())
     }
 
-    fn unschedule_all(&mut self, schedule_ids: &[u32]) -> Result<(), CompilerDiagnostic> {
+    fn unschedule_all(&mut self, schedule_ids: &[u32]) -> Result<(), OxcDiagnostic> {
         for &id in schedule_ids.iter().rev() {
             self.unschedule(id)?;
         }
@@ -244,7 +232,7 @@ impl<'a, 'h> Context<'a, 'h> {
     fn get_break_target(
         &self,
         block: BlockId,
-    ) -> Result<(BlockId, ReactiveTerminalTargetKind), CompilerDiagnostic> {
+    ) -> Result<(BlockId, ReactiveTerminalTargetKind), OxcDiagnostic> {
         let mut has_preceding_loop = false;
         for i in (0..self.control_flow_stack.len()).rev() {
             let target = &self.control_flow_stack[i];
@@ -264,11 +252,8 @@ impl<'a, 'h> Context<'a, 'h> {
             }
             has_preceding_loop = has_preceding_loop || target.is_loop();
         }
-        Err(CompilerDiagnostic::new(
-            ErrorCategory::Invariant,
-            format!("Expected a break target for bb{}", block.0),
-            None,
-        ))
+        Err(ErrorCategory::Invariant
+            .diagnostic(format!("Expected a break target for bb{}", block.0)))
     }
 
     fn get_continue_target(&self, block: BlockId) -> Option<(BlockId, ReactiveTerminalTargetKind)> {
@@ -306,10 +291,7 @@ struct Driver<'a, 'b, 'h> {
 }
 
 impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
-    fn traverse_block(
-        &mut self,
-        block_id: BlockId,
-    ) -> Result<ReactiveBlock<'a>, CompilerDiagnostic> {
+    fn traverse_block(&mut self, block_id: BlockId) -> Result<ReactiveBlock<'a>, OxcDiagnostic> {
         let mut block_value = Vec::new();
         self.visit_block(block_id, &mut block_value)?;
         Ok(block_value)
@@ -319,7 +301,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         &mut self,
         mut block_id: BlockId,
         block_value: &mut ReactiveBlock<'a>,
-    ) -> Result<(), CompilerDiagnostic> {
+    ) -> Result<(), OxcDiagnostic> {
         // Use a loop to avoid deep recursion for fallthrough chains.
         // Each terminal that would tail-call visit_block(fallthrough, block_value)
         // instead sets next_block and continues the loop.
@@ -331,11 +313,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             let terminal = block.terminal.clone();
 
             if !self.cx.emitted.insert(block_id_val) {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    format!("Block bb{} was already emitted", block_id_val.0),
-                    None,
-                ));
+                return Err(ErrorCategory::Invariant
+                    .diagnostic(format!("Block bb{} was already emitted", block_id_val.0)));
             }
 
             // Emit instructions
@@ -345,8 +324,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     id: instr.id,
                     lvalue: Some(instr.lvalue.clone()),
                     value: ReactiveValue::Instruction(instr.value.clone()),
-                    effects: instr.effects.clone(),
-                    loc: instr.loc,
+                    span: instr.span,
                 }));
             }
 
@@ -355,7 +333,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             let mut next_block: Option<BlockId> = None;
 
             match &terminal {
-                Terminal::If { test, consequent, alternate, fallthrough, id, loc } => {
+                Terminal::If { test, consequent, alternate, fallthrough, id, .. } => {
                     // TS: reachable(fallthrough) && !isScheduled(fallthrough)
                     let fallthrough_id =
                         if self.cx.reachable(*fallthrough) && !self.cx.is_scheduled(*fallthrough) {
@@ -372,28 +350,20 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
 
                     let consequent_block = if self.cx.is_scheduled(*consequent) {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
-                            format!(
-                                "Unexpected 'if' where consequent is already scheduled (bb{})",
-                                consequent.0
-                            ),
-                            None,
-                        ));
+                        return Err(ErrorCategory::Invariant.diagnostic(format!(
+                            "Unexpected 'if' where consequent is already scheduled (bb{})",
+                            consequent.0
+                        )));
                     } else {
                         self.traverse_block(*consequent)?
                     };
 
                     let alternate_block = if let Some(alt) = alternate_id {
                         if self.cx.is_scheduled(alt) {
-                            return Err(CompilerDiagnostic::new(
-                                ErrorCategory::Invariant,
-                                format!(
-                                    "Unexpected 'if' where the alternate is already scheduled (bb{})",
-                                    alt.0
-                                ),
-                                None,
-                            ));
+                            return Err(ErrorCategory::Invariant.diagnostic(format!(
+                                "Unexpected 'if' where the alternate is already scheduled (bb{})",
+                                alt.0
+                            )));
                         } else {
                             Some(self.traverse_block(alt)?)
                         }
@@ -408,7 +378,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             consequent: consequent_block,
                             alternate: alternate_block,
                             id: *id,
-                            loc: *loc,
                         },
                         label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
@@ -416,7 +385,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     next_block = fallthrough_id;
                 }
 
-                Terminal::Switch { test, cases, fallthrough, id, loc } => {
+                Terminal::Switch { test, cases, fallthrough, id, .. } => {
                     // TS: reachable(fallthrough) && !isScheduled(fallthrough)
                     let fallthrough_id =
                         if self.cx.reachable(*fallthrough) && !self.cx.is_scheduled(*fallthrough) {
@@ -438,11 +407,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         if self.cx.is_scheduled(case_block_id) {
                             // TS: asserts case.block === fallthrough, then skips (return)
                             if case_block_id != *fallthrough {
-                                return Err(CompilerDiagnostic::new(
-                                ErrorCategory::Invariant,
-                                "Unexpected 'switch' where a case is already scheduled and block is not the fallthrough".to_string(),
-                                None,
-                            ));
+                                return Err(ErrorCategory::Invariant.diagnostic("Unexpected 'switch' where a case is already scheduled and block is not the fallthrough"));
                             }
                             continue;
                         }
@@ -464,7 +429,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             test: test.clone(),
                             cases: reactive_cases,
                             id: *id,
-                            loc: *loc,
                         },
                         label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
@@ -472,7 +436,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     next_block = fallthrough_id;
                 }
 
-                Terminal::DoWhile { loop_block, test, fallthrough, id, loc } => {
+                Terminal::DoWhile { loop_block, test, fallthrough, id, span } => {
                     let fallthrough_id =
                         if !self.cx.is_scheduled(*fallthrough) { Some(*fallthrough) } else { None };
                     let loop_id =
@@ -491,13 +455,11 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
+                        return Err(ErrorCategory::Invariant.diagnostic(
                             "Unexpected 'do-while' where the loop is already scheduled",
-                            None,
                         ));
                     };
-                    let test_result = self.visit_value_block(*test, *loc, None)?;
+                    let test_result = self.visit_value_block(*test, *span, None)?;
 
                     self.cx.unschedule_all(&schedule_ids)?;
                     block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
@@ -505,7 +467,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             loop_block: loop_body,
                             test: test_result.value,
                             id: *id,
-                            loc: *loc,
                         },
                         label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
@@ -513,7 +474,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     next_block = fallthrough_id;
                 }
 
-                Terminal::While { test, loop_block, fallthrough, id, loc } => {
+                Terminal::While { test, loop_block, fallthrough, id, span } => {
                     // TS: reachable(fallthrough) && !isScheduled(fallthrough)
                     let fallthrough_id =
                         if self.cx.reachable(*fallthrough) && !self.cx.is_scheduled(*fallthrough) {
@@ -534,16 +495,13 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         Some(*loop_block),
                     )?);
 
-                    let test_result = self.visit_value_block(*test, *loc, None)?;
+                    let test_result = self.visit_value_block(*test, *span, None)?;
 
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
-                            "Unexpected 'while' where the loop is already scheduled",
-                            None,
-                        ));
+                        return Err(ErrorCategory::Invariant
+                            .diagnostic("Unexpected 'while' where the loop is already scheduled"));
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
@@ -552,7 +510,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             test: test_result.value,
                             loop_block: loop_body,
                             id: *id,
-                            loc: *loc,
                         },
                         label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
@@ -560,7 +517,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     next_block = fallthrough_id;
                 }
 
-                Terminal::For { init, test, update, loop_block, fallthrough, id, loc } => {
+                Terminal::For { init, test, update, loop_block, fallthrough, id, span } => {
                     let loop_id =
                         if !self.cx.is_scheduled(*loop_block) && *loop_block != *fallthrough {
                             Some(*loop_block)
@@ -579,24 +536,21 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         Some(*loop_block),
                     )?);
 
-                    let init_result = self.visit_value_block(*init, *loc, None)?;
-                    let init_value = self.value_block_result_to_sequence(init_result, *loc);
+                    let init_result = self.visit_value_block(*init, *span, None)?;
+                    let init_value = self.value_block_result_to_sequence(init_result, *span);
 
-                    let test_result = self.visit_value_block(*test, *loc, None)?;
+                    let test_result = self.visit_value_block(*test, *span, None)?;
 
                     let update_result = match update {
-                        Some(u) => Some(self.visit_value_block(*u, *loc, None)?),
+                        Some(u) => Some(self.visit_value_block(*u, *span, None)?),
                         None => None,
                     };
 
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
-                            "Unexpected 'for' where the loop is already scheduled",
-                            None,
-                        ));
+                        return Err(ErrorCategory::Invariant
+                            .diagnostic("Unexpected 'for' where the loop is already scheduled"));
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
@@ -607,7 +561,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             update: update_result.map(|r| r.value),
                             loop_block: loop_body,
                             id: *id,
-                            loc: *loc,
                         },
                         label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
@@ -615,7 +568,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     next_block = fallthrough_id;
                 }
 
-                Terminal::ForOf { init, test, loop_block, fallthrough, id, loc } => {
+                Terminal::ForOf { init, test, loop_block, fallthrough, id, span } => {
                     let loop_id =
                         if !self.cx.is_scheduled(*loop_block) && *loop_block != *fallthrough {
                             Some(*loop_block)
@@ -633,19 +586,17 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         Some(*loop_block),
                     )?);
 
-                    let init_result = self.visit_value_block(*init, *loc, None)?;
-                    let init_value = self.value_block_result_to_sequence(init_result, *loc);
+                    let init_result = self.visit_value_block(*init, *span, None)?;
+                    let init_value = self.value_block_result_to_sequence(init_result, *span);
 
-                    let test_result = self.visit_value_block(*test, *loc, None)?;
-                    let test_value = self.value_block_result_to_sequence(test_result, *loc);
+                    let test_result = self.visit_value_block(*test, *span, None)?;
+                    let test_value = self.value_block_result_to_sequence(test_result, *span);
 
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
+                        return Err(ErrorCategory::Invariant.diagnostic(
                             "Unexpected 'for-of' where the loop is already scheduled",
-                            None,
                         ));
                     };
 
@@ -656,7 +607,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             test: test_value,
                             loop_block: loop_body,
                             id: *id,
-                            loc: *loc,
+                            span: *span,
                         },
                         label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
@@ -664,7 +615,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     next_block = fallthrough_id;
                 }
 
-                Terminal::ForIn { init, loop_block, fallthrough, id, loc } => {
+                Terminal::ForIn { init, loop_block, fallthrough, id, span } => {
                     let loop_id =
                         if !self.cx.is_scheduled(*loop_block) && *loop_block != *fallthrough {
                             Some(*loop_block)
@@ -681,16 +632,14 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         Some(*loop_block),
                     )?);
 
-                    let init_result = self.visit_value_block(*init, *loc, None)?;
-                    let init_value = self.value_block_result_to_sequence(init_result, *loc);
+                    let init_result = self.visit_value_block(*init, *span, None)?;
+                    let init_value = self.value_block_result_to_sequence(init_result, *span);
 
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
+                        return Err(ErrorCategory::Invariant.diagnostic(
                             "Unexpected 'for-in' where the loop is already scheduled",
-                            None,
                         ));
                     };
 
@@ -700,7 +649,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             init: init_value,
                             loop_block: loop_body,
                             id: *id,
-                            loc: *loc,
+                            span: *span,
                         },
                         label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
@@ -708,7 +657,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     next_block = fallthrough_id;
                 }
 
-                Terminal::Label { block: label_block, fallthrough, id, loc } => {
+                Terminal::Label { block: label_block, fallthrough, id, .. } => {
                     // TS: reachable(fallthrough) && !isScheduled(fallthrough)
                     let fallthrough_id =
                         if self.cx.reachable(*fallthrough) && !self.cx.is_scheduled(*fallthrough) {
@@ -721,17 +670,15 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
 
                     if self.cx.is_scheduled(*label_block) {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
-                            "Unexpected 'label' where the block is already scheduled".to_string(),
-                            None,
+                        return Err(ErrorCategory::Invariant.diagnostic(
+                            "Unexpected 'label' where the block is already scheduled",
                         ));
                     }
                     let label_body = self.traverse_block(*label_block)?;
 
                     self.cx.unschedule_all(&schedule_ids)?;
                     block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::Label { block: label_body, id: *id, loc: *loc },
+                        terminal: ReactiveTerminal::Label { block: label_body, id: *id },
                         label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
 
@@ -761,22 +708,21 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         id: result.id,
                         lvalue: Some(result.place),
                         value: result.value,
-                        effects: None,
-                        loc: *terminal_loc(&terminal),
+                        span: *terminal_span(&terminal),
                     }));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::Goto { block: goto_block, variant, id, loc } => {
+                Terminal::Goto { block: goto_block, variant, id, .. } => {
                     match variant {
                         GotoVariant::Break => {
-                            if let Some(stmt) = self.visit_break(*goto_block, *id, *loc)? {
+                            if let Some(stmt) = self.visit_break(*goto_block, *id)? {
                                 block_value.push(stmt);
                             }
                         }
                         GotoVariant::Continue => {
-                            let stmt = self.visit_continue(*goto_block, *id, *loc)?;
+                            let stmt = self.visit_continue(*goto_block, *id)?;
                             block_value.push(stmt);
                         }
                         GotoVariant::Try => {
@@ -797,7 +743,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     handler,
                     fallthrough,
                     id,
-                    loc,
+                    ..
                 } => {
                     let fallthrough_id =
                         if self.cx.reachable(*fallthrough) && !self.cx.is_scheduled(*fallthrough) {
@@ -820,7 +766,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             handler_binding: handler_binding.clone(),
                             handler: handler_body,
                             id: *id,
-                            loc: *loc,
                         },
                         label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
                     }));
@@ -837,10 +782,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
 
                     if self.cx.is_scheduled(*scope_block) {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
-                            "Unexpected 'scope' where the block is already scheduled".to_string(),
-                            None,
+                        return Err(ErrorCategory::Invariant.diagnostic(
+                            "Unexpected 'scope' where the block is already scheduled",
                         ));
                     }
                     let scope_body = self.traverse_block(*scope_block)?;
@@ -863,10 +806,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
 
                     if self.cx.is_scheduled(*scope_block) {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
-                            "Unexpected 'scope' where the block is already scheduled".to_string(),
-                            None,
+                        return Err(ErrorCategory::Invariant.diagnostic(
+                            "Unexpected 'scope' where the block is already scheduled",
                         ));
                     }
                     let scope_body = self.traverse_block(*scope_block)?;
@@ -880,24 +821,16 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     next_block = fallthrough_id;
                 }
 
-                Terminal::Return { value, id, loc, .. } => {
+                Terminal::Return { value, id, .. } => {
                     block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::Return {
-                            value: value.clone(),
-                            id: *id,
-                            loc: *loc,
-                        },
+                        terminal: ReactiveTerminal::Return { value: value.clone(), id: *id },
                         label: None,
                     }));
                 }
 
-                Terminal::Throw { value, id, loc } => {
+                Terminal::Throw { value, id, .. } => {
                     block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::Throw {
-                            value: value.clone(),
-                            id: *id,
-                            loc: *loc,
-                        },
+                        terminal: ReactiveTerminal::Throw { value: value.clone(), id: *id },
                         label: None,
                     }));
                 }
@@ -906,17 +839,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     // noop
                 }
 
-                Terminal::Unsupported { .. } => {
-                    return Err(CompilerDiagnostic::new(
-                        ErrorCategory::Invariant,
-                        "Unexpected unsupported terminal",
-                        None,
-                    ));
-                }
-
-                Terminal::Branch { test, consequent, alternate, id, loc, .. } => {
+                Terminal::Branch { test, consequent, alternate, id, .. } => {
                     let consequent_block = if self.cx.is_scheduled(*consequent) {
-                        if let Some(stmt) = self.visit_break(*consequent, *id, *loc)? {
+                        if let Some(stmt) = self.visit_break(*consequent, *id)? {
                             vec![stmt]
                         } else {
                             Vec::new()
@@ -926,11 +851,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     };
 
                     if self.cx.is_scheduled(*alternate) {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
-                            "Unexpected 'branch' where the alternate is already scheduled"
-                                .to_string(),
-                            None,
+                        return Err(ErrorCategory::Invariant.diagnostic(
+                            "Unexpected 'branch' where the alternate is already scheduled",
                         ));
                     }
                     let alternate_block = self.traverse_block(*alternate)?;
@@ -941,7 +863,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             consequent: consequent_block,
                             alternate: Some(alternate_block),
                             id: *id,
-                            loc: *loc,
                         },
                         label: None,
                     }));
@@ -961,9 +882,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
     fn visit_value_block(
         &mut self,
         block_id: BlockId,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
         fallthrough: Option<BlockId>,
-    ) -> Result<ValueBlockResult<'a>, CompilerDiagnostic> {
+    ) -> Result<ValueBlockResult<'a>, OxcDiagnostic> {
         let block = &self.hir.body.blocks[&block_id];
         let block_id_val = block.id;
         let terminal = block.terminal.clone();
@@ -972,14 +893,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         // If we've reached the fallthrough, stop
         if let Some(ft) = fallthrough {
             if block_id == ft {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    format!(
-                        "Did not expect to reach the fallthrough of a value block (bb{})",
-                        block_id.0
-                    ),
-                    None,
-                ));
+                return Err(ErrorCategory::Invariant.diagnostic(format!(
+                    "Did not expect to reach the fallthrough of a value block (bb{})",
+                    block_id.0
+                )));
             }
         }
 
@@ -991,28 +908,24 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         place: test.clone(),
                         value: ReactiveValue::Instruction(InstructionValue::LoadLocal {
                             place: test.clone(),
-                            loc: test.loc,
+                            span: test.span,
                         }),
                         id: *term_id,
                     })
                 } else {
-                    Ok(self.extract_value_block_result(&instructions, block_id_val, loc))
+                    Ok(self.extract_value_block_result(&instructions, block_id_val))
                 }
             }
             Terminal::Goto { .. } => {
                 if instructions.is_empty() {
-                    return Err(CompilerDiagnostic::new(
-                        ErrorCategory::Invariant,
-                        "Unexpected empty block with `goto` terminal",
-                        Some(format!("Block bb{} is empty", block_id.0)),
-                    )
-                    .with_detail(CompilerDiagnosticDetail::Error {
-                        loc,
-                        message: Some("Unexpected empty block with `goto` terminal".to_string()),
-                        identifier_name: None,
-                    }));
+                    return Err(ErrorCategory::Invariant
+                        .diagnostic("Unexpected empty block with `goto` terminal")
+                        .with_help(format!("Block bb{} is empty", block_id.0))
+                        .with_labels(
+                            span.map(|s| s.label("Unexpected empty block with `goto` terminal")),
+                        ));
                 }
-                Ok(self.extract_value_block_result(&instructions, block_id_val, loc))
+                Ok(self.extract_value_block_result(&instructions, block_id_val))
             }
             Terminal::MaybeThrow { continuation, .. } => {
                 let continuation_id = *continuation;
@@ -1022,26 +935,26 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 let cont_block_id = continuation_block.id;
 
                 if cont_instructions_empty && cont_is_goto {
-                    Ok(self.extract_value_block_result(&instructions, cont_block_id, loc))
+                    Ok(self.extract_value_block_result(&instructions, cont_block_id))
                 } else {
-                    let continuation = self.visit_value_block(continuation_id, loc, fallthrough)?;
-                    Ok(self.wrap_with_sequence(&instructions, continuation, loc))
+                    let continuation =
+                        self.visit_value_block(continuation_id, span, fallthrough)?;
+                    Ok(self.wrap_with_sequence(&instructions, continuation))
                 }
             }
             _ => {
                 // Value block ended in a value terminal, recurse to get the value
                 // of that terminal and stitch them together in a sequence.
-                // TS: visitValueBlock(init.fallthrough, loc) — does NOT propagate fallthrough
+                // TS: visitValueBlock(init.fallthrough, span) — does NOT propagate fallthrough
                 let init = self.visit_value_block_terminal(&terminal)?;
                 let init_fallthrough = init.fallthrough;
                 let init_instr = ReactiveInstruction {
                     id: init.id,
                     lvalue: Some(init.place),
                     value: init.value,
-                    effects: None,
-                    loc,
+                    span,
                 };
-                let final_result = self.visit_value_block(init_fallthrough, loc, None)?;
+                let final_result = self.visit_value_block(init_fallthrough, span, None)?;
 
                 // Combine block instructions + init instruction, then wrap
                 let mut all_instrs: Vec<ReactiveInstruction<'a>> = instructions
@@ -1052,8 +965,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             id: instr.id,
                             lvalue: Some(instr.lvalue.clone()),
                             value: ReactiveValue::Instruction(instr.value.clone()),
-                            effects: instr.effects.clone(),
-                            loc: instr.loc,
+                            span: instr.span,
                         }
                     })
                     .collect();
@@ -1069,7 +981,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             instructions: all_instrs,
                             id: final_result.id,
                             value: Box::new(final_result.value),
-                            loc,
                         },
                         id: final_result.id,
                     })
@@ -1081,39 +992,35 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
     fn visit_test_block(
         &mut self,
         test_block_id: BlockId,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
         terminal_kind: &str,
-    ) -> Result<TestBlockResult<'a>, CompilerDiagnostic> {
-        let test = self.visit_value_block(test_block_id, loc, None)?;
+    ) -> Result<TestBlockResult<'a>, OxcDiagnostic> {
+        let test = self.visit_value_block(test_block_id, span, None)?;
         let test_block = &self.hir.body.blocks[&test.block];
         match &test_block.terminal {
-            Terminal::Branch { consequent, alternate, loc: branch_loc, .. } => {
+            Terminal::Branch { consequent, alternate, span: branch_span, .. } => {
                 Ok(TestBlockResult {
                     test,
                     consequent: *consequent,
                     alternate: *alternate,
-                    branch_loc: *branch_loc,
+                    branch_span: *branch_span,
                 })
             }
-            other => Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
-                format!(
-                    "Expected a branch terminal for {} test block, got {:?}",
-                    terminal_kind,
-                    discriminant(other)
-                ),
-                None,
-            )),
+            other => Err(ErrorCategory::Invariant.diagnostic(format!(
+                "Expected a branch terminal for {} test block, got {:?}",
+                terminal_kind,
+                discriminant(other)
+            ))),
         }
     }
 
     fn visit_value_block_terminal(
         &mut self,
         terminal: &Terminal,
-    ) -> Result<ValueTerminalResult<'a>, CompilerDiagnostic> {
+    ) -> Result<ValueTerminalResult<'a>, OxcDiagnostic> {
         match terminal {
-            Terminal::Sequence { block, fallthrough, id, loc } => {
-                let block_result = self.visit_value_block(*block, *loc, Some(*fallthrough))?;
+            Terminal::Sequence { block, fallthrough, id, span } => {
+                let block_result = self.visit_value_block(*block, *span, Some(*fallthrough))?;
                 Ok(ValueTerminalResult {
                     value: block_result.value,
                     place: block_result.place,
@@ -1121,97 +1028,82 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     id: *id,
                 })
             }
-            Terminal::Optional { optional, test, fallthrough, id, loc } => {
-                let test_result = self.visit_test_block(*test, *loc, "optional")?;
+            Terminal::Optional { optional, test, fallthrough, id, span } => {
+                let test_result = self.visit_test_block(*test, *span, "optional")?;
                 let consequent =
-                    self.visit_value_block(test_result.consequent, *loc, Some(*fallthrough))?;
+                    self.visit_value_block(test_result.consequent, *span, Some(*fallthrough))?;
                 let call = ReactiveValue::SequenceExpression {
                     instructions: vec![ReactiveInstruction {
                         id: test_result.test.id,
                         lvalue: Some(test_result.test.place.clone()),
                         value: test_result.test.value,
-                        effects: None,
-                        loc: test_result.branch_loc,
+                        span: test_result.branch_span,
                     }],
                     id: consequent.id,
                     value: Box::new(consequent.value),
-                    loc: *loc,
                 };
                 Ok(ValueTerminalResult {
                     place: consequent.place,
                     value: ReactiveValue::OptionalExpression {
                         optional: *optional,
                         value: Box::new(call),
-                        id: *id,
-                        loc: *loc,
                     },
                     fallthrough: *fallthrough,
                     id: *id,
                 })
             }
-            Terminal::Logical { operator, test, fallthrough, id, loc } => {
-                let test_result = self.visit_test_block(*test, *loc, "logical")?;
+            Terminal::Logical { operator, test, fallthrough, id, span } => {
+                let test_result = self.visit_test_block(*test, *span, "logical")?;
                 let left_final =
-                    self.visit_value_block(test_result.consequent, *loc, Some(*fallthrough))?;
+                    self.visit_value_block(test_result.consequent, *span, Some(*fallthrough))?;
                 let left = ReactiveValue::SequenceExpression {
                     instructions: vec![ReactiveInstruction {
                         id: test_result.test.id,
                         lvalue: Some(test_result.test.place.clone()),
                         value: test_result.test.value,
-                        effects: None,
-                        loc: *loc,
+                        span: *span,
                     }],
                     id: left_final.id,
                     value: Box::new(left_final.value),
-                    loc: *loc,
                 };
                 let right =
-                    self.visit_value_block(test_result.alternate, *loc, Some(*fallthrough))?;
+                    self.visit_value_block(test_result.alternate, *span, Some(*fallthrough))?;
                 Ok(ValueTerminalResult {
                     place: left_final.place,
                     value: ReactiveValue::LogicalExpression {
                         operator: *operator,
                         left: Box::new(left),
                         right: Box::new(right.value),
-                        loc: *loc,
                     },
                     fallthrough: *fallthrough,
                     id: *id,
                 })
             }
-            Terminal::Ternary { test, fallthrough, id, loc } => {
-                let test_result = self.visit_test_block(*test, *loc, "ternary")?;
+            Terminal::Ternary { test, fallthrough, id, span } => {
+                let test_result = self.visit_test_block(*test, *span, "ternary")?;
                 let consequent =
-                    self.visit_value_block(test_result.consequent, *loc, Some(*fallthrough))?;
+                    self.visit_value_block(test_result.consequent, *span, Some(*fallthrough))?;
                 let alternate =
-                    self.visit_value_block(test_result.alternate, *loc, Some(*fallthrough))?;
+                    self.visit_value_block(test_result.alternate, *span, Some(*fallthrough))?;
                 Ok(ValueTerminalResult {
                     place: consequent.place,
                     value: ReactiveValue::ConditionalExpression {
                         test: Box::new(test_result.test.value),
                         consequent: Box::new(consequent.value),
                         alternate: Box::new(alternate.value),
-                        loc: *loc,
                     },
                     fallthrough: *fallthrough,
                     id: *id,
                 })
             }
-            Terminal::MaybeThrow { .. } => Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
-                "Unexpected maybe-throw in visit_value_block_terminal",
-                None,
-            )),
-            Terminal::Label { .. } => Err(CompilerDiagnostic::new(
-                ErrorCategory::Todo,
+            Terminal::MaybeThrow { .. } => Err(ErrorCategory::Invariant
+                .diagnostic("Unexpected maybe-throw in visit_value_block_terminal")),
+            Terminal::Label { .. } => Err(ErrorCategory::Todo.diagnostic(
                 "Support labeled statements combined with value blocks is not yet implemented",
-                None,
             )),
-            _ => Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
-                "Unsupported terminal kind in value block",
-                None,
-            )),
+            _ => {
+                Err(ErrorCategory::Invariant.diagnostic("Unsupported terminal kind in value block"))
+            }
         }
     }
 
@@ -1219,7 +1111,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         &self,
         instructions: &[InstructionId],
         block_id: BlockId,
-        loc: Option<SourceLocation>,
     ) -> ValueBlockResult<'a> {
         let last_id = instructions.last().expect("Expected non-empty instructions");
         let last_instr = &self.hir.instructions[last_id.0 as usize];
@@ -1232,8 +1123,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     id: instr.id,
                     lvalue: Some(instr.lvalue.clone()),
                     value: ReactiveValue::Instruction(instr.value.clone()),
-                    effects: instr.effects.clone(),
-                    loc: instr.loc,
+                    span: instr.span,
                 }
             })
             .collect();
@@ -1247,7 +1137,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     (
                         ReactiveValue::Instruction(InstructionValue::LoadLocal {
                             place: store_value.clone(),
-                            loc: store_value.loc,
+                            span: store_value.span,
                         }),
                         lvalue.place.clone(),
                     )
@@ -1267,12 +1157,11 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         } else {
             ValueBlockResult {
                 block: block_id,
-                place: place.clone(),
+                place,
                 value: ReactiveValue::SequenceExpression {
                     instructions: remaining,
                     id,
                     value: Box::new(value),
-                    loc,
                 },
                 id,
             }
@@ -1283,7 +1172,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         &self,
         instructions: &[InstructionId],
         continuation: ValueBlockResult<'a>,
-        loc: Option<SourceLocation>,
     ) -> ValueBlockResult<'a> {
         if instructions.is_empty() {
             return continuation;
@@ -1297,8 +1185,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     id: instr.id,
                     lvalue: Some(instr.lvalue.clone()),
                     value: ReactiveValue::Instruction(instr.value.clone()),
-                    effects: instr.effects.clone(),
-                    loc: instr.loc,
+                    span: instr.span,
                 }
             })
             .collect();
@@ -1310,7 +1197,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 instructions: reactive_instrs,
                 id: continuation.id,
                 value: Box::new(continuation.value),
-                loc,
             },
             id: continuation.id,
         }
@@ -1327,21 +1213,18 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
     fn value_block_result_to_sequence(
         &self,
         result: ValueBlockResult<'a>,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     ) -> ReactiveValue<'a> {
         // Collect all instructions from potentially nested SequenceExpressions
         let mut instructions: Vec<ReactiveInstruction<'a>> = Vec::new();
         let mut inner_value = result.value;
 
         // Flatten nested SequenceExpressions
-        loop {
-            match inner_value {
-                ReactiveValue::SequenceExpression { instructions: seq_instrs, value, .. } => {
-                    instructions.extend(seq_instrs);
-                    inner_value = *value;
-                }
-                _ => break,
-            }
+        while let ReactiveValue::SequenceExpression { instructions: seq_instrs, value, .. } =
+            inner_value
+        {
+            instructions.extend(seq_instrs);
+            inner_value = *value;
         }
 
         // Only add the final instruction if the innermost value is not just a LoadLocal
@@ -1358,8 +1241,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 id: result.id,
                 lvalue: Some(result.place),
                 value: inner_value,
-                effects: None,
-                loc,
+                span,
             });
         }
 
@@ -1368,9 +1250,8 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             id: result.id,
             value: Box::new(ReactiveValue::Instruction(InstructionValue::Primitive {
                 value: PrimitiveValue::Undefined,
-                loc,
+                span,
             })),
-            loc,
         }
     }
 
@@ -1378,21 +1259,17 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         &self,
         block: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
-    ) -> Result<Option<ReactiveStatement<'a>>, CompilerDiagnostic> {
+    ) -> Result<Option<ReactiveStatement<'a>>, OxcDiagnostic> {
         let (target_block, target_kind) = self.cx.get_break_target(block)?;
         if self.cx.scope_fallthroughs.contains(&target_block) {
             if target_kind != ReactiveTerminalTargetKind::Implicit {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    "Expected reactive scope to implicitly break to fallthrough".to_string(),
-                    None,
-                ));
+                return Err(ErrorCategory::Invariant
+                    .diagnostic("Expected reactive scope to implicitly break to fallthrough"));
             }
             return Ok(None);
         }
         Ok(Some(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-            terminal: ReactiveTerminal::Break { target: target_block, id, target_kind, loc },
+            terminal: ReactiveTerminal::Break { target: target_block, id, target_kind },
             label: None,
         })))
     }
@@ -1401,21 +1278,19 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         &self,
         block: BlockId,
         id: EvaluationOrder,
-        loc: Option<SourceLocation>,
-    ) -> Result<ReactiveStatement<'a>, CompilerDiagnostic> {
+    ) -> Result<ReactiveStatement<'a>, OxcDiagnostic> {
         let (target_block, target_kind) = match self.cx.get_continue_target(block) {
             Some(result) => result,
             None => {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    format!("Expected continue target to be scheduled for bb{}", block.0),
-                    None,
-                ));
+                return Err(ErrorCategory::Invariant.diagnostic(format!(
+                    "Expected continue target to be scheduled for bb{}",
+                    block.0
+                )));
             }
         };
 
         Ok(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-            terminal: ReactiveTerminal::Continue { target: target_block, id, target_kind, loc },
+            terminal: ReactiveTerminal::Continue { target: target_block, id, target_kind },
             label: None,
         }))
     }
@@ -1436,7 +1311,7 @@ struct TestBlockResult<'a> {
     test: ValueBlockResult<'a>,
     consequent: BlockId,
     alternate: BlockId,
-    branch_loc: Option<SourceLocation>,
+    branch_span: Option<Span>,
 }
 
 struct ValueTerminalResult<'a> {
@@ -1446,30 +1321,29 @@ struct ValueTerminalResult<'a> {
     id: EvaluationOrder,
 }
 
-/// Helper to get loc from a terminal
-fn terminal_loc(terminal: &Terminal) -> &Option<SourceLocation> {
+/// Helper to get span from a terminal
+fn terminal_span(terminal: &Terminal) -> &Option<Span> {
     match terminal {
-        Terminal::If { loc, .. }
-        | Terminal::Branch { loc, .. }
-        | Terminal::Logical { loc, .. }
-        | Terminal::Ternary { loc, .. }
-        | Terminal::Optional { loc, .. }
-        | Terminal::Throw { loc, .. }
-        | Terminal::Return { loc, .. }
-        | Terminal::Goto { loc, .. }
-        | Terminal::Switch { loc, .. }
-        | Terminal::DoWhile { loc, .. }
-        | Terminal::While { loc, .. }
-        | Terminal::For { loc, .. }
-        | Terminal::ForOf { loc, .. }
-        | Terminal::ForIn { loc, .. }
-        | Terminal::Label { loc, .. }
-        | Terminal::Sequence { loc, .. }
-        | Terminal::Unreachable { loc, .. }
-        | Terminal::Unsupported { loc, .. }
-        | Terminal::MaybeThrow { loc, .. }
-        | Terminal::Scope { loc, .. }
-        | Terminal::PrunedScope { loc, .. }
-        | Terminal::Try { loc, .. } => loc,
+        Terminal::If { span, .. }
+        | Terminal::Branch { span, .. }
+        | Terminal::Logical { span, .. }
+        | Terminal::Ternary { span, .. }
+        | Terminal::Optional { span, .. }
+        | Terminal::Throw { span, .. }
+        | Terminal::Return { span, .. }
+        | Terminal::Goto { span, .. }
+        | Terminal::Switch { span, .. }
+        | Terminal::DoWhile { span, .. }
+        | Terminal::While { span, .. }
+        | Terminal::For { span, .. }
+        | Terminal::ForOf { span, .. }
+        | Terminal::ForIn { span, .. }
+        | Terminal::Label { span, .. }
+        | Terminal::Sequence { span, .. }
+        | Terminal::Unreachable { span, .. }
+        | Terminal::MaybeThrow { span, .. }
+        | Terminal::Scope { span, .. }
+        | Terminal::PrunedScope { span, .. }
+        | Terminal::Try { span, .. } => span,
     }
 }

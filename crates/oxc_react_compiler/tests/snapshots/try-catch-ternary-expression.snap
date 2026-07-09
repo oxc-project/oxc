@@ -4,7 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/try-catch-ternary-expression.js
 ---
 function Component(props) {
 	let result;
-	;
 	try {
 		result = props.cond ? props.a : props.fallback.value;
 	} catch (t0) {

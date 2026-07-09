@@ -10,7 +10,7 @@
 
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use crate::diagnostics::CompilerError;
 use crate::react_compiler_hir::{
     DeclarationId, IdentifierId, IdentifierName, InstructionKind, InstructionValue, LValue,
     ParamPattern, Place, ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock,
@@ -93,7 +93,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         if let ReactiveValue::Instruction(InstructionValue::Destructure {
             lvalue,
             value: _destr_value,
-            loc,
+            span,
         }) = &mut instruction.value
         {
             // Check if this is a mixed destructuring (some declared, some not)
@@ -115,8 +115,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
             } else if !reassigned.is_empty() {
                 // Mixed: replace reassigned items with temporaries and emit separate assignments
                 let mut renamed: Vec<(Place, Place)> = Vec::new();
-                let instr_loc = instruction.loc.clone();
-                let destr_loc = loc.clone();
+                let instr_span = instruction.span;
+                let destr_span = *span;
 
                 let env = &mut *self.env; // reborrow
                 visitors::map_pattern_operands(&mut lvalue.pattern, &mut |place: Place| {
@@ -129,9 +129,9 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                     // Copy type from original identifier to temporary
                     let original_type = env.identifiers[place.identifier.0 as usize].type_;
                     env.identifiers[temp_id.0 as usize].type_ = original_type;
-                    // Set identifier loc to the place's source location
-                    // (matches TS makeTemporaryIdentifier which receives place.loc)
-                    env.identifiers[temp_id.0 as usize].loc = place.loc.clone();
+                    // Set identifier span to the place's source location
+                    // (matches TS makeTemporaryIdentifier which receives place.span)
+                    env.identifiers[temp_id.0 as usize].span = place.span;
                     // Promote the temporary
                     env.identifiers[temp_id.0 as usize].name =
                         Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
@@ -139,10 +139,10 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                         identifier: temp_id,
                         effect: place.effect,
                         reactive: place.reactive,
-                        loc: None, // GeneratedSource — matches TS createTemporaryPlace
+                        span: None, // GeneratedSource — matches TS createTemporaryPlace
                     };
                     let original = place;
-                    renamed.push((original.clone(), temporary.clone()));
+                    renamed.push((original, temporary.clone()));
                     temporary
                 });
 
@@ -155,11 +155,9 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                         value: ReactiveValue::Instruction(InstructionValue::StoreLocal {
                             lvalue: LValue { kind: InstructionKind::Reassign, place: original },
                             value: temporary,
-                            type_annotation: None,
-                            loc: destr_loc.clone(),
+                            span: destr_span,
                         }),
-                        effects: None,
-                        loc: instr_loc.clone(),
+                        span: instr_span,
                     });
                 }
                 extra_instructions = Some(extra);
@@ -169,13 +167,13 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         // Update state.declared with declarations from the instruction(s)
         if let Some(ref extras) = extra_instructions {
             // Process the original instruction
-            update_declared_from_instruction(instruction, &self.env, state);
+            update_declared_from_instruction(instruction, self.env, state);
             // Process extra instructions
             for extra_instr in extras {
-                update_declared_from_instruction(extra_instr, &self.env, state);
+                update_declared_from_instruction(extra_instr, self.env, state);
             }
         } else {
-            update_declared_from_instruction(instruction, &self.env, state);
+            update_declared_from_instruction(instruction, self.env, state);
         }
 
         if let Some(extras) = extra_instructions {
@@ -208,12 +206,12 @@ fn update_declared_from_instruction<'a>(
                     state.declared.insert(identifier.declaration_id);
                 }
             }
-            InstructionValue::Destructure { lvalue, .. } => {
-                if lvalue.kind != InstructionKind::Reassign {
-                    for place in visitors::each_pattern_operand(&lvalue.pattern) {
-                        let identifier = &env.identifiers[place.identifier.0 as usize];
-                        state.declared.insert(identifier.declaration_id);
-                    }
+            InstructionValue::Destructure { lvalue, .. }
+                if lvalue.kind != InstructionKind::Reassign =>
+            {
+                for place in visitors::each_pattern_operand(&lvalue.pattern) {
+                    let identifier = &env.identifiers[place.identifier.0 as usize];
+                    state.declared.insert(identifier.declaration_id);
                 }
             }
             _ => {}

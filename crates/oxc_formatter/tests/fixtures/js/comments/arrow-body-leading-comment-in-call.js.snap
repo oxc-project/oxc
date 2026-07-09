@@ -1,0 +1,87 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+pinia._p.push(() =>
+  // @ts-expect-error: invalid state
+  ({ external: { dark: true } })
+);
+
+call(() =>
+  // comment
+  ({})
+);
+
+call(() =>
+  // comment
+  []
+);
+
+call(() =>
+  /* block comment */
+  ({})
+);
+
+call(first, () =>
+  // comment
+  ({})
+);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+pinia._p.push(() =>
+  // @ts-expect-error: invalid state
+  ({ external: { dark: true } }),
+);
+
+call(() =>
+  // comment
+  ({}),
+);
+
+call(() =>
+  // comment
+  [],
+);
+
+call(() =>
+  /* block comment */
+  ({}),
+);
+
+call(first, () =>
+  // comment
+  ({}),
+);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+pinia._p.push(() =>
+  // @ts-expect-error: invalid state
+  ({ external: { dark: true } }),
+);
+
+call(() =>
+  // comment
+  ({}),
+);
+
+call(() =>
+  // comment
+  [],
+);
+
+call(() =>
+  /* block comment */
+  ({}),
+);
+
+call(first, () =>
+  // comment
+  ({}),
+);
+
+===================== End =====================

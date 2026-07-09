@@ -14,17 +14,22 @@
 //! The snapshots are oxc's *own* golden output, so any change in compiler behaviour
 //! surfaces as a diff. Regenerate with `cargo insta accept` after reviewing.
 
-use std::{fs, path::Path};
+use std::{
+    ffi::OsStr,
+    fs,
+    path::{Component, Path, PathBuf},
+};
 
 use convert_case::{Case, Casing};
+use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
-use oxc_react_compiler::react_compiler_hir::environment_config::{
-    ExhaustiveEffectDepsMode, ExternalFunctionConfig, InstrumentationConfig,
-};
 use oxc_react_compiler::{
-    DynamicGatingConfig, EnvironmentConfig, GatingConfig, PluginOptions, transform,
+    BuiltInTypeRef, CompilationMode, CompilerOutputMode, DynamicGatingConfig, Effect,
+    EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunctionConfig, FunctionTypeConfig,
+    FxIndexMap, GatingConfig, HookTypeConfig, InstrumentationConfig, ObjectTypeConfig,
+    PanicThreshold, PluginOptions, TypeConfig, TypeReferenceConfig, ValueKind, lint, transform,
 };
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -34,6 +39,7 @@ fn snapshots() {
     let fixtures = concat!(env!("CARGO_MANIFEST_DIR"), "/fixtures");
     insta::glob!(fixtures, "**/*.{js,cjs,mjs,ts,cts,mts,jsx,tsx}", |path| {
         let source = fs::read_to_string(path).unwrap();
+        let source = normalize_newlines(&source);
         let snapshot = run_fixture(&source);
         insta::with_settings!({ prepend_module_to_snapshot => false, snapshot_suffix => "", omit_expression => true }, {
             insta::assert_snapshot!(snapshot_name(path), snapshot);
@@ -41,9 +47,20 @@ fn snapshots() {
     });
 }
 
-/// Parse, analyse, compile, and render the compiled program + diagnostics.
+fn normalize_newlines(source: &str) -> String {
+    source.cow_replace("\r\n", "\n").cow_replace('\r', "\n").into_owned()
+}
+
+/// Parse, analyse, compile, and render the compiled program + diagnostics, plus any
+/// divergence between the read-only `lint` entry point and `transform`.
 fn run_fixture(source: &str) -> String {
     let (source_type, options) = parse_pragma(source);
+    // In lint output mode the compiler validates without rewriting the program, so
+    // `changed` is always false. Upstream's `snap` runner still emits the (unmodified)
+    // code in that mode alongside the reported findings, so mirror that here rather
+    // than collapsing to "No changes." — otherwise every lint fixture would look like a
+    // bail-out even though the compiler ran to completion.
+    let lint_mode = CompilerOutputMode::from_opts(&options) == CompilerOutputMode::Lint;
 
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, source_type).parse();
@@ -53,55 +70,114 @@ fn run_fixture(source: &str) -> String {
     // Surface parse failures rather than silently compiling a recovered/dummy AST.
     push_diagnostics(&mut out, "Parse errors", parsed.diagnostics.as_slice());
 
-    // `transform` borrows a `Semantic` built from the pristine program; scope the
-    // borrow so it ends before we swap in the compiled program.
-    let mut result = {
+    // `transform` and `lint` both borrow a `Semantic` built from the pristine program;
+    // scope the borrow so it ends before we swap in the compiled program. `transform`
+    // runs first on the untouched allocator so its output stays byte-identical to a
+    // transform-only run; `lint` then re-runs the shared `compile` pipeline read-only so
+    // we can cross-check its diagnostics against `transform`'s below.
+    let (mut result, lint_diagnostics) = {
         let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
-        transform(&program, &semantic, &allocator, options)
+        let result = transform(&program, &semantic, &allocator, options.clone());
+        let lint_diagnostics = lint(&program, &semantic, &allocator, options).diagnostics;
+        (result, lint_diagnostics)
     };
     if let Some(compiled) = result.program.take() {
         program = compiled;
     }
 
     push_diagnostics(&mut out, "Diagnostics", result.diagnostics.as_slice());
-    if result.changed {
+    // Mirror the upstream `snap` runner, which always re-emits the program as
+    // `## Code` unless a hard error turns the output into `## Error`. So when the
+    // compiler cleanly declines to change anything (e.g. `@expectNothingCompiled`,
+    // or a file with no React-like functions), or when a lint-mode run reports
+    // findings without rewriting the program, echo the reprinted source rather than
+    // the `No changes.` marker. The marker is kept only when a non-lint run reports
+    // an error (parse failure or compile diagnostic), where upstream emits no code —
+    // and echoing a parse-recovered AST would be misleading.
+    let clean = parsed.diagnostics.is_empty() && result.diagnostics.as_slice().is_empty();
+    if result.changed || clean || lint_mode {
         out.push_str(&Codegen::new().build(&program).code);
     } else {
         out.push_str("No changes.");
+    }
+
+    // Cross-check the read-only `lint` entry point against `transform`. Both funnel
+    // through the same `compile` pipeline, so their diagnostics are identical for almost
+    // every fixture. They diverge only where the pipeline gates a validation on lint
+    // output mode: `@validateNoSetStateInEffects` / `@validateNoJSXInTryStatements` /
+    // `@validateStaticComponents` / `@validateNoDerivedComputationsInEffectsExp` fixtures
+    // gain lint-only findings, while `@enableEmitHookGuards` conversely errors only when
+    // emitting. Surface any divergence in the snapshot so it stays reviewed rather than
+    // drifting silently.
+    let transform_body = diagnostics_body(result.diagnostics.as_slice());
+    let lint_body = diagnostics_body(lint_diagnostics.as_slice());
+    if lint_body != transform_body {
+        out.push_str("\n\nLint-mode diagnostics (differ from transform):\n\n");
+        out.push_str(if lint_body.is_empty() { "(none)\n" } else { &lint_body });
     }
     out
 }
 
 /// Append a `"{label}:\n\n{diag}\n…\n"` section, or nothing when there are none.
 fn push_diagnostics(out: &mut String, label: &str, diagnostics: &[impl std::fmt::Debug]) {
-    if diagnostics.is_empty() {
+    let body = diagnostics_body(diagnostics);
+    if body.is_empty() {
         return;
     }
     out.push_str(label);
     out.push_str(":\n\n");
-    for diagnostic in diagnostics {
-        out.push_str(&format!("{diagnostic:?}\n"));
-    }
+    out.push_str(&body);
     out.push('\n');
 }
 
-/// Snapshot name = fixture path under `fixtures/`, extension dropped and `/` → `__`
-/// so nested fixtures with the same basename don't collide.
+/// Render diagnostics as one `{diag:?}` line each, or `""` when there are none.
+fn diagnostics_body(diagnostics: &[impl std::fmt::Debug]) -> String {
+    let mut body = String::new();
+    for diagnostic in diagnostics {
+        body.push_str(&format!("{diagnostic:?}\n"));
+    }
+    body
+}
+
+/// Snapshot name = fixture path under `fixtures/`, extension dropped and path
+/// separators replaced with `__`, so nested fixtures with the same basename
+/// don't collide.
 fn snapshot_name(path: &Path) -> String {
-    let full = path.to_string_lossy();
-    let rel = full.rsplit_once("/fixtures/").map_or(full.as_ref(), |(_, rel)| rel);
-    let stem = rel.rsplit_once('.').map_or(rel, |(stem, _ext)| stem);
-    stem.split('/').collect::<Vec<_>>().join("__")
+    let components = path.components().collect::<Vec<_>>();
+    let start = components
+        .iter()
+        .rposition(|component| {
+            matches!(component, Component::Normal(part) if *part == OsStr::new("fixtures"))
+        })
+        .map_or(0, |index| index + 1);
+
+    let mut rel = PathBuf::new();
+    for component in &components[start..] {
+        rel.push(component.as_os_str());
+    }
+    rel.set_extension("");
+
+    rel.components()
+        .filter_map(|component| match component {
+            Component::Normal(part) => Some(part.to_string_lossy()),
+            _ => None,
+        })
+        .collect::<Vec<_>>()
+        .join("__")
 }
 
 /// Build the per-fixture `SourceType` + `PluginOptions` from the first-line pragmas.
 fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
     // Upstream `snap` defaults: compile everything, surface every error.
     let mut options = PluginOptions {
-        compilation_mode: "all".to_string(),
-        panic_threshold: "all_errors".to_string(),
+        compilation_mode: CompilationMode::All,
+        panic_threshold: PanicThreshold::AllErrors,
         ..PluginOptions::default()
     };
+    // Mirror the snap runner's test `moduleTypeProvider`; unlisted modules fall back to
+    // oxc's default provider, so only the `error.invalid-{type-provider,known-incompatible}-*`
+    // fixtures (which import these magic modules) are affected.
+    options.environment.module_type_provider = Some(test_module_type_provider());
 
     let mut is_script = false;
     // Fixture headers are normalised to the canonical `@key:value` / bare `@key` shape,
@@ -116,16 +192,16 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
         match key {
             "script" => is_script = true,
             "compilationMode" => {
-                if let Some(v) = value {
-                    options.compilation_mode = unquote(v);
+                if let Some(v) = value.and_then(|v| unquote(v).parse().ok()) {
+                    options.compilation_mode = v;
                 }
             }
             "panicThreshold" => {
-                if let Some(v) = value {
-                    options.panic_threshold = unquote(v);
+                if let Some(v) = value.and_then(|v| unquote(v).parse().ok()) {
+                    options.panic_threshold = v;
                 }
             }
-            "outputMode" => options.output_mode = value.map(unquote),
+            "outputMode" => options.output_mode = value.and_then(|v| unquote(v).parse().ok()),
             // Fixed test default (upstream `testComplexPluginOptionDefaults`).
             "gating" => {
                 options.gating = Some(GatingConfig {
@@ -146,6 +222,20 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
             other => set_environment_directive(&mut options.environment, other, value),
         }
     }
+
+    // Mirror the snap runner (`packages/snap/src/compiler.ts`): the fixture corpus runs
+    // with `validatePreserveExistingMemoizationGuarantees` OFF by default — most fixtures
+    // care about compilation output, not whether manual memoization is preserved — and it
+    // is turned on only when the fixture's first line opts in via the directive. Snap keys
+    // off substring presence alone (ignoring any `:value`), so replicate that exactly and
+    // let it override whatever the directive loop parsed. Without this, fixtures that set
+    // `@enablePreserveExistingMemoizationGuarantees:false` still hit `ValidatePreservedManual-
+    // Memoization` and bail with a spurious "memoization could not be preserved" error.
+    options.environment.validate_preserve_existing_memoization_guarantees = source
+        .lines()
+        .next()
+        .unwrap_or("")
+        .contains("@validatePreserveExistingMemoizationGuarantees");
 
     // Upstream parses every (non-Flow) fixture with the TypeScript + JSX plugins,
     // regardless of extension, and as a module unless `@script` — so injected runtime
@@ -273,4 +363,98 @@ fn json_strings(value: &str) -> Vec<String> {
 fn json_source(value: &str) -> Option<String> {
     let parts = json_strings(value);
     parts.iter().position(|s| s == "source").and_then(|i| parts.get(i + 1).cloned())
+}
+
+/// The upstream snap runner's test `moduleTypeProvider` (`shared-runtime-type-provider`),
+/// limited to the magic modules the corpus imports to exercise type-config /
+/// known-incompatible-library validation. These configs are intentionally invalid or
+/// flagged, so the `error.invalid-type-provider-*` / `error.invalid-known-incompatible-*`
+/// fixtures produce diagnostics instead of compiling.
+fn test_module_type_provider() -> FxIndexMap<String, TypeConfig> {
+    FxIndexMap::from_iter([
+        (
+            "ReactCompilerKnownIncompatibleTest".to_string(),
+            object([
+                (
+                    "useKnownIncompatible",
+                    hook(
+                        type_ref(),
+                        Some(Vec::new()),
+                        incompat("useKnownIncompatible is known to be incompatible"),
+                    ),
+                ),
+                (
+                    "useKnownIncompatibleIndirect",
+                    hook(
+                        object([(
+                            "incompatible",
+                            incompatible_fn(
+                                "useKnownIncompatibleIndirect returns an incompatible() function that is known incompatible",
+                            ),
+                        )]),
+                        Some(Vec::new()),
+                        None,
+                    ),
+                ),
+                (
+                    "knownIncompatible",
+                    incompatible_fn("useKnownIncompatible is known to be incompatible"),
+                ),
+            ]),
+        ),
+        (
+            "ReactCompilerTest".to_string(),
+            object([
+                ("useHookNotTypedAsHook", type_ref()),
+                ("notAhookTypedAsHook", hook(type_ref(), None, None)),
+            ]),
+        ),
+        ("useDefaultExportNotTypedAsHook".to_string(), object([("default", type_ref())])),
+    ])
+}
+
+fn object(properties: impl IntoIterator<Item = (&'static str, TypeConfig)>) -> TypeConfig {
+    let properties = properties.into_iter().map(|(name, config)| (name.to_string(), config));
+    TypeConfig::Object(ObjectTypeConfig { properties: Some(properties.collect()) })
+}
+
+fn type_ref() -> TypeConfig {
+    TypeConfig::TypeReference(TypeReferenceConfig { name: BuiltInTypeRef::Any })
+}
+
+fn hook(
+    return_type: TypeConfig,
+    positional_params: Option<Vec<Effect>>,
+    known_incompatible: Option<String>,
+) -> TypeConfig {
+    let rest_param = positional_params.as_ref().map(|_| Effect::Read);
+    TypeConfig::Hook(HookTypeConfig {
+        positional_params,
+        rest_param,
+        return_type: Box::new(return_type),
+        return_value_kind: None,
+        no_alias: None,
+        aliasing: None,
+        known_incompatible,
+    })
+}
+
+fn incompatible_fn(message: &str) -> TypeConfig {
+    TypeConfig::Function(FunctionTypeConfig {
+        positional_params: Vec::new(),
+        rest_param: Some(Effect::Read),
+        callee_effect: Effect::Read,
+        return_type: Box::new(type_ref()),
+        return_value_kind: ValueKind::Mutable,
+        no_alias: None,
+        mutable_only_if_operands_are_mutable: None,
+        impure: None,
+        canonical_name: None,
+        aliasing: None,
+        known_incompatible: Some(message.to_string()),
+    })
+}
+
+fn incompat(message: &str) -> Option<String> {
+    Some(message.to_string())
 }
