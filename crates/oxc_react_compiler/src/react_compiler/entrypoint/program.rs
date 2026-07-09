@@ -13,11 +13,12 @@
 //! 4. Applying compiled functions back to the AST
 
 use cow_utils::CowUtils;
+use oxc_ast::AstKind;
 use oxc_ast::ast as oxc;
 use oxc_ast::builder::AstBuilder;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
-use oxc_span::{SPAN, Span};
-use rustc_hash::FxHashMap;
+use oxc_span::{GetSpan, SPAN, Span};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_diagnostics::CompilerError;
 use crate::react_compiler_diagnostics::CompilerErrorDetail;
@@ -28,8 +29,9 @@ use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
 use crate::scope::ScopeResolver;
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn, GetAllocator};
-use oxc_semantic::Semantic;
+use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
 use oxc_syntax::scope::ScopeId;
+use oxc_syntax::symbol::SymbolId;
 
 use super::compile_result::CodegenFunction;
 use super::compile_result::CompileResult;
@@ -340,8 +342,8 @@ fn is_regular_call(call: &oxc::CallExpression) -> bool {
 /// For FunctionDeclaration: uses the `id` field.
 /// For FunctionExpression/ArrowFunctionExpression: infers from parent context
 /// (VariableDeclarator, etc.) which is passed explicitly since we don't have Babel paths.
-fn get_function_name_from_id(id: Option<&oxc::BindingIdentifier>) -> Option<String> {
-    id.map(|id| id.name.to_string())
+fn get_function_name_from_id<'ast>(id: Option<&oxc::BindingIdentifier<'ast>>) -> Option<&'ast str> {
+    id.map(|id| id.name.as_str())
 }
 
 // -----------------------------------------------------------------------
@@ -1313,11 +1315,11 @@ fn body_directive_values(body: &oxc::FunctionBody) -> Vec<String> {
 /// and `parent_callee_name` the enclosing forwardRef/memo callee (if any).
 fn try_make_compile_source<'a>(
     fn_node: FunctionNode<'a>,
-    name: Option<String>,
+    name: Option<&str>,
     original_kind: OriginalFnKind,
-    parent_callee_name: Option<String>,
+    parent_callee_name: Option<&str>,
     opts: &PluginOptions,
-    context: &mut ProgramContext,
+    already_compiled: &mut FxHashSet<u32>,
 ) -> Option<CompileSource<'a>> {
     let (params, body, span, body_directives) = match fn_node {
         FunctionNode::Function(f) => {
@@ -1342,25 +1344,26 @@ fn try_make_compile_source<'a>(
 
     let node_id = span.start;
 
-    // Skip if already compiled (identified by node_id).
-    if context.is_already_compiled(node_id) {
+    // Skip if already compiled (identified by node_id). This is a workaround for
+    // Babel not consistently respecting skip().
+    if already_compiled.contains(&node_id) {
         return None;
     }
 
     let fn_type = get_react_function_type(
-        name.as_deref(),
+        name,
         params,
         &body,
         &body_directives,
         // Flow `component`/`hook` declaration syntax never appears in the oxc AST.
         false,
-        parent_callee_name.as_deref(),
+        parent_callee_name,
         opts,
         false,
         false,
     )?;
 
-    context.mark_compiled(node_id);
+    already_compiled.insert(node_id);
 
     Some(CompileSource {
         kind: CompileSourceKind::Original,
@@ -1380,9 +1383,9 @@ fn try_make_compile_source<'a>(
 
 /// Get the variable declarator name (for inferring function names from
 /// `const Foo = () => {}`).
-fn get_declarator_name(decl: &oxc::VariableDeclarator) -> Option<String> {
+fn get_declarator_name<'ast>(decl: &oxc::VariableDeclarator<'ast>) -> Option<&'ast str> {
     match &decl.id {
-        oxc::BindingPattern::BindingIdentifier(id) => Some(id.name.to_string()),
+        oxc::BindingPattern::BindingIdentifier(id) => Some(id.name.as_str()),
         _ => None,
     }
 }
@@ -1410,19 +1413,19 @@ fn get_declarator_name(decl: &oxc::VariableDeclarator) -> Option<String> {
 /// discovery — matching the Babel bridge, which extracted no metadata for them).
 struct DiscoveryWalker<'a, 'ast> {
     opts: &'a PluginOptions,
-    context: &'a mut ProgramContext,
+    already_compiled: FxHashSet<u32>,
     queue: Vec<CompileSource<'ast>>,
     scope_stack: Vec<ScopeId>,
     loop_expression_depth: usize,
-    current_declarator_name: Option<String>,
-    parent_callee_stack: Vec<Option<String>>,
+    current_declarator_name: Option<&'ast str>,
+    parent_callee_stack: Vec<Option<&'ast str>>,
 }
 
 impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
-    fn new(opts: &'a PluginOptions, context: &'a mut ProgramContext) -> Self {
+    fn new(opts: &'a PluginOptions) -> Self {
         Self {
             opts,
-            context,
+            already_compiled: FxHashSet::default(),
             queue: Vec::new(),
             scope_stack: Vec::new(),
             loop_expression_depth: 0,
@@ -1432,8 +1435,12 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     }
 
     /// Try to push the scope a node creates (its semantic `scope_id` cell).
-    /// Returns whether one was pushed.
+    /// Returns whether one was pushed. The stack is only consulted by the
+    /// 'all'-mode scope check, so skip maintaining it in other modes.
     fn try_push_scope(&mut self, scope_id: Option<ScopeId>) -> bool {
+        if self.opts.compilation_mode != CompilationMode::All {
+            return false;
+        }
         if let Some(scope_id) = scope_id {
             self.scope_stack.push(scope_id);
             true
@@ -1450,8 +1457,8 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
             && (self.scope_stack.len() > 2 || self.loop_expression_depth > 0)
     }
 
-    fn current_parent_callee(&self) -> Option<String> {
-        self.parent_callee_stack.last().and_then(|opt| opt.clone())
+    fn current_parent_callee(&self) -> Option<&'ast str> {
+        self.parent_callee_stack.last().copied().flatten()
     }
 
     fn walk_program(&mut self, program: &'ast oxc::Program<'ast>) {
@@ -1659,7 +1666,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     /// Walk an oxc `Function` node (declaration or expression). `inferred_name`,
     /// when `Some`, supplies the name from the enclosing variable declarator (for
     /// function expressions); `None` means use the function's own id.
-    fn walk_function(&mut self, func: &'ast oxc::Function<'ast>, inferred_name: Option<String>) {
+    fn walk_function(&mut self, func: &'ast oxc::Function<'ast>, inferred_name: Option<&'ast str>) {
         let pushed = self.try_push_scope(func.scope_id.get());
 
         let original_kind = match func.r#type {
@@ -1685,7 +1692,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 original_kind,
                 parent_callee,
                 self.opts,
-                self.context,
+                &mut self.already_compiled,
             ) {
                 self.queue.push(source);
                 true
@@ -1710,7 +1717,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     fn walk_arrow(
         &mut self,
         arrow: &'ast oxc::ArrowFunctionExpression<'ast>,
-        inferred_name: Option<String>,
+        inferred_name: Option<&'ast str>,
     ) {
         let pushed = self.try_push_scope(arrow.scope_id.get());
 
@@ -1724,7 +1731,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 OriginalFnKind::ArrowFunctionExpression,
                 parent_callee,
                 self.opts,
-                self.context,
+                &mut self.already_compiled,
             ) {
                 self.queue.push(source);
                 true
@@ -1757,7 +1764,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 self.walk_arrow(node, name);
             }
             oxc::Expression::CallExpression(node) => {
-                let callee_name = get_callee_name_if_react_api(&node.callee).map(|s| s.to_string());
+                let callee_name = get_callee_name_if_react_api(&node.callee);
                 // The declarator name only flows through forwardRef/memo calls; for
                 // any other call, clear it so nested functions don't inherit it.
                 if callee_name.is_none() {
@@ -1984,11 +1991,155 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
 fn find_functions_to_compile<'ast>(
     program: &'ast oxc::Program<'ast>,
     opts: &PluginOptions,
-    context: &mut ProgramContext,
 ) -> Vec<CompileSource<'ast>> {
-    let mut walker = DiscoveryWalker::new(opts, context);
+    let mut walker = DiscoveryWalker::new(opts);
     walker.walk_program(program);
     walker.queue
+}
+
+// -----------------------------------------------------------------------
+// Discovery pre-check
+// -----------------------------------------------------------------------
+
+/// Cheap, sound pre-check for [`find_functions_to_compile`]: `false` means the
+/// discovery walk cannot queue anything, so the compile is a no-op. Built from
+/// data `Semantic` already computed instead of walking the AST, and delegating
+/// all judgment to discovery's own helpers:
+///
+/// - every discoverable function creates a function scope, so the node behind
+///   each function scope is run through [`try_make_compile_source`] with the
+///   name discovery would infer — own id for declarations, the directly
+///   enclosing `const Foo = ...` declarator for expressions/arrows, the only
+///   name sources discovery uses outside forwardRef/memo. This covers the
+///   named and directive-opt-in selection paths, nested functions included;
+/// - the forwardRef/memo path needs an identifier named `memo`, `forwardRef`,
+///   or `React` in callee position of a call [`get_callee_name_if_react_api`]
+///   recognizes, so checking the reference shapes of those three names —
+///   bindings and unresolved globals — covers wrapped anonymous functions.
+///
+/// Over-approximation is fine (the walk then finds an empty queue); a missed
+/// witness is not, since a skipped file is never compiled.
+fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> bool {
+    // 'all' mode compiles every top-level function; always walk.
+    if opts.compilation_mode == CompilationMode::All {
+        return true;
+    }
+
+    let scoping = semantic.scoping();
+    let nodes = semantic.nodes();
+
+    // forwardRef/memo wrappers used as globals: O(1) lookups. Discovery matches
+    // callee *names*, not bindings, so unresolved references count too.
+    const WRAPPER_NAMES: [&str; 3] = ["memo", "forwardRef", "React"];
+    for name in WRAPPER_NAMES {
+        if let Some(reference_ids) = scoping.root_unresolved_references().get(name) {
+            if reference_ids.iter().any(|reference_id| {
+                is_wrapper_callee(nodes, scoping.get_reference(*reference_id).node_id())
+            }) {
+                return true;
+            }
+        }
+    }
+
+    // Named components/hooks and directive opt-ins: run the node behind every
+    // function scope through discovery's candidate constructor. parent_callee
+    // is None — wrapper-selected functions are witnessed by reference shapes.
+    let mut discarded = FxHashSet::default();
+    for scope_id in scoping.scope_descendants_from_root() {
+        if !scoping.scope_flags(scope_id).is_function() {
+            continue;
+        }
+        let node = nodes.get_node(scoping.get_node_id(scope_id));
+        let (fn_node, name, original_kind) = match node.kind() {
+            AstKind::Function(func) => {
+                let (name, original_kind) = match func.r#type {
+                    oxc::FunctionType::FunctionDeclaration
+                    | oxc::FunctionType::TSDeclareFunction => (
+                        get_function_name_from_id(func.id.as_ref()),
+                        OriginalFnKind::FunctionDeclaration,
+                    ),
+                    _ => (
+                        declarator_name_for(nodes, node.id(), func.span),
+                        OriginalFnKind::FunctionExpression,
+                    ),
+                };
+                // A nameless function without directives can never classify.
+                if name.is_none()
+                    && func.body.as_ref().is_none_or(|body| body.directives.is_empty())
+                {
+                    continue;
+                }
+                (FunctionNode::Function(func), name, original_kind)
+            }
+            AstKind::ArrowFunctionExpression(arrow) => {
+                let name = declarator_name_for(nodes, node.id(), arrow.span);
+                if name.is_none() && arrow.body.directives.is_empty() {
+                    continue;
+                }
+                (FunctionNode::Arrow(arrow), name, OriginalFnKind::ArrowFunctionExpression)
+            }
+            _ => continue,
+        };
+        if try_make_compile_source(fn_node, name, original_kind, None, opts, &mut discarded)
+            .is_some()
+        {
+            return true;
+        }
+    }
+
+    // Bindings named like a wrapper (`import {memo} from 'react'`, or even a
+    // local `const memo = ...` — discovery treats any `memo(...)` call as a
+    // wrapper regardless of what the name resolves to). Scanned last so
+    // component files exit in the function-scope pass above.
+    for symbol_id in scoping.symbol_ids() {
+        if matches!(scoping.symbol_name(symbol_id), "memo" | "forwardRef" | "React")
+            && has_wrapper_callee_reference(scoping, nodes, symbol_id)
+        {
+            return true;
+        }
+    }
+
+    false
+}
+
+/// Whether any resolved reference of `symbol_id` is a wrapper-call callee.
+fn has_wrapper_callee_reference(scoping: &Scoping, nodes: &AstNodes, symbol_id: SymbolId) -> bool {
+    scoping.get_resolved_reference_ids(symbol_id).iter().any(|reference_id| {
+        is_wrapper_callee(nodes, scoping.get_reference(*reference_id).node_id())
+    })
+}
+
+/// The `const Foo = <fn>` name for a function/arrow node, iff the declarator's
+/// init is directly this node — the same direct-init rule the discovery walker
+/// applies (wrappers like parens or TS casts break the inference there too).
+fn declarator_name_for<'a>(nodes: &AstNodes<'a>, node_id: NodeId, span: Span) -> Option<&'a str> {
+    match nodes.parent_kind(node_id) {
+        AstKind::VariableDeclarator(decl)
+            if decl.init.as_ref().is_some_and(|init| init.span() == span) =>
+        {
+            get_declarator_name(decl)
+        }
+        _ => None,
+    }
+}
+
+/// Whether a reference sits in callee position of a call that
+/// [`get_callee_name_if_react_api`] recognizes — directly (`memo(...)`) or as
+/// the object of a called member (`React.memo(...)`).
+fn is_wrapper_callee(nodes: &AstNodes, node_id: NodeId) -> bool {
+    let span = nodes.get_node(node_id).kind().span();
+    let parent = nodes.parent_node(node_id);
+    let (call, callee_span) = match parent.kind() {
+        AstKind::CallExpression(call) => (call, span),
+        AstKind::StaticMemberExpression(member) if member.object.span() == span => {
+            match nodes.parent_kind(parent.id()) {
+                AstKind::CallExpression(call) => (call, member.span),
+                _ => return false,
+            }
+        }
+        _ => return false,
+    };
+    call.callee.span() == callee_span && get_callee_name_if_react_api(&call.callee).is_some()
 }
 
 struct CompiledFunction<'a, 'p, 's> {
@@ -2744,10 +2895,16 @@ pub fn compile_program<'a, 'p>(
     program: &'p oxc::Program<'a>,
     options: PluginOptions,
 ) -> CompileResult<'a> {
-    // The codegen back-end builds oxc nodes directly via this `AstBuilder`; `scope`
-    // is a read-through view over `Semantic` for binding/reference lookups.
-    let ast = AstBuilder::new(allocator);
-    let scope = ScopeResolver::new(semantic, program);
+    // Find all functions to compile. An empty queue means no work, so return
+    // before all the setup below, which only compilation needs. The pre-check
+    // decides emptiness from semantic data without walking the AST.
+    if !may_have_functions_to_compile(semantic, &options) {
+        return CompileResult::Success { ast: None, diagnostics: Diagnostics::new() };
+    }
+    let queue = find_functions_to_compile(program, &options);
+    if queue.is_empty() {
+        return CompileResult::Success { ast: None, diagnostics: Diagnostics::new() };
+    }
 
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
@@ -2781,6 +2938,11 @@ pub fn compile_program<'a, 'p>(
 
     // Create program context
     let mut context = ProgramContext::new(options.clone(), suppressions, has_module_scope_opt_out);
+
+    // The codegen back-end builds oxc nodes directly via this `AstBuilder`; `scope`
+    // is a read-through view over `Semantic` for binding/reference lookups.
+    let ast = AstBuilder::new(allocator);
+    let scope = ScopeResolver::new(semantic, program);
 
     // Initialize known referenced names from scope bindings for UID collision detection
     context.init_from_scope(&scope);
@@ -2817,9 +2979,6 @@ pub fn compile_program<'a, 'p>(
     context.instrument_fn_name = instrument_fn_name;
     context.instrument_gating_name = instrument_gating_name;
     context.hook_guard_name = hook_guard_name;
-
-    // Find all functions to compile
-    let queue = find_functions_to_compile(program, &options, &mut context);
 
     // Process each function and collect compiled results
     let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_>> = Vec::new();

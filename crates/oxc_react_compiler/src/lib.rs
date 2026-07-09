@@ -2,7 +2,6 @@ use oxc_allocator::Allocator;
 
 mod diagnostics;
 mod options;
-mod prefilter;
 mod scope;
 
 mod react_compiler;
@@ -19,10 +18,9 @@ mod react_compiler_validation;
 
 use crate::react_compiler::entrypoint::compile_result::CompileResult;
 use crate::react_compiler::entrypoint::imports::{
-    get_react_compiler_runtime_module, validate_restricted_imports,
+    get_react_compiler_runtime_module, has_memo_cache_function_import, validate_restricted_imports,
 };
 use crate::react_compiler::entrypoint::program::compile_program;
-use prefilter::{has_memo_cache_function_import, has_react_like_functions};
 
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use crate::options::{
@@ -115,13 +113,6 @@ fn compile<'a>(
 ) -> (Option<Program<'a>>, Diagnostics) {
     // Check for existing runtime imports (file already compiled).
     if has_memo_cache_function_import(program, &get_react_compiler_runtime_module(&options.target))
-    {
-        return (None, Diagnostics::default());
-    }
-
-    // Skip files with no React-like functions, unless the mode compiles everything.
-    if !matches!(options.compilation_mode, CompilationMode::All | CompilationMode::Annotation)
-        && !has_react_like_functions(program)
     {
         return (None, Diagnostics::default());
     }

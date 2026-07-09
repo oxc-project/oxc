@@ -768,16 +768,3 @@ pub fn is_hook_name(name: &str) -> bool {
     let fourth_char = name.as_bytes()[3];
     fourth_char.is_ascii_uppercase() || fourth_char.is_ascii_digit()
 }
-
-/// Returns true if the name follows React naming conventions (component or hook).
-/// Components start with an uppercase letter; hooks match `use[A-Z0-9]`.
-pub fn is_react_like_name(name: &str) -> bool {
-    if name.is_empty() {
-        return false;
-    }
-    let first_char = name.as_bytes()[0];
-    if first_char.is_ascii_uppercase() {
-        return true;
-    }
-    is_hook_name(name)
-}
