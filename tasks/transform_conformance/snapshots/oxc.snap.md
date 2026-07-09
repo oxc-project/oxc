@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 325/398
+Passed: 328/398
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (42/60)
+# babel-plugin-transform-typescript (45/60)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -127,48 +127,15 @@ Symbol reference IDs mismatch for "NumberEnum":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(8)]
 rebuilt        : SymbolId(0): [ReferenceId(5)]
 
-* export-elimination/input.ts
-Symbol flags mismatch for "T":
-after transform: SymbolId(9): SymbolFlags(Function | TypeAlias)
-rebuilt        : SymbolId(8): SymbolFlags(Function)
-Symbol span mismatch for "T":
-after transform: SymbolId(9): Span { start: 205, end: 206 }
-rebuilt        : SymbolId(8): Span { start: 226, end: 227 }
-Symbol redeclarations mismatch for "T":
-after transform: SymbolId(9): [Span { start: 205, end: 206 }, Span { start: 226, end: 227 }]
-rebuilt        : SymbolId(8): []
-
 * namespace/import-=/input.ts
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(2)]
 
-* namespace/redeclaration-with-enum/input.ts
-Symbol redeclarations mismatch for "x":
-after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 39, end: 40 }]
-rebuilt        : SymbolId(0): []
-Symbol redeclarations mismatch for "y":
-after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 83, end: 84 }]
-rebuilt        : SymbolId(3): []
-
 * optimize-enums/merged-enum/input.ts
 Unresolved references mismatch:
 after transform: ["A"]
 rebuilt        : []
-
-* redeclarations/input.ts
-Symbol flags mismatch for "T":
-after transform: SymbolId(1): SymbolFlags(Import | TypeAlias)
-rebuilt        : SymbolId(1): SymbolFlags(Import)
-Symbol redeclarations mismatch for "T":
-after transform: SymbolId(1): [Span { start: 149, end: 150 }, Span { start: 170, end: 171 }]
-rebuilt        : SymbolId(1): []
-Symbol flags mismatch for "B":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol redeclarations mismatch for "B":
-after transform: SymbolId(2): [Span { start: 289, end: 290 }, Span { start: 304, end: 305 }]
-rebuilt        : SymbolId(2): []
 
 * remove-class-properties-without-initializer/input.ts
 Unresolved references mismatch:

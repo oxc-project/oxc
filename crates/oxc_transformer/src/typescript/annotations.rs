@@ -575,9 +575,15 @@ impl<'a> TypeScriptAnnotations<'a> {
     ) -> bool {
         match decl {
             // Remove type aliases, interfaces, and `declare global {}`
-            Declaration::TSTypeAliasDeclaration(_)
-            | Declaration::TSInterfaceDeclaration(_)
-            | Declaration::TSGlobalDeclaration(_) => false,
+            Declaration::TSTypeAliasDeclaration(type_alias_decl) => {
+                self.record_removed_declaration(&type_alias_decl.id);
+                false
+            }
+            Declaration::TSInterfaceDeclaration(interface_decl) => {
+                self.record_removed_declaration(&interface_decl.id);
+                false
+            }
+            Declaration::TSGlobalDeclaration(_) => false,
             // Remove `declare var/let/const`
             Declaration::VariableDeclaration(var_decl) => {
                 if var_decl.declare {
@@ -588,7 +594,9 @@ impl<'a> TypeScriptAnnotations<'a> {
                 }
             }
             // Remove `declare function` and function overload signatures (no body)
-            Declaration::FunctionDeclaration(func_decl) if func_decl.declare => {
+            Declaration::FunctionDeclaration(func_decl)
+                if func_decl.declare || func_decl.body.is_none() =>
+            {
                 if let Some(id) = &func_decl.id {
                     self.record_removed_declaration(id);
                 }

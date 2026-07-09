@@ -23,6 +23,7 @@ pub struct TypeScriptNamespace<'a> {
     allow_namespaces: bool,
 
     removed_bindings: Vec<RemovedNamespaceBinding<'a>>,
+    lowered_enum_namespace_symbols: Vec<SymbolId>,
 }
 
 struct RemovedNamespaceBinding<'a> {
@@ -32,7 +33,11 @@ struct RemovedNamespaceBinding<'a> {
 
 impl TypeScriptNamespace<'_> {
     pub fn new(options: &TypeScriptOptions) -> Self {
-        Self { allow_namespaces: options.allow_namespaces, removed_bindings: vec![] }
+        Self {
+            allow_namespaces: options.allow_namespaces,
+            removed_bindings: vec![],
+            lowered_enum_namespace_symbols: vec![],
+        }
     }
 }
 
@@ -327,8 +332,13 @@ impl<'a> TypeScriptNamespace<'a> {
         ));
 
         let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
-        if !redeclarations.iter().any(|redeclaration| redeclaration.flags.is_enum())
-            && redeclarations.last().is_some_and(|redeclaration| redeclaration.span == ident.span)
+        if redeclarations.iter().any(|redeclaration| redeclaration.flags.is_enum()) {
+            // Keep this metadata until enum lowering has finished. An enum declared after this
+            // namespace uses it to detect the existing runtime binding.
+            self.lowered_enum_namespace_symbols.push(symbol_id);
+        } else if redeclarations
+            .last()
+            .is_some_and(|redeclaration| redeclaration.span == ident.span)
         {
             ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
         }
@@ -577,6 +587,10 @@ impl<'a> TypeScriptNamespace<'a> {
     }
 
     pub(super) fn update_removed_bindings(&mut self, scoping: &mut Scoping) {
+        for symbol_id in self.lowered_enum_namespace_symbols.drain(..) {
+            scoping.clear_symbol_redeclarations(symbol_id);
+        }
+
         let mut removed_bindings = std::mem::take(&mut self.removed_bindings);
         removed_bindings.sort_unstable_by_key(|binding| binding.symbol_id.index());
         removed_bindings.dedup_by_key(|binding| binding.symbol_id);

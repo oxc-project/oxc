@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 774/1165
+Passed: 777/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (122/157)
+# babel-plugin-transform-typescript (125/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1210,29 +1210,8 @@ rebuilt        : SymbolId(1): []
 * exports/interface/input.ts
 x Output mismatch
 
-* function/overloads/input.ts
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
-rebuilt        : SymbolId(0): []
-
-* function/overloads-exports/input.mjs
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
-rebuilt        : SymbolId(0): []
-
 * imports/type-only-export-specifier-2/input.ts
 x Output mismatch
-
-* namespace/clobber-enum/input.ts
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 30, end: 31 }]
-rebuilt        : SymbolId(0): []
 
 * namespace/declare/input.ts
 Bindings mismatch:
