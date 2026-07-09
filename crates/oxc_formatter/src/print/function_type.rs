@@ -1,9 +1,15 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    ast_nodes::AstNode, format_args, formatter::prelude::*,
+    ast_nodes::AstNode,
+    format_args,
+    formatter::prelude::*,
     print::function::should_group_function_parameters,
-    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments, write,
+    utils::{
+        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        object::format_property_key,
+    },
+    write,
 };
 
 use super::FormatWrite;
@@ -72,11 +78,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
                 }
             }
             if self.computed() {
-                write!(f, "[");
-            }
-            write!(f, self.key());
-            if self.computed() {
-                write!(f, "]");
+                write!(f, ["[", self.key(), "]"]);
+            } else {
+                format_property_key(self.key(), f);
             }
             if self.optional() {
                 write!(f, "?");

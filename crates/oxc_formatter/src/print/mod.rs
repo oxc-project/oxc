@@ -71,7 +71,9 @@ use crate::{
         expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         is_keyword_property_key,
-        object::{format_property_key, should_preserve_quote},
+        object::{
+            format_property_key, should_preserve_quote, should_preserve_quote_for_enum_member,
+        },
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         suppressed::FormatSuppressedNode,
@@ -125,6 +127,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
                 | AstNodes::PropertyDefinition(_)
                 | AstNodes::AccessorProperty(_)
                 | AstNodes::ImportAttribute(_)
+                | AstNodes::TSEnumMember(_)
         );
         if is_property_key_parent && f.context().is_quote_needed() {
             let quote_str = f.options().quote_style.as_str();
@@ -1155,14 +1158,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
             // We're inside a Tailwind context - sort this string literal as Tailwind classes
             write_tailwind_string_literal(self, ctx, f);
         } else {
-            // Not in Tailwind context - use normal string literal formatting
-            let is_jsx = matches!(self.parent(), AstNodes::JSXAttribute(_));
-            FormatLiteralStringToken::new(
-                f.source_text().text_for(self),
-                is_jsx,
-                StringLiteralParentKind::Expression,
-            )
-            .fmt(f);
+            // Not in Tailwind context - use normal string literal formatting.
+            // Enum member names behave like object property keys for `quoteProps`.
+            // Unlike object properties, they reach here through the generic dispatch,
+            // so detect them by parent (the span check excludes initializer literals).
+            let (is_jsx, parent_kind) = match self.parent() {
+                AstNodes::JSXAttribute(_) => (true, StringLiteralParentKind::Expression),
+                AstNodes::TSEnumMember(member) if member.id.span() == self.span() => {
+                    (false, StringLiteralParentKind::Member)
+                }
+                _ => (false, StringLiteralParentKind::Expression),
+            };
+            FormatLiteralStringToken::new(f.source_text().text_for(self), is_jsx, parent_kind)
+                .fmt(f);
         }
     }
 }
@@ -1220,12 +1228,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSEnumMember<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if f.options().quote_properties.is_consistent() {
+            let quote_needed = self
+                .as_ref()
+                .iter()
+                .any(|member| should_preserve_quote_for_enum_member(&member.id, f));
+            f.context_mut().push_quote_needed(quote_needed);
+        }
+
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_nodes_with_soft_line().entries_with_trailing_separator(
             self.iter(),
             ",",
             trailing_separator,
         );
+
+        if f.options().quote_properties.is_consistent() {
+            f.context_mut().pop_quote_needed();
+        }
     }
 }
 

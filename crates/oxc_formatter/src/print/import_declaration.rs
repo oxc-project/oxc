@@ -1,7 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::is_identifier_name_patched;
 
 use crate::{
     Format, FormatTrailingCommas, JsLabels, TrailingSeparator,
@@ -11,7 +10,10 @@ use crate::{
         JsFormatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,
     },
     print::semicolon::{FormatContentWithSemicolon, OptionalSemicolon},
-    utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
+    utils::{
+        object::should_preserve_string_quote,
+        string::{FormatLiteralStringToken, StringLiteralParentKind},
+    },
     write,
 };
 
@@ -193,10 +195,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.with_entries.iter().any(|attribute| {
-                matches!(&attribute.key, ImportAttributeKey::StringLiteral(string) if {
-                    let quote_less_content = f.source_text().text_for(&string.span.shrink(1));
-                    !is_identifier_name_patched(quote_less_content)
-                })
+                matches!(&attribute.key, ImportAttributeKey::StringLiteral(string)
+                    if should_preserve_string_quote(string, f))
             });
 
             f.context_mut().push_quote_needed(quote_needed);

@@ -1,4 +1,4 @@
-ts compatibility: 608/663 (91.70%), 19 files skipped
+ts compatibility: 611/663 (92.16%), 19 files skipped
 
 # Failed
 
@@ -37,9 +37,6 @@ ts compatibility: 608/663 (91.70%), 19 files skipped
 | typescript/object-type/comments/11307.ts | 💥 | 66.67% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 80.00% |
-| typescript/quote-props/enums.ts | 💥💥✨ | 56.86% |
-| typescript/quote-props/interfaces.ts | 💥✨✨ | 30.30% |
-| typescript/quote-props/type-literal.ts | 💥✨✨ | 30.30% |
 | typescript/template-literals/member-expression.ts | 💥 | 55.00% |
 | typescript/tsx/optional-chaining.tsx | 💥 | 73.33% |
 | typescript/type-parameters-arguments/10732.ts | 💥 | 50.00% |
