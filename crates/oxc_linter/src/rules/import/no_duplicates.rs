@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cell::OnceCell};
+use std::borrow::Cow;
 
 use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -121,8 +121,7 @@ impl Rule for NoDuplicates {
 
         // Map each import statement span to its declaration node so the fixer can inspect
         // specifiers, default names and brace positions when merging duplicates.
-        let import_declarations: OnceCell<FxHashMap<Span, &'a ImportDeclaration<'a>>> =
-            OnceCell::new();
+        let mut import_declarations: Option<FxHashMap<Span, &'a ImportDeclaration<'a>>> = None;
 
         let groups = module_record
             .requested_modules
@@ -218,13 +217,13 @@ impl Rule for NoDuplicates {
                 if i == 0 && !key0_has_runtime_specifiers {
                     check_duplicates(
                         ctx,
-                        &import_declarations,
+                        &mut import_declarations,
                         self.prefer_inline,
                         Some(&key0_side_effect_imports),
                     );
                     check_duplicates(
                         ctx,
-                        &import_declarations,
+                        &mut import_declarations,
                         self.prefer_inline,
                         Some(&key0_type_only_imports),
                     );
@@ -232,7 +231,7 @@ impl Rule for NoDuplicates {
                 }
                 check_duplicates(
                     ctx,
-                    &import_declarations,
+                    &mut import_declarations,
                     self.prefer_inline,
                     import_entries_maps.get(&i),
                 );
@@ -255,7 +254,7 @@ fn build_import_declarations<'a>(
 
 fn check_duplicates<'a>(
     ctx: &LintContext<'a>,
-    import_declarations: &OnceCell<FxHashMap<Span, &'a ImportDeclaration<'a>>>,
+    import_declarations: &mut Option<FxHashMap<Span, &'a ImportDeclaration<'a>>>,
     prefer_inline: bool,
     requested_modules: Option<&Vec<&RequestedModule>>,
 ) {
@@ -269,7 +268,8 @@ fn check_duplicates<'a>(
     let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
     let diagnostic = no_duplicates_diagnostic(module_name, first, labels);
 
-    let import_declarations = import_declarations.get_or_init(|| build_import_declarations(ctx));
+    let import_declarations =
+        import_declarations.get_or_insert_with(|| build_import_declarations(ctx));
     let decls: Vec<&ImportDeclaration<'a>> = requested_modules
         .iter()
         .filter_map(|m| import_declarations.get(&m.statement_span).copied())
