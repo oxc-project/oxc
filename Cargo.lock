@@ -2761,7 +2761,9 @@ version = "0.138.0"
 dependencies = [
  "anyhow",
  "bpaf",
+ "cow-utils",
  "indexmap",
+ "json-strip-comments",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
@@ -2776,6 +2778,7 @@ dependencies = [
  "rayon",
  "rustc-hash",
  "self_cell",
+ "serde_json",
 ]
 
 [[package]]

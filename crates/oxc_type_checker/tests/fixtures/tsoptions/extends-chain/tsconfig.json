@@ -1,0 +1,9 @@
+{
+  // JSONC: comments and trailing commas must parse.
+  "extends": "./config/base",
+  "compilerOptions": {
+    "target": "es2022",
+    "outDir": null,
+  },
+  "exclude": ["dist"],
+}

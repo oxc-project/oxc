@@ -57,6 +57,7 @@ use oxc_diagnostics::Diagnostics;
 use oxc_semantic::Semantic;
 
 pub mod compiler;
+pub mod core;
 mod diagnostics;
 pub mod execute;
 pub mod tsoptions;

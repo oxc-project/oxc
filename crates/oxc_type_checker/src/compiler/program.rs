@@ -6,7 +6,8 @@ use std::{
 };
 
 use oxc_index::{IndexSlice, define_nonmax_u32_index_type};
-use oxc_resolver::TsConfig;
+
+use crate::tsoptions::ParsedCommandLine;
 
 use super::{
     fileloader::{FileLoader, ProcessedFiles},
@@ -35,7 +36,7 @@ pub struct ProgramOptions {
     /// The parsed project tsconfig (tsgo `Config`), driving module resolution
     /// (`paths`/`baseUrl`) and the compiler-option gates. `None` when files are compiled
     /// directly without a config file.
-    pub config: Option<Arc<TsConfig>>,
+    pub config: Option<Arc<ParsedCommandLine>>,
 }
 
 /// A program: the source files loaded from a set of root files (roots + their transitive imports).

@@ -26,9 +26,6 @@ description = "An experimental type checker for JavaScript and TypeScript (work 
 [lints]
 workspace = true
 
-[lib]
-test = false
-
 [[bin]]
 name = "oxcheck"
 path = "src/main.rs"
@@ -49,7 +46,10 @@ oxc_syntax = { workspace = true }
 
 anyhow = { workspace = true }
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
+cow-utils = { workspace = true }
 indexmap = { workspace = true }
+json-strip-comments = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
 self_cell = { workspace = true }
+serde_json = { workspace = true }

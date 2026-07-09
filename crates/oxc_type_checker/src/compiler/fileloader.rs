@@ -19,9 +19,10 @@ use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 
 use crate::{
+    core::CompilerOptions,
     tsoptions::{
-        SUPPORTED_TS_EXTENSIONS_WITH_JSON_FLAT, get_allow_js, get_resolve_json_module,
-        get_supported_extensions, get_supported_extensions_with_json_flat,
+        SUPPORTED_TS_EXTENSIONS_WITH_JSON_FLAT, get_supported_extensions,
+        get_supported_extensions_with_json_flat,
     },
     tspath::{self, file_extension_is, file_extension_is_one_of},
 };
@@ -75,16 +76,16 @@ pub(super) struct FileLoader {
 
 impl FileLoader {
     fn new(opts: &ProgramOptions) -> Self {
-        let default_options = oxc_resolver::CompilerOptions::default();
+        let default_options = CompilerOptions::default();
         let options =
             opts.config.as_ref().map_or(&default_options, |config| &config.compiler_options);
         Self {
             host: CompilerHost::new(opts.current_directory.clone()),
-            resolver: build_resolver(opts.config.as_ref().map(|config| config.path.as_path())),
+            resolver: build_resolver(opts.config.as_ref().map(|config| config.path())),
             supported_extensions: get_supported_extensions(options),
             supported_extensions_with_json: get_supported_extensions_with_json_flat(options),
-            allow_js: get_allow_js(options),
-            resolve_json_module: get_resolve_json_module(options),
+            allow_js: options.get_allow_js(),
+            resolve_json_module: options.get_resolve_json_module(),
             jsx: options.jsx.is_some(),
         }
     }
