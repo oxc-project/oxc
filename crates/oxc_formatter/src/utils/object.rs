@@ -13,7 +13,16 @@ use crate::{
     write,
 };
 
-pub fn format_property_key<'a>(key: &AstNode<'a, PropertyKey<'a>>, f: &mut JsFormatter<'_, 'a>) {
+pub fn format_property_key<'a>(
+    key: &AstNode<'a, PropertyKey<'a>>,
+    computed: bool,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    if computed {
+        write!(f, ["[", key, "]"]);
+        return;
+    }
+
     // Check if we're in a Tailwind context and the key is a string literal with multiple classes
     if let AstNodes::StringLiteral(string) = key.as_ast_nodes() {
         if let Some(ctx) = tailwind_context_for_string_literal(string, f) {

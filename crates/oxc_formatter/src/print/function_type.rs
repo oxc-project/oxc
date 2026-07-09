@@ -77,11 +77,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
                     write!(f, ["set", space()]);
                 }
             }
-            if self.computed() {
-                write!(f, ["[", self.key(), "]"]);
-            } else {
-                format_property_key(self.key(), f);
-            }
+            format_property_key(self.key(), self.computed(), f);
             if self.optional() {
                 write!(f, "?");
             }

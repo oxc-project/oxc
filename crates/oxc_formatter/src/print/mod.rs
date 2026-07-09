@@ -232,11 +232,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
             if value.generator() {
                 write!(f, "*");
             }
-            if self.computed {
-                write!(f, ["[", self.key(), "]"]);
-            } else {
-                format_property_key(self.key(), f);
-            }
+            format_property_key(self.key(), self.computed, f);
 
             format_grouped_parameters_with_return_type_for_method(
                 value.type_parameters(),
@@ -1142,19 +1138,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
             // We're inside a Tailwind context - sort this string literal as Tailwind classes
             write_tailwind_string_literal(self, ctx, f);
         } else {
-            // Not in Tailwind context - use normal string literal formatting.
-            // Enum member names behave like object property keys for `quoteProps`.
-            // Unlike object properties, they reach here through the generic dispatch,
-            // so detect them by parent (the span check excludes initializer literals).
-            let (is_jsx, parent_kind) = match self.parent() {
-                AstNodes::JSXAttribute(_) => (true, StringLiteralParentKind::Expression),
-                AstNodes::TSEnumMember(member) if member.id.span() == self.span() => {
-                    (false, StringLiteralParentKind::Member)
-                }
-                _ => (false, StringLiteralParentKind::Expression),
-            };
-            FormatLiteralStringToken::new(f.source_text().text_for(self), is_jsx, parent_kind)
-                .fmt(f);
+            // Not in Tailwind context - use normal string literal formatting
+            let is_jsx = matches!(self.parent(), AstNodes::JSXAttribute(_));
+            FormatLiteralStringToken::new(
+                f.source_text().text_for(self),
+                is_jsx,
+                StringLiteralParentKind::Expression,
+            )
+            .fmt(f);
         }
     }
 }
@@ -1242,7 +1233,27 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
             write!(f, "[");
         }
 
-        write!(f, [id]);
+        // Enum member names behave like object property keys for `quoteProps`;
+        // intercept them here (like `ImportAttribute`) so the generic `StringLiteral` writer stays context-free.
+        if let (
+            // NOTE: `ComputedString` (`['baz']`, rejected by TSC but parsed by Oxc) is included
+            TSEnumMemberName::String(_) | TSEnumMemberName::ComputedString(_),
+            AstNodes::StringLiteral(string),
+        ) = (id.as_ref(), id.as_ast_nodes())
+        {
+            let format = FormatLiteralStringToken::new(
+                f.source_text().text_for(string),
+                /* jsx */ false,
+                StringLiteralParentKind::Member,
+            )
+            .clean_text(f);
+
+            string.format_leading_comments(f);
+            write!(f, format);
+            string.format_trailing_comments(f);
+        } else {
+            write!(f, [id]);
+        }
 
         if is_computed {
             write!(f, "]");
@@ -1623,11 +1634,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSPropertySignature<'a>> {
         if self.readonly() {
             write!(f, ["readonly", space()]);
         }
-        if self.computed() {
-            write!(f, ["[", self.key(), "]"]);
-        } else {
-            format_property_key(self.key(), f);
-        }
+        format_property_key(self.key(), self.computed(), f);
         if self.optional() {
             write!(f, "?");
         }

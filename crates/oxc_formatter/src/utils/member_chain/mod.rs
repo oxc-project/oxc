@@ -441,11 +441,13 @@ fn chain_members_iter<'a, 'b>(
 
         // A nested `ChainExpression` whose parentheses do not survive
         // (e.g. the head of `(a?.b!)?.c`) is transparent:
-        // flatten through it so the whole chain is laid out as one,
-        // matching Prettier's `printMemberChain`.
+        // flatten through it so the whole chain is laid out as one, matching Prettier's `printMemberChain`.
+        // The type-cast case is already handled above:
+        // on the first iteration `chain` is `expression` itself,
+        // and a `ChainElement` can never be another `ChainExpression`, so no re-check is needed here.
         let mut node = expression.as_ast_nodes();
         while let AstNodes::ChainExpression(chain) = node {
-            if chain.needs_parentheses(f) || is_type_cast_node(chain, f).is_some() {
+            if chain.needs_parentheses(f) {
                 break;
             }
             node = chain.expression().as_ast_nodes();

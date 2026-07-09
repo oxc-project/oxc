@@ -21,7 +21,7 @@ use crate::{
     },
     utils::{
         call_expression::is_test_each_pattern,
-        expression::as_member_expression_without_chain_wrappers,
+        expression::is_member_expression_without_chain_wrappers,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         tailwindcss::{is_tailwind_function_call, write_tailwind_template_element},
     },
@@ -430,7 +430,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a, '_> {
                             | Expression::BinaryExpression(_)
                             | Expression::LogicalExpression(_)
                             | Expression::Identifier(_) => true,
-                            e => as_member_expression_without_chain_wrappers(e).is_some(),
+                            e => is_member_expression_without_chain_wrappers(e),
                         }
                 });
 

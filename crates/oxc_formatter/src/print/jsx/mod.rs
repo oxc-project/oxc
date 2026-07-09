@@ -285,11 +285,10 @@ pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> b
         | JSXExpression::TemplateLiteral(_)
         | JSXExpression::TaggedTemplateExpression(_) => true,
         // A call wrapped in `?.` chains and/or `!` assertions still inlines.
-        JSXExpression::ChainExpression(_) | JSXExpression::TSNonNullExpression(_) => container
-            .expression
-            .as_expression()
-            .and_then(as_call_expression_without_chain_wrappers)
-            .is_some(),
+        JSXExpression::ChainExpression(_) | JSXExpression::TSNonNullExpression(_) => {
+            as_call_expression_without_chain_wrappers(container.expression.to_expression())
+                .is_some()
+        }
         JSXExpression::AwaitExpression(await_expression) => {
             matches!(
                 await_expression.argument,

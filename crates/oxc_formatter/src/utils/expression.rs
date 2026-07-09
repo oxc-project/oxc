@@ -130,8 +130,8 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
 ///
 /// Equivalent to Prettier's `isCallExpression(stripChainElementWrappers(node))`.
 /// A general "strip" cannot return `&Expression` because [`ChainElement`] is a separate enum,
-/// hence the call-expression-specialized shape; see also the member-expression sibling
-/// [`as_member_expression_without_chain_wrappers`].
+/// hence the call-expression-specialized shape;
+/// see also the member-expression sibling [`is_member_expression_without_chain_wrappers`].
 pub fn as_call_expression_without_chain_wrappers<'a, 'b>(
     expression: &'b Expression<'a>,
 ) -> Option<&'b CallExpression<'a>> {
@@ -152,23 +152,21 @@ pub fn as_call_expression_without_chain_wrappers<'a, 'b>(
 }
 
 /// Strip `ChainExpression` / `TSNonNullExpression` wrappers
-/// and return the inner [`MemberExpression`], if that is what they wrap.
+/// and check whether they wrap a [`MemberExpression`].
 ///
 /// Equivalent to Prettier's `isMemberExpression(stripChainElementWrappers(node))`;
 /// the member-expression sibling of [`as_call_expression_without_chain_wrappers`].
-pub fn as_member_expression_without_chain_wrappers<'a, 'b>(
-    expression: &'b Expression<'a>,
-) -> Option<&'b MemberExpression<'a>> {
+pub fn is_member_expression_without_chain_wrappers(expression: &Expression<'_>) -> bool {
     match expression {
         Expression::TSNonNullExpression(non_null) => {
-            as_member_expression_without_chain_wrappers(&non_null.expression)
+            is_member_expression_without_chain_wrappers(&non_null.expression)
         }
         Expression::ChainExpression(chain) => match &chain.expression {
             ChainElement::TSNonNullExpression(non_null) => {
-                as_member_expression_without_chain_wrappers(&non_null.expression)
+                is_member_expression_without_chain_wrappers(&non_null.expression)
             }
-            element => element.as_member_expression(),
+            element => element.as_member_expression().is_some(),
         },
-        _ => expression.as_member_expression(),
+        _ => expression.as_member_expression().is_some(),
     }
 }
