@@ -12,9 +12,9 @@
 
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, GENERATED_SOURCE,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::{BlockId, HirFunction, Instruction, InstructionValue, Terminal};
 use crate::react_compiler_lowering::{
     get_reverse_postordered_blocks, mark_instruction_ids, remove_dead_do_while_statements,
@@ -27,7 +27,7 @@ use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecut
 pub fn prune_maybe_throws(
     func: &mut HirFunction,
     functions: &mut [HirFunction],
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let terminal_mapping = prune_maybe_throws_impl(func);
     if let Some(terminal_mapping) = terminal_mapping {
         // If terminals have changed then blocks may have become newly unreachable.
@@ -50,18 +50,12 @@ pub fn prune_maybe_throws(
                     if !preds.contains(predecessor) {
                         let mapped_terminal =
                             terminal_mapping.get(predecessor).copied().ok_or_else(|| {
-                                CompilerDiagnostic::new(
-                                    ErrorCategory::Invariant,
-                                    "Expected non-existing phi operand's predecessor to have been mapped to a new terminal",
-                                    Some(format!(
+                                ErrorCategory::Invariant
+                                    .diagnostic("Expected non-existing phi operand's predecessor to have been mapped to a new terminal")
+                                    .with_help(format!(
                                         "Could not find mapping for predecessor bb{} in block bb{}",
                                         predecessor.0, block.id.0,
-                                    )),
-                                )
-                                .with_detail(CompilerDiagnosticDetail::Error {
-                                    span: GENERATED_SOURCE,
-                                    message: None,
-                                })
+                                    ))
                             })?;
                         updates.push((*predecessor, mapped_terminal));
                     }

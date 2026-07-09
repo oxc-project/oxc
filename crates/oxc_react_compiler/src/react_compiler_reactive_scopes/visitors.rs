@@ -9,7 +9,7 @@
 
 use std::mem::replace;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use crate::diagnostics::CompilerError;
 use crate::react_compiler_hir::visitors::{
     each_instruction_value_lvalue, each_instruction_value_operand, each_terminal_operand,
 };

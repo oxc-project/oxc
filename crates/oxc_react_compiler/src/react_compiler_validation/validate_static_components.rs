@@ -11,10 +11,8 @@
 
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, Span,
-};
-use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, JsxTag};
+use crate::diagnostics::{CompilerError, ErrorCategory};
+use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, JsxTag, Span};
 
 /// Validates that components used in JSX are not dynamically created during render.
 ///
@@ -63,22 +61,18 @@ pub fn validate_static_components(func: &HirFunction) -> CompilerError {
                 InstructionValue::JsxExpression { tag: JsxTag::Place(tag_place), .. } => {
                     if let Some(location) = known_dynamic_components.get(&tag_place.identifier) {
                         let location = *location;
-                        let diagnostic = CompilerDiagnostic::new(
-                            ErrorCategory::StaticComponents,
-                            "Cannot create components during render",
-                            Some("Components created during render will reset their state each time they are created. Declare components outside of render".to_string()),
-                        )
-                        .with_detail(CompilerDiagnosticDetail::Error {
-                            span: tag_place.span,
-                            message: Some("This component is created during render".to_string()),
-                        })
-                        .with_detail(CompilerDiagnosticDetail::Error {
-                            span: location,
-                            message: Some(
-                                "The component is created during render here".to_string(),
-                            ),
-                        });
-                        error.push_diagnostic(diagnostic);
+                        let diagnostic = ErrorCategory::StaticComponents
+                            .diagnostic("Cannot create components during render")
+                            .with_help("Components created during render will reset their state each time they are created. Declare components outside of render")
+                            .with_labels(
+                                tag_place
+                                    .span
+                                    .map(|s| s.label("This component is created during render")),
+                            )
+                            .and_labels(location.map(
+                                |s| s.label("The component is created during render here"),
+                            ));
+                        error.push(diagnostic);
                     }
                 }
                 _ => {}

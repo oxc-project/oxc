@@ -20,10 +20,7 @@ use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{GetSpan, SPAN, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::diagnostics::{CompilerError, ErrorCategory, with_fallback_label};
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
@@ -141,7 +138,7 @@ fn find_directives_dynamic_gating<'a>(
         None => return Ok(None),
     };
 
-    let mut errors: Vec<CompilerErrorDetail> = Vec::new();
+    let mut errors = CompilerError::new();
     let mut matches: Vec<(&'a str, String)> = Vec::new();
 
     for directive in directives {
@@ -149,34 +146,26 @@ fn find_directives_dynamic_gating<'a>(
             if is_valid_identifier(ident) {
                 matches.push((directive.as_str(), ident.to_string()));
             } else {
-                let detail = CompilerErrorDetail::new(
-                    ErrorCategory::Gating,
-                    "Dynamic gating directive is not a valid JavaScript identifier",
-                )
-                .with_description(format!("Found '{directive}'"));
-                errors.push(detail);
+                errors.push(
+                    ErrorCategory::Gating
+                        .diagnostic("Dynamic gating directive is not a valid JavaScript identifier")
+                        .with_help(format!("Found '{directive}'")),
+                );
             }
         }
     }
 
-    if !errors.is_empty() {
-        let mut err = CompilerError::new();
-        for e in errors {
-            err.push_error_detail(e);
-        }
-        return Err(err);
+    if errors.has_any_errors() {
+        return Err(errors);
     }
 
     if matches.len() > 1 {
         let names: Vec<&str> = matches.iter().map(|(d, _)| *d).collect();
-        let mut err = CompilerError::new();
-        let detail = CompilerErrorDetail::new(
-            ErrorCategory::Gating,
-            "Multiple dynamic gating directives found",
-        )
-        .with_description(format!("Expected a single directive but found [{}]", names.join(", ")));
-        err.push_error_detail(detail);
-        return Err(err);
+        return Err(CompilerError::from(
+            ErrorCategory::Gating
+                .diagnostic("Multiple dynamic gating directives found")
+                .with_help(format!("Expected a single directive but found [{}]", names.join(", "))),
+        ));
     }
 
     if matches.len() == 1 {
@@ -1089,18 +1078,16 @@ fn get_callee_name_if_react_api<'e>(callee: &'e oxc::Expression) -> Option<&'e s
 // Error handling
 // -----------------------------------------------------------------------
 
-/// Push a compiler error's per-detail diagnostics onto the accumulator.
+/// Push a compiler error's diagnostics onto the accumulator.
 fn log_error(err: &CompilerError, fn_span: Option<Span>, diagnostics: &mut Diagnostics) {
     // Detect simulated unknown exception (throwUnknownException__testonly). In TS,
     // non-CompilerError exceptions surface as a pipeline error carrying the error
     // message rather than a per-detail compiler error.
-    let is_simulated_unknown = err.details.len() == 1
-        && err.details.iter().all(|d| match d {
-            CompilerErrorOrDiagnostic::ErrorDetail(d) => {
-                d.category == ErrorCategory::Invariant && d.reason == "unexpected error"
-            }
-            _ => false,
-        });
+    let is_simulated_unknown = err.diagnostics.len() == 1
+        && err
+            .diagnostics
+            .iter()
+            .all(|d| d.message == "[ReactCompiler] Invariant: unexpected error");
     if is_simulated_unknown {
         let mut diagnostic =
             OxcDiagnostic::error("[ReactCompiler] Pipeline error: Error: unexpected error");
@@ -1111,10 +1098,8 @@ fn log_error(err: &CompilerError, fn_span: Option<Span>, diagnostics: &mut Diagn
         return;
     }
 
-    for detail in &err.details {
-        if let Some(diagnostic) = crate::diagnostics::detail_to_diagnostic(detail, fn_span) {
-            diagnostics.push(diagnostic);
-        }
+    for diagnostic in &err.diagnostics {
+        diagnostics.push(with_fallback_label(diagnostic, fn_span));
     }
 }
 
@@ -1137,10 +1122,7 @@ fn handle_error<'a>(
     };
 
     // Config errors always cause a panic
-    let is_config_error = err.details.iter().any(|d| match d {
-        CompilerErrorOrDiagnostic::Diagnostic(d) => d.category == ErrorCategory::Config,
-        CompilerErrorOrDiagnostic::ErrorDetail(d) => d.category == ErrorCategory::Config,
-    });
+    let is_config_error = err.diagnostics.iter().any(|d| ErrorCategory::Config.matches(d));
 
     if should_panic || is_config_error {
         // The per-detail diagnostics were already pushed by `log_error`; the fatal
@@ -3000,11 +2982,10 @@ pub fn compile_program<'a, 'p>(
     // TS invariant: if there's a module scope opt-out, no functions should have been compiled
     if has_module_scope_opt_out {
         if !compiled_fns.is_empty() {
-            let mut err = CompilerError::new();
-            err.push_error_detail(CompilerErrorDetail::new(
-                ErrorCategory::Invariant,
-                "Unexpected compiled functions when module scope opt-out is present",
-            ));
+            let err =
+                CompilerError::from(ErrorCategory::Invariant.diagnostic(
+                    "Unexpected compiled functions when module scope opt-out is present",
+                ));
             handle_error(&err, None, context.opts.panic_threshold, &mut context.diagnostics);
         }
         return CompileResult::Success { ast: None, diagnostics: context.diagnostics };

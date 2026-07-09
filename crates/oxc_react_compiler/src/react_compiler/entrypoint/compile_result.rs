@@ -1,6 +1,7 @@
 use oxc_diagnostics::Diagnostics;
 
-use crate::react_compiler_diagnostics::Span;
+use oxc_span::Span;
+
 use crate::react_compiler_hir::ReactFunctionType;
 
 /// Main result type returned by the compile function.

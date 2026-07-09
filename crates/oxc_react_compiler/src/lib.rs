@@ -5,7 +5,6 @@ mod options;
 mod scope;
 
 mod react_compiler;
-mod react_compiler_diagnostics;
 mod react_compiler_hir;
 mod react_compiler_inference;
 mod react_compiler_lowering;

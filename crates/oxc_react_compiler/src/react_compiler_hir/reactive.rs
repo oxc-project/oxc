@@ -15,10 +15,8 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 
-use crate::react_compiler_diagnostics::Span;
-
 use crate::react_compiler_hir::{
-    BlockId, EvaluationOrder, InstructionValue, LogicalOperator, ParamPattern, Place, ScopeId,
+    BlockId, EvaluationOrder, InstructionValue, LogicalOperator, ParamPattern, Place, ScopeId, Span,
 };
 
 // =============================================================================

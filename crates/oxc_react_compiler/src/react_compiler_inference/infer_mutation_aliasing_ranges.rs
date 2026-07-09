@@ -14,11 +14,12 @@
 //!   vars, aliasing between params/context-vars/return-value)
 //! - The legacy `Effect` to store on each Place
 
+use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_utils::FxIndexMap;
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::type_config::{ValueKind, ValueReason};
 use crate::react_compiler_hir::visitors::{
@@ -430,7 +431,7 @@ pub fn infer_mutation_aliasing_ranges(
     func: &mut HirFunction,
     env: &mut Environment,
     is_function_expression: bool,
-) -> Result<Vec<AliasingEffect>, CompilerDiagnostic> {
+) -> Result<Vec<AliasingEffect>, OxcDiagnostic> {
     let mut function_effects: Vec<AliasingEffect> = Vec::new();
 
     // =========================================================================
@@ -868,10 +869,8 @@ pub fn infer_mutation_aliasing_ranges(
                         operand_effects.insert(value.identifier, Effect::Store);
                     }
                     AliasingEffect::Apply { .. } => {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
+                        return Err(ErrorCategory::Invariant.diagnostic(
                             "[AnalyzeFunctions] Expected Apply effects to be replaced with more precise effects",
-                            None,
                         ));
                     }
                     AliasingEffect::MutateTransitive { value, .. }

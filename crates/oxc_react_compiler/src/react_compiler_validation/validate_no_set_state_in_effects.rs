@@ -14,9 +14,9 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::{CompilerError, ErrorCategory};
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::ObjectPropertyOrSpread;
 use crate::react_compiler_hir::Pattern;
@@ -32,7 +32,7 @@ use crate::react_compiler_hir::{
 pub fn validate_no_set_state_in_effects(
     func: &HirFunction,
     env: &Environment,
-) -> Result<CompilerError, CompilerDiagnostic> {
+) -> Result<CompilerError, OxcDiagnostic> {
     let identifiers = &env.identifiers;
     let types = &env.types;
     let functions = &env.functions;
@@ -154,11 +154,12 @@ fn is_set_state_type_by_id(
 
 fn push_error(errors: &mut CompilerError, info: &SetStateInfo, enable_verbose: bool) {
     if enable_verbose {
-        errors.push_diagnostic(
-            CompilerDiagnostic::new(
-                ErrorCategory::EffectSetState,
-                "Calling setState synchronously within an effect can trigger cascading renders",
-                Some(
+        errors.push(
+            ErrorCategory::EffectSetState
+                .diagnostic(
+                    "Calling setState synchronously within an effect can trigger cascading renders",
+                )
+                .with_help(
                     "Effects are intended to synchronize state between React and external systems. \
                      Calling setState synchronously causes cascading renders that hurt performance.\n\n\
                      This pattern may indicate one of several issues:\n\n\
@@ -171,36 +172,31 @@ fn push_error(errors: &mut CompilerError, info: &SetStateInfo, enable_verbose: b
                      **3. Force update / external sync**: If you're forcing a re-render to sync with an external \
                      data source (mutable values outside React), use `useSyncExternalStore` to properly subscribe \
                      to external state changes.\n\n\
-                     See: https://react.dev/learn/you-might-not-need-an-effect".to_string(),
+                     See: https://react.dev/learn/you-might-not-need-an-effect",
+                )
+                .with_labels(
+                    info.span
+                        .map(|s| s.label("Avoid calling setState() directly within an effect")),
                 ),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                span: info.span,
-                message: Some(
-                    "Avoid calling setState() directly within an effect".to_string(),
-                ),
-            }),
         );
     } else {
-        errors.push_diagnostic(
-            CompilerDiagnostic::new(
-                ErrorCategory::EffectSetState,
-                "Calling setState synchronously within an effect can trigger cascading renders",
-                Some(
+        errors.push(
+            ErrorCategory::EffectSetState
+                .diagnostic(
+                    "Calling setState synchronously within an effect can trigger cascading renders",
+                )
+                .with_help(
                     "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. \
                      In general, the body of an effect should do one or both of the following:\n\
                      * Update external systems with the latest state from React.\n\
                      * Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\n\
                      Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. \
-                     (https://react.dev/learn/you-might-not-need-an-effect)".to_string(),
+                     (https://react.dev/learn/you-might-not-need-an-effect)",
+                )
+                .with_labels(
+                    info.span
+                        .map(|s| s.label("Avoid calling setState() directly within an effect")),
                 ),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                span: info.span,
-                message: Some(
-                    "Avoid calling setState() directly within an effect".to_string(),
-                ),
-            }),
         );
     }
 }
@@ -268,7 +264,7 @@ fn create_ref_controlled_block_checker(
     ref_derived_values: &FxHashSet<IdentifierId>,
     identifiers: &[Identifier],
     types: &[Type],
-) -> Result<FxHashMap<BlockId, bool>, CompilerDiagnostic> {
+) -> Result<FxHashMap<BlockId, bool>, OxcDiagnostic> {
     let post_dominators = compute_post_dominator_tree(func, next_block_id_counter, false)?;
     let mut cache: FxHashMap<BlockId, bool> = FxHashMap::default();
 
@@ -331,7 +327,7 @@ fn get_set_state_call(
     functions: &[HirFunction],
     enable_allow_set_state_from_refs: bool,
     next_block_id_counter: u32,
-) -> Result<Option<SetStateInfo>, CompilerDiagnostic> {
+) -> Result<Option<SetStateInfo>, OxcDiagnostic> {
     let mut ref_derived_values: FxHashSet<IdentifierId> = FxHashSet::default();
 
     // First pass: collect ref-derived values (needed before building control dominator checker)

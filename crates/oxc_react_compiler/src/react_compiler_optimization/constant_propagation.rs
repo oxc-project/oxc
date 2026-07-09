@@ -28,7 +28,6 @@ use std::mem::replace;
 
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_diagnostics::JsString;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BinaryOperator, BlockKind, FloatValue, FunctionId, GotoVariant, HirFunction, IdentifierId,
@@ -42,6 +41,7 @@ use crate::react_compiler_lowering::{
 };
 use crate::react_compiler_ssa::eliminate_redundant_phi;
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
+use crate::react_compiler_utils::JsString;
 
 use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecutive_blocks;
 

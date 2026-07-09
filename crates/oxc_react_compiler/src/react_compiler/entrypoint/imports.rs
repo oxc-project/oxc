@@ -8,10 +8,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ast::ast::{ImportDeclarationSpecifier, ModuleExportName, Program, Statement};
 
-use crate::diagnostics::detail_to_diagnostic;
-use crate::react_compiler_diagnostics::{
-    CompilerErrorDetail, CompilerErrorOrDiagnostic, ErrorCategory,
-};
+use crate::diagnostics::ErrorCategory;
 use crate::scope::ScopeResolver;
 
 use oxc_diagnostics::Diagnostics;
@@ -199,15 +196,11 @@ pub fn validate_restricted_imports(
     for stmt in &program.body {
         if let Statement::ImportDeclaration(import) = stmt {
             if restricted.contains(import.source.value.as_str()) {
-                let detail = CompilerErrorDetail::new(
-                    ErrorCategory::Todo,
-                    "Bailing out due to blocklisted import",
-                )
-                .with_description(format!("Import from module {}", import.source.value));
-                let detail = CompilerErrorOrDiagnostic::ErrorDetail(detail);
-                if let Some(diagnostic) = detail_to_diagnostic(&detail, None) {
-                    diagnostics.push(diagnostic);
-                }
+                diagnostics.push(
+                    ErrorCategory::Todo
+                        .diagnostic("Bailing out due to blocklisted import")
+                        .with_help(format!("Import from module {}", import.source.value)),
+                );
             }
         }
     }

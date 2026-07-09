@@ -11,13 +11,11 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, Span,
-};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     ArrayPatternElement, Effect, ObjectPropertyOrSpread, Pattern, PropertyLiteral,
-    PrunedReactiveScopeBlock, ReactiveTerminalStatement,
+    PrunedReactiveScopeBlock, ReactiveTerminalStatement, Span,
 };
 use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, Identifier, IdentifierId, IdentifierName, InstructionKind,
@@ -213,20 +211,17 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
                 if let Some(scope_id) = ident.scope {
                     if !state.scopes.contains(&scope_id) && !state.pruned_scopes.contains(&scope_id)
                     {
-                        let diag = CompilerDiagnostic::new(
-                            ErrorCategory::PreserveManualMemo,
-                            "Existing memoization could not be preserved",
-                            Some(
+                        let diag = ErrorCategory::PreserveManualMemo
+                            .diagnostic("Existing memoization could not be preserved")
+                            .with_help(
                                 "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. \
-                                 This dependency may be mutated later, which could cause the value to change unexpectedly".to_string(),
-                            ),
-                        )
-                        .with_detail(CompilerDiagnosticDetail::Error {
-                            span: place.span,
-                            message: Some(
-                                "This dependency may be modified later".to_string(),
-                            ),
-                        });
+                                 This dependency may be mutated later, which could cause the value to change unexpectedly",
+                            )
+                            .with_labels(
+                                place
+                                    .span
+                                    .map(|s| s.label("This dependency may be modified later")),
+                            );
                         state.env.record_diagnostic(diag);
                     }
                 }
@@ -315,17 +310,12 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
 }
 
 fn record_unmemoized_error(span: Option<Span>, env: &mut Environment) {
-    let diag = CompilerDiagnostic::new(
-        ErrorCategory::PreserveManualMemo,
-        "Existing memoization could not be preserved",
-        Some(
-            "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output".to_string(),
-        ),
-    )
-    .with_detail(CompilerDiagnosticDetail::Error {
-        span,
-        message: Some("Could not preserve existing memoization".to_string()),
-    });
+    let diag = ErrorCategory::PreserveManualMemo
+        .diagnostic("Existing memoization could not be preserved")
+        .with_help(
+            "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output",
+        )
+        .with_labels(span.map(|s| s.label("Could not preserve existing memoization")));
     env.record_diagnostic(diag);
 }
 
@@ -714,14 +704,11 @@ fn validate_inferred_dep(
         extra.as_deref().unwrap_or_default()
     );
 
-    let diag = CompilerDiagnostic::new(
-        ErrorCategory::PreserveManualMemo,
-        "Existing memoization could not be preserved",
-        Some(description.trim().to_string()),
-    )
-    .with_detail(CompilerDiagnosticDetail::Error {
-        span: memo_location,
-        message: Some("Could not preserve existing manual memoization".to_string()),
-    });
+    let diag = ErrorCategory::PreserveManualMemo
+        .diagnostic("Existing memoization could not be preserved")
+        .with_help(description.trim().to_string())
+        .with_labels(
+            memo_location.map(|s| s.label("Could not preserve existing manual memoization")),
+        );
     env.record_diagnostic(diag);
 }

@@ -15,9 +15,7 @@
 //!
 //! Port of ValidateNoJSXInTryStatement.ts.
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory,
-};
+use crate::diagnostics::{CompilerError, ErrorCategory};
 use crate::react_compiler_hir::{BlockId, HirFunction, InstructionValue, Terminal};
 
 pub fn validate_no_jsx_in_try_statement(func: &HirFunction) -> CompilerError {
@@ -34,20 +32,15 @@ pub fn validate_no_jsx_in_try_statement(func: &HirFunction) -> CompilerError {
                 match &instr.value {
                     InstructionValue::JsxExpression { span, .. }
                     | InstructionValue::JsxFragment { span, .. } => {
-                        error.push_diagnostic(
-                            CompilerDiagnostic::new(
-                                ErrorCategory::ErrorBoundaries,
-                                "Avoid constructing JSX within try/catch",
-                                Some(
-                                    "React does not immediately render components when JSX is rendered, so any errors from this component will not be caught by the try/catch. To catch errors in rendering a given component, wrap that component in an error boundary. (https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)".to_string(),
+                        error.push(
+                            ErrorCategory::ErrorBoundaries
+                                .diagnostic("Avoid constructing JSX within try/catch")
+                                .with_help(
+                                    "React does not immediately render components when JSX is rendered, so any errors from this component will not be caught by the try/catch. To catch errors in rendering a given component, wrap that component in an error boundary. (https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)",
+                                )
+                                .with_labels(
+                                    span.map(|s| s.label("Avoid constructing JSX within try/catch")),
                                 ),
-                            )
-                            .with_detail(CompilerDiagnosticDetail::Error {
-                                span: *span,
-                                message: Some(
-                                    "Avoid constructing JSX within try/catch".to_string(),
-                                ),
-                            }),
                         );
                     }
                     _ => {}

@@ -35,9 +35,8 @@ use oxc_ast_visit::Visit;
 use oxc_span::Span;
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::diagnostics::CompilerError;
+use crate::diagnostics::ErrorCategory;
 use crate::scope::ScopeId;
 use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
@@ -395,16 +394,13 @@ impl<'a> ContextIdentifierVisitor<'a> {
 /// than record-and-continue: otherwise Rust emits HIR debug entries for a
 /// function TS never lowered.
 fn make_unsupported_lval_error(type_name: &str, span: Option<Span>) -> CompilerError {
-    let mut err = CompilerError::new();
-    err.push_error_detail(CompilerErrorDetail {
-        category: ErrorCategory::Todo,
-        reason: format!(
-            "[FindContextIdentifiers] Cannot handle Object destructuring assignment target {type_name}"
-        ),
-        description: None,
-        span,
-    });
-    err
+    CompilerError::from(
+        ErrorCategory::Todo
+            .diagnostic(format!(
+                "[FindContextIdentifiers] Cannot handle Object destructuring assignment target {type_name}"
+            ))
+            .with_labels(span),
+    )
 }
 
 /// Check if a binding declared at `binding_scope` is captured by a function at `function_scope`.

@@ -12,13 +12,14 @@
 
 use std::mem::take;
 
-use crate::react_compiler_diagnostics::{CompilerError, Span};
+use crate::diagnostics::CompilerError;
 use crate::react_compiler_hir::{
     BlockId, Effect, EvaluationOrder, IdentifierId, IdentifierName, InstructionKind,
     InstructionValue, LValue, NonLocalBinding, Place, PlaceOrSpread, PrimitiveValue,
     PropertyLiteral, ReactiveFunction, ReactiveInstruction, ReactiveLabel, ReactiveScopeBlock,
     ReactiveScopeDeclaration, ReactiveScopeEarlyReturn, ReactiveStatement, ReactiveTerminal,
-    ReactiveTerminalStatement, ReactiveTerminalTargetKind, ReactiveValue, environment::Environment,
+    ReactiveTerminalStatement, ReactiveTerminalTargetKind, ReactiveValue, Span,
+    environment::Environment,
 };
 use crate::react_compiler_reactive_scopes::visitors::{
     ReactiveFunctionTransform, Transformed, transform_reactive_function,

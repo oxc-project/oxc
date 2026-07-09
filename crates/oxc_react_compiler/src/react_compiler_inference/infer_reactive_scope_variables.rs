@@ -15,9 +15,10 @@
 //! 3. MergeOverlappingReactiveScopes ensures scopes do not overlap.
 //! 4. BuildReactiveBlocks groups the statements for each scope.
 
+use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
@@ -39,7 +40,7 @@ use crate::react_compiler_utils::DisjointSet;
 pub fn infer_reactive_scope_variables(
     func: &mut HirFunction,
     env: &mut Environment,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     // Phase 1: find disjoint sets of co-mutating identifiers
     let mut scope_identifiers = find_disjoint_mutable_values(func, env);
 
@@ -115,17 +116,13 @@ pub fn infer_reactive_scope_variables(
             || max_instruction == EvaluationOrder(0)
             || scope.range.end.0 > max_instruction.0 + 1
         {
-            return Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
-                format!(
-                    "Invalid mutable range for scope: Scope @{} has range [{}:{}] but the valid range is [1:{}]",
-                    scope.id.0,
-                    scope.range.start.0,
-                    scope.range.end.0,
-                    max_instruction.0 + 1,
-                ),
-                None,
-            ));
+            return Err(ErrorCategory::Invariant.diagnostic(format!(
+                "Invalid mutable range for scope: Scope @{} has range [{}:{}] but the valid range is [1:{}]",
+                scope.id.0,
+                scope.range.start.0,
+                scope.range.end.0,
+                max_instruction.0 + 1,
+            )));
         }
     }
 

@@ -12,7 +12,7 @@ use std::mem::take;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, CompilerError, ErrorCategory};
+use crate::diagnostics::{CompilerError, ErrorCategory};
 use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, EvaluationOrder, InstructionKind, InstructionValue, Place,
     ReactiveBlock, ReactiveFunction, ReactiveScopeBlock, ReactiveScopeDependency,
@@ -351,12 +351,9 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
             let mut merged_scope = match &all_stmts[entry.from] {
                 ReactiveStatement::Scope(s) => s.clone(),
                 _ => {
-                    return Err(CompilerDiagnostic::new(
-                        ErrorCategory::Invariant,
-                        "MergeConsecutiveScopes: Expected scope at starting index",
-                        None,
-                    )
-                    .into());
+                    return Err(ErrorCategory::Invariant
+                        .diagnostic("MergeConsecutiveScopes: Expected scope at starting index")
+                        .into());
                 }
             };
             index += 1;
