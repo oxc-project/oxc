@@ -303,6 +303,9 @@ impl NeedsParentheses<'_> for AstNode<'_, TaggedTemplateExpression<'_>> {
         // `class A extends (tag`x`) {}`; keep in sync with the wrapped-in-`!` case
         // in `class_extends_needs_parens_through_non_null`.
         is_class_extends(self.span, self.parent())
+            // `new (import("foo")`bar`)()`; a tag containing a call/import
+            // cannot appear in a new callee without parens
+            || (self.is_new_callee() && member_chain_callee_needs_parens(&self.tag))
     }
 }
 
@@ -1032,11 +1035,12 @@ fn member_chain_callee_needs_parens(e: &Expression) -> bool {
     std::iter::successors(Some(e), |e| match e {
         Expression::ComputedMemberExpression(e) => Some(&e.object),
         Expression::StaticMemberExpression(e) => Some(&e.object),
+        Expression::PrivateFieldExpression(e) => Some(&e.object),
         Expression::TaggedTemplateExpression(e) => Some(&e.tag),
         Expression::TSNonNullExpression(e) => Some(&e.expression),
         _ => None,
     })
-    .any(|object| matches!(object, Expression::CallExpression(_)))
+    .any(|object| matches!(object, Expression::CallExpression(_) | Expression::ImportExpression(_)))
 }
 
 #[derive(Clone, Copy)]

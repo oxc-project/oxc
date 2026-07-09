@@ -1,4 +1,4 @@
-ts compatibility: 623/663 (93.97%), 19 files skipped
+ts compatibility: 624/663 (94.12%), 19 files skipped
 
 # Failed
 
@@ -22,7 +22,6 @@ ts compatibility: 623/663 (93.97%), 19 files skipped
 | typescript/intersection/intersection-parens.ts | 💥💥 | 85.64% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 67.44% |
 | typescript/intersection/consistent-with-flow/single-member.ts | 💥 | 78.00% |
-| typescript/new/parentheses.ts | 💥 | 0.00% |
 | typescript/object-type/comments/11307.ts | 💥 | 66.67% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 80.00% |

@@ -1,4 +1,4 @@
-js compatibility: 763/808 (94.43%), 23 files skipped
+js compatibility: 764/808 (94.55%), 23 files skipped
 
 # Failed
 
@@ -35,7 +35,6 @@ js compatibility: 763/808 (94.43%), 23 files skipped
 | js/if/condition-break/unary-expression.js | 💥 | 59.59% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
 | js/logical-expressions/in-unary-expression.js | 💥 | 33.33% |
-| js/new-expression/parentheses.js | 💥 | 33.33% |
 | js/no-semi/debugger-statement.js | 💥💥 | 91.18% |
 | js/no-semi/for-in-statement.js | 💥💥 | 63.89% |
 | js/no-semi/for-of-statement.js | 💥💥 | 66.67% |
