@@ -39,6 +39,13 @@ fn main() {
     let task = command.as_deref().unwrap_or("default");
     match task {
         "parser" => app_args.run_parser(&load()),
+        #[cfg(all(
+            feature = "lexer",
+            target_arch = "x86_64",
+            target_feature = "avx2",
+            target_feature = "bmi2",
+        ))]
+        "lexer" => app_args.run_lexer(&load()),
         "semantic" => app_args.run_semantic(&load()),
         "codegen" => app_args.run_codegen(&load()),
         "formatter" => app_args.run_formatter(&load()),

@@ -339,7 +339,7 @@ impl<'a> LegacyDecorator<'a> {
             Some(if let Some(ident) = class.id.as_ref() {
                 BoundIdentifier::from_binding_ident(ident)
             } else {
-                ctx.generate_uid_in_current_scope("class", SymbolFlags::Class)
+                ctx.generate_uid("class", class.scope_id(), SymbolFlags::Class)
             })
         } else {
             None

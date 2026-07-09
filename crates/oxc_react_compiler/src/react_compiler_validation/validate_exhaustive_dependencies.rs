@@ -3,9 +3,9 @@ use std::mem::{replace, take};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, Span,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment_config::ExhaustiveEffectDepsMode;
 use crate::react_compiler_hir::visitors::{
@@ -16,7 +16,7 @@ use crate::react_compiler_hir::{
     ArrayElement, BlockId, DependencyPathEntry, Effect, HirFunction, Identifier, IdentifierId,
     IdentifierName, InstructionKind, InstructionValue, ManualMemoDependency,
     ManualMemoDependencyRoot, NonLocalBinding, ParamPattern, Place, PlaceOrSpread, PropertyLiteral,
-    Terminal, Type,
+    Span, Terminal, Type,
 };
 
 /// Port of ValidateExhaustiveDependencies.ts
@@ -31,7 +31,7 @@ use crate::react_compiler_hir::{
 pub fn validate_exhaustive_dependencies(
     func: &mut HirFunction,
     env: &mut Environment,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let reactive = collect_reactive_identifiers(func, &env.functions);
 
     let mut temporaries: FxHashMap<IdentifierId, Temporary> = FxHashMap::default();
@@ -174,7 +174,7 @@ struct Callbacks<'a> {
     validate_memo: bool,
     validate_effect: ExhaustiveEffectDepsMode,
     reactive: &'a FxHashSet<IdentifierId>,
-    diagnostics: Vec<CompilerDiagnostic>,
+    diagnostics: Vec<OxcDiagnostic>,
     /// manual_memo_ids that had validation errors (to set has_invalid_deps)
     invalid_memo_ids: FxHashSet<u32>,
 }
@@ -458,7 +458,7 @@ fn collect_dependencies(
     temporaries: &mut FxHashMap<IdentifierId, Temporary>,
     callbacks: &mut Option<&mut Callbacks<'_>>,
     is_function_expression: bool,
-) -> Result<Temporary, CompilerDiagnostic> {
+) -> Result<Temporary, OxcDiagnostic> {
     let optionals = find_optional_places(func);
     let mut locals: FxHashSet<IdentifierId> = FxHashSet::default();
 
@@ -1115,7 +1115,7 @@ fn validate_dependencies(
     exhaustive_deps_report_mode: &str,
     identifiers: &[Identifier],
     types: &[Type],
-) -> Result<Option<CompilerDiagnostic>, CompilerDiagnostic> {
+) -> Result<Option<OxcDiagnostic>, OxcDiagnostic> {
     // Sort dependencies by name and path
     inferred.sort_by(|a, b| {
         match (a, b) {
@@ -1312,10 +1312,9 @@ fn validate_dependencies(
                 ""
             };
             let dep_str = print_inferred_dependency(dep, identifiers);
-            diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                span: *span,
-                message: Some(format!("Missing dependency `{dep_str}`{hint}")),
-            });
+            diagnostic
+                .labels
+                .extend(span.map(|s| s.label(format!("Missing dependency `{dep_str}`{hint}"))));
         }
     }
 
@@ -1324,12 +1323,11 @@ fn validate_dependencies(
         match &dep.root {
             ManualMemoDependencyRoot::Global { .. } => {
                 let dep_str = print_manual_memo_dependency(dep, identifiers);
-                diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                    span: dep.span.or(manual_memo_span),
-                    message: Some(format!(
+                diagnostic.labels.extend(dep.span.or(manual_memo_span).map(|s| {
+                    s.label(format!(
                         "Unnecessary dependency `{dep_str}`. Values declared outside of a component/hook should not be listed as dependencies as the component will not re-render if they change"
-                    )),
-                });
+                    ))
+                }));
             }
             ManualMemoDependencyRoot::NamedLocal { value, .. } => {
                 // Check if there's a matching inferred dep
@@ -1350,12 +1348,11 @@ fn validate_dependencies(
                         let matching_ty = get_identifier_type(*identifier, identifiers, types);
                         if is_effect_event_function_type(matching_ty) {
                             let dep_str = print_manual_memo_dependency(dep, identifiers);
-                            diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                                span: dep.span.or(manual_memo_span),
-                                message: Some(format!(
+                            diagnostic.labels.extend(dep.span.or(manual_memo_span).map(|s| {
+                                s.label(format!(
                                     "Functions returned from `useEffectEvent` must not be included in the dependency array. Remove `{dep_str}` from the dependencies."
-                                )),
-                            });
+                                ))
+                            }));
                         } else if !is_optional_dependency_inferred(
                             matching,
                             reactive,
@@ -1364,26 +1361,27 @@ fn validate_dependencies(
                         ) {
                             let dep_str = print_manual_memo_dependency(dep, identifiers);
                             let inferred_str = print_inferred_dependency(matching, identifiers);
-                            diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                                span: dep.span.or(manual_memo_span),
-                                message: Some(format!(
+                            diagnostic.labels.extend(dep.span.or(manual_memo_span).map(|s| {
+                                s.label(format!(
                                     "Overly precise dependency `{dep_str}`, use `{inferred_str}` instead"
-                                )),
-                            });
+                                ))
+                            }));
                         } else {
                             let dep_str = print_manual_memo_dependency(dep, identifiers);
-                            diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                                span: dep.span.or(manual_memo_span),
-                                message: Some(format!("Unnecessary dependency `{dep_str}`")),
-                            });
+                            diagnostic.labels.extend(
+                                dep.span.or(manual_memo_span).map(|s| {
+                                    s.label(format!("Unnecessary dependency `{dep_str}`"))
+                                }),
+                            );
                         }
                     }
                 } else {
                     let dep_str = print_manual_memo_dependency(dep, identifiers);
-                    diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                        span: dep.span.or(manual_memo_span),
-                        message: Some(format!("Unnecessary dependency `{dep_str}`")),
-                    });
+                    diagnostic.labels.extend(
+                        dep.span
+                            .or(manual_memo_span)
+                            .map(|s| s.label(format!("Unnecessary dependency `{dep_str}`"))),
+                    );
                 }
             }
         }
@@ -1482,7 +1480,7 @@ fn create_diagnostic(
     category: ErrorCategory,
     missing: &[&InferredDependency],
     extra: &[&ManualMemoDependency],
-) -> Result<CompilerDiagnostic, CompilerDiagnostic> {
+) -> Result<OxcDiagnostic, OxcDiagnostic> {
     let missing_str = if !missing.is_empty() { Some("missing") } else { None };
     let extra_str = if !extra.is_empty() { Some("extra") } else { None };
 
@@ -1534,15 +1532,12 @@ fn create_diagnostic(
             (reason, description)
         }
         _ => {
-            return Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
-                format!("Unexpected error category: {:?}", category),
-                None,
-            ));
+            return Err(ErrorCategory::Invariant
+                .diagnostic(format!("Unexpected error category: {:?}", category)));
         }
     };
 
-    Ok(CompilerDiagnostic { category, reason, description: Some(description), details: Vec::new() })
+    Ok(category.diagnostic(reason).with_help(description))
 }
 
 /// Collect lvalue identifier ids from instruction value (for the default branch).

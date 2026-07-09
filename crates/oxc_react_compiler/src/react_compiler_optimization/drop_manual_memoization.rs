@@ -18,9 +18,9 @@ use cow_utils::CowUtils;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerDiagnostic;
-use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::ArrayElement;
 use crate::react_compiler_hir::DependencyPathEntry;
 use crate::react_compiler_hir::Effect;
@@ -96,7 +96,7 @@ struct ExtractedMemoArgs {
 pub fn drop_manual_memoization<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let is_validation_enabled = env.validate_preserve_existing_memoization_guarantees
         || env.validate_no_set_state_in_render
         || env.enable_preserve_existing_memoization_guarantees;
@@ -223,17 +223,17 @@ fn process_manual_memo_call<'a>(
     if is_validation_enabled {
         // Bail out when we encounter manual memoization without inline function expressions
         if !sidemap.functions.contains(&fn_place.identifier) {
-            let diag = CompilerDiagnostic::new(
-                ErrorCategory::UseMemo,
-                "Expected the first argument to be an inline function expression",
-                Some("Expected the first argument to be an inline function expression".to_string()),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                span: fn_place.span,
-                message: Some(
+            let diag = ErrorCategory::UseMemo
+                .diagnostic("Expected the first argument to be an inline function expression")
+                .with_help(
                     "Expected the first argument to be an inline function expression".to_string(),
-                ),
-            });
+                )
+                .with_labels(fn_place.span.map(|s| {
+                    s.label(
+                        "Expected the first argument to be an inline function expression"
+                            .to_string(),
+                    )
+                }));
             env.record_diagnostic(diag);
             return;
         }
@@ -518,23 +518,20 @@ fn extract_manual_memoization_args(
         _ => {
             let span = instr.value.span().cloned();
             env.record_diagnostic(
-                CompilerDiagnostic::new(
-                    ErrorCategory::UseMemo,
-                    format!("Expected a callback function to be passed to {kind_name}"),
-                    Some(if kind == ManualMemoKind::UseCallback {
+                ErrorCategory::UseMemo
+                    .diagnostic(format!("Expected a callback function to be passed to {kind_name}"))
+                    .with_help(if kind == ManualMemoKind::UseCallback {
                         "The first argument to useCallback() must be a function to cache".to_string()
                     } else {
                         "The first argument to useMemo() must be a function that calculates a result to cache".to_string()
-                    }),
-                )
-                .with_detail(CompilerDiagnosticDetail::Error {
-                    span,
-                    message: Some(if kind == ManualMemoKind::UseCallback {
-                        "Expected a callback function".to_string()
-                    } else {
-                        "Expected a memoization function".to_string()
-                    }),
-                }),
+                    })
+                    .with_labels(span.map(|s| {
+                        s.label(if kind == ManualMemoKind::UseCallback {
+                            "Expected a callback function".to_string()
+                        } else {
+                            "Expected a memoization function".to_string()
+                        })
+                    })),
             );
             return None;
         }
@@ -559,19 +556,18 @@ fn extract_manual_memoization_args(
             _ => instr.span,
         };
         env.record_diagnostic(
-            CompilerDiagnostic::new(
-                ErrorCategory::UseMemo,
-                format!("Expected the dependency list for {kind_name} to be an array literal"),
-                Some(format!(
+            ErrorCategory::UseMemo
+                .diagnostic(format!(
                     "Expected the dependency list for {kind_name} to be an array literal"
-                )),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                span,
-                message: Some(format!(
+                ))
+                .with_help(format!(
                     "Expected the dependency list for {kind_name} to be an array literal"
-                )),
-            }),
+                ))
+                .with_labels(span.map(|s| {
+                    s.label(format!(
+                        "Expected the dependency list for {kind_name} to be an array literal"
+                    ))
+                })),
         );
         return None;
     }
@@ -584,15 +580,12 @@ fn extract_manual_memoization_args(
             deps_list.push(d.clone());
         } else {
             env.record_diagnostic(
-                CompilerDiagnostic::new(
-                    ErrorCategory::UseMemo,
-                    "Expected the dependency list to be an array of simple expressions (e.g. `x`, `x.y.z`, `x?.y?.z`)",
-                    Some("Expected the dependency list to be an array of simple expressions (e.g. `x`, `x.y.z`, `x?.y?.z`)".to_string()),
-                )
-                .with_detail(CompilerDiagnosticDetail::Error {
-                    span: dep.span,
-                    message: Some("Expected the dependency list to be an array of simple expressions (e.g. `x`, `x.y.z`, `x?.y?.z`)".to_string()),
-                }),
+                ErrorCategory::UseMemo
+                    .diagnostic("Expected the dependency list to be an array of simple expressions (e.g. `x`, `x.y.z`, `x?.y?.z`)")
+                    .with_help("Expected the dependency list to be an array of simple expressions (e.g. `x`, `x.y.z`, `x?.y?.z`)".to_string())
+                    .with_labels(dep.span.map(|s| {
+                        s.label("Expected the dependency list to be an array of simple expressions (e.g. `x`, `x.y.z`, `x?.y?.z`)".to_string())
+                    })),
             );
         }
     }
@@ -604,7 +597,7 @@ fn extract_manual_memoization_args(
 // findOptionalPlaces
 // =============================================================================
 
-fn find_optional_places(func: &HirFunction) -> Result<FxHashSet<IdentifierId>, CompilerDiagnostic> {
+fn find_optional_places(func: &HirFunction) -> Result<FxHashSet<IdentifierId>, OxcDiagnostic> {
     let mut optionals = FxHashSet::default();
     for block in func.body.blocks.values() {
         if let Terminal::Optional { optional: true, test, fallthrough, .. } = &block.terminal {
@@ -642,14 +635,10 @@ fn find_optional_places(func: &HirFunction) -> Result<FxHashSet<IdentifierId>, C
                     other => {
                         // Invariant: unexpected terminal in optional
                         // In TS this throws CompilerError.invariant
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
-                            format!(
-                                "Unexpected terminal kind in optional: {:?}",
-                                discriminant(other)
-                            ),
-                            None,
-                        ));
+                        return Err(ErrorCategory::Invariant.diagnostic(format!(
+                            "Unexpected terminal kind in optional: {:?}",
+                            discriminant(other)
+                        )));
                     }
                 }
             }

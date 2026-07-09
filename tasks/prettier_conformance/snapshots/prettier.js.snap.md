@@ -1,4 +1,4 @@
-js compatibility: 760/808 (94.06%), 23 files skipped
+js compatibility: 764/808 (94.55%), 23 files skipped
 
 # Failed
 
@@ -7,7 +7,6 @@ js compatibility: 760/808 (94.06%), 23 files skipped
 | js/arrows/issue-17421.js | 💥💥 | 90.43% |
 | js/assignment-comments/indentable-block-comment.js | 💥 | 12.50% |
 | js/call/no-argument/no-arguments.js | 💥 | 57.53% |
-| js/chain-expression/member-chain.js | 💥 | 57.14% |
 | js/comments/15661.js | 💥💥 | 43.53% |
 | js/comments/break-continue-statements-2.js | 💥💥 | 87.18% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
@@ -36,7 +35,6 @@ js compatibility: 760/808 (94.06%), 23 files skipped
 | js/if/condition-break/unary-expression.js | 💥 | 59.59% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
 | js/logical-expressions/in-unary-expression.js | 💥 | 33.33% |
-| js/new-expression/parentheses.js | 💥 | 33.33% |
 | js/no-semi/debugger-statement.js | 💥💥 | 91.18% |
 | js/no-semi/for-in-statement.js | 💥💥 | 63.89% |
 | js/no-semi/for-of-statement.js | 💥💥 | 66.67% |
@@ -50,8 +48,6 @@ js compatibility: 760/808 (94.06%), 23 files skipped
 | js/template-literals/expressions.js | 💥 | 97.64% |
 | js/test-declarations/jest-each.js | 💥💥 | 95.71% |
 | js/unary-expression/comments.js | 💥 | 96.47% |
-| jsx/attribute-blank-lines/attribute-blank-lines.js | 💥💥 | 62.82% |
-| jsx/jsx/quotes.js | 💥💥💥💥 | 89.47% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
 

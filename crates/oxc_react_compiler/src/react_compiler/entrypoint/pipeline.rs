@@ -8,9 +8,7 @@
 //! Analogous to TS `Pipeline.ts` (`compileFn` → `run` → `runWithEnvironment`).
 //! Currently runs BuildHIR (lowering) and PruneMaybeThrows.
 
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::diagnostics::{CompilerError, ErrorCategory};
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
@@ -148,17 +146,7 @@ pub fn compile_fn<'a>(
     // TODO: port assertConsistentIdentifiers
     // TODO: port assertTerminalSuccessorsExist
 
-    enter_ssa(&mut hir, &mut env).map_err(|diag| {
-        let span = diag.primary_location().cloned();
-        let mut err = CompilerError::new();
-        err.push_error_detail(CompilerErrorDetail {
-            category: diag.category,
-            reason: diag.reason,
-            description: diag.description,
-            span,
-        });
-        err
-    })?;
+    enter_ssa(&mut hir, &mut env)?;
 
     eliminate_redundant_phi(&mut hir, &mut env);
 
@@ -348,14 +336,7 @@ pub fn compile_fn<'a>(
 
     // Simulate unexpected exception for testing (matches TS Pipeline.ts)
     if env.config.throw_unknown_exception_testonly {
-        let mut err = CompilerError::new();
-        err.push_error_detail(CompilerErrorDetail {
-            category: ErrorCategory::Invariant,
-            reason: "unexpected error".to_string(),
-            description: None,
-            span: None,
-        });
-        return Err(err);
+        return Err(CompilerError::from(ErrorCategory::Invariant.diagnostic("unexpected error")));
     }
 
     // Check for accumulated errors at the end of the pipeline
@@ -440,12 +421,8 @@ pub fn compile_outlined_fn<'a>(
     Ok(codegen_fn)
 }
 
-/// Push a compiler error's per-detail diagnostics (validation / lint / telemetry
-/// path), matching TS `env.logErrors()`. No enclosing-function fallback label.
+/// Push a compiler error's diagnostics (validation / lint / telemetry path),
+/// matching TS `env.logErrors()`. No enclosing-function fallback label.
 fn log_errors_as_events(errors: &CompilerError, context: &mut ProgramContext) {
-    for detail in &errors.details {
-        if let Some(diagnostic) = crate::diagnostics::detail_to_diagnostic(detail, None) {
-            context.diagnostics.push(diagnostic);
-        }
-    }
+    context.diagnostics.extend(errors.diagnostics.iter().cloned());
 }

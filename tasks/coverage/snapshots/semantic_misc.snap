@@ -1,6 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 70/70 (100.00%)
-Positive Passed: 64/70 (91.43%)
+AST Parsed     : 71/71 (100.00%)
+Positive Passed: 66/71 (92.96%)
 semantic Error: tasks/coverage/misc/pass/declare-let-private.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["private"]
@@ -90,58 +90,8 @@ Symbol reference IDs mismatch for "_super":
 after transform: SymbolId(18): [ReferenceId(14)]
 rebuilt        : SymbolId(9): []
 
-semantic Error: tasks/coverage/misc/pass/oxc-4449.ts
+semantic Error: tasks/coverage/misc/pass/reserved-kw-ambient-context.ts
 Bindings mismatch:
-after transform: ScopeId(1): ["A", "baz"]
-rebuilt        : ScopeId(1): ["A"]
-Bindings mismatch:
-after transform: ScopeId(2): ["B", "baz"]
-rebuilt        : ScopeId(2): ["B"]
-Bindings mismatch:
-after transform: ScopeId(3): ["C", "baz"]
-rebuilt        : ScopeId(3): ["C"]
-Bindings mismatch:
-after transform: ScopeId(4): ["D", "baz"]
-rebuilt        : ScopeId(4): ["D"]
-Bindings mismatch:
-after transform: ScopeId(5): ["E", "baz"]
-rebuilt        : ScopeId(5): ["E"]
-Bindings mismatch:
-after transform: ScopeId(6): ["F", "baz"]
-rebuilt        : ScopeId(6): ["F"]
-Bindings mismatch:
-after transform: ScopeId(7): ["G", "baz"]
-rebuilt        : ScopeId(7): ["G"]
-Bindings mismatch:
-after transform: ScopeId(8): ["H", "baz"]
-rebuilt        : ScopeId(8): ["H"]
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "B":
-after transform: SymbolId(2): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "C":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "D":
-after transform: SymbolId(6): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "E":
-after transform: SymbolId(8): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "F":
-after transform: SymbolId(10): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "G":
-after transform: SymbolId(12): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(12): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "H":
-after transform: SymbolId(14): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/misc/pass/oxc-8193.ts
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+after transform: ScopeId(0): ["C2", "f"]
+rebuilt        : ScopeId(0): ["C2"]
 

@@ -4,9 +4,9 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, Span,
-};
+use oxc_span::Span;
+
+use crate::diagnostics::{CompilerError, ErrorCategory};
 
 /// A comment's text and byte range, plus the byte-offset span that surfaces as the
 /// labeled span on a suppression diagnostic. The former Babel front-end carried
@@ -271,22 +271,19 @@ pub fn suppressions_to_compiler_error(suppressions: &[SuppressionRange]) -> Comp
             suppression.disable_comment.value.trim()
         );
 
-        let mut diagnostic =
-            CompilerDiagnostic::new(ErrorCategory::Suppression, reason, Some(description));
-
-        // Add error detail with location info
+        // Label the suppression comment's location when known
         let span = suppression
             .disable_comment
             .span
             .as_ref()
             .and_then(|l| Some(Span::new(l.start_index?, l.end_index?)));
 
-        diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Error {
-            span,
-            message: Some("Found React rule suppression".to_string()),
-        });
-
-        error.push_diagnostic(diagnostic);
+        error.push(
+            ErrorCategory::Suppression
+                .diagnostic(reason)
+                .with_help(description)
+                .with_labels(span.map(|s| s.label("Found React rule suppression"))),
+        );
     }
 
     error

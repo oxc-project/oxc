@@ -7,14 +7,14 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, Span,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
 use crate::react_compiler_hir::{
     AliasingEffect, Effect, HirFunction, Identifier, IdentifierId, IdentifierName,
-    InstructionValue, Place, Type,
+    InstructionValue, Place, Span, Type,
 };
 
 /// Information about a known mutation effect: which identifier is mutated, and
@@ -51,10 +51,10 @@ fn check_no_freezing_known_mutable_functions(
     types: &[Type],
     functions: &[HirFunction],
     env: &Environment,
-) -> Vec<CompilerDiagnostic> {
+) -> Vec<OxcDiagnostic> {
     // Maps an identifier to the mutation effect that makes it "known mutable"
     let mut context_mutation_effects: FxHashMap<IdentifierId, MutationInfo> = FxHashMap::default();
-    let mut diagnostics: Vec<CompilerDiagnostic> = Vec::new();
+    let mut diagnostics: Vec<OxcDiagnostic> = Vec::new();
 
     for (_block_id, block) in &func.body.blocks {
         for &instruction_id in &block.instructions {
@@ -169,7 +169,7 @@ fn check_operand_for_freeze_violation(
     operand: &Place,
     context_mutation_effects: &FxHashMap<IdentifierId, MutationInfo>,
     identifiers: &[Identifier],
-    diagnostics: &mut Vec<CompilerDiagnostic>,
+    diagnostics: &mut Vec<OxcDiagnostic>,
 ) {
     if operand.effect == Effect::Freeze {
         if let Some(mutation_info) = context_mutation_effects.get(&operand.identifier) {
@@ -180,27 +180,25 @@ fn check_operand_for_freeze_violation(
             };
 
             diagnostics.push(
-                CompilerDiagnostic::new(
-                    ErrorCategory::Immutability,
-                    "Cannot modify local variables after render completes",
-                    Some(format!(
+                ErrorCategory::Immutability
+                    .diagnostic("Cannot modify local variables after render completes")
+                    .with_help(format!(
                         "This argument is a function which may reassign or mutate {} after render, \
                          which can cause inconsistent behavior on subsequent renders. \
                          Consider using state instead",
                         variable_name
-                    )),
-                )
-                .with_detail(CompilerDiagnosticDetail::Error {
-                    span: operand.span,
-                    message: Some(format!(
-                        "This function may (indirectly) reassign or modify {} after render",
-                        variable_name
-                    )),
-                })
-                .with_detail(CompilerDiagnosticDetail::Error {
-                    span: mutation_info.value_span,
-                    message: Some(format!("This modifies {}", variable_name)),
-                }),
+                    ))
+                    .with_labels(operand.span.map(|s| {
+                        s.label(format!(
+                            "This function may (indirectly) reassign or modify {} after render",
+                            variable_name
+                        ))
+                    }))
+                    .and_labels(
+                        mutation_info
+                            .value_span
+                            .map(|s| s.label(format!("This modifies {}", variable_name))),
+                    ),
             );
         }
     }

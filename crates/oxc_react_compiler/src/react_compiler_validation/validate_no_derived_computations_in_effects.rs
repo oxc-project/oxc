@@ -13,9 +13,9 @@
 use crate::react_compiler_utils::{FxIndexMap, FxIndexSet};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, CompilerErrorDetail, ErrorCategory,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::{CompilerError, ErrorCategory};
 use crate::react_compiler_hir::BasicBlock;
 use crate::react_compiler_hir::Instruction;
 use crate::react_compiler_hir::Terminal;
@@ -271,7 +271,7 @@ fn is_mutable_at(
 pub fn validate_no_derived_computations_in_effects_exp(
     func: &HirFunction,
     env: &Environment,
-) -> Result<CompilerError, CompilerDiagnostic> {
+) -> Result<CompilerError, OxcDiagnostic> {
     let identifiers = &env.identifiers;
 
     let mut context = ValidationContext {
@@ -391,7 +391,7 @@ fn record_instruction_derivations(
     context: &mut ValidationContext,
     is_first_pass: bool,
     env: &Environment,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let identifiers = &env.identifiers;
     let types = &env.types;
     let functions = &env.functions;
@@ -557,11 +557,7 @@ fn record_instruction_derivations(
                 }
             }
         } else if matches!(operand.effect, Effect::Unknown) {
-            return Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
-                "Unexpected unknown effect",
-                None,
-            ));
+            return Err(ErrorCategory::Invariant.diagnostic("Unexpected unknown effect"));
         }
         // Freeze | Read => no-op
     }
@@ -955,18 +951,15 @@ fn validate_effect(
                     trees.join("\n"),
                 );
 
-                errors.push_diagnostic(
-                    CompilerDiagnostic::new(
-                        ErrorCategory::EffectDerivationsOfState,
-                        "You might not need an effect. Derive values in render, not effects.",
-                        Some(description),
-                    )
-                    .with_detail(CompilerDiagnosticDetail::Error {
-                        span: derived.callee_span,
-                        message: Some(
-                            "This should be computed during render, not in an effect".to_string(),
-                        ),
-                    }),
+                errors.push(
+                    ErrorCategory::EffectDerivationsOfState
+                        .diagnostic(
+                            "You might not need an effect. Derive values in render, not effects.",
+                        )
+                        .with_help(description)
+                        .with_labels(derived.callee_span.map(|s| {
+                            s.label("This should be computed during render, not in an effect")
+                        })),
                 );
             }
         }
@@ -1066,8 +1059,7 @@ pub fn validate_no_derived_computations_in_effects(
     };
 
     // Phase 2: Validate each collected effect and record error details.
-    // Uses ErrorDetail (flat span format) to match TS behavior where
-    // env.recordError(new CompilerErrorDetail({...})) is used.
+    // Matches TS behavior where env.recordError(new CompilerErrorDetail({...})) is used.
     for (func_id, resolved_deps) in effects_to_validate {
         let details = validate_effect_non_exp(
             &env.functions[func_id.0 as usize],
@@ -1087,7 +1079,7 @@ fn validate_effect_non_exp(
     effect_deps: &[IdentifierId],
     ids: &[Identifier],
     tys: &[Type],
-) -> Vec<CompilerErrorDetail> {
+) -> Vec<OxcDiagnostic> {
     // Check that the effect function only captures effect deps and setState
     for ctx in &effect_func.context {
         let ctx_ty = &tys[ids[ctx.identifier.0 as usize].type_.0 as usize];
@@ -1212,12 +1204,11 @@ fn validate_effect_non_exp(
     set_state_spans
         .into_iter()
         .map(|span| {
-            CompilerErrorDetail {
-                category: ErrorCategory::EffectDerivationsOfState,
-                reason: "Values derived from props and state should be calculated during render, not in an effect. (https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)".to_string(),
-                description: None,
-                span: Some(span),
-            }
+            ErrorCategory::EffectDerivationsOfState
+                .diagnostic(
+                    "Values derived from props and state should be calculated during render, not in an effect. (https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)",
+                )
+                .with_label(span)
         })
         .collect()
 }

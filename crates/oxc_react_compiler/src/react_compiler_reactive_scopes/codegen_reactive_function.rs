@@ -13,11 +13,7 @@
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerDiagnostic;
-use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::diagnostics::{CompilerError, ErrorCategory};
 use crate::react_compiler_hir::ArrayElement;
 use crate::react_compiler_hir::ArrayPattern;
 use crate::react_compiler_hir::BlockId;
@@ -51,6 +47,7 @@ use crate::react_compiler_hir::reactive::ReactiveStatement;
 use crate::react_compiler_hir::reactive::ReactiveTerminal;
 use crate::react_compiler_hir::reactive::ReactiveTerminalTargetKind;
 use crate::react_compiler_hir::reactive::ReactiveValue;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
 use crate::react_compiler_reactive_scopes::build_reactive_function::build_reactive_function;
@@ -233,17 +230,8 @@ fn ox_codegen_outlined<'a>(
     let entries = env.take_outlined_functions();
     let mut outlined = Vec::with_capacity(entries.len());
     for entry in entries {
-        let mut reactive_function = build_reactive_function(&entry.func, env).map_err(|diag| {
-            let span = diag.primary_location().cloned();
-            let mut err = CompilerError::new();
-            err.push_error_detail(crate::react_compiler_diagnostics::CompilerErrorDetail {
-                category: diag.category,
-                reason: diag.reason,
-                description: diag.description,
-                span,
-            });
-            err
-        })?;
+        let mut reactive_function =
+            build_reactive_function(&entry.func, env).map_err(CompilerError::from)?;
         prune_unused_labels(&mut reactive_function, env)?;
         prune_unused_lvalues(&mut reactive_function, env);
         prune_hoisted_contexts(&mut reactive_function, env)?;
@@ -372,8 +360,8 @@ impl<'a, 'env, 'h> OxcContext<'a, 'env, 'h> {
     }
 
     #[allow(dead_code)]
-    fn record_error(&mut self, detail: CompilerErrorDetail) -> Result<(), CompilerError> {
-        self.env.record_error(detail)
+    fn record_error(&mut self, diagnostic: OxcDiagnostic) -> Result<(), CompilerError> {
+        self.env.record_error(diagnostic)
     }
 }
 
@@ -1178,12 +1166,9 @@ fn ox_codegen_for_in<'a, 'h>(
         return Err(invariant_err("Expected a sequence expression init for for..in", None));
     };
     if instructions.len() != 2 {
-        cx.record_error(CompilerErrorDetail {
-            category: ErrorCategory::Todo,
-            reason: "Support non-trivial for..in inits".to_string(),
-            description: None,
-            span,
-        })?;
+        cx.record_error(
+            ErrorCategory::Todo.diagnostic("Support non-trivial for..in inits").with_labels(span),
+        )?;
         return Ok(Some(oxc_ast::ast::Statement::new_empty_statement(SPAN, &cx.ast)));
     }
     let iterable_collection = &instructions[0];
@@ -1238,12 +1223,9 @@ fn ox_codegen_for_of<'a, 'h>(
         return Err(invariant_err("Expected a sequence expression test for for..of", None));
     };
     if test_instrs.len() != 2 {
-        cx.record_error(CompilerErrorDetail {
-            category: ErrorCategory::Todo,
-            reason: "Support non-trivial for..of inits".to_string(),
-            description: None,
-            span,
-        })?;
+        cx.record_error(
+            ErrorCategory::Todo.diagnostic("Support non-trivial for..of inits").with_labels(span),
+        )?;
         return Ok(Some(oxc_ast::ast::Statement::new_empty_statement(SPAN, &cx.ast)));
     }
     let iterable_item = &test_instrs[1];
@@ -1287,12 +1269,11 @@ fn ox_extract_for_in_of_lval<'a>(
             (ox_codegen_lvalue(cx, &LvalueRef::Pattern(&lvalue.pattern))?, lvalue.kind)
         }
         InstructionValue::StoreContext { .. } => {
-            cx.record_error(CompilerErrorDetail {
-                category: ErrorCategory::Todo,
-                reason: format!("Support non-trivial {} inits", context_name),
-                description: None,
-                span,
-            })?;
+            cx.record_error(
+                ErrorCategory::Todo
+                    .diagnostic(format!("Support non-trivial {} inits", context_name))
+                    .with_labels(span),
+            )?;
             return Ok((
                 oxc_ast::ast::BindingPattern::new_binding_identifier(SPAN, "_", &cx.ast),
                 oxc::VariableDeclarationKind::Let,
@@ -1739,12 +1720,9 @@ fn ox_codegen_instruction_value<'a, 'h>(
                         expressions.push(es.unbox().expression);
                     }
                     oxc::Statement::VariableDeclaration(_) => {
-                        cx.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::Todo,
-                            reason: "(CodegenReactiveFunction::codegenInstructionValue) Cannot declare variables in a value block".to_string(),
-                            description: None,
-                            span: None,
-                        })?;
+                        cx.record_error(ErrorCategory::Todo.diagnostic(
+                            "(CodegenReactiveFunction::codegenInstructionValue) Cannot declare variables in a value block",
+                        ))?;
                         expressions.push(oxc_ast::ast::Expression::new_string_literal(
                             SPAN,
                             "TODO handle declaration",
@@ -1753,12 +1731,9 @@ fn ox_codegen_instruction_value<'a, 'h>(
                         ));
                     }
                     _ => {
-                        cx.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::Todo,
-                            reason: "(CodegenReactiveFunction::codegenInstructionValue) Handle conversion of statement to expression".to_string(),
-                            description: None,
-                            span: None,
-                        })?;
+                        cx.record_error(ErrorCategory::Todo.diagnostic(
+                            "(CodegenReactiveFunction::codegenInstructionValue) Handle conversion of statement to expression",
+                        ))?;
                         expressions.push(oxc_ast::ast::Expression::new_string_literal(
                             SPAN,
                             "TODO handle statement",
@@ -1959,16 +1934,12 @@ fn ox_codegen_base_instruction_value<'a>(
             if !ox_is_member_like(&member_expr) {
                 let msg = format!("Got: '{}'", ox_expression_type_name(&member_expr));
                 let mut err = CompilerError::new();
-                err.push_diagnostic(
-                    CompilerDiagnostic::new(
-                        ErrorCategory::Invariant,
-                        "[Codegen] Internal error: MethodCall::property must be an unpromoted + unmemoized MemberExpression",
-                        None,
-                    )
-                    .with_detail(CompilerDiagnosticDetail::Error {
-                        span: property.span,
-                        message: Some(msg),
-                    }),
+                err.push(
+                    ErrorCategory::Invariant
+                        .diagnostic(
+                            "[Codegen] Internal error: MethodCall::property must be an unpromoted + unmemoized MemberExpression",
+                        )
+                        .with_labels(property.span.map(|s| s.label(msg))),
                 );
                 return Err(err);
             }
@@ -3503,14 +3474,7 @@ fn unimplemented_err(reason: &str, span: Option<Span>) -> CompilerError {
 }
 
 fn invariant_err(reason: &str, span: Option<Span>) -> CompilerError {
-    // Use CompilerDiagnostic (with details array) to match TS CompilerError.invariant()
-    let mut err = CompilerError::new();
-    err.push_diagnostic(
-        CompilerDiagnostic::new(ErrorCategory::Invariant, reason, None::<String>).with_detail(
-            CompilerDiagnosticDetail::Error { span, message: Some(reason.to_string()) },
-        ),
-    );
-    err
+    invariant_err_with_detail_message(reason, reason, span)
 }
 
 fn invariant_err_with_detail_message(
@@ -3518,18 +3482,11 @@ fn invariant_err_with_detail_message(
     message: &str,
     span: Option<Span>,
 ) -> CompilerError {
-    let mut err = CompilerError::new();
-    let diagnostic = crate::react_compiler_diagnostics::CompilerDiagnostic::new(
-        ErrorCategory::Invariant,
-        reason,
-        None::<String>,
+    CompilerError::from(
+        ErrorCategory::Invariant
+            .diagnostic(reason)
+            .with_labels(span.map(|s| s.label(message.to_string()))),
     )
-    .with_detail(crate::react_compiler_diagnostics::CompilerDiagnosticDetail::Error {
-        span,
-        message: Some(message.to_string()),
-    });
-    err.push_diagnostic(diagnostic);
-    err
 }
 
 fn compare_scope_dependency(

@@ -26,7 +26,9 @@
 //!
 //! Analogous to TS `ReactiveScopes/FlattenScopesWithHooksOrUseHIR.ts`.
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BlockId, HirFunction, InstructionValue, Terminal, Type, is_use_operator_type,
@@ -39,7 +41,7 @@ use crate::react_compiler_hir::{
 pub fn flatten_scopes_with_hooks_or_use_hir(
     func: &mut HirFunction,
     env: &Environment,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let mut active_scopes: Vec<ActiveScope> = Vec::new();
     let mut prune: Vec<BlockId> = Vec::new();
 
@@ -93,11 +95,8 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
                 (*block, *fallthrough, *id, *span, *scope)
             }
             _ => {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    format!("Expected block bb{} to end in a scope terminal", id.0),
-                    None,
-                ));
+                return Err(ErrorCategory::Invariant
+                    .diagnostic(format!("Expected block bb{} to end in a scope terminal", id.0)));
             }
         };
 
@@ -125,6 +124,6 @@ struct ActiveScope {
     fallthrough: BlockId,
 }
 
-fn is_hook_or_use(env: &Environment, ty: &Type) -> Result<bool, CompilerDiagnostic> {
+fn is_hook_or_use(env: &Environment, ty: &Type) -> Result<bool, OxcDiagnostic> {
     Ok(env.get_hook_kind_for_type(ty)?.is_some() || is_use_operator_type(ty))
 }

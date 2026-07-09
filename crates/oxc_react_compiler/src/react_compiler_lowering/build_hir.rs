@@ -1,11 +1,8 @@
 use cow_utils::CowUtils;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerDiagnostic;
-use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::diagnostics::CompilerError;
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::FxIndexMap;
@@ -18,6 +15,7 @@ use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
 
 use oxc_ast::ast as oxc;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::GetSpan;
 
 use crate::react_compiler_lowering::FunctionNode;
@@ -219,7 +217,7 @@ fn lower_block_statement_inner<'a>(
     block_scope: Option<ScopeId>,
     scope_override: Option<ScopeId>,
     parent_scope: Option<ScopeId>,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     use crate::scope::BindingKind as AstBindingKind;
 
     // Look up the block's scope to identify hoistable bindings. Use the scope
@@ -441,27 +439,25 @@ fn lower_block_statement_inner<'a>(
                         InstructionKind::HoistedFunction
                     } else if info.declaration_type == DeclKind::VariableDeclarator {
                         // Unsupported hoisting for this declaration kind
-                        builder.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::Todo,
-                            reason: "Handle non-const declarations for hoisting".to_string(),
-                            description: Some(format!(
-                                "variable \"{}\" declared with {:?}",
-                                info.name, info.kind
-                            )),
-                            span: None,
-                        })?;
+                        builder.record_error(
+                            ErrorCategory::Todo
+                                .diagnostic("Handle non-const declarations for hoisting")
+                                .with_help(format!(
+                                    "variable \"{}\" declared with {:?}",
+                                    info.name, info.kind
+                                )),
+                        )?;
                         continue;
                     } else {
-                        builder.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::Todo,
-                            reason: "Unsupported declaration type for hoisting".to_string(),
-                            description: Some(format!(
-                                "variable \"{}\" declared with {}",
-                                info.name,
-                                info.declaration_type.as_str()
-                            )),
-                            span: None,
-                        })?;
+                        builder.record_error(
+                            ErrorCategory::Todo
+                                .diagnostic("Unsupported declaration type for hoisting")
+                                .with_help(format!(
+                                    "variable \"{}\" declared with {}",
+                                    info.name,
+                                    info.declaration_type.as_str()
+                                )),
+                        )?;
                         continue;
                     }
                 }
@@ -714,18 +710,17 @@ fn lower_inner<'a>(
                 }
                 _ => {
                     builder.record_diagnostic(
-                        CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
-                            "Could not find binding",
-                            Some(format!(
+                        ErrorCategory::Invariant
+                            .diagnostic("Could not find binding")
+                            .with_help(format!(
                                 "[BuildHIR] Could not find binding for param `{}`",
                                 ident.name.as_str()
-                            )),
-                        )
-                        .with_detail(CompilerDiagnosticDetail::Error {
-                            span: builder.source_location(ident.span),
-                            message: Some("Could not find binding".to_string()),
-                        }),
+                            ))
+                            .with_labels(
+                                builder
+                                    .source_location(ident.span)
+                                    .map(|s| s.label("Could not find binding")),
+                            ),
                     );
                 }
             }
@@ -869,14 +864,12 @@ fn lower_identifier(
         _ => {
             if let VariableBinding::Global { ref name } = binding {
                 if name == "eval" {
-                    builder.record_error(CompilerErrorDetail {
-                        category: ErrorCategory::UnsupportedSyntax,
-                        reason: "The 'eval' function is not supported".to_string(),
-                        description: Some(
-                            "Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler".to_string(),
-                        ),
-                        span,
-                    })?;
+                    builder.record_error(
+                        ErrorCategory::UnsupportedSyntax
+                            .diagnostic("The 'eval' function is not supported")
+                            .with_help("Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler")
+                            .with_labels(span),
+                    )?;
                 }
             }
             let non_local_binding = match binding {
@@ -1024,13 +1017,11 @@ fn lower_member_expression_impl<'a>(
             };
             // TODO(stage1a-arms): private field access needs a private-name property
             // load + OriginalNode bail; defer to a later batch.
-            builder.record_error(CompilerErrorDetail {
-                category: ErrorCategory::Todo,
-                reason: "(BuildHIR::lowerMemberExpression) Handle private field property"
-                    .to_string(),
-                description: None,
-                span,
-            })?;
+            builder.record_error(
+                ErrorCategory::Todo
+                    .diagnostic("(BuildHIR::lowerMemberExpression) Handle private field property")
+                    .with_labels(span),
+            )?;
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(PropertyLiteral::String(String::new())),
@@ -1052,12 +1043,11 @@ fn lower_import_keyword_to_temporary(
     builder: &mut HirBuilder<'_, '_>,
     span: &Option<Span>,
 ) -> Result<Place, CompilerError> {
-    builder.record_error(CompilerErrorDetail {
-        category: ErrorCategory::Todo,
-        reason: "(BuildHIR::lowerExpression) Handle Import expressions".to_string(),
-        description: None,
-        span: *span,
-    })?;
+    builder.record_error(
+        ErrorCategory::Todo
+            .diagnostic("(BuildHIR::lowerExpression) Handle Import expressions")
+            .with_labels(*span),
+    )?;
     lower_value_to_temporary(
         builder,
         InstructionValue::Primitive { value: PrimitiveValue::Undefined, span: *span },
@@ -1072,12 +1062,11 @@ fn lower_private_name_to_temporary(
     span: oxc_span::Span,
 ) -> Result<Place, CompilerError> {
     let span = builder.source_location(span);
-    builder.record_error(CompilerErrorDetail {
-        category: ErrorCategory::Todo,
-        reason: "(BuildHIR::lowerExpression) Handle PrivateName expressions".to_string(),
-        description: None,
-        span,
-    })?;
+    builder.record_error(
+        ErrorCategory::Todo
+            .diagnostic("(BuildHIR::lowerExpression) Handle PrivateName expressions")
+            .with_labels(span),
+    )?;
     lower_value_to_temporary(
         builder,
         InstructionValue::Primitive { value: PrimitiveValue::Undefined, span },
@@ -1197,13 +1186,11 @@ fn lower_member_expression_from_simple_target<'a>(
         oxc::SimpleAssignmentTarget::PrivateFieldExpression(m) => {
             let span = builder.source_location(m.span);
             let object = lower_expression_to_temporary(builder, &m.object)?;
-            builder.record_error(CompilerErrorDetail {
-                category: ErrorCategory::Todo,
-                reason: "(BuildHIR::lowerMemberExpression) Handle private field property"
-                    .to_string(),
-                description: None,
-                span,
-            })?;
+            builder.record_error(
+                ErrorCategory::Todo
+                    .diagnostic("(BuildHIR::lowerMemberExpression) Handle private field property")
+                    .with_labels(span),
+            )?;
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(PropertyLiteral::String(String::new())),
@@ -1271,12 +1258,12 @@ fn lower_identifier_for_assignment(
                 builder.set_identifier_declaration_span(identifier, &ident_span);
             }
             if binding_kind == BindingKind::Const && kind == InstructionKind::Reassign {
-                builder.record_error(CompilerErrorDetail {
-                    reason: "Cannot reassign a `const` variable".to_string(),
-                    category: ErrorCategory::Syntax,
-                    span,
-                    description: Some(format!("`{}` is declared as const", name)),
-                })?;
+                builder.record_error(
+                    ErrorCategory::Syntax
+                        .diagnostic("Cannot reassign a `const` variable")
+                        .with_help(format!("`{}` is declared as const", name))
+                        .with_labels(span),
+                )?;
                 return Ok(None);
             }
             Ok(Some(IdentifierForAssignment::Place(Place {
@@ -1290,12 +1277,11 @@ fn lower_identifier_for_assignment(
             if kind == InstructionKind::Reassign {
                 Ok(Some(IdentifierForAssignment::Global { name: gname }))
             } else {
-                builder.record_error(CompilerErrorDetail {
-                    reason: "Could not find binding for declaration".to_string(),
-                    category: ErrorCategory::Invariant,
-                    span,
-                    description: None,
-                })?;
+                builder.record_error(
+                    ErrorCategory::Invariant
+                        .diagnostic("Could not find binding for declaration")
+                        .with_labels(span),
+                )?;
                 Ok(None)
             }
         }
@@ -1303,12 +1289,11 @@ fn lower_identifier_for_assignment(
             if kind == InstructionKind::Reassign {
                 Ok(Some(IdentifierForAssignment::Global { name: name.to_string() }))
             } else {
-                builder.record_error(CompilerErrorDetail {
-                    reason: "Could not find binding for declaration".to_string(),
-                    category: ErrorCategory::Invariant,
-                    span,
-                    description: None,
-                })?;
+                builder.record_error(
+                    ErrorCategory::Invariant
+                        .diagnostic("Could not find binding for declaration")
+                        .with_labels(span),
+                )?;
                 Ok(None)
             }
         }
@@ -1368,13 +1353,11 @@ fn lower_binding_assignment<'a>(
                             .map(|s| builder.environment().is_hoisted_identifier(s.index() as u32))
                             .unwrap_or(false);
                         if kind == InstructionKind::Const && !is_hoisted {
-                            builder.record_error(CompilerErrorDetail {
-                                reason: "Expected `const` declaration not to be reassigned"
-                                    .to_string(),
-                                category: ErrorCategory::Syntax,
-                                span,
-                                description: None,
-                            })?;
+                            builder.record_error(
+                                ErrorCategory::Syntax
+                                    .diagnostic("Expected `const` declaration not to be reassigned")
+                                    .with_labels(span),
+                            )?;
                         }
                         let temp = lower_value_to_temporary(
                             builder,
@@ -1543,12 +1526,11 @@ fn lower_binding_assignment<'a>(
 
             for prop in &pattern.properties {
                 if prop.computed {
-                    builder.record_error(CompilerErrorDetail {
-                        reason: "(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern".to_string(),
-                        category: ErrorCategory::Todo,
-                        span: builder.source_location(prop.span),
-                        description: None,
-                    })?;
+                    builder.record_error(
+                        ErrorCategory::Todo
+                            .diagnostic("(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern")
+                            .with_labels(builder.source_location(prop.span)),
+                    )?;
                     continue;
                 }
 
@@ -1583,12 +1565,11 @@ fn lower_binding_assignment<'a>(
                                     ));
                                 }
                                 Some(IdentifierForAssignment::Global { .. }) => {
-                                    builder.record_error(CompilerErrorDetail {
-                                        reason: "Expected reassignment of globals to enable forceTemporaries".to_string(),
-                                        category: ErrorCategory::Todo,
-                                        span: builder.source_location(id.span),
-                                        description: None,
-                                    })?;
+                                    builder.record_error(
+                                        ErrorCategory::Todo
+                                            .diagnostic("Expected reassignment of globals to enable forceTemporaries")
+                                            .with_labels(builder.source_location(id.span)),
+                                    )?;
                                 }
                                 None => {
                                     continue;
@@ -1644,12 +1625,11 @@ fn lower_binding_assignment<'a>(
                                     ));
                                 }
                                 Some(IdentifierForAssignment::Global { .. }) => {
-                                    builder.record_error(CompilerErrorDetail {
-                                        reason: "Expected reassignment of globals to enable forceTemporaries".to_string(),
-                                        category: ErrorCategory::Todo,
-                                        span: builder.source_location(rest.span),
-                                        description: None,
-                                    })?;
+                                    builder.record_error(
+                                        ErrorCategory::Todo
+                                            .diagnostic("Expected reassignment of globals to enable forceTemporaries")
+                                            .with_labels(builder.source_location(rest.span)),
+                                    )?;
                                 }
                                 None => {}
                             }
@@ -1664,20 +1644,19 @@ fn lower_binding_assignment<'a>(
                         }
                     }
                     other => {
-                        builder.record_error(CompilerErrorDetail {
-                            reason: format!(
-                                "(BuildHIR::lowerAssignment) Handle {} rest element in ObjectPattern",
-                                match other {
-                                    oxc::BindingPattern::ObjectPattern(_) => "ObjectPattern",
-                                    oxc::BindingPattern::ArrayPattern(_) => "ArrayPattern",
-                                    oxc::BindingPattern::AssignmentPattern(_) => "AssignmentPattern",
-                                    _ => "unknown",
-                                }
-                            ),
-                            category: ErrorCategory::Todo,
-                            span: builder.source_location(rest.span),
-                            description: None,
-                        })?;
+                        builder.record_error(
+                            ErrorCategory::Todo
+                                .diagnostic(format!(
+                                    "(BuildHIR::lowerAssignment) Handle {} rest element in ObjectPattern",
+                                    match other {
+                                        oxc::BindingPattern::ObjectPattern(_) => "ObjectPattern",
+                                        oxc::BindingPattern::ArrayPattern(_) => "ArrayPattern",
+                                        oxc::BindingPattern::AssignmentPattern(_) => "AssignmentPattern",
+                                        _ => "unknown",
+                                    }
+                                ))
+                                .with_labels(builder.source_location(rest.span)),
+                        )?;
                     }
                 }
             }
@@ -1824,12 +1803,11 @@ fn lower_member_assignment_target<'a>(
 ) -> Result<Option<Place>, CompilerError> {
     // MemberExpression may only appear in an assignment expression (Reassign).
     if kind != InstructionKind::Reassign {
-        builder.record_error(CompilerErrorDetail {
-            category: ErrorCategory::Invariant,
-            reason: "MemberExpression may only appear in an assignment expression".to_string(),
-            description: None,
-            span,
-        })?;
+        builder.record_error(
+            ErrorCategory::Invariant
+                .diagnostic("MemberExpression may only appear in an assignment expression")
+                .with_labels(span),
+        )?;
         return Ok(None);
     }
     match target {
@@ -1874,14 +1852,11 @@ fn lower_member_assignment_target<'a>(
             // PrivateName property; the original `lower_assignment` member arm hit
             // the generic property `_` branch and bailed with this Todo.
             lower_expression_to_temporary(builder, &member.object)?;
-            builder.record_error(CompilerErrorDetail {
-                reason:
-                    "(BuildHIR::lowerAssignment) Handle PrivateName properties in MemberExpression"
-                        .to_string(),
-                category: ErrorCategory::Todo,
-                span: builder.source_location(member.field.span),
-                description: None,
-            })?;
+            builder.record_error(
+                ErrorCategory::Todo
+                    .diagnostic("(BuildHIR::lowerAssignment) Handle PrivateName properties in MemberExpression")
+                    .with_labels(builder.source_location(member.field.span)),
+            )?;
             let temp = lower_value_to_temporary(
                 builder,
                 InstructionValue::Primitive { value: PrimitiveValue::Undefined, span },
@@ -1954,13 +1929,11 @@ fn lower_assignment_target<'a>(
                             .map(|s| builder.environment().is_hoisted_identifier(s.index() as u32))
                             .unwrap_or(false);
                         if kind == InstructionKind::Const && !is_hoisted {
-                            builder.record_error(CompilerErrorDetail {
-                                reason: "Expected `const` declaration not to be reassigned"
-                                    .to_string(),
-                                category: ErrorCategory::Syntax,
-                                span,
-                                description: None,
-                            })?;
+                            builder.record_error(
+                                ErrorCategory::Syntax
+                                    .diagnostic("Expected `const` declaration not to be reassigned")
+                                    .with_labels(span),
+                            )?;
                         }
                         let temp = lower_value_to_temporary(
                             builder,
@@ -2257,12 +2230,11 @@ fn lower_assignment_target<'a>(
                                     ));
                                 }
                                 Some(IdentifierForAssignment::Global { .. }) => {
-                                    builder.record_error(CompilerErrorDetail {
-                                        reason: "Expected reassignment of globals to enable forceTemporaries".to_string(),
-                                        category: ErrorCategory::Todo,
-                                        span: builder.source_location(id.span),
-                                        description: None,
-                                    })?;
+                                    builder.record_error(
+                                        ErrorCategory::Todo
+                                            .diagnostic("Expected reassignment of globals to enable forceTemporaries")
+                                            .with_labels(builder.source_location(id.span)),
+                                    )?;
                                 }
                                 None => {
                                     continue;
@@ -2282,12 +2254,11 @@ fn lower_assignment_target<'a>(
                     }
                     oxc::AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
                         if p.computed {
-                            builder.record_error(CompilerErrorDetail {
-                                reason: "(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern".to_string(),
-                                category: ErrorCategory::Todo,
-                                span: builder.source_location(p.span),
-                                description: None,
-                            })?;
+                            builder.record_error(
+                                ErrorCategory::Todo
+                                    .diagnostic("(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern")
+                                    .with_labels(builder.source_location(p.span)),
+                            )?;
                             continue;
                         }
                         let key = match lower_object_property_key(builder, &p.name, false)? {
@@ -2321,12 +2292,11 @@ fn lower_assignment_target<'a>(
                                             ));
                                         }
                                         Some(IdentifierForAssignment::Global { .. }) => {
-                                            builder.record_error(CompilerErrorDetail {
-                                                reason: "Expected reassignment of globals to enable forceTemporaries".to_string(),
-                                                category: ErrorCategory::Todo,
-                                                span: builder.source_location(id.span),
-                                                description: None,
-                                            })?;
+                                            builder.record_error(
+                                                ErrorCategory::Todo
+                                                    .diagnostic("Expected reassignment of globals to enable forceTemporaries")
+                                                    .with_labels(builder.source_location(id.span)),
+                                            )?;
                                         }
                                         None => {
                                             continue;
@@ -2390,12 +2360,11 @@ fn lower_assignment_target<'a>(
                                     ));
                                 }
                                 Some(IdentifierForAssignment::Global { .. }) => {
-                                    builder.record_error(CompilerErrorDetail {
-                                        reason: "Expected reassignment of globals to enable forceTemporaries".to_string(),
-                                        category: ErrorCategory::Todo,
-                                        span: builder.source_location(rest.span),
-                                        description: None,
-                                    })?;
+                                    builder.record_error(
+                                        ErrorCategory::Todo
+                                            .diagnostic("Expected reassignment of globals to enable forceTemporaries")
+                                            .with_labels(builder.source_location(rest.span)),
+                                    )?;
                                 }
                                 None => {}
                             }
@@ -2410,26 +2379,25 @@ fn lower_assignment_target<'a>(
                         }
                     }
                     other => {
-                        builder.record_error(CompilerErrorDetail {
-                            reason: format!(
-                                "(BuildHIR::lowerAssignment) Handle {} rest element in ObjectPattern",
-                                match other {
-                                    oxc::AssignmentTarget::ObjectAssignmentTarget(_) => {
-                                        "ObjectPattern"
+                        builder.record_error(
+                            ErrorCategory::Todo
+                                .diagnostic(format!(
+                                    "(BuildHIR::lowerAssignment) Handle {} rest element in ObjectPattern",
+                                    match other {
+                                        oxc::AssignmentTarget::ObjectAssignmentTarget(_) => {
+                                            "ObjectPattern"
+                                        }
+                                        oxc::AssignmentTarget::ArrayAssignmentTarget(_) => "ArrayPattern",
+                                        oxc::AssignmentTarget::StaticMemberExpression(_)
+                                        | oxc::AssignmentTarget::ComputedMemberExpression(_)
+                                        | oxc::AssignmentTarget::PrivateFieldExpression(_) => {
+                                            "MemberExpression"
+                                        }
+                                        _ => "unknown",
                                     }
-                                    oxc::AssignmentTarget::ArrayAssignmentTarget(_) => "ArrayPattern",
-                                    oxc::AssignmentTarget::StaticMemberExpression(_)
-                                    | oxc::AssignmentTarget::ComputedMemberExpression(_)
-                                    | oxc::AssignmentTarget::PrivateFieldExpression(_) => {
-                                        "MemberExpression"
-                                    }
-                                    _ => "unknown",
-                                }
-                            ),
-                            category: ErrorCategory::Todo,
-                            span: builder.source_location(rest.span),
-                            description: None,
-                        })?;
+                                ))
+                                .with_labels(builder.source_location(rest.span)),
+                        )?;
                     }
                 }
             }
@@ -3349,15 +3317,14 @@ fn lower_function_declaration<'a>(
                     }
                 }
                 _ => {
-                    builder.record_error(CompilerErrorDetail {
-                        category: ErrorCategory::Invariant,
-                        reason: format!(
-                            "Could not find binding for function declaration `{}`",
-                            name
-                        ),
-                        description: None,
-                        span,
-                    })?;
+                    builder.record_error(
+                        ErrorCategory::Invariant
+                            .diagnostic(format!(
+                                "Could not find binding for function declaration `{}`",
+                                name
+                            ))
+                            .with_labels(span),
+                    )?;
                 }
             }
         }
@@ -3621,12 +3588,11 @@ fn lower_expression<'a>(
                         // (`delete obj?.prop`, kept as a `ChainExpression`), etc. — can't
                         // delete an object property; the fork rejects it rather than
                         // silently dropping the delete.
-                        builder.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::Syntax,
-                            reason: "Only object properties can be deleted".to_string(),
-                            description: None,
-                            span,
-                        })?;
+                        builder.record_error(
+                            ErrorCategory::Syntax
+                                .diagnostic("Only object properties can be deleted")
+                                .with_labels(span),
+                        )?;
                         Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
                     }
                 }
@@ -3823,13 +3789,11 @@ fn lower_expression<'a>(
             let span = builder.source_location(seq.span);
 
             if seq.expressions.is_empty() {
-                builder.record_error(CompilerErrorDetail {
-                    category: ErrorCategory::Syntax,
-                    reason: "Expected sequence expression to have at least one expression"
-                        .to_string(),
-                    description: None,
-                    span,
-                })?;
+                builder.record_error(
+                    ErrorCategory::Syntax
+                        .diagnostic("Expected sequence expression to have at least one expression")
+                        .with_labels(span),
+                )?;
                 return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span });
             }
 
@@ -3901,12 +3865,11 @@ fn lower_expression<'a>(
             if tagged.quasi.quasis.iter().any(|q| {
                 q.value.raw.as_str() != q.value.cooked.map(|c| c.to_string()).unwrap_or_default()
             }) {
-                builder.record_error(CompilerErrorDetail {
-                    category: ErrorCategory::Todo,
-                    reason: "(BuildHIR::lowerExpression) Handle tagged template where cooked value is different from raw value".to_string(),
-                    description: None,
-                    span,
-                })?;
+                builder.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic("(BuildHIR::lowerExpression) Handle tagged template where cooked value is different from raw value")
+                        .with_labels(span),
+                )?;
                 return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span });
             }
             // Evaluation order: the tag is evaluated first, then each interpolated
@@ -3929,13 +3892,11 @@ fn lower_expression<'a>(
         }
         oxc::Expression::YieldExpression(yld) => {
             let span = builder.source_location(yld.span);
-            builder.record_error(CompilerErrorDetail {
-                category: ErrorCategory::Todo,
-                reason: "(BuildHIR::lowerExpression) Handle YieldExpression expressions"
-                    .to_string(),
-                description: None,
-                span,
-            })?;
+            builder.record_error(
+                ErrorCategory::Todo
+                    .diagnostic("(BuildHIR::lowerExpression) Handle YieldExpression expressions")
+                    .with_labels(span),
+            )?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
         }
         oxc::Expression::MetaProperty(meta) => {
@@ -3947,44 +3908,39 @@ fn lower_expression<'a>(
                     span,
                 })
             } else {
-                builder.record_error(CompilerErrorDetail {
-                    category: ErrorCategory::Todo,
-                    reason: "(BuildHIR::lowerExpression) Handle MetaProperty expressions other than import.meta".to_string(),
-                    description: None,
-                    span,
-                })?;
+                builder.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic("(BuildHIR::lowerExpression) Handle MetaProperty expressions other than import.meta")
+                        .with_labels(span),
+                )?;
                 Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
             }
         }
         oxc::Expression::ClassExpression(cls) => {
             let span = builder.source_location(cls.span);
-            builder.record_error(CompilerErrorDetail {
-                category: ErrorCategory::Todo,
-                reason: "(BuildHIR::lowerExpression) Handle ClassExpression expressions"
-                    .to_string(),
-                description: None,
-                span,
-            })?;
+            builder.record_error(
+                ErrorCategory::Todo
+                    .diagnostic("(BuildHIR::lowerExpression) Handle ClassExpression expressions")
+                    .with_labels(span),
+            )?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
         }
         oxc::Expression::Super(sup) => {
             let span = builder.source_location(sup.span);
-            builder.record_error(CompilerErrorDetail {
-                category: ErrorCategory::Todo,
-                reason: "(BuildHIR::lowerExpression) Handle Super expressions".to_string(),
-                description: None,
-                span,
-            })?;
+            builder.record_error(
+                ErrorCategory::Todo
+                    .diagnostic("(BuildHIR::lowerExpression) Handle Super expressions")
+                    .with_labels(span),
+            )?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
         }
         oxc::Expression::ThisExpression(this) => {
             let span = builder.source_location(this.span);
-            builder.record_error(CompilerErrorDetail {
-                category: ErrorCategory::Todo,
-                reason: "(BuildHIR::lowerExpression) Handle ThisExpression expressions".to_string(),
-                description: None,
-                span,
-            })?;
+            builder.record_error(
+                ErrorCategory::Todo
+                    .diagnostic("(BuildHIR::lowerExpression) Handle ThisExpression expressions")
+                    .with_labels(span),
+            )?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
         }
         oxc::Expression::ImportExpression(imp) => {
@@ -4092,12 +4048,11 @@ fn lower_expression<'a>(
                 oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
                     let symbol = builder.scope().resolve_reference(ident);
                     if builder.is_context_identifier(symbol) {
-                        builder.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::Todo,
-                            reason: "(BuildHIR::lowerExpression) Handle UpdateExpression to variables captured within lambdas.".to_string(),
-                            description: None,
-                            span,
-                        })?;
+                        builder.record_error(
+                            ErrorCategory::Todo
+                                .diagnostic("(BuildHIR::lowerExpression) Handle UpdateExpression to variables captured within lambdas.")
+                                .with_labels(span),
+                        )?;
                         return Ok(InstructionValue::Primitive {
                             value: PrimitiveValue::Undefined,
                             span,
@@ -4108,14 +4063,11 @@ fn lower_expression<'a>(
                     let binding =
                         builder.resolve_identifier(ident.name.as_str(), ident_span, symbol)?;
                     if matches!(binding, VariableBinding::Global { .. }) {
-                        builder.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::Todo,
-                            reason:
-                                "UpdateExpression where argument is a global is not yet supported"
-                                    .to_string(),
-                            description: None,
-                            span,
-                        })?;
+                        builder.record_error(
+                            ErrorCategory::Todo
+                                .diagnostic("UpdateExpression where argument is a global is not yet supported")
+                                .with_labels(span),
+                        )?;
                         return Ok(InstructionValue::Primitive {
                             value: PrimitiveValue::Undefined,
                             span,
@@ -4124,12 +4076,11 @@ fn lower_expression<'a>(
                     let identifier = match binding {
                         VariableBinding::Identifier { identifier, .. } => identifier,
                         _ => {
-                            builder.record_error(CompilerErrorDetail {
-                                category: ErrorCategory::Todo,
-                                reason: "(BuildHIR::lowerExpression) Support UpdateExpression where argument is a global".to_string(),
-                                description: None,
-                                span,
-                            })?;
+                            builder.record_error(
+                                ErrorCategory::Todo
+                                    .diagnostic("(BuildHIR::lowerExpression) Support UpdateExpression where argument is a global")
+                                    .with_labels(span),
+                            )?;
                             return Ok(InstructionValue::Primitive {
                                 value: PrimitiveValue::Undefined,
                                 span,
@@ -4173,12 +4124,11 @@ fn lower_expression<'a>(
                     }
                 }
                 _ => {
-                    builder.record_error(CompilerErrorDetail {
-                        category: ErrorCategory::Todo,
-                        reason: "UpdateExpression with unsupported argument type".to_string(),
-                        description: None,
-                        span,
-                    })?;
+                    builder.record_error(
+                        ErrorCategory::Todo
+                            .diagnostic("UpdateExpression with unsupported argument type")
+                            .with_labels(span),
+                    )?;
                     Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
                 }
             }
@@ -4321,15 +4271,15 @@ fn lower_assignment_expression<'a>(
                 match binding {
                     VariableBinding::Identifier { identifier, binding_kind } => {
                         if binding_kind == BindingKind::Const {
-                            builder.record_error(CompilerErrorDetail {
-                                reason: "Cannot reassign a `const` variable".to_string(),
-                                category: ErrorCategory::Syntax,
-                                span: ident_span,
-                                description: Some(format!(
-                                    "`{}` is declared as const",
-                                    ident.name.as_str()
-                                )),
-                            })?;
+                            builder.record_error(
+                                ErrorCategory::Syntax
+                                    .diagnostic("Cannot reassign a `const` variable")
+                                    .with_help(format!(
+                                        "`{}` is declared as const",
+                                        ident.name.as_str()
+                                    ))
+                                    .with_labels(ident_span),
+                            )?;
                             return Ok(InstructionValue::Primitive {
                                 value: PrimitiveValue::Undefined,
                                 span: ident_span,
@@ -4482,13 +4432,13 @@ fn lower_assignment_expression<'a>(
             oxc::AssignmentOperator::LogicalOr
             | oxc::AssignmentOperator::LogicalAnd
             | oxc::AssignmentOperator::LogicalNullish => {
-                builder.record_error(CompilerErrorDetail {
-                    reason: "Logical assignment operators (||=, &&=, ??=) are not yet supported"
-                        .to_string(),
-                    category: ErrorCategory::Todo,
-                    span,
-                    description: None,
-                })?;
+                builder.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic(
+                            "Logical assignment operators (||=, &&=, ??=) are not yet supported",
+                        )
+                        .with_labels(span),
+                )?;
                 return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span });
             }
             oxc::AssignmentOperator::Assign => unreachable!(),
@@ -4599,13 +4549,11 @@ fn lower_assignment_expression<'a>(
                 }
             }
             _ => {
-                builder.record_error(CompilerErrorDetail {
-                    reason: "Compound assignment to complex pattern is not yet supported"
-                        .to_string(),
-                    category: ErrorCategory::Todo,
-                    span,
-                    description: None,
-                })?;
+                builder.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic("Compound assignment to complex pattern is not yet supported")
+                        .with_labels(span),
+                )?;
                 Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
             }
         }
@@ -4645,15 +4593,14 @@ fn lower_jsx_element_expr<'a>(
                     oxc::JSXAttributeName::Identifier(id) => {
                         let name = id.name.as_str();
                         if name.contains(':') {
-                            builder.record_error(CompilerErrorDetail {
-                                category: ErrorCategory::Todo,
-                                reason: format!(
-                                    "(BuildHIR::lowerExpression) Unexpected colon in attribute name `{}`",
-                                    name
-                                ),
-                                description: None,
-                                span: builder.source_location(id.span),
-                            })?;
+                            builder.record_error(
+                                ErrorCategory::Todo
+                                    .diagnostic(format!(
+                                        "(BuildHIR::lowerExpression) Unexpected colon in attribute name `{}`",
+                                        name
+                                    ))
+                                    .with_labels(builder.source_location(id.span)),
+                            )?;
                         }
                         name.to_string()
                     }
@@ -4739,14 +4686,10 @@ fn lower_jsx_element_expr<'a>(
             // so check if ANY binding with this name exists in the function scope.
             let is_local_binding = builder.has_local_binding(name);
             if is_local_binding {
-                // Record as a Diagnostic (not ErrorDetail) to match TS behavior
-                // where CompilerError.invariant creates a CompilerDiagnostic.
                 let reason = format!("<{}> tags should be module-level imports", tag_name);
-                return Err(CompilerDiagnostic::new(ErrorCategory::Invariant, &reason, None)
-                    .with_detail(CompilerDiagnosticDetail::Error {
-                        span: id_span,
-                        message: Some(reason),
-                    })
+                return Err(ErrorCategory::Invariant
+                    .diagnostic(&reason)
+                    .with_labels(id_span.map(|s| s.label(reason)))
                     .into());
             }
         }
@@ -4774,22 +4717,17 @@ fn lower_jsx_element_expr<'a>(
             [("enum", &enum_spans), ("plural", &plural_spans), ("pronoun", &pronoun_spans)]
         {
             if locations.len() > 1 {
-                let details: Vec<CompilerDiagnosticDetail> = locations
-                    .iter()
-                    .map(|span| CompilerDiagnosticDetail::Error {
-                        message: Some(format!("Multiple `<{}:{}>` tags found", tag_name, name)),
-                        span: *span,
-                    })
-                    .collect();
-                let mut diag = CompilerDiagnostic::new(
-                    ErrorCategory::Todo,
-                    "Support duplicate fbt tags",
-                    Some(format!(
+                let diag = ErrorCategory::Todo
+                    .diagnostic("Support duplicate fbt tags")
+                    .with_help(format!(
                         "Support `<{}>` tags with multiple `<{}:{}>` values",
                         tag_name, tag_name, name
-                    )),
-                );
-                diag.details = details;
+                    ))
+                    .with_labels(locations.iter().filter_map(|span| {
+                        span.map(|s| {
+                            s.label(format!("Multiple `<{}:{}>` tags found", tag_name, name))
+                        })
+                    }));
                 builder.environment_mut().record_diagnostic(diag);
             }
         }
@@ -4900,13 +4838,14 @@ fn lower_jsx_element_name(
             let tag = format!("{}:{}", namespace, name);
             let span = builder.source_location(ns.span);
             if namespace.contains(':') || name.contains(':') {
-                builder.record_error(CompilerErrorDetail {
-                    category: ErrorCategory::Syntax,
-                    reason: "Expected JSXNamespacedName to have no colons in the namespace or name"
-                        .to_string(),
-                    description: Some(format!("Got `{}` : `{}`", namespace, name)),
-                    span,
-                })?;
+                builder.record_error(
+                    ErrorCategory::Syntax
+                        .diagnostic(
+                            "Expected JSXNamespacedName to have no colons in the namespace or name",
+                        )
+                        .with_help(format!("Got `{}` : `{}`", namespace, name))
+                        .with_labels(span),
+                )?;
             }
             let place = lower_value_to_temporary(
                 builder,
@@ -5477,15 +5416,14 @@ fn lower_object_method<'a>(
             oxc::PropertyKind::Set => "set",
             oxc::PropertyKind::Init => "method",
         };
-        builder.record_error(CompilerErrorDetail {
-            reason: format!(
-                "(BuildHIR::lowerExpression) Handle {} functions in ObjectExpression",
-                kind_str
-            ),
-            category: ErrorCategory::Todo,
-            span: builder.source_location(method.span),
-            description: None,
-        })?;
+        builder.record_error(
+            ErrorCategory::Todo
+                .diagnostic(format!(
+                    "(BuildHIR::lowerExpression) Handle {} functions in ObjectExpression",
+                    kind_str
+                ))
+                .with_labels(builder.source_location(method.span)),
+        )?;
         return Ok(None);
     }
 
@@ -5545,12 +5483,11 @@ fn lower_object_property_key<'a>(
                 oxc::PropertyKey::Identifier(i) => builder.source_location(i.span),
                 _ => None,
             };
-            builder.record_error(CompilerErrorDetail {
-                category: ErrorCategory::Todo,
-                reason: "Unsupported key type in ObjectExpression".to_string(),
-                description: None,
-                span,
-            })?;
+            builder.record_error(
+                ErrorCategory::Todo
+                    .diagnostic("Unsupported key type in ObjectExpression")
+                    .with_labels(span),
+            )?;
             Ok(None)
         }
     }
@@ -5564,15 +5501,14 @@ fn lower_reorderable_expression<'a>(
     expr: &'a oxc::Expression<'a>,
 ) -> Result<Place, CompilerError> {
     if !is_reorderable_expression(builder, expr, true) {
-        builder.record_error(CompilerErrorDetail {
-            category: ErrorCategory::Todo,
-            reason: format!(
-                "(BuildHIR::node.lowerReorderableExpression) Expression type `{}` cannot be safely reordered",
-                expression_type_name(expr)
-            ),
-            description: None,
-            span: builder.source_location(expr.span()),
-        })?;
+        builder.record_error(
+            ErrorCategory::Todo
+                .diagnostic(format!(
+                    "(BuildHIR::node.lowerReorderableExpression) Expression type `{}` cannot be safely reordered",
+                    expression_type_name(expr)
+                ))
+                .with_labels(builder.source_location(expr.span())),
+        )?;
     }
     lower_expression_to_temporary(builder, expr)
 }
@@ -5736,7 +5672,7 @@ fn lower_statement<'a>(
     stmt: &'a oxc::Statement<'a>,
     label: Option<&str>,
     parent_scope: Option<crate::scope::ScopeId>,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     match stmt {
         oxc::Statement::EmptyStatement(_) => {}
         oxc::Statement::DebuggerStatement(dbg) => {
@@ -5772,13 +5708,13 @@ fn lower_statement<'a>(
             let span = builder.source_location(throw.span);
             let value = lower_expression_to_temporary(builder, &throw.argument)?;
             if builder.resolve_throw_handler().is_some() {
-                builder.record_error(CompilerErrorDetail {
-                    category: ErrorCategory::Todo,
-                    reason: "(BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch"
-                        .to_string(),
-                    description: None,
-                    span,
-                })?;
+                builder.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic(
+                            "(BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch",
+                        )
+                        .with_labels(span),
+                )?;
             }
             let fallthrough = builder.reserve(BlockKind::Block);
             builder.terminate_with_continuation(
@@ -5872,12 +5808,11 @@ fn lower_statement<'a>(
                     Some(init) => {
                         let expr = init.to_expression();
                         let init_span = builder.source_location(expr.span());
-                        builder.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::Todo,
-                            reason: "(BuildHIR::lowerStatement) Handle non-variable initialization in ForStatement".to_string(),
-                            description: None,
-                            span,
-                        })?;
+                                                builder.record_error(
+                            ErrorCategory::Todo
+                                .diagnostic("(BuildHIR::lowerStatement) Handle non-variable initialization in ForStatement")
+                                .with_labels(span),
+                        )?;
                         lower_expression_to_temporary(builder, expr)?;
                         init_span
                     }
@@ -5955,13 +5890,11 @@ fn lower_statement<'a>(
                     continuation_block,
                 );
             } else {
-                builder.record_error(CompilerErrorDetail {
-                    category: ErrorCategory::Todo,
-                    reason: "(BuildHIR::lowerStatement) Handle empty test in ForStatement"
-                        .to_string(),
-                    description: None,
-                    span,
-                })?;
+                builder.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic("(BuildHIR::lowerStatement) Handle empty test in ForStatement")
+                        .with_labels(span),
+                )?;
                 // Treat `for(;;)` as `while(true)` to keep the builder state consistent
                 let true_val =
                     InstructionValue::Primitive { value: PrimitiveValue::Boolean(true), span };
@@ -6161,12 +6094,11 @@ fn lower_statement<'a>(
             let test_block_id = test_block.id;
 
             if for_of.r#await {
-                builder.record_error(CompilerErrorDetail {
-                    category: ErrorCategory::Todo,
-                    reason: "(BuildHIR::lowerStatement) Handle for-await loops".to_string(),
-                    description: None,
-                    span,
-                })?;
+                builder.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic("(BuildHIR::lowerStatement) Handle for-await loops")
+                        .with_labels(span),
+                )?;
                 return Ok(());
             }
 
@@ -6260,13 +6192,13 @@ fn lower_statement<'a>(
 
                 if case.test.is_none() {
                     if has_default {
-                        builder.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::Syntax,
-                            reason: "Expected at most one `default` branch in a switch statement"
-                                .to_string(),
-                            description: None,
-                            span: case_span,
-                        })?;
+                        builder.record_error(
+                            ErrorCategory::Syntax
+                                .diagnostic(
+                                    "Expected at most one `default` branch in a switch statement",
+                                )
+                                .with_labels(case_span),
+                        )?;
                         break;
                     }
                     has_default = true;
@@ -6325,25 +6257,21 @@ fn lower_statement<'a>(
             let handler_clause = match &try_stmt.handler {
                 Some(h) => h,
                 None => {
-                    builder.record_error(CompilerErrorDetail {
-                        category: ErrorCategory::Todo,
-                        reason:
-                            "(BuildHIR::lowerStatement) Handle TryStatement without a catch clause"
-                                .to_string(),
-                        description: None,
-                        span,
-                    })?;
+                    builder.record_error(
+                        ErrorCategory::Todo
+                            .diagnostic("(BuildHIR::lowerStatement) Handle TryStatement without a catch clause")
+                            .with_labels(span),
+                    )?;
                     return Ok(());
                 }
             };
 
             if try_stmt.finalizer.is_some() {
-                builder.record_error(CompilerErrorDetail {
-                    category: ErrorCategory::Todo,
-                    reason: "(BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause".to_string(),
-                    description: None,
-                    span,
-                })?;
+                builder.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic("(BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause")
+                        .with_labels(span),
+                )?;
             }
 
             // Set up handler binding if catch has a param
@@ -6361,12 +6289,11 @@ fn lower_statement<'a>(
                     let mut id_spans = Vec::new();
                     collect_catch_pattern_identifier_spans(builder, &param.pattern, &mut id_spans);
                     for id_span in id_spans {
-                        builder.record_error(CompilerErrorDetail {
-                                reason: "(BuildHIR::lowerAssignment) Could not find binding for declaration.".to_string(),
-                                category: ErrorCategory::Invariant,
-                                span: id_span,
-                                description: None,
-                            })?;
+                        builder.record_error(
+                            ErrorCategory::Invariant
+                                .diagnostic("(BuildHIR::lowerAssignment) Could not find binding for declaration.")
+                                .with_labels(id_span),
+                        )?;
                     }
                     None
                 } else {
@@ -6542,33 +6469,30 @@ fn lower_statement<'a>(
             }
         }
         oxc::Statement::WithStatement(with_stmt) => {
-            builder.record_error(CompilerErrorDetail {
-                category: ErrorCategory::UnsupportedSyntax,
-                reason: "JavaScript 'with' syntax is not supported".to_string(),
-                description: Some("'with' syntax is considered deprecated and removed from JavaScript standards, consider alternatives".to_string()),
-                span: builder.source_location(with_stmt.span),
-            })?;
+            builder.record_error(
+                ErrorCategory::UnsupportedSyntax
+                    .diagnostic("JavaScript 'with' syntax is not supported")
+                    .with_help("'with' syntax is considered deprecated and removed from JavaScript standards, consider alternatives")
+                    .with_labels(builder.source_location(with_stmt.span)),
+            )?;
         }
         oxc::Statement::ClassDeclaration(cls) => {
-            builder.record_error(CompilerErrorDetail {
-                category: ErrorCategory::UnsupportedSyntax,
-                reason: "Inline `class` declarations are not supported".to_string(),
-                description: Some(
-                    "Move class declarations outside of components/hooks".to_string(),
-                ),
-                span: builder.source_location(cls.span),
-            })?;
+            builder.record_error(
+                ErrorCategory::UnsupportedSyntax
+                    .diagnostic("Inline `class` declarations are not supported")
+                    .with_help("Move class declarations outside of components/hooks")
+                    .with_labels(builder.source_location(cls.span)),
+            )?;
         }
         oxc::Statement::ImportDeclaration(_)
         | oxc::Statement::ExportNamedDeclaration(_)
         | oxc::Statement::ExportDefaultDeclaration(_)
         | oxc::Statement::ExportAllDeclaration(_) => {
-            builder.record_error(CompilerErrorDetail {
-                category: ErrorCategory::Syntax,
-                reason: "JavaScript `import` and `export` statements may only appear at the top level of a module".to_string(),
-                description: None,
-                span: builder.source_location(stmt.span()),
-            })?;
+            builder.record_error(
+                ErrorCategory::Syntax
+                    .diagnostic("JavaScript `import` and `export` statements may only appear at the top level of a module")
+                    .with_labels(builder.source_location(stmt.span())),
+            )?;
         }
         oxc::Statement::TSEnumDeclaration(e) => {
             // Inline TS `enum` has runtime semantics, so preserve it: emit an
@@ -6595,16 +6519,14 @@ fn lower_statement<'a>(
 fn lower_variable_declaration<'a>(
     builder: &mut HirBuilder<'a, '_>,
     var_decl: &'a oxc::VariableDeclaration<'a>,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     use oxc::VariableDeclarationKind as VK;
     if matches!(var_decl.kind, VK::Var) {
-        builder.record_error(CompilerErrorDetail {
-            reason: "(BuildHIR::lowerStatement) Handle var kinds in VariableDeclaration"
-                .to_string(),
-            category: ErrorCategory::Todo,
-            span: builder.source_location(var_decl.span),
-            description: None,
-        })?;
+        builder.record_error(
+            ErrorCategory::Todo
+                .diagnostic("(BuildHIR::lowerStatement) Handle var kinds in VariableDeclaration")
+                .with_labels(builder.source_location(var_decl.span)),
+        )?;
         // Treat `var` as `let` so references to the variable don't break
     }
     if matches!(var_decl.kind, VK::Using | VK::AwaitUsing) {
@@ -6674,13 +6596,11 @@ fn lower_variable_declaration<'a>(
                     if builder.is_context_identifier(builder.scope().resolve_binding_identifier(id))
                     {
                         if kind == InstructionKind::Const {
-                            builder.record_error(CompilerErrorDetail {
-                                reason: "Expect `const` declaration not to be reassigned"
-                                    .to_string(),
-                                category: ErrorCategory::Syntax,
-                                span: id_span,
-                                description: None,
-                            })?;
+                            builder.record_error(
+                                ErrorCategory::Syntax
+                                    .diagnostic("Expect `const` declaration not to be reassigned")
+                                    .with_labels(id_span),
+                            )?;
                         }
                         lower_value_to_temporary(
                             builder,
@@ -6700,21 +6620,19 @@ fn lower_variable_declaration<'a>(
                     }
                 }
                 _ => {
-                    builder.record_error(CompilerErrorDetail {
-                        reason: "Could not find binding for declaration".to_string(),
-                        category: ErrorCategory::Invariant,
-                        span: id_span,
-                        description: None,
-                    })?;
+                    builder.record_error(
+                        ErrorCategory::Invariant
+                            .diagnostic("Could not find binding for declaration")
+                            .with_labels(id_span),
+                    )?;
                 }
             }
         } else {
-            builder.record_error(CompilerErrorDetail {
-                reason: "Expected variable declaration to be an identifier if no initializer was provided".to_string(),
-                category: ErrorCategory::Syntax,
-                span: builder.source_location(declarator.span),
-                description: None,
-            })?;
+            builder.record_error(
+                ErrorCategory::Syntax
+                    .diagnostic("Expected variable declaration to be an identifier if no initializer was provided")
+                    .with_labels(builder.source_location(declarator.span)),
+            )?;
         }
     }
     Ok(())
@@ -6732,15 +6650,14 @@ fn lower_for_in_of_left<'a>(
     match left {
         oxc::ForStatementLeft::VariableDeclaration(var_decl) => {
             if var_decl.declarations.len() != 1 {
-                builder.record_error(CompilerErrorDetail {
-                    category: ErrorCategory::Invariant,
-                    reason: format!(
-                        "Expected only one declaration in for-in/of init, got {}",
-                        var_decl.declarations.len()
-                    ),
-                    description: None,
-                    span: left_span,
-                })?;
+                builder.record_error(
+                    ErrorCategory::Invariant
+                        .diagnostic(format!(
+                            "Expected only one declaration in for-in/of init, got {}",
+                            var_decl.declarations.len()
+                        ))
+                        .with_labels(left_span),
+                )?;
             }
             if let Some(declarator) = var_decl.declarations.first() {
                 lower_binding_assignment(

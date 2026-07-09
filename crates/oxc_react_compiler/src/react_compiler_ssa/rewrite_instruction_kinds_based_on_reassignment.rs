@@ -19,18 +19,17 @@ use std::borrow::Cow;
 
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, Span,
-};
+use crate::diagnostics::{CompilerError, ErrorCategory};
 use crate::react_compiler_hir::visitors::each_pattern_operand;
 use crate::react_compiler_hir::{
     BlockKind, DeclarationId, HirFunction, InstructionKind, InstructionValue, ParamPattern, Place,
+    Span,
 };
 
 use crate::react_compiler_hir::environment::Environment;
 
 /// Create an invariant CompilerError (matches TS CompilerError.invariant).
-/// When a span is provided, creates a CompilerDiagnostic with an error detail item
+/// When a span is provided, it is attached as a labelled span
 /// (matching TS CompilerError.invariant which uses .withDetails()).
 fn invariant_error(reason: &str, description: Option<String>) -> CompilerError {
     invariant_error_with_span(reason, description, None)
@@ -41,11 +40,12 @@ fn invariant_error_with_span(
     description: Option<String>,
     span: Option<Span>,
 ) -> CompilerError {
-    let mut err = CompilerError::new();
-    let diagnostic = CompilerDiagnostic::new(ErrorCategory::Invariant, reason, description)
-        .with_detail(CompilerDiagnosticDetail::Error { span, message: Some(reason.to_string()) });
-    err.push_diagnostic(diagnostic);
-    err
+    let mut diagnostic =
+        ErrorCategory::Invariant.diagnostic(reason).with_labels(span.map(|s| s.label(reason)));
+    if let Some(description) = description {
+        diagnostic = diagnostic.with_help(description);
+    }
+    CompilerError::from(diagnostic)
 }
 
 /// Format an InstructionKind variant name (matches TS `${kind}` interpolation).
