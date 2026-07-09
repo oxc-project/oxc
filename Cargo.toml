@@ -115,7 +115,6 @@ redundant_clone = "warn"
 # FIXME: New warnings introduced by Rust 1.97.
 byte_char_slices = "allow"
 manual_assert_eq = "allow"
-manual_filter = "allow"
 question_mark = "allow"
 useless_borrows_in_formatting = "allow"
 # cargo
