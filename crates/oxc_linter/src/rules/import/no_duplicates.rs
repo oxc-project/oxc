@@ -367,6 +367,14 @@ fn merge_imports_fix<'a>(
     let first = decls[0];
     let rest = &decls[1..];
 
+    if decls.iter().any(|decl| {
+        decl.source.value != first.source.value
+            || decl.with_clause.is_some()
+            || decl.phase.is_some()
+    }) {
+        return fixer.noop();
+    }
+
     if has_namespace(first) || has_problematic_comments(ctx, first) {
         return fixer.noop();
     }
@@ -992,6 +1000,19 @@ fn test() {
         ),
         // A trailing comma in the first import is preserved when appending specifiers.
         (r"import {a,} from 'foo'; import {b} from 'foo'", r"import {a,b} from 'foo'; ", None),
+        // Imports with different query strings must not be merged, even when the rule considers
+        // them duplicates for reporting purposes.
+        (
+            r"import {x} from './foo?one'; import {y} from './foo?two'",
+            r"import {x} from './foo?one'; import {y} from './foo?two'",
+            None,
+        ),
+        // Import attributes can change module semantics and must not be discarded by a merge.
+        (
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'css' }",
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'css' }",
+            None,
+        ),
     ];
 
     Tester::new(NoDuplicates::NAME, NoDuplicates::PLUGIN, pass, fail)
