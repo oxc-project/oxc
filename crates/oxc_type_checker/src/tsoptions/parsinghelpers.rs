@@ -4,34 +4,6 @@ use rustc_hash::FxHashSet;
 
 use crate::core::{CompilerOptions, for_each_compiler_option};
 
-/// One merge statement per option, split by kind so `Copy` fields assign and the rest
-/// `clone_from`.
-macro_rules! merge_field {
-    ($target:ident, $source:ident, $nulls:ident, $field:ident, $json:literal, bool) => {
-        merge_field!(@copy $target, $source, $nulls, $field, $json);
-    };
-    ($target:ident, $source:ident, $nulls:ident, $field:ident, $json:literal, number) => {
-        merge_field!(@copy $target, $source, $nulls, $field, $json);
-    };
-    ($target:ident, $source:ident, $nulls:ident, $field:ident, $json:literal, enum($ty:ty)) => {
-        merge_field!(@copy $target, $source, $nulls, $field, $json);
-    };
-    (@copy $target:ident, $source:ident, $nulls:ident, $field:ident, $json:literal) => {
-        if $nulls.contains($json) {
-            $target.$field = None;
-        } else if $source.$field.is_some() {
-            $target.$field = $source.$field;
-        }
-    };
-    ($target:ident, $source:ident, $nulls:ident, $field:ident, $json:literal, $kind:ident) => {
-        if $nulls.contains($json) {
-            $target.$field = None;
-        } else if $source.$field.is_some() {
-            $target.$field.clone_from(&$source.$field);
-        }
-    };
-}
-
 macro_rules! define_merge_compiler_options {
     ($(($field:ident, $json:literal, $($kind:tt)+)),* $(,)?) => {
         /// tsgo `mergeCompilerOptions`: copy every option that is set on `source` onto `target`
@@ -45,7 +17,13 @@ macro_rules! define_merge_compiler_options {
             source: &CompilerOptions,
             source_explicit_nulls: &FxHashSet<&'static str>,
         ) {
-            $( merge_field!(target, source, source_explicit_nulls, $field, $json, $($kind)+); )*
+            $(
+                if source_explicit_nulls.contains($json) {
+                    target.$field = None;
+                } else if source.$field.is_some() {
+                    target.$field.clone_from(&source.$field);
+                }
+            )*
             // `paths_base_path` travels with `paths` (tsgo copies the non-zero `PathsBasePath`
             // field like any other): a config that sets `paths` also set its base path.
             if source.paths_base_path.is_some() {
