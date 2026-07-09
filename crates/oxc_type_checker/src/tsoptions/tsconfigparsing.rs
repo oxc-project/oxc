@@ -16,6 +16,7 @@
 //! [`for_each_compiler_option!`]: for_each_compiler_option
 
 use std::{
+    cell::OnceCell,
     fs,
     path::{Path, PathBuf},
     sync::Arc,
@@ -41,24 +42,28 @@ use super::parsinghelpers::merge_compiler_options;
 
 type JsonObject = Map<String, Value>;
 
-/// tsgo `tsoptions.ParsedCommandLine`: a parsed project tsconfig — the compiler options merged
-/// through the `extends` chain, plus the file specs the project's root files are computed from.
+/// tsgo `tsoptions.ParsedCommandLine`: a parsed project tsconfig.
 ///
-/// All paths are absolute: option paths are resolved against the directory of the config file
-/// that defined them, `${configDir}`-template values and the file specs against the root
-/// config's directory.
+/// Carries the compiler options merged through the `extends` chain, plus the file specs
+/// [`Self::file_names`] expands into the project's root files.
+///
+/// Everything is anchored absolute: option paths are resolved against the directory of the
+/// config file that defined them, `${configDir}`-template values and the file specs against
+/// the root config's directory.
 #[derive(Debug)]
 pub struct ParsedCommandLine {
     config_path: PathBuf,
     /// The merged `compilerOptions`.
     pub compiler_options: CompilerOptions,
-    /// Literal root files (tsconfig `files`).
-    pub files: Option<Vec<PathBuf>>,
-    /// Include globs (tsconfig `include`).
-    pub include: Option<Vec<PathBuf>>,
-    /// Exclude globs (tsconfig `exclude`).
-    pub exclude: Option<Vec<PathBuf>>,
+    /// Literal root files (tsconfig `files`), absolute.
+    files: Option<Vec<PathBuf>>,
+    /// Include glob specs (tsconfig `include`) — patterns, not paths, so kept as strings
+    /// (as tsgo keeps its validated specs).
+    include: Option<Vec<String>>,
+    /// Exclude glob specs (tsconfig `exclude`).
+    exclude: Option<Vec<String>>,
     /// `references[].path`, resolved to absolute paths. Not inherited through `extends`.
+    /// Not consumed yet — project references are a later program-loading step.
     pub project_references: Vec<PathBuf>,
 }
 
@@ -77,6 +82,97 @@ impl ParsedCommandLine {
     pub fn directory(&self) -> &Path {
         self.config_path.parent().expect("config path is an absolute file path")
     }
+
+    /// The project's root files (tsgo `ParsedCommandLine.FileNames`), expanded from the
+    /// config's specs.
+    ///
+    /// Faithful port of tsgo's `getFileNamesFromConfigSpecs`: literal `files` are always kept;
+    /// `include` globs (default `**/*` when neither `files` nor `include` is given) are walked
+    /// from the tsconfig directory via `read_directory`; `.json` files require an include spec
+    /// that targets JSON; and higher-priority extensions win over lower ones (`a.ts` over a
+    /// sibling `a.d.ts`/`a.js`).
+    #[must_use]
+    pub fn file_names(&self) -> Vec<PathBuf> {
+        let base = self.directory();
+        let options = &self.compiler_options;
+        let extension_groups = get_supported_extensions(options);
+
+        // Flat suffix list for the directory walk, plus `.json` when JSON modules resolve
+        // (tsgo walks with `GetSupportedExtensionsWithJsonIfResolveJsonModule`).
+        let walk_extensions = get_supported_extensions_with_json_flat(options);
+
+        // Literal `files` (already absolute) are always included and cannot be removed by
+        // `include`/`exclude`.
+        let mut literal_files = Vec::new();
+        let mut literal_keys = FxHashSet::default();
+        for file in self.files.iter().flatten() {
+            if literal_keys.insert(file.to_string_lossy().into_owned()) {
+                literal_files.push(file.clone());
+            }
+        }
+
+        // `include` specs. Default to `**/*` only when neither `files` nor `include` is
+        // present.
+        let include_specs: Vec<String> = match &self.include {
+            Some(include) => include.clone(),
+            None if self.files.is_none() => {
+                vec![base.join("**/*").to_string_lossy().into_owned()]
+            }
+            None => Vec::new(),
+        };
+        let exclude_specs: Vec<String> = self.exclude.clone().unwrap_or_default();
+
+        let mut wildcard_files: IndexMap<String, PathBuf> = IndexMap::new();
+        let mut json_files: IndexMap<String, PathBuf> = IndexMap::new();
+
+        if !include_specs.is_empty() {
+            // `.json` files are only picked up by an include spec that specifically targets
+            // JSON.
+            let json_specs: Vec<String> =
+                include_specs.iter().filter(|spec| is_json_spec(spec)).cloned().collect();
+            let json_matcher = SpecMatcher::new(&json_specs);
+
+            for file in read_directory(base, &walk_extensions, &exclude_specs, &include_specs) {
+                let key = file.to_string_lossy().into_owned();
+
+                if file_extension_is(&key, ".json") {
+                    if json_matcher.matches(&file)
+                        && !literal_keys.contains(&key)
+                        && !json_files.contains_key(&key)
+                    {
+                        json_files.insert(key, file);
+                    }
+                    continue;
+                }
+
+                // Skip when a higher-priority extension of the same file was already included.
+                if has_file_with_higher_priority_extension(
+                    &key,
+                    extension_groups,
+                    &literal_keys,
+                    &wildcard_files,
+                ) {
+                    continue;
+                }
+                // Drop any lower-priority extension of the same file added earlier.
+                remove_wildcard_files_with_lower_priority_extension(
+                    &key,
+                    &mut wildcard_files,
+                    extension_groups,
+                );
+                if !literal_keys.contains(&key) && !wildcard_files.contains_key(&key) {
+                    wildcard_files.insert(key, file);
+                }
+            }
+        }
+
+        let mut result =
+            Vec::with_capacity(literal_files.len() + wildcard_files.len() + json_files.len());
+        result.extend(literal_files);
+        result.extend(wildcard_files.into_values());
+        result.extend(json_files.into_values());
+        result
+    }
 }
 
 /// Parse the `tsconfig.json` at `config_file` (a config file or a directory containing
@@ -90,6 +186,10 @@ impl ParsedCommandLine {
 ///
 /// Returns an error when a config file is missing or malformed, or when the `extends` chain
 /// cannot be resolved (missing target, circularity).
+#[expect(
+    clippy::missing_panics_doc,
+    reason = "config_path is made absolute (with a file name) above, so parent() cannot fail"
+)]
 pub fn parse_config_file(config_file: &Path) -> Result<Arc<ParsedCommandLine>> {
     let cwd =
         std::env::current_dir().context("Unable to determine the current working directory")?;
@@ -99,20 +199,21 @@ pub fn parse_config_file(config_file: &Path) -> Result<Arc<ParsedCommandLine>> {
     }
 
     let mut resolution_stack = Vec::new();
-    let parsed = parse_config(&config_path, &mut resolution_stack)?;
+    // The node_modules resolver for bare `extends` specifiers, built on first use and shared
+    // down the whole `extends` chain.
+    let extends_resolver = OnceCell::new();
+    let parsed = parse_config(&config_path, &mut resolution_stack, &extends_resolver)?;
 
     // Finalization on the root config (tsgo `parseJsonConfigFileContentWorker`): stamp the
     // config path, then substitute `${configDir}` values against the root config's directory.
-    let Some(config_dir) = config_path.parent() else {
-        bail!("The specified path does not exist: '{}'.", config_path.display());
-    };
+    let config_dir = config_path.parent().expect("config path is an absolute file path");
     let mut compiler_options = parsed.options;
     compiler_options.config_file_path = Some(config_path.clone());
     substitute_config_dir_in_options(&mut compiler_options, config_dir);
 
-    let files = parsed.files.map(|specs| finalize_specs(specs, config_dir));
-    let include = parsed.include.map(|specs| finalize_specs(specs, config_dir));
-    let exclude = parsed.exclude.map(|specs| finalize_specs(specs, config_dir));
+    let files = parsed.files.map(|specs| finalize_file_specs(specs, config_dir));
+    let include = parsed.include.map(|specs| finalize_glob_specs(specs, config_dir));
+    let exclude = parsed.exclude.map(|specs| finalize_glob_specs(specs, config_dir));
 
     Ok(Arc::new(ParsedCommandLine {
         config_path,
@@ -143,7 +244,11 @@ struct ParsedTsconfig {
 
 /// tsgo `parseConfig`: parse one config file and merge its `extends` chain — extended configs
 /// first (in `extends` array order, later entries winning), the config's own values last.
-fn parse_config(config_path: &Path, resolution_stack: &mut Vec<PathBuf>) -> Result<ParsedTsconfig> {
+fn parse_config(
+    config_path: &Path,
+    resolution_stack: &mut Vec<PathBuf>,
+    extends_resolver: &OnceCell<Resolver>,
+) -> Result<ParsedTsconfig> {
     if resolution_stack.iter().any(|path| path == config_path) {
         // tsgo diagnostic `Circularity_detected_while_resolving_configuration_Colon_0`.
         let chain = resolution_stack
@@ -167,7 +272,7 @@ fn parse_config(config_path: &Path, resolution_stack: &mut Vec<PathBuf>) -> Resu
     let own_include = top_level_specs(&root, "include");
     let own_exclude = top_level_specs(&root, "exclude");
     let references = project_references(&root, config_dir);
-    let extended_paths = extends_paths(&root, config_dir)?;
+    let extended_paths = extends_paths(&root, config_dir, extends_resolver)?;
 
     if extended_paths.is_empty() {
         return Ok(ParsedTsconfig {
@@ -186,7 +291,7 @@ fn parse_config(config_path: &Path, resolution_stack: &mut Vec<PathBuf>) -> Resu
     let mut inherited_include: Option<Vec<String>> = None;
     let mut inherited_exclude: Option<Vec<String>> = None;
     for extended_path in &extended_paths {
-        let extended = parse_config(extended_path, resolution_stack)?;
+        let extended = parse_config(extended_path, resolution_stack, extends_resolver)?;
         merge_compiler_options(&mut options, &extended.options, &extended.own_explicit_nulls);
         // tsgo `applyExtendedConfig`: file specs are inherited wholesale, each relative spec
         // staying anchored to the config that defined it.
@@ -260,16 +365,20 @@ fn project_references(root: &JsonObject, config_dir: &Path) -> Vec<PathBuf> {
 /// tsgo `getExtendsConfigPathOrArray`: the `extends` value as resolved config paths. A single
 /// specifier or an array (array order preserved — later entries win the merge). tsgo skips a
 /// top-level empty-string `extends` without error; an empty string *inside* an array errors.
-fn extends_paths(root: &JsonObject, config_dir: &Path) -> Result<Vec<PathBuf>> {
+fn extends_paths(
+    root: &JsonObject,
+    config_dir: &Path,
+    extends_resolver: &OnceCell<Resolver>,
+) -> Result<Vec<PathBuf>> {
     let mut paths = Vec::new();
     match root.get("extends") {
         Some(Value::String(specifier)) if !specifier.is_empty() => {
-            paths.push(resolve_extends(specifier, config_dir)?);
+            paths.push(resolve_extends(specifier, config_dir, extends_resolver)?);
         }
         Some(Value::Array(items)) => {
             for item in items {
                 if let Some(specifier) = item.as_str() {
-                    paths.push(resolve_extends(specifier, config_dir)?);
+                    paths.push(resolve_extends(specifier, config_dir, extends_resolver)?);
                 }
             }
         }
@@ -281,7 +390,11 @@ fn extends_paths(root: &JsonObject, config_dir: &Path) -> Result<Vec<PathBuf>> {
 /// tsgo `getExtendsConfigPath`: resolve one `extends` specifier. Rooted and `./`/`../`
 /// specifiers resolve against the config's directory, retrying with `.json` appended;
 /// anything else resolves like a module through `node_modules` (tsgo `module.ResolveConfig`).
-fn resolve_extends(specifier: &str, config_dir: &Path) -> Result<PathBuf> {
+fn resolve_extends(
+    specifier: &str,
+    config_dir: &Path,
+    extends_resolver: &OnceCell<Resolver>,
+) -> Result<PathBuf> {
     if specifier.is_empty() {
         // TS18051
         bail!("Compiler option 'extends' cannot be given an empty string.");
@@ -307,15 +420,18 @@ fn resolve_extends(specifier: &str, config_dir: &Path) -> Result<PathBuf> {
         }
         return Ok(extended);
     }
-    // Bare (or `#`-prefixed) specifier: node-style config lookup. The resolver mirrors
-    // tsgo's `module.ResolveConfig` — `.json` extension, the package.json `tsconfig` field
-    // as the entry point, `tsconfig.json` as the directory default.
-    let resolver = Resolver::new(ResolveOptions {
-        condition_names: vec!["node".to_string(), "import".to_string()],
-        extensions: vec![".json".to_string()],
-        main_fields: vec!["tsconfig".to_string()],
-        main_files: vec!["tsconfig".to_string()],
-        ..ResolveOptions::default()
+    // Bare (or `#`-prefixed) specifier: node-style config lookup, sharing one resolver (and
+    // its filesystem cache) across the `extends` chain. The lookup mirrors tsgo's
+    // `module.ResolveConfig` — `.json` extension, the package.json `tsconfig` field as the
+    // entry point, `tsconfig.json` as the directory default.
+    let resolver = extends_resolver.get_or_init(|| {
+        Resolver::new(ResolveOptions {
+            condition_names: vec!["node".to_string(), "import".to_string()],
+            extensions: vec![".json".to_string()],
+            main_fields: vec!["tsconfig".to_string()],
+            main_files: vec!["tsconfig".to_string()],
+            ..ResolveOptions::default()
+        })
     });
     match resolver.resolve(config_dir, specifier) {
         Ok(resolution) => Ok(to_path(config_dir, resolution.path())),
@@ -338,19 +454,28 @@ fn rebase_inherited_specs(specs: &[String], extended_dir: &Path) -> Vec<String> 
         .collect()
 }
 
-/// Resolve the root config's final specs to absolute paths: `${configDir}` and still-relative
-/// (own) specs against the root config's directory.
-fn finalize_specs(specs: Vec<String>, config_dir: &Path) -> Vec<PathBuf> {
+/// Resolve the root config's literal `files` to absolute paths.
+fn finalize_file_specs(specs: Vec<String>, config_dir: &Path) -> Vec<PathBuf> {
+    specs.into_iter().map(|spec| finalize_spec(&spec, config_dir)).collect()
+}
+
+/// The same anchoring for `include`/`exclude`, which stay glob-spec strings (they are
+/// patterns, not paths — tsgo keeps its validated specs as strings too).
+fn finalize_glob_specs(specs: Vec<String>, config_dir: &Path) -> Vec<String> {
     specs
         .into_iter()
-        .map(|spec| {
-            if starts_with_config_dir_template(&spec) {
-                substitute_config_dir_template(&spec, config_dir)
-            } else {
-                to_path(config_dir, Path::new(&spec))
-            }
-        })
+        .map(|spec| finalize_spec(&spec, config_dir).to_string_lossy().into_owned())
         .collect()
+}
+
+/// Anchor one root-config spec absolute: `${configDir}` and still-relative (own) specs
+/// resolve against the root config's directory.
+fn finalize_spec(spec: &str, config_dir: &Path) -> PathBuf {
+    if starts_with_config_dir_template(spec) {
+        substitute_config_dir_template(spec, config_dir)
+    } else {
+        to_path(config_dir, Path::new(spec))
+    }
 }
 
 /// tsgo's `${configDir}` template variable (`tsconfigparsing.go`), recognized only as a prefix,
@@ -474,13 +599,14 @@ for_each_compiler_option!(define_convert_compiler_options);
 /// options plus `paths` values).
 macro_rules! substitute_field {
     ($options:ident, $config_dir:ident, $field:ident, path) => {
-        if let Some(value) = $options.$field.take() {
-            $options.$field = Some(match value.to_str() {
-                Some(text) if starts_with_config_dir_template(text) => {
-                    substitute_config_dir_template(text, $config_dir)
-                }
-                _ => value,
-            });
+        if let Some(value) = &mut $options.$field {
+            let substituted = value
+                .to_str()
+                .filter(|text| starts_with_config_dir_template(text))
+                .map(|text| substitute_config_dir_template(text, $config_dir));
+            if let Some(substituted) = substituted {
+                *value = substituted;
+            }
         }
     };
     ($options:ident, $config_dir:ident, $field:ident, path_list) => {
@@ -555,95 +681,6 @@ pub fn get_supported_extensions_with_json_flat(options: &CompilerOptions) -> Vec
     extensions
 }
 
-/// Expand a parsed `tsconfig` into the list of root files to type check.
-///
-/// Faithful port of tsgo's `getFileNamesFromConfigSpecs`: literal `files` are always kept;
-/// `include` globs (default `**/*` when neither `files` nor `include` is given) are walked
-/// from the tsconfig directory via `read_directory`; `.json` files require an include spec
-/// that targets JSON; and higher-priority extensions win over lower ones (`a.ts` over a
-/// sibling `a.d.ts`/`a.js`).
-#[must_use]
-pub fn get_file_names(tsconfig: &ParsedCommandLine) -> Vec<PathBuf> {
-    let base = tsconfig.directory();
-    let options = &tsconfig.compiler_options;
-    let extension_groups = get_supported_extensions(options);
-
-    // Flat suffix list for the directory walk, plus `.json` when JSON modules resolve
-    // (tsgo walks with `GetSupportedExtensionsWithJsonIfResolveJsonModule`).
-    let walk_extensions = get_supported_extensions_with_json_flat(options);
-
-    // Literal `files` are always included and cannot be removed by `include`/`exclude`.
-    let mut literal_files = Vec::new();
-    let mut literal_keys = FxHashSet::default();
-    if let Some(files) = &tsconfig.files {
-        for file in files {
-            let file = if file.is_absolute() { file.clone() } else { base.join(file) };
-            if literal_keys.insert(file.to_string_lossy().into_owned()) {
-                literal_files.push(file);
-            }
-        }
-    }
-
-    // `include` specs. Default to `**/*` only when neither `files` nor `include` is present.
-    let include_specs: Vec<String> = match &tsconfig.include {
-        Some(include) => include.iter().map(|path| path_to_string(path)).collect(),
-        None if tsconfig.files.is_none() => vec![base.join("**/*").to_string_lossy().into_owned()],
-        None => Vec::new(),
-    };
-    let exclude_specs: Vec<String> =
-        tsconfig.exclude.iter().flatten().map(|path| path_to_string(path)).collect();
-
-    let mut wildcard_files: IndexMap<String, PathBuf> = IndexMap::new();
-    let mut json_files: IndexMap<String, PathBuf> = IndexMap::new();
-
-    if !include_specs.is_empty() {
-        // `.json` files are only picked up by an include spec that specifically targets JSON.
-        let json_specs: Vec<String> =
-            include_specs.iter().filter(|spec| is_json_spec(spec)).cloned().collect();
-        let json_matcher = SpecMatcher::new(&json_specs);
-
-        for file in read_directory(base, &walk_extensions, &exclude_specs, &include_specs) {
-            let key = file.to_string_lossy().into_owned();
-
-            if file_extension_is(&key, ".json") {
-                if json_matcher.matches(&file)
-                    && !literal_keys.contains(&key)
-                    && !json_files.contains_key(&key)
-                {
-                    json_files.insert(key, file);
-                }
-                continue;
-            }
-
-            // Skip when a higher-priority extension of the same file was already included.
-            if has_file_with_higher_priority_extension(
-                &key,
-                extension_groups,
-                &literal_keys,
-                &wildcard_files,
-            ) {
-                continue;
-            }
-            // Drop any lower-priority extension of the same file added earlier.
-            remove_wildcard_files_with_lower_priority_extension(
-                &key,
-                &mut wildcard_files,
-                extension_groups,
-            );
-            if !literal_keys.contains(&key) && !wildcard_files.contains_key(&key) {
-                wildcard_files.insert(key, file);
-            }
-        }
-    }
-
-    let mut result =
-        Vec::with_capacity(literal_files.len() + wildcard_files.len() + json_files.len());
-    result.extend(literal_files);
-    result.extend(wildcard_files.into_values());
-    result.extend(json_files.into_values());
-    result
-}
-
 /// tsgo `hasFileWithHigherPriorityExtension`.
 fn has_file_with_higher_priority_extension(
     file: &str,
@@ -700,8 +737,4 @@ fn extension_group_for<'a>(file: &str, extension_groups: &[&'a [&'a str]]) -> Ve
 /// Whether an include spec specifically targets `.json` files (e.g. `**/*.json`, `a.json`).
 fn is_json_spec(spec: &str) -> bool {
     Path::new(spec).extension().is_some_and(|ext| ext == "json")
-}
-
-fn path_to_string(path: &Path) -> String {
-    path.to_string_lossy().into_owned()
 }

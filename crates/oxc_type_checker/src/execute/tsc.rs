@@ -10,7 +10,7 @@ use anyhow::{Context, Result, bail};
 
 use crate::{
     compiler::{Program, ProgramOptions},
-    tsoptions::{TypeCheckCommand, get_file_names, parse_command_line, parse_config_file},
+    tsoptions::{TypeCheckCommand, parse_command_line, parse_config_file},
     tspath::to_path,
 };
 
@@ -46,7 +46,7 @@ fn tsc_compilation(command: &TypeCheckCommand) -> Result<()> {
         Some(config_file) => {
             let tsconfig = parse_config_file(&config_file)?;
             println!("project: {}", config_file.display());
-            (get_file_names(&tsconfig), Some(tsconfig))
+            (tsconfig.file_names(), Some(tsconfig))
         }
         // Source files given without a config file: use them directly as roots.
         None => (command.files.clone(), None),
