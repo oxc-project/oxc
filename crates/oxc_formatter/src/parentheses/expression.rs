@@ -300,7 +300,9 @@ impl NeedsParentheses<'_> for AstNode<'_, ObjectExpression<'_>> {
 impl NeedsParentheses<'_> for AstNode<'_, TaggedTemplateExpression<'_>> {
     #[inline]
     fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
-        false
+        // `class A extends (tag`x`) {}`; keep in sync with the wrapped-in-`!` case
+        // in `class_extends_needs_parens_through_non_null`.
+        is_class_extends(self.span, self.parent())
     }
 }
 
@@ -913,9 +915,44 @@ fn type_cast_like_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
 
 impl NeedsParentheses<'_> for AstNode<'_, TSNonNullExpression<'_>> {
     fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
-        let parent = self.parent();
-        is_class_extends(self.span, parent)
-            || (self.is_new_callee() && member_chain_callee_needs_parens(&self.expression))
+        (self.is_new_callee() && member_chain_callee_needs_parens(&self.expression))
+            // `class A extends ({}!) {}` needs parens, `class A extends B! {}` does not:
+            // like Prettier, judge by the expression under the `!`, not the `!` itself.
+            || (is_class_extends(self.span, self.parent())
+                && class_extends_needs_parens_through_non_null(&self.expression))
+    }
+}
+
+/// The `superClass` expressions Prettier wraps in parentheses (`parent-needs-parentheses.js`),
+/// applied to the expression under `!` wrappers.
+/// Chain contents are call/member expressions, which never need them.
+///
+/// The grammar is `extends LeftHandSideExpression`.
+/// So most variants below are REQUIRED, without parens the output is a syntax error (e.g. `extends a + b`).
+fn class_extends_needs_parens_through_non_null(expression: &Expression<'_>) -> bool {
+    match expression {
+        Expression::TSNonNullExpression(non_null) => {
+            class_extends_needs_parens_through_non_null(&non_null.expression)
+        }
+        Expression::ClassExpression(class) => !class.decorators.is_empty(),
+        Expression::ArrowFunctionExpression(_)
+        | Expression::AssignmentExpression(_)
+        | Expression::AwaitExpression(_)
+        | Expression::BinaryExpression(_)
+        | Expression::ConditionalExpression(_)
+        | Expression::LogicalExpression(_)
+        | Expression::SequenceExpression(_)
+        | Expression::UnaryExpression(_)
+        | Expression::UpdateExpression(_)
+        | Expression::YieldExpression(_)
+        // NOTE: These three are readability style only, since they are LeftHandSideExpressions and parse bare:
+        // - `ObjectExpression` (`extends {} {}`, confusable with the class body)
+        // - `NewExpression` (`extends new A() {}`, confusable with a constructor call)
+        // - `TaggedTemplateExpression` (`extends tag`x` {}`, confusable with a template literal)
+        | Expression::ObjectExpression(_)
+        | Expression::NewExpression(_)
+        | Expression::TaggedTemplateExpression(_) => true,
+        _ => false,
     }
 }
 

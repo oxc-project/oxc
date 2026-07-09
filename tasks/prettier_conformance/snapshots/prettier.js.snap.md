@@ -1,4 +1,4 @@
-js compatibility: 762/808 (94.31%), 23 files skipped
+js compatibility: 763/808 (94.43%), 23 files skipped
 
 # Failed
 
@@ -7,7 +7,6 @@ js compatibility: 762/808 (94.31%), 23 files skipped
 | js/arrows/issue-17421.js | 💥💥 | 90.43% |
 | js/assignment-comments/indentable-block-comment.js | 💥 | 12.50% |
 | js/call/no-argument/no-arguments.js | 💥 | 57.53% |
-| js/chain-expression/member-chain.js | 💥 | 57.14% |
 | js/comments/15661.js | 💥💥 | 43.53% |
 | js/comments/break-continue-statements-2.js | 💥💥 | 87.18% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |

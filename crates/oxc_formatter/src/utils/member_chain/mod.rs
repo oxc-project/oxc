@@ -9,6 +9,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     best_fitting,
     formatter::{Buffer, Comments, Format, JsFormatter, prelude::*},
+    parentheses::NeedsParentheses,
     utils::{
         is_long_curried_call,
         member_chain::{
@@ -438,7 +439,19 @@ fn chain_members_iter<'a, 'b>(
             return ChainMember::Node(expression).into();
         }
 
-        let member = match expression.as_ast_nodes() {
+        // A nested `ChainExpression` whose parentheses do not survive
+        // (e.g. the head of `(a?.b!)?.c`) is transparent:
+        // flatten through it so the whole chain is laid out as one,
+        // matching Prettier's `printMemberChain`.
+        let mut node = expression.as_ast_nodes();
+        while let AstNodes::ChainExpression(chain) = node {
+            if chain.needs_parentheses(f) || is_type_cast_node(chain, f).is_some() {
+                break;
+            }
+            node = chain.expression().as_ast_nodes();
+        }
+
+        let member = match node {
             AstNodes::CallExpression(expr) => {
                 let callee = expr.callee();
                 let is_chain = matches!(

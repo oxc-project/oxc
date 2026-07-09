@@ -21,6 +21,7 @@ use crate::{
     },
     utils::{
         assignment_like::AssignmentLike,
+        expression::as_member_expression_without_chain_wrappers,
         format_node_without_trailing_comments::{
             FormatNodeWithoutTrailingComments, format_content_without_comments_after,
         },
@@ -503,10 +504,9 @@ fn should_group<'a>(class: &AstNode<Class<'a>>, f: &JsFormatter<'_, 'a>) -> bool
         && class
             .super_class
             .as_ref()
-            .is_some_and(|super_class|
-                super_class.is_member_expression() ||
-                matches!(&super_class, Expression::ChainExpression(chain) if chain.expression.is_member_expression())
-            ) && class.super_type_arguments.is_none()
+            .and_then(as_member_expression_without_chain_wrappers)
+            .is_some()
+        && class.super_type_arguments.is_none()
         || class.implements.first().is_some_and(|implements| {
             implements.type_arguments.is_none() && implements.expression.is_qualified_name()
         })

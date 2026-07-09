@@ -19,7 +19,10 @@ use crate::{
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },
-    utils::tailwindcss::is_tailwind_jsx_attribute,
+    utils::{
+        expression::as_call_expression_without_chain_wrappers,
+        tailwindcss::is_tailwind_jsx_attribute,
+    },
     write,
 };
 
@@ -281,9 +284,12 @@ pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> b
         | JSXExpression::FunctionExpression(_)
         | JSXExpression::TemplateLiteral(_)
         | JSXExpression::TaggedTemplateExpression(_) => true,
-        JSXExpression::ChainExpression(chain_expression) => {
-            matches!(chain_expression.expression, ChainElement::CallExpression(_))
-        }
+        // A call wrapped in `?.` chains and/or `!` assertions still inlines.
+        JSXExpression::ChainExpression(_) | JSXExpression::TSNonNullExpression(_) => container
+            .expression
+            .as_expression()
+            .and_then(as_call_expression_without_chain_wrappers)
+            .is_some(),
         JSXExpression::AwaitExpression(await_expression) => {
             matches!(
                 await_expression.argument,

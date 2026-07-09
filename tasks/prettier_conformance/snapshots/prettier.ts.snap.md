@@ -1,4 +1,4 @@
-ts compatibility: 617/663 (93.06%), 19 files skipped
+ts compatibility: 623/663 (93.97%), 19 files skipped
 
 # Failed
 
@@ -8,14 +8,9 @@ ts compatibility: 617/663 (93.06%), 19 files skipped
 | typescript/as/as.ts | 💥 | 97.74% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 93.33% |
 | typescript/as/comments/17407.ts | 💥 | 47.06% |
-| typescript/assignment/lone-arg.ts | 💥 | 41.18% |
 | typescript/call/callee-comments.ts | 💥 | 75.00% |
 | typescript/cast/18406.ts | 💥 | 84.21% |
-| typescript/chain-expression/issue-15785-1.ts | 💥 | 66.67% |
-| typescript/chain-expression/issue-15785-2.ts | 💥 | 77.78% |
-| typescript/chain-expression/member-chain.ts | 💥 | 69.70% |
 | typescript/class-and-interface/empty/empty.ts | 💥 | 87.10% |
-| typescript/class-and-interface/heritage-break/member-expression-like.ts | 💥 | 75.00% |
 | typescript/comments/mapped-types.ts | 💥 | 85.71% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
 | typescript/comments/type-parameters.ts | 💥 | 81.82% |
@@ -31,8 +26,7 @@ ts compatibility: 617/663 (93.06%), 19 files skipped
 | typescript/object-type/comments/11307.ts | 💥 | 66.67% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 80.00% |
-| typescript/template-literals/member-expression.ts | 💥 | 55.00% |
-| typescript/tsx/optional-chaining.tsx | 💥 | 73.33% |
+| typescript/template-literals/member-expression.ts | 💥 | 65.12% |
 | typescript/type-parameters-arguments/10732.ts | 💥 | 50.00% |
 | typescript/type-parameters-arguments/18041.ts | 💥 | 91.43% |
 | typescript/type-parameters-arguments/18604.ts | 💥 | 60.00% |
