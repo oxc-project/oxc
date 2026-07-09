@@ -29,3 +29,8 @@ class WithStatic {
   static {/* static */}
 }
 try {/* try */} catch {/* catch */}
+// Prettier moves the comment into the discriminant (`switch (a /* switch */) {`),
+// an attachment artifact; we keep it inside the braces like other statement bodies
+switch (a) {/* switch */}
+switch (b) {// line
+}
