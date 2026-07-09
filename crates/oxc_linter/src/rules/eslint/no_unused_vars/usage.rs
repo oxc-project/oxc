@@ -451,6 +451,7 @@ impl<'a> Symbol<'_, 'a> {
         // Have we seen this reference be used to update the value of another
         // symbol, or for some other logically-relevant purpose?
         let mut is_used_by_others = true;
+        let mut saw_self_update = false;
         let ref_span = self.get_ref_span(reference);
 
         for node in self.nodes().ancestors(reference.node_id()) {
@@ -462,6 +463,9 @@ impl<'a> Symbol<'_, 'a> {
                 | AstKind::PropertyDefinition(_) => {
                     // definitely used, short-circuit
                     return false;
+                }
+                AstKind::FormalParameter(_) if saw_self_update => {
+                    return self.is_discarded_read(reference);
                 }
                 AstKind::CallExpression(call_expr)
                     if call_expr.arguments_span().is_some_and(|span| {
@@ -482,6 +486,7 @@ impl<'a> Symbol<'_, 'a> {
                                 .is_some_and(|e| e.get_inner_expression().is_member_expression());
                         if !is_member_expr {
                             is_used_by_others = false;
+                            saw_self_update = true;
                         }
                     }
                 // RHS usage when LHS != reference's symbol is definitely used by
