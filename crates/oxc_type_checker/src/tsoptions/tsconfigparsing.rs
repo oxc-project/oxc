@@ -1,6 +1,6 @@
 //! Port of typescript-go's `internal/tsoptions/tsconfigparsing.go`.
 //!
-//! Reads and parses a `tsconfig.json` into a [`ParsedCommandLine`]: the raw JSONC is parsed with
+//! Reads and parses a `tsconfig.json` into a [`ParsedConfig`]: the raw JSONC is parsed with
 //! `serde_json` (comments and trailing commas stripped in place), every user-settable
 //! `compilerOptions` field is converted through the declarations table
 //! ([`for_each_compiler_option!`]), the `extends` chain is resolved and merged with tsc's
@@ -43,9 +43,15 @@ use super::parsinghelpers::merge_compiler_options;
 
 type JsonObject = Map<String, Value>;
 
-/// tsgo `tsoptions.ParsedCommandLine`: a parsed project tsconfig.
+/// A parsed project configuration.
 ///
-/// Wraps the parse result (tsgo `ParsedConfig`); the file specs are already expanded into
+/// Port of tsgo `tsoptions.ParsedCommandLine`, renamed: the tsc name is historical — command-
+/// line arguments and tsconfig files parse into this same shape, and tsc merges CLI overrides
+/// into the config's parse result (tsgo `execute.tscCompilation`). `ParsedConfig` names what
+/// the value is; when `oxcheck` grows tsc-style option flags, they will merge into this type
+/// exactly as in tsgo. The accessors keep their tsgo names.
+///
+/// Wraps the parse result ([`ParsedOptions`]); the file specs are already expanded into
 /// [`ParsedOptions::file_names`] at parse time, as in tsgo. tsgo's `ConfigFile` source file,
 /// its diagnostics, and its watch/glob caches are not ported — `config_path` stands in for
 /// the config file's identity.
@@ -54,14 +60,14 @@ type JsonObject = Map<String, Value>;
 /// config file that defined them, `${configDir}`-template values and the file specs against
 /// the root config's directory.
 #[derive(Debug)]
-pub struct ParsedCommandLine {
-    /// The parse result (tsgo `ParsedConfig`).
-    pub parsed_config: ParsedOptions,
+pub struct ParsedConfig {
+    /// The parse result (tsgo's `ParsedConfig` field).
+    pub parsed_options: ParsedOptions,
     config_path: PathBuf,
 }
 
-impl ParsedCommandLine {
-    /// The root config file this command line was parsed from.
+impl ParsedConfig {
+    /// The root config file this configuration was parsed from.
     pub fn path(&self) -> &Path {
         &self.config_path
     }
@@ -78,19 +84,19 @@ impl ParsedCommandLine {
 
     /// tsgo `ParsedCommandLine.CompilerOptions`: the merged `compilerOptions`.
     pub fn compiler_options(&self) -> &CompilerOptions {
-        &self.parsed_config.compiler_options
+        &self.parsed_options.compiler_options
     }
 
     /// tsgo `ParsedCommandLine.FileNames`: the project's root files, expanded from the
     /// config's `files`/`include`/`exclude` at parse time.
     pub fn file_names(&self) -> &[PathBuf] {
-        &self.parsed_config.file_names
+        &self.parsed_options.file_names
     }
 
     /// tsgo `ParsedCommandLine.ProjectReferences`. Not consumed yet — project references
     /// are a later program-loading step.
     pub fn project_references(&self) -> &[PathBuf] {
-        &self.parsed_config.project_references
+        &self.parsed_options.project_references
     }
 }
 
@@ -109,7 +115,7 @@ impl ParsedCommandLine {
     clippy::missing_panics_doc,
     reason = "config_path is made absolute (with a file name) above, so parent() cannot fail"
 )]
-pub fn parse_config_file(config_file: &Path) -> Result<Arc<ParsedCommandLine>> {
+pub fn parse_config_file(config_file: &Path) -> Result<Arc<ParsedConfig>> {
     let cwd =
         std::env::current_dir().context("Unable to determine the current working directory")?;
     let mut config_path = to_path(&cwd, config_file);
@@ -137,8 +143,8 @@ pub fn parse_config_file(config_file: &Path) -> Result<Arc<ParsedCommandLine>> {
     let file_names =
         get_file_names_from_config_specs(files, include, exclude, config_dir, &compiler_options);
 
-    Ok(Arc::new(ParsedCommandLine {
-        parsed_config: ParsedOptions {
+    Ok(Arc::new(ParsedConfig {
+        parsed_options: ParsedOptions {
             compiler_options,
             file_names,
             project_references: parsed.references,
