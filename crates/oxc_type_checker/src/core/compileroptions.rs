@@ -171,14 +171,18 @@ macro_rules! for_each_compiler_option {
             (jsx_factory, "jsxFactory", string),
             (jsx_fragment_factory, "jsxFragmentFactory", string),
             (jsx_import_source, "jsxImportSource", string),
-            (lib, "lib", string_list),
+            // `lib` entries are validated against tsgo's `LibMap` and stored as canonical
+            // lowercased `lib.*.d.ts` file names (invalid names dropped), as in tsgo.
+            (lib, "lib", lib_list),
             (lib_replacement, "libReplacement", bool),
             (map_root, "mapRoot", string),
             (max_node_module_js_depth, "maxNodeModuleJsDepth", number),
             (module, "module", enum(ModuleKind)),
             (module_detection, "moduleDetection", enum(ModuleDetectionKind)),
             (module_resolution, "moduleResolution", enum(ModuleResolutionKind)),
-            (module_suffixes, "moduleSuffixes", string_list),
+            // The one list option where empty strings are meaningful (tsgo
+            // `listPreserveFalsyValues`): `""` means "also try the bare name".
+            (module_suffixes, "moduleSuffixes", string_list_preserving_falsy),
             (new_line, "newLine", enum(NewLineKind)),
             (no_check, "noCheck", bool),
             (no_emit, "noEmit", bool),
@@ -241,9 +245,11 @@ macro_rules! option_field_type {
     (string) => { Option<String> };
     (path) => { Option<PathBuf> };
     (string_list) => { Option<Vec<String>> };
+    (string_list_preserving_falsy) => { Option<Vec<String>> };
+    (lib_list) => { Option<Vec<String>> };
     (path_list) => { Option<Vec<PathBuf>> };
     (paths_map) => { Option<CompilerOptionsPathsMap> };
-    (number) => { Option<i32> };
+    (number) => { Option<i64> };
     (enum($ty:ty)) => { Option<$ty> };
 }
 
@@ -353,6 +359,7 @@ impl CompilerOptions {
         if let Some(explicit) = self.resolve_json_module {
             return explicit;
         }
+        // tsgo: "TODO in 6.0: add Node16/Node18".
         matches!(self.get_emit_module_kind(), ModuleKind::Node20 | ModuleKind::NodeNext)
             || self.get_module_resolution_kind() == ModuleResolutionKind::Bundler
     }
@@ -371,12 +378,21 @@ impl CompilerOptions {
     /// tsgo `GetEffectiveTypeRoots`: `typeRoots` when set (`from_config` = true); otherwise
     /// every ancestor directory's `node_modules/@types`, walking up from the config file's
     /// directory (or `current_directory` without one).
+    ///
+    /// # Panics
+    ///
+    /// * As in tsgo: when there is neither a config file path nor a current directory to
+    ///   walk from.
     pub fn get_effective_type_roots(&self, current_directory: &Path) -> (Vec<PathBuf>, bool) {
         if let Some(type_roots) = &self.type_roots {
             return (type_roots.clone(), true);
         }
         let base_dir =
             self.config_file_path.as_deref().and_then(Path::parent).unwrap_or(current_directory);
+        assert!(
+            !base_dir.as_os_str().is_empty(),
+            "cannot get effective type roots without a config file path or current directory"
+        );
         let type_roots =
             base_dir.ancestors().map(|dir| dir.join("node_modules").join("@types")).collect();
         (type_roots, false)

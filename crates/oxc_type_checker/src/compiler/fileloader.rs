@@ -7,6 +7,12 @@
 //! including its `shouldAddFile` gating — but reuses `oxc_resolver`'s TS-aware `resolve_dts`
 //! (mode-less: tsgo resolves each usage under its ESM/CJS resolution mode). Lib files and project
 //! references are not loaded yet.
+//!
+//! Note the deliberate dual parse: `oxc_resolver` receives only the tsconfig *path* and
+//! independently re-parses it for the `paths`/`baseUrl` that drive `resolve_dts` — unlike tsgo,
+//! which threads its one parsed `Config.CompilerOptions()` into the resolver. The checker's
+//! merged [`crate::core::CompilerOptions`] feeds every other gate but not path-alias resolution;
+//! unifying the two is future resolver work.
 
 use std::path::{Path, PathBuf};
 

@@ -10,9 +10,10 @@
 //! as [`ParsedOptions::file_names`].
 //!
 //! Unlike tsc this produces hard errors instead of config diagnostics (missing/cyclic `extends`,
-//! unreadable or malformed files); invalid *values* are tolerated the way tsc tolerates them —
-//! diagnosed-and-ignored, except we don't diagnose yet — so an unknown enum value or a
-//! wrong-typed option is simply left unset.
+//! unreadable or malformed files — where tsgo diagnoses and still yields a usable config);
+//! invalid *values* are tolerated the way tsc tolerates them — diagnosed-and-ignored, except we
+//! don't diagnose yet — so an unknown enum value or a wrong-typed option is simply left unset.
+//! `compileOnSave`, `typeAcquisition`, and `watchOptions` are not ported.
 //!
 //! [`for_each_compiler_option!`]: for_each_compiler_option
 
@@ -36,11 +37,16 @@ use crate::{
         ModuleResolutionKind, NewLineKind, ParsedOptions, ProjectReference, ScriptTarget,
         for_each_compiler_option,
     },
-    tspath::{change_extension, file_extension_is, file_extension_is_one_of, to_path},
+    tspath::{
+        change_extension, file_extension_is, file_extension_is_one_of, is_rooted_disk_path, to_path,
+    },
     vfs::vfsmatch::{SpecMatcher, read_directory},
 };
 
-use super::parsinghelpers::merge_compiler_options;
+use super::{
+    enummaps::get_lib_file_name,
+    parsinghelpers::{merge_compiler_options, parse_number},
+};
 
 type JsonObject = Map<String, Value>;
 
@@ -136,9 +142,29 @@ pub fn parse_config_file(config_file: &Path) -> Result<Arc<ParsedConfig>> {
     compiler_options.config_file_path = Some(config_path.clone());
     handle_option_config_dir_template_substitution(&mut compiler_options, config_dir);
 
-    let files = parsed.files.map(|specs| finalize_file_specs(specs, config_dir));
-    let include = parsed.include.map(|specs| finalize_glob_specs(specs, config_dir));
-    let exclude = parsed.exclude.map(|specs| finalize_glob_specs(specs, config_dir));
+    let files = match parsed.files {
+        SpecsFromRaw::Specs(specs) => Some(finalize_file_specs(specs, config_dir)),
+        _ => None,
+    };
+    let include = match parsed.include {
+        SpecsFromRaw::Specs(specs) => Some(finalize_glob_specs(specs, config_dir)),
+        _ => None,
+    };
+    let exclude = match parsed.exclude {
+        SpecsFromRaw::Specs(specs) => Some(finalize_glob_specs(specs, config_dir)),
+        // tsgo `getConfigFileSpecs`: when `exclude` is absent (or `null`), `outDir` and
+        // `declarationDir` are excluded by default. A wrong-typed `exclude` gets no default.
+        SpecsFromRaw::NoProp | SpecsFromRaw::NullValue => {
+            let injected: Vec<String> =
+                [&compiler_options.out_dir, &compiler_options.declaration_dir]
+                    .into_iter()
+                    .flatten()
+                    .map(|dir| dir.to_string_lossy().into_owned())
+                    .collect();
+            (!injected.is_empty()).then_some(injected)
+        }
+        SpecsFromRaw::NotArray => None,
+    };
     let file_names =
         get_file_names_from_config_specs(files, include, exclude, config_dir, &compiler_options);
 
@@ -158,9 +184,26 @@ struct ParsedTsconfig {
     /// `files`/`include`/`exclude` specs. Relative specs belong to the *root* config's
     /// directory; specs inherited through `extends` have already been rebased to absolute
     /// paths against the config that defined them.
-    files: Option<Vec<String>>,
-    include: Option<Vec<String>>,
-    exclude: Option<Vec<String>>,
+    files: SpecsFromRaw,
+    include: SpecsFromRaw,
+    exclude: SpecsFromRaw,
+}
+
+/// tsgo `propOfRaw` for the top-level spec properties (`files`/`include`/`exclude`). The
+/// distinctions matter: *any* present key — even `null` or wrong-typed — blocks `extends`
+/// inheritance (tsgo `setPropertyValue` checks raw presence), but only an array contributes
+/// specs, and the `outDir`/`declarationDir` default-exclude applies to absent-or-`null`
+/// (tsgo's `"no-prop"`) but not to a wrong-typed value.
+enum SpecsFromRaw {
+    /// The key is absent (tsgo `wrongValue: "no-prop"`).
+    NoProp,
+    /// The key is present with a JSON `null` (also tsgo `"no-prop"`, but raw presence still
+    /// blocks inheritance).
+    NullValue,
+    /// The key is present with a non-array value (tsgo `wrongValue: "not-array"`).
+    NotArray,
+    /// The key is a string array; non-string elements are dropped (tsc diagnoses them).
+    Specs(Vec<String>),
 }
 
 /// tsgo `parseConfig`: parse one config's JSON (already read — the caller reads the file, as
@@ -188,11 +231,14 @@ fn parse_config(
     };
     let config_dir = config_path.parent().expect("config path is an absolute file path");
 
-    let (own_options, own_explicit_nulls) =
-        convert_compiler_options_from_json_worker(root.get("compilerOptions"), config_dir);
-    let own_files = top_level_specs(&root, "files");
-    let own_include = top_level_specs(&root, "include");
-    let own_exclude = top_level_specs(&root, "exclude");
+    let (own_options, own_explicit_nulls) = convert_compiler_options_from_json_worker(
+        root.get("compilerOptions"),
+        config_dir,
+        config_path,
+    );
+    let own_files = get_specs_from_raw(&root, "files");
+    let own_include = get_specs_from_raw(&root, "include");
+    let own_exclude = get_specs_from_raw(&root, "exclude");
     let extended_paths = get_extends_config_path_or_array(&root, config_dir, extends_resolver)?;
 
     if extended_paths.is_empty() {
@@ -207,46 +253,53 @@ fn parse_config(
 
     resolution_stack.push(config_path.to_path_buf());
     let mut options = CompilerOptions::default();
-    let mut inherited_files: Option<Vec<String>> = None;
-    let mut inherited_include: Option<Vec<String>> = None;
-    let mut inherited_exclude: Option<Vec<String>> = None;
+    let mut inherited_files = SpecsFromRaw::NoProp;
+    let mut inherited_include = SpecsFromRaw::NoProp;
+    let mut inherited_exclude = SpecsFromRaw::NoProp;
     for extended_path in &extended_paths {
         let extended_json = read_json_config_file(extended_path)?;
         let extended =
             parse_config(extended_path, extended_json, resolution_stack, extends_resolver)?;
         merge_compiler_options(&mut options, &extended.options, &extended.own_explicit_nulls);
-        // tsgo `applyExtendedConfig`: file specs are inherited wholesale, each relative spec
-        // staying anchored to the config that defined it.
+        // tsgo `applyExtendedConfig`: file specs are inherited wholesale (only array values —
+        // a parent's `null`/wrong-typed spec contributes nothing), each relative spec staying
+        // anchored to the config that defined it.
         let extended_dir = extended_path.parent().expect("config path is an absolute file path");
-        if let Some(specs) = &extended.files {
-            inherited_files = Some(rebase_inherited_specs(specs, extended_dir));
+        if let SpecsFromRaw::Specs(specs) = &extended.files {
+            inherited_files = SpecsFromRaw::Specs(rebase_inherited_specs(specs, extended_dir));
         }
-        if let Some(specs) = &extended.include {
-            inherited_include = Some(rebase_inherited_specs(specs, extended_dir));
+        if let SpecsFromRaw::Specs(specs) = &extended.include {
+            inherited_include =
+                SpecsFromRaw::Specs(rebase_inherited_specs(&validate_specs(specs), extended_dir));
         }
-        if let Some(specs) = &extended.exclude {
-            inherited_exclude = Some(rebase_inherited_specs(specs, extended_dir));
+        if let SpecsFromRaw::Specs(specs) = &extended.exclude {
+            inherited_exclude =
+                SpecsFromRaw::Specs(rebase_inherited_specs(&validate_specs(specs), extended_dir));
         }
     }
     resolution_stack.pop();
     merge_compiler_options(&mut options, &own_options, &own_explicit_nulls);
 
+    // tsgo `setPropertyValue`: a key present on the child — even `null` or wrong-typed —
+    // blocks inheritance of that property.
     Ok(ParsedTsconfig {
         options,
         own_explicit_nulls,
-        files: own_files.or(inherited_files),
-        include: own_include.or(inherited_include),
-        exclude: own_exclude.or(inherited_exclude),
+        files: own_files.or_inherited(inherited_files),
+        include: own_include.or_inherited(inherited_include),
+        exclude: own_exclude.or_inherited(inherited_exclude),
     })
 }
 
-/// Read a config file into a JSON value, stripping the BOM, comments, and trailing commas
-/// (tsgo parses tsconfig with its scanner in JSON mode; a whitespace-only file is an empty
-/// config).
+/// Read a config file into a JSON value, decoding UTF-16 (tsgo `decodeBytes`) and stripping
+/// the BOM, comments, and trailing commas (tsgo parses tsconfig with its scanner in JSON
+/// mode; a whitespace-only file is an empty config).
 fn read_json_config_file(config_file: &Path) -> Result<Value> {
-    let text = fs::read_to_string(config_file)
+    let bytes = fs::read(config_file)
         .with_context(|| format!("Cannot read file '{}'.", config_file.display()))?;
-    let mut json = text.into_bytes();
+    let mut json = decode_bytes(bytes)
+        .with_context(|| format!("Cannot read file '{}'.", config_file.display()))?
+        .into_bytes();
     if json.starts_with(&[0xEF, 0xBB, 0xBF]) {
         json[..3].fill(b' ');
     }
@@ -260,17 +313,49 @@ fn read_json_config_file(config_file: &Path) -> Result<Value> {
         .with_context(|| format!("Failed to parse '{}'", config_file.display()))
 }
 
-/// A top-level string-array property (`files`/`include`/`exclude`), kept as raw specs.
-/// Non-array values and non-string elements are ignored (tsc diagnoses-and-ignores them).
-fn top_level_specs(root: &JsonObject, key: &str) -> Option<Vec<String>> {
-    let items = root.get(key)?.as_array()?;
-    Some(items.iter().filter_map(Value::as_str).map(str::to_string).collect())
+/// tsgo `decodeBytes` (`internal/vfs`): a UTF-16 BOM selects UTF-16 LE/BE decoding; anything
+/// else is treated as UTF-8.
+fn decode_bytes(bytes: Vec<u8>) -> Result<String> {
+    match bytes.first_chunk::<2>() {
+        Some([0xFF, 0xFE]) => decode_utf16(&bytes[2..], u16::from_le_bytes),
+        Some([0xFE, 0xFF]) => decode_utf16(&bytes[2..], u16::from_be_bytes),
+        _ => String::from_utf8(bytes).context("File is not valid UTF-8"),
+    }
+}
+
+fn decode_utf16(bytes: &[u8], from_bytes: fn([u8; 2]) -> u16) -> Result<String> {
+    let units: Vec<u16> =
+        bytes.chunks_exact(2).map(|pair| from_bytes([pair[0], pair[1]])).collect();
+    String::from_utf16(&units).context("File is not valid UTF-16")
+}
+
+impl SpecsFromRaw {
+    /// The inheritance rule: own raw presence (any variant but [`Self::NoProp`]) wins.
+    fn or_inherited(self, inherited: Self) -> Self {
+        match self {
+            Self::NoProp => inherited,
+            own => own,
+        }
+    }
+}
+
+/// tsgo `getSpecsFromRaw`/`getPropFromRaw` for a top-level spec property, kept as raw specs.
+fn get_specs_from_raw(root: &JsonObject, key: &str) -> SpecsFromRaw {
+    match root.get(key) {
+        None => SpecsFromRaw::NoProp,
+        Some(Value::Null) => SpecsFromRaw::NullValue,
+        Some(Value::Array(items)) => SpecsFromRaw::Specs(
+            items.iter().filter_map(Value::as_str).map(str::to_string).collect(),
+        ),
+        Some(_) => SpecsFromRaw::NotArray,
+    }
 }
 
 /// tsgo `getProjectReferences` (in `parseJsonConfigFileContentWorker`): the root config's
 /// `references`, each `path` resolved against the root config's directory. Entries without a
 /// non-empty string `path` are skipped, as in tsgo (which diagnoses them; we don't diagnose
-/// yet).
+/// yet). Deliberately safer than tsgo on malformed elements: tsgo's `parseProjectReference`
+/// panics on a non-string `path` or non-bool `circular`; we skip/default instead.
 fn get_project_references(root: &JsonObject, base_path: &Path) -> Vec<ProjectReference> {
     root.get("references")
         .and_then(Value::as_array)
@@ -298,8 +383,9 @@ fn get_project_references(root: &JsonObject, base_path: &Path) -> Vec<ProjectRef
 }
 
 /// tsgo `getExtendsConfigPathOrArray`: the `extends` value as resolved config paths. A single
-/// specifier or an array (array order preserved — later entries win the merge). tsgo skips a
-/// top-level empty-string `extends` without error; an empty string *inside* an array errors.
+/// specifier or an array (array order preserved — later entries win the merge). Empty-string
+/// specifiers are skipped: tsgo ignores a top-level one and diagnoses-then-continues past one
+/// inside an array (TS18051), so neither aborts the parse.
 fn get_extends_config_path_or_array(
     root: &JsonObject,
     config_dir: &Path,
@@ -312,7 +398,9 @@ fn get_extends_config_path_or_array(
         }
         Some(Value::Array(items)) => {
             for item in items {
-                if let Some(specifier) = item.as_str() {
+                if let Some(specifier) = item.as_str()
+                    && !specifier.is_empty()
+                {
                     paths.push(get_extends_config_path(specifier, config_dir, extends_resolver)?);
                 }
             }
@@ -330,13 +418,10 @@ fn get_extends_config_path(
     config_dir: &Path,
     extends_resolver: &OnceCell<Resolver>,
 ) -> Result<PathBuf> {
-    if specifier.is_empty() {
-        // TS18051
-        bail!("Compiler option 'extends' cannot be given an empty string.");
-    }
-    // tsgo normalizes slashes first, so the Windows-style `.\` form counts as relative.
+    // tsgo normalizes slashes first, so the Windows-style `.\` form counts as relative;
+    // `IsRootedDiskPath` recognizes DOS drive roots on every platform.
     let normalized = specifier.cow_replace('\\', "/");
-    if Path::new(normalized.as_ref()).is_absolute()
+    if is_rooted_disk_path(&normalized)
         || normalized.starts_with("./")
         || normalized.starts_with("../")
     {
@@ -358,10 +443,12 @@ fn get_extends_config_path(
     // Bare (or `#`-prefixed) specifier: node-style config lookup, sharing one resolver (and
     // its filesystem cache) across the `extends` chain. The lookup mirrors tsgo's
     // `module.ResolveConfig` — `.json` extension, the package.json `tsconfig` field as the
-    // entry point, `tsconfig.json` as the directory default.
+    // entry point, `tsconfig.json` as the directory default, and CommonJS-mode conditions
+    // (tsgo resolves configs with `ResolutionModeCommonJS`, so `GetConditions` yields
+    // `require`/`types`/`node`).
     let resolver = extends_resolver.get_or_init(|| {
         Resolver::new(ResolveOptions {
-            condition_names: vec!["node".to_string(), "import".to_string()],
+            condition_names: vec!["require".to_string(), "types".to_string(), "node".to_string()],
             extensions: vec![".json".to_string()],
             main_fields: vec!["tsconfig".to_string()],
             main_files: vec!["tsconfig".to_string()],
@@ -395,12 +482,36 @@ fn finalize_file_specs(specs: Vec<String>, config_dir: &Path) -> Vec<PathBuf> {
 }
 
 /// The same anchoring for `include`/`exclude`, which stay glob-spec strings (they are
-/// patterns, not paths — tsgo keeps its validated specs as strings too).
+/// patterns, not paths — tsgo keeps its validated specs as strings too). Invalid specs are
+/// dropped first, as tsgo's `validateSpecs` does.
 fn finalize_glob_specs(specs: Vec<String>, config_dir: &Path) -> Vec<String> {
     specs
         .into_iter()
+        .filter(|spec| !invalid_dot_dot_after_recursive_wildcard(spec))
         .map(|spec| finalize_spec(&spec, config_dir).to_string_lossy().into_owned())
         .collect()
+}
+
+/// tsgo `validateSpecs` for inherited `include`/`exclude` specs, which must be validated
+/// *before* rebasing lexically collapses their `..` segments.
+fn validate_specs(specs: &[String]) -> Vec<String> {
+    specs.iter().filter(|spec| !invalid_dot_dot_after_recursive_wildcard(spec)).cloned().collect()
+}
+
+/// tsgo `invalidDotDotAfterRecursiveWildcard` (`validateSpecs`): a `**` segment followed by a
+/// later `..` segment — such include/exclude specs are dropped (tsc diagnoses them). tsgo's
+/// other validation, the invalid *trailing* `**` in an include, needs no counterpart here:
+/// the glob compiler already turns it into a match-nothing pattern, tsgo's net effect.
+fn invalid_dot_dot_after_recursive_wildcard(spec: &str) -> bool {
+    let mut seen_recursive_wildcard = false;
+    for segment in spec.split('/') {
+        if segment == "**" {
+            seen_recursive_wildcard = true;
+        } else if seen_recursive_wildcard && segment == ".." {
+            return true;
+        }
+    }
+    false
 }
 
 /// Anchor one root-config spec absolute: `${configDir}` and still-relative (own) specs
@@ -530,27 +641,42 @@ fn substitute_config_dir_in_path(value: &mut PathBuf, config_dir: &Path) {
     }
 }
 
-/// tsgo `normalizeNonListOptionValue` for path-typed options: `${configDir}`-prefixed values
-/// survive as written until the post-merge substitution; everything else is absolutized
-/// against the directory of the config file that defined it.
+/// tsgo `getDefaultCompilerOptions`: a `jsconfig.json` seeds JavaScript-project defaults,
+/// which explicit values in the config then override.
+fn get_default_compiler_options(config_file_name: &Path) -> CompilerOptions {
+    let mut options = CompilerOptions::default();
+    if config_file_name.file_name().is_some_and(|name| name == "jsconfig.json") {
+        options.allow_js = Some(true);
+        options.max_node_module_js_depth = Some(2);
+        options.skip_lib_check = Some(true);
+        options.no_emit = Some(true);
+    }
+    options
+}
+
+/// tsgo `normalizeNonListOptionValue` for path-typed options: slashes are normalized first,
+/// then `${configDir}`-prefixed values survive as written until the post-merge substitution;
+/// everything else is absolutized against the directory of the config file that defined it.
 fn convert_path_value(value: &str, config_dir: &Path) -> PathBuf {
-    if starts_with_config_dir_template(value) {
-        PathBuf::from(value)
+    let value = value.cow_replace('\\', "/");
+    if starts_with_config_dir_template(&value) {
+        PathBuf::from(value.into_owned())
     } else {
-        to_path(config_dir, Path::new(value))
+        to_path(config_dir, Path::new(value.as_ref()))
     }
 }
 
 /// tsconfig `paths`: pattern -> substitutions, kept as written (`${configDir}` substitution
-/// happens post-merge; relative substitutions resolve against `paths_base_path`).
+/// happens post-merge; relative substitutions resolve against `paths_base_path`). A pattern
+/// whose value is not an array keeps its key with no substitutions, as in tsgo
+/// (`parseStringMap` sets every key).
 fn convert_paths_map(object: &JsonObject) -> CompilerOptionsPathsMap {
     let mut paths = CompilerOptionsPathsMap::default();
     for (pattern, substitutions) in object {
-        let Some(substitutions) = substitutions.as_array() else { continue };
-        paths.insert(
-            pattern.clone(),
-            substitutions.iter().filter_map(Value::as_str).map(str::to_string).collect(),
-        );
+        let substitutions = substitutions.as_array().map_or_else(Vec::new, |items| {
+            items.iter().filter_map(Value::as_str).map(str::to_string).collect()
+        });
+        paths.insert(pattern.clone(), substitutions);
     }
     paths
 }
@@ -568,8 +694,32 @@ macro_rules! convert_value {
         $value.as_str().map(|value| convert_path_value(value, $config_dir))
     };
     ($value:ident, $config_dir:ident, string_list) => {
+        // tsgo filters falsy values (empty strings) out of list options unless the option
+        // sets `listPreserveFalsyValues`.
+        $value.as_array().map(|items| {
+            items
+                .iter()
+                .filter_map(Value::as_str)
+                .filter(|item| !item.is_empty())
+                .map(str::to_string)
+                .collect::<Vec<_>>()
+        })
+    };
+    ($value:ident, $config_dir:ident, string_list_preserving_falsy) => {
         $value.as_array().map(|items| {
             items.iter().filter_map(Value::as_str).map(str::to_string).collect::<Vec<_>>()
+        })
+    };
+    ($value:ident, $config_dir:ident, lib_list) => {
+        // tsgo validates each `lib` entry against `LibMap` (an enum-typed list element) and
+        // stores the canonical `lib.*.d.ts` file name; invalid entries are dropped.
+        $value.as_array().map(|items| {
+            items
+                .iter()
+                .filter_map(Value::as_str)
+                .filter_map(get_lib_file_name)
+                .map(str::to_string)
+                .collect::<Vec<_>>()
         })
     };
     ($value:ident, $config_dir:ident, path_list) => {
@@ -585,7 +735,7 @@ macro_rules! convert_value {
         $value.as_object().map(convert_paths_map)
     };
     ($value:ident, $config_dir:ident, number) => {
-        $value.as_i64().and_then(|number| i32::try_from(number).ok())
+        parse_number($value)
     };
     ($value:ident, $config_dir:ident, enum($ty:ty)) => {
         $value.as_str().and_then(<$ty>::from_str_ignore_case)
@@ -595,14 +745,15 @@ macro_rules! convert_value {
 macro_rules! define_convert_compiler_options {
     ($(($field:ident, $json:literal, $($kind:tt)+)),* $(,)?) => {
         /// tsgo `convertCompilerOptionsFromJsonWorker`: convert a raw `compilerOptions` object
-        /// through the declarations table. Returns the options plus the set of options that
-        /// were explicitly `null` (tsc's "reset, don't inherit" marker for the `extends`
-        /// merge).
+        /// through the declarations table, over the config file's default options (`jsconfig`
+        /// seeds). Returns the options plus the set of options that were explicitly `null`
+        /// (tsc's "reset, don't inherit" marker for the `extends` merge).
         fn convert_compiler_options_from_json_worker(
             json: Option<&Value>,
             config_dir: &Path,
+            config_file_name: &Path,
         ) -> (CompilerOptions, FxHashSet<&'static str>) {
-            let mut options = CompilerOptions::default();
+            let mut options = get_default_compiler_options(config_file_name);
             let mut explicit_nulls = FxHashSet::default();
             let Some(json) = json.and_then(Value::as_object) else {
                 return (options, explicit_nulls);

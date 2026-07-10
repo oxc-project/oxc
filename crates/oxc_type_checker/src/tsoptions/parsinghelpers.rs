@@ -1,8 +1,20 @@
-//! Port of typescript-go's `internal/tsoptions/parsinghelpers.go` (the `extends` merge).
+//! Port of typescript-go's `internal/tsoptions/parsinghelpers.go` (the `extends` merge and
+//! value parsing helpers).
 
 use rustc_hash::FxHashSet;
+use serde_json::Value;
 
 use crate::core::{CompilerOptions, for_each_compiler_option};
+
+/// tsgo `parseNumber`: any JSON number is accepted and truncated to an integer
+/// (`int(v.(float64))`).
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "tsgo truncates the float64 the same way; JSON numbers cannot be NaN"
+)]
+pub(super) fn parse_number(value: &Value) -> Option<i64> {
+    value.as_f64().map(|number| number as i64)
+}
 
 macro_rules! define_merge_compiler_options {
     ($(($field:ident, $json:literal, $($kind:tt)+)),* $(,)?) => {

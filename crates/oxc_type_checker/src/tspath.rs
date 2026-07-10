@@ -57,6 +57,19 @@ pub fn change_extension(path: &str, new_extension: &str) -> String {
     format!("{path}{new_extension}")
 }
 
+/// tsgo `IsRootedDiskPath` (via `GetEncodedRootLength`), for slash-normalized paths: a POSIX
+/// root (`/...`, including `//` UNC-style) or a DOS drive root (`c:` followed by `/` or the
+/// end). URL roots (`file://...`) are not ported.
+pub fn is_rooted_disk_path(path: &str) -> bool {
+    if path.starts_with('/') {
+        return true;
+    }
+    let mut chars = path.chars();
+    chars.next().is_some_and(|first| first.is_ascii_alphabetic())
+        && chars.next() == Some(':')
+        && chars.next().is_none_or(|third| third == '/')
+}
+
 /// tsgo `IsExternalModuleNameRelative`: the module name starts with `./`, `../`, or is `.`/`..`
 /// (`tspath.PathIsRelative`, including the Windows `.\` forms).
 pub fn is_external_module_name_relative(module_name: &str) -> bool {
