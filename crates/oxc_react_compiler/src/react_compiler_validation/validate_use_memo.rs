@@ -1,6 +1,8 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use oxc_diagnostics::Diagnostics;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{
     each_instruction_value_operand_with_functions, each_terminal_operand,
@@ -14,7 +16,7 @@ use crate::react_compiler_hir::{
 ///
 /// Port of ValidateUseMemo.ts.
 /// Returns VoidUseMemo errors separately (for logging via logErrors, not as compile errors).
-pub fn validate_use_memo(func: &HirFunction, env: &mut Environment) -> CompilerError {
+pub fn validate_use_memo(func: &HirFunction, env: &mut Environment) -> Diagnostics {
     validate_use_memo_impl(
         func,
         &env.functions,
@@ -32,10 +34,10 @@ struct FuncExprInfo {
 fn validate_use_memo_impl(
     func: &HirFunction,
     functions: &[HirFunction],
-    errors: &mut CompilerError,
+    errors: &mut Diagnostics,
     validate_no_void_use_memo: bool,
-) -> CompilerError {
-    let mut void_memo_errors = CompilerError::new();
+) -> Diagnostics {
+    let mut void_memo_errors = Diagnostics::new();
     let mut use_memos: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut react: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut func_exprs: FxHashMap<IdentifierId, FuncExprInfo> = FxHashMap::default();
@@ -139,8 +141,8 @@ fn validate_use_memo_impl(
 #[allow(clippy::too_many_arguments)]
 fn handle_possible_use_memo_call(
     functions: &[HirFunction],
-    errors: &mut CompilerError,
-    void_memo_errors: &mut CompilerError,
+    errors: &mut Diagnostics,
+    void_memo_errors: &mut Diagnostics,
     use_memos: &FxHashSet<IdentifierId>,
     func_exprs: &FxHashMap<IdentifierId, FuncExprInfo>,
     unused_use_memos: &mut FxHashMap<IdentifierId, (Span, Option<String>)>,
@@ -222,7 +224,7 @@ fn handle_possible_use_memo_call(
     }
 }
 
-fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut CompilerError) {
+fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Diagnostics) {
     let context: FxHashSet<IdentifierId> =
         func.context.iter().map(|place| place.identifier).collect();
 

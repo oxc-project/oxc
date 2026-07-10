@@ -12,7 +12,8 @@
 
 use std::mem::take;
 
-use crate::diagnostics::CompilerError;
+use oxc_diagnostics::OxcDiagnostic;
+
 use crate::react_compiler_hir::{
     BlockId, Effect, EvaluationOrder, IdentifierId, IdentifierName, InstructionKind,
     InstructionValue, LValue, NonLocalBinding, Place, PlaceOrSpread, PrimitiveValue,
@@ -79,7 +80,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         &mut self,
         scope_block: &mut ReactiveScopeBlock<'a>,
         parent_state: &mut State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         let scope_id = scope_block.scope;
 
         // Exit early if an earlier pass has already created an early return
@@ -111,7 +112,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut State,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         if state.within_reactive_scope {
             if let ReactiveTerminal::Return { value, .. } = &stmt.terminal {
                 let span = value.span;

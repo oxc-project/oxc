@@ -11,15 +11,17 @@
 
 use rustc_hash::FxHashMap;
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use oxc_diagnostics::Diagnostics;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, JsxTag, Span};
 
 /// Validates that components used in JSX are not dynamically created during render.
 ///
-/// Returns a CompilerError containing all diagnostics found (may be empty).
+/// Returns the diagnostics found (may be empty).
 /// Called via `env.logErrors()` pattern in Pipeline.ts.
-pub fn validate_static_components(func: &HirFunction) -> CompilerError {
-    let mut error = CompilerError::new();
+pub fn validate_static_components(func: &HirFunction) -> Diagnostics {
+    let mut error = Diagnostics::new();
     let mut known_dynamic_components: FxHashMap<IdentifierId, Option<Span>> = FxHashMap::default();
 
     for (_block_id, block) in &func.body.blocks {

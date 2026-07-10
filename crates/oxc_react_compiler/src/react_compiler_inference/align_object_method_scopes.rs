@@ -51,7 +51,7 @@ fn find_scopes_to_merge(func: &HirFunction, env: &Environment) -> DisjointSet<Sc
                             let lvalue_scope =
                                 env.identifiers[instr.lvalue.identifier.0 as usize].scope;
 
-                            // TS: CompilerError.invariant(operandScope != null && lvalueScope != null, ...)
+                            // TS: Diagnostics.invariant(operandScope != null && lvalueScope != null, ...)
                             let operand_sid = operand_scope.expect(
                                 "Internal error: Expected all ObjectExpressions and ObjectMethods to have non-null scope.",
                             );

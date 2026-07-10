@@ -20,7 +20,7 @@ use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{GetSpan, SPAN, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::{CompilerError, ErrorCategory, with_fallback_label};
+use crate::diagnostics::{ErrorCategory, has_critical_errors, with_fallback_label};
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
@@ -37,7 +37,7 @@ use super::pipeline;
 use super::suppression::SuppressionRange;
 use super::suppression::filter_suppressions_that_affect_function;
 use super::suppression::find_program_suppressions;
-use super::suppression::suppressions_to_compiler_error;
+use super::suppression::suppressions_to_diagnostics;
 use crate::options::{
     CompilationMode, CompilerOutputMode, GatingConfig, PanicThreshold, PluginOptions,
 };
@@ -94,7 +94,7 @@ enum CompileSourceKind {
 fn try_find_directive_enabling_memoization<'a>(
     directives: &'a [String],
     opts: &PluginOptions,
-) -> Result<Option<&'a str>, CompilerError> {
+) -> Result<Option<&'a str>, Diagnostics> {
     // Check standard opt-in directives
     let opt_in = directives.iter().find(|d| OPT_IN_DIRECTIVES.contains(&d.as_str()));
     if let Some(directive) = opt_in {
@@ -132,13 +132,13 @@ struct DynamicGatingResult<'a> {
 fn find_directives_dynamic_gating<'a>(
     directives: &'a [String],
     opts: &PluginOptions,
-) -> Result<Option<DynamicGatingResult<'a>>, CompilerError> {
+) -> Result<Option<DynamicGatingResult<'a>>, Diagnostics> {
     let dynamic_gating = match &opts.dynamic_gating {
         Some(dg) => dg,
         None => return Ok(None),
     };
 
-    let mut errors = CompilerError::new();
+    let mut errors = Diagnostics::new();
     let mut matches: Vec<(&'a str, String)> = Vec::new();
 
     for directive in directives {
@@ -155,13 +155,13 @@ fn find_directives_dynamic_gating<'a>(
         }
     }
 
-    if errors.has_any_errors() {
+    if !errors.is_empty() {
         return Err(errors);
     }
 
     if matches.len() > 1 {
         let names: Vec<&str> = matches.iter().map(|(d, _)| *d).collect();
-        return Err(CompilerError::from(
+        return Err(Diagnostics::from(
             ErrorCategory::Gating
                 .diagnostic("Multiple dynamic gating directives found")
                 .with_help(format!("Expected a single directive but found [{}]", names.join(", "))),
@@ -1078,16 +1078,13 @@ fn get_callee_name_if_react_api<'e>(callee: &'e oxc::Expression) -> Option<&'e s
 // Error handling
 // -----------------------------------------------------------------------
 
-/// Push a compiler error's diagnostics onto the accumulator.
-fn log_error(err: &CompilerError, fn_span: Option<Span>, diagnostics: &mut Diagnostics) {
+/// Push a failed compilation attempt's diagnostics onto the accumulator.
+fn log_error(err: &Diagnostics, fn_span: Option<Span>, diagnostics: &mut Diagnostics) {
     // Detect simulated unknown exception (throwUnknownException__testonly). In TS,
-    // non-CompilerError exceptions surface as a pipeline error carrying the error
-    // message rather than a per-detail compiler error.
-    let is_simulated_unknown = err.diagnostics.len() == 1
-        && err
-            .diagnostics
-            .iter()
-            .all(|d| d.message == "[ReactCompiler] Invariant: unexpected error");
+    // exceptions that are not compiler errors surface as a pipeline error carrying
+    // the error message rather than a per-detail compiler error.
+    let is_simulated_unknown = err.len() == 1
+        && err.iter().all(|d| d.message == "[ReactCompiler] Invariant: unexpected error");
     if is_simulated_unknown {
         let mut diagnostic =
             OxcDiagnostic::error("[ReactCompiler] Pipeline error: Error: unexpected error");
@@ -1098,7 +1095,7 @@ fn log_error(err: &CompilerError, fn_span: Option<Span>, diagnostics: &mut Diagn
         return;
     }
 
-    for diagnostic in &err.diagnostics {
+    for diagnostic in err {
         diagnostics.push(with_fallback_label(diagnostic, fn_span));
     }
 }
@@ -1107,7 +1104,7 @@ fn log_error(err: &CompilerError, fn_span: Option<Span>, diagnostics: &mut Diagn
 /// Returns Some(CompileResult::Error) if the error should be surfaced as fatal,
 /// otherwise returns None (error was logged only).
 fn handle_error<'a>(
-    err: &CompilerError,
+    err: &Diagnostics,
     fn_span: Option<Span>,
     panic_threshold: PanicThreshold,
     diagnostics: &mut Diagnostics,
@@ -1117,12 +1114,12 @@ fn handle_error<'a>(
 
     let should_panic = match panic_threshold {
         PanicThreshold::AllErrors => true,
-        PanicThreshold::CriticalErrors => err.has_errors(),
+        PanicThreshold::CriticalErrors => has_critical_errors(err),
         PanicThreshold::None => false,
     };
 
     // Config errors always cause a panic
-    let is_config_error = err.diagnostics.iter().any(|d| ErrorCategory::Config.matches(d));
+    let is_config_error = err.iter().any(|d| ErrorCategory::Config.matches(d));
 
     if should_panic || is_config_error {
         // The per-detail diagnostics were already pushed by `log_error`; the fatal
@@ -1139,7 +1136,7 @@ fn handle_error<'a>(
 
 /// Attempt to compile a single function.
 ///
-/// Returns `CodegenFunction` on success or `CompilerError` on failure.
+/// Returns `CodegenFunction` on success or the failed attempt's diagnostics.
 /// Debug log entries are accumulated on `context.debug_logs`.
 fn try_compile_function<'a>(
     ast: &AstBuilder<'a>,
@@ -1148,17 +1145,14 @@ fn try_compile_function<'a>(
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
-) -> Result<Option<CodegenFunction<'a>>, CompilerError> {
-    // Check for suppressions that affect this function
+) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
+    // Check for suppressions that affect this function. Suppression errors are
+    // returned (not thrown), so they do NOT trigger CompileUnexpectedThrow.
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
         let affecting = filter_suppressions_that_affect_function(&context.suppressions, start, end);
         if !affecting.is_empty() {
             let owned: Vec<SuppressionRange> = affecting.into_iter().cloned().collect();
-            let mut err = suppressions_to_compiler_error(&owned);
-            // Suppression errors are returned (not thrown), so they should NOT
-            // trigger CompileUnexpectedThrow.
-            err.is_thrown = false;
-            return Err(err);
+            return Err(suppressions_to_diagnostics(&owned));
         }
     }
 
@@ -1172,6 +1166,7 @@ fn try_compile_function<'a>(
         output_mode,
         env_config,
         context,
+        source.fn_ast_span,
     )
 }
 
@@ -1219,20 +1214,6 @@ fn process_fn<'a>(
 
     match compile_result {
         Err(err) => {
-            // Surface errors "thrown" from a pass (not accumulated via
-            // env.record_error) that have all non-Invariant details, matching TS
-            // tryCompileFunction()'s catch block.
-            if err.is_thrown && err.is_all_non_invariant() {
-                let mut diagnostic = OxcDiagnostic::error(format!(
-                    "[ReactCompiler] Unexpected error: {}",
-                    err.to_string_for_event()
-                ));
-                if let Some(span) = source.fn_ast_span {
-                    diagnostic = diagnostic.with_label(span);
-                }
-                context.diagnostics.push(diagnostic);
-            }
-
             if opt_out.is_some() {
                 // If there's an opt-out, just log the error (don't escalate)
                 log_error(&err, source.fn_ast_span, &mut context.diagnostics);
@@ -2983,7 +2964,7 @@ pub fn compile_program<'a, 'p>(
     if has_module_scope_opt_out {
         if !compiled_fns.is_empty() {
             let err =
-                CompilerError::from(ErrorCategory::Invariant.diagnostic(
+                Diagnostics::from(ErrorCategory::Invariant.diagnostic(
                     "Unexpected compiled functions when module scope opt-out is present",
                 ));
             handle_error(&err, None, context.opts.panic_threshold, &mut context.diagnostics);

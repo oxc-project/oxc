@@ -131,7 +131,7 @@ where
 
     // rewriteInstructionKindsBasedOnReassignment
     if let Err(err) = rewrite_instruction_kinds_based_on_reassignment(func, env) {
-        env.errors.merge(err);
+        env.errors.push(err);
         return Ok(());
     }
 

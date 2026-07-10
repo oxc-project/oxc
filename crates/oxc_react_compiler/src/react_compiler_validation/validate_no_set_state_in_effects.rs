@@ -14,9 +14,9 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::ObjectPropertyOrSpread;
 use crate::react_compiler_hir::Pattern;
@@ -32,14 +32,14 @@ use crate::react_compiler_hir::{
 pub fn validate_no_set_state_in_effects(
     func: &HirFunction,
     env: &Environment,
-) -> Result<CompilerError, OxcDiagnostic> {
+) -> Result<Diagnostics, OxcDiagnostic> {
     let identifiers = &env.identifiers;
     let types = &env.types;
     let functions = &env.functions;
 
     // Map from IdentifierId to the Place where the setState originated
     let mut set_state_functions: FxHashMap<IdentifierId, SetStateInfo> = FxHashMap::default();
-    let mut errors = CompilerError::new();
+    let mut errors = Diagnostics::new();
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
@@ -152,7 +152,7 @@ fn is_set_state_type_by_id(
     is_set_state_type(ty)
 }
 
-fn push_error(errors: &mut CompilerError, info: &SetStateInfo, enable_verbose: bool) {
+fn push_error(errors: &mut Diagnostics, info: &SetStateInfo, enable_verbose: bool) {
     if enable_verbose {
         errors.push(
             ErrorCategory::EffectSetState

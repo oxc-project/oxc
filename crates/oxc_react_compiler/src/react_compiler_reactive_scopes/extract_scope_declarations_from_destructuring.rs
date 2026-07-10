@@ -10,7 +10,8 @@
 
 use rustc_hash::FxHashSet;
 
-use crate::diagnostics::CompilerError;
+use oxc_diagnostics::OxcDiagnostic;
+
 use crate::react_compiler_hir::{
     DeclarationId, IdentifierId, IdentifierName, InstructionKind, InstructionValue, LValue,
     ParamPattern, Place, ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock,
@@ -31,7 +32,7 @@ use crate::react_compiler_reactive_scopes::visitors::{
 pub fn extract_scope_declarations_from_destructuring<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &mut Environment<'a>,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let mut declared: FxHashSet<DeclarationId> = FxHashSet::default();
     for param in &func.params {
         let place = match param {
@@ -65,7 +66,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut ExtractState,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         let scope_data = &self.env.scopes[scope.scope.0 as usize];
         let decl_ids: Vec<DeclarationId> = scope_data
             .declarations
@@ -85,7 +86,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         &mut self,
         instruction: &mut ReactiveInstruction<'a>,
         state: &mut ExtractState,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         self.visit_instruction(instruction, state)?;
 
         let mut extra_instructions: Option<Vec<ReactiveInstruction<'a>>> = None;

@@ -1,7 +1,6 @@
 use cow_utils::CowUtils;
 use rustc_hash::FxHashSet;
 
-use crate::diagnostics::CompilerError;
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::*;
@@ -29,12 +28,12 @@ use crate::react_compiler_lowering::identifier_loc_index::build_identifier_loc_i
 fn validate_ts_this_parameter(
     scope: &ScopeResolver<'_, '_>,
     function_scope: ScopeId,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let Some(symbol_id) = scope.get_binding(function_scope, "this") else {
         return Ok(());
     };
     if matches!(scope.binding_kind(symbol_id), AstBindingKind::Param) {
-        return Err(CompilerError::from(reserved_identifier_diagnostic("this")));
+        return Err(reserved_identifier_diagnostic("this"));
     }
     Ok(())
 }
@@ -47,7 +46,7 @@ fn validate_ts_this_parameters_in_function_range(
     scope: &ScopeResolver<'_, '_>,
     start: u32,
     end: u32,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     if start >= end {
         return Ok(());
     }
@@ -81,7 +80,7 @@ fn promote_temporary(builder: &mut HirBuilder<'_, '_>, identifier_id: Identifier
 fn lower_value_to_temporary<'a>(
     builder: &mut HirBuilder<'a, '_>,
     value: InstructionValue<'a>,
-) -> Result<Place, CompilerError> {
+) -> Result<Place, OxcDiagnostic> {
     // Optimization: if loading an unnamed temporary, skip creating a new instruction
     if let InstructionValue::LoadLocal { ref place, .. } = value {
         let ident = &builder.environment().identifiers[place.identifier.0 as usize];
@@ -104,7 +103,7 @@ fn lower_value_to_temporary<'a>(
 fn lower_expression_to_temporary<'a>(
     builder: &mut HirBuilder<'a, '_>,
     expr: &'a oxc::Expression<'a>,
-) -> Result<Place, CompilerError> {
+) -> Result<Place, OxcDiagnostic> {
     let value = lower_expression(builder, expr)?;
     lower_value_to_temporary(builder, value)
 }
@@ -197,7 +196,7 @@ fn lower_block_statement<'a>(
     statements: &'a [oxc::Statement<'a>],
     block_scope: Option<ScopeId>,
     parent_scope: Option<ScopeId>,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let _ = lower_block_statement_inner(builder, statements, block_scope, None, parent_scope);
     Ok(())
 }
@@ -206,7 +205,7 @@ fn lower_block_statement_with_scope<'a>(
     builder: &mut HirBuilder<'a, '_>,
     statements: &'a [oxc::Statement<'a>],
     scope_override: ScopeId,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let _ = lower_block_statement_inner(builder, statements, None, Some(scope_override), None);
     Ok(())
 }
@@ -525,7 +524,7 @@ enum FunctionBody<'a> {
 
 type LowerInnerResult<'a> = Result<
     (HirFunction<'a>, FxIndexMap<String, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
-    CompilerError,
+    OxcDiagnostic,
 >;
 
 /// Main entry point: lower a function AST node into HIR.
@@ -535,7 +534,7 @@ pub fn lower<'a>(
     func: &'a FunctionNode<'a>,
     scope: &ScopeResolver<'_, 'a>,
     env: &mut Environment<'a>,
-) -> Result<HirFunction<'a>, CompilerError> {
+) -> Result<HirFunction<'a>, OxcDiagnostic> {
     // Extract params, body, generator, is_async, span, scope_id, and the AST function's own id
     // Note: `id` param may include inferred names (e.g., from `const Foo = () => {}`),
     // but the HIR function's `id` field should only include the function's own AST id
@@ -671,9 +670,7 @@ fn lower_inner<'a>(
             && let oxc::BindingPattern::BindingIdentifier(ident) = &param.pattern
         {
             if is_always_reserved_word(ident.name.as_str()) {
-                return Err(CompilerError::from(reserved_identifier_diagnostic(
-                    ident.name.as_str(),
-                )));
+                return Err(reserved_identifier_diagnostic(ident.name.as_str()));
             }
             let param_span = builder.source_location(ident.span);
             let mut binding = builder.resolve_identifier(
@@ -855,7 +852,7 @@ fn lower_identifier(
     name: &str,
     span: Option<Span>,
     symbol: Option<SymbolId>,
-) -> Result<Place, CompilerError> {
+) -> Result<Place, OxcDiagnostic> {
     let binding = builder.resolve_identifier(name, span, symbol)?;
     match binding {
         VariableBinding::Identifier { identifier, .. } => {
@@ -949,7 +946,7 @@ struct LoweredMemberExpression<'a> {
 fn lower_member_expression<'a>(
     builder: &mut HirBuilder<'a, '_>,
     member: &'a oxc::MemberExpression<'a>,
-) -> Result<LoweredMemberExpression<'a>, CompilerError> {
+) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
     lower_member_expression_impl(builder, member, None)
 }
 
@@ -957,7 +954,7 @@ fn lower_member_expression_impl<'a>(
     builder: &mut HirBuilder<'a, '_>,
     member: &'a oxc::MemberExpression<'a>,
     lowered_object: Option<Place>,
-) -> Result<LoweredMemberExpression<'a>, CompilerError> {
+) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
     match member {
         oxc::MemberExpression::StaticMemberExpression(m) => {
             let span = builder.source_location(m.span);
@@ -1042,7 +1039,7 @@ fn template_quasi_from_oxc(q: &oxc::TemplateElement) -> TemplateQuasi {
 fn lower_import_keyword_to_temporary(
     builder: &mut HirBuilder<'_, '_>,
     span: &Option<Span>,
-) -> Result<Place, CompilerError> {
+) -> Result<Place, OxcDiagnostic> {
     builder.record_error(
         ErrorCategory::Todo
             .diagnostic("(BuildHIR::lowerExpression) Handle Import expressions")
@@ -1060,7 +1057,7 @@ fn lower_import_keyword_to_temporary(
 fn lower_private_name_to_temporary(
     builder: &mut HirBuilder<'_, '_>,
     span: oxc_span::Span,
-) -> Result<Place, CompilerError> {
+) -> Result<Place, OxcDiagnostic> {
     let span = builder.source_location(span);
     builder.record_error(
         ErrorCategory::Todo
@@ -1118,7 +1115,7 @@ fn lower_type_cast_expression<'a>(
     expression: &'a oxc::Expression<'a>,
     type_annotation: &'a oxc::TSType<'a>,
     type_annotation_kind: &str,
-) -> Result<InstructionValue<'a>, CompilerError> {
+) -> Result<InstructionValue<'a>, OxcDiagnostic> {
     let span = builder.source_location(span);
     let value = lower_expression_to_temporary(builder, expression)?;
     // `lower_ts_type` allocates a type var (via `make_type`); keep the call for
@@ -1138,7 +1135,7 @@ fn lower_type_cast_expression<'a>(
 fn lower_member_expression_from_simple_target<'a>(
     builder: &mut HirBuilder<'a, '_>,
     target: &'a oxc::SimpleAssignmentTarget<'a>,
-) -> Result<LoweredMemberExpression<'a>, CompilerError> {
+) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
     match target {
         oxc::SimpleAssignmentTarget::StaticMemberExpression(m) => {
             let span = builder.source_location(m.span);
@@ -1206,7 +1203,7 @@ fn lower_member_expression_from_simple_target<'a>(
 fn lower_arguments<'a>(
     builder: &mut HirBuilder<'a, '_>,
     args: &'a [oxc::Argument<'a>],
-) -> Result<Vec<PlaceOrSpread>, CompilerError> {
+) -> Result<Vec<PlaceOrSpread>, OxcDiagnostic> {
     let mut result = Vec::new();
     for arg in args {
         match arg {
@@ -1239,7 +1236,7 @@ fn lower_identifier_for_assignment(
     kind: InstructionKind,
     name: &str,
     symbol: Option<SymbolId>,
-) -> Result<Option<IdentifierForAssignment>, CompilerError> {
+) -> Result<Option<IdentifierForAssignment>, OxcDiagnostic> {
     let mut binding = builder.resolve_identifier(name, ident_span, symbol)?;
     if !matches!(binding, VariableBinding::Identifier { .. }) && kind != InstructionKind::Reassign {
         if let Some(symbol_id) =
@@ -1323,7 +1320,7 @@ fn lower_binding_assignment<'a>(
     target: &'a oxc::BindingPattern<'a>,
     value: Place,
     assignment_style: AssignmentStyle,
-) -> Result<Option<Place>, CompilerError> {
+) -> Result<Option<Place>, OxcDiagnostic> {
     match target {
         oxc::BindingPattern::BindingIdentifier(id) => {
             let id_span = builder.source_location(id.span);
@@ -1705,7 +1702,7 @@ fn lower_default_to_temp<'a>(
     pat_span: Option<Span>,
     default: &'a oxc::Expression<'a>,
     value: Place,
-) -> Result<Place, CompilerError> {
+) -> Result<Place, OxcDiagnostic> {
     let temp = build_temporary_place(builder, pat_span);
 
     let test_block = builder.reserve(BlockKind::Value);
@@ -1800,7 +1797,7 @@ fn lower_member_assignment_target<'a>(
     kind: InstructionKind,
     target: &'a oxc::SimpleAssignmentTarget<'a>,
     value: Place,
-) -> Result<Option<Place>, CompilerError> {
+) -> Result<Option<Place>, OxcDiagnostic> {
     // MemberExpression may only appear in an assignment expression (Reassign).
     if kind != InstructionKind::Reassign {
         builder.record_error(
@@ -1872,7 +1869,7 @@ fn lower_member_assignment_target<'a>(
 fn assignment_target_is_local_identifier(
     builder: &mut HirBuilder<'_, '_>,
     maybe: &oxc::AssignmentTargetMaybeDefault,
-) -> Result<bool, CompilerError> {
+) -> Result<bool, OxcDiagnostic> {
     match maybe {
         oxc::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => {
             if builder.is_context_identifier(builder.scope().resolve_reference(id)) {
@@ -1900,7 +1897,7 @@ fn lower_assignment_target<'a>(
     target: &'a oxc::AssignmentTarget<'a>,
     value: Place,
     assignment_style: AssignmentStyle,
-) -> Result<Option<Place>, CompilerError> {
+) -> Result<Option<Place>, OxcDiagnostic> {
     match target {
         oxc::AssignmentTarget::AssignmentTargetIdentifier(id) => {
             let id_span = builder.source_location(id.span);
@@ -2459,7 +2456,7 @@ fn lower_identifier_followup_store(
     kind: InstructionKind,
     id: &oxc::IdentifierReference,
     value: Place,
-) -> Result<Option<Place>, CompilerError> {
+) -> Result<Option<Place>, OxcDiagnostic> {
     let id_span = builder.source_location(id.span);
     let result = lower_identifier_for_assignment(
         builder,
@@ -2505,7 +2502,7 @@ fn lower_followup_target<'a>(
     target: FollowupTarget<'a>,
     value: Place,
     assignment_style: AssignmentStyle,
-) -> Result<Option<Place>, CompilerError> {
+) -> Result<Option<Place>, OxcDiagnostic> {
     match target {
         FollowupTarget::Target(t) => {
             let followup_span = builder.source_location(t.span()).or(span);
@@ -2540,7 +2537,7 @@ fn lower_assignment_target_maybe_default<'a>(
     maybe: &'a oxc::AssignmentTargetMaybeDefault<'a>,
     value: Place,
     assignment_style: AssignmentStyle,
-) -> Result<Option<Place>, CompilerError> {
+) -> Result<Option<Place>, OxcDiagnostic> {
     match maybe {
         oxc::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(with_default) => {
             lower_assignment_target_default(
@@ -2572,7 +2569,7 @@ fn lower_assignment_target_default<'a>(
     binding: FollowupBinding<'a>,
     value: Place,
     assignment_style: AssignmentStyle,
-) -> Result<Option<Place>, CompilerError> {
+) -> Result<Option<Place>, OxcDiagnostic> {
     let pat_span = builder.source_location(span);
 
     let temp = build_temporary_place(builder, pat_span);
@@ -2701,7 +2698,7 @@ fn expr_contains_optional(expr: &oxc::Expression) -> bool {
 fn lower_chain_expression<'a>(
     builder: &mut HirBuilder<'a, '_>,
     chain: &'a oxc::ChainExpression<'a>,
-) -> Result<InstructionValue<'a>, CompilerError> {
+) -> Result<InstructionValue<'a>, OxcDiagnostic> {
     match &chain.expression {
         oxc::ChainElement::CallExpression(call) => {
             lower_optional_call_expression_impl(builder, call, None)
@@ -2734,7 +2731,7 @@ fn lower_chain_expression<'a>(
 fn lower_chain_subexpr<'a>(
     builder: &mut HirBuilder<'a, '_>,
     expr: &'a oxc::Expression<'a>,
-) -> Result<InstructionValue<'a>, CompilerError> {
+) -> Result<InstructionValue<'a>, OxcDiagnostic> {
     match expr {
         oxc::Expression::StaticMemberExpression(_)
         | oxc::Expression::ComputedMemberExpression(_)
@@ -2761,7 +2758,7 @@ fn lower_optional_member_expression_impl<'a>(
     builder: &mut HirBuilder<'a, '_>,
     member: &'a oxc::MemberExpression<'a>,
     parent_alternate: Option<BlockId>,
-) -> Result<(Place, Place), CompilerError> {
+) -> Result<(Place, Place), OxcDiagnostic> {
     let optional = member.optional();
     let span = builder.source_location(member.span());
     let place = build_temporary_place(builder, span);
@@ -2873,7 +2870,7 @@ fn lower_optional_call_expression_impl<'a>(
     builder: &mut HirBuilder<'a, '_>,
     call: &'a oxc::CallExpression<'a>,
     parent_alternate: Option<BlockId>,
-) -> Result<InstructionValue<'a>, CompilerError> {
+) -> Result<InstructionValue<'a>, OxcDiagnostic> {
     let span = builder.source_location(call.span);
     let place = build_temporary_place(builder, span);
     let continuation_block = builder.reserve(builder.current_block_kind());
@@ -3034,7 +3031,7 @@ fn lower_function_to_value<'a>(
     builder: &mut HirBuilder<'a, '_>,
     func: FunctionNode<'a>,
     expr_type: FunctionExpressionType,
-) -> Result<InstructionValue<'a>, CompilerError> {
+) -> Result<InstructionValue<'a>, OxcDiagnostic> {
     let span = match func {
         FunctionNode::Arrow(arrow) => builder.source_location(arrow.span),
         FunctionNode::Function(f) => builder.source_location(f.span),
@@ -3058,7 +3055,7 @@ fn lower_function_to_value<'a>(
 fn lower_function<'a>(
     builder: &mut HirBuilder<'a, '_>,
     func: FunctionNode<'a>,
-) -> Result<LoweredFunction, CompilerError> {
+) -> Result<LoweredFunction, OxcDiagnostic> {
     // Extract function parts from the AST node
     let (params, body, id, generator, is_async, func_start, func_end, func_span) = match func {
         FunctionNode::Arrow(arrow) => {
@@ -3157,7 +3154,7 @@ fn lower_function<'a>(
 fn lower_function_declaration<'a>(
     builder: &mut HirBuilder<'a, '_>,
     func_decl: &'a oxc::Function<'a>,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let span = builder.source_location(func_decl.span);
     let func_start = func_decl.span.start;
     let func_end = func_decl.span.end;
@@ -3341,7 +3338,7 @@ fn lower_function_for_object_method<'a>(
     body: &'a oxc::FunctionBody<'a>,
     generator: bool,
     is_async: bool,
-) -> Result<LoweredFunction, CompilerError> {
+) -> Result<LoweredFunction, OxcDiagnostic> {
     let func_start = method_span.start;
     let func_end = method_span.end;
     let func_span = builder.source_location(method_span);
@@ -3510,7 +3507,7 @@ fn capture_scopes(
 fn lower_expression<'a>(
     builder: &mut HirBuilder<'a, '_>,
     expr: &'a oxc::Expression<'a>,
-) -> Result<InstructionValue<'a>, CompilerError> {
+) -> Result<InstructionValue<'a>, OxcDiagnostic> {
     match expr {
         oxc::Expression::Identifier(ident) => {
             let span = builder.source_location(ident.span);
@@ -4257,7 +4254,7 @@ fn lower_expression<'a>(
 fn lower_assignment_expression<'a>(
     builder: &mut HirBuilder<'a, '_>,
     assign: &'a oxc::AssignmentExpression<'a>,
-) -> Result<InstructionValue<'a>, CompilerError> {
+) -> Result<InstructionValue<'a>, OxcDiagnostic> {
     let span = builder.source_location(assign.span);
 
     if matches!(assign.operator, oxc::AssignmentOperator::Assign) {
@@ -4570,7 +4567,7 @@ fn lower_assignment_expression<'a>(
 fn lower_jsx_element_expr<'a>(
     builder: &mut HirBuilder<'a, '_>,
     jsx_element: &'a oxc::JSXElement<'a>,
-) -> Result<InstructionValue<'a>, CompilerError> {
+) -> Result<InstructionValue<'a>, OxcDiagnostic> {
     let span = builder.source_location(jsx_element.span);
     let opening_span = builder.source_location(jsx_element.opening_element.span);
     let closing_span =
@@ -4667,7 +4664,7 @@ fn lower_jsx_element_expr<'a>(
     let is_fbt = matches!(&tag, JsxTag::Builtin(b) if b.name == "fbt" || b.name == "fbs");
 
     // Check that fbt/fbs tags are module-level imports, not local bindings.
-    // Matches TS: CompilerError.invariant(tagIdentifier.kind !== 'Identifier', ...)
+    // Matches TS: Diagnostics.invariant(tagIdentifier.kind !== 'Identifier', ...)
     if is_fbt {
         let tag_name = match &tag {
             JsxTag::Builtin(b) => b.name.clone(),
@@ -4689,8 +4686,7 @@ fn lower_jsx_element_expr<'a>(
                 let reason = format!("<{}> tags should be module-level imports", tag_name);
                 return Err(ErrorCategory::Invariant
                     .diagnostic(&reason)
-                    .with_labels(id_span.map(|s| s.label(reason)))
-                    .into());
+                    .with_labels(id_span.map(|s| s.label(reason))));
             }
         }
     }
@@ -4768,7 +4764,7 @@ fn lower_jsx_element_expr<'a>(
 fn lower_jsx_fragment_expr<'a>(
     builder: &mut HirBuilder<'a, '_>,
     jsx_fragment: &'a oxc::JSXFragment<'a>,
-) -> Result<InstructionValue<'a>, CompilerError> {
+) -> Result<InstructionValue<'a>, OxcDiagnostic> {
     let span = builder.source_location(jsx_fragment.span);
 
     // Lower children
@@ -4791,14 +4787,14 @@ fn lower_jsx_fragment_expr<'a>(
 fn lower_jsx_element_name(
     builder: &mut HirBuilder<'_, '_>,
     name: &oxc::JSXElementName,
-) -> Result<JsxTag, CompilerError> {
+) -> Result<JsxTag, OxcDiagnostic> {
     // Lower a simple JSX tag identifier (component-vs-builtin split on case).
     fn lower_tag_identifier(
         builder: &mut HirBuilder<'_, '_>,
         tag: &str,
         span: oxc_span::Span,
         symbol: Option<SymbolId>,
-    ) -> Result<JsxTag, CompilerError> {
+    ) -> Result<JsxTag, OxcDiagnostic> {
         let span = builder.source_location(span);
         if tag.starts_with(|c: char| c.is_ascii_uppercase()) {
             // Component tag: resolve as identifier and load
@@ -4863,7 +4859,7 @@ fn lower_jsx_element_name(
 fn lower_jsx_member_expression(
     builder: &mut HirBuilder<'_, '_>,
     expr: &oxc::JSXMemberExpression,
-) -> Result<Place, CompilerError> {
+) -> Result<Place, OxcDiagnostic> {
     // Use the full member expression's span for instruction locs (matching TS: exprPath.node.span)
     let expr_span = builder.source_location(expr.span);
     let object = match &expr.object {
@@ -4902,7 +4898,7 @@ fn lower_jsx_member_object_identifier(
     span: oxc_span::Span,
     symbol: Option<SymbolId>,
     expr_span: &Option<Span>,
-) -> Result<Place, CompilerError> {
+) -> Result<Place, OxcDiagnostic> {
     let id_span = builder.source_location(span);
     let place = lower_identifier(builder, name, id_span, symbol)?;
     let load_value = if builder.is_context_identifier(symbol) {
@@ -4918,7 +4914,7 @@ fn lower_jsx_member_object_identifier(
 fn lower_jsx_element<'a>(
     builder: &mut HirBuilder<'a, '_>,
     child: &'a oxc::JSXChild<'a>,
-) -> Result<Option<Place>, CompilerError> {
+) -> Result<Option<Place>, OxcDiagnostic> {
     match child {
         oxc::JSXChild::Text(text) => {
             // oxc keeps JSX text raw; decode entities first so the value matches
@@ -5406,7 +5402,7 @@ fn expression_type_name(expr: &oxc::Expression) -> &'static str {
 fn lower_object_method<'a>(
     builder: &mut HirBuilder<'a, '_>,
     method: &'a oxc::ObjectProperty<'a>,
-) -> Result<Option<ObjectProperty>, CompilerError> {
+) -> Result<Option<ObjectProperty>, OxcDiagnostic> {
     // In oxc, a shorthand method is encoded as `kind: Init, method: true`; only
     // getters/setters carry a non-`Init` `PropertyKind`.
     let is_method = method.method && matches!(method.kind, oxc::PropertyKind::Init);
@@ -5457,7 +5453,7 @@ fn lower_object_property_key<'a>(
     builder: &mut HirBuilder<'a, '_>,
     key: &'a oxc::PropertyKey<'a>,
     computed: bool,
-) -> Result<Option<ObjectPropertyKey>, CompilerError> {
+) -> Result<Option<ObjectPropertyKey>, OxcDiagnostic> {
     match key {
         // Property keys stay String-typed; oxc atoms are valid UTF-8, so
         // `to_string()` reproduces the marker wire form for non-pathological keys.
@@ -5499,7 +5495,7 @@ fn lower_object_property_key<'a>(
 fn lower_reorderable_expression<'a>(
     builder: &mut HirBuilder<'a, '_>,
     expr: &'a oxc::Expression<'a>,
-) -> Result<Place, CompilerError> {
+) -> Result<Place, OxcDiagnostic> {
     if !is_reorderable_expression(builder, expr, true) {
         builder.record_error(
             ErrorCategory::Todo
@@ -6646,7 +6642,7 @@ fn lower_for_in_of_left<'a>(
     left: &'a oxc::ForStatementLeft<'a>,
     left_span: Option<Span>,
     value: Place,
-) -> Result<Option<Place>, CompilerError> {
+) -> Result<Option<Place>, OxcDiagnostic> {
     match left {
         oxc::ForStatementLeft::VariableDeclaration(var_decl) => {
             if var_decl.declarations.len() != 1 {

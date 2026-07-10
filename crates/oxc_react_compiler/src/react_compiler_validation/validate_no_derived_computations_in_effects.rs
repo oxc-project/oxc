@@ -13,9 +13,9 @@
 use crate::react_compiler_utils::{FxIndexMap, FxIndexSet};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::BasicBlock;
 use crate::react_compiler_hir::Instruction;
 use crate::react_compiler_hir::Terminal;
@@ -271,7 +271,7 @@ fn is_mutable_at(
 pub fn validate_no_derived_computations_in_effects_exp(
     func: &HirFunction,
     env: &Environment,
-) -> Result<CompilerError, OxcDiagnostic> {
+) -> Result<Diagnostics, OxcDiagnostic> {
     let identifiers = &env.identifiers;
 
     let mut context = ValidationContext {
@@ -344,7 +344,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
     }
 
     // Validate all effect sites
-    let mut errors = CompilerError::new();
+    let mut errors = Diagnostics::new();
     let effects_cache: Vec<(IdentifierId, FunctionId, Vec<DepElement>)> = context
         .effects_cache
         .iter()
@@ -736,7 +736,7 @@ fn validate_effect(
     dependencies: &[DepElement],
     context: &mut ValidationContext,
     env: &Environment,
-    errors: &mut CompilerError,
+    errors: &mut Diagnostics,
 ) {
     let identifiers = &env.identifiers;
     let types = &env.types;
@@ -976,7 +976,7 @@ fn validate_effect(
 pub fn validate_no_derived_computations_in_effects(
     func: &HirFunction,
     env: &mut Environment,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     // Phase 1: Collect effect call sites (func_id + resolved deps).
     // Done with only immutable borrows of env fields.
     let effects_to_validate: Vec<(FunctionId, Vec<IdentifierId>)> = {

@@ -1,4 +1,3 @@
-use crate::diagnostics::CompilerError;
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::each_terminal_successor;
@@ -19,7 +18,7 @@ use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
 
 type BuildResult<'a> = Result<
     (HIR, Vec<Instruction<'a>>, FxIndexMap<String, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
-    CompilerError,
+    OxcDiagnostic,
 >;
 
 // ---------------------------------------------------------------------------
@@ -552,7 +551,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Record an error on the environment.
     /// Returns `Err` for Invariant errors (matching TS throw behavior).
-    pub fn record_error(&mut self, error: OxcDiagnostic) -> Result<(), CompilerError> {
+    pub fn record_error(&mut self, error: OxcDiagnostic) -> Result<(), OxcDiagnostic> {
         self.env.record_error(error)
     }
 
@@ -645,7 +644,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         &mut self,
         name: &str,
         symbol_id: SymbolId,
-    ) -> Result<IdentifierId, CompilerError> {
+    ) -> Result<IdentifierId, OxcDiagnostic> {
         self.resolve_binding_with_span(name, symbol_id, None)
     }
 
@@ -655,7 +654,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         name: &str,
         symbol_id: SymbolId,
         span: Option<Span>,
-    ) -> Result<IdentifierId, CompilerError> {
+    ) -> Result<IdentifierId, OxcDiagnostic> {
         // Check for unsupported names BEFORE the cache check.
         // In TS, resolveBinding records fbt errors when node.name === 'fbt'. After a name collision
         // causes a rename (e.g., "fbt" -> "fbt_0"), TS's scope.rename changes the AST node's name,
@@ -696,7 +695,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
         if is_always_reserved_word(name) {
             // Match TS behavior: makeIdentifierName throws for reserved words.
-            return Err(CompilerError::from(reserved_identifier_diagnostic(name)));
+            return Err(reserved_identifier_diagnostic(name));
         }
 
         // Find a unique name: start with the original name, then try name_0, name_1, ...
@@ -763,7 +762,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         name: &str,
         span: Option<Span>,
         symbol: Option<SymbolId>,
-    ) -> Result<VariableBinding, CompilerError> {
+    ) -> Result<VariableBinding, OxcDiagnostic> {
         let Some(symbol_id) = symbol else {
             // No binding found: this is a global
             return Ok(VariableBinding::Global { name: name.to_string() });

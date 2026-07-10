@@ -1,7 +1,9 @@
 use cow_utils::CowUtils;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, PropertyLiteral};
 
@@ -11,7 +13,7 @@ use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, Pro
 pub fn validate_no_capitalized_calls(
     func: &HirFunction,
     env: &mut Environment,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     // Build the allow list from global registry keys + config entries
     let mut allow_list: FxHashSet<String> = env.globals().keys().map(str::to_owned).collect();
     if let Some(config_entries) = &env.config.validate_no_capitalized_calls {

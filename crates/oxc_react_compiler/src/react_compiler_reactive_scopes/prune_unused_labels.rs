@@ -12,7 +12,8 @@ use std::mem::take;
 
 use rustc_hash::FxHashSet;
 
-use crate::diagnostics::CompilerError;
+use oxc_diagnostics::OxcDiagnostic;
+
 use crate::react_compiler_hir::{
     BlockId, ReactiveFunction, ReactiveStatement, ReactiveTerminal, ReactiveTerminalStatement,
     ReactiveTerminalTargetKind, environment::Environment,
@@ -26,7 +27,7 @@ use crate::react_compiler_reactive_scopes::visitors::{
 pub fn prune_unused_labels<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &Environment<'a>,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let mut transform = Transform { env };
     let mut labels: FxHashSet<BlockId> = FxHashSet::default();
     transform_reactive_function(func, &mut transform, &mut labels)
@@ -47,7 +48,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut FxHashSet<BlockId>,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         // Traverse children first
         self.traverse_terminal(stmt, state)?;
 

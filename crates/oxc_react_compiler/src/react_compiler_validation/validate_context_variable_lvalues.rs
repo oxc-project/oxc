@@ -2,9 +2,9 @@ use rustc_hash::FxHashMap;
 use std::fmt::Display;
 use std::fmt::Formatter;
 
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{each_instruction_value_lvalue, each_pattern_operand};
 use crate::react_compiler_hir::{
@@ -53,7 +53,7 @@ pub fn validate_context_variable_lvalues_with_errors(
     func: &HirFunction,
     functions: &[HirFunction],
     identifiers: &[Identifier],
-    errors: &mut CompilerError,
+    errors: &mut Diagnostics,
 ) -> Result<(), OxcDiagnostic> {
     let mut identifier_kinds: IdentifierKinds = FxHashMap::default();
     validate_context_variable_lvalues_impl(
@@ -70,7 +70,7 @@ fn validate_context_variable_lvalues_impl(
     identifier_kinds: &mut IdentifierKinds,
     functions: &[HirFunction],
     identifiers: &[Identifier],
-    errors: &mut CompilerError,
+    errors: &mut Diagnostics,
 ) -> Result<(), OxcDiagnostic> {
     let mut inner_function_ids: Vec<FunctionId> = Vec::new();
 
@@ -162,7 +162,7 @@ fn visit(
     place: &Place,
     kind: VarRefKind,
     env_identifiers: &[Identifier],
-    errors: &mut CompilerError,
+    errors: &mut Diagnostics,
 ) -> Result<(), OxcDiagnostic> {
     if let Some((prev_place, prev_kind)) = identifiers.get(&place.identifier) {
         let was_context = *prev_kind == VarRefKind::Context;

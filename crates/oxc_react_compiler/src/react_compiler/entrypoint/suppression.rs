@@ -1,3 +1,4 @@
+use oxc_diagnostics::Diagnostics;
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
@@ -6,7 +7,7 @@
  */
 use oxc_span::Span;
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use crate::diagnostics::ErrorCategory;
 
 /// A comment's text and byte range, plus the byte-offset span that surfaces as the
 /// labeled span on a suppression diagnostic. The former Babel front-end carried
@@ -250,11 +251,11 @@ pub fn filter_suppressions_that_affect_function(
     suppressions_in_scope
 }
 
-/// Convert suppression ranges to a CompilerError.
-pub fn suppressions_to_compiler_error(suppressions: &[SuppressionRange]) -> CompilerError {
+/// Convert suppression ranges to diagnostics.
+pub fn suppressions_to_diagnostics(suppressions: &[SuppressionRange]) -> Diagnostics {
     assert!(!suppressions.is_empty(), "Expected at least one suppression comment source range");
 
-    let mut error = CompilerError::new();
+    let mut error = Diagnostics::new();
 
     for suppression in suppressions {
         let reason = match suppression.source {

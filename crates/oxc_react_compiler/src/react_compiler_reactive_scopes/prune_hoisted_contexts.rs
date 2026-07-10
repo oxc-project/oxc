@@ -10,7 +10,9 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::{
     EvaluationOrder, IdentifierId, InstructionKind, InstructionValue, Place, ReactiveFunction,
     ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveValue,
@@ -31,7 +33,7 @@ use crate::react_compiler_reactive_scopes::visitors::{
 pub fn prune_hoisted_contexts<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &Environment<'a>,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let mut transform = Transform { env };
     let mut state = VisitorState { active_scopes: Vec::new(), uninitialized: FxHashMap::default() };
     transform_reactive_function(func, &mut transform, &mut state)
@@ -78,7 +80,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut VisitorState,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         let scope_data = &self.env.scopes[scope.scope.0 as usize];
         let decl_ids: FxHashSet<IdentifierId> =
             scope_data.declarations.iter().map(|(id, _)| *id).collect();
@@ -105,18 +107,14 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         _id: EvaluationOrder,
         place: &Place,
         state: &mut VisitorState,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         if let Some(UninitializedKind::Func { definition }) =
             state.uninitialized.get(&place.identifier)
         {
             if *definition != Some(place.identifier) {
-                let mut err = CompilerError::new();
-                err.push(
-                    ErrorCategory::Todo
-                        .diagnostic("[PruneHoistedContexts] Rewrite hoisted function references")
-                        .with_labels(place.span),
-                );
-                return Err(err);
+                return Err(ErrorCategory::Todo
+                    .diagnostic("[PruneHoistedContexts] Rewrite hoisted function references")
+                    .with_labels(place.span));
             }
         }
         Ok(())
@@ -126,7 +124,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         &mut self,
         instruction: &mut ReactiveInstruction<'a>,
         state: &mut VisitorState,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         // Remove hoisted declarations to preserve TDZ
         if let ReactiveValue::Instruction(InstructionValue::DeclareContext { lvalue, .. }) =
             &instruction.value
@@ -158,28 +156,20 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                     } else if lvalue.kind == InstructionKind::Function {
                         if let Some(kind) = state.uninitialized.get(&lvalue_id) {
                             if !matches!(kind, UninitializedKind::Func { .. }) {
-                                let mut err = CompilerError::new();
-                                err.push(
-                                    ErrorCategory::Invariant
-                                        .diagnostic(
-                                            "[PruneHoistedContexts] Unexpected hoisted function",
-                                        )
-                                        .with_labels(instruction.span),
-                                );
-                                return Err(err);
+                                return Err(ErrorCategory::Invariant
+                                    .diagnostic(
+                                        "[PruneHoistedContexts] Unexpected hoisted function",
+                                    )
+                                    .with_labels(instruction.span));
                             }
                             // References to hoisted functions are now "safe" as
                             // variable assignments have finished.
                             state.uninitialized.remove(&lvalue_id);
                         }
                     } else {
-                        let mut err = CompilerError::new();
-                        err.push(
-                            ErrorCategory::Todo
-                                .diagnostic("[PruneHoistedContexts] Unexpected kind")
-                                .with_labels(instruction.span),
-                        );
-                        return Err(err);
+                        return Err(ErrorCategory::Todo
+                            .diagnostic("[PruneHoistedContexts] Unexpected kind")
+                            .with_labels(instruction.span));
                     }
                 }
             }

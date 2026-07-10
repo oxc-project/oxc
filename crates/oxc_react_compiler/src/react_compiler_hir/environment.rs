@@ -4,9 +4,9 @@ use cow_utils::CowUtils;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use crate::diagnostics::ErrorCategory;
 
 use crate::react_compiler_hir::default_module_type_provider::default_module_type_provider;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
@@ -54,7 +54,7 @@ pub struct Environment<'a> {
     pub functions: Vec<HirFunction<'a>>,
 
     // Error accumulation
-    pub errors: CompilerError,
+    pub errors: Diagnostics,
 
     // Set during lowering when the function uses syntax the compiler can't handle
     // yet (currently `using`/`await using`, whose disposal semantics aren't
@@ -179,7 +179,7 @@ impl<'a> Environment<'a> {
             types: Vec::new(),
             scopes: Vec::new(),
             functions: Vec::new(),
-            errors: CompilerError::new(),
+            errors: Diagnostics::new(),
             skip_compilation: false,
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
@@ -279,10 +279,10 @@ impl<'a> Environment<'a> {
         id
     }
 
-    pub fn record_error(&mut self, diagnostic: OxcDiagnostic) -> Result<(), CompilerError> {
+    pub fn record_error(&mut self, diagnostic: OxcDiagnostic) -> Result<(), OxcDiagnostic> {
         if ErrorCategory::Invariant.matches(&diagnostic) {
             self.errors.push(diagnostic.clone());
-            return Err(CompilerError::from(diagnostic));
+            return Err(diagnostic);
         }
         self.errors.push(diagnostic);
         Ok(())
@@ -293,40 +293,29 @@ impl<'a> Environment<'a> {
     }
 
     pub fn has_errors(&self) -> bool {
-        self.errors.has_any_errors()
+        !self.errors.is_empty()
     }
 
     /// Check if any recorded errors have Invariant category.
     /// In TS, Invariant errors throw immediately from recordError(),
     /// which aborts the current operation.
     pub fn has_invariant_errors(&self) -> bool {
-        self.errors.has_invariant_errors()
+        self.errors.iter().any(|d| ErrorCategory::Invariant.matches(d))
     }
 
-    pub fn take_errors(&mut self) -> CompilerError {
-        let mut errors = take(&mut self.errors);
-        // Mark as not thrown — these are accumulated errors returned at the end
-        // of the pipeline, not errors thrown by a pass.
-        errors.is_thrown = false;
-        errors
+    /// Take the accumulated errors, to be returned at the end of the pipeline.
+    pub fn take_errors(&mut self) -> Diagnostics {
+        take(&mut self.errors)
     }
 
     /// Take only the Invariant errors, leaving non-Invariant errors in place.
-    /// In TS, Invariant errors throw as a separate CompilerError, so only
-    /// the Invariant error is surfaced.
-    pub fn take_invariant_errors(&mut self) -> CompilerError {
-        let mut invariant = CompilerError::new();
-        let mut remaining = CompilerError::new();
-        let old = take(&mut self.errors);
-        for diagnostic in old.diagnostics {
-            if ErrorCategory::Invariant.matches(&diagnostic) {
-                invariant.push(diagnostic);
-            } else {
-                remaining.push(diagnostic);
-            }
-        }
-        self.errors = remaining;
-        invariant
+    /// In TS, Invariant errors throw as a separate error, so only the
+    /// Invariant error is surfaced.
+    pub fn take_invariant_errors(&mut self) -> Diagnostics {
+        let (invariant, remaining): (Vec<_>, Vec<_>) =
+            take(&mut self.errors).into_iter().partition(|d| ErrorCategory::Invariant.matches(d));
+        self.errors = remaining.into();
+        invariant.into()
     }
 
     /// Check if a binding has been hoisted (via DeclareContext) already.
@@ -351,7 +340,7 @@ impl<'a> Environment<'a> {
         &mut self,
         binding: &NonLocalBinding,
         span: Option<Span>,
-    ) -> Result<Option<Global>, CompilerError> {
+    ) -> Result<Option<Global>, OxcDiagnostic> {
         match binding {
             NonLocalBinding::ModuleLocal { name, .. } => {
                 if is_hook_name(name) {

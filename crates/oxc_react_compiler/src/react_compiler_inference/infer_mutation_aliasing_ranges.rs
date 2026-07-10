@@ -645,7 +645,7 @@ pub fn infer_mutation_aliasing_ranges(
                         // Expected for MaybeThrow terminals, skip
                     }
                     _ => {
-                        // TS: CompilerError.invariant(effect.kind === 'Freeze', ...)
+                        // TS: Diagnostics.invariant(effect.kind === 'Freeze', ...)
                         // We skip non-Alias, non-Freeze effects
                     }
                 }

@@ -16,7 +16,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::dominator::compute_unconditional_blocks;
 use crate::react_compiler_hir::environment::{Environment, is_hook_name};
 use crate::react_compiler_hir::object_shape::HookKind;
@@ -87,7 +87,7 @@ fn visit_place(
     value_kinds: &FxHashMap<IdentifierId, Kind>,
     errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let kind = value_kinds.get(&place.identifier).copied();
     if kind == Some(Kind::KnownHook) {
         record_invalid_hook_usage_error(place, errors_by_span, env)?;
@@ -100,7 +100,7 @@ fn record_conditional_hook_error(
     value_kinds: &mut FxHashMap<IdentifierId, Kind>,
     errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     value_kinds.insert(place.identifier, Kind::Error);
     let reason = "Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)";
     if let Some(span) = place.span {
@@ -119,7 +119,7 @@ fn record_invalid_hook_usage_error(
     place: &Place,
     errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let reason = "Hooks may not be referenced as normal values, they must be called. See https://react.dev/reference/rules/react-calls-components-and-hooks#never-pass-around-hooks-as-regular-values";
     if let Some(span) = place.span {
         if !errors_by_span.contains_key(&span) {
@@ -135,7 +135,7 @@ fn record_dynamic_hook_usage_error(
     place: &Place,
     errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let reason = "Hooks must be the same function on every render, but this value may change over time to a different function. See https://react.dev/reference/rules/react-calls-components-and-hooks#dont-dynamically-use-hooks";
     if let Some(span) = place.span {
         if !errors_by_span.contains_key(&span) {
@@ -370,7 +370,7 @@ pub fn validate_hooks_usage(
 fn visit_function_expression(
     env: &mut Environment,
     func_id: FunctionId,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     // Collect items in instruction order to process them sequentially.
     // Each item is either a call to check or a nested function to visit.
     enum Item {
@@ -462,7 +462,7 @@ fn visit_all_operands(
     value_kinds: &FxHashMap<IdentifierId, Kind>,
     errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let operands = visitors::each_instruction_value_operand(value, &*env);
     for place in &operands {
         visit_place(place, value_kinds, errors_by_span, env)?;

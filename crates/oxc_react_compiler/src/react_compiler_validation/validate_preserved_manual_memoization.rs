@@ -183,7 +183,7 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
             has_invalid_deps,
             ..
         }) => {
-            // TS: CompilerError.invariant(state.manualMemoState == null, ...)
+            // TS: Diagnostics.invariant(state.manualMemoState == null, ...)
             if state.manual_memo_state.is_some() {
                 return;
             }
@@ -238,7 +238,7 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
                 return;
             }
 
-            // TS: CompilerError.invariant(state.manualMemoState.manualMemoId === value.manualMemoId, ...)
+            // TS: Diagnostics.invariant(state.manualMemoState.manualMemoId === value.manualMemoId, ...)
             if state.manual_memo_state.as_ref().is_none_or(|s| s.manual_memo_id != *manual_memo_id)
             {
                 state.manual_memo_state = None;
@@ -637,7 +637,7 @@ fn validate_inferred_dep(
         ManualMemoDependency { root: temp.root.clone(), path, span: temp.span }
     } else {
         let ident = &env.identifiers[dep_id.0 as usize];
-        // TS: CompilerError.invariant(dep.identifier.name?.kind === 'named', ...)
+        // TS: Diagnostics.invariant(dep.identifier.name?.kind === 'named', ...)
         if !is_named(ident) {
             return;
         }

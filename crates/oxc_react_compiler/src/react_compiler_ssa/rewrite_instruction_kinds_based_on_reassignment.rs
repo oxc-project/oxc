@@ -19,7 +19,9 @@ use std::borrow::Cow;
 
 use rustc_hash::FxHashMap;
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::visitors::each_pattern_operand;
 use crate::react_compiler_hir::{
     BlockKind, DeclarationId, HirFunction, InstructionKind, InstructionValue, ParamPattern, Place,
@@ -28,10 +30,10 @@ use crate::react_compiler_hir::{
 
 use crate::react_compiler_hir::environment::Environment;
 
-/// Create an invariant CompilerError (matches TS CompilerError.invariant).
+/// Create an invariant diagnostic (matches TS CompilerError.invariant).
 /// When a span is provided, it is attached as a labelled span
 /// (matching TS CompilerError.invariant which uses .withDetails()).
-fn invariant_error(reason: &str, description: Option<String>) -> CompilerError {
+fn invariant_error(reason: &str, description: Option<String>) -> OxcDiagnostic {
     invariant_error_with_span(reason, description, None)
 }
 
@@ -39,13 +41,13 @@ fn invariant_error_with_span(
     reason: &str,
     description: Option<String>,
     span: Option<Span>,
-) -> CompilerError {
+) -> OxcDiagnostic {
     let mut diagnostic =
         ErrorCategory::Invariant.diagnostic(reason).with_labels(span.map(|s| s.label(reason)));
     if let Some(description) = description {
         diagnostic = diagnostic.with_help(description);
     }
-    CompilerError::from(diagnostic)
+    diagnostic
 }
 
 /// Format an InstructionKind variant name (matches TS `${kind}` interpolation).
@@ -97,7 +99,7 @@ enum DeclarationLoc {
 pub fn rewrite_instruction_kinds_based_on_reassignment(
     func: &mut HirFunction,
     env: &Environment,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     // Phase 1: Collect all information about which declarations need updates.
     //
     // Track: for each DeclarationId, the location of its first declaration,
@@ -178,7 +180,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                             reassign_spans.push((block_index, local_idx));
                         } else {
                             // First store — mark as Const
-                            // Mirrors TS: CompilerError.invariant(!declarations.has(...))
+                            // Mirrors TS: Diagnostics.invariant(!declarations.has(...))
                             if declarations.contains_key(&decl_id) {
                                 return Err(invariant_error_with_span(
                                     "Expected variable not to be defined prior to declaration",

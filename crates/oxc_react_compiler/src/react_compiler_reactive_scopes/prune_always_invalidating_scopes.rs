@@ -15,7 +15,8 @@ use std::mem::take;
 
 use rustc_hash::FxHashSet;
 
-use crate::diagnostics::CompilerError;
+use oxc_diagnostics::OxcDiagnostic;
+
 use crate::react_compiler_hir::{
     IdentifierId, InstructionValue, PrunedReactiveScopeBlock, ReactiveFunction,
     ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveValue,
@@ -32,7 +33,7 @@ use crate::react_compiler_reactive_scopes::visitors::{
 pub fn prune_always_invalidating_scopes<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &Environment<'a>,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     let mut transform = Transform {
         env,
         always_invalidating_values: FxHashSet::default(),
@@ -59,7 +60,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         &mut self,
         instruction: &mut ReactiveInstruction<'a>,
         within_scope: &mut bool,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         self.visit_instruction(instruction, within_scope)?;
 
         let lvalue = &instruction.lvalue;
@@ -109,7 +110,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         _within_scope: &mut bool,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         let mut within_scope = true;
         self.visit_scope(scope, &mut within_scope)?;
 
