@@ -563,18 +563,7 @@ fn build_ignore_glob(
 
     let mut builder = GitignoreBuilder::new(config_dir);
     for pattern in ignore_patterns {
-        // Matching is rooted at the config file's directory and gitignore semantics cannot reach outside that root,
-        // so a `..` component can never match anything.
-        // Reject it instead of silently accepting a dead pattern.
-        let path_part = pattern.strip_prefix('!').unwrap_or(pattern);
-        let path_part = if path_part.ends_with("\\ ") { path_part } else { path_part.trim_end() };
-        // Split by `/` instead of `Path::components()`,
-        // since Gitignore patterns use `/` as the separator on all platforms.
-        if path_part.split('/').any(|segment| segment == "..") {
-            return Err(format!(
-                "Invalid pattern `{pattern}` in `ignorePatterns`: `..` is not supported, patterns are resolved within the config file's directory"
-            ));
-        }
+        oxc_config::validate_ignore_pattern(pattern)?;
 
         if builder.add_line(None, pattern).is_err() {
             return Err(format!("Failed to add ignore pattern `{pattern}` from `ignorePatterns`"));
@@ -685,28 +674,19 @@ mod tests_ignore_patterns_validation {
         build_ignore_glob(Some(Path::new("/repo/config")), &[pattern.to_string()]).map(|_| ())
     }
 
+    // Pattern-level cases are covered by `oxc_config::validate_ignore_pattern` tests;
+    // these only check that `build_ignore_glob` rejects a config containing one.
     #[test]
     fn rejects_parent_directory_components() {
-        for pattern in
-            ["../src/skip.js", "!../src/keep.js", "src/../skip.js", "src/..", ".. ", "src/.. "]
-        {
-            let error = build(pattern).unwrap_err();
-            assert_eq!(
-                error,
-                format!(
-                    "Invalid pattern `{pattern}` in `ignorePatterns`: `..` is not supported, patterns are resolved within the config file's directory"
-                )
-            );
-        }
+        let error = build("../src/skip.js").unwrap_err();
+        assert_eq!(
+            error,
+            "Invalid pattern `../src/skip.js` in `ignorePatterns`: `..` is not supported, patterns are resolved within the config file's directory"
+        );
     }
 
     #[test]
     fn accepts_patterns_without_parent_directory_components() {
-        // `..\ ` (escaped trailing space) literally matches a file named `.. `, not a parent directory
-        for pattern in
-            ["src/skip.js", "!src/keep.js", "ignored/", "*.gen.js", "foo..bar.js", "..\\ "]
-        {
-            assert!(build(pattern).is_ok(), "pattern `{pattern}` should be accepted");
-        }
+        assert!(build("src/skip.js").is_ok());
     }
 }

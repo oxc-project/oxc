@@ -1,0 +1,15 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c ./config/.oxlintrc.json .
+working directory: fixtures/cli/config_ignore_patterns/parent_reference
+----------
+Failed to parse oxlint configuration file.
+
+  x invalid config file <cwd>/fixtures/cli/config_ignore_patterns/parent_reference/config/.oxlintrc.json: Invalid pattern `../src/skipMe.js` in `ignorePatterns`: `..`
+  | is not supported, patterns are resolved within the config file's directory
+
+----------
+CLI result: InvalidOptionConfig
+----------

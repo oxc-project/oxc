@@ -278,6 +278,8 @@ pub struct Oxlintrc {
     pub path: PathBuf,
     /// Globs to ignore during linting. Patterns use gitignore-style matching,
     /// rooted at the directory containing the configuration file.
+    /// Files outside that directory cannot be matched; patterns containing `..`
+    /// are rejected as a configuration error.
     #[serde(rename = "ignorePatterns")]
     pub ignore_patterns: Vec<String>,
     /// Paths of configuration files that this configuration file extends (inherits from). The files

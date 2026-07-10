@@ -1287,6 +1287,16 @@ mod test {
             .test_and_snapshot(args);
     }
 
+    #[test]
+    fn test_config_ignore_patterns_parent_reference() {
+        // Patterns containing `..` can never match (matching is rooted at the
+        // config file's directory), so they are rejected as a configuration error.
+        let args = &["-c", "./config/.oxlintrc.json", "."];
+        Tester::new()
+            .with_cwd("fixtures/cli/config_ignore_patterns/parent_reference".into())
+            .test_and_snapshot(args);
+    }
+
     // Issue: <https://github.com/oxc-project/oxc/pull/7566>
     #[test]
     fn ignore_path_with_relative_files() {
