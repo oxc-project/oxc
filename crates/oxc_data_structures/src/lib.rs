@@ -6,6 +6,9 @@ mod assert_unchecked;
 #[cfg(feature = "box_macros")]
 pub mod box_macros;
 
+#[cfg(feature = "branch_hints")]
+pub mod branch_hints;
+
 #[cfg(feature = "code_buffer")]
 pub mod code_buffer;
 
