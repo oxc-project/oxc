@@ -59,8 +59,6 @@ bitflags! {
     pub struct NodeFlags: u8 {
         /// Set if the Node has a JSDoc comment attached
         const JSDoc     = 1 << 0;
-        /// Set on Nodes inside classes
-        const Class     = 1 << 1;
         /// Set functions containing yield statements
         const HasYield  = 1 << 2;
         /// Set for `export { specifier }`
@@ -73,12 +71,6 @@ impl NodeFlags {
     #[inline]
     pub fn has_jsdoc(self) -> bool {
         self.contains(Self::JSDoc)
-    }
-
-    /// Returns `true` if this node is inside a class.
-    #[inline]
-    pub fn has_class(self) -> bool {
-        self.contains(Self::Class)
     }
 
     /// Returns `true` if this function has a yield statement.
