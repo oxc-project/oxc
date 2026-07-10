@@ -1,22 +1,22 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, Span,
-};
+use oxc_diagnostics::Diagnostics;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{
     each_instruction_value_operand_with_functions, each_terminal_operand,
 };
 use crate::react_compiler_hir::{
     FunctionId, HirFunction, IdentifierId, InstructionValue, ParamPattern, Place, PlaceOrSpread,
-    PropertyLiteral, ReturnVariant, Terminal,
+    PropertyLiteral, ReturnVariant, Span, Terminal,
 };
 
 /// Validates useMemo() usage patterns.
 ///
 /// Port of ValidateUseMemo.ts.
 /// Returns VoidUseMemo errors separately (for logging via logErrors, not as compile errors).
-pub fn validate_use_memo(func: &HirFunction, env: &mut Environment) -> CompilerError {
+pub fn validate_use_memo(func: &HirFunction, env: &mut Environment) -> Diagnostics {
     validate_use_memo_impl(
         func,
         &env.functions,
@@ -34,10 +34,10 @@ struct FuncExprInfo {
 fn validate_use_memo_impl(
     func: &HirFunction,
     functions: &[HirFunction],
-    errors: &mut CompilerError,
+    errors: &mut Diagnostics,
     validate_no_void_use_memo: bool,
-) -> CompilerError {
-    let mut void_memo_errors = CompilerError::new();
+) -> Diagnostics {
+    let mut void_memo_errors = Diagnostics::new();
     let mut use_memos: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut react: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut func_exprs: FxHashMap<IdentifierId, FuncExprInfo> = FxHashMap::default();
@@ -124,19 +124,13 @@ fn validate_use_memo_impl(
     // Report unused useMemo results
     if !unused_use_memos.is_empty() {
         for (span, _) in unused_use_memos.values() {
-            void_memo_errors.push_diagnostic(
-                CompilerDiagnostic::new(
-                    ErrorCategory::VoidUseMemo,
-                    "useMemo() result is unused",
-                    Some(
-                        "This useMemo() value is unused. useMemo() is for computing and caching values, not for arbitrary side effects"
-                            .to_string(),
-                    ),
-                )
-                .with_detail(CompilerDiagnosticDetail::Error {
-                    span: Some(*span),
-                    message: Some("useMemo() result is unused".to_string()),
-                }),
+            void_memo_errors.push(
+                ErrorCategory::VoidUseMemo
+                    .diagnostic("useMemo() result is unused")
+                    .with_help(
+                        "This useMemo() value is unused. useMemo() is for computing and caching values, not for arbitrary side effects",
+                    )
+                    .with_label(span.label("useMemo() result is unused")),
             );
         }
     }
@@ -147,8 +141,8 @@ fn validate_use_memo_impl(
 #[allow(clippy::too_many_arguments)]
 fn handle_possible_use_memo_call(
     functions: &[HirFunction],
-    errors: &mut CompilerError,
-    void_memo_errors: &mut CompilerError,
+    errors: &mut Diagnostics,
+    void_memo_errors: &mut Diagnostics,
     use_memos: &FxHashSet<IdentifierId>,
     func_exprs: &FxHashMap<IdentifierId, FuncExprInfo>,
     unused_use_memos: &mut FxHashMap<IdentifierId, (Span, Option<String>)>,
@@ -181,37 +175,29 @@ fn handle_possible_use_memo_call(
             ParamPattern::Place(place) => place.span,
             ParamPattern::Spread(spread) => spread.place.span,
         };
-        errors.push_diagnostic(
-            CompilerDiagnostic::new(
-                ErrorCategory::UseMemo,
-                "useMemo() callbacks may not accept parameters",
-                Some(
-                    "useMemo() callbacks are called by React to cache calculations across re-renders. They should not take parameters. Instead, directly reference the props, state, or local variables needed for the computation"
-                        .to_string(),
-                ),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                span,
-                message: Some("Callbacks with parameters are not supported".to_string()),
-            }),
+        errors.push(
+            ErrorCategory::UseMemo
+                .diagnostic("useMemo() callbacks may not accept parameters")
+                .with_help(
+                    "useMemo() callbacks are called by React to cache calculations across re-renders. They should not take parameters. Instead, directly reference the props, state, or local variables needed for the computation",
+                )
+                .with_labels(span.map(|s| s.label("Callbacks with parameters are not supported"))),
         );
     }
 
     // Validate not async or generator
     if body_func.is_async || body_func.generator {
-        errors.push_diagnostic(
-            CompilerDiagnostic::new(
-                ErrorCategory::UseMemo,
-                "useMemo() callbacks may not be async or generator functions",
-                Some(
-                    "useMemo() callbacks are called once and must synchronously return a value"
-                        .to_string(),
+        errors.push(
+            ErrorCategory::UseMemo
+                .diagnostic("useMemo() callbacks may not be async or generator functions")
+                .with_help(
+                    "useMemo() callbacks are called once and must synchronously return a value",
+                )
+                .with_labels(
+                    body_info
+                        .span
+                        .map(|s| s.label("Async and generator functions are not supported")),
                 ),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                span: body_info.span,
-                message: Some("Async and generator functions are not supported".to_string()),
-            }),
         );
     }
 
@@ -219,19 +205,15 @@ fn handle_possible_use_memo_call(
     validate_no_context_variable_assignment(body_func, errors);
 
     if validate_no_void_use_memo && !has_non_void_return(body_func) {
-        void_memo_errors.push_diagnostic(
-            CompilerDiagnostic::new(
-                ErrorCategory::VoidUseMemo,
-                "useMemo() callbacks must return a value",
-                Some(
-                    "This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects"
-                        .to_string(),
+        void_memo_errors.push(
+            ErrorCategory::VoidUseMemo
+                .diagnostic("useMemo() callbacks must return a value")
+                .with_help(
+                    "This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects",
+                )
+                .with_labels(
+                    body_info.span.map(|s| s.label("useMemo() callbacks must return a value")),
                 ),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                span: body_info.span,
-                message: Some("useMemo() callbacks must return a value".to_string()),
-            }),
         );
     } else if validate_no_void_use_memo {
         if let Some(callee_span) = callee.span {
@@ -242,7 +224,7 @@ fn handle_possible_use_memo_call(
     }
 }
 
-fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut CompilerError) {
+fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Diagnostics) {
     let context: FxHashSet<IdentifierId> =
         func.context.iter().map(|place| place.identifier).collect();
 
@@ -251,19 +233,17 @@ fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Comp
             let instr = &func.instructions[instr_id.0 as usize];
             if let InstructionValue::StoreContext { lvalue, .. } = &instr.value {
                 if context.contains(&lvalue.place.identifier) {
-                    errors.push_diagnostic(
-                        CompilerDiagnostic::new(
-                            ErrorCategory::UseMemo,
-                            "useMemo() callbacks may not reassign variables declared outside of the callback",
-                            Some(
-                                "useMemo() callbacks must be pure functions and cannot reassign variables defined outside of the callback function"
-                                    .to_string(),
+                    errors.push(
+                        ErrorCategory::UseMemo
+                            .diagnostic(
+                                "useMemo() callbacks may not reassign variables declared outside of the callback",
+                            )
+                            .with_help(
+                                "useMemo() callbacks must be pure functions and cannot reassign variables defined outside of the callback function",
+                            )
+                            .with_labels(
+                                lvalue.place.span.map(|s| s.label("Cannot reassign variable")),
                             ),
-                        )
-                        .with_detail(CompilerDiagnosticDetail::Error {
-                            span: lvalue.place.span,
-                            message: Some("Cannot reassign variable".to_string()),
-                        }),
                     );
                 }
             }

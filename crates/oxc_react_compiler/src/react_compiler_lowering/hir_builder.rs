@@ -1,8 +1,4 @@
-use crate::react_compiler_diagnostics::CompilerDiagnostic;
-use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::each_terminal_successor;
 use crate::react_compiler_hir::visitors::terminal_fallthrough;
@@ -15,13 +11,14 @@ use crate::scope::ScopeId;
 use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
 
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
 use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
 
 type BuildResult<'a> = Result<
     (HIR, Vec<Instruction<'a>>, FxIndexMap<String, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
-    CompilerError,
+    OxcDiagnostic,
 >;
 
 // ---------------------------------------------------------------------------
@@ -70,19 +67,11 @@ pub(crate) fn is_always_reserved_word(s: &str) -> bool {
     )
 }
 
-pub(crate) fn reserved_identifier_diagnostic(name: &str) -> CompilerDiagnostic {
-    CompilerDiagnostic::new(
-        ErrorCategory::Syntax,
-        "Expected a non-reserved identifier name",
-        Some(format!(
-            "`{}` is a reserved word in JavaScript and cannot be used as an identifier name",
-            name
-        )),
-    )
-    .with_detail(CompilerDiagnosticDetail::Error {
-        span: None, // GeneratedSource in TS
-        message: Some("reserved word".to_string()),
-    })
+pub(crate) fn reserved_identifier_diagnostic(name: &str) -> OxcDiagnostic {
+    ErrorCategory::Syntax.diagnostic("Expected a non-reserved identifier name").with_help(format!(
+        "`{}` is a reserved word in JavaScript and cannot be used as an identifier name",
+        name
+    ))
 }
 
 // ---------------------------------------------------------------------------
@@ -401,12 +390,12 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         new_block(id, kind)
     }
 
-    /// Like `enter_reserved`, but the closure returns a `Result<Terminal, CompilerDiagnostic>`.
+    /// Like `enter_reserved`, but the closure returns a `Result<Terminal, OxcDiagnostic>`.
     pub fn try_enter_reserved(
         &mut self,
         wip: WipBlock,
-        f: impl FnOnce(&mut Self) -> Result<Terminal, CompilerDiagnostic>,
-    ) -> Result<(), CompilerDiagnostic> {
+        f: impl FnOnce(&mut Self) -> Result<Terminal, OxcDiagnostic>,
+    ) -> Result<(), OxcDiagnostic> {
         let prev = std::mem::replace(&mut self.current, wip);
         let terminal = f(self)?;
         let completed_wip = std::mem::replace(&mut self.current, prev);
@@ -414,12 +403,12 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         Ok(())
     }
 
-    /// Like `enter`, but the closure returns a `Result<Terminal, CompilerDiagnostic>`.
+    /// Like `enter`, but the closure returns a `Result<Terminal, OxcDiagnostic>`.
     pub fn try_enter(
         &mut self,
         kind: BlockKind,
-        f: impl FnOnce(&mut Self, BlockId) -> Result<Terminal, CompilerDiagnostic>,
-    ) -> Result<BlockId, CompilerDiagnostic> {
+        f: impl FnOnce(&mut Self, BlockId) -> Result<Terminal, OxcDiagnostic>,
+    ) -> Result<BlockId, OxcDiagnostic> {
         let wip = self.reserve(kind);
         let wip_id = wip.id;
         self.try_enter_reserved(wip, |this| f(this, wip_id))?;
@@ -430,8 +419,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn try_enter_try_catch(
         &mut self,
         handler: BlockId,
-        f: impl FnOnce(&mut Self) -> Result<(), CompilerDiagnostic>,
-    ) -> Result<(), CompilerDiagnostic> {
+        f: impl FnOnce(&mut Self) -> Result<(), OxcDiagnostic>,
+    ) -> Result<(), OxcDiagnostic> {
         self.exception_handler_stack.push(handler);
         let result = f(self);
         self.exception_handler_stack.pop();
@@ -449,8 +438,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         label: Option<String>,
         continue_block: BlockId,
         break_block: BlockId,
-        f: impl FnOnce(&mut Self) -> Result<T, CompilerDiagnostic>,
-    ) -> Result<T, CompilerDiagnostic> {
+        f: impl FnOnce(&mut Self) -> Result<T, OxcDiagnostic>,
+    ) -> Result<T, OxcDiagnostic> {
         self.scopes.push(Scope::Loop { label: label.clone(), continue_block, break_block });
         let value = f(self)?;
         let last = self.scopes.pop().expect("Mismatched loop scope: stack empty");
@@ -462,11 +451,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 );
             }
             _ => {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    "Mismatched loop scope: expected Loop, got other",
-                    None,
-                ));
+                return Err(ErrorCategory::Invariant
+                    .diagnostic("Mismatched loop scope: expected Loop, got other"));
             }
         }
         Ok(value)
@@ -477,8 +463,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         &mut self,
         label: String,
         break_block: BlockId,
-        f: impl FnOnce(&mut Self) -> Result<T, CompilerDiagnostic>,
-    ) -> Result<T, CompilerDiagnostic> {
+        f: impl FnOnce(&mut Self) -> Result<T, OxcDiagnostic>,
+    ) -> Result<T, OxcDiagnostic> {
         self.scopes.push(Scope::Label { label: label.clone(), break_block });
         let value = f(self)?;
         let last = self.scopes.pop().expect("Mismatched label scope: stack empty");
@@ -487,11 +473,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 assert!(*l == label && *b == break_block, "Mismatched label scope");
             }
             _ => {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    "Mismatched label scope: expected Label, got other",
-                    None,
-                ));
+                return Err(ErrorCategory::Invariant
+                    .diagnostic("Mismatched label scope: expected Label, got other"));
             }
         }
         Ok(value)
@@ -502,8 +485,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         &mut self,
         label: Option<String>,
         break_block: BlockId,
-        f: impl FnOnce(&mut Self) -> Result<T, CompilerDiagnostic>,
-    ) -> Result<T, CompilerDiagnostic> {
+        f: impl FnOnce(&mut Self) -> Result<T, OxcDiagnostic>,
+    ) -> Result<T, OxcDiagnostic> {
         self.scopes.push(Scope::Switch { label: label.clone(), break_block });
         let value = f(self)?;
         let last = self.scopes.pop().expect("Mismatched switch scope: stack empty");
@@ -512,11 +495,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 assert!(*l == label && *b == break_block, "Mismatched switch scope");
             }
             _ => {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    "Mismatched switch scope: expected Switch, got other",
-                    None,
-                ));
+                return Err(ErrorCategory::Invariant
+                    .diagnostic("Mismatched switch scope: expected Switch, got other"));
             }
         }
         Ok(value)
@@ -524,7 +504,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Look up the break target for the given label (or the innermost
     /// loop/switch if label is None).
-    pub fn lookup_break(&self, label: Option<&str>) -> Result<BlockId, CompilerDiagnostic> {
+    pub fn lookup_break(&self, label: Option<&str>) -> Result<BlockId, OxcDiagnostic> {
         for scope in self.scopes.iter().rev() {
             match scope {
                 Scope::Loop { .. } | Scope::Switch { .. } if label.is_none() => {
@@ -536,16 +516,13 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 _ => continue,
             }
         }
-        Err(CompilerDiagnostic::new(
-            ErrorCategory::Invariant,
-            "Expected a loop or switch to be in scope for break",
-            None,
-        ))
+        Err(ErrorCategory::Invariant
+            .diagnostic("Expected a loop or switch to be in scope for break"))
     }
 
     /// Look up the continue target for the given label (or the innermost
     /// loop if label is None). Only loops support continue.
-    pub fn lookup_continue(&self, label: Option<&str>) -> Result<BlockId, CompilerDiagnostic> {
+    pub fn lookup_continue(&self, label: Option<&str>) -> Result<BlockId, OxcDiagnostic> {
         for scope in self.scopes.iter().rev() {
             match scope {
                 Scope::Loop { label: scope_label, continue_block, .. } => {
@@ -555,20 +532,13 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 }
                 _ => {
                     if label.is_some() && scope.label() == label {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
-                            "Continue may only refer to a labeled loop",
-                            None,
-                        ));
+                        return Err(ErrorCategory::Invariant
+                            .diagnostic("Continue may only refer to a labeled loop"));
                     }
                 }
             }
         }
-        Err(CompilerDiagnostic::new(
-            ErrorCategory::Invariant,
-            "Expected a loop to be in scope for continue",
-            None,
-        ))
+        Err(ErrorCategory::Invariant.diagnostic("Expected a loop to be in scope for continue"))
     }
 
     /// Create a temporary identifier with a fresh id, returning its IdentifierId.
@@ -581,12 +551,12 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Record an error on the environment.
     /// Returns `Err` for Invariant errors (matching TS throw behavior).
-    pub fn record_error(&mut self, error: CompilerErrorDetail) -> Result<(), CompilerError> {
+    pub fn record_error(&mut self, error: OxcDiagnostic) -> Result<(), OxcDiagnostic> {
         self.env.record_error(error)
     }
 
     /// Record a diagnostic on the environment.
-    pub fn record_diagnostic(&mut self, diagnostic: CompilerDiagnostic) {
+    pub fn record_diagnostic(&mut self, diagnostic: OxcDiagnostic) {
         self.env.record_diagnostic(diagnostic);
     }
 
@@ -639,12 +609,11 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                         .first()
                         .and_then(|&i| instructions[i.0 as usize].span)
                         .or_else(|| block.terminal.span().copied());
-                    self.env.record_error(CompilerErrorDetail {
-                        category: ErrorCategory::Todo,
-                        reason: "Support functions with unreachable code that may contain hoisted declarations".to_string(),
-                        description: None,
-                        span,
-                    })?;
+                    self.env.record_error(
+                        ErrorCategory::Todo
+                            .diagnostic("Support functions with unreachable code that may contain hoisted declarations")
+                            .with_labels(span),
+                    )?;
                 }
             }
         }
@@ -675,7 +644,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         &mut self,
         name: &str,
         symbol_id: SymbolId,
-    ) -> Result<IdentifierId, CompilerError> {
+    ) -> Result<IdentifierId, OxcDiagnostic> {
         self.resolve_binding_with_span(name, symbol_id, None)
     }
 
@@ -685,7 +654,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         name: &str,
         symbol_id: SymbolId,
         span: Option<Span>,
-    ) -> Result<IdentifierId, CompilerError> {
+    ) -> Result<IdentifierId, OxcDiagnostic> {
         // Check for unsupported names BEFORE the cache check.
         // In TS, resolveBinding records fbt errors when node.name === 'fbt'. After a name collision
         // causes a rename (e.g., "fbt" -> "fbt_0"), TS's scope.rename changes the AST node's name,
@@ -710,14 +679,12 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                     .declaration_start(symbol_id)
                     .and_then(|nid| self.get_identifier_span(nid))
                     .or(span);
-                self.env.record_error(CompilerErrorDetail {
-                    category: ErrorCategory::Todo,
-                    reason: "Support local variables named `fbt`".to_string(),
-                    description: Some(
-                        "Local variables named `fbt` may conflict with the fbt plugin and are not yet supported".to_string(),
-                    ),
-                    span: error_span,
-                })?;
+                self.env.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic("Support local variables named `fbt`")
+                        .with_help("Local variables named `fbt` may conflict with the fbt plugin and are not yet supported")
+                        .with_labels(error_span),
+                )?;
             }
         }
 
@@ -728,7 +695,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
         if is_always_reserved_word(name) {
             // Match TS behavior: makeIdentifierName throws for reserved words.
-            return Err(CompilerError::from(reserved_identifier_diagnostic(name)));
+            return Err(reserved_identifier_diagnostic(name));
         }
 
         // Find a unique name: start with the original name, then try name_0, name_1, ...
@@ -795,7 +762,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         name: &str,
         span: Option<Span>,
         symbol: Option<SymbolId>,
-    ) -> Result<VariableBinding, CompilerError> {
+    ) -> Result<VariableBinding, OxcDiagnostic> {
         let Some(symbol_id) = symbol else {
             // No binding found: this is a global
             return Ok(VariableBinding::Global { name: name.to_string() });

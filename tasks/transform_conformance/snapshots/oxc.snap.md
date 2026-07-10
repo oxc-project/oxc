@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 267/398
+Passed: 270/398
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (38/60)
+# babel-plugin-transform-typescript (41/60)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -158,21 +158,6 @@ rebuilt        : SymbolId(0): []
 Symbol redeclarations mismatch for "y":
 after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(3): []
-
-* namespace/redeclaration-with-interface/input.ts
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 41, end: 44 }]
-rebuilt        : SymbolId(0): []
-
-* namespace/redeclaration-with-type-alias/input.ts
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 39, end: 42 }, Span { start: 87, end: 90 }]
-rebuilt        : SymbolId(0): []
-
-* namespace/redeclaration-with-type-only-namespace/input.ts
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 62, end: 65 }]
-rebuilt        : SymbolId(0): []
 
 * optimize-enums/merged-enum/input.ts
 Unresolved references mismatch:

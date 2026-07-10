@@ -1,6 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 70/70 (100.00%)
-Positive Passed: 66/70 (94.29%)
+AST Parsed     : 71/71 (100.00%)
+Positive Passed: 66/71 (92.96%)
 semantic Error: tasks/coverage/misc/pass/declare-let-private.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["private"]
@@ -89,4 +89,9 @@ semantic Error: tasks/coverage/misc/pass/oxc-13284.ts
 Symbol reference IDs mismatch for "_super":
 after transform: SymbolId(18): [ReferenceId(14)]
 rebuilt        : SymbolId(9): []
+
+semantic Error: tasks/coverage/misc/pass/reserved-kw-ambient-context.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["C2", "f"]
+rebuilt        : ScopeId(0): ["C2"]
 

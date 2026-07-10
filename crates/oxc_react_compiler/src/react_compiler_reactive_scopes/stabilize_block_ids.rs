@@ -12,7 +12,8 @@
 
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use oxc_diagnostics::OxcDiagnostic;
+
 use crate::react_compiler_hir::{
     BlockId, ReactiveFunction, ReactiveScopeBlock, ReactiveTerminal, ReactiveTerminalStatement,
     environment::Environment,
@@ -102,7 +103,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for RewriteBlockIds<'a, 'e> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         let scope_data = &mut self.env.scopes[scope.scope.0 as usize];
         if let Some(ref mut early_return) = scope_data.early_return_value {
             early_return.label = get_or_insert_mapping(state, early_return.label);
@@ -114,7 +115,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for RewriteBlockIds<'a, 'e> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         if let Some(ref mut label) = stmt.label {
             label.id = get_or_insert_mapping(state, label.id);
         }

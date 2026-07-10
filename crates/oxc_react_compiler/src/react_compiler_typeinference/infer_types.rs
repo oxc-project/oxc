@@ -12,7 +12,9 @@ use std::mem::replace;
 
 use rustc_hash::FxHashMap;
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::{Environment, is_hook_name};
 use crate::react_compiler_hir::object_shape::{
     BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_MIXED_READONLY_ID,
@@ -32,10 +34,7 @@ use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 // Public API
 // =============================================================================
 
-pub fn infer_types(
-    func: &mut HirFunction,
-    env: &mut Environment,
-) -> Result<(), CompilerDiagnostic> {
+pub fn infer_types(func: &mut HirFunction, env: &mut Environment) -> Result<(), OxcDiagnostic> {
     let enable_treat_ref_like_identifiers_as_refs =
         env.config.enable_treat_ref_like_identifiers_as_refs;
     let enable_treat_set_identifiers_as_state_setters =
@@ -279,7 +278,7 @@ fn generate(
     func: &HirFunction,
     env: &mut Environment,
     unifier: &mut Unifier,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     // Component params
     if func.fn_type == ReactFunctionType::Component {
         if let Some(ParamPattern::Place(place)) = func.params.first() {
@@ -380,7 +379,7 @@ fn generate_for_function_id(
     global_types: &FxHashMap<(u32, InstructionId), Type>,
     shapes: &ShapeRegistry,
     unifier: &mut Unifier,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     // Take the function out temporarily to avoid borrow conflicts
     let inner = replace(&mut functions[func_id.0 as usize], placeholder_function());
 
@@ -462,7 +461,7 @@ fn generate_instruction_types(
     global_types: &FxHashMap<(u32, InstructionId), Type>,
     shapes: &ShapeRegistry,
     unifier: &mut Unifier,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let left = get_type(instr.lvalue.identifier, identifiers);
 
     match &instr.value {
@@ -1200,12 +1199,7 @@ impl Unifier {
         }
     }
 
-    fn unify(
-        &mut self,
-        t_a: Type,
-        t_b: Type,
-        shapes: &ShapeRegistry,
-    ) -> Result<(), CompilerDiagnostic> {
+    fn unify(&mut self, t_a: Type, t_b: Type, shapes: &ShapeRegistry) -> Result<(), OxcDiagnostic> {
         self.unify_impl(t_a, t_b, shapes)
     }
 
@@ -1214,7 +1208,7 @@ impl Unifier {
         t_a: Type,
         t_b: Type,
         shapes: &ShapeRegistry,
-    ) -> Result<(), CompilerDiagnostic> {
+    ) -> Result<(), OxcDiagnostic> {
         // Handle Property in the RHS position
         if let Type::Property { ref object_type, ref object_name, ref property_name } = t_b {
             // Check enableTreatRefLikeIdentifiersAsRefs
@@ -1279,7 +1273,7 @@ impl Unifier {
         v: Type,
         ty: Type,
         shapes: &ShapeRegistry,
-    ) -> Result<(), CompilerDiagnostic> {
+    ) -> Result<(), OxcDiagnostic> {
         let v_id = match &v {
             Type::TypeVar { id } => *id,
             _ => return Ok(()),
@@ -1304,12 +1298,9 @@ impl Unifier {
 
         if let Type::Phi { ref operands } = ty {
             if operands.is_empty() {
-                return Err(CompilerDiagnostic {
-                    category: ErrorCategory::Invariant,
-                    reason: "there should be at least one operand".to_string(),
-                    description: None,
-                    details: vec![],
-                });
+                return Err(
+                    ErrorCategory::Invariant.diagnostic("there should be at least one operand")
+                );
             }
 
             let mut candidate_type: Option<Type> = None;
@@ -1346,12 +1337,7 @@ impl Unifier {
                 self.substitutions.insert(v_id, resolved);
                 return Ok(());
             }
-            return Err(CompilerDiagnostic {
-                category: ErrorCategory::Invariant,
-                reason: "cycle detected".to_string(),
-                description: None,
-                details: vec![],
-            });
+            return Err(ErrorCategory::Invariant.diagnostic("cycle detected"));
         }
 
         self.substitutions.insert(v_id, ty);

@@ -71,7 +71,9 @@ use crate::{
         expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         is_keyword_property_key,
-        object::{format_property_key, should_preserve_quote},
+        object::{
+            format_property_key, should_preserve_quote, should_preserve_quote_for_enum_member,
+        },
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         suppressed::FormatSuppressedNode,
@@ -125,6 +127,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
                 | AstNodes::PropertyDefinition(_)
                 | AstNodes::AccessorProperty(_)
                 | AstNodes::ImportAttribute(_)
+                | AstNodes::TSEnumMember(_)
         );
         if is_property_key_parent && f.context().is_quote_needed() {
             let quote_str = f.options().quote_style.as_str();
@@ -229,11 +232,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
             if value.generator() {
                 write!(f, "*");
             }
-            if self.computed {
-                write!(f, ["[", self.key(), "]"]);
-            } else {
-                format_property_key(self.key(), f);
-            }
+            format_property_key(self.key(), self.computed, f);
 
             format_grouped_parameters_with_return_type_for_method(
                 value.type_parameters(),
@@ -447,23 +446,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ChainExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        // When ChainExpression contains TSNonNullExpression, we print `(a?.b)!` instead of `(a?.b!)`
-        // This normalizes `(a?.b!).c` to `(a?.b)!.c` to match Prettier's output.
-        // See: https://github.com/prettier/prettier/blob/main/src/language-js/clean.js
-        if let AstNodes::TSNonNullExpression(non_null) = self.expression().as_ast_nodes() {
-            let needs_parens =
-                crate::parentheses::chain_expression_needs_parens(self.span, self.parent());
-            if needs_parens {
-                write!(f, "(");
-            }
-            non_null.expression().fmt(f);
-            if needs_parens {
-                write!(f, ")");
-            }
-            write!(f, "!");
-        } else {
-            self.expression().fmt(f);
-        }
+        self.expression().fmt(f);
     }
 }
 
@@ -1220,12 +1203,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSEnumMember<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if f.options().quote_properties.is_consistent() {
+            let quote_needed = self
+                .as_ref()
+                .iter()
+                .any(|member| should_preserve_quote_for_enum_member(&member.id, f));
+            f.context_mut().push_quote_needed(quote_needed);
+        }
+
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_nodes_with_soft_line().entries_with_trailing_separator(
             self.iter(),
             ",",
             trailing_separator,
         );
+
+        if f.options().quote_properties.is_consistent() {
+            f.context_mut().pop_quote_needed();
+        }
     }
 }
 
@@ -1238,7 +1233,27 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
             write!(f, "[");
         }
 
-        write!(f, [id]);
+        // Enum member names behave like object property keys for `quoteProps`;
+        // intercept them here (like `ImportAttribute`) so the generic `StringLiteral` writer stays context-free.
+        if let (
+            // NOTE: `ComputedString` (`['baz']`, rejected by TSC but parsed by Oxc) is included
+            TSEnumMemberName::String(_) | TSEnumMemberName::ComputedString(_),
+            AstNodes::StringLiteral(string),
+        ) = (id.as_ref(), id.as_ast_nodes())
+        {
+            let format = FormatLiteralStringToken::new(
+                f.source_text().text_for(string),
+                /* jsx */ false,
+                StringLiteralParentKind::Member,
+            )
+            .clean_text(f);
+
+            string.format_leading_comments(f);
+            write!(f, format);
+            string.format_trailing_comments(f);
+        } else {
+            write!(f, [id]);
+        }
 
         if is_computed {
             write!(f, "]");
@@ -1619,11 +1634,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSPropertySignature<'a>> {
         if self.readonly() {
             write!(f, ["readonly", space()]);
         }
-        if self.computed() {
-            write!(f, ["[", self.key(), "]"]);
-        } else {
-            format_property_key(self.key(), f);
-        }
+        format_property_key(self.key(), self.computed(), f);
         if self.optional() {
             write!(f, "?");
         }

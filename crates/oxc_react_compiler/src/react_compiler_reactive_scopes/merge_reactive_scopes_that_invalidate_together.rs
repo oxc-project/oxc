@@ -12,7 +12,9 @@ use std::mem::take;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, CompilerError, ErrorCategory};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, EvaluationOrder, InstructionKind, InstructionValue, Place,
     ReactiveBlock, ReactiveFunction, ReactiveScopeBlock, ReactiveScopeDependency,
@@ -35,7 +37,7 @@ use crate::react_compiler_reactive_scopes::visitors::{
 pub fn merge_reactive_scopes_that_invalidate_together<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &mut Environment<'a>,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     // Pass 1: find last usage of each declaration
     let visitor = FindLastUsageVisitor { env: &*env };
     let mut last_usage: FxHashMap<DeclarationId, EvaluationOrder> = FxHashMap::default();
@@ -95,7 +97,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         let scope_deps = self.env.scopes[scope.scope.0 as usize].dependencies.clone();
         // Save parent state and recurse with this scope's deps as state
         let parent_state = state.take();
@@ -119,7 +121,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
         &mut self,
         block: &mut ReactiveBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         // Pass 1: traverse nested (scope flattening handled by transform_scope)
         self.traverse_block(block, state)?;
         // Pass 2+3: merge consecutive scopes in this block
@@ -133,7 +135,7 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
     fn merge_scopes_in_block(
         &mut self,
         block: &mut ReactiveBlock<'a>,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         // Pass 2: identify scopes for merging
         struct MergedScope {
             scope_id: ScopeId,
@@ -351,12 +353,8 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
             let mut merged_scope = match &all_stmts[entry.from] {
                 ReactiveStatement::Scope(s) => s.clone(),
                 _ => {
-                    return Err(CompilerDiagnostic::new(
-                        ErrorCategory::Invariant,
-                        "MergeConsecutiveScopes: Expected scope at starting index",
-                        None,
-                    )
-                    .into());
+                    return Err(ErrorCategory::Invariant
+                        .diagnostic("MergeConsecutiveScopes: Expected scope at starting index"));
                 }
             };
             index += 1;

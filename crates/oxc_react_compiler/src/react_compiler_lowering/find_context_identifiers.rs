@@ -32,12 +32,11 @@ use oxc_ast::ast as oxc;
 use oxc_ast::ast::AssignmentTargetMaybeDefault;
 use oxc_ast::match_assignment_target;
 use oxc_ast_visit::Visit;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::diagnostics::ErrorCategory;
 use crate::scope::ScopeId;
 use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
@@ -61,7 +60,7 @@ struct ContextIdentifierVisitor<'a> {
     /// Empty when at the top level of the function being compiled.
     function_stack: Vec<ScopeId>,
     binding_info: FxHashMap<SymbolId, BindingInfo>,
-    error: Option<CompilerError>,
+    error: Option<OxcDiagnostic>,
 }
 
 impl<'a> ContextIdentifierVisitor<'a> {
@@ -394,17 +393,12 @@ impl<'a> ContextIdentifierVisitor<'a> {
 /// aborting before BuildHIR ever runs or logs, so this must return Err rather
 /// than record-and-continue: otherwise Rust emits HIR debug entries for a
 /// function TS never lowered.
-fn make_unsupported_lval_error(type_name: &str, span: Option<Span>) -> CompilerError {
-    let mut err = CompilerError::new();
-    err.push_error_detail(CompilerErrorDetail {
-        category: ErrorCategory::Todo,
-        reason: format!(
+fn make_unsupported_lval_error(type_name: &str, span: Option<Span>) -> OxcDiagnostic {
+    ErrorCategory::Todo
+        .diagnostic(format!(
             "[FindContextIdentifiers] Cannot handle Object destructuring assignment target {type_name}"
-        ),
-        description: None,
-        span,
-    });
-    err
+        ))
+        .with_labels(span)
 }
 
 /// Check if a binding declared at `binding_scope` is captured by a function at `function_scope`.
@@ -432,7 +426,7 @@ pub fn find_context_identifiers(
     func: &FunctionNode<'_>,
     scope: &ScopeResolver<'_, '_>,
     identifier_spans: &crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex,
-) -> Result<FxHashSet<SymbolId>, CompilerError> {
+) -> Result<FxHashSet<SymbolId>, OxcDiagnostic> {
     let func_scope = func.scope_id().unwrap_or_else(|| scope.program_scope());
 
     let mut visitor = ContextIdentifierVisitor {

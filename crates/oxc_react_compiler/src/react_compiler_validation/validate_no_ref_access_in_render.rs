@@ -2,9 +2,9 @@ use std::sync::atomic::{AtomicU32, Ordering};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory, Span,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors::{
@@ -13,7 +13,7 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     AliasingEffect, BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, ParamPattern,
-    Place, PrimitiveValue, Terminal, Type, UnaryOperator, is_use_ref_type,
+    Place, PrimitiveValue, Span, Terminal, Type, UnaryOperator, is_use_ref_type,
 };
 
 const ERROR_DESCRIPTION: &str = "React refs are values that are not needed for rendering. \
@@ -288,7 +288,7 @@ fn destructure(ty: &RefAccessType) -> RefAccessType {
 // --- Validation helpers ---
 
 fn validate_no_direct_ref_value_access(
-    errors: &mut Vec<CompilerDiagnostic>,
+    errors: &mut Vec<OxcDiagnostic>,
     operand: &Place,
     env: &Env,
 ) {
@@ -296,48 +296,41 @@ fn validate_no_direct_ref_value_access(
         let ty = destructure(ty);
         if let RefAccessType::RefValue { span, .. } = &ty {
             errors.push(
-                CompilerDiagnostic::new(
-                    ErrorCategory::Refs,
-                    "Cannot access refs during render",
-                    Some(ERROR_DESCRIPTION.to_string()),
-                )
-                .with_detail(CompilerDiagnosticDetail::Error {
-                    span: span.or(operand.span),
-                    message: Some("Cannot access ref value during render".to_string()),
-                }),
+                ErrorCategory::Refs
+                    .diagnostic("Cannot access refs during render")
+                    .with_help(ERROR_DESCRIPTION)
+                    .with_labels(
+                        span.or(operand.span)
+                            .map(|s| s.label("Cannot access ref value during render")),
+                    ),
             );
         }
     }
 }
 
-fn validate_no_ref_value_access(errors: &mut Vec<CompilerDiagnostic>, env: &Env, operand: &Place) {
+fn validate_no_ref_value_access(errors: &mut Vec<OxcDiagnostic>, env: &Env, operand: &Place) {
     if let Some(ty) = env.get(operand.identifier) {
         let ty = destructure(ty);
         match &ty {
             RefAccessType::RefValue { span, .. } => {
                 errors.push(
-                    CompilerDiagnostic::new(
-                        ErrorCategory::Refs,
-                        "Cannot access refs during render",
-                        Some(ERROR_DESCRIPTION.to_string()),
-                    )
-                    .with_detail(CompilerDiagnosticDetail::Error {
-                        span: span.or(operand.span),
-                        message: Some("Cannot access ref value during render".to_string()),
-                    }),
+                    ErrorCategory::Refs
+                        .diagnostic("Cannot access refs during render")
+                        .with_help(ERROR_DESCRIPTION)
+                        .with_labels(
+                            span.or(operand.span)
+                                .map(|s| s.label("Cannot access ref value during render")),
+                        ),
                 );
             }
             RefAccessType::Structure { fn_type: Some(fn_type), .. } if fn_type.read_ref_effect => {
                 errors.push(
-                    CompilerDiagnostic::new(
-                        ErrorCategory::Refs,
-                        "Cannot access refs during render",
-                        Some(ERROR_DESCRIPTION.to_string()),
-                    )
-                    .with_detail(CompilerDiagnosticDetail::Error {
-                        span: operand.span,
-                        message: Some("Cannot access ref value during render".to_string()),
-                    }),
+                    ErrorCategory::Refs
+                        .diagnostic("Cannot access refs during render")
+                        .with_help(ERROR_DESCRIPTION)
+                        .with_labels(
+                            operand.span.map(|s| s.label("Cannot access ref value during render")),
+                        ),
                 );
             }
             _ => {}
@@ -346,7 +339,7 @@ fn validate_no_ref_value_access(errors: &mut Vec<CompilerDiagnostic>, env: &Env,
 }
 
 fn validate_no_ref_passed_to_function(
-    errors: &mut Vec<CompilerDiagnostic>,
+    errors: &mut Vec<OxcDiagnostic>,
     env: &Env,
     operand: &Place,
     span: Option<Span>,
@@ -361,34 +354,22 @@ fn validate_no_ref_passed_to_function(
                     span
                 };
                 errors.push(
-                    CompilerDiagnostic::new(
-                        ErrorCategory::Refs,
-                        "Cannot access refs during render",
-                        Some(ERROR_DESCRIPTION.to_string()),
-                    )
-                    .with_detail(CompilerDiagnosticDetail::Error {
-                        span: error_span,
-                        message: Some(
-                            "Passing a ref to a function may read its value during render"
-                                .to_string(),
-                        ),
-                    }),
+                    ErrorCategory::Refs
+                        .diagnostic("Cannot access refs during render")
+                        .with_help(ERROR_DESCRIPTION)
+                        .with_labels(error_span.map(|s| {
+                            s.label("Passing a ref to a function may read its value during render")
+                        })),
                 );
             }
             RefAccessType::Structure { fn_type: Some(fn_type), .. } if fn_type.read_ref_effect => {
                 errors.push(
-                    CompilerDiagnostic::new(
-                        ErrorCategory::Refs,
-                        "Cannot access refs during render",
-                        Some(ERROR_DESCRIPTION.to_string()),
-                    )
-                    .with_detail(CompilerDiagnosticDetail::Error {
-                        span,
-                        message: Some(
-                            "Passing a ref to a function may read its value during render"
-                                .to_string(),
-                        ),
-                    }),
+                    ErrorCategory::Refs
+                        .diagnostic("Cannot access refs during render")
+                        .with_help(ERROR_DESCRIPTION)
+                        .with_labels(span.map(|s| {
+                            s.label("Passing a ref to a function may read its value during render")
+                        })),
                 );
             }
             _ => {}
@@ -397,7 +378,7 @@ fn validate_no_ref_passed_to_function(
 }
 
 fn validate_no_ref_update(
-    errors: &mut Vec<CompilerDiagnostic>,
+    errors: &mut Vec<OxcDiagnostic>,
     env: &Env,
     operand: &Place,
     span: Option<Span>,
@@ -412,15 +393,12 @@ fn validate_no_ref_update(
                     span
                 };
                 errors.push(
-                    CompilerDiagnostic::new(
-                        ErrorCategory::Refs,
-                        "Cannot access refs during render",
-                        Some(ERROR_DESCRIPTION.to_string()),
-                    )
-                    .with_detail(CompilerDiagnosticDetail::Error {
-                        span: error_span,
-                        message: Some("Cannot update ref during render".to_string()),
-                    }),
+                    ErrorCategory::Refs
+                        .diagnostic("Cannot access refs during render")
+                        .with_help(ERROR_DESCRIPTION)
+                        .with_labels(
+                            error_span.map(|s| s.label("Cannot update ref during render")),
+                        ),
                 );
             }
             _ => {}
@@ -428,18 +406,15 @@ fn validate_no_ref_update(
     }
 }
 
-fn guard_check(errors: &mut Vec<CompilerDiagnostic>, operand: &Place, env: &Env) {
+fn guard_check(errors: &mut Vec<OxcDiagnostic>, operand: &Place, env: &Env) {
     if matches!(env.get(operand.identifier), Some(RefAccessType::Guard { .. })) {
         errors.push(
-            CompilerDiagnostic::new(
-                ErrorCategory::Refs,
-                "Cannot access refs during render",
-                Some(ERROR_DESCRIPTION.to_string()),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                span: operand.span,
-                message: Some("Cannot access ref value during render".to_string()),
-            }),
+            ErrorCategory::Refs
+                .diagnostic("Cannot access refs during render")
+                .with_help(ERROR_DESCRIPTION)
+                .with_labels(
+                    operand.span.map(|s| s.label("Cannot access ref value during render")),
+                ),
         );
     }
 }
@@ -449,7 +424,7 @@ fn guard_check(errors: &mut Vec<CompilerDiagnostic>, operand: &Place, env: &Env)
 pub fn validate_no_ref_access_in_render(func: &HirFunction, env: &mut Environment) {
     let mut ref_env = Env::new();
     collect_temporaries_sidemap(func, &mut ref_env, &env.identifiers, &env.types);
-    let mut errors: Vec<CompilerDiagnostic> = Vec::new();
+    let mut errors: Vec<OxcDiagnostic> = Vec::new();
     validate_no_ref_access_in_render_impl(
         func,
         &env.identifiers,
@@ -517,7 +492,7 @@ fn validate_no_ref_access_in_render_impl(
     functions: &[HirFunction],
     env: &Environment,
     ref_env: &mut Env,
-    errors: &mut Vec<CompilerDiagnostic>,
+    errors: &mut Vec<OxcDiagnostic>,
 ) -> RefAccessType {
     let mut return_values: Vec<RefAccessType> = Vec::new();
 
@@ -683,7 +658,7 @@ fn validate_no_ref_access_in_render_impl(
                     InstructionValue::ObjectMethod { lowered_func, .. }
                     | InstructionValue::FunctionExpression { lowered_func, .. } => {
                         let inner = &functions[lowered_func.func.0 as usize];
-                        let mut inner_errors: Vec<CompilerDiagnostic> = Vec::new();
+                        let mut inner_errors: Vec<OxcDiagnostic> = Vec::new();
                         let result = validate_no_ref_access_in_render_impl(
                             inner,
                             identifiers,
@@ -723,19 +698,12 @@ fn validate_no_ref_access_in_render_impl(
                             if fn_ty.read_ref_effect {
                                 did_error = true;
                                 errors.push(
-                                    CompilerDiagnostic::new(
-                                        ErrorCategory::Refs,
-                                        "Cannot access refs during render",
-                                        Some(ERROR_DESCRIPTION.to_string()),
-                                    )
-                                    .with_detail(
-                                        CompilerDiagnosticDetail::Error {
-                                            span: callee.span,
-                                            message: Some(
-                                                "This function accesses a ref value".to_string(),
-                                            ),
-                                        },
-                                    ),
+                                    ErrorCategory::Refs
+                                        .diagnostic("Cannot access refs during render")
+                                        .with_help(ERROR_DESCRIPTION)
+                                        .with_labels(callee.span.map(|s| {
+                                            s.label("This function accesses a ref value")
+                                        })),
                                 );
                             }
                         }
@@ -979,19 +947,12 @@ fn validate_no_ref_access_in_render_impl(
                                     RefAccessType::Guard { ref_id: *ref_id },
                                 );
                                 errors.push(
-                                    CompilerDiagnostic::new(
-                                        ErrorCategory::Refs,
-                                        "Cannot access refs during render",
-                                        Some(ERROR_DESCRIPTION.to_string()),
-                                    )
-                                    .with_detail(
-                                        CompilerDiagnosticDetail::Error {
-                                            span: value.span,
-                                            message: Some(
-                                                "Cannot access ref value during render".to_string(),
-                                            ),
-                                        },
-                                    ),
+                                    ErrorCategory::Refs
+                                        .diagnostic("Cannot access refs during render")
+                                        .with_help(ERROR_DESCRIPTION)
+                                        .with_labels(value.span.map(|s| {
+                                            s.label("Cannot access ref value during render")
+                                        })),
                                 );
                             } else {
                                 validate_no_ref_value_access(errors, ref_env, value);
@@ -1118,11 +1079,7 @@ fn validate_no_ref_access_in_render_impl(
     }
 
     if ref_env.has_changed() {
-        errors.push(CompilerDiagnostic::new(
-            ErrorCategory::Invariant,
-            "Ref type environment did not converge",
-            None,
-        ));
+        errors.push(ErrorCategory::Invariant.diagnostic("Ref type environment did not converge"));
         return RefAccessType::None;
     }
 

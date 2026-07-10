@@ -55,8 +55,8 @@ test:
   cargo test --all-features
 
 # Lint the whole project
-lint:
-  cargo lint -- --deny warnings
+lint $CARGO_BUILD_WARNINGS="deny":
+  cargo lint
 
 # Format all files
 fmt:

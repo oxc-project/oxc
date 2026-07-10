@@ -7,41 +7,37 @@
 //!
 //! This module is a port of Program.ts from the TypeScript compiler. It orchestrates
 //! the compilation of a program by:
-//! 1. Checking if compilation should be skipped
-//! 2. Validating restricted imports
-//! 3. Finding program-level suppressions
-//! 4. Discovering functions to compile (components, hooks)
-//! 5. Processing each function through the compilation pipeline
-//! 6. Applying compiled functions back to the AST
+//! 1. Finding program-level suppressions
+//! 2. Discovering functions to compile (components, hooks)
+//! 3. Processing each function through the compilation pipeline
+//! 4. Applying compiled functions back to the AST
 
 use cow_utils::CowUtils;
+use oxc_ast::AstKind;
 use oxc_ast::ast as oxc;
 use oxc_ast::builder::AstBuilder;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{SPAN, Span};
-use rustc_hash::FxHashMap;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_span::{GetSpan, SPAN, Span};
+use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::diagnostics::{ErrorCategory, has_critical_errors, with_fallback_label};
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
 use crate::scope::ScopeResolver;
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn, GetAllocator};
-use oxc_semantic::Semantic;
+use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
 use oxc_syntax::scope::ScopeId;
+use oxc_syntax::symbol::SymbolId;
 
 use super::compile_result::CodegenFunction;
 use super::compile_result::CompileResult;
 use super::imports::ProgramContext;
-use super::imports::validate_restricted_imports;
 use super::pipeline;
 use super::suppression::SuppressionRange;
 use super::suppression::filter_suppressions_that_affect_function;
 use super::suppression::find_program_suppressions;
-use super::suppression::suppressions_to_compiler_error;
+use super::suppression::suppressions_to_diagnostics;
 use crate::options::{
     CompilationMode, CompilerOutputMode, GatingConfig, PanicThreshold, PluginOptions,
 };
@@ -98,7 +94,7 @@ enum CompileSourceKind {
 fn try_find_directive_enabling_memoization<'a>(
     directives: &'a [String],
     opts: &PluginOptions,
-) -> Result<Option<&'a str>, CompilerError> {
+) -> Result<Option<&'a str>, Diagnostics> {
     // Check standard opt-in directives
     let opt_in = directives.iter().find(|d| OPT_IN_DIRECTIVES.contains(&d.as_str()));
     if let Some(directive) = opt_in {
@@ -115,13 +111,13 @@ fn try_find_directive_enabling_memoization<'a>(
 
 /// Check if any opt-out directive is present in the given directives.
 fn find_directive_disabling_memoization<'a>(
-    directives: &'a [String],
-    opts: &PluginOptions,
+    mut directives: impl Iterator<Item = &'a str>,
+    custom_opt_out_directives: Option<&[String]>,
 ) -> Option<&'a str> {
-    if let Some(ref custom_directives) = opts.custom_opt_out_directives {
-        directives.iter().find(|d| custom_directives.contains(d)).map(String::as_str)
+    if let Some(custom_directives) = custom_opt_out_directives {
+        directives.find(|d| custom_directives.iter().any(|c| c == d))
     } else {
-        directives.iter().find(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str())).map(String::as_str)
+        directives.find(|d| OPT_OUT_DIRECTIVES.contains(d))
     }
 }
 
@@ -136,13 +132,13 @@ struct DynamicGatingResult<'a> {
 fn find_directives_dynamic_gating<'a>(
     directives: &'a [String],
     opts: &PluginOptions,
-) -> Result<Option<DynamicGatingResult<'a>>, CompilerError> {
+) -> Result<Option<DynamicGatingResult<'a>>, Diagnostics> {
     let dynamic_gating = match &opts.dynamic_gating {
         Some(dg) => dg,
         None => return Ok(None),
     };
 
-    let mut errors: Vec<CompilerErrorDetail> = Vec::new();
+    let mut errors = Diagnostics::new();
     let mut matches: Vec<(&'a str, String)> = Vec::new();
 
     for directive in directives {
@@ -150,34 +146,26 @@ fn find_directives_dynamic_gating<'a>(
             if is_valid_identifier(ident) {
                 matches.push((directive.as_str(), ident.to_string()));
             } else {
-                let detail = CompilerErrorDetail::new(
-                    ErrorCategory::Gating,
-                    "Dynamic gating directive is not a valid JavaScript identifier",
-                )
-                .with_description(format!("Found '{directive}'"));
-                errors.push(detail);
+                errors.push(
+                    ErrorCategory::Gating
+                        .diagnostic("Dynamic gating directive is not a valid JavaScript identifier")
+                        .with_help(format!("Found '{directive}'")),
+                );
             }
         }
     }
 
     if !errors.is_empty() {
-        let mut err = CompilerError::new();
-        for e in errors {
-            err.push_error_detail(e);
-        }
-        return Err(err);
+        return Err(errors);
     }
 
     if matches.len() > 1 {
         let names: Vec<&str> = matches.iter().map(|(d, _)| *d).collect();
-        let mut err = CompilerError::new();
-        let detail = CompilerErrorDetail::new(
-            ErrorCategory::Gating,
-            "Multiple dynamic gating directives found",
-        )
-        .with_description(format!("Expected a single directive but found [{}]", names.join(", ")));
-        err.push_error_detail(detail);
-        return Err(err);
+        return Err(Diagnostics::from(
+            ErrorCategory::Gating
+                .diagnostic("Multiple dynamic gating directives found")
+                .with_help(format!("Expected a single directive but found [{}]", names.join(", "))),
+        ));
     }
 
     if matches.len() == 1 {
@@ -343,8 +331,8 @@ fn is_regular_call(call: &oxc::CallExpression) -> bool {
 /// For FunctionDeclaration: uses the `id` field.
 /// For FunctionExpression/ArrowFunctionExpression: infers from parent context
 /// (VariableDeclarator, etc.) which is passed explicitly since we don't have Babel paths.
-fn get_function_name_from_id(id: Option<&oxc::BindingIdentifier>) -> Option<String> {
-    id.map(|id| id.name.to_string())
+fn get_function_name_from_id<'ast>(id: Option<&oxc::BindingIdentifier<'ast>>) -> Option<&'ast str> {
+    id.map(|id| id.name.as_str())
 }
 
 // -----------------------------------------------------------------------
@@ -1090,32 +1078,25 @@ fn get_callee_name_if_react_api<'e>(callee: &'e oxc::Expression) -> Option<&'e s
 // Error handling
 // -----------------------------------------------------------------------
 
-/// Push a compiler error's per-detail diagnostics onto the context.
-fn log_error(err: &CompilerError, fn_span: Option<Span>, context: &mut ProgramContext) {
+/// Push a failed compilation attempt's diagnostics onto the accumulator.
+fn log_error(err: &Diagnostics, fn_span: Option<Span>, diagnostics: &mut Diagnostics) {
     // Detect simulated unknown exception (throwUnknownException__testonly). In TS,
-    // non-CompilerError exceptions surface as a pipeline error carrying the error
-    // message rather than a per-detail compiler error.
-    let is_simulated_unknown = err.details.len() == 1
-        && err.details.iter().all(|d| match d {
-            CompilerErrorOrDiagnostic::ErrorDetail(d) => {
-                d.category == ErrorCategory::Invariant && d.reason == "unexpected error"
-            }
-            _ => false,
-        });
+    // exceptions that are not compiler errors surface as a pipeline error carrying
+    // the error message rather than a per-detail compiler error.
+    let is_simulated_unknown = err.len() == 1
+        && err.iter().all(|d| d.message == "[ReactCompiler] Invariant: unexpected error");
     if is_simulated_unknown {
         let mut diagnostic =
             OxcDiagnostic::error("[ReactCompiler] Pipeline error: Error: unexpected error");
         if let Some(span) = fn_span {
             diagnostic = diagnostic.with_label(span);
         }
-        context.diagnostics.push(diagnostic);
+        diagnostics.push(diagnostic);
         return;
     }
 
-    for detail in &err.details {
-        if let Some(diagnostic) = crate::diagnostics::detail_to_diagnostic(detail, fn_span) {
-            context.diagnostics.push(diagnostic);
-        }
+    for diagnostic in err {
+        diagnostics.push(with_fallback_label(diagnostic, fn_span));
     }
 }
 
@@ -1123,29 +1104,27 @@ fn log_error(err: &CompilerError, fn_span: Option<Span>, context: &mut ProgramCo
 /// Returns Some(CompileResult::Error) if the error should be surfaced as fatal,
 /// otherwise returns None (error was logged only).
 fn handle_error<'a>(
-    err: &CompilerError,
+    err: &Diagnostics,
     fn_span: Option<Span>,
-    context: &mut ProgramContext,
+    panic_threshold: PanicThreshold,
+    diagnostics: &mut Diagnostics,
 ) -> Option<CompileResult<'a>> {
     // Log the error
-    log_error(err, fn_span, context);
+    log_error(err, fn_span, diagnostics);
 
-    let should_panic = match context.opts.panic_threshold {
+    let should_panic = match panic_threshold {
         PanicThreshold::AllErrors => true,
-        PanicThreshold::CriticalErrors => err.has_errors(),
+        PanicThreshold::CriticalErrors => has_critical_errors(err),
         PanicThreshold::None => false,
     };
 
     // Config errors always cause a panic
-    let is_config_error = err.details.iter().any(|d| match d {
-        CompilerErrorOrDiagnostic::Diagnostic(d) => d.category == ErrorCategory::Config,
-        CompilerErrorOrDiagnostic::ErrorDetail(d) => d.category == ErrorCategory::Config,
-    });
+    let is_config_error = err.iter().any(|d| ErrorCategory::Config.matches(d));
 
     if should_panic || is_config_error {
         // The per-detail diagnostics were already pushed by `log_error`; the fatal
         // result just carries them. (The old JS-shim summary is dropped.)
-        Some(CompileResult::Error { diagnostics: std::mem::take(&mut context.diagnostics) })
+        Some(CompileResult::Error { diagnostics: std::mem::take(diagnostics) })
     } else {
         None
     }
@@ -1157,7 +1136,7 @@ fn handle_error<'a>(
 
 /// Attempt to compile a single function.
 ///
-/// Returns `CodegenFunction` on success or `CompilerError` on failure.
+/// Returns `CodegenFunction` on success or the failed attempt's diagnostics.
 /// Debug log entries are accumulated on `context.debug_logs`.
 fn try_compile_function<'a>(
     ast: &AstBuilder<'a>,
@@ -1166,17 +1145,14 @@ fn try_compile_function<'a>(
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
-) -> Result<Option<CodegenFunction<'a>>, CompilerError> {
-    // Check for suppressions that affect this function
+) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
+    // Check for suppressions that affect this function. Suppression errors are
+    // returned (not thrown), so they do NOT trigger CompileUnexpectedThrow.
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
         let affecting = filter_suppressions_that_affect_function(&context.suppressions, start, end);
         if !affecting.is_empty() {
             let owned: Vec<SuppressionRange> = affecting.into_iter().cloned().collect();
-            let mut err = suppressions_to_compiler_error(&owned);
-            // Suppression errors are returned (not thrown), so they should NOT
-            // trigger CompileUnexpectedThrow.
-            err.is_thrown = false;
-            return Err(err);
+            return Err(suppressions_to_diagnostics(&owned));
         }
     }
 
@@ -1190,6 +1166,7 @@ fn try_compile_function<'a>(
         output_mode,
         env_config,
         context,
+        source.fn_ast_span,
     )
 }
 
@@ -1210,14 +1187,22 @@ fn process_fn<'a>(
     // Parse directives from the function body
     let opt_in_result =
         try_find_directive_enabling_memoization(&source.body_directives, &context.opts);
-    let opt_out = find_directive_disabling_memoization(&source.body_directives, &context.opts);
+    let opt_out = find_directive_disabling_memoization(
+        source.body_directives.iter().map(String::as_str),
+        context.opts.custom_opt_out_directives.as_deref(),
+    );
 
     // If parsing opt-in directive fails, handle the error and skip
     let opt_in = match opt_in_result {
         Ok(d) => d,
         Err(err) => {
             // Apply panic threshold logic (same as compilation errors)
-            if let Some(result) = handle_error(&err, source.fn_ast_span, context) {
+            if let Some(result) = handle_error(
+                &err,
+                source.fn_ast_span,
+                context.opts.panic_threshold,
+                &mut context.diagnostics,
+            ) {
                 return Err(result);
             }
             return Ok(None);
@@ -1229,26 +1214,17 @@ fn process_fn<'a>(
 
     match compile_result {
         Err(err) => {
-            // Surface errors "thrown" from a pass (not accumulated via
-            // env.record_error) that have all non-Invariant details, matching TS
-            // tryCompileFunction()'s catch block.
-            if err.is_thrown && err.is_all_non_invariant() {
-                let mut diagnostic = OxcDiagnostic::error(format!(
-                    "[ReactCompiler] Unexpected error: {}",
-                    err.to_string_for_event()
-                ));
-                if let Some(span) = source.fn_ast_span {
-                    diagnostic = diagnostic.with_label(span);
-                }
-                context.diagnostics.push(diagnostic);
-            }
-
             if opt_out.is_some() {
                 // If there's an opt-out, just log the error (don't escalate)
-                log_error(&err, source.fn_ast_span, context);
+                log_error(&err, source.fn_ast_span, &mut context.diagnostics);
             } else {
                 // Apply panic threshold logic
-                if let Some(result) = handle_error(&err, source.fn_ast_span, context) {
+                if let Some(result) = handle_error(
+                    &err,
+                    source.fn_ast_span,
+                    context.opts.panic_threshold,
+                    &mut context.diagnostics,
+                ) {
                     return Err(result);
                 }
             }
@@ -1302,11 +1278,11 @@ fn body_directive_values(body: &oxc::FunctionBody) -> Vec<String> {
 /// and `parent_callee_name` the enclosing forwardRef/memo callee (if any).
 fn try_make_compile_source<'a>(
     fn_node: FunctionNode<'a>,
-    name: Option<String>,
+    name: Option<&str>,
     original_kind: OriginalFnKind,
-    parent_callee_name: Option<String>,
+    parent_callee_name: Option<&str>,
     opts: &PluginOptions,
-    context: &mut ProgramContext,
+    already_compiled: &mut FxHashSet<u32>,
 ) -> Option<CompileSource<'a>> {
     let (params, body, span, body_directives) = match fn_node {
         FunctionNode::Function(f) => {
@@ -1331,25 +1307,26 @@ fn try_make_compile_source<'a>(
 
     let node_id = span.start;
 
-    // Skip if already compiled (identified by node_id).
-    if context.is_already_compiled(node_id) {
+    // Skip if already compiled (identified by node_id). This is a workaround for
+    // Babel not consistently respecting skip().
+    if already_compiled.contains(&node_id) {
         return None;
     }
 
     let fn_type = get_react_function_type(
-        name.as_deref(),
+        name,
         params,
         &body,
         &body_directives,
         // Flow `component`/`hook` declaration syntax never appears in the oxc AST.
         false,
-        parent_callee_name.as_deref(),
+        parent_callee_name,
         opts,
         false,
         false,
     )?;
 
-    context.mark_compiled(node_id);
+    already_compiled.insert(node_id);
 
     Some(CompileSource {
         kind: CompileSourceKind::Original,
@@ -1369,9 +1346,9 @@ fn try_make_compile_source<'a>(
 
 /// Get the variable declarator name (for inferring function names from
 /// `const Foo = () => {}`).
-fn get_declarator_name(decl: &oxc::VariableDeclarator) -> Option<String> {
+fn get_declarator_name<'ast>(decl: &oxc::VariableDeclarator<'ast>) -> Option<&'ast str> {
     match &decl.id {
-        oxc::BindingPattern::BindingIdentifier(id) => Some(id.name.to_string()),
+        oxc::BindingPattern::BindingIdentifier(id) => Some(id.name.as_str()),
         _ => None,
     }
 }
@@ -1399,19 +1376,19 @@ fn get_declarator_name(decl: &oxc::VariableDeclarator) -> Option<String> {
 /// discovery — matching the Babel bridge, which extracted no metadata for them).
 struct DiscoveryWalker<'a, 'ast> {
     opts: &'a PluginOptions,
-    context: &'a mut ProgramContext,
+    already_compiled: FxHashSet<u32>,
     queue: Vec<CompileSource<'ast>>,
     scope_stack: Vec<ScopeId>,
     loop_expression_depth: usize,
-    current_declarator_name: Option<String>,
-    parent_callee_stack: Vec<Option<String>>,
+    current_declarator_name: Option<&'ast str>,
+    parent_callee_stack: Vec<Option<&'ast str>>,
 }
 
 impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
-    fn new(opts: &'a PluginOptions, context: &'a mut ProgramContext) -> Self {
+    fn new(opts: &'a PluginOptions) -> Self {
         Self {
             opts,
-            context,
+            already_compiled: FxHashSet::default(),
             queue: Vec::new(),
             scope_stack: Vec::new(),
             loop_expression_depth: 0,
@@ -1421,8 +1398,12 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     }
 
     /// Try to push the scope a node creates (its semantic `scope_id` cell).
-    /// Returns whether one was pushed.
+    /// Returns whether one was pushed. The stack is only consulted by the
+    /// 'all'-mode scope check, so skip maintaining it in other modes.
     fn try_push_scope(&mut self, scope_id: Option<ScopeId>) -> bool {
+        if self.opts.compilation_mode != CompilationMode::All {
+            return false;
+        }
         if let Some(scope_id) = scope_id {
             self.scope_stack.push(scope_id);
             true
@@ -1439,8 +1420,8 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
             && (self.scope_stack.len() > 2 || self.loop_expression_depth > 0)
     }
 
-    fn current_parent_callee(&self) -> Option<String> {
-        self.parent_callee_stack.last().and_then(|opt| opt.clone())
+    fn current_parent_callee(&self) -> Option<&'ast str> {
+        self.parent_callee_stack.last().copied().flatten()
     }
 
     fn walk_program(&mut self, program: &'ast oxc::Program<'ast>) {
@@ -1648,7 +1629,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     /// Walk an oxc `Function` node (declaration or expression). `inferred_name`,
     /// when `Some`, supplies the name from the enclosing variable declarator (for
     /// function expressions); `None` means use the function's own id.
-    fn walk_function(&mut self, func: &'ast oxc::Function<'ast>, inferred_name: Option<String>) {
+    fn walk_function(&mut self, func: &'ast oxc::Function<'ast>, inferred_name: Option<&'ast str>) {
         let pushed = self.try_push_scope(func.scope_id.get());
 
         let original_kind = match func.r#type {
@@ -1674,7 +1655,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 original_kind,
                 parent_callee,
                 self.opts,
-                self.context,
+                &mut self.already_compiled,
             ) {
                 self.queue.push(source);
                 true
@@ -1699,7 +1680,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     fn walk_arrow(
         &mut self,
         arrow: &'ast oxc::ArrowFunctionExpression<'ast>,
-        inferred_name: Option<String>,
+        inferred_name: Option<&'ast str>,
     ) {
         let pushed = self.try_push_scope(arrow.scope_id.get());
 
@@ -1713,7 +1694,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 OriginalFnKind::ArrowFunctionExpression,
                 parent_callee,
                 self.opts,
-                self.context,
+                &mut self.already_compiled,
             ) {
                 self.queue.push(source);
                 true
@@ -1746,7 +1727,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 self.walk_arrow(node, name);
             }
             oxc::Expression::CallExpression(node) => {
-                let callee_name = get_callee_name_if_react_api(&node.callee).map(|s| s.to_string());
+                let callee_name = get_callee_name_if_react_api(&node.callee);
                 // The declarator name only flows through forwardRef/memo calls; for
                 // any other call, clear it so nested functions don't inherit it.
                 if callee_name.is_none() {
@@ -1973,11 +1954,155 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
 fn find_functions_to_compile<'ast>(
     program: &'ast oxc::Program<'ast>,
     opts: &PluginOptions,
-    context: &mut ProgramContext,
 ) -> Vec<CompileSource<'ast>> {
-    let mut walker = DiscoveryWalker::new(opts, context);
+    let mut walker = DiscoveryWalker::new(opts);
     walker.walk_program(program);
     walker.queue
+}
+
+// -----------------------------------------------------------------------
+// Discovery pre-check
+// -----------------------------------------------------------------------
+
+/// Cheap, sound pre-check for [`find_functions_to_compile`]: `false` means the
+/// discovery walk cannot queue anything, so the compile is a no-op. Built from
+/// data `Semantic` already computed instead of walking the AST, and delegating
+/// all judgment to discovery's own helpers:
+///
+/// - every discoverable function creates a function scope, so the node behind
+///   each function scope is run through [`try_make_compile_source`] with the
+///   name discovery would infer — own id for declarations, the directly
+///   enclosing `const Foo = ...` declarator for expressions/arrows, the only
+///   name sources discovery uses outside forwardRef/memo. This covers the
+///   named and directive-opt-in selection paths, nested functions included;
+/// - the forwardRef/memo path needs an identifier named `memo`, `forwardRef`,
+///   or `React` in callee position of a call [`get_callee_name_if_react_api`]
+///   recognizes, so checking the reference shapes of those three names —
+///   bindings and unresolved globals — covers wrapped anonymous functions.
+///
+/// Over-approximation is fine (the walk then finds an empty queue); a missed
+/// witness is not, since a skipped file is never compiled.
+fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> bool {
+    // 'all' mode compiles every top-level function; always walk.
+    if opts.compilation_mode == CompilationMode::All {
+        return true;
+    }
+
+    let scoping = semantic.scoping();
+    let nodes = semantic.nodes();
+
+    // forwardRef/memo wrappers used as globals: O(1) lookups. Discovery matches
+    // callee *names*, not bindings, so unresolved references count too.
+    const WRAPPER_NAMES: [&str; 3] = ["memo", "forwardRef", "React"];
+    for name in WRAPPER_NAMES {
+        if let Some(reference_ids) = scoping.root_unresolved_references().get(name) {
+            if reference_ids.iter().any(|reference_id| {
+                is_wrapper_callee(nodes, scoping.get_reference(*reference_id).node_id())
+            }) {
+                return true;
+            }
+        }
+    }
+
+    // Named components/hooks and directive opt-ins: run the node behind every
+    // function scope through discovery's candidate constructor. parent_callee
+    // is None — wrapper-selected functions are witnessed by reference shapes.
+    let mut discarded = FxHashSet::default();
+    for scope_id in scoping.scope_descendants_from_root() {
+        if !scoping.scope_flags(scope_id).is_function() {
+            continue;
+        }
+        let node = nodes.get_node(scoping.get_node_id(scope_id));
+        let (fn_node, name, original_kind) = match node.kind() {
+            AstKind::Function(func) => {
+                let (name, original_kind) = match func.r#type {
+                    oxc::FunctionType::FunctionDeclaration
+                    | oxc::FunctionType::TSDeclareFunction => (
+                        get_function_name_from_id(func.id.as_ref()),
+                        OriginalFnKind::FunctionDeclaration,
+                    ),
+                    _ => (
+                        declarator_name_for(nodes, node.id(), func.span),
+                        OriginalFnKind::FunctionExpression,
+                    ),
+                };
+                // A nameless function without directives can never classify.
+                if name.is_none()
+                    && func.body.as_ref().is_none_or(|body| body.directives.is_empty())
+                {
+                    continue;
+                }
+                (FunctionNode::Function(func), name, original_kind)
+            }
+            AstKind::ArrowFunctionExpression(arrow) => {
+                let name = declarator_name_for(nodes, node.id(), arrow.span);
+                if name.is_none() && arrow.body.directives.is_empty() {
+                    continue;
+                }
+                (FunctionNode::Arrow(arrow), name, OriginalFnKind::ArrowFunctionExpression)
+            }
+            _ => continue,
+        };
+        if try_make_compile_source(fn_node, name, original_kind, None, opts, &mut discarded)
+            .is_some()
+        {
+            return true;
+        }
+    }
+
+    // Bindings named like a wrapper (`import {memo} from 'react'`, or even a
+    // local `const memo = ...` — discovery treats any `memo(...)` call as a
+    // wrapper regardless of what the name resolves to). Scanned last so
+    // component files exit in the function-scope pass above.
+    for symbol_id in scoping.symbol_ids() {
+        if matches!(scoping.symbol_name(symbol_id), "memo" | "forwardRef" | "React")
+            && has_wrapper_callee_reference(scoping, nodes, symbol_id)
+        {
+            return true;
+        }
+    }
+
+    false
+}
+
+/// Whether any resolved reference of `symbol_id` is a wrapper-call callee.
+fn has_wrapper_callee_reference(scoping: &Scoping, nodes: &AstNodes, symbol_id: SymbolId) -> bool {
+    scoping.get_resolved_reference_ids(symbol_id).iter().any(|reference_id| {
+        is_wrapper_callee(nodes, scoping.get_reference(*reference_id).node_id())
+    })
+}
+
+/// The `const Foo = <fn>` name for a function/arrow node, iff the declarator's
+/// init is directly this node — the same direct-init rule the discovery walker
+/// applies (wrappers like parens or TS casts break the inference there too).
+fn declarator_name_for<'a>(nodes: &AstNodes<'a>, node_id: NodeId, span: Span) -> Option<&'a str> {
+    match nodes.parent_kind(node_id) {
+        AstKind::VariableDeclarator(decl)
+            if decl.init.as_ref().is_some_and(|init| init.span() == span) =>
+        {
+            get_declarator_name(decl)
+        }
+        _ => None,
+    }
+}
+
+/// Whether a reference sits in callee position of a call that
+/// [`get_callee_name_if_react_api`] recognizes — directly (`memo(...)`) or as
+/// the object of a called member (`React.memo(...)`).
+fn is_wrapper_callee(nodes: &AstNodes, node_id: NodeId) -> bool {
+    let span = nodes.get_node(node_id).kind().span();
+    let parent = nodes.parent_node(node_id);
+    let (call, callee_span) = match parent.kind() {
+        AstKind::CallExpression(call) => (call, span),
+        AstKind::StaticMemberExpression(member) if member.object.span() == span => {
+            match nodes.parent_kind(parent.id()) {
+                AstKind::CallExpression(call) => (call, member.span),
+                _ => return false,
+            }
+        }
+        _ => return false,
+    };
+    call.callee.span() == callee_span && get_callee_name_if_react_api(&call.callee).is_some()
 }
 
 struct CompiledFunction<'a, 'p, 's> {
@@ -2723,7 +2848,6 @@ fn ox_is_non_namespaced_import(import: &oxc::ImportDeclaration) -> bool {
 /// modified, along with any logger events.
 ///
 /// This function implements the logic from the TS entrypoint (Program.ts):
-/// - validateRestrictedImports: check for blocklisted imports
 /// - findProgramSuppressions: find eslint/flow suppression comments
 /// - findFunctionsToCompile: traverse program to find components and hooks
 /// - processFn: per-function compilation with directive and suppression handling
@@ -2734,10 +2858,16 @@ pub fn compile_program<'a, 'p>(
     program: &'p oxc::Program<'a>,
     options: PluginOptions,
 ) -> CompileResult<'a> {
-    // The codegen back-end builds oxc nodes directly via this `AstBuilder`; `scope`
-    // is a read-through view over `Semantic` for binding/reference lookups.
-    let ast = AstBuilder::new(allocator);
-    let scope = ScopeResolver::new(semantic, program);
+    // Find all functions to compile. An empty queue means no work, so return
+    // before all the setup below, which only compilation needs. The pre-check
+    // decides emptiness from semantic data without walking the AST.
+    if !may_have_functions_to_compile(semantic, &options) {
+        return CompileResult::Success { ast: None, diagnostics: Diagnostics::new() };
+    }
+    let queue = find_functions_to_compile(program, &options);
+    if queue.is_empty() {
+        return CompileResult::Success { ast: None, diagnostics: Diagnostics::new() };
+    }
 
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
@@ -2763,26 +2893,22 @@ pub fn compile_program<'a, 'p>(
     );
 
     // Check for module-scope opt-out directive
-    let module_directives: Vec<String> =
-        program.directives.iter().map(|d| d.expression.value.to_string()).collect();
-    let has_module_scope_opt_out =
-        find_directive_disabling_memoization(&module_directives, &options).is_some();
+    let has_module_scope_opt_out = find_directive_disabling_memoization(
+        program.directives.iter().map(|d| d.expression.value.as_str()),
+        options.custom_opt_out_directives.as_deref(),
+    )
+    .is_some();
 
     // Create program context
     let mut context = ProgramContext::new(options.clone(), suppressions, has_module_scope_opt_out);
 
+    // The codegen back-end builds oxc nodes directly via this `AstBuilder`; `scope`
+    // is a read-through view over `Semantic` for binding/reference lookups.
+    let ast = AstBuilder::new(allocator);
+    let scope = ScopeResolver::new(semantic, program);
+
     // Initialize known referenced names from scope bindings for UID collision detection
     context.init_from_scope(&scope);
-
-    // Validate restricted imports (needs context for handle_error)
-    if let Some(err) =
-        validate_restricted_imports(program, &options.environment.validate_blocklisted_imports)
-    {
-        if let Some(result) = handle_error(&err, None, &mut context) {
-            return result;
-        }
-        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
-    }
 
     // Pre-register instrumentation imports to get stable local names.
     // These are needed before compilation so codegen can use the correct names.
@@ -2817,9 +2943,6 @@ pub fn compile_program<'a, 'p>(
     context.instrument_gating_name = instrument_gating_name;
     context.hook_guard_name = hook_guard_name;
 
-    // Find all functions to compile
-    let queue = find_functions_to_compile(program, &options, &mut context);
-
     // Process each function and collect compiled results
     let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_>> = Vec::new();
 
@@ -2840,12 +2963,11 @@ pub fn compile_program<'a, 'p>(
     // TS invariant: if there's a module scope opt-out, no functions should have been compiled
     if has_module_scope_opt_out {
         if !compiled_fns.is_empty() {
-            let mut err = CompilerError::new();
-            err.push_error_detail(CompilerErrorDetail::new(
-                ErrorCategory::Invariant,
-                "Unexpected compiled functions when module scope opt-out is present",
-            ));
-            handle_error(&err, None, &mut context);
+            let err =
+                Diagnostics::from(ErrorCategory::Invariant.diagnostic(
+                    "Unexpected compiled functions when module scope opt-out is present",
+                ));
+            handle_error(&err, None, context.opts.panic_threshold, &mut context.diagnostics);
         }
         return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
     }

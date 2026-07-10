@@ -2,9 +2,9 @@ use rustc_hash::FxHashMap;
 use std::fmt::Display;
 use std::fmt::Formatter;
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory,
-};
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{each_instruction_value_lvalue, each_pattern_operand};
 use crate::react_compiler_hir::{
@@ -37,7 +37,7 @@ type IdentifierKinds = FxHashMap<IdentifierId, (Place, VarRefKind)>;
 pub fn validate_context_variable_lvalues(
     func: &HirFunction,
     env: &mut Environment,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     validate_context_variable_lvalues_with_errors(
         func,
         &env.functions,
@@ -53,8 +53,8 @@ pub fn validate_context_variable_lvalues_with_errors(
     func: &HirFunction,
     functions: &[HirFunction],
     identifiers: &[Identifier],
-    errors: &mut CompilerError,
-) -> Result<(), CompilerDiagnostic> {
+    errors: &mut Diagnostics,
+) -> Result<(), OxcDiagnostic> {
     let mut identifier_kinds: IdentifierKinds = FxHashMap::default();
     validate_context_variable_lvalues_impl(
         func,
@@ -70,8 +70,8 @@ fn validate_context_variable_lvalues_impl(
     identifier_kinds: &mut IdentifierKinds,
     functions: &[HirFunction],
     identifiers: &[Identifier],
-    errors: &mut CompilerError,
-) -> Result<(), CompilerDiagnostic> {
+    errors: &mut Diagnostics,
+) -> Result<(), OxcDiagnostic> {
     let mut inner_function_ids: Vec<FunctionId> = Vec::new();
 
     for (_block_id, block) in &func.body.blocks {
@@ -121,18 +121,12 @@ fn validate_context_variable_lvalues_impl(
                 }
                 _ => {
                     for _ in each_instruction_value_lvalue(value) {
-                        errors.push_diagnostic(
-                            CompilerDiagnostic::new(
-                                ErrorCategory::Todo,
-                                "ValidateContextVariableLValues: unhandled instruction variant",
-                                None,
-                            )
-                            .with_detail(
-                                CompilerDiagnosticDetail::Error {
-                                    span: value.span().copied(),
-                                    message: None,
-                                },
-                            ),
+                        errors.push(
+                            ErrorCategory::Todo
+                                .diagnostic(
+                                    "ValidateContextVariableLValues: unhandled instruction variant",
+                                )
+                                .with_labels(value.span().copied()),
                         );
                     }
                 }
@@ -168,8 +162,8 @@ fn visit(
     place: &Place,
     kind: VarRefKind,
     env_identifiers: &[Identifier],
-    errors: &mut CompilerError,
-) -> Result<(), CompilerDiagnostic> {
+    errors: &mut Diagnostics,
+) -> Result<(), OxcDiagnostic> {
     if let Some((prev_place, prev_kind)) = identifiers.get(&place.identifier) {
         let was_context = *prev_kind == VarRefKind::Context;
         let is_context = kind == VarRefKind::Context;
@@ -177,29 +171,23 @@ fn visit(
             if *prev_kind == VarRefKind::Destructure || kind == VarRefKind::Destructure {
                 let span =
                     if kind == VarRefKind::Destructure { place.span } else { prev_place.span };
-                errors.push_diagnostic(
-                    CompilerDiagnostic::new(
-                        ErrorCategory::Todo,
-                        "Support destructuring of context variables",
-                        None,
-                    )
-                    .with_detail(CompilerDiagnosticDetail::Error { span, message: None }),
+                errors.push(
+                    ErrorCategory::Todo
+                        .diagnostic("Support destructuring of context variables")
+                        .with_labels(span),
                 );
                 return Ok(());
             }
             let place_str = format_place(place, env_identifiers);
-            return Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
-                "Expected all references to a variable to be consistently local or context references",
-                Some(format!(
+            return Err(ErrorCategory::Invariant
+                .diagnostic(
+                    "Expected all references to a variable to be consistently local or context references",
+                )
+                .with_help(format!(
                     "Identifier {} is referenced as a {} variable, but was previously referenced as a {} variable",
                     place_str, kind, prev_kind
-                )),
-            )
-            .with_detail(CompilerDiagnosticDetail::Error {
-                span: place.span,
-                message: Some(format!("this is {}", prev_kind)),
-            }));
+                ))
+                .with_labels(place.span.map(|s| s.label(format!("this is {}", prev_kind)))));
         }
     }
     identifiers.insert(place.identifier, (place.clone(), kind));

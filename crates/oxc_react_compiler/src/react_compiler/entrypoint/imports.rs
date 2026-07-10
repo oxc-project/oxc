@@ -6,7 +6,9 @@
  */
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
+use oxc_ast::ast::{ImportDeclarationSpecifier, ModuleExportName, Program, Statement};
+
+use crate::diagnostics::ErrorCategory;
 use crate::scope::ScopeResolver;
 
 use oxc_diagnostics::Diagnostics;
@@ -39,7 +41,6 @@ pub struct ProgramContext {
     pub hook_guard_name: Option<String>,
 
     // Internal state
-    already_compiled: FxHashSet<u32>,
     known_referenced_names: FxHashSet<String>,
     imports: FxHashMap<String, FxHashMap<String, NonLocalImportSpecifier>>,
 }
@@ -60,21 +61,9 @@ impl ProgramContext {
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
-            already_compiled: FxHashSet::default(),
             known_referenced_names: FxHashSet::default(),
             imports: FxHashMap::default(),
         }
-    }
-
-    /// Check if a function at the given start position has already been compiled.
-    /// This is a workaround for Babel not consistently respecting skip().
-    pub fn is_already_compiled(&self, start: u32) -> bool {
-        self.already_compiled.contains(&start)
-    }
-
-    /// Mark a function at the given start position as compiled.
-    pub fn mark_compiled(&mut self, start: u32) {
-        self.already_compiled.insert(start);
     }
 
     /// Initialize known referenced names from scope bindings.
@@ -192,32 +181,59 @@ impl ProgramContext {
 }
 
 /// Check for blocklisted import modules.
-/// Returns a CompilerError if any blocklisted imports are found.
+/// Returns diagnostics if any blocklisted imports are found.
 pub fn validate_restricted_imports(
-    program: &oxc_ast::ast::Program,
+    program: &Program,
     blocklisted: &Option<Vec<String>>,
-) -> Option<CompilerError> {
+) -> Option<Diagnostics> {
     let blocklisted = match blocklisted {
         Some(b) if !b.is_empty() => b,
         _ => return None,
     };
     let restricted: FxHashSet<&str> = blocklisted.iter().map(|s| s.as_str()).collect();
-    let mut error = CompilerError::new();
+    let mut diagnostics = Diagnostics::new();
 
     for stmt in &program.body {
-        if let oxc_ast::ast::Statement::ImportDeclaration(import) = stmt {
+        if let Statement::ImportDeclaration(import) = stmt {
             if restricted.contains(import.source.value.as_str()) {
-                let detail = CompilerErrorDetail::new(
-                    ErrorCategory::Todo,
-                    "Bailing out due to blocklisted import",
-                )
-                .with_description(format!("Import from module {}", import.source.value));
-                error.push_error_detail(detail);
+                diagnostics.push(
+                    ErrorCategory::Todo
+                        .diagnostic("Bailing out due to blocklisted import")
+                        .with_help(format!("Import from module {}", import.source.value)),
+                );
             }
         }
     }
 
-    if error.has_any_errors() { Some(error) } else { None }
+    if diagnostics.is_empty() { None } else { Some(diagnostics) }
+}
+
+/// Whether the program already imports the `c` memo-cache helper from `module_name`
+/// — i.e. the file has already been compiled and must be skipped.
+pub fn has_memo_cache_function_import(program: &Program, module_name: &str) -> bool {
+    for stmt in &program.body {
+        if let Statement::ImportDeclaration(import) = stmt
+            && import.source.value == module_name
+            && import.import_kind.is_value()
+            && let Some(specifiers) = &import.specifiers
+        {
+            for specifier in specifiers {
+                if let ImportDeclarationSpecifier::ImportSpecifier(data) = specifier
+                    && data.import_kind.is_value()
+                {
+                    let imported_name = match &data.imported {
+                        ModuleExportName::IdentifierName(id) => Some(id.name.as_str()),
+                        ModuleExportName::IdentifierReference(id) => Some(id.name.as_str()),
+                        ModuleExportName::StringLiteral(s) => Some(s.value.as_str()),
+                    };
+                    if imported_name == Some("c") {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
 }
 
 /// Check if a name follows the React hook naming convention (use[A-Z0-9]...).

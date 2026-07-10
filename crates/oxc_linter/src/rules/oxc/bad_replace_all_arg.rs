@@ -16,6 +16,7 @@ use crate::{
 fn bad_replace_all_arg_diagnostic(replace_all_span: Span, regex_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.")
         .with_help("To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.")
+        .with_note("Unlike `replace`, `replaceAll` throws a `TypeError` when passed a non-global regular expression instead of replacing only the first match.")
         .with_labels([
             replace_all_span.label("`replaceAll` called here"),
             regex_span.label("RegExp supplied here"),
@@ -32,7 +33,8 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The `replaceAll` method replaces all occurrences of a string with another string. If the global flag (g) is not used in the regular expression, only the first occurrence of the string will be replaced.
+    /// When called with a regular expression, the `replaceAll` method requires the global flag (g).
+    /// Otherwise, it throws a `TypeError` at runtime instead of performing a replacement.
     ///
     /// ### Examples
     ///

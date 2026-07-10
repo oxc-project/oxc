@@ -13,7 +13,8 @@ use std::mem::take;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use oxc_diagnostics::OxcDiagnostic;
+
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::DeclarationId;
 use crate::react_compiler_hir::Effect;
@@ -60,7 +61,7 @@ type ScopeMemoNodes = FxHashMap<ScopeId, (Vec<DeclarationId>, bool)>;
 pub fn prune_non_escaping_scopes<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &mut Environment<'a>,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     // First build up a map of which instructions are involved in creating which values,
     // and which values are returned.
     let mut state = CollectState::new();
@@ -1078,7 +1079,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneScopesTransform<'a, 'e> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut FxHashSet<DeclarationId>,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         self.visit_scope(scope, state)?;
 
         let scope_id = scope.scope;
@@ -1112,7 +1113,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneScopesTransform<'a, 'e> {
         &mut self,
         instruction: &mut ReactiveInstruction<'a>,
         state: &mut FxHashSet<DeclarationId>,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         self.traverse_instruction(instruction, state)?;
 
         match &mut instruction.value {

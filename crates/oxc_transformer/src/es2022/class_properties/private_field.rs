@@ -1742,7 +1742,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::UnaryExpression(unary_expr) = expr else { unreachable!() };
-        debug_assert!(unary_expr.operator == UnaryOperator::Delete);
+        debug_assert_eq!(unary_expr.operator, UnaryOperator::Delete);
         debug_assert!(matches!(unary_expr.argument, Expression::ChainExpression(_)));
 
         if let Some((result, chain_expr)) =

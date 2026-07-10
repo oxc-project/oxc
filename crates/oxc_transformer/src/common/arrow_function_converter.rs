@@ -208,7 +208,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
         debug_assert!(self.super_methods_stack.is_exhausted());
         debug_assert!(self.super_methods_stack.first().is_empty());
         debug_assert!(self.super_needs_transform_stack.is_exhausted());
-        debug_assert!(self.super_needs_transform_stack.first() == &false);
+        debug_assert_eq!(self.super_needs_transform_stack.first(), &false);
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -639,7 +639,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         let mut body = arrow_function_expr.body;
 
         if arrow_function_expr.expression {
-            assert!(body.statements.len() == 1);
+            assert_eq!(body.statements.len(), 1);
             let stmt = body.statements.pop().unwrap();
             let Statement::ExpressionStatement(stmt) = stmt else { unreachable!() };
             let stmt = stmt.unbox();

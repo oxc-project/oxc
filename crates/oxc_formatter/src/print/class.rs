@@ -21,6 +21,7 @@ use crate::{
     },
     utils::{
         assignment_like::AssignmentLike,
+        expression::is_member_expression_without_chain_wrappers,
         format_node_without_trailing_comments::{
             FormatNodeWithoutTrailingComments, format_content_without_comments_after,
         },
@@ -113,11 +114,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         if value.generator {
             write!(f, "*");
         }
-        if self.computed {
-            write!(f, ["[", self.key(), "]"]);
-        } else {
-            format_property_key(self.key(), f);
-        }
+        format_property_key(self.key(), self.computed, f);
 
         if self.optional {
             write!(f, "?");
@@ -500,13 +497,8 @@ fn should_group<'a>(class: &AstNode<Class<'a>>, f: &JsFormatter<'_, 'a>) -> bool
     }
 
     if (!class.is_expression() || !matches!(class.parent(), AstNodes::AssignmentExpression(_)))
-        && class
-            .super_class
-            .as_ref()
-            .is_some_and(|super_class|
-                super_class.is_member_expression() ||
-                matches!(&super_class, Expression::ChainExpression(chain) if chain.expression.is_member_expression())
-            ) && class.super_type_arguments.is_none()
+        && class.super_class.as_ref().is_some_and(is_member_expression_without_chain_wrappers)
+        && class.super_type_arguments.is_none()
         || class.implements.first().is_some_and(|implements| {
             implements.type_arguments.is_none() && implements.expression.is_qualified_name()
         })

@@ -971,7 +971,7 @@ impl PreferExportFrom {
                 Self::build_new_import_declaration(ctx, import_decl, retained_specifiers);
             if let Some(item) = re_export_decl {
                 let last_export_span = Self::get_last_export_span(item.specifiers.last(), "", item);
-                let replacement_str = format!(", {}", &exports_str);
+                let replacement_str = format!(", {exports_str}");
                 rule_fixes.push(fixer.insert_text_after_range(last_export_span, replacement_str));
                 rule_fixes.push(fixer.replace(import_decl.span(), new_import_str));
             } else {

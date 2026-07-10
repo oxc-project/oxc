@@ -9,14 +9,16 @@ pub mod reactive;
 pub mod type_config;
 pub mod visitors;
 
-pub use crate::react_compiler_diagnostics::CompilerDiagnostic;
-pub use crate::react_compiler_diagnostics::GENERATED_SOURCE;
-pub use crate::react_compiler_diagnostics::Span;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
 use oxc_ast::ast as oxc;
+use oxc_diagnostics::OxcDiagnostic;
+pub use oxc_span::Span;
 pub use raw::RawTypeCategory;
 pub use reactive::*;
+
+/// Sentinel value for generated/synthetic source locations (a node with no span).
+pub const GENERATED_SOURCE: Option<Span> = None;
 
 // =============================================================================
 // ID newtypes
@@ -836,7 +838,7 @@ pub enum PrimitiveValue {
     Undefined,
     Boolean(bool),
     Number(FloatValue),
-    String(crate::react_compiler_diagnostics::JsString),
+    String(crate::react_compiler_utils::JsString),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1376,11 +1378,11 @@ pub enum AliasingEffect {
     /// Function expression creation with captures.
     CreateFunction { captures: Vec<Place>, function_id: FunctionId, into: Place },
     /// Mutation of a value known to be frozen (error).
-    MutateFrozen { place: Place, error: CompilerDiagnostic },
+    MutateFrozen { place: Place, error: OxcDiagnostic },
     /// Mutation of a global value (error).
-    MutateGlobal { place: Place, error: CompilerDiagnostic },
+    MutateGlobal { place: Place, error: OxcDiagnostic },
     /// Side-effect not safe during render.
-    Impure { place: Place, error: CompilerDiagnostic },
+    Impure { place: Place, error: OxcDiagnostic },
     /// Value is accessed during render.
     Render { place: Place },
 }

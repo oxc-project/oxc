@@ -412,6 +412,14 @@ impl<'a> SemanticBuilder<'a> {
         self.node_store.ancestry()
     }
 
+    fn is_declare_class_element(&self) -> bool {
+        // Class elements are children of `ClassBody`, whose parent is `Class`.
+        matches!(
+            self.ancestry().ancestor_kinds().nth(1),
+            Some(AstKind::Class(class)) if class.declare
+        )
+    }
+
     pub(crate) fn in_declare_scope(&self) -> bool {
         self.source_type.is_typescript_definition()
             || self
@@ -906,7 +914,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
 
         // Check `current_function_node_id` has been reset to as it was at start
-        debug_assert!(self.current_function_node_id == NodeId::ROOT);
+        debug_assert_eq!(self.current_function_node_id, NodeId::ROOT);
     }
 
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
@@ -2454,22 +2462,35 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_method_definition(&mut self, method: &MethodDefinition<'a>) {
+        let kind = AstKind::MethodDefinition(self.alloc(method));
+        self.enter_node(kind);
+        self.visit_span(&method.span);
+        self.visit_decorators(&method.decorators);
+        if method.computed && (method.r#type.is_abstract() || self.is_declare_class_element()) {
+            // declare class A { [prop](): string }
+            //                    ^^^^  The property can reference value or [`SymbolFlags::TypeImport`] symbol
+            self.current_reference_flags = ReferenceFlags::ValueAsType;
+        }
+        self.visit_property_key(&method.key);
+        self.current_reference_flags = ReferenceFlags::empty();
+        let flags = match method.kind {
+            MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
+            MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
+            MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
+            MethodDefinitionKind::Method => ScopeFlags::Function,
+        };
+        self.visit_function(&method.value, flags);
+        self.leave_node(kind);
+    }
+
     fn visit_property_definition(&mut self, prop: &PropertyDefinition<'a>) {
         let kind = AstKind::PropertyDefinition(self.alloc(prop));
         self.enter_node(kind);
         self.visit_span(&prop.span);
         self.visit_decorators(&prop.decorators);
         if prop.computed
-            && (prop.declare
-                || prop.r#type.is_abstract()
-                || self
-                    .ancestry()
-                    .ancestor_kinds()
-                    .find_map(|kind| match kind {
-                        AstKind::Class(class) => Some(class.declare),
-                        _ => None,
-                    })
-                    .unwrap_or(false))
+            && (prop.declare || prop.r#type.is_abstract() || self.is_declare_class_element())
         {
             // class A { declare [prop]: string }
             //                   ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol

@@ -2,11 +2,9 @@ use oxc_allocator::Allocator;
 
 mod diagnostics;
 mod options;
-mod prefilter;
 mod scope;
 
 mod react_compiler;
-mod react_compiler_diagnostics;
 mod react_compiler_hir;
 mod react_compiler_inference;
 mod react_compiler_lowering;
@@ -18,9 +16,10 @@ mod react_compiler_utils;
 mod react_compiler_validation;
 
 use crate::react_compiler::entrypoint::compile_result::CompileResult;
-use crate::react_compiler::entrypoint::imports::get_react_compiler_runtime_module;
+use crate::react_compiler::entrypoint::imports::{
+    get_react_compiler_runtime_module, has_memo_cache_function_import, validate_restricted_imports,
+};
 use crate::react_compiler::entrypoint::program::compile_program;
-use prefilter::{has_memo_cache_function_import, has_react_like_functions};
 
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use crate::options::{
@@ -117,11 +116,11 @@ fn compile<'a>(
         return (None, Diagnostics::default());
     }
 
-    // Skip files with no React-like functions, unless the mode compiles everything.
-    if !matches!(options.compilation_mode, CompilationMode::All | CompilationMode::Annotation)
-        && !has_react_like_functions(program)
+    // Blocklisted imports fail the whole file: report and bail without compiling.
+    if let Some(diagnostics) =
+        validate_restricted_imports(program, &options.environment.validate_blocklisted_imports)
     {
-        return (None, Diagnostics::default());
+        return (None, diagnostics);
     }
 
     let result = compile_program(allocator, semantic, program, options);

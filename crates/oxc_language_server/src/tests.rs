@@ -893,7 +893,7 @@ mod test_suite {
         let execute_command_response = server.recv_response().await;
         assert!(execute_command_response.is_ok());
         assert!(execute_command_response.result().is_some());
-        assert!(execute_command_response.id() == &Id::Number(3));
+        assert_eq!(execute_command_response.id(), &Id::Number(3));
         assert_eq!(execute_command_response.result().unwrap(), &json!(null));
 
         // shutdown request
@@ -1584,7 +1584,7 @@ mod test_suite {
         server.send_request(code_action(3, &file)).await;
         let response = server.recv_response().await;
         assert!(response.is_ok());
-        assert!(response.id() == &Id::Number(3));
+        assert_eq!(response.id(), &Id::Number(3));
         assert!(response.result().is_some_and(|result| *result == Value::Null));
 
         server.shutdown(4).await;
@@ -1606,7 +1606,7 @@ mod test_suite {
         server.send_request(code_action(3, &file)).await;
         let response = server.recv_response().await;
         assert!(response.is_ok());
-        assert!(response.id() == &Id::Number(3));
+        assert_eq!(response.id(), &Id::Number(3));
         let actions: Vec<serde_json::Value> =
             serde_json::from_value(response.result().unwrap().clone()).unwrap();
         assert_eq!(actions.len(), 1);

@@ -10,7 +10,8 @@
 
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use oxc_diagnostics::OxcDiagnostic;
+
 use crate::react_compiler_hir::{
     EvaluationOrder, IdentifierId, InstructionValue, Place, PrunedReactiveScopeBlock,
     ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveValue, Type,
@@ -149,7 +150,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneVisitor<'a, 'e> {
         &mut self,
         instruction: &mut ReactiveInstruction<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_instruction(instruction, state)?;
 
         let lvalue = &instruction.lvalue;
@@ -219,7 +220,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneVisitor<'a, 'e> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_scope(scope, state)?;
 
         let scope_id = scope.scope;

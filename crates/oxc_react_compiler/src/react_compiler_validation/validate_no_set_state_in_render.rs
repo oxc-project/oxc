@@ -9,9 +9,9 @@
 
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::{
-    CompilerDiagnostic, CompilerDiagnosticDetail, ErrorCategory,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::dominator::compute_unconditional_blocks;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::is_set_state_type;
@@ -22,7 +22,7 @@ use crate::react_compiler_hir::{
 pub fn validate_no_set_state_in_render(
     func: &HirFunction,
     env: &mut Environment,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let mut unconditional_set_state_functions: FxHashSet<IdentifierId> = FxHashSet::default();
     let next_block_id = env.next_block_id().0;
     let diagnostics = validate_impl(
@@ -58,11 +58,11 @@ fn validate_impl(
     next_block_id_counter: u32,
     enable_use_keyed_state: bool,
     unconditional_set_state_functions: &mut FxHashSet<IdentifierId>,
-) -> Result<Vec<CompilerDiagnostic>, CompilerDiagnostic> {
+) -> Result<Vec<OxcDiagnostic>, OxcDiagnostic> {
     let unconditional_blocks: FxHashSet<BlockId> =
         compute_unconditional_blocks(func, next_block_id_counter)?;
     let mut active_manual_memo_id: Option<u32> = None;
-    let mut errors: Vec<CompilerDiagnostic> = Vec::new();
+    let mut errors: Vec<OxcDiagnostic> = Vec::new();
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
@@ -125,51 +125,46 @@ fn validate_impl(
                 {
                     if active_manual_memo_id.is_some() {
                         errors.push(
-                                CompilerDiagnostic::new(
-                                    ErrorCategory::RenderSetState,
+                            ErrorCategory::RenderSetState
+                                .diagnostic(
                                     "Calling setState from useMemo may trigger an infinite loop",
-                                    Some(
-                                        "Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/react/useState)".to_string(),
-                                    ),
                                 )
-                                .with_detail(CompilerDiagnosticDetail::Error {
-                                    span: callee.span,
-                                    message: Some("Found setState() within useMemo()".to_string()),
-                                }),
-                            );
+                                .with_help(
+                                    "Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/react/useState)",
+                                )
+                                .with_labels(
+                                    callee
+                                        .span
+                                        .map(|s| s.label("Found setState() within useMemo()")),
+                                ),
+                        );
                     } else if unconditional_blocks.contains(&block.id) {
                         if enable_use_keyed_state {
                             errors.push(
-                                    CompilerDiagnostic::new(
-                                        ErrorCategory::RenderSetState,
-                                        "Cannot call setState during render",
-                                        Some(
-                                            "Calling setState during render may trigger an infinite loop.\n\
-                                            * To reset state when other state/props change, use `const [state, setState] = useKeyedState(initialState, key)` to reset `state` when `key` changes.\n\
-                                            * To derive data from other state/props, compute the derived data during render without using state".to_string(),
-                                        ),
+                                ErrorCategory::RenderSetState
+                                    .diagnostic("Cannot call setState during render")
+                                    .with_help(
+                                        "Calling setState during render may trigger an infinite loop.\n\
+                                        * To reset state when other state/props change, use `const [state, setState] = useKeyedState(initialState, key)` to reset `state` when `key` changes.\n\
+                                        * To derive data from other state/props, compute the derived data during render without using state",
                                     )
-                                    .with_detail(CompilerDiagnosticDetail::Error {
-                                        span: callee.span,
-                                        message: Some("Found setState() in render".to_string()),
-                                    }),
-                                );
+                                    .with_labels(
+                                        callee.span.map(|s| s.label("Found setState() in render")),
+                                    ),
+                            );
                         } else {
                             errors.push(
-                                    CompilerDiagnostic::new(
-                                        ErrorCategory::RenderSetState,
-                                        "Cannot call setState during render",
-                                        Some(
-                                            "Calling setState during render may trigger an infinite loop.\n\
-                                            * To reset state when other state/props change, store the previous value in state and update conditionally: https://react.dev/reference/react/useState#storing-information-from-previous-renders\n\
-                                            * To derive data from other state/props, compute the derived data during render without using state".to_string(),
-                                        ),
+                                ErrorCategory::RenderSetState
+                                    .diagnostic("Cannot call setState during render")
+                                    .with_help(
+                                        "Calling setState during render may trigger an infinite loop.\n\
+                                        * To reset state when other state/props change, store the previous value in state and update conditionally: https://react.dev/reference/react/useState#storing-information-from-previous-renders\n\
+                                        * To derive data from other state/props, compute the derived data during render without using state",
                                     )
-                                    .with_detail(CompilerDiagnosticDetail::Error {
-                                        span: callee.span,
-                                        message: Some("Found setState() in render".to_string()),
-                                    }),
-                                );
+                                    .with_labels(
+                                        callee.span.map(|s| s.label("Found setState() in render")),
+                                    ),
+                            );
                         }
                     }
                 }

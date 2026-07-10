@@ -1,7 +1,9 @@
 use cow_utils::CowUtils;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, PropertyLiteral};
 
@@ -11,7 +13,7 @@ use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, Pro
 pub fn validate_no_capitalized_calls(
     func: &HirFunction,
     env: &mut Environment,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     // Build the allow list from global registry keys + config entries
     let mut allow_list: FxHashSet<String> = env.globals().keys().map(str::to_owned).collect();
     if let Some(config_entries) = &env.config.validate_no_capitalized_calls {
@@ -46,12 +48,12 @@ pub fn validate_no_capitalized_calls(
                 InstructionValue::CallExpression { callee, span, .. } => {
                     let callee_id = callee.identifier;
                     if let Some(callee_name) = capital_load_globals.get(&callee_id) {
-                        env.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::CapitalizedCalls,
-                            reason: reason.to_string(),
-                            description: Some(format!("{callee_name} may be a component")),
-                            span: *span,
-                        })?;
+                        env.record_error(
+                            ErrorCategory::CapitalizedCalls
+                                .diagnostic(reason)
+                                .with_help(format!("{callee_name} may be a component"))
+                                .with_labels(*span),
+                        )?;
                         continue;
                     }
                 }
@@ -66,12 +68,12 @@ pub fn validate_no_capitalized_calls(
                 InstructionValue::MethodCall { property, span, .. } => {
                     let property_id = property.identifier;
                     if let Some(prop_name) = capitalized_properties.get(&property_id) {
-                        env.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::CapitalizedCalls,
-                            reason: reason.to_string(),
-                            description: Some(format!("{prop_name} may be a component")),
-                            span: *span,
-                        })?;
+                        env.record_error(
+                            ErrorCategory::CapitalizedCalls
+                                .diagnostic(reason)
+                                .with_help(format!("{prop_name} may be a component"))
+                                .with_labels(*span),
+                        )?;
                     }
                 }
                 _ => {}

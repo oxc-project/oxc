@@ -1,5 +1,5 @@
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, ValueType},
@@ -205,18 +205,21 @@ impl<'a> Normalize {
     }
 
     fn convert_while_to_for(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::WhileStatement(while_stmt) = stmt.take_in(ctx) else { return };
-        let while_stmt = while_stmt.unbox();
-        let for_stmt = ForStatement::boxed_with_scope_id(
-            while_stmt.span,
-            None,
-            Some(while_stmt.test),
-            None,
-            while_stmt.body,
-            ctx.create_child_scope_of_current(ScopeFlags::empty()),
-            ctx,
-        );
-        *stmt = Statement::ForStatement(for_stmt);
+        // Caller (`exit_statement`) only calls this for a `WhileStatement`, so the `else` is dead.
+        stmt.replace_with(|stmt| {
+            let Statement::WhileStatement(while_stmt) = stmt else { unreachable!() };
+            let while_stmt = while_stmt.unbox();
+            let for_stmt = ForStatement::boxed_with_scope_id(
+                while_stmt.span,
+                None,
+                Some(while_stmt.test),
+                None,
+                while_stmt.body,
+                ctx.create_child_scope_of_current(ScopeFlags::empty()),
+                ctx,
+            );
+            Statement::ForStatement(for_stmt)
+        });
     }
 
     fn convert_const_to_let(decl: &mut VariableDeclaration<'a>, ctx: &TraverseCtx<'a>) {

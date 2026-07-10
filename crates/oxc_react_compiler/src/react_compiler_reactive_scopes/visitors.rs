@@ -9,7 +9,8 @@
 
 use std::mem::replace;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use oxc_diagnostics::OxcDiagnostic;
+
 use crate::react_compiler_hir::visitors::{
     each_instruction_value_lvalue, each_instruction_value_operand, each_terminal_operand,
 };
@@ -316,7 +317,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         _id: EvaluationOrder,
         _state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         Ok(())
     }
 
@@ -325,7 +326,7 @@ pub trait ReactiveFunctionTransform<'a> {
         _id: EvaluationOrder,
         _place: &Place,
         _state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         Ok(())
     }
 
@@ -334,7 +335,7 @@ pub trait ReactiveFunctionTransform<'a> {
         _id: EvaluationOrder,
         _lvalue: &Place,
         _state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         Ok(())
     }
 
@@ -343,7 +344,7 @@ pub trait ReactiveFunctionTransform<'a> {
         id: EvaluationOrder,
         value: &mut ReactiveValue<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_value(id, value, state)
     }
 
@@ -352,7 +353,7 @@ pub trait ReactiveFunctionTransform<'a> {
         id: EvaluationOrder,
         value: &mut ReactiveValue<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         match value {
             ReactiveValue::OptionalExpression { value: inner, .. } => {
                 let next = self.transform_value(id, inner, state)?;
@@ -412,7 +413,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         instruction: &mut ReactiveInstruction<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_instruction(instruction, state)
     }
 
@@ -421,7 +422,7 @@ pub trait ReactiveFunctionTransform<'a> {
         id: EvaluationOrder,
         value: &mut ReactiveValue<'a>,
         state: &mut Self::State,
-    ) -> Result<TransformedValue<'a>, CompilerError> {
+    ) -> Result<TransformedValue<'a>, OxcDiagnostic> {
         self.visit_value(id, value, state)?;
         Ok(TransformedValue::Keep)
     }
@@ -430,7 +431,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         instruction: &mut ReactiveInstruction<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.visit_id(instruction.id, state)?;
         // Visit instruction-level lvalue
         if let Some(lvalue) = &instruction.lvalue {
@@ -453,7 +454,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_terminal(stmt, state)
     }
 
@@ -461,7 +462,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         let terminal = &mut stmt.terminal;
         let id = terminal_id(terminal);
         self.visit_id(id, state)?;
@@ -565,7 +566,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_scope(scope, state)
     }
 
@@ -573,7 +574,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.visit_block(&mut scope.instructions, state)
     }
 
@@ -581,7 +582,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         scope: &mut PrunedReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_pruned_scope(scope, state)
     }
 
@@ -589,7 +590,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         scope: &mut PrunedReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.visit_block(&mut scope.instructions, state)
     }
 
@@ -597,7 +598,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         block: &mut ReactiveBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         self.traverse_block(block, state)
     }
 
@@ -605,7 +606,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         instruction: &mut ReactiveInstruction<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         self.visit_instruction(instruction, state)?;
         Ok(Transformed::Keep)
     }
@@ -614,7 +615,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         self.visit_terminal(stmt, state)?;
         Ok(Transformed::Keep)
     }
@@ -623,7 +624,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         self.visit_scope(scope, state)?;
         Ok(Transformed::Keep)
     }
@@ -632,7 +633,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         scope: &mut PrunedReactiveScopeBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<Transformed<ReactiveStatement<'a>>, CompilerError> {
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
         self.visit_pruned_scope(scope, state)?;
         Ok(Transformed::Keep)
     }
@@ -641,7 +642,7 @@ pub trait ReactiveFunctionTransform<'a> {
         &mut self,
         block: &mut ReactiveBlock<'a>,
         state: &mut Self::State,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), OxcDiagnostic> {
         let mut next_block: Option<Vec<ReactiveStatement<'a>>> = None;
         let len = block.len();
         for i in 0..len {
@@ -709,7 +710,7 @@ pub fn transform_reactive_function<'a, T: ReactiveFunctionTransform<'a>>(
     func: &mut ReactiveFunction<'a>,
     transform: &mut T,
     state: &mut T::State,
-) -> Result<(), CompilerError> {
+) -> Result<(), OxcDiagnostic> {
     transform.visit_block(&mut func.body, state)
 }
 

@@ -69,6 +69,7 @@ disallowed_types = "allow" # `react_compiler_ast`'s `ScopeInfo`/`ScopeData` fiel
 collapsible_if = "allow"
 needless_return = "allow"
 unnecessary_unwrap = "allow"
+result_large_err = "allow" # `Result<T, OxcDiagnostic>` everywhere; same trade-off as the workspace allow
 
 # The vendored modules' doc comments reference types like `Vec<PatternLike>`
 # without backticks; relax rustdoc for them rather than editing upstream code.
