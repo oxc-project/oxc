@@ -1100,7 +1100,7 @@ fn get_assumed_invoked_functions_impl(
         changed = false;
         // Two-phase: collect then insert
         let mut to_add = Vec::new();
-        for (_, (func_id, may_invoke)) in temporaries.iter() {
+        for (func_id, may_invoke) in temporaries.values() {
             if hoistable.contains(func_id) {
                 for &called in may_invoke {
                     if !hoistable.contains(&called) {

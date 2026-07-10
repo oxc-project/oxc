@@ -70,9 +70,6 @@ collapsible_if = "allow"
 needless_return = "allow"
 unnecessary_unwrap = "allow"
 result_large_err = "allow" # `Result<T, OxcDiagnostic>` everywhere; same trade-off as the workspace allow
-for_kv_map = "allow"
-question_mark = "allow"
-unneeded_wildcard_pattern = "allow"
 
 # The vendored modules' doc comments reference types like `Vec<PatternLike>`
 # without backticks; relax rustdoc for them rather than editing upstream code.

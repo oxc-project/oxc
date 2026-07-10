@@ -1243,7 +1243,7 @@ fn validate_dependencies(
                 }
                 continue;
             }
-            InferredDependency::Local { identifier, path, span: _, .. } => {
+            InferredDependency::Local { identifier, path, .. } => {
                 // Skip effect event functions
                 let ty = get_identifier_type(*identifier, identifiers, types);
                 if is_effect_event_function_type(ty) {

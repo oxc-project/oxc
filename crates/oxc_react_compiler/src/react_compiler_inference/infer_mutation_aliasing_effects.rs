@@ -2035,7 +2035,7 @@ fn compute_signature_for_instruction(
                 }
             }
         }
-        InstructionValue::JsxFragment { children: _, .. } => {
+        InstructionValue::JsxFragment { .. } => {
             effects.push(AliasingEffect::Create {
                 into: lvalue.clone(),
                 value: ValueKind::Frozen,
@@ -2164,7 +2164,7 @@ fn compute_signature_for_instruction(
                 reason: ValueReason::Other,
             });
         }
-        InstructionValue::StoreGlobal { name, value: sg_value, span: _, .. } => {
+        InstructionValue::StoreGlobal { name, value: sg_value, .. } => {
             let variable = format!("`{}`", name);
             let diagnostic = ErrorCategory::Globals
                 .diagnostic("Cannot reassign variables declared outside of the component/hook")
