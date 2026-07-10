@@ -116,7 +116,6 @@ redundant_clone = "warn"
 byte_char_slices = "allow"
 manual_assert_eq = "allow"
 question_mark = "allow"
-useless_borrows_in_formatting = "allow"
 # cargo
 cargo = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"

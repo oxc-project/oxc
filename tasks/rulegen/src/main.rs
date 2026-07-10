@@ -1571,7 +1571,7 @@ fn main() {
                         last_comment = current_comment.to_string();
                         code = format!(
                             "// {}\n{}",
-                            &last_comment,
+                            last_comment,
                             case.code(has_config, has_settings, has_filename)
                         );
                     }

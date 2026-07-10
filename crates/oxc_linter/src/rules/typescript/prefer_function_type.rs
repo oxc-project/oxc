@@ -173,8 +173,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                 "{}{}{} = {};",
                                 comments_text,
                                 if is_parent_exported { "export type " } else { "type " },
-                                &interface_decl.id.name,
-                                &suggestion
+                                interface_decl.id.name,
+                                suggestion
                             ),
                             Span::new(node_start, node_end),
                         )
@@ -185,8 +185,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                         format!(
                             "{} {} = {};",
                             if is_parent_exported { "export type" } else { "type" },
-                            &interface_decl.id.name,
-                            &suggestion
+                            interface_decl.id.name,
+                            suggestion
                         ),
                         Span::new(node_start, node_end),
                     )
