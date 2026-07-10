@@ -120,18 +120,11 @@ pub struct CompilerError {
     /// because errors created directly (e.g., via `?` from a pass) are
     /// analogous to thrown errors in the TS code.
     pub is_thrown: bool,
-    /// Set when the error originates from an oxc codegen sub-emitter that has not
-    /// yet been ported (e.g. destructuring reassignment targets, hook-guard
-    /// wrapping). `codegen_function` swallows these and falls back to an empty
-    /// body — preserving the pre-port behavior — instead of surfacing a spurious
-    /// diagnostic for a construct the upstream compiler handles. Genuine invariant
-    /// errors leave this `false` and propagate as diagnostics.
-    pub unimplemented: bool,
 }
 
 impl CompilerError {
     pub fn new() -> Self {
-        Self { diagnostics: Vec::new(), is_thrown: true, unimplemented: false }
+        Self { diagnostics: Vec::new(), is_thrown: true }
     }
 
     pub fn push(&mut self, diagnostic: OxcDiagnostic) {
