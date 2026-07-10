@@ -70,6 +70,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
             return;
         };
 
+        Self::add_display_name_from_ancestors(obj_expr, ctx);
+    }
+}
+
+impl<'a> ReactDisplayName {
+    // Keep the slow ancestor scan and property insertion out of the call expression walker.
+    #[inline(never)]
+    fn add_display_name_from_ancestors(obj_expr: &mut ObjectExpression<'a>, ctx: &TraverseCtx<'a>) {
         let mut ancestors = ctx.ancestors();
         let name = loop {
             let Some(ancestor) = ancestors.next() else {
@@ -125,9 +133,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
 
         Self::add_display_name(obj_expr, name, ctx);
     }
-}
 
-impl<'a> ReactDisplayName {
     /// Get the object from `React.createClass({})` or `createReactClass({})`
     fn get_object_from_create_class<'b>(
         call_expr: &'b mut CallExpression<'a>,

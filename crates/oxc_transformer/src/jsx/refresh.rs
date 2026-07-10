@@ -348,6 +348,20 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             return;
         }
 
+        self.record_hook(call_expr, current_scope_id, hook_name, ctx);
+    }
+}
+
+impl<'a> ReactRefresh<'a> {
+    // Keep hook recording and string construction out of the call expression walker.
+    #[inline(never)]
+    fn record_hook(
+        &mut self,
+        call_expr: &CallExpression<'a>,
+        current_scope_id: ScopeId,
+        hook_name: Str<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if !is_builtin_hook(&hook_name) {
             // Check if a corresponding binding exists where we emit the signature.
             let (binding_name, middle_property, is_member_expression): (
