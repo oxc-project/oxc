@@ -64,6 +64,12 @@ pub enum Tag {
     /// See [crate::builders::labelled] for documentation.
     StartLabelled(LabelId),
     EndLabelled,
+
+    /// Marks the current indention as the root that [LineMode::Literal](super::LineMode::Literal)
+    /// line breaks and [DedentMode::Root] dedents return to.
+    /// See [crate::builders::mark_as_root] for documentation.
+    StartMarkAsRoot,
+    EndMarkAsRoot,
 }
 
 impl Tag {
@@ -81,6 +87,7 @@ impl Tag {
                 | Tag::StartEntry
                 | Tag::StartLineSuffix
                 | Tag::StartLabelled(_)
+                | Tag::StartMarkAsRoot
         )
     }
 
@@ -92,9 +99,9 @@ impl Tag {
     pub const fn kind(&self) -> TagKind {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
         };
 
         match self {
@@ -108,6 +115,7 @@ impl Tag {
             StartEntry | EndEntry => TagKind::Entry,
             StartLineSuffix | EndLineSuffix => TagKind::LineSuffix,
             StartLabelled(_) | EndLabelled => TagKind::Labelled,
+            StartMarkAsRoot | EndMarkAsRoot => TagKind::MarkAsRoot,
         }
     }
 }
@@ -128,6 +136,7 @@ pub enum TagKind {
     LineSuffix,
     Labelled,
     TailwindClass,
+    MarkAsRoot,
 }
 
 #[derive(Debug, Copy, Default, Clone, Eq, PartialEq)]

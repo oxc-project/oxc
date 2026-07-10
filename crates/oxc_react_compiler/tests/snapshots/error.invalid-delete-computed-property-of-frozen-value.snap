@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.invalid-delete-computed-property-of-frozen-value.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: This value cannot be modified", labels: One([LabeledSpan { label: Some("value cannot be modified"), span: SourceSpan { offset: SourceOffset(93), length: 1 }, primary: false }]), help: Some("Modifying a value used previously in JSX is not allowed. Consider moving the modification before the JSX"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

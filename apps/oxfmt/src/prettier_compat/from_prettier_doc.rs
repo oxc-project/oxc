@@ -99,7 +99,7 @@ fn convert_doc<'a>(
             };
             match doc_type {
                 "line" => {
-                    convert_line(obj, out, ctx);
+                    convert_line(obj, out);
                     Ok(())
                 }
                 "group" => convert_group(obj, out, ctx),
@@ -136,17 +136,17 @@ fn convert_doc<'a>(
 fn convert_line<'a>(
     obj: &serde_json::Map<String, Value>,
     out: &mut ArenaVec<'a, FormatElement<'a>>,
-    ctx: &FmtCtx<'a, '_>,
 ) {
     let hard = obj.get("hard").and_then(Value::as_bool).unwrap_or(false);
     let soft = obj.get("soft").and_then(Value::as_bool).unwrap_or(false);
     let literal = obj.get("literal").and_then(Value::as_bool).unwrap_or(false);
 
     if hard && literal {
-        let arena_text = ctx.allocator.alloc_str("\n");
-        let width = TextWidth::multiline(0);
-        out.push(FormatElement::Text { text: arena_text, width });
-        out.push(FormatElement::ExpandParent);
+        // NOTE: inherits the core printer's known divergence — a hard line directly
+        // after a COLUMN-0 literal line is absorbed (Prettier prints both newlines).
+        // This mechanical conversion cannot apply the `empty_line()` workaround;
+        // see `hard_line_after_column_zero_literal_line_is_absorbed` in `oxc_formatter_core`.
+        out.push(FormatElement::Line(LineMode::Literal));
     } else if hard {
         out.push(FormatElement::Line(LineMode::Hard));
     } else if soft {
@@ -263,22 +263,15 @@ fn convert_align<'a>(
             Err(format!("Unsupported align value: {n}"))
         }
         Value::Object(obj_val) => {
-            // `align({type: "root"}, ...)` = Prettier's `markAsRoot()`.
-            // In Prettier, `markAsRoot` records the current indent position
-            // so that a later `dedentToRoot` can return to it.
-            // However, `oxc_formatter`'s `DedentMode::Root` always resets to absolute level 0
-            // and has no way to store a custom root position.
-            // Skipping the root capture is safe because
-            // embedded language Docs are processed in their own context starting near level 0,
-            // so `dedentToRoot` to absolute 0 produces the same result.
-            //
-            // NOTE: `markAsRoot` is used in Prettier for other cases.
-            // e.g. JS comment printer, YAML block printer, and front-matter embed.
-            // But none of those go through this Doc→IR path.
+            // `align({type: "root"}, ...)` = Prettier's `markAsRoot()`:
+            // records the current indent position so that literal lines and
+            // a later `dedentToRoot` return to it.
             if obj_val.get("type").and_then(Value::as_str) == Some("root") {
+                out.push(FormatElement::Tag(Tag::StartMarkAsRoot));
                 if let Some(contents) = obj.get("contents") {
                     convert_doc(contents, out, ctx)?;
                 }
+                out.push(FormatElement::Tag(Tag::EndMarkAsRoot));
                 return Ok(());
             }
             Err(format!("Unsupported align value: {n}"))

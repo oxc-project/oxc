@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/preserve-memo-validation/error.useMemo-unrelated-mutation-in-depslist.ts
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] MemoDependencies: Found missing memoization dependencies", labels: One([LabeledSpan { label: Some("Missing dependency `x`"), span: SourceSpan { offset: SourceOffset(673), length: 1 }, primary: false }]), help: Some("Missing dependencies can cause a value to update less often than it should, resulting in stale UI"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

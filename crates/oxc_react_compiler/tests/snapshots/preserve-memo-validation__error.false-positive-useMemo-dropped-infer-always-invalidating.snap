@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/preserve-memo-validation/error.false-positive-useMemo-dropped-infer-always-invalidating.ts
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] PreserveManualMemo: Existing memoization could not be preserved", labels: One([LabeledSpan { label: Some("Could not preserve existing memoization"), span: SourceSpan { offset: SourceOffset(401), length: 23 }, primary: false }]), help: Some("React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

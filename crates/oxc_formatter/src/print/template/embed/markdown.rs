@@ -56,8 +56,7 @@ pub(super) fn try_embed_markdown<'a>(
     if has_indent {
         write!(f, ["`", indent(&format_args!(soft_line_break(), content)), soft_line_break(), "`"]);
     } else {
-        let literalline = format_with(|f| super::write_literalline(f, allocator));
-        write!(f, ["`", literalline, dedent_to_root(&content), soft_line_break(), "`"]);
+        write!(f, ["`", literal_line_break(), dedent_to_root(&content), soft_line_break(), "`"]);
     }
 
     true

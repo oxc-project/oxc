@@ -10,6 +10,17 @@ mod typescript;
 
 mod tools;
 
+// Mirrors `oxc_lexer`'s crate gate: the lexer compiles to an empty stub without
+// static AVX2/BMI2 x86_64, so the differential harness only exists where the
+// lexer does (`--all-features` builds must pass on every target).
+#[cfg(all(
+    feature = "lexer",
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+))]
+mod lexer_diff;
+
 use std::{
     fmt::Write,
     path::{Path, PathBuf},
@@ -310,15 +321,26 @@ const ESTREE_ACORN_JSX_PATH: &str = "estree-conformance/tests/acorn-jsx";
 impl AppArgs {
     pub fn run_all(&self) {
         let data = TestData::load(self.filter.as_deref());
+        self.run_conformance_suites(&data);
+    }
 
-        self.run_parser(&data);
-        self.run_semantic(&data);
-        self.run_codegen(&data);
-        self.run_formatter(&data);
-        self.run_transformer(&data);
-        self.run_minifier(&data);
-        self.run_estree(&data);
-        self.run_estree_tokens(&data);
+    /// Like [`run_all`](Self::run_all) but also runs the runtime suite, reusing the
+    /// already-loaded `data` so test262 is not read twice (once by the suites, once
+    /// by runtime).
+    pub fn run_all_with(&self, data: &TestData) {
+        self.run_conformance_suites(data);
+        self.run_tool("runtime", TEST262_PATH, &data.test262, runtime::run);
+    }
+
+    fn run_conformance_suites(&self, data: &TestData) {
+        self.run_parser(data);
+        self.run_semantic(data);
+        self.run_codegen(data);
+        self.run_formatter(data);
+        self.run_transformer(data);
+        self.run_minifier(data);
+        self.run_estree(data);
+        self.run_estree_tokens(data);
     }
 
     fn run_tool<T>(
@@ -349,6 +371,28 @@ impl AppArgs {
         if self.filter.is_none() {
             typescript::save_reviewed_tsc_diagnostics_codes();
         }
+    }
+
+    /// Differential lexer conformance: compare `oxc_lexer`'s significant-token
+    /// spans against the parser's token stream over the corpora. Opt-in (kept out
+    /// of `run_all`) — requires the `lexer` feature and a static AVX2/BMI2 x86_64
+    /// build of `oxc_lexer`.
+    #[cfg(all(
+        feature = "lexer",
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+    ))]
+    pub fn run_lexer(&self, data: &TestData) {
+        self.run_tool("lexer_test262", TEST262_PATH, &data.test262, lexer_diff::run_lexer_test262);
+        self.run_tool("lexer_babel", BABEL_PATH, &data.babel, lexer_diff::run_lexer_babel);
+        self.run_tool(
+            "lexer_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            lexer_diff::run_lexer_typescript,
+        );
+        self.run_tool("lexer_misc", MISC_PATH, &data.misc, lexer_diff::run_lexer_misc);
     }
 
     pub fn run_semantic(&self, data: &TestData) {
@@ -456,9 +500,36 @@ impl AppArgs {
         typescript::transpile_runner::run(self.filter.as_deref(), self.detail);
     }
 
-    /// Run runtime tests (requires Node.js subprocess)
+    /// Run runtime tests (requires Node.js subprocess).
+    ///
+    /// Loads only test262 (not the other fixture suites), so it works in a checkout
+    /// that has only the test262 submodule — load-bearing for monitor-oxc CI.
     pub fn run_runtime(&self) {
-        runtime::run(self.filter.as_deref(), self.detail);
+        let files = load::load_test262(self.filter.as_deref());
+        self.run_tool("runtime", TEST262_PATH, &files, runtime::run);
+    }
+
+    /// Run the TypeScript baseline conformance suites against the `.symbols`, `.errors.txt`,
+    /// and `.types` baselines. `.types` is a scaffold (reports ~0%) until oxc has a type checker.
+    pub fn run_types(&self, data: &TestData) {
+        self.run_tool(
+            "symbols_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            typescript::type_symbol_baseline::run_symbols_typescript,
+        );
+        self.run_tool(
+            "errors_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            typescript::error_baseline::run_errors_typescript,
+        );
+        self.run_tool(
+            "types_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            typescript::type_symbol_baseline::run_types_typescript,
+        );
     }
 }
 

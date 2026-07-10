@@ -407,7 +407,11 @@ impl<'a> PeepholeOptimizations {
         }
 
         // a + 'b' + 'c' -> a + 'bc'
+        // Only sound when the inner operator is also `+`: for e.g. `(x - 'b') + 'c'` the inner
+        // string operand is numerically coerced (`x - 'b'` is `x - NaN`), so the literals must
+        // not be pulled out and merged.
         if let Expression::BinaryExpression(left_binary_expr) = &mut e.left
+            && left_binary_expr.operator == BinaryOperator::Addition
             && left_binary_expr.right.value_type(ctx).is_string()
         {
             if let (Some(left_str), Some(right_str)) = (

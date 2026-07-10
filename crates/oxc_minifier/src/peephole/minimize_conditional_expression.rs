@@ -431,6 +431,84 @@ impl<'a> PeepholeOptimizations {
                 let test = Self::minimize_not(expr.span, test, ctx);
                 return Some(test);
             }
+            // "c ? false : x" => "!c && x" (exact for any `c`)
+            (Some(false), None)
+                if Self::can_fold_negated_test(&expr.test)
+                    && !Self::logical_operand_needs_parens(
+                        &expr.alternate,
+                        LogicalOperator::And,
+                    ) =>
+            {
+                let test = expr.test.take_in(ctx);
+                let test = Self::minimize_not(expr.span, test, ctx);
+                let right = expr.alternate.take_in(ctx);
+                return Some(Self::join_with_left_associative_op(
+                    expr.span,
+                    LogicalOperator::And,
+                    test,
+                    right,
+                    ctx,
+                ));
+            }
+            // "c ? x : true" => "!c || x" (exact for any `c`)
+            (None, Some(true))
+                if Self::can_fold_negated_test(&expr.test)
+                    && !Self::logical_operand_needs_parens(
+                        &expr.consequent,
+                        LogicalOperator::Or,
+                    ) =>
+            {
+                let test = expr.test.take_in(ctx);
+                let test = Self::minimize_not(expr.span, test, ctx);
+                let right = expr.consequent.take_in(ctx);
+                return Some(Self::join_with_left_associative_op(
+                    expr.span,
+                    LogicalOperator::Or,
+                    test,
+                    right,
+                    ctx,
+                ));
+            }
+            // "c ? true : x" => "c || x" (only when `c` is boolean-typed; a
+            // non-boolean truthy `c` would be returned instead of `true`)
+            (Some(true), None)
+                if expr.test.value_type(ctx).is_boolean()
+                    && !Self::logical_operand_needs_parens(&expr.test, LogicalOperator::Or)
+                    && !Self::logical_operand_needs_parens(
+                        &expr.alternate,
+                        LogicalOperator::Or,
+                    ) =>
+            {
+                let test = expr.test.take_in(ctx);
+                let right = expr.alternate.take_in(ctx);
+                return Some(Self::join_with_left_associative_op(
+                    expr.span,
+                    LogicalOperator::Or,
+                    test,
+                    right,
+                    ctx,
+                ));
+            }
+            // "c ? x : false" => "c && x" (only when `c` is boolean-typed; a
+            // non-boolean falsy `c` would be returned instead of `false`)
+            (None, Some(false))
+                if expr.test.value_type(ctx).is_boolean()
+                    && !Self::logical_operand_needs_parens(&expr.test, LogicalOperator::And)
+                    && !Self::logical_operand_needs_parens(
+                        &expr.consequent,
+                        LogicalOperator::And,
+                    ) =>
+            {
+                let test = expr.test.take_in(ctx);
+                let right = expr.consequent.take_in(ctx);
+                return Some(Self::join_with_left_associative_op(
+                    expr.span,
+                    LogicalOperator::And,
+                    test,
+                    right,
+                    ctx,
+                ));
+            }
             _ => {}
         }
 
@@ -685,6 +763,39 @@ impl<'a> PeepholeOptimizations {
             _ => {}
         }
         false
+    }
+
+    /// Returns `true` when `minimize_not(test)` negates `test` without wrapping
+    /// it in a `!(...)`, so folding a conditional into `!test && x` / `!test || x`
+    /// does not grow the output. Equality comparisons invert their operator in
+    /// place (`a === b` -> `a !== b`); anything that is not otherwise
+    /// parenthesized as a unary operand negates to a bare `!test`.
+    fn can_fold_negated_test(test: &Expression<'_>) -> bool {
+        if let Expression::BinaryExpression(e) = test {
+            return e.operator.is_equality();
+        }
+        !Self::test_needs_parens(test)
+    }
+
+    /// Returns `true` if `expr` would need parentheses when printed as an operand
+    /// of the logical operator `op` (`&&` or `||`). Used as a size guard before
+    /// folding a conditional into a logical expression.
+    fn logical_operand_needs_parens(expr: &Expression<'_>, op: LogicalOperator) -> bool {
+        match expr {
+            Expression::SequenceExpression(_)
+            | Expression::AssignmentExpression(_)
+            | Expression::YieldExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::ConditionalExpression(_) => true,
+            // `??` cannot be mixed with `&&`/`||` without parens, and `||` needs
+            // parens as an operand of `&&`. `&&` under `||`, and same-operator
+            // nesting (flattened by `join_with_left_associative_op`), do not.
+            Expression::LogicalExpression(e) => {
+                matches!(e.operator, LogicalOperator::Coalesce)
+                    || matches!((e.operator, op), (LogicalOperator::Or, LogicalOperator::And))
+            }
+            _ => false,
+        }
     }
 
     /// Returns `true` if the expression would need parentheses when used as a unary operand.

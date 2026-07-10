@@ -27,7 +27,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTupleType<'a>> {
 
         let element_types = self.element_types();
         if element_types.is_empty() {
-            write!(f, [format_dangling_comments(self.span).with_block_indent()]);
+            write!(f, [format_dangling_comments(self.span).with_soft_block_indent()]);
         } else {
             write!(f, [group(&soft_block_indent(&element_types))]);
         }

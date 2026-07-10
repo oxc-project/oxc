@@ -138,10 +138,8 @@ fn get_error_subclass_if_in_constructor<'a>(
             }
             AstKind::Class(class) => {
                 if found_constructor && is_error_class(class, ctx) {
-                    if let Some(id) = class.id.as_ref()
-                        && let Some(symbol_id) = id.symbol_id.get()
-                    {
-                        return ClassInfo::Named(symbol_id);
+                    if let Some(id) = class.id.as_ref() {
+                        return ClassInfo::Named(id.symbol_id());
                     }
                     return ClassInfo::Anonymous;
                 }

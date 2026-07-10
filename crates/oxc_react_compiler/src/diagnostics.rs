@@ -3,143 +3,156 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use oxc_diagnostics::{Diagnostics, LabeledSpan, OxcDiagnostic};
+//! Compiler diagnostics, built directly on [`oxc_diagnostics`].
+//!
+//! Passes construct [`OxcDiagnostic`]s eagerly via [`ErrorCategory::diagnostic`],
+//! whose deterministic `[ReactCompiler] <Category>: ` message prefix lets
+//! consumers recover the category for control flow (Invariant/Config checks,
+//! panic-threshold severity) without a parallel data model.
+//!
+//! Errors "thrown" by a pass (TS: exceptions escaping a pass) propagate as a
+//! single `Err(OxcDiagnostic)`; errors accumulated on the Environment and
+//! returned at the end of the pipeline travel as
+//! [`Diagnostics`](oxc_diagnostics::Diagnostics).
+
+use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_span::Span;
 
-use react_compiler::entrypoint::compile_result::{
-    CompileResult, CompilerErrorDetailInfo, CompilerErrorInfo, LoggerEvent, LoggerSourceLocation,
-};
+/// Error categories matching the TS `ErrorCategory` enum.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorCategory {
+    Hooks,
+    CapitalizedCalls,
+    StaticComponents,
+    UseMemo,
+    VoidUseMemo,
+    PreserveManualMemo,
+    MemoDependencies,
+    IncompatibleLibrary,
+    Immutability,
+    Globals,
+    Refs,
+    EffectExhaustiveDependencies,
+    EffectSetState,
+    EffectDerivationsOfState,
+    ErrorBoundaries,
+    Purity,
+    RenderSetState,
+    Invariant,
+    Todo,
+    Syntax,
+    UnsupportedSyntax,
+    Config,
+    Gating,
+    Suppression,
+}
 
-/// Convert a `CompileResult` into OXC diagnostics. Each diagnostic carries its
-/// own severity (set by [`OxcDiagnostic::error`]/[`OxcDiagnostic::warn`]).
-pub fn compile_result_to_diagnostics(result: &CompileResult) -> Diagnostics {
-    let mut diagnostics = Diagnostics::new();
-
-    match result {
-        CompileResult::Success { events, .. } => {
-            for event in events {
-                if let Some(diag) = event_to_diagnostic(event) {
-                    diagnostics.push(diag);
-                }
-            }
-        }
-        CompileResult::Error { error, events, .. } => {
-            diagnostics.push(error_info_to_diagnostic(error));
-            for event in events {
-                if let Some(diag) = event_to_diagnostic(event) {
-                    diagnostics.push(diag);
-                }
-            }
+impl ErrorCategory {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Hooks => "Hooks",
+            Self::CapitalizedCalls => "CapitalizedCalls",
+            Self::StaticComponents => "StaticComponents",
+            Self::UseMemo => "UseMemo",
+            Self::VoidUseMemo => "VoidUseMemo",
+            Self::PreserveManualMemo => "PreserveManualMemo",
+            Self::MemoDependencies => "MemoDependencies",
+            Self::IncompatibleLibrary => "IncompatibleLibrary",
+            Self::Immutability => "Immutability",
+            Self::Globals => "Globals",
+            Self::Refs => "Refs",
+            Self::EffectExhaustiveDependencies => "EffectExhaustiveDependencies",
+            Self::EffectSetState => "EffectSetState",
+            Self::EffectDerivationsOfState => "EffectDerivationsOfState",
+            Self::ErrorBoundaries => "ErrorBoundaries",
+            Self::Purity => "Purity",
+            Self::RenderSetState => "RenderSetState",
+            Self::Invariant => "Invariant",
+            Self::Todo => "Todo",
+            Self::Syntax => "Syntax",
+            Self::UnsupportedSyntax => "UnsupportedSyntax",
+            Self::Config => "Config",
+            Self::Gating => "Gating",
+            Self::Suppression => "Suppression",
         }
     }
 
+    /// Displayed severity, matching the TS compiler's `getRuleForCategory()`.
+    /// `PreserveManualMemo` displays as an error but does not count towards
+    /// `panicThreshold: critical_errors` (see [`has_critical_errors`]).
+    const fn severity(self) -> Severity {
+        match self {
+            Self::IncompatibleLibrary | Self::UnsupportedSyntax | Self::Todo => Severity::Warning,
+            _ => Severity::Error,
+        }
+    }
+
+    /// Build a diagnostic for this category: `[ReactCompiler] <Category>: <reason>`.
+    /// Attach spans with `.with_label(span)` (plain underline) or
+    /// `.with_label(span.label(text))`, and a description with `.with_help(..)`.
+    pub fn diagnostic(self, reason: impl AsRef<str>) -> OxcDiagnostic {
+        let message = format!("[ReactCompiler] {}: {}", self.as_str(), reason.as_ref());
+        match self.severity() {
+            Severity::Error => OxcDiagnostic::error(message),
+            _ => OxcDiagnostic::warn(message),
+        }
+    }
+
+    /// Whether `diagnostic` was built for this category via [`Self::diagnostic`],
+    /// recovered from the deterministic message prefix.
+    pub fn matches(self, diagnostic: &OxcDiagnostic) -> bool {
+        Self::of(diagnostic) == Some(self.as_str())
+    }
+
+    /// The category segment of a message built by [`Self::diagnostic`].
+    fn of(diagnostic: &OxcDiagnostic) -> Option<&str> {
+        let rest = diagnostic.message.strip_prefix("[ReactCompiler] ")?;
+        rest.split_once(": ").map(|(category, _)| category)
+    }
+}
+
+/// Whether any diagnostic is an error at the TS compiler's *internal*
+/// severity, which decides `panicThreshold: critical_errors`. Internal and
+/// displayed severity agree except for `PreserveManualMemo`, which displays
+/// as an error but is internally a warning (it must not trigger the panic
+/// threshold).
+pub fn has_critical_errors(diagnostics: &[OxcDiagnostic]) -> bool {
     diagnostics
+        .iter()
+        .any(|d| d.severity == Severity::Error && !ErrorCategory::PreserveManualMemo.matches(d))
 }
 
-/// Byte-offset span for a compiler source location. Locations that flow through
-/// the oxc frontend carry span offsets in `Position::index`; synthetic locations
-/// without offsets yield `None`.
-fn loc_to_span(loc: &LoggerSourceLocation) -> Option<Span> {
-    Some(Span::new(loc.start.index?, loc.end.index?))
-}
-
-/// Labels for an error detail: its own `loc` when present (`ErrorDetail`-style),
-/// otherwise the locations of its sub-details (`Diagnostic`-style), otherwise
-/// the enclosing function.
-fn detail_labels(
-    detail: &CompilerErrorDetailInfo,
-    fn_loc: Option<&LoggerSourceLocation>,
-) -> Vec<LabeledSpan> {
-    if let Some(span) = detail.loc.as_ref().and_then(loc_to_span) {
-        return vec![LabeledSpan::underline(span)];
-    }
-    if let Some(items) = &detail.details {
-        let labels: Vec<LabeledSpan> = items
-            .iter()
-            .filter_map(|item| {
-                let span = item.loc.as_ref().and_then(loc_to_span)?;
-                Some(match &item.message {
-                    Some(message) => span.label(message.clone()),
-                    None => LabeledSpan::underline(span),
-                })
-            })
-            .collect();
-        if !labels.is_empty() {
-            return labels;
+/// Format a thrown diagnostic as a string matching the TS
+/// `CompilerError.toString()` output, used for the `data` field of
+/// `CompileUnexpectedThrow` events: `"<Heading>: <reason>. <description>."`.
+/// The reason is the message minus the deterministic prefix added by
+/// [`ErrorCategory::diagnostic`].
+pub fn to_string_for_event(diagnostic: &OxcDiagnostic) -> String {
+    let category = ErrorCategory::of(diagnostic);
+    let heading = match category {
+        Some("IncompatibleLibrary" | "PreserveManualMemo" | "UnsupportedSyntax") => {
+            "Compilation Skipped"
         }
-    }
-    fn_loc.and_then(loc_to_span).map(|span| vec![LabeledSpan::underline(span)]).unwrap_or_default()
-}
-
-fn error_info_to_diagnostic(error: &CompilerErrorInfo) -> OxcDiagnostic {
-    let message = format!("[ReactCompiler] {}", error.reason);
-    let mut diag = OxcDiagnostic::error(message);
-
-    if let Some(description) = &error.description {
-        diag = diag.with_help(description.clone());
-    }
-
-    let labels: Vec<LabeledSpan> =
-        error.details.iter().flat_map(|detail| detail_labels(detail, None)).collect();
-    if !labels.is_empty() {
-        diag = diag.with_labels(labels);
-    }
-
-    diag
-}
-
-/// Map a detail to an [`OxcDiagnostic`] at the compiler's own *display* severity
-/// (`Error`/`Warning`/`Hint`; `Off` is suppressed). Fatality is separate, decided
-/// by `panicThreshold` ([`CompileResult::Error`]).
-fn error_detail_to_diagnostic(
-    detail: &CompilerErrorDetailInfo,
-    fn_loc: Option<&LoggerSourceLocation>,
-) -> Option<OxcDiagnostic> {
-    let message = format!("[ReactCompiler] {}: {}", detail.category, detail.reason);
-
-    let mut diagnostic = match detail.severity.as_str() {
-        "Off" => return None,
-        "Error" => OxcDiagnostic::error(message),
-        // `Warning`, `Hint`, and any unknown future value surface as warnings.
-        _ => OxcDiagnostic::warn(message),
+        Some(heading @ ("Invariant" | "Todo")) => heading,
+        _ => "Error",
     };
-
-    if let Some(description) = &detail.description {
-        diagnostic = diagnostic.with_help(description.clone());
+    let reason = category
+        .and_then(|c| diagnostic.message.strip_prefix(&format!("[ReactCompiler] {c}: ")))
+        .unwrap_or(&diagnostic.message);
+    let mut buf = format!("{heading}: {reason}");
+    if let Some(help) = &diagnostic.help {
+        buf.push_str(&format!(". {help}."));
     }
-
-    let labels = detail_labels(detail, fn_loc);
-    if !labels.is_empty() {
-        diagnostic = diagnostic.with_labels(labels);
-    }
-
-    Some(diagnostic)
+    buf
 }
 
-fn event_to_diagnostic(event: &LoggerEvent) -> Option<OxcDiagnostic> {
-    match event {
-        LoggerEvent::CompileSuccess { .. } | LoggerEvent::CompileSkip { .. } => None,
-        LoggerEvent::CompileError { detail, fn_loc } => {
-            error_detail_to_diagnostic(detail, fn_loc.as_ref())
-        }
-        LoggerEvent::CompileErrorWithLoc { detail, fn_loc } => {
-            error_detail_to_diagnostic(detail, Some(fn_loc))
-        }
-        LoggerEvent::CompileUnexpectedThrow { data, fn_loc } => {
-            let mut diagnostic =
-                OxcDiagnostic::error(format!("[ReactCompiler] Unexpected error: {}", data));
-            if let Some(span) = fn_loc.as_ref().and_then(loc_to_span) {
-                diagnostic = diagnostic.with_label(LabeledSpan::underline(span));
-            }
-            Some(diagnostic)
-        }
-        LoggerEvent::PipelineError { data, fn_loc } => {
-            let mut diagnostic =
-                OxcDiagnostic::error(format!("[ReactCompiler] Pipeline error: {}", data));
-            if let Some(span) = fn_loc.as_ref().and_then(loc_to_span) {
-                diagnostic = diagnostic.with_label(LabeledSpan::underline(span));
-            }
-            Some(diagnostic)
-        }
+/// Owned copy of a diagnostic for the log accumulator, labelling the enclosing
+/// function (`fn_span`) when the diagnostic carries no location of its own.
+#[cold]
+pub fn with_fallback_label(diagnostic: &OxcDiagnostic, fn_span: Option<Span>) -> OxcDiagnostic {
+    let diagnostic = diagnostic.clone();
+    match fn_span {
+        Some(span) if diagnostic.labels.is_empty() => diagnostic.with_label(span),
+        _ => diagnostic,
     }
 }

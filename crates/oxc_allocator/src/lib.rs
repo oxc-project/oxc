@@ -55,6 +55,7 @@ pub mod hash_set;
 pub mod ident_hasher;
 #[cfg(feature = "pool")]
 mod pool;
+mod replace_with;
 mod string_builder;
 mod take_in;
 #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
@@ -81,6 +82,7 @@ pub use hash_set::{HashSet, HashSet as ArenaHashSet};
 pub use ident_hasher::{IdentBuildHasher, ident_hash, pack_len_hash};
 #[cfg(feature = "pool")]
 pub use pool::*;
+pub use replace_with::ReplaceWith;
 pub use string_builder::{StringBuilder, StringBuilder as ArenaStringBuilder};
 pub use take_in::{Dummy, TakeIn};
 pub use vec::{Vec, Vec as ArenaVec};

@@ -1,0 +1,34 @@
+// A trailing comment right before the closing source paren stays inside the
+// parentheses when they survive in the output (Prettier >= 3.9):
+// sequence/assignment as a declarator init, return argument, arrow expression
+// body, or an assignment's right-hand side
+const x1 = (a, b, c /* comment */);
+const x2 = (a = c /* comment */);
+assigned = (a, b, c /* comment */);
+nested = other = (a, b /* nested right */);
+fn = () => (a, b, c /* abc */);
+fn2 = () => (a = b /* abc */);
+const g = () => (a, b /* arrow in init */);
+function f() {
+  return (a, b, c /* ret seq */);
+  return (a = c /* ret assign */);
+}
+multilineCase = (someParameter) => (
+  someVeryLongExpressionName,
+  anotherVeryLongExpressionName,
+  yetAnotherVeryLongExpressionName /* abc */
+);
+
+// A plain expression statement, call arguments, and removable parens
+// don't keep the comment inside
+(a, b, c /* stmt */);
+(foo() /* removable */);
+callee((a, b /* call arg */));
+
+// throw does not keep it either (Prettier keeps it between `)` and `;`), and
+// `export default` differs: Prettier prints `(a, b) /* c */;`,
+// we move it behind the semicolon uniformly
+function t() {
+  throw (a = b /* throw assign */);
+}
+export default (a, b /* export default */);

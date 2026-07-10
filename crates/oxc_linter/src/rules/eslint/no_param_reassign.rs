@@ -123,9 +123,7 @@ impl Rule for NoParamReassign {
 
         let symbol_table = ctx.scoping();
         for ident in param.pattern.get_binding_identifiers() {
-            let Some(symbol_id) = ident.symbol_id.get() else {
-                continue;
-            };
+            let symbol_id = ident.symbol_id();
 
             let declaration_id = symbol_table.symbol_declaration(symbol_id);
             let name = symbol_table.symbol_name(symbol_id);

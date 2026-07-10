@@ -442,3 +442,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │         } while (i++ < 5);
    ╰────
   help: Variables declared with 'var' are function-scoped, not block-scoped. Consider using 'let' or 'const' for block-scoped variables, or move the function outside the loop.
+
+  ⚠ eslint(no-loop-func): Function declared in a loop contains unsafe references to variable(s)
+   ╭─[no_loop_func.tsx:3:32]
+ 2 │             for (let i = 0; i < 10; i++) {
+ 3 │                 callbacks.push(() => e);
+   ·                                ───────
+ 4 │                 e = next();
+   ╰────
+  help: Variables declared with 'var' are function-scoped, not block-scoped. Consider using 'let' or 'const' for block-scoped variables, or move the function outside the loop.

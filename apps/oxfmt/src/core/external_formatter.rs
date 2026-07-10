@@ -358,9 +358,9 @@ fn wrap_init_external_formatter(
             match status {
                 Ok(promise) => match promise.await {
                     Ok(()) => Ok(()),
-                    Err(err) => Err(err.reason.clone()),
+                    Err(err) => Err(err.reason),
                 },
-                Err(err) => Err(err.reason.clone()),
+                Err(err) => Err(err.reason),
             }
         });
         drop(guard);
@@ -383,9 +383,9 @@ fn wrap_format_file(
             match status {
                 Ok(promise) => match promise.await {
                     Ok(result) => parse_format_file_result(result),
-                    Err(err) => Err(err.reason.clone()),
+                    Err(err) => Err(err.reason),
                 },
-                Err(err) => Err(err.reason.clone()),
+                Err(err) => Err(err.reason),
             }
         });
         drop(guard);
@@ -435,9 +435,9 @@ fn wrap_format_embedded(
                     Ok(None) => Err("Embedded formatting failed".to_string()),
                     // JS side never rejects; it returns `null` on error instead.
                     // `Err` here would only come from a napi-rs internal failure.
-                    Err(err) => Err(err.reason.clone()),
+                    Err(err) => Err(err.reason),
                 },
-                Err(err) => Err(err.reason.clone()),
+                Err(err) => Err(err.reason),
             }
         });
         drop(guard);
@@ -464,9 +464,9 @@ fn wrap_format_embedded_doc(
                     Ok(None) => Err("Embedded doc formatting failed".to_string()),
                     // JS side never rejects; it returns `null` on error instead.
                     // `Err` here would only come from a napi-rs internal failure.
-                    Err(err) => Err(err.reason.clone()),
+                    Err(err) => Err(err.reason),
                 },
-                Err(err) => Err(err.reason.clone()),
+                Err(err) => Err(err.reason),
             }
         });
         drop(guard);

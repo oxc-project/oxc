@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         with:
           path: /home/runner/.rustup
           cache: |
@@ -62,7 +62,7 @@ jobs:
       # `tar` archives the symlink record itself rather than the store contents - producing a faulty cache.
       # `actions/cache` already handles pnpm correctly here, only `rust` needs the NS volume.
       # Note: On Linux this action uses bind-mounts, which don't have this problem - it's a Mac OS problem only.
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         with:
           cache: rust
       - run: cargo ck
@@ -122,11 +122,11 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@682e7d9e49c5e653d371fc6adbda67653461378a # v2.82.4
+      - uses: taiki-e/install-action@16b05812d776ae1dfaabc8277e421fb6d2506419 # v2.82.7
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -139,11 +139,11 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@682e7d9e49c5e653d371fc6adbda67653461378a # v2.82.4
+      - uses: taiki-e/install-action@16b05812d776ae1dfaabc8277e421fb6d2506419 # v2.82.7
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -164,7 +164,7 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
         if: steps.filter.outputs.changed == 'true'
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -203,7 +203,7 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
         if: steps.filter.outputs.changed == 'true'
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -245,7 +245,7 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
         if: steps.filter.outputs.changed == 'true'
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -268,7 +268,7 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
         if: steps.filter.outputs.changed == 'true'
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -303,7 +303,7 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
         if: steps.filter.outputs.changed == 'true' || steps.filter-conformance.outputs.changed == 'true'
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -316,7 +316,7 @@ jobs:
           pnpm --filter "./apps/oxfmt" build-test
           pnpm --filter "./apps/oxfmt" test
       # Conformance ---
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         if: steps.filter-conformance.outputs.changed == 'true'
         with:
           # Cache `~/.degit` to reuse degit's tarball cache across CI runs
@@ -472,25 +472,34 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: crate-ci/typos@37bb98842b0d8c4ffebdb75301a13db0267cef89 # v1.47.2
+      - uses: crate-ci/typos@bee27e3a4fd1ea2111cf90ab89cd076c870fce14 # v1.48.0
         with:
           files: .
 
   lint:
     name: Lint
     runs-on: namespace-profile-linux-x64-default
+    env:
+      CARGO_BUILD_WARNINGS: deny
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         with:
           path: /home/runner/.rustup
           cache: |
             rust
             pnpm
       - run: rustup component add clippy
-      - run: cargo lint -- -D warnings
-      - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
+      - run: cargo lint
+      # Catch lints which only fire with `debug_assertions` off (i.e. release mode),
+      # e.g. code becoming unused when a `#[cfg(debug_assertions)]` block vanishes.
+      # Main-only and without `--all-targets`: these failures are rare and a post-merge
+      # failure pinpoints the culprit commit, so not worth doubling clippy time on every PR.
+      # `--all-targets` is omitted because test/bench code is never built in release mode
+      # with warnings denied.
+      - if: ${{ github.ref_name == 'main' }}
+        run: cargo clippy --all-features --profile dev-no-debug-assertions
       - run: pnpm --filter oxlint-app build-js
       - run: pnpm --filter oxfmt-app build-js
       - run: node --run lint
@@ -503,7 +512,7 @@ jobs:
       TOOLCHAIN: nightly-2026-04-01
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         with:
           path: /home/runner/.rustup
           cache: rust
@@ -522,7 +531,7 @@ jobs:
         uses: ./.github/actions/check-changes
         with:
           packages: oxc_coverage,oxc_transform_conformance,oxc_prettier_conformance
-          paths: tasks/coverage/,tasks/common/,tasks/oxc_transform_conformance/,tasks/oxc_prettier_conformance/,pnpm-lock.yaml
+          paths: tasks/coverage/,tasks/common/,tasks/transform_conformance/,tasks/prettier_conformance/,pnpm-lock.yaml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
@@ -534,7 +543,7 @@ jobs:
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
         if: steps.filter.outputs.changed == 'true'
 
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -542,7 +551,7 @@ jobs:
             rust
             pnpm
 
-      - uses: taiki-e/install-action@682e7d9e49c5e653d371fc6adbda67653461378a # v2.82.4
+      - uses: taiki-e/install-action@16b05812d776ae1dfaabc8277e421fb6d2506419 # v2.82.7
         if: steps.filter.outputs.changed == 'true'
         with:
           tool: just
@@ -567,7 +576,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         with:
           path: /home/runner/.rustup
           cache: rust
@@ -591,7 +600,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         with:
           path: /home/runner/.rustup
           cache: rust
@@ -609,7 +618,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
         id: filter
         with:
           filters: ".github/generated/ast_changes_watch_list.yml"
@@ -617,7 +626,7 @@ jobs:
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
         if: steps.filter.outputs.src == 'true'
 
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         if: steps.filter.outputs.src == 'true'
         with:
           path: /home/runner/.rustup
@@ -643,15 +652,15 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          packages: oxc_linter
-          paths: tasks/linter_codegen/,npm/oxlint/configuration_schema.json,apps/oxlint/src-js/package/config.generated.ts,apps/oxlint/scripts/generate-config-types.ts,apps/oxlint/package.json,pnpm-lock.yaml,package.json
+          packages: oxc_linter,oxc_track_linter_timings
+          paths: tasks/linter_codegen/,tasks/track_linter_timings/,npm/oxlint/configuration_schema.json,apps/oxlint/src-js/package/config.generated.ts,apps/oxlint/scripts/generate-config-types.ts,apps/oxlint/package.json,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
         if: steps.filter.outputs.changed == 'true'
 
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -667,5 +676,6 @@ jobs:
         run: |
           cargo lintgen
           pnpm --filter oxlint-app generate-config-types
+          cargo lint-timings
           git diff --exit-code ||
-          (echo 'Linter generated files have changed. Run `cargo lintgen`, `just linter-schema-json`, and `just linter-config-ts`, then commit the generated files.' && exit 1)
+          (echo 'Linter generated files or timing snapshots have changed. Run `cargo lintgen`, `just linter-schema-json`, `just linter-config-ts`, and `cargo lint-timings`, then commit the generated files.' && exit 1)

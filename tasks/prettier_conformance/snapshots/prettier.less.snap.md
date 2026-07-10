@@ -1,4 +1,4 @@
-less compatibility: 39/39 (100.00%), 8 files skipped
+less compatibility: 39/39 (100.00%), 7 files skipped
 
 # Failed
 
@@ -14,4 +14,3 @@ less compatibility: 39/39 (100.00%), 8 files skipped
 - less/lookup/lookup-1.less
 - less/no-semicolon/url.less
 - less/parens/parens.less
-- less/postcss-8-improment/test.less

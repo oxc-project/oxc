@@ -4,15 +4,12 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
-use oxc_css_parser::{
-    Spanned,
-    ast::{
-        AttributeSelector, AttributeSelectorMatcherKind, AttributeSelectorValue, Combinator,
-        CombinatorKind, ComplexSelector, ComplexSelectorChild, CompoundSelector, InterpolableIdent,
-        InterpolableStr, KeyframeSelector, NsPrefixKind, Nth, NthIndex, PseudoClassSelector,
-        PseudoClassSelectorArgKind, PseudoElementSelector, PseudoElementSelectorArgKind,
-        SelectorList, SimpleSelector, TypeSelector, WqName,
-    },
+use oxc_css_parser::ast::{
+    AttributeSelector, AttributeSelectorMatcherKind, AttributeSelectorValue, Combinator,
+    CombinatorKind, ComplexSelector, ComplexSelectorChild, CompoundSelector, CompoundSelectorList,
+    InterpolableIdent, InterpolableStr, KeyframeSelector, NsPrefixKind, Nth, NthIndex,
+    PseudoClassSelector, PseudoClassSelectorArgKind, PseudoElementSelector,
+    PseudoElementSelectorArgKind, SelectorList, SimpleSelector, TypeSelector, WqName,
 };
 
 use oxc_formatter_core::{
@@ -39,7 +36,7 @@ pub(super) fn is_icss_selector(list: &SelectorList<'_>) -> bool {
         return false;
     };
     let InterpolableIdent::Literal(ident) = &pseudo.name else { return false };
-    matches!(ident.name.as_ref(), "import" | "export")
+    matches!(ident.name, "import" | "export")
 }
 
 /// How a selector list separates its selectors.
@@ -61,11 +58,18 @@ pub(super) fn write_selector_list<'a>(
     // everything from the selector containing the first placeholder onwards
     // becomes one garbage token soup whose commas no longer split selectors.
     // Prettier then prints it near-verbatim:
-    // whitespace runs collapse to single spaces and the line never breaks.
+    // - source newlines are preserved (a `,\n` selector-list boundary stays a hardline)
+    // - and only intra-line whitespace runs collapse to a single space
     // Selectors BEFORE the first placeholder still split normally.
     // Only the embedded entry point can contain placeholders;
     // the gate also keeps a literal marker inside
     // (e.g. an attribute value (`[x="@prettier"]`)) in a standalone file from triggering garbage mode.
+    //
+    // NOTE: `oxc-css-parser` types `${...}` as `Token::Placeholder`,
+    // so `SelectorList`'s `,` boundary and each `ComplexSelector` are intact.
+    // A structured print (standard multi-selector "one-per-line" rule, printWidth-aware) is possible
+    // and would restore consistency with the plain-selector path (`.foo, .bar` splits, so `${a}, ${b}` should too).
+    // However, we stay verbatim for Prettier alignment.
     let placeholder_idx = if f.context().template_placeholders() {
         let source = f.context().source_text();
         list.selectors.iter().position(|complex| {
@@ -109,18 +113,23 @@ pub(super) fn write_selector_list<'a>(
                 let source = f.context().source_text();
                 let end = to_span(list.selectors[list.selectors.len() - 1].span()).end;
                 let raw = source.slice_range(start, end);
-                let mut collapsed = oxc_allocator::StringBuilder::new_in(f.allocator());
-                for (k, word) in raw.split_ascii_whitespace().enumerate() {
-                    if k > 0 {
-                        collapsed.push_str(" ");
-                    }
-                    collapsed.push_str(word);
-                }
                 // Comments inside the chunk are part of the verbatim text
                 let _ = f.context().comments().take_before(end);
+                // Emit each source line as a collapsed run of placeholders + text,
+                // joined by `hard_line_break()`.
+                // Source newlines are normalized to `\n` by `parse_stylesheet`,
+                // so splitting on `\n` is enough.
                 // The degraded chunk is printed verbatim,
                 // but the embedded placeholders must stay typed so the host can splice `${expr}` back.
-                write_text_with_placeholders(collapsed.into_str(), f);
+                for (line_idx, line) in raw.split('\n').enumerate() {
+                    if line_idx > 0 {
+                        write!(f, hard_line_break());
+                    }
+                    let joined = normalize_whitespace(line);
+                    if !joined.is_empty() {
+                        write_text_with_placeholders(f.allocator().alloc_str(&joined), f);
+                    }
+                }
                 return;
             }
             write_complex_selector(complex, f);
@@ -177,6 +186,11 @@ fn write_combinator(
                 CombinatorKind::NextSibling => write!(f, "+"),
                 CombinatorKind::LaterSibling => write!(f, "~"),
                 CombinatorKind::Column => write!(f, "||"),
+                // Deprecated shadow-DOM combinators;
+                // Prettier's `selector-combinator` fallback keeps them spaced like any other combinator.
+                CombinatorKind::Deep => write!(f, "/deep/"),
+                CombinatorKind::ShadowChild => write!(f, "^"),
+                CombinatorKind::ShadowDescendant => write!(f, "^^"),
                 CombinatorKind::Descendant => unreachable!(),
             }
             if !is_last {
@@ -189,6 +203,16 @@ fn write_combinator(
 fn write_compound_selector<'a>(compound: &CompoundSelector<'a>, f: &mut CssFormatter<'_, 'a>) {
     for child in &compound.children {
         write_simple_selector(child, f);
+    }
+}
+
+/// `, `-joined compound selectors inside a pseudo-class/-element arg.
+fn write_compound_selector_list<'a>(list: &CompoundSelectorList<'a>, f: &mut CssFormatter<'_, 'a>) {
+    for (i, compound) in list.selectors.iter().enumerate() {
+        if i > 0 {
+            write!(f, [",", soft_line_break_or_space()]);
+        }
+        write_compound_selector(compound, f);
     }
 }
 
@@ -220,7 +244,10 @@ fn write_simple_selector<'a>(selector: &SimpleSelector<'a>, f: &mut CssFormatter
     }
 }
 
-fn write_interpolable_ident<'a>(ident: &InterpolableIdent<'a>, f: &mut CssFormatter<'_, 'a>) {
+pub(super) fn write_interpolable_ident<'a>(
+    ident: &InterpolableIdent<'a>,
+    f: &mut CssFormatter<'_, 'a>,
+) {
     // A css-in-js placeholder becomes a typed marker the host replaces with `${expr}`.
     if let InterpolableIdent::Placeholder(placeholder) = ident {
         super::write_placeholder(placeholder, f);
@@ -340,7 +367,7 @@ fn write_attribute_selector<'a>(attribute: &AttributeSelector<'a>, f: &mut CssFo
                 write!(f, [text(quote), text(source.text_for(&span)), text(quote)]);
             }
             AttributeSelectorValue::Str(InterpolableStr::Literal(str)) => {
-                value::write_str(str, f);
+                value::write_attribute_str(str, f);
             }
             // Interpolated string (`[x="#{$v}"]`):
             // re-quote the outer quotes per `singleQuote`, keep the `#{}` content verbatim.
@@ -353,9 +380,13 @@ fn write_attribute_selector<'a>(attribute: &AttributeSelector<'a>, f: &mut CssFo
             // so it re-quotes per `singleQuote` like the value-position handler.
             AttributeSelectorValue::LessEscapedStr(escaped) => {
                 write!(f, "~");
-                value::write_str(&escaped.str, f);
+                value::write_attribute_str(&escaped.str, f);
             }
-            AttributeSelectorValue::Percentage(_) => {
+            // TokenSeq: unusual values like `[attr=;]` stay verbatim
+            AttributeSelectorValue::Percentage(_)
+            | AttributeSelectorValue::Number(_)
+            | AttributeSelectorValue::Dimension(_)
+            | AttributeSelectorValue::TokenSeq(_) => {
                 let span = to_span(value.span());
                 write!(f, text(source.text_for(&span)));
             }
@@ -415,13 +446,7 @@ fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut Css
             write_compound_selector(compound, f);
         }
         PseudoClassSelectorArgKind::CompoundSelectorList(list) => {
-            for (i, compound) in list.selectors.iter().enumerate() {
-                if i > 0 {
-                    write!(f, ",");
-                    write!(f, soft_line_break_or_space());
-                }
-                write_compound_selector(compound, f);
-            }
+            write_compound_selector_list(list, f);
         }
         PseudoClassSelectorArgKind::Ident(ident) => write_interpolable_ident(ident, f),
         PseudoClassSelectorArgKind::Nth(nth) => write_nth(nth, f),
@@ -462,7 +487,7 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
     }
     if let Some(matcher) = &nth.matcher {
         write!(f, " ");
-        let matcher_span = to_span(matcher.span());
+        let matcher_span = to_span(&matcher.span);
         if let Some(selector) = &matcher.selector {
             // The `of` keyword as written, then the selector list
             let keyword_end = to_span(selector.span()).start;
@@ -545,6 +570,10 @@ fn write_pseudo_element<'a>(pseudo: &PseudoElementSelector<'a>, f: &mut CssForma
         match &arg.kind {
             PseudoElementSelectorArgKind::CompoundSelector(compound) => {
                 write_compound_selector(compound, f);
+            }
+            // Sass extend output produces lists (`::slotted(.c.d, .d.e)`)
+            PseudoElementSelectorArgKind::CompoundSelectorList(list) => {
+                write_compound_selector_list(list, f);
             }
             PseudoElementSelectorArgKind::Ident(ident) => write_interpolable_ident(ident, f),
             PseudoElementSelectorArgKind::TokenSeq(seq) => {

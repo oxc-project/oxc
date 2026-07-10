@@ -1,0 +1,36 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/codegen-instrument-forget-test.js
+---
+import { shouldInstrument, useRenderCounter } from "react-compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
+// @enableEmitInstrumentForget @compilationMode:"annotation"
+function Bar(props) {
+	"use forget";
+	const $ = _c(2);
+	let t0;
+	if ($[0] !== props.bar) {
+		t0 = <div>{props.bar}</div>;
+		$[0] = props.bar;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	return t0;
+}
+function NoForget(props) {
+	return <Bar>{props.noForget}</Bar>;
+}
+function Foo(props) {
+	"use forget";
+	const $ = _c(2);
+	let t0;
+	if ($[0] !== props.bar) {
+		t0 = <Foo>{props.bar}</Foo>;
+		$[0] = props.bar;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	return t0;
+}

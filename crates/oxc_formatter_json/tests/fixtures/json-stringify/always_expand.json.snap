@@ -19,8 +19,8 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
       1,
       2,
       "3",
-      10000000000,
-      0.001
+      1e10,
+      1e-3
     ]
   },
   "empty_arr": [],
@@ -41,8 +41,8 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
       1,
       2,
       "3",
-      10000000000,
-      0.001
+      1e10,
+      1e-3
     ]
   },
   "empty_arr": [],

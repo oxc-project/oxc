@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.58.0] - 2026-07-06
+
+### 🐛 Bug Fixes
+
+- 0a6b16c formatter_json: Preserve key and literal value for json-stringify (#23996) (leaysgur)
+
+## [0.57.0] - 2026-06-29
+
+### 🐛 Bug Fixes
+
+- 8c07cad all: Enable `disable_old_builder` Cargo feature for `oxc_ast` crate in tests (#23888) (overlookmotel)
+
 ## [0.56.0] - 2026-06-22
 
 ### 🐛 Bug Fixes

@@ -343,45 +343,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // All of transforms below only act on `PrivateFieldExpression`s or `PrivateInExpression`s.
         // If we're not inside a class which has private fields, `#prop` can't be present here,
-        // so exit early - fast path for common case.
-        if self.private_field_count == 0 {
-            return;
-        }
-
-        match expr {
-            // `object.#prop`
-            Expression::PrivateFieldExpression(_) => {
-                self.transform_private_field_expression(expr, ctx);
-            }
-            // `object.#prop()`
-            Expression::CallExpression(_) => {
-                self.transform_call_expression(expr, ctx);
-            }
-            // `object.#prop = value`, `object.#prop += value`, `object.#prop ??= value` etc
-            Expression::AssignmentExpression(_) => {
-                self.transform_assignment_expression(expr, ctx);
-            }
-            // `object.#prop++`, `--object.#prop`
-            Expression::UpdateExpression(_) => {
-                self.transform_update_expression(expr, ctx);
-            }
-            // `object?.#prop`
-            Expression::ChainExpression(_) => {
-                self.transform_chain_expression(expr, ctx);
-            }
-            // `delete object?.#prop.xyz`
-            Expression::UnaryExpression(_) => {
-                self.transform_unary_expression(expr, ctx);
-            }
-            // "object.#prop`xyz`"
-            Expression::TaggedTemplateExpression(_) => {
-                self.transform_tagged_template_expression(expr, ctx);
-            }
-            // "#prop in object"
-            Expression::PrivateInExpression(_) => {
-                self.transform_private_in_expression(expr, ctx);
-            }
-            _ => {}
+        // so skip the slow path - fast path for common case.
+        if self.private_field_count != 0 {
+            self.enter_expression_with_private_fields(expr, ctx);
         }
     }
 
@@ -425,5 +389,52 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
 
     fn exit_static_block(&mut self, _block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.flag_exiting_static_property_or_block();
+    }
+}
+
+impl<'a> ClassProperties<'a> {
+    // Keep the rare private-field transform body out of the hot expression visitor.
+    // Rust 1.97 otherwise inlines these large branches into the generated walker.
+    #[inline(never)]
+    fn enter_expression_with_private_fields(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        match expr {
+            // `object.#prop`
+            Expression::PrivateFieldExpression(_) => {
+                self.transform_private_field_expression(expr, ctx);
+            }
+            // `object.#prop()`
+            Expression::CallExpression(_) => {
+                self.transform_call_expression(expr, ctx);
+            }
+            // `object.#prop = value`, `object.#prop += value`, `object.#prop ??= value` etc
+            Expression::AssignmentExpression(_) => {
+                self.transform_assignment_expression(expr, ctx);
+            }
+            // `object.#prop++`, `--object.#prop`
+            Expression::UpdateExpression(_) => {
+                self.transform_update_expression(expr, ctx);
+            }
+            // `object?.#prop`
+            Expression::ChainExpression(_) => {
+                self.transform_chain_expression(expr, ctx);
+            }
+            // `delete object?.#prop.xyz`
+            Expression::UnaryExpression(_) => {
+                self.transform_unary_expression(expr, ctx);
+            }
+            // "object.#prop`xyz`"
+            Expression::TaggedTemplateExpression(_) => {
+                self.transform_tagged_template_expression(expr, ctx);
+            }
+            // "#prop in object"
+            Expression::PrivateInExpression(_) => {
+                self.transform_private_in_expression(expr, ctx);
+            }
+            _ => {}
+        }
     }
 }

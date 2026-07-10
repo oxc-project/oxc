@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
@@ -110,24 +110,29 @@ impl<'a> TypeScriptNamespace {
             return;
         };
 
-        // Check if this is an empty namespace or only contains type declarations
+        // Return early if this declaration is empty or only contains type declarations —
+        // it emits no JS.
+        //
+        // Lowering a declaration updates the symbol flags right away, so for a symbol
+        // with several declarations the live flags may already describe the emitted
+        // `let` binding by the time a later declaration gets here. Use the immutable
+        // per-declaration flags from the redeclaration list instead. A symbol without
+        // redeclarations has a single declaration, which is visited only once, so its
+        // live flags are still what the semantic builder produced.
         let symbol_id = ident.symbol_id();
-        let flags = ctx.scoping().symbol_flags(symbol_id);
-
-        // If it's a namespace, we need additional checks to determine if it can return early.
-        if flags.is_namespace_module() {
-            // Don't need further check because NO `ValueModule` namespace redeclaration
-            if !flags.is_value_module() {
+        let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
+        if redeclarations.is_empty() {
+            if ctx.scoping().symbol_flags(symbol_id).is_namespace_module() {
                 return;
             }
-
+        } else {
             // Input:
             // ```ts
-            // // SymbolFlags: NameSpaceModule
+            // // Declaration flags: NameSpaceModule
             // export namespace Foo {
             // 	 export type T = 0;
             // }
-            // // SymbolFlags: ValueModule
+            // // Declaration flags: ValueModule
             // export namespace Foo {
             // 	 export const Bar = 1;
             // }
@@ -135,28 +140,16 @@ impl<'a> TypeScriptNamespace {
             //
             // Output:
             // ```js
-            // // SymbolFlags: ValueModule
             // export let Foo;
             // (function(_Foo) {
             //   const Bar = _Foo.Bar = 1;
             // })(Foo || (Foo = {}));
             // ```
             //
-            // When both `NameSpaceModule` and `ValueModule` are present, we need to check the current
-            // declaration flags. If the current declaration is `NameSpaceModule`, we can return early
-            // because it's a type-only namespace and doesn't emit any JS code, otherwise we need to
-            // continue transforming it.
-
-            // Find the current declaration flag
-            let current_declaration_flags = ctx
-                .scoping()
-                .symbol_redeclarations(symbol_id)
-                .iter()
-                .find(|rd| rd.span == ident.span)
-                .unwrap()
-                .flags;
-
-            // Return if the current declaration is a namespace
+            // Only the `ValueModule` declaration emits JS; a `NameSpaceModule`
+            // declaration is type-only.
+            let current_declaration_flags =
+                redeclarations.iter().find(|rd| rd.span == ident.span).unwrap().flags;
             if current_declaration_flags.is_namespace_module() {
                 return;
             }
@@ -281,8 +274,20 @@ impl<'a> TypeScriptNamespace {
             }
         }
 
-        if !Self::is_redeclaration_namespace(&ident, ctx) {
-            let declaration = Self::create_variable_declaration(&binding, span, ctx);
+        // The symbol flags now describe the emitted JS. Updating them right away is
+        // fine — the type-only check above reads per-declaration flags, so later
+        // declarations of a merged namespace don't depend on the old flags.
+        if Self::is_redeclaration_namespace(&ident, ctx) {
+            // Lowered to an assignment to the existing runtime binding — drop only the
+            // module bits and keep the flags describing that binding.
+            *ctx.scoping_mut().symbol_flags_mut(symbol_id) -=
+                SymbolFlags::ValueModule | SymbolFlags::NamespaceModule;
+        } else {
+            // Lowered to a fresh `let` declaration.
+            *ctx.scoping_mut().symbol_flags_mut(binding.symbol_id) =
+                SymbolFlags::BlockScopedVariable;
+            ctx.scoping_mut().set_symbol_span(binding.symbol_id, ident.span);
+            let declaration = Self::create_variable_declaration(&binding, span, ident.span, ctx);
             if is_export {
                 let export_named_decl =
                     ExportNamedDeclaration::boxed_plain_declaration(span, declaration, ctx);
@@ -303,6 +308,13 @@ impl<'a> TypeScriptNamespace {
             scope_id,
             ctx,
         ));
+
+        let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
+        if !redeclarations.iter().any(|redeclaration| redeclaration.flags.is_enum())
+            && redeclarations.last().is_some_and(|redeclaration| redeclaration.span == ident.span)
+        {
+            ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
+        }
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
@@ -310,11 +322,12 @@ impl<'a> TypeScriptNamespace {
     fn create_variable_declaration(
         binding: &BoundIdentifier<'a>,
         span: Span,
+        binding_span: Span,
         ctx: &TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {
-            let pattern = binding.create_binding_pattern(ctx);
+            let pattern = binding.create_spanned_binding_pattern(binding_span, ctx);
             let decl = VariableDeclarator::new(span, kind, pattern, NONE, None, false, ctx);
             ArenaVec::from_value_in(decl, ctx)
         };
@@ -350,8 +363,10 @@ impl<'a> TypeScriptNamespace {
                     scope_id,
                     ctx,
                 ));
-            *ctx.scoping_mut().scope_flags_mut(scope_id) =
-                ScopeFlags::Function | ScopeFlags::StrictMode;
+
+            let strict_mode = (ctx.scoping().scope_flags(scope_id) | ctx.current_scope_flags())
+                & ScopeFlags::StrictMode;
+            *ctx.scoping_mut().scope_flags_mut(scope_id) = ScopeFlags::Function | strict_mode;
             Expression::new_parenthesized_expression(span, function_expr, ctx)
         };
 
@@ -475,20 +490,22 @@ impl<'a> TypeScriptNamespace {
                     return;
                 };
                 if let Some(init) = &mut declarator.init {
-                    declarator.init = Some(Expression::new_assignment_expression(
-                        SPAN,
-                        AssignmentOperator::Assign,
-                        SimpleAssignmentTarget::new_static_member_expression(
+                    init.replace_with(|init| {
+                        Expression::new_assignment_expression(
                             SPAN,
-                            binding.create_read_expression(ctx),
-                            IdentifierName::new(SPAN, property_name, ctx),
-                            false,
+                            AssignmentOperator::Assign,
+                            SimpleAssignmentTarget::new_static_member_expression(
+                                SPAN,
+                                binding.create_read_expression(ctx),
+                                IdentifierName::new(SPAN, property_name, ctx),
+                                false,
+                                ctx,
+                            )
+                            .into(),
+                            init,
                             ctx,
                         )
-                        .into(),
-                        init.take_in(ctx),
-                        ctx,
-                    ));
+                    });
                 }
             });
             return ArenaVec::from_value_in(Statement::VariableDeclaration(var_decl), ctx);

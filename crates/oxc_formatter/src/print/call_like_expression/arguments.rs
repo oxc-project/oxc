@@ -29,7 +29,8 @@ use crate::{
         parameters::has_only_simple_parameters,
     },
     utils::{
-        call_expression::is_test_call_expression, is_long_curried_call,
+        call_expression::is_test_call_expression,
+        expression::as_call_expression_without_chain_wrappers, is_long_curried_call,
         member_chain::simple_argument::SimpleArgument,
     },
     write,
@@ -194,17 +195,15 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
                 }
                 has_seen_function_like = true;
             }
-            Argument::ChainExpression(chain) => {
-                return if let ChainElement::CallExpression(call) = &chain.expression {
-                    is_call_expression_with_arrow_or_function(call)
-                } else {
-                    false
-                };
+            _ => {
+                if arg
+                    .as_expression()
+                    .and_then(as_call_expression_without_chain_wrappers)
+                    .is_some_and(is_call_expression_with_arrow_or_function)
+                {
+                    return true;
+                }
             }
-            Argument::CallExpression(call) if is_call_expression_with_arrow_or_function(call) => {
-                return true;
-            }
-            _ => {}
         }
     }
 
@@ -630,14 +629,18 @@ fn can_group_arrow_function_expression_argument(
         // `couldExpandArg` naturally returns false. In oxc's AST the parens are stripped, so we
         // must explicitly check for type cast comments to prevent incorrect grouping.
         // https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/call-arguments.js#L232-L234
-        Expression::ChainExpression(chain) => {
-            matches!(chain.expression, ChainElement::CallExpression(_))
-                && !is_arrow_recursion
-                && !f
-                    .comments()
-                    .has_type_cast_comment_in_range(arrow_function.span.start, expr.span().start)
-        }
-        Expression::CallExpression(_) | Expression::ConditionalExpression(_) => {
+        //
+        // A call wrapped in `ChainExpression` / `TSNonNullExpression`
+        // (e.g. `a?.b()`, `a.b()!`) counts as a call,
+        // like Prettier's `isCallExpression(stripChainElementWrappers(body))`.
+        //
+        // NOTE: The conditional check is deliberately asymmetric:
+        // Prettier matches a bare `ConditionalExpression` body only,
+        // so a wrapped one (`(a ? b : c)!`) does not count.
+        // Not derivable from a principle; follow Prettier if it changes.
+        expr if matches!(expr, Expression::ConditionalExpression(_))
+            || as_call_expression_without_chain_wrappers(expr).is_some() =>
+        {
             !is_arrow_recursion
                 && !f
                     .comments()

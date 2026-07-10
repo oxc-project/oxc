@@ -40,7 +40,7 @@
 
 use std::iter;
 
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, ReplaceWith};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
@@ -83,16 +83,18 @@ impl<'a> TaggedTemplateTransform {
             return;
         }
 
-        let Expression::TaggedTemplateExpression(tagged) = expr.take_in(ctx) else {
-            unreachable!();
-        };
+        expr.replace_with(|expr| {
+            let Expression::TaggedTemplateExpression(tagged) = expr else {
+                unreachable!();
+            };
 
-        let TaggedTemplateExpression { span, tag, quasi: template_lit, type_arguments, .. } =
-            tagged.unbox();
+            let TaggedTemplateExpression { span, tag, quasi: template_lit, type_arguments, .. } =
+                tagged.unbox();
 
-        let binding = self.create_top_level_binding(ctx);
-        let arguments = self.transform_template_literal(&binding, template_lit, ctx);
-        *expr = Expression::new_call_expression(span, tag, type_arguments, arguments, false, ctx);
+            let binding = self.create_top_level_binding(ctx);
+            let arguments = self.transform_template_literal(&binding, template_lit, ctx);
+            Expression::new_call_expression(span, tag, type_arguments, arguments, false, ctx)
+        });
     }
 
     /// Check if the template literal contains a `</script` tag; note it is case-insensitive.

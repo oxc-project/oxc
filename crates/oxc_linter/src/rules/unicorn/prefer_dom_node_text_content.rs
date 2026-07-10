@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::PropertyKey};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -57,57 +57,42 @@ impl Rule for PreferDomNodeTextContent {
                     );
                 }
             }
-            // `const {innerText} = node` or `({innerText: text} = node)`
-            AstKind::IdentifierName(identifier) => {
-                if identifier.name != "innerText" {
-                    return;
-                }
-
-                let parent_node = ctx.nodes().parent_node(node.id());
-                let grand_parent_node = ctx.nodes().parent_node(parent_node.id());
-
-                if matches!(
-                    parent_node.kind(),
-                    AstKind::BindingProperty(_) | AstKind::AssignmentTargetPropertyProperty(_)
-                ) && (matches!(grand_parent_node.kind(), AstKind::ObjectPattern(_))
-                    || matches!(
-                        grand_parent_node.kind(),
-                        AstKind::IdentifierReference(_)
-                            | AstKind::ObjectAssignmentTarget(_)
-                            | AstKind::AssignmentTargetPropertyIdentifier(_)
-                            | AstKind::ArrayAssignmentTarget(_)
-                            | AstKind::ComputedMemberExpression(_)
-                            | AstKind::StaticMemberExpression(_)
-                            | AstKind::PrivateFieldExpression(_)
-                    ))
+            // `const {innerText} = node`, `const {innerText: text} = node`,
+            // function params `function foo({innerText}) {}`, etc.
+            AstKind::BindingProperty(prop) => {
+                if let PropertyKey::StaticIdentifier(ident) = &prop.key
+                    && ident.name == "innerText"
                 {
-                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier.span));
+                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(ident.span));
                 }
             }
-            // `({innerText} = node)`
-            AstKind::IdentifierReference(identifier_ref) => {
-                if identifier_ref.name != "innerText" {
+            // `({innerText: text} = node)`
+            AstKind::AssignmentTargetPropertyProperty(prop) => {
+                if let PropertyKey::StaticIdentifier(ident) = &prop.name
+                    && ident.name == "innerText"
+                {
+                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(ident.span));
+                }
+            }
+            // `({innerText} = node)` (shorthand)
+            AstKind::AssignmentTargetPropertyIdentifier(prop) => {
+                if prop.binding.name != "innerText" {
                     return;
                 }
 
-                let mut ancestor_kinds = ctx.nodes().ancestor_kinds(node.id());
+                // The parent is always an `ObjectAssignmentTarget`; only report when that
+                // target is directly part of an assignment (or nested in another object
+                // assignment target), matching the previous `IdentifierReference` logic.
+                let object_target = ctx.nodes().parent_node(node.id());
+                let grand_parent_node = ctx.nodes().parent_node(object_target.id());
 
-                let Some(mut parent_node_kind) = ancestor_kinds.next() else { return };
-                if matches!(parent_node_kind, AstKind::AssignmentTargetPropertyIdentifier(_)) {
-                    let Some(next) = ancestor_kinds.next() else { return };
-                    parent_node_kind = next;
-                }
-                let Some(grand_parent_node_kind) = ancestor_kinds.next() else { return };
-
-                if matches!(parent_node_kind, AstKind::ObjectAssignmentTarget(_))
-                    && matches!(
-                        grand_parent_node_kind,
-                        AstKind::ExpressionStatement(_)
-                            | AstKind::AssignmentExpression(_)
-                            | AstKind::ObjectAssignmentTarget(_)
-                    )
-                {
-                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier_ref.span));
+                if matches!(
+                    grand_parent_node.kind(),
+                    AstKind::ExpressionStatement(_)
+                        | AstKind::AssignmentExpression(_)
+                        | AstKind::ObjectAssignmentTarget(_)
+                ) {
+                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(prop.binding.span));
                 }
             }
             _ => {}

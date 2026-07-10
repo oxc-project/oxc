@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.58.0] - 2026-07-06
+
+### 🚀 Features
+
+- 89ec3d9 formatter_core: Add literal line and root indention primitives (#24051) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 1fe6546 formatter: Omit unneeded `;` for type members with `no-semi` (#24212) (leaysgur)
+- 0ad7316 formatter: Print space for `ForStatement`.`update` only if exists (#24211) (leaysgur)
+- 3abbed5 formatter: Print `;` before jsdoc type-cast parens with no-semi (#24208) (leaysgur)
+- d3b9591 formatter: Add parens around `await/yield` with `<T>` (#24202) (leaysgur)
+
+## [0.57.0] - 2026-06-29
+
+### 🐛 Bug Fixes
+
+- 8c07cad all: Enable `disable_old_builder` Cargo feature for `oxc_ast` crate in tests (#23888) (overlookmotel)
+
+### 📚 Documentation
+
+- b4d0dc9 oxfmt,formatter,formatter_css,formatter_core: Update AGENTS.md (#23814) (leaysgur)
+
 ## [0.56.0] - 2026-06-22
 
 ### 💥 BREAKING CHANGES

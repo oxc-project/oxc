@@ -1,0 +1,11 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/rules-of-hooks-8f1c2c3f71c9.js
+---
+// @expectNothingCompiled @compilationMode:"infer"
+// Valid because components can use hooks.
+function createComponentWithHook() {
+	return function ComponentWithHook() {
+		useHook();
+	};
+}

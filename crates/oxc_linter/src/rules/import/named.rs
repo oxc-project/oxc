@@ -273,6 +273,8 @@ fn test() {
         "import x from './typescript-export-assign-object'",
         "export { default as foo } from './typescript-export-default'",
         "import { default as foo } from './typescript-export-default'",
+        "import { a, b } from './cyclic-star-a'",
+        "import { a, b } from './cyclic-star-b'",
     ];
 
     let fail = vec![

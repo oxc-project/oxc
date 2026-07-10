@@ -1,0 +1,11 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/new-mutability/error.invalid-impure-functions-in-render.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Purity: Cannot call impure function during render", labels: One([LabeledSpan { label: Some("Cannot call impure function"), span: SourceSpan { offset: SourceOffset(109), length: 10 }, primary: false }]), help: Some("`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent)"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Purity: Cannot call impure function during render", labels: One([LabeledSpan { label: Some("Cannot call impure function"), span: SourceSpan { offset: SourceOffset(135), length: 17 }, primary: false }]), help: Some("`performance.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent)"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Purity: Cannot call impure function during render", labels: One([LabeledSpan { label: Some("Cannot call impure function"), span: SourceSpan { offset: SourceOffset(169), length: 13 }, primary: false }]), help: Some("`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent)"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

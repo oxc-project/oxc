@@ -100,10 +100,14 @@ unsafe impl GlobalAlloc for TrackedAllocator {
 /// Stores all of the memory allocation stats that will be printed for each file.
 #[derive(Debug)]
 struct AllocatorStats {
-    /// Number of allocations made by system allocator
+    /// Number of allocations made by system allocator, excluding arena chunk allocations
     sys_allocs: usize,
     /// Number of reallocations made by system allocator
     sys_reallocs: usize,
+    /// Number of chunks arenas have requested from the system allocator.
+    /// Tracked separately so chunk allocations can be excluded from `sys_allocs`
+    /// (see `record_stats_diff`). Not printed in snapshots because the count is platform-dependent.
+    arena_chunk_allocs: usize,
     /// Number of allocations made by arena allocator
     arena_allocs: usize,
     /// Number of reallocations made by arena allocator
@@ -292,17 +296,33 @@ fn record_stats(allocator: &Allocator) -> AllocatorStats {
     let (arena_allocs, arena_reallocs) = allocator.get_allocation_stats();
     #[cfg(feature = "is_all_features")]
     let (arena_allocs, arena_reallocs) = (0, 0);
+    #[cfg(not(feature = "is_all_features"))]
+    let arena_chunk_allocs = Allocator::global_chunk_allocation_count();
+    #[cfg(feature = "is_all_features")]
+    let arena_chunk_allocs = 0;
 
-    AllocatorStats { sys_allocs, sys_reallocs, arena_allocs, arena_reallocs }
+    AllocatorStats { sys_allocs, sys_reallocs, arena_chunk_allocs, arena_allocs, arena_reallocs }
 }
 
 /// Record current allocation stats since the last recorded stats in `prev`. This is useful
 /// for measuring allocations made during a specific operation without needing to reset the stats.
 fn record_stats_diff(allocator: &Allocator, prev: &AllocatorStats) -> AllocatorStats {
     let stats = record_stats(allocator);
+    // Arena chunk allocations go through the system allocator, so they are included in `sys_allocs`.
+    // Exclude them. Whether an arena needs one more chunk depends on the total number of bytes
+    // allocated in the arena, and that byte total varies across platforms with target type layout
+    // and alignment (e.g. hashbrown tables are wider on x86_64 than aarch64). Counting chunk
+    // requests therefore made snapshots platform-dependent whenever an arena's content size sat
+    // close to a chunk boundary on one platform (see #22621 for a previous instance).
+    // All other allocation classes grow on element counts, which are identical on all platforms.
+    let arena_chunk_allocs = stats.arena_chunk_allocs.saturating_sub(prev.arena_chunk_allocs);
     AllocatorStats {
-        sys_allocs: stats.sys_allocs.saturating_sub(prev.sys_allocs),
+        sys_allocs: stats
+            .sys_allocs
+            .saturating_sub(prev.sys_allocs)
+            .saturating_sub(arena_chunk_allocs),
         sys_reallocs: stats.sys_reallocs.saturating_sub(prev.sys_reallocs),
+        arena_chunk_allocs,
         arena_allocs: stats.arena_allocs.saturating_sub(prev.arena_allocs),
         arena_reallocs: stats.arena_reallocs.saturating_sub(prev.arena_reallocs),
     }

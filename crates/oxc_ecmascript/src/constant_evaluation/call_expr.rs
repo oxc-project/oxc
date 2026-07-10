@@ -8,11 +8,12 @@
 
 use std::borrow::Cow;
 
+use cow_utils::CowUtils;
+use smallvec::SmallVec;
+
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_syntax::number::ToJsString;
-
-use cow_utils::CowUtils;
 
 use crate::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
@@ -496,7 +497,7 @@ fn try_fold_math_variadic<'a>(
     if !ctx.is_global_expr("Math", object) {
         return None;
     }
-    let mut numbers = Vec::new();
+    let mut numbers = SmallVec::<[f64; 8]>::new();
     for arg in args {
         let expr = arg.as_expression()?;
         let value = expr.get_side_free_number_value(ctx)?;

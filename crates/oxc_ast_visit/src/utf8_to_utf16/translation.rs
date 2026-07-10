@@ -169,7 +169,7 @@ pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>
 
     // Process last chunk
     if remaining_len > 0 {
-        debug_assert!(ptr as usize + remaining_len == bytes.as_ptr() as usize + bytes.len());
+        debug_assert_eq!(ptr as usize + remaining_len, bytes.as_ptr() as usize + bytes.len());
 
         // SAFETY: `ptr` is within `bytes` and `ptr + remaining_len` is end of `bytes`.
         // `bytes` is a `&[u8]`, so guaranteed initialized and valid for reads.
