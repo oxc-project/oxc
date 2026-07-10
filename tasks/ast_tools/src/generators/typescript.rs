@@ -486,7 +486,7 @@ fn amend_oxlint_types(code: &str) -> String {
     #[expect(clippy::disallowed_methods, reason = "always results in replacement")]
     let code =
         code.replacen("hashbang: Hashbang | null;", "comments: Comment[]; tokens: Token[];", 1);
-    assert!(code.len() != old_len); // Check replacement was made
+    assert_ne!(code.len(), old_len); // Check replacement was made
 
     // Make `parent` fields non-optional
     #[expect(clippy::disallowed_methods)]

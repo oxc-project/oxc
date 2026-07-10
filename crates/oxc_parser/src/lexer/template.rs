@@ -83,7 +83,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                     }
                     _ => {
                         // `TEMPLATE_LITERAL_TABLE` only matches `$`, '`', `\r` and `\`
-                        debug_assert!(next_byte == b'\\');
+                        debug_assert_eq!(next_byte, b'\\');
                         // SAFETY: Byte at `pos` is `\`.
                         // `pos` has only been advanced relative to `self.source.position()`.
                         return unsafe { self.template_literal_backslash(pos, substitute, tail) };
@@ -340,7 +340,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                         _ => {
                             // `TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE` only matches `$`, '`', `\r`, `\`,
                             // or first byte of lossy replacement character
-                            debug_assert!(next_byte == LOSSY_REPLACEMENT_CHAR_FIRST_BYTE);
+                            debug_assert_eq!(next_byte, LOSSY_REPLACEMENT_CHAR_FIRST_BYTE);
 
                             // SAFETY: 0xEF is always first byte of a 3-byte UTF-8 character,
                             // so there must be 2 more bytes to read

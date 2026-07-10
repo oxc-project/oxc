@@ -914,7 +914,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
 
         // Check `current_function_node_id` has been reset to as it was at start
-        debug_assert!(self.current_function_node_id == NodeId::ROOT);
+        debug_assert_eq!(self.current_function_node_id, NodeId::ROOT);
     }
 
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {

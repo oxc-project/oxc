@@ -2015,7 +2015,7 @@ mod tests {
         let res = find_unsupported_rule("no-dupe-args", RuleKind::ESLint);
         assert!(res.is_some());
         let (key, reason) = res.unwrap();
-        assert!(key == "eslint/no-dupe-args");
+        assert_eq!(key, "eslint/no-dupe-args");
         assert!(!reason.is_empty());
     }
 
@@ -2031,7 +2031,7 @@ mod tests {
         let res = find_unsupported_rule("no-hide-core-modules", RuleKind::Node);
         assert!(res.is_some());
         let (key, reason) = res.unwrap();
-        assert!(key == "n/no-hide-core-modules");
+        assert_eq!(key, "n/no-hide-core-modules");
         assert!(!reason.is_empty());
     }
 

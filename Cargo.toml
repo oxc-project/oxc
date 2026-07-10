@@ -114,7 +114,6 @@ suspicious_operation_groupings = "warn"
 redundant_clone = "warn"
 # FIXME: New warnings introduced by Rust 1.97.
 byte_char_slices = "allow"
-manual_assert_eq = "allow"
 question_mark = "allow"
 # cargo
 cargo = { level = "warn", priority = -1 }
