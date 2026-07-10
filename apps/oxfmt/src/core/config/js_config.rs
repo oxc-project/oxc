@@ -40,17 +40,23 @@ pub type JsConfigLoaderCb = Arc<dyn Fn(String) -> Result<Value, String> + Send +
 ///   can be reused for other tasks while we block on the NAPI promise
 /// - outside a Tokio runtime, drive the future directly via the captured handle
 pub fn create_js_config_loader(cb: JsLoadJsConfigCb) -> JsConfigLoaderCb {
+    #[cfg(not(target_family = "wasm"))]
     let handle = tokio::runtime::Handle::current();
     Arc::new(move |path: String| {
         let cb = &cb;
-        let handle = handle.clone();
         let fut = async move { cb.call_async(path).await?.into_future().await };
 
+        #[cfg(not(target_family = "wasm"))]
         let res = if tokio::runtime::Handle::try_current().is_ok() {
             tokio::task::block_in_place(|| handle.block_on(fut))
         } else {
             handle.block_on(fut)
         };
+        // On wasm, the TSFN future is channel-based and does not need the tokio runtime.
+        // See `utils::block_on` for details.
+        #[cfg(target_family = "wasm")]
+        let res = crate::core::utils::block_on(fut);
+
         res.map_err(|e| e.reason)
     })
 }

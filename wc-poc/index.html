@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>oxfmt WebContainer mini playground</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+      header { padding: 8px 12px; display: flex; gap: 12px; align-items: center; border-bottom: 1px solid #ddd; }
+      header .status { color: #666; font-size: 12px; margin-left: auto; }
+      main { flex: 1; display: flex; min-height: 0; }
+      main > * { flex: 1; margin: 0; padding: 12px; font: 13px/1.5 ui-monospace, monospace; border: 0; outline: none; }
+      #input { resize: none; border-right: 1px solid #ddd; }
+      #output { overflow: auto; background: #fafafa; white-space: pre-wrap; }
+      #output.error { color: #b00; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>oxfmt (wasi + WebContainers)</strong>
+      <select id="filename">
+        <option>demo.tsx</option>
+        <option>demo.ts</option>
+        <option>demo.css</option>
+        <option>demo.json</option>
+        <option>demo.graphql</option>
+        <option>demo.vue</option>
+        <option>demo.svelte</option>
+      </select>
+      <label><input type="checkbox" id="tailwind" checked /> sortTailwindcss</label>
+      <span class="status" id="status">loading main.js...</span>
+    </header>
+    <main>
+      <textarea id="input" spellcheck="false"></textarea>
+      <pre id="output"></pre>
+    </main>
+    <script>
+      window.addEventListener("error", (e) => {
+        document.querySelector("#status").textContent = "[error] " + (e.message || String(e));
+      });
+      window.addEventListener("unhandledrejection", (e) => {
+        document.querySelector("#status").textContent = "[rejection] " + String(e.reason);
+      });
+    </script>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

@@ -28,6 +28,8 @@ pub fn run(
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> ApiFormatResult {
+    utils::init_wasi_cwd();
+
     // NOTE: In NAPI context, we don't have a config file path, since options are passed directly as a JSON.
     // However, relative -> absolute path conversion is needed for Tailwind plugin to work correctly,
     // use current working directory as the base.
@@ -73,8 +75,7 @@ pub fn run(
     let formatter = SourceFormatter::new(num_of_threads)
         .with_external_formatter(Some(external_formatter.clone()));
 
-    // Use `block_in_place()` to avoid nested async runtime access
-    let result = match tokio::task::block_in_place(|| formatter.format(&source_text, strategy)) {
+    let result = match utils::run_blocking(|| formatter.format(&source_text, strategy)) {
         FormatResult::Success { code, .. } => ApiFormatResult { code, errors: vec![] },
         FormatResult::Error(diagnostics) => {
             let errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);

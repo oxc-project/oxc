@@ -47,6 +47,56 @@ pub fn init_tracing() {
     });
 }
 
+/// Run a closure that blocks on JS callbacks (`block_on` in `external_formatter.rs`)
+/// from within an async (NAPI) context.
+///
+/// On native targets, wrap with `block_in_place` so the multi-threaded tokio runtime
+/// can keep scheduling other tasks while this thread blocks.
+/// On wasm, tokio only provides the current-thread runtime and `block_in_place` does not exist;
+/// JS callback bridging there does not rely on the tokio runtime (see `block_on` below),
+/// so a direct call is fine.
+#[cfg(feature = "napi")]
+pub fn run_blocking<T>(f: impl FnOnce() -> T) -> T {
+    #[cfg(not(target_family = "wasm"))]
+    {
+        tokio::task::block_in_place(f)
+    }
+    #[cfg(target_family = "wasm")]
+    {
+        f()
+    }
+}
+
+// `block_on` for JS (TSFN) futures.
+// On native targets, NAPI-RS's implementation drives the future on its multi-threaded
+// tokio runtime. On wasm that runtime is current-thread and its core is held by the
+// thread driving the NAPI async fn for its entire duration, so napi's `block_on` would
+// deadlock when called concurrently from rayon threads. TSFN futures are channel-based
+// and do not need a tokio driver, so a plain thread-parking executor is enough there.
+#[cfg(all(feature = "napi", target_family = "wasm"))]
+pub use futures::executor::block_on;
+#[cfg(all(feature = "napi", not(target_family = "wasm")))]
+pub use napi::bindgen_prelude::block_on;
+
+/// WASI has no process-level cwd; wasi-libc emulates one starting at `/`.
+/// Sync it once from the host `PWD` env var (snapshotted by the napi wasi glue at
+/// instantiation; shells — including WebContainers' — set it) so that relative path
+/// normalization in the `format()` API behaves like on native.
+/// No-op on native targets.
+#[cfg(all(feature = "napi", target_family = "wasm"))]
+pub fn init_wasi_cwd() {
+    use std::sync::OnceLock;
+
+    static CWD_INIT: OnceLock<()> = OnceLock::new();
+    CWD_INIT.get_or_init(|| {
+        if let Ok(pwd) = std::env::var("PWD") {
+            let _ = std::env::set_current_dir(pwd);
+        }
+    });
+}
+#[cfg(all(feature = "napi", not(target_family = "wasm")))]
+pub fn init_wasi_cwd() {}
+
 pub fn read_to_string(path: &Path) -> io::Result<String> {
     // `simdutf8` is faster than `std::str::from_utf8` which `fs::read_to_string` uses internally
     let bytes = fs::read(path)?;
