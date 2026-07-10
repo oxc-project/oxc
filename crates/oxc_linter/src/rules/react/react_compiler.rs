@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_diagnostics::Severity;
 use oxc_macros::declare_oxc_lint;
-use oxc_react_compiler::{EnvironmentConfig, PluginOptions};
+use oxc_react_compiler::{CompilerOutputMode, EnvironmentConfig, PluginOptions};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -16,7 +16,7 @@ use crate::{
 /// Mirrors `COMPILER_OPTIONS` in the plugin's `src/shared/RunReactCompiler.ts`.
 fn react_compiler_options() -> PluginOptions {
     PluginOptions {
-        output_mode: Some("lint".to_string()),
+        output_mode: Some(CompilerOutputMode::Lint),
         // Don't emit errors on Flow suppressions — Flow already gave a signal.
         // Suppressed lines are filtered in `run_once` instead (like the eslint
         // plugin), so other diagnostics in the same function still surface.

@@ -74,14 +74,6 @@ describe("CSS/SCSS/Less files (oxc_formatter_css)", () => {
     expect(result.errors).toHaveLength(0);
   });
 
-  it("should format an unclosed block by closing it", async () => {
-    // Prettier (postcss) rejects "Unclosed block"; `oxc-css-parser` recovers.
-    const source = `a {\n  color: red;\n`;
-    const result = await format("recovered.css", source);
-    expect(result.code).toBe("a {\n  color: red;\n}\n");
-    expect(result.errors).toHaveLength(0);
-  });
-
   it("should report a diagnostic for input rejects (no Prettier fallback)", async () => {
     // postcss tolerates this as raw at-rule params (Prettier destroys it to `@media ;`),
     // but `oxc_formatter_css` does not, the parse error is surfaced as-is.

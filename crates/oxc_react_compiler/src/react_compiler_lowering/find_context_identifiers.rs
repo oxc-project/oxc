@@ -35,16 +35,13 @@ use oxc_ast_visit::Visit;
 use oxc_span::Span;
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::ErrorCategory;
-use crate::react_compiler_diagnostics::SourceLocation;
+use crate::diagnostics::CompilerError;
+use crate::diagnostics::ErrorCategory;
 use crate::scope::ScopeId;
 use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
 
 use crate::react_compiler_lowering::FunctionNode;
-use crate::react_compiler_lowering::source_loc::LineOffsets;
 
 #[derive(Default)]
 struct BindingInfo {
@@ -55,7 +52,6 @@ struct BindingInfo {
 
 struct ContextIdentifierVisitor<'a> {
     scope: &'a ScopeResolver<'a, 'a>,
-    line_offsets: &'a LineOffsets,
     /// The active scope stack. Initialized with the function-being-compiled's
     /// scope and pushed/popped for every scope-creating node, mirroring the
     /// original `AstWalker`.
@@ -138,8 +134,7 @@ impl<'a> ContextIdentifierVisitor<'a> {
         if self.error.is_some() {
             return;
         }
-        let loc = self.line_offsets.source_location(span);
-        self.error = Some(make_unsupported_lval_error(type_name, Some(loc)));
+        self.error = Some(make_unsupported_lval_error(type_name, Some(span)));
     }
 }
 
@@ -398,17 +393,14 @@ impl<'a> ContextIdentifierVisitor<'a> {
 /// aborting before BuildHIR ever runs or logs, so this must return Err rather
 /// than record-and-continue: otherwise Rust emits HIR debug entries for a
 /// function TS never lowered.
-fn make_unsupported_lval_error(type_name: &str, loc: Option<SourceLocation>) -> CompilerError {
-    let mut err = CompilerError::new();
-    err.push_error_detail(CompilerErrorDetail {
-        category: ErrorCategory::Todo,
-        reason: format!(
-            "[FindContextIdentifiers] Cannot handle Object destructuring assignment target {type_name}"
-        ),
-        description: None,
-        loc,
-    });
-    err
+fn make_unsupported_lval_error(type_name: &str, span: Option<Span>) -> CompilerError {
+    CompilerError::from(
+        ErrorCategory::Todo
+            .diagnostic(format!(
+                "[FindContextIdentifiers] Cannot handle Object destructuring assignment target {type_name}"
+            ))
+            .with_labels(span),
+    )
 }
 
 /// Check if a binding declared at `binding_scope` is captured by a function at `function_scope`.
@@ -435,14 +427,12 @@ fn is_captured_by_function(
 pub fn find_context_identifiers(
     func: &FunctionNode<'_>,
     scope: &ScopeResolver<'_, '_>,
-    identifier_locs: &crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex,
-    line_offsets: &LineOffsets,
+    identifier_spans: &crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex,
 ) -> Result<FxHashSet<SymbolId>, CompilerError> {
     let func_scope = func.scope_id().unwrap_or_else(|| scope.program_scope());
 
     let mut visitor = ContextIdentifierVisitor {
         scope,
-        line_offsets,
         scope_stack: vec![func_scope],
         function_stack: Vec::new(),
         binding_info: FxHashMap::default(),
@@ -503,7 +493,7 @@ pub fn find_context_identifiers(
             if declaration_start == Some(ref_nid) {
                 continue;
             }
-            let ref_pos = match identifier_locs.get(&ref_nid) {
+            let ref_pos = match identifier_spans.get(&ref_nid) {
                 Some(entry) => entry.start,
                 None => continue,
             };

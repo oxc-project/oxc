@@ -12,7 +12,9 @@
 //! inferMutationAliasingRanges, rewriteInstructionKindsBasedOnReassignment,
 //! and inferReactiveScopeVariables on each inner function.
 
-use crate::react_compiler_diagnostics::{CompilerDiagnostic, ErrorCategory};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_inference::infer_mutation_aliasing_effects::infer_mutation_aliasing_effects;
 use crate::react_compiler_inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges;
@@ -43,7 +45,7 @@ pub fn analyse_functions<F>(
     func: &mut HirFunction,
     env: &mut Environment,
     debug_logger: &mut F,
-) -> Result<(), CompilerDiagnostic>
+) -> Result<(), OxcDiagnostic>
 where
     F: FnMut(&HirFunction, &Environment),
 {
@@ -104,7 +106,7 @@ fn lower_with_mutation_aliasing<F>(
     func: &mut HirFunction,
     env: &mut Environment,
     debug_logger: &mut F,
-) -> Result<(), CompilerDiagnostic>
+) -> Result<(), OxcDiagnostic>
 where
     F: FnMut(&HirFunction, &Environment),
 {
@@ -167,10 +169,8 @@ where
                 // no-op
             }
             AliasingEffect::Apply { .. } => {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
+                return Err(ErrorCategory::Invariant.diagnostic(
                     "[AnalyzeFunctions] Expected Apply effects to be replaced with more precise effects",
-                    None,
                 ));
             }
         }
@@ -195,7 +195,7 @@ where
 /// read — the real function is swapped back immediately after processing.
 fn placeholder_function<'a>() -> HirFunction<'a> {
     HirFunction {
-        loc: None,
+        span: None,
         id: None,
         name_hint: None,
         fn_type: ReactFunctionType::Other,
@@ -204,7 +204,7 @@ fn placeholder_function<'a>() -> HirFunction<'a> {
             identifier: IdentifierId(0),
             effect: Effect::Unknown,
             reactive: false,
-            loc: None,
+            span: None,
         },
         context: Vec::new(),
         body: HIR { entry: BlockId(0), blocks: FxIndexMap::default() },

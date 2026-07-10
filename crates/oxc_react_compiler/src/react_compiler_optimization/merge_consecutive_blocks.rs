@@ -123,16 +123,16 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
                 identifier,
                 effect: Effect::ConditionallyMutate,
                 reactive: false,
-                loc: GENERATED_SOURCE,
+                span: GENERATED_SOURCE,
             };
             let instr = Instruction {
                 id: eval_order,
                 lvalue: lvalue.clone(),
                 value: InstructionValue::LoadLocal {
                     place: operand.clone(),
-                    loc: GENERATED_SOURCE,
+                    span: GENERATED_SOURCE,
                 },
-                loc: GENERATED_SOURCE,
+                span: GENERATED_SOURCE,
                 effects: Some(vec![AliasingEffect::Alias { from: operand, into: lvalue }]),
             };
             let instr_id = InstructionId(func.instructions.len() as u32);

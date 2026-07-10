@@ -7,42 +7,40 @@
 //!
 //! This module is a port of Program.ts from the TypeScript compiler. It orchestrates
 //! the compilation of a program by:
-//! 1. Checking if compilation should be skipped
-//! 2. Validating restricted imports
-//! 3. Finding program-level suppressions
-//! 4. Discovering functions to compile (components, hooks)
-//! 5. Processing each function through the compilation pipeline
-//! 6. Applying compiled functions back to the AST
+//! 1. Finding program-level suppressions
+//! 2. Discovering functions to compile (components, hooks)
+//! 3. Processing each function through the compilation pipeline
+//! 4. Applying compiled functions back to the AST
 
 use cow_utils::CowUtils;
+use oxc_ast::AstKind;
 use oxc_ast::ast as oxc;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::Span;
-use rustc_hash::FxHashMap;
+use oxc_ast::builder::AstBuilder;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_span::{GetSpan, SPAN, Span};
+use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::diagnostics::{CompilerError, ErrorCategory, with_fallback_label};
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
 use crate::scope::ScopeResolver;
-use oxc_allocator::GetAllocator;
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn, GetAllocator};
+use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
 use oxc_syntax::scope::ScopeId;
+use oxc_syntax::symbol::SymbolId;
 
 use super::compile_result::CodegenFunction;
 use super::compile_result::CompileResult;
 use super::imports::ProgramContext;
-use super::imports::validate_restricted_imports;
 use super::pipeline;
-use super::plugin_options::CompilerOutputMode;
-use super::plugin_options::GatingConfig;
-use super::plugin_options::PluginOptions;
 use super::suppression::SuppressionRange;
 use super::suppression::filter_suppressions_that_affect_function;
 use super::suppression::find_program_suppressions;
 use super::suppression::suppressions_to_compiler_error;
+use crate::options::{
+    CompilationMode, CompilerOutputMode, GatingConfig, PanicThreshold, PluginOptions,
+};
 
 // -----------------------------------------------------------------------
 // Constants
@@ -64,14 +62,12 @@ const OPT_OUT_DIRECTIVES: &[&str] = &["use no forget", "use no memo"];
 /// A function found in the program that should be compiled.
 ///
 /// `'a` is the arena lifetime of the discovered oxc function node.
-#[allow(dead_code)]
 struct CompileSource<'a> {
     kind: CompileSourceKind,
     original_kind: OriginalFnKind,
-    fn_name: Option<String>,
     /// Byte span of the discovered function, used as the fallback labeled span in
     /// compile-error diagnostics.
-    fn_ast_loc: Option<Span>,
+    fn_ast_span: Option<Span>,
     fn_start: Option<u32>,
     fn_end: Option<u32>,
     fn_node_id: Option<u32>,
@@ -85,8 +81,6 @@ struct CompileSource<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum CompileSourceKind {
     Original,
-    #[allow(dead_code)]
-    Outlined,
 }
 
 // -----------------------------------------------------------------------
@@ -117,19 +111,18 @@ fn try_find_directive_enabling_memoization<'a>(
 
 /// Check if any opt-out directive is present in the given directives.
 fn find_directive_disabling_memoization<'a>(
-    directives: &'a [String],
-    opts: &PluginOptions,
+    mut directives: impl Iterator<Item = &'a str>,
+    custom_opt_out_directives: Option<&[String]>,
 ) -> Option<&'a str> {
-    if let Some(ref custom_directives) = opts.custom_opt_out_directives {
-        directives.iter().find(|d| custom_directives.contains(d)).map(String::as_str)
+    if let Some(custom_directives) = custom_opt_out_directives {
+        directives.find(|d| custom_directives.iter().any(|c| c == d))
     } else {
-        directives.iter().find(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str())).map(String::as_str)
+        directives.find(|d| OPT_OUT_DIRECTIVES.contains(d))
     }
 }
 
 /// Result of a dynamic gating directive parse.
 struct DynamicGatingResult<'a> {
-    #[allow(dead_code)]
     directive: &'a str,
     gating: GatingConfig,
 }
@@ -145,7 +138,7 @@ fn find_directives_dynamic_gating<'a>(
         None => return Ok(None),
     };
 
-    let mut errors: Vec<CompilerErrorDetail> = Vec::new();
+    let mut errors = CompilerError::new();
     let mut matches: Vec<(&'a str, String)> = Vec::new();
 
     for directive in directives {
@@ -153,34 +146,26 @@ fn find_directives_dynamic_gating<'a>(
             if is_valid_identifier(ident) {
                 matches.push((directive.as_str(), ident.to_string()));
             } else {
-                let detail = CompilerErrorDetail::new(
-                    ErrorCategory::Gating,
-                    "Dynamic gating directive is not a valid JavaScript identifier",
-                )
-                .with_description(format!("Found '{directive}'"));
-                errors.push(detail);
+                errors.push(
+                    ErrorCategory::Gating
+                        .diagnostic("Dynamic gating directive is not a valid JavaScript identifier")
+                        .with_help(format!("Found '{directive}'")),
+                );
             }
         }
     }
 
-    if !errors.is_empty() {
-        let mut err = CompilerError::new();
-        for e in errors {
-            err.push_error_detail(e);
-        }
-        return Err(err);
+    if errors.has_any_errors() {
+        return Err(errors);
     }
 
     if matches.len() > 1 {
         let names: Vec<&str> = matches.iter().map(|(d, _)| *d).collect();
-        let mut err = CompilerError::new();
-        let detail = CompilerErrorDetail::new(
-            ErrorCategory::Gating,
-            "Multiple dynamic gating directives found",
-        )
-        .with_description(format!("Expected a single directive but found [{}]", names.join(", ")));
-        err.push_error_detail(detail);
-        return Err(err);
+        return Err(CompilerError::from(
+            ErrorCategory::Gating
+                .diagnostic("Multiple dynamic gating directives found")
+                .with_help(format!("Expected a single directive but found [{}]", names.join(", "))),
+        ));
     }
 
     if matches.len() == 1 {
@@ -341,30 +326,13 @@ fn is_regular_call(call: &oxc::CallExpression) -> bool {
     !call.optional && !expr_contains_optional(&call.callee)
 }
 
-/// Check if an expression is a React API call (e.g., `forwardRef` or `React.forwardRef`).
-#[allow(dead_code)]
-fn is_react_api(expr: &oxc::Expression, function_name: &str) -> bool {
-    match expr {
-        oxc::Expression::Identifier(id) => id.name == function_name,
-        oxc::Expression::StaticMemberExpression(member) => {
-            if let oxc::Expression::Identifier(obj) = &member.object {
-                if obj.name == "React" {
-                    return member.property.name == function_name;
-                }
-            }
-            false
-        }
-        _ => false,
-    }
-}
-
 /// Get the inferred function name from a function's context.
 ///
 /// For FunctionDeclaration: uses the `id` field.
 /// For FunctionExpression/ArrowFunctionExpression: infers from parent context
 /// (VariableDeclarator, etc.) which is passed explicitly since we don't have Babel paths.
-fn get_function_name_from_id(id: Option<&oxc::BindingIdentifier>) -> Option<String> {
-    id.map(|id| id.name.to_string())
+fn get_function_name_from_id<'ast>(id: Option<&oxc::BindingIdentifier<'ast>>) -> Option<&'ast str> {
+    id.map(|id| id.name.as_str())
 }
 
 // -----------------------------------------------------------------------
@@ -1018,25 +986,24 @@ fn get_react_function_type(
         None
     };
 
-    match opts.compilation_mode.as_str() {
-        "annotation" => {
+    match opts.compilation_mode {
+        CompilationMode::Annotation => {
             // opt-ins were checked above
             None
         }
-        "infer" => {
+        CompilationMode::Infer => {
             // Check if this is a component or hook-like function
             component_syntax_type
                 .or_else(|| get_component_or_hook_like(name, params, body, parent_callee_name))
         }
-        "syntax" => {
+        CompilationMode::Syntax => {
             // In syntax mode, only compile declared components/hooks
             component_syntax_type
         }
-        "all" => Some(
+        CompilationMode::All => Some(
             get_component_or_hook_like(name, params, body, parent_callee_name)
                 .unwrap_or(ReactFunctionType::Other),
         ),
-        _ => None,
     }
 }
 
@@ -1111,32 +1078,28 @@ fn get_callee_name_if_react_api<'e>(callee: &'e oxc::Expression) -> Option<&'e s
 // Error handling
 // -----------------------------------------------------------------------
 
-/// Push a compiler error's per-detail diagnostics onto the context.
-fn log_error(err: &CompilerError, fn_loc: Option<Span>, context: &mut ProgramContext) {
+/// Push a compiler error's diagnostics onto the accumulator.
+fn log_error(err: &CompilerError, fn_span: Option<Span>, diagnostics: &mut Diagnostics) {
     // Detect simulated unknown exception (throwUnknownException__testonly). In TS,
     // non-CompilerError exceptions surface as a pipeline error carrying the error
     // message rather than a per-detail compiler error.
-    let is_simulated_unknown = err.details.len() == 1
-        && err.details.iter().all(|d| match d {
-            CompilerErrorOrDiagnostic::ErrorDetail(d) => {
-                d.category == ErrorCategory::Invariant && d.reason == "unexpected error"
-            }
-            _ => false,
-        });
+    let is_simulated_unknown = err.diagnostics.len() == 1
+        && err
+            .diagnostics
+            .iter()
+            .all(|d| d.message == "[ReactCompiler] Invariant: unexpected error");
     if is_simulated_unknown {
         let mut diagnostic =
             OxcDiagnostic::error("[ReactCompiler] Pipeline error: Error: unexpected error");
-        if let Some(span) = fn_loc {
+        if let Some(span) = fn_span {
             diagnostic = diagnostic.with_label(span);
         }
-        context.diagnostics.push(diagnostic);
+        diagnostics.push(diagnostic);
         return;
     }
 
-    for detail in &err.details {
-        if let Some(diagnostic) = crate::diagnostics::detail_to_diagnostic(detail, fn_loc) {
-            context.diagnostics.push(diagnostic);
-        }
+    for diagnostic in &err.diagnostics {
+        diagnostics.push(with_fallback_label(diagnostic, fn_span));
     }
 }
 
@@ -1145,28 +1108,26 @@ fn log_error(err: &CompilerError, fn_loc: Option<Span>, context: &mut ProgramCon
 /// otherwise returns None (error was logged only).
 fn handle_error<'a>(
     err: &CompilerError,
-    fn_loc: Option<Span>,
-    context: &mut ProgramContext,
+    fn_span: Option<Span>,
+    panic_threshold: PanicThreshold,
+    diagnostics: &mut Diagnostics,
 ) -> Option<CompileResult<'a>> {
     // Log the error
-    log_error(err, fn_loc, context);
+    log_error(err, fn_span, diagnostics);
 
-    let should_panic = match context.opts.panic_threshold.as_str() {
-        "all_errors" => true,
-        "critical_errors" => err.has_errors(),
-        _ => false,
+    let should_panic = match panic_threshold {
+        PanicThreshold::AllErrors => true,
+        PanicThreshold::CriticalErrors => err.has_errors(),
+        PanicThreshold::None => false,
     };
 
     // Config errors always cause a panic
-    let is_config_error = err.details.iter().any(|d| match d {
-        CompilerErrorOrDiagnostic::Diagnostic(d) => d.category == ErrorCategory::Config,
-        CompilerErrorOrDiagnostic::ErrorDetail(d) => d.category == ErrorCategory::Config,
-    });
+    let is_config_error = err.diagnostics.iter().any(|d| ErrorCategory::Config.matches(d));
 
     if should_panic || is_config_error {
         // The per-detail diagnostics were already pushed by `log_error`; the fatal
         // result just carries them. (The old JS-shim summary is dropped.)
-        Some(CompileResult::Error { diagnostics: std::mem::take(&mut context.diagnostics) })
+        Some(CompileResult::Error { diagnostics: std::mem::take(diagnostics) })
     } else {
         None
     }
@@ -1181,14 +1142,13 @@ fn handle_error<'a>(
 /// Returns `CodegenFunction` on success or `CompilerError` on failure.
 /// Debug log entries are accumulated on `context.debug_logs`.
 fn try_compile_function<'a>(
-    ast: &oxc_ast::builder::AstBuilder<'a>,
+    ast: &AstBuilder<'a>,
     source: &CompileSource,
     scope: &ScopeResolver<'_, '_>,
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
-    source_text: &str,
-) -> Result<CodegenFunction<'a>, CompilerError> {
+) -> Result<Option<CodegenFunction<'a>>, CompilerError> {
     // Check for suppressions that affect this function
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
         let affecting = filter_suppressions_that_affect_function(&context.suppressions, start, end);
@@ -1212,7 +1172,6 @@ fn try_compile_function<'a>(
         output_mode,
         env_config,
         context,
-        source_text,
     )
 }
 
@@ -1223,25 +1182,32 @@ fn try_compile_function<'a>(
 /// or `Err(CompileResult)` if a fatal error should short-circuit the program.
 #[allow(clippy::result_large_err)]
 fn process_fn<'a>(
-    ast: &oxc_ast::builder::AstBuilder<'a>,
+    ast: &AstBuilder<'a>,
     source: &CompileSource,
     scope: &ScopeResolver<'_, '_>,
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext,
-    source_text: &str,
 ) -> Result<Option<CodegenFunction<'a>>, CompileResult<'a>> {
     // Parse directives from the function body
     let opt_in_result =
         try_find_directive_enabling_memoization(&source.body_directives, &context.opts);
-    let opt_out = find_directive_disabling_memoization(&source.body_directives, &context.opts);
+    let opt_out = find_directive_disabling_memoization(
+        source.body_directives.iter().map(String::as_str),
+        context.opts.custom_opt_out_directives.as_deref(),
+    );
 
     // If parsing opt-in directive fails, handle the error and skip
     let opt_in = match opt_in_result {
         Ok(d) => d,
         Err(err) => {
             // Apply panic threshold logic (same as compilation errors)
-            if let Some(result) = handle_error(&err, source.fn_ast_loc, context) {
+            if let Some(result) = handle_error(
+                &err,
+                source.fn_ast_span,
+                context.opts.panic_threshold,
+                &mut context.diagnostics,
+            ) {
                 return Err(result);
             }
             return Ok(None);
@@ -1249,8 +1215,7 @@ fn process_fn<'a>(
     };
 
     // Attempt compilation
-    let compile_result =
-        try_compile_function(ast, source, scope, output_mode, env_config, context, source_text);
+    let compile_result = try_compile_function(ast, source, scope, output_mode, env_config, context);
 
     match compile_result {
         Err(err) => {
@@ -1262,7 +1227,7 @@ fn process_fn<'a>(
                     "[ReactCompiler] Unexpected error: {}",
                     err.to_string_for_event()
                 ));
-                if let Some(span) = source.fn_ast_loc {
+                if let Some(span) = source.fn_ast_span {
                     diagnostic = diagnostic.with_label(span);
                 }
                 context.diagnostics.push(diagnostic);
@@ -1270,16 +1235,24 @@ fn process_fn<'a>(
 
             if opt_out.is_some() {
                 // If there's an opt-out, just log the error (don't escalate)
-                log_error(&err, source.fn_ast_loc, context);
+                log_error(&err, source.fn_ast_span, &mut context.diagnostics);
             } else {
                 // Apply panic threshold logic
-                if let Some(result) = handle_error(&err, source.fn_ast_loc, context) {
+                if let Some(result) = handle_error(
+                    &err,
+                    source.fn_ast_span,
+                    context.opts.panic_threshold,
+                    &mut context.diagnostics,
+                ) {
                     return Err(result);
                 }
             }
             Ok(None)
         }
-        Ok(codegen_fn) => {
+        // Lowering silently declined to compile this function (e.g. it uses
+        // `using`/`await using`); nothing to emit, and no diagnostic.
+        Ok(None) => Ok(None),
+        Ok(Some(codegen_fn)) => {
             // Functions opted out via directive are skipped; nothing to emit.
             if !context.opts.ignore_use_no_forget && opt_out.is_some() {
                 // Do NOT register the memo cache import here — it is registered in
@@ -1298,7 +1271,7 @@ fn process_fn<'a>(
             }
 
             // Check annotation mode
-            if context.opts.compilation_mode == "annotation" && opt_in.is_none() {
+            if context.opts.compilation_mode == CompilationMode::Annotation && opt_in.is_none() {
                 return Ok(None);
             }
 
@@ -1324,11 +1297,11 @@ fn body_directive_values(body: &oxc::FunctionBody) -> Vec<String> {
 /// and `parent_callee_name` the enclosing forwardRef/memo callee (if any).
 fn try_make_compile_source<'a>(
     fn_node: FunctionNode<'a>,
-    name: Option<String>,
+    name: Option<&str>,
     original_kind: OriginalFnKind,
-    parent_callee_name: Option<String>,
+    parent_callee_name: Option<&str>,
     opts: &PluginOptions,
-    context: &mut ProgramContext,
+    already_compiled: &mut FxHashSet<u32>,
 ) -> Option<CompileSource<'a>> {
     let (params, body, span, body_directives) = match fn_node {
         FunctionNode::Function(f) => {
@@ -1353,34 +1326,34 @@ fn try_make_compile_source<'a>(
 
     let node_id = span.start;
 
-    // Skip if already compiled (identified by node_id).
-    if context.is_already_compiled(node_id) {
+    // Skip if already compiled (identified by node_id). This is a workaround for
+    // Babel not consistently respecting skip().
+    if already_compiled.contains(&node_id) {
         return None;
     }
 
     let fn_type = get_react_function_type(
-        name.as_deref(),
+        name,
         params,
         &body,
         &body_directives,
         // Flow `component`/`hook` declaration syntax never appears in the oxc AST.
         false,
-        parent_callee_name.as_deref(),
+        parent_callee_name,
         opts,
         false,
         false,
     )?;
 
-    context.mark_compiled(node_id);
+    already_compiled.insert(node_id);
 
     Some(CompileSource {
         kind: CompileSourceKind::Original,
         original_kind,
-        fn_name: name,
         // The function source location flows into compile-error diagnostics as the
         // fallback labeled span (offset/length). Only the byte `index` is
         // load-bearing; line/column/filename never reach the example's output.
-        fn_ast_loc: Some(span),
+        fn_ast_span: Some(span),
         fn_start: Some(span.start),
         fn_end: Some(span.end),
         fn_node_id: Some(node_id),
@@ -1392,9 +1365,9 @@ fn try_make_compile_source<'a>(
 
 /// Get the variable declarator name (for inferring function names from
 /// `const Foo = () => {}`).
-fn get_declarator_name(decl: &oxc::VariableDeclarator) -> Option<String> {
+fn get_declarator_name<'ast>(decl: &oxc::VariableDeclarator<'ast>) -> Option<&'ast str> {
     match &decl.id {
-        oxc::BindingPattern::BindingIdentifier(id) => Some(id.name.to_string()),
+        oxc::BindingPattern::BindingIdentifier(id) => Some(id.name.as_str()),
         _ => None,
     }
 }
@@ -1422,19 +1395,19 @@ fn get_declarator_name(decl: &oxc::VariableDeclarator) -> Option<String> {
 /// discovery — matching the Babel bridge, which extracted no metadata for them).
 struct DiscoveryWalker<'a, 'ast> {
     opts: &'a PluginOptions,
-    context: &'a mut ProgramContext,
+    already_compiled: FxHashSet<u32>,
     queue: Vec<CompileSource<'ast>>,
     scope_stack: Vec<ScopeId>,
     loop_expression_depth: usize,
-    current_declarator_name: Option<String>,
-    parent_callee_stack: Vec<Option<String>>,
+    current_declarator_name: Option<&'ast str>,
+    parent_callee_stack: Vec<Option<&'ast str>>,
 }
 
 impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
-    fn new(opts: &'a PluginOptions, context: &'a mut ProgramContext) -> Self {
+    fn new(opts: &'a PluginOptions) -> Self {
         Self {
             opts,
-            context,
+            already_compiled: FxHashSet::default(),
             queue: Vec::new(),
             scope_stack: Vec::new(),
             loop_expression_depth: 0,
@@ -1444,8 +1417,12 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     }
 
     /// Try to push the scope a node creates (its semantic `scope_id` cell).
-    /// Returns whether one was pushed.
+    /// Returns whether one was pushed. The stack is only consulted by the
+    /// 'all'-mode scope check, so skip maintaining it in other modes.
     fn try_push_scope(&mut self, scope_id: Option<ScopeId>) -> bool {
+        if self.opts.compilation_mode != CompilationMode::All {
+            return false;
+        }
         if let Some(scope_id) = scope_id {
             self.scope_stack.push(scope_id);
             true
@@ -1458,12 +1435,12 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     /// function's own scope is on the stack, so a top-level function has
     /// `len == 2` (program + function); deeper means a nested scope.
     fn is_rejected_by_scope_check(&self) -> bool {
-        self.opts.compilation_mode == "all"
+        self.opts.compilation_mode == CompilationMode::All
             && (self.scope_stack.len() > 2 || self.loop_expression_depth > 0)
     }
 
-    fn current_parent_callee(&self) -> Option<String> {
-        self.parent_callee_stack.last().and_then(|opt| opt.clone())
+    fn current_parent_callee(&self) -> Option<&'ast str> {
+        self.parent_callee_stack.last().copied().flatten()
     }
 
     fn walk_program(&mut self, program: &'ast oxc::Program<'ast>) {
@@ -1671,7 +1648,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     /// Walk an oxc `Function` node (declaration or expression). `inferred_name`,
     /// when `Some`, supplies the name from the enclosing variable declarator (for
     /// function expressions); `None` means use the function's own id.
-    fn walk_function(&mut self, func: &'ast oxc::Function<'ast>, inferred_name: Option<String>) {
+    fn walk_function(&mut self, func: &'ast oxc::Function<'ast>, inferred_name: Option<&'ast str>) {
         let pushed = self.try_push_scope(func.scope_id.get());
 
         let original_kind = match func.r#type {
@@ -1697,7 +1674,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 original_kind,
                 parent_callee,
                 self.opts,
-                self.context,
+                &mut self.already_compiled,
             ) {
                 self.queue.push(source);
                 true
@@ -1722,7 +1699,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     fn walk_arrow(
         &mut self,
         arrow: &'ast oxc::ArrowFunctionExpression<'ast>,
-        inferred_name: Option<String>,
+        inferred_name: Option<&'ast str>,
     ) {
         let pushed = self.try_push_scope(arrow.scope_id.get());
 
@@ -1736,7 +1713,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 OriginalFnKind::ArrowFunctionExpression,
                 parent_callee,
                 self.opts,
-                self.context,
+                &mut self.already_compiled,
             ) {
                 self.queue.push(source);
                 true
@@ -1769,7 +1746,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
                 self.walk_arrow(node, name);
             }
             oxc::Expression::CallExpression(node) => {
-                let callee_name = get_callee_name_if_react_api(&node.callee).map(|s| s.to_string());
+                let callee_name = get_callee_name_if_react_api(&node.callee);
                 // The declarator name only flows through forwardRef/memo calls; for
                 // any other call, clear it so nested functions don't inherit it.
                 if callee_name.is_none() {
@@ -1972,7 +1949,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         self.walk_jsx_children(&node.children);
     }
 
-    fn walk_jsx_children(&mut self, children: &'ast oxc_allocator::Vec<'ast, oxc::JSXChild<'ast>>) {
+    fn walk_jsx_children(&mut self, children: &'ast ArenaVec<'ast, oxc::JSXChild<'ast>>) {
         for child in children {
             match child {
                 oxc::JSXChild::Element(el) => self.walk_jsx_element(el),
@@ -1996,19 +1973,160 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
 fn find_functions_to_compile<'ast>(
     program: &'ast oxc::Program<'ast>,
     opts: &PluginOptions,
-    context: &mut ProgramContext,
 ) -> Vec<CompileSource<'ast>> {
-    let mut walker = DiscoveryWalker::new(opts, context);
+    let mut walker = DiscoveryWalker::new(opts);
     walker.walk_program(program);
     walker.queue
 }
 
+// -----------------------------------------------------------------------
+// Discovery pre-check
+// -----------------------------------------------------------------------
+
+/// Cheap, sound pre-check for [`find_functions_to_compile`]: `false` means the
+/// discovery walk cannot queue anything, so the compile is a no-op. Built from
+/// data `Semantic` already computed instead of walking the AST, and delegating
+/// all judgment to discovery's own helpers:
+///
+/// - every discoverable function creates a function scope, so the node behind
+///   each function scope is run through [`try_make_compile_source`] with the
+///   name discovery would infer — own id for declarations, the directly
+///   enclosing `const Foo = ...` declarator for expressions/arrows, the only
+///   name sources discovery uses outside forwardRef/memo. This covers the
+///   named and directive-opt-in selection paths, nested functions included;
+/// - the forwardRef/memo path needs an identifier named `memo`, `forwardRef`,
+///   or `React` in callee position of a call [`get_callee_name_if_react_api`]
+///   recognizes, so checking the reference shapes of those three names —
+///   bindings and unresolved globals — covers wrapped anonymous functions.
+///
+/// Over-approximation is fine (the walk then finds an empty queue); a missed
+/// witness is not, since a skipped file is never compiled.
+fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> bool {
+    // 'all' mode compiles every top-level function; always walk.
+    if opts.compilation_mode == CompilationMode::All {
+        return true;
+    }
+
+    let scoping = semantic.scoping();
+    let nodes = semantic.nodes();
+
+    // forwardRef/memo wrappers used as globals: O(1) lookups. Discovery matches
+    // callee *names*, not bindings, so unresolved references count too.
+    const WRAPPER_NAMES: [&str; 3] = ["memo", "forwardRef", "React"];
+    for name in WRAPPER_NAMES {
+        if let Some(reference_ids) = scoping.root_unresolved_references().get(name) {
+            if reference_ids.iter().any(|reference_id| {
+                is_wrapper_callee(nodes, scoping.get_reference(*reference_id).node_id())
+            }) {
+                return true;
+            }
+        }
+    }
+
+    // Named components/hooks and directive opt-ins: run the node behind every
+    // function scope through discovery's candidate constructor. parent_callee
+    // is None — wrapper-selected functions are witnessed by reference shapes.
+    let mut discarded = FxHashSet::default();
+    for scope_id in scoping.scope_descendants_from_root() {
+        if !scoping.scope_flags(scope_id).is_function() {
+            continue;
+        }
+        let node = nodes.get_node(scoping.get_node_id(scope_id));
+        let (fn_node, name, original_kind) = match node.kind() {
+            AstKind::Function(func) => {
+                let (name, original_kind) = match func.r#type {
+                    oxc::FunctionType::FunctionDeclaration
+                    | oxc::FunctionType::TSDeclareFunction => (
+                        get_function_name_from_id(func.id.as_ref()),
+                        OriginalFnKind::FunctionDeclaration,
+                    ),
+                    _ => (
+                        declarator_name_for(nodes, node.id(), func.span),
+                        OriginalFnKind::FunctionExpression,
+                    ),
+                };
+                // A nameless function without directives can never classify.
+                if name.is_none()
+                    && func.body.as_ref().is_none_or(|body| body.directives.is_empty())
+                {
+                    continue;
+                }
+                (FunctionNode::Function(func), name, original_kind)
+            }
+            AstKind::ArrowFunctionExpression(arrow) => {
+                let name = declarator_name_for(nodes, node.id(), arrow.span);
+                if name.is_none() && arrow.body.directives.is_empty() {
+                    continue;
+                }
+                (FunctionNode::Arrow(arrow), name, OriginalFnKind::ArrowFunctionExpression)
+            }
+            _ => continue,
+        };
+        if try_make_compile_source(fn_node, name, original_kind, None, opts, &mut discarded)
+            .is_some()
+        {
+            return true;
+        }
+    }
+
+    // Bindings named like a wrapper (`import {memo} from 'react'`, or even a
+    // local `const memo = ...` — discovery treats any `memo(...)` call as a
+    // wrapper regardless of what the name resolves to). Scanned last so
+    // component files exit in the function-scope pass above.
+    for symbol_id in scoping.symbol_ids() {
+        if matches!(scoping.symbol_name(symbol_id), "memo" | "forwardRef" | "React")
+            && has_wrapper_callee_reference(scoping, nodes, symbol_id)
+        {
+            return true;
+        }
+    }
+
+    false
+}
+
+/// Whether any resolved reference of `symbol_id` is a wrapper-call callee.
+fn has_wrapper_callee_reference(scoping: &Scoping, nodes: &AstNodes, symbol_id: SymbolId) -> bool {
+    scoping.get_resolved_reference_ids(symbol_id).iter().any(|reference_id| {
+        is_wrapper_callee(nodes, scoping.get_reference(*reference_id).node_id())
+    })
+}
+
+/// The `const Foo = <fn>` name for a function/arrow node, iff the declarator's
+/// init is directly this node — the same direct-init rule the discovery walker
+/// applies (wrappers like parens or TS casts break the inference there too).
+fn declarator_name_for<'a>(nodes: &AstNodes<'a>, node_id: NodeId, span: Span) -> Option<&'a str> {
+    match nodes.parent_kind(node_id) {
+        AstKind::VariableDeclarator(decl)
+            if decl.init.as_ref().is_some_and(|init| init.span() == span) =>
+        {
+            get_declarator_name(decl)
+        }
+        _ => None,
+    }
+}
+
+/// Whether a reference sits in callee position of a call that
+/// [`get_callee_name_if_react_api`] recognizes — directly (`memo(...)`) or as
+/// the object of a called member (`React.memo(...)`).
+fn is_wrapper_callee(nodes: &AstNodes, node_id: NodeId) -> bool {
+    let span = nodes.get_node(node_id).kind().span();
+    let parent = nodes.parent_node(node_id);
+    let (call, callee_span) = match parent.kind() {
+        AstKind::CallExpression(call) => (call, span),
+        AstKind::StaticMemberExpression(member) if member.object.span() == span => {
+            match nodes.parent_kind(parent.id()) {
+                AstKind::CallExpression(call) => (call, member.span),
+                _ => return false,
+            }
+        }
+        _ => return false,
+    };
+    call.callee.span() == callee_span && get_callee_name_if_react_api(&call.callee).is_some()
+}
+
 struct CompiledFunction<'a, 'p, 's> {
-    #[allow(dead_code)]
     kind: CompileSourceKind,
-    #[allow(dead_code)]
     source: &'s CompileSource<'p>,
-    #[allow(dead_code)]
     codegen_fn: CodegenFunction<'a>,
 }
 
@@ -2044,10 +2162,9 @@ struct OxcReplacement<'a> {
 /// types carry through. The compiled params (from codegen) never carry types.
 fn copy_param_ts_metadata<'a>(
     allocator: &'a oxc_allocator::Allocator,
-    new_params: &mut oxc_ast::ast::FormalParameters<'a>,
-    source_params: &oxc_ast::ast::FormalParameters<'a>,
+    new_params: &mut oxc::FormalParameters<'a>,
+    source_params: &oxc::FormalParameters<'a>,
 ) {
-    use oxc_allocator::CloneIn;
     for (param, source) in new_params.items.iter_mut().zip(source_params.items.iter()) {
         param.decorators = source.decorators.clone_in(allocator);
         param.type_annotation = source.type_annotation.clone_in(allocator);
@@ -2065,23 +2182,21 @@ fn copy_param_ts_metadata<'a>(
 /// Build an oxc `Function` from a compiled codegen function. `r#type` selects
 /// declaration vs expression. Mirrors the Babel `ReplaceFnVisitor` field copy.
 fn ox_build_function<'a>(
-    ast: &oxc_ast::builder::AstBuilder<'a>,
+    ast: &AstBuilder<'a>,
     codegen: &CodegenFunction<'a>,
-    fn_type: oxc_ast::ast::FunctionType,
-) -> oxc_allocator::Box<'a, oxc_ast::ast::Function<'a>> {
-    use oxc_allocator::CloneIn;
-    use oxc_span::SPAN;
-    oxc_ast::ast::Function::boxed(
+    fn_type: oxc::FunctionType,
+) -> ArenaBox<'a, oxc::Function<'a>> {
+    oxc::Function::boxed(
         SPAN,
         fn_type,
         codegen.id.clone_in(ast.allocator()),
         codegen.generator,
         codegen.is_async,
         false,
-        None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterDeclaration>>,
-        None::<oxc_allocator::Box<oxc_ast::ast::TSThisParameter>>,
+        None::<ArenaBox<oxc::TSTypeParameterDeclaration>>,
+        None::<ArenaBox<oxc::TSThisParameter>>,
         codegen.params.clone_in(ast.allocator()),
-        None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
+        None::<ArenaBox<oxc::TSTypeAnnotation>>,
         Some(codegen.body.clone_in(ast.allocator())),
         ast,
     )
@@ -2090,31 +2205,27 @@ fn ox_build_function<'a>(
 /// Build the compiled replacement as an `Expression`, matching the original node
 /// kind (arrow vs function expression). Mirrors `build_compiled_expression_matching_kind`.
 fn ox_build_compiled_expression<'a>(
-    ast: &oxc_ast::builder::AstBuilder<'a>,
+    ast: &AstBuilder<'a>,
     codegen: &CodegenFunction<'a>,
     original_kind: OriginalFnKind,
-) -> oxc_ast::ast::Expression<'a> {
-    use oxc_allocator::CloneIn;
-    use oxc_span::SPAN;
+) -> oxc::Expression<'a> {
     match original_kind {
         OriginalFnKind::ArrowFunctionExpression => {
-            oxc_ast::ast::Expression::ArrowFunctionExpression(
-                oxc_ast::ast::ArrowFunctionExpression::boxed(
-                    SPAN,
-                    false,
-                    codegen.is_async,
-                    None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterDeclaration>>,
-                    codegen.params.clone_in(ast.allocator()),
-                    None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
-                    codegen.body.clone_in(ast.allocator()),
-                    ast,
-                ),
-            )
+            oxc::Expression::ArrowFunctionExpression(oxc::ArrowFunctionExpression::boxed(
+                SPAN,
+                false,
+                codegen.is_async,
+                None::<ArenaBox<oxc::TSTypeParameterDeclaration>>,
+                codegen.params.clone_in(ast.allocator()),
+                None::<ArenaBox<oxc::TSTypeAnnotation>>,
+                codegen.body.clone_in(ast.allocator()),
+                ast,
+            ))
         }
-        _ => oxc_ast::ast::Expression::FunctionExpression(ox_build_function(
+        _ => oxc::Expression::FunctionExpression(ox_build_function(
             ast,
             codegen,
-            oxc_ast::ast::FunctionType::FunctionExpression,
+            oxc::FunctionType::FunctionExpression,
         )),
     }
 }
@@ -2122,7 +2233,7 @@ fn ox_build_compiled_expression<'a>(
 /// Visitor that replaces a compiled function in the oxc AST by matching `span.start`.
 /// Mirrors the Babel `ReplaceFnVisitor`.
 struct OxcReplaceFnVisitor<'a, 'b> {
-    ast: &'b oxc_ast::builder::AstBuilder<'a>,
+    ast: &'b AstBuilder<'a>,
     node_id: u32,
     codegen: &'b CodegenFunction<'a>,
     done: bool,
@@ -2131,14 +2242,13 @@ struct OxcReplaceFnVisitor<'a, 'b> {
 impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceFnVisitor<'a, 'b> {
     fn visit_function(
         &mut self,
-        func: &mut oxc_ast::ast::Function<'a>,
+        func: &mut oxc::Function<'a>,
         flags: oxc_syntax::scope::ScopeFlags,
     ) {
         if self.done {
             return;
         }
         if func.span.start == self.node_id {
-            use oxc_allocator::CloneIn;
             // When the compiled function does not initialize a memo cache, the body is
             // left essentially intact, so the original TS signature (type parameters,
             // `this` parameter, return type, and per-parameter type annotations) is
@@ -2164,15 +2274,11 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceFnVisitor<'a, 'b> {
         oxc_ast_visit::walk_mut::walk_function(self, func, flags);
     }
 
-    fn visit_arrow_function_expression(
-        &mut self,
-        arrow: &mut oxc_ast::ast::ArrowFunctionExpression<'a>,
-    ) {
+    fn visit_arrow_function_expression(&mut self, arrow: &mut oxc::ArrowFunctionExpression<'a>) {
         if self.done {
             return;
         }
         if arrow.span.start == self.node_id {
-            use oxc_allocator::CloneIn;
             let keep_types = self.codegen.memo_slots_used == 0;
             let mut params = self.codegen.params.clone_in(self.ast.allocator());
             if keep_types {
@@ -2195,9 +2301,9 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceFnVisitor<'a, 'b> {
 /// Visitor that replaces a function (matched by `span.start`) with a gated
 /// conditional expression. Mirrors the Babel `ReplaceWithGatedVisitor`.
 struct OxcReplaceWithGatedVisitor<'a, 'b> {
-    ast: &'b oxc_ast::builder::AstBuilder<'a>,
+    ast: &'b AstBuilder<'a>,
     node_id: u32,
-    gating_expression: &'b oxc_ast::ast::Expression<'a>,
+    gating_expression: &'b oxc::Expression<'a>,
     /// Pending `export default Name;` to insert after a named export-default fn.
     export_default_name: Option<String>,
     done: bool,
@@ -2205,26 +2311,20 @@ struct OxcReplaceWithGatedVisitor<'a, 'b> {
 
 impl<'a, 'b> OxcReplaceWithGatedVisitor<'a, 'b> {
     /// Build `const <name> = <gating_expression>;`
-    fn build_const_decl(&self, name: &str) -> oxc_ast::ast::Statement<'a> {
-        use oxc_allocator::CloneIn;
-        use oxc_span::SPAN;
-        let declarator = oxc_ast::ast::VariableDeclarator::new(
+    fn build_const_decl(&self, name: &str) -> oxc::Statement<'a> {
+        let declarator = oxc::VariableDeclarator::new(
             SPAN,
-            oxc_ast::ast::VariableDeclarationKind::Const,
-            oxc_ast::ast::BindingPattern::new_binding_identifier(
-                SPAN,
-                ox_atom(self.ast, name),
-                self.ast,
-            ),
-            None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
+            oxc::VariableDeclarationKind::Const,
+            oxc::BindingPattern::new_binding_identifier(SPAN, ox_atom(self.ast, name), self.ast),
+            None::<ArenaBox<oxc::TSTypeAnnotation>>,
             Some(self.gating_expression.clone_in(self.ast.allocator())),
             false,
             self.ast,
         );
-        oxc_ast::ast::Statement::VariableDeclaration(oxc_ast::ast::VariableDeclaration::boxed(
+        oxc::Statement::VariableDeclaration(oxc::VariableDeclaration::boxed(
             SPAN,
-            oxc_ast::ast::VariableDeclarationKind::Const,
-            oxc_allocator::ArenaVec::from_value_in(declarator, self.ast),
+            oxc::VariableDeclarationKind::Const,
+            ArenaVec::from_value_in(declarator, self.ast),
             false,
             self.ast,
         ))
@@ -2232,11 +2332,7 @@ impl<'a, 'b> OxcReplaceWithGatedVisitor<'a, 'b> {
 }
 
 impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> {
-    fn visit_statements(
-        &mut self,
-        stmts: &mut oxc_allocator::Vec<'a, oxc_ast::ast::Statement<'a>>,
-    ) {
-        use oxc_ast::ast::Statement;
+    fn visit_statements(&mut self, stmts: &mut ArenaVec<'a, oxc::Statement<'a>>) {
         let mut i = 0;
         while i < stmts.len() {
             if self.done {
@@ -2244,11 +2340,11 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
             }
             // FunctionDeclaration → `const Foo = gating() ? ... : ...;`
             let replace_name: Option<Option<String>> = match &stmts[i] {
-                Statement::FunctionDeclaration(f) if f.span.start == self.node_id => {
+                oxc::Statement::FunctionDeclaration(f) if f.span.start == self.node_id => {
                     Some(f.id.as_ref().map(|id| id.name.to_string()))
                 }
-                Statement::ExportNamedDeclaration(e) => match &e.declaration {
-                    Some(oxc_ast::ast::Declaration::FunctionDeclaration(f))
+                oxc::Statement::ExportNamedDeclaration(e) => match &e.declaration {
+                    Some(oxc::Declaration::FunctionDeclaration(f))
                         if f.span.start == self.node_id =>
                     {
                         Some(f.id.as_ref().map(|id| id.name.to_string()))
@@ -2259,27 +2355,25 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
             };
             if let Some(name) = replace_name {
                 let name = name.as_deref().unwrap_or("anonymous");
-                let is_export = matches!(stmts[i], Statement::ExportNamedDeclaration(_));
+                let is_export = matches!(stmts[i], oxc::Statement::ExportNamedDeclaration(_));
                 let const_decl = self.build_const_decl(name);
                 if is_export {
-                    use oxc_span::SPAN;
                     let decl = match const_decl {
-                        Statement::VariableDeclaration(d) => {
-                            oxc_ast::ast::Declaration::VariableDeclaration(d)
+                        oxc::Statement::VariableDeclaration(d) => {
+                            oxc::Declaration::VariableDeclaration(d)
                         }
                         _ => unreachable!(),
                     };
-                    stmts[i] = oxc_ast::ast::Statement::ExportNamedDeclaration(
-                        oxc_ast::ast::ExportNamedDeclaration::boxed(
+                    stmts[i] =
+                        oxc::Statement::ExportNamedDeclaration(oxc::ExportNamedDeclaration::boxed(
                             SPAN,
                             Some(decl),
-                            oxc_allocator::ArenaVec::new_in(self.ast),
+                            ArenaVec::new_in(self.ast),
                             None,
-                            oxc_ast::ast::ImportOrExportKind::Value,
-                            None::<oxc_allocator::Box<oxc_ast::ast::WithClause>>,
+                            oxc::ImportOrExportKind::Value,
+                            None::<ArenaBox<oxc::WithClause>>,
                             self.ast,
-                        ),
-                    );
+                        ));
                 } else {
                     stmts[i] = const_decl;
                 }
@@ -2287,21 +2381,17 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
                 break;
             }
             // ExportDefaultDeclaration with FunctionDeclaration
-            if let Statement::ExportDefaultDeclaration(e) = &stmts[i] {
-                if let oxc_ast::ast::ExportDefaultDeclarationKind::FunctionDeclaration(f) =
-                    &e.declaration
-                {
+            if let oxc::Statement::ExportDefaultDeclaration(e) = &stmts[i] {
+                if let oxc::ExportDefaultDeclarationKind::FunctionDeclaration(f) = &e.declaration {
                     if f.span.start == self.node_id {
                         if let Some(id) = f.id.as_ref().map(|id| id.name.to_string()) {
                             stmts[i] = self.build_const_decl(&id);
                             self.export_default_name = Some(id);
                         } else {
-                            use oxc_allocator::CloneIn;
-                            use oxc_span::SPAN;
-                            stmts[i] = oxc_ast::ast::Statement::ExportDefaultDeclaration(
-                                oxc_ast::ast::ExportDefaultDeclaration::boxed(
+                            stmts[i] = oxc::Statement::ExportDefaultDeclaration(
+                                oxc::ExportDefaultDeclaration::boxed(
                                     SPAN,
-                                    oxc_ast::ast::ExportDefaultDeclarationKind::from(
+                                    oxc::ExportDefaultDeclarationKind::from(
                                         self.gating_expression.clone_in(self.ast.allocator()),
                                     ),
                                     self.ast,
@@ -2319,21 +2409,18 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
 
         // Insert `export default Name;` right after the replaced declaration.
         if let Some(name) = self.export_default_name.take() {
-            use oxc_span::SPAN;
-            let ident =
-                oxc_ast::ast::Expression::new_identifier(SPAN, ox_atom(self.ast, &name), self.ast);
-            let export = oxc_ast::ast::Statement::ExportDefaultDeclaration(
-                oxc_ast::ast::ExportDefaultDeclaration::boxed(
+            let ident = oxc::Expression::new_identifier(SPAN, ox_atom(self.ast, &name), self.ast);
+            let export =
+                oxc::Statement::ExportDefaultDeclaration(oxc::ExportDefaultDeclaration::boxed(
                     SPAN,
-                    oxc_ast::ast::ExportDefaultDeclarationKind::from(ident),
+                    oxc::ExportDefaultDeclarationKind::from(ident),
                     self.ast,
-                ),
-            );
+                ));
             // Find the const decl we just inserted (it has name `name`); insert after.
             let pos = stmts.iter().position(|s| {
-                matches!(s, oxc_ast::ast::Statement::VariableDeclaration(d)
+                matches!(s, oxc::Statement::VariableDeclaration(d)
                     if d.declarations.first().is_some_and(|decl| matches!(&decl.id,
-                        oxc_ast::ast::BindingPattern::BindingIdentifier(b) if b.name.as_str() == name)))
+                        oxc::BindingPattern::BindingIdentifier(b) if b.name.as_str() == name)))
             });
             if let Some(pos) = pos {
                 stmts.insert(pos + 1, export);
@@ -2343,17 +2430,16 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
         }
     }
 
-    fn visit_expression(&mut self, expr: &mut oxc_ast::ast::Expression<'a>) {
+    fn visit_expression(&mut self, expr: &mut oxc::Expression<'a>) {
         if self.done {
             return;
         }
         let matched = match expr {
-            oxc_ast::ast::Expression::FunctionExpression(f) => f.span.start == self.node_id,
-            oxc_ast::ast::Expression::ArrowFunctionExpression(f) => f.span.start == self.node_id,
+            oxc::Expression::FunctionExpression(f) => f.span.start == self.node_id,
+            oxc::Expression::ArrowFunctionExpression(f) => f.span.start == self.node_id,
             _ => false,
         };
         if matched {
-            use oxc_allocator::CloneIn;
             *expr = self.gating_expression.clone_in(self.ast.allocator());
             self.done = true;
             return;
@@ -2365,13 +2451,13 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
 /// Visitor that renames every identifier reference matching `old_name` to `new_name`.
 /// Mirrors the Babel `RenameIdentifierVisitor` (used to rename `useMemoCache`).
 struct OxcRenameIdentifierVisitor<'a, 'b> {
-    ast: &'b oxc_ast::builder::AstBuilder<'a>,
+    ast: &'b AstBuilder<'a>,
     old_name: &'b str,
     new_name: &'b str,
 }
 
 impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcRenameIdentifierVisitor<'a, 'b> {
-    fn visit_identifier_reference(&mut self, ident: &mut oxc_ast::ast::IdentifierReference<'a>) {
+    fn visit_identifier_reference(&mut self, ident: &mut oxc::IdentifierReference<'a>) {
         if ident.name == self.old_name {
             ident.name = ox_atom(self.ast, self.new_name).into();
         }
@@ -2380,21 +2466,17 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcRenameIdentifierVisitor<'a, 'b> 
 
 /// Allocate a `&'a str` in the arena (satisfies the builders' `Into<Ident>` /
 /// `IntoIn` slots; convert to `Atom` via `.into()` where a bare `Atom` is needed).
-fn ox_atom<'a>(ast: &oxc_ast::builder::AstBuilder<'a>, s: &str) -> &'a str {
+fn ox_atom<'a>(ast: &AstBuilder<'a>, s: &str) -> &'a str {
     oxc_allocator::StringBuilder::from_str_in(s, ast.allocator()).into_str()
 }
 
 /// Build `<callee_name>()` as an oxc call expression.
-fn ox_gating_call<'a>(
-    ast: &oxc_ast::builder::AstBuilder<'a>,
-    callee_name: &str,
-) -> oxc_ast::ast::Expression<'a> {
-    use oxc_span::SPAN;
-    oxc_ast::ast::Expression::new_call_expression(
+fn ox_gating_call<'a>(ast: &AstBuilder<'a>, callee_name: &str) -> oxc::Expression<'a> {
+    oxc::Expression::new_call_expression(
         SPAN,
-        oxc_ast::ast::Expression::new_identifier(SPAN, ox_atom(ast, callee_name), ast),
-        None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterInstantiation>>,
-        oxc_allocator::ArenaVec::new_in(ast),
+        oxc::Expression::new_identifier(SPAN, ox_atom(ast, callee_name), ast),
+        None::<ArenaBox<oxc::TSTypeParameterInstantiation>>,
+        ArenaVec::new_in(ast),
         false,
         ast,
     )
@@ -2403,8 +2485,8 @@ fn ox_gating_call<'a>(
 /// Apply the conditional gating pattern to the oxc program. Mirrors
 /// `apply_gated_function_conditional`.
 fn ox_apply_gated_conditional<'a>(
-    ast: &oxc_ast::builder::AstBuilder<'a>,
-    program: &mut oxc_ast::ast::Program<'a>,
+    ast: &AstBuilder<'a>,
+    program: &mut oxc::Program<'a>,
     replacement: &OxcReplacement<'a>,
     gating_config: &GatingConfig,
     context: &mut ProgramContext,
@@ -2432,8 +2514,7 @@ fn ox_apply_gated_conditional<'a>(
         ox_build_compiled_expression(ast, &replacement.codegen_fn, replacement.original_kind);
 
     // gating() ? compiled : original
-    use oxc_span::SPAN;
-    let gating_expression = oxc_ast::ast::Expression::new_conditional_expression(
+    let gating_expression = oxc::Expression::new_conditional_expression(
         SPAN,
         ox_gating_call(ast, &gating_import.name),
         compiled_expr,
@@ -2454,59 +2535,53 @@ fn ox_apply_gated_conditional<'a>(
 /// Clone the original function at `node_id` as an `Expression` (FunctionDeclaration
 /// becomes a FunctionExpression). Mirrors `clone_original_fn_as_expression`.
 fn ox_clone_original_fn_as_expression<'a>(
-    ast: &oxc_ast::builder::AstBuilder<'a>,
-    program: &oxc_ast::ast::Program<'a>,
+    ast: &AstBuilder<'a>,
+    program: &oxc::Program<'a>,
     node_id: u32,
-) -> Option<oxc_ast::ast::Expression<'a>> {
-    use oxc_allocator::CloneIn;
-
+) -> Option<oxc::Expression<'a>> {
     struct Finder<'a, 'b> {
-        ast: &'b oxc_ast::builder::AstBuilder<'a>,
+        ast: &'b AstBuilder<'a>,
         node_id: u32,
-        found: Option<oxc_ast::ast::Expression<'a>>,
+        found: Option<oxc::Expression<'a>>,
     }
     impl<'a, 'b> oxc_ast_visit::Visit<'a> for Finder<'a, 'b> {
         fn visit_function(
             &mut self,
-            func: &oxc_ast::ast::Function<'a>,
+            func: &oxc::Function<'a>,
             flags: oxc_syntax::scope::ScopeFlags,
         ) {
             if self.found.is_some() {
                 return;
             }
             if func.span.start == self.node_id {
-                use oxc_allocator::CloneIn;
-                use oxc_span::SPAN;
-                let f = oxc_ast::ast::Function::boxed(
+                let f = oxc::Function::boxed(
                     SPAN,
-                    oxc_ast::ast::FunctionType::FunctionExpression,
+                    oxc::FunctionType::FunctionExpression,
                     func.id.clone_in(self.ast.allocator()),
                     func.generator,
                     func.r#async,
                     false,
-                    None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterDeclaration>>,
-                    None::<oxc_allocator::Box<oxc_ast::ast::TSThisParameter>>,
+                    None::<ArenaBox<oxc::TSTypeParameterDeclaration>>,
+                    None::<ArenaBox<oxc::TSThisParameter>>,
                     func.params.clone_in(self.ast.allocator()),
-                    None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
+                    None::<ArenaBox<oxc::TSTypeAnnotation>>,
                     func.body.clone_in(self.ast.allocator()),
                     self.ast,
                 );
-                self.found = Some(oxc_ast::ast::Expression::FunctionExpression(f));
+                self.found = Some(oxc::Expression::FunctionExpression(f));
                 return;
             }
             oxc_ast_visit::walk::walk_function(self, func, flags);
         }
-        fn visit_arrow_function_expression(
-            &mut self,
-            arrow: &oxc_ast::ast::ArrowFunctionExpression<'a>,
-        ) {
+        fn visit_arrow_function_expression(&mut self, arrow: &oxc::ArrowFunctionExpression<'a>) {
             if self.found.is_some() {
                 return;
             }
             if arrow.span.start == self.node_id {
-                self.found = Some(oxc_ast::ast::Expression::ArrowFunctionExpression(
-                    oxc_allocator::ArenaBox::new_in(arrow.clone_in(self.ast.allocator()), self.ast),
-                ));
+                self.found = Some(oxc::Expression::ArrowFunctionExpression(ArenaBox::new_in(
+                    arrow.clone_in(self.ast.allocator()),
+                    self.ast,
+                )));
                 return;
             }
             oxc_ast_visit::walk::walk_arrow_function_expression(self, arrow);
@@ -2520,14 +2595,12 @@ fn ox_clone_original_fn_as_expression<'a>(
 /// Splice every compiled oxc function into a clone of the original oxc program and
 /// add the required imports. Returns the final memoized program.
 fn ox_splice_program<'a>(
-    ast: &oxc_ast::builder::AstBuilder<'a>,
-    oxc_program: &oxc_ast::ast::Program<'a>,
+    ast: &AstBuilder<'a>,
+    program: &oxc::Program<'a>,
     replacements: &[OxcReplacement<'a>],
     context: &mut ProgramContext,
-) -> oxc_ast::ast::Program<'a> {
-    use oxc_allocator::CloneIn;
-
-    let mut program = oxc_program.clone_in(ast.allocator());
+) -> oxc::Program<'a> {
+    let mut program = program.clone_in(ast.allocator());
 
     // Outlined function declarations are placed differently depending on the
     // original function's syntactic kind, mirroring `insertNewOutlinedFunctionNode`
@@ -2537,18 +2610,15 @@ fn ox_splice_program<'a>(
     //   - (Arrow)FunctionExpression originals: appended at the end of the program
     //     body (Babel `pushContainer('body', ...)`), since inserting as a sibling
     //     would corrupt the parent expression.
-    let mut appended_outlined_decls: Vec<oxc_ast::ast::Statement<'a>> = Vec::new();
+    let mut appended_outlined_decls: Vec<oxc::Statement<'a>> = Vec::new();
 
     for replacement in replacements {
-        let mut sibling_outlined_decls: Vec<oxc_ast::ast::Statement<'a>> = Vec::new();
+        let mut sibling_outlined_decls: Vec<oxc::Statement<'a>> = Vec::new();
         let insert_as_sibling = replacement.original_kind == OriginalFnKind::FunctionDeclaration;
         for outlined in &replacement.codegen_fn.outlined {
-            let func = ox_build_function(
-                ast,
-                &outlined.func,
-                oxc_ast::ast::FunctionType::FunctionDeclaration,
-            );
-            let stmt = oxc_ast::ast::Statement::FunctionDeclaration(func);
+            let func =
+                ox_build_function(ast, &outlined.func, oxc::FunctionType::FunctionDeclaration);
+            let stmt = oxc::Statement::FunctionDeclaration(func);
             if insert_as_sibling {
                 sibling_outlined_decls.push(stmt);
             } else {
@@ -2597,20 +2667,18 @@ fn ox_splice_program<'a>(
 /// `originalFn.insertAfter(...)` for `FunctionDeclaration` originals. The statement
 /// may be a bare `FunctionDeclaration` or one wrapped in an `export`.
 fn ox_insert_outlined_after<'a>(
-    program: &mut oxc_ast::ast::Program<'a>,
+    program: &mut oxc::Program<'a>,
     node_id: u32,
-    outlined_decls: Vec<oxc_ast::ast::Statement<'a>>,
+    outlined_decls: Vec<oxc::Statement<'a>>,
 ) {
-    use oxc_ast::ast::{Declaration, ExportDefaultDeclarationKind, Statement};
-
-    let matches = |stmt: &Statement<'a>| -> bool {
+    let matches = |stmt: &oxc::Statement<'a>| -> bool {
         match stmt {
-            Statement::FunctionDeclaration(f) => f.span.start == node_id,
-            Statement::ExportNamedDeclaration(e) => {
-                matches!(&e.declaration, Some(Declaration::FunctionDeclaration(f)) if f.span.start == node_id)
+            oxc::Statement::FunctionDeclaration(f) => f.span.start == node_id,
+            oxc::Statement::ExportNamedDeclaration(e) => {
+                matches!(&e.declaration, Some(oxc::Declaration::FunctionDeclaration(f)) if f.span.start == node_id)
             }
-            Statement::ExportDefaultDeclaration(e) => {
-                matches!(&e.declaration, ExportDefaultDeclarationKind::FunctionDeclaration(f) if f.span.start == node_id)
+            oxc::Statement::ExportDefaultDeclaration(e) => {
+                matches!(&e.declaration, oxc::ExportDefaultDeclarationKind::FunctionDeclaration(f) if f.span.start == node_id)
             }
             _ => false,
         }
@@ -2638,11 +2706,10 @@ fn ox_insert_outlined_after<'a>(
 /// in imports.rs but builds oxc nodes. Handles ESM imports, CommonJS require, and
 /// merging into an existing non-namespaced import of the same module.
 fn ox_add_imports_to_program<'a>(
-    ast: &oxc_ast::builder::AstBuilder<'a>,
-    program: &mut oxc_ast::ast::Program<'a>,
+    ast: &AstBuilder<'a>,
+    program: &mut oxc::Program<'a>,
     context: &ProgramContext,
 ) {
-    use oxc_span::SPAN;
     if !context.has_pending_imports() {
         return;
     }
@@ -2651,7 +2718,7 @@ fn ox_add_imports_to_program<'a>(
     // Existing non-namespaced value imports, by module name.
     let mut existing_import_indices: FxHashMap<String, usize> = FxHashMap::default();
     for (idx, stmt) in program.body.iter().enumerate() {
-        if let oxc_ast::ast::Statement::ImportDeclaration(import) = stmt {
+        if let oxc::Statement::ImportDeclaration(import) = stmt {
             if ox_is_non_namespaced_import(import) {
                 existing_import_indices.entry(import.source.value.to_string()).or_insert(idx);
             }
@@ -2663,7 +2730,7 @@ fn ox_add_imports_to_program<'a>(
 
     let is_module = matches!(program.source_type.module_kind(), oxc_span::ModuleKind::Module);
 
-    let mut new_stmts: Vec<oxc_ast::ast::Statement<'a>> = Vec::new();
+    let mut new_stmts: Vec<oxc::Statement<'a>> = Vec::new();
 
     for (module_name, imports_map) in sorted_modules {
         let mut sorted_imports: Vec<_> = imports_map.values().collect();
@@ -2671,59 +2738,57 @@ fn ox_add_imports_to_program<'a>(
 
         if let Some(&idx) = existing_import_indices.get(module_name) {
             // Merge into the existing import declaration.
-            if let oxc_ast::ast::Statement::ImportDeclaration(import) = &mut program.body[idx] {
-                let specifiers =
-                    import.specifiers.get_or_insert_with(|| oxc_allocator::ArenaVec::new_in(ast));
+            if let oxc::Statement::ImportDeclaration(import) = &mut program.body[idx] {
+                let specifiers = import.specifiers.get_or_insert_with(|| ArenaVec::new_in(ast));
                 for spec in &sorted_imports {
                     specifiers.push(ox_make_import_specifier(ast, spec));
                 }
             }
         } else if is_module {
             // ESM: import { imported as local, ... } from 'module'
-            let mut specifiers = oxc_allocator::ArenaVec::new_in(ast);
+            let mut specifiers = ArenaVec::new_in(ast);
             for spec in &sorted_imports {
                 specifiers.push(ox_make_import_specifier(ast, spec));
             }
-            let source =
-                oxc_ast::ast::StringLiteral::new(SPAN, ox_atom(ast, module_name), None, ast);
-            let import = oxc_ast::ast::ImportDeclaration::boxed(
+            let source = oxc::StringLiteral::new(SPAN, ox_atom(ast, module_name), None, ast);
+            let import = oxc::ImportDeclaration::boxed(
                 SPAN,
                 Some(specifiers),
                 source,
                 None,
-                None::<oxc_allocator::Box<oxc_ast::ast::WithClause>>,
-                oxc_ast::ast::ImportOrExportKind::Value,
+                None::<ArenaBox<oxc::WithClause>>,
+                oxc::ImportOrExportKind::Value,
                 ast,
             );
-            new_stmts.push(oxc_ast::ast::Statement::ImportDeclaration(import));
+            new_stmts.push(oxc::Statement::ImportDeclaration(import));
         } else {
             // CommonJS: const { imported: local, ... } = require('module')
-            let mut props = oxc_allocator::ArenaVec::new_in(ast);
+            let mut props = ArenaVec::new_in(ast);
             for spec in &sorted_imports {
-                let key = oxc_ast::ast::PropertyKey::new_static_identifier(
+                let key = oxc::PropertyKey::new_static_identifier(
                     SPAN,
                     ox_atom(ast, &spec.imported),
                     ast,
                 );
-                let value = oxc_ast::ast::BindingPattern::new_binding_identifier(
+                let value = oxc::BindingPattern::new_binding_identifier(
                     SPAN,
                     ox_atom(ast, &spec.name),
                     ast,
                 );
-                props.push(oxc_ast::ast::BindingProperty::new(SPAN, key, value, false, false, ast));
+                props.push(oxc::BindingProperty::new(SPAN, key, value, false, false, ast));
             }
-            let object_pattern = oxc_ast::ast::BindingPattern::new_object_pattern(
+            let object_pattern = oxc::BindingPattern::new_object_pattern(
                 SPAN,
                 props,
-                None::<oxc_allocator::Box<oxc_ast::ast::BindingRestElement>>,
+                None::<ArenaBox<oxc::BindingRestElement>>,
                 ast,
             );
-            let require_call = oxc_ast::ast::Expression::new_call_expression(
+            let require_call = oxc::Expression::new_call_expression(
                 SPAN,
-                oxc_ast::ast::Expression::new_identifier(SPAN, "require", ast),
-                None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterInstantiation>>,
-                oxc_allocator::ArenaVec::from_value_in(
-                    oxc_ast::ast::Argument::from(oxc_ast::ast::Expression::new_string_literal(
+                oxc::Expression::new_identifier(SPAN, "require", ast),
+                None::<ArenaBox<oxc::TSTypeParameterInstantiation>>,
+                ArenaVec::from_value_in(
+                    oxc::Argument::from(oxc::Expression::new_string_literal(
                         SPAN,
                         ox_atom(ast, module_name),
                         None,
@@ -2734,28 +2799,28 @@ fn ox_add_imports_to_program<'a>(
                 false,
                 ast,
             );
-            let declarator = oxc_ast::ast::VariableDeclarator::new(
+            let declarator = oxc::VariableDeclarator::new(
                 SPAN,
-                oxc_ast::ast::VariableDeclarationKind::Const,
+                oxc::VariableDeclarationKind::Const,
                 object_pattern,
-                None::<oxc_allocator::Box<oxc_ast::ast::TSTypeAnnotation>>,
+                None::<ArenaBox<oxc::TSTypeAnnotation>>,
                 Some(require_call),
                 false,
                 ast,
             );
-            let decl = oxc_ast::ast::VariableDeclaration::boxed(
+            let decl = oxc::VariableDeclaration::boxed(
                 SPAN,
-                oxc_ast::ast::VariableDeclarationKind::Const,
-                oxc_allocator::ArenaVec::from_value_in(declarator, ast),
+                oxc::VariableDeclarationKind::Const,
+                ArenaVec::from_value_in(declarator, ast),
                 false,
                 ast,
             );
-            new_stmts.push(oxc_ast::ast::Statement::VariableDeclaration(decl));
+            new_stmts.push(oxc::Statement::VariableDeclaration(decl));
         }
     }
 
     if !new_stmts.is_empty() {
-        let old_body = std::mem::replace(&mut program.body, oxc_allocator::ArenaVec::new_in(ast));
+        let old_body = std::mem::replace(&mut program.body, ArenaVec::new_in(ast));
         program.body.extend(new_stmts);
         program.body.extend(old_body);
     }
@@ -2763,55 +2828,66 @@ fn ox_add_imports_to_program<'a>(
 
 /// Build an oxc named import specifier `imported as local`. Mirrors `make_import_specifier`.
 fn ox_make_import_specifier<'a>(
-    ast: &oxc_ast::builder::AstBuilder<'a>,
+    ast: &AstBuilder<'a>,
     spec: &super::imports::NonLocalImportSpecifier,
-) -> oxc_ast::ast::ImportDeclarationSpecifier<'a> {
-    use oxc_span::SPAN;
-    let imported = oxc_ast::ast::ModuleExportName::IdentifierName(
-        oxc_ast::ast::IdentifierName::new(SPAN, ox_atom(ast, &spec.imported), ast),
-    );
-    let local = oxc_ast::ast::BindingIdentifier::new(SPAN, ox_atom(ast, &spec.name), ast);
-    oxc_ast::ast::ImportDeclarationSpecifier::ImportSpecifier(oxc_ast::ast::ImportSpecifier::boxed(
+) -> oxc::ImportDeclarationSpecifier<'a> {
+    let imported = oxc::ModuleExportName::IdentifierName(oxc::IdentifierName::new(
+        SPAN,
+        ox_atom(ast, &spec.imported),
+        ast,
+    ));
+    let local = oxc::BindingIdentifier::new(SPAN, ox_atom(ast, &spec.name), ast);
+    oxc::ImportDeclarationSpecifier::ImportSpecifier(oxc::ImportSpecifier::boxed(
         SPAN,
         imported,
         local,
-        oxc_ast::ast::ImportOrExportKind::Value,
+        oxc::ImportOrExportKind::Value,
         ast,
     ))
 }
 
 /// Whether an import declaration is a non-namespaced value import. Mirrors
 /// `is_non_namespaced_import`.
-fn ox_is_non_namespaced_import(import: &oxc_ast::ast::ImportDeclaration) -> bool {
-    if !matches!(import.import_kind, oxc_ast::ast::ImportOrExportKind::Value) {
+fn ox_is_non_namespaced_import(import: &oxc::ImportDeclaration) -> bool {
+    if !matches!(import.import_kind, oxc::ImportOrExportKind::Value) {
         return false;
     }
     match &import.specifiers {
         None => true,
         Some(specifiers) => specifiers
             .iter()
-            .all(|s| matches!(s, oxc_ast::ast::ImportDeclarationSpecifier::ImportSpecifier(_))),
+            .all(|s| matches!(s, oxc::ImportDeclarationSpecifier::ImportSpecifier(_))),
     }
 }
 
 /// Main entry point for the React Compiler.
 ///
-/// Receives a full program AST, scope information (unused for now), and resolved options.
-/// Returns a CompileResult indicating whether the AST was modified,
-/// along with any logger events.
+/// Receives the arena allocator, semantic model, the full program AST, and
+/// resolved options. Returns a CompileResult indicating whether the AST was
+/// modified, along with any logger events.
 ///
 /// This function implements the logic from the TS entrypoint (Program.ts):
-/// - validateRestrictedImports: check for blocklisted imports
 /// - findProgramSuppressions: find eslint/flow suppression comments
 /// - findFunctionsToCompile: traverse program to find components and hooks
 /// - processFn: per-function compilation with directive and suppression handling
 /// - applyCompiledFunctions: replace original functions with compiled versions
 pub fn compile_program<'a, 'p>(
-    ast: &oxc_ast::builder::AstBuilder<'a>,
-    oxc_program: &'p oxc_ast::ast::Program<'a>,
-    scope: &ScopeResolver<'_, '_>,
+    allocator: &'a Allocator,
+    semantic: &Semantic<'_>,
+    program: &'p oxc::Program<'a>,
     options: PluginOptions,
 ) -> CompileResult<'a> {
+    // Find all functions to compile. An empty queue means no work, so return
+    // before all the setup below, which only compilation needs. The pre-check
+    // decides emptiness from semantic data without walking the AST.
+    if !may_have_functions_to_compile(semantic, &options) {
+        return CompileResult::Success { ast: None, diagnostics: Diagnostics::new() };
+    }
+    let queue = find_functions_to_compile(program, &options);
+    if queue.is_empty() {
+        return CompileResult::Success { ast: None, diagnostics: Diagnostics::new() };
+    }
+
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
@@ -2829,33 +2905,29 @@ pub fn compile_program<'a, 'p>(
 
     // Find program-level suppressions from comments
     let suppressions = find_program_suppressions(
-        &oxc_program.comments,
-        oxc_program.source_text,
+        &program.comments,
+        program.source_text,
         eslint_rules.as_deref(),
         options.flow_suppressions,
     );
 
     // Check for module-scope opt-out directive
-    let module_directives: Vec<String> =
-        oxc_program.directives.iter().map(|d| d.expression.value.to_string()).collect();
-    let has_module_scope_opt_out =
-        find_directive_disabling_memoization(&module_directives, &options).is_some();
+    let has_module_scope_opt_out = find_directive_disabling_memoization(
+        program.directives.iter().map(|d| d.expression.value.as_str()),
+        options.custom_opt_out_directives.as_deref(),
+    )
+    .is_some();
 
     // Create program context
     let mut context = ProgramContext::new(options.clone(), suppressions, has_module_scope_opt_out);
 
-    // Initialize known referenced names from scope bindings for UID collision detection
-    context.init_from_scope(scope);
+    // The codegen back-end builds oxc nodes directly via this `AstBuilder`; `scope`
+    // is a read-through view over `Semantic` for binding/reference lookups.
+    let ast = AstBuilder::new(allocator);
+    let scope = ScopeResolver::new(semantic, program);
 
-    // Validate restricted imports (needs context for handle_error)
-    if let Some(err) =
-        validate_restricted_imports(oxc_program, &options.environment.validate_blocklisted_imports)
-    {
-        if let Some(result) = handle_error(&err, None, &mut context) {
-            return result;
-        }
-        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
-    }
+    // Initialize known referenced names from scope bindings for UID collision detection
+    context.init_from_scope(&scope);
 
     // Pre-register instrumentation imports to get stable local names.
     // These are needed before compilation so codegen can use the correct names.
@@ -2868,9 +2940,9 @@ pub fn compile_program<'a, 'p>(
             );
             let gating_name = instrument_config.gating.as_ref().map(|g| {
                 let spec = context.add_import_specifier(&g.source, &g.import_specifier_name, None);
-                spec.name.clone()
+                spec.name
             });
-            (Some(fn_spec.name.clone()), gating_name)
+            (Some(fn_spec.name), gating_name)
         } else {
             (None, None)
         };
@@ -2882,7 +2954,7 @@ pub fn compile_program<'a, 'p>(
                 &hook_guard_config.import_specifier_name,
                 None,
             );
-            spec.name.clone()
+            spec.name
         });
 
     // Store pre-resolved names on context for pipeline access
@@ -2890,26 +2962,11 @@ pub fn compile_program<'a, 'p>(
     context.instrument_gating_name = instrument_gating_name;
     context.hook_guard_name = hook_guard_name;
 
-    // Find all functions to compile
-    let queue = find_functions_to_compile(oxc_program, &options, &mut context);
-
-    // Clone env_config once for all function compilations (avoids per-function clone
-    // while satisfying the borrow checker — compile_fn needs &mut context + &env_config)
-    let env_config = options.environment.clone();
-
     // Process each function and collect compiled results
     let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_>> = Vec::new();
 
     for source in &queue {
-        match process_fn(
-            ast,
-            source,
-            scope,
-            output_mode,
-            &env_config,
-            &mut context,
-            oxc_program.source_text,
-        ) {
+        match process_fn(&ast, source, &scope, output_mode, &options.environment, &mut context) {
             Ok(Some(codegen_fn)) => {
                 compiled_fns.push(CompiledFunction { kind: source.kind, source, codegen_fn });
             }
@@ -2925,12 +2982,11 @@ pub fn compile_program<'a, 'p>(
     // TS invariant: if there's a module scope opt-out, no functions should have been compiled
     if has_module_scope_opt_out {
         if !compiled_fns.is_empty() {
-            let mut err = CompilerError::new();
-            err.push_error_detail(CompilerErrorDetail::new(
-                ErrorCategory::Invariant,
-                "Unexpected compiled functions when module scope opt-out is present",
-            ));
-            handle_error(&err, None, &mut context);
+            let err =
+                CompilerError::from(ErrorCategory::Invariant.diagnostic(
+                    "Unexpected compiled functions when module scope opt-out is present",
+                ));
+            handle_error(&err, None, context.opts.panic_threshold, &mut context.diagnostics);
         }
         return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
     }
@@ -2965,18 +3021,14 @@ pub fn compile_program<'a, 'p>(
     // Drop the discovery results (and their borrows of `file.program`).
     drop(queue);
 
-    if replacements.is_empty() {
-        // No functions to replace. Return renames for the Babel plugin to apply
-        // (e.g., variable shadowing renames in lint mode). Imports are NOT added
-        // when there are no replacements — matching TS behavior where
-        // addImportsToProgram is only called when compiledFns.length > 0.
-        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
+    // `ast` is `None` when nothing was compiled — always so in lint mode, which
+    // applies nothing — skipping `ox_splice_program`'s whole-program clone. Splicing
+    // each compiled function in for its original (matched by `span.start ==
+    // fn_node_id`) is also what inserts the memo-cache / gating imports, so (matching
+    // TS `addImportsToProgram`) they're added only when there are replacements.
+    CompileResult::Success {
+        ast: (!replacements.is_empty())
+            .then(|| ox_splice_program(&ast, program, &replacements, &mut context)),
+        diagnostics: context.diagnostics,
     }
-
-    // Build the memoized oxc program: splice each compiled oxc function in for its
-    // original (matched by `span.start == fn_node_id`), apply gating, insert outlined
-    // functions, and add the memo-cache / gating imports.
-    let compiled_program = ox_splice_program(ast, oxc_program, &replacements, &mut context);
-
-    CompileResult::Success { ast: Some(compiled_program), diagnostics: context.diagnostics }
 }

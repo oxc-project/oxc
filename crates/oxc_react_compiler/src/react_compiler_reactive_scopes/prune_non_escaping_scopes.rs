@@ -13,7 +13,7 @@ use std::mem::take;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use crate::diagnostics::CompilerError;
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::DeclarationId;
 use crate::react_compiler_hir::Effect;
@@ -814,7 +814,7 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                     identifier: *identifier_id,
                     effect: Effect::Read,
                     reactive: false,
-                    loc: None,
+                    span: None,
                 },
                 *operand_id,
             );
@@ -846,7 +846,7 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                     identifier: lv.place_identifier,
                     effect: Effect::Read,
                     reactive: false,
-                    loc: None,
+                    span: None,
                 },
                 lvalue_id,
             );

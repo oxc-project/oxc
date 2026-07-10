@@ -4,11 +4,9 @@ use cow_utils::CowUtils;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerDiagnostic;
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::CompilerErrorOrDiagnostic;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::{CompilerError, ErrorCategory};
 
 use crate::react_compiler_hir::default_module_type_provider::default_module_type_provider;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
@@ -57,6 +55,12 @@ pub struct Environment<'a> {
 
     // Error accumulation
     pub errors: CompilerError,
+
+    // Set during lowering when the function uses syntax the compiler can't handle
+    // yet (currently `using`/`await using`, whose disposal semantics aren't
+    // preserved). Signals the pipeline to skip compiling this function silently —
+    // no diagnostic — while other functions in the file still compile.
+    pub skip_compilation: bool,
 
     // Function type classification (Component, Hook, Other)
     pub fn_type: ReactFunctionType,
@@ -176,6 +180,7 @@ impl<'a> Environment<'a> {
             scopes: Vec::new(),
             functions: Vec::new(),
             errors: CompilerError::new(),
+            skip_compilation: false,
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
             instrument_fn_name: None,
@@ -233,7 +238,7 @@ impl<'a> Environment<'a> {
             mutable_range,
             scope: None,
             type_: type_id,
-            loc: None,
+            span: None,
         });
         id
     }
@@ -251,7 +256,7 @@ impl<'a> Environment<'a> {
             reassignments: Vec::new(),
             early_return_value: None,
             merged: Vec::new(),
-            loc: None,
+            span: None,
         });
         id
     }
@@ -274,20 +279,17 @@ impl<'a> Environment<'a> {
         id
     }
 
-    pub fn record_error(&mut self, detail: CompilerErrorDetail) -> Result<(), CompilerError> {
-        if detail.category == ErrorCategory::Invariant {
-            let detail_clone = detail.clone();
-            self.errors.push_error_detail(detail);
-            let mut err = CompilerError::new();
-            err.push_error_detail(detail_clone);
-            return Err(err);
+    pub fn record_error(&mut self, diagnostic: OxcDiagnostic) -> Result<(), CompilerError> {
+        if ErrorCategory::Invariant.matches(&diagnostic) {
+            self.errors.push(diagnostic.clone());
+            return Err(CompilerError::from(diagnostic));
         }
-        self.errors.push_error_detail(detail);
+        self.errors.push(diagnostic);
         Ok(())
     }
 
-    pub fn record_diagnostic(&mut self, diagnostic: CompilerDiagnostic) {
-        self.errors.push_diagnostic(diagnostic);
+    pub fn record_diagnostic(&mut self, diagnostic: OxcDiagnostic) {
+        self.errors.push(diagnostic);
     }
 
     pub fn has_errors(&self) -> bool {
@@ -316,15 +318,11 @@ impl<'a> Environment<'a> {
         let mut invariant = CompilerError::new();
         let mut remaining = CompilerError::new();
         let old = take(&mut self.errors);
-        for detail in old.details {
-            let is_invariant = match &detail {
-                CompilerErrorOrDiagnostic::Diagnostic(d) => d.category == ErrorCategory::Invariant,
-                CompilerErrorOrDiagnostic::ErrorDetail(d) => d.category == ErrorCategory::Invariant,
-            };
-            if is_invariant {
-                invariant.details.push(detail);
+        for diagnostic in old.diagnostics {
+            if ErrorCategory::Invariant.matches(&diagnostic) {
+                invariant.push(diagnostic);
             } else {
-                remaining.details.push(detail);
+                remaining.push(diagnostic);
             }
         }
         self.errors = remaining;
@@ -347,12 +345,12 @@ impl<'a> Environment<'a> {
 
     /// Resolve a non-local binding to its type. Ported from TS `getGlobalDeclaration`.
     ///
-    /// The `loc` parameter is used for error diagnostics when validating module type
+    /// The `span` parameter is used for error diagnostics when validating module type
     /// configurations. Pass `None` if no source location is available.
     pub fn get_global_declaration(
         &mut self,
         binding: &NonLocalBinding,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     ) -> Result<Option<Global>, CompilerError> {
         match binding {
             NonLocalBinding::ModuleLocal { name, .. } => {
@@ -387,12 +385,10 @@ impl<'a> Environment<'a> {
                 if let Some(errors) = self.module_type_errors.remove(module.as_str()) {
                     if let Some(first_error) = errors.into_iter().next() {
                         self.record_error(
-                            CompilerErrorDetail::new(
-                                ErrorCategory::Config,
-                                "Invalid type configuration for module",
-                            )
-                            .with_description(first_error.to_string())
-                            .with_loc(loc),
+                            ErrorCategory::Config
+                                .diagnostic("Invalid type configuration for module")
+                                .with_help(first_error)
+                                .with_labels(span),
                         )?;
                     }
                 }
@@ -431,12 +427,10 @@ impl<'a> Environment<'a> {
                 if let Some(errors) = self.module_type_errors.remove(module.as_str()) {
                     if let Some(first_error) = errors.into_iter().next() {
                         self.record_error(
-                            CompilerErrorDetail::new(
-                                ErrorCategory::Config,
-                                "Invalid type configuration for module",
-                            )
-                            .with_description(first_error.to_string())
-                            .with_loc(loc),
+                            ErrorCategory::Config
+                                .diagnostic("Invalid type configuration for module")
+                                .with_help(first_error)
+                                .with_labels(span),
                         )?;
                     }
                 }
@@ -454,16 +448,14 @@ impl<'a> Environment<'a> {
                             self.get_hook_kind_for_type(&imported_type).ok().flatten().is_some();
                         if expect_hook != is_hook {
                             self.record_error(
-                                CompilerErrorDetail::new(
-                                    ErrorCategory::Config,
-                                    "Invalid type configuration for module",
-                                )
-                                .with_description(format!(
-                                    "Expected type for `import ... from '{}'` {} based on the module name",
-                                    module,
-                                    if expect_hook { "to be a hook" } else { "not to be a hook" }
-                                ))
-                                .with_loc(loc),
+                                ErrorCategory::Config
+                                    .diagnostic("Invalid type configuration for module")
+                                    .with_help(format!(
+                                        "Expected type for `import ... from '{}'` {} based on the module name",
+                                        module,
+                                        if expect_hook { "to be a hook" } else { "not to be a hook" }
+                                    ))
+                                    .with_labels(span),
                             )?;
                         }
                         return Ok(Some(imported_type));
@@ -507,18 +499,16 @@ impl<'a> Environment<'a> {
     pub fn get_function_signature(
         &self,
         ty: &Type,
-    ) -> Result<Option<&FunctionSignature>, CompilerDiagnostic> {
+    ) -> Result<Option<&FunctionSignature>, OxcDiagnostic> {
         let shape_id = match ty {
             Type::Function { shape_id, .. } => shape_id.as_deref(),
             _ => return Ok(None),
         };
         if let Some(shape_id) = shape_id {
             let shape = self.shapes.get(shape_id).ok_or_else(|| {
-                CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    format!("[HIR] Forget internal error: cannot resolve shape {}", shape_id),
-                    None,
-                )
+                ErrorCategory::Invariant.diagnostic(format!(
+                    "[HIR] Forget internal error: cannot resolve shape {shape_id}"
+                ))
             })?;
             return Ok(shape.function_type.as_ref());
         }
@@ -527,10 +517,7 @@ impl<'a> Environment<'a> {
 
     /// Get the hook kind for a type, if it represents a hook.
     /// Ported from TS `getHookKindForType` in HIR.ts.
-    pub fn get_hook_kind_for_type(
-        &self,
-        ty: &Type,
-    ) -> Result<Option<&HookKind>, CompilerDiagnostic> {
+    pub fn get_hook_kind_for_type(&self, ty: &Type) -> Result<Option<&HookKind>, OxcDiagnostic> {
         Ok(self.get_function_signature(ty)?.and_then(|sig| sig.hook_kind.as_ref()))
     }
 
@@ -698,11 +685,6 @@ impl<'a> Environment<'a> {
         self.outlined_functions.push(OutlinedFunctionEntry { func, fn_type });
     }
 
-    #[cfg(feature = "debug")]
-    pub(crate) fn outlined_functions(&self) -> &[OutlinedFunctionEntry<'a>] {
-        &self.outlined_functions
-    }
-
     /// Take the outlined functions, leaving the vec empty.
     pub fn take_outlined_functions(&mut self) -> Vec<OutlinedFunctionEntry<'a>> {
         take(&mut self.outlined_functions)
@@ -742,7 +724,7 @@ impl<'a> Environment<'a> {
     pub fn get_hook_kind_for_id(
         &self,
         identifier_id: IdentifierId,
-    ) -> Result<Option<&HookKind>, CompilerDiagnostic> {
+    ) -> Result<Option<&HookKind>, OxcDiagnostic> {
         let ty = &self.types[self.identifiers[identifier_id.0 as usize].type_.0 as usize];
         self.get_hook_kind_for_type(ty)
     }
@@ -765,17 +747,4 @@ pub fn is_hook_name(name: &str) -> bool {
     }
     let fourth_char = name.as_bytes()[3];
     fourth_char.is_ascii_uppercase() || fourth_char.is_ascii_digit()
-}
-
-/// Returns true if the name follows React naming conventions (component or hook).
-/// Components start with an uppercase letter; hooks match `use[A-Z0-9]`.
-pub fn is_react_like_name(name: &str) -> bool {
-    if name.is_empty() {
-        return false;
-    }
-    let first_char = name.as_bytes()[0];
-    if first_char.is_ascii_uppercase() {
-        return true;
-    }
-    is_hook_name(name)
 }

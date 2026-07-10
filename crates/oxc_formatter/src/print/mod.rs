@@ -70,11 +70,15 @@ use crate::{
         conditional::ConditionalLike,
         expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        object::{format_property_key, should_preserve_quote},
+        is_keyword_property_key,
+        object::{
+            format_property_key, should_preserve_quote, should_preserve_quote_for_enum_member,
+        },
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         suppressed::FormatSuppressedNode,
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
+        typecast::is_type_cast_node,
     },
     write,
 };
@@ -87,7 +91,10 @@ use self::{
     object_pattern_like::ObjectPatternLike,
     program::FormatStatementsWithImports,
     return_or_throw_statement::FormatAdjacentArgument,
-    semicolon::OptionalSemicolon,
+    semicolon::{
+        FormatContentWithSemicolon, OptionalSemicolon, keeps_trailing_comment_inside_parens,
+        write_trailing_comments_inside_parens,
+    },
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
 };
 
@@ -95,6 +102,16 @@ pub trait FormatWrite<'ast, T = ()> {
     fn write(&self, f: &mut JsFormatter<'_, 'ast>);
     fn write_with_options(&self, _options: T, _f: &mut JsFormatter<'_, 'ast>) {
         unreachable!("Please implement it first.");
+    }
+    /// Formats the node when it is suppressed (`oxfmt-ignore` / `prettier-ignore`).
+    /// Only called for statements whose ignored range must exclude the trailing semicolon,
+    /// so the formatter prints its own terminator, like Prettier;
+    /// every other node prints its whole span verbatim in the generated `fmt`.
+    fn write_suppressed(&self, _f: &mut JsFormatter<'_, 'ast>) {
+        unreachable!(
+            "Implement `write_suppressed` for every node listed in \
+             `AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING` (tasks/ast_tools)."
+        );
     }
 }
 
@@ -110,6 +127,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
                 | AstNodes::PropertyDefinition(_)
                 | AstNodes::AccessorProperty(_)
                 | AstNodes::ImportAttribute(_)
+                | AstNodes::TSEnumMember(_)
         );
         if is_property_key_parent && f.context().is_quote_needed() {
             let quote_str = f.options().quote_style.as_str();
@@ -214,11 +232,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
             if value.generator() {
                 write!(f, "*");
             }
-            if self.computed {
-                write!(f, ["[", self.key(), "]"]);
-            } else {
-                format_property_key(self.key(), f);
-            }
+            format_property_key(self.key(), self.computed, f);
 
             format_grouped_parameters_with_return_type_for_method(
                 value.type_parameters(),
@@ -308,6 +322,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ConditionalExpression<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         AssignmentLike::AssignmentExpression(self).fmt(f);
+        write_trailing_comments_inside_parens(f, self.parent(), self.span().end, false);
     }
 }
 
@@ -316,7 +331,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrayAssignmentTarget<'a>> {
         write!(f, "[");
 
         if self.elements.is_empty() && self.rest.is_none() {
-            write!(f, [format_dangling_comments(self.span()).with_block_indent()]);
+            write!(f, [format_dangling_comments(self.span()).with_soft_block_indent()]);
         } else {
             write!(
                 f,
@@ -431,23 +446,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ChainExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        // When ChainExpression contains TSNonNullExpression, we print `(a?.b)!` instead of `(a?.b!)`
-        // This normalizes `(a?.b!).c` to `(a?.b)!.c` to match Prettier's output.
-        // See: https://github.com/prettier/prettier/blob/main/src/language-js/clean.js
-        if let AstNodes::TSNonNullExpression(non_null) = self.expression().as_ast_nodes() {
-            let needs_parens =
-                crate::parentheses::chain_expression_needs_parens(self.span, self.parent());
-            if needs_parens {
-                write!(f, "(");
-            }
-            non_null.expression().fmt(f);
-            if needs_parens {
-                write!(f, ")");
-            }
-            write!(f, "!");
-        } else {
-            self.expression().fmt(f);
-        }
+        self.expression().fmt(f);
     }
 }
 
@@ -539,6 +538,11 @@ fn expression_statement_needs_semicolon<'a>(
                     }
                     _ => false,
                 }
+                // A type cast comment forces parentheses around the expression,
+                // so the line starts with `(` even though `needs_parentheses` is false:
+                // `/** @type {string} */ (this.s).length`
+                // Checked last: this scans source text/comments, unlike the checks above.
+                || is_type_cast_node(expr, f).is_some()
         }
         ExpressionLeftSide::AssignmentTarget(assignment) => {
             matches!(
@@ -563,12 +567,27 @@ fn expression_statement_needs_semicolon<'a>(
 impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let span = self.span();
-        // Check if we need a leading semicolon to prevent ASI issues
-        if f.options().semicolons == Semicolons::AsNeeded
-            && expression_statement_needs_semicolon(self, f)
+        // Check if we need a leading semicolon to prevent ASI issues.
+        // Leading comments are printed here rather than in the generated `fmt`
+        // so the semicolon can go before a type cast comment;
+        // otherwise the cast is detached from its expression and the parentheses get dropped on the next format:
+        // `;/** @type {string[]} */ ([]).forEach(...)`
+        let needs_semicolon = f.options().semicolons == Semicolons::AsNeeded
+            && expression_statement_needs_semicolon(self, f);
+        let leading_comments = f.context().comments().comments_before(span.start);
+        // Split off a trailing type cast comment so the semicolon lands before it
+        let split = if needs_semicolon
+            && leading_comments.last().is_some_and(|last| f.comments().is_type_cast_comment(last))
         {
+            leading_comments.len() - 1
+        } else {
+            leading_comments.len()
+        };
+        write!(f, FormatLeadingComments::Comments(&leading_comments[..split]));
+        if needs_semicolon {
             write!(f, ";");
         }
+        write!(f, FormatLeadingComments::Comments(&leading_comments[split..]));
 
         if f.comments().has_trailing_suppression_comment(span.end) {
             // Preserve original text when the statement has an inline suppression comment:
@@ -577,11 +596,42 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
             return;
         }
 
-        write!(f, [self.expression(), OptionalSemicolon]);
+        let expression = self.expression();
+        // A trailing comment right before the closing paren of the rightmost
+        // sequence/assignment stays inside the parentheses;
+        // extend the content past the closing paren so the comment is not moved behind the semicolon
+        // (the sub-expression prints it, see `keeps_trailing_comment_inside_parens`).
+        let expression_end = expression.span().end;
+        let content_end = if keeps_trailing_comment_inside_parens(expression.as_ref(), false) {
+            f.comments().end_including_source_parens(expression_end, self.span().end)
+        } else {
+            expression_end
+        };
+        write!(f, FormatContentWithSemicolon::new(expression, content_end, self.span().end));
     }
 }
 
+/// Prints a suppressed statement whose ignored range excludes the trailing semicolon:
+/// the source from `start` up to `content_end` verbatim,
+/// then the formatter's own terminator, like Prettier (prettier#18678).
+/// Comments between `content_end` and the end of the statement are left
+/// for the next node's leading-comments pass.
+fn write_suppressed_statement_with_semicolon(
+    start: u32,
+    content_end: u32,
+    f: &mut JsFormatter<'_, '_>,
+) {
+    write!(f, [FormatSuppressedNode(Span::new(start, content_end)), OptionalSemicolon]);
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, DoWhileStatement<'a>> {
+    fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
+        // The ignored range ends at the closing paren
+        let rparen_end =
+            f.comments().end_including_source_parens(self.test().span().end, self.span().end);
+        write_suppressed_statement_with_semicolon(self.span().start, rparen_end, f);
+    }
+
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let body = self.body();
         write!(f, group(&format_args!("do", FormatStatementBody::new(body))));
@@ -590,17 +640,22 @@ impl<'a> FormatWrite<'a> for AstNode<'a, DoWhileStatement<'a>> {
         } else {
             write!(f, hard_line_break());
         }
-        write!(
-            f,
-            [
-                "while",
-                space(),
-                "(",
-                group(&soft_block_indent(&self.test())),
-                ")",
-                OptionalSemicolon
-            ]
-        );
+
+        // Comments inside the parens belong to the test and stay there;
+        // only comments between `)` and `;` move behind the semicolon.
+        // Scan for the `)` only when a comment is actually around;
+        // otherwise `FormatContentWithSemicolon` prints as-is from either position.
+        let node_end = self.span().end;
+        let test_end = self.test().span().end;
+        let rparen_end = if f.comments().has_comment_in_range(test_end, node_end) {
+            f.comments().end_including_source_parens(test_end, node_end)
+        } else {
+            test_end
+        };
+        let content = format_with(|f| {
+            write!(f, ["while", space(), "(", group(&soft_block_indent(&self.test())), ")"]);
+        });
+        write!(f, FormatContentWithSemicolon::new(&content, rparen_end, node_end));
     }
 }
 
@@ -696,7 +751,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
                         test,
                         (update.is_none()).then_some(FormatCommentForEmptyStatement(body)),
                         ";",
-                        soft_line_break_or_space(),
+                        update.is_some().then_some(soft_line_break_or_space()),
                         update,
                         FormatCommentForEmptyStatement(body)
                     ))),
@@ -850,22 +905,44 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ContinueStatement<'a>> {
+    fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
+        #[expect(clippy::cast_possible_truncation)]
+        const CONTINUE_KEYWORD_LEN: u32 = "continue".len() as u32;
+
+        // The ignored range ends at the label (or the keyword)
+        let content_end =
+            self.label().map_or_else(|| self.span().start + CONTINUE_KEYWORD_LEN, |l| l.span().end);
+        write_suppressed_statement_with_semicolon(self.span().start, content_end, f);
+    }
+
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, "continue");
         if let Some(label) = self.label() {
-            write!(f, [space(), label]);
+            let content = format_with(|f| write!(f, ["continue", space(), label]));
+            write!(f, FormatContentWithSemicolon::new(&content, label.span().end, self.span().end));
+        } else {
+            write!(f, ["continue", OptionalSemicolon]);
         }
-        write!(f, OptionalSemicolon);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BreakStatement<'a>> {
+    fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
+        #[expect(clippy::cast_possible_truncation)]
+        const BREAK_KEYWORD_LEN: u32 = "break".len() as u32;
+
+        // The ignored range ends at the label (or the keyword)
+        let content_end =
+            self.label().map_or_else(|| self.span().start + BREAK_KEYWORD_LEN, |l| l.span().end);
+        write_suppressed_statement_with_semicolon(self.span().start, content_end, f);
+    }
+
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, "break");
         if let Some(label) = self.label() {
-            write!(f, [space(), label]);
+            let content = format_with(|f| write!(f, ["break", space(), label]));
+            write!(f, FormatContentWithSemicolon::new(&content, label.span().end, self.span().end));
+        } else {
+            write!(f, ["break", OptionalSemicolon]);
         }
-        write!(f, OptionalSemicolon);
     }
 }
 
@@ -1117,7 +1194,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.members().is_empty() {
-            write!(f, format_dangling_comments(self.span()).with_block_indent());
+            write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
         } else {
             write!(f, block_indent(self.members()));
         }
@@ -1126,12 +1203,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSEnumMember<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if f.options().quote_properties.is_consistent() {
+            let quote_needed = self
+                .as_ref()
+                .iter()
+                .any(|member| should_preserve_quote_for_enum_member(&member.id, f));
+            f.context_mut().push_quote_needed(quote_needed);
+        }
+
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_nodes_with_soft_line().entries_with_trailing_separator(
             self.iter(),
             ",",
             trailing_separator,
         );
+
+        if f.options().quote_properties.is_consistent() {
+            f.context_mut().pop_quote_needed();
+        }
     }
 }
 
@@ -1144,7 +1233,27 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
             write!(f, "[");
         }
 
-        write!(f, [id]);
+        // Enum member names behave like object property keys for `quoteProps`;
+        // intercept them here (like `ImportAttribute`) so the generic `StringLiteral` writer stays context-free.
+        if let (
+            // NOTE: `ComputedString` (`['baz']`, rejected by TSC but parsed by Oxc) is included
+            TSEnumMemberName::String(_) | TSEnumMemberName::ComputedString(_),
+            AstNodes::StringLiteral(string),
+        ) = (id.as_ref(), id.as_ast_nodes())
+        {
+            let format = FormatLiteralStringToken::new(
+                f.source_text().text_for(string),
+                /* jsx */ false,
+                StringLiteralParentKind::Member,
+            )
+            .clean_text(f);
+
+            string.format_leading_comments(f);
+            write!(f, format);
+            string.format_trailing_comments(f);
+        } else {
+            write!(f, [id]);
+        }
 
         if is_computed {
             write!(f, "]");
@@ -1383,7 +1492,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterDeclaration<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAliasDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, [AssignmentLike::TSTypeAliasDeclaration(self), OptionalSemicolon]);
+        let content = AssignmentLike::TSTypeAliasDeclaration(self);
+        write!(
+            f,
+            FormatContentWithSemicolon::new(
+                &content,
+                self.type_annotation.span().end,
+                self.span.end
+            )
+        );
     }
 }
 
@@ -1517,11 +1634,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSPropertySignature<'a>> {
         if self.readonly() {
             write!(f, ["readonly", space()]);
         }
-        if self.computed() {
-            write!(f, ["[", self.key(), "]"]);
-        } else {
-            format_property_key(self.key(), f);
-        }
+        format_property_key(self.key(), self.computed(), f);
         if self.optional() {
             write!(f, "?");
         }
@@ -1567,22 +1680,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSSignature<'a, '_> {
                 }
             }
             Semicolons::AsNeeded => {
-                // Needs semicolon anyway when:
-                // 1. It's a non-computed property signature with type annotation followed by
-                //    a call signature that has type parameters
-                //    e.g for: `a: string; <T>() => void`
-                // 2. It's a non-computed property signature without type annotation followed by
-                //    a call signature or method signature
-                //    e.g for: `a; () => void` or `a; method(): void`
+                // Needs semicolon anyway when omitting it would change how the members parse:
+                // 1. It's a property signature without type annotation named `static`, `get` or `set`,
+                //    which would otherwise parse as a modifier or accessor of the following member
+                // 2. It's a property signature without type annotation followed by
+                //    a call signature, e.g. `a` + `(): void` -> `a(): void`
                 let needs_semicolon = matches!(
-                    self.signature.as_ref(), TSSignature::TSPropertySignature(property) if !property.computed
-                    && self.next_signature.is_some_and(|signature| match signature.as_ref() {
-                        TSSignature::TSCallSignatureDeclaration(call) => {
-                            property.type_annotation.is_none() || call.type_parameters.is_some()
-                        }
-                        TSSignature::TSMethodSignature(_) => property.type_annotation.is_none(),
-                        _ => false,
-                    })
+                    self.signature.as_ref(), TSSignature::TSPropertySignature(property)
+                    if property.type_annotation.is_none()
+                    && (is_keyword_property_key(&property.key)
+                        || self.next_signature.is_some_and(|next| {
+                            matches!(next.as_ref(), TSSignature::TSCallSignatureDeclaration(_))
+                        }))
                 );
 
                 if needs_semicolon {

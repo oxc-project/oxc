@@ -17,10 +17,9 @@ use crate::react_compiler_utils::FxIndexMap;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerDiagnostic;
-use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::AliasingEffect;
 use crate::react_compiler_hir::AliasingSignature;
 use crate::react_compiler_hir::ArrayElement;
@@ -45,7 +44,7 @@ use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PlaceOrSpreadOrHole;
 use crate::react_compiler_hir::PropertyLiteral;
 use crate::react_compiler_hir::ReactFunctionType;
-use crate::react_compiler_hir::SourceLocation;
+use crate::react_compiler_hir::Span;
 use crate::react_compiler_hir::SpreadPattern;
 use crate::react_compiler_hir::Terminal;
 use crate::react_compiler_hir::Type;
@@ -78,7 +77,7 @@ pub fn infer_mutation_aliasing_effects(
     func: &mut HirFunction,
     env: &mut Environment,
     is_function_expression: bool,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let mut initial_state = InferenceState::empty(is_function_expression);
 
     // Map of blocks to the last (merged) incoming state that was processed
@@ -176,11 +175,9 @@ pub fn infer_mutation_aliasing_effects(
     while !queued_states.is_empty() {
         iteration_count += 1;
         if iteration_count > 100 {
-            return Err(CompilerDiagnostic::new(
-                ErrorCategory::Invariant,
+            return Err(ErrorCategory::Invariant.diagnostic(
                 "[InferMutationAliasingEffects] Potential infinite loop: \
                  A value, temporary place, or effect was not cached properly",
-                None,
             ));
         }
 
@@ -199,14 +196,14 @@ pub fn infer_mutation_aliasing_effects(
 
             // Check for uninitialized identifier access (matches TS invariant:
             // "Expected value kind to be initialized")
-            if let Some((uninitialized_id, usage_loc)) = state.uninitialized_access.get() {
+            if let Some((uninitialized_id, usage_span)) = state.uninitialized_access.get() {
                 let ident_info = env.identifiers.get(uninitialized_id.0 as usize);
                 let name = ident_info
                     .and_then(|ident| ident.name.as_ref())
                     .map(|n| n.value().to_string())
                     .unwrap_or_default();
-                // Use usage_loc if available, otherwise fall back to identifier's own loc
-                let error_loc = usage_loc.or_else(|| ident_info.and_then(|i| i.loc));
+                // Use usage_span if available, otherwise fall back to identifier's own span
+                let error_span = usage_span.or_else(|| ident_info.and_then(|i| i.span));
                 // Match TS printPlace format: "<unknown> name$id:type"
                 let type_str = ident_info
                     .map(|ident| {
@@ -215,15 +212,12 @@ pub fn infer_mutation_aliasing_effects(
                     })
                     .unwrap_or_default();
                 let description = format!("<unknown> {}${}{}", name, uninitialized_id.0, type_str);
-                let diag = CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    "[InferMutationAliasingEffects] Expected value kind to be initialized",
-                    Some(description),
-                )
-                .with_detail(CompilerDiagnosticDetail::Error {
-                    loc: error_loc,
-                    message: Some("this is uninitialized".to_string()),
-                });
+                let diag = ErrorCategory::Invariant
+                    .diagnostic(
+                        "[InferMutationAliasingEffects] Expected value kind to be initialized",
+                    )
+                    .with_help(description)
+                    .with_labels(error_span.map(|s| s.label("this is uninitialized")));
                 return Err(diag);
             }
 
@@ -288,9 +282,9 @@ struct InferenceState {
     variables: FxHashMap<IdentifierId, FxHashSet<ValueId>>,
     /// Tracks uninitialized identifier access errors (matches TS invariant).
     /// Uses Cell so it can be set from `&self` methods like `kind()`.
-    /// Stores (IdentifierId, usage_loc) where usage_loc is the source location
+    /// Stores (IdentifierId, usage_span) where usage_span is the source location
     /// of the Place that triggered the uninitialized access.
-    uninitialized_access: Cell<Option<(IdentifierId, Option<SourceLocation>)>>,
+    uninitialized_access: Cell<Option<(IdentifierId, Option<Span>)>>,
 }
 
 impl InferenceState {
@@ -304,16 +298,12 @@ impl InferenceState {
     }
 
     /// Check the kind of a place, recording the usage location for error reporting.
-    fn kind_with_loc(
-        &self,
-        place_id: IdentifierId,
-        usage_loc: Option<SourceLocation>,
-    ) -> AbstractValue {
+    fn kind_with_span(&self, place_id: IdentifierId, usage_span: Option<Span>) -> AbstractValue {
         let values = match self.variables.get(&place_id) {
             Some(v) => v,
             None => {
                 if self.uninitialized_access.get().is_none() {
-                    self.uninitialized_access.set(Some((place_id, usage_loc)));
+                    self.uninitialized_access.set(Some((place_id, usage_span)));
                 }
                 return AbstractValue {
                     kind: ValueKind::Mutable,
@@ -406,7 +396,7 @@ impl InferenceState {
     }
 
     fn kind(&self, place_id: IdentifierId) -> AbstractValue {
-        self.kind_with_loc(place_id, None)
+        self.kind_with_span(place_id, None)
     }
 
     fn freeze(&mut self, place_id: IdentifierId, reason: ValueReason) -> bool {
@@ -447,21 +437,21 @@ impl InferenceState {
         place_id: IdentifierId,
         env: &Environment,
     ) -> MutationResult {
-        self.mutate_with_loc(variant, place_id, env, None)
+        self.mutate_with_span(variant, place_id, env, None)
     }
 
-    fn mutate_with_loc(
+    fn mutate_with_span(
         &self,
         variant: MutateVariant,
         place_id: IdentifierId,
         env: &Environment,
-        usage_loc: Option<SourceLocation>,
+        usage_span: Option<Span>,
     ) -> MutationResult {
         let ty = &env.types[env.identifiers[place_id.0 as usize].type_.0 as usize];
         if is_ref_or_ref_value(ty) {
             return MutationResult::MutateRef;
         }
-        let kind = self.kind_with_loc(place_id, usage_loc).kind;
+        let kind = self.kind_with_span(place_id, usage_span).kind;
         match variant {
             MutateVariant::MutateConditionally | MutateVariant::MutateTransitiveConditionally => {
                 match kind {
@@ -672,10 +662,10 @@ fn hash_effect(effect: &AliasingEffect) -> String {
         AliasingEffect::Impure { place, .. } => format!("Impure:{}", place.identifier.0),
         AliasingEffect::Render { place } => format!("Render:{}", place.identifier.0),
         AliasingEffect::MutateFrozen { place, error } => {
-            format!("MutateFrozen:{}:{}:{:?}", place.identifier.0, error.reason, error.description)
+            format!("MutateFrozen:{}:{}:{:?}", place.identifier.0, error.message, error.help)
         }
         AliasingEffect::MutateGlobal { place, error } => {
-            format!("MutateGlobal:{}:{}:{:?}", place.identifier.0, error.reason, error.description)
+            format!("MutateGlobal:{}:{}:{:?}", place.identifier.0, error.message, error.help)
         }
         AliasingEffect::Mutate { value, .. } => format!("Mutate:{}", value.identifier.0),
         AliasingEffect::MutateConditionally { value } => {
@@ -936,7 +926,7 @@ fn infer_block(
     block_id: BlockId,
     func: &mut HirFunction,
     env: &mut Environment,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let block = &func.body.blocks[&block_id];
 
     // Process phis
@@ -1061,7 +1051,7 @@ fn apply_signature(
     instr: &Instruction,
     env: &mut Environment,
     func: &HirFunction,
-) -> Result<Option<Vec<AliasingEffect>>, CompilerDiagnostic> {
+) -> Result<Option<Vec<AliasingEffect>>, OxcDiagnostic> {
     let mut effects: Vec<AliasingEffect> = Vec::new();
 
     // For function instructions, validate frozen mutation
@@ -1094,15 +1084,14 @@ fn apply_signature(
                             }
                             _ => "value".to_string(),
                         };
-                        let mut diagnostic = CompilerDiagnostic::new(
-                            ErrorCategory::Immutability,
-                            "This value cannot be modified",
-                            Some(reason_str),
-                        );
-                        diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                            loc: mutate_value.loc,
-                            message: Some(format!("{} cannot be modified", variable)),
-                        });
+                        let diagnostic = ErrorCategory::Immutability
+                            .diagnostic("This value cannot be modified")
+                            .with_help(reason_str)
+                            .with_labels(
+                                mutate_value
+                                    .span
+                                    .map(|s| s.label(format!("{} cannot be modified", variable))),
+                            );
                         effects.push(AliasingEffect::MutateFrozen {
                             place: mutate_value.clone(),
                             error: diagnostic,
@@ -1195,7 +1184,7 @@ fn apply_effect(
     effects: &mut Vec<AliasingEffect>,
     env: &mut Environment,
     func: &HirFunction,
-) -> Result<(), CompilerDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let effect = context.intern_effect(effect);
     match effect {
         AliasingEffect::Freeze { ref value, reason } => {
@@ -1384,14 +1373,14 @@ fn apply_effect(
             );
 
             // Check destination kind
-            let into_kind = state.kind_with_loc(into.identifier, into.loc).kind;
+            let into_kind = state.kind_with_span(into.identifier, into.span).kind;
             let destination_type = match into_kind {
                 ValueKind::Context => Some("context"),
                 ValueKind::Mutable | ValueKind::MaybeFrozen => Some("mutable"),
                 _ => None,
             };
 
-            let from_kind = state.kind_with_loc(from.identifier, from.loc).kind;
+            let from_kind = state.kind_with_span(from.identifier, from.span).kind;
             let source_type = match from_kind {
                 ValueKind::Context => Some("context"),
                 ValueKind::Global | ValueKind::Primitive => None,
@@ -1433,7 +1422,7 @@ fn apply_effect(
                 "[InferMutationAliasingEffects] Cannot re-initialize variable within an instruction"
             );
             initialized.insert(into.identifier);
-            let from_value = state.kind_with_loc(from.identifier, from.loc);
+            let from_value = state.kind_with_span(from.identifier, from.span);
             match from_value.kind {
                 ValueKind::Frozen => {
                     apply_effect(
@@ -1453,7 +1442,7 @@ fn apply_effect(
                         .or_insert_with(ValueId::new);
                     state.initialize(
                         value_id,
-                        AbstractValue { kind: from_value.kind, reason: from_value.reason.clone() },
+                        AbstractValue { kind: from_value.kind, reason: from_value.reason },
                     );
                     state.define(into.identifier, value_id);
                 }
@@ -1466,7 +1455,7 @@ fn apply_effect(
                         .or_insert_with(ValueId::new);
                     state.initialize(
                         value_id,
-                        AbstractValue { kind: from_value.kind, reason: from_value.reason.clone() },
+                        AbstractValue { kind: from_value.kind, reason: from_value.reason },
                     );
                     state.define(into.identifier, value_id);
                 }
@@ -1483,7 +1472,7 @@ fn apply_effect(
             ref args,
             ref into,
             ref signature,
-            ref loc,
+            ref span,
         } => {
             // First, check if the callee is a locally-declared function expression
             // whose aliasing effects we already know (TS lines 1016-1068)
@@ -1509,7 +1498,7 @@ fn apply_effect(
                                 receiver,
                                 args,
                                 &context_places,
-                                loc.as_ref(),
+                                span.as_ref(),
                             )?;
                             if let Some(sig_effs) = sig_effects {
                                 // Conditionally mutate the function itself first
@@ -1545,20 +1534,17 @@ fn apply_effect(
                 // Check known_incompatible (TS line 2351-2370)
                 if let Some(ref incompatible_msg) = sig.known_incompatible {
                     if env.enable_validations() {
-                        let mut diagnostic = CompilerDiagnostic::new(
-                            ErrorCategory::IncompatibleLibrary,
-                            "Use of incompatible library",
-                            Some(
+                        let diagnostic = ErrorCategory::IncompatibleLibrary
+                            .diagnostic("Use of incompatible library")
+                            .with_help(
                                 "This API returns functions which cannot be memoized without leading to stale UI. \
                                  To prevent this, by default React Compiler will skip memoizing this component/hook. \
                                  However, you may see issues if values from this API are passed to other components/hooks that are \
-                                 memoized".to_string(),
-                            ),
-                        );
-                        diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                            loc: receiver.loc,
-                            message: Some(incompatible_msg.clone()),
-                        });
+                                 memoized",
+                            )
+                            .with_labels(
+                                receiver.span.map(|s| s.label(incompatible_msg.clone())),
+                            );
                         // TS throws here, aborting compilation for this function
                         return Err(diagnostic);
                     }
@@ -1572,7 +1558,7 @@ fn apply_effect(
                         receiver,
                         args,
                         &[],
-                        loc.as_ref(),
+                        span.as_ref(),
                         &mut context.aliasing_config_temp_cache,
                     )?;
                     if let Some(sig_effs) = sig_effects {
@@ -1584,21 +1570,21 @@ fn apply_effect(
                 }
 
                 // Legacy signature
-                let mut todo_errors: Vec<CompilerErrorDetail> = Vec::new();
+                let mut todo_errors: Vec<OxcDiagnostic> = Vec::new();
                 let legacy_effects = compute_effects_for_legacy_signature(
                     state,
                     sig,
                     into,
                     receiver,
                     args,
-                    loc.as_ref(),
+                    span.as_ref(),
                     env,
                     &context.function_values,
                     &mut todo_errors,
                 );
                 // Todo errors should short-circuit (TS throws throwTodo)
                 if let Some(err_detail) = todo_errors.into_iter().next() {
-                    return Err(CompilerDiagnostic::from_detail(err_detail));
+                    return Err(err_detail);
                 }
                 for le in legacy_effects {
                     apply_effect(context, state, le, initialized, effects, env, func)?;
@@ -1708,7 +1694,7 @@ fn apply_effect(
                 _ => unreachable!(),
             };
             let value = mutate_place;
-            let mutation_kind = state.mutate_with_loc(variant, value.identifier, env, value.loc);
+            let mutation_kind = state.mutate_with_span(variant, value.identifier, env, value.span);
             if mutation_kind == MutationResult::Mutate {
                 effects.push(effect.clone());
             } else if mutation_kind == MutationResult::MutateRef {
@@ -1730,32 +1716,28 @@ fn apply_effect(
                     };
                     let hoisted_access =
                         context.hoisted_context_declarations.get(&decl_id).cloned().flatten();
-                    let mut diagnostic = CompilerDiagnostic::new(
-                        ErrorCategory::Immutability,
-                        "Cannot access variable before it is declared",
-                        Some(format!(
+                    let mut diagnostic = ErrorCategory::Immutability
+                        .diagnostic("Cannot access variable before it is declared")
+                        .with_help(format!(
                             "{} is accessed before it is declared, which prevents the earlier access from updating when this value changes over time",
                             variable.as_deref().unwrap_or("This variable")
-                        )),
-                    );
+                        ));
                     if let Some(ref access) = hoisted_access {
-                        if access.loc != value.loc {
-                            diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                                loc: access.loc,
-                                message: Some(format!(
+                        if access.span != value.span {
+                            diagnostic.labels.extend(access.span.map(|s| {
+                                s.label(format!(
                                     "{} accessed before it is declared",
                                     variable.as_deref().unwrap_or("variable")
-                                )),
-                            });
+                                ))
+                            }));
                         }
                     }
-                    diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                        loc: value.loc,
-                        message: Some(format!(
+                    diagnostic.labels.extend(value.span.map(|s| {
+                        s.label(format!(
                             "{} is declared here",
                             variable.as_deref().unwrap_or("variable")
-                        )),
-                    });
+                        ))
+                    }));
                     apply_effect(
                         context,
                         state,
@@ -1773,15 +1755,12 @@ fn apply_effect(
                         }
                         _ => "value".to_string(),
                     };
-                    let mut diagnostic = CompilerDiagnostic::new(
-                        ErrorCategory::Immutability,
-                        "This value cannot be modified",
-                        Some(reason_str),
-                    );
-                    diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                        loc: value.loc,
-                        message: Some(format!("{} cannot be modified", variable)),
-                    });
+                    let diagnostic = ErrorCategory::Immutability
+                        .diagnostic("This value cannot be modified")
+                        .with_help(reason_str)
+                        .with_labels(
+                            value.span.map(|s| s.label(format!("{} cannot be modified", variable))),
+                        );
 
                     let error_kind = if abstract_value.kind == ValueKind::Frozen {
                         AliasingEffect::MutateFrozen { place: value.clone(), error: diagnostic }
@@ -1879,7 +1858,7 @@ fn compute_signature_for_instruction(
             effects
                 .push(AliasingEffect::Capture { from: await_value.clone(), into: lvalue.clone() });
         }
-        InstructionValue::NewExpression { callee, args, loc } => {
+        InstructionValue::NewExpression { callee, args, span } => {
             let sig = get_function_call_signature(env, callee.identifier).ok().flatten();
             effects.push(AliasingEffect::Apply {
                 receiver: callee.clone(),
@@ -1888,10 +1867,10 @@ fn compute_signature_for_instruction(
                 args: args.iter().map(place_or_spread_to_hole).collect(),
                 into: lvalue.clone(),
                 signature: sig,
-                loc: *loc,
+                span: *span,
             });
         }
-        InstructionValue::CallExpression { callee, args, loc } => {
+        InstructionValue::CallExpression { callee, args, span } => {
             let sig = get_function_call_signature(env, callee.identifier).ok().flatten();
             effects.push(AliasingEffect::Apply {
                 receiver: callee.clone(),
@@ -1900,10 +1879,10 @@ fn compute_signature_for_instruction(
                 args: args.iter().map(place_or_spread_to_hole).collect(),
                 into: lvalue.clone(),
                 signature: sig,
-                loc: *loc,
+                span: *span,
             });
         }
-        InstructionValue::MethodCall { receiver, property, args, loc } => {
+        InstructionValue::MethodCall { receiver, property, args, span } => {
             let sig = get_function_call_signature(env, property.identifier).ok().flatten();
             effects.push(AliasingEffect::Apply {
                 receiver: receiver.clone(),
@@ -1912,7 +1891,7 @@ fn compute_signature_for_instruction(
                 args: args.iter().map(place_or_spread_to_hole).collect(),
                 into: lvalue.clone(),
                 signature: sig,
-                loc: *loc,
+                span: *span,
             });
         }
         InstructionValue::PropertyDelete { object, .. }
@@ -2185,20 +2164,17 @@ fn compute_signature_for_instruction(
                 reason: ValueReason::Other,
             });
         }
-        InstructionValue::StoreGlobal { name, value: sg_value, loc: _, .. } => {
+        InstructionValue::StoreGlobal { name, value: sg_value, span: _, .. } => {
             let variable = format!("`{}`", name);
-            let mut diagnostic = CompilerDiagnostic::new(
-                ErrorCategory::Globals,
-                "Cannot reassign variables declared outside of the component/hook",
-                Some(format!(
+            let diagnostic = ErrorCategory::Globals
+                .diagnostic("Cannot reassign variables declared outside of the component/hook")
+                .with_help(format!(
                     "Variable {} is declared outside of the component/hook. Reassigning this value during render is a form of side effect, which can cause unpredictable behavior depending on when the component happens to re-render. If this variable is used in rendering, use useState instead. Otherwise, consider updating it in an effect. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#side-effects-must-run-outside-of-render)",
                     variable
-                )),
-            );
-            diagnostic.details.push(CompilerDiagnosticDetail::Error {
-                loc: instr.loc,
-                message: Some(format!("{} cannot be reassigned", variable)),
-            });
+                ))
+                .with_labels(
+                    instr.span.map(|s| s.label(format!("{} cannot be reassigned", variable))),
+                );
             effects
                 .push(AliasingEffect::MutateGlobal { place: sg_value.clone(), error: diagnostic });
             effects.push(AliasingEffect::Assign { from: sg_value.clone(), into: lvalue.clone() });
@@ -2261,10 +2237,10 @@ fn compute_effects_for_legacy_signature(
     lvalue: &Place,
     receiver: &Place,
     args: &[PlaceOrSpreadOrHole],
-    loc: Option<&SourceLocation>,
+    span: Option<&Span>,
     env: &Environment,
     function_values: &FxHashMap<ValueId, FunctionId>,
-    todo_errors: &mut Vec<CompilerErrorDetail>,
+    todo_errors: &mut Vec<OxcDiagnostic>,
 ) -> Vec<AliasingEffect> {
     let return_value_reason = signature.return_value_reason.unwrap_or(ValueReason::Other);
     let mut effects: Vec<AliasingEffect> = Vec::new();
@@ -2276,22 +2252,17 @@ fn compute_effects_for_legacy_signature(
     });
 
     if signature.impure && env.config.validate_no_impure_functions_in_render {
-        let mut diagnostic = CompilerDiagnostic::new(
-            ErrorCategory::Purity,
-            "Cannot call impure function during render",
-            Some(format!(
+        let diagnostic = ErrorCategory::Purity
+            .diagnostic("Cannot call impure function during render")
+            .with_help(format!(
                 "{}Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent)",
                 if let Some(ref name) = signature.canonical_name {
                     format!("`{}` is an impure function. ", name)
                 } else {
                     String::new()
                 }
-            )),
-        );
-        diagnostic.details.push(CompilerDiagnosticDetail::Error {
-            loc: loc.copied(),
-            message: Some("Cannot call impure function".to_string()),
-        });
+            ))
+            .with_labels(span.copied().map(|s| s.label("Cannot call impure function")));
         effects.push(AliasingEffect::Impure { place: receiver.clone(), error: diagnostic });
     }
 
@@ -2373,7 +2344,7 @@ fn compute_effects_for_legacy_signature(
                 } else {
                     signature.rest_param.unwrap_or(Effect::ConditionallyMutate)
                 };
-                let (effect, err_detail) = get_argument_effect(sig_effect, is_spread, place.loc);
+                let (effect, err_detail) = get_argument_effect(sig_effect, is_spread, place.span);
                 if let Some(d) = err_detail {
                     todo_errors.push(d);
                 }
@@ -2405,20 +2376,19 @@ fn compute_effects_for_legacy_signature(
 fn get_argument_effect(
     sig_effect: Effect,
     is_spread: bool,
-    spread_loc: Option<SourceLocation>,
-) -> (Effect, Option<CompilerErrorDetail>) {
+    spread_span: Option<Span>,
+) -> (Effect, Option<OxcDiagnostic>) {
     if !is_spread || sig_effect == Effect::Mutate || sig_effect == Effect::ConditionallyMutate {
         (sig_effect, None)
     } else {
         // Spread with Freeze effect is unsupported for hook arguments
         // (matches TS CompilerError.throwTodo)
         let detail = if sig_effect == Effect::Freeze {
-            Some(CompilerErrorDetail {
-                reason: "Support spread syntax for hook arguments".to_string(),
-                description: None,
-                category: ErrorCategory::Todo,
-                loc: spread_loc,
-            })
+            Some(
+                ErrorCategory::Todo
+                    .diagnostic("Support spread syntax for hook arguments")
+                    .with_labels(spread_span),
+            )
         } else {
             None
         };
@@ -2517,9 +2487,9 @@ fn compute_effects_for_aliasing_signature_config(
     receiver: &Place,
     args: &[PlaceOrSpreadOrHole],
     context: &[Place],
-    loc: Option<&SourceLocation>,
+    span: Option<&Span>,
     temp_cache: &mut FxHashMap<(IdentifierId, String), Place>,
-) -> Result<Option<Vec<AliasingEffect>>, CompilerDiagnostic> {
+) -> Result<Option<Vec<AliasingEffect>>, OxcDiagnostic> {
     // Build substitutions from config strings to places
     let mut substitutions: FxHashMap<String, Vec<Place>> = FxHashMap::default();
     substitutions.insert(config.receiver.clone(), vec![receiver.clone()]);
@@ -2564,7 +2534,7 @@ fn compute_effects_for_aliasing_signature_config(
         let cache_key = (lvalue.identifier, temp_name.clone());
         let temp_place = temp_cache
             .entry(cache_key)
-            .or_insert_with(|| create_temp_place(env, receiver.loc))
+            .or_insert_with(|| create_temp_place(env, receiver.span))
             .clone();
         substitutions.insert(temp_name.clone(), vec![temp_place]);
     }
@@ -2577,10 +2547,9 @@ fn compute_effects_for_aliasing_signature_config(
                 let values = substitutions.get(value).cloned().unwrap_or_default();
                 for v in values {
                     if mutable_spreads.contains(&v.identifier) {
-                        return Err(CompilerDiagnostic::todo(
-                            "Support spread syntax for hook arguments",
-                            v.loc,
-                        ));
+                        return Err(ErrorCategory::Todo
+                            .diagnostic("Support spread syntax for hook arguments")
+                            .with_labels(v.span));
                     }
                     effects.push(AliasingEffect::Freeze { value: v, reason: *reason });
                 }
@@ -2649,11 +2618,7 @@ fn compute_effects_for_aliasing_signature_config(
                 for v in values {
                     effects.push(AliasingEffect::Impure {
                         place: v,
-                        error: CompilerDiagnostic::new(
-                            ErrorCategory::Purity,
-                            "Impure function call",
-                            None,
-                        ),
+                        error: ErrorCategory::Purity.diagnostic("Impure function call"),
                     });
                 }
             }
@@ -2711,7 +2676,7 @@ fn compute_effects_for_aliasing_signature_config(
                         args: apply_args,
                         into,
                         signature: None,
-                        loc: loc.copied(),
+                        span: span.copied(),
                     });
                 } else {
                     return Ok(None);
@@ -2744,10 +2709,10 @@ fn build_signature_from_function_expression(
     }
     let returns = inner_func.returns.identifier;
     let aliasing_effects = inner_func.aliasing_effects.clone().unwrap_or_default();
-    let loc = inner_func.loc;
+    let span = inner_func.span;
 
     if rest.is_none() {
-        let temp = create_temp_place(env, loc);
+        let temp = create_temp_place(env, span);
         rest = Some(temp.identifier);
     }
 
@@ -2770,8 +2735,8 @@ fn compute_effects_for_aliasing_signature(
     receiver: &Place,
     args: &[PlaceOrSpreadOrHole],
     context: &[Place],
-    loc: Option<&SourceLocation>,
-) -> Result<Option<Vec<AliasingEffect>>, CompilerDiagnostic> {
+    span: Option<&Span>,
+) -> Result<Option<Vec<AliasingEffect>>, OxcDiagnostic> {
     if signature.params.len() > args.len()
         || (args.len() > signature.params.len() && signature.rest.is_none())
     {
@@ -2816,7 +2781,7 @@ fn compute_effects_for_aliasing_signature(
 
     // Create temporaries
     for temp in &signature.temporaries {
-        let temp_place = create_temp_place(env, receiver.loc);
+        let temp_place = create_temp_place(env, receiver.span);
         substitutions.insert(temp.identifier, vec![temp_place]);
     }
 
@@ -2913,10 +2878,9 @@ fn compute_effects_for_aliasing_signature(
                 let values = substitutions.get(&value.identifier).cloned().unwrap_or_default();
                 for v in values {
                     if mutable_spreads.contains(&v.identifier) {
-                        return Err(CompilerDiagnostic::todo(
-                            "Support spread syntax for hook arguments",
-                            v.loc,
-                        ));
+                        return Err(ErrorCategory::Todo
+                            .diagnostic("Support spread syntax for hook arguments")
+                            .with_labels(v.span));
                     }
                     effects.push(AliasingEffect::Freeze { value: v, reason: *reason });
                 }
@@ -2938,7 +2902,7 @@ fn compute_effects_for_aliasing_signature(
                 args: a,
                 into: i,
                 signature: s,
-                loc: _l,
+                span: _l,
             } => {
                 let recv = substitutions.get(&r.identifier).and_then(|v| v.first()).cloned();
                 let func = substitutions.get(&f.identifier).and_then(|v| v.first()).cloned();
@@ -2973,7 +2937,7 @@ fn compute_effects_for_aliasing_signature(
                         args: apply_args,
                         into: apply_into,
                         signature: s.clone(),
-                        loc: loc.copied(),
+                        span: span.copied(),
                     });
                 } else {
                     return Ok(None);
@@ -3051,7 +3015,7 @@ fn is_builtin_collection_type(ty: &Type) -> bool {
 fn get_function_call_signature(
     env: &Environment,
     callee_id: IdentifierId,
-) -> Result<Option<FunctionSignature>, CompilerDiagnostic> {
+) -> Result<Option<FunctionSignature>, OxcDiagnostic> {
     let ty = &env.types[env.identifiers[callee_id.0 as usize].type_.0 as usize];
     Ok(env.get_function_signature(ty)?.cloned())
 }
@@ -3064,7 +3028,7 @@ fn is_ref_or_ref_value_for_id(env: &Environment, id: IdentifierId) -> bool {
 fn get_hook_kind_for_type<'a>(
     env: &'a Environment,
     ty: &Type,
-) -> Result<Option<&'a HookKind>, CompilerDiagnostic> {
+) -> Result<Option<&'a HookKind>, OxcDiagnostic> {
     env.get_hook_kind_for_type(ty)
 }
 
@@ -3128,10 +3092,10 @@ fn build_apply_operands(
     result
 }
 
-fn create_temp_place(env: &mut Environment, loc: Option<SourceLocation>) -> Place {
+fn create_temp_place(env: &mut Environment, span: Option<Span>) -> Place {
     let id = env.next_identifier_id();
-    env.identifiers[id.0 as usize].loc = loc;
-    Place { identifier: id, effect: Effect::Unknown, reactive: false, loc }
+    env.identifiers[id.0 as usize].span = span;
+    Place { identifier: id, effect: Effect::Unknown, reactive: false, span }
 }
 
 // =============================================================================

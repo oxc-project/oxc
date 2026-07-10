@@ -21,8 +21,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let discriminant = self.discriminant();
         let cases = self.cases();
-        let format_cases =
-            format_with(|f| if cases.is_empty() { hard_line_break().fmt(f) } else { cases.fmt(f) });
+        let format_cases = format_with(|f| {
+            if cases.is_empty() {
+                // Comments inside empty braces (`switch (a) { /* comment */ }`)
+                // would otherwise leak behind the closing brace.
+                if f.context().comments().has_comment_before(self.span.end) {
+                    format_dangling_comments(self.span).fmt(f);
+                } else {
+                    hard_line_break().fmt(f);
+                }
+            } else {
+                cases.fmt(f);
+            }
+        });
         write!(
             f,
             [

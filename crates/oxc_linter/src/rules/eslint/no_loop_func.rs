@@ -222,6 +222,13 @@ impl NoLoopFunc {
             return false;
         }
 
+        // Catch parameters are lexical bindings. A catch clause inside the loop creates a fresh
+        // binding each iteration, while a catch clause outside the loop may share a mutable binding.
+        if flags.is_catch_variable() {
+            let symbol_decl_node = nodes.get_node(scoping.symbol_declaration(symbol_id));
+            return Self::is_let_unsafe_in_loop(symbol_id, symbol_decl_node, loop_node, ctx);
+        }
+
         // Get the declaration node for the symbol
         let symbol_decl_node_id = scoping.symbol_declaration(symbol_id);
         let symbol_decl_node = nodes.get_node(symbol_decl_node_id);
@@ -673,9 +680,13 @@ fn test() {
         "for (const i of {}) { (function() { i; }) }",
         "for (using i of foo) { (function() { i; }) }",
         "for (await using i of foo) { (function() { i; }) }",
+        "for (let i = 0; i < 10; i++) { try {} catch (e) { setTimeout(() => console.log(e)); } }",
+        "for (let i = 0; i < 10; i++) { try {} catch (e) { setTimeout(() => console.log(e)); e = next(); } }",
         "for (var i = 0; i < 10; ++i) { using foo = bar(i); (function() { foo; }) }",
         "for (var i = 0; i < 10; ++i) { await using foo = bar(i); (function() { foo; }) }",
         "for (let i = 0; i < 10; ++i) { for (let x in xs.filter(x => x != i)) {  } }",
+        "for (var i=0; i<l; i++) { try { } catch (e) { (function() { e; }) }  }",
+        "while (i<l) { try { } catch (e) { (function() { e; }) }  }",
         "let a = 0; for (let i=0; i<l; i++) { (function() { a; }); }",
         "let a = 0; for (let i in {}) { (function() { a; }); }",
         "let a = 0; for (let i of {}) { (function() { a; }); }",
@@ -1103,6 +1114,13 @@ fn test() {
             arr.push(function () { return i; });
             arr.push(() => i);
         } while (i++ < 5);",
+        // A catch parameter declared outside the loop is shared across iterations.
+        "try {} catch (e) {
+            for (let i = 0; i < 10; i++) {
+                callbacks.push(() => e);
+                e = next();
+            }
+        }",
     ];
 
     Tester::new(NoLoopFunc::NAME, NoLoopFunc::PLUGIN, pass, fail).test_and_snapshot();

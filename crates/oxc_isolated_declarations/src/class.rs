@@ -105,8 +105,10 @@ impl<'a> IsolatedDeclarations<'a> {
                 type_annotation = property.type_annotation.clone_in(self.allocator());
             } else if let Some(expr) = property.value.as_ref() {
                 let ts_type = if property.readonly {
-                    // Keep literal const initializers on readonly class properties to match TS d.ts emit.
-                    if let Some(initializer) = self.get_literal_const_initializer(expr) {
+                    // Keep literal initializers without const assertions to match TS d.ts emit.
+                    if let Some(initializer) =
+                        self.get_literal_initializer_without_const_assertion(expr)
+                    {
                         value = Some(initializer);
                         None
                     } else if Self::is_non_const_array_literal(expr) {
@@ -146,7 +148,10 @@ impl<'a> IsolatedDeclarations<'a> {
         )
     }
 
-    fn get_literal_const_initializer(&self, expr: &Expression<'a>) -> Option<Expression<'a>> {
+    fn get_literal_initializer_without_const_assertion(
+        &self,
+        expr: &Expression<'a>,
+    ) -> Option<Expression<'a>> {
         match expr {
             Expression::BooleanLiteral(_)
             | Expression::NumericLiteral(_)
@@ -159,13 +164,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 Some(Expression::UnaryExpression(expr.clone_in(self.allocator())))
             }
             Expression::ParenthesizedExpression(expr) => {
-                self.get_literal_const_initializer(&expr.expression)
-            }
-            Expression::TSAsExpression(expr) if expr.type_annotation.is_const_type_reference() => {
-                self.get_literal_const_initializer(&expr.expression)
-            }
-            Expression::TSTypeAssertion(expr) if expr.type_annotation.is_const_type_reference() => {
-                self.get_literal_const_initializer(&expr.expression)
+                self.get_literal_initializer_without_const_assertion(&expr.expression)
             }
             _ => None,
         }

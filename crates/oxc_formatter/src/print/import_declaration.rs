@@ -1,7 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::is_identifier_name_patched;
 
 use crate::{
     Format, FormatTrailingCommas, JsLabels, TrailingSeparator,
@@ -10,8 +9,11 @@ use crate::{
     formatter::{
         JsFormatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,
     },
-    print::semicolon::OptionalSemicolon,
-    utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
+    print::semicolon::{FormatContentWithSemicolon, OptionalSemicolon},
+    utils::{
+        object::should_preserve_string_quote,
+        string::{FormatLiteralStringToken, StringLiteralParentKind},
+    },
     write,
 };
 
@@ -29,6 +31,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ImportPhase {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [self.as_str(), space()]);
     }
+}
+
+/// End position of the source + optional with-clause pair formatted by
+/// [`format_import_and_export_source_with_clause`].
+pub fn import_and_export_source_with_clause_end(
+    source: &AstNode<'_, StringLiteral>,
+    with_clause: Option<&AstNode<'_, WithClause>>,
+) -> u32 {
+    with_clause.map_or(source.span.end, |with| with.span.end)
 }
 
 pub fn format_import_and_export_source_with_clause<'a>(
@@ -49,7 +60,7 @@ pub fn format_import_and_export_source_with_clause<'a>(
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let decl = &format_with(|f| {
+        let content = format_with(|f| {
             write!(f, ["import", space()]);
             if let Some(phase) = self.phase() {
                 write!(f, phase);
@@ -62,12 +73,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
             }
 
             format_import_and_export_source_with_clause(self.source(), self.with_clause(), f);
-
-            write!(f, [OptionalSemicolon]);
         });
+        let content_end =
+            import_and_export_source_with_clause_end(self.source(), self.with_clause());
+        let decl = FormatContentWithSemicolon::new(&content, content_end, self.span.end);
 
         if f.options().sort_imports.is_some() {
-            write!(f, [labelled(LabelId::of(JsLabels::ImportDeclaration), decl)]);
+            write!(f, [labelled(LabelId::of(JsLabels::ImportDeclaration), &decl)]);
         } else {
             write!(f, decl);
         }
@@ -183,10 +195,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.with_entries.iter().any(|attribute| {
-                matches!(&attribute.key, ImportAttributeKey::StringLiteral(string) if {
-                    let quote_less_content = f.source_text().text_for(&string.span.shrink(1));
-                    !is_identifier_name_patched(quote_less_content)
-                })
+                matches!(&attribute.key, ImportAttributeKey::StringLiteral(string)
+                    if should_preserve_string_quote(string, f))
             });
 
             f.context_mut().push_quote_needed(quote_needed);

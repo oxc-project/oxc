@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::react_compiler_diagnostics::{CompilerError, CompilerErrorDetail, ErrorCategory};
+use crate::diagnostics::{CompilerError, ErrorCategory};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, PropertyLiteral};
 
@@ -43,15 +43,15 @@ pub fn validate_no_capitalized_calls(
                         capital_load_globals.insert(lvalue_id, name.to_string());
                     }
                 }
-                InstructionValue::CallExpression { callee, loc, .. } => {
+                InstructionValue::CallExpression { callee, span, .. } => {
                     let callee_id = callee.identifier;
                     if let Some(callee_name) = capital_load_globals.get(&callee_id) {
-                        env.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::CapitalizedCalls,
-                            reason: reason.to_string(),
-                            description: Some(format!("{callee_name} may be a component")),
-                            loc: *loc,
-                        })?;
+                        env.record_error(
+                            ErrorCategory::CapitalizedCalls
+                                .diagnostic(reason)
+                                .with_help(format!("{callee_name} may be a component"))
+                                .with_labels(*span),
+                        )?;
                         continue;
                     }
                 }
@@ -63,15 +63,15 @@ pub fn validate_no_capitalized_calls(
                         capitalized_properties.insert(lvalue_id, prop_name.clone());
                     }
                 }
-                InstructionValue::MethodCall { property, loc, .. } => {
+                InstructionValue::MethodCall { property, span, .. } => {
                     let property_id = property.identifier;
                     if let Some(prop_name) = capitalized_properties.get(&property_id) {
-                        env.record_error(CompilerErrorDetail {
-                            category: ErrorCategory::CapitalizedCalls,
-                            reason: reason.to_string(),
-                            description: Some(format!("{prop_name} may be a component")),
-                            loc: *loc,
-                        })?;
+                        env.record_error(
+                            ErrorCategory::CapitalizedCalls
+                                .diagnostic(reason)
+                                .with_help(format!("{prop_name} may be a component"))
+                                .with_labels(*span),
+                        )?;
                     }
                 }
                 _ => {}

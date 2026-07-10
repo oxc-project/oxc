@@ -105,3 +105,33 @@ fn test_minimize_conditional_numeric() {
     // "a ? 0 : 1" stays when parens would make it same or longer
     test("let x = a + b ? 0 : 1", "let x = a + b ? 0 : 1");
 }
+
+#[test]
+fn test_minimize_conditional_boolean_value_context() {
+    // Form 1: "c ? false : x" => "!c && x" (exact for any `c`)
+    test("let x = foo() ? false : bar()", "let x = !foo() && bar()");
+    test("let x = num ? false : y", "let x = !num && y");
+    test("foo(a ? false : b)", "foo(!a && b)");
+    // equality tests invert their operator in place via `minimize_not`
+    test("function f() { return a === b ? false : x }", "function f() { return a !== b && x }");
+
+    // Form 2: "c ? x : true" => "!c || x" (exact for any `c`)
+    test("let x = foo() ? bar() : true", "let x = !foo() || bar()");
+    test("let x = a === b ? c : true", "let x = a !== b || c");
+    // "!a ? true : x" first flips to "a ? x : true", then folds via form 2
+    test("let x = !a ? true : b", "let x = !a || b");
+
+    // Form 3: "c ? true : x" => "c || x" only when `c` is boolean-typed
+    test("let x = a === b ? true : c", "let x = a === b || c");
+    // Form 4: "c ? x : false" => "c && x" only when `c` is boolean-typed
+    test("let x = a === b ? c : false", "let x = a === b && c");
+
+    // Negative: forms 3/4 require a boolean-typed test, else the value changes.
+    test("let x = num ? true : y", "let x = num ? !0 : y");
+    test("let x = num ? y : false", "let x = num ? y : !1");
+
+    // Negative: size guard. `!(a || b) && c` is longer than `a || b ? !1 : c`.
+    test("let x = a || b ? false : c", "let x = a || b ? !1 : c");
+    // Negative: `x` needing parens as a logical operand would not save bytes.
+    test("let x = a ? false : b ? c : d", "let x = a ? !1 : b ? c : d");
+}

@@ -10,6 +10,17 @@ mod typescript;
 
 mod tools;
 
+// Mirrors `oxc_lexer`'s crate gate: the lexer compiles to an empty stub without
+// static AVX2/BMI2 x86_64, so the differential harness only exists where the
+// lexer does (`--all-features` builds must pass on every target).
+#[cfg(all(
+    feature = "lexer",
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+))]
+mod lexer_diff;
+
 use std::{
     fmt::Write,
     path::{Path, PathBuf},
@@ -360,6 +371,28 @@ impl AppArgs {
         if self.filter.is_none() {
             typescript::save_reviewed_tsc_diagnostics_codes();
         }
+    }
+
+    /// Differential lexer conformance: compare `oxc_lexer`'s significant-token
+    /// spans against the parser's token stream over the corpora. Opt-in (kept out
+    /// of `run_all`) — requires the `lexer` feature and a static AVX2/BMI2 x86_64
+    /// build of `oxc_lexer`.
+    #[cfg(all(
+        feature = "lexer",
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+    ))]
+    pub fn run_lexer(&self, data: &TestData) {
+        self.run_tool("lexer_test262", TEST262_PATH, &data.test262, lexer_diff::run_lexer_test262);
+        self.run_tool("lexer_babel", BABEL_PATH, &data.babel, lexer_diff::run_lexer_babel);
+        self.run_tool(
+            "lexer_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            lexer_diff::run_lexer_typescript,
+        );
+        self.run_tool("lexer_misc", MISC_PATH, &data.misc, lexer_diff::run_lexer_misc);
     }
 
     pub fn run_semantic(&self, data: &TestData) {

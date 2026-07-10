@@ -10,7 +10,7 @@
 
 use rustc_hash::FxHashSet;
 
-use crate::react_compiler_diagnostics::CompilerError;
+use crate::diagnostics::CompilerError;
 use crate::react_compiler_hir::{
     EvaluationOrder, IdentifierId, InstructionValue, Place, PrunedReactiveScopeBlock,
     ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveValue, Type,

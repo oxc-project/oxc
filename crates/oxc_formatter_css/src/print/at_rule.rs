@@ -820,7 +820,7 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
         AtRulePrelude::SassForward(forward) => scss::write_sass_forward(forward, f),
         AtRulePrelude::SassImport(import) => {
             let paths: Vec<(Span, &str)> =
-                import.paths.iter().map(|path| (path.span.clone(), path.raw)).collect();
+                import.paths.iter().map(|path| (path.span, path.raw)).collect();
             write_import_path_list(&paths, to_span(import.span()).end, f);
         }
         // Only reached for SCSS-family names parsed AS CSS (see `is_value_parsed_at_rule`);
@@ -1243,14 +1243,17 @@ fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssF
             Token::Str(_) => {
                 write_raw_str(source.text_for(&span), f);
             }
-            Token::Number(n) => {
-                write!(f, text(arena_cow_str(&value::print_css_number(n.raw), f)));
+            Token::Number(_) => {
+                let raw = tok.number_raw(source.as_str()).unwrap();
+                write!(f, text(arena_cow_str(&value::print_css_number(raw), f)));
             }
-            Token::Dimension(d) => {
+            Token::Dimension(_) => {
+                let d = tok.dimension(source.as_str()).unwrap();
                 write!(f, text(arena_cow_str(&value::print_css_number(d.value.raw), f)));
                 write!(f, text(d.unit.raw));
             }
-            Token::Percentage(pct) => {
+            Token::Percentage(_) => {
+                let pct = tok.percentage(source.as_str()).unwrap();
                 write!(f, text(arena_cow_str(&value::print_css_number(pct.value.raw), f)));
                 write!(f, "%");
             }
@@ -1268,6 +1271,7 @@ fn write_token_pair_space<'a>(
     hug_lparen: bool,
     f: &mut CssFormatter<'_, 'a>,
 ) {
+    let source = f.context().source_text();
     let prev = &run[j - 1];
     let tok = &run[j];
     let gap = to_span(&prev.span).end != to_span(&tok.span).start;
@@ -1291,7 +1295,11 @@ fn write_token_pair_space<'a>(
         (Token::Equal(_) | Token::Dot(_), _) => false,
         (_, Token::LParen(_)) if j == 1 && hug_lparen => false,
         (Token::Colon(_) | Token::Comma(_), _) => true,
-        (Token::Ident(i), Token::Asterisk(_)) if !gap && i.raw.ends_with('-') => false,
+        (Token::Ident(_), Token::Asterisk(_))
+            if !gap && source.text_for(&to_span(&prev.span)).ends_with('-') =>
+        {
+            false
+        }
         (p, Token::Asterisk(_) | Token::Plus(_)) if wordish(p) => true,
         (Token::Asterisk(_) | Token::Plus(_), n) if wordish(n) => true,
         (Token::Asterisk(_) | Token::Plus(_), Token::LParen(_)) => true,
@@ -1373,7 +1381,7 @@ fn import_as_path_list<'a>(
     }
     let source = f.context().source_text();
     let mut paths = Vec::with_capacity(1 + modifiers.values.len() / 2);
-    paths.push((href.span.clone(), href.raw));
+    paths.push((href.span, href.raw));
     let mut expect_comma = true;
     for value in &modifiers.values {
         let ComponentValue::TokenWithSpan(tok) = value else {
@@ -1382,7 +1390,7 @@ fn import_as_path_list<'a>(
         match &tok.token {
             Token::Comma(_) if expect_comma => expect_comma = false,
             Token::Str(_) if !expect_comma => {
-                paths.push((tok.span.clone(), source.text_for(&to_span(&tok.span))));
+                paths.push((tok.span, source.text_for(&to_span(&tok.span))));
                 expect_comma = true;
             }
             _ => return None,
@@ -1510,7 +1518,7 @@ fn write_import_modifier_group<'a>(values: &[ComponentValue<'a>], f: &mut CssFor
             let tokens: Vec<TokenWithSpan<'a>> = values[run_start..i]
                 .iter()
                 .filter_map(|value| match value {
-                    ComponentValue::TokenWithSpan(tok) => Some(tok.clone()),
+                    ComponentValue::TokenWithSpan(tok) => Some(*tok),
                     _ => None,
                 })
                 .collect();

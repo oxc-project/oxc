@@ -1,4 +1,4 @@
-use std::{cell::OnceCell, fmt, iter};
+use std::{fmt, iter};
 
 use rustc_hash::FxHashSet;
 
@@ -22,7 +22,6 @@ pub(super) struct Symbol<'s, 'a> {
     module_record: &'s ModuleRecord,
     id: SymbolId,
     flags: SymbolFlags,
-    span: OnceCell<Span>,
 }
 
 impl PartialEq for Symbol<'_, '_> {
@@ -39,7 +38,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         symbol_id: SymbolId,
     ) -> Self {
         let flags = semantic.scoping().symbol_flags(symbol_id);
-        Self { semantic, module_record, id: symbol_id, flags, span: OnceCell::new() }
+        Self { semantic, module_record, id: symbol_id, flags }
     }
 
     #[inline]
@@ -149,28 +148,6 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 | AstKind::TSTypeAssertion(_)
         )
     }
-
-    /// <https://github.com/oxc-project/oxc/issues/4739>
-    fn derive_span(&self) -> Span {
-        for kind in self.iter_self_and_parents().map(AstNode::kind) {
-            match kind {
-                AstKind::BindingIdentifier(_) => {}
-                AstKind::BindingRestElement(rest) => return rest.span,
-                AstKind::VariableDeclarator(decl) => return self.clean_binding_id(&decl.id),
-                AstKind::FormalParameter(param) => return self.clean_binding_id(&param.pattern),
-                _ => break,
-            }
-        }
-        self.scoping().symbol_span(self.id)
-    }
-
-    /// <https://github.com/oxc-project/oxc/issues/4739>
-    fn clean_binding_id(&self, binding: &BindingPattern) -> Span {
-        if binding.is_destructuring_pattern() {
-            return self.scoping().symbol_span(self.id);
-        }
-        binding.span()
-    }
 }
 
 impl<'a> Symbol<'_, 'a> {
@@ -247,11 +224,7 @@ impl GetSpan for Symbol<'_, '_> {
     /// [`Span`] for the node declaring the [`Symbol`].
     #[inline]
     fn span(&self) -> Span {
-        // TODO: un-comment and replace when BindingIdentifier spans are fixed
-        // https://github.com/oxc-project/oxc/issues/4739
-
-        // self.symbols().get_span(self.id)
-        *self.span.get_or_init(|| self.derive_span())
+        self.scoping().symbol_span(self.id)
     }
 }
 

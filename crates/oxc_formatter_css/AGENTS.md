@@ -199,8 +199,27 @@ Notable divergences are:
   - Prettier lands at +4 (arg) / +2 (`)`)
   - Layout-only, rare trigger (selector longer than line width)
 - `@nest <selector-list>` continuation lines indent at +2 (same class as the `:not(...)` entry above)
-  - Prettier lands at +4 (comma-separated selectors) / +6 (wrapped selector parts) — an artifact of its generic at-rule params indent
-  - Ours matches how selector lists indent everywhere else; layout-only, deprecated syntax, triggers only on width overflow
+  - Prettier lands at +4 (comma-separated selectors) / +6 (wrapped selector parts)
+    - An artifact of its generic at-rule params indent
+  - Ours matches how selector lists indent everywhere else
+    - This is layout-only, deprecated syntax, triggers only on width overflow
+- SCSS: `@forward` with `show`/`hide` members AND a `with (...)` config
+  - Prettier parses the whole prelude as ONE comma list, so the config's forced break spills into the member commas
+    (`show b,\n  c with (` even when the head fits) and the config body lands one level deeper (+4 body / +2 `)`)
+  - We break members only on width overflow (fill, matching Prettier's break positions when no config is present)
+    and keep the config at the standalone `with (...)` indent (+2 body / 0 `)`, same as `@use`)
+  - Layout-only, rare combo
+- SCSS: `@forward` members after an over-wide FIRST member pack at +2
+  - The prelude head (`path`, `as <ns>`/`as <prefix>-*`, `show`/`hide`, members) is one flat fill,
+    so overflow breaks at the token seams with a +2 continuation
+    - Matching Prettier's break points (its params are a comma list of `line`-joined words in a fill), incl. the trailing-`;` exclusion from the last chunk's fit
+  - The one difference: when the FIRST member alone overflows, Prettier indents it at +4 and puts
+    every later member on its own line at +2 (artifacts of its nested comma-chunk fill);
+    our flat fill packs the continuation members at +2 (`show\n  <wide-member>, second;`)
+  - Same class as the `:not(...)` indent entry; pinned in `module-head-seams.scss`
+  - Remaining printers of this overflow class (heads that still never break): `@for` bounds
+    and `@namespace` — Prettier value-parses both, so it breaks their word seams too;
+    extend the same fill shape if reported
 - `<general-enclosed>` media preludes (`@media (not all)`, `(screen and (color))` unparsable as `<media-condition>`) normalize whitespace fully
   - Source gap → one space, paren inner edges tight
   - Prettier only collapses space RUNS inside the unparsable paren, leaving `(not ( screen and ( color ) ))`
@@ -229,6 +248,13 @@ Notable divergences are:
     and emits non-compiling output for `key: 2 * ($a + $b)` inside `$var:` declarations (dart-sass: `Undefined operation "2 * (3px,)"`)
   - Prettier's own #18530 (math siblings in args) / #19091 (single-node scalars) fixed subsets of this;
     we extend the same rule to every non-comma-list, so these stay inline
+- SCSS: An own-line trailing comment before a list's closing `)` keeps its own line
+  - Applies to maps AND `@use`/`@forward with (...)` configs (`$e: 5\n  // c\n)` stays as-is;
+    for maps the trailing comma is also kept)
+  - Prettier pulls the comment up onto the last item's line (`$e: 5 // c`, a `lineSuffix`
+    artifact of its comma-group printing) and drops the map's trailing comma
+  - Same-line trailing comments still glue (matching Prettier);
+    moving an own-line comment up would destroy the author's visual grouping
 - SCSS: A map whose FIRST item is preceded by a block comment always breaks one-per-line
   - Prettier stops treating it as a map item (the comment becomes `groups[0]`, so `isKeyValuePairInParenGroupNode` fails) and inlines it when it fits: `$b: (/* c */ a: 1);`
   - We reproduce the map-item-ness loss for the trailing comma (dropped, like Prettier)

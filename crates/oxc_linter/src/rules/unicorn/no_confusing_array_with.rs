@@ -61,7 +61,7 @@ declare_oxc_lint!(
     NoConfusingArrayWith,
     unicorn,
     suspicious,
-    version = "next",
+    version = "1.73.0",
     short_description = "Disallow confusing uses of `Array#with()`.",
 );
 

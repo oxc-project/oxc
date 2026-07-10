@@ -2,7 +2,6 @@ pub mod build_hir;
 pub mod find_context_identifiers;
 pub mod hir_builder;
 pub mod identifier_loc_index;
-pub mod source_loc;
 
 use oxc_ast::ast as oxc;
 

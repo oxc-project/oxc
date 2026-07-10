@@ -42,6 +42,9 @@ pub fn evaluate_enum_members(decl: &TSEnumDeclaration<'_>, scoping: &mut Scoping
     let enum_symbol_id = decl.id.symbol_id.get();
     if let Some(id) = enum_symbol_id {
         scoping.add_enum_body_scope(id, scope_id);
+        if decl.r#const {
+            scoping.add_const_enum(id);
+        }
     }
 
     // Sentinel: the first member with no initializer evaluates to `-1.0 + 1.0 = 0.0`.

@@ -403,9 +403,9 @@ fn diagnostics_preserve_compiler_severity() {
     );
 }
 
-/// Comments are dropped by the `react_compiler_ast` roundtrip, so
-/// `preserve_comments` carries top-level comments over from the original
-/// program. Comments inside a compiled function are not recovered.
+/// Compilation clones the source program, so top-level comments survive; comments
+/// inside a compiled function are pruned because their anchor no longer resolves to
+/// a statement (see `prune_inner_comments`).
 #[test]
 fn top_level_comments_are_preserved() {
     let source = "\

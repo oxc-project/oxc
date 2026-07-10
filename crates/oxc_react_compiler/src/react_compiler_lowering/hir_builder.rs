@@ -1,8 +1,5 @@
-use crate::react_compiler_diagnostics::CompilerDiagnostic;
-use crate::react_compiler_diagnostics::CompilerDiagnosticDetail;
-use crate::react_compiler_diagnostics::CompilerError;
-use crate::react_compiler_diagnostics::CompilerErrorDetail;
-use crate::react_compiler_diagnostics::ErrorCategory;
+use crate::diagnostics::CompilerError;
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::each_terminal_successor;
 use crate::react_compiler_hir::visitors::terminal_fallthrough;
@@ -15,10 +12,10 @@ use crate::scope::ScopeId;
 use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
 
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
 use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
-use crate::react_compiler_lowering::source_loc::LineOffsets;
 
 type BuildResult<'a> = Result<
     (HIR, Vec<Instruction<'a>>, FxIndexMap<String, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
@@ -71,19 +68,11 @@ pub(crate) fn is_always_reserved_word(s: &str) -> bool {
     )
 }
 
-pub(crate) fn reserved_identifier_diagnostic(name: &str) -> CompilerDiagnostic {
-    CompilerDiagnostic::new(
-        ErrorCategory::Syntax,
-        "Expected a non-reserved identifier name",
-        Some(format!(
-            "`{}` is a reserved word in JavaScript and cannot be used as an identifier name",
-            name
-        )),
-    )
-    .with_detail(CompilerDiagnosticDetail::Error {
-        loc: None, // GeneratedSource in TS
-        message: Some("reserved word".to_string()),
-    })
+pub(crate) fn reserved_identifier_diagnostic(name: &str) -> OxcDiagnostic {
+    ErrorCategory::Syntax.diagnostic("Expected a non-reserved identifier name").with_help(format!(
+        "`{}` is a reserved word in JavaScript and cannot be used as an identifier name",
+        name
+    ))
 }
 
 // ---------------------------------------------------------------------------
@@ -139,7 +128,7 @@ pub struct HirBuilder<'a, 'b> {
     scopes: Vec<Scope>,
     /// Context identifiers: variables captured from an outer scope.
     /// Maps the outer scope's symbol to the source location where it was referenced.
-    context: FxIndexMap<SymbolId, Option<SourceLocation>>,
+    context: FxIndexMap<SymbolId, Option<Span>>,
     /// Resolved bindings: maps a symbol to the HIR IdentifierId created for it.
     bindings: FxIndexMap<SymbolId, IdentifierId>,
     /// Names already used by bindings, for collision avoidance.
@@ -162,11 +151,7 @@ pub struct HirBuilder<'a, 'b> {
     /// These need StoreContext/LoadContext instead of StoreLocal/LoadLocal.
     context_identifiers: rustc_hash::FxHashSet<SymbolId>,
     /// Index mapping identifier byte offsets to source locations and JSX status.
-    identifier_locs: &'b IdentifierLocIndex,
-    /// Line-offset table for computing `SourceLocation`s from oxc byte spans.
-    /// Built once per file and shared; replaces the Babel `base.loc` the
-    /// front-end used to read off the now-removed Babel-shaped AST.
-    line_offsets: &'b LineOffsets,
+    identifier_spans: &'b IdentifierLocIndex,
 }
 
 impl<'a, 'b> HirBuilder<'a, 'b> {
@@ -190,11 +175,10 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         component_scope: ScopeId,
         context_identifiers: rustc_hash::FxHashSet<SymbolId>,
         bindings: Option<FxIndexMap<SymbolId, IdentifierId>>,
-        context: Option<FxIndexMap<SymbolId, Option<SourceLocation>>>,
+        context: Option<FxIndexMap<SymbolId, Option<Span>>>,
         entry_block_kind: Option<BlockKind>,
         used_names: Option<FxIndexMap<String, SymbolId>>,
-        identifier_locs: &'b IdentifierLocIndex,
-        line_offsets: &'b LineOffsets,
+        identifier_spans: &'b IdentifierLocIndex,
     ) -> Self {
         let entry = env.next_block_id();
         let kind = entry_block_kind.unwrap_or(BlockKind::Block);
@@ -214,15 +198,14 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             function_scope,
             component_scope,
             context_identifiers,
-            identifier_locs,
-            line_offsets,
+            identifier_spans,
         }
     }
 
-    /// Compute the HIR `SourceLocation` for an oxc byte span. Always `Some`
-    /// (oxc nodes always have a span), matching what `convert_ast` produced.
-    pub fn source_location(&self, span: Span) -> Option<SourceLocation> {
-        Some(self.line_offsets.source_location(span))
+    /// The HIR `Span` for an oxc byte span. Always `Some` (oxc nodes
+    /// always have a span); a `Span` is the byte span itself.
+    pub fn source_location(&self, span: Span) -> Option<Span> {
+        Some(span)
     }
 
     /// Check if a scope is the component scope or a descendant of it.
@@ -261,8 +244,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     }
 
     /// Look up the source location of an identifier by its node_id.
-    pub fn get_identifier_loc(&self, node_id: u32) -> Option<SourceLocation> {
-        self.identifier_locs.get(&node_id).map(|entry| entry.loc)
+    pub fn get_identifier_span(&self, node_id: u32) -> Option<Span> {
+        self.identifier_spans.get(&node_id).map(|entry| entry.span)
     }
 
     /// Access the function scope (the scope of the function being compiled).
@@ -276,7 +259,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     }
 
     /// Access the context map.
-    pub fn context(&self) -> &FxIndexMap<SymbolId, Option<SourceLocation>> {
+    pub fn context(&self) -> &FxIndexMap<SymbolId, Option<Span>> {
         &self.context
     }
 
@@ -292,14 +275,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Access the identifier location index.
     /// Returns the 'a reference to avoid conflicts with mutable borrows on self.
-    pub fn identifier_locs(&self) -> &'b IdentifierLocIndex {
-        self.identifier_locs
-    }
-
-    /// Access the line-offset table.
-    /// Returns the 'a reference to avoid conflicts with mutable borrows on self.
-    pub fn line_offsets(&self) -> &'b LineOffsets {
-        self.line_offsets
+    pub fn identifier_spans(&self) -> &'b IdentifierLocIndex {
+        self.identifier_spans
     }
 
     /// Access the bindings map.
@@ -338,7 +315,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// after the instruction to model potential control flow to the handler,
     /// then continues in a new block.
     pub fn push(&mut self, instruction: Instruction<'a>) {
-        let loc = instruction.loc;
+        let span = instruction.span;
         let instr_id = InstructionId(self.instruction_table.len() as u32);
         self.instruction_table.push(instruction);
         self.current.instructions.push(instr_id);
@@ -350,12 +327,31 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                     continuation: continuation.id,
                     handler: Some(handler),
                     id: EvaluationOrder(0),
-                    loc,
+                    span,
                     effects: None,
                 },
                 continuation,
             );
         }
+    }
+
+    /// Insert `wip` into `completed` as a finished block terminated by `terminal`.
+    ///
+    /// Kept non-generic (and out-of-line) so the block-completion machinery compiles
+    /// once instead of being duplicated into every generic `try_enter*` instantiation.
+    #[inline(never)]
+    fn complete_block(&mut self, wip: WipBlock, terminal: Terminal) {
+        self.completed.insert(
+            wip.id,
+            BasicBlock {
+                kind: wip.kind,
+                id: wip.id,
+                instructions: wip.instructions,
+                terminal,
+                preds: FxIndexSet::default(),
+                phis: Vec::new(),
+            },
+        );
     }
 
     /// Terminate the current block with the given terminal and start a new block.
@@ -371,17 +367,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             std::mem::replace(&mut self.current, new_block(BlockId(u32::MAX), BlockKind::Block));
         let block_id = wip.id;
 
-        self.completed.insert(
-            block_id,
-            BasicBlock {
-                kind: wip.kind,
-                id: block_id,
-                instructions: wip.instructions,
-                terminal,
-                preds: FxIndexSet::default(),
-                phis: Vec::new(),
-            },
-        );
+        self.complete_block(wip, terminal);
 
         if let Some(kind) = next_block_kind {
             let next_id = self.env.next_block_id();
@@ -394,18 +380,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// a previously reserved block as the new current block.
     pub fn terminate_with_continuation(&mut self, terminal: Terminal, continuation: WipBlock) {
         let wip = std::mem::replace(&mut self.current, continuation);
-        let block_id = wip.id;
-        self.completed.insert(
-            block_id,
-            BasicBlock {
-                kind: wip.kind,
-                id: block_id,
-                instructions: wip.instructions,
-                terminal,
-                preds: FxIndexSet::default(),
-                phis: Vec::new(),
-            },
-        );
+        self.complete_block(wip, terminal);
     }
 
     /// Reserve a new block so it can be referenced before construction.
@@ -416,35 +391,25 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         new_block(id, kind)
     }
 
-    /// Like `enter_reserved`, but the closure returns a `Result<Terminal, CompilerDiagnostic>`.
+    /// Like `enter_reserved`, but the closure returns a `Result<Terminal, OxcDiagnostic>`.
     pub fn try_enter_reserved(
         &mut self,
         wip: WipBlock,
-        f: impl FnOnce(&mut Self) -> Result<Terminal, CompilerDiagnostic>,
-    ) -> Result<(), CompilerDiagnostic> {
+        f: impl FnOnce(&mut Self) -> Result<Terminal, OxcDiagnostic>,
+    ) -> Result<(), OxcDiagnostic> {
         let prev = std::mem::replace(&mut self.current, wip);
         let terminal = f(self)?;
         let completed_wip = std::mem::replace(&mut self.current, prev);
-        self.completed.insert(
-            completed_wip.id,
-            BasicBlock {
-                kind: completed_wip.kind,
-                id: completed_wip.id,
-                instructions: completed_wip.instructions,
-                terminal,
-                preds: FxIndexSet::default(),
-                phis: Vec::new(),
-            },
-        );
+        self.complete_block(completed_wip, terminal);
         Ok(())
     }
 
-    /// Like `enter`, but the closure returns a `Result<Terminal, CompilerDiagnostic>`.
+    /// Like `enter`, but the closure returns a `Result<Terminal, OxcDiagnostic>`.
     pub fn try_enter(
         &mut self,
         kind: BlockKind,
-        f: impl FnOnce(&mut Self, BlockId) -> Result<Terminal, CompilerDiagnostic>,
-    ) -> Result<BlockId, CompilerDiagnostic> {
+        f: impl FnOnce(&mut Self, BlockId) -> Result<Terminal, OxcDiagnostic>,
+    ) -> Result<BlockId, OxcDiagnostic> {
         let wip = self.reserve(kind);
         let wip_id = wip.id;
         self.try_enter_reserved(wip, |this| f(this, wip_id))?;
@@ -455,8 +420,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn try_enter_try_catch(
         &mut self,
         handler: BlockId,
-        f: impl FnOnce(&mut Self) -> Result<(), CompilerDiagnostic>,
-    ) -> Result<(), CompilerDiagnostic> {
+        f: impl FnOnce(&mut Self) -> Result<(), OxcDiagnostic>,
+    ) -> Result<(), OxcDiagnostic> {
         self.exception_handler_stack.push(handler);
         let result = f(self);
         self.exception_handler_stack.pop();
@@ -474,8 +439,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         label: Option<String>,
         continue_block: BlockId,
         break_block: BlockId,
-        f: impl FnOnce(&mut Self) -> Result<T, CompilerDiagnostic>,
-    ) -> Result<T, CompilerDiagnostic> {
+        f: impl FnOnce(&mut Self) -> Result<T, OxcDiagnostic>,
+    ) -> Result<T, OxcDiagnostic> {
         self.scopes.push(Scope::Loop { label: label.clone(), continue_block, break_block });
         let value = f(self)?;
         let last = self.scopes.pop().expect("Mismatched loop scope: stack empty");
@@ -487,11 +452,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 );
             }
             _ => {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    "Mismatched loop scope: expected Loop, got other",
-                    None,
-                ));
+                return Err(ErrorCategory::Invariant
+                    .diagnostic("Mismatched loop scope: expected Loop, got other"));
             }
         }
         Ok(value)
@@ -502,8 +464,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         &mut self,
         label: String,
         break_block: BlockId,
-        f: impl FnOnce(&mut Self) -> Result<T, CompilerDiagnostic>,
-    ) -> Result<T, CompilerDiagnostic> {
+        f: impl FnOnce(&mut Self) -> Result<T, OxcDiagnostic>,
+    ) -> Result<T, OxcDiagnostic> {
         self.scopes.push(Scope::Label { label: label.clone(), break_block });
         let value = f(self)?;
         let last = self.scopes.pop().expect("Mismatched label scope: stack empty");
@@ -512,11 +474,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 assert!(*l == label && *b == break_block, "Mismatched label scope");
             }
             _ => {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    "Mismatched label scope: expected Label, got other",
-                    None,
-                ));
+                return Err(ErrorCategory::Invariant
+                    .diagnostic("Mismatched label scope: expected Label, got other"));
             }
         }
         Ok(value)
@@ -527,8 +486,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         &mut self,
         label: Option<String>,
         break_block: BlockId,
-        f: impl FnOnce(&mut Self) -> Result<T, CompilerDiagnostic>,
-    ) -> Result<T, CompilerDiagnostic> {
+        f: impl FnOnce(&mut Self) -> Result<T, OxcDiagnostic>,
+    ) -> Result<T, OxcDiagnostic> {
         self.scopes.push(Scope::Switch { label: label.clone(), break_block });
         let value = f(self)?;
         let last = self.scopes.pop().expect("Mismatched switch scope: stack empty");
@@ -537,11 +496,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 assert!(*l == label && *b == break_block, "Mismatched switch scope");
             }
             _ => {
-                return Err(CompilerDiagnostic::new(
-                    ErrorCategory::Invariant,
-                    "Mismatched switch scope: expected Switch, got other",
-                    None,
-                ));
+                return Err(ErrorCategory::Invariant
+                    .diagnostic("Mismatched switch scope: expected Switch, got other"));
             }
         }
         Ok(value)
@@ -549,7 +505,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Look up the break target for the given label (or the innermost
     /// loop/switch if label is None).
-    pub fn lookup_break(&self, label: Option<&str>) -> Result<BlockId, CompilerDiagnostic> {
+    pub fn lookup_break(&self, label: Option<&str>) -> Result<BlockId, OxcDiagnostic> {
         for scope in self.scopes.iter().rev() {
             match scope {
                 Scope::Loop { .. } | Scope::Switch { .. } if label.is_none() => {
@@ -561,16 +517,13 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 _ => continue,
             }
         }
-        Err(CompilerDiagnostic::new(
-            ErrorCategory::Invariant,
-            "Expected a loop or switch to be in scope for break",
-            None,
-        ))
+        Err(ErrorCategory::Invariant
+            .diagnostic("Expected a loop or switch to be in scope for break"))
     }
 
     /// Look up the continue target for the given label (or the innermost
     /// loop if label is None). Only loops support continue.
-    pub fn lookup_continue(&self, label: Option<&str>) -> Result<BlockId, CompilerDiagnostic> {
+    pub fn lookup_continue(&self, label: Option<&str>) -> Result<BlockId, OxcDiagnostic> {
         for scope in self.scopes.iter().rev() {
             match scope {
                 Scope::Loop { label: scope_label, continue_block, .. } => {
@@ -580,38 +533,31 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 }
                 _ => {
                     if label.is_some() && scope.label() == label {
-                        return Err(CompilerDiagnostic::new(
-                            ErrorCategory::Invariant,
-                            "Continue may only refer to a labeled loop",
-                            None,
-                        ));
+                        return Err(ErrorCategory::Invariant
+                            .diagnostic("Continue may only refer to a labeled loop"));
                     }
                 }
             }
         }
-        Err(CompilerDiagnostic::new(
-            ErrorCategory::Invariant,
-            "Expected a loop to be in scope for continue",
-            None,
-        ))
+        Err(ErrorCategory::Invariant.diagnostic("Expected a loop to be in scope for continue"))
     }
 
     /// Create a temporary identifier with a fresh id, returning its IdentifierId.
-    pub fn make_temporary(&mut self, loc: Option<SourceLocation>) -> IdentifierId {
+    pub fn make_temporary(&mut self, span: Option<Span>) -> IdentifierId {
         let id = self.env.next_identifier_id();
-        // Update the loc on the allocated identifier
-        self.env.identifiers[id.0 as usize].loc = loc;
+        // Update the span on the allocated identifier
+        self.env.identifiers[id.0 as usize].span = span;
         id
     }
 
     /// Record an error on the environment.
     /// Returns `Err` for Invariant errors (matching TS throw behavior).
-    pub fn record_error(&mut self, error: CompilerErrorDetail) -> Result<(), CompilerError> {
+    pub fn record_error(&mut self, error: OxcDiagnostic) -> Result<(), CompilerError> {
         self.env.record_error(error)
     }
 
     /// Record a diagnostic on the environment.
-    pub fn record_diagnostic(&mut self, diagnostic: CompilerDiagnostic) {
+    pub fn record_diagnostic(&mut self, diagnostic: OxcDiagnostic) {
         self.env.record_diagnostic(diagnostic);
     }
 
@@ -659,17 +605,16 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                     )
                 });
                 if has_function_expr {
-                    let loc = block
+                    let span = block
                         .instructions
                         .first()
-                        .and_then(|&i| instructions[i.0 as usize].loc)
-                        .or_else(|| block.terminal.loc().copied());
-                    self.env.record_error(CompilerErrorDetail {
-                        category: ErrorCategory::Todo,
-                        reason: "Support functions with unreachable code that may contain hoisted declarations".to_string(),
-                        description: None,
-                        loc,
-                    })?;
+                        .and_then(|&i| instructions[i.0 as usize].span)
+                        .or_else(|| block.terminal.span().copied());
+                    self.env.record_error(
+                        ErrorCategory::Todo
+                            .diagnostic("Support functions with unreachable code that may contain hoisted declarations")
+                            .with_labels(span),
+                    )?;
                 }
             }
         }
@@ -701,15 +646,15 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         name: &str,
         symbol_id: SymbolId,
     ) -> Result<IdentifierId, CompilerError> {
-        self.resolve_binding_with_loc(name, symbol_id, None)
+        self.resolve_binding_with_span(name, symbol_id, None)
     }
 
     /// Map a symbol to an HIR IdentifierId, with an optional source location.
-    pub fn resolve_binding_with_loc(
+    pub fn resolve_binding_with_span(
         &mut self,
         name: &str,
         symbol_id: SymbolId,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
     ) -> Result<IdentifierId, CompilerError> {
         // Check for unsupported names BEFORE the cache check.
         // In TS, resolveBinding records fbt errors when node.name === 'fbt'. After a name collision
@@ -730,19 +675,17 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                     true
                 };
             if should_record_fbt_error {
-                let error_loc = self
+                let error_span = self
                     .scope
                     .declaration_start(symbol_id)
-                    .and_then(|nid| self.get_identifier_loc(nid))
-                    .or(loc);
-                self.env.record_error(CompilerErrorDetail {
-                    category: ErrorCategory::Todo,
-                    reason: "Support local variables named `fbt`".to_string(),
-                    description: Some(
-                        "Local variables named `fbt` may conflict with the fbt plugin and are not yet supported".to_string(),
-                    ),
-                    loc: error_loc,
-                })?;
+                    .and_then(|nid| self.get_identifier_span(nid))
+                    .or(span);
+                self.env.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic("Support local variables named `fbt`")
+                        .with_help("Local variables named `fbt` may conflict with the fbt plugin and are not yet supported")
+                        .with_labels(error_span),
+                )?;
             }
         }
 
@@ -782,17 +725,17 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
         // Allocate identifier in the arena
         let id = self.env.next_identifier_id();
-        // Update the name and loc on the allocated identifier
+        // Update the name and span on the allocated identifier
         self.env.identifiers[id.0 as usize].name = Some(IdentifierName::Named(candidate.clone()));
-        // Prefer the binding's declaration loc over the reference loc.
+        // Prefer the binding's declaration span over the reference span.
         // This matches TS behavior where Babel's resolveBinding returns the
-        // binding identifier's original loc (the declaration site).
-        let decl_loc =
-            self.scope.declaration_start(symbol_id).and_then(|nid| self.get_identifier_loc(nid));
-        if let Some(ref dl) = decl_loc {
-            self.env.identifiers[id.0 as usize].loc = Some(*dl);
-        } else if let Some(ref loc) = loc {
-            self.env.identifiers[id.0 as usize].loc = Some(*loc);
+        // binding identifier's original span (the declaration site).
+        let decl_span =
+            self.scope.declaration_start(symbol_id).and_then(|nid| self.get_identifier_span(nid));
+        if let Some(ref dl) = decl_span {
+            self.env.identifiers[id.0 as usize].span = Some(*dl);
+        } else if let Some(ref span) = span {
+            self.env.identifiers[id.0 as usize].span = Some(*span);
         }
 
         self.used_names.insert(candidate, symbol_id);
@@ -800,15 +743,11 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         Ok(id)
     }
 
-    /// Set the loc on an identifier to the declaration-site loc.
-    /// This overrides any previously-set loc (which may have come from a reference site).
-    pub fn set_identifier_declaration_loc(
-        &mut self,
-        id: IdentifierId,
-        loc: &Option<SourceLocation>,
-    ) {
-        if let Some(loc_val) = loc {
-            self.env.identifiers[id.0 as usize].loc = Some(*loc_val);
+    /// Set the span on an identifier to the declaration-site span.
+    /// This overrides any previously-set span (which may have come from a reference site).
+    pub fn set_identifier_declaration_span(&mut self, id: IdentifierId, span: &Option<Span>) {
+        if let Some(span_val) = span {
+            self.env.identifiers[id.0 as usize].span = Some(*span_val);
         }
     }
 
@@ -822,7 +761,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn resolve_identifier(
         &mut self,
         name: &str,
-        loc: Option<SourceLocation>,
+        span: Option<Span>,
         symbol: Option<SymbolId>,
     ) -> Result<VariableBinding, CompilerError> {
         let Some(symbol_id) = symbol else {
@@ -869,7 +808,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
                 &self.scope.binding_kind(symbol_id),
             );
-            let identifier_id = self.resolve_binding_with_loc(name, symbol_id, loc)?;
+            let identifier_id = self.resolve_binding_with_span(name, symbol_id, span)?;
             Ok(VariableBinding::Identifier { identifier: identifier_id, binding_kind })
         }
     }
@@ -1036,7 +975,7 @@ pub fn get_reverse_postordered_blocks(hir: &HIR) -> FxIndexMap<BlockId, BasicBlo
                     instructions: Vec::new(),
                     terminal: Terminal::Unreachable {
                         id: block.terminal.evaluation_order(),
-                        loc: block.terminal.loc().copied(),
+                        span: block.terminal.span().copied(),
                     },
                     preds: block.preds.clone(),
                     phis: Vec::new(),
@@ -1075,12 +1014,12 @@ pub fn remove_dead_do_while_statements(hir: &mut HIR) {
             false
         };
         if should_replace {
-            if let Terminal::DoWhile { loop_block, id, loc, .. } = std::mem::replace(
+            if let Terminal::DoWhile { loop_block, id, span, .. } = std::mem::replace(
                 &mut block.terminal,
-                Terminal::Unreachable { id: EvaluationOrder(0), loc: None },
+                Terminal::Unreachable { id: EvaluationOrder(0), span: None },
             ) {
                 block.terminal =
-                    Terminal::Goto { block: loop_block, variant: GotoVariant::Break, id, loc };
+                    Terminal::Goto { block: loop_block, variant: GotoVariant::Break, id, span };
             }
         }
     }
@@ -1095,28 +1034,28 @@ pub fn remove_unnecessary_try_catch(hir: &mut HIR) {
     let block_ids: FxIndexSet<BlockId> = hir.blocks.keys().copied().collect();
 
     // Collect the blocks that need replacement and their associated data
-    let replacements: Vec<(BlockId, BlockId, BlockId, BlockId, Option<SourceLocation>)> = hir
+    let replacements: Vec<(BlockId, BlockId, BlockId, BlockId, Option<Span>)> = hir
         .blocks
         .iter()
         .filter_map(|(&block_id, block)| {
-            if let Terminal::Try { block: try_block, handler, fallthrough, loc, .. } =
+            if let Terminal::Try { block: try_block, handler, fallthrough, span, .. } =
                 &block.terminal
             {
                 if !block_ids.contains(handler) {
-                    return Some((block_id, *try_block, *handler, *fallthrough, *loc));
+                    return Some((block_id, *try_block, *handler, *fallthrough, *span));
                 }
             }
             None
         })
         .collect();
 
-    for (block_id, try_block, handler_id, fallthrough_id, loc) in replacements {
+    for (block_id, try_block, handler_id, fallthrough_id, span) in replacements {
         // Replace the terminal
         if let Some(block) = hir.blocks.get_mut(&block_id) {
             block.terminal = Terminal::Goto {
                 block: try_block,
                 id: EvaluationOrder(0),
-                loc,
+                span,
                 variant: GotoVariant::Break,
             };
         }
@@ -1201,9 +1140,9 @@ pub fn mark_predecessors(hir: &mut HIR) {
 // ---------------------------------------------------------------------------
 
 /// Create a temporary Place with a fresh identifier allocated in the arena.
-pub fn create_temporary_place(env: &mut Environment<'_>, loc: Option<SourceLocation>) -> Place {
+pub fn create_temporary_place(env: &mut Environment<'_>, span: Option<Span>) -> Place {
     let id = env.next_identifier_id();
-    // Update the loc on the allocated identifier
-    env.identifiers[id.0 as usize].loc = loc;
-    Place { identifier: id, reactive: false, effect: Effect::Unknown, loc: None }
+    // Update the span on the allocated identifier
+    env.identifiers[id.0 as usize].span = span;
+    Place { identifier: id, reactive: false, effect: Effect::Unknown, span: None }
 }
