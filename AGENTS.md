@@ -49,7 +49,7 @@ Avoid editing `generated` subdirectories.
 
 ## Development Commands
 
-Prerequisites: Rust (MSRV: 1.91), Node.js, pnpm, just
+Prerequisites: Rust (MSRV: 1.95), Node.js, pnpm, just
 
 **Setup Notes:**
 
