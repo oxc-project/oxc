@@ -276,7 +276,8 @@ pub struct Oxlintrc {
     /// Absolute path to the configuration file.
     #[serde(skip)]
     pub path: PathBuf,
-    /// Globs to ignore during linting. These are resolved from the configuration file path.
+    /// Globs to ignore during linting. Patterns use gitignore-style matching,
+    /// rooted at the directory containing the configuration file.
     #[serde(rename = "ignorePatterns")]
     pub ignore_patterns: Vec<String>,
     /// Paths of configuration files that this configuration file extends (inherits from). The files
@@ -349,6 +350,14 @@ impl Oxlintrc {
         config.set_config_dir(&config_dir);
 
         Ok(config)
+    }
+
+    /// Returns the directory containing this configuration file.
+    ///
+    /// Returns `None` when the configuration was not loaded from a file (`path` is empty),
+    /// e.g. when no configuration file was found.
+    pub fn dir(&self) -> Option<&Path> {
+        self.path.parent()
     }
 
     /// # Errors

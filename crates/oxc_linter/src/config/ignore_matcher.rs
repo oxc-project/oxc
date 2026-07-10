@@ -18,7 +18,9 @@ impl LintIgnoreMatcher {
         base_root: &Path,
         mut nested: Vec<(Vec<String>, PathBuf)>,
     ) -> Self {
-        let base_gi = {
+        let base_gi = if base_patterns.is_empty() {
+            None
+        } else {
             let mut builder = GitignoreBuilder::new(base_root);
             for pat in base_patterns {
                 let _ = builder.add_line(None, pat);

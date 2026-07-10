@@ -10,6 +10,7 @@ pub mod lsp;
 mod mode;
 mod output_formatter;
 mod result;
+mod utils;
 mod walk;
 
 #[cfg(test)]
