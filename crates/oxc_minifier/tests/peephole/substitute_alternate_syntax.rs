@@ -1047,10 +1047,7 @@ fn test_fold_sequence_in_unary_expression() {
 fn test_fold_sequence_in_yield_expression() {
     test("function* a() { yield (c(1), 2) }", "function* a() { c(1), yield 2 }");
     test("function* a() { b(yield (c(1), 2)) }", "function* a() { b((c(1), yield 2)) }");
-    test(
-        "function* a() { yield (c(1), d(2), 3) }",
-        "function* a() { c(1), d(2), yield 3 }",
-    );
+    test("function* a() { yield (c(1), d(2), 3) }", "function* a() { c(1), d(2), yield 3 }");
 }
 
 #[test]
