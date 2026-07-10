@@ -41,6 +41,14 @@ impl<'s, 'a> Symbol<'s, 'a> {
         Self { semantic, module_record, id: symbol_id, flags }
     }
 
+    /// Create a [`Symbol`] for another [`SymbolId`], reusing this symbol's
+    /// [`Semantic`] and [`ModuleRecord`]. Useful for inspecting sibling
+    /// bindings, e.g. other declarators in the same `VariableDeclaration`.
+    #[inline]
+    pub fn with_symbol_id(&self, symbol_id: SymbolId) -> Self {
+        Self::new(self.semantic, self.module_record, symbol_id)
+    }
+
     #[inline]
     pub fn id(&self) -> SymbolId {
         self.id

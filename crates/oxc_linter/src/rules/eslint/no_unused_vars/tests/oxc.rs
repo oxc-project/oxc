@@ -93,8 +93,25 @@ fn test_vars_simple() {
     let fix = vec![
         // unused vars should be removed
         ("let a = 1;", "", None, FixKind::DangerousSuggestion),
-        // FIXME: b should be deleted as well.
-        ("let a = 1, b = 2;", "let b = 2;", None, FixKind::DangerousSuggestion),
+        // when every declarator in a multi-declarator statement is unused,
+        // the whole statement is deleted instead of leaving dead declarators
+        // behind (https://github.com/oxc-project/oxc/issues/16832)
+        ("let a = 1, b = 2;", "", None, FixKind::DangerousSuggestion),
+        ("let a = 1, b = 2, c = 3;", "", None, FixKind::DangerousSuggestion),
+        // a sibling that's exported or ignored by name pattern must not be
+        // swept away by the whole-statement deletion
+        (
+            "let a = 1, b = 2; export { b };",
+            "let b = 2; export { b };",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "let a = 1, _b = 2;",
+            "let _b = 2;",
+            Some(json!([{ "varsIgnorePattern": "^_" }])),
+            FixKind::DangerousSuggestion,
+        ),
         (
             "let a = 1; let b = 2; console.log(a);",
             "let a = 1;  console.log(a);",

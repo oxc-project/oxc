@@ -69,7 +69,24 @@ impl NoUnusedVars {
             let binding_info = symbol.get_binding_info(&decl.id);
 
             match binding_info {
-                BindingInfo::SingleDestructure | BindingInfo::NotDestructure => {
+                BindingInfo::NotDestructure => {
+                    if has_neighbors {
+                        // if every other declarator in this statement is also
+                        // a plain (non-destructured) unused binding that's
+                        // safe to remove, delete the whole declaration
+                        // instead of leaving the other dead declarators
+                        // behind. e.g. `let a = 1, b = 2;` (both unused)
+                        // should become `` rather than `let b = 2;`.
+                        // Destructured neighbors are left to
+                        // `delete_from_list` below (see #16832).
+                        if self.all_other_declarators_removable(symbol, decl, declarations) {
+                            return fixer.delete_range(span).dangerously();
+                        }
+                        return symbol.delete_from_list(fixer, declarations, decl).dangerously();
+                    }
+                    return fixer.delete_range(span).dangerously();
+                }
+                BindingInfo::SingleDestructure => {
                     if has_neighbors {
                         return symbol.delete_from_list(fixer, declarations, decl).dangerously();
                     }
@@ -116,6 +133,44 @@ impl NoUnusedVars {
         }
 
         fixer.noop()
+    }
+
+    /// Checks if every declarator in `declarations` other than `own` is also
+    /// safe to remove, i.e. it has no simple `BindingIdentifier` bindings that
+    /// are used, exported, ignored, or otherwise excluded from removal.
+    ///
+    /// Destructured declarators (e.g. `const { a } = obj`) are treated as not
+    /// removable here; they're left for `Symbol::delete_from_list` to handle
+    /// declarator-by-declarator, since collapsing them into a whole-statement
+    /// deletion needs more care (see #16832's destructure-in-multi-declarator
+    /// bug).
+    fn all_other_declarators_removable<'a>(
+        &self,
+        symbol: &Symbol<'_, 'a>,
+        own: &VariableDeclarator<'a>,
+        declarations: &[VariableDeclarator<'a>],
+    ) -> bool {
+        declarations.iter().all(|other| {
+            if std::ptr::eq(other, own) {
+                return true;
+            }
+
+            let Some(binding) = other.id.get_binding_identifier() else {
+                // destructured or otherwise non-trivial bindings are left to
+                // the existing per-declarator removal logic
+                return false;
+            };
+
+            if other.init.as_ref().is_some_and(|init| is_skipped_init(symbol, init)) {
+                return false;
+            }
+
+            let other_symbol = symbol.with_symbol_id(binding.symbol_id());
+            !other_symbol.has_references()
+                && !other_symbol.is_exported_binding()
+                && !self.is_allowed_variable_declaration(&other_symbol, other)
+                && self.is_ignored(&other_symbol).is_none()
+        })
     }
 }
 
