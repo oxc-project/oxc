@@ -1,14 +1,15 @@
 export function wrap(result) {
-  // Eagerly move the serialized AST out of the native `ParseResult`, so its Rust-side
-  // memory is freed as soon as this function returns.
+  // Eagerly move the JSON-serialized AST string out of the native `ParseResult`,
+  // so its Rust-side memory is freed before this function returns.
   //
   // The native object's memory is only freed by a NAPI finalizer, and finalizers only
-  // run on event-loop turns. If the serialized AST (typically 10-20x the size of the
+  // run on event-loop turns. If the AST JSON (typically 10-20x the size of the
   // source text) stayed inside the native object, code which calls `parseSync` in a
   // loop without yielding to the event loop would retain the serialized AST of every
   // file it parses - gigabytes over enough files - with no way for GC to reclaim it,
   // because V8 cannot see native memory. Moving it into a JS string here hands it to
   // V8, which frees it under normal GC pressure.
+  //
   // Deserializing the AST itself (`JSON.parse`) remains lazy, as do the other fields,
   // whose conversion cost is not worth paying for callers that never read them
   // (their retained native memory is small compared to the serialized AST).
