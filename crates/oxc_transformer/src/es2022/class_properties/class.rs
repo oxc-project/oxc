@@ -575,6 +575,7 @@ impl<'a> ClassProperties<'a> {
     ///
     /// `let C = class { static [foo()] = 123; static { bar(); } };`
     /// -> `let C = (_foo = foo(), _Class = class {}, _Class[_foo] = 123, bar(), _Class);`
+    #[inline(never)]
     pub(super) fn transform_class_expression_on_exit(
         &mut self,
         expr: &mut Expression<'a>,
