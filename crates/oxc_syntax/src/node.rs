@@ -61,8 +61,6 @@ bitflags! {
         const JSDoc     = 1 << 0;
         /// Set functions containing yield statements
         const HasYield  = 1 << 2;
-        /// Set for `export { specifier }`
-        const ExportSpecifier  = 1 << 3;
     }
 }
 
@@ -77,11 +75,5 @@ impl NodeFlags {
     #[inline]
     pub fn has_yield(self) -> bool {
         self.contains(Self::HasYield)
-    }
-
-    /// Returns `true` if this function has an export specifier.
-    #[inline]
-    pub fn has_export_specifier(self) -> bool {
-        self.contains(Self::ExportSpecifier)
     }
 }

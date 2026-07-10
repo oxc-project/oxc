@@ -2361,12 +2361,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.visit_span(&it.span);
 
-        self.node_store.current_node_flags |= NodeFlags::ExportSpecifier;
-
         self.visit_module_export_name(&it.local);
         self.visit_module_export_name(&it.exported);
-
-        self.node_store.current_node_flags -= NodeFlags::ExportSpecifier;
 
         self.leave_node(kind);
     }
