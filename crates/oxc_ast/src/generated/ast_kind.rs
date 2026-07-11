@@ -425,7 +425,7 @@ impl AstKind<'_> {
         // and it's valid to read it.
         // `AstType` is also `#[repr(u8)]` and `AstKind` and `AstType` both have the same
         // discriminants, so it's valid to read `AstKind`'s discriminant as `AstType`.
-        unsafe { *ptr::from_ref(self).cast::<AstType>().as_ref().unwrap_unchecked() }
+        unsafe { *ptr::from_ref(self).cast::<AstType>().as_ref_unchecked() }
     }
 
     /// Get [`NodeId`] of an [`AstKind`].
