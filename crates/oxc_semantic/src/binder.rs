@@ -572,8 +572,8 @@ fn get_module_instance_state_for_statement<'a, 'b>(
                     ModuleInstanceState::Instantiated
                 }
             }
-            Statement::ExportNamedDeclaration(export_decl) if export_decl.declaration.is_some() => {
-                match export_decl.declaration.as_ref().unwrap() {
+            Statement::ExportNamedDeclaration(export_decl) if let Some(declaration) = &export_decl.declaration => {
+                match declaration {
                     Declaration::TSModuleDeclaration(module_decl) => {
                         get_module_instance_state_impl(builder, module_decl, current_node_id, module_declaration_stmts)
                     }
