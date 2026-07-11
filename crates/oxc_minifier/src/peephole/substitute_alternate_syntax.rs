@@ -1850,11 +1850,11 @@ impl<'a> PeepholeOptimizations {
     ) {
         let Expression::LogicalExpression(logical_expr) = expr else { return };
 
-        if let Expression::SequenceExpression(sequence_expr) = &mut logical_expr.left
-            && let Some(last_expr) = sequence_expr.expressions.pop()
+        if let Expression::SequenceExpression(argument) = &mut logical_expr.left
+            && argument.expressions.len() > 1
         {
-            let mut seq_expr = sequence_expr.take_in_box(ctx);
-            logical_expr.left = last_expr;
+            let mut seq_expr = argument.take_in_box(ctx);
+            logical_expr.left = seq_expr.expressions.pop().unwrap();
             seq_expr.expressions.push(expr.take_in(ctx));
             let new_value = Expression::SequenceExpression(seq_expr);
             ctx.replace_expression(expr, new_value);
@@ -1899,7 +1899,6 @@ impl<'a> PeepholeOptimizations {
         {
             let mut seq_expr = argument.take_in_box(ctx);
             yield_expr.argument = seq_expr.expressions.pop();
-
             seq_expr.expressions.push(expr.take_in(ctx));
             let new_value = Expression::SequenceExpression(seq_expr);
             ctx.replace_expression(expr, new_value);
