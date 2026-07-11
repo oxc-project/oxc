@@ -1,5 +1,5 @@
-use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
 use oxc_syntax::{
@@ -37,10 +37,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
 
         // Recreate the statements vec for memory efficiency.
         // Inserting the `let` declaration multiple times will reallocate the whole statements vec
-        // every time a namespace declaration is encountered.
-        let mut new_stmts = ctx.ast.vec();
+        // every time a namespace declaration is encountered. Pre-size to the current body length
+        // (a lower bound — namespaces expand) to avoid the growth reallocations for the common
+        // pass-through statements.
+        let mut new_stmts = ArenaVec::with_capacity_in(program.body.len(), ctx);
 
-        for stmt in program.body.take_in(ctx.ast) {
+        for stmt in program.body.take_in(ctx) {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !self.allow_namespaces {
@@ -108,24 +110,29 @@ impl<'a> TypeScriptNamespace {
             return;
         };
 
-        // Check if this is an empty namespace or only contains type declarations
+        // Return early if this declaration is empty or only contains type declarations —
+        // it emits no JS.
+        //
+        // Lowering a declaration updates the symbol flags right away, so for a symbol
+        // with several declarations the live flags may already describe the emitted
+        // `let` binding by the time a later declaration gets here. Use the immutable
+        // per-declaration flags from the redeclaration list instead. A symbol without
+        // redeclarations has a single declaration, which is visited only once, so its
+        // live flags are still what the semantic builder produced.
         let symbol_id = ident.symbol_id();
-        let flags = ctx.scoping().symbol_flags(symbol_id);
-
-        // If it's a namespace, we need additional checks to determine if it can return early.
-        if flags.is_namespace_module() {
-            // Don't need further check because NO `ValueModule` namespace redeclaration
-            if !flags.is_value_module() {
+        let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
+        if redeclarations.is_empty() {
+            if ctx.scoping().symbol_flags(symbol_id).is_namespace_module() {
                 return;
             }
-
+        } else {
             // Input:
             // ```ts
-            // // SymbolFlags: NameSpaceModule
+            // // Declaration flags: NameSpaceModule
             // export namespace Foo {
             // 	 export type T = 0;
             // }
-            // // SymbolFlags: ValueModule
+            // // Declaration flags: ValueModule
             // export namespace Foo {
             // 	 export const Bar = 1;
             // }
@@ -133,28 +140,16 @@ impl<'a> TypeScriptNamespace {
             //
             // Output:
             // ```js
-            // // SymbolFlags: ValueModule
             // export let Foo;
             // (function(_Foo) {
             //   const Bar = _Foo.Bar = 1;
             // })(Foo || (Foo = {}));
             // ```
             //
-            // When both `NameSpaceModule` and `ValueModule` are present, we need to check the current
-            // declaration flags. If the current declaration is `NameSpaceModule`, we can return early
-            // because it's a type-only namespace and doesn't emit any JS code, otherwise we need to
-            // continue transforming it.
-
-            // Find the current declaration flag
-            let current_declaration_flags = ctx
-                .scoping()
-                .symbol_redeclarations(symbol_id)
-                .iter()
-                .find(|rd| rd.span == ident.span)
-                .unwrap()
-                .flags;
-
-            // Return if the current declaration is a namespace
+            // Only the `ValueModule` declaration emits JS; a `NameSpaceModule`
+            // declaration is type-only.
+            let current_declaration_flags =
+                redeclarations.iter().find(|rd| rd.span == ident.span).unwrap().flags;
             if current_declaration_flags.is_namespace_module() {
                 return;
             }
@@ -187,14 +182,14 @@ impl<'a> TypeScriptNamespace {
             TSModuleDeclarationBody::TSModuleDeclaration(declaration) => {
                 let declaration = Declaration::TSModuleDeclaration(declaration);
                 let export_named_decl =
-                    ctx.ast.plain_export_named_declaration_declaration(SPAN, declaration);
+                    ExportNamedDeclaration::boxed_plain_declaration(SPAN, declaration, ctx);
                 let stmt = Statement::ExportNamedDeclaration(export_named_decl);
-                directives = ctx.ast.vec();
-                namespace_top_level = ctx.ast.vec1(stmt);
+                directives = ArenaVec::new_in(ctx);
+                namespace_top_level = ArenaVec::from_value_in(stmt, ctx);
             }
         }
 
-        let mut new_stmts = ctx.ast.vec();
+        let mut new_stmts = ArenaVec::new_in(ctx);
 
         for stmt in namespace_top_level {
             match stmt {
@@ -279,18 +274,30 @@ impl<'a> TypeScriptNamespace {
             }
         }
 
-        if !Self::is_redeclaration_namespace(&ident, ctx) {
-            let declaration = Self::create_variable_declaration(&binding, span, ctx);
+        // The symbol flags now describe the emitted JS. Updating them right away is
+        // fine — the type-only check above reads per-declaration flags, so later
+        // declarations of a merged namespace don't depend on the old flags.
+        if Self::is_redeclaration_namespace(&ident, ctx) {
+            // Lowered to an assignment to the existing runtime binding — drop only the
+            // module bits and keep the flags describing that binding.
+            *ctx.scoping_mut().symbol_flags_mut(symbol_id) -=
+                SymbolFlags::ValueModule | SymbolFlags::NamespaceModule;
+        } else {
+            // Lowered to a fresh `let` declaration.
+            *ctx.scoping_mut().symbol_flags_mut(binding.symbol_id) =
+                SymbolFlags::BlockScopedVariable;
+            ctx.scoping_mut().set_symbol_span(binding.symbol_id, ident.span);
+            let declaration = Self::create_variable_declaration(&binding, span, ident.span, ctx);
             if is_export {
                 let export_named_decl =
-                    ctx.ast.plain_export_named_declaration_declaration(span, declaration);
+                    ExportNamedDeclaration::boxed_plain_declaration(span, declaration, ctx);
                 let stmt = Statement::ExportNamedDeclaration(export_named_decl);
                 parent_stmts.push(stmt);
             } else {
                 parent_stmts.push(Statement::from(declaration));
             }
         }
-        let func_body = ctx.ast.function_body(SPAN, directives, new_stmts);
+        let func_body = FunctionBody::new(SPAN, directives, new_stmts, ctx);
 
         parent_stmts.push(Self::transform_namespace(
             span,
@@ -301,6 +308,13 @@ impl<'a> TypeScriptNamespace {
             scope_id,
             ctx,
         ));
+
+        let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
+        if !redeclarations.iter().any(|redeclaration| redeclaration.flags.is_enum())
+            && redeclarations.last().is_some_and(|redeclaration| redeclaration.span == ident.span)
+        {
+            ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
+        }
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
@@ -308,15 +322,16 @@ impl<'a> TypeScriptNamespace {
     fn create_variable_declaration(
         binding: &BoundIdentifier<'a>,
         span: Span,
+        binding_span: Span,
         ctx: &TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {
-            let pattern = binding.create_binding_pattern(ctx);
-            let decl = ctx.ast.variable_declarator(span, kind, pattern, NONE, None, false);
-            ctx.ast.vec1(decl)
+            let pattern = binding.create_spanned_binding_pattern(binding_span, ctx);
+            let decl = VariableDeclarator::new(span, kind, pattern, NONE, None, false, ctx);
+            ArenaVec::from_value_in(decl, ctx)
         };
-        ctx.ast.declaration_variable(span, kind, declarations, false)
+        Declaration::new_variable_declaration(span, kind, declarations, false, ctx)
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
@@ -334,21 +349,25 @@ impl<'a> TypeScriptNamespace {
         let callee = {
             let params = {
                 let pattern = param_binding.create_binding_pattern(ctx);
-                let items = ctx.ast.vec1(ctx.ast.plain_formal_parameter(SPAN, pattern));
-                ctx.ast.formal_parameters(SPAN, FormalParameterKind::FormalParameter, items, NONE)
+                let items =
+                    ArenaVec::from_value_in(FormalParameter::new_plain(SPAN, pattern, ctx), ctx);
+                FormalParameters::new(SPAN, FormalParameterKind::FormalParameter, items, NONE, ctx)
             };
             let function_expr =
-                Expression::FunctionExpression(ctx.ast.alloc_plain_function_with_scope_id(
+                Expression::FunctionExpression(Function::boxed_plain_with_scope_id(
                     FunctionType::FunctionExpression,
                     span,
                     None,
                     params,
                     func_body,
                     scope_id,
+                    ctx,
                 ));
-            *ctx.scoping_mut().scope_flags_mut(scope_id) =
-                ScopeFlags::Function | ScopeFlags::StrictMode;
-            ctx.ast.expression_parenthesized(span, function_expr)
+
+            let strict_mode = (ctx.scoping().scope_flags(scope_id) | ctx.current_scope_flags())
+                & ScopeFlags::StrictMode;
+            *ctx.scoping_mut().scope_flags_mut(scope_id) = ScopeFlags::Function | strict_mode;
+            Expression::new_parenthesized_expression(span, function_expr, ctx)
         };
 
         // (function (_N) { var M; (function (_M) { var x; })(M || (M = _N.M || (_N.M = {})));})(N || (N = {}));
@@ -362,50 +381,65 @@ impl<'a> TypeScriptNamespace {
             let mut logical_right = {
                 // _N.M
                 let assign_left = if let Some(parent_binding) = parent_binding {
-                    AssignmentTarget::from(ctx.ast.member_expression_static(
+                    AssignmentTarget::new_static_member_expression(
                         SPAN,
                         parent_binding.create_read_expression(ctx),
-                        ctx.ast.identifier_name(SPAN, binding.name),
+                        IdentifierName::new(SPAN, binding.name, ctx),
                         false,
-                    ))
+                        ctx,
+                    )
                 } else {
                     // _N
                     binding.create_write_target(ctx)
                 };
 
-                let assign_right = ctx.ast.expression_object(SPAN, ctx.ast.vec());
+                let assign_right =
+                    Expression::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx);
                 let op = AssignmentOperator::Assign;
                 let assign_expr =
-                    ctx.ast.expression_assignment(SPAN, op, assign_left, assign_right);
-                ctx.ast.expression_parenthesized(SPAN, assign_expr)
+                    Expression::new_assignment_expression(SPAN, op, assign_left, assign_right, ctx);
+                Expression::new_parenthesized_expression(SPAN, assign_expr, ctx)
             };
 
             // (M = _N.M || (_N.M = {}))
             if let Some(parent_binding) = parent_binding {
                 let assign_left = binding.create_write_target(ctx);
                 let assign_right = {
-                    let property = ctx.ast.identifier_name(SPAN, binding.name);
-                    let logical_left = ctx.ast.member_expression_static(
+                    let property = IdentifierName::new(SPAN, binding.name, ctx);
+                    let logical_left = MemberExpression::new_static_member_expression(
                         SPAN,
                         parent_binding.create_read_expression(ctx),
                         property,
                         false,
+                        ctx,
                     );
                     let op = LogicalOperator::Or;
-                    ctx.ast.expression_logical(SPAN, logical_left.into(), op, logical_right)
+                    Expression::new_logical_expression(
+                        SPAN,
+                        logical_left.into(),
+                        op,
+                        logical_right,
+                        ctx,
+                    )
                 };
                 let op = AssignmentOperator::Assign;
-                logical_right = ctx.ast.expression_assignment(SPAN, op, assign_left, assign_right);
-                logical_right = ctx.ast.expression_parenthesized(SPAN, logical_right);
+                logical_right =
+                    Expression::new_assignment_expression(SPAN, op, assign_left, assign_right, ctx);
+                logical_right = Expression::new_parenthesized_expression(SPAN, logical_right, ctx);
             }
 
-            let expr =
-                ctx.ast.expression_logical(SPAN, logical_left, LogicalOperator::Or, logical_right);
-            ctx.ast.vec1(Argument::from(expr))
+            let expr = Expression::new_logical_expression(
+                SPAN,
+                logical_left,
+                LogicalOperator::Or,
+                logical_right,
+                ctx,
+            );
+            ArenaVec::from_value_in(Argument::from(expr), ctx)
         };
 
-        let expr = ctx.ast.expression_call(span, callee, NONE, arguments, false);
-        ctx.ast.statement_expression(span, expr)
+        let expr = Expression::new_call_expression(span, callee, NONE, arguments, false, ctx);
+        Statement::new_expression_statement(span, expr, ctx)
     }
 
     /// Add assignment statement for decl id
@@ -418,7 +452,8 @@ impl<'a> TypeScriptNamespace {
     ) {
         let assignment_statement =
             Self::create_assignment_statement(namespace_binding, value_binding, ctx);
-        let assignment_statement = ctx.ast.statement_expression(SPAN, assignment_statement);
+        let assignment_statement =
+            Statement::new_expression_statement(SPAN, assignment_statement, ctx);
         new_stmts.push(assignment_statement);
     }
 
@@ -429,12 +464,13 @@ impl<'a> TypeScriptNamespace {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let object = object_binding.create_read_expression(ctx);
-        let property = ctx.ast.identifier_name(SPAN, value_binding.name);
-        let left = ctx.ast.member_expression_static(SPAN, object, property, false);
+        let property = IdentifierName::new(SPAN, value_binding.name, ctx);
+        let left =
+            MemberExpression::new_static_member_expression(SPAN, object, property, false, ctx);
         let left = AssignmentTarget::from(left);
         let right = value_binding.create_read_expression(ctx);
         let op = AssignmentOperator::Assign;
-        ctx.ast.expression_assignment(SPAN, op, left, right)
+        Expression::new_assignment_expression(SPAN, op, left, right, ctx)
     }
 
     /// Convert `export const foo = 1` to `Namespace.foo = 1`;
@@ -454,28 +490,30 @@ impl<'a> TypeScriptNamespace {
                     return;
                 };
                 if let Some(init) = &mut declarator.init {
-                    declarator.init = Some(
-                        ctx.ast.expression_assignment(
+                    init.replace_with(|init| {
+                        Expression::new_assignment_expression(
                             SPAN,
                             AssignmentOperator::Assign,
-                            SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
+                            SimpleAssignmentTarget::new_static_member_expression(
                                 SPAN,
                                 binding.create_read_expression(ctx),
-                                ctx.ast.identifier_name(SPAN, property_name),
+                                IdentifierName::new(SPAN, property_name, ctx),
                                 false,
-                            ))
+                                ctx,
+                            )
                             .into(),
-                            init.take_in(ctx.ast),
-                        ),
-                    );
+                            init,
+                            ctx,
+                        )
+                    });
                 }
             });
-            return ctx.ast.vec1(Statement::VariableDeclaration(var_decl));
+            return ArenaVec::from_value_in(Statement::VariableDeclaration(var_decl), ctx);
         }
 
         // Now we have pattern in declarators
         // `export const [a] = 1` transforms to `const [a] = 1; N.a = a`
-        let mut assignments = ctx.ast.vec();
+        let mut assignments = ArenaVec::new_in(ctx);
         var_decl.bound_names(&mut |id| {
             assignments.push(Self::create_assignment_statement(
                 binding,
@@ -484,10 +522,17 @@ impl<'a> TypeScriptNamespace {
             ));
         });
 
-        ctx.ast.vec_from_array([
-            Statement::VariableDeclaration(var_decl),
-            ctx.ast.statement_expression(SPAN, ctx.ast.expression_sequence(SPAN, assignments)),
-        ])
+        ArenaVec::from_array_in(
+            [
+                Statement::VariableDeclaration(var_decl),
+                Statement::new_expression_statement(
+                    SPAN,
+                    Expression::new_sequence_expression(SPAN, assignments, ctx),
+                    ctx,
+                ),
+            ],
+            ctx,
+        )
     }
 
     /// Check the namespace binding identifier if it is a redeclaration

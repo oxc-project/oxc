@@ -173,8 +173,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                 "{}{}{} = {};",
                                 comments_text,
                                 if is_parent_exported { "export type " } else { "type " },
-                                &interface_decl.id.name,
-                                &suggestion
+                                interface_decl.id.name,
+                                suggestion
                             ),
                             Span::new(node_start, node_end),
                         )
@@ -185,8 +185,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                         format!(
                             "{} {} = {};",
                             if is_parent_exported { "export type" } else { "type" },
-                            &interface_decl.id.name,
-                            &suggestion
+                            interface_decl.id.name,
+                            suggestion
                         ),
                         Span::new(node_start, node_end),
                     )
@@ -290,7 +290,7 @@ impl Rule for PreferFunctionType {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(decl) => {
-                let body: &oxc_allocator::Vec<'_, TSSignature<'_>> = &decl.body.body;
+                let body = &decl.body.body;
 
                 if !has_one_super_type(decl) && body.len() == 1 {
                     check_member(&body[0], node, ctx);

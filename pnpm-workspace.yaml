@@ -10,19 +10,19 @@ packages:
 catalog:
   "@emnapi/core": 1.11.1
   "@emnapi/runtime": 1.11.1
-  "@arethetypeswrong/core": 0.18.3
+  "@arethetypeswrong/core": 0.18.4
   "@napi-rs/cli": 3.7.2
-  "@napi-rs/wasm-runtime": 1.1.5
+  "@napi-rs/wasm-runtime": 1.1.6
   "@types/node": 24.1.0
   cross-env: ^10.1.0
   degit: 3.4.7
-  eslint: 10.4.1
+  eslint: 10.6.0
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.21
-  rolldown: 1.1.1
-  tsdown: 0.22.2
-  vite-plus: 0.1.24
-  vitest: 4.1.8
+  rolldown: 1.1.5
+  tsdown: 0.22.4
+  vite-plus: 0.2.4
+  vitest: 4.1.9
 
 overrides:
   rolldown: "catalog:"
@@ -30,7 +30,7 @@ overrides:
 allowBuilds:
   "@vscode/vsce-sign@2.0.8": true
   esbuild@0.27.7: true
-  esbuild@0.28.0: true
+  esbuild@0.28.1: true
   "@nestjs/core@11.1.9": false
 
 verifyDepsBeforeRun: install

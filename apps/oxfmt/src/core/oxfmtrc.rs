@@ -24,7 +24,8 @@ pub struct Oxfmtrc {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub overrides: Option<Vec<OxfmtOverrideConfig>>,
     /// Ignore files matching these glob patterns.
-    /// Patterns are based on the location of the Oxfmt configuration file.
+    /// Patterns use gitignore-style matching, rooted at the directory containing the configuration file.
+    /// Files outside that directory cannot be matched; patterns containing `..` are rejected as a configuration error.
     ///
     /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -305,6 +306,17 @@ impl FormatConfig {
     /// disabled when unset or `false`.
     pub fn is_svelte_enabled(&self) -> bool {
         matches!(self.svelte, Some(SvelteUserConfig::Bool(true) | SvelteUserConfig::Object(_)))
+    }
+
+    /// Whether Tailwind class sorting is enabled by this config.
+    ///
+    /// Enabled when `sortTailwindcss` is set to `true` or an object;
+    /// disabled when unset or `false`.
+    pub fn is_tailwind_enabled(&self) -> bool {
+        matches!(
+            self.sort_tailwindcss,
+            Some(SortTailwindcssUserConfig::Bool(true) | SortTailwindcssUserConfig::Object(_))
+        )
     }
 
     /// Resolve relative tailwind paths (`config`, `stylesheet`) to absolute paths.

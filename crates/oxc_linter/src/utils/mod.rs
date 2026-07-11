@@ -128,6 +128,15 @@ pub fn is_string_raw_member_expression(expr: &Expression, scoping: &Scoping) -> 
     }
 }
 
+/// Checks if `haystack` starts with `prefix`, ignoring ASCII case.
+pub fn starts_with_ignore_case(haystack: &str, prefix: &str) -> bool {
+    let len = prefix.len();
+    if haystack.len() < len {
+        return false;
+    }
+    haystack.as_bytes()[..len].eq_ignore_ascii_case(prefix.as_bytes())
+}
+
 /// Reads the content of a path and returns it.
 /// This function is faster than native `fs:read_to_string`.
 ///
@@ -239,8 +248,8 @@ fn read_to_arena_bytes_known_size(
         let mut vec = ManuallyDrop::new(vec);
         let bytes_written = file.take(size as u64).read_to_end(&mut vec)?;
 
-        debug_assert!(vec.capacity() == size);
-        debug_assert!(vec.len() == bytes_written);
+        debug_assert_eq!(vec.capacity(), size);
+        debug_assert_eq!(vec.len(), bytes_written);
 
         // Update `size`, in case file was altered and got smaller since the call to `file.metadata()`,
         // or `file.metadata()` reported inaccurate size

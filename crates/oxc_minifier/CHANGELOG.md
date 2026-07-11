@@ -4,6 +4,83 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.139.0] - 2026-07-06
+
+### 🚀 Features
+
+- 2d9b0b3 minifier: Fold boolean-literal ternary branches in value contexts (#24110) (Dunqing)
+- 4eb074e mangler: Add `reserved` option for names that must not be mangled (#24041) (Dunqing)
+- 60e7160 minifier: Drop side-effect-free IIFEs whose result is unused (#23967) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 652fbaf mangler: Keep names of destructured exported bindings (#24036) (Dunqing)
+- e274415 minifier: Don't drop global calls that throw despite pure arguments (#23917) (Dunqing)
+- 59abb30 minifier: Only merge string literals in `try_fold_add` when the inner operator is `+` (#23622) (Jerry Zhao)
+
+### ⚡ Performance
+
+- c59f2fe rust: Return impl ExactSizeIterator from slice-backed accessors (#24144) (Boshen)
+
+### 📚 Documentation
+
+- e4c30e6 minifier: Explain what `dce` mode means (#23994) (Dunqing)
+
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 94fbacb ast: [**BREAKING**] Only export `AstBuilder` and `NONE` in `builder` module (#23876) (overlookmotel)
+- 8de5122 ecmascript: [**BREAKING**] Switch to new `AstBuilder` (#23834) (overlookmotel)
+- 88f4455 str: [**BREAKING**] `Str` and `Ident` methods take `&GetAllocator` (#23781) (overlookmotel)
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+- 6883fcf minifier: Fold write-once falsy var to false in boolean context (#23540) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- da0e5bf minifier: Don't reorder a closed-over TDZ read when inlining a var (#23771) (Dunqing)
+- 3f574f5 traverse: Fix unsoundness in `Traverse` walk functions (#23745) (overlookmotel)
+
+### ⚡ Performance
+
+- e71609d minifier: Bail member-expr folding before the side-effect walk (#23924) (Lawrence Lin)
+- e1f89ab minifier: Reduce string allocations folding addition (#23846) (overlookmotel)
+- e1886a0 transformer, minifier: Use `static_ident!` macro to create static `Ident`s (#23727) (overlookmotel)
+- 3855f0c minifier: Allocate AST nodes in arena directly (#23710) (overlookmotel)
+
+### 📚 Documentation
+
+- 3d61dea all: Correct capitalization in comments (#23887) (overlookmotel)
+
+## [0.137.0] - 2026-06-18
+
+### 🚀 Features
+
+- 53509a8 minifier: Treeshake pure typed arrays and Set/Map array literals (#23469) (Dunqing)
+- 09762d9 minifier: Inline const value for read-only vars (#22593) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 31bfd9b minifier: Keep Object introspection calls on a possible Proxy (#23483) (Dunqing)
+- e409fe0 minifier: Keep `new Map`/`WeakSet`/`WeakMap` with a string argument (#23470) (Dunqing)
+
+### ⚡ Performance
+
+- 970e09a minifier: Compute template-literal inline checks in a single pass (#23467) (Yunfei He)
+- 3170c0e semantic,mangler,minifier: Fix `Semantic::stats` node count and reuse stats in mangler builds (#23352) (Boshen)
+- d1fa6e0 minifier: Evaluate ternary branches once in minimize_conditional_expression (#23479) (Yunfei He)
+- bcb3894 minifier: Incremental scoping refresh, delete LiveUsageCollector (#23197) (Dunqing)
+
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- 7a24911 codegen: [**BREAKING**] Borrow sourcemaps from codegen (#23422) (Boshen)
+
 ## [0.135.0] - 2026-06-08
 
 ### 💥 BREAKING CHANGES

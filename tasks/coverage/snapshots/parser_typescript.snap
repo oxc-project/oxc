@@ -1,9 +1,9 @@
-commit: 7539c04d
+commit: 7964e22f
 
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
 Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1642/2640 (62.20%)
+Negative Passed: 1644/2640 (62.27%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -644,11 +644,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmen
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal7.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal7_1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal8.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal8_1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports2.ts
 
@@ -9249,6 +9245,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │     interface Array<T> { x }
    ╰────
 
+  × TS(2670): Augmentations for the global scope should have 'declare' modifier unless they appear in already ambient context.
+   ╭─[typescript/tests/cases/compiler/moduleAugmentationGlobal7_1.ts:2:5]
+ 1 │ namespace A {
+ 2 │     global {
+   ·     ──────
+ 3 │         interface Array<T> { x }
+   ╰────
+
+  × TS(2670): Augmentations for the global scope should have 'declare' modifier unless they appear in already ambient context.
+   ╭─[typescript/tests/cases/compiler/moduleAugmentationGlobal8_1.ts:2:5]
+ 1 │ namespace A {
+ 2 │     global {
+   ·     ──────
+ 3 │         interface Array<T> { x }
+   ╰────
+
   × Identifier `Kettle` has already been declared
     ╭─[typescript/tests/cases/compiler/moduleDuplicateIdentifiers.ts:20:14]
  19 │ 
@@ -12537,6 +12549,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  5 │ }
  6 │ namespace private.public.foo { }
    ·           ───────
+   ╰────
+
+  × The keyword 'public' is reserved
+   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:6:19]
+ 5 │ }
+ 6 │ namespace private.public.foo { }
+   ·                   ──────
    ╰────
 
   × The keyword 'package' is reserved
@@ -24024,19 +24043,21 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  5 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery2.tsx:4:7]
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery2.tsx:4:1]
  3 │ <div></div>
  4 │ <div></div>
-   ·       ─
+   · ─
    ╰────
+  help: Did you want a JSX fragment `<>...</>`?
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery3.tsx:4:7]
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery3.tsx:4:1]
  3 │ <div></div>
  4 │ <div></div>
-   ·       ─
+   · ─
    ╰────
+  help: Did you want a JSX fragment `<>...</>`?
 
   × Expected corresponding closing tag for JSX fragment.
     ╭─[typescript/tests/cases/conformance/jsx/tsxFragmentErrors.tsx:9:7]
@@ -24048,12 +24069,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  10 │ 
     ╰────
 
-  × Unexpected token
-    ╭─[typescript/tests/cases/conformance/jsx/tsxFragmentErrors.tsx:11:2]
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+    ╭─[typescript/tests/cases/conformance/jsx/tsxFragmentErrors.tsx:11:1]
  10 │ 
  11 │ <>eof   // Error
-    ·  ─
+    · ─
     ╰────
+  help: Did you want a JSX fragment `<>...</>`?
 
   × Unexpected token. Did you mean `{'>'}` or `&gt;`?
    ╭─[typescript/tests/cases/conformance/jsx/tsxGenericArrowFunctionParsing.tsx:8:17]

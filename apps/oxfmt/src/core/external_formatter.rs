@@ -1,3 +1,11 @@
+//! Bridge between napi-rs `ThreadsafeFunction`s and the Rust callback shapes
+//! consumed by the embedded orchestration in `core::embed`.
+//!
+//! [`ExternalFormatter`] stores the JS callbacks as `Arc<dyn Fn>`s wrapped by the private `wrap_*` helpers,
+//! exposes [`ExternalFormatter::format_file`] for the Tier 3/4 file delegations,
+//! and converts itself into `oxc_formatter::ExternalCallbacks` via [`ExternalFormatter::to_external_callbacks`]
+//! which delegates the actual embedded-callback / dispatcher / Tailwind closures to `core::embed::{string_channel, dispatcher}`.
+
 use std::sync::{Arc, RwLock};
 
 use napi::{
@@ -5,16 +13,17 @@ use napi::{
     bindgen_prelude::{FnArgs, Promise, block_on},
     threadsafe_function::ThreadsafeFunction,
 };
-use serde::Deserialize;
 use serde_json::Value;
-use tracing::{debug, debug_span};
+use tracing::debug_span;
 
-use oxc_formatter::{
-    EmbeddedDocFormatterCallback, EmbeddedFormatterCallback, ExternalCallbacks, JsFormatOptions,
-    TailwindCallback,
+use oxc_formatter::{ExternalCallbacks, JsFormatOptions, TailwindCallback};
+use oxc_formatter_css::CssFormatOptions;
+use oxc_formatter_graphql::GraphqlFormatOptions;
+
+use crate::core::embed::{
+    self, FormatEmbeddedDocWithConfigCallback, FormatEmbeddedWithConfigCallback,
+    FormatFileWithConfigCallback, TailwindWithConfigCallback,
 };
-
-use crate::{core::options::inject_parser, prettier_compat::from_prettier_doc};
 
 /// Type alias for the init external formatter callback function signature.
 /// Takes num_threads as argument; signals JS to perform any one-time setup before formatting.
@@ -120,28 +129,6 @@ impl TsfnHandles {
 /// Takes num_threads.
 type InitExternalFormatterCallback = Arc<dyn Fn(usize) -> Result<(), String> + Send + Sync>;
 
-/// Callback function type for formatting files with config.
-/// Takes (options, code) and returns formatted code or an error.
-/// The `options` Value is owned and includes `parser` and `filepath` set by the caller.
-type FormatFileWithConfigCallback =
-    Arc<dyn Fn(Value, &str) -> Result<String, String> + Send + Sync>;
-
-/// Callback function type for formatting embedded code with config.
-/// Takes (options, code) and returns formatted code or an error.
-/// The `options` Value is owned and includes `parser` set by the caller.
-type FormatEmbeddedWithConfigCallback =
-    Arc<dyn Fn(Value, &str) -> Result<String, String> + Send + Sync>;
-
-/// Callback function type for formatting embedded code via Doc IR path (batch).
-/// Takes (options, texts) and returns Doc JSON strings (one per text) or an error.
-type FormatEmbeddedDocWithConfigCallback =
-    Arc<dyn Fn(Value, &[&str]) -> Result<Vec<String>, String> + Send + Sync>;
-
-/// Internal callback type for Tailwind processing with config.
-/// Takes (options, classes) and returns sorted classes.
-/// The `filepath` is included in `options`.
-type TailwindWithConfigCallback = Arc<dyn Fn(&Value, Vec<String>) -> Vec<String> + Send + Sync>;
-
 /// External formatter that wraps a JS callback.
 #[derive(Clone)]
 pub struct ExternalFormatter {
@@ -237,109 +224,85 @@ impl ExternalFormatter {
         (self.format_file)(options, code)
     }
 
-    /// Convert this external formatter to the oxc_formatter::ExternalCallbacks type.
+    /// Convert this external formatter to the `oxc_formatter::ExternalCallbacks` type.
     /// The options (including `filepath`) are captured in the closures and passed to JS on each call.
+    ///
+    /// `graphql_options` / `css_options` are dual mappings of the same resolved config
+    /// for the dispatcher's Rust branches (gql-in-js / css-in-js).
+    ///
+    /// Actual closure assembly lives in `core::embed::{string_channel, ir_channel}`;
+    /// this method just bridges the napi-held callback `Arc`s into those factories.
+    ///
+    /// NOTE: Tailwind data paths
+    /// `sort_tailwindcss_classes` is wired into THREE distinct callback slots,
+    /// because Tailwind class sorting has four legitimate paths depending on
+    /// where the classes live and how they reach printing:
+    ///
+    /// 1. Standalone JS/TS (`className` / functions / custom attributes):
+    ///    `oxc_formatter` collects classes into `FormatElement::TailwindClass`.
+    ///    When the entry document is finalized,
+    ///    the printer sorts them in one host batch via the `tailwind_callback` set by `with_tailwind` below.
+    /// 2. Standalone CSS / SCSS / LESS (`@apply` at top level):
+    ///    `oxc_formatter_css::format()` receives the sort closure directly
+    ///    (via `CssFormatOptions::sort_tailwindcss` + the host sorter on the CSS format context)
+    ///    and sorts as it prints, no embedded boundary is involved.
+    /// 3. Embedded CSS (css-in-js + Angular `@Component({ styles })`):
+    ///    `oxc_formatter_css::format_to_ir()` returns pre-sort `@apply` classes
+    ///    in `DispatchResult::tailwind_classes`.
+    ///    The JS parent re-indexes them into its own collector (`remap_tailwind_into`)
+    ///    so they ride the SAME parent batch as path 1.
+    ///    The standalone CSS sort closure is NOT invoked here.
+    /// 4. JSDoc fenced CSS (Markdown code fence in JSDoc descriptions):
+    ///    Goes through the string channel,
+    ///    `format_embedded()` returns a formatted string (not parent-integrated IR),
+    ///    so the sort must run inside that call, not via `DispatchResult` remapping.
+    ///    The `string_channel::build_embedded_callback` factory receives the sorter for this case.
+    ///
+    /// All four paths use the SAME `sort_tailwindcss_classes` napi callback;
+    /// only the wiring differs.
+    /// Moving sorting to the wrong layer (e.g. sorting inside embedded CSS instead of remapping)
+    /// would double-sort or drop classes.
+    /// `DispatchResult::remap_tailwind_into`'s printer `debug_assert` catches dropped remaps.
     pub fn to_external_callbacks(
         &self,
         format_options: &JsFormatOptions,
         options: Value,
+        graphql_options: GraphqlFormatOptions,
+        css_options: CssFormatOptions,
     ) -> ExternalCallbacks {
         let needs_embedded = !format_options.embedded_language_formatting.is_off();
-        let embedded_callback: Option<EmbeddedFormatterCallback> = if needs_embedded {
-            let format_embedded = Arc::clone(&self.format_embedded);
-            let options_for_embedded = options.clone();
-            Some(Arc::new(move |language: &str, code: &str| {
-                let Some(parser_name) = language_to_prettier_parser(language) else {
-                    // NOTE: Do not return `Ok(original)` here.
-                    // We need to keep unsupported content as-is.
-                    return Err(format!("Unsupported language: {language}"));
-                };
-                debug_span!("oxfmt::external::format_embedded", parser = parser_name).in_scope(
-                    || {
-                        // `clone()` is unavoidable here,
-                        // because there may be multiple embedded sections in one JS/TS file.
-                        let mut options = options_for_embedded.clone();
-                        inject_parser(&mut options, parser_name);
-                        (format_embedded)(options, code)
-                            .map(|mut code| {
-                                // Remove trailing newline added by Prettier without allocation
-                                // For embedded code, we never want trailing newlines, regardless of options.
-                                let trimmed_len = code.trim_end().len();
-                                code.truncate(trimmed_len);
-                                code
-                            })
-                            .inspect_err(|err| {
-                                debug!("Failed to format embedded code for parser '{parser_name}': {err}");
-                            })
-                    },
-                )
-            }))
-        } else {
-            None
-        };
+        let tailwind_enabled = format_options.sort_tailwindcss.is_some();
 
-        let embedded_doc_callback: Option<EmbeddedDocFormatterCallback> = if needs_embedded {
-            let format_embedded_doc = Arc::clone(&self.format_embedded_doc);
-            let options_for_doc = options.clone();
-            Some(Arc::new(move |allocator, group_id_builder, language: &str, texts: &[&str]| {
-                let Some(parser_name) = language_to_prettier_parser(language) else {
-                    return Err(format!("Unsupported language: {language}"));
-                };
-                debug_span!("oxfmt::external::format_embedded_doc", parser = parser_name)
-                    .in_scope(|| {
-                        let mut options = options_for_doc.clone();
-                        inject_parser(&mut options, parser_name);
-                        let doc_json_strs =
-                            (format_embedded_doc)(options, texts).map_err(|err| {
-                                format!(
-                                    "Failed to get Doc for embedded code (parser '{parser_name}'): {err}"
-                                )
-                            })?;
-                        let doc_jsons = doc_json_strs
-                            .into_iter()
-                            .map(|s| {
-                                // Prettier's Doc can produce deeply nested arrays.
-                                // (e.g., md-in-js with `proseWrap: preserve`,
-                                // which nests each word in `[[[prev, " "], word], " "]`)
-                                // The default recursion limit of 128 is not enough for long paragraphs.
-                                // This only affects this deserialization call;
-                                // other `serde_json` usage in the codebase keeps the default limit.
-                                let mut de = serde_json::Deserializer::from_str(&s);
-                                de.disable_recursion_limit();
-                                serde_json::Value::deserialize(&mut de)
-                            })
-                            .collect::<Result<Vec<_>, _>>()
-                            .map_err(|e| format!("Failed to parse Doc JSON: {e}"))?;
+        let embedded_callback = needs_embedded.then(|| {
+            embed::string_channel::build_embedded_callback(
+                Arc::clone(&self.format_embedded),
+                tailwind_enabled.then(|| Arc::clone(&self.sort_tailwindcss_classes)),
+                options.clone(),
+                graphql_options,
+                css_options,
+            )
+        });
 
-                        from_prettier_doc::to_format_elements_for_template(
-                            language,
-                            doc_jsons,
-                            allocator,
-                            group_id_builder,
-                        )
-                    })
-                    .inspect_err(|err| {
-                        debug!("Failed to format embedded doc for parser '{parser_name}': {err}");
-                    })
-            }))
-        } else {
-            None
-        };
+        let dispatcher = needs_embedded.then(|| {
+            embed::ir_channel::build_dispatcher(
+                Arc::clone(&self.format_embedded_doc),
+                options.clone(),
+                graphql_options,
+                css_options,
+            )
+        });
 
-        let needs_tailwind = format_options.sort_tailwindcss.is_some();
-        let tailwind_callback: Option<TailwindCallback> = if needs_tailwind {
-            let sort_tailwindcss_classes = Arc::clone(&self.sort_tailwindcss_classes);
-            Some(Arc::new(move |classes: Vec<String>| {
+        let tailwind_callback: Option<TailwindCallback> = tailwind_enabled.then(|| {
+            let sort = Arc::clone(&self.sort_tailwindcss_classes);
+            Arc::new(move |classes: Vec<String>| {
                 debug_span!("oxfmt::external::sort_tailwind", classes_count = classes.len())
-                    .in_scope(|| (sort_tailwindcss_classes)(&options, classes))
-            }))
-        } else {
-            None
-        };
+                    .in_scope(|| (sort)(&options, classes))
+            }) as TailwindCallback
+        });
 
         ExternalCallbacks::new()
             .with_embedded_formatter(embedded_callback)
-            .with_embedded_doc_formatter(embedded_doc_callback)
+            .with_dispatcher(dispatcher)
             .with_tailwind(tailwind_callback)
     }
 
@@ -363,29 +326,6 @@ impl ExternalFormatter {
             }),
             sort_tailwindcss_classes: Arc::new(|_, _| vec![]),
         }
-    }
-}
-
-// ---
-
-/// Mapping from language identifiers to Prettier `parser` names.
-/// This is the single source of truth for supported embedded languages.
-///
-/// Language identifiers come from two sources:
-/// - xxx-in-js `(Tagged)TemplateLiteral` (`embed/*.rs`)
-/// - JSDoc fenced code blocks (`jsdoc/mdast_serialize/`)
-///
-/// NOTE: these identifiers happen to overlap with some Prettier parser names,
-/// but `oxc_formatter` treats them as generic language names.
-/// This function is the only place that maps them to Prettier-specific parsers.
-fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
-    match language {
-        "css" | "scss" | "less" => Some("scss"),
-        "graphql" | "gql" => Some("graphql"),
-        "html" => Some("html"),
-        "angular" => Some("angular"),
-        "markdown" | "md" => Some("markdown"),
-        _ => None,
     }
 }
 
@@ -418,9 +358,9 @@ fn wrap_init_external_formatter(
             match status {
                 Ok(promise) => match promise.await {
                     Ok(()) => Ok(()),
-                    Err(err) => Err(err.reason.clone()),
+                    Err(err) => Err(err.reason),
                 },
-                Err(err) => Err(err.reason.clone()),
+                Err(err) => Err(err.reason),
             }
         });
         drop(guard);
@@ -443,9 +383,9 @@ fn wrap_format_file(
             match status {
                 Ok(promise) => match promise.await {
                     Ok(result) => parse_format_file_result(result),
-                    Err(err) => Err(err.reason.clone()),
+                    Err(err) => Err(err.reason),
                 },
-                Err(err) => Err(err.reason.clone()),
+                Err(err) => Err(err.reason),
             }
         });
         drop(guard);
@@ -495,9 +435,9 @@ fn wrap_format_embedded(
                     Ok(None) => Err("Embedded formatting failed".to_string()),
                     // JS side never rejects; it returns `null` on error instead.
                     // `Err` here would only come from a napi-rs internal failure.
-                    Err(err) => Err(err.reason.clone()),
+                    Err(err) => Err(err.reason),
                 },
-                Err(err) => Err(err.reason.clone()),
+                Err(err) => Err(err.reason),
             }
         });
         drop(guard);
@@ -524,9 +464,9 @@ fn wrap_format_embedded_doc(
                     Ok(None) => Err("Embedded doc formatting failed".to_string()),
                     // JS side never rejects; it returns `null` on error instead.
                     // `Err` here would only come from a napi-rs internal failure.
-                    Err(err) => Err(err.reason.clone()),
+                    Err(err) => Err(err.reason),
                 },
-                Err(err) => Err(err.reason.clone()),
+                Err(err) => Err(err.reason),
             }
         });
         drop(guard);

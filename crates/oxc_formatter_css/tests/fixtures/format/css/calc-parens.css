@@ -1,0 +1,5 @@
+.x {
+  width: calc((100% - 10px));
+  height: max(((100% - 10px) / 2), 0px);
+  margin: min(((1px)), 2px);
+}

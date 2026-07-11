@@ -138,13 +138,13 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String
     if let Some(tw_config) =
         config.sort_tailwindcss.clone().and_then(SortTailwindcssUserConfig::into_config)
     {
+        // `config` / `stylesheet` / `preserve_duplicates` are JS-sorter-only
+        // and travel through `to_prettier::inject_tailwind_plugin_payload`,
+        // not the Rust formatter options.
         format_options.sort_tailwindcss = Some(SortTailwindcssOptions {
-            config: tw_config.config,
-            stylesheet: tw_config.stylesheet,
             functions: tw_config.functions.unwrap_or_default(),
             attributes: tw_config.attributes.unwrap_or_default(),
             preserve_whitespace: tw_config.preserve_whitespace.unwrap_or(false),
-            preserve_duplicates: tw_config.preserve_duplicates.unwrap_or(false),
         });
     }
 

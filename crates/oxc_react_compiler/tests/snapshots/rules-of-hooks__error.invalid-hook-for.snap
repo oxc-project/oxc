@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/error.invalid-hook-for.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Invariant: Unexpected empty block with `goto` terminal", labels: One([LabeledSpan { label: Some("Unexpected empty block with `goto` terminal"), span: SourceSpan { offset: SourceOffset(43), length: 76 }, primary: false }]), help: Some("Block bb5 is empty"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

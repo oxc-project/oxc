@@ -19,8 +19,15 @@ pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConf
     let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let ret = ReplaceGlobalDefines::new(&allocator, config.clone()).build(scoping, &mut program);
     assert_eq!(ret.changed, source_text != expected);
-    // Use the updated scoping, instead of recreating one.
-    scoping = ret.scoping;
+    // Mirror the pipeline in crates/oxc/src/compiler.rs: it treats scoping as
+    // dirty whenever ReplaceGlobalDefines changed the AST (`scoping_dirty |=
+    // ret.changed`) and rebuilds it before DCE. Reuse RGD's scoping only on
+    // the unchanged path.
+    scoping = if ret.changed {
+        SemanticBuilder::new().build(&program).semantic.into_scoping()
+    } else {
+        ret.scoping
+    };
     AssertAst.visit_program(&program);
     // Run DCE, to align pipeline in crates/oxc/src/compiler.rs
     Compressor::new(&allocator).dead_code_elimination_with_scoping(
@@ -85,6 +92,111 @@ fn shadowed() {
     test_same("(function (undefined) { foo(typeof undefined) })()", &config);
     test_same("(function (NaN) { foo(typeof NaN) })()", &config);
     test_same("(function (process) { foo(process.env.NODE_ENV) })()", &config);
+}
+
+#[test]
+fn typeof_define() {
+    let config = config(&[
+        ("typeof window", "'undefined'"),
+        ("typeof process.env", "'object'"),
+        ("typeof import.meta", "'object'"),
+        ("typeof import.meta.env", "'object'"),
+    ]);
+
+    test_define_only(
+        "foo(typeof window, typeof (window), typeof process.env, typeof (process).env, typeof process['env'], typeof (process)['env'], typeof process?.env, typeof import.meta, typeof import.meta.env)",
+        "foo('undefined', 'undefined', 'object', 'object', 'object', 'object', 'object', 'object', 'object')",
+        &config,
+    );
+    test("if (typeof window === 'undefined') server(); else client();", "server()", &config);
+    test(
+        "if (typeof window !== 'undefined') import('./client'); else import('./server');",
+        "import('./server')",
+        &config,
+    );
+}
+
+#[test]
+fn typeof_define_is_exact() {
+    let config = config(&[("typeof window", "'undefined'"), ("typeof process.env", "'object'")]);
+
+    test_same("foo(typeof window.document)", &config);
+    test_same("foo(typeof process)", &config);
+    test_same("foo(typeof process.env.NODE_ENV)", &config);
+}
+
+#[test]
+fn typeof_define_is_scope_aware() {
+    let config =
+        config(&[("typeof window", "'undefined'"), ("typeof window.document", "'object'")]);
+
+    test_define_only(
+        "foo(typeof window, typeof window.document); function f(window) { foo(typeof window, typeof window.document) }",
+        "foo('undefined', 'object'); function f(window) { foo(typeof window, typeof window.document) }",
+        &config,
+    );
+    test_define_only(
+        "const window = {}; foo(typeof window)",
+        "const window = {}; foo(typeof window)",
+        &config,
+    );
+    test_define_only("foo(typeof window); var window", "foo(typeof window); var window", &config);
+    test_define_only(
+        "try {} catch (window) { foo(typeof window) }",
+        "try {} catch (window) { foo(typeof window) }",
+        &config,
+    );
+    test_define_only(
+        "import window from 'window'; foo(typeof window)",
+        "import window from 'window'; foo(typeof window)",
+        &config,
+    );
+    test_define_only(
+        "declare const window: Window; foo(typeof window)",
+        "declare const window: Window; foo('undefined')",
+        &config,
+    );
+    test_define_only(
+        "type WindowType = typeof window; foo(typeof window)",
+        "type WindowType = typeof window; foo('undefined')",
+        &config,
+    );
+}
+
+#[test]
+fn typeof_define_this_expr() {
+    let config = config(&[("typeof this", "'object'")]);
+
+    test_define_only("foo(typeof this)", "foo('object')", &config);
+    test_define_only("(() => foo(typeof this))()", "(() => foo('object'))()", &config);
+    test_define_only(
+        "function f() { foo(typeof this); (() => foo(typeof this))() }",
+        "function f() { foo(typeof this); (() => foo(typeof this))() }",
+        &config,
+    );
+    test_define_only(
+        "class C { field = typeof this; static field = typeof this; static { foo(typeof this) } }",
+        "class C { field = typeof this; static field = typeof this; static { foo(typeof this) } }",
+        &config,
+    );
+    test_define_only(
+        "class C { [typeof this] = typeof this }",
+        "class C { ['object'] = typeof this }",
+        &config,
+    );
+}
+
+#[test]
+fn typeof_define_takes_precedence_over_identifier_define() {
+    let config = config(&[("window", "globalThis"), ("typeof window", "'undefined'")]);
+    test_define_only("foo(window, typeof window)", "foo(globalThis, 'undefined')", &config);
+}
+
+#[test]
+fn invalid_typeof_define_key() {
+    for key in ["typeof ", "typeof  window", "typeof window.*", "typeof window[0]"] {
+        assert!(ReplaceGlobalDefinesConfig::new(&[(key, "'undefined'")]).is_err(), "{key}");
+    }
 }
 
 #[test]
@@ -241,6 +353,12 @@ fn this_expr() {
     ",
         &config,
     );
+
+    test_define_only(
+        "class C { field = this; static field = this.foo; static { foo(this, this.foo) } }",
+        "class C { field = this; static field = this.foo; static { foo(this, this.foo) } }",
+        &config,
+    );
 }
 
 #[test]
@@ -299,6 +417,20 @@ fn replace_with_undefined() {
 fn declare_const() {
     let config = config(&[("IS_PROD", "true")]);
     test("declare const IS_PROD: boolean; if (IS_PROD) {} foo(IS_PROD)", "foo(true)", &config);
+}
+
+#[test]
+fn declare_const_assignment_target_bailout() {
+    // `IS_PROD = 0` cannot be rewritten to `true = 0` (literals are not valid
+    // assignment targets), so the LHS replacement bails out and the original
+    // identifier stays in the AST, its reference intact — downstream DCE must
+    // not treat IS_PROD as unused and drop the `declare const`.
+    let config = config(&[("IS_PROD", "true")]);
+    test(
+        "declare const IS_PROD: boolean; IS_PROD = 0;",
+        "declare const IS_PROD: boolean; IS_PROD = 0;",
+        &config,
+    );
 }
 
 #[test]

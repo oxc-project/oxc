@@ -31,7 +31,23 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "TemplateElement",
 ];
 
-const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] = &["TSUnionType"];
+// `ExpressionStatement` prints leading comments in its `write` implementation,
+// so the ASI-guard semicolon can be printed before a leading type cast comment.
+const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] =
+    &["TSUnionType", "ExpressionStatement"];
+
+// Statements whose suppressed (`oxfmt-ignore`d) range must exclude the trailing semicolon,
+// so the formatter prints its own terminator like Prettier's ignored range.
+// Every node listed here MUST implement `FormatWrite::write_suppressed`
+// (the default implementation panics at runtime).
+//
+// Other semicolon-terminated statements have the same issue in principle,
+// (`ExpressionStatement`, `VariableDeclaration`, ...)
+// but only these three have a confirmed divergence against Prettier 3.9.
+// (return/throw already handle their suppression in their own `write`)
+// Extend the list one statement at a time, verifying each against Prettier first.
+const AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING: &[&str] =
+    &["BreakStatement", "ContinueStatement", "DoWhileStatement"];
 
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeAssertion",
@@ -170,20 +186,30 @@ fn generate_struct_implementation(
 
         let write_implementation = if suppressed_check.is_none() {
             write_call
-        } else if trailing_comments.is_none() {
-            quote! {
-                if is_suppressed {
-                     self.format_leading_comments(f);
-                    FormatSuppressedNode(self.span()).fmt(f);
-                     self.format_trailing_comments(f);
-                } else {
-                    #write_call
-                }
-            }
         } else {
+            let suppressed_write =
+                if AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING.contains(&struct_name) {
+                    quote! { self.write_suppressed(f); }
+                } else {
+                    quote! { FormatSuppressedNode(self.span()).fmt(f); }
+                };
+            // When `fmt` doesn't print leading/trailing comments itself,
+            // the suppressed path still has to print them, or the suppression comment would be lost.
+            let suppressed_leading_comments = do_not_print_leading_comment.then(|| {
+                quote! {
+                    self.format_leading_comments(f);
+                }
+            });
+            let suppressed_trailing_comments = do_not_print_comment.then(|| {
+                quote! {
+                    self.format_trailing_comments(f);
+                }
+            });
             quote! {
                 if is_suppressed {
-                    FormatSuppressedNode(self.span()).fmt(f);
+                    #suppressed_leading_comments
+                    #suppressed_write
+                    #suppressed_trailing_comments
                 } else {
                     #write_call
                 }
@@ -283,12 +309,8 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         })
     });
 
-    let inherits_match_arms = enum_def.inherits_types(schema).map(|inherits_type| {
-        let inherits_type = inherits_type.as_enum().unwrap();
-        let inherits_inner_type = inherits_type
-            .maybe_inner_type(schema)
-            .map_or_else(|| inherits_type.ident(), TypeDef::ident);
-
+    let inherits_match_arms = enum_def.inherits_enums(schema).map(|inherits_type| {
+        let inherits_ident = inherits_type.ident();
         let inherits_snake_name = inherits_type.snake_name();
         let match_ident = format_ident!("match_{inherits_snake_name}");
 
@@ -296,7 +318,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         let match_arm = quote! {
             it @ #match_ident!(#enum_ident) => {
                 let inner = it.#to_fn_ident();
-                allocator.alloc(AstNode::<'a, #inherits_inner_type> {
+                allocator.alloc(AstNode::<'a, #inherits_ident> {
                     inner,
                     parent,
                     allocator,

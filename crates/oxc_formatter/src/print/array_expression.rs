@@ -31,10 +31,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
         write!(f, "[");
 
         if self.array.elements().is_empty() {
-            write!(f, format_dangling_comments(self.array.span).with_block_indent());
+            write!(f, format_dangling_comments(self.array.span).with_soft_block_indent());
         } else {
             let group_id = f.group_id("array");
             let array_expand = f.options().array_expand;
+            // A line comment after the last element (e.g. after a trailing hole)
+            // is printed right before the `]` and needs the array to break,
+            // regardless of the configured expand mode
+            let has_trailing_line_comment = || {
+                self.array.elements().last().is_some_and(|last| {
+                    f.comments()
+                        .comments_in_range(last.span().end, self.array.span.end)
+                        .iter()
+                        .any(|comment| comment.is_line())
+                })
+            };
 
             let force_above_threshold = matches!(array_expand, ArrayExpand::ForceAboveThreshold(threshold) if self.array.elements().len() >= threshold as usize);
 
@@ -43,13 +54,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
                 && elements_have_leading_newline(self.array, f);
 
             let should_expand = !self.options.is_force_flat_mode
-                && match array_expand {
+                && (match array_expand {
                     ArrayExpand::Auto => should_break(self.array) || preserve_multiline,
                     ArrayExpand::Never => false,
                     ArrayExpand::ForceAboveThreshold(_) => {
                         force_above_threshold || preserve_multiline
                     }
-                };
+                } || has_trailing_line_comment());
 
             let force_one_per_line = force_above_threshold || preserve_multiline;
             let elements = ArrayElementList::new(self.array.elements(), group_id)

@@ -32,10 +32,11 @@
 
 use indexmap::{IndexMap, map::Entry as IndexMapEntry};
 
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::ArenaVec;
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::SPAN;
-use oxc_str::Str;
+use oxc_str::{Str, static_ident};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::BoundIdentifier;
 
@@ -140,57 +141,60 @@ impl<'a> ModuleImportsStore<'a> {
         names: Vec<Import<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let specifiers = ctx.ast.vec_from_iter(names.into_iter().map(|import| match import {
-            Import::Named(import) => {
-                ImportDeclarationSpecifier::ImportSpecifier(ctx.ast.alloc_import_specifier(
+        let specifiers = ArenaVec::from_iter_in(
+            names.into_iter().map(|import| match import {
+                Import::Named(import) => ImportDeclarationSpecifier::new_import_specifier(
                     SPAN,
-                    ModuleExportName::IdentifierName(
-                        ctx.ast.identifier_name(SPAN, import.imported),
-                    ),
+                    ModuleExportName::new_identifier_name(SPAN, import.imported, ctx),
                     import.local.create_binding_identifier(ctx),
                     ImportOrExportKind::Value,
-                ))
-            }
-            Import::Default(local) => ImportDeclarationSpecifier::ImportDefaultSpecifier(
-                ctx.ast.alloc_import_default_specifier(SPAN, local.create_binding_identifier(ctx)),
-            ),
-        }));
+                    ctx,
+                ),
+                Import::Default(local) => ImportDeclarationSpecifier::new_import_default_specifier(
+                    SPAN,
+                    local.create_binding_identifier(ctx),
+                    ctx,
+                ),
+            }),
+            ctx,
+        );
 
-        Statement::from(ctx.ast.module_declaration_import_declaration(
+        Statement::new_import_declaration(
             SPAN,
             Some(specifiers),
-            ctx.ast.string_literal(SPAN, source, None),
+            StringLiteral::new(SPAN, source, None, ctx),
             None,
             NONE,
             ImportOrExportKind::Value,
-        ))
+            ctx,
+        )
     }
 
     pub(crate) fn get_require(
         source: Str<'a>,
-        names: std::vec::Vec<Import<'a>>,
+        names: Vec<Import<'a>>,
         require_symbol_id: Option<SymbolId>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let callee = ctx.create_ident_expr(
             SPAN,
-            ctx.ast.ident("require"),
+            static_ident!("require"),
             require_symbol_id,
             ReferenceFlags::read(),
         );
 
         let args = {
-            let arg = Argument::from(ctx.ast.expression_string_literal(SPAN, source, None));
-            ctx.ast.vec1(arg)
+            let arg = Argument::new_string_literal(SPAN, source, None, ctx);
+            ArenaVec::from_value_in(arg, ctx)
         };
         let Some(Import::Default(local)) = names.into_iter().next() else { unreachable!() };
         let id = local.create_binding_pattern(ctx);
         let var_kind = VariableDeclarationKind::Var;
         let decl = {
-            let init = ctx.ast.expression_call(SPAN, callee, NONE, args, false);
-            let decl = ctx.ast.variable_declarator(SPAN, var_kind, id, NONE, Some(init), false);
-            ctx.ast.vec1(decl)
+            let init = Expression::new_call_expression(SPAN, callee, NONE, args, false, ctx);
+            let decl = VariableDeclarator::new(SPAN, var_kind, id, NONE, Some(init), false, ctx);
+            ArenaVec::from_value_in(decl, ctx)
         };
-        Statement::from(ctx.ast.declaration_variable(SPAN, var_kind, decl, false))
+        Statement::new_variable_declaration(SPAN, var_kind, decl, false, ctx)
     }
 }

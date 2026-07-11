@@ -1,4 +1,4 @@
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, GetAllocator};
 use rustc_hash::FxHashMap;
 
 use crate::{GroupId, UniqueGroupIdBuilder, format_element::Interned};
@@ -68,5 +68,12 @@ impl<'ast, C> FormatState<'ast, C> {
     #[expect(clippy::mutable_key_type)]
     pub fn printed_interned_elements(&mut self) -> &mut FxHashMap<Interned<'ast>, usize> {
         &mut self.printed_interned_elements
+    }
+}
+
+impl<'ast, C> GetAllocator<'ast> for FormatState<'ast, C> {
+    #[inline]
+    fn allocator(&self) -> &'ast Allocator {
+        self.allocator
     }
 }

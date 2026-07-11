@@ -1,8 +1,8 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use crate::print::semicolon::OptionalSemicolon;
+use crate::print::semicolon::{FormatContentWithSemicolon, keeps_trailing_comment_inside_parens};
 use crate::utils::assignment_like::AssignmentLike;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -19,12 +19,13 @@ use super::FormatWrite;
 impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let semicolon = match self.parent() {
-            AstNodes::ExportNamedDeclaration(_) => false,
             AstNodes::ForStatement(stmt) => {
                 stmt.init().is_some_and(|init| init.span() != self.span())
             }
             AstNodes::ForInStatement(stmt) => stmt.left().span() != self.span(),
             AstNodes::ForOfStatement(stmt) => stmt.left().span() != self.span(),
+            // Everywhere else the declaration terminates itself, including `export const ...`,
+            // whose `ExportNamedDeclaration` prints no semicolon of its own (see its `FormatWrite` implementation).
             _ => true,
         };
 
@@ -32,19 +33,35 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
             write!(f, ["declare", space()]);
         }
 
-        write!(
-            f,
-            group(&format_args!(
-                self.kind().as_str(),
-                space(),
-                self.declarations(),
-                semicolon.then_some(OptionalSemicolon)
-            ))
-        );
+        let declarations = self.declarations();
+        let format_declarations = format_with(|f| {
+            if semicolon {
+                let last_declarator = declarations.as_ref().last();
+                let declarations_end = last_declarator.map_or(self.span().end, |d| d.span().end);
+                // A trailing comment right before the closing paren of the last initializer stays inside the parentheses;
+                // extend the content past the closing paren so the comment is not moved behind the semicolon
+                // (the initializer prints it, see `keeps_trailing_comment_inside_parens`).
+                let keeps_comment_inside_parens = last_declarator
+                    .and_then(|declarator| declarator.init.as_ref())
+                    .is_some_and(|init| keeps_trailing_comment_inside_parens(init, true));
+                let content_end = if keeps_comment_inside_parens {
+                    f.comments().end_including_source_parens(declarations_end, self.span().end)
+                } else {
+                    declarations_end
+                };
+                write!(
+                    f,
+                    FormatContentWithSemicolon::new(declarations, content_end, self.span().end)
+                );
+            } else {
+                write!(f, declarations);
+            }
+        });
+        write!(f, group(&format_args!(self.kind().as_str(), space(), format_declarations)));
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, VariableDeclarator<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let length = self.len();
 

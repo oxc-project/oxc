@@ -9,7 +9,10 @@ use std::{
 
 use convert_case::{Case, Casing};
 use lazy_regex::regex;
-use oxc_allocator::Allocator;
+use rustc_hash::{FxHashMap, FxHashSet};
+use serde::Serialize;
+
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::{
     Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, CallExpression,
     Expression, ExpressionStatement, IdentifierName, ObjectExpression, ObjectProperty,
@@ -20,8 +23,6 @@ use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
 use oxc_tasks_common::project_root;
-use rustc_hash::{FxHashMap, FxHashSet};
-use serde::Serialize;
 
 mod json;
 mod template;
@@ -648,7 +649,7 @@ impl<'a> Visit<'a> for State<'a> {
 
 fn find_parser_arguments<'a, 'b>(
     mut expr: &'b Expression<'a>,
-) -> Option<&'b oxc_allocator::Vec<'a, Argument<'a>>> {
+) -> Option<&'b ArenaVec<'a, Argument<'a>>> {
     loop {
         let Expression::CallExpression(call_expr) = expr else { return None };
         let Expression::StaticMemberExpression(static_member_expr) = &call_expr.callee else {
@@ -873,10 +874,14 @@ impl RuleConfigOutput {
                     else {
                         continue;
                     };
-                    if key.to_case(Case::Camel) != *raw_key {
+                    let field_name = key.to_case(Case::Snake);
+                    let rust_field_name = rust_field_name(&field_name);
+                    let serialized_field_name =
+                        rust_field_name.strip_prefix("r#").unwrap_or(&rust_field_name);
+                    if key.to_case(Case::Camel) != *raw_key || serialized_field_name != field_name {
                         let _ = writeln!(output, "    #[serde(rename = \"{raw_key}\")]");
                     }
-                    let _ = writeln!(output, "    {}: {value_label},", key.to_case(Case::Snake));
+                    let _ = writeln!(output, "    {rust_field_name}: {value_label},");
                     if let Some(value_output) = value_output {
                         let _ = writeln!(fields_output, "{value_output}\n");
                     }
@@ -918,6 +923,24 @@ impl RuleConfigOutput {
                 None
             }
         }
+    }
+}
+
+/// Convert a config property name into a valid Rust field identifier.
+///
+/// Most Rust keywords can be used as raw identifiers. `self`, `Self`, `super`, and `crate`
+/// cannot, so append an underscore for those names. The caller adds a serde rename when the
+/// returned identifier does not serialize back to `name`.
+fn rust_field_name(name: &str) -> Cow<'_, str> {
+    if syn::parse_str::<syn::Ident>(name).is_ok() {
+        return Cow::Borrowed(name);
+    }
+
+    let raw_name = format!("r#{name}");
+    if syn::parse_str::<syn::Ident>(&raw_name).is_ok() {
+        Cow::Owned(raw_name)
+    } else {
+        Cow::Owned(format!("{name}_"))
     }
 }
 
@@ -1548,7 +1571,7 @@ fn main() {
                         last_comment = current_comment.to_string();
                         code = format!(
                             "// {}\n{}",
-                            &last_comment,
+                            last_comment,
                             case.code(has_config, has_settings, has_filename)
                         );
                     }
@@ -1992,7 +2015,7 @@ mod tests {
         let res = find_unsupported_rule("no-dupe-args", RuleKind::ESLint);
         assert!(res.is_some());
         let (key, reason) = res.unwrap();
-        assert!(key == "eslint/no-dupe-args");
+        assert_eq!(key, "eslint/no-dupe-args");
         assert!(!reason.is_empty());
     }
 
@@ -2008,7 +2031,7 @@ mod tests {
         let res = find_unsupported_rule("no-hide-core-modules", RuleKind::Node);
         assert!(res.is_some());
         let (key, reason) = res.unwrap();
-        assert!(key == "n/no-hide-core-modules");
+        assert_eq!(key, "n/no-hide-core-modules");
         assert!(!reason.is_empty());
     }
 

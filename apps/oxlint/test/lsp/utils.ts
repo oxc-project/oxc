@@ -529,11 +529,11 @@ function lspRangeToBabelLocation(range: Range) {
   return {
     start: {
       line: range.start.line + 1,
-      column: range.start.character + 1,
+      column: range.start.character,
     },
     end: {
       line: range.end.line + 1,
-      column: range.end.character + 1,
+      column: range.end.character,
     },
   };
 }

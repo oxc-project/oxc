@@ -1,6 +1,6 @@
 use std::{borrow::Cow, ops::Deref};
 
-use oxc_allocator::{Address, UnstableAddress};
+use oxc_allocator::{Address, ArenaVec, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::{
     Visit,
@@ -612,7 +612,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         }
     }
 
-    fn visit_statements(&mut self, it: &oxc_allocator::Vec<'a, Statement<'a>>) {
+    fn visit_statements(&mut self, it: &ArenaVec<'a, Statement<'a>>) {
         for stmt in it {
             match stmt {
                 Statement::ReturnStatement(_) => {

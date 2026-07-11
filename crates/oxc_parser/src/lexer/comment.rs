@@ -192,7 +192,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// # SAFETY
     /// Next 2 bytes must be `#!`.
     pub(super) unsafe fn read_hashbang_comment(&mut self) -> Kind {
-        debug_assert!(self.peek_2_bytes() == Some([b'#', b'!']));
+        debug_assert_eq!(self.peek_2_bytes(), Some([b'#', b'!']));
 
         // SAFETY: Caller guarantees next 2 bytes are `#!`
         unsafe {

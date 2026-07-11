@@ -132,12 +132,7 @@ impl<'a> Visit<'a> for ControlCharacterFinder<'a> {
         //    why we need to do this check here, instead of filtering inside of
         //    visit_character.
         if self.num_capture_groups > 0 && !self.control_chars.is_empty() {
-            let control_chars = std::mem::take(&mut self.control_chars);
-            let control_chars = control_chars
-                .into_iter()
-                .filter(|c| !(c.value > 0x01 && c.value <= self.num_capture_groups))
-                .collect::<Vec<_>>();
-            self.control_chars = control_chars;
+            self.control_chars.retain(|c| !(c.value > 0x01 && c.value <= self.num_capture_groups));
         }
     }
 

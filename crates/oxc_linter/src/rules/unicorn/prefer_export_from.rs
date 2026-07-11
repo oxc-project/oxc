@@ -85,7 +85,7 @@ declare_oxc_lint!(
     style,
     suggestion,
     config = PreferExportFrom,
-    version = "next",
+    version = "1.70.0",
     short_description = "Prefer direct re-exports using `export ... from` syntax instead of separate import and export statements.",
 );
 
@@ -971,7 +971,7 @@ impl PreferExportFrom {
                 Self::build_new_import_declaration(ctx, import_decl, retained_specifiers);
             if let Some(item) = re_export_decl {
                 let last_export_span = Self::get_last_export_span(item.specifiers.last(), "", item);
-                let replacement_str = format!(", {}", &exports_str);
+                let replacement_str = format!(", {exports_str}");
                 rule_fixes.push(fixer.insert_text_after_range(last_export_span, replacement_str));
                 rule_fixes.push(fixer.replace(import_decl.span(), new_import_str));
             } else {
@@ -1125,19 +1125,16 @@ fn has_matching_type_alias<'a>(
     }
     let Some(specifiers) = &import_decl.specifiers else { return false };
 
-    let import_names: FxHashSet<&str> =
-        specifiers.iter().map(|specifier| specifier.local().name.as_str()).collect();
-
     let scoping = ctx.scoping();
     let root_scope_id = scoping.root_scope_id();
-    let root_bindings = scoping.get_bindings(root_scope_id);
 
-    for (_, &symbol_id) in root_bindings {
+    for specifier in specifiers {
+        let Some(symbol_id) = scoping.get_binding(root_scope_id, specifier.local().name) else {
+            continue;
+        };
         for declaration_node_id in scoping.symbol_declarations(symbol_id) {
             let node = ctx.nodes().get_node(declaration_node_id);
-            if let AstKind::TSTypeAliasDeclaration(decl) = node.kind()
-                && import_names.contains(decl.id.name.as_str())
-            {
+            if matches!(node.kind(), AstKind::TSTypeAliasDeclaration(_)) {
                 return true;
             }
         }

@@ -4,14 +4,18 @@ use base64::{
     encoded_len as base64_encoded_len,
     prelude::{BASE64_STANDARD, Engine},
 };
+use hmac_sha1_compact::Hash as Sha1;
 use rustc_hash::{FxHashMap, FxHashSet};
-use sha1::{Digest, Sha1};
 
 use oxc_allocator::{
-    CloneIn, GetAddress, StringBuilder as ArenaStringBuilder, TakeIn, UnstableAddress,
-    Vec as ArenaVec,
+    ArenaStringBuilder, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn,
+    UnstableAddress,
 };
-use oxc_ast::{AstBuilder, NONE, ast::*, match_expression};
+use oxc_ast::{
+    ast::*,
+    builder::{AstBuilder, NONE},
+    match_expression,
+};
 use oxc_ast_visit::{
     Visit,
     walk::{walk_call_expression, walk_declaration},
@@ -26,7 +30,7 @@ use crate::{
     common::var_declarations::VarDeclarationsStore, context::TraverseCtx, state::TransformState,
 };
 
-use super::options::ReactRefreshOptions;
+use super::options::{DEFAULT_REFRESH_REG, DEFAULT_REFRESH_SIG, ReactRefreshOptions};
 
 /// Parse a string into a `RefreshIdentifierResolver` and convert it into an `Expression`
 #[derive(Debug)]
@@ -41,36 +45,42 @@ enum RefreshIdentifierResolver<'a> {
 
 impl<'a> RefreshIdentifierResolver<'a> {
     /// Parses a string into a RefreshIdentifierResolver
-    pub fn parse(input: &str, ast: AstBuilder<'a>) -> Self {
+    pub fn parse(input: &str, ast: &AstBuilder<'a>) -> Self {
         let mut parts = input.split('.');
 
         let first_part = parts.next().unwrap();
         let Some(second_part) = parts.next() else {
             // Handle simple identifier reference
-            return Self::Identifier(ast.identifier_reference(SPAN, ast.str(input)));
+            return Self::Identifier(IdentifierReference::new(
+                SPAN,
+                Str::from_str_in(input, ast),
+                ast,
+            ));
         };
 
         if first_part == "import" {
             // Handle `import.meta.$RefreshReg$` expression
-            let mut expr = ast.expression_meta_property(
+            let mut expr = Expression::new_meta_property(
                 SPAN,
-                ast.identifier_name(SPAN, "import"),
-                ast.identifier_name(SPAN, ast.str(second_part)),
+                IdentifierName::new(SPAN, "import", ast),
+                IdentifierName::new(SPAN, Str::from_str_in(second_part, ast), ast),
+                ast,
             );
             if let Some(property) = parts.next() {
-                expr = Expression::from(ast.member_expression_static(
+                expr = Expression::new_static_member_expression(
                     SPAN,
                     expr,
-                    ast.identifier_name(SPAN, ast.str(property)),
+                    IdentifierName::new(SPAN, Str::from_str_in(property, ast), ast),
                     false,
-                ));
+                    ast,
+                );
             }
             return Self::Expression(expr);
         }
 
         // Handle `window.$RefreshReg$` member expression
-        let object = ast.identifier_reference(SPAN, ast.str(first_part));
-        let property = ast.identifier_name(SPAN, ast.str(second_part));
+        let object = IdentifierReference::new(SPAN, Str::from_str_in(first_part, ast), ast);
+        let property = IdentifierName::new(SPAN, Str::from_str_in(second_part, ast), ast);
         Self::Member((object, property))
     }
 
@@ -79,27 +89,24 @@ impl<'a> RefreshIdentifierResolver<'a> {
         match self {
             Self::Identifier(ident) => {
                 let reference_id = ctx.create_unbound_reference(ident.name, ReferenceFlags::Read);
-                ctx.ast.expression_identifier_with_reference_id(
+                Expression::new_identifier_with_reference_id(
                     ident.span,
                     ident.name,
                     reference_id,
+                    ctx,
                 )
             }
             Self::Member((ident, property)) => {
                 let reference_id = ctx.create_unbound_reference(ident.name, ReferenceFlags::Read);
-                let ident = ctx.ast.expression_identifier_with_reference_id(
+                let ident = Expression::new_identifier_with_reference_id(
                     ident.span,
                     ident.name,
                     reference_id,
+                    ctx,
                 );
-                Expression::from(ctx.ast.member_expression_static(
-                    SPAN,
-                    ident,
-                    property.clone(),
-                    false,
-                ))
+                Expression::new_static_member_expression(SPAN, ident, property.clone(), false, ctx)
             }
-            Self::Expression(expr) => expr.clone_in(ctx.ast.allocator),
+            Self::Expression(expr) => expr.clone_in(ctx.allocator()),
         }
     }
 }
@@ -129,11 +136,13 @@ pub struct ReactRefresh<'a> {
 }
 
 impl<'a> ReactRefresh<'a> {
-    pub fn new(options: &ReactRefreshOptions, ast: AstBuilder<'a>) -> Self {
+    pub fn new(options: Option<&ReactRefreshOptions>, ast: &AstBuilder<'a>) -> Self {
+        let refresh_reg = options.map_or(DEFAULT_REFRESH_REG, |options| &options.refresh_reg);
+        let refresh_sig = options.map_or(DEFAULT_REFRESH_SIG, |options| &options.refresh_sig);
         Self {
-            refresh_reg: RefreshIdentifierResolver::parse(&options.refresh_reg, ast),
-            refresh_sig: RefreshIdentifierResolver::parse(&options.refresh_sig, ast),
-            emit_full_signatures: options.emit_full_signatures,
+            refresh_reg: RefreshIdentifierResolver::parse(refresh_reg, ast),
+            refresh_sig: RefreshIdentifierResolver::parse(refresh_sig, ast),
+            emit_full_signatures: options.is_some_and(|options| options.emit_full_signatures),
             registrations: Vec::default(),
             last_signature: None,
             function_signature_keys: FxHashMap::default(),
@@ -147,8 +156,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.used_in_jsx_bindings = UsedInJSXBindingsCollector::collect(program, ctx);
 
-        let mut new_statements = ctx.ast.vec_with_capacity(program.body.len() * 2);
-        for mut statement in program.body.take_in(ctx.ast) {
+        let mut new_statements = ArenaVec::with_capacity_in(program.body.len() * 2, ctx);
+        for mut statement in program.body.take_in(ctx) {
             let next_statement = self.process_statement(&mut statement, ctx);
             new_statements.push(statement);
             if let Some(assignment_expression) = next_statement {
@@ -163,32 +172,39 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             return;
         }
 
-        let var_decl = Statement::from(ctx.ast.declaration_variable(
+        let var_decl = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ctx.ast.vec(), // This is replaced at the end
+            ArenaVec::new_in(ctx), // This is replaced at the end
             false,
-        ));
+            ctx,
+        );
 
-        let mut variable_declarator_items = ctx.ast.vec_with_capacity(self.registrations.len());
+        let mut variable_declarator_items =
+            ArenaVec::with_capacity_in(self.registrations.len(), ctx);
         let calls = self.registrations.iter().map(|(binding, persistent_id)| {
-            variable_declarator_items.push(ctx.ast.variable_declarator(
+            variable_declarator_items.push(VariableDeclarator::new(
                 SPAN,
                 VariableDeclarationKind::Var,
                 binding.create_binding_pattern(ctx),
                 NONE,
                 None,
                 false,
+                ctx,
             ));
 
             let callee = self.refresh_reg.to_expression(ctx);
-            let arguments = ctx.ast.vec_from_array([
-                Argument::from(binding.create_read_expression(ctx)),
-                Argument::from(ctx.ast.expression_string_literal(SPAN, *persistent_id, None)),
-            ]);
-            ctx.ast.statement_expression(
+            let arguments = ArenaVec::from_array_in(
+                [
+                    Argument::from(binding.create_read_expression(ctx)),
+                    Argument::new_string_literal(SPAN, *persistent_id, None, ctx),
+                ],
+                ctx,
+            );
+            Statement::new_expression_statement(
                 SPAN,
-                ctx.ast.expression_call(SPAN, callee, NONE, arguments, false),
+                Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx),
+                ctx,
             )
         });
 
@@ -254,18 +270,21 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 
         if found_call_expression {
             self.last_signature =
-                Some((binding_identifier.clone(), arguments.clone_in(ctx.ast.allocator)));
+                Some((binding_identifier.clone(), arguments.clone_in(ctx.allocator())));
         }
 
         let span = expr.span();
-        arguments.insert(0, Argument::from(expr.take_in(ctx.ast)));
-        *expr = ctx.ast.expression_call(
-            span,
-            binding.create_read_expression(ctx),
-            NONE,
-            arguments,
-            false,
-        );
+        expr.replace_with(|expr| {
+            arguments.insert(0, Argument::from(expr));
+            Expression::new_call_expression(
+                span,
+                binding.create_read_expression(ctx),
+                NONE,
+                arguments,
+                false,
+                ctx,
+            )
+        });
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -290,8 +309,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 
         let binding = BoundIdentifier::from_binding_ident(&binding_identifier);
         let callee = binding.create_read_expression(ctx);
-        let expr = ctx.ast.expression_call(func.span, callee, NONE, arguments, false);
-        let statement = ctx.ast.statement_expression(func.span, expr);
+        let expr = Expression::new_call_expression(func.span, callee, NONE, arguments, false, ctx);
+        let statement = Statement::new_expression_statement(func.span, expr, ctx);
 
         // Get the address of the statement containing this `FunctionDeclaration`
         let address = match ctx.parent() {
@@ -373,20 +392,22 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
                             if is_member_expression {
                                 if let Some(middle_property) = middle_property {
                                     // binding_name.middle_property
-                                    expr = Expression::from(ctx.ast.member_expression_static(
+                                    expr = Expression::new_static_member_expression(
                                         SPAN,
                                         expr,
-                                        ctx.ast.identifier_name(SPAN, middle_property),
+                                        IdentifierName::new(SPAN, middle_property, ctx),
                                         false,
-                                    ));
+                                        ctx,
+                                    );
                                 }
                                 // binding_name.hook_name
-                                expr = Expression::from(ctx.ast.member_expression_static(
+                                expr = Expression::new_static_member_expression(
                                     SPAN,
                                     expr,
-                                    ctx.ast.identifier_name(SPAN, hook_name),
+                                    IdentifierName::new(SPAN, hook_name, ctx),
                                     false,
-                                ));
+                                    ctx,
+                                );
                             }
                             expr
                         }),
@@ -528,12 +549,15 @@ impl<'a> ReactRefresh<'a> {
         }
 
         if !is_variable_declarator {
-            *expr = ctx.ast.expression_assignment(
-                SPAN,
-                AssignmentOperator::Assign,
-                self.create_registration(ctx.ast.str(inferred_name), ctx),
-                expr.take_in(ctx.ast),
-            );
+            expr.replace_with(|expr| {
+                Expression::new_assignment_expression(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    self.create_registration(Str::from_str_in(inferred_name, ctx), ctx),
+                    expr,
+                    ctx,
+                )
+            });
         }
 
         true
@@ -548,8 +572,14 @@ impl<'a> ReactRefresh<'a> {
         let left = self.create_registration(id.name.into(), ctx);
         let right =
             ctx.create_bound_ident_expr(SPAN, id.name, id.symbol_id(), ReferenceFlags::Read);
-        let expr = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
-        ctx.ast.statement_expression(SPAN, expr)
+        let expr = Expression::new_assignment_expression(
+            SPAN,
+            AssignmentOperator::Assign,
+            left,
+            right,
+            ctx,
+        );
+        Statement::new_expression_statement(SPAN, expr, ctx)
     }
 
     fn create_signature_call_expression(
@@ -561,7 +591,7 @@ impl<'a> ReactRefresh<'a> {
         let key = self.function_signature_keys.remove(&scope_id)?;
 
         let key = if self.emit_full_signatures {
-            ctx.ast.str(&key)
+            Str::from_str_in(&key, ctx)
         } else {
             // Prefer to hash when we can (e.g. outside of ASTExplorer).
             // This makes it deterministically compact, even if there's
@@ -578,7 +608,7 @@ impl<'a> ReactRefresh<'a> {
             };
 
             let mut hasher = Sha1::new();
-            hasher.update(&key);
+            hasher.update(key.as_bytes());
             let hash = hasher.finalize();
             debug_assert_eq!(hash.len(), SHA1_HASH_LEN);
 
@@ -592,7 +622,7 @@ impl<'a> ReactRefresh<'a> {
                 }
             };
 
-            let mut hashed_key = ArenaStringBuilder::from_str_in(ZEROS_STR, ctx.ast.allocator);
+            let mut hashed_key = ArenaStringBuilder::from_str_in(ZEROS_STR, ctx.allocator());
             // SAFETY: Base64 encoding only produces ASCII bytes. Even if our assumptions are incorrect,
             // and Base64 bytes do not fill `hashed_key` completely, the remaining bytes are 0, so also ASCII.
             let hashed_key_bytes = unsafe { hashed_key.as_mut_str().as_bytes_mut() };
@@ -603,76 +633,86 @@ impl<'a> ReactRefresh<'a> {
 
         let callee_list = self.non_builtin_hooks_callee.remove(&scope_id).unwrap_or_default();
         let callee_len = callee_list.len();
-        let custom_hooks_in_scope = ctx.ast.vec_from_iter(
+        let custom_hooks_in_scope = ArenaVec::from_iter_in(
             callee_list.into_iter().filter_map(|e| e.map(ArrayExpressionElement::from)),
+            ctx,
         );
 
         let force_reset = custom_hooks_in_scope.len() != callee_len;
 
-        let mut arguments = ctx.ast.vec();
-        arguments.push(Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)));
+        let mut arguments = ArenaVec::new_in(ctx);
+        arguments.push(Argument::new_string_literal(SPAN, key, None, ctx));
 
         if force_reset || !custom_hooks_in_scope.is_empty() {
-            arguments.push(Argument::from(ctx.ast.expression_boolean_literal(SPAN, force_reset)));
+            arguments.push(Argument::new_boolean_literal(SPAN, force_reset, ctx));
         }
 
         if !custom_hooks_in_scope.is_empty() {
             // function () { return custom_hooks_in_scope }
-            let formal_parameters = ctx.ast.formal_parameters(
+            let formal_parameters = FormalParameters::new(
                 SPAN,
                 FormalParameterKind::FormalParameter,
-                ctx.ast.vec(),
+                ArenaVec::new_in(ctx),
                 NONE,
+                ctx,
             );
-            let function_body = ctx.ast.function_body(
+            let function_body = FunctionBody::new(
                 SPAN,
-                ctx.ast.vec(),
-                ctx.ast.vec1(ctx.ast.statement_return(
-                    SPAN,
-                    Some(ctx.ast.expression_array(SPAN, custom_hooks_in_scope)),
-                )),
+                ArenaVec::new_in(ctx),
+                ArenaVec::from_value_in(
+                    Statement::new_return_statement(
+                        SPAN,
+                        Some(Expression::new_array_expression(SPAN, custom_hooks_in_scope, ctx)),
+                        ctx,
+                    ),
+                    ctx,
+                ),
+                ctx,
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
-            let function =
-                Argument::from(ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
-                    SPAN,
-                    FunctionType::FunctionExpression,
-                    None,
-                    false,
-                    false,
-                    false,
-                    NONE,
-                    NONE,
-                    formal_parameters,
-                    NONE,
-                    Some(function_body),
-                    scope_id,
-                    false,
-                    false,
-                ));
+            let function = Argument::new_function_expression_with_scope_id_and_pure_and_pife(
+                SPAN,
+                FunctionType::FunctionExpression,
+                None,
+                false,
+                false,
+                false,
+                NONE,
+                NONE,
+                formal_parameters,
+                NONE,
+                Some(function_body),
+                scope_id,
+                false,
+                false,
+                ctx,
+            );
             arguments.push(function);
         }
 
         // _s = refresh_sig();
-        let init = ctx.ast.expression_call(
+        let init = Expression::new_call_expression(
             SPAN,
             self.refresh_sig.to_expression(ctx),
             NONE,
-            ctx.ast.vec(),
+            ArenaVec::new_in(ctx),
             false,
+            ctx,
         );
         let binding = VarDeclarationsStore::create_uid_var_with_init("s", init, ctx);
 
         // _s();
-        let call_expression = ctx.ast.statement_expression(
+        let call_expression = Statement::new_expression_statement(
             SPAN,
-            ctx.ast.expression_call(
+            Expression::new_call_expression(
                 SPAN,
                 binding.create_read_expression(ctx),
                 NONE,
-                ctx.ast.vec(),
+                ArenaVec::new_in(ctx),
                 false,
+                ctx,
             ),
+            ctx,
         );
 
         body.statements.insert(0, call_expression);
@@ -856,15 +896,17 @@ impl<'a> ReactRefresh<'a> {
 
         // Result: let Foo = () => {}; __signature(Foo, ...);
         arguments.insert(0, Argument::from(id_binding.create_read_expression(ctx)));
-        let statement = ctx.ast.statement_expression(
+        let statement = Statement::new_expression_statement(
             SPAN,
-            ctx.ast.expression_call(
+            Expression::new_call_expression(
                 SPAN,
                 binding.create_read_expression(ctx),
                 NONE,
                 arguments,
                 false,
+                ctx,
             ),
+            ctx,
         );
 
         // Get the address of the statement containing this `VariableDeclarator`
@@ -905,10 +947,11 @@ impl<'a> ReactRefresh<'a> {
             unreachable!("arrow function body is never empty")
         };
 
-        arrow
-            .body
-            .statements
-            .push(ctx.ast.statement_return(SPAN, Some(statement.unbox().expression)));
+        arrow.body.statements.push(Statement::new_return_statement(
+            SPAN,
+            Some(statement.unbox().expression),
+            ctx,
+        ));
     }
 }
 

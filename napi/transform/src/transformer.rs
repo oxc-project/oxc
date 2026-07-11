@@ -19,8 +19,7 @@ use oxc::{
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
     transformer::{
-        EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, ProposalOptions,
-        RewriteExtensionsMode,
+        EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, RewriteExtensionsMode,
     },
     transformer_plugins::{
         InjectGlobalVariablesConfig, InjectImport, ModuleRunnerTransform,
@@ -30,7 +29,7 @@ use oxc::{
 use oxc_napi::{OxcError, get_source_type};
 use oxc_sourcemap::napi::SourceMap;
 
-use crate::{IsolatedDeclarationsOptions, react_compiler::ReactCompilerOptions};
+use crate::IsolatedDeclarationsOptions;
 
 #[derive(Default)]
 #[napi(object)]
@@ -84,7 +83,7 @@ pub struct TransformResult {
 ///
 /// Options are listed in evaluation order: the source is parsed (`lang`,
 /// `sourceType`), declarations are emitted (`typescript.declaration`), then
-/// transforms run (`reactCompiler`, `typescript`, `decorator`, `plugins`,
+/// transforms run (`typescript`, `decorator`, `plugins`,
 /// `jsx`, `target`), followed by the `inject` and `define` plugins, and
 /// finally codegen (`sourcemap`). `helpers` configures the runtime helpers
 /// the transforms emit.
@@ -107,14 +106,6 @@ pub struct TransformOptions {
 
     /// Set assumptions in order to produce smaller output.
     pub assumptions: Option<CompilerAssumptions>,
-
-    /// Enable the experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
-    ///
-    /// `true` enables it with default options; an object enables it with the
-    /// given options; `false` or omitted disables it. When enabled, the compiler
-    /// runs as the first transform and memoizes React components and hooks.
-    #[napi(ts_type = "boolean | ReactCompilerOptions")]
-    pub react_compiler: Option<Either<bool, ReactCompilerOptions>>,
 
     /// Configure how TypeScript is transformed.
     ///
@@ -190,7 +181,6 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
         Ok(Self {
             cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
             assumptions: options.assumptions.map(Into::into).unwrap_or_default(),
-            react_compiler: crate::react_compiler::resolve(options.react_compiler),
             typescript: options
                 .typescript
                 .map(oxc::transformer::TypeScriptOptions::from)
@@ -215,10 +205,15 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 None => oxc::transformer::JsxOptions::enable(),
             },
             env,
-            proposals: ProposalOptions::default(),
             helper_loader: options
                 .helpers
                 .map_or_else(HelperLoaderOptions::default, HelperLoaderOptions::from),
+            // `..Default` supplies `proposals` (TC39, none implemented) and, when a
+            // workspace build enables it via Cargo feature unification, the gated
+            // `oxc_transformer` `react_compiler` field this binding no longer exposes.
+            // Keeps the literal valid in every feature config (and avoids
+            // `clippy::needless_update`).
+            ..Default::default()
         })
     }
 }
@@ -871,12 +866,12 @@ impl CompilerInterface for Compiler {
         self.inject.clone()
     }
 
-    fn after_codegen(&mut self, ret: CodegenReturn) {
+    fn after_codegen(&mut self, ret: CodegenReturn<'_>) {
         self.printed = ret.code;
         self.printed_sourcemap = ret.map.map(SourceMap::from);
     }
 
-    fn after_isolated_declarations(&mut self, ret: CodegenReturn) {
+    fn after_isolated_declarations(&mut self, ret: CodegenReturn<'_>) {
         self.declaration.replace(ret.code);
         self.declaration_map = ret.map.map(SourceMap::from);
     }

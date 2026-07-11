@@ -16,7 +16,7 @@ alias f := fix
 # Initialize the project by installing all necessary tools
 init:
   # Rust related init
-  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear@1.12.4 -y
+  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear@1.13.1 -y
   # Node.js related init
   pnpm install
 
@@ -47,16 +47,21 @@ ready:
   git status
 
 # Run cargo check
-check:
-  cargo ck
+check *args:
+  cargo ck {{args}}
 
 # Run all the tests
-test:
-  cargo test --all-features
+test *args:
+  cargo test --all-features {{args}}
 
 # Lint the whole project
-lint:
-  cargo lint -- --deny warnings
+[unix]
+lint *args:
+  CARGO_BUILD_WARNINGS=deny cargo lint {{args}}
+
+[windows]
+lint *args:
+  $Env:CARGO_BUILD_WARNINGS='deny'; cargo lint {{args}}
 
 # Format all files
 fmt:
@@ -65,12 +70,12 @@ fmt:
   node --run fmt
 
 [unix]
-doc:
-  RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items --all-features
+doc *args:
+  RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items --all-features {{args}}
 
 [windows]
-doc:
-  $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items --all-features
+doc *args:
+  $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items --all-features {{args}}
 
 # Fix all auto-fixable format and lint issues
 fix:
@@ -233,7 +238,7 @@ test-transform *args='':
 # Update transformer conformance test fixtures
 update-transformer-fixtures:
   cd tasks/coverage/babel; git reset --hard HEAD; git clean -f -q
-  node tasks/transform_conformance/update_fixtures.mjs
+  node tasks/transform_conformance/update_fixtures.ts
 
 # ==================== MINIFIER ====================
 
@@ -245,6 +250,10 @@ minsize:
 # Update memory allocation snapshots
 allocs:
   cargo allocs
+
+# Update linter timing snapshots
+lint-timings:
+  cargo lint-timings
 
 # Generate minifier size comparison
 minifier-diff:

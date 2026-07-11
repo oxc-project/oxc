@@ -1,7 +1,8 @@
-use oxc_allocator::TakeIn;
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::SPAN;
+use oxc_str::static_ident;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::Traverse;
 
@@ -33,7 +34,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule {
         if self.module.is_commonjs() {
             let has_use_strict = program.directives.iter().any(Directive::is_use_strict);
             if !has_use_strict {
-                program.directives.insert(0, ctx.ast.use_strict_directive());
+                program.directives.insert(0, Directive::new_use_strict(ctx));
             }
         }
     }
@@ -69,20 +70,25 @@ impl<'a> TypeScriptModule {
 
         // module.exports
         let module_exports = {
-            let reference_id = ctx
-                .create_reference_in_current_scope(ctx.ast.ident("module"), ReferenceFlags::Read);
+            let module = static_ident!("module");
+            let reference_id = ctx.create_reference_in_current_scope(module, ReferenceFlags::Read);
             let reference =
-                ctx.ast.alloc_identifier_reference_with_reference_id(SPAN, "module", reference_id);
+                IdentifierReference::boxed_with_reference_id(SPAN, module, reference_id, ctx);
             let object = Expression::Identifier(reference);
-            let property = ctx.ast.identifier_name(SPAN, "exports");
-            ctx.ast.member_expression_static(SPAN, object, property, false)
+            let property = IdentifierName::new(SPAN, "exports", ctx);
+            MemberExpression::new_static_member_expression(SPAN, object, property, false, ctx)
         };
 
         let left = AssignmentTarget::from(SimpleAssignmentTarget::from(module_exports));
-        let right = export_assignment.expression.take_in(ctx.ast);
-        let assignment_expr =
-            ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
-        ctx.ast.statement_expression(SPAN, assignment_expr)
+        let right = export_assignment.expression.take_in(ctx);
+        let assignment_expr = Expression::new_assignment_expression(
+            SPAN,
+            AssignmentOperator::Assign,
+            left,
+            right,
+            ctx,
+        );
+        Statement::new_expression_statement(SPAN, assignment_expr, ctx)
     }
 
     /// Transform TSImportEqualsDeclaration to a VariableDeclaration.
@@ -110,7 +116,7 @@ impl<'a> TypeScriptModule {
             return None;
         }
 
-        let binding = BindingPattern::BindingIdentifier(ctx.ast.alloc(decl.id.clone()));
+        let binding = BindingPattern::BindingIdentifier(ArenaBox::new_in(decl.id.clone(), ctx));
         let decl_span = decl.span;
 
         let flags = ctx.scoping_mut().symbol_flags_mut(decl.id.symbol_id());
@@ -120,23 +126,29 @@ impl<'a> TypeScriptModule {
             TSModuleReference::IdentifierReference(ident) => {
                 flags.insert(SymbolFlags::FunctionScopedVariable);
 
-                let ident = ident.clone();
-                let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
+                let reference_id = ident.reference_id();
+                let reference = ctx.scoping_mut().get_reference_mut(reference_id);
                 *reference.flags_mut() = ReferenceFlags::Read;
-                (VariableDeclarationKind::Var, Expression::Identifier(ctx.alloc(ident)))
+
+                let ident = Expression::new_identifier_with_reference_id(
+                    ident.span,
+                    ident.name,
+                    reference_id,
+                    ctx,
+                );
+                (VariableDeclarationKind::Var, ident)
             }
             TSModuleReference::QualifiedName(qualified_name) => {
                 flags.insert(SymbolFlags::FunctionScopedVariable);
 
-                let init = ctx
-                    .ast
-                    .member_expression_static(
-                        SPAN,
-                        self.transform_ts_type_name(&mut qualified_name.left, ctx),
-                        qualified_name.right.clone(),
-                        false,
-                    )
-                    .into();
+                let init = MemberExpression::new_static_member_expression(
+                    SPAN,
+                    self.transform_ts_type_name(&mut qualified_name.left, ctx),
+                    qualified_name.right.clone(),
+                    false,
+                    ctx,
+                )
+                .into();
                 (VariableDeclarationKind::Var, init)
             }
             TSModuleReference::ExternalModuleReference(reference) => {
@@ -146,22 +158,31 @@ impl<'a> TypeScriptModule {
                     ctx.state.error(diagnostics::import_equals_cannot_be_used_in_esm(decl_span));
                 }
 
-                let require = ctx.ast.ident("require");
+                let require = static_ident!("require");
                 let require_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), require);
                 let callee =
                     ctx.create_ident_expr(SPAN, require, require_symbol_id, ReferenceFlags::Read);
-                let arguments =
-                    ctx.ast.vec1(Argument::StringLiteral(ctx.alloc(reference.expression.clone())));
+                let str_lit = &reference.expression;
+                let str_lit = StringLiteral::boxed_with_lone_surrogates(
+                    str_lit.span,
+                    str_lit.value,
+                    str_lit.raw,
+                    str_lit.lone_surrogates,
+                    ctx,
+                );
+                let arguments = ArenaVec::from_value_in(Argument::StringLiteral(str_lit), ctx);
                 (
                     VariableDeclarationKind::Const,
-                    ctx.ast.expression_call(SPAN, callee, NONE, arguments, false),
+                    Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx),
                 )
             }
         };
-        let decls =
-            ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, binding, NONE, Some(init), false));
+        let decls = ArenaVec::from_value_in(
+            VariableDeclarator::new(SPAN, kind, binding, NONE, Some(init), false, ctx),
+            ctx,
+        );
 
-        Some(ctx.ast.declaration_variable(SPAN, kind, decls, false))
+        Some(Declaration::new_variable_declaration(SPAN, kind, decls, false, ctx))
     }
 
     #[expect(clippy::self_only_used_in_recursion)]
@@ -172,21 +193,24 @@ impl<'a> TypeScriptModule {
     ) -> Expression<'a> {
         match type_name {
             TSTypeName::IdentifierReference(ident) => {
-                let ident = ident.clone();
-                let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
+                let reference_id = ident.reference_id();
+                let reference = ctx.scoping_mut().get_reference_mut(reference_id);
                 *reference.flags_mut() = ReferenceFlags::Read;
-                Expression::Identifier(ctx.alloc(ident))
-            }
-            TSTypeName::QualifiedName(qualified_name) => ctx
-                .ast
-                .member_expression_static(
-                    SPAN,
-                    self.transform_ts_type_name(&mut qualified_name.left, ctx),
-                    qualified_name.right.clone(),
-                    false,
+                Expression::new_identifier_with_reference_id(
+                    ident.span,
+                    ident.name,
+                    reference_id,
+                    ctx,
                 )
-                .into(),
-            TSTypeName::ThisExpression(e) => ctx.ast.expression_this(e.span),
+            }
+            TSTypeName::QualifiedName(qualified_name) => Expression::new_static_member_expression(
+                SPAN,
+                self.transform_ts_type_name(&mut qualified_name.left, ctx),
+                qualified_name.right.clone(),
+                false,
+                ctx,
+            ),
+            TSTypeName::ThisExpression(e) => Expression::new_this_expression(e.span, ctx),
         }
     }
 

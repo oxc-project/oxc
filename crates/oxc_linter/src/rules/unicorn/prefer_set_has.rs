@@ -151,9 +151,7 @@ impl Rule for PreferSetHas {
             return;
         };
 
-        let Some(symbol_id) = ident.symbol_id.get() else {
-            return;
-        };
+        let symbol_id = ident.symbol_id();
 
         let module_record = ctx.module_record();
         if module_record.exported_bindings.contains_key(ident.name.as_str())

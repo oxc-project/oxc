@@ -11,7 +11,7 @@ use oxc_ast::ast::{
     ObjectPropertyKind, PropertyKey, StringLiteral, TemplateLiteral,
 };
 use oxc_formatter_core::{
-    Buffer, Format,
+    Buffer, Format, arena_cow_str,
     builders::{block_indent, hard_line_break, space, text},
     write,
 };
@@ -21,13 +21,9 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::context::JsonFormatContext;
 
 use super::{
-    FormatInvalidJson, JsonFormatter, arena_cow_str, format_with, literal::FmtJsonString,
+    FormatInvalidJson, JsonFormatter, format_with, literal::FmtJsonString,
     number_string_round_trips, write_quoted_str,
 };
-
-// NOTE: This is a temporary compatibility flag for Prettier's pre-#18405 behavior,
-// which should be removed after updating `prettier@3.9.0`.
-const COMPAT_PRE_18405: bool = true;
 
 /// Top-level wrapper around an [`Expression`] for the `json-stringify` variant.
 /// The counterpart of [`super::FmtJsonValue`]; recursion stays within this type.
@@ -42,7 +38,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonStringifyValue<'a, '_> {
             Expression::BooleanLiteral(lit) => {
                 write!(f, if lit.value { "true" } else { "false" });
             }
-            Expression::NumericLiteral(lit) => write_number_value(lit, f),
+            Expression::NumericLiteral(lit) => write_number(lit, f),
             Expression::StringLiteral(lit) => write_string(lit, f),
             Expression::ArrayExpression(array) => write_array(array, f),
             Expression::ObjectExpression(object) => write_object(object, f),
@@ -70,31 +66,14 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonStringifyValue<'a, '_> {
     }
 }
 
-fn write_number_value<'a>(lit: &NumericLiteral<'a>, f: &mut JsonFormatter<'_, 'a>) {
-    if COMPAT_PRE_18405 {
-        // The parser can only produce non-negative values; overflow yields +Infinity.
-        if lit.value.is_finite() {
-            // Stack-format then copy once into the arena (same as `oxc_codegen`),
-            // avoiding `ToJsString`'s intermediate heap `String`.
-            let mut buffer = dragonbox_ecma::Buffer::new();
-            write!(f, text(f.allocator().alloc_str(buffer.format(lit.value))));
-        } else {
-            write!(f, "null");
-        }
-    } else {
-        let raw = lit.raw.as_ref().unwrap_or_else(|| unreachable!("parser always sets `raw`"));
-        write!(f, text(raw.as_str()));
-    }
+fn write_number<'a>(lit: &NumericLiteral<'a>, f: &mut JsonFormatter<'_, 'a>) {
+    let raw = lit.raw.as_ref().unwrap_or_else(|| unreachable!("parser always sets `raw`"));
+    write!(f, text(raw.as_str()));
 }
 
 fn write_string<'a>(lit: &StringLiteral<'a>, f: &mut JsonFormatter<'_, 'a>) {
-    if COMPAT_PRE_18405 {
-        let body = json_stringify_escape(lit.value.as_str(), lit.lone_surrogates);
-        write_quoted_str(f, b'"', arena_cow_str(body, f));
-    } else {
-        // `preferred_quote` already pins `json-stringify` to `"`.
-        FmtJsonString { lit }.fmt(f);
-    }
+    // `preferred_quote` already pins `json-stringify` to `"`.
+    FmtJsonString { lit }.fmt(f);
 }
 
 /// The always-expanded layout shared by arrays and objects: a [`block_indent`]
@@ -165,8 +144,7 @@ fn write_object<'a>(object: &ObjectExpression<'a>, f: &mut JsonFormatter<'_, 'a>
 /// - Identifier key (`a:`, `undefined:`): always double-quoted
 ///   (identifier names cannot contain characters `JSON.stringify` would escape)
 /// - Numeric key: see the module table for the mode split; in compat mode `String()`
-///   (unlike value position's `JSON.stringify()`) has no `null` fallback,
-///   so non-finite quotes as `"Infinity"`
+///   (unlike value position's `JSON.stringify()`) has no `null` fallback, so non-finite quotes as `"Infinity"`
 fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) {
     match key {
         PropertyKey::StringLiteral(lit) => write_string(lit, f),
@@ -174,23 +152,12 @@ fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) {
             write_quoted_str(f, b'"', ident.name.as_str());
         }
         PropertyKey::NumericLiteral(lit) => {
-            if COMPAT_PRE_18405 {
-                let printed = if lit.value.is_finite() {
-                    let mut buffer = dragonbox_ecma::Buffer::new();
-                    f.allocator().alloc_str(buffer.format(lit.value))
-                } else {
-                    "Infinity"
-                };
-                write_quoted_str(f, b'"', printed);
+            let raw = lit.raw.as_ref().unwrap_or_else(|| unreachable!("parser always sets `raw`"));
+            let raw = raw.as_str();
+            if number_string_round_trips(raw) {
+                write_quoted_str(f, b'"', raw);
             } else {
-                let raw =
-                    lit.raw.as_ref().unwrap_or_else(|| unreachable!("parser always sets `raw`"));
-                let raw = raw.as_str();
-                if number_string_round_trips(raw) {
-                    write_quoted_str(f, b'"', raw);
-                } else {
-                    write!(f, text(raw));
-                }
+                write!(f, text(raw));
             }
         }
         _ => write!(f, FormatInvalidJson(key.span())),
@@ -212,7 +179,7 @@ fn write_template<'a>(template: &TemplateLiteral<'a>, f: &mut JsonFormatter<'_, 
         return;
     };
     let body = json_stringify_escape(cooked.as_str(), quasi.lone_surrogates);
-    write_quoted_str(f, b'"', arena_cow_str(body, f));
+    write_quoted_str(f, b'"', arena_cow_str(&body, f));
 }
 
 /// Escapes `content` the way `JSON.stringify` does for a string body
@@ -285,8 +252,6 @@ fn json_stringify_escape(content: &str, lone_surrogates: bool) -> Cow<'_, str> {
 mod tests {
     use super::{json_stringify_escape, number_string_round_trips};
 
-    /// Covers the prettier@3.9 behavior even while `COMPAT_PRE_18405` keeps it inactive,
-    /// so the path doesn't rot before the switch is flipped.
     #[test]
     fn key_round_trip() {
         // Quoted: survives `String(Number(raw))` unchanged

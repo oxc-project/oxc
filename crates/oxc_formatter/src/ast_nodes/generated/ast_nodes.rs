@@ -3,7 +3,7 @@
 
 use std::mem::transmute;
 
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_str::Ident;
@@ -827,7 +827,7 @@ impl<'a> AstNode<'a, Program<'a>> {
     }
 
     #[inline]
-    pub fn comments(&self) -> &Vec<'a, Comment> {
+    pub fn comments(&self) -> &ArenaVec<'a, Comment> {
         &self.inner.comments
     }
 
@@ -852,7 +852,7 @@ impl<'a> AstNode<'a, Program<'a>> {
     }
 
     #[inline]
-    pub fn directives(&self) -> &AstNode<'a, Vec<'a, Directive<'a>>> {
+    pub fn directives(&self) -> &AstNode<'a, ArenaVec<'a, Directive<'a>>> {
         let following_span_start = self
             .inner
             .body
@@ -869,7 +869,7 @@ impl<'a> AstNode<'a, Program<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
@@ -1325,7 +1325,7 @@ impl<'a> AstNode<'a, ArrayExpression<'a>> {
     }
 
     #[inline]
-    pub fn elements(&self) -> &AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>> {
+    pub fn elements(&self) -> &AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
@@ -1405,7 +1405,7 @@ impl<'a> AstNode<'a, ObjectExpression<'a>> {
     }
 
     #[inline]
-    pub fn properties(&self) -> &AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
+    pub fn properties(&self) -> &AstNode<'a, ArenaVec<'a, ObjectPropertyKind<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
@@ -1553,7 +1553,7 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
     }
 
     #[inline]
-    pub fn quasis(&self) -> &AstNode<'a, Vec<'a, TemplateElement<'a>>> {
+    pub fn quasis(&self) -> &AstNode<'a, ArenaVec<'a, TemplateElement<'a>>> {
         let following_span_start = self
             .inner
             .expressions
@@ -1570,7 +1570,7 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
     }
 
     #[inline]
-    pub fn expressions(&self) -> &AstNode<'a, Vec<'a, Expression<'a>>> {
+    pub fn expressions(&self) -> &AstNode<'a, ArenaVec<'a, Expression<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.expressions,
@@ -1885,7 +1885,7 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
     }
 
     #[inline]
-    pub fn arguments(&self) -> &AstNode<'a, Vec<'a, Argument<'a>>> {
+    pub fn arguments(&self) -> &AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.arguments,
@@ -1959,7 +1959,7 @@ impl<'a> AstNode<'a, NewExpression<'a>> {
     }
 
     #[inline]
-    pub fn arguments(&self) -> &AstNode<'a, Vec<'a, Argument<'a>>> {
+    pub fn arguments(&self) -> &AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.arguments,
@@ -2487,7 +2487,7 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
     }
 
     #[inline]
-    pub fn elements(&self) -> &AstNode<'a, Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
+    pub fn elements(&self) -> &AstNode<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
@@ -2527,7 +2527,7 @@ impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
     }
 
     #[inline]
-    pub fn properties(&self) -> &AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>> {
+    pub fn properties(&self) -> &AstNode<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
@@ -2776,7 +2776,7 @@ impl<'a> AstNode<'a, SequenceExpression<'a>> {
     }
 
     #[inline]
-    pub fn expressions(&self) -> &AstNode<'a, Vec<'a, Expression<'a>>> {
+    pub fn expressions(&self) -> &AstNode<'a, ArenaVec<'a, Expression<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.expressions,
@@ -3158,7 +3158,7 @@ impl<'a> AstNode<'a, BlockStatement<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = 0;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
@@ -3270,7 +3270,7 @@ impl<'a> AstNode<'a, VariableDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn declarations(&self) -> &AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
+    pub fn declarations(&self) -> &AstNode<'a, ArenaVec<'a, VariableDeclarator<'a>>> {
         let following_span_start = 0;
         self.allocator.alloc(AstNode {
             inner: &self.inner.declarations,
@@ -3924,7 +3924,7 @@ impl<'a> AstNode<'a, SwitchStatement<'a>> {
     }
 
     #[inline]
-    pub fn cases(&self) -> &AstNode<'a, Vec<'a, SwitchCase<'a>>> {
+    pub fn cases(&self) -> &AstNode<'a, ArenaVec<'a, SwitchCase<'a>>> {
         let following_span_start = 0;
         self.allocator.alloc(AstNode {
             inner: &self.inner.cases,
@@ -3970,7 +3970,7 @@ impl<'a> AstNode<'a, SwitchCase<'a>> {
     }
 
     #[inline]
-    pub fn consequent(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+    pub fn consequent(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.consequent,
@@ -4303,7 +4303,7 @@ impl<'a> AstNode<'a, ObjectPattern<'a>> {
     }
 
     #[inline]
-    pub fn properties(&self) -> &AstNode<'a, Vec<'a, BindingProperty<'a>>> {
+    pub fn properties(&self) -> &AstNode<'a, ArenaVec<'a, BindingProperty<'a>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
@@ -4391,7 +4391,7 @@ impl<'a> AstNode<'a, ArrayPattern<'a>> {
     }
 
     #[inline]
-    pub fn elements(&self) -> &AstNode<'a, Vec<'a, Option<BindingPattern<'a>>>> {
+    pub fn elements(&self) -> &AstNode<'a, ArenaVec<'a, Option<BindingPattern<'a>>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
@@ -4611,7 +4611,7 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
     }
 
     #[inline]
-    pub fn items(&self) -> &AstNode<'a, Vec<'a, FormalParameter<'a>>> {
+    pub fn items(&self) -> &AstNode<'a, ArenaVec<'a, FormalParameter<'a>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.items,
@@ -4651,7 +4651,7 @@ impl<'a> AstNode<'a, FormalParameter<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.pattern.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
@@ -4748,7 +4748,7 @@ impl<'a> AstNode<'a, FormalParameterRest<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.rest.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
@@ -4805,7 +4805,7 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
     }
 
     #[inline]
-    pub fn directives(&self) -> &AstNode<'a, Vec<'a, Directive<'a>>> {
+    pub fn directives(&self) -> &AstNode<'a, ArenaVec<'a, Directive<'a>>> {
         let following_span_start = self
             .inner
             .statements
@@ -4822,7 +4822,7 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
     }
 
     #[inline]
-    pub fn statements(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+    pub fn statements(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.statements,
@@ -4978,7 +4978,7 @@ impl<'a> AstNode<'a, Class<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self
             .inner
             .id
@@ -5081,7 +5081,7 @@ impl<'a> AstNode<'a, Class<'a>> {
     }
 
     #[inline]
-    pub fn implements(&self) -> &AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(&self) -> &AstNode<'a, ArenaVec<'a, TSClassImplements<'a>>> {
         let following_span_start = self.inner.body.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.implements,
@@ -5129,7 +5129,7 @@ impl<'a> AstNode<'a, ClassBody<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Vec<'a, ClassElement<'a>>> {
+    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, ClassElement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
@@ -5209,7 +5209,7 @@ impl<'a> AstNode<'a, MethodDefinition<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.key.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
@@ -5293,7 +5293,7 @@ impl<'a> AstNode<'a, PropertyDefinition<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.key.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
@@ -5431,7 +5431,7 @@ impl<'a> AstNode<'a, StaticBlock<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
@@ -5521,7 +5521,7 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.key.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
@@ -5674,7 +5674,7 @@ impl<'a> AstNode<'a, ImportDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn specifiers(&self) -> Option<&AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>>> {
+    pub fn specifiers(&self) -> Option<&AstNode<'a, ArenaVec<'a, ImportDeclarationSpecifier<'a>>>> {
         let following_span_start = self.inner.source.span().start;
         self.allocator
             .alloc(self.inner.specifiers.as_ref().map(|inner| AstNode {
@@ -5873,7 +5873,7 @@ impl<'a> AstNode<'a, WithClause<'a>> {
     }
 
     #[inline]
-    pub fn with_entries(&self) -> &AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
+    pub fn with_entries(&self) -> &AstNode<'a, ArenaVec<'a, ImportAttribute<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.with_entries,
@@ -5984,7 +5984,7 @@ impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn specifiers(&self) -> &AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
+    pub fn specifiers(&self) -> &AstNode<'a, ArenaVec<'a, ExportSpecifier<'a>>> {
         let following_span_start = self
             .inner
             .source
@@ -6272,7 +6272,7 @@ impl<'a> AstNode<'a, V8IntrinsicExpression<'a>> {
     }
 
     #[inline]
-    pub fn arguments(&self) -> &AstNode<'a, Vec<'a, Argument<'a>>> {
+    pub fn arguments(&self) -> &AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.arguments,
@@ -6473,7 +6473,7 @@ impl<'a> AstNode<'a, JSXElement<'a>> {
     }
 
     #[inline]
-    pub fn children(&self) -> &AstNode<'a, Vec<'a, JSXChild<'a>>> {
+    pub fn children(&self) -> &AstNode<'a, ArenaVec<'a, JSXChild<'a>>> {
         let following_span_start = self
             .inner
             .closing_element
@@ -6556,7 +6556,7 @@ impl<'a> AstNode<'a, JSXOpeningElement<'a>> {
     }
 
     #[inline]
-    pub fn attributes(&self) -> &AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
+    pub fn attributes(&self) -> &AstNode<'a, ArenaVec<'a, JSXAttributeItem<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.attributes,
@@ -6627,7 +6627,7 @@ impl<'a> AstNode<'a, JSXFragment<'a>> {
     }
 
     #[inline]
-    pub fn children(&self) -> &AstNode<'a, Vec<'a, JSXChild<'a>>> {
+    pub fn children(&self) -> &AstNode<'a, ArenaVec<'a, JSXChild<'a>>> {
         let following_span_start = self.inner.closing_fragment.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.children,
@@ -7292,7 +7292,7 @@ impl<'a> AstNode<'a, TSEnumBody<'a>> {
     }
 
     #[inline]
-    pub fn members(&self) -> &AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
+    pub fn members(&self) -> &AstNode<'a, ArenaVec<'a, TSEnumMember<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.members,
@@ -7849,7 +7849,7 @@ impl<'a> AstNode<'a, TSUnionType<'a>> {
     }
 
     #[inline]
-    pub fn types(&self) -> &AstNode<'a, Vec<'a, TSType<'a>>> {
+    pub fn types(&self) -> &AstNode<'a, ArenaVec<'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.types,
@@ -7876,7 +7876,7 @@ impl<'a> AstNode<'a, TSIntersectionType<'a>> {
     }
 
     #[inline]
-    pub fn types(&self) -> &AstNode<'a, Vec<'a, TSType<'a>>> {
+    pub fn types(&self) -> &AstNode<'a, ArenaVec<'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.types,
@@ -8027,7 +8027,7 @@ impl<'a> AstNode<'a, TSTupleType<'a>> {
     }
 
     #[inline]
-    pub fn element_types(&self) -> &AstNode<'a, Vec<'a, TSTupleElement<'a>>> {
+    pub fn element_types(&self) -> &AstNode<'a, ArenaVec<'a, TSTupleElement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_types,
@@ -8528,7 +8528,7 @@ impl<'a> AstNode<'a, TSTypeParameterInstantiation<'a>> {
     }
 
     #[inline]
-    pub fn params(&self) -> &AstNode<'a, Vec<'a, TSType<'a>>> {
+    pub fn params(&self) -> &AstNode<'a, ArenaVec<'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.params,
@@ -8636,7 +8636,7 @@ impl<'a> AstNode<'a, TSTypeParameterDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn params(&self) -> &AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
+    pub fn params(&self) -> &AstNode<'a, ArenaVec<'a, TSTypeParameter<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.params,
@@ -8808,7 +8808,7 @@ impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn extends(&self) -> &AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
+    pub fn extends(&self) -> &AstNode<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>> {
         let following_span_start = self.inner.body.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.extends,
@@ -8851,7 +8851,7 @@ impl<'a> AstNode<'a, TSInterfaceBody<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Vec<'a, TSSignature<'a>>> {
+    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, TSSignature<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
@@ -8989,7 +8989,7 @@ impl<'a> AstNode<'a, TSIndexSignature<'a>> {
     }
 
     #[inline]
-    pub fn parameters(&self) -> &AstNode<'a, Vec<'a, TSIndexSignatureName<'a>>> {
+    pub fn parameters(&self) -> &AstNode<'a, ArenaVec<'a, TSIndexSignatureName<'a>>> {
         let following_span_start = self.inner.type_annotation.span().start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.parameters,
@@ -9577,7 +9577,7 @@ impl<'a> AstNode<'a, TSModuleBlock<'a>> {
     }
 
     #[inline]
-    pub fn directives(&self) -> &AstNode<'a, Vec<'a, Directive<'a>>> {
+    pub fn directives(&self) -> &AstNode<'a, ArenaVec<'a, Directive<'a>>> {
         let following_span_start = self
             .inner
             .body
@@ -9594,7 +9594,7 @@ impl<'a> AstNode<'a, TSModuleBlock<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
@@ -9621,7 +9621,7 @@ impl<'a> AstNode<'a, TSTypeLiteral<'a>> {
     }
 
     #[inline]
-    pub fn members(&self) -> &AstNode<'a, Vec<'a, TSSignature<'a>>> {
+    pub fn members(&self) -> &AstNode<'a, ArenaVec<'a, TSSignature<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.members,
@@ -10114,7 +10114,7 @@ impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
     }
 
     #[inline]
-    pub fn quasis(&self) -> &AstNode<'a, Vec<'a, TemplateElement<'a>>> {
+    pub fn quasis(&self) -> &AstNode<'a, ArenaVec<'a, TemplateElement<'a>>> {
         let following_span_start = self
             .inner
             .types
@@ -10131,7 +10131,7 @@ impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
     }
 
     #[inline]
-    pub fn types(&self) -> &AstNode<'a, Vec<'a, TSType<'a>>> {
+    pub fn types(&self) -> &AstNode<'a, ArenaVec<'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.types,

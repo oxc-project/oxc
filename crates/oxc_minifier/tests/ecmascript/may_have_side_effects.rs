@@ -1177,27 +1177,34 @@ fn test_call_expressions() {
     test("Number.parseFloat()", false);
     test("Number.parseInt()", false);
 
-    test("Object.create()", false);
-    test("Object.getOwnPropertyDescriptor()", false);
-    test("Object.getOwnPropertyDescriptors()", false);
-    test("Object.getOwnPropertyNames()", false);
-    test("Object.getOwnPropertySymbols()", false);
-    test("Object.getPrototypeOf()", false);
-    test("Object.hasOwn()", false);
+    // These throw on the `undefined` receiver (`ToObject(undefined)`) or are
+    // conservatively kept; `Object.is()` is `Object.is(undefined, undefined)` -> true.
+    test("Object.create()", true);
+    test("Object.getOwnPropertyDescriptor()", true);
+    test("Object.getOwnPropertyDescriptors()", true);
+    test("Object.getOwnPropertyNames()", true);
+    test("Object.getOwnPropertySymbols()", true);
+    test("Object.getPrototypeOf()", true);
+    test("Object.hasOwn()", true);
     test("Object.is()", false);
+    test("Object.keys()", true);
+    // `isExtensible`/`isFrozen`/`isSealed` return a primitive for a non-object receiver
+    // (`Object.isExtensible(undefined)` -> `false`) instead of throwing, so they are pure.
     test("Object.isExtensible()", false);
     test("Object.isFrozen()", false);
     test("Object.isSealed()", false);
-    test("Object.keys()", false);
 
     test("String.fromCharCode()", false);
     test("String.fromCodePoint()", false);
-    test("String.raw()", false);
+    // `String.raw(undefined)` reads `undefined.raw` -> throws TypeError.
+    test("String.raw()", true);
 
     test("Symbol.for()", false);
-    test("Symbol.keyFor()", false);
+    // `Symbol.keyFor(undefined)` requires a Symbol argument -> throws TypeError.
+    test("Symbol.keyFor()", true);
 
-    test("URL.canParse()", false);
+    // `URL.canParse()` has a required first argument -> throws TypeError with none.
+    test("URL.canParse()", true);
 
     test("BigInt64Array.of()", false);
     test("BigUint64Array.of()", false);
@@ -1214,6 +1221,130 @@ fn test_call_expressions() {
     // may have side effects if shadowed
     test_with_global_variables("Date()", &[], true);
     test_with_global_variables("Object.create()", &[], true);
+}
+
+#[test]
+fn test_proxy_sensitive_object_methods() {
+    // Pure with a determined, non-Proxy, non-null target (a literal cannot be a Proxy
+    // and these methods never `[[Get]]`, so a literal getter is not invoked).
+    test("Object.keys({})", false);
+    test("Object.keys([])", false);
+    test("Object.keys(42)", false);
+    test("Object.keys('s')", false);
+    test("Object.keys(true)", false);
+    test("Object.keys(10n)", false);
+    test("Object.keys({ get a() { f() } })", false);
+    test("Object[\"keys\"]({})", false);
+    test("Object.getOwnPropertyDescriptor({}, 'x')", false);
+    test("Object.getOwnPropertyDescriptors({})", false);
+    test("Object.getOwnPropertyNames({})", false);
+    test("Object.getOwnPropertySymbols({})", false);
+    test("Object.getPrototypeOf({})", false);
+    test("Object.hasOwn({}, 'x')", false);
+    test("Object.isExtensible({})", false);
+    test("Object.isFrozen({})", false);
+    test("Object.isSealed({})", false);
+
+    // `isExtensible`/`isFrozen`/`isSealed` never `ToObject` their target: a non-object
+    // (missing/null/undefined/primitive) yields a primitive result without throwing, so
+    // they stay pure where `keys`/`getOwnPropertyDescriptor`/... must be kept.
+    test("Object.isExtensible(null)", false);
+    test("Object.isFrozen(undefined)", false);
+    test("Object.isSealed(42)", false);
+    // A Proxy target still fires the `[[IsExtensible]]`/`[[OwnPropertyKeys]]` traps, so an
+    // undetermined target (could be a Proxy) or an inline Proxy is kept.
+    test("Object.isExtensible(x)", true);
+    test("Object.isFrozen(new Proxy({}, {}))", true);
+    test("Object.isSealed(...x)", true);
+
+    // Kept when the target could be a Proxy (undetermined) or would throw (null/undefined).
+    test("Object.keys(x)", true);
+    test("Object.keys(new Proxy({}, {}))", true);
+    test("Object.keys(null)", true);
+    test("Object.keys(undefined)", true);
+    test("Object.keys(...x)", true);
+    test("Object.getOwnPropertyDescriptor(x, 'x')", true);
+    test("Object.getPrototypeOf(x)", true);
+    test("Object.hasOwn(x, 'x')", true);
+    test("Object[\"keys\"](x)", true);
+
+    // `Object.values`/`entries` invoke `[[Get]]` (run getters), so they are always kept.
+    test("Object.values({})", true);
+    test("Object.entries({})", true);
+    test("Object.values(x)", true);
+    test("Object.values({ get a() { f() } })", true);
+
+    // `Object.is` is unconditionally pure (never introspects its arguments).
+    test("Object.is(1, 2)", false);
+    test("Object.is(f(), 2)", true);
+
+    // `Object.create(proto)` is pure with an object/null prototype and no properties.
+    test("Object.create({})", false);
+    test("Object.create([])", false);
+    test("Object.create(null)", false);
+    test("Object.create(x)", true); // proto could be a non-object -> throws
+    test("Object.create(42)", true); // primitive proto -> throws
+    test("Object.create(undefined)", true); // throws
+    test("Object.create({}, x)", true); // properties read via [[OwnPropertyKeys]]/[[Get]]
+    test("Object.create({}, {})", true);
+}
+
+/// Known-pure global functions/methods that nonetheless *throw* for some arguments,
+/// so the call is not side-effect-free and must not be dropped. Cross-checked against
+/// terser and esbuild, which both keep these.
+#[test]
+fn test_throwing_global_calls() {
+    // Tier 1: missing/invalid required argument always throws a TypeError.
+    // `String.raw(template)` reads `template.raw`; `undefined`/non-template throws.
+    test("String.raw()", true);
+    test("String.raw({})", true);
+    test("String.raw(x)", true);
+    // `Symbol.keyFor(sym)` requires a Symbol argument; anything else throws.
+    test("Symbol.keyFor()", true);
+    test("Symbol.keyFor(42)", true);
+    test("Symbol.keyFor(x)", true);
+    // `URL.canParse(url)` has a required first argument; with none it throws.
+    test("URL.canParse()", true);
+    test("URL.canParse('x')", false); // a string argument is fine
+    test("URL.canParse(x)", false);
+
+    // Tier 2: `String.fromCodePoint(cp)` throws RangeError unless every `cp` is an
+    // integer in [0, 0x10FFFF]. `fromCharCode` truncates via ToUint16 and never
+    // RangeErrors.
+    test("String.fromCodePoint(-1)", true);
+    test("String.fromCodePoint(1.5)", true);
+    test("String.fromCodePoint(0x110000)", true);
+    test("String.fromCodePoint(65)", false);
+    test("String.fromCodePoint(0, 0x10FFFF)", false);
+    test("String.fromCodePoint(0, -1)", true);
+    test("String.fromCodePoint(x)", false); // undetermined -> stay droppable
+    test("String.fromCharCode(-1)", false);
+    test("String.fromCharCode(1.5)", false);
+
+    // Tier 3: `ToNumber` coercion throws a TypeError on a BigInt argument (provable).
+    // A Symbol also throws, but oxc can never prove a value is a Symbol, so — like
+    // esbuild — those stay droppable; only the BigInt cases are guarded.
+    test("Math.abs(10n)", true);
+    test("Math.floor(10n)", true);
+    test("Math.max(1, 10n)", true);
+    test("Date.UTC(10n)", true);
+    test("String.fromCharCode(10n)", true);
+    test("String.fromCodePoint(10n)", true);
+    test("isNaN(10n)", true);
+    test("isFinite(10n)", true);
+    // Non-BigInt arguments remain pure/droppable.
+    test("Math.abs(1)", false);
+    test("Math.floor(1.5)", false);
+    test("Math.max(1, 2)", false);
+    test("Date.UTC(2020, 0)", false);
+    // `ToString` coercers (parseInt/parseFloat/decodeURI/.../Date.parse/Symbol.for)
+    // accept BigInt (`ToString(10n)` -> "10"); only a Symbol throws (not provable).
+    test("parseInt(10n)", false);
+    test("parseFloat(10n)", false);
+    test("decodeURI(10n)", false);
+    test("Number.parseInt(10n)", false);
+    test("Date.parse(10n)", false);
+    test("Symbol.for(10n)", false);
 }
 
 #[test]

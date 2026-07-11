@@ -1,0 +1,13 @@
+{
+  a # same-line trailing
+  b
+  # own line before closing
+}
+
+type T {
+  a: String # trailing
+}
+
+# after last definition
+
+# blank line above me

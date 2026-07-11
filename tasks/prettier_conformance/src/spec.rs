@@ -11,6 +11,8 @@ use oxc_formatter::{
     JsFormatOptions, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_css::{CssFormatOptions, CssVariant};
+use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant, QuoteProps};
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
@@ -29,15 +31,8 @@ type SnapshotOptions = Vec<(String, String)>;
 pub enum SpecOptions {
     Js(Box<JsFormatOptions>),
     Json(JsonFormatOptions),
-}
-
-impl SpecOptions {
-    pub fn line_width(&self) -> LineWidth {
-        match self {
-            Self::Js(o) => o.line_width,
-            Self::Json(o) => o.line_width,
-        }
-    }
+    Graphql(GraphqlFormatOptions),
+    Css(CssFormatOptions),
 }
 
 pub fn parse_spec(spec: &Path, language: TestLanguage) -> Vec<(SpecOptions, SnapshotOptions)> {
@@ -134,18 +129,22 @@ impl VisitMut<'_> for SpecParser {
             return;
         }
 
-        // NOTE: The JSON-family languages each accept only their own parser's calls
+        // NOTE: The JSON-family languages (and GraphQL) each accept only their own parser's calls
         // (the parser name is exactly `TestLanguage::as_str()`).
         // A single `format.test.js` may list several parsers (e.g. `with-comment/`),
         // so we filter per-language.
-        let is_json_family = matches!(
+        let is_exact_parser_language = matches!(
             self.language,
             TestLanguage::Json
                 | TestLanguage::Jsonc
                 | TestLanguage::Json5
                 | TestLanguage::JsonStringify
+                | TestLanguage::Graphql
+                | TestLanguage::Css
+                | TestLanguage::Scss
+                | TestLanguage::Less
         );
-        if is_json_family && !parsers.iter().any(|p| p == self.language.as_str()) {
+        if is_exact_parser_language && !parsers.iter().any(|p| p == self.language.as_str()) {
             return;
         }
 
@@ -161,6 +160,19 @@ impl VisitMut<'_> for SpecParser {
                 TestLanguage::Json5 => JsonVariant::Json5,
                 TestLanguage::JsonStringify => JsonVariant::JsonStringify,
                 _ => JsonVariant::Json,
+            },
+            ..Default::default()
+        };
+        let mut graphql_options = GraphqlFormatOptions {
+            line_width: LineWidth::try_from(80).unwrap(),
+            ..Default::default()
+        };
+        let mut css_options = CssFormatOptions {
+            line_width: LineWidth::try_from(80).unwrap(),
+            variant: match self.language {
+                TestLanguage::Scss => CssVariant::Scss,
+                TestLanguage::Less => CssVariant::Less,
+                _ => CssVariant::Css,
             },
             ..Default::default()
         };
@@ -181,6 +193,7 @@ impl VisitMut<'_> for SpecParser {
                                 }
                             } else if name == "bracketSpacing" {
                                 js_options.bracket_spacing = BracketSpacing::from(literal.value);
+                                graphql_options.bracket_spacing = literal.value.into();
                             } else if matches!(
                                 name.as_ref(),
                                 "jsxBracketSameLine" | "bracketSameLine"
@@ -194,6 +207,7 @@ impl VisitMut<'_> for SpecParser {
                                     QuoteStyle::Double
                                 };
                                 json_options.single_quote = literal.value.into();
+                                css_options.single_quote = literal.value.into();
                             } else if name == "jsxSingleQuote" {
                                 js_options.jsx_quote_style = if literal.value {
                                     QuoteStyle::Single
@@ -208,6 +222,8 @@ impl VisitMut<'_> for SpecParser {
                                 };
                                 js_options.indent_style = style;
                                 json_options.indent_style = style;
+                                graphql_options.indent_style = style;
+                                css_options.indent_style = style;
                             } else if name == "experimentalTernaries" {
                                 js_options.experimental_ternaries = literal.value;
                             } else if name == "singleAttributePerLine" {
@@ -224,11 +240,15 @@ impl VisitMut<'_> for SpecParser {
                                 let width = LineWidth::try_from(literal.value as u16).unwrap();
                                 js_options.line_width = width;
                                 json_options.line_width = width;
+                                graphql_options.line_width = width;
+                                css_options.line_width = width;
                             }
                             "tabWidth" => {
                                 let w = IndentWidth::try_from(literal.value as u8).unwrap();
                                 js_options.indent_width = w;
                                 json_options.indent_width = w;
+                                graphql_options.indent_width = w;
+                                css_options.indent_width = w;
                             }
                             _ => {}
                         },
@@ -243,12 +263,19 @@ impl VisitMut<'_> for SpecParser {
                                         "none" => oxc_formatter_json::TrailingCommas::Never,
                                         _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
                                     };
+                                    css_options.trailing_commas = match s {
+                                        "all" | "es5" => oxc_formatter_css::TrailingCommas::Always,
+                                        "none" => oxc_formatter_css::TrailingCommas::Never,
+                                        _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
+                                    };
                                 }
                                 "endOfLine" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
                                     let ending = LineEnding::from_str(s).unwrap_or_default();
                                     js_options.line_ending = ending;
                                     json_options.line_ending = ending;
+                                    graphql_options.line_ending = ending;
+                                    css_options.line_ending = ending;
                                 }
                                 "quoteProps" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
@@ -317,10 +344,8 @@ impl VisitMut<'_> for SpecParser {
             ),
         ));
 
-        if !snapshot_options.iter().any(|item| item.0 == "printWidth") {
-            snapshot_options.push(("printWidth".to_string(), "80".into()));
-        }
-
+        // Prettier omits `printWidth` from the options block when it equals the
+        // default (80); the value is only shown in the trailing visualization line.
         snapshot_options.sort_by(|a, b| a.0.cmp(&b.0));
 
         let options = match self.language {
@@ -328,6 +353,10 @@ impl VisitMut<'_> for SpecParser {
             | TestLanguage::Jsonc
             | TestLanguage::Json5
             | TestLanguage::JsonStringify => SpecOptions::Json(json_options),
+            TestLanguage::Graphql => SpecOptions::Graphql(graphql_options),
+            TestLanguage::Css | TestLanguage::Scss | TestLanguage::Less => {
+                SpecOptions::Css(css_options)
+            }
             TestLanguage::Js | TestLanguage::Ts => SpecOptions::Js(Box::new(js_options)),
         };
         self.calls.push((options, snapshot_options));

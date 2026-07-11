@@ -24,7 +24,9 @@ doctest = false
 [dependencies]
 cow-utils = { workspace = true }
 oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize", "conformance"] }
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 oxc_estree_tokens = { workspace = true }
+oxc_lexer = { workspace = true, optional = true }
 oxc_formatter = { workspace = true }
 oxc_formatter_core = { workspace = true }
 oxc_tasks_common = { workspace = true }
@@ -42,3 +44,14 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 similar = { workspace = true }
 walkdir = { workspace = true }
+
+[features]
+# Differential lexer conformance. `oxc_lexer`'s SIMD core only exists on x86_64
+# with static AVX2/BMI2 (it compiles to an empty stub otherwise), so the harness
+# is opt-in and its cfg sites mirror the lexer's crate gate:
+#   RUSTFLAGS="-C target-feature=+avx2,+bmi2" cargo coverage --features lexer -- lexer
+lexer = ["dep:oxc_lexer", "oxc_lexer/oxc_diagnostics"]
+
+# `oxc_ast` is a feature-only dependency, to enable its `disable_old_builder` feature
+[package.metadata.cargo-shear]
+ignored = ["oxc_ast"]

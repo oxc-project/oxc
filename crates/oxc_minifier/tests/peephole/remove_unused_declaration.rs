@@ -5,6 +5,93 @@ use crate::{
     test_same_options_source_type, test_same_smallest, test_smallest,
 };
 
+// Leak regression: dropping an unused declarator must walk the whole
+// declarator, not just the init — references can also live in the binding's
+// TS type annotation (e.g. computed keys in a type literal). A leaked type
+// ref makes the symbol look used, blocking its own removal.
+#[test]
+fn remove_unused_declarator_walks_type_annotation_refs() {
+    let options = CompressOptions::smallest();
+    test_options_source_type(
+        "function f() { const a = Symbol('a'); const b = Symbol('b'); const reg: { [a]: string; [b]: string } = { foo: 1, bar: 2 }; return 1; } g(f());",
+        "function f() { return 1; } g(f());",
+        SourceType::ts(),
+        &options,
+    );
+}
+
+// Leak regression (single-use inlining, `stmts.pop()` site): after the lone
+// declarator's init is inlined into the next statement, the whole declaration
+// statement is popped — the discarded declarator's type annotation still holds
+// a ref to `a`.
+#[test]
+fn single_use_inline_pop_walks_type_annotation_refs() {
+    let options = CompressOptions::smallest();
+    test_options_source_type(
+        "function f() { const a = Symbol('a'); const x: { [a]: string } = g(); return x; } h(f());",
+        "function f() { return g(); } h(f());",
+        SourceType::ts(),
+        &options,
+    );
+}
+
+// Leak regression (single-use inlining, `declarations.truncate()` site): only
+// the tail declarator `x` is inlined; the truncate discards it while `keep`
+// survives — `x`'s type annotation still holds a ref to `a`.
+#[test]
+fn single_use_inline_truncate_walks_type_annotation_refs() {
+    let options = CompressOptions::smallest();
+    test_options_source_type(
+        "function f() { const a = Symbol('a'); const keep = g(), x: { [a]: string } = h(); return [keep, keep, x]; } j(f());",
+        "function f() { let keep = g(); return [keep, keep, h()]; } j(f());",
+        SourceType::ts(),
+        &options,
+    );
+}
+
+// Leak regression (single-use inlining, `declarations.drain()` site): `x` is
+// inlined into the sibling declarator `y`'s init within the same declaration;
+// the drain discards `x`'s declarator — its type annotation still holds a ref
+// to `a`.
+#[test]
+fn single_use_inline_drain_walks_type_annotation_refs() {
+    let options = CompressOptions::smallest();
+    test_options_source_type(
+        "function f() { const a = Symbol('a'); const x: { [a]: string } = g(), y = [x]; return y; } j(f());",
+        "function f() { return [g()]; } j(f());",
+        SourceType::ts(),
+        &options,
+    );
+}
+
+// Leak regression (dead-code identity-drop site): an init-less `var` after
+// `return` is classified as an identity drop (KeepVar re-emits it), skipping
+// the drop walk — but KeepVar's re-emit strips the type annotation, so the
+// annotation's ref to `b` leaks.
+#[test]
+fn dead_code_identity_drop_checks_type_annotation() {
+    let options = CompressOptions::smallest();
+    test_options_source_type(
+        "function f() { const b = Symbol('b'); return 1; var a: { [b]: string }; } g(f());",
+        "function f() { return 1; } g(f());",
+        SourceType::ts(),
+        &options,
+    );
+}
+
+// Near-miss: dropping the annotated declarator must only kill the annotation's
+// own ref — `a`'s other (value) uses keep `const a = Symbol('a')` alive.
+#[test]
+fn type_annotation_drop_keeps_symbol_used_elsewhere() {
+    let options = CompressOptions::smallest();
+    test_options_source_type(
+        "function f() { const a = Symbol('a'); const x: { [a]: string } = g(); return [x, a, a]; } h(f());",
+        "function f() { let a = Symbol('a'); return [g(), a, a]; } h(f());",
+        SourceType::ts(),
+        &options,
+    );
+}
+
 #[test]
 fn remove_unused_variable_declaration() {
     let options = CompressOptions::smallest();
@@ -267,6 +354,45 @@ fn keep_in_script_mode() {
     test_options_source_type("var x = 1; x = 2;", "", SourceType::cjs(), &options);
 
     test_options_source_type("class C {}", "class C {}", source_type, &options);
+}
+
+#[test]
+fn keep_class_cycle_with_wrapped_arrow_heritage() {
+    // The removal check must see the arrow heritage through a pure
+    // sequence/paren wrapper, so the decision cannot change when a fold
+    // surfaces the literal arrow between passes.
+    test_smallest(
+        "class A extends (0, () => {}) { m() { new B() } } class B { m() { new A() } } console.log(1);",
+        "class A extends (() => {}) {\n\tm() {\n\t\tnew B();\n\t}\n}\nclass B {\n\tm() {\n\t\tnew A();\n\t}\n}\nconsole.log(1);",
+    );
+    // The single, fully-unused class is kept for the same reason a literal
+    // arrow heritage is kept: evaluating it is a guaranteed TypeError.
+    test_smallest("class C extends (0, () => {}) {}", "class C extends (() => {}) {}");
+}
+
+#[test]
+fn keep_class_with_tdz_or_undefined_heritage() {
+    // test262 language/statements/class/name-binding/in-extends-expression.js:
+    // the class's own name is in its TDZ while the heritage evaluates, so the
+    // declaration is a guaranteed ReferenceError that must survive.
+    test_same_smallest("class C extends C {}");
+    // The test262 shape: the class lives in a callback whose call is live.
+    // (A NAMED function wrapper additionally hits a pre-existing hole in the
+    // pure-function model — `may_have_side_effects` does not model heritage
+    // TDZ throws, so `f` reads as pure and the call is dropped on `main`
+    // too; that is a separate `oxc_ecmascript` issue, not covered here.)
+    test_same_smallest("g(function() {\n\tclass C extends C {}\n});");
+    // The wrapped variant classifies through the same heritage unwrap.
+    test_smallest("class C extends (0, C) {}", "class C extends C {}");
+    // A forward lexical heritage also evaluates in its TDZ; reference order
+    // cannot be proven mid-minification (transforms copy and move spans), so
+    // any class/lexical/`var` heritage keeps the class.
+    test_same_smallest(
+        "class A extends B {\n\tm() {\n\t\tnew A();\n\t}\n}\nclass B {\n\tm() {\n\t\tnew A();\n\t}\n}",
+    );
+    // `var` heritage: a hoisted-but-unassigned binding is `undefined`, and
+    // `extends undefined` is a TypeError.
+    test_same_smallest("var B = class {};\nclass A extends B {\n\tm() {\n\t\tnew A();\n\t}\n}");
 }
 
 #[test]

@@ -1,0 +1,51 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// The tail flush of a map must stay bounded by its own `)`: the `//` comment
+// glued to `$second`'s last item must not be pulled into `$first`'s output
+// (it is not own-line, so the unbounded same-line flush used to steal it).
+$first: (
+  a: 1,
+  // own comment
+  b: 2,
+);
+$second: (
+  a: 1,
+  b: 2, // stays here
+);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// The tail flush of a map must stay bounded by its own `)`: the `//` comment
+// glued to `$second`'s last item must not be pulled into `$first`'s output
+// (it is not own-line, so the unbounded same-line flush used to steal it).
+$first: (
+  a: 1,
+  // own comment
+  b: 2,
+);
+$second: (
+  a: 1,
+  b: 2, // stays here
+);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// The tail flush of a map must stay bounded by its own `)`: the `//` comment
+// glued to `$second`'s last item must not be pulled into `$first`'s output
+// (it is not own-line, so the unbounded same-line flush used to steal it).
+$first: (
+  a: 1,
+  // own comment
+  b: 2,
+);
+$second: (
+  a: 1,
+  b: 2, // stays here
+);
+
+===================== End =====================

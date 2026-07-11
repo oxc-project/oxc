@@ -1,23 +1,38 @@
 use std::{cell::Cell, mem, num};
 
-use crate::{Allocator, AllocatorAccessor, Box, Vec};
+use crate::{Allocator, Box, GetAllocator, Vec};
 
 /// A trait to replace an existing AST node with a dummy.
 pub trait TakeIn<'a>: Dummy<'a> {
-    /// Replace node with a dummy.
+    /// Replace node with a dummy, and return the original.
+    ///
+    /// If you're taking the node out to build a new node from it and store the result back
+    /// in the same slot, prefer [`replace_with`]. `take_in` writes a dummy into the arena,
+    /// which takes up space there forever. `replace_with` avoids that (no dummy), so is faster
+    /// and uses less memory.
+    ///
+    /// [`replace_with`]: crate::ReplaceWith::replace_with
     #[must_use]
-    fn take_in<A: AllocatorAccessor<'a>>(&mut self, allocator_accessor: A) -> Self {
+    fn take_in<A: GetAllocator<'a>>(&mut self, allocator_accessor: &A) -> Self {
         let allocator = allocator_accessor.allocator();
         let dummy = Dummy::dummy(allocator);
         mem::replace(self, dummy)
     }
 
-    /// Replace node with a boxed dummy.
+    /// Replace node with a dummy, allocate the original node into the arena,
+    /// and return it as a [`Box<Self>`].
+    ///
+    /// If you're taking the node out to build a new node from it and store the result back
+    /// in the same slot, prefer [`replace_with`]. `take_in` writes a dummy into the arena,
+    /// which takes up space there forever. `replace_with` avoids that (no dummy), so is faster
+    /// and uses less memory.
+    ///
+    /// [`replace_with`]: crate::ReplaceWith::replace_with
     #[must_use]
-    fn take_in_box<A: AllocatorAccessor<'a>>(&mut self, allocator_accessor: A) -> Box<'a, Self> {
+    fn take_in_box<A: GetAllocator<'a>>(&mut self, allocator_accessor: &A) -> Box<'a, Self> {
         let allocator = allocator_accessor.allocator();
         let dummy = Dummy::dummy(allocator);
-        Box::new_in(mem::replace(self, dummy), allocator)
+        Box::new_in(mem::replace(self, dummy), &allocator)
     }
 }
 
@@ -44,7 +59,7 @@ impl<'a, T: Dummy<'a>> Dummy<'a> for Box<'a, T> {
     /// Create a dummy [`Box`].
     #[inline]
     fn dummy(allocator: &'a Allocator) -> Self {
-        Box::new_in(Dummy::dummy(allocator), allocator)
+        Box::new_in(Dummy::dummy(allocator), &allocator)
     }
 }
 
@@ -60,7 +75,7 @@ impl<'a, T> Dummy<'a> for Vec<'a, T> {
     /// Create a dummy [`Vec`].
     #[inline]
     fn dummy(allocator: &'a Allocator) -> Self {
-        Vec::new_in(allocator)
+        Vec::new_in(&allocator)
     }
 }
 

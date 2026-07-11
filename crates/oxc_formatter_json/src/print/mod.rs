@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use oxc_ast::ast::Expression;
 use oxc_formatter_core::{Buffer, Format, Formatter, builders::FormatWith, builders::text, write};
 use oxc_span::{GetSpan, Span};
@@ -29,15 +27,6 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for &'static str {
     }
 }
 
-/// Lifts a `Cow<'a, str>` to `&'a str`, allocating in the arena only for the owned case.
-/// Borrowed Cows already point into arena-resident source, so they pass through unchanged.
-pub fn arena_cow_str<'a>(cow: Cow<'a, str>, f: &JsonFormatter<'_, 'a>) -> &'a str {
-    match cow {
-        Cow::Borrowed(s) => s,
-        Cow::Owned(s) => f.allocator().alloc_str(&s),
-    }
-}
-
 /// Writes `body` enclosed in the character named by `quote_byte` (`b'"'` / `b'\''`).
 /// `body` must already be escape-normalized for that quote.
 pub fn write_quoted_str<'a>(f: &mut JsonFormatter<'_, 'a>, quote_byte: u8, body: &'a str) {
@@ -55,6 +44,10 @@ pub fn write_quoted_str<'a>(f: &mut JsonFormatter<'_, 'a>, quote_byte: u8, body:
 /// JS stringifies the parsed value into a different shape (`"16"` for `0x10`, `"NaN"` for `1_2`),
 /// Rust simply fails to parse, so `Err` mapping to `false` matches.
 pub fn number_string_round_trips(s: &str) -> bool {
+    // PERF: Use `dragonbox_ecma` directly instead of `oxc_syntax::ToJsString`
+    // The latter returns `String` (heap alloc),
+    // while `Buffer::format` returns `&str` borrowed from a stack buffer.
+    // This is only a `==` comparison on a hot path (every numeric key), so avoid the alloc.
     s.parse::<f64>()
         .is_ok_and(|value| value.is_finite() && dragonbox_ecma::Buffer::new().format(value) == s)
 }

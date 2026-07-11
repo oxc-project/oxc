@@ -74,7 +74,7 @@ impl UnstableLayoutMethods for Layout {
 
     fn array<T>(n: usize) -> Result<Layout, LayoutError> {
         UnstableLayoutMethods::repeat(&Layout::new::<T>(), n).map(|(k, offs)| {
-            debug_assert!(offs == mem::size_of::<T>());
+            debug_assert_eq!(offs, mem::size_of::<T>());
             k
         })
     }
@@ -642,7 +642,7 @@ pub unsafe trait Alloc {
     {
         match (Layout::array::<T>(n_old), Layout::array::<T>(n_new)) {
             (Ok(ref k_old), Ok(ref k_new)) if k_old.size() > 0 && k_new.size() > 0 => {
-                debug_assert!(k_old.align() == k_new.align());
+                debug_assert_eq!(k_old.align(), k_new.align());
                 unsafe { self.realloc(ptr.cast(), *k_old, k_new.size()) }.map(NonNull::cast)
             }
             _ => Err(AllocErr),

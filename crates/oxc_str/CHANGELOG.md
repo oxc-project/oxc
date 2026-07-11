@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 88f4455 str: [**BREAKING**] `Str` and `Ident` methods take `&GetAllocator` (#23781) (overlookmotel)
+
+### 🚀 Features
+
+- 2580eda str: Add `Str::from_str_in` and `Ident::from_str_in` methods (#23767) (overlookmotel)
+
 ## [0.125.0] - 2026-04-13
 
 ### 💥 BREAKING CHANGES

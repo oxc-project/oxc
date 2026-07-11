@@ -1,6 +1,6 @@
 [package]
 name = "oxc_minifier"
-version = "0.135.0"
+version = "0.139.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -36,6 +36,7 @@ oxc_str = { workspace = true }
 oxc_syntax = { workspace = true }
 oxc_traverse = { workspace = true }
 
+bitflags = { workspace = true }
 cow-utils = { workspace = true }
 itoa = { workspace = true }
 rustc-hash = { workspace = true }
@@ -44,6 +45,11 @@ rustc-hash = { workspace = true }
 oxc_codegen = { workspace = true, features = ["sourcemap"] }
 oxc_parser = { workspace = true }
 oxc_sourcemap = { workspace = true }
+
+# Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
+# If we enabled `disable_old_builder` feature in main dependency, feature unification would
+# cause it to be activated for `oxc_ast` for the user too.
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 
 insta = { workspace = true }
 javascript-globals = { workspace = true }

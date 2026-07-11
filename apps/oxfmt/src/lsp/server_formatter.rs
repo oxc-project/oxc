@@ -9,7 +9,7 @@ use tracing::{debug, error, warn};
 
 use oxc_language_server::{
     Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
-    offset_to_position,
+    offset_to_position, utils::normalize_user_config_path_to_watch_pattern,
 };
 
 use crate::core::{
@@ -169,7 +169,7 @@ impl Tool for ServerFormatter {
 
         let mut patterns: Vec<Pattern> =
             if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
-                vec![config_path.clone()]
+                vec![normalize_user_config_path_to_watch_pattern(config_path)]
             } else {
                 // Watch for config files in all subdirectories (nested config support)
                 config_discovery()
@@ -437,12 +437,17 @@ fn deserialize_lsp_options(value: serde_json::Value) -> LSPFormatOptions {
 }
 
 /// Returns the minimal text edit (start, end, replacement) to transform `source_text` into `formatted_text`
+///
+/// Respects EOL characters as a whole edit. Appending `\r` before `\n` is invalid and should be treated as a single edit replacing `\n` with `\r\n`.
 #[expect(clippy::cast_possible_truncation)]
 fn compute_minimal_text_edit<'a>(
     source_text: &str,
     formatted_text: &'a str,
 ) -> (u32, u32, &'a str) {
-    debug_assert!(source_text != formatted_text);
+    debug_assert_ne!(
+        source_text, formatted_text,
+        "compute_minimal_text_edit: source_text and formatted_text must be different"
+    );
 
     // Find common prefix (byte offset)
     let mut prefix_byte = 0;
@@ -461,10 +466,25 @@ fn compute_minimal_text_edit<'a>(
     let src_len = src_bytes.len();
     let fmt_len = fmt_bytes.len();
 
-    while suffix_byte < src_len - prefix_byte
-        && suffix_byte < fmt_len - prefix_byte
-        && src_bytes[src_len - 1 - suffix_byte] == fmt_bytes[fmt_len - 1 - suffix_byte]
-    {
+    while suffix_byte < src_len - prefix_byte && suffix_byte < fmt_len - prefix_byte {
+        let src_idx = src_len - 1 - suffix_byte;
+        let fmt_idx = fmt_len - 1 - suffix_byte;
+
+        // Prevents appending `\r` to a line ending in `\n`, instead we want to replace `\n` with `\r\n` in this case,
+        // aligning how LSP text documents are represented (line / column editing, instead of bytes).
+        if src_bytes[src_idx] == b'\n' && fmt_bytes[fmt_idx] == b'\n' {
+            let src_has_cr = src_idx > 0 && src_bytes[src_idx - 1] == b'\r';
+            let fmt_has_cr = fmt_idx > 0 && fmt_bytes[fmt_idx - 1] == b'\r';
+
+            if src_has_cr != fmt_has_cr {
+                break;
+            }
+        }
+
+        if src_bytes[src_idx] != fmt_bytes[fmt_idx] {
+            break;
+        }
+
         suffix_byte += 1;
     }
 
@@ -514,7 +534,9 @@ mod tests {
     use oxc_language_server::offset_to_position;
 
     #[test]
-    #[should_panic(expected = "assertion failed")]
+    #[should_panic(
+        expected = "compute_minimal_text_edit: source_text and formatted_text must be different"
+    )]
     fn test_no_change() {
         let src = "abc";
         let formatted = "abc";
@@ -606,5 +628,24 @@ mod tests {
 
         let (start, end, replacement) = compute_minimal_text_edit(&src, &formatted);
         assert_eq!((start, end, replacement), (0, 0, "b"));
+    }
+
+    #[test]
+    #[expect(clippy::cast_possible_truncation)]
+    fn test_replacing_line_breaks() {
+        let src_lf = "line1\nline2\nline3";
+        let src_crlf = "line1\r\nline2\r\nline3";
+
+        // from LF to CRLF
+        {
+            let (start, end, replacement) = compute_minimal_text_edit(src_lf, src_crlf);
+            assert_eq!((start, end, replacement), (5, src_lf.len() as u32 - 5, "\r\nline2\r\n"));
+        }
+
+        // from CRLF to LF
+        {
+            let (start, end, replacement) = compute_minimal_text_edit(src_crlf, src_lf);
+            assert_eq!((start, end, replacement), (5, src_crlf.len() as u32 - 5, "\nline2\n"));
+        }
     }
 }

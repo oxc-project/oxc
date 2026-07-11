@@ -207,9 +207,10 @@ fn dce_var_hoisting() {
 }
 
 // Dropping a dead-after-throw statement (`module.exports = x`) removes the
-// only reference to `x`. Without flagging that as a change, the peephole loop
-// terminates before `LiveUsageCollector` refreshes scoping, leaving the
-// unused-declarator pass to see a stale reference and keep `var x = {}`.
+// only reference to `x`. Without recording that as a mutation, the peephole
+// loop terminates before `flush_pass_dirty` prunes the dropped reference,
+// leaving the unused-declarator pass to see a stale reference and keep
+// `var x = {}`.
 #[test]
 fn dead_after_throw_drop_triggers_unused_declarator_removal() {
     test(
@@ -617,6 +618,20 @@ fn preserve_iife_in_dce_mode() {
     test_same("export const x = (() => 42)();");
     test_same("export const x = (() => { foo(); })();");
     test_same("export const x = (() => { return foo(); })();");
+
+    // A non-pure IIFE with a provably side-effect-free body is also preserved
+    // in DCE-only mode even when its result is unused. The body analysis that
+    // proves it droppable runs only under full minification.
+    // https://github.com/oxc-project/oxc/issues/23777
+    test_same("(function () { function t() {} return t })();");
+    test_same("(function () { return 1 })();");
+    // The unused binding is still dropped, but its side-effect-free IIFE
+    // initializer survives as a statement (structure preserved).
+    test("var u = (function () { return 1 })();", "(function () { return 1 })();");
+    // Nested in a sequence — still preserved (routes through the same path).
+    test_same("(function () { return 1 })(), foo();");
+    // `for`-init declarator removal must preserve the IIFE too.
+    test_same("for (var u = (function () { return 1 })(); cond;) bar();");
 }
 
 #[test]
@@ -672,5 +687,27 @@ fn fold_coalesce_on_tracked_non_nullish_binding() {
     test(
         "let n = 5n; export function a() { return n ?? other() } export function b() { return n ?? other() }",
         "let n = 5n; export function a() { return n } export function b() { return n }",
+    );
+}
+
+// Convergence regression (monitor-oxc, bluebird.js): `try_fold_if` re-extracts
+// the dead branch's `var` names via `KeepVar` on every pass and filters the
+// synthesized statement through the unused-declarator removal. Dropping `x`
+// from that TRANSIENT statement must not record a mutation — when the slot is
+// already in canonical KeepVar shape nothing in the live tree changes, and a
+// spurious mutation spins the fixed-point loop past its iteration guard.
+#[test]
+fn test_fold_if_keep_var_filter_converges() {
+    test_same("function f() {\n\tif (0) var x, y;\n\ty = 1;\n\treturn y;\n}\nf();");
+}
+
+// DCE mode is rolldown's per-module tree-shaking preprocess; the DEFAULT-mode
+// drop of write-only property assignments (full minify only) must stay off
+// here — `treeshake.property_write_side_effects: false` is rolldown's own knob
+// for opting in.
+#[test]
+fn dce_keeps_write_only_property_assignments() {
+    test_same(
+        "(function() {\n\tvar r = require(\"react\");\n\tvar o = function(e, t) {\n\t\treturn r.create(e, t);\n\t};\n\to.displayName = \"X\";\n})();",
     );
 }

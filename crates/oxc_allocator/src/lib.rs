@@ -55,6 +55,7 @@ pub mod hash_set;
 pub mod ident_hasher;
 #[cfg(feature = "pool")]
 mod pool;
+mod replace_with;
 mod string_builder;
 mod take_in;
 #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
@@ -68,22 +69,23 @@ mod arena;
 #[cfg(feature = "testing")]
 pub mod arena;
 
-pub use accessor::AllocatorAccessor;
+pub use accessor::GetAllocator;
 pub use address::{Address, GetAddress, UnstableAddress};
 pub use allocator::Allocator;
 #[cfg(feature = "bitset")]
 pub use bitset::BitSet;
-pub use boxed::Box;
+pub use boxed::{Box, Box as ArenaBox};
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
-pub use hash_map::HashMap;
-pub use hash_set::HashSet;
+pub use hash_map::{HashMap, HashMap as ArenaHashMap};
+pub use hash_set::{HashSet, HashSet as ArenaHashSet};
 pub use ident_hasher::{IdentBuildHasher, ident_hash, pack_len_hash};
 #[cfg(feature = "pool")]
 pub use pool::*;
-pub use string_builder::StringBuilder;
+pub use replace_with::ReplaceWith;
+pub use string_builder::{StringBuilder, StringBuilder as ArenaStringBuilder};
 pub use take_in::{Dummy, TakeIn};
-pub use vec::Vec;
+pub use vec::{Vec, Vec as ArenaVec};
 
 // Fixed size allocators are only supported on 64-bit little-endian platforms at present.
 //

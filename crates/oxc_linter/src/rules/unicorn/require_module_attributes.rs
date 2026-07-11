@@ -1,3 +1,4 @@
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{Expression, ObjectProperty, PropertyKind, WithClause},
@@ -177,7 +178,7 @@ fn check_with_clause(
 fn fix_empty_with_property(
     fixer: RuleFixer<'_, '_>,
     empty_with_prop: &ObjectProperty<'_>,
-    properties: &oxc_allocator::Vec<'_, oxc_ast::ast::ObjectPropertyKind<'_>>,
+    properties: &ArenaVec<'_, oxc_ast::ast::ObjectPropertyKind<'_>>,
 ) -> RuleFix {
     // Find the position of the empty_with_prop in properties
     let prop_index = properties

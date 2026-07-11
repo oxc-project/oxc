@@ -17,6 +17,7 @@ mod arguments;
 pub mod buffer;
 pub mod builders;
 mod diagnostics;
+mod embedded;
 pub mod format;
 pub mod format_element;
 mod format_extensions;
@@ -42,6 +43,9 @@ pub use buffer::{
     VecBuffer,
 };
 pub use diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError};
+pub use embedded::{
+    DispatchResult, EmbeddedContext, EmbeddedIr, FormatDispatcher, TailwindCollector,
+};
 pub use format::{Format, write};
 pub use format_element::debug::DisplayDocument;
 pub use format_element::document::Document;
@@ -54,7 +58,7 @@ pub use format_element::{
 };
 pub use format_extensions::{MemoizeFormat, Memoized};
 pub use formatted::Formatted;
-pub use formatter::Formatter;
+pub use formatter::{Formatter, arena_cow_str};
 pub use group_id::{GroupId, UniqueGroupIdBuilder};
 pub use options::{
     IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding, LineWidth,

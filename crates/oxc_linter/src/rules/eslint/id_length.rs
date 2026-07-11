@@ -1,10 +1,10 @@
 use std::ops::Deref;
 
-use icu_segmenter::GraphemeClusterSegmenter;
 use lazy_regex::Regex;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
+use unicode_segmentation::UnicodeSegmentation;
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
@@ -18,7 +18,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::AlwaysNever,
+    utils::{AlwaysNever, deserialize_regex_vec},
 };
 
 fn id_length_is_too_short_diagnostic(span: Span, config_min: u64) -> OxcDiagnostic {
@@ -48,7 +48,7 @@ impl Deref for IdLength {
 pub struct IdLengthConfig {
     /// An array of regex patterns for identifiers to exclude from the rule.
     /// For example, `["^x.*"]` would exclude all identifiers starting with "x".
-    #[serde(deserialize_with = "deserialize_exception_patterns")]
+    #[serde(deserialize_with = "deserialize_regex_vec")]
     exception_patterns: Vec<Regex>,
     /// An array of identifier names that are excluded from the rule.
     /// For example, `["x", "y", "z"]` would allow single-letter identifiers "x", "y", and "z".
@@ -76,18 +76,6 @@ impl Default for IdLengthConfig {
             properties: AlwaysNever::default(),
         }
     }
-}
-
-fn deserialize_exception_patterns<'de, D>(deserializer: D) -> Result<Vec<Regex>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    use serde::de::Error;
-
-    Vec::<String>::deserialize(deserializer)?
-        .into_iter()
-        .map(|pattern| Regex::new(&pattern).map_err(D::Error::custom))
-        .collect()
 }
 
 declare_oxc_lint!(
@@ -214,8 +202,7 @@ impl IdLength {
             let ident_length = ident_name.len();
             (self.is_too_long(ident_length), self.is_too_short(ident_length))
         } else {
-            let segmenter = GraphemeClusterSegmenter::new();
-            let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
+            let graphemes_length = ident_name.graphemes(true).count();
             (self.is_too_long(graphemes_length), self.is_too_short(graphemes_length))
         };
 
@@ -224,7 +211,9 @@ impl IdLength {
         }
 
         let parent_node = ctx.nodes().parent_node(node.id());
-        if !self.check_generic && matches!(parent_node.kind(), AstKind::TSTypeParameter(_)) {
+        if !self.check_generic
+            && matches!(parent_node.kind(), AstKind::TSTypeParameter(_) | AstKind::TSMappedType(_))
+        {
             return;
         }
 
@@ -275,8 +264,7 @@ impl IdLength {
             let ident_length = ident_name.len();
             (self.is_too_long(ident_length), self.is_too_short(ident_length))
         } else {
-            let segmenter = GraphemeClusterSegmenter::new();
-            let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
+            let graphemes_length = ident_name.graphemes(true).count();
             (self.is_too_long(graphemes_length), self.is_too_short(graphemes_length))
         };
 
@@ -382,8 +370,7 @@ impl IdLength {
             let ident_length = ident_name.len();
             (self.is_too_long(ident_length), self.is_too_short(ident_length))
         } else {
-            let segmenter = GraphemeClusterSegmenter::new();
-            let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
+            let graphemes_length = ident_name.graphemes(true).count();
             (self.is_too_long(graphemes_length), self.is_too_short(graphemes_length))
         };
 
@@ -578,6 +565,10 @@ fn test() {
             "export type Example<T> = T extends Array<infer U> ? U : never;",
             Some(serde_json::json!([{ "min": 2, "checkGeneric": false }])),
         ),
+        (
+            "type Foo<T> = { [K in keyof T]: unknown };",
+            Some(serde_json::json!([{ "min": 2, "checkGeneric": false }])),
+        ),
         ("var 𠮟 = 2", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6 },
         ("var 葛󠄀 = 2", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6 },
         ("var a = { 𐌘: 1 };", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
@@ -698,6 +689,10 @@ fn test() {
         ("class Foo { #abcdefg = 1 }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
         (
             "export type Example<T> = T extends Array<infer U> ? U : never;",
+            Some(serde_json::json!([{ "min": 2, "checkGeneric": true }])),
+        ),
+        (
+            "type Foo<T> = { [K in keyof T]: unknown };",
             Some(serde_json::json!([{ "min": 2, "checkGeneric": true }])),
         ),
         ("var 𠮟 = 2", None),              // { "ecmaVersion": 6 },

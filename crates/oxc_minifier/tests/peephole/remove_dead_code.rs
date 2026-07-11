@@ -118,6 +118,16 @@ fn test_fold_try_statement() {
     test("try {} catch (e) { } finally {}", "");
     test("try { foo() } catch (e) { bar() } finally {}", "try { foo() } catch { bar() }");
     test_same("try { foo() } catch { bar() } finally { baz() }");
+
+    // Leak regression: when the empty `try` drops, the catch arm's write-ref
+    // to `x` must be walked into `PassDirty`, else the stale write blocks
+    // constant inlining of `x`.
+    let options = CompressOptions::smallest();
+    test_options(
+        "let x = 'initial'; try {} catch (e) { x = 'unexpected'; } console.log(x);",
+        "console.log('initial');",
+        &options,
+    );
 }
 
 #[test]
@@ -168,7 +178,9 @@ fn remove_unreachable() {
     test("while(true) { throw a; unreachable;}", "for(;;) throw a");
     test("while(true) { return a; unreachable;}", "for(;;) return a");
 
-    test("(function () { return; var a })()", "(function () { return; var a })()");
+    // A kept function declaration (not a dead IIFE) so the unreachable `var a`
+    // after `return` is preserved under `unused: Keep`.
+    test("function f() { return; var a }", "function f() { return; var a }");
     test_unused("(function () { return; var a })()", "");
 }
 
@@ -189,6 +201,13 @@ fn remove_unused_expressions_in_sequence() {
     test("(true, true, foo.bar)();", "(0, foo.bar)();");
     test("var foo; (true, foo.bar)();", "var foo; (0, foo.bar)();");
     test("var foo; (true, true, foo.bar)();", "var foo; (0, foo.bar)();");
+
+    // Regression: a >=3 element sequence in indirect-access position whose
+    // second-to-last element is already `0` must converge. Re-wrapping the
+    // already-`0` element re-records a mutation every iteration, spinning
+    // the fixed-point loop into the 10-iteration debug_assert.
+    test_same("(sideEffect(), 0, foo.bar)();");
+    test_same("delete (sideEffect(), 0, foo.bar);");
 
     test("typeof (0, foo);", "foo");
     test_same("v = typeof (0, foo);");

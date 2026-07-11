@@ -131,7 +131,7 @@ declare_oxc_lint!(
     restriction,
     none,
     config = JsxNoLiteralsConfig,
-    version = "next",
+    version = "1.70.0",
     short_description = "Disallows usage of unwrapped string literals inside JSX, such as text children of a JSX element or string-valued props.",
 );
 
@@ -179,7 +179,7 @@ impl JsxNoLiterals {
 
         for prop in &obj.properties {
             if let BindingPattern::BindingIdentifier(local) = &prop.value
-                && local.symbol_id.get() == Some(symbol_id)
+                && local.symbol_id() == symbol_id
                 && let PropertyKey::StaticIdentifier(key) = &prop.key
             {
                 return Some(key.name.to_compact_str());

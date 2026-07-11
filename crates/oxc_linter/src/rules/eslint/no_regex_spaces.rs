@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, NewExpression, RegExpLiteral},
@@ -104,7 +104,7 @@ impl NoRegexSpaces {
         find_consecutive_spaces(pattern)
     }
 
-    fn find_expr_to_report(args: &Vec<'_, Argument<'_>>, ctx: &LintContext) -> Option<Span> {
+    fn find_expr_to_report(args: &ArenaVec<'_, Argument<'_>>, ctx: &LintContext) -> Option<Span> {
         if let Some(expr) = args.get(1).and_then(Argument::as_expression)
             && !expr.is_string_literal()
         {

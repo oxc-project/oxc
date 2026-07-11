@@ -8,11 +8,12 @@
 
 use std::borrow::Cow;
 
-use oxc_allocator::Vec;
+use cow_utils::CowUtils;
+use smallvec::SmallVec;
+
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_syntax::number::ToJsString;
-
-use cow_utils::CowUtils;
 
 use crate::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
@@ -27,7 +28,7 @@ use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue};
 
 fn try_fold_global_functions<'a>(
     ident: &IdentifierReference<'a>,
-    arguments: &Vec<'a, Argument<'a>>,
+    arguments: &ArenaVec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     match ident.name.as_str() {
@@ -51,7 +52,7 @@ fn try_fold_global_functions<'a>(
 
 pub fn try_fold_known_global_methods<'a>(
     callee: &Expression<'a>,
-    arguments: &Vec<'a, Argument<'a>>,
+    arguments: &ArenaVec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if let Expression::Identifier(ident) = callee {
@@ -98,7 +99,7 @@ pub fn try_fold_known_global_methods<'a>(
 }
 
 fn try_fold_string_casing<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     name: &str,
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
@@ -118,18 +119,18 @@ fn try_fold_string_casing<'a>(
     };
 
     let result = match name {
-        "toLowerCase" => ctx.ast().str(&value.cow_to_lowercase()),
-        "toUpperCase" => ctx.ast().str(&value.cow_to_uppercase()),
-        "trim" => ctx.ast().str(value.trim()),
-        "trimStart" => ctx.ast().str(value.trim_start()),
-        "trimEnd" => ctx.ast().str(value.trim_end()),
+        "toLowerCase" => Str::from_str_in(&value.cow_to_lowercase(), ctx),
+        "toUpperCase" => Str::from_str_in(&value.cow_to_uppercase(), ctx),
+        "trim" => Str::from_str_in(value.trim(), ctx),
+        "trimStart" => Str::from_str_in(value.trim_start(), ctx),
+        "trimEnd" => Str::from_str_in(value.trim_end(), ctx),
         _ => return None,
     };
     Some(ConstantValue::String(Cow::Borrowed(result.as_str())))
 }
 
 fn try_fold_string_index_of<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     name: &str,
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
@@ -164,7 +165,7 @@ fn try_fold_string_index_of<'a>(
 }
 
 fn try_fold_string_substring_or_slice<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
@@ -201,7 +202,7 @@ fn try_fold_string_substring_or_slice<'a>(
 }
 
 fn try_fold_string_char_at<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
@@ -226,7 +227,7 @@ fn try_fold_string_char_at<'a>(
 }
 
 fn try_fold_string_char_code_at<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
@@ -244,7 +245,7 @@ fn try_fold_string_char_code_at<'a>(
 }
 
 fn try_fold_starts_with<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     object: &Expression<'a>,
     _ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
@@ -257,7 +258,7 @@ fn try_fold_starts_with<'a>(
 }
 
 fn try_fold_string_replace<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     name: &str,
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
@@ -296,7 +297,7 @@ fn try_fold_string_replace<'a>(
 }
 
 fn try_fold_string_from_char_code<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
@@ -315,7 +316,7 @@ fn try_fold_string_from_char_code<'a>(
 }
 
 fn try_fold_to_string<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
@@ -386,12 +387,12 @@ fn format_radix(mut x: u32, radix: u32) -> String {
     result.into_iter().rev().collect()
 }
 
-fn validate_arguments(args: &Vec<'_, Argument<'_>>, expected_len: usize) -> bool {
+fn validate_arguments(args: &ArenaVec<'_, Argument<'_>>, expected_len: usize) -> bool {
     (args.len() == expected_len) && args.iter().all(Argument::is_expression)
 }
 
 fn try_fold_number_methods<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     object: &Expression<'a>,
     name: &str,
     ctx: &impl ConstantEvaluationCtx<'a>,
@@ -422,7 +423,7 @@ fn try_fold_number_methods<'a>(
 }
 
 fn try_fold_roots<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     name: &str,
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
@@ -446,7 +447,7 @@ fn try_fold_roots<'a>(
 }
 
 fn try_fold_math_unary<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     name: &str,
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
@@ -488,7 +489,7 @@ fn try_fold_math_unary<'a>(
 }
 
 fn try_fold_math_variadic<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     name: &str,
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
@@ -496,7 +497,7 @@ fn try_fold_math_variadic<'a>(
     if !ctx.is_global_expr("Math", object) {
         return None;
     }
-    let mut numbers = std::vec::Vec::new();
+    let mut numbers = SmallVec::<[f64; 8]>::new();
     for arg in args {
         let expr = arg.as_expression()?;
         let value = expr.get_side_free_number_value(ctx)?;
@@ -539,7 +540,7 @@ fn try_fold_math_variadic<'a>(
 }
 
 fn try_fold_encode_uri<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
@@ -568,7 +569,7 @@ fn try_fold_encode_uri<'a>(
 }
 
 fn try_fold_encode_uri_component<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
@@ -593,7 +594,7 @@ fn try_fold_encode_uri_component<'a>(
 }
 
 fn try_fold_decode_uri<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
@@ -615,7 +616,7 @@ fn try_fold_decode_uri<'a>(
 }
 
 fn try_fold_decode_uri_component<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
@@ -638,7 +639,7 @@ fn try_fold_decode_uri_component<'a>(
 }
 
 fn try_fold_global_is_nan<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
@@ -654,7 +655,7 @@ fn try_fold_global_is_nan<'a>(
 }
 
 fn try_fold_global_is_finite<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
@@ -670,7 +671,7 @@ fn try_fold_global_is_finite<'a>(
 }
 
 fn try_fold_global_parse_float<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
@@ -794,7 +795,7 @@ fn find_str_decimal_literal_prefix(input: &str) -> Option<&str> {
 }
 
 fn try_fold_global_parse_int<'a>(
-    args: &Vec<'a, Argument<'a>>,
+    args: &ArenaVec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {

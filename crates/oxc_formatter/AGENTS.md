@@ -21,7 +21,9 @@ The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(cra
   - Drives context-dependent decisions like forced parentheses / quote style
   - The formatter knows nothing about Prettier/Vue vocabulary, callers pass wrapped source
 - `format_program`: Special-purpose AST-in entry point
-- `ExternalCallbacks` (in `external_formatter.rs`): Callbacks for embedded-doc / Tailwind formatting delegated back to the host
+- `ExternalCallbacks` (in `external_formatter.rs`): The host-supplied `FormatDispatcher`
+  (embedded-language formatting, see `oxc_formatter_core`'s `embedded` module)
+  plus string-based / Tailwind callbacks delegated back to the host
 
 ### Generated code
 
@@ -48,9 +50,16 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 
 ### Embedded language formatting
 
-- Two directions: xxx-in-js (e.g. css/graphql/html in template literals) and js-in-xxx (e.g. vue/svelte)
-- Both work by Oxfmt injecting Prettier calls through `ExternalCallbacks`
-  - This crate stays unaware of Prettier and only invokes the supplied callbacks
+Two directions: xxx-in-js (css/graphql/html in template literals) and js-in-xxx (vue/svelte).
+
+- xxx-in-js goes through the `FormatDispatcher` Oxfmt assembles Rust based formatter, Prettier Doc→IR fallback otherwise
+- As the JS host, this crate also owns the parent-side concerns in `print/template/embed/`:
+  - template-literal escape on returned IR,
+  - placeholder marker insertion / survival count / `${expr}` substitution,
+  - and `.raw` vs `.cooked` selection
+  - Language formatter crates stay free of these rules
+    - See `embed/mod.rs` for the shared helpers and `embed/{css,html,graphql,markdown}.rs` for each site's wiring
+- js-in-xxx works with `prettier-plugin-oxfmt` which uses `format_fragment`
 
 ## Fixing IR construction
 
@@ -61,6 +70,65 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
   - Biome works on a CST rather than an AST, so its code and strategy differ in detail too
 
 Above all, prioritize consistency, and always consider whether the divergence is a Prettier bug.
+
+### Comment placement invariants
+
+Repositioning a comment is allowed only relative to formatter-owned punctuation
+(e.g. printing `;` before a same-line trailing comment, see `FormatContentWithSemicolon`).
+
+The `;` rule applies to statement _terminators_ only, never to member _separators_:
+
+- Terminator: the `;` cannot be replaced by `,` — statements, class members
+  (property/accessor via `FormatClassElementWithSemicolon`, bodyless methods in `MethodDefinition`).
+  A same-line trailing comment moves behind it
+- Separator: interface / type literal members and index signatures (`;` is interchangeable with `,`),
+  enum members' `,` — the comment stays before it, same as any list separator.
+  This matches Prettier and is the principled line, not an emulated quirk
+- Known gap, intentionally not covered: TS-only statements
+  (`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`).
+  They are terminators by the rule above, but Prettier does not move their comments (yet);
+  we follow Prettier for now. If Prettier extends the rule to them, follow;
+  each is a small mechanical `FormatContentWithSemicolon` adoption
+
+When the content's source parentheses survive in the output
+(return/throw arguments, sequence/assignment in the prettier#19263 positions),
+comments inside them belong to the content and stay there;
+only comments after the closing paren may move behind the terminator (see `Comments::end_including_source_parens`).
+
+The "which positions keep their parens" table is intentionally encoded twice:
+
+- `keeps_trailing_comment_inside_parens` (statement side, walks down the rightmost expression)
+- and `write_trailing_comments_inside_parens` (expression side, matches on the parent) in `print/semicolon.rs`
+
+The statement side promises not to hide/move the comment; the expression side actually prints it.
+Change them together: if they drift, the comment silently lands elsewhere (no assert catches it),
+so pin every position change in a fixture.
+
+The move-behind-the-terminator policy has four deliberate variants.
+When extending to a new node, pick by measuring Prettier, not by analogy:
+
+| Site                                                        | Source `;` required?      | Own-line comment before `;`              |
+| ----------------------------------------------------------- | ------------------------- | ---------------------------------------- |
+| Statements (`FormatContentWithSemicolon`)                   | yes (ASI: no move)        | deferred to the next node's leading pass |
+| return/throw (`ReturnAndThrowStatement`)                    | no (moves even under ASI) | printed as dangling                      |
+| Class property/accessor (`FormatClassElementWithSemicolon`) | yes                       | cancels the move (stays own-line)        |
+| Bodyless methods (`MethodDefinition`)                       | yes                       | cancels the move                         |
+
+Never let it cross:
+
+- A line boundary: line-based directives (`eslint-disable-line`, ...) must keep their meaning
+  - Line comments are printed via `line_suffix`, and own-line comments stay own-line (they become the next node's leading comments)
+  - Both are structural guarantees, keep them
+- User content (code, other comments):
+  - e.g. Prettier relocates a comment after a trailing array hole backward across commas to the last real element, that is an attachment artifact, not a rule
+  - We keep the comment in place and diverge intentionally
+- A suppression comment's target: `prettier-ignore` / `oxfmt-ignore` needs its original text
+  preserved
+  - When hiding comments from a node (`limit_comments_up_to`), check `has_trailing_suppression_comment` first, or the node loses its suppression
+
+Prettier's comment _attachment_ is position-heuristic and sometimes asymmetric
+(e.g. it moves `export type T = string /* c */;`'s comment behind the semicolon but not the non-exported form).
+When that happens, prefer one uniform rule over emulating the asymmetry, and pin the intentional divergence in a fixture with a note.
 
 ## Verification
 

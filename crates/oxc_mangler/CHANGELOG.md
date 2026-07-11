@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.139.0] - 2026-07-06
+
+### 🚀 Features
+
+- 4eb074e mangler: Add `reserved` option for names that must not be mangled (#24041) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 652fbaf mangler: Keep names of destructured exported bindings (#24036) (Dunqing)
+
+## [0.138.0] - 2026-06-29
+
+### 🐛 Bug Fixes
+
+- 8c07cad all: Enable `disable_old_builder` Cargo feature for `oxc_ast` crate in tests (#23888) (overlookmotel)
+
+## [0.137.0] - 2026-06-18
+
+### ⚡ Performance
+
+- cf24329 mangler: Compile slot sort once instead of per CAPACITY (#23577) (Boshen)
+- 3170c0e semantic,mangler,minifier: Fix `Semantic::stats` node count and reuse stats in mangler builds (#23352) (Boshen)
+
 ## [0.135.0] - 2026-06-08
 
 ### 🚀 Features

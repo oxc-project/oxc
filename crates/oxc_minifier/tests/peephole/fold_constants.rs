@@ -938,6 +938,13 @@ fn test_string_add() {
     fold("x = foo() + 'a' + 'b' + 'cd' + bar()", "x = foo()+'abcd'+bar()");
     fold("x = foo() + 2 + 'b'", "x = foo()+2+\"b\""); // don't fold!
 
+    // Don't merge string literals across a non-`+` inner operator: the inner string operand
+    // is coerced numerically, so `(x - 'b') + 'c'` is `(x - NaN) + 'c'`, not `x + 'bc'`.
+    fold_same("x = x - 'b' + 'c'");
+    fold_same("x = x * 'b' + 'c'");
+    fold_same("x = x % 'b' + 'c'");
+    fold_same("x = (x & 'b') + 'c'");
+
     fold("x = foo() + 'a' + 2", "x = foo()+\"a2\"");
     fold("x = '' + null", "x = 'null'");
     fold("x = true + '' + false", "x = 'truefalse'");
@@ -1277,6 +1284,37 @@ fn test_inline_values_in_template_literal() {
     fold("`foo${'${}'}`", "'foo${}'");
     fold("`foo${'${}'}${i}`", "`foo\\${}${i}`");
     fold_same("foo`foo${1}bar`");
+}
+
+// Regression: when `fold_object_exp` drops or folds a spread, the dropped
+// subtree must be walked through `drop_expression` so identifier references
+// inside don't leak across passes. The discriminating signal is an
+// otherwise-inlineable symbol that stays uninlined because a stale
+// write-ref hangs around in `Scoping` (#22736).
+//
+// Test options keep unused declarations (`CompressOptionsUnused::Keep`), so
+// `let x` survives — but with `write_references_count == 0` the inline pass
+// replaces `return x` with the constant value. Without the drop walk, the
+// dropped subtree's stale write-ref leaves the count at 1 and inline is
+// blocked.
+#[test]
+fn test_fold_object_spread_drop_walks_argument_refs() {
+    // Path 2: spread argument is a side-effect-free function expression,
+    // folded away entirely. The write to `x` inside the function body must
+    // be cleared from `Scoping`, otherwise the constant inline of `x`
+    // below is blocked by a stale write-reference.
+    test(
+        "function f() { let x = 'a'; ({...function(){ x = 'b' }}); return x; }",
+        "function f() { let x = 'a'; return 'a'; }",
+    );
+    // Path 3: non-computed `__proto__` from an inlined object literal is
+    // elided because it would set the prototype rather than become a
+    // regular property. The dropped property's value subtree must be
+    // walked for the same reason.
+    test(
+        "function f() { let x = 'a'; ({...{__proto__: function(){ x = 'b' }}}); return x; }",
+        "function f() { let x = 'a'; return 'a'; }",
+    );
 }
 
 mod bigint {

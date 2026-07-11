@@ -1,12 +1,12 @@
 use std::cell::Cell;
 
-use oxc_allocator::{TakeIn, Vec as ArenaVec};
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{SPAN, Span};
-use oxc_str::Ident;
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
     constant_value::ConstantValue,
     number::NumberBase,
@@ -134,7 +134,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
             *expr = match value {
                 ConstantValue::Number(n) => Self::get_initializer_expr(n, ctx),
                 ConstantValue::String(s) => {
-                    ctx.ast.expression_string_literal(SPAN, ctx.ast.str(&s), None)
+                    Expression::new_string_literal(SPAN, Str::from_str_in(&s, ctx), None, ctx)
                 }
             };
         }
@@ -175,27 +175,37 @@ impl<'a> TypeScriptEnum {
             decl.id.name,
         );
 
-        let ast = ctx.ast;
-
         let is_export = export_span.is_some();
         let is_not_top_scope = !ctx.scoping().scope_flags(ctx.current_scope_id()).is_top();
 
         let enum_name: Ident = decl.id.name;
         let func_scope_id = decl.body.scope_id();
+        ctx.scoping_mut().scope_flags_mut(func_scope_id).insert(ScopeFlags::Function);
         let param_binding =
             ctx.generate_binding(enum_name, func_scope_id, SymbolFlags::FunctionScopedVariable);
 
         let id = param_binding.create_binding_pattern(ctx);
 
         // ((Foo) => {
-        let params =
-            ast.formal_parameter(SPAN, ast.vec(), id, NONE, NONE, false, None, false, false);
-        let params = ast.vec1(params);
-        let params = ast.alloc_formal_parameters(
+        let params = FormalParameter::new(
+            SPAN,
+            ArenaVec::new_in(ctx),
+            id,
+            NONE,
+            NONE,
+            false,
+            None,
+            false,
+            false,
+            ctx,
+        );
+        let params = ArenaVec::from_value_in(params, ctx);
+        let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::ArrowFormalParameters,
             params,
             NONE,
+            ctx,
         );
 
         let has_potential_side_effect = decl.body.members.iter().any(|member| {
@@ -212,8 +222,8 @@ impl<'a> TypeScriptEnum {
             ctx,
         );
         let span = decl.span;
-        let body = ast.alloc_function_body(span, ast.vec(), statements);
-        let callee = ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
+        let body = FunctionBody::boxed(span, ArenaVec::new_in(ctx), statements, ctx);
+        let callee = Expression::new_function_expression_with_scope_id_and_pure_and_pife(
             span,
             FunctionType::FunctionExpression,
             None,
@@ -228,6 +238,7 @@ impl<'a> TypeScriptEnum {
             func_scope_id,
             false,
             false,
+            ctx,
         );
 
         let enum_symbol_id = decl.id.symbol_id();
@@ -239,8 +250,8 @@ impl<'a> TypeScriptEnum {
 
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
-            let object_expr = ast.expression_object(SPAN, ast.vec());
-            ast.vec1(Argument::from(object_expr))
+            let object_arg = Argument::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx);
+            ArenaVec::from_value_in(object_arg, ctx)
         } else {
             // }(Foo || {});
             let op = LogicalOperator::Or;
@@ -250,21 +261,26 @@ impl<'a> TypeScriptEnum {
                 enum_symbol_id,
                 ReferenceFlags::Read,
             );
-            let right = ast.expression_object(SPAN, ast.vec());
-            let expression = ast.expression_logical(span, left, op, right);
-            ast.vec1(Argument::from(expression))
+            let right = Expression::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx);
+            let argument = Argument::new_logical_expression(span, left, op, right, ctx);
+            ArenaVec::from_value_in(argument, ctx)
         };
 
-        let call_expression = ast.expression_call_with_pure(
+        let call_expression = Expression::new_call_expression_with_pure(
             span,
             callee,
             NONE,
             arguments,
             false,
             !has_potential_side_effect,
+            ctx,
         );
 
         if is_already_declared {
+            // The lowered output assigns to the existing runtime binding — drop only the
+            // enum bits and keep the flags describing that binding. Updating flags
+            // mid-traversal doesn't break member inlining — see `resolve_enum_member`.
+            *ctx.scoping_mut().symbol_flags_mut(enum_symbol_id) -= SymbolFlags::Enum;
             let op = AssignmentOperator::Assign;
             let left = ctx.create_bound_ident_reference(
                 decl.id.span,
@@ -273,28 +289,44 @@ impl<'a> TypeScriptEnum {
                 ReferenceFlags::Write,
             );
             let left = AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(left));
-            let expr = ast.expression_assignment(span, op, left, call_expression);
-            return Some(ast.statement_expression(span, expr));
+            let expr = Expression::new_assignment_expression(span, op, left, call_expression, ctx);
+            return Some(Statement::new_expression_statement(span, expr, ctx));
         }
 
-        let kind = if is_export || is_not_top_scope {
-            VariableDeclarationKind::Let
+        let (kind, flags) = if is_export || is_not_top_scope {
+            (VariableDeclarationKind::Let, SymbolFlags::BlockScopedVariable)
         } else {
-            VariableDeclarationKind::Var
+            (VariableDeclarationKind::Var, SymbolFlags::FunctionScopedVariable)
         };
+        // The symbol flags now describe the emitted `var`/`let` binding.
+        *ctx.scoping_mut().symbol_flags_mut(enum_symbol_id) = flags;
         let decls = {
-            let binding_identifier = decl.id.clone();
-            let binding = BindingPattern::BindingIdentifier(ctx.alloc(binding_identifier));
-            let decl =
-                ast.variable_declarator(span, kind, binding, NONE, Some(call_expression), false);
-            ast.vec1(decl)
+            let binding = BindingPattern::new_binding_identifier_with_symbol_id(
+                decl.id.span,
+                decl.id.name,
+                enum_symbol_id,
+                ctx,
+            );
+            let decl = VariableDeclarator::new(
+                span,
+                kind,
+                binding,
+                NONE,
+                Some(call_expression),
+                false,
+                ctx,
+            );
+            ArenaVec::from_value_in(decl, ctx)
         };
-        let variable_declaration = ast.declaration_variable(span, kind, decls, false);
+        let variable_declaration =
+            Declaration::new_variable_declaration(span, kind, decls, false, ctx);
 
         let stmt = if let Some(export_span) = export_span {
-            let declaration = ctx
-                .ast
-                .plain_export_named_declaration_declaration(export_span, variable_declaration);
+            let declaration = ExportNamedDeclaration::boxed_plain_declaration(
+                export_span,
+                variable_declaration,
+                ctx,
+            );
             Statement::ExportNamedDeclaration(declaration)
         } else {
             Statement::from(variable_declaration)
@@ -308,9 +340,9 @@ impl<'a> TypeScriptEnum {
         param_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, Statement<'a>> {
-        let ast = ctx.ast;
-
-        let mut statements = ast.vec();
+        // Each member pushes exactly one statement, plus a final `return` statement,
+        // so the length is known up front — pre-size to avoid growth reallocations.
+        let mut statements = ArenaVec::with_capacity_in(members.len() + 1, ctx);
 
         // If enum number has no initializer, its value will be the previous member value + 1,
         // if it's the first member, it will be `0`.
@@ -319,7 +351,7 @@ impl<'a> TypeScriptEnum {
 
         let mut prev_member_name = None;
 
-        for member in members.take_in(ctx.ast) {
+        for member in members.take_in(ctx) {
             let member_span = member.span;
             let member_name = member.id.static_name();
 
@@ -347,7 +379,12 @@ impl<'a> TypeScriptEnum {
                         }
                         ConstantValue::String(s) => {
                             prev_constant_number = None;
-                            ast.expression_string_literal(SPAN, ctx.ast.str(&s), None)
+                            Expression::new_string_literal(
+                                SPAN,
+                                Str::from_str_in(&s, ctx),
+                                None,
+                                ctx,
+                            )
                         }
                     },
                 }
@@ -359,13 +396,19 @@ impl<'a> TypeScriptEnum {
             } else if let Some(prev_member_name) = prev_member_name {
                 let self_ref = {
                     let obj = param_binding.create_read_expression(ctx);
-                    let expr = ctx.ast.expression_string_literal(SPAN, prev_member_name, None);
-                    ast.member_expression_computed(SPAN, obj, expr, false).into()
+                    let expr = Expression::new_string_literal(SPAN, prev_member_name, None, ctx);
+                    Expression::new_computed_member_expression(SPAN, obj, expr, false, ctx)
                 };
 
                 // 1 + Foo["x"]
                 let one = Self::get_number_literal_expression(1.0, ctx);
-                ast.expression_binary(SPAN, one, BinaryOperator::Addition, self_ref)
+                Expression::new_binary_expression(
+                    SPAN,
+                    one,
+                    BinaryOperator::Addition,
+                    self_ref,
+                    ctx,
+                )
             } else {
                 Self::get_number_literal_expression(0.0, ctx)
             };
@@ -375,41 +418,43 @@ impl<'a> TypeScriptEnum {
             // Foo["x"] = init
             let member_expr = {
                 let obj = param_binding.create_read_expression(ctx);
-                let expr = ast.expression_string_literal(SPAN, member_name, None);
+                let expr = Expression::new_string_literal(SPAN, member_name, None, ctx);
 
-                ast.member_expression_computed(SPAN, obj, expr, false)
+                MemberExpression::new_computed_member_expression(SPAN, obj, expr, false, ctx)
             };
             let left = SimpleAssignmentTarget::from(member_expr);
-            let mut expr = ast.expression_assignment(
+            let mut expr = Expression::new_assignment_expression(
                 member_span,
                 AssignmentOperator::Assign,
                 left.into(),
                 init,
+                ctx,
             );
 
             // Foo[Foo["x"] = init] = "x"
             if !is_str {
                 let member_expr = {
                     let obj = param_binding.create_read_expression(ctx);
-                    ast.member_expression_computed(SPAN, obj, expr, false)
+                    MemberExpression::new_computed_member_expression(SPAN, obj, expr, false, ctx)
                 };
                 let left = SimpleAssignmentTarget::from(member_expr);
-                let right = ast.expression_string_literal(SPAN, member_name, None);
-                expr = ast.expression_assignment(
+                let right = Expression::new_string_literal(SPAN, member_name, None, ctx);
+                expr = Expression::new_assignment_expression(
                     member_span,
                     AssignmentOperator::Assign,
                     left.into(),
                     right,
+                    ctx,
                 );
             }
 
             prev_member_name = Some(member_name);
-            statements.push(ast.statement_expression(member_span, expr));
+            statements.push(Statement::new_expression_statement(member_span, expr, ctx));
         }
 
         let enum_ref = param_binding.create_read_expression(ctx);
         // return Foo;
-        let return_stmt = ast.statement_return(SPAN, Some(enum_ref));
+        let return_stmt = Statement::new_return_statement(SPAN, Some(enum_ref), ctx);
         statements.push(return_stmt);
 
         statements
@@ -468,7 +513,7 @@ impl<'a> TypeScriptEnum {
     }
 
     fn get_number_literal_expression(value: f64, ctx: &TraverseCtx<'a>) -> Expression<'a> {
-        ctx.ast.expression_numeric_literal(SPAN, value, None, NumberBase::Decimal)
+        Expression::new_numeric_literal(SPAN, value, None, NumberBase::Decimal, ctx)
     }
 
     fn get_initializer_expr(value: f64, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
@@ -476,7 +521,7 @@ impl<'a> TypeScriptEnum {
 
         // Infinity
         let expr = if value.is_infinite() {
-            let infinity = ctx.ast.ident("Infinity");
+            let infinity = static_ident!("Infinity");
             let infinity_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), infinity);
             ctx.create_ident_expr(SPAN, infinity, infinity_symbol_id, ReferenceFlags::Read)
         } else {
@@ -485,7 +530,7 @@ impl<'a> TypeScriptEnum {
         };
 
         if is_negative {
-            ctx.ast.expression_unary(SPAN, UnaryOperator::UnaryNegation, expr)
+            Expression::new_unary_expression(SPAN, UnaryOperator::UnaryNegation, expr, ctx)
         } else {
             expr
         }
@@ -526,14 +571,19 @@ impl<'a> TypeScriptEnum {
         let ref_id = ident.reference_id.get()?;
         let symbol_id = ctx.scoping().get_reference(ref_id).symbol_id()?;
 
-        let flags = ctx.scoping().symbol_flags(symbol_id);
-        let is_const_enum = flags.is_const_enum() && self.optimize_const_enums;
-        let is_regular_enum = flags.contains(SymbolFlags::RegularEnum) && self.optimize_enums;
-        if !is_const_enum && !is_regular_enum {
+        // `SymbolFlags` can't identify enums here: once a declaration is lowered, its
+        // flags describe the emitted `var`/`let` binding, but references visited after
+        // it must still inline. The enum data in `Scoping` stays valid throughout.
+        let body_scopes = ctx.scoping().get_enum_body_scopes(symbol_id)?;
+        let optimize = if ctx.scoping().is_const_enum(symbol_id) {
+            self.optimize_const_enums
+        } else {
+            self.optimize_enums
+        };
+        if !optimize {
             return None;
         }
 
-        let body_scopes = ctx.scoping().get_enum_body_scopes(symbol_id)?;
         for &body_scope_id in body_scopes {
             if let Some(member_symbol_id) =
                 ctx.scoping().get_binding(body_scope_id, property_name.into())
@@ -672,9 +722,12 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
             Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {
-                let object = self.ctx.ast.expression_identifier(SPAN, self.enum_name);
-                let property = self.ctx.ast.identifier_name(SPAN, ident.name);
-                *expr = self.ctx.ast.member_expression_static(SPAN, object, property, false).into();
+                let object = Expression::new_identifier(SPAN, self.enum_name, self.ctx);
+                let property = IdentifierName::new(SPAN, ident.name, self.ctx);
+                *expr = MemberExpression::new_static_member_expression(
+                    SPAN, object, property, false, self.ctx,
+                )
+                .into();
             }
             _ => {
                 walk_mut::walk_expression(self, expr);

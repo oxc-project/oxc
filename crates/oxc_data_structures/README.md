@@ -16,6 +16,8 @@ This crate provides specialized data structures and utilities that are used thro
 - **Box macros**: Macros for creating boxed arrays / slices (similar to `vec!` macro)
 - **Fieldless enums macro**: Macro for creating enums with a `VARIANTS` constant listing all variants
 - **Non-null pointers**: `NonNullConst<T>` and `NonNullMut<T>` - non-null pointer types with explicit const/mut permissions
+- **Branch prediction hints**: `likely` and `unlikely` functions to hint to the compiler whether a branch is likely to be taken (also re-exports `std::hint::cold_path`)
+- **`StringExt` trait**: Add methods to `String` to push without capacity checks
 
 ## Architecture
 

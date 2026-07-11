@@ -3,7 +3,7 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, BitSet, CloneIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec, BitSet, CloneIn};
 use oxc_index::IndexVec;
 use oxc_span::Span;
 use oxc_str::{ArenaIdentHashMap, Ident};
@@ -122,8 +122,8 @@ impl Default for Scoping {
             enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
-                symbol_names: ArenaVec::new_in(allocator),
-                resolved_references: ArenaVec::new_in(allocator),
+                symbol_names: ArenaVec::new_in(&allocator),
+                resolved_references: ArenaVec::new_in(&allocator),
                 symbol_redeclarations: FxHashMap::default(),
                 bindings: IndexVec::new(),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
@@ -257,8 +257,15 @@ mod scoping_cell {
         }
     }
 
-    /// SAFETY: `ScopingCell` can be `Send` because both the `Allocator` and `Vec`s / `HashMap`s
-    /// storing their data in that `Allocator` are moved to another thread together.
+    /// SAFETY: `ScopingCell` can be `Send` because both the `Allocator`, and the `Vec`s / `HashMap`s
+    /// storing their data in that `Allocator`, are moved to another thread together.
+    ///
+    /// One case doesn't fit that "moved together" picture: `ReplaceWith`'s panic path (in `oxc_allocator`)
+    /// writes a dummy backed by its own dedicated, global `'static` allocator, which does *not* travel
+    /// with this bundle. Sending is still sound, because each such dummy allocator is exclusively owned -
+    /// reachable only through the single value that holds it, and mutated only via `&mut` to that value -
+    /// so no two threads can ever touch one. The invariant this impl really rests on is single-ownership
+    /// of each referenced allocator, not co-location.
     unsafe impl Send for ScopingCell {}
 
     /// SAFETY: `ScopingCell` can be `Sync` if `ScopingInner` is `Sync`, because `ScopingCell` provides
@@ -309,12 +316,14 @@ impl Scoping {
     }
 
     /// Iterate all symbol names in insertion order.
-    pub fn symbol_names(&self) -> impl Iterator<Item = &str> + '_ {
+    pub fn symbol_names(&self) -> impl ExactSizeIterator<Item = &str> + '_ {
         self.cell.borrow_dependent().symbol_names.iter().map(Ident::as_str)
     }
 
     /// Iterate resolved reference ID lists for each symbol.
-    pub fn resolved_references(&self) -> impl Iterator<Item = &ArenaVec<'_, ReferenceId>> + '_ {
+    pub fn resolved_references(
+        &self,
+    ) -> impl ExactSizeIterator<Item = &ArenaVec<'_, ReferenceId>> + '_ {
         self.cell.borrow_dependent().resolved_references.iter()
     }
 
@@ -324,7 +333,7 @@ impl Scoping {
     /// scope.
     ///
     /// [`ScopeTree::iter_bindings_in`]: crate::scoping::Scoping::iter_bindings_in
-    pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
+    pub fn symbol_ids(&self) -> impl ExactSizeIterator<Item = SymbolId> + '_ {
         self.symbol_table.iter_ids()
     }
 
@@ -334,6 +343,12 @@ impl Scoping {
     #[inline]
     pub fn symbol_span(&self, symbol_id: SymbolId) -> Span {
         *self.symbol_table.symbol_spans(symbol_id)
+    }
+
+    /// Set the span of `symbol_id`.
+    #[inline]
+    pub fn set_symbol_span(&mut self, symbol_id: SymbolId, span: Span) {
+        *self.symbol_table.symbol_spans_mut(symbol_id) = span;
     }
 
     /// Get the identifier name a symbol is bound to.
@@ -349,8 +364,6 @@ impl Scoping {
     }
 
     /// Rename a symbol.
-    ///
-    /// Returns the old name.
     #[inline]
     pub fn set_symbol_name(&mut self, symbol_id: SymbolId, name: Ident<'_>) {
         self.cell.with_dependent_mut(|allocator, cell| {
@@ -441,7 +454,7 @@ impl Scoping {
     ) -> SymbolId {
         self.cell.with_dependent_mut(|allocator, cell| {
             cell.symbol_names.push(name.clone_in(allocator));
-            cell.resolved_references.push(ArenaVec::new_in(allocator));
+            cell.resolved_references.push(ArenaVec::new_in(&allocator));
         });
         self.symbol_table.push(span, flags, scope_id, node_id)
     }
@@ -460,7 +473,7 @@ impl Scoping {
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = name.clone_in(allocator);
             cell.symbol_names.push(name);
-            cell.resolved_references.push(ArenaVec::new_in(allocator));
+            cell.resolved_references.push(ArenaVec::new_in(&allocator));
             cell.bindings[binding_scope_id].insert(name, symbol_id);
         });
         symbol_id
@@ -496,11 +509,43 @@ impl Scoping {
                             "The above step has already been checked, and it was first declared."
                         )
                     });
-                    let v = ArenaVec::from_array_in([first_declaration, redeclaration], allocator);
+                    let v = ArenaVec::from_array_in([first_declaration, redeclaration], &allocator);
                     vacant.insert(v);
                 }
             }
         });
+    }
+
+    /// Remove all redeclaration metadata for a symbol.
+    pub fn clear_symbol_redeclarations(&mut self, symbol_id: SymbolId) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.symbol_redeclarations.remove(&symbol_id);
+        });
+    }
+
+    /// Remove one declaration from a merged symbol and promote the first surviving declaration.
+    pub fn remove_symbol_declaration(&mut self, symbol_id: SymbolId, span: Span) {
+        let replacement = self.cell.with_dependent_mut(|_allocator, cell| {
+            let redeclarations = cell.symbol_redeclarations.get_mut(&symbol_id)?;
+            redeclarations.retain(|redeclaration| redeclaration.span != span);
+
+            let first = redeclarations.first()?.clone();
+            let flags = redeclarations
+                .iter()
+                .fold(SymbolFlags::None, |flags, redeclaration| flags | redeclaration.flags);
+            let has_redeclarations = redeclarations.len() > 1;
+            if !has_redeclarations {
+                cell.symbol_redeclarations.remove(&symbol_id);
+            }
+
+            Some((first, flags))
+        });
+
+        if let Some((replacement, flags)) = replacement {
+            *self.symbol_table.symbol_spans_mut(symbol_id) = replacement.span;
+            *self.symbol_table.symbol_declarations_mut(symbol_id) = replacement.declaration;
+            *self.symbol_table.symbol_flags_mut(symbol_id) = flags;
+        }
     }
 
     #[inline]
@@ -599,18 +644,21 @@ impl Scoping {
         });
     }
 
-    /// Retain only resolved references that are in the given set.
+    /// Remove every `ReferenceId` whose bit is set in `excluded` from each
+    /// symbol's resolved-references list. O(total_references) in the worst
+    /// case; short-circuits when `excluded` has no bits set.
     ///
-    /// This is an O(n) batch operation across all symbols, much more efficient than
-    /// calling `delete_resolved_reference` repeatedly when many references from the
-    /// same symbol need to be removed (which would be O(n²) due to the linear scan
-    /// in each deletion).
-    ///
-    /// `live_references` should be sized to [`Self::references_len`] at construction time.
-    pub fn retain_resolved_references(&mut self, live_references: &BitSet<'_>) {
+    /// `excluded` should be sized to at least [`Self::references_len`] at the
+    /// time it was constructed. References created after the bitset was
+    /// constructed have indices beyond `excluded.capacity()` and are treated
+    /// as live (never excluded) — `BitSet::contains` is `false` past capacity.
+    pub fn retain_resolved_references_excluding(&mut self, excluded: &BitSet<'_>) {
+        if excluded.is_empty() {
+            return;
+        }
         self.cell.with_dependent_mut(|_allocator, cell| {
             for reference_ids in &mut cell.resolved_references {
-                reference_ids.retain(|id| live_references.has_bit(id.index()));
+                reference_ids.retain(|id| !excluded.contains(id.index()));
             }
         });
     }
@@ -652,6 +700,10 @@ impl Scoping {
 
     /// Get the body scopes for an enum declaration symbol.
     /// Returns multiple scopes for merged enum declarations.
+    ///
+    /// Unlike the enum bits in `SymbolFlags`, this stays valid after the transformer
+    /// lowers the enum to a `var`/`let` binding, so it identifies enums at any point
+    /// during a transform.
     pub fn get_enum_body_scopes(&self, symbol_id: SymbolId) -> Option<&[ScopeId]> {
         self.enum_data.get_body_scopes(symbol_id)
     }
@@ -660,6 +712,19 @@ impl Scoping {
     /// Appends to the list (supports merged enum declarations).
     pub(crate) fn add_enum_body_scope(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
         self.enum_data.add_body_scope(symbol_id, scope_id);
+    }
+
+    /// Whether the symbol is a `const enum` declaration.
+    ///
+    /// Returns `false` for regular enums and non-enum symbols alike — gate on
+    /// [`Self::get_enum_body_scopes`] to identify enums.
+    pub fn is_const_enum(&self, symbol_id: SymbolId) -> bool {
+        self.enum_data.is_const_enum(symbol_id)
+    }
+
+    /// Mark a symbol as a `const enum` declaration.
+    pub(crate) fn add_const_enum(&mut self, symbol_id: SymbolId) {
+        self.enum_data.add_const_enum(symbol_id);
     }
 }
 
@@ -699,7 +764,7 @@ impl Scoping {
     }
 
     /// Iterate all scope IDs from the root scope through all descendants.
-    pub fn scope_descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
+    pub fn scope_descendants_from_root(&self) -> impl ExactSizeIterator<Item = ScopeId> + '_ {
         self.scope_table.iter_ids()
     }
 
@@ -802,7 +867,7 @@ impl Scoping {
             let name = name.clone_in(allocator);
             cell.root_unresolved_references
                 .entry(name)
-                .or_insert_with(|| ArenaVec::new_in(allocator))
+                .or_insert_with(|| ArenaVec::new_in(&allocator))
                 .push(reference_id);
         });
     }
@@ -859,13 +924,16 @@ impl Scoping {
     /// If you only want bindings in a specific scope, use [`iter_bindings_in`].
     ///
     /// [`iter_bindings_in`]: Scoping::iter_bindings_in
-    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, &Bindings<'_>)> + '_ {
+    pub fn iter_bindings(&self) -> impl ExactSizeIterator<Item = (ScopeId, &Bindings<'_>)> + '_ {
         self.cell.borrow_dependent().bindings.iter_enumerated()
     }
 
     /// Iterate over bindings declared inside a scope.
     #[inline]
-    pub fn iter_bindings_in(&self, scope_id: ScopeId) -> impl Iterator<Item = SymbolId> + '_ {
+    pub fn iter_bindings_in(
+        &self,
+        scope_id: ScopeId,
+    ) -> impl ExactSizeIterator<Item = SymbolId> + '_ {
         self.cell.borrow_dependent().bindings[scope_id].values().copied()
     }
 
@@ -980,16 +1048,40 @@ impl Scoping {
         });
     }
 
-    /// Remove bindings that exist only in TypeScript type space.
+    /// Remove bindings that exist only in TypeScript syntax.
     pub fn delete_typescript_bindings(&mut self) {
+        #[expect(
+            clippy::inline_always,
+            reason = "Hot predicate called for every semantic reference"
+        )]
+        #[inline(always)]
+        fn is_typescript_reference(reference: &Reference) -> bool {
+            let flags = reference.flags();
+            (flags.is_type() && !flags.is_value()) || flags.is_value_as_type()
+        }
+
+        let references = &self.references;
+
         self.cell.with_dependent_mut(|_allocator, cell| {
+            for reference_ids in &mut cell.resolved_references {
+                reference_ids
+                    .retain(|reference_id| !is_typescript_reference(&references[*reference_id]));
+            }
+
+            cell.root_unresolved_references.retain(|_name, reference_ids| {
+                reference_ids
+                    .retain(|reference_id| !is_typescript_reference(&references[*reference_id]));
+                !reference_ids.is_empty()
+            });
+
             for bindings in &mut cell.bindings {
                 bindings.retain(|_name, symbol_id| {
                     let flags = *self.symbol_table.symbol_flags(*symbol_id);
                     !flags.intersects(
                         SymbolFlags::TypeAlias
                             | SymbolFlags::Interface
-                            | SymbolFlags::TypeParameter,
+                            | SymbolFlags::TypeParameter
+                            | SymbolFlags::EnumMember,
                     )
                 });
             }

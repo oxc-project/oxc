@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.135.0",
+  "version": "0.139.0",
   "description": "Oxc Parser Node API",
   "keywords": [
     "ast",
@@ -26,6 +26,7 @@
     "src-js/bindings.js",
     "src-js/index.d.ts",
     "src-js/index.js",
+    "src-js/wasm.d.ts",
     "src-js/wasm.js",
     "src-js/webcontainer-fallback.cjs",
     "src-js/wrap.js",
@@ -85,8 +86,8 @@
     "@napi-rs/wasm-runtime": "catalog:",
     "@types/node": "catalog:",
     "@typescript-eslint/visitor-keys": "^8.54.0",
-    "@vitest/browser": "4.1.8",
-    "@vitest/browser-playwright": "4.1.8",
+    "@vitest/browser": "4.1.9",
+    "@vitest/browser-playwright": "4.1.9",
     "playwright": "^1.51.0",
     "publint": "catalog:",
     "rolldown": "catalog:",

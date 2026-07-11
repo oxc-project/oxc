@@ -4,7 +4,7 @@ use unicode_width::UnicodeWidthStr;
 
 use std::cmp;
 
-use oxc_allocator::{StringBuilder, Vec as ArenaVec};
+use oxc_allocator::{ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_formatter_core::IndentWidth;
 use oxc_span::{GetSpan, Span};
@@ -21,6 +21,7 @@ use crate::{
     },
     utils::{
         call_expression::is_test_each_pattern,
+        expression::is_member_expression_without_chain_wrappers,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         tailwindcss::{is_tailwind_function_call, write_tailwind_template_element},
     },
@@ -422,20 +423,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a, '_> {
                 let indent = self.expression.as_expression().is_some_and(|e| {
                     has_comment_in_expression
                         || match e.as_ref() {
-                            Expression::StaticMemberExpression(_)
-                            | Expression::ComputedMemberExpression(_)
-                            | Expression::PrivateFieldExpression(_)
-                            | Expression::ConditionalExpression(_)
+                            Expression::ConditionalExpression(_)
                             | Expression::SequenceExpression(_)
                             | Expression::TSAsExpression(_)
                             | Expression::TSSatisfiesExpression(_)
                             | Expression::BinaryExpression(_)
                             | Expression::LogicalExpression(_)
                             | Expression::Identifier(_) => true,
-                            Expression::ChainExpression(chain) => {
-                                chain.expression.is_member_expression()
-                            }
-                            _ => false,
+                            e => is_member_expression_without_chain_wrappers(e),
                         }
                 });
 
@@ -747,9 +742,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for EachTemplateTable<'a> {
                         let mut content = if current_column != 0
                             && (!is_last_in_row || !column.text.is_empty())
                         {
-                            StringBuilder::from_strs_array_in([" ", column.text], f.allocator())
+                            ArenaStringBuilder::from_strs_array_in(
+                                [" ", column.text],
+                                f.allocator(),
+                            )
                         } else {
-                            StringBuilder::from_str_in(column.text, f.allocator())
+                            ArenaStringBuilder::from_str_in(column.text, f.allocator())
                         };
 
                         // align the column based on the maximum column width in the table

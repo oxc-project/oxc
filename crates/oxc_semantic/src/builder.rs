@@ -6,8 +6,9 @@ use std::{
 };
 
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 
-use oxc_allocator::Address;
+use oxc_allocator::{Address, ArenaVec};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::Visit;
 #[cfg(feature = "cfg")]
@@ -17,7 +18,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
-use oxc_str::{Ident, IdentHashMap};
+use oxc_str::Ident;
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -83,11 +84,14 @@ pub struct SemanticBuilder<'a> {
     pub(crate) current_function_node_id: NodeId,
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
+    /// Nesting depth of TypeScript ambient contexts.
+    ambient_depth: u32,
     /// Symbols that have been hoisted out of a scope (e.g. `var` declarations hoisted to
     /// the enclosing function scope, or Annex B function declarations hoisted to the var scope).
-    /// Keyed by the **original** scope the symbol was declared in, so that future declarations
-    /// in that scope can still detect redeclarations via `check_redeclaration`.
-    pub(crate) hoisting_variables: FxHashMap<ScopeId, IdentHashMap<'a, SymbolId>>,
+    /// Keyed by the `(original scope, name)` the symbol was declared in, so that future
+    /// declarations in that scope can still detect redeclarations via `check_redeclaration`.
+    /// A single flat map avoids allocating a per-scope inner map for every hoisting scope.
+    pub(crate) hoisting_variables: FxHashMap<(ScopeId, Ident<'a>), SymbolId>,
 
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
@@ -151,6 +155,7 @@ impl<'a> SemanticBuilder<'a> {
             source_type: SourceType::default(),
             errors: RefCell::new(Diagnostics::new()),
             current_reference_flags: ReferenceFlags::empty(),
+            ambient_depth: 0,
             current_scope_id,
             current_function_node_id: NodeId::ROOT,
             module_instance_state_cache: FxHashMap::default(),
@@ -374,12 +379,14 @@ impl<'a> SemanticBuilder<'a> {
         #[cfg(debug_assertions)]
         self.unused_labels.assert_empty();
 
+        let node_count = self.node_store.node_count();
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
             comments: &program.comments,
             irregular_whitespaces: [].into(),
             nodes: self.node_store.into_nodes(),
+            node_count,
             scoping: self.scoping,
             classes: self.class_table_builder.build(),
             #[cfg(feature = "jsdoc")]
@@ -408,12 +415,23 @@ impl<'a> SemanticBuilder<'a> {
         self.node_store.ancestry()
     }
 
-    pub(crate) fn in_declare_scope(&self) -> bool {
-        self.source_type.is_typescript_definition()
-            || self
-                .scoping
-                .scope_ancestors(self.current_scope_id)
-                .any(|scope_id| self.scoping.scope_flags(scope_id).is_ts_module_block())
+    pub(crate) fn in_ambient_context(&self) -> bool {
+        self.ambient_depth > 0
+    }
+
+    #[inline]
+    fn enter_ambient_context(&mut self, is_ambient: bool) {
+        if is_ambient {
+            self.ambient_depth += 1;
+        }
+    }
+
+    #[inline]
+    fn leave_ambient_context(&mut self, is_ambient: bool) {
+        if is_ambient {
+            debug_assert!(self.ambient_depth > 0);
+            self.ambient_depth -= 1;
+        }
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
@@ -563,12 +581,13 @@ impl<'a> SemanticBuilder<'a> {
         &self,
         scope_id: ScopeId,
         span: Span,
-        name: Ident<'_>,
+        name: Ident<'a>,
         excludes: SymbolFlags,
     ) -> Option<SymbolId> {
-        let symbol_id = self.scoping.get_binding(scope_id, name).or_else(|| {
-            self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(&name).copied())
-        })?;
+        let symbol_id = self
+            .scoping
+            .get_binding(scope_id, name)
+            .or_else(|| self.hoisting_variables.get(&(scope_id, name)).copied())?;
 
         let flags = self.scoping.symbol_flags(symbol_id);
 
@@ -745,7 +764,7 @@ impl<'a> SemanticBuilder<'a> {
         );
     }
 
-    fn visit_parameter_decorators(&mut self, decorators: &oxc_allocator::Vec<'a, Decorator<'a>>) {
+    fn visit_parameter_decorators(&mut self, decorators: &ArenaVec<'a, Decorator<'a>>) {
         if decorators.is_empty() {
             return;
         }
@@ -867,6 +886,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             AstNodeStoreKind::Ancestry(stack) => stack.push(kind),
         }
 
+        let is_ambient = self.source_type.is_typescript_definition();
+        self.enter_ambient_context(is_ambient);
+
         // Don't call `enter_scope` here as `Program` is a special case - scope has no `parent_id`.
         // Inline the specific logic for `Program` here instead.
         // This simplifies logic in `enter_scope`, as it doesn't have to handle the special case.
@@ -899,9 +921,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.resolve_all_references();
 
         self.leave_node(kind);
+        self.leave_ambient_context(is_ambient);
 
         // Check `current_function_node_id` has been reset to as it was at start
-        debug_assert!(self.current_function_node_id == NodeId::ROOT);
+        debug_assert_eq!(self.current_function_node_id, NodeId::ROOT);
+        debug_assert_eq!(self.ambient_depth, 0);
     }
 
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
@@ -931,12 +955,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_class(&mut self, class: &Class<'a>) {
         let kind = AstKind::Class(self.alloc(class));
         self.enter_node(kind);
-        self.node_store.current_node_flags |= NodeFlags::Class;
         if class.is_declaration() {
             class.bind(self);
         }
 
         self.visit_decorators(&class.decorators);
+        self.enter_ambient_context(class.declare);
         self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
 
         if class.is_expression() {
@@ -952,7 +976,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
         if let Some(super_class) = &class.super_class {
+            if self.in_ambient_context() {
+                self.current_reference_flags = ReferenceFlags::ValueAsType;
+            }
             self.visit_expression(super_class);
+            self.current_reference_flags = ReferenceFlags::empty();
         }
         if let Some(super_type_parameters) = &class.super_type_arguments {
             self.visit_ts_type_parameter_instantiation(super_type_parameters);
@@ -962,7 +990,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_scope();
         self.leave_node(kind);
-        self.node_store.current_node_flags -= NodeFlags::Class;
+        self.leave_ambient_context(class.declare);
         self.class_table_builder.pop_class();
     }
 
@@ -983,7 +1011,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 } else {
                     let mut parent_bindings = Bindings::new_in(allocator);
                     mem::swap(&mut cell.bindings[parent_scope_id], &mut parent_bindings);
-                    let parent_symbol_ids = parent_bindings.values().copied().collect::<Vec<_>>();
+                    // Collect into a `SmallVec` so the common `catch (e)` (a single binding)
+                    // resolves inline without a heap allocation. The ids must be collected
+                    // here to escape the `with_dependent_mut` borrow before calling
+                    // `set_symbol_scope_id` below.
+                    let parent_symbol_ids =
+                        parent_bindings.values().copied().collect::<SmallVec<[SymbolId; 4]>>();
                     cell.bindings[self.current_scope_id] = parent_bindings;
                     Some(parent_symbol_ids)
                 }
@@ -1331,10 +1364,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         #[cfg(feature = "cfg")]
-        let before_body_graph_ix = control_flow!(self, |cfg| {
+        let (after_update_graph_ix, before_body_graph_ix) = control_flow!(self, |cfg| {
+            let after_update_graph_ix = cfg.current_node_ix;
             let before_body_graph_ix = cfg.new_basic_block_normal();
             cfg.ctx(None).default().allow_break().allow_continue();
-            before_body_graph_ix
+            (after_update_graph_ix, before_body_graph_ix)
         });
         /* cfg */
 
@@ -1347,7 +1381,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             cfg.add_edge(before_for_graph_ix, test_graph_ix, EdgeType::Normal);
             cfg.add_edge(after_test_graph_ix, before_body_graph_ix, EdgeType::Jump);
             cfg.add_edge(after_body_graph_ix, update_graph_ix, EdgeType::Backedge);
-            cfg.add_edge(update_graph_ix, test_graph_ix, EdgeType::Backedge);
+            cfg.add_edge(after_update_graph_ix, test_graph_ix, EdgeType::Backedge);
             cfg.add_edge(after_test_graph_ix, after_for_stmt, EdgeType::Normal);
 
             cfg.ctx(None)
@@ -1909,12 +1943,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg - body basic block */
         #[cfg(feature = "cfg")]
-        let body_graph_ix = control_flow!(self, |cfg| {
+        let (after_test_graph_ix, body_graph_ix) = control_flow!(self, |cfg| {
             cfg.append_condition_to(condition_graph_ix, test_node_id);
+            let after_test_graph_ix = cfg.current_node_ix;
             let body_graph_ix = cfg.new_basic_block_normal();
 
             cfg.ctx(None).default().allow_break().allow_continue();
-            body_graph_ix
+            (after_test_graph_ix, body_graph_ix)
         });
         /* cfg */
 
@@ -1926,9 +1961,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             let after_while_graph_ix = cfg.new_basic_block_normal();
 
             cfg.add_edge(before_while_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
-            cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Jump);
+            cfg.add_edge(after_test_graph_ix, body_graph_ix, EdgeType::Jump);
             cfg.add_edge(after_body_graph_ix, condition_graph_ix, EdgeType::Backedge);
-            cfg.add_edge(condition_graph_ix, after_while_graph_ix, EdgeType::Normal);
+            cfg.add_edge(after_test_graph_ix, after_while_graph_ix, EdgeType::Normal);
 
             cfg.ctx(None)
                 .mark_break(after_while_graph_ix)
@@ -1993,6 +2028,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         let kind = AstKind::Function(self.alloc(func));
         self.enter_node(kind);
+        self.enter_ambient_context(func.declare);
 
         let parent_function_node_id = self.current_function_node_id;
         self.current_function_node_id = self.node_store.current_node_id;
@@ -2082,6 +2118,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_scope();
         self.leave_node(kind);
+        self.leave_ambient_context(func.declare);
 
         self.current_function_node_id = parent_function_node_id;
     }
@@ -2339,12 +2376,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.visit_span(&it.span);
 
-        self.node_store.current_node_flags |= NodeFlags::ExportSpecifier;
-
         self.visit_module_export_name(&it.local);
         self.visit_module_export_name(&it.exported);
-
-        self.node_store.current_node_flags -= NodeFlags::ExportSpecifier;
 
         self.leave_node(kind);
     }
@@ -2410,6 +2443,77 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.current_reference_flags = ReferenceFlags::empty();
         self.leave_node(kind);
+    }
+
+    fn visit_ts_method_signature(&mut self, sig: &TSMethodSignature<'a>) {
+        let kind = AstKind::TSMethodSignature(self.alloc(sig));
+        self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty(), &sig.scope_id);
+        self.visit_span(&sig.span);
+        if sig.computed {
+            // interface A { [prop](): string }
+            //                ^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
+            self.current_reference_flags = ReferenceFlags::ValueAsType;
+        }
+        self.visit_property_key(&sig.key);
+        self.current_reference_flags = ReferenceFlags::empty();
+        if let Some(type_parameters) = &sig.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        if let Some(this_param) = &sig.this_param {
+            self.visit_ts_this_parameter(this_param);
+        }
+        self.visit_formal_parameters(&sig.params);
+        if let Some(return_type) = &sig.return_type {
+            self.visit_ts_type_annotation(return_type);
+        }
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_method_definition(&mut self, method: &MethodDefinition<'a>) {
+        let kind = AstKind::MethodDefinition(self.alloc(method));
+        self.enter_node(kind);
+        self.visit_span(&method.span);
+        self.visit_decorators(&method.decorators);
+        if method.computed && (method.r#type.is_abstract() || self.in_ambient_context()) {
+            // declare class A { [prop](): string }
+            //                    ^^^^  The property can reference value or [`SymbolFlags::TypeImport`] symbol
+            self.current_reference_flags = ReferenceFlags::ValueAsType;
+        }
+        self.visit_property_key(&method.key);
+        self.current_reference_flags = ReferenceFlags::empty();
+        let flags = match method.kind {
+            MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
+            MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
+            MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
+            MethodDefinitionKind::Method => ScopeFlags::Function,
+        };
+        self.visit_function(&method.value, flags);
+        self.leave_node(kind);
+    }
+
+    fn visit_property_definition(&mut self, prop: &PropertyDefinition<'a>) {
+        let kind = AstKind::PropertyDefinition(self.alloc(prop));
+        self.enter_node(kind);
+        self.visit_span(&prop.span);
+        self.visit_decorators(&prop.decorators);
+        self.enter_ambient_context(prop.declare);
+        if prop.computed && (prop.r#type.is_abstract() || self.in_ambient_context()) {
+            // class A { declare [prop]: string }
+            //                   ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
+            self.current_reference_flags = ReferenceFlags::ValueAsType;
+        }
+        self.visit_property_key(&prop.key);
+        self.current_reference_flags = ReferenceFlags::empty();
+        if let Some(type_annotation) = &prop.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &prop.value {
+            self.visit_expression(value);
+        }
+        self.leave_node(kind);
+        self.leave_ambient_context(prop.declare);
     }
 
     fn visit_import_specifier(&mut self, specifier: &ImportSpecifier<'a>) {
@@ -2529,6 +2633,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_ts_module_declaration(&mut self, decl: &TSModuleDeclaration<'a>) {
         let kind = AstKind::TSModuleDeclaration(self.alloc(decl));
         self.enter_node(kind);
+        self.enter_ambient_context(decl.declare);
         decl.bind(self);
         self.visit_span(&decl.span);
         self.visit_ts_module_declaration_name(&decl.id);
@@ -2548,11 +2653,26 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_scope();
         self.leave_node(kind);
+        self.leave_ambient_context(decl.declare);
+    }
+
+    fn visit_ts_global_declaration(&mut self, decl: &TSGlobalDeclaration<'a>) {
+        let kind = AstKind::TSGlobalDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        self.enter_ambient_context(decl.declare);
+        self.enter_scope(ScopeFlags::TsModuleBlock, &decl.scope_id);
+        self.visit_span(&decl.span);
+        self.visit_span(&decl.global_span);
+        self.visit_ts_module_block(&decl.body);
+        self.leave_scope();
+        self.leave_node(kind);
+        self.leave_ambient_context(decl.declare);
     }
 
     fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
         let kind = AstKind::TSTypeAliasDeclaration(self.alloc(decl));
         self.enter_node(kind);
+        self.enter_ambient_context(decl.declare);
         decl.bind(self);
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
@@ -2563,11 +2683,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_ts_type(&decl.type_annotation);
         self.leave_scope();
         self.leave_node(kind);
+        self.leave_ambient_context(decl.declare);
     }
 
     fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
         let kind = AstKind::TSInterfaceDeclaration(self.alloc(decl));
         self.enter_node(kind);
+        self.enter_ambient_context(decl.declare);
         decl.bind(self);
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
@@ -2579,11 +2701,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_ts_interface_body(&decl.body);
         self.leave_scope();
         self.leave_node(kind);
+        self.leave_ambient_context(decl.declare);
     }
 
     fn visit_ts_enum_declaration(&mut self, decl: &TSEnumDeclaration<'a>) {
         let kind = AstKind::TSEnumDeclaration(self.alloc(decl));
         self.enter_node(kind);
+        self.enter_ambient_context(decl.declare);
         decl.bind(self);
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
@@ -2593,6 +2717,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             crate::ts_enum::eval::evaluate_enum_members(decl, &mut self.scoping);
         }
         self.leave_node(kind);
+        self.leave_ambient_context(decl.declare);
     }
 
     fn visit_ts_enum_member(&mut self, member: &TSEnumMember<'a>) {
@@ -2750,10 +2875,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
         let kind = AstKind::VariableDeclaration(self.alloc(it));
         self.enter_node(kind);
+        self.enter_ambient_context(it.declare);
         control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
         self.visit_span(&it.span);
         self.visit_variable_declarators(&it.declarations);
         self.leave_node(kind);
+        self.leave_ambient_context(it.declare);
     }
 
     fn visit_empty_statement(&mut self, it: &EmptyStatement) {

@@ -100,6 +100,16 @@ impl Rule for BranchesSharingCode {
             return;
         };
 
+        // Analyze the entire chain from its root instead of reporting on an `else if` suffix.
+        if let AstKind::IfStatement(parent_if) = ctx.nodes().parent_kind(node.id())
+            && parent_if
+                .alternate
+                .as_ref()
+                .is_some_and(|alternate| alternate.span() == if_stmt.span)
+        {
+            return;
+        }
+
         let (conditions, bodies) = extract_if_sequence(if_stmt);
 
         if bodies.len() < 2 || bodies.len() == conditions.len() {
@@ -127,7 +137,7 @@ impl Rule for BranchesSharingCode {
                     .iter()
                     .map(|body| get_duplicated_delete_span(start, body, false))
                     .collect::<Vec<_>>();
-                let moved_code = ctx.source_range(spans[0]).to_string();
+                let moved_code = ctx.source_range(spans[0]);
                 ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                     let fixer = fixer.for_multifix();
                     let mut fix = fixer.new_fix_with_capacity(spans.len() + 1);
@@ -156,7 +166,7 @@ impl Rule for BranchesSharingCode {
                     .iter()
                     .map(|body| get_duplicated_delete_span(end, body, true))
                     .collect::<Vec<_>>();
-                let moved_code = ctx.source_range(spans[0]).to_string();
+                let moved_code = ctx.source_range(spans[0]);
                 ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                     let fixer = fixer.for_multifix();
                     let mut fix = fixer.new_fix_with_capacity(spans.len() + 1);
@@ -404,6 +414,18 @@ fn test() {
             if (maybe2) { console.log("not maybe and maybe2"); }
         }
         "#,
+        r"
+        if (someCondition) {
+            y = somethingElse;
+            x = '1';
+        } else if (someOtherCondition) {
+            y = somethingElse;
+            x = 'b';
+        } else {
+            viewId = accountId;
+            x = 'b';
+        }
+        ",
     ];
 
     let fail = vec![

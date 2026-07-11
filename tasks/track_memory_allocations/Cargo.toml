@@ -18,6 +18,7 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true, features = ["track_allocations"] }
+oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 oxc_formatter = { workspace = true }
 oxc_minifier = { workspace = true }
 oxc_parser = { workspace = true }
@@ -31,3 +32,7 @@ mimalloc-safe = { workspace = true }
 [features]
 # Sentinel flag that should only get enabled if we're running under `--all-features`
 is_all_features = []
+
+# `oxc_ast` is a feature-only dependency, to enable its `disable_old_builder` feature
+[package.metadata.cargo-shear]
+ignored = ["oxc_ast"]

@@ -4,6 +4,75 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.139.0] - 2026-07-06
+
+### 🐛 Bug Fixes
+
+- e8b50ee transformer: Clean up semantics for stripped TypeScript syntax (#24180) (camc314)
+- 4b16e1a transformer/async-to-generator: Preserve direct eval scope flags (#24136) (camc314)
+- 018c0e5 transformer: Hoist lowered async declarations (#22770) (camc314)
+
+### ⚡ Performance
+
+- c5ca77b transformer: Avoid cloning refresh options (#24191) (camc314)
+- abb44a0 transformer: Build fixed object-rest arguments (#24190) (camc314)
+- ff10855 transformer: Use `ReplaceWith` instead of `TakeIn` (#24015) (overlookmotel)
+- e6d48e1 transformer/nullish_coalescing: Move cold path into separate function (#23989) (overlookmotel)
+- c4e35b5 transformer/object_rest_spread: Pre-allocate capacity in `Vec` (#23988) (overlookmotel)
+- 527b8e5 transformer/decorators: Narrow type earlier (#23987) (overlookmotel)
+
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 94fbacb ast: [**BREAKING**] Only export `AstBuilder` and `NONE` in `builder` module (#23876) (overlookmotel)
+- dc0ef38 transformer: [**BREAKING**] Switch to new `AstBuilder` (#23831) (overlookmotel)
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+
+### ⚡ Performance
+
+- e1886a0 transformer, minifier: Use `static_ident!` macro to create static `Ident`s (#23727) (overlookmotel)
+- 5527bef transformer/object-rest-spread: Reduce iteration (#23720) (overlookmotel)
+- 680ffbc transformer: Allocate AST nodes in arena directly (#23711) (overlookmotel)
+
+### 📚 Documentation
+
+- 3d61dea all: Correct capitalization in comments (#23887) (overlookmotel)
+
+## [0.137.0] - 2026-06-18
+
+### 🐛 Bug Fixes
+
+- 20375f9 react_compiler: Keep imports referenced only by a computed key (#23586) (Boshen)
+
+### ⚡ Performance
+
+- dfb52b6 transformer: Pre-size statement vecs in TS enum & namespace lowering (#23516) (Yunfei He)
+- 3fa8051 transformer: Pre-size JSX props vec to attribute count (#23466) (Yunfei He)
+
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- bb0ed44 transformer: [**BREAKING**] Disable styled-components transpileTemplateLiterals by default (#23171) (Boshen)
+
+### 🚀 Features
+
+- 6c0bdf0 transformer/react-refresh: Support `module.property.useHook()` (#23190) (Dunqing)
+- ec266bb transformer: Run React Compiler as a feature-gated transform pass (#23201) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 2c28748 transformer/class: Parent generated constructors to class scope (#23222) (camc314)
+
+### 📚 Documentation
+
+- 09755ac transformer: Add `AGENTS.md` test guidance for agents (#23439) (camc314)
+
 ## [0.135.0] - 2026-06-08
 
 ### 💥 BREAKING CHANGES

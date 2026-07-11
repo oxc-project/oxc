@@ -48,13 +48,13 @@
       "markdownDescription": "Enabled or disabled specific global variables."
     },
     "ignorePatterns": {
-      "description": "Globs to ignore during linting. These are resolved from the configuration file path.",
+      "description": "Globs to ignore during linting. Patterns use gitignore-style matching,\nrooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..`\nare rejected as a configuration error.",
       "default": [],
       "type": "array",
       "items": {
         "type": "string"
       },
-      "markdownDescription": "Globs to ignore during linting. These are resolved from the configuration file path."
+      "markdownDescription": "Globs to ignore during linting. Patterns use gitignore-style matching,\nrooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..`\nare rejected as a configuration error."
     },
     "jsPlugins": {
       "description": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```",
@@ -672,6 +672,46 @@
       },
       "additionalProperties": false
     },
+    "AnchorIsValidAspect": {
+      "type": "string",
+      "enum": [
+        "noHref",
+        "invalidHref",
+        "preferButton"
+      ]
+    },
+    "AnchorIsValidConfig": {
+      "type": "object",
+      "properties": {
+        "aspects": {
+          "description": "Sub-rule aspects to run.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AnchorIsValidAspect"
+          },
+          "markdownDescription": "Sub-rule aspects to run."
+        },
+        "components": {
+          "description": "Custom components to treat as anchor elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to treat as anchor elements."
+        },
+        "specialLink": {
+          "description": "Custom prop names to treat as link destinations.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom prop names to treat as link destinations."
+        }
+      },
+      "additionalProperties": false
+    },
     "ArgsOption": {
       "oneOf": [
         {
@@ -844,8 +884,10 @@
       "type": "object",
       "properties": {
         "requireReturnForObjectLiteral": {
+          "description": "Requires braces and an explicit return for object literals. This option only applies when\nthe first option is `\"as-needed\"`.",
           "default": false,
-          "type": "boolean"
+          "type": "boolean",
+          "markdownDescription": "Requires braces and an explicit return for object literals. This option only applies when\nthe first option is `\"as-needed\"`."
         }
       },
       "additionalProperties": false
@@ -1095,6 +1137,14 @@
         }
       },
       "additionalProperties": false
+    },
+    "CallbackReturn": {
+      "description": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`."
     },
     "CapitalizedCommentsOptions": {
       "description": "Configuration for the capitalized-comments rule.\n\nThe first element specifies whether comments should `\"always\"` or `\"never\"`\nbegin with a capital letter. The second element is an optional object\ncontaining additional options.",
@@ -1438,6 +1488,18 @@
       },
       "additionalProperties": false
     },
+    "ComplexityConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/ComplexityConfig"
+        }
+      ]
+    },
     "Config": {
       "type": "array",
       "items": [
@@ -1709,6 +1771,7 @@
           "default": 2,
           "type": "integer",
           "format": "uint8",
+          "maximum": 25.0,
           "minimum": 0.0,
           "markdownDescription": "Maximum depth to search for an accessible label within the element.\nDefaults to `2`."
         },
@@ -2241,14 +2304,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "$ref": "#/definitions/ComplexityConfig"
-                    }
-                  ]
+                  "$ref": "#/definitions/ComplexityConfigEnum"
                 }
               ],
               "maxItems": 2,
@@ -2335,7 +2391,57 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "func-name-matching": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/FuncNameMatchingMode"
+                    },
+                    {
+                      "$ref": "#/definitions/FuncNameMatchingConfig"
+                    }
+                  ],
+                  "maxItems": 3,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/FuncNameMatchingMode"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/FuncNameMatchingConfig"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              ]
+            }
+          ]
         },
         "func-names": {
           "anyOf": [
@@ -2502,7 +2608,57 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "import/extensions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ExtensionRule"
+                    },
+                    {
+                      "$ref": "#/definitions/ImportExtensionsObject"
+                    }
+                  ],
+                  "maxItems": 3,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ExtensionRule"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/ImportExtensionsObject"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              ]
+            }
+          ]
         },
         "import/first": {
           "anyOf": [
@@ -3391,13 +3547,47 @@
           "$ref": "#/definitions/DummyRule"
         },
         "jsdoc/require-param-description": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireParamDescriptionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/require-param-name": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsdoc/require-param-type": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireParamTypeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/require-property": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -3513,7 +3703,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/anchor-is-valid": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AnchorIsValidConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/aria-activedescendant-has-tabindex": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -3786,7 +3993,24 @@
           ]
         },
         "jsx-a11y/no-noninteractive-element-interactions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoNoninteractiveElementInteractionsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/no-noninteractive-element-to-interactive-role": {
           "anyOf": [
@@ -3918,14 +4142,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxClassesPerFileConfig"
-                    }
-                  ]
+                  "$ref": "#/definitions/MaxClassesPerFileConfigEnum"
                 }
               ],
               "maxItems": 2,
@@ -3945,14 +4162,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxDepth"
-                    }
-                  ]
+                  "$ref": "#/definitions/MaxDepthConfigEnum"
                 }
               ],
               "maxItems": 2,
@@ -3972,14 +4182,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxLinesConfig"
-                    }
-                  ]
+                  "$ref": "#/definitions/MaxLinesConfigEnum"
                 }
               ],
               "maxItems": 2,
@@ -3999,14 +4202,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxLinesPerFunctionConfig"
-                    }
-                  ]
+                  "$ref": "#/definitions/MaxLinesPerFunctionConfigEnum"
                 }
               ],
               "maxItems": 2,
@@ -4026,14 +4222,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxNestedCallbacks"
-                    }
-                  ]
+                  "$ref": "#/definitions/MaxNestedCallbacksConfigEnum"
                 }
               ],
               "maxItems": 2,
@@ -4053,14 +4242,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxParamsConfig"
-                    }
-                  ]
+                  "$ref": "#/definitions/MaxParamsConfigEnum"
                 }
               ],
               "maxItems": 2,
@@ -4080,14 +4262,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxStatementsConfig"
-                    }
-                  ]
+                  "$ref": "#/definitions/MaxStatementsConfigEnum"
                 }
               ],
               "maxItems": 2,
@@ -4266,7 +4441,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "no-constant-binary-expression": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoConstantBinaryExpressionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "no-constant-condition": {
           "anyOf": [
@@ -4909,10 +5101,46 @@
           "$ref": "#/definitions/DummyRule"
         },
         "no-restricted-imports": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
+                }
+              ],
+              "additionalItems": {
+                "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
+              },
+              "minItems": 2
+            }
+          ]
         },
         "no-restricted-properties": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PropertyDetails"
+                }
+              ],
+              "additionalItems": {
+                "$ref": "#/definitions/PropertyDetails"
+              },
+              "minItems": 2
+            }
+          ]
         },
         "no-return-assign": {
           "anyOf": [
@@ -5112,6 +5340,26 @@
         },
         "no-unreachable": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "no-unreachable-loop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoUnreachableLoop"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "no-unsafe-finally": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -5350,7 +5598,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "node/callback-return": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CallbackReturn"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "node/global-require": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -5378,6 +5643,26 @@
         "node/no-exports-assign": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "node/no-mixed-requires": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoMixedRequiresConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "node/no-new-require": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -5397,6 +5682,26 @@
                 },
                 {
                   "$ref": "#/definitions/NoProcessEnvConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "node/no-sync": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoSyncConfig"
                 }
               ],
               "maxItems": 2,
@@ -5651,7 +5956,27 @@
           ]
         },
         "prefer-destructuring": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferDestructuringOption"
+                },
+                {
+                  "$ref": "#/definitions/PreferDestructuringRenamedPropertiesConfig"
+                }
+              ],
+              "maxItems": 3,
+              "minItems": 2
+            }
+          ]
         },
         "prefer-exponentiation-operator": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -6360,7 +6685,47 @@
           ]
         },
         "react/jsx-no-script-url": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/JsxNoScriptUrlComponent"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/JsxNoScriptUrlOptions"
+                    }
+                  ],
+                  "maxItems": 3,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/JsxNoScriptUrlOptions"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              ]
+            }
+          ]
         },
         "react/jsx-no-target-blank": {
           "anyOf": [
@@ -6709,6 +7074,26 @@
                 },
                 {
                   "$ref": "#/definitions/PreferFunctionComponent"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "react/react-compiler": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ReactCompilerConfig"
                 }
               ],
               "maxItems": 2,
@@ -8286,6 +8671,26 @@
             }
           ]
         },
+        "unicorn/explicit-timer-delay": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExplicitTimerDelayMode"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "unicorn/filename-case": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -8302,6 +8707,26 @@
                 },
                 {
                   "$ref": "#/definitions/ImportStyleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "unicorn/max-nested-calls": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MaxNestedCalls"
                 }
               ],
               "maxItems": 2,
@@ -8397,6 +8822,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/no-await-in-promise-methods": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "unicorn/no-confusing-array-with": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/no-console-spaces": {
@@ -8611,7 +9039,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/numeric-separators-style": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NumericSeparatorsStyleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "unicorn/prefer-add-event-listener": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -8744,6 +9189,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/prefer-node-protocol": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "unicorn/prefer-number-coercion": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/prefer-number-properties": {
@@ -9680,6 +10128,26 @@
         "vue/no-arrow-functions-in-watch": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vue/no-async-in-computed-properties": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoAsyncInComputedProperties"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "vue/no-computed-properties-in-data": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -9720,6 +10188,26 @@
         },
         "vue/no-deprecated-vue-config-keycodes": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vue/no-dupe-keys": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoDupeKeys"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "vue/no-export-in-script-setup": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -10270,6 +10758,36 @@
       },
       "additionalProperties": false
     },
+    "ExplicitTimerDelayMode": {
+      "oneOf": [
+        {
+          "description": "Require explicit `delay` argument for clarity.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Require explicit `delay` argument for clarity."
+        },
+        {
+          "description": "Disallow explicit `0` delay, prefer implicit default.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallow explicit `0` delay, prefer implicit default."
+        }
+      ]
+    },
+    "ExtensionRule": {
+      "description": "Extension rule configuration; Copy to avoid extra indirection.",
+      "type": "string",
+      "enum": [
+        "always",
+        "never",
+        "ignorePackages"
+      ],
+      "markdownDescription": "Extension rule configuration; Copy to avoid extra indirection."
+    },
     "ExternalPluginEntry": {
       "anyOf": [
         {
@@ -10381,12 +10899,12 @@
       "type": "object",
       "properties": {
         "forbid": {
-          "description": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, an optional `disallowedFor` array of DOM node names,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`",
+          "description": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, optional `disallowedFor` and `disallowedValues` arrays,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"type\", \"disallowedValues\": [\"button\"] }] }]`",
           "type": "array",
           "items": {
             "$ref": "#/definitions/ForbidDomPropsItem"
           },
-          "markdownDescription": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, an optional `disallowedFor` array of DOM node names,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`"
+          "markdownDescription": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, optional `disallowedFor` and `disallowedValues` arrays,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"type\", \"disallowedValues\": [\"button\"] }] }]`"
         }
       },
       "additionalProperties": false,
@@ -10401,13 +10919,13 @@
           "markdownDescription": "A prop name to forbid on all DOM elements."
         },
         {
-          "description": "A prop with optional `disallowedFor` DOM node list and custom `message`.",
+          "description": "A prop with optional `disallowedFor` DOM node list, optional\n`disallowedValues` value list, and custom `message`.",
           "allOf": [
             {
               "$ref": "#/definitions/PropWithOptions"
             }
           ],
-          "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+          "markdownDescription": "A prop with optional `disallowedFor` DOM node list, optional\n`disallowedValues` value list, and custom `message`."
         }
       ],
       "markdownDescription": "A forbidden prop, either as a plain prop name string or with options."
@@ -10476,15 +10994,10 @@
     },
     "ForbidItemObject": {
       "type": "object",
-      "required": [
-        "allowedFor",
-        "allowedForPatterns",
-        "disallowedFor",
-        "disallowedForPatterns"
-      ],
       "properties": {
         "allowedFor": {
           "description": "Component names for which this prop is **allowed** (all others are\nforbidden).",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10493,6 +11006,7 @@
         },
         "allowedForPatterns": {
           "description": "Glob patterns for component names where the prop is **allowed**.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10501,6 +11015,7 @@
         },
         "disallowedFor": {
           "description": "Component names for which this prop is **disallowed** (all others are\nallowed).",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10509,6 +11024,7 @@
         },
         "disallowedForPatterns": {
           "description": "Glob patterns for component names where the prop is **disallowed**.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10551,6 +11067,31 @@
           ],
           "markdownDescription": "This mode enforces the standard form for React fragments.\n\nExamples of **incorrect** code for this rule:\n```jsx\n<><Foo /></>\n```\n\nExamples of **correct** code for this rule:\n```jsx\n<React.Fragment><Foo /></React.Fragment>\n```\n\n```jsx\n<React.Fragment key=\"key\"><Foo /></React.Fragment>\n```"
         }
+      ]
+    },
+    "FuncNameMatchingConfig": {
+      "type": "object",
+      "properties": {
+        "considerPropertyDescriptor": {
+          "description": "If `considerPropertyDescriptor` is set to `true`, the check will take into account the use of `Object.create`, `Object.defineProperty`, `Object.defineProperties`, and `Reflect.defineProperty`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If `considerPropertyDescriptor` is set to `true`, the check will take into account the use of `Object.create`, `Object.defineProperty`, `Object.defineProperties`, and `Reflect.defineProperty`."
+        },
+        "includeCommonJSModuleExports": {
+          "description": "If `includeCommonJSModuleExports` is set to `true`, `module.exports` and `module[\"exports\"]` will be checked by this rule.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If `includeCommonJSModuleExports` is set to `true`, `module.exports` and `module[\"exports\"]` will be checked by this rule."
+        }
+      },
+      "additionalProperties": false
+    },
+    "FuncNameMatchingMode": {
+      "type": "string",
+      "enum": [
+        "always",
+        "never"
       ]
     },
     "FuncNames": {
@@ -10706,9 +11247,9 @@
       "additionalProperties": false
     },
     "HandleCallbackErrConfig": {
-      "description": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\n\nDefault: `\"err\"`.",
+      "description": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\nInvalid regexp patterns are rejected during configuration parsing.\n\nDefault: `\"err\"`.",
       "type": "string",
-      "markdownDescription": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\n\nDefault: `\"err\"`."
+      "markdownDescription": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\nInvalid regexp patterns are rejected during configuration parsing.\n\nDefault: `\"err\"`."
     },
     "HeadingHasContentConfig": {
       "type": "object",
@@ -11006,6 +11547,53 @@
         }
       },
       "additionalProperties": false
+    },
+    "ImportExtensionsConfig": {
+      "type": "object",
+      "properties": {
+        "checkTypeImports": {
+          "description": "Whether to check type imports when enforcing extension rules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check type imports when enforcing extension rules."
+        },
+        "ignorePackages": {
+          "description": "Whether to ignore package imports when enforcing extension rules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore package imports when enforcing extension rules."
+        },
+        "pathGroupOverrides": {
+          "description": "Path group overrides for bespoke import specifiers.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PathGroupOverrideConfig"
+          },
+          "markdownDescription": "Path group overrides for bespoke import specifiers."
+        },
+        "pattern": {
+          "description": "Per-extension rules.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ExtensionRule"
+          },
+          "markdownDescription": "Per-extension rules."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ImportExtensionsObject": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ImportExtensionsConfig"
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ExtensionRule"
+          }
+        }
+      ]
     },
     "ImportKind": {
       "type": "string",
@@ -11545,6 +12133,41 @@
       "additionalProperties": false,
       "markdownDescription": "The options shared between the top-level config and each `elementOverrides` entry."
     },
+    "JsxNoScriptUrlComponent": {
+      "type": "object",
+      "required": [
+        "name",
+        "props"
+      ],
+      "properties": {
+        "name": {
+          "description": "Component name.",
+          "type": "string",
+          "markdownDescription": "Component name."
+        },
+        "props": {
+          "description": "List of properties that should be validated.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of properties that should be validated."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JsxNoScriptUrlOptions": {
+      "type": "object",
+      "properties": {
+        "includeFromSettings": {
+          "description": "Whether to include components from settings.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to include components from settings."
+        }
+      },
+      "additionalProperties": false
+    },
     "JsxNoTargetBlank": {
       "type": "object",
       "properties": {
@@ -11830,6 +12453,16 @@
       },
       "additionalProperties": false
     },
+    "LoopType": {
+      "type": "string",
+      "enum": [
+        "WhileStatement",
+        "DoWhileStatement",
+        "ForStatement",
+        "ForInStatement",
+        "ForOfStatement"
+      ]
+    },
     "MaxClassesPerFileConfig": {
       "type": "object",
       "properties": {
@@ -11849,6 +12482,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "MaxClassesPerFileConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxClassesPerFileConfig"
+        }
+      ]
     },
     "MaxDependenciesConfig": {
       "type": "object",
@@ -11896,6 +12541,18 @@
       },
       "additionalProperties": false
     },
+    "MaxDepthConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxDepth"
+        }
+      ]
+    },
     "MaxExpectsConfig": {
       "type": "object",
       "properties": {
@@ -11936,6 +12593,18 @@
       },
       "additionalProperties": false
     },
+    "MaxLinesConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxLinesConfig"
+        }
+      ]
+    },
     "MaxLinesPerFunctionConfig": {
       "type": "object",
       "properties": {
@@ -11968,6 +12637,18 @@
       },
       "additionalProperties": false
     },
+    "MaxLinesPerFunctionConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxLinesPerFunctionConfig"
+        }
+      ]
+    },
     "MaxNestedCallbacks": {
       "type": "object",
       "properties": {
@@ -11978,6 +12659,32 @@
           "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The `max` enforces a maximum depth that callbacks can be nested."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MaxNestedCallbacksConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxNestedCallbacks"
+        }
+      ]
+    },
+    "MaxNestedCalls": {
+      "type": "object",
+      "properties": {
+        "max": {
+          "description": "The maximum allowed nested call depth.",
+          "default": 3,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The maximum allowed nested call depth."
         }
       },
       "additionalProperties": false
@@ -12025,6 +12732,18 @@
       },
       "additionalProperties": false
     },
+    "MaxParamsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxParamsConfig"
+        }
+      ]
+    },
     "MaxProps": {
       "type": "object",
       "properties": {
@@ -12058,6 +12777,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "MaxStatementsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxStatementsConfig"
+        }
+      ]
     },
     "MediaHasCaptionConfig": {
       "type": "object",
@@ -12159,11 +12890,31 @@
       ]
     },
     "Mode2": {
-      "type": "string",
-      "enum": [
-        "as-needed",
-        "always",
-        "never"
+      "oneOf": [
+        {
+          "description": "Enforces no braces where they can be omitted (default).",
+          "type": "string",
+          "enum": [
+            "as-needed"
+          ],
+          "markdownDescription": "Enforces no braces where they can be omitted (default)."
+        },
+        {
+          "description": "Enforces braces around the function body.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Enforces braces around the function body."
+        },
+        {
+          "description": "Enforces no braces around the function body (constrains arrow functions to the role of returning an expression).",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Enforces no braces around the function body (constrains arrow functions to the role of returning an expression)."
+        }
       ]
     },
     "Modifier": {
@@ -12524,6 +13275,12 @@
     "NoArraySort": {
       "type": "object",
       "properties": {
+        "allowAfterSpread": {
+          "description": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```"
+        },
         "allowExpressionStatement": {
           "description": "When set to `true` (default), allows `array.sort()` as an expression statement.\nSet to `false` to forbid `Array#sort()` even if it's an expression statement.\n\nExample of **incorrect** code for this rule with `allowExpressionStatement` set to `false`:\n```js\narray.sort();\n```",
           "default": true,
@@ -12544,6 +13301,25 @@
             "type": "string"
           },
           "markdownDescription": "An array of names that are allowed to be async."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoAsyncInComputedProperties": {
+      "$ref": "#/definitions/NoAsyncInComputedPropertiesConfig"
+    },
+    "NoAsyncInComputedPropertiesConfig": {
+      "type": "object",
+      "properties": {
+        "ignoredObjectNames": {
+          "description": "Names of identifiers whose member-call chains (`.then` / `.catch` / `.finally`)\nshould be ignored. Useful for libraries like Zod where `.catch(default)` is\na builder API, not a Promise method.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "markdownDescription": "Names of identifiers whose member-call chains (`.then` / `.catch` / `.finally`)\nshould be ignored. Useful for libraries like Zod where `.catch(default)` is\na builder API, not a Promise method."
         }
       },
       "additionalProperties": false
@@ -12725,6 +13501,16 @@
       },
       "additionalProperties": false
     },
+    "NoConstantBinaryExpressionConfig": {
+      "type": "object",
+      "properties": {
+        "checkRelationalComparisons": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
     "NoConstantCondition": {
       "type": "object",
       "properties": {
@@ -12840,6 +13626,24 @@
             "$ref": "#/definitions/DistractingElement"
           },
           "markdownDescription": "List of distracting elements to check for."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoDupeKeys": {
+      "$ref": "#/definitions/NoDupeKeysConfig"
+    },
+    "NoDupeKeysConfig": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "description": "Additional group names to search for duplicate keys in, on top of the\nbuilt-in `props`, `computed`, `data`, `methods` and `setup` groups.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional group names to search for duplicate keys in, on top of the\nbuilt-in `props`, `computed`, `data`, `methods` and `setup` groups."
         }
       },
       "additionalProperties": false
@@ -13677,6 +14481,30 @@
       },
       "additionalProperties": false
     },
+    "NoMixedRequiresConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/NoMixedRequiresOptions"
+        }
+      ]
+    },
+    "NoMixedRequiresOptions": {
+      "type": "object",
+      "properties": {
+        "allowCall": {
+          "default": false,
+          "type": "boolean"
+        },
+        "grouping": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
     "NoMultiAssign": {
       "type": "object",
       "properties": {
@@ -13754,6 +14582,53 @@
         }
       },
       "additionalProperties": false
+    },
+    "NoNoninteractiveElementInteractionsConfig": {
+      "type": "object",
+      "properties": {
+        "handlers": {
+          "description": "An array of event handler names that should trigger this rule.",
+          "default": [
+            "onError",
+            "onLoad",
+            "onKeyPress",
+            "onKeyDown",
+            "onKeyUp",
+            "onFocus",
+            "onBlur",
+            "onClick",
+            "onContextMenu",
+            "onDblClick",
+            "onDoubleClick",
+            "onDrag",
+            "onDragEnd",
+            "onDragEnter",
+            "onDragExit",
+            "onDragLeave",
+            "onDragOver",
+            "onDragStart",
+            "onDrop",
+            "onMouseDown",
+            "onMouseEnter",
+            "onMouseLeave",
+            "onMouseMove",
+            "onMouseOut",
+            "onMouseOver",
+            "onMouseUp"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of event handler names that should trigger this rule."
+        }
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
     },
     "NoNoninteractiveElementToInteractiveRoleConfig": {
       "type": "object",
@@ -14069,6 +14944,42 @@
       },
       "additionalProperties": false
     },
+    "NoRestrictedImportsConfig": {
+      "type": "object",
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PossiblePaths"
+          }
+        },
+        "patterns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PossiblePatterns"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoRestrictedImportsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedPath"
+        },
+        {
+          "$ref": "#/definitions/NoRestrictedImportsConfig"
+        }
+      ]
+    },
+    "NoRestrictedImportsConfigValue": {
+      "additionalItems": {
+        "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
+      }
+    },
     "NoRestrictedMatchersConfig": {
       "type": "object",
       "additionalProperties": {
@@ -14158,10 +15069,10 @@
       "type": "object",
       "properties": {
         "allowInParentheses": {
-          "description": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.\nDefault is `true`.",
+          "description": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.",
           "default": true,
           "type": "boolean",
-          "markdownDescription": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.\nDefault is `true`."
+          "markdownDescription": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses."
         }
       },
       "additionalProperties": false
@@ -14271,6 +15182,28 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Disallow template literals in addition to string literals."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoSyncConfig": {
+      "type": "object",
+      "properties": {
+        "allowAtRootLevel": {
+          "description": "Whether synchronous methods should be allowed at the top level of a file.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether synchronous methods should be allowed at the top level of a file."
+        },
+        "ignores": {
+          "description": "Function names to ignore.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "markdownDescription": "Function names to ignore."
         }
       },
       "additionalProperties": false
@@ -14499,6 +15432,21 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "Whether to allow the default assignment pattern `x ? x : y`.\n\nWhen set to `false`, the rule also flags cases like `x ? x : y` and suggests using\nthe logical OR form `x || y` instead. When `true` (default), such default assignments\nare allowed and not reported."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoUnreachableLoop": {
+      "$ref": "#/definitions/NoUnreachableLoopConfig"
+    },
+    "NoUnreachableLoopConfig": {
+      "type": "object",
+      "properties": {
+        "ignore": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LoopType"
+          }
         }
       },
       "additionalProperties": false
@@ -15029,6 +15977,128 @@
           "markdownDescription": "Ignore null comparisons, allow either `== null`/`!= null` or `=== null`/`!== null`."
         }
       ]
+    },
+    "NumericBaseConfig": {
+      "type": "object",
+      "properties": {
+        "groupLength": {
+          "description": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`.",
+          "default": 0,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
+        },
+        "minimumDigits": {
+          "description": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped.",
+          "default": 0,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped."
+        },
+        "onlyIfContainsSeparator": {
+          "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
+          "type": "boolean",
+          "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NumericNumberConfig": {
+      "type": "object",
+      "properties": {
+        "fractionGroupLength": {
+          "description": "The size a group of digits in the fractional part (after the decimal point) should be.",
+          "default": 4294967295,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The size a group of digits in the fractional part (after the decimal point) should be."
+        },
+        "groupLength": {
+          "description": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`.",
+          "default": 0,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
+        },
+        "minimumDigits": {
+          "description": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped.",
+          "default": 0,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped."
+        },
+        "onlyIfContainsSeparator": {
+          "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
+          "type": "boolean",
+          "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NumericSeparatorsStyleConfig": {
+      "type": "object",
+      "properties": {
+        "binary": {
+          "description": "Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).\nControls how digits are grouped and when separators are applied.",
+          "default": {
+            "groupLength": 4,
+            "minimumDigits": 0
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NumericBaseConfig"
+            }
+          ],
+          "markdownDescription": "Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).\nControls how digits are grouped and when separators are applied."
+        },
+        "hexadecimal": {
+          "description": "Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).\nControls how digits are grouped and when separators are applied.",
+          "default": {
+            "groupLength": 2,
+            "minimumDigits": 0
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NumericBaseConfig"
+            }
+          ],
+          "markdownDescription": "Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).\nControls how digits are grouped and when separators are applied."
+        },
+        "number": {
+          "description": "Configuration for decimal numbers (integers, fraction parts, and exponents).\nControls how digits are grouped and when separators are applied.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NumericNumberConfig"
+            }
+          ],
+          "markdownDescription": "Configuration for decimal numbers (integers, fraction parts, and exponents).\nControls how digits are grouped and when separators are applied."
+        },
+        "octal": {
+          "description": "Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).\nControls how digits are grouped and when separators are applied.",
+          "default": {
+            "groupLength": 4,
+            "minimumDigits": 0
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NumericBaseConfig"
+            }
+          ],
+          "markdownDescription": "Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).\nControls how digits are grouped and when separators are applied."
+        },
+        "onlyIfContainsSeparator": {
+          "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
+        }
+      },
+      "additionalProperties": false
     },
     "ObjectLiteralTypeAssertions": {
       "oneOf": [
@@ -15595,6 +16665,52 @@
       },
       "additionalProperties": false
     },
+    "PathGroupAction": {
+      "description": "Action to take for path group overrides.\n\nDetermines how import extensions are validated for matching bespoke import specifiers.",
+      "oneOf": [
+        {
+          "description": "Enforce extension validation for matching imports (require extensions based on config).",
+          "type": "string",
+          "enum": [
+            "enforce"
+          ],
+          "markdownDescription": "Enforce extension validation for matching imports (require extensions based on config)."
+        },
+        {
+          "description": "Ignore matching imports entirely (skip all extension validation).",
+          "type": "string",
+          "enum": [
+            "ignore"
+          ],
+          "markdownDescription": "Ignore matching imports entirely (skip all extension validation)."
+        }
+      ],
+      "markdownDescription": "Action to take for path group overrides.\n\nDetermines how import extensions are validated for matching bespoke import specifiers."
+    },
+    "PathGroupOverrideConfig": {
+      "type": "object",
+      "required": [
+        "action",
+        "pattern"
+      ],
+      "properties": {
+        "action": {
+          "description": "Action to take when pattern matches.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PathGroupAction"
+            }
+          ],
+          "markdownDescription": "Action to take when pattern matches."
+        },
+        "pattern": {
+          "description": "Glob pattern to match import specifiers.",
+          "type": "string",
+          "markdownDescription": "Glob pattern to match import specifiers."
+        }
+      },
+      "additionalProperties": false
+    },
     "PathOption": {
       "oneOf": [
         {
@@ -15612,6 +16728,26 @@
             "never"
           ],
           "markdownDescription": "Disallow triple-slash `path` references."
+        }
+      ]
+    },
+    "PossiblePaths": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedPath"
+        }
+      ]
+    },
+    "PossiblePatterns": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedPattern"
         }
       ]
     },
@@ -15649,12 +16785,16 @@
       "type": "object",
       "properties": {
         "allowNamedFunctions": {
+          "description": "If this option is set to `true`, named function expressions are allowed.",
           "default": false,
-          "type": "boolean"
+          "type": "boolean",
+          "markdownDescription": "If this option is set to `true`, named function expressions are allowed."
         },
         "allowUnboundThis": {
+          "description": "If this option is set to `false`, function expressions that reference `this` are reported even when they are not bound to a `this` value.",
           "default": true,
-          "type": "boolean"
+          "type": "boolean",
+          "markdownDescription": "If this option is set to `false`, function expressions that reference `this` are reported even when they are not bound to a `this` value."
         }
       },
       "additionalProperties": false
@@ -15733,6 +16873,63 @@
       },
       "additionalProperties": false
     },
+    "PreferDestructuringAssignmentConfig": {
+      "type": "object",
+      "properties": {
+        "AssignmentExpression": {
+          "$ref": "#/definitions/PreferDestructuringTargetOption"
+        },
+        "VariableDeclarator": {
+          "$ref": "#/definitions/PreferDestructuringTargetOption"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferDestructuringConfig": {
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/PreferDestructuringOption"
+        },
+        {
+          "$ref": "#/definitions/PreferDestructuringRenamedPropertiesConfig"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2
+    },
+    "PreferDestructuringOption": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PreferDestructuringTargetOption"
+        },
+        {
+          "$ref": "#/definitions/PreferDestructuringAssignmentConfig"
+        }
+      ]
+    },
+    "PreferDestructuringRenamedPropertiesConfig": {
+      "type": "object",
+      "properties": {
+        "enforceForRenamedProperties": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferDestructuringTargetOption": {
+      "type": "object",
+      "properties": {
+        "array": {
+          "type": "boolean"
+        },
+        "object": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
     "PreferEndingWithAnExpectConfig": {
       "type": "object",
       "properties": {
@@ -15746,15 +16943,12 @@
           "markdownDescription": "An array of function names that should also be treated as test blocks."
         },
         "assertFunctionNames": {
-          "description": "A list of function names that should be treated as assertion functions.",
-          "default": [
-            "expect"
-          ],
+          "description": "A list of function names that should be treated as assertion functions.\nDefault: `[\"expect\"]`",
           "type": "array",
           "items": {
             "type": "string"
           },
-          "markdownDescription": "A list of function names that should be treated as assertion functions."
+          "markdownDescription": "A list of function names that should be treated as assertion functions.\nDefault: `[\"expect\"]`"
         }
       },
       "additionalProperties": false
@@ -16243,7 +17437,7 @@
       "additionalProperties": false
     },
     "PropWithOptions": {
-      "description": "A prop with optional `disallowedFor` DOM node list and custom `message`.",
+      "description": "A prop with optional `disallowedFor` DOM node list, optional `disallowedValues`\nvalue list, and custom `message`.",
       "type": "object",
       "required": [
         "propName"
@@ -16257,6 +17451,14 @@
           },
           "markdownDescription": "A list of DOM element names (e.g. `[\"div\", \"span\"]`) on which this\nprop is forbidden. If empty or omitted, the prop is forbidden on all\nDOM elements."
         },
+        "disallowedValues": {
+          "description": "A list of string literal values for which this prop is forbidden. If\nomitted, the prop is forbidden for all values.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of string literal values for which this prop is forbidden. If\nomitted, the prop is forbidden for all values."
+        },
         "message": {
           "description": "A custom message to display when this prop is used.",
           "type": "string",
@@ -16269,7 +17471,54 @@
         }
       },
       "additionalProperties": false,
-      "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+      "markdownDescription": "A prop with optional `disallowedFor` DOM node list, optional `disallowedValues`\nvalue list, and custom `message`."
+    },
+    "PropertyDetails": {
+      "type": "object",
+      "properties": {
+        "allowObjects": {
+          "description": "Objects where property access should be allowed. This must be used with `property` and\ncannot be used with `object`.",
+          "default": null,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Objects where property access should be allowed. This must be used with `property` and\ncannot be used with `object`."
+        },
+        "allowProperties": {
+          "description": "Properties where property access should be allowed. This must be used with `object` and\ncannot be used with `property`.",
+          "default": null,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Properties where property access should be allowed. This must be used with `object` and\ncannot be used with `property`."
+        },
+        "message": {
+          "description": "A custom message to display.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "A custom message to display."
+        },
+        "object": {
+          "description": "The object on which the property is being accessed.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "The object on which the property is being accessed."
+        },
+        "property": {
+          "description": "The property being accessed. If `object` is not specified, this applies to the named\nproperty on all objects.",
+          "default": null,
+          "type": "string",
+          "markdownDescription": "The property being accessed. If `object` is not specified, this applies to the named\nproperty on all objects."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PropertyDetailsList": {
+      "additionalItems": {
+        "$ref": "#/definitions/PropertyDetails"
+      }
     },
     "RadixType": {
       "oneOf": [
@@ -16290,6 +17539,18 @@
           "markdownDescription": "Only require the radix parameter when necessary."
         }
       ]
+    },
+    "ReactCompilerConfig": {
+      "type": "object",
+      "properties": {
+        "reportAllBailouts": {
+          "description": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize."
+        }
+      },
+      "additionalProperties": false
     },
     "ReactPerfConfig": {
       "type": "object",
@@ -16455,6 +17716,42 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Also require type parameters for `importActual` and `importMock`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RequireParamDescriptionConfig": {
+      "type": "object",
+      "properties": {
+        "defaultDestructuredRootDescription": {
+          "description": "The description string to set by default for destructured roots. Defaults to \"The root object\".",
+          "default": "The root object",
+          "type": "string",
+          "markdownDescription": "The description string to set by default for destructured roots. Defaults to \"The root object\"."
+        },
+        "setDefaultDestructuredRootDescription": {
+          "description": "Whether to set a default destructured root description.\nFor example, you may wish to avoid manually having to set the description for a @param corresponding to a destructured root object as it should always be the same type of object.\nUses `defaultDestructuredRootDescription` for the description string. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to set a default destructured root description.\nFor example, you may wish to avoid manually having to set the description for a @param corresponding to a destructured root object as it should always be the same type of object.\nUses `defaultDestructuredRootDescription` for the description string. Defaults to `false`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RequireParamTypeConfig": {
+      "type": "object",
+      "properties": {
+        "defaultDestructuredRootType": {
+          "description": "The type string to set by default for destructured roots. Defaults to \"object\".",
+          "default": "object",
+          "type": "string",
+          "markdownDescription": "The type string to set by default for destructured roots. Defaults to \"object\"."
+        },
+        "setDefaultDestructuredRootType": {
+          "description": "Whether to set a default destructured root type. For example, you may wish to avoid manually having to set the type for a `@param` corresponding to a destructured root object as it is always going to be an object. Uses `defaultDestructuredRootType` for the type string. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to set a default destructured root type. For example, you may wish to avoid manually having to set the type for a `@param` corresponding to a destructured root object as it is always going to be an object. Uses `defaultDestructuredRootType` for the type string. Defaults to `false`."
         }
       },
       "additionalProperties": false
@@ -16702,6 +17999,78 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "Whether to allow RegExp values in template expressions."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RestrictedPath": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "allowImportNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowTypeImports": {
+          "type": "boolean"
+        },
+        "importNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RestrictedPattern": {
+      "type": "object",
+      "properties": {
+        "allowImportNamePattern": {
+          "type": "string"
+        },
+        "allowImportNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowTypeImports": {
+          "type": "boolean"
+        },
+        "caseSensitive": {
+          "type": "boolean"
+        },
+        "group": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "importNamePattern": {
+          "type": "string"
+        },
+        "importNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string"
         }
       },
       "additionalProperties": false

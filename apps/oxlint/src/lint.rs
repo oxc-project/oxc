@@ -289,8 +289,6 @@ impl CliRunner {
         enable_plugins.apply_overrides(&mut plugins);
         root_config.plugins = Some(plugins);
 
-        let base_ignore_patterns = root_config.ignore_patterns.clone();
-
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             root_config.clone(),
@@ -334,8 +332,13 @@ impl CliRunner {
             return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
         }
 
-        let ignore_matcher =
-            { LintIgnoreMatcher::new(&base_ignore_patterns, &self.cwd, nested_ignore_patterns) };
+        let ignore_matcher = LintIgnoreMatcher::new(
+            &root_config.ignore_patterns,
+            // Without a config file there are no patterns and the root is never consulted,
+            // so the CWD fallback is an arbitrary placeholder.
+            root_config.dir().unwrap_or(&self.cwd),
+            nested_ignore_patterns,
+        );
 
         let files_to_lint = paths
             .into_iter()
@@ -479,11 +482,12 @@ impl CliRunner {
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
             .with_type_check_only(type_check_only)
+            .with_timings(debug_timings)
             .build()
         {
             Ok(runner) => runner,
             Err(err) => {
-                print_and_flush_stdout(stdout, &err);
+                print_and_flush_stdout(stdout, &format!("{err}\n"));
                 return CliRunResult::TsGoLintError;
             }
         };
@@ -507,7 +511,7 @@ impl CliRunner {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }
             Err(err) => {
-                print_and_flush_stdout(stdout, &err);
+                print_and_flush_stdout(stdout, &format!("{err}\n"));
                 return CliRunResult::TsGoLintError;
             }
         }
@@ -841,6 +845,28 @@ mod test {
         Tester::new()
             .with_cwd("fixtures/cli/ignore_patterns_relative".into())
             .test_and_snapshot_multiple(&[args1, args2]);
+    }
+
+    #[test]
+    // https://github.com/oxc-project/oxc/issues/24310
+    fn ignore_patterns_ancestor_config() {
+        // Config is found via ancestor search; its `ignorePatterns` should be
+        // rooted at the config file's directory, not CWD.
+        let args = &["."];
+        Tester::new()
+            .with_cwd("fixtures/cli/ignore_patterns_ancestor_config/packages/foo".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn ignore_patterns_config_path_with_parent_references() {
+        // `..` components in a `--config` path must be normalized before the config's
+        // directory is used as the root for `ignorePatterns`, otherwise the patterns
+        // silently never match.
+        let args = &["-c", "./packages/../.oxlintrc.json", "."];
+        Tester::new()
+            .with_cwd("fixtures/cli/ignore_patterns_ancestor_config".into())
+            .test_and_snapshot(args);
     }
 
     #[test]

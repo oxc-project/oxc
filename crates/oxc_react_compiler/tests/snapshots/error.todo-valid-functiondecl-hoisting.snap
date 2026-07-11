@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-valid-functiondecl-hoisting.tsx
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Unexpected error: Todo: [PruneHoistedContexts] Rewrite hoisted function references", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(307), length: 180 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: [PruneHoistedContexts] Rewrite hoisted function references", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(369), length: 3 }, primary: false }]), help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

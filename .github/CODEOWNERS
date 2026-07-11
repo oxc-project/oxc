@@ -7,24 +7,85 @@
 Cargo.lock
 pnpm-lock.yaml
 
-/apps/oxfmt @leaysgur
+# Linter (@camc314)
+
+/crates/oxc_linter @camc314
+/oxlintrc.json @camc314
 /apps/oxlint @camc314
 /apps/oxlint/conformance @camc314 @overlookmotel
 /apps/oxlint/src-js @camc314 @overlookmotel
 /apps/oxlint/src-js/package/config.generated.ts @camc314
 /apps/oxlint/test @camc314 @overlookmotel
 /apps/oxlint/tsdown_plugins @camc314 @overlookmotel
+/npm/oxlint @camc314
+/npm/oxlint-plugin-eslint @camc314
+/npm/oxlint-plugins @camc314
+/tasks/lint_rules @camc314
+/tasks/linter_codegen @camc314
+/tasks/rulegen @camc314
+/tasks/website_linter @camc314
+
+# Formatter (@leaysgur)
+
+/crates/oxc_formatter @leaysgur
+/crates/oxc_formatter_core @leaysgur
+/crates/oxc_formatter_json @leaysgur
+/crates/oxc_formatter_graphql @leaysgur
+/crates/oxc_formatter_css @leaysgur
+/crates/oxc_jsdoc @leaysgur
+/crates/oxc_regular_expression @leaysgur
+/oxfmtrc.jsonc @leaysgur
+/apps/oxfmt @leaysgur
+/npm/oxfmt @leaysgur
+/tasks/prettier_conformance @leaysgur
+/tasks/website_formatter @leaysgur
+
+# Shared application tooling (@camc314 @leaysgur)
+
+/crates/oxc_language_server @camc314 @leaysgur @sysix
+/crates/oxc_config @camc314 @leaysgur
+/apps/shared @camc314 @leaysgur
+
+# Transformer / Minifier / Semantic (@dunqing)
+
+/crates/oxc_transformer @dunqing
+/crates/oxc_transformer_plugins @dunqing
+/crates/oxc_minifier @dunqing
+/crates/oxc_mangler @dunqing
+/crates/oxc_semantic @dunqing
+/crates/oxc_isolated_declarations @dunqing
+/crates/oxc_ecmascript @dunqing
+/crates/oxc_cfg @dunqing
+/crates/oxc_compat @dunqing
+/crates/oxc_codegen @dunqing
+/crates/oxc_napi @dunqing
+/napi/transform @dunqing
+/napi/minify @dunqing
+/npm/runtime @dunqing
+/tasks/transform_conformance @dunqing
+/tasks/transform_checker @dunqing
+/tasks/minsize @dunqing
+/tasks/compat_data @dunqing
+
+# Core infrastructure crates (@overlookmotel)
 
 /crates/oxc_allocator @overlookmotel
 /crates/oxc_data_structures @overlookmotel
-/crates/oxc_formatter @dunqing @leaysgur
-/crates/oxc_isolated_declarations @dunqing
-/crates/oxc_language_server @camc314 @sysix
-/crates/oxc_linter @camc314
-/crates/oxc_regular_expression @leaysgur
-/crates/oxc_semantic @dunqing
-/crates/oxc_transformer @overlookmotel @dunqing
-/crates/oxc_transformer_plugins @overlookmotel @dunqing
 /crates/oxc_traverse @overlookmotel
-
+/crates/oxc_ast @overlookmotel
+/crates/oxc_ast_macros @overlookmotel
+/crates/oxc_ast_visit @overlookmotel
+/crates/oxc_macros @overlookmotel
+/crates/oxc_span @overlookmotel
+/crates/oxc_str @overlookmotel
+/crates/oxc_syntax @overlookmotel
+/crates/oxc_estree @overlookmotel
+/crates/oxc_estree_tokens @overlookmotel
+/npm/oxc-types @overlookmotel
 /tasks/ast_tools @overlookmotel
+/tasks/track_memory_allocations @overlookmotel
+
+# Everything else falls through to the default owner @Boshen, including:
+#   parser (crates/oxc_parser, napi/parser), umbrella crates (crates/oxc,
+#   crates/oxc_react_compiler), crates/oxc_diagnostics, CI/release config,
+#   .github, build/dev toolchain configs, and project documentation.

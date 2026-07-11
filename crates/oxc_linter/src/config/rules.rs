@@ -214,7 +214,10 @@ impl OxlintRules {
                                     .or_insert((options_id, severity));
                             }
                             Err(e) => {
-                                errors.push(OverrideRulesError::ExternalRuleLookup(e));
+                                let error = OverrideRulesError::ExternalRuleLookup(e);
+                                if !errors.contains(&error) {
+                                    errors.push(error);
+                                }
                             }
                         }
                     }
@@ -357,18 +360,28 @@ impl JsonSchema for OxlintRules {
                     schema: &'a Schema,
                     r#gen: &'a SchemaGenerator,
                 ) -> &'a Schema {
-                    let mut current = schema;
-                    while let Some(next) = r#gen.dereference(current) {
-                        current = next;
-                    }
+                    let Some(current) = r#gen.dereference(schema) else {
+                        return schema;
+                    };
 
                     let Schema::Object(obj) = current else {
-                        return current;
+                        return schema;
                     };
 
                     // We only need to dereference array schemas for rule config.
                     // Reuse the schema for other cases.
-                    if obj.array.is_none() {
+                    if obj.array.as_ref().is_none_or(|array| {
+                        // We need to dereference array schemas with at least 2 entries. A single entry array schema is used for configs which accepts an array.
+                        // 2 entries means that it is a tuple config, and `AllowWarnDeny` needs to be appended for each entry in the tuple.
+                        array
+                            .items
+                            .as_ref()
+                            .is_none_or(|items| !matches!(items, SingleOrVec::Vec(_)))
+                            &&
+                            // We need to dereference array schemas with additional items. These should be handled as spread elements inside the config.
+                            // So rule configurations like `[AllowWarnDeny, ...Config]` can be supported.
+                            array.additional_items.is_none()
+                    }) {
                         return schema;
                     }
 
@@ -397,104 +410,125 @@ impl JsonSchema for OxlintRules {
                         .into()
                     }
 
+                    fn append_allow_warn_deny_to_schema(
+                        config_schema: Schema,
+                        r#gen: &mut SchemaGenerator,
+                    ) -> Schema {
+                        let Schema::Object(mut obj) = config_schema.clone() else {
+                            return SchemaObject {
+                                instance_type: Some(InstanceType::Array.into()),
+                                array: Some(Box::new(ArrayValidation {
+                                    items: Some(SingleOrVec::Vec(vec![
+                                        r#gen.subschema_for::<AllowWarnDeny>(),
+                                        config_schema,
+                                    ])),
+                                    min_items: Some(2),
+                                    max_items: Some(2),
+                                    ..Default::default()
+                                })),
+                                ..Default::default()
+                            }
+                            .into();
+                        };
+
+                        debug_assert!(
+                            (u8::from(obj.array.is_some())
+                                + u8::from(obj.object.is_some())
+                                + u8::from(obj.reference.is_some()))
+                                <= 1,
+                            "Expected rule schema to be either an object, an array, or a reference, but not multiple"
+                        );
+
+                        if let Some(ref mut array) = obj.array {
+                            debug_assert!(
+                                array.items.is_none() || array.additional_items.is_none(),
+                                "Expected rule to not contain items and additionalItems at the same time"
+                            );
+                            if let Some(ref additional_items) = array.additional_items {
+                                array.items = Some(SingleOrVec::Vec(vec![
+                                    r#gen.subschema_for::<AllowWarnDeny>(),
+                                    *additional_items.clone(),
+                                ]));
+                                array.min_items = Some(2);
+                                array.max_items = None;
+                                return Schema::Object(obj);
+                            }
+                            // We only need to handle the cases where multiple items exists,
+                            // because single item array schema is used for rules which accepts an array as config,
+                            // and we just need to append `AllowWarnDeny` for that case.
+                            let Some(SingleOrVec::Vec(configs)) = array.items.clone() else {
+                                return SchemaObject {
+                                    instance_type: Some(InstanceType::Array.into()),
+                                    array: Some(Box::new(ArrayValidation {
+                                        items: Some(SingleOrVec::Vec(vec![
+                                            r#gen.subschema_for::<AllowWarnDeny>(),
+                                            config_schema,
+                                        ])),
+                                        min_items: Some(2),
+                                        max_items: Some(2),
+                                        ..Default::default()
+                                    })),
+                                    ..Default::default()
+                                }
+                                .into();
+                            };
+
+                            let mut items = Vec::with_capacity(configs.len().saturating_add(1));
+                            items.push(r#gen.subschema_for::<AllowWarnDeny>());
+                            items.extend(configs);
+
+                            let config_length = items.len() as u32;
+
+                            return SchemaObject {
+                                instance_type: Some(InstanceType::Array.into()),
+                                array: Some(Box::new(ArrayValidation {
+                                    items: Some(SingleOrVec::Vec(items)),
+                                    min_items: Some(2),
+                                    max_items: Some(config_length),
+                                    ..Default::default()
+                                })),
+                                ..Default::default()
+                            }
+                            .into();
+                        }
+
+                        if let Some(subschemas) = &mut obj.subschemas
+                            && let Some(any_of) = &subschemas.any_of
+                        {
+                            subschemas.any_of = Some(
+                                any_of
+                                    .iter()
+                                    .map(|schema| {
+                                        append_allow_warn_deny_to_schema(schema.clone(), r#gen)
+                                    })
+                                    .collect(),
+                            );
+
+                            return obj.into();
+                        }
+
+                        SchemaObject {
+                            instance_type: Some(InstanceType::Array.into()),
+                            array: Some(Box::new(ArrayValidation {
+                                items: Some(SingleOrVec::Vec(vec![
+                                    r#gen.subschema_for::<AllowWarnDeny>(),
+                                    config_schema,
+                                ])),
+                                min_items: Some(2),
+                                max_items: Some(2),
+                                ..Default::default()
+                            })),
+                            ..Default::default()
+                        }
+                        .into()
+                    }
+
                     let Some(schema) = r.schema(r#gen) else {
                         return r#gen.subschema_for::<RuleNoConfig>();
                     };
-
                     let schema = resolve_references_in_schema(&schema, r#gen).clone();
-
-                    let Schema::Object(obj) = schema else {
-                        let array_schema = SchemaObject {
-                            instance_type: Some(InstanceType::Array.into()),
-                            array: Some(Box::new(ArrayValidation {
-                                items: Some(SingleOrVec::Vec(vec![
-                                    r#gen.subschema_for::<AllowWarnDeny>(),
-                                    Schema::Bool(true),
-                                ])),
-                                min_items: Some(2),
-                                max_items: Some(2),
-                                ..Default::default()
-                            })),
-                            ..Default::default()
-                        }
-                        .into();
-                        return with_default_rule_schema(array_schema, r#gen);
-                    };
-
-                    debug_assert!(
-                        (u8::from(obj.array.is_some())
-                            + u8::from(obj.object.is_some())
-                            + u8::from(obj.reference.is_some()))
-                            <= 1,
-                        "Expected rule schema to be either an object, an array, or a reference, but not multiple"
-                    );
-
-                    if let Some(reference) = obj.reference {
-                        let array_schema = SchemaObject {
-                            instance_type: Some(InstanceType::Array.into()),
-                            array: Some(Box::new(ArrayValidation {
-                                items: Some(SingleOrVec::Vec(vec![
-                                    r#gen.subschema_for::<AllowWarnDeny>(),
-                                    Schema::Object(SchemaObject {
-                                        reference: Some(reference),
-                                        ..Default::default()
-                                    }),
-                                ])),
-                                min_items: Some(2),
-                                max_items: Some(2),
-                                ..Default::default()
-                            })),
-                            ..Default::default()
-                        }
-                        .into();
-                        return with_default_rule_schema(array_schema, r#gen);
-                    }
-
-                    if let Some(array) = obj.array {
-                        let items = match array.items {
-                            None => vec![r#gen.subschema_for::<AllowWarnDeny>()],
-                            Some(SingleOrVec::Single(config)) => {
-                                vec![r#gen.subschema_for::<AllowWarnDeny>(), *config]
-                            }
-                            Some(SingleOrVec::Vec(configs)) => {
-                                let mut items = Vec::with_capacity(configs.len().saturating_add(1));
-                                items.push(r#gen.subschema_for::<AllowWarnDeny>());
-                                items.extend(configs);
-                                items
-                            }
-                        };
-
-                        let config_length = items.len() as u32;
-
-                        let array_schema = SchemaObject {
-                            instance_type: Some(InstanceType::Array.into()),
-                            array: Some(Box::new(ArrayValidation {
-                                items: Some(SingleOrVec::Vec(items)),
-                                min_items: Some(2),
-                                max_items: Some(config_length),
-                                ..Default::default()
-                            })),
-                            ..Default::default()
-                        }
-                        .into();
-                        return with_default_rule_schema(array_schema, r#gen);
-                    }
-
-                    let array_schema = Schema::Object(SchemaObject {
-                        instance_type: Some(InstanceType::Array.into()),
-                        array: Some(Box::new(ArrayValidation {
-                            items: Some(SingleOrVec::Vec(vec![
-                                r#gen.subschema_for::<AllowWarnDeny>(),
-                                Schema::Object(obj),
-                            ])),
-                            min_items: Some(2),
-                            max_items: Some(2),
-                            ..Default::default()
-                        })),
-                        ..Default::default()
-                    });
-
-                    with_default_rule_schema(array_schema, r#gen)
+                    let schema = append_allow_warn_deny_to_schema(schema, r#gen);
+                    with_default_rule_schema(schema, r#gen)
                 }
 
                 let dummy_schema = r#gen.subschema_for::<DummyRule>();
@@ -917,18 +951,25 @@ mod test {
     fn test_normalize_plugin_name_in_rules() {
         use super::super::plugins::normalize_plugin_name;
 
-        // Test eslint-plugin- prefix stripping
+        // Test eslint-plugin- and oxlint-plugin- prefix stripping
         assert_eq!(normalize_plugin_name("eslint-plugin-foo"), "foo");
         assert_eq!(normalize_plugin_name("eslint-plugin-react"), "react");
         assert_eq!(normalize_plugin_name("eslint-plugin-import"), "import");
+        assert_eq!(normalize_plugin_name("oxlint-plugin-foo"), "foo");
+        assert_eq!(normalize_plugin_name("oxlint-plugin-react"), "react");
+        assert_eq!(normalize_plugin_name("oxlint-plugin-import"), "import");
 
-        // Test @scope/eslint-plugin suffix stripping
+        // Test @scope/eslint-plugin and @scope/oxlint-plugin suffix stripping
         assert_eq!(normalize_plugin_name("@foo/eslint-plugin"), "@foo");
         assert_eq!(normalize_plugin_name("@bar/eslint-plugin"), "@bar");
+        assert_eq!(normalize_plugin_name("@foo/oxlint-plugin"), "@foo");
+        assert_eq!(normalize_plugin_name("@bar/oxlint-plugin"), "@bar");
 
-        // Test @scope/eslint-plugin-name normalization
+        // Test @scope/eslint-plugin-name and @scope/oxlint-plugin-name normalization
         assert_eq!(normalize_plugin_name("@foo/eslint-plugin-bar"), "@foo/bar");
         assert_eq!(normalize_plugin_name("@typescript-eslint/eslint-plugin"), "@typescript-eslint");
+        assert_eq!(normalize_plugin_name("@foo/oxlint-plugin-bar"), "@foo/bar");
+        assert_eq!(normalize_plugin_name("@typescript-eslint/oxlint-plugin"), "@typescript-eslint");
 
         // Test no change for already normalized names
         assert_eq!(normalize_plugin_name("react"), "react");
@@ -939,10 +980,11 @@ mod test {
 
     #[test]
     fn test_parse_rules_with_eslint_plugin_prefix() {
-        // Test that eslint-plugin- prefix is properly normalized in various formats
+        // Test that plugin package prefixes are properly normalized in various formats
         let rules = OxlintRules::deserialize(&json!({
             "eslint-plugin-react/jsx-uses-vars": "error",
             "eslint-plugin-unicorn/no-null": "warn",
+            "oxlint-plugin-import/no-cycle": "error",
         }))
         .unwrap();
 
@@ -957,6 +999,11 @@ mod test {
         assert_eq!(r2.rule_name, "no-null");
         assert_eq!(r2.plugin_name, "unicorn");
         assert!(r2.severity.is_warn_deny());
+
+        let r3 = rules_iter.next().unwrap();
+        assert_eq!(r3.rule_name, "no-cycle");
+        assert_eq!(r3.plugin_name, "import");
+        assert!(r3.severity.is_warn_deny());
     }
 
     #[test]
