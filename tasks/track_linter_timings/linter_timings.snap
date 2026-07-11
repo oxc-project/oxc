@@ -511,6 +511,7 @@ typescript/no-var-requires                                 |  24652
 typescript/no-wrapper-object-types                         |  13199
 typescript/parameter-properties                            |   1070
 typescript/prefer-as-const                                 |  12866
+typescript/prefer-destructuring                            |  50504
 typescript/prefer-enum-initializers                        |     23
 typescript/prefer-for-of                                   |    557
 typescript/prefer-function-type                            |  14798

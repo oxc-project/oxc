@@ -1480,11 +1480,6 @@ impl RuleRunner for crate::rules::eslint::yoda::Yoda {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
-impl RuleRunner for crate::rules::typescript::prefer_destructuring::PreferDestructuring {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
-}
-
 impl RuleRunner
     for crate::rules::typescript::adjacent_overload_signatures::AdjacentOverloadSignatures
 {
@@ -2027,6 +2022,14 @@ impl RuleRunner for crate::rules::typescript::prefer_as_const::PreferAsConst {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::PropertyDefinition,
         AstType::TSAsExpression,
+        AstType::VariableDeclarator,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::typescript::prefer_destructuring::PreferDestructuring {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
         AstType::VariableDeclarator,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;

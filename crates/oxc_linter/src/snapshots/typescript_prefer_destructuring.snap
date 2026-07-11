@@ -1,0 +1,328 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:19]
+ 1 │ var foo: string = object.foo;
+   ·                   ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:1:19]
+ 1 │ var foo: string = array[0];
+   ·                   ────────
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:20]
+ 1 │ var foo: unknown = object.bar;
+   ·                    ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:3:29]
+ 2 │                     let x: { [Symbol.iterator]: unknown };
+ 3 │                     let y = x[0];
+   ·                             ────
+ 4 │                   
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:3:21]
+ 2 │                     let x: { [Symbol.iterator]: unknown };
+ 3 │                     y = x[0];
+   ·                     ────────
+ 4 │                   
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:3:29]
+ 2 │                     let x: [1, 2, 3];
+ 3 │                     let y = x[0];
+   ·                             ────
+ 4 │                   
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:3:21]
+ 2 │                     let x: [1, 2, 3];
+ 3 │                     y = x[0];
+   ·                     ────────
+ 4 │                   
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:5:29]
+ 4 │                     }
+ 5 │                     let y = it()[0];
+   ·                             ───────
+ 6 │                   
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:5:21]
+ 4 │                     }
+ 5 │                     y = it()[0];
+   ·                     ───────────
+ 6 │                   
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:3:29]
+ 2 │                     let x: any;
+ 3 │                     let y = x[0];
+   ·                             ────
+ 4 │                   
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:3:21]
+ 2 │                     let x: any;
+ 3 │                     y = x[0];
+   ·                     ────────
+ 4 │                   
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:3:29]
+ 2 │                     let x: string[] | { [Symbol.iterator]: unknown };
+ 3 │                     let y = x[0];
+   ·                             ────
+ 4 │                   
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:3:21]
+ 2 │                     let x: string[] | { [Symbol.iterator]: unknown };
+ 3 │                     y = x[0];
+   ·                     ────────
+ 4 │                   
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:3:29]
+ 2 │                     let x: object & unknown[];
+ 3 │                     let y = x[0];
+   ·                             ────
+ 4 │                   
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:3:21]
+ 2 │                     let x: object & unknown[];
+ 3 │                     y = x[0];
+   ·                     ────────
+ 4 │                   
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:3:29]
+ 2 │                     let x: { 0: string };
+ 3 │                     let y = x[0];
+   ·                             ────
+ 4 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:3:21]
+ 2 │                     let x: { 0: string };
+ 3 │                     y = x[0];
+   ·                     ────────
+ 4 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:3:29]
+ 2 │                     let x: { 0: string };
+ 3 │                     let y = x[0];
+   ·                             ────
+ 4 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:3:21]
+ 2 │                     let x: { 0: string };
+ 3 │                     y = x[0];
+   ·                     ────────
+ 4 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:4:21]
+ 3 │                     let i: number = 0;
+ 4 │                     y = x[i];
+   ·                     ────────
+ 5 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:4:21]
+ 3 │                     let i: 0 = 0;
+ 4 │                     y = x[i];
+   ·                     ────────
+ 5 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:4:21]
+ 3 │                     let i: 0 | 1 | 2 = 0;
+ 4 │                     y = x[i];
+   ·                     ────────
+ 5 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:4:21]
+ 3 │                     let i: number = 0;
+ 4 │                     y = x[i];
+   ·                     ────────
+ 5 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:4:21]
+ 3 │                     let i: 0 = 0;
+ 4 │                     y = x[i];
+   ·                     ────────
+ 5 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:4:21]
+ 3 │                     let i: 0 | 1 | 2 = 0;
+ 4 │                     y = x[i];
+   ·                     ────────
+ 5 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:3:29]
+ 2 │                     let x: { 0: unknown } | unknown[];
+ 3 │                     let y = x[0];
+   ·                             ────
+ 4 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:3:21]
+ 2 │                     let x: { 0: unknown } | unknown[];
+ 3 │                     y = x[0];
+   ·                     ────────
+ 4 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:3:33]
+ 2 │                     let obj = { foo: 'bar' };
+ 3 │                     const foo = obj.foo;
+   ·                                 ───────
+ 4 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:4:33]
+ 3 │                     var x: null = null;
+ 4 │                     const foo = (x, obj).foo;
+   ·                                 ────────────
+ 5 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:14]
+ 1 │ const call = (() => null).call;
+   ·              ─────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:4:31]
+ 3 │                     let a: any;
+ 4 │                     var foo = (a = obj).foo;
+   ·                               ─────────────
+ 5 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:3:34]
+ 2 │                     const obj = { asdf: { qwer: null } };
+ 3 │                     const qwer = obj.asdf.qwer;
+   ·                                  ─────────────
+ 4 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:3:47]
+ 2 │                     const obj = { foo: 100 };
+ 3 │                     const /* comment */ foo = obj.foo;
+   ·                                               ───────
+ 4 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:3:31]
+ 2 │                     let obj = { foo: 'bar' };
+ 3 │                     const x = obj.foo;
+   ·                               ───────
+ 4 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:4:21]
+ 3 │                     let x: unknown;
+ 4 │                     x = obj.foo;
+   ·                     ───────────
+ 5 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:4:31]
+ 3 │                     let key = 'abc';
+ 4 │                     const x = obj[key];
+   ·                               ────────
+ 5 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ typescript(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:5:21]
+ 4 │                     let x: unknown;
+ 5 │                     x = obj[key];
+   ·                     ────────────
+ 6 │                   
+   ╰────
+  help: Use object destructuring rather than direct member access.

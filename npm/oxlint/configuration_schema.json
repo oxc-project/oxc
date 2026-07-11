@@ -8166,7 +8166,27 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/prefer-destructuring": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferDestructuringOption2"
+                },
+                {
+                  "$ref": "#/definitions/PreferDestructuringEnforcementConfig"
+                }
+              ],
+              "maxItems": 3,
+              "minItems": 2
+            }
+          ]
         },
         "typescript/prefer-enum-initializers": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -16888,6 +16908,18 @@
       },
       "additionalProperties": false
     },
+    "PreferDestructuringAssignmentConfig2": {
+      "type": "object",
+      "properties": {
+        "AssignmentExpression": {
+          "$ref": "#/definitions/PreferDestructuringTargetOption2"
+        },
+        "VariableDeclarator": {
+          "$ref": "#/definitions/PreferDestructuringTargetOption2"
+        }
+      },
+      "additionalProperties": false
+    },
     "PreferDestructuringConfig": {
       "type": "array",
       "items": [
@@ -16901,6 +16933,37 @@
       "maxItems": 2,
       "minItems": 2
     },
+    "PreferDestructuringConfig2": {
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/PreferDestructuringOption2"
+        },
+        {
+          "$ref": "#/definitions/PreferDestructuringEnforcementConfig"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2
+    },
+    "PreferDestructuringEnforcementConfig": {
+      "type": "object",
+      "properties": {
+        "enforceForDeclarationWithTypeAnnotation": {
+          "description": "Whether to enforce destructuring on variable declarations with type annotations.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to enforce destructuring on variable declarations with type annotations."
+        },
+        "enforceForRenamedProperties": {
+          "description": "Whether to enforce destructuring that uses a different variable name than the property name.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to enforce destructuring that uses a different variable name than the property name."
+        }
+      },
+      "additionalProperties": false
+    },
     "PreferDestructuringOption": {
       "anyOf": [
         {
@@ -16908,6 +16971,16 @@
         },
         {
           "$ref": "#/definitions/PreferDestructuringAssignmentConfig"
+        }
+      ]
+    },
+    "PreferDestructuringOption2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PreferDestructuringTargetOption2"
+        },
+        {
+          "$ref": "#/definitions/PreferDestructuringAssignmentConfig2"
         }
       ]
     },
@@ -16922,6 +16995,18 @@
       "additionalProperties": false
     },
     "PreferDestructuringTargetOption": {
+      "type": "object",
+      "properties": {
+        "array": {
+          "type": "boolean"
+        },
+        "object": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferDestructuringTargetOption2": {
       "type": "object",
       "properties": {
         "array": {
