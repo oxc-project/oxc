@@ -42,8 +42,7 @@ impl AtomicCounter {
     }
 
     fn increment(&self) {
-        // Result of `fetch_update` cannot be `Err` as closure always returns `Some`
-        let _ = self.0.fetch_update(SeqCst, SeqCst, |count| Some(count.saturating_add(1)));
+        self.0.update(SeqCst, SeqCst, |count| count.saturating_add(1));
     }
 
     fn reset(&self) {
