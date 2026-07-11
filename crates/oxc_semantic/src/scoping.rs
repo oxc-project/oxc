@@ -644,6 +644,47 @@ impl Scoping {
         });
     }
 
+    /// Resolve all references to a removed symbol again from their original scopes.
+    ///
+    /// The symbol's binding must be removed before calling this method.
+    pub fn resolve_symbol_references(&mut self, name: Ident<'_>, symbol_id: SymbolId) {
+        let scope_id = self.symbol_scope_id(symbol_id);
+        debug_assert!(!self.scope_has_binding(scope_id, name));
+
+        let references = &mut self.references;
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let mut unresolved_reference_ids = Vec::new();
+            while let Some(reference_id) = cell.resolved_references[symbol_id.index()].pop() {
+                let mut scope_id = references[reference_id].scope_id();
+                let resolved_symbol_id = loop {
+                    if let Some(symbol_id) = cell.bindings[scope_id].get(&name) {
+                        break Some(*symbol_id);
+                    }
+                    let Some(parent_scope_id) = *self.scope_table.parent_ids(scope_id) else {
+                        break None;
+                    };
+                    scope_id = parent_scope_id;
+                };
+
+                if let Some(resolved_symbol_id) = resolved_symbol_id {
+                    references[reference_id].set_symbol_id(resolved_symbol_id);
+                    cell.resolved_references[resolved_symbol_id.index()].push(reference_id);
+                } else {
+                    references[reference_id].clear_symbol_id();
+                    unresolved_reference_ids.push(reference_id);
+                }
+            }
+
+            if !unresolved_reference_ids.is_empty() {
+                let name = name.clone_in(allocator);
+                cell.root_unresolved_references
+                    .entry(name)
+                    .or_insert_with(|| ArenaVec::new_in(&allocator))
+                    .extend(unresolved_reference_ids);
+            }
+        });
+    }
+
     /// Remove every `ReferenceId` whose bit is set in `excluded` from each
     /// symbol's resolved-references list. O(total_references) in the worst
     /// case; short-circuits when `excluded` has no bits set.

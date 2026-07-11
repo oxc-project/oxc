@@ -187,9 +187,6 @@ after transform: ["dce"]
 rebuilt        : []
 
 * remove-unused-import-equals/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["D", "a", "b", "bar", "c"]
-rebuilt        : ScopeId(0): ["a", "b", "bar", "c"]
 Unresolved reference IDs mismatch for "foo":
 after transform: [ReferenceId(0), ReferenceId(6)]
 rebuilt        : [ReferenceId(0)]

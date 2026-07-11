@@ -302,6 +302,11 @@ impl Reference {
         self.symbol_id = Some(symbol_id);
     }
 
+    #[inline]
+    pub fn clear_symbol_id(&mut self) {
+        self.symbol_id = None;
+    }
+
     /// Get the id of the scope in which this reference occurs.
     #[inline]
     pub fn scope_id(&self) -> ScopeId {

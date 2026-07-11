@@ -1,5 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_semantic::Scoping;
 use oxc_traverse::Traverse;
 
 use crate::{context::TraverseCtx, state::TransformState};
@@ -44,7 +45,7 @@ use rewrite_extensions::TypeScriptRewriteExtensions;
 pub struct TypeScript<'a> {
     annotations: TypeScriptAnnotations<'a>,
     r#enum: TypeScriptEnum,
-    namespace: TypeScriptNamespace,
+    namespace: TypeScriptNamespace<'a>,
     module: TypeScriptModule,
     rewrite_extensions: Option<TypeScriptRewriteExtensions>,
     // Options
@@ -68,6 +69,10 @@ impl<'a> TypeScript<'a> {
             remove_class_fields_without_initializer: !options.allow_declare_fields
                 || options.remove_class_fields_without_initializer,
         }
+    }
+
+    pub(super) fn finalize_scoping(&mut self, scoping: &mut Scoping) {
+        self.namespace.update_removed_bindings(scoping);
     }
 }
 

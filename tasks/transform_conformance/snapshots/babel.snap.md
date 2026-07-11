@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 766/1165
+Passed: 769/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (114/157)
+# babel-plugin-transform-typescript (117/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1146,7 +1146,7 @@ rebuilt        : ScopeId(0): []
 
 * declarations/erased/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["C", "E", "M", "N", "f", "x"]
+after transform: ScopeId(0): ["C", "E", "f", "x"]
 rebuilt        : ScopeId(0): []
 
 * declarations/export-declare-enum/input.ts
@@ -1236,7 +1236,7 @@ rebuilt        : SymbolId(2): []
 
 * exports/declared-types/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["BB", "BB2", "C", "C2", "E", "N", "f", "foo", "x"]
+after transform: ScopeId(0): ["BB", "BB2", "C", "C2", "E", "f", "foo", "x"]
 rebuilt        : ScopeId(0): ["BB", "BB2", "C2", "foo"]
 Symbol redeclarations mismatch for "BB":
 after transform: SymbolId(10): [Span { start: 445, end: 447 }, Span { start: 461, end: 463 }]
@@ -1264,17 +1264,6 @@ rebuilt        : SymbolId(0): []
 * imports/type-only-export-specifier-2/input.ts
 x Output mismatch
 
-* namespace/alias/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["AliasModule", "LongNameModule", "bar", "baz", "node", "some", "str"]
-rebuilt        : ScopeId(0): ["AliasModule", "bar", "baz", "node", "some", "str"]
-Reference symbol mismatch for "LongNameModule":
-after transform: SymbolId(0) "LongNameModule"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["console"]
-rebuilt        : ["LongNameModule", "console"]
-
 * namespace/clobber-enum/input.ts
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 30, end: 31 }]
@@ -1287,22 +1276,11 @@ rebuilt        : ScopeId(1): ["_N"]
 
 * namespace/empty-removed/input.ts
 Bindings mismatch:
-after transform: ScopeId(1): ["_a", "b", "c", "d"]
-rebuilt        : ScopeId(1): ["_a", "c"]
-Bindings mismatch:
-after transform: ScopeId(6): ["_WithTypes", "a", "b", "c", "d"]
-rebuilt        : ScopeId(3): ["_WithTypes", "d"]
-Bindings mismatch:
 after transform: ScopeId(12): ["D", "_d"]
 rebuilt        : ScopeId(4): ["_d"]
 Symbol reference IDs mismatch for "a":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(4), ReferenceId(5)]
 rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
-
-* namespace/export-type-only/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Platform"]
-rebuilt        : ScopeId(0): []
 
 * namespace/mutable-fail/input.ts
 
@@ -1327,11 +1305,6 @@ rebuilt        : ScopeId(0): []
    : ^^^^^^^^^^^^^^
    `----
 
-
-* namespace/nested-namespace/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["B", "G", "_A"]
-rebuilt        : ScopeId(1): ["G", "_A"]
 
 * optimize-const-enums/custom-values-exported/input.ts
 x Output mismatch
