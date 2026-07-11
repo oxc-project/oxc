@@ -328,6 +328,7 @@ export type AllowConstantLoopConditionsMode = "never" | "always" | "only-allowed
 export type Modifier =
   "private" | "private readonly" | "protected" | "protected readonly" | "public" | "public readonly" | "readonly";
 export type Prefer2 = "class-property" | "parameter-property";
+export type PreferDestructuringOption2 = PreferDestructuringTargetOption2 | PreferDestructuringAssignmentConfig2;
 /**
  * Represents the different ways `ignorePrimitives` can be specified in JSON.
  * Can be:
@@ -1455,7 +1456,10 @@ export interface DummyRuleMap {
   "typescript/only-throw-error"?: RuleNoConfig | [AllowWarnDeny, OnlyThrowErrorConfig];
   "typescript/parameter-properties"?: RuleNoConfig | [AllowWarnDeny, ParameterPropertiesConfig];
   "typescript/prefer-as-const"?: RuleNoConfig;
-  "typescript/prefer-destructuring"?: RuleNoConfig;
+  "typescript/prefer-destructuring"?:
+    | RuleNoConfig
+    | [AllowWarnDeny, PreferDestructuringOption2]
+    | [AllowWarnDeny, PreferDestructuringOption2, PreferDestructuringEnforcementConfig];
   "typescript/prefer-enum-initializers"?: RuleNoConfig;
   "typescript/prefer-find"?: RuleNoConfig;
   "typescript/prefer-for-of"?: RuleNoConfig;
@@ -5594,6 +5598,24 @@ export interface ParameterPropertiesConfig {
    * Whether to prefer parameter properties or class properties.
    */
   prefer?: Prefer2;
+}
+export interface PreferDestructuringTargetOption2 {
+  array?: boolean;
+  object?: boolean;
+}
+export interface PreferDestructuringAssignmentConfig2 {
+  AssignmentExpression?: PreferDestructuringTargetOption2;
+  VariableDeclarator?: PreferDestructuringTargetOption2;
+}
+export interface PreferDestructuringEnforcementConfig {
+  /**
+   * Whether to enforce destructuring on variable declarations with type annotations.
+   */
+  enforceForDeclarationWithTypeAnnotation?: boolean;
+  /**
+   * Whether to enforce destructuring that uses a different variable name than the property name.
+   */
+  enforceForRenamedProperties?: boolean;
 }
 export interface PreferLiteralEnumMember {
   /**
