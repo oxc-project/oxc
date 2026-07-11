@@ -1,0 +1,9 @@
+// Wrapped arrays follow the configured elements-per-line pattern
+const numbers = [1, 2, 3, 4, 5, 6, 7];
+const strings = ["Abidjan", "Accra", "Addis_Ababa", "Algiers", "Asmara", "Bamako", "Bangui"];
+// Multiline in source: wrapped by preserve behavior (pattern-only option set)
+const preserved = [
+  1, 2, 3, 4, 5];
+// Holes and comments fall back to one element per line
+const holes = [1, , 3, 4, 5];
+const commented = [1, 2, /* c */ 3, 4, 5];

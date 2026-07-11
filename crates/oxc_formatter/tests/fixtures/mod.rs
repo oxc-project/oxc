@@ -2,7 +2,7 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    ArrowParentheses, BracketSameLine, BracketSpacing, JsFormatOptions, JsdocOptions,
+    ArrayExpand, ArrowParentheses, BracketSameLine, BracketSpacing, JsFormatOptions, JsdocOptions,
     QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_formatter_core::{
@@ -110,6 +110,29 @@ impl FixtureFormatter for JsHarness {
                 }
                 "jsdoc" if value.is_object() => {
                     options.jsdoc = Some(JsdocOptions::default());
+                }
+                "arrayWrap" => {
+                    if let Some(s) = value.as_str() {
+                        options.array_expand = match s {
+                            "preserve" => ArrayExpand::Preserve,
+                            "collapse" => ArrayExpand::Never,
+                            _ => options.array_expand,
+                        };
+                    } else if let Some(object) = value.as_object() {
+                        if let Some(threshold) =
+                            object.get("minElementsToWrap").and_then(serde_json::Value::as_u64)
+                        {
+                            options.array_expand =
+                                ArrayExpand::ForceAboveThreshold(u32::try_from(threshold).unwrap());
+                        } else {
+                            options.array_expand = ArrayExpand::Preserve;
+                        }
+                        if let Some(pattern) =
+                            object.get("linePattern").and_then(serde_json::Value::as_str)
+                        {
+                            options.array_line_pattern = Some(pattern.parse().unwrap());
+                        }
+                    }
                 }
                 _ => {}
             }

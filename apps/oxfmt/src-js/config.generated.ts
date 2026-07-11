@@ -43,8 +43,9 @@ export interface Oxfmtrc {
    * arrays below the threshold use `"preserve"` behavior.
    * - `{ "linePattern": "2 1" }`: Print the given number of elements per wrapped line,
    * repeating the pattern once exhausted (like `prettier-plugin-multiline-arrays`'
-   * `multilineArraysLinePattern`). Applies to arrays wrapped by `minElementsToWrap`
-   * or, when no threshold is set, to arrays kept expanded by `"preserve"` behavior.
+   * `multilineArraysLinePattern`). Applies to any array printed across multiple lines,
+   * whether wrapped by `minElementsToWrap`, kept expanded by `"preserve"` behavior
+   * (the default when only `linePattern` is set), or too wide for printWidth.
    * Arrays containing holes or comments fall back to one element per line.
    *
    * When omitted, Prettier's default heuristic is used: arrays are collapsed when they fit
@@ -403,8 +404,9 @@ export interface FormatConfig {
    * arrays below the threshold use `"preserve"` behavior.
    * - `{ "linePattern": "2 1" }`: Print the given number of elements per wrapped line,
    * repeating the pattern once exhausted (like `prettier-plugin-multiline-arrays`'
-   * `multilineArraysLinePattern`). Applies to arrays wrapped by `minElementsToWrap`
-   * or, when no threshold is set, to arrays kept expanded by `"preserve"` behavior.
+   * `multilineArraysLinePattern`). Applies to any array printed across multiple lines,
+   * whether wrapped by `minElementsToWrap`, kept expanded by `"preserve"` behavior
+   * (the default when only `linePattern` is set), or too wide for printWidth.
    * Arrays containing holes or comments fall back to one element per line.
    *
    * When omitted, Prettier's default heuristic is used: arrays are collapsed when they fit

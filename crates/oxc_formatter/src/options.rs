@@ -59,10 +59,11 @@ pub struct JsFormatOptions {
     /// Whether to expand array literals to multiple lines. Defaults to "auto".
     pub array_expand: ArrayExpand,
 
-    /// Number of elements per line for expanded array literals, as a repeating
-    /// pattern (e.g. `[2, 1]` prints two elements on the first line, one on the
-    /// second, then repeats). Only applies to arrays expanded by `array_expand`
-    /// `Preserve` or `ForceAboveThreshold`. Defaults to `None` (one per line).
+    /// Number of elements per line for array literals printed across multiple
+    /// lines, as a repeating pattern (e.g. `"2 1"` prints two elements on the
+    /// first line, one on the second, then repeats). Applies however the array
+    /// came to break: `array_expand` or exceeding the line width. Arrays
+    /// containing holes or comments are exempt. Defaults to `None` (one per line).
     pub array_line_pattern: Option<ArrayLinePattern>,
 
     /// Controls the position of operators in binary expressions. [**NOT SUPPORTED YET**]

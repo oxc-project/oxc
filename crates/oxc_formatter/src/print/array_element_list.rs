@@ -39,17 +39,19 @@ impl<'a, 'b> ArrayElementList<'a, 'b> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let layout = if self.force_one_per_line {
-            // Holes and comments need `write_array_node`'s special handling,
-            // so a configured line pattern only applies without them
-            match f.options().array_line_pattern.as_ref() {
-                Some(pattern)
-                    if can_use_line_pattern(self.elements.parent().span(), self.elements, f) =>
-                {
-                    ArrayLayout::Pattern(pattern.clone())
-                }
-                _ => ArrayLayout::OnePerLine,
-            }
+        // A configured line pattern applies to any array printed across
+        // multiple lines, however it came to break. Holes and comments need
+        // `write_array_node`'s special handling, so they opt out
+        let line_pattern = f
+            .options()
+            .array_line_pattern
+            .as_ref()
+            .filter(|_| can_use_line_pattern(self.elements.parent().span(), self.elements, f));
+
+        let layout = if let Some(pattern) = line_pattern {
+            ArrayLayout::Pattern(pattern.clone())
+        } else if self.force_one_per_line {
+            ArrayLayout::OnePerLine
         } else if can_concisely_print_array_list(self.elements.parent().span(), self.elements, f) {
             ArrayLayout::Fill
         } else {
@@ -64,7 +66,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
                 let mut written_in_line = 0;
 
                 // Using format_separated is valid in this case as the line
-                // pattern is not used when the array contains holes
+                // pattern is not used when the array contains holes.
+                // Pattern boundaries are soft so a flat array stays on one
+                // line; elements within a line never break on their own
                 for (index, element) in FormatSeparatedIter::new(self.elements.iter(), ",")
                     .with_trailing_separator(trailing_separator)
                     .with_group_id(self.group_id)
@@ -72,7 +76,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
                 {
                     if index > 0 {
                         if written_in_line >= pattern.elements_for_line(line_index) {
-                            write!(f, hard_line_break());
+                            write!(f, soft_line_break_or_space());
                             line_index += 1;
                             written_in_line = 0;
                         } else {
