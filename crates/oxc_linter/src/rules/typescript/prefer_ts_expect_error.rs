@@ -97,7 +97,7 @@ impl Rule for PreferTsExpectError {
     }
 }
 
-fn get_last_comment_line<'a>(comment: Comment, raw: &'a str) -> &'a str {
+fn get_last_comment_line(comment: Comment, raw: &str) -> &str {
     if comment.is_line() {
         return raw;
     }
