@@ -5,6 +5,8 @@ use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_syntax::reference::ReferenceId;
+use oxc_syntax::symbol::SymbolId;
 
 use crate::diagnostics::ErrorCategory;
 
@@ -22,15 +24,6 @@ use crate::react_compiler_hir::object_shape::add_hook;
 use crate::react_compiler_hir::object_shape::default_mutating_hook;
 use crate::react_compiler_hir::object_shape::default_nonmutating_hook;
 use crate::react_compiler_hir::*;
-
-/// A variable rename from lowering: the binding at `declaration_start` position
-/// was renamed from `original` to `renamed`.
-#[derive(Debug, Clone)]
-pub struct BindingRename {
-    pub original: String,
-    pub renamed: String,
-    pub declaration_start: u32,
-}
 
 /// Output mode for the compiler, mirrored from the entrypoint's CompilerOutputMode.
 /// Stored on Environment so pipeline passes can access it.
@@ -74,20 +67,14 @@ pub struct Environment<'a> {
     pub instrument_gating_name: Option<String>,
     pub hook_guard_name: Option<String>,
 
-    // Renames: tracks variable renames from lowering (original_name → new_name)
-    // keyed by binding declaration position, for applying back to the Babel AST.
-    pub renames: Vec<BindingRename>,
-
-    // Node IDs of identifiers that are actual references to bindings.
-    // Used by codegen to filter type annotation renames — only rename identifiers
-    // whose node_id is in this set (type labels like ObjectTypeIndexer params
-    // are NOT in this set and should keep their original names).
-    pub reference_node_ids: FxHashSet<u32>,
+    // Renames from lowering (collision suffixes like `name_0`), recorded per
+    // resolved reference so codegen can rename identifiers inside preserved TS
+    // type annotations by reference identity.
+    pub renames: FxHashMap<ReferenceId, String>,
 
     // Hoisted identifiers: tracks which bindings have already been hoisted
     // via DeclareContext to avoid duplicate hoisting.
-    // Uses u32 to avoid depending on react_compiler_ast types.
-    hoisted_identifiers: FxHashSet<u32>,
+    hoisted_identifiers: FxHashSet<SymbolId>,
 
     // Config flags for validation passes (kept for backwards compat with existing pipeline code)
     pub validate_preserve_existing_memoization_guarantees: bool,
@@ -186,8 +173,7 @@ impl<'a> Environment<'a> {
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
-            renames: Vec::new(),
-            reference_node_ids: FxHashSet::default(),
+            renames: FxHashMap::default(),
             hoisted_identifiers: FxHashSet::default(),
             validate_preserve_existing_memoization_guarantees: config
                 .validate_preserve_existing_memoization_guarantees,
@@ -319,12 +305,12 @@ impl<'a> Environment<'a> {
     }
 
     /// Check if a binding has been hoisted (via DeclareContext) already.
-    pub fn is_hoisted_identifier(&self, binding_id: u32) -> bool {
+    pub fn is_hoisted_identifier(&self, binding_id: SymbolId) -> bool {
         self.hoisted_identifiers.contains(&binding_id)
     }
 
     /// Mark a binding as hoisted.
-    pub fn add_hoisted_identifier(&mut self, binding_id: u32) {
+    pub fn add_hoisted_identifier(&mut self, binding_id: SymbolId) {
         self.hoisted_identifiers.insert(binding_id);
     }
 

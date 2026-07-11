@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    BindingIdentifier, BindingPattern, ExportDefaultDeclarationKind, IdentifierReference,
-    ImportDeclaration, ModuleExportName, Program, PropertyKind, Statement, TSModuleDeclarationName,
+    BindingIdentifier, BindingPattern, IdentifierReference, ImportDeclaration, ModuleExportName,
+    PropertyKind, TSModuleDeclarationName,
 };
 use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
 use oxc_span::GetSpan;
@@ -9,6 +9,7 @@ use oxc_syntax::scope::ScopeFlags;
 use oxc_syntax::symbol::SymbolFlags;
 use rustc_hash::FxHashSet;
 
+pub use oxc_syntax::reference::ReferenceId;
 pub use oxc_syntax::scope::ScopeId;
 pub use oxc_syntax::symbol::SymbolId;
 
@@ -108,60 +109,32 @@ pub enum ImportBindingKind {
 pub struct ScopeResolver<'s, 'a> {
     scoping: &'s Scoping,
     nodes: &'s AstNodes<'a>,
-    /// Positions of resolved identifier references, declaration identifiers, and
-    /// `export default function` exports (Babel counts the export statement as a
-    /// reference to the function's binding).
-    reference_positions: FxHashSet<u32>,
-    /// `(start, end, scope_id)` source windows of Function-kind scopes, used for
-    /// position-range containment checks. Object methods get an extra window
+    /// All Function-kind scopes, in scope-tree order.
+    function_scopes: Vec<ScopeId>,
+    /// `(start, end)` source windows of Function-kind scopes, used by the
+    /// hoisting analysis's position checks. Object methods get an extra window
     /// starting at the enclosing ObjectProperty (Babel's ObjectMethod spans the
     /// whole property, including `get `/`set ` prefixes and computed keys).
-    function_scope_ranges: Vec<(u32, u32, ScopeId)>,
+    function_scope_ranges: Vec<(u32, u32)>,
 }
 
 impl<'s, 'a> ScopeResolver<'s, 'a> {
-    pub fn new(semantic: &'s Semantic<'a>, program: &Program<'_>) -> Self {
+    pub fn new(semantic: &'s Semantic<'a>) -> Self {
         let scoping = semantic.scoping();
         let nodes = semantic.nodes();
 
-        let mut reference_positions = FxHashSet::default();
-        for symbol_id in scoping.symbol_ids() {
-            for &ref_id in scoping.get_resolved_reference_ids(symbol_id) {
-                let reference = scoping.get_reference(ref_id);
-                reference_positions.insert(nodes.get_node(reference.node_id()).kind().span().start);
-            }
-            let decl_node = nodes.get_node(scoping.symbol_declaration(symbol_id));
-            let name = scoping.symbol_name(symbol_id);
-            if let Some(start) = find_binding_identifier_start(decl_node.kind(), name) {
-                reference_positions.insert(start);
-            }
-        }
-        for stmt in &program.body {
-            let Statement::ExportDefaultDeclaration(export) = stmt else { continue };
-            let ExportDefaultDeclarationKind::FunctionDeclaration(func) = &export.declaration
-            else {
-                continue;
-            };
-            let Some(id) = &func.id else { continue };
-            if id.symbol_id.get().is_some()
-                || scoping.symbol_ids().any(|s| scoping.symbol_name(s) == id.name.as_str())
-            {
-                reference_positions.insert(export.span.start);
-            }
-        }
-
         let mut resolver =
-            Self { scoping, nodes, reference_positions, function_scope_ranges: Vec::new() };
+            Self { scoping, nodes, function_scopes: Vec::new(), function_scope_ranges: Vec::new() };
 
-        let mut function_scope_ranges = Vec::new();
         for scope_id in scoping.scope_descendants_from_root() {
             if resolver.scope_kind(scope_id) != ScopeKind::Function {
                 continue;
             }
+            resolver.function_scopes.push(scope_id);
             let node = nodes.get_node(scoping.get_node_id(scope_id));
             let span = node.kind().span();
             if span.end > span.start {
-                function_scope_ranges.push((span.start, span.end, scope_id));
+                resolver.function_scope_ranges.push((span.start, span.end));
             }
             // For function scopes inside object methods, also record a window from
             // the parent ObjectProperty's start, so range checks match Babel's
@@ -169,16 +142,15 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             if let AstKind::Function(_) = node.kind() {
                 let parent = nodes.parent_node(node.id());
                 if let AstKind::ObjectProperty(prop) = parent.kind() {
-                    if prop.method || matches!(prop.kind, PropertyKind::Get | PropertyKind::Set) {
+                    if is_object_method_property(prop) {
                         let prop_start = parent.kind().span().start;
                         if prop_start != span.start {
-                            function_scope_ranges.push((prop_start, span.end, scope_id));
+                            resolver.function_scope_ranges.push((prop_start, span.end));
                         }
                     }
                 }
             }
         }
-        resolver.function_scope_ranges = function_scope_ranges;
 
         resolver
     }
@@ -200,7 +172,9 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
     /// only the first declaration's position was mapped.
     pub fn resolve_binding_identifier(&self, ident: &BindingIdentifier) -> Option<SymbolId> {
         let symbol_id = ident.symbol_id.get()?;
-        (self.declaration_start(symbol_id) == Some(ident.span.start)).then_some(symbol_id)
+        self.declaration_ident(symbol_id)
+            .is_some_and(|decl| std::ptr::eq(decl, ident))
+            .then_some(symbol_id)
     }
 
     /// All symbols in the program, in symbol-table order.
@@ -331,12 +305,12 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         }
     }
 
-    /// The start offset of the symbol's declaration identifier (the first
-    /// declaration for redeclared symbols). `None` for declaration kinds the
-    /// old conversion did not map (e.g. interfaces).
-    pub fn declaration_start(&self, symbol_id: SymbolId) -> Option<u32> {
+    /// The symbol's declaration identifier (the first declaration for
+    /// redeclared symbols). `None` for declaration kinds the old conversion
+    /// did not map (e.g. interfaces).
+    pub fn declaration_ident(&self, symbol_id: SymbolId) -> Option<&'a BindingIdentifier<'a>> {
         let decl_node = self.nodes.get_node(self.scoping.symbol_declaration(symbol_id));
-        find_binding_identifier_start(decl_node.kind(), self.symbol_name(symbol_id))
+        find_binding_identifier(decl_node.kind(), self.symbol_name(symbol_id))
     }
 
     /// For import bindings: the source module and import details.
@@ -397,19 +371,9 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         None
     }
 
-    /// Positions of the symbol's resolved references (including TS type references).
-    pub fn reference_positions(&self, symbol_id: SymbolId) -> impl Iterator<Item = u32> + '_ {
-        let nodes = self.nodes;
-        self.scoping().get_resolved_reference_ids(symbol_id).iter().map(move |&ref_id| {
-            let reference = self.scoping().get_reference(ref_id);
-            nodes.get_node(reference.node_id()).kind().span().start
-        })
-    }
-
-    /// The positions of every resolved reference, declaration identifier, and
-    /// export-default pseudo-reference. Feeds `Environment::reference_node_ids`.
-    pub fn all_reference_positions(&self) -> &FxHashSet<u32> {
-        &self.reference_positions
+    /// The symbol's resolved reference IDs (including TS type references).
+    pub fn reference_ids(&self, symbol_id: SymbolId) -> &'s [ReferenceId] {
+        self.scoping().get_resolved_reference_ids(symbol_id)
     }
 
     /// The program-level (module) scope.
@@ -486,10 +450,61 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         symbols
     }
 
-    /// `(start, end, scope_id)` windows of Function-kind scopes, for
-    /// position-range containment checks.
-    pub fn function_scope_ranges(&self) -> &[(u32, u32, ScopeId)] {
+    /// `(start, end)` source windows of Function-kind scopes, for the hoisting
+    /// analysis's position checks.
+    pub fn function_scope_ranges(&self) -> &[(u32, u32)] {
         &self.function_scope_ranges
+    }
+
+    /// All Function-kind scopes, in scope-tree order.
+    pub fn function_scopes(&self) -> impl Iterator<Item = ScopeId> + '_ {
+        self.function_scopes.iter().copied()
+    }
+
+    /// The AST node a reference sits on.
+    pub fn reference_node_id(&self, reference_id: ReferenceId) -> NodeId {
+        self.scoping().get_reference(reference_id).node_id()
+    }
+
+    /// The subtree root for capture analysis of a function scope: the function
+    /// node itself, widened to the enclosing ObjectProperty for object methods
+    /// and accessors (Babel's ObjectMethod node spans the whole property,
+    /// including `get `/`set ` prefixes and computed keys).
+    pub fn capture_root_node(&self, function_scope: ScopeId) -> NodeId {
+        let node_id = self.scoping().get_node_id(function_scope);
+        let node = self.nodes.get_node(node_id);
+        if let AstKind::Function(_) = node.kind() {
+            let parent = self.nodes.parent_node(node_id);
+            if let AstKind::ObjectProperty(prop) = parent.kind() {
+                if is_object_method_property(prop) {
+                    return parent.id();
+                }
+            }
+        }
+        node_id
+    }
+
+    /// Whether `node_id` is `root` or one of its descendants.
+    pub fn node_within(&self, node_id: NodeId, root: NodeId) -> bool {
+        node_id == root || self.nodes.ancestor_ids(node_id).any(|id| id == root)
+    }
+
+    /// Scopes of the functions lexically containing `node_id`, innermost first.
+    /// Mirrors Babel's ObjectMethod extent: a node inside a method property's
+    /// computed key or accessor prefix counts as inside that method's function.
+    pub fn containing_function_scopes(
+        &self,
+        node_id: NodeId,
+    ) -> impl Iterator<Item = ScopeId> + '_ {
+        self.nodes.ancestor_kinds(node_id).filter_map(|kind| match kind {
+            AstKind::Function(func) => func.scope_id.get(),
+            AstKind::ArrowFunctionExpression(arrow) => arrow.scope_id.get(),
+            AstKind::ObjectProperty(prop) if is_object_method_property(prop) => match &prop.value {
+                oxc_ast::ast::Expression::FunctionExpression(func) => func.scope_id.get(),
+                _ => None,
+            },
+            _ => None,
+        })
     }
 
     /// Find a binding by name within the descendants of a given scope
@@ -530,56 +545,34 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
     }
 }
 
-/// Find the binding identifier's start position within a declaration AST node.
-fn find_binding_identifier_start(kind: AstKind, name: &str) -> Option<u32> {
+/// Whether an object property is what Babel models as an `ObjectMethod`
+/// (a method or a `get`/`set` accessor), whose node spans the whole property.
+fn is_object_method_property(prop: &oxc_ast::ast::ObjectProperty) -> bool {
+    prop.method || matches!(prop.kind, PropertyKind::Get | PropertyKind::Set)
+}
+
+/// Find the binding identifier with the given name within a declaration AST node.
+fn find_binding_identifier<'a>(kind: AstKind<'a>, name: &str) -> Option<&'a BindingIdentifier<'a>> {
     match kind {
-        AstKind::BindingIdentifier(ident) => {
-            if ident.name.as_str() == name {
-                Some(ident.span.start)
-            } else {
-                None
-            }
-        }
+        AstKind::BindingIdentifier(ident) => (ident.name.as_str() == name).then_some(ident),
         AstKind::VariableDeclarator(decl) => find_identifier_in_pattern(&decl.id, name),
-        AstKind::Function(func) => func
-            .id
-            .as_ref()
-            .and_then(|id| if id.name.as_str() == name { Some(id.span.start) } else { None }),
-        AstKind::Class(class) => class
-            .id
-            .as_ref()
-            .and_then(|id| if id.name.as_str() == name { Some(id.span.start) } else { None }),
+        AstKind::Function(func) => func.id.as_ref().filter(|id| id.name.as_str() == name),
+        AstKind::Class(class) => class.id.as_ref().filter(|id| id.name.as_str() == name),
         AstKind::FormalParameter(param) => find_identifier_in_pattern(&param.pattern, name),
         AstKind::FormalParameterRest(rest) => find_identifier_in_pattern(&rest.rest.argument, name),
-        AstKind::ImportSpecifier(spec) => Some(spec.local.span.start),
-        AstKind::ImportDefaultSpecifier(spec) => Some(spec.local.span.start),
-        AstKind::ImportNamespaceSpecifier(spec) => Some(spec.local.span.start),
+        AstKind::ImportSpecifier(spec) => Some(&spec.local),
+        AstKind::ImportDefaultSpecifier(spec) => Some(&spec.local),
+        AstKind::ImportNamespaceSpecifier(spec) => Some(&spec.local),
         AstKind::CatchClause(catch) => {
             catch.param.as_ref().and_then(|p| find_identifier_in_pattern(&p.pattern, name))
         }
         AstKind::CatchParameter(param) => find_identifier_in_pattern(&param.pattern, name),
         AstKind::TSTypeAliasDeclaration(decl) => {
-            if decl.id.name.as_str() == name {
-                Some(decl.id.span.start)
-            } else {
-                None
-            }
+            (decl.id.name.as_str() == name).then_some(&decl.id)
         }
-        AstKind::TSEnumDeclaration(decl) => {
-            if decl.id.name.as_str() == name {
-                Some(decl.id.span.start)
-            } else {
-                None
-            }
-        }
+        AstKind::TSEnumDeclaration(decl) => (decl.id.name.as_str() == name).then_some(&decl.id),
         AstKind::TSModuleDeclaration(decl) => match &decl.id {
-            TSModuleDeclarationName::Identifier(id) => {
-                if id.name.as_str() == name {
-                    Some(id.span.start)
-                } else {
-                    None
-                }
-            }
+            TSModuleDeclarationName::Identifier(id) => (id.name.as_str() == name).then_some(id),
             _ => None,
         },
         _ => None,
@@ -587,41 +580,27 @@ fn find_binding_identifier_start(kind: AstKind, name: &str) -> Option<u32> {
 }
 
 /// Recursively find a binding identifier within a binding pattern.
-fn find_identifier_in_pattern(pattern: &BindingPattern, name: &str) -> Option<u32> {
+fn find_identifier_in_pattern<'a>(
+    pattern: &'a BindingPattern<'a>,
+    name: &str,
+) -> Option<&'a BindingIdentifier<'a>> {
     match pattern {
-        BindingPattern::BindingIdentifier(ident) => {
-            if ident.name.as_str() == name {
-                Some(ident.span.start)
-            } else {
-                None
-            }
-        }
-        BindingPattern::ObjectPattern(obj) => {
-            for prop in &obj.properties {
-                if let Some(start) = find_identifier_in_pattern(&prop.value, name) {
-                    return Some(start);
-                }
-            }
-            if let Some(rest) = &obj.rest {
-                if let Some(start) = find_identifier_in_pattern(&rest.argument, name) {
-                    return Some(start);
-                }
-            }
-            None
-        }
-        BindingPattern::ArrayPattern(arr) => {
-            for element in arr.elements.iter().flatten() {
-                if let Some(start) = find_identifier_in_pattern(element, name) {
-                    return Some(start);
-                }
-            }
-            if let Some(rest) = &arr.rest {
-                if let Some(start) = find_identifier_in_pattern(&rest.argument, name) {
-                    return Some(start);
-                }
-            }
-            None
-        }
+        BindingPattern::BindingIdentifier(ident) => (ident.name.as_str() == name).then_some(ident),
+        BindingPattern::ObjectPattern(obj) => obj
+            .properties
+            .iter()
+            .find_map(|prop| find_identifier_in_pattern(&prop.value, name))
+            .or_else(|| {
+                obj.rest.as_ref().and_then(|rest| find_identifier_in_pattern(&rest.argument, name))
+            }),
+        BindingPattern::ArrayPattern(arr) => arr
+            .elements
+            .iter()
+            .flatten()
+            .find_map(|element| find_identifier_in_pattern(element, name))
+            .or_else(|| {
+                arr.rest.as_ref().and_then(|rest| find_identifier_in_pattern(&rest.argument, name))
+            }),
         BindingPattern::AssignmentPattern(assign) => find_identifier_in_pattern(&assign.left, name),
     }
 }

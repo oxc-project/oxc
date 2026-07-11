@@ -274,30 +274,22 @@ fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '
         }
         ReactiveValue::Instruction(InstructionValue::StoreLocal { lvalue, value, .. }) => {
             // Track reassignments from inlining of manual memo
-            if state.manual_memo_state.is_some() && lvalue.kind == InstructionKind::Reassign {
+            if let Some(memo_state) = &mut state.manual_memo_state
+                && lvalue.kind == InstructionKind::Reassign
+            {
                 let decl_id =
                     state.env.identifiers[lvalue.place.identifier.0 as usize].declaration_id;
-                state
-                    .manual_memo_state
-                    .as_mut()
-                    .unwrap()
-                    .reassignments
-                    .entry(decl_id)
-                    .or_default()
-                    .insert(value.identifier);
+                memo_state.reassignments.entry(decl_id).or_default().insert(value.identifier);
             }
         }
         ReactiveValue::Instruction(InstructionValue::LoadLocal { place, .. })
-            if state.manual_memo_state.is_some() =>
+            if let Some(memo_state) = &mut state.manual_memo_state =>
         {
             let place_ident = &state.env.identifiers[place.identifier.0 as usize];
             if let Some(ref lvalue) = instr.lvalue {
                 let lvalue_ident = &state.env.identifiers[lvalue.identifier.0 as usize];
                 if place_ident.scope.is_some() && lvalue_ident.scope.is_none() {
-                    state
-                        .manual_memo_state
-                        .as_mut()
-                        .unwrap()
+                    memo_state
                         .reassignments
                         .entry(lvalue_ident.declaration_id)
                         .or_default()

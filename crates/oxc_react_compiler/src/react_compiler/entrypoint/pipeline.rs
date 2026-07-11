@@ -150,8 +150,6 @@ fn run_pipeline<'a>(
     env.hook_guard_name = context.hook_guard_name.clone();
     env.seed_uid_known_names(context.known_referenced_names());
 
-    env.reference_node_ids = scope.all_reference_positions().clone();
-
     let mut hir = lower(func, scope, &mut env)?;
 
     // Check for Invariant errors after lowering, before logging HIR.

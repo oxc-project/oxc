@@ -201,12 +201,6 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         }
     }
 
-    /// The HIR `Span` for an oxc byte span. Always `Some` (oxc nodes
-    /// always have a span); a `Span` is the byte span itself.
-    pub fn source_location(&self, span: Span) -> Option<Span> {
-        Some(span)
-    }
-
     /// Check if a scope is the component scope or a descendant of it.
     /// Used to determine whether a binding is local to the compiled function
     /// or belongs to an ancestor function scope (e.g., a factory function
@@ -242,9 +236,10 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         self.scope
     }
 
-    /// Look up the source location of an identifier by its node_id.
-    pub fn get_identifier_span(&self, node_id: u32) -> Option<Span> {
-        self.identifier_spans.get(&node_id).map(|entry| entry.span)
+    /// The declaration identifier's span, when the declaration was recorded
+    /// in the compiled function's identifier index.
+    pub fn declaration_span(&self, symbol_id: SymbolId) -> Option<Span> {
+        self.identifier_spans.declaration_span(symbol_id)
     }
 
     /// Access the function scope (the scope of the function being compiled).
@@ -674,11 +669,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                     true
                 };
             if should_record_fbt_error {
-                let error_span = self
-                    .scope
-                    .declaration_start(symbol_id)
-                    .and_then(|nid| self.get_identifier_span(nid))
-                    .or(span);
+                let error_span = self.declaration_span(symbol_id).or(span);
                 self.env.record_error(
                     ErrorCategory::Todo
                         .diagnostic("Support local variables named `fbt`")
@@ -711,14 +702,11 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             index += 1;
         }
 
-        // Record rename if the candidate differs from the original name
+        // Record the rename on each resolved reference of the binding, so codegen
+        // can rename matching identifiers inside preserved TS type annotations.
         if candidate != name {
-            if let Some(decl_start) = self.scope.declaration_start(symbol_id) {
-                self.env.renames.push(crate::react_compiler_hir::environment::BindingRename {
-                    original: name.to_string(),
-                    renamed: candidate.clone(),
-                    declaration_start: decl_start,
-                });
+            for &reference_id in self.scope.reference_ids(symbol_id) {
+                self.env.renames.insert(reference_id, candidate.clone());
             }
         }
 
@@ -729,8 +717,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         // Prefer the binding's declaration span over the reference span.
         // This matches TS behavior where Babel's resolveBinding returns the
         // binding identifier's original span (the declaration site).
-        let decl_span =
-            self.scope.declaration_start(symbol_id).and_then(|nid| self.get_identifier_span(nid));
+        let decl_span = self.declaration_span(symbol_id);
         if let Some(ref dl) = decl_span {
             self.env.identifiers[id.0 as usize].span = Some(*dl);
         } else if let Some(ref span) = span {
@@ -744,10 +731,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Set the span on an identifier to the declaration-site span.
     /// This overrides any previously-set span (which may have come from a reference site).
-    pub fn set_identifier_declaration_span(&mut self, id: IdentifierId, span: &Option<Span>) {
-        if let Some(span_val) = span {
-            self.env.identifiers[id.0 as usize].span = Some(*span_val);
-        }
+    pub fn set_identifier_declaration_span(&mut self, id: IdentifierId, span: Span) {
+        self.env.identifiers[id.0 as usize].span = Some(span);
     }
 
     /// Resolve an identifier reference to a VariableBinding.
@@ -760,7 +745,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn resolve_identifier(
         &mut self,
         name: &str,
-        span: Option<Span>,
+        span: Span,
         symbol: Option<SymbolId>,
     ) -> Result<VariableBinding, OxcDiagnostic> {
         let Some(symbol_id) = symbol else {
@@ -807,7 +792,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
                 &self.scope.binding_kind(symbol_id),
             );
-            let identifier_id = self.resolve_binding_with_span(name, symbol_id, span)?;
+            let identifier_id = self.resolve_binding_with_span(name, symbol_id, Some(span))?;
             Ok(VariableBinding::Identifier { identifier: identifier_id, binding_kind })
         }
     }
