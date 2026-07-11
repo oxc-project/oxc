@@ -40,8 +40,8 @@ catalogs:
       specifier: 0.3.21
       version: 0.3.21
     tsdown:
-      specifier: 0.22.4
-      version: 0.22.4
+      specifier: 0.22.5
+      version: 0.22.5
     vite-plus:
       specifier: 0.2.4
       version: 0.2.4
@@ -113,7 +113,7 @@ importers:
         version: 5.56.4(@typescript-eslint/types@8.62.1)
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.4(@arethetypeswrong/core@0.18.4)(publint@0.3.21)(tsx@4.22.5)(typescript@5.6.1-rc)
+        version: 0.22.5(@arethetypeswrong/core@0.18.4)(publint@0.3.21)(tsx@4.22.5)(typescript@5.6.1-rc)
       vite-plus:
         specifier: 'catalog:'
         version: 0.2.4(@arethetypeswrong/core@0.18.4)(@types/node@24.1.0)(esbuild@0.28.1)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.4(@typescript-eslint/types@8.62.1))(terser@5.44.1)(tsx@4.22.5)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.5))
@@ -209,7 +209,7 @@ importers:
         version: 7.0.7
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.4(@arethetypeswrong/core@0.18.4)(publint@0.3.21)(tsx@4.22.5)(typescript@5.6.1-rc)
+        version: 0.22.5(@arethetypeswrong/core@0.18.4)(publint@0.3.21)(tsx@4.22.5)(typescript@5.6.1-rc)
       tsx:
         specifier: ^4.21.0
         version: 4.22.5
@@ -5044,14 +5044,14 @@ packages:
   robust-predicates@3.0.2:
     resolution: {integrity: sha512-IXgzBWvWQwE6PrDI05OvmXUIruQTcoMDzRsOd5CDvHCVLcLHMTSYvOK5Cm46kWqlV3yAbuSpBZdJ5oP5OUoStg==}
 
-  rolldown-plugin-dts@0.27.1:
-    resolution: {integrity: sha512-s1HLtZfsXcLsBrcqW6nmIcTqkBZd7Y9srgL9SMS2hNvl37US5jFl193d5ki2w9Ei5myP7ERLVlQX2o6ZTL/AQQ==}
+  rolldown-plugin-dts@0.27.4:
+    resolution: {integrity: sha512-z1uz1gH2sJ55i6JY/xi3q7gsI5CPthefDp5HYXnBlrkN1L3K4tx+gyAQO3Udt69ASWItWKwXJ55nKQq2HCMVfA==}
     engines: {node: ^22.18.0 || >=24.11.0}
     peerDependencies:
       '@ts-macro/tsc': ^0.3.6
       '@typescript/native-preview': '>=7.0.0-dev.20260325.1'
       rolldown: 1.1.5
-      typescript: ^5.0.0 || ^6.0.0
+      typescript: ^5.0.0 || ^6.0.0 || ^7.0.0
       vue-tsc: ~3.2.0 || ~3.3.0
     peerDependenciesMeta:
       '@ts-macro/tsc':
@@ -5297,18 +5297,18 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  tsdown@0.22.4:
-    resolution: {integrity: sha512-3a5FsNL2fH2jw3ozvFUuPMBgS0xXjX9wpZShHyB4klXelVhyaNw5Q5WA9TPCNeoGYpRZEc4OZdMx5wT4Fkma3A==}
+  tsdown@0.22.5:
+    resolution: {integrity: sha512-0iEpnuOVBGo7mPW+FlyglErHBExYOAlpLBlCl/QcTrRUJ+TF2prfzl6ipQS5VsjJejFXnmbkdh0Ta53B3stWxg==}
     engines: {node: ^22.18.0 || >=24.11.0}
     hasBin: true
     peerDependencies:
       '@arethetypeswrong/core': ^0.18.1
-      '@tsdown/css': 0.22.4
-      '@tsdown/exe': 0.22.4
+      '@tsdown/css': 0.22.5
+      '@tsdown/exe': 0.22.5
       '@vitejs/devtools': '*'
       publint: ^0.3.8
       tsx: '*'
-      typescript: ^5.0.0 || ^6.0.0
+      typescript: ^5.0.0 || ^6.0.0 || ^7.0.0
       unplugin-unused: ^0.5.0
       unrun: '*'
     peerDependenciesMeta:
@@ -9919,7 +9919,7 @@ snapshots:
 
   robust-predicates@3.0.2: {}
 
-  rolldown-plugin-dts@0.27.1(rolldown@1.1.5)(typescript@5.6.1-rc):
+  rolldown-plugin-dts@0.27.4(rolldown@1.1.5)(typescript@5.6.1-rc):
     dependencies:
       dts-resolver: 3.0.0
       get-tsconfig: 5.0.0-beta.5
@@ -10229,7 +10229,7 @@ snapshots:
     dependencies:
       typescript: 5.6.1-rc
 
-  tsdown@0.22.4(@arethetypeswrong/core@0.18.4)(publint@0.3.21)(tsx@4.22.5)(typescript@5.6.1-rc):
+  tsdown@0.22.5(@arethetypeswrong/core@0.18.4)(publint@0.3.21)(tsx@4.22.5)(typescript@5.6.1-rc):
     dependencies:
       ansis: 4.3.1
       cac: 7.0.0
@@ -10240,7 +10240,7 @@ snapshots:
       obug: 2.1.3
       picomatch: 4.0.5
       rolldown: 1.1.5
-      rolldown-plugin-dts: 0.27.1(rolldown@1.1.5)(typescript@5.6.1-rc)
+      rolldown-plugin-dts: 0.27.4(rolldown@1.1.5)(typescript@5.6.1-rc)
       semver: 7.8.5
       tinyexec: 1.2.4
       tinyglobby: 0.2.17
