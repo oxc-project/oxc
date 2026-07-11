@@ -24,14 +24,14 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
             ts::check_ts_export_assignment_in_program(program, ctx);
         }
         AstKind::BindingIdentifier(ident) => {
-            js::check_identifier(&ident.name, ident.span, ident.symbol_id.get(), ctx);
+            js::check_identifier(&ident.name, ident.span, ctx);
             js::check_binding_identifier(ident, ctx);
         }
         AstKind::IdentifierReference(ident) => {
-            js::check_identifier(&ident.name, ident.span, None, ctx);
+            js::check_identifier(&ident.name, ident.span, ctx);
             js::check_identifier_reference(ident, ctx);
         }
-        AstKind::LabelIdentifier(ident) => js::check_identifier(&ident.name, ident.span, None, ctx),
+        AstKind::LabelIdentifier(ident) => js::check_identifier(&ident.name, ident.span, ctx),
         AstKind::PrivateIdentifier(ident) => js::check_private_identifier_outside_class(ident, ctx),
         AstKind::NumericLiteral(lit) => js::check_number_literal(lit, ctx),
         AstKind::StringLiteral(lit) => js::check_string_literal(lit, ctx),
