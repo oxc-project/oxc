@@ -42,16 +42,12 @@ fn is_class_scope_descendant(scope: &ScopeResolver<'_, '_>, scope_id: ScopeId) -
     scope.ancestors(scope_id).skip(1).any(|s| scope.scope_kind(s) == ScopeKind::Class)
 }
 
-fn validate_ts_this_parameters_in_function_range(
+fn validate_ts_this_parameters_within(
     scope: &ScopeResolver<'_, '_>,
-    start: u32,
-    end: u32,
+    function_scope: ScopeId,
 ) -> Result<(), OxcDiagnostic> {
-    if start >= end {
-        return Ok(());
-    }
-    for &(node_start, _, scope_id) in scope.function_scope_ranges() {
-        if node_start < start || node_start >= end {
+    for scope_id in scope.function_scopes() {
+        if !scope.ancestors(scope_id).any(|s| s == function_scope) {
             continue;
         }
         if is_class_scope_descendant(scope, scope_id) {
@@ -277,7 +273,7 @@ fn lower_block_statement_inner<'a>(
                 scope.symbol_name(sid).to_string(),
                 scope.binding_kind(sid),
                 scope.decl_kind(sid),
-                scope.declaration_start(sid),
+                scope.declaration_ident(sid).map(|id| id.span.start),
             )
         })
         .collect();
@@ -309,8 +305,8 @@ fn lower_block_statement_inner<'a>(
                 .scope()
                 .function_scope_ranges()
                 .iter()
-                .filter(|&&(pos, _, _)| pos > stmt_start && pos < stmt_end)
-                .map(|&(pos, end, _)| (pos, end))
+                .copied()
+                .filter(|&(pos, _)| pos > stmt_start && pos < stmt_end)
                 .collect()
         };
 
@@ -320,8 +316,7 @@ fn lower_block_statement_inner<'a>(
             name: String,
             kind: AstBindingKind,
             declaration_type: DeclKind,
-            first_ref_pos: u32,
-            first_ref_nid: u32,
+            first_ref_span: Span,
         }
         let mut will_hoist: Vec<HoistInfo> = Vec::new();
 
@@ -330,58 +325,58 @@ fn lower_block_statement_inner<'a>(
                 continue;
             }
 
-            // Find the first reference (not declaration) to this binding in the statement's range.
+            // Find the first reference to this binding in the statement's range.
             // Exclude JSX identifier references: while Babel's scope system links JSX
             // tag names to local bindings (and the context capture pass includes them),
             // the TS hoisting analysis does NOT traverse JSX elements. This mismatch
             // is intentional — it matches the TS behavior where <colgroup> adds
             // "colgroup" to the context but does NOT trigger hoisting, causing
             // EnterSSA to error with "Expected identifier to be defined before use".
-            //
-            // The decl_start filter excludes the binding's own declaration position from
-            // counting as a reference. For hoisted bindings (function declarations), this
-            // filter is only applied when the current statement IS a FunctionDeclaration,
-            // since that's the only statement type where decl_start is a declaration, not
-            // a reference.
-            let apply_decl_filter = !matches!(kind, AstBindingKind::Hoisted) || is_function_decl;
-            let refs_in_stmt: Vec<(u32, u32)> = scope
-                .reference_positions(*binding_id)
-                .chain(decl_start.iter().copied())
-                .filter_map(|ref_nid| {
-                    let entry = builder.identifier_spans().get(&ref_nid)?;
-                    let ref_start = entry.start;
+            let mut refs_in_stmt: Vec<Span> = scope
+                .reference_ids(*binding_id)
+                .iter()
+                .filter_map(|&ref_id| {
+                    let entry = builder.identifier_spans().reference(ref_id)?;
+                    let ref_start = entry.span.start;
                     if ref_start < stmt_start || ref_start >= stmt_end {
                         return None;
                     }
-                    if apply_decl_filter && *decl_start == Some(ref_nid) {
+                    if entry.is_jsx() {
                         return None;
                     }
-                    if entry.is_jsx {
-                        return None;
-                    }
-                    Some((ref_start, ref_nid))
+                    Some(entry.span)
                 })
                 .collect();
+            // For hoisted bindings (function declarations) outside their own
+            // declaration statement, the declaration site itself counts as a
+            // reference (Babel's binding references include the declaration).
+            let decl_counts_as_ref = matches!(kind, AstBindingKind::Hoisted) && !is_function_decl;
+            if decl_counts_as_ref {
+                if let Some(decl_span) = builder.identifier_spans().declaration_span(*binding_id) {
+                    if decl_span.start >= stmt_start && decl_span.start < stmt_end {
+                        refs_in_stmt.push(decl_span);
+                    }
+                }
+            }
 
             if refs_in_stmt.is_empty() {
                 continue;
             }
 
-            let (first_ref_pos, first_ref_nid) =
-                *refs_in_stmt.iter().min_by_key(|(pos, _)| *pos).unwrap();
+            let first_ref_span = *refs_in_stmt.iter().min_by_key(|s| s.start).unwrap();
 
             // Hoist if: (1) binding is "hoisted" kind (function declaration), or
             // (2) any reference to this binding is inside a nested function scope.
             // Check per-reference rather than per-statement to correctly handle
             // statements that contain both nested functions and top-level code.
             let is_hoisted_kind = matches!(kind, AstBindingKind::Hoisted);
-            let refs_in_nested_fn: Vec<(u32, u32)> = refs_in_stmt
+            let refs_in_nested_fn: Vec<Span> = refs_in_stmt
                 .iter()
                 .copied()
-                .filter(|&(ref_pos, _)| {
+                .filter(|s| {
                     nested_function_ranges
                         .iter()
-                        .any(|&(fn_start, fn_end)| ref_pos >= fn_start && ref_pos < fn_end)
+                        .any(|&(fn_start, fn_end)| s.start >= fn_start && s.start < fn_end)
                 })
                 .collect();
             let should_hoist = is_hoisted_kind || !refs_in_nested_fn.is_empty();
@@ -404,28 +399,27 @@ fn lower_block_statement_inner<'a>(
                 // For hoisted bindings (function declarations), use the first reference
                 // overall. For non-hoisted bindings, use the first reference inside a
                 // nested function.
-                let (hoist_ref_pos, hoist_ref_nid) = if is_hoisted_kind {
-                    (first_ref_pos, first_ref_nid)
+                let first_ref_span = if is_hoisted_kind {
+                    first_ref_span
                 } else {
-                    *refs_in_nested_fn.iter().min_by_key(|(pos, _)| *pos).unwrap()
+                    *refs_in_nested_fn.iter().min_by_key(|s| s.start).unwrap()
                 };
                 will_hoist.push(HoistInfo {
                     binding_id: *binding_id,
                     name: name.clone(),
                     kind: *kind,
                     declaration_type: *decl_type,
-                    first_ref_pos: hoist_ref_pos,
-                    first_ref_nid: hoist_ref_nid,
+                    first_ref_span,
                 });
             }
         }
 
         // Sort by first reference position to match TS traversal order
-        will_hoist.sort_by_key(|h| h.first_ref_pos);
+        will_hoist.sort_by_key(|h| h.first_ref_span.start);
 
         // Emit DeclareContext for hoisted bindings
         for info in &will_hoist {
-            if builder.environment().is_hoisted_identifier(info.binding_id.index() as u32) {
+            if builder.environment().is_hoisted_identifier(info.binding_id) {
                 continue;
             }
 
@@ -462,8 +456,7 @@ fn lower_block_statement_inner<'a>(
                 }
             };
 
-            // Look up the reference location for the DeclareContext instruction.
-            let ref_span = builder.identifier_spans().get(&info.first_ref_nid).map(|e| e.span);
+            let ref_span = Some(info.first_ref_span);
             let identifier = builder.resolve_binding(&info.name, info.binding_id)?;
             let place =
                 Place { effect: Effect::Unknown, identifier, reactive: false, span: ref_span };
@@ -474,7 +467,7 @@ fn lower_block_statement_inner<'a>(
                     span: ref_span,
                 },
             )?;
-            builder.environment_mut().add_hoisted_identifier(info.binding_id.index() as u32);
+            builder.environment_mut().add_hoisted_identifier(info.binding_id);
             // Hoisted identifiers also become context identifiers (matching TS addHoistedIdentifier)
             builder.add_context_identifier(info.binding_id);
         }
@@ -539,7 +532,7 @@ pub fn lower<'a>(
     // Note: `id` param may include inferred names (e.g., from `const Foo = () => {}`),
     // but the HIR function's `id` field should only include the function's own AST id
     // (FunctionDeclaration.id or FunctionExpression.id, NOT arrow functions).
-    let (params, body, generator, is_async, span, start, end, ast_id) = match func {
+    let (params, body, generator, is_async, span, ast_id) = match func {
         FunctionNode::Function(f) => {
             let body_ref = f.body.as_deref().expect("component function has a body");
             (
@@ -548,8 +541,6 @@ pub fn lower<'a>(
                 f.generator,
                 f.r#async,
                 f.span,
-                f.span.start,
-                f.span.end,
                 f.id.as_ref().map(|id| id.name.as_str()),
             )
         }
@@ -564,22 +555,13 @@ pub fn lower<'a>(
             } else {
                 FunctionBody::Block(arrow.body.as_ref())
             };
-            (
-                arrow.params.as_ref(),
-                body,
-                false,
-                arrow.r#async,
-                arrow.span,
-                arrow.span.start,
-                arrow.span.end,
-                None,
-            )
+            (arrow.params.as_ref(), body, false, arrow.r#async, arrow.span, None)
         }
     };
 
     let scope_id = func.scope_id().unwrap_or_else(|| scope.program_scope());
 
-    validate_ts_this_parameters_in_function_range(scope, start, end)?;
+    validate_ts_this_parameters_within(scope, scope_id)?;
 
     // Build identifier location index from the AST (replaces serialized referenceLocs/jsxReferencePositions)
     let identifier_spans = build_identifier_loc_index(func);
@@ -1345,7 +1327,7 @@ fn lower_binding_assignment<'a>(
                         let is_hoisted = builder
                             .scope()
                             .resolve_binding_identifier(id)
-                            .map(|s| builder.environment().is_hoisted_identifier(s.index() as u32))
+                            .map(|s| builder.environment().is_hoisted_identifier(s))
                             .unwrap_or(false);
                         if kind == InstructionKind::Const && !is_hoisted {
                             builder.record_error(
@@ -1902,7 +1884,7 @@ fn lower_assignment_target<'a>(
                         let is_hoisted = builder
                             .scope()
                             .resolve_reference(id)
-                            .map(|s| builder.environment().is_hoisted_identifier(s.index() as u32))
+                            .map(|s| builder.environment().is_hoisted_identifier(s))
                             .unwrap_or(false);
                         if kind == InstructionKind::Const && !is_hoisted {
                             builder.record_error(
@@ -3004,7 +2986,7 @@ fn lower_function<'a>(
     func: FunctionNode<'a>,
 ) -> Result<LoweredFunction, OxcDiagnostic> {
     // Extract function parts from the AST node
-    let (params, body, id, generator, is_async, func_start, func_end, func_span) = match func {
+    let (params, body, id, generator, is_async, func_span) = match func {
         FunctionNode::Arrow(arrow) => {
             let body = if arrow.expression {
                 match arrow.body.statements.first() {
@@ -3016,16 +2998,7 @@ fn lower_function<'a>(
             } else {
                 FunctionBody::Block(arrow.body.as_ref())
             };
-            (
-                arrow.params.as_ref(),
-                body,
-                None::<&str>,
-                false,
-                arrow.r#async,
-                arrow.span.start,
-                arrow.span.end,
-                arrow.span,
-            )
+            (arrow.params.as_ref(), body, None::<&str>, false, arrow.r#async, arrow.span)
         }
         FunctionNode::Function(f) => {
             let body_ref = f.body.as_deref().expect("function expression has a body");
@@ -3035,8 +3008,6 @@ fn lower_function<'a>(
                 f.id.as_ref().map(|id| id.name.as_str()),
                 f.generator,
                 f.r#async,
-                f.span.start,
-                f.span.end,
                 f.span,
             )
         }
@@ -3053,14 +3024,8 @@ fn lower_function<'a>(
     let ident_spans = builder.identifier_spans();
 
     // Gather captured context
-    let captured_context = gather_captured_context(
-        scope,
-        function_scope,
-        component_scope,
-        func_start,
-        func_end,
-        ident_spans,
-    );
+    let captured_context =
+        gather_captured_context(scope, function_scope, component_scope, ident_spans);
     let merged_context: FxIndexMap<SymbolId, Option<Span>> = {
         let parent_context = builder.context().clone();
         let mut merged = parent_context;
@@ -3103,8 +3068,6 @@ fn lower_function_declaration<'a>(
     func_decl: &'a oxc::Function<'a>,
 ) -> Result<(), OxcDiagnostic> {
     let span = func_decl.span;
-    let func_start = func_decl.span.start;
-    let func_end = func_decl.span.end;
 
     let func_name = func_decl.id.as_ref().map(|id| id.name.to_string());
 
@@ -3121,14 +3084,8 @@ fn lower_function_declaration<'a>(
     let ident_spans = builder.identifier_spans();
 
     // Gather captured context
-    let captured_context = gather_captured_context(
-        scope,
-        function_scope,
-        component_scope,
-        func_start,
-        func_end,
-        ident_spans,
-    );
+    let captured_context =
+        gather_captured_context(scope, function_scope, component_scope, ident_spans);
     let merged_context: FxIndexMap<SymbolId, Option<Span>> = {
         let parent_context = builder.context().clone();
         let mut merged = parent_context;
@@ -3218,7 +3175,7 @@ fn lower_function_declaration<'a>(
                         };
                         if let Some(symbol_id) = fallback {
                             let symbol =
-                                builder.scope().declaration_start(symbol_id).map(|_| symbol_id);
+                                builder.scope().declaration_ident(symbol_id).map(|_| symbol_id);
                             binding = builder.resolve_identifier(name, ident_span, symbol)?;
                         }
                     }
@@ -3290,8 +3247,6 @@ fn lower_function_for_object_method<'a>(
     generator: bool,
     is_async: bool,
 ) -> Result<LoweredFunction, OxcDiagnostic> {
-    let func_start = method_span.start;
-    let func_end = method_span.end;
     let func_span = method_span;
 
     let function_scope = func.scope_id.get().unwrap_or_else(|| builder.scope().program_scope());
@@ -3304,14 +3259,8 @@ fn lower_function_for_object_method<'a>(
     let context_ids = builder.context_identifiers().clone();
     let ident_spans = builder.identifier_spans();
 
-    let captured_context = gather_captured_context(
-        scope,
-        function_scope,
-        component_scope,
-        func_start,
-        func_end,
-        ident_spans,
-    );
+    let captured_context =
+        gather_captured_context(scope, function_scope, component_scope, ident_spans);
     let merged_context: FxIndexMap<SymbolId, Option<Span>> = {
         let parent_context = builder.context().clone();
         let mut merged = parent_context;
@@ -3352,10 +3301,9 @@ fn gather_captured_context(
     scope: &ScopeResolver<'_, '_>,
     function_scope: ScopeId,
     component_scope: ScopeId,
-    func_start: u32,
-    func_end: u32,
     identifier_spans: &IdentifierLocIndex,
 ) -> FxIndexMap<SymbolId, Option<Span>> {
+    let root_node = scope.capture_root_node(function_scope);
     let parent_scope = scope.scope_parent(function_scope);
     let pure_scopes = match parent_scope {
         Some(parent) => capture_scopes(scope, parent, component_scope),
@@ -3382,27 +3330,22 @@ fn gather_captured_context(
         if !pure_scopes.contains(&scope.symbol_scope(symbol_id)) {
             continue;
         }
-        let declaration_start = scope.declaration_start(symbol_id);
-        for ref_nid in scope.reference_positions(symbol_id) {
-            // Range check: use the position stored in identifier_spans
-            let ref_start = identifier_spans.get(&ref_nid).map(|e| e.start).unwrap_or(0);
-            if ref_start < func_start || ref_start >= func_end {
-                continue;
-            }
-            // Skip references that are actually the binding's own declaration site
-            if declaration_start == Some(ref_nid) {
-                continue;
-            }
-            // Skip function/class declaration names that are not expression references.
+        let declaration_start = scope.declaration_ident(symbol_id).map(|id| id.span.start);
+        for &ref_id in scope.reference_ids(symbol_id) {
+            // Only references the identifier walk recorded participate; the walk
+            // covers exactly the compiled function's subtree.
+            let Some(entry) = identifier_spans.reference(ref_id) else { continue };
+            let ref_start = entry.span.start;
             // Skip type-annotation references: TS's gatherCapturedContext traverse
             // skips TypeAnnotation/TSTypeAnnotation/TypeAlias/TSTypeAliasDeclaration
             // subtrees, so identifiers there never become captures (they DO still
             // feed FindContextIdentifiers and the hoisting analysis, which have no
             // such skip in TS).
-            if let Some(entry) = identifier_spans.get(&ref_nid) {
-                if entry.is_declaration_name || entry.in_type_annotation {
-                    continue;
-                }
+            if entry.in_type_annotation {
+                continue;
+            }
+            if !scope.node_within(scope.reference_node_id(ref_id), root_node) {
+                continue;
             }
             // Skip references whose start offset aliases the binding's own
             // declaration offset. Hermes desugars (component syntax) reuse the
@@ -3415,9 +3358,7 @@ fn gather_captured_context(
             if declaration_start == Some(ref_start) {
                 continue;
             }
-            let span = identifier_spans.get(&ref_nid).map(|entry| {
-                if let Some(oe_span) = &entry.opening_element_span { *oe_span } else { entry.span }
-            });
+            let span = Some(entry.opening_element_span.unwrap_or(entry.span));
             captured
                 .entry(symbol_id)
                 .and_modify(|(min_pos, existing_span)| {

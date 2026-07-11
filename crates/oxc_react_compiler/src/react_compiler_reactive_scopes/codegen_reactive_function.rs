@@ -394,77 +394,26 @@ fn ox_str<'a>(ast: &oxc_ast::builder::AstBuilder<'a>, s: &str) -> &'a str {
 ///
 /// When some identifier reference inside the type has a binding rename (e.g. a
 /// `typeof field` whose value binding was renamed to `field_3`), the matching
-/// references in the clone are renamed in place. `clone_in` preserves spans, so the
-/// renames are keyed by source offset, exactly like the reference set that selects
-/// them.
+/// references in the clone are renamed in place. The clone preserves the semantic
+/// `reference_id` cells, so renames apply by reference identity.
 fn ox_reemit_ts_type<'a>(cx: &OxcContext<'a, '_, '_>, ty: &oxc::TSType<'_>) -> oxc::TSType<'a> {
-    // Which identifier references inside the type get a binding rename, keyed by
-    // absolute source offset. An ident is renamed only if it is an actual reference
-    // (its offset is in `reference_node_ids`, excluding type labels / property keys)
-    // and a binding rename applies for the nearest enclosing declaration. Without
-    // this, a `typeof field` keeps the pre-rename name while the value binding was
-    // renamed to `field_3`.
-    let renames_by_offset: FxHashMap<u32, String> = if cx.env.renames.is_empty() {
-        FxHashMap::default()
-    } else {
-        struct Collector {
-            out: Vec<(u32, String)>,
-        }
-        impl<'v> oxc_ast_visit::Visit<'v> for Collector {
-            fn visit_identifier_reference(&mut self, it: &oxc::IdentifierReference<'v>) {
-                self.out.push((it.span.start, it.name.to_string()));
-            }
-            fn visit_identifier_name(&mut self, it: &oxc::IdentifierName<'v>) {
-                self.out.push((it.span.start, it.name.to_string()));
-            }
-        }
-        let mut collector = Collector { out: Vec::new() };
-        oxc_ast_visit::Visit::visit_ts_type(&mut collector, ty);
-
-        let mut renames = FxHashMap::default();
-        for (offset, name) in &collector.out {
-            if *offset == 0 || !cx.env.reference_node_ids.contains(offset) {
-                continue;
-            }
-            if let Some(rename) = cx
-                .env
-                .renames
-                .iter()
-                .filter(|r| &r.original == name && r.declaration_start <= *offset)
-                .max_by_key(|r| r.declaration_start)
-            {
-                renames.insert(*offset, rename.renamed.clone());
-            }
-        }
-        renames
-    };
-
-    // Clone the stored type into the output allocator. Common case: no renames apply,
-    // so the clone is the whole answer.
-    let mut cloned = ty.clone_in(cx.ast.allocator());
-    if renames_by_offset.is_empty() {
-        return cloned;
+    if cx.env.renames.is_empty() {
+        return ty.clone_in(cx.ast.allocator());
     }
 
-    // Rename case: rewrite the matching identifier references in the clone, keyed by
-    // the preserved source offset.
-    struct Renamer<'a> {
+    struct Renamer<'a, 'env> {
         allocator: &'a oxc_allocator::Allocator,
-        renames_by_offset: FxHashMap<u32, String>,
+        renames: &'env FxHashMap<oxc_syntax::reference::ReferenceId, String>,
     }
-    impl<'a> oxc_ast_visit::VisitMut<'a> for Renamer<'a> {
+    impl<'a> oxc_ast_visit::VisitMut<'a> for Renamer<'a, '_> {
         fn visit_identifier_reference(&mut self, it: &mut oxc::IdentifierReference<'a>) {
-            if let Some(renamed) = self.renames_by_offset.get(&it.span.start) {
-                it.name = renamed.as_str().into_in(self.allocator);
-            }
-        }
-        fn visit_identifier_name(&mut self, it: &mut oxc::IdentifierName<'a>) {
-            if let Some(renamed) = self.renames_by_offset.get(&it.span.start) {
+            if let Some(renamed) = it.reference_id.get().and_then(|id| self.renames.get(&id)) {
                 it.name = renamed.as_str().into_in(self.allocator);
             }
         }
     }
-    let mut renamer = Renamer { allocator: cx.ast.allocator(), renames_by_offset };
+    let mut cloned = ty.clone_in_with_semantic_ids(cx.ast.allocator());
+    let mut renamer = Renamer { allocator: cx.ast.allocator(), renames: &cx.env.renames };
     oxc_ast_visit::VisitMut::visit_ts_type(&mut renamer, &mut cloned);
     cloned
 }

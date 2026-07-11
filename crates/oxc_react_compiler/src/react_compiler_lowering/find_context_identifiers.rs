@@ -476,8 +476,7 @@ pub fn find_context_identifiers(
     // resolved references (including ones inside type annotations) sit within a
     // nested function scope.
     //
-    // Declaration sites are excluded: they are not references. The function
-    // windows include the object-method alias windows, matching the old map.
+    // Declaration sites are excluded structurally: they are not references.
     let candidates: Vec<SymbolId> = visitor
         .binding_info
         .iter()
@@ -486,21 +485,17 @@ pub fn find_context_identifiers(
         .collect();
     for symbol_id in candidates {
         let binding_scope = scope.symbol_scope(symbol_id);
-        let declaration_start = scope.declaration_start(symbol_id);
-        'refs: for ref_nid in scope.reference_positions(symbol_id) {
-            if declaration_start == Some(ref_nid) {
+        'refs: for &ref_id in scope.reference_ids(symbol_id) {
+            // Only references recorded by the identifier walk participate (the
+            // walk covers exactly the compiled function's subtree).
+            if identifier_spans.reference(ref_id).is_none() {
                 continue;
             }
-            let ref_pos = match identifier_spans.get(&ref_nid) {
-                Some(entry) => entry.start,
-                None => continue,
-            };
-            // Check if ref_pos is inside a nested function scope
-            for &(fn_start, fn_end, fn_scope) in scope.function_scope_ranges() {
-                if fn_start <= ref_pos
-                    && ref_pos < fn_end
-                    && is_captured_by_function(scope, binding_scope, fn_scope)
-                {
+            // Check whether the reference sits inside a nested function that
+            // captures the binding.
+            let ref_node = scope.reference_node_id(ref_id);
+            for fn_scope in scope.containing_function_scopes(ref_node) {
+                if is_captured_by_function(scope, binding_scope, fn_scope) {
                     visitor.binding_info.get_mut(&symbol_id).unwrap().referenced_by_inner_fn = true;
                     break 'refs;
                 }

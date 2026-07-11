@@ -236,9 +236,10 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         self.scope
     }
 
-    /// Look up the source location of an identifier by its node_id.
-    pub fn get_identifier_span(&self, node_id: u32) -> Option<Span> {
-        self.identifier_spans.get(&node_id).map(|entry| entry.span)
+    /// The declaration identifier's span, when the declaration was recorded
+    /// in the compiled function's identifier index.
+    pub fn declaration_span(&self, symbol_id: SymbolId) -> Option<Span> {
+        self.identifier_spans.declaration_span(symbol_id)
     }
 
     /// Access the function scope (the scope of the function being compiled).
@@ -668,11 +669,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                     true
                 };
             if should_record_fbt_error {
-                let error_span = self
-                    .scope
-                    .declaration_start(symbol_id)
-                    .and_then(|nid| self.get_identifier_span(nid))
-                    .or(span);
+                let error_span = self.declaration_span(symbol_id).or(span);
                 self.env.record_error(
                     ErrorCategory::Todo
                         .diagnostic("Support local variables named `fbt`")
@@ -705,14 +702,11 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             index += 1;
         }
 
-        // Record rename if the candidate differs from the original name
+        // Record the rename on each resolved reference of the binding, so codegen
+        // can rename matching identifiers inside preserved TS type annotations.
         if candidate != name {
-            if let Some(decl_start) = self.scope.declaration_start(symbol_id) {
-                self.env.renames.push(crate::react_compiler_hir::environment::BindingRename {
-                    original: name.to_string(),
-                    renamed: candidate.clone(),
-                    declaration_start: decl_start,
-                });
+            for &reference_id in self.scope.reference_ids(symbol_id) {
+                self.env.renames.insert(reference_id, candidate.clone());
             }
         }
 
@@ -723,8 +717,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         // Prefer the binding's declaration span over the reference span.
         // This matches TS behavior where Babel's resolveBinding returns the
         // binding identifier's original span (the declaration site).
-        let decl_span =
-            self.scope.declaration_start(symbol_id).and_then(|nid| self.get_identifier_span(nid));
+        let decl_span = self.declaration_span(symbol_id);
         if let Some(ref dl) = decl_span {
             self.env.identifiers[id.0 as usize].span = Some(*dl);
         } else if let Some(ref span) = span {
