@@ -201,12 +201,6 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         }
     }
 
-    /// The HIR `Span` for an oxc byte span. Always `Some` (oxc nodes
-    /// always have a span); a `Span` is the byte span itself.
-    pub fn source_location(&self, span: Span) -> Option<Span> {
-        Some(span)
-    }
-
     /// Check if a scope is the component scope or a descendant of it.
     /// Used to determine whether a binding is local to the compiled function
     /// or belongs to an ancestor function scope (e.g., a factory function
@@ -744,10 +738,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Set the span on an identifier to the declaration-site span.
     /// This overrides any previously-set span (which may have come from a reference site).
-    pub fn set_identifier_declaration_span(&mut self, id: IdentifierId, span: &Option<Span>) {
-        if let Some(span_val) = span {
-            self.env.identifiers[id.0 as usize].span = Some(*span_val);
-        }
+    pub fn set_identifier_declaration_span(&mut self, id: IdentifierId, span: Span) {
+        self.env.identifiers[id.0 as usize].span = Some(span);
     }
 
     /// Resolve an identifier reference to a VariableBinding.
@@ -760,7 +752,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn resolve_identifier(
         &mut self,
         name: &str,
-        span: Option<Span>,
+        span: Span,
         symbol: Option<SymbolId>,
     ) -> Result<VariableBinding, OxcDiagnostic> {
         let Some(symbol_id) = symbol else {
@@ -807,7 +799,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
                 &self.scope.binding_kind(symbol_id),
             );
-            let identifier_id = self.resolve_binding_with_span(name, symbol_id, span)?;
+            let identifier_id = self.resolve_binding_with_span(name, symbol_id, Some(span))?;
             Ok(VariableBinding::Identifier { identifier: identifier_id, binding_kind })
         }
     }
