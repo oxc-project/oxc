@@ -944,7 +944,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_class(&mut self, class: &Class<'a>) {
         let kind = AstKind::Class(self.alloc(class));
         self.enter_node(kind);
-        self.node_store.current_node_flags |= NodeFlags::Class;
         if class.is_declaration() {
             class.bind(self);
         }
@@ -979,7 +978,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_scope();
         self.leave_node(kind);
-        self.node_store.current_node_flags -= NodeFlags::Class;
         self.class_table_builder.pop_class();
     }
 
@@ -2363,12 +2361,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.visit_span(&it.span);
 
-        self.node_store.current_node_flags |= NodeFlags::ExportSpecifier;
-
         self.visit_module_export_name(&it.local);
         self.visit_module_export_name(&it.exported);
-
-        self.node_store.current_node_flags -= NodeFlags::ExportSpecifier;
 
         self.leave_node(kind);
     }
