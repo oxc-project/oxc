@@ -296,11 +296,9 @@ fn fresh_dummy_allocator() -> &'static Allocator {
     // ~`isize::MAX` entries.
     let mut allocators = DUMMY_ALLOCATORS.lock().unwrap();
 
-    // Create an `Allocator` and store it in a `Box` in `DUMMY_ALLOCATORS`
-    allocators.push(StdBox::new(Allocator::new()));
-
-    // Get reference to the `Allocator` on the heap
-    let allocator = allocators.last().unwrap().as_ref();
+    // Create an `Allocator` and store it in a `Box` in `DUMMY_ALLOCATORS`.
+    // Get reference to the `Allocator` on the heap.
+    let allocator = &**allocators.push_mut(StdBox::new(Allocator::new()));
 
     // Extend `&Allocator`'s lifetime to `'static`.
     // SAFETY: The `Allocator` is owned by `DUMMY_ALLOCATORS`, a `static` from which allocators
