@@ -3,7 +3,7 @@
  * Run `just formatter-config-ts` to regenerate.
  */
 
-export type ArrayWrapConfig = ArrayWrapMode | ArrayWrapThreshold;
+export type ArrayWrapConfig = ArrayWrapMode | ArrayWrapOptions;
 export type ArrayWrapMode = "preserve" | "collapse";
 export type ArrowParensConfig = "always" | "avoid";
 export type EmbeddedLanguageFormattingConfig = "auto" | "off";
@@ -41,6 +41,11 @@ export interface Oxfmtrc {
    * - `"collapse"`: Always collapse arrays to a single line when they fit within printWidth.
    * - `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold;
    * arrays below the threshold use `"preserve"` behavior.
+   * - `{ "linePattern": "2 1" }`: Print the given number of elements per wrapped line,
+   * repeating the pattern once exhausted (like `prettier-plugin-multiline-arrays`'
+   * `multilineArraysLinePattern`). Applies to arrays wrapped by `minElementsToWrap`
+   * or, when no threshold is set, to arrays kept expanded by `"preserve"` behavior.
+   * Arrays containing holes or comments fall back to one element per line.
    *
    * When omitted, Prettier's default heuristic is used: arrays are collapsed when they fit
    * within printWidth, regardless of how they are written in the source.
@@ -284,8 +289,16 @@ export interface Oxfmtrc {
   vueIndentScriptAndStyle?: boolean;
   [k: string]: unknown;
 }
-export interface ArrayWrapThreshold {
-  minElementsToWrap: number;
+export interface ArrayWrapOptions {
+  /**
+   * Number of elements per wrapped line, as a repeating space-separated
+   * pattern of positive integers (e.g. `"2 1"`).
+   */
+  linePattern?: string;
+  /**
+   * Force one-element-per-line when element count >= this threshold.
+   */
+  minElementsToWrap?: number;
   [k: string]: unknown;
 }
 export interface JsdocConfig {
@@ -388,6 +401,11 @@ export interface FormatConfig {
    * - `"collapse"`: Always collapse arrays to a single line when they fit within printWidth.
    * - `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold;
    * arrays below the threshold use `"preserve"` behavior.
+   * - `{ "linePattern": "2 1" }`: Print the given number of elements per wrapped line,
+   * repeating the pattern once exhausted (like `prettier-plugin-multiline-arrays`'
+   * `multilineArraysLinePattern`). Applies to arrays wrapped by `minElementsToWrap`
+   * or, when no threshold is set, to arrays kept expanded by `"preserve"` behavior.
+   * Arrays containing holes or comments fall back to one element per line.
    *
    * When omitted, Prettier's default heuristic is used: arrays are collapsed when they fit
    * within printWidth, regardless of how they are written in the source.

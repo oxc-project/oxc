@@ -123,12 +123,28 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String
 
     // Below are our own extensions
 
-    if let Some(array_wrap) = config.array_wrap {
+    if let Some(array_wrap) = &config.array_wrap {
         format_options.array_expand = match array_wrap {
             ArrayWrapConfig::Mode(ArrayWrapMode::Preserve) => ArrayExpand::Preserve,
             ArrayWrapConfig::Mode(ArrayWrapMode::Collapse) => ArrayExpand::Never,
-            ArrayWrapConfig::Threshold(t) => {
-                ArrayExpand::ForceAboveThreshold(t.min_elements_to_wrap)
+            ArrayWrapConfig::Options(options) => {
+                if options.min_elements_to_wrap.is_none() && options.line_pattern.is_none() {
+                    return Err(
+                        "Invalid `arrayWrap` value.\nExpected at least one of `minElementsToWrap` or `linePattern`.".to_string(),
+                    );
+                }
+
+                if let Some(line_pattern) = &options.line_pattern {
+                    format_options.array_line_pattern =
+                        Some(line_pattern.parse().map_err(|err| {
+                            format!("Invalid `arrayWrap.linePattern` value.\n{err}")
+                        })?);
+                }
+
+                // A pattern without a threshold applies to arrays kept expanded by preserve
+                options.min_elements_to_wrap.map_or(ArrayExpand::Preserve, |threshold| {
+                    ArrayExpand::ForceAboveThreshold(threshold)
+                })
             }
         };
     }
@@ -469,6 +485,40 @@ mod tests {
             serde_json::from_str(r#"{"arrayWrap": {"minElementsToWrap": 2}}"#).unwrap();
         let format_options = to_oxc_formatter(&config).unwrap();
         assert_eq!(format_options.array_expand, ArrayExpand::ForceAboveThreshold(2));
+        assert_eq!(format_options.array_line_pattern, None);
+
+        // Test { minElementsToWrap: 2, linePattern: "2 1" } -> ForceAboveThreshold(2) + pattern
+        let config: FormatConfig = serde_json::from_str(
+            r#"{"arrayWrap": {"minElementsToWrap": 2, "linePattern": "2 1"}}"#,
+        )
+        .unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::ForceAboveThreshold(2));
+        assert_eq!(format_options.array_line_pattern, Some("2 1".parse().unwrap()));
+
+        // Test { linePattern: "3" } alone -> Preserve + pattern
+        let config: FormatConfig =
+            serde_json::from_str(r#"{"arrayWrap": {"linePattern": "3"}}"#).unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::Preserve);
+        assert_eq!(format_options.array_line_pattern, Some("3".parse().unwrap()));
+
+        // Test {} -> error
+        let config: FormatConfig = serde_json::from_str(r#"{"arrayWrap": {}}"#).unwrap();
+        let err = to_oxc_formatter(&config).unwrap_err();
+        assert!(err.contains("minElementsToWrap"), "unexpected error: {err}");
+
+        // Test invalid linePattern -> error
+        let config: FormatConfig =
+            serde_json::from_str(r#"{"arrayWrap": {"linePattern": "2 x"}}"#).unwrap();
+        let err = to_oxc_formatter(&config).unwrap_err();
+        assert!(err.contains("linePattern"), "unexpected error: {err}");
+
+        // Test zero in linePattern -> error
+        let config: FormatConfig =
+            serde_json::from_str(r#"{"arrayWrap": {"linePattern": "0"}}"#).unwrap();
+        let err = to_oxc_formatter(&config).unwrap_err();
+        assert!(err.contains("linePattern"), "unexpected error: {err}");
     }
 
     #[test]

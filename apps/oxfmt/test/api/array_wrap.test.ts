@@ -545,4 +545,125 @@ describe("arrayWrap", () => {
       expect(result.errors).toStrictEqual([]);
     });
   });
+
+  describe("linePattern", () => {
+    it("wraps threshold arrays with the given elements per line", async () => {
+      const input = "const x = [1, 2, 3, 4, 5, 6, 7];\n";
+      const result = await format("a.ts", input, {
+        arrayWrap: { minElementsToWrap: 4, linePattern: "3" },
+      });
+      expect(result.code).toBe(`const x = [
+  1, 2, 3,
+  4, 5, 6,
+  7,
+];
+`);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("below threshold stays flat", async () => {
+      const input = "const x = [1, 2, 3];\n";
+      const result = await format("a.ts", input, {
+        arrayWrap: { minElementsToWrap: 4, linePattern: "3" },
+      });
+      expect(result.code).toBe(input);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("repeats an alternating pattern", async () => {
+      const input = "const x = [1, 2, 3, 4, 5, 6, 7];\n";
+      const result = await format("a.ts", input, {
+        arrayWrap: { minElementsToWrap: 2, linePattern: "2 1" },
+      });
+      expect(result.code).toBe(`const x = [
+  1, 2,
+  3,
+  4, 5,
+  6,
+  7,
+];
+`);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("without a threshold applies to preserved multiline arrays", async () => {
+      const input = `const x = [
+  1, 2, 3, 4, 5, 6, 7];
+`;
+      const result = await format("a.ts", input, {
+        arrayWrap: { linePattern: "3" },
+      });
+      expect(result.code).toBe(`const x = [
+  1, 2, 3,
+  4, 5, 6,
+  7,
+];
+`);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("without a threshold leaves single-line arrays flat", async () => {
+      const input = "const x = [1, 2, 3, 4, 5, 6, 7];\n";
+      const result = await format("a.ts", input, {
+        arrayWrap: { linePattern: "3" },
+      });
+      expect(result.code).toBe(input);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("arrays with comments fall back to one element per line", async () => {
+      const input = "const x = [1, 2, /* c */ 3, 4];\n";
+      const result = await format("a.ts", input, {
+        arrayWrap: { minElementsToWrap: 2, linePattern: "2" },
+      });
+      expect(result.code).toBe(`const x = [
+  1,
+  2,
+  /* c */ 3,
+  4,
+];
+`);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("arrays with holes fall back to one element per line", async () => {
+      const input = "const x = [1, , 3, 4];\n";
+      const result = await format("a.ts", input, {
+        arrayWrap: { minElementsToWrap: 2, linePattern: "2" },
+      });
+      expect(result.code).toBe(`const x = [
+  1,
+  ,
+  3,
+  4,
+];
+`);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("formatting is idempotent", async () => {
+      const input = "const x = [1, 2, 3, 4, 5, 6, 7];\n";
+      const opts = {
+        arrayWrap: { minElementsToWrap: 4, linePattern: "2 1" },
+      } as const;
+      const first = await format("a.ts", input, opts);
+      const second = await format("a.ts", first.code, opts);
+      expect(second.code).toBe(first.code);
+      expect(second.errors).toStrictEqual([]);
+    });
+
+    it("rejects an invalid pattern", async () => {
+      const { errors } = await format("a.ts", "const x = [1];\n", {
+        arrayWrap: { linePattern: "2 x" },
+      });
+      expect(errors.length).toBe(1);
+    });
+
+    it("rejects an empty arrayWrap object", async () => {
+      const { errors } = await format("a.ts", "const x = [1];\n", {
+        arrayWrap: {},
+      });
+      expect(errors.length).toBe(1);
+    });
+  });
 });

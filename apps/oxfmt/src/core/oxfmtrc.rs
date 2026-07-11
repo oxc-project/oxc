@@ -227,6 +227,11 @@ pub struct FormatConfig {
     /// - `"collapse"`: Always collapse arrays to a single line when they fit within printWidth.
     /// - `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold;
     ///   arrays below the threshold use `"preserve"` behavior.
+    /// - `{ "linePattern": "2 1" }`: Print the given number of elements per wrapped line,
+    ///   repeating the pattern once exhausted (like `prettier-plugin-multiline-arrays`'
+    ///   `multilineArraysLinePattern`). Applies to arrays wrapped by `minElementsToWrap`
+    ///   or, when no threshold is set, to arrays kept expanded by `"preserve"` behavior.
+    ///   Arrays containing holes or comments fall back to one element per line.
     ///
     /// When omitted, Prettier's default heuristic is used: arrays are collapsed when they fit
     /// within printWidth, regardless of how they are written in the source.
@@ -422,11 +427,11 @@ pub enum ObjectWrapConfig {
     Collapse,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(untagged)]
 pub enum ArrayWrapConfig {
     Mode(ArrayWrapMode),
-    Threshold(ArrayWrapThreshold),
+    Options(ArrayWrapOptions),
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
@@ -436,10 +441,16 @@ pub enum ArrayWrapMode {
     Collapse,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct ArrayWrapThreshold {
-    pub min_elements_to_wrap: u32,
+pub struct ArrayWrapOptions {
+    /// Force one-element-per-line when element count >= this threshold.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub min_elements_to_wrap: Option<u32>,
+    /// Number of elements per wrapped line, as a repeating space-separated
+    /// pattern of positive integers (e.g. `"2 1"`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line_pattern: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]

@@ -11,6 +11,7 @@ use crate::{
         separated::FormatSeparatedIter,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
+    options::ArrayLinePattern,
     utils::array::write_array_node,
     write,
 };
@@ -39,7 +40,16 @@ impl<'a, 'b> ArrayElementList<'a, 'b> {
 impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let layout = if self.force_one_per_line {
-            ArrayLayout::OnePerLine
+            // Holes and comments need `write_array_node`'s special handling,
+            // so a configured line pattern only applies without them
+            match f.options().array_line_pattern.as_ref() {
+                Some(pattern)
+                    if can_use_line_pattern(self.elements.parent().span(), self.elements, f) =>
+                {
+                    ArrayLayout::Pattern(pattern.clone())
+                }
+                _ => ArrayLayout::OnePerLine,
+            }
         } else if can_concisely_print_array_list(self.elements.parent().span(), self.elements, f) {
             ArrayLayout::Fill
         } else {
@@ -47,6 +57,32 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
         };
 
         match layout {
+            ArrayLayout::Pattern(pattern) => {
+                let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
+
+                let mut line_index = 0;
+                let mut written_in_line = 0;
+
+                // Using format_separated is valid in this case as the line
+                // pattern is not used when the array contains holes
+                for (index, element) in FormatSeparatedIter::new(self.elements.iter(), ",")
+                    .with_trailing_separator(trailing_separator)
+                    .with_group_id(self.group_id)
+                    .enumerate()
+                {
+                    if index > 0 {
+                        if written_in_line >= pattern.elements_for_line(line_index) {
+                            write!(f, hard_line_break());
+                            line_index += 1;
+                            written_in_line = 0;
+                        } else {
+                            write!(f, space());
+                        }
+                    }
+                    write!(f, [element]);
+                    written_in_line += 1;
+                }
+            }
             ArrayLayout::Fill => {
                 let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
 
@@ -98,7 +134,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 enum ArrayLayout {
     /// Tries to fit as many array elements on a single line as possible.
     ///
@@ -120,6 +156,31 @@ enum ArrayLayout {
     /// ]
     /// ```
     OnePerLine,
+
+    /// Prints a fixed number of elements per line, following the configured
+    /// repeating pattern (e.g. `"2 1"`).
+    /// ```javascript
+    /// [
+    ///     1, 2,
+    ///     3,
+    ///     4, 5,
+    /// ]
+    /// ```
+    Pattern(ArrayLinePattern),
+}
+
+/// A configured line pattern replaces the one-per-line layout only when the
+/// array has no holes (which `format_separated` cannot print) and no comments
+/// (which need their own lines).
+fn can_use_line_pattern(
+    array_expression_span: Span,
+    list: &[ArrayExpressionElement<'_>],
+    f: &JsFormatter<'_, '_>,
+) -> bool {
+    !list.iter().any(ArrayExpressionElement::is_elision)
+        && f.comments()
+            .comments_in_range(array_expression_span.start, array_expression_span.end)
+            .is_empty()
 }
 
 /// Returns true if the provided JsArrayElementList could
