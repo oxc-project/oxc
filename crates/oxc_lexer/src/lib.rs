@@ -1,4 +1,4 @@
-#![cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#![cfg(target_endian = "little")]
 #![allow(unsafe_code)]
 
 pub mod arena;
@@ -24,7 +24,6 @@ pub use token::{
 
 use core::cell::RefCell;
 
-/// Zero-byte padding required past the lexed length `n`: the SIMD scanners over-read (but never act on) up to this many bytes.
 pub const PAD: usize = 64;
 
 thread_local! {
@@ -87,6 +86,7 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
                 arena.tok_starts,
                 options.jsx,
                 options.ts,
+                options.source_type_module,
                 options.validate_utf8,
             )
         };
