@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/ast_kind.rs`.
 
-use std::ptr;
+use std::ptr::NonNull;
 
 use oxc_allocator::{Address, GetAddress, UnstableAddress};
 use oxc_span::{GetSpan, Span};
@@ -425,7 +425,7 @@ impl AstKind<'_> {
         // and it's valid to read it.
         // `AstType` is also `#[repr(u8)]` and `AstKind` and `AstType` both have the same
         // discriminants, so it's valid to read `AstKind`'s discriminant as `AstType`.
-        unsafe { *ptr::from_ref(self).cast::<AstType>().as_ref_unchecked() }
+        unsafe { *NonNull::from_ref(self).cast::<AstType>().as_ref() }
     }
 
     /// Get [`NodeId`] of an [`AstKind`].

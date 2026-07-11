@@ -99,7 +99,7 @@ impl Generator for AstKindGenerator {
 
         let output = quote! {
             ///@@line_break
-            use std::ptr;
+            use std::ptr::NonNull;
 
             ///@@line_break
             use oxc_allocator::{Address, GetAddress, UnstableAddress};
@@ -137,7 +137,7 @@ impl Generator for AstKindGenerator {
                     ///@ and it's valid to read it.
                     ///@ `AstType` is also `#[repr(u8)]` and `AstKind` and `AstType` both have the same
                     ///@ discriminants, so it's valid to read `AstKind`'s discriminant as `AstType`.
-                    unsafe { *ptr::from_ref(self).cast::<AstType>().as_ref_unchecked() }
+                    unsafe { *NonNull::from_ref(self).cast::<AstType>().as_ref() }
                 }
 
                 ///@@line_break
