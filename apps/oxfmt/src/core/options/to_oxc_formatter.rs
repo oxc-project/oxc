@@ -1,10 +1,10 @@
 use rustc_hash::FxHashSet;
 
 use oxc_formatter::{
-    ArrayExpand, ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
-    CustomGroupDefinition, EmbeddedLanguageFormatting, Expand, GroupEntry, ImportModifier,
-    ImportSelector, JsFormatOptions, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions,
-    SortOrder, SortTailwindcssOptions, TrailingCommas,
+    ArrayExpand, ArrayLinePattern, ArrowParentheses, AttributePosition, BracketSameLine,
+    BracketSpacing, CustomGroupDefinition, EmbeddedLanguageFormatting, Expand, GroupEntry,
+    ImportModifier, ImportSelector, JsFormatOptions, QuoteProperties, QuoteStyle, Semicolons,
+    SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
 };
 
 use super::{
@@ -123,30 +123,9 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String
 
     // Below are our own extensions
 
-    if let Some(array_wrap) = &config.array_wrap {
-        format_options.array_expand = match array_wrap {
-            ArrayWrapConfig::Mode(ArrayWrapMode::Preserve) => ArrayExpand::Preserve,
-            ArrayWrapConfig::Mode(ArrayWrapMode::Collapse) => ArrayExpand::Never,
-            ArrayWrapConfig::Options(options) => {
-                if options.min_elements_to_wrap.is_none() && options.line_pattern.is_none() {
-                    return Err(
-                        "Invalid `arrayWrap` value.\nExpected at least one of `minElementsToWrap` or `linePattern`.".to_string(),
-                    );
-                }
-
-                if let Some(line_pattern) = &options.line_pattern {
-                    format_options.array_line_pattern =
-                        Some(line_pattern.parse().map_err(|err| {
-                            format!("Invalid `arrayWrap.linePattern` value.\n{err}")
-                        })?);
-                }
-
-                // A pattern without a threshold applies to arrays kept expanded by preserve
-                options.min_elements_to_wrap.map_or(ArrayExpand::Preserve, |threshold| {
-                    ArrayExpand::ForceAboveThreshold(threshold)
-                })
-            }
-        };
+    if let Some((array_expand, array_line_pattern)) = to_array_wrap(config)? {
+        format_options.array_expand = array_expand;
+        format_options.array_line_pattern = array_line_pattern;
     }
 
     format_options.sort_imports = to_sort_imports(config)?;
@@ -167,6 +146,50 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String
     format_options.jsdoc = to_jsdoc(config)?;
 
     Ok(format_options)
+}
+
+/// Parse and validate `arrayWrap` into [`ArrayExpand`] and an optional [`ArrayLinePattern`].
+///
+/// Parsing is the validation here, so this is shared by
+/// both [`to_oxc_formatter()`] (build) and [`super::validate::validate()`] (gate).
+///
+/// # Errors
+/// Returns an error if the `arrayWrap` configuration is invalid.
+pub(super) fn to_array_wrap(
+    config: &FormatConfig,
+) -> Result<Option<(ArrayExpand, Option<ArrayLinePattern>)>, String> {
+    let Some(array_wrap) = &config.array_wrap else {
+        return Ok(None);
+    };
+
+    Ok(Some(match array_wrap {
+        ArrayWrapConfig::Mode(ArrayWrapMode::Preserve) => (ArrayExpand::Preserve, None),
+        ArrayWrapConfig::Mode(ArrayWrapMode::Collapse) => (ArrayExpand::Never, None),
+        ArrayWrapConfig::Options(options) => {
+            if options.min_elements_to_wrap.is_none() && options.line_pattern.is_none() {
+                return Err(
+                    "Invalid `arrayWrap` value.\nExpected at least one of `minElementsToWrap` or `linePattern`.".to_string(),
+                );
+            }
+
+            let line_pattern = options
+                .line_pattern
+                .as_ref()
+                .map(|line_pattern| {
+                    line_pattern
+                        .parse()
+                        .map_err(|err| format!("Invalid `arrayWrap.linePattern` value.\n{err}"))
+                })
+                .transpose()?;
+
+            // A pattern without a threshold applies to arrays kept expanded by preserve
+            let array_expand = options
+                .min_elements_to_wrap
+                .map_or(ArrayExpand::Preserve, ArrayExpand::ForceAboveThreshold);
+
+            (array_expand, line_pattern)
+        }
+    }))
 }
 
 /// Parse and validate `sortImports` into [`SortImportsOptions`].

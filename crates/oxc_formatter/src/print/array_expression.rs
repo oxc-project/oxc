@@ -62,11 +62,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
                     ArrayExpand::Preserve => should_break(self.array) || preserve_multiline,
                     ArrayExpand::Never => false,
                     ArrayExpand::ForceAboveThreshold(_) => {
-                        force_above_threshold || preserve_multiline
+                        force_above_threshold || should_break(self.array) || preserve_multiline
                     }
                 } || has_trailing_line_comment());
 
-            let force_one_per_line = force_above_threshold || preserve_multiline;
+            // Preserve-based modes never use the fill layout: a fill-printed
+            // array would be re-detected as multiline and re-laid out one per
+            // line on the next run, making formatting non-idempotent
+            let force_one_per_line =
+                matches!(array_expand, ArrayExpand::Preserve | ArrayExpand::ForceAboveThreshold(_));
             let elements = ArrayElementList::new(self.array.elements(), group_id)
                 .with_force_one_per_line(force_one_per_line);
 
@@ -82,13 +86,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
     }
 }
 
+/// Like the array pattern and assignment target sites, holes are skipped:
+/// the first present element anchors the check
 fn elements_have_leading_newline(
     array: &AstNode<'_, ArrayExpression<'_>>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
     array
         .elements()
-        .first()
+        .iter()
+        .find(|e| !e.is_elision())
         .is_some_and(|e| f.source_text().contains_newline_between(array.span.start, e.span().start))
 }
 

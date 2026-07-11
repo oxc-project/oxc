@@ -22,5 +22,9 @@ const [
   d,
   e,
 ] = values;
+// Holes are skipped when detecting the leading newline
+const holes = [,
+  f,
+];
 // Prettier's expand heuristic for arrays of objects still applies
 const objects = [{ a: 1, b: 2 }, { a: 3, b: 4 }];

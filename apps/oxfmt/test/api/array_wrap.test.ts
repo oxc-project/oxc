@@ -234,6 +234,39 @@ describe("arrayWrap", () => {
       expect(result.errors).toStrictEqual([]);
     });
 
+    it("multiline array literal with leading hole stays multiline", async () => {
+      const input = `const x = [,
+  1,
+  2,
+];
+`;
+      const result = await format("a.ts", input, { arrayWrap: "preserve" });
+      expect(result.code).toBe(`const x = [
+  ,
+  1,
+  2,
+];
+`);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("arrays exceeding printWidth wrap one per line and stay stable", async () => {
+      const input = "const x = [100000001, 200000002, 300000003, 400000004, 500000005];\n";
+      const opts = { arrayWrap: "preserve", printWidth: 40 } as const;
+      const first = await format("a.ts", input, opts);
+      expect(first.code).toBe(`const x = [
+  100000001,
+  200000002,
+  300000003,
+  400000004,
+  500000005,
+];
+`);
+      const second = await format("a.ts", first.code, opts);
+      expect(second.code).toBe(first.code);
+      expect(second.errors).toStrictEqual([]);
+    });
+
     it("formatting is idempotent for multiline", async () => {
       const input = `const x = [
   1, 2, 3];
@@ -462,6 +495,19 @@ describe("arrayWrap", () => {
         arrayWrap: { minElementsToWrap: 3 },
       });
       expect(result.code).toBe("const x = [1, 2];\n");
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("below threshold keeps Prettier's object-array expansion", async () => {
+      const input = "const x = [{ a: 1, b: 2 }, { a: 3, b: 4 }];\n";
+      const result = await format("a.ts", input, {
+        arrayWrap: { minElementsToWrap: 10 },
+      });
+      expect(result.code).toBe(`const x = [
+  { a: 1, b: 2 },
+  { a: 3, b: 4 },
+];
+`);
       expect(result.errors).toStrictEqual([]);
     });
 

@@ -26,10 +26,10 @@ arrays written on a single line are collapsed when they fit within printWidth.
 arrays below the threshold use `"preserve"` behavior.
 - `{ "linePattern": "2 1" }`: Print the given number of elements per wrapped line,
 repeating the pattern once exhausted (like `prettier-plugin-multiline-arrays`'
-`multilineArraysLinePattern`). Applies to any array printed across multiple lines,
-whether wrapped by `minElementsToWrap`, kept expanded by `"preserve"` behavior
-(the default when only `linePattern` is set), or too wide for printWidth.
-Arrays containing holes or comments fall back to one element per line.
+`multilineArraysLinePattern`). Applies to any array literal printed across multiple
+lines, whether wrapped by `minElementsToWrap`, kept expanded by `"preserve"` behavior,
+or too wide for printWidth. Array literals containing holes or comments, and
+destructuring patterns, always wrap one element per line.
 
 When omitted, Prettier's default heuristic is used: arrays are collapsed when they fit
 within printWidth, regardless of how they are written in the source.
@@ -370,10 +370,10 @@ arrays written on a single line are collapsed when they fit within printWidth.
 arrays below the threshold use `"preserve"` behavior.
 - `{ "linePattern": "2 1" }`: Print the given number of elements per wrapped line,
 repeating the pattern once exhausted (like `prettier-plugin-multiline-arrays`'
-`multilineArraysLinePattern`). Applies to any array printed across multiple lines,
-whether wrapped by `minElementsToWrap`, kept expanded by `"preserve"` behavior
-(the default when only `linePattern` is set), or too wide for printWidth.
-Arrays containing holes or comments fall back to one element per line.
+`multilineArraysLinePattern`). Applies to any array literal printed across multiple
+lines, whether wrapped by `minElementsToWrap`, kept expanded by `"preserve"` behavior,
+or too wide for printWidth. Array literals containing holes or comments, and
+destructuring patterns, always wrap one element per line.
 
 When omitted, Prettier's default heuristic is used: arrays are collapsed when they fit
 within printWidth, regardless of how they are written in the source.
