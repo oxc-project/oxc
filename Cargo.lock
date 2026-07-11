@@ -2158,7 +2158,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_lexer"
-version = "0.139.0"
+version = "0.138.0"
 dependencies = [
  "memchr",
  "oxc_ast",

@@ -18,6 +18,7 @@ mod compress;
 mod find;
 mod keywords;
 mod regex_div;
+mod replay;
 
 use crate::PAD;
 use crate::lanes::Lanes;
@@ -148,11 +149,13 @@ impl Lexer {
         out_starts: *mut u32,
         jsx: bool,
         ts: bool,
+        module: bool,
         vutf8: bool,
     ) -> usize {
         debug_assert!(src.len() >= n + PAD, "source must extend PAD zeroed bytes past n");
         self.ensure(n);
         self.lanes.clear();
+        self.lanes.module = module;
         if n == 0 {
             *out_kinds = EOF;
             *out_starts = 0;
@@ -227,7 +230,16 @@ impl Lexer {
         let kinds = self.kinds.as_mut_ptr();
         let starts = self.starts.as_mut_ptr();
         unsafe {
-            self.lex_raw(src, n, kinds, starts, options.jsx, options.ts, options.validate_utf8)
+            self.lex_raw(
+                src,
+                n,
+                kinds,
+                starts,
+                options.jsx,
+                options.ts,
+                options.source_type_module,
+                options.validate_utf8,
+            )
         }
     }
 }

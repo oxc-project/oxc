@@ -1,7 +1,7 @@
 //! TS-mode keyword recognition: the TS set is active only under
 //! `LexOptions::ts`, JS mode must be unaffected, and the wider TS hash key
 //! must separate the pairs the JS key cannot.
-#![cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#![cfg(target_endian = "little")]
 
 use oxc_lexer::{Lexer, PAD, default_options, token_kind as k};
 
