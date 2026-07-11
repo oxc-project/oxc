@@ -2,7 +2,7 @@ commit: de8e621c
 
 runtime Summary:
 AST Parsed     : 18277/18277 (100.00%)
-Positive Passed: 17279/18277 (94.54%)
+Positive Passed: 17285/18277 (94.57%)
 minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -1629,19 +1629,10 @@ Test262Error: reject reason Expected SameValue(«TypeError: The iterator does no
 transform Error: tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-sync-throw.js
 throw-arg-1
 
-minify Error: tasks/coverage/test262/test/language/statements/class/definition/constructable-but-no-prototype.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
 minify Error: tasks/coverage/test262/test/language/statements/class/definition/getters-non-configurable-err.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 minify Error: tasks/coverage/test262/test/language/statements/class/definition/invalid-extends.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/statements/class/definition/prototype-getter.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/statements/class/definition/prototype-setter.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 minify Error: tasks/coverage/test262/test/language/statements/class/definition/setters-non-configurable-err.js
@@ -2328,12 +2319,6 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
 
-minify Error: tasks/coverage/test262/test/language/statements/class/name-binding/in-extends-expression-assigned.js
-Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/statements/class/name-binding/in-extends-expression-grouped.js
-Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
 minify Error: tasks/coverage/test262/test/language/statements/class/static-method-gen-non-configurable-err.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -2344,9 +2329,6 @@ minify Error: tasks/coverage/test262/test/language/statements/class/subclass/bui
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 codegen Error: tasks/coverage/test262/test/language/statements/class/subclass/private-class-field-on-nonextensible-return-override.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/statements/class/subclass/superclass-arrow-function.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 transform Error: tasks/coverage/test262/test/language/statements/class/subclass/superclass-async-function.js
