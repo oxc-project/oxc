@@ -518,7 +518,6 @@ impl Oxc {
 
         if let Some(ref array_wrap) = options.array_wrap {
             let normalized = match array_wrap.as_str() {
-                "preserve" => "auto",
                 "collapse" => "never",
                 _ => array_wrap.as_str(),
             };

@@ -5,13 +5,13 @@
   "type": "object",
   "properties": {
     "arrayWrap": {
-      "description": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\n- Default: `\"preserve\"`",
+      "description": "How to wrap array literals.\n\n- `\"preserve\"`: Keep arrays written across multiple lines expanded, one element per line;\narrays written on a single line are collapsed when they fit within printWidth.\n- `\"collapse\"`: Always collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\nWhen omitted, Prettier's default heuristic is used: arrays are collapsed when they fit\nwithin printWidth, regardless of how they are written in the source.\n\n- Languages: JS, TS, JSX, TSX",
       "allOf": [
         {
           "$ref": "#/definitions/ArrayWrapConfig"
         }
       ],
-      "markdownDescription": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\n- Default: `\"preserve\"`"
+      "markdownDescription": "How to wrap array literals.\n\n- `\"preserve\"`: Keep arrays written across multiple lines expanded, one element per line;\narrays written on a single line are collapsed when they fit within printWidth.\n- `\"collapse\"`: Always collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\nWhen omitted, Prettier's default heuristic is used: arrays are collapsed when they fit\nwithin printWidth, regardless of how they are written in the source.\n\n- Languages: JS, TS, JSX, TSX"
     },
     "arrowParens": {
       "description": "Include parentheses around a sole arrow function parameter.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`",
@@ -298,13 +298,13 @@
       "type": "object",
       "properties": {
         "arrayWrap": {
-          "description": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\n- Default: `\"preserve\"`",
+          "description": "How to wrap array literals.\n\n- `\"preserve\"`: Keep arrays written across multiple lines expanded, one element per line;\narrays written on a single line are collapsed when they fit within printWidth.\n- `\"collapse\"`: Always collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\nWhen omitted, Prettier's default heuristic is used: arrays are collapsed when they fit\nwithin printWidth, regardless of how they are written in the source.\n\n- Languages: JS, TS, JSX, TSX",
           "allOf": [
             {
               "$ref": "#/definitions/ArrayWrapConfig"
             }
           ],
-          "markdownDescription": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\n- Default: `\"preserve\"`"
+          "markdownDescription": "How to wrap array literals.\n\n- `\"preserve\"`: Keep arrays written across multiple lines expanded, one element per line;\narrays written on a single line are collapsed when they fit within printWidth.\n- `\"collapse\"`: Always collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\nWhen omitted, Prettier's default heuristic is used: arrays are collapsed when they fit\nwithin printWidth, regardless of how they are written in the source.\n\n- Languages: JS, TS, JSX, TSX"
         },
         "arrowParens": {
           "description": "Include parentheses around a sole arrow function parameter.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`",

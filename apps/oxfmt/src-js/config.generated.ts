@@ -36,12 +36,16 @@ export interface Oxfmtrc {
   /**
    * How to wrap array literals.
    *
-   * - `"preserve"` (default): Keep arrays as-is; only reformat when they exceed printWidth.
-   * - `"collapse"`: Collapse arrays to a single line when they fit within printWidth.
+   * - `"preserve"`: Keep arrays written across multiple lines expanded, one element per line;
+   * arrays written on a single line are collapsed when they fit within printWidth.
+   * - `"collapse"`: Always collapse arrays to a single line when they fit within printWidth.
    * - `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold;
    * arrays below the threshold use `"preserve"` behavior.
    *
-   * - Default: `"preserve"`
+   * When omitted, Prettier's default heuristic is used: arrays are collapsed when they fit
+   * within printWidth, regardless of how they are written in the source.
+   *
+   * - Languages: JS, TS, JSX, TSX
    */
   arrayWrap?: ArrayWrapConfig;
   /**
@@ -379,12 +383,16 @@ export interface FormatConfig {
   /**
    * How to wrap array literals.
    *
-   * - `"preserve"` (default): Keep arrays as-is; only reformat when they exceed printWidth.
-   * - `"collapse"`: Collapse arrays to a single line when they fit within printWidth.
+   * - `"preserve"`: Keep arrays written across multiple lines expanded, one element per line;
+   * arrays written on a single line are collapsed when they fit within printWidth.
+   * - `"collapse"`: Always collapse arrays to a single line when they fit within printWidth.
    * - `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold;
    * arrays below the threshold use `"preserve"` behavior.
    *
-   * - Default: `"preserve"`
+   * When omitted, Prettier's default heuristic is used: arrays are collapsed when they fit
+   * within printWidth, regardless of how they are written in the source.
+   *
+   * - Languages: JS, TS, JSX, TSX
    */
   arrayWrap?: ArrayWrapConfig;
   /**

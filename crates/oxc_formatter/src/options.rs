@@ -724,10 +724,18 @@ impl FromStr for BracketSameLine {
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum ArrayExpand {
+    /// Follow Prettier's heuristic: collapse arrays that fit on a single line,
+    /// expand arrays consisting of multiple object or array expressions.
     #[default]
     Auto,
+    /// Like `Auto`, but arrays written across multiple lines
+    /// (a line break between `[` and the first element) stay expanded,
+    /// one element per line.
+    Preserve,
     /// Arrays are never expanded if they are shorter than the line width.
     Never,
+    /// Arrays with at least this many elements are always expanded, one element
+    /// per line. Arrays below the threshold behave like `Preserve`.
     ForceAboveThreshold(u32),
 }
 
@@ -737,6 +745,7 @@ impl FromStr for ArrayExpand {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "auto" => Ok(Self::Auto),
+            "preserve" => Ok(Self::Preserve),
             "never" => Ok(Self::Never),
             _ => Err(std::format!("unknown array expand literal: {s}")),
         }
@@ -747,6 +756,7 @@ impl fmt::Display for ArrayExpand {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ArrayExpand::Auto => f.write_str("Auto"),
+            ArrayExpand::Preserve => f.write_str("Preserve"),
             ArrayExpand::Never => f.write_str("Never"),
             ArrayExpand::ForceAboveThreshold(n) => {
                 f.write_str("ForceAboveThreshold(")?;

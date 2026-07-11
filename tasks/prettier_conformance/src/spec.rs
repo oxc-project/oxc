@@ -301,7 +301,6 @@ impl VisitMut<'_> for SpecParser {
                                 }
                                 "arrayWrap" => {
                                     js_options.array_expand = ArrayExpand::from_str(match s {
-                                        "preserve" => "auto",
                                         "collapse" => "never",
                                         _ => s,
                                     })

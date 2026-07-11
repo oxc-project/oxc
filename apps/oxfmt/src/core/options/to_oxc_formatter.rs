@@ -125,7 +125,7 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String
 
     if let Some(array_wrap) = config.array_wrap {
         format_options.array_expand = match array_wrap {
-            ArrayWrapConfig::Mode(ArrayWrapMode::Preserve) => ArrayExpand::Auto,
+            ArrayWrapConfig::Mode(ArrayWrapMode::Preserve) => ArrayExpand::Preserve,
             ArrayWrapConfig::Mode(ArrayWrapMode::Collapse) => ArrayExpand::Never,
             ArrayWrapConfig::Threshold(t) => {
                 ArrayExpand::ForceAboveThreshold(t.min_elements_to_wrap)
@@ -449,10 +449,15 @@ mod tests {
 
     #[test]
     fn test_array_wrap_normalization() {
-        // Test "preserve" -> Auto
-        let config: FormatConfig = serde_json::from_str(r#"{"arrayWrap": "preserve"}"#).unwrap();
+        // Test default (no option) -> Auto (Prettier behavior)
+        let config: FormatConfig = serde_json::from_str("{}").unwrap();
         let format_options = to_oxc_formatter(&config).unwrap();
         assert_eq!(format_options.array_expand, ArrayExpand::Auto);
+
+        // Test "preserve" -> Preserve
+        let config: FormatConfig = serde_json::from_str(r#"{"arrayWrap": "preserve"}"#).unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::Preserve);
 
         // Test "collapse" -> Never
         let config: FormatConfig = serde_json::from_str(r#"{"arrayWrap": "collapse"}"#).unwrap();

@@ -50,12 +50,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
             let force_above_threshold = matches!(array_expand, ArrayExpand::ForceAboveThreshold(threshold) if self.array.elements().len() >= threshold as usize);
 
             let preserve_multiline = !force_above_threshold
-                && matches!(array_expand, ArrayExpand::Auto | ArrayExpand::ForceAboveThreshold(_))
+                && matches!(
+                    array_expand,
+                    ArrayExpand::Preserve | ArrayExpand::ForceAboveThreshold(_)
+                )
                 && elements_have_leading_newline(self.array, f);
 
             let should_expand = !self.options.is_force_flat_mode
                 && (match array_expand {
-                    ArrayExpand::Auto => should_break(self.array) || preserve_multiline,
+                    ArrayExpand::Auto => should_break(self.array),
+                    ArrayExpand::Preserve => should_break(self.array) || preserve_multiline,
                     ArrayExpand::Never => false,
                     ArrayExpand::ForceAboveThreshold(_) => {
                         force_above_threshold || preserve_multiline

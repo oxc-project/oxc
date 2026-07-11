@@ -2,7 +2,39 @@ import { describe, expect, it } from "vitest";
 import { format } from "../../dist/index.js";
 
 describe("arrayWrap", () => {
-  describe("preserve (default)", () => {
+  describe("default (no arrayWrap)", () => {
+    it("single-line stays single-line", async () => {
+      const input = "const x = [1, 2, 3];\n";
+      const result = await format("a.ts", input);
+      expect(result.code).toBe("const x = [1, 2, 3];\n");
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("follows Prettier and collapses multiline arrays that fit", async () => {
+      const input = `const x = [
+  1,
+  2,
+  3,
+];
+`;
+      const result = await format("a.ts", input);
+      expect(result.code).toBe("const x = [1, 2, 3];\n");
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("follows Prettier and expands arrays of multiple objects", async () => {
+      const input = "const x = [{ a: 1, b: 2 }, { a: 3, b: 4 }];\n";
+      const result = await format("a.ts", input);
+      expect(result.code).toBe(`const x = [
+  { a: 1, b: 2 },
+  { a: 3, b: 4 },
+];
+`);
+      expect(result.errors).toStrictEqual([]);
+    });
+  });
+
+  describe("preserve", () => {
     it("single-line stays single-line", async () => {
       const input = "const x = [1, 2, 3];\n";
       const result = await format("a.ts", input, { arrayWrap: "preserve" });
@@ -80,25 +112,6 @@ describe("arrayWrap", () => {
       const input = "const x = [];\n";
       const result = await format("a.ts", input, { arrayWrap: "preserve" });
       expect(result.code).toBe("const x = [];\n");
-      expect(result.errors).toStrictEqual([]);
-    });
-
-    it("default (no option) behaves like preserve", async () => {
-      const input = "const x = [1, 2, 3];\n";
-      const result = await format("a.ts", input);
-      expect(result.code).toBe("const x = [1, 2, 3];\n");
-      expect(result.errors).toStrictEqual([]);
-    });
-
-    it("default preserves multiline", async () => {
-      const input = `const x = [
-  1,
-  2,
-  3,
-];
-`;
-      const result = await format("a.ts", input);
-      expect(result.code).toBe(input);
       expect(result.errors).toStrictEqual([]);
     });
 
@@ -199,6 +212,28 @@ describe("arrayWrap", () => {
       expect(result.errors).toStrictEqual([]);
     });
 
+    it("multiline destructuring with leading hole stays multiline", async () => {
+      const input = `const [
+  ,
+  a,
+] = values;
+`;
+      const result = await format("a.ts", input, { arrayWrap: "preserve" });
+      expect(result.code).toBe(input);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("multiline assignment target with leading hole stays multiline", async () => {
+      const input = `[
+  ,
+  a,
+] = values;
+`;
+      const result = await format("a.ts", input, { arrayWrap: "preserve" });
+      expect(result.code).toBe(input);
+      expect(result.errors).toStrictEqual([]);
+    });
+
     it("formatting is idempotent for multiline", async () => {
       const input = `const x = [
   1, 2, 3];
@@ -209,7 +244,6 @@ describe("arrayWrap", () => {
       expect(second.code).toBe(first.code);
       expect(second.errors).toStrictEqual([]);
     });
-
   });
 
   describe("collapse", () => {
@@ -294,9 +328,7 @@ describe("arrayWrap", () => {
 ];
 `;
       const result = await format("a.ts", input, { arrayWrap: "collapse" });
-      expect(result.code).toBe(
-        "const ids = [7234932941, 7234932722, 7234932312, 7234932933];\n",
-      );
+      expect(result.code).toBe("const ids = [7234932941, 7234932722, 7234932312, 7234932933];\n");
       expect(result.errors).toStrictEqual([]);
     });
 
