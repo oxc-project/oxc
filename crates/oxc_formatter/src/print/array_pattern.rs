@@ -35,13 +35,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayPattern<'a, '_> {
 
             let force_above_threshold = matches!(f.options().array_expand, ArrayExpand::ForceAboveThreshold(threshold) if element_count >= threshold as usize);
 
+            // Leading holes have no node, so measure against the first present
+            // element (or the rest element) instead
+            let first_element_start = self
+                .elements
+                .iter()
+                .flatten()
+                .map(|e| e.span().start)
+                .next()
+                .or_else(|| self.rest.as_deref().map(|rest| rest.span.start));
+
             let preserve_multiline = !force_above_threshold
                 && matches!(
                     f.options().array_expand,
-                    ArrayExpand::Auto | ArrayExpand::ForceAboveThreshold(_)
+                    ArrayExpand::Preserve | ArrayExpand::ForceAboveThreshold(_)
                 )
-                && self.elements.first().and_then(|e| e.as_ref()).is_some_and(|e| {
-                    f.source_text().contains_newline_between(self.span().start, e.span().start)
+                && first_element_start.is_some_and(|start| {
+                    f.source_text().contains_newline_between(self.span().start, start)
                 });
 
             let should_expand = force_above_threshold || preserve_multiline;
