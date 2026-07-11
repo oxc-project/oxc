@@ -8165,6 +8165,9 @@
         "typescript/prefer-as-const": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "typescript/prefer-destructuring": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "typescript/prefer-enum-initializers": {
           "$ref": "#/definitions/RuleNoConfig"
         },

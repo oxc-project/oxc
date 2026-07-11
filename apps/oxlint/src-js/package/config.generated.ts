@@ -1455,6 +1455,7 @@ export interface DummyRuleMap {
   "typescript/only-throw-error"?: RuleNoConfig | [AllowWarnDeny, OnlyThrowErrorConfig];
   "typescript/parameter-properties"?: RuleNoConfig | [AllowWarnDeny, ParameterPropertiesConfig];
   "typescript/prefer-as-const"?: RuleNoConfig;
+  "typescript/prefer-destructuring"?: RuleNoConfig;
   "typescript/prefer-enum-initializers"?: RuleNoConfig;
   "typescript/prefer-find"?: RuleNoConfig;
   "typescript/prefer-for-of"?: RuleNoConfig;
