@@ -148,7 +148,7 @@ pub struct OxcFormatterOptions {
     pub bracket_same_line: Option<bool>,
     /// Object wrapping style: "preserve" | "collapse" | "always" (default: "preserve")
     pub object_wrap: Option<String>,
-    /// Array wrapping style: "preserve" | "collapse" (default: "preserve")
+    /// Array wrapping style: "preserve" | "collapse" (default: Prettier's heuristic)
     pub array_wrap: Option<String>,
     /// Put each attribute on its own line (default: false)
     pub single_attribute_per_line: Option<bool>,
