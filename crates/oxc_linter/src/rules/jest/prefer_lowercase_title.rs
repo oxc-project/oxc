@@ -52,6 +52,10 @@ fn test() {
         ("it('foo', function () {})", None),
         ("it(\"foo\", function () {})", None),
         ("it(`foo`, function () {})", None),
+        (
+            "it('some longer description', function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
+        ),
         ("it(\"<Foo/>\", function () {})", None),
         ("it(\"123 foo\", function () {})", None),
         ("it(42, function () {})", None),
@@ -182,6 +186,10 @@ fn test() {
             None,
         ),
         ("describe(`Some longer description`, function () {})", None),
+        (
+            "describe(`some longer Description`, function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
+        ),
         ("fdescribe(`Some longer description`, function () {})", None),
         ("it.each(['green', 'black'])('Should return %', () => {})", None),
         ("describe.each(['green', 'black'])('Should return %', () => {})", None),
@@ -263,6 +271,11 @@ fn test() {
             "describe(`Some longer description`, function () {})",
             "describe(`some longer description`, function () {})",
             None,
+        ),
+        (
+            "describe(`some longer Description`, function () {})",
+            "describe(`some longer description`, function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
         ),
         (
             "fdescribe(`Some longer description`, function () {})",
