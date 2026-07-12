@@ -109,6 +109,20 @@ export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type SnapshotHintMode = "always" | "multi";
+/**
+ * Patterns for `mustMatch`/`mustNotMatch`, either applied to all block types
+ * or per block type.
+ */
+export type MatcherPatterns =
+  | MatcherPattern
+  | {
+      [k: string]: MatcherPattern;
+    };
+/**
+ * A single `mustMatch`/`mustNotMatch` pattern, with an optional custom
+ * diagnostic message.
+ */
+export type MatcherPattern = string | string[];
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
@@ -999,7 +1013,7 @@ export interface DummyRuleMap {
   "jest/valid-describe-callback"?: RuleNoConfig;
   "jest/valid-expect"?: RuleNoConfig | [AllowWarnDeny, ValidExpectConfig];
   "jest/valid-expect-in-promise"?: RuleNoConfig;
-  "jest/valid-title"?: DummyRule;
+  "jest/valid-title"?: RuleNoConfig | [AllowWarnDeny, ValidTitleOptions];
   "jsdoc/check-access"?: RuleNoConfig;
   "jsdoc/check-property-names"?: RuleNoConfig;
   "jsdoc/check-tag-names"?: RuleNoConfig | [AllowWarnDeny, CheckTagNamesConfig];
@@ -1698,7 +1712,7 @@ export interface DummyRuleMap {
   "vitest/valid-describe-callback"?: RuleNoConfig;
   "vitest/valid-expect"?: RuleNoConfig | [AllowWarnDeny, ValidExpectConfig];
   "vitest/valid-expect-in-promise"?: RuleNoConfig;
-  "vitest/valid-title"?: DummyRule;
+  "vitest/valid-title"?: RuleNoConfig | [AllowWarnDeny, ValidTitleOptions];
   "vitest/warn-todo"?: RuleNoConfig;
   "vue/component-definition-name-casing"?: RuleNoConfig | [AllowWarnDeny, CaseType];
   "vue/define-emits-declaration"?: RuleNoConfig | [AllowWarnDeny, DeclarationStyle];
@@ -2422,6 +2436,43 @@ export interface ValidExpectConfig {
    * Minimum number of arguments `expect` should be called with.
    */
   minArgs?: number;
+}
+export interface ValidTitleOptions {
+  /**
+   * Whether to allow identifiers (e.g. variables holding the title) as
+   * titles.
+   */
+  allowArguments?: boolean;
+  /**
+   * A list of words that are not allowed to appear in titles.
+   */
+  disallowedWords?: string[];
+  /**
+   * Whether to allow leading and trailing spaces in titles.
+   */
+  ignoreSpaces?: boolean;
+  /**
+   * Whether to ignore the type of the first argument to `describe` blocks,
+   * so titles that are not strings are allowed.
+   */
+  ignoreTypeOfDescribeName?: boolean;
+  /**
+   * Whether to ignore the type of the first argument to `test` and `it`
+   * blocks, so titles that are not strings are allowed.
+   */
+  ignoreTypeOfTestName?: boolean;
+  /**
+   * A pattern (or per-block patterns) that titles must match, optionally
+   * paired with a custom message: `"pattern"`, `["pattern", "message"]`,
+   * or `{ "describe" | "test" | "it": pattern }`.
+   */
+  mustMatch?: MatcherPatterns;
+  /**
+   * A pattern (or per-block patterns) that titles must **not** match,
+   * optionally paired with a custom message: `"pattern"`,
+   * `["pattern", "message"]`, or `{ "describe" | "test" | "it": pattern }`.
+   */
+  mustNotMatch?: MatcherPatterns;
 }
 export interface CheckTagNamesConfig {
   /**

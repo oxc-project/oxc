@@ -1,5 +1,4 @@
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
 
 use crate::{
     context::LintContext,
@@ -15,16 +14,14 @@ declare_oxc_lint!(
     jest,
     correctness,
     conditional_fix,
-    // TODO: Replace this with an actual config struct. This is a dummy value to
-    // indicate that this rule has configuration and avoid errors.
-    config = Value,
+    config = SharedValidTitle::ValidTitleOptions,
     docs = SharedValidTitle::DOCUMENTATION,
     version = "0.0.14",
 );
 
 impl Rule for ValidTitle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        SharedValidTitle::ValidTitleConfig::from_configuration(&value)
+        SharedValidTitle::ValidTitleConfig::from_configuration(value)
             .map(|config| Self(Box::new(config)))
     }
 
@@ -33,7 +30,7 @@ impl Rule for ValidTitle {
         jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        SharedValidTitle::ValidTitleConfig::run_rule(&self.0, jest_node, ctx);
+        self.0.run_rule(jest_node, ctx);
     }
 }
 
@@ -76,6 +73,12 @@ fn test() {
         (
             "it('correctly sets the value', () => {});",
             Some(serde_json::json!([{ "mustMatch": { "test": "#(?:unit|integration|e2e)" } }])),
+        ),
+        (
+            "it('correctly sets the value #unit', () => {});",
+            Some(serde_json::json!([
+              { "mustMatch": { "it": ["#(?:unit|integration|e2e)", "Please include a tag"] } },
+            ])),
         ),
         (
             "
@@ -268,6 +271,21 @@ fn test() {
             "test('foo[bar', () => {});",
             Some(serde_json::json!([{ "disallowedWords": ["foo[bar"] }])),
         ),
+        // `disallowedWords` must not disable the other checks when no disallowed word matches.
+        (
+            "test('the title has no tag', () => {});",
+            Some(serde_json::json!([
+              { "disallowedWords": ["pizza"], "mustMatch": "#(?:unit|integration|e2e)" },
+            ])),
+        ),
+        (
+            "test('  leading and trailing spaces  ', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["pizza"] }])),
+        ),
+        (
+            "test('test foo', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["pizza"] }])),
+        ),
         // TODO: The regex `(?:#(?!unit|e2e))\w+` in those test cases is not valid in Rust
         // (
         //     "
@@ -439,6 +457,18 @@ fn test() {
         (
             "test('the correct way to properly handle all things', () => {});",
             Some(serde_json::json!([{ "mustMatch": "#(?:unit|integration|e2e)" }])),
+        ),
+        (
+            "test('the correct way to properly handle all things', () => {});",
+            Some(serde_json::json!([
+              { "mustMatch": ["#(?:unit|integration|e2e)", "Please include a tag"] },
+            ])),
+        ),
+        (
+            "it('correctly sets the value', () => {});",
+            Some(serde_json::json!([
+              { "mustMatch": { "it": ["#(?:unit|integration|e2e)", "Please include a tag"] } },
+            ])),
         ),
         (
             "describe('the test', () => {});",
@@ -723,4 +753,30 @@ fn test() {
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    // Unknown option keys.
+    let unknown_key = serde_json::json!([{ "foo": "bar" }]);
+    assert!(ValidTitle::from_configuration(unknown_key).is_err());
+
+    // Unknown block kinds in the per-kind form.
+    let unknown_kind = serde_json::json!([{ "mustMatch": { "describes": "^[^#]+$" } }]);
+    assert!(ValidTitle::from_configuration(unknown_kind).is_err());
+
+    // Patterns that are not valid Rust regexes, in each of the three shapes.
+    let lookahead = r"(?:#(?!unit|e2e))\w+";
+    for must_match in [
+        serde_json::json!(lookahead),
+        serde_json::json!([lookahead, "custom message"]),
+        serde_json::json!({ "describe": lookahead }),
+    ] {
+        let config = serde_json::json!([{ "mustMatch": must_match }]);
+        assert!(ValidTitle::from_configuration(config).is_err());
+    }
+
+    // A pattern array must have a pattern in it.
+    let empty_pattern = serde_json::json!([{ "mustNotMatch": [] }]);
+    assert!(ValidTitle::from_configuration(empty_pattern).is_err());
 }
