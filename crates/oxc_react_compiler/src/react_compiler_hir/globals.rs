@@ -1530,6 +1530,12 @@ const UNTYPED_GLOBALS: &[&str] = &[
     "JSON",
     "console",
     "eval",
+    "BigInt",
+    "Number",
+    "String",
+    "Boolean",
+    "Symbol",
+    "Array",
 ];
 
 /// Build the React API types (REACT_APIS from TS). Returns the list of (name, type) pairs
