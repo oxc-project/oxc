@@ -756,9 +756,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         };
         // Treat type-only declarations as globals so the compiler
         // doesn't try to create/initialize HIR bindings for them.
-        // TSEnumDeclaration is included because enums inside function
-        // bodies are lowered as UnsupportedNode and their binding
-        // is never initialized in HIR.
+        // TSEnumDeclaration is included because a function with an inline
+        // enum is skipped (`skip_compilation`) and the enum binding is
+        // never initialized in HIR.
         if matches!(
             self.scope.decl_kind(symbol_id),
             DeclKind::TSTypeAliasDeclaration

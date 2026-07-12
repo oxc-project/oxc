@@ -621,11 +621,7 @@ pub enum InstructionValue<'a> {
     },
     TypeCastExpression {
         value: Place,
-        type_annotation_kind: Option<&'static str>,
-        /// The original oxc AST type annotation subtree, preserved for codegen,
-        /// which re-emits it by cloning into the output allocator (and applying any
-        /// identifier renames via the environment for the rare rename case).
-        type_annotation: Option<&'a oxc::TSType<'a>>,
+        cast: TypeCast<'a>,
         span: Option<Span>,
     },
     JsxExpression {
@@ -770,13 +766,17 @@ pub enum InstructionValue<'a> {
         pruned: bool,
         span: Option<Span>,
     },
-    UnsupportedNode {
-        /// The borrowed oxc statement node preserved verbatim, so codegen can clone
-        /// it into the output allocator and re-emit it (e.g. an inline TS `enum`,
-        /// which has runtime semantics but no HIR representation).
-        stmt: &'a oxc::Statement<'a>,
-        span: Option<Span>,
-    },
+}
+
+/// A preserved TS type-cast wrapper, aligned with the oxc AST node it was
+/// lowered from. The type subtree is an arena clone made at lowering; codegen
+/// re-emits it, applying identifier renames via semantic reference ids.
+#[derive(Debug, Clone, Copy)]
+pub enum TypeCast<'a> {
+    /// `expr as T` (`TSAsExpression`) and `<T>expr` (`TSTypeAssertion`)
+    As(&'a oxc::TSType<'a>),
+    /// `expr satisfies T` (`TSSatisfiesExpression`)
+    Satisfies(&'a oxc::TSType<'a>),
 }
 
 impl<'a> InstructionValue<'a> {
@@ -823,8 +823,7 @@ impl<'a> InstructionValue<'a> {
             | InstructionValue::PostfixUpdate { span, .. }
             | InstructionValue::Debugger { span, .. }
             | InstructionValue::StartMemoize { span, .. }
-            | InstructionValue::FinishMemoize { span, .. }
-            | InstructionValue::UnsupportedNode { span, .. } => span.as_ref(),
+            | InstructionValue::FinishMemoize { span, .. } => span.as_ref(),
         }
     }
 }

@@ -38,6 +38,7 @@ use crate::react_compiler_hir::PrimitiveValue;
 use crate::react_compiler_hir::PropertyLiteral;
 use crate::react_compiler_hir::ScopeId;
 use crate::react_compiler_hir::SpreadPattern;
+use crate::react_compiler_hir::TypeCast;
 use crate::react_compiler_hir::environment::{Environment, OutputMode};
 use crate::react_compiler_hir::reactive::PrunedReactiveScopeBlock;
 use crate::react_compiler_hir::reactive::ReactiveBlock;
@@ -1365,13 +1366,6 @@ fn ox_codegen_instruction_nullable<'a>(
                 cx.object_methods.insert(lvalue.identifier, (value.clone(), *span));
                 return Ok(None);
             }
-            InstructionValue::UnsupportedNode { stmt, .. } => {
-                // Statement-position unsupported node (e.g. an inline TS `enum`
-                // declaration): re-emit it verbatim by cloning the borrowed oxc
-                // statement into the output allocator, mirroring the Babel path's
-                // `return node` for non-expression original nodes.
-                return Ok(Some(stmt.clone_in(cx.ast.allocator())));
-            }
             _ => {}
         }
     }
@@ -2082,32 +2076,24 @@ fn ox_codegen_base_instruction_value<'a>(
                 oxc_allocator::ArenaBox::new_in(template, &cx.ast),
             )))
         }
-        InstructionValue::TypeCastExpression {
-            value,
-            type_annotation_kind,
-            type_annotation,
-            ..
-        } => {
+        InstructionValue::TypeCastExpression { value, cast, .. } => {
             let expr = ox_codegen_place_to_expression(cx, value)?;
             // Re-emit the stored TS type into the output allocator (a `clone_in`, with
             // any binding renames applied to identifier references inside the type) and
             // re-wrap the inner expression, matching the baseline output.
-            let wrapped = match (type_annotation_kind.as_deref(), type_annotation) {
-                (Some("satisfies"), Some(ta)) => {
-                    oxc_ast::ast::Expression::new_ts_satisfies_expression(
-                        SPAN,
-                        expr,
-                        ox_reemit_ts_type(cx, ta),
-                        &cx.ast,
-                    )
-                }
-                (Some("as"), Some(ta)) => oxc_ast::ast::Expression::new_ts_as_expression(
+            let wrapped = match cast {
+                TypeCast::Satisfies(ta) => oxc_ast::ast::Expression::new_ts_satisfies_expression(
                     SPAN,
                     expr,
                     ox_reemit_ts_type(cx, ta),
                     &cx.ast,
                 ),
-                _ => expr,
+                TypeCast::As(ta) => oxc_ast::ast::Expression::new_ts_as_expression(
+                    SPAN,
+                    expr,
+                    ox_reemit_ts_type(cx, ta),
+                    &cx.ast,
+                ),
             };
             Ok(OxValue::Expression(wrapped))
         }
@@ -2138,8 +2124,7 @@ fn ox_codegen_base_instruction_value<'a>(
         | InstructionValue::DeclareContext { .. }
         | InstructionValue::Destructure { .. }
         | InstructionValue::ObjectMethod { .. }
-        | InstructionValue::StoreContext { .. }
-        | InstructionValue::UnsupportedNode { .. } => Err(invariant_err(
+        | InstructionValue::StoreContext { .. } => Err(invariant_err(
             &format!("Unexpected {:?} in codegenInstructionValue", std::mem::discriminant(iv)),
             None,
         )),

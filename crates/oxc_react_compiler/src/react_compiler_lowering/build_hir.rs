@@ -1097,7 +1097,7 @@ fn lower_type_cast_expression<'a>(
     span: oxc_span::Span,
     expression: &oxc::Expression<'a>,
     type_annotation: &oxc::TSType<'a>,
-    type_annotation_kind: &'static str,
+    cast: fn(&'a oxc::TSType<'a>) -> TypeCast<'a>,
 ) -> Result<InstructionValue<'a>, OxcDiagnostic> {
     let span = Some(span);
     let value = lower_expression_to_temporary(builder, expression)?;
@@ -1109,12 +1109,7 @@ fn lower_type_cast_expression<'a>(
     // borrows of the input `Program` reference.
     let allocator = builder.environment().allocator;
     let type_annotation = &*allocator.alloc(type_annotation.clone_in_with_semantic_ids(allocator));
-    Ok(InstructionValue::TypeCastExpression {
-        value,
-        type_annotation_kind: Some(type_annotation_kind),
-        type_annotation: Some(type_annotation),
-        span,
-    })
+    Ok(InstructionValue::TypeCastExpression { value, cast: cast(type_annotation), span })
 }
 
 /// Lower a member-expression update target (oxc's member variants of
@@ -4033,19 +4028,27 @@ fn lower_expression<'a>(
         // `x as T` / `x satisfies T` / `<T>x` lower the inner expression to a
         // temporary and emit a `TypeCastExpression` carrying the type metadata,
         // mirroring the original Babel logic.
-        oxc::Expression::TSAsExpression(ts) => {
-            lower_type_cast_expression(builder, ts.span, &ts.expression, &ts.type_annotation, "as")
-        }
+        oxc::Expression::TSAsExpression(ts) => lower_type_cast_expression(
+            builder,
+            ts.span,
+            &ts.expression,
+            &ts.type_annotation,
+            TypeCast::As,
+        ),
         oxc::Expression::TSSatisfiesExpression(ts) => lower_type_cast_expression(
             builder,
             ts.span,
             &ts.expression,
             &ts.type_annotation,
-            "satisfies",
+            TypeCast::Satisfies,
         ),
-        oxc::Expression::TSTypeAssertion(ts) => {
-            lower_type_cast_expression(builder, ts.span, &ts.expression, &ts.type_annotation, "as")
-        }
+        oxc::Expression::TSTypeAssertion(ts) => lower_type_cast_expression(
+            builder,
+            ts.span,
+            &ts.expression,
+            &ts.type_annotation,
+            TypeCast::As,
+        ),
         // `x!` and `x<T>` unwrap to their inner expression (the original also just
         // unwraps these).
         oxc::Expression::TSNonNullExpression(ts) => lower_expression(builder, &ts.expression),
@@ -6380,15 +6383,12 @@ fn lower_statement<'a>(
                     .diagnostic("JavaScript `import` and `export` statements may only appear at the top level of a module").with_label(stmt.span()),
             )?;
         }
-        oxc::Statement::TSEnumDeclaration(e) => {
-            // Inline TS `enum` has runtime semantics, so preserve it: emit an
-            // `UnsupportedNode` carrying an arena clone of the oxc statement node
-            // so the back-end can re-emit it verbatim (matching the original Babel
-            // front-end, which wrapped the enum the same way).
-            let span = Some(e.span);
-            let allocator = builder.environment().allocator;
-            let stmt = &*allocator.alloc(stmt.clone_in_with_semantic_ids(allocator));
-            lower_value_to_temporary(builder, InstructionValue::UnsupportedNode { stmt, span })?;
+        oxc::Statement::TSEnumDeclaration(_) => {
+            // Inline TS `enum` has runtime semantics but no HIR representation, and
+            // the compiled body is rebuilt from HIR. Flag the function to be skipped
+            // (silently, no diagnostic) once lowering finishes, rather than dropping
+            // the enum from the output. Other functions in the file are unaffected.
+            builder.environment_mut().skip_compilation = true;
         }
         _ => {
             // Remaining statements are skipped: bodyless FunctionDeclaration
