@@ -271,6 +271,21 @@ fn test() {
             "test('foo[bar', () => {});",
             Some(serde_json::json!([{ "disallowedWords": ["foo[bar"] }])),
         ),
+        // `disallowedWords` must not disable the other checks when no disallowed word matches.
+        (
+            "test('the title has no tag', () => {});",
+            Some(serde_json::json!([
+              { "disallowedWords": ["pizza"], "mustMatch": "#(?:unit|integration|e2e)" },
+            ])),
+        ),
+        (
+            "test('  leading and trailing spaces  ', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["pizza"] }])),
+        ),
+        (
+            "test('test foo', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["pizza"] }])),
+        ),
         // TODO: The regex `(?:#(?!unit|e2e))\w+` in those test cases is not valid in Rust
         // (
         //     "
