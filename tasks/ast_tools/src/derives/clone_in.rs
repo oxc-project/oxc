@@ -156,13 +156,15 @@ fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         )
     };
 
-    // Note: Add `#[inline(always)]` to methods for fieldless enums, because they're no-ops
+    // Add `#[inline(always)]` to methods for fieldless enums, because they're no-ops
+    let inline_always = enum_def.is_fieldless();
+
     generate_impl(
         &type_ident,
         &clone_in_body,
         &clone_in_with_semantic_ids_body,
         enum_def.has_lifetime,
-        enum_def.is_fieldless(),
+        inline_always,
     )
 }
 
