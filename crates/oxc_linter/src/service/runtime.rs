@@ -24,15 +24,16 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic}
 use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
-use oxc_span::{SourceType, VALID_EXTENSIONS};
+use oxc_span::{SourceType, Span, VALID_EXTENSIONS};
 use oxc_str::CompactStr;
 
 use crate::{
-    Fixer, Linter, Message, PossibleFixes, RuleTimingStore,
+    Fix, Fixer, Linter, Message, PossibleFixes, RuleTimingStore,
     context::{ContextSubHost, ContextSubHostOptions},
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
+    shadow_source::ShadowLintInput,
     suppression::DiffManager,
     utils::read_to_arena_str,
 };
@@ -609,6 +610,25 @@ impl Runtime {
         diff_manager: &Arc<DiffManager>,
         rule_timing_store: Option<&RuleTimingStore>,
     ) {
+        // Files with an external (JS) parser are parsed and linted entirely on JS side.
+        // They are linted separately, and don't take part in the module graph.
+        // Only walk overrides per-file when some override actually configures a parser;
+        // otherwise every path is a native-parser path (skips the per-file glob walk).
+        let (js_parser_paths, paths): (Vec<_>, Vec<_>) =
+            if self.linter.has_external_parser_overrides() {
+                paths.into_iter().partition(|path| self.linter.has_external_parser(Path::new(path)))
+            } else {
+                (Vec::new(), paths)
+            };
+
+        if !js_parser_paths.is_empty() {
+            // Dedupe, same as `paths_set` below for the native path.
+            // Overlapping input paths can yield the same file more than once.
+            let js_parser_paths: IndexSet<Arc<OsStr>, FxBuildHasher> =
+                js_parser_paths.into_iter().collect();
+            self.run_with_js_parser(file_system, &js_parser_paths, tx_error, diff_manager);
+        }
+
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
@@ -741,9 +761,225 @@ impl Runtime {
         });
     }
 
+    /// Lint files which are parsed by an external (JS) parser.
+    ///
+    /// These files are parsed on JS side by the parser configured in `languageOptions.parser`,
+    /// and only external (JS plugin) rules run on them.
+    fn run_with_js_parser(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: &IndexSet<Arc<OsStr>, FxBuildHasher>,
+        tx_error: &DiagnosticSender,
+        diff_manager: &Arc<DiffManager>,
+    ) {
+        paths.par_iter().for_each(|path| {
+            let path = Path::new(path);
+
+            let allocator_guard = self.allocator_pool.get();
+            let source_text = match file_system.read_to_arena_str(path, &allocator_guard) {
+                Ok(source_text) => source_text,
+                Err(err) => {
+                    tx_error
+                        .send(vec![Error::new(OxcDiagnostic::error(format!(
+                            "Failed to open file {} with error \"{err}\"",
+                            path.display()
+                        )))])
+                        .unwrap();
+                    return;
+                }
+            };
+
+            let (mut messages, disable_directives, shadow_lint_input) =
+                self.linter.run_with_js_parser(path, source_text);
+
+            // Run native rules on the shadow source (must happen before the directives are
+            // moved into the map below, so "used" markers from the native run are merged in).
+            if let Some(shadow_lint_input) = &shadow_lint_input {
+                messages.extend(self.lint_shadow_source(
+                    path,
+                    source_text,
+                    shadow_lint_input,
+                    disable_directives.as_ref(),
+                    &allocator_guard,
+                ));
+            }
+
+            // Store the disable directives for this file, so unused directives can be
+            // reported, same as the native path.
+            if let Some(disable_directives) = disable_directives {
+                self.disable_directives_map
+                    .lock()
+                    .expect("disable_directives_map mutex poisoned")
+                    .insert(path.to_path_buf(), disable_directives);
+            }
+
+            if self.linter.options().fix.is_some() {
+                let fix_result = Fixer::new(source_text, messages, None).fix();
+                if fix_result.fixed
+                    && let Err(error) = file_system.write_file(path, &fix_result.fixed_code)
+                {
+                    tx_error
+                        .send(vec![Error::new(OxcDiagnostic::error(format!(
+                            "Failed to write file {} with error \"{error}\"",
+                            path.display()
+                        )))])
+                        .unwrap();
+                }
+                messages = fix_result.messages;
+            }
+
+            if !diff_manager.skip() {
+                messages = diff_manager.collect_file(path, &self.cwd, messages);
+            }
+
+            if !messages.is_empty() {
+                let errors = messages.into_iter().map(Into::into).collect();
+                let diagnostics =
+                    DiagnosticService::wrap_diagnostics(&self.cwd, path, source_text, errors);
+                tx_error.send(diagnostics).unwrap();
+            }
+        });
+    }
+
+    /// Run native rules on the shadow source of a file parsed by an external (JS) parser.
+    ///
+    /// The shadow source (see the `shadow_source` module docs) has the same byte length as
+    /// the original source, with custom syntax replaced in-place by valid JS placeholders,
+    /// so spans of native diagnostics map back to the original file unchanged.
+    ///
+    /// Any diagnostic whose span intersects a masked region is discarded. Such a diagnostic
+    /// may be about the placeholder itself (which is not real source), so dropping it is a
+    /// deliberate tradeoff: it also drops the occasional diagnostic on an enclosing real
+    /// construct (e.g. `max-lines-per-function` on a function that contains a template), but
+    /// keeping intersecting diagnostics would surface placeholder-induced false positives
+    /// (e.g. `no-unused-expressions` on the template literal placeholder). Fixes touching a
+    /// mask are stripped for the same reason (see below). "Used" markers from the shadow run's
+    /// disable directives are merged into `js_directives` (the directives built from the
+    /// parser's comments), so `--report-unused-disable-directives` sees a directive as used
+    /// when only a native rule used it.
+    ///
+    /// If the shadow source fails to parse (e.g. a custom node in a position where the
+    /// placeholder isn't valid JS), native linting is skipped silently: the custom parser
+    /// already accepted the file's syntax, so reporting shadow parse errors would be
+    /// confusing false positives. The file is then linted by JS plugin rules only,
+    /// the same as before shadow linting existed.
+    ///
+    /// Note: files linted through this path don't take part in the module graph,
+    /// so native rules requiring cross-file module info see no loaded modules.
+    fn lint_shadow_source<'a>(
+        &self,
+        path: &Path,
+        // Original (pre-shadow) source text. Same byte length as the shadow, identical outside
+        // masked regions. Used to tell whether a fix's content leaked placeholder bytes.
+        original_source_text: &str,
+        shadow: &'a ShadowLintInput,
+        js_directives: Option<&DisableDirectives>,
+        // The caller's allocator (which holds the original source text). Reused rather
+        // than taking a second allocator from the pool - the pool can be a fixed-size
+        // pool with one allocator per thread, so a nested `get()` would exhaust it.
+        allocator: &'a Allocator,
+    ) -> Vec<Message> {
+        // `SourceType::from_path` fails for custom extensions (e.g. `.gts`). Default to
+        // TypeScript - a superset of JavaScript for parsing purposes. If the shadow source
+        // doesn't parse with this source type, native linting is skipped below.
+        let source_type = SourceType::from_path(path).map_or_else(
+            |_| SourceType::ts(),
+            |st| if st.is_javascript() { st.with_jsx(true) } else { st },
+        );
+
+        let Ok((record, semantic, parser_tokens)) =
+            self.process_source_section(path, allocator, &shadow.source_text, source_type, false)
+        else {
+            return vec![];
+        };
+
+        let context_sub_host = ContextSubHost::new(
+            semantic,
+            record.module_record,
+            0,
+            ContextSubHostOptions {
+                parser_tokens,
+                respect_eslint_disable_directives: self.linter.respect_eslint_disable_directives(),
+                ..Default::default()
+            },
+        );
+
+        let (mut messages, shadow_directives) =
+            self.linter.run_native_rules_with_disable_directives::<false>(
+                path,
+                vec![context_sub_host],
+                allocator,
+                None,
+            );
+
+        if let (Some(js_directives), Some(shadow_directives)) = (js_directives, &shadow_directives)
+        {
+            js_directives.merge_used_from(shadow_directives);
+        }
+
+        // Discard diagnostics inside masked regions, and strip fixes which touch one
+        let masked_spans = &shadow.masked_spans;
+        let intersects_mask = |span: Span| {
+            masked_spans.iter().any(|mask| span.start < mask.end && span.end > mask.start)
+        };
+        // A fix whose span is clear of every mask can still leak placeholder bytes if its
+        // *content* was copied from a masked region of the shadow (e.g. a rule that moves
+        // code). Applying it under `--fix` would then write placeholder bytes into the real
+        // file, and the span check cannot catch it. A masked region's placeholder differs from
+        // the real source it replaced, so if the placeholder text appears verbatim in the fix
+        // content but nowhere in the original source, the content must have come from the
+        // shadow - drop the fix. A placeholder that also occurs naturally in the source is
+        // indistinguishable from legitimate content and is left alone (writing those bytes back
+        // is harmless - they already exist in the original). No shipped rule is known to leak
+        // this way; this is defense-in-depth.
+        let fix_leaks_placeholder = |fix: &Fix| {
+            !fix.content.is_empty()
+                && masked_spans.iter().any(|mask| {
+                    let placeholder = &shadow.source_text[mask.start as usize..mask.end as usize];
+                    fix.content.contains(placeholder) && !original_source_text.contains(placeholder)
+                })
+        };
+        let fix_survives = |fix: &Fix| !intersects_mask(fix.span) && !fix_leaks_placeholder(fix);
+        messages.retain_mut(|message| {
+            if intersects_mask(message.span) {
+                return false;
+            }
+            // Strip fixes whose span touches a masked region, or whose content leaked
+            // placeholder bytes. `Multiple` fixes are mutually-exclusive alternatives (a fix
+            // plus suggestions), so drop only the offending alternatives and keep any that
+            // survive, rather than discarding the whole set.
+            message.fixes = match std::mem::replace(&mut message.fixes, PossibleFixes::None) {
+                PossibleFixes::None => PossibleFixes::None,
+                PossibleFixes::Single(fix) => {
+                    if fix_survives(&fix) {
+                        PossibleFixes::Single(fix)
+                    } else {
+                        PossibleFixes::None
+                    }
+                }
+                PossibleFixes::Multiple(mut fixes) => {
+                    fixes.retain(&fix_survives);
+                    match fixes.len() {
+                        0 => PossibleFixes::None,
+                        1 => PossibleFixes::Single(fixes.pop().unwrap()),
+                        _ => PossibleFixes::Multiple(fixes),
+                    }
+                }
+            };
+            true
+        });
+
+        messages
+    }
+
     // language_server: the language server needs line and character position
     // the struct not using `oxc_diagnostic::Error, because we are just collecting information
     // and returning it to the client to let him display it.
+    /// Returns `true` if an external (JS) parser is configured for the file at `path`.
+    pub(super) fn has_external_parser(&self, path: &Path) -> bool {
+        self.linter.has_external_parser(path)
+    }
+
     pub(super) fn run_source(
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
@@ -751,10 +987,59 @@ impl Runtime {
     ) -> Vec<Message> {
         use std::sync::Mutex;
 
+        // Files with an external (JS) parser are parsed and linted entirely on JS side,
+        // same as in `run_impl`. Only walk overrides per-file when some override actually
+        // configures a parser; otherwise every path is a native-parser path.
+        let (js_parser_paths, paths): (Vec<_>, Vec<_>) =
+            if self.linter.has_external_parser_overrides() {
+                paths.into_iter().partition(|path| self.linter.has_external_parser(Path::new(path)))
+            } else {
+                (Vec::new(), paths)
+            };
+
+        let mut js_parser_messages = Vec::<Message>::new();
+        for path in &js_parser_paths {
+            let path = Path::new(path);
+            let allocator_guard = self.allocator_pool.get();
+            match file_system.read_to_arena_str(path, &allocator_guard) {
+                Ok(source_text) => {
+                    let (messages, disable_directives, shadow_lint_input) =
+                        self.linter.run_with_js_parser(path, source_text);
+                    js_parser_messages.extend(messages);
+                    // Run native rules on the shadow source (before the directives are
+                    // moved into the map, so "used" markers from the native run are merged in).
+                    if let Some(shadow_lint_input) = &shadow_lint_input {
+                        js_parser_messages.extend(self.lint_shadow_source(
+                            path,
+                            source_text,
+                            shadow_lint_input,
+                            disable_directives.as_ref(),
+                            &allocator_guard,
+                        ));
+                    }
+                    if let Some(disable_directives) = disable_directives {
+                        self.disable_directives_map
+                            .lock()
+                            .expect("disable_directives_map mutex poisoned")
+                            .insert(path.to_path_buf(), disable_directives);
+                    }
+                }
+                Err(err) => {
+                    js_parser_messages.push(Message::new(
+                        OxcDiagnostic::error(format!(
+                            "Failed to open file {} with error \"{err}\"",
+                            path.display()
+                        )),
+                        PossibleFixes::None,
+                    ));
+                }
+            }
+        }
+
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
-        let messages = Mutex::new(Vec::<Message>::new());
+        let messages = Mutex::new(js_parser_messages);
         rayon::scope(|scope| {
             self.resolve_modules(
                 file_system,

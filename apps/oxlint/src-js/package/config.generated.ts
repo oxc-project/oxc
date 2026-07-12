@@ -41,6 +41,10 @@ export type ExternalPluginEntry =
  * Patterns are matched against paths relative to the configuration file's directory.
  */
 export type GlobSet = string[];
+/**
+ * Path or package name of an ESLint-compatible parser module
+ */
+export type ExternalParserEntry = string;
 export type LintPluginOptionsSchema =
   | "eslint"
   | "react"
@@ -855,11 +859,61 @@ export interface OxlintOverride {
    */
   jsPlugins?: null | ExternalPluginEntry[];
   /**
+   * Language options for files matched by this override, mirroring ESLint's
+   * `languageOptions`.
+   *
+   * Allows routing matched files to an external (JS) parser, for file types which
+   * oxlint's native parser cannot parse (e.g. Ember's `.gjs`/`.gts` files).
+   */
+  languageOptions?: OxlintLanguageOptions;
+  /**
    * Optionally change what plugins are enabled for this override. When
    * omitted, the base config's plugins are used.
    */
   plugins?: LintPlugins;
   rules?: DummyRuleMap;
+}
+/**
+ * Language options for files matched by an override.
+ *
+ * This is a deliberately small subset of ESLint's `languageOptions`: only `parser` and
+ * `parserOptions` are recognized. It exists to route files that oxlint's native parser
+ * cannot parse (e.g. Ember's `.gjs`/`.gts` files) to an external (JS) parser.
+ *
+ * Other ESLint `languageOptions` keys (`globals`, `env`, `ecmaVersion`, `sourceType`) are
+ * rejected with an actionable config error rather than silently ignored; oxlint's top-level
+ * `globals`/`env` settings are the equivalents.
+ *
+ * Note: External parsers are only supported when running oxlint via the CLI (Node.js),
+ * same as `jsPlugins`.
+ */
+export interface OxlintLanguageOptions {
+  /**
+   * External parser for files matched by this override.
+   *
+   * A module specifier (path, package name, or URL), resolved the same way as `jsPlugins`
+   * entries. The module must export an ESLint-compatible parser
+   * (an object with a `parseForESLint` or `parse` method).
+   *
+   * The bare string form is intentional and forward-compatible: a future object form or a
+   * separate `languagePlugins` key (per RFC #21936) can be added alongside it without a
+   * breaking change, mirroring ESLint's own `languageOptions.parser` / `language` split.
+   *
+   * Files matched by an override with a `parser` are parsed by that parser instead of
+   * oxlint's native parser. Only JS plugin rules run on such files.
+   */
+  parser?: ExternalParserEntry;
+  /**
+   * Options passed verbatim to the external `parser`.
+   *
+   * Only takes effect when `parser` is also set. Unlike ESLint (which applies
+   * `parserOptions` to its built-in parser too), oxlint's native parser does not read them,
+   * so `parserOptions` without `parser` is rejected as a config error rather than silently
+   * having no effect.
+   */
+  parserOptions?: {
+    [k: string]: unknown | undefined;
+  };
 }
 /**
  * See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)

@@ -1,0 +1,14 @@
+{
+  "overrides": [
+    {
+      "files": ["**/*.custom"],
+      "jsPlugins": ["./plugin.ts"],
+      "languageOptions": {
+        "parser": "./parser.mjs"
+      },
+      "rules": {
+        "fix-plugin/no-var": "error"
+      }
+    }
+  ]
+}

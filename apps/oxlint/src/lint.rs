@@ -184,6 +184,11 @@ impl CliRunner {
             paths.push(self.cwd.clone());
         }
 
+        // Keep walk inputs, to walk again for files matched by config overrides with
+        // `languageOptions.parser` (which requires configs to be loaded first).
+        let walk_input_paths = paths.clone();
+        let walk_override_builder = override_builder.clone();
+
         let walker = Walk::new(&paths, &self.cwd, &ignore_options, override_builder);
         let mut paths = walker.paths();
 
@@ -340,18 +345,10 @@ impl CliRunner {
             nested_ignore_patterns,
         );
 
-        let files_to_lint = paths
+        let mut files_to_lint = paths
             .into_iter()
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
-
-        if debug_files {
-            return crate::mode::run_debug_files(
-                files_to_lint.iter().map(|path| Path::new(path.as_ref())),
-                &self.cwd,
-                stdout,
-            );
-        }
 
         // If no external rules, discard `ExternalLinter`
         let mut external_linter = self.external_linter;
@@ -374,6 +371,45 @@ impl CliRunner {
         );
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+
+        // Files matched by an override with `languageOptions.parser` (e.g. Ember's
+        // `.gjs`/`.gts` files) have extensions which are not natively lintable, so are not
+        // found by the default extension-based walk. Walk again for those files.
+        if config_store.has_external_parser_overrides() {
+            let matcher_config_store = config_store.clone();
+            let mut extra_paths =
+                Walk::new(&walk_input_paths, &self.cwd, &ignore_options, walk_override_builder)
+                    .with_path_matcher(std::sync::Arc::new(move |path| {
+                        matcher_config_store.has_external_parser(path)
+                    }))
+                    .paths();
+
+            // Sort for deterministic linting order in NAPI tests (see comment above)
+            if cfg!(feature = "testing") && misc_options.threads == Some(1) {
+                extra_paths.sort_unstable();
+            }
+
+            // Skip ignored files, and files already seen - either found by the
+            // extension-based walk (possible if an override with a parser matches
+            // e.g. `.js` files), or yielded twice by this walk (overlapping input paths)
+            let mut seen_paths =
+                files_to_lint.iter().cloned().collect::<rustc_hash::FxHashSet<_>>();
+            files_to_lint.extend(extra_paths.into_iter().filter(|path| {
+                !ignore_matcher.should_ignore(Path::new(path))
+                    && seen_paths.insert(Arc::clone(path))
+            }));
+        }
+
+        // Note: This must come after the second walk above, so that files matched by
+        // an override with `languageOptions.parser` are included in the debug listing
+        if debug_files {
+            return crate::mode::run_debug_files(
+                files_to_lint.iter().map(|path| Path::new(path.as_ref())),
+                &self.cwd,
+                stdout,
+            );
+        }
+
         let type_check_only = self.options.type_check_only;
         let type_aware =
             type_check_only || self.options.type_aware || config_store.type_aware_enabled();

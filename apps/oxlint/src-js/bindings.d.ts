@@ -63,9 +63,17 @@ export type JsDestroyWorkspaceCb =
 export type JsLintFileCb =
   ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string, arg7?: string | undefined | null) => string | null)
 
+/** JS callback to lint a file which is parsed by a custom (JS) parser. */
+export type JsLintFileWithJsParserCb =
+  ((arg0: string, arg1: string, arg2: boolean, arg3: number, arg4: string | undefined | null, arg5: Array<number>, arg6: Array<number>, arg7: string, arg8: string, arg9?: string | undefined | null) => string)
+
 /** JS callback to load JavaScript config files. */
 export type JsLoadJsConfigsCb =
   ((arg: Array<string>) => Promise<string>)
+
+/** JS callback to load a custom parser. */
+export type JsLoadParserCb =
+  ((arg: string) => Promise<string>)
 
 /** JS callback to load a JS plugin. */
 export type JsLoadPluginCb =
@@ -81,15 +89,17 @@ export type JsSetupRuleConfigsCb =
  * JS side passes in:
  * 1. `args`: Command line arguments (process.argv.slice(2))
  * 2. `load_plugin`: Load a JS plugin from a file path.
- * 3. `setup_rule_configs`: Setup configuration options.
- * 4. `lint_file`: Lint a file.
- * 5. `create_workspace`: Create a workspace.
- * 6. `destroy_workspace`: Destroy a workspace.
- * 7. `load_js_configs`: Load JavaScript config files.
+ * 3. `load_parser`: Load a custom parser from a file path.
+ * 4. `setup_rule_configs`: Setup configuration options.
+ * 5. `lint_file`: Lint a file.
+ * 6. `lint_file_with_js_parser`: Lint a file which is parsed by a custom (JS) parser.
+ * 7. `create_workspace`: Create a workspace.
+ * 8. `destroy_workspace`: Destroy a workspace.
+ * 9. `load_js_configs`: Load JavaScript config files.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb, loadJsConfigs: JsLoadJsConfigsCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, loadParser: JsLoadParserCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, lintFileWithJsParser: JsLintFileWithJsParserCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb, loadJsConfigs: JsLoadJsConfigsCb): Promise<boolean>
 
 /**
  * Parse AST into provided `Uint8Array` buffer, synchronously.

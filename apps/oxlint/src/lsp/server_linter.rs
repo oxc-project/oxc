@@ -733,7 +733,9 @@ impl ServerLinter {
     }
 
     fn is_ignored(&self, uri_path: &Path) -> bool {
-        if !Self::is_lintable_extension(uri_path) {
+        // Files with an extension which is not natively lintable can still be lintable
+        // if a config override routes them to an external (JS) parser (e.g. `.gjs` files).
+        if !Self::is_lintable_extension(uri_path) && !self.runner.has_external_parser(uri_path) {
             debug!("ignored (unsupported extension): {uri_path:?}");
             return true;
         }

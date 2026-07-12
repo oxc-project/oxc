@@ -10788,6 +10788,11 @@
       ],
       "markdownDescription": "Extension rule configuration; Copy to avoid extra indirection."
     },
+    "ExternalParserEntry": {
+      "description": "Path or package name of an ESLint-compatible parser module",
+      "type": "string",
+      "markdownDescription": "Path or package name of an ESLint-compatible parser module"
+    },
     "ExternalPluginEntry": {
       "anyOf": [
         {
@@ -16342,6 +16347,27 @@
       },
       "markdownDescription": "Add or remove global variables.\n\nFor each global variable, set the corresponding value equal to `\"writable\"`\nto allow the variable to be overwritten or `\"readonly\"` to disallow overwriting.\n\nGlobals can be disabled by setting their value to `\"off\"`. For example, in\nan environment where most Es2015 globals are available but `Promise` is unavailable,\nyou might use this config:\n\n```json\n\n{\n\"$schema\": \"./node_modules/oxlint/configuration_schema.json\",\n\"env\": {\n\"es6\": true\n},\n\"globals\": {\n\"Promise\": \"off\"\n}\n}\n\n```\n\nYou may also use `\"readable\"` or `false` to represent `\"readonly\"`, and\n`\"writeable\"` or `true` to represent `\"writable\"`."
     },
+    "OxlintLanguageOptions": {
+      "description": "Language options for files matched by an override.\n\nThis is a deliberately small subset of ESLint's `languageOptions`: only `parser` and\n`parserOptions` are recognized. It exists to route files that oxlint's native parser\ncannot parse (e.g. Ember's `.gjs`/`.gts` files) to an external (JS) parser.\n\nOther ESLint `languageOptions` keys (`globals`, `env`, `ecmaVersion`, `sourceType`) are\nrejected with an actionable config error rather than silently ignored; oxlint's top-level\n`globals`/`env` settings are the equivalents.\n\nNote: External parsers are only supported when running oxlint via the CLI (Node.js),\nsame as `jsPlugins`.",
+      "type": "object",
+      "properties": {
+        "parser": {
+          "description": "External parser for files matched by this override.\n\nA module specifier (path, package name, or URL), resolved the same way as `jsPlugins`\nentries. The module must export an ESLint-compatible parser\n(an object with a `parseForESLint` or `parse` method).\n\nThe bare string form is intentional and forward-compatible: a future object form or a\nseparate `languagePlugins` key (per RFC #21936) can be added alongside it without a\nbreaking change, mirroring ESLint's own `languageOptions.parser` / `language` split.\n\nFiles matched by an override with a `parser` are parsed by that parser instead of\noxlint's native parser. Only JS plugin rules run on such files.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ExternalParserEntry"
+            }
+          ],
+          "markdownDescription": "External parser for files matched by this override.\n\nA module specifier (path, package name, or URL), resolved the same way as `jsPlugins`\nentries. The module must export an ESLint-compatible parser\n(an object with a `parseForESLint` or `parse` method).\n\nThe bare string form is intentional and forward-compatible: a future object form or a\nseparate `languagePlugins` key (per RFC #21936) can be added alongside it without a\nbreaking change, mirroring ESLint's own `languageOptions.parser` / `language` split.\n\nFiles matched by an override with a `parser` are parsed by that parser instead of\noxlint's native parser. Only JS plugin rules run on such files."
+        },
+        "parserOptions": {
+          "description": "Options passed verbatim to the external `parser`.\n\nOnly takes effect when `parser` is also set. Unlike ESLint (which applies\n`parserOptions` to its built-in parser too), oxlint's native parser does not read them,\nso `parserOptions` without `parser` is rejected as a config error rather than silently\nhaving no effect.",
+          "markdownDescription": "Options passed verbatim to the external `parser`.\n\nOnly takes effect when `parser` is also set. Unlike ESLint (which applies\n`parserOptions` to its built-in parser too), oxlint's native parser does not read them,\nso `parserOptions` without `parser` is rejected as a config error rather than silently\nhaving no effect."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "Language options for files matched by an override.\n\nThis is a deliberately small subset of ESLint's `languageOptions`: only `parser` and\n`parserOptions` are recognized. It exists to route files that oxlint's native parser\ncannot parse (e.g. Ember's `.gjs`/`.gts` files) to an external (JS) parser.\n\nOther ESLint `languageOptions` keys (`globals`, `env`, `ecmaVersion`, `sourceType`) are\nrejected with an actionable config error rather than silently ignored; oxlint's top-level\n`globals`/`env` settings are the equivalents.\n\nNote: External parsers are only supported when running oxlint via the CLI (Node.js),\nsame as `jsPlugins`."
+    },
     "OxlintOptions": {
       "description": "Options for the linter.",
       "type": "object",
@@ -16443,6 +16469,15 @@
             }
           ],
           "markdownDescription": "JS plugins for this override, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver."
+        },
+        "languageOptions": {
+          "description": "Language options for files matched by this override, mirroring ESLint's\n`languageOptions`.\n\nAllows routing matched files to an external (JS) parser, for file types which\noxlint's native parser cannot parse (e.g. Ember's `.gjs`/`.gts` files).",
+          "allOf": [
+            {
+              "$ref": "#/definitions/OxlintLanguageOptions"
+            }
+          ],
+          "markdownDescription": "Language options for files matched by this override, mirroring ESLint's\n`languageOptions`.\n\nAllows routing matched files to an external (JS) parser, for file types which\noxlint's native parser cannot parse (e.g. Ember's `.gjs`/`.gts` files)."
         },
         "plugins": {
           "description": "Optionally change what plugins are enabled for this override. When\nomitted, the base config's plugins are used.",

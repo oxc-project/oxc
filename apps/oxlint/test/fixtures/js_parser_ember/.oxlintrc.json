@@ -1,0 +1,25 @@
+{
+  "rules": {
+    "no-debugger": "error",
+    "eqeqeq": "error",
+    "no-unused-vars": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.{gjs,gts}"],
+      "jsPlugins": ["eslint-plugin-ember"],
+      "languageOptions": {
+        "parser": "ember-eslint-parser"
+      },
+      "rules": {
+        "ember/template-no-let-reference": "error"
+      }
+    },
+    {
+      "files": ["**/this-in-template.gjs"],
+      "rules": {
+        "class-methods-use-this": "error"
+      }
+    }
+  ]
+}

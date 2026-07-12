@@ -43,6 +43,7 @@ mod module_record;
 mod options;
 mod rule;
 mod service;
+mod shadow_source;
 mod suppression;
 pub(crate) mod timing;
 mod tsgolint;
@@ -71,16 +72,21 @@ pub use crate::disable_directives::{
 };
 pub use crate::{
     config::{
-        Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
-        LintPlugins, Oxlintrc, ResolvedLinterState,
+        Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule,
+        ExternalParserEntry, LintIgnoreMatcher, LintPlugins, OxlintLanguageOptions, Oxlintrc,
+        ResolvedExternalParser, ResolvedLinterState,
     },
     context::{ContextSubHost, ContextSubHostOptions, LintContext},
     external_linter::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
-        ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-        JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
+        ExternalLinterLintFileCb, ExternalLinterLintFileWithJsParserCb, ExternalLinterLoadParserCb,
+        ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb, JsComment, JsFix,
+        JsMaskedRegion, JsParserLintFileResult, LintFileResult, LoadParserResult, LoadPluginResult,
+        convert_and_merge_js_fixes,
     },
-    external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
+    external_plugin_store::{
+        ExternalOptionsId, ExternalParserId, ExternalPluginStore, ExternalRuleId,
+    },
     fixer::{Fix, FixKind, Fixer, Message, MessageRule, PossibleFixes},
     frameworks::FrameworkFlags,
     lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
@@ -90,6 +96,7 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
+    shadow_source::ShadowLintInput,
     suppression::{OxlintSuppressionFileAction, SuppressionManager},
     timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
     tsgolint::TsGoLintState,
@@ -98,10 +105,12 @@ pub use crate::{
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
+    disable_directives::DisableDirectivesBuilder,
     external_linter::GlobalsAndEnvs,
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
+    shadow_source::{MaskedRegion, build_shadow_source},
     timing::{RuleTimingRecorder, RuleTimingStat},
     utils::iter_possible_jest_call_node,
 };
@@ -364,7 +373,52 @@ impl Linter {
         js_allocator_pool: Option<&AllocatorPool>,
         rule_timing_store: Option<&RuleTimingStore>,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
-        let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
+        self.run_rules::<TIMINGS>(
+            path,
+            context_sub_hosts,
+            allocator,
+            js_allocator_pool,
+            rule_timing_store,
+            true,
+        )
+    }
+
+    /// Same as [`Linter::run_with_disable_directives`], but only runs native rules,
+    /// skipping external (JS plugin) rules.
+    ///
+    /// Used for the shadow source of a file parsed by an external (JS) parser:
+    /// external rules already ran against the parser's own AST
+    /// (see [`Linter::run_with_js_parser`]), so must not run a second time.
+    pub fn run_native_rules_with_disable_directives<'a, const TIMINGS: bool>(
+        &self,
+        path: &Path,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        allocator: &'a Allocator,
+        rule_timing_store: Option<&RuleTimingStore>,
+    ) -> (Vec<Message>, Option<DisableDirectives>) {
+        self.run_rules::<TIMINGS>(
+            path,
+            context_sub_hosts,
+            allocator,
+            None,
+            rule_timing_store,
+            false,
+        )
+    }
+
+    fn run_rules<'a, const TIMINGS: bool>(
+        &self,
+        path: &Path,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        allocator: &'a Allocator,
+        js_allocator_pool: Option<&AllocatorPool>,
+        rule_timing_store: Option<&RuleTimingStore>,
+        run_external_rules: bool,
+    ) -> (Vec<Message>, Option<DisableDirectives>) {
+        // Files with an external parser are parsed and linted on JS side, and do not go
+        // through this path (see `run_external_rules_with_js_parser`).
+        let ResolvedLinterState { rules, config, external_rules, external_parser: _ } =
+            self.config.resolve(path);
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
         let mut ctx_host =
@@ -459,13 +513,15 @@ impl Linter {
             // can mutably access `ctx_host` via `Rc::get_mut` without panicking due to multiple references.
             drop(rules);
 
-            self.run_external_rules(
-                &external_rules,
-                path,
-                &mut ctx_host,
-                allocator,
-                js_allocator_pool,
-            );
+            if run_external_rules {
+                self.run_external_rules(
+                    &external_rules,
+                    path,
+                    &mut ctx_host,
+                    allocator,
+                    js_allocator_pool,
+                );
+            }
 
             // Report unused directives is now handled differently with type-aware linting
 
@@ -508,6 +564,215 @@ impl Linter {
             );
         }
         result
+    }
+
+    /// Returns `true` if an external (JS) parser is configured for the file at `path`.
+    ///
+    /// Such files are parsed and linted entirely on JS side via [`Linter::run_with_js_parser`],
+    /// instead of the native path.
+    pub fn has_external_parser(&self, path: &Path) -> bool {
+        // Use the cheap glob-only check rather than `resolve()`, which rebuilds the full
+        // resolved rule set. This is called for every file in `Runtime::run`.
+        self.external_linter.is_some() && self.config.has_external_parser(path)
+    }
+
+    /// Returns `true` if any override configures an external (JS) parser via
+    /// `languageOptions.parser`.
+    ///
+    /// A cheap run-once precheck: when this is `false`, [`Linter::has_external_parser`] returns
+    /// `false` for every path, so callers can skip the per-file glob walk entirely.
+    pub fn has_external_parser_overrides(&self) -> bool {
+        self.external_linter.is_some() && self.config.has_external_parser_overrides()
+    }
+
+    /// Lint a file which is parsed by an external (JS) parser.
+    ///
+    /// The file is parsed on JS side by the parser configured in `languageOptions.parser`
+    /// of the override matching the file, and external (JS plugin) rules run on it there.
+    ///
+    /// Returns the messages, the file's [`DisableDirectives`] (`None` if the file
+    /// was not linted, or linting failed before directives could be built), and the
+    /// [`ShadowLintInput`] for running native rules on the file's shadow source
+    /// (`None` if the file has no native rules configured, or a shadow source could
+    /// not be built - native rules are then skipped for the file).
+    ///
+    /// # Panics
+    /// Panics if no external parser is configured for the file (check with
+    /// [`Linter::has_external_parser`] first), or no external linter is configured.
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    pub fn run_with_js_parser(
+        &self,
+        path: &Path,
+        source_text: &str,
+    ) -> (Vec<Message>, Option<DisableDirectives>, Option<ShadowLintInput>) {
+        const BOM: &str = "\u{feff}";
+        const BOM_LEN: usize = BOM.len();
+
+        let resolved = self.config.resolve(path);
+        let external_parser =
+            resolved.external_parser.as_ref().expect("file should have an external parser");
+        let external_linter =
+            self.external_linter.as_ref().expect("external linter should be configured");
+
+        let external_rules = &resolved.external_rules;
+        // Native rules run on the file's shadow source (see `shadow_source` module docs).
+        // Even if no external rules are configured, the file must still be sent to JS
+        // to be parsed, as the masked regions the shadow source is built from can only
+        // be determined from the parser's AST.
+        let has_native_rules = !resolved.rules.is_empty();
+        if external_rules.is_empty() && !has_native_rules {
+            return (vec![], None, None);
+        }
+
+        let mut messages = vec![];
+
+        let path_string = path.to_string_lossy();
+        let path_string = path_string.as_ref();
+
+        // If has BOM, remove it. The parser receives source text without the BOM,
+        // same as the raw transfer path.
+        // Spans converted back from UTF-16 are relative to the original text *including*
+        // the BOM (the span converter is created with an offset below), so all span-based
+        // slicing must use `original_source_text`, same as the buffer-based path.
+        let original_source_text = source_text;
+        let has_bom = source_text.starts_with(BOM);
+        let source_text = if has_bom { &source_text[BOM_LEN..] } else { source_text };
+
+        // Create span converter, to convert UTF-16 spans sent from JS back to UTF-8.
+        // If source starts with BOM, create converter which ignores the BOM.
+        let span_converter = if has_bom {
+            #[expect(clippy::cast_possible_truncation)]
+            Utf8ToUtf16::new_with_offset(source_text, BOM_LEN as u32)
+        } else {
+            Utf8ToUtf16::new(source_text)
+        };
+
+        let settings_json = match &resolved.config.settings.json {
+            Some(json) => serde_json::to_string(&json).unwrap_or_else(|e| {
+                let message = format!("Error serializing settings.\nFile path: {path_string}\n{e}");
+                messages.push(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
+                "{}".to_string()
+            }),
+            None => "{}".to_string(),
+        };
+
+        let globals_and_envs = GlobalsAndEnvs::new(&resolved.config.globals, &resolved.config.env);
+        let globals_json = serde_json::to_string(&globals_and_envs).unwrap_or_else(|e| {
+            let message = format!("Error serializing globals.\nFile path: {path_string}\n{e}");
+            messages.push(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
+            "{}".to_string()
+        });
+
+        let result = (external_linter.lint_file_with_js_parser)(
+            path_string.to_owned(),
+            source_text.to_string(),
+            has_bom,
+            external_parser.parser_id.raw(),
+            external_parser.parser_options_json.as_ref().map(ToString::to_string),
+            external_rules.iter().map(|(rule_id, _, _)| rule_id.raw()).collect(),
+            external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
+            settings_json,
+            globals_json,
+            self.workspace_uri.as_ref().map(ToString::to_string),
+        );
+
+        let result = match result {
+            Ok(result) => result,
+            Err(err) => {
+                let message = format!("Error running JS plugin.\nFile path: {path_string}\n{err}");
+                messages.push(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
+                return (messages, None, None);
+            }
+        };
+
+        // Build the shadow source for native rules, from the masked regions reported by JS side.
+        // `masked_regions` is `None` if JS side could not determine them - native rules are
+        // then skipped for this file (only JS plugin rules run, the previous behavior).
+        let shadow_lint_input = if has_native_rules {
+            result.masked_regions.as_ref().and_then(|regions| {
+                let regions = regions
+                    .iter()
+                    .map(|region| {
+                        // Convert UTF-16 offsets back to UTF-8, same as diagnostic spans
+                        let mut span = Span::new(region.start, region.end);
+                        span_converter.convert_span_back(&mut span);
+                        MaskedRegion {
+                            span,
+                            class_member: region.class_member,
+                            refs: region.refs.clone(),
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                build_shadow_source(original_source_text, &regions).map(|shadow_text| {
+                    ShadowLintInput {
+                        source_text: shadow_text,
+                        masked_spans: regions.iter().map(|region| region.span).collect(),
+                    }
+                })
+            })
+        } else {
+            None
+        };
+
+        // Build disable directives from comments reported by the parser,
+        // so `eslint-disable` comments work in files parsed by external parsers.
+        // Note: Converted-back spans are relative to `original_source_text` (including BOM).
+        let comments = result
+            .comments
+            .iter()
+            .filter_map(|comment| {
+                let mut span = Span::new(comment.start, comment.end);
+                span_converter.convert_span_back(&mut span);
+                // Skip comments with invalid spans (only possible if the parser misbehaves)
+                let text = original_source_text.get(span.start as usize..span.end as usize)?;
+                // Belt and braces: `DisableDirectivesBuilder` calls `content_span()` on every
+                // comment, which slices off the delimiters (`start + 2 .. end` for a line
+                // comment, `start + 2 .. end - 2` for a block). A span too short for its
+                // delimiters would invert and panic on slicing, so drop it. JS side filters
+                // these too, but a UTF-16 -> UTF-8 conversion also sits between there and here.
+                if span.end - span.start < if comment.is_block { 4 } else { 2 } {
+                    return None;
+                }
+                let kind = if !comment.is_block {
+                    CommentKind::Line
+                } else if text.contains('\n') {
+                    CommentKind::MultiLineBlock
+                } else {
+                    CommentKind::SingleLineBlock
+                };
+                Some(Comment::new(span.start, span.end, kind))
+            })
+            .collect::<Vec<_>>();
+        let disable_directives = DisableDirectivesBuilder::new()
+            .with_respect_eslint_disable_directives(self.respect_eslint_disable_directives())
+            .build(original_source_text, &comments);
+
+        self.convert_external_diagnostics(
+            result.diagnostics,
+            external_rules,
+            &span_converter,
+            original_source_text,
+            has_bom,
+            path_string,
+            &disable_directives,
+            self.options.fix,
+            |message| messages.push(message),
+        );
+
+        (messages, Some(disable_directives), shadow_lint_input)
+    }
+
+    /// Lint a file which is parsed by an external (JS) parser.
+    ///
+    /// External parsers (JS plugins) are not supported on non-64-bit or big-endian platforms,
+    /// so this returns no messages.
+    #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+    pub fn run_with_js_parser(
+        &self,
+        _path: &Path,
+        _source_text: &str,
+    ) -> (Vec<Message>, Option<DisableDirectives>, Option<ShadowLintInput>) {
+        (vec![], None, None)
     }
 
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
@@ -799,7 +1064,7 @@ impl Linter {
             None => "{}".to_string(),
         };
 
-        let globals_and_envs = GlobalsAndEnvs::new(ctx_host);
+        let globals_and_envs = GlobalsAndEnvs::new(ctx_host.globals(), ctx_host.env());
         let globals_json = serde_json::to_string(&globals_and_envs).unwrap_or_else(|e| {
             let message = format!("Error serializing globals.\nFile path: {path_string}\n{e}");
             ctx_host
@@ -822,88 +1087,17 @@ impl Linter {
         );
         match result {
             Ok(diagnostics) => {
-                for diagnostic in diagnostics {
-                    // Convert UTF-16 offsets back to UTF-8.
-                    // TODO: Validate span offsets are within bounds and `start <= end`.
-                    // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
-                    // That's possible if UTF-16 offset points to middle of a surrogate pair.
-                    let mut span = Span::new(diagnostic.start, diagnostic.end);
-                    span_converter.convert_span_back(&mut span);
-
-                    let (external_rule_id, _options_id, severity) =
-                        external_rules[diagnostic.rule_index as usize];
-                    let (plugin_name, rule_name) =
-                        self.config.resolve_plugin_rule_names(external_rule_id);
-
-                    if ctx_host
-                        .disable_directives()
-                        .contains(&format!("{plugin_name}/{rule_name}"), span)
-                    {
-                        continue;
-                    }
-
-                    // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
-                    let create_fix = |fixes, fix_kind| match convert_and_merge_js_fixes(
-                        fixes,
-                        original_source_text,
-                        &span_converter,
-                        has_bom,
-                    ) {
-                        Ok(fix) => Some(fix.with_kind(fix_kind)),
-                        Err(err) => {
-                            let fixes_type = if fix_kind.contains(FixKind::Suggestion) {
-                                "suggestions"
-                            } else {
-                                "fixes"
-                            };
-                            let message = format!(
-                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path_string}\n{err}"
-                            );
-                            ctx_host.push_diagnostic(Message::new(
-                                OxcDiagnostic::error(message),
-                                PossibleFixes::None,
-                            ));
-                            None
-                        }
-                    };
-
-                    // Convert fix
-                    let fix = diagnostic.fixes.and_then(|fixes| create_fix(fixes, FixKind::Fix));
-
-                    // Convert suggestions (only if fix kind allows suggestions), and combine with fix
-                    let possible_fixes = if let Some(suggestions) = diagnostic.suggestions
-                        && ctx_host.fix.can_apply(FixKind::Suggestion)
-                    {
-                        debug_assert!(
-                            !suggestions.is_empty(),
-                            "`diagnostic.suggestions` should be `None` if there are no suggestions"
-                        );
-
-                        let suggestions = suggestions.into_iter().filter_map(|suggestion| {
-                            create_fix(suggestion.fixes, FixKind::Suggestion)
-                                .map(|fix| fix.with_message(suggestion.message))
-                        });
-
-                        #[expect(clippy::from_iter_instead_of_collect)]
-                        PossibleFixes::from_iter(iter::chain(fix, suggestions))
-                    } else {
-                        PossibleFixes::from(fix)
-                    };
-
-                    ctx_host.push_diagnostic(
-                        Message::new(
-                            OxcDiagnostic::error(diagnostic.message)
-                                .with_label(span)
-                                .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                                .with_severity(severity.into()),
-                            possible_fixes,
-                        )
-                        .with_rule(MessageRule {
-                            plugin_name: Cow::Owned(plugin_name.to_string()),
-                            rule_name: Cow::Owned(rule_name.to_string()),
-                        }),
-                    );
-                }
+                self.convert_external_diagnostics(
+                    diagnostics,
+                    external_rules,
+                    &span_converter,
+                    original_source_text,
+                    has_bom,
+                    path_string,
+                    ctx_host.disable_directives(),
+                    ctx_host.fix,
+                    |message| ctx_host.push_diagnostic(message),
+                );
             }
             Err(err) => {
                 let message = format!("Error running JS plugin.\nFile path: {path_string}\n{err}");
@@ -912,6 +1106,106 @@ impl Linter {
                     PossibleFixes::None,
                 ));
             }
+        }
+    }
+
+    /// Convert external (JS plugin) diagnostics into [`Message`]s and forward them to `push`.
+    ///
+    /// Shared by [`Self::run_with_js_parser`] (custom-parser files, whose AST lives on JS side)
+    /// and [`Self::convert_and_call_external_linter`] (natively-parsed files). Both receive the
+    /// same [`LintFileResult`] diagnostics with UTF-16 spans; this converts spans back to UTF-8,
+    /// resolves rule names, drops directive-disabled diagnostics, converts fixes and suggestions,
+    /// and hands each resulting [`Message`] (including any fix-conversion error messages) to
+    /// `push`. The two callers differ only in their message sink, disable directives, and fix
+    /// capability, which are passed in.
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    fn convert_external_diagnostics(
+        &self,
+        diagnostics: Vec<LintFileResult>,
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        span_converter: &Utf8ToUtf16,
+        original_source_text: &str,
+        has_bom: bool,
+        path_string: &str,
+        disable_directives: &DisableDirectives,
+        allowed_fixes: FixKind,
+        mut push: impl FnMut(Message),
+    ) {
+        for diagnostic in diagnostics {
+            // Convert UTF-16 offsets back to UTF-8.
+            // TODO: Validate span offsets are within bounds and `start <= end`.
+            // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
+            // That's possible if UTF-16 offset points to middle of a surrogate pair.
+            let mut span = Span::new(diagnostic.start, diagnostic.end);
+            span_converter.convert_span_back(&mut span);
+
+            let (external_rule_id, _options_id, severity) =
+                external_rules[diagnostic.rule_index as usize];
+            let (plugin_name, rule_name) = self.config.resolve_plugin_rule_names(external_rule_id);
+
+            if disable_directives.contains(&format!("{plugin_name}/{rule_name}"), span) {
+                continue;
+            }
+
+            // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
+            let mut create_fix = |fixes, fix_kind| match convert_and_merge_js_fixes(
+                fixes,
+                original_source_text,
+                span_converter,
+                has_bom,
+            ) {
+                Ok(fix) => Some(fix.with_kind(fix_kind)),
+                Err(err) => {
+                    let fixes_type = if fix_kind.contains(FixKind::Suggestion) {
+                        "suggestions"
+                    } else {
+                        "fixes"
+                    };
+                    let message = format!(
+                        "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path_string}\n{err}"
+                    );
+                    push(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
+                    None
+                }
+            };
+
+            // Convert fix
+            let fix = diagnostic.fixes.and_then(|fixes| create_fix(fixes, FixKind::Fix));
+
+            // Convert suggestions (only if fix kind allows suggestions), and combine with fix
+            let possible_fixes = if let Some(suggestions) = diagnostic.suggestions
+                && allowed_fixes.can_apply(FixKind::Suggestion)
+            {
+                debug_assert!(
+                    !suggestions.is_empty(),
+                    "`diagnostic.suggestions` should be `None` if there are no suggestions"
+                );
+
+                let suggestions = suggestions.into_iter().filter_map(|suggestion| {
+                    create_fix(suggestion.fixes, FixKind::Suggestion)
+                        .map(|fix| fix.with_message(suggestion.message))
+                });
+
+                #[expect(clippy::from_iter_instead_of_collect)]
+                PossibleFixes::from_iter(iter::chain(fix, suggestions))
+            } else {
+                PossibleFixes::from(fix)
+            };
+
+            // `create_fix` no longer borrows `push` past this point, so `push` can be called again
+            push(
+                Message::new(
+                    OxcDiagnostic::error(diagnostic.message)
+                        .with_label(span)
+                        .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                        .with_severity(severity.into()),
+                    possible_fixes,
+                )
+                .with_rule(MessageRule {
+                    plugin_name: Cow::Owned(plugin_name.to_string()),
+                    rule_name: Cow::Owned(rule_name.to_string()),
+                }),
+            );
         }
     }
 }

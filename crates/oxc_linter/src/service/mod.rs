@@ -97,6 +97,11 @@ impl LintService {
         self.runtime.run_source(file_system, paths)
     }
 
+    /// Returns `true` if an external (JS) parser is configured for the file at `path`.
+    pub fn has_external_parser(&self, path: &Path) -> bool {
+        self.runtime.has_external_parser(path)
+    }
+
     pub fn collect_parse_diagnostics(
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),

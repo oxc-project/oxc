@@ -23,7 +23,7 @@ import {
 import { walkProgram, ancestors } from "../generated/walk.js";
 
 import type { VisitFn, EnterExit } from "./visitor.ts";
-import type { AfterHook, BufferWithArrays } from "./types.ts";
+import type { AfterHook, BufferWithArrays, Visitor } from "./types.ts";
 
 // Buffers cache.
 //
@@ -33,7 +33,9 @@ import type { AfterHook, BufferWithArrays } from "./types.ts";
 export const buffers: (BufferWithArrays | null)[] = [];
 
 // Array of `after` hooks to run after traversal. This array reused for every file.
-const afterHooks: AfterHook[] = [];
+// Also used by the custom-parser path (`lint_js_parser.ts`); the two flows never interleave
+// (both synchronous on the main JS thread, one file at a time), so they share one array.
+export const afterHooks: AfterHook[] = [];
 
 // Reusable property descriptor for updating `options` value on rule context objects.
 // `value` is updated before each call. Other attributes are omitted to retain existing values.
@@ -154,23 +156,10 @@ export function lintFileImpl(
     "`ruleIds` and `optionsIds` should be same length",
   );
 
-  // The order rules run in is indeterminate.
-  // To make order predictable in tests, in debug builds, sort rules by ID in ascending order.
-  // i.e. rules run in same order as they're defined in plugin.
-  let ruleIndexes: number[] | undefined;
-  if (DEBUG) {
-    const rules = ruleIds.map((ruleId, index) => ({ ruleId, optionsId: optionsIds[index], index }));
-    rules.sort((rule1, rule2) => rule1.ruleId - rule2.ruleId);
-    ruleIds = rules.map((rule) => rule.ruleId);
-    optionsIds = rules.map((rule) => rule.optionsId);
-    ruleIndexes = rules.map((rule) => rule.index);
-  }
-
   // Switch to requested workspace.
   // In CLI, `workspaceUri` is `null`, and there's only 1 workspace, so no need to switch.
   // In LSP, there can be multiple workspaces, so we need to switch if we're not already in the right one.
   if (workspaceUri !== null) switchWorkspace(workspaceUri);
-  debugAssertIsNonNull(allOptions, "`allOptions` should be initialized");
 
   // Pass file path to context module, so `Context`s know what file is being linted
   setupFileContext(filePath);
@@ -190,7 +179,72 @@ export function lintFileImpl(
   setSettingsForFile(settingsJSON);
   setGlobalsForFile(globalsJSON);
 
-  // Get visitors for this file from all rules
+  // Get visitors for this file from all rules, compiling each into the visitor for the native walk
+  buildRuleVisitors(ruleIds, optionsIds, addVisitorToCompiled);
+
+  const visitorState = finalizeCompiledVisitor();
+
+  // Visit AST.
+  // Skip this if no visitors visit any nodes.
+  // Some rules seen in the wild return an empty visitor object from `create` if some initial check fails
+  // e.g. file extension is not one the rule acts on.
+  if (visitorState !== VISITOR_EMPTY) {
+    if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
+
+    debugAssert(ancestors.length === 0, "`ancestors` should be empty before walking AST");
+
+    if (visitorState === VISITOR_CFG) {
+      walkProgramWithCfg(ast, compiledVisitor);
+    } else {
+      walkProgram(ast, compiledVisitor as (VisitFn | EnterExit | null)[]);
+    }
+
+    debugAssert(ancestors.length === 0, "`ancestors` should be empty after walking AST");
+
+    // Reset compiled visitor, ready for next file
+    resetCompiledVisitor();
+  }
+
+  // Run any `after` hooks
+  runAfterHooks(true);
+}
+
+/**
+ * Build visitors for all rules configured for a file, passing each to `onVisitor`.
+ *
+ * Shared by the buffer-based path (`lintFileImpl`) and the custom-parser path
+ * (`lint_js_parser.ts`), which differ only in what they do with each visitor - compile it for
+ * the native walk, vs. collect it for the string-keyed walk.
+ *
+ * For each rule, sets its `ruleIndex` and `options`, then obtains its visitor from `create`,
+ * or (for `createOnce` rules) runs the `before` hook - skipping the rule if it returns `false` -
+ * and registers its `after` hook. In debug builds, rules are sorted by ascending ID first, so
+ * they run in a deterministic order (the order they're defined in the plugin).
+ *
+ * @param ruleIds - IDs of rules to run on this file
+ * @param optionsIds - IDs of options for each rule, in same order as `ruleIds`
+ * @param onVisitor - Called with each active rule's visitor, in run order
+ */
+export function buildRuleVisitors(
+  ruleIds: number[],
+  optionsIds: number[],
+  onVisitor: (visitor: Visitor) => void,
+): void {
+  debugAssertIsNonNull(allOptions, "`allOptions` should be initialized");
+
+  // The order rules run in is indeterminate.
+  // To make order predictable in tests, in debug builds, sort rules by ID in ascending order.
+  // i.e. rules run in same order as they're defined in plugin.
+  let ruleIndexes: number[] | undefined;
+  if (DEBUG) {
+    const rules = ruleIds.map((ruleId, index) => ({ ruleId, optionsId: optionsIds[index], index }));
+    rules.sort((rule1, rule2) => rule1.ruleId - rule2.ruleId);
+    ruleIds = rules.map((rule) => rule.ruleId);
+    optionsIds = rules.map((rule) => rule.optionsId);
+    ruleIndexes = rules.map((rule) => rule.index);
+  }
+
   for (let i = 0, len = ruleIds.length; i < len; i++) {
     const ruleId = ruleIds[i];
     debugAssert(ruleId < registeredRules.length, "Rule ID out of bounds");
@@ -228,35 +282,8 @@ export function lintFileImpl(
       if (afterHook !== null) afterHooks.push(afterHook);
     }
 
-    addVisitorToCompiled(visitor);
+    onVisitor(visitor);
   }
-
-  const visitorState = finalizeCompiledVisitor();
-
-  // Visit AST.
-  // Skip this if no visitors visit any nodes.
-  // Some rules seen in the wild return an empty visitor object from `create` if some initial check fails
-  // e.g. file extension is not one the rule acts on.
-  if (visitorState !== VISITOR_EMPTY) {
-    if (ast === null) initAst();
-    debugAssertIsNonNull(ast);
-
-    debugAssert(ancestors.length === 0, "`ancestors` should be empty before walking AST");
-
-    if (visitorState === VISITOR_CFG) {
-      walkProgramWithCfg(ast, compiledVisitor);
-    } else {
-      walkProgram(ast, compiledVisitor as (VisitFn | EnterExit | null)[]);
-    }
-
-    debugAssert(ancestors.length === 0, "`ancestors` should be empty after walking AST");
-
-    // Reset compiled visitor, ready for next file
-    resetCompiledVisitor();
-  }
-
-  // Run any `after` hooks
-  runAfterHooks(true);
 }
 
 /**
@@ -276,7 +303,7 @@ export function lintFileImpl(
  *
  * @param shouldThrowIfError - `true` if any errors thrown in after hooks should be re-thrown
  */
-function runAfterHooks(shouldThrowIfError: boolean) {
+export function runAfterHooks(shouldThrowIfError: boolean) {
   const afterHooksLen = afterHooks.length;
   if (afterHooksLen === 0) return;
 

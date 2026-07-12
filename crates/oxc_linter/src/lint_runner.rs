@@ -315,6 +315,11 @@ impl LintRunner {
         &self.directives_store
     }
 
+    /// Returns `true` if an external (JS) parser is configured for the file at `path`.
+    pub fn has_external_parser(&self, path: &Path) -> bool {
+        self.lint_service.has_external_parser(path)
+    }
+
     /// Check if type-aware linting is enabled
     pub fn has_type_aware(&self) -> bool {
         self.type_aware_linter.is_some()
