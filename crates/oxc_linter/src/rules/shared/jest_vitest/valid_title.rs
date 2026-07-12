@@ -168,31 +168,31 @@ pub struct ValidTitleConfig {
     must_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
 }
 
-impl From<ValidTitleOptions> for ValidTitleConfig {
-    fn from(options: ValidTitleOptions) -> Self {
+impl TryFrom<ValidTitleOptions> for ValidTitleConfig {
+    type Error = serde_json::error::Error;
+
+    fn try_from(options: ValidTitleOptions) -> Result<Self, Self::Error> {
         let disallowed_words_reg = (!options.disallowed_words.is_empty()).then(|| {
             let disallowed_words_pattern =
                 options.disallowed_words.iter().map(|word| regex::escape(word)).join("|");
             Regex::new(&format!(r"(?iu)\b(?:{disallowed_words_pattern})\b"))
                 .expect("escaped disallowed words should form a valid regex")
         });
-        ValidTitleConfig {
+        Ok(ValidTitleConfig {
             ignore_type_of_test_name: options.ignore_type_of_test_name,
             ignore_type_of_describe_name: options.ignore_type_of_describe_name,
             allow_arguments: options.allow_arguments,
             disallowed_words_reg,
             ignore_spaces: options.ignore_spaces,
-            must_not_match_patterns: options
-                .must_not_match
-                .as_ref()
-                .map(compile_matcher_patterns)
-                .unwrap_or_default(),
-            must_match_patterns: options
-                .must_match
-                .as_ref()
-                .map(compile_matcher_patterns)
-                .unwrap_or_default(),
-        }
+            must_not_match_patterns: compile_matcher_patterns(
+                options.must_not_match.as_ref(),
+                "mustNotMatch",
+            )?,
+            must_match_patterns: compile_matcher_patterns(
+                options.must_match.as_ref(),
+                "mustMatch",
+            )?,
+        })
     }
 }
 
@@ -200,8 +200,9 @@ impl ValidTitleConfig {
     pub fn from_configuration(
         value: serde_json::Value,
     ) -> Result<ValidTitleConfig, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<ValidTitleOptions>>(value)
-            .map(|options| options.into_inner().into())
+        serde_json::from_value::<DefaultRuleConfig<ValidTitleOptions>>(value)?
+            .into_inner()
+            .try_into()
     }
 
     pub fn run_rule<'a>(
@@ -334,35 +335,44 @@ impl MatchKind {
 }
 
 fn compile_matcher_patterns(
-    matcher_patterns: &MatcherPatterns,
-) -> FxHashMap<MatchKind, CompiledMatcherAndMessage> {
+    matcher_patterns: Option<&MatcherPatterns>,
+    field: &str,
+) -> Result<FxHashMap<MatchKind, CompiledMatcherAndMessage>, serde_json::error::Error> {
     let mut map: FxHashMap<MatchKind, CompiledMatcherAndMessage> = FxHashMap::default();
     match matcher_patterns {
-        MatcherPatterns::All(pattern) => {
-            if let Some(compiled) = compile_matcher_pattern(pattern) {
-                map.insert(MatchKind::Describe, compiled.clone());
-                map.insert(MatchKind::Test, compiled.clone());
-                map.insert(MatchKind::It, compiled);
-            }
+        None => {}
+        Some(MatcherPatterns::All(pattern)) => {
+            let compiled = compile_matcher_pattern(pattern, field)?;
+            map.insert(MatchKind::Describe, compiled.clone());
+            map.insert(MatchKind::Test, compiled.clone());
+            map.insert(MatchKind::It, compiled);
         }
-        MatcherPatterns::PerKind(patterns) => {
+        Some(MatcherPatterns::PerKind(patterns)) => {
             for (kind, pattern) in patterns {
-                if let Some(compiled) = compile_matcher_pattern(pattern) {
-                    map.insert(kind.clone(), compiled);
-                }
+                map.insert(kind.clone(), compile_matcher_pattern(pattern, field)?);
             }
         }
     }
-    map
+    Ok(map)
 }
 
-/// Compiles a matcher pattern, returning `None` if the pattern is not a valid
-/// Rust regex (e.g. it uses JS-only features such as lookaheads).
-fn compile_matcher_pattern(pattern: &MatcherPattern) -> Option<CompiledMatcherAndMessage> {
+/// Compiles a matcher pattern, erroring if the pattern is not a valid Rust
+/// regex (e.g. it uses JS-only features such as lookaheads).
+fn compile_matcher_pattern(
+    pattern: &MatcherPattern,
+    field: &str,
+) -> Result<CompiledMatcherAndMessage, serde_json::error::Error> {
+    use serde::de::Error;
+
     let (pattern_str, message) = match pattern {
         MatcherPattern::Pattern(pattern) => (pattern.as_str(), None),
         MatcherPattern::PatternAndMessage(parts) => {
-            (parts.first()?.as_str(), parts.get(1).cloned())
+            let Some(pattern) = parts.first() else {
+                return Err(serde_json::error::Error::custom(format!(
+                    "`{field}` expects a pattern as the first element, but the array is empty"
+                )));
+            };
+            (pattern.as_str(), parts.get(1).cloned())
         }
     };
 
@@ -372,13 +382,19 @@ fn compile_matcher_pattern(pattern: &MatcherPattern) -> Option<CompiledMatcherAn
     {
         let (pat, _flags) = stripped.split_at(end);
         // For now, ignore flags and just use the pattern
-        Regex::new(pat).ok()?
+        Regex::new(pat)
     } else {
         // Fallback: treat as a normal Rust regex with Unicode support
-        Regex::new(&format!("(?u){pattern_str}")).ok()?
+        Regex::new(&format!("(?u){pattern_str}"))
     };
 
-    Some((regex, message))
+    let regex = regex.map_err(|err| {
+        serde_json::error::Error::custom(format!(
+            "invalid `{field}` pattern `{pattern_str}`: {err}"
+        ))
+    })?;
+
+    Ok((regex, message))
 }
 
 fn validate_title(

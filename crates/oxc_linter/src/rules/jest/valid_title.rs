@@ -754,3 +754,29 @@ fn test() {
         .expect_fix(fix)
         .test_and_snapshot();
 }
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    // Unknown option keys.
+    let unknown_key = serde_json::json!([{ "foo": "bar" }]);
+    assert!(ValidTitle::from_configuration(unknown_key).is_err());
+
+    // Unknown block kinds in the per-kind form.
+    let unknown_kind = serde_json::json!([{ "mustMatch": { "describes": "^[^#]+$" } }]);
+    assert!(ValidTitle::from_configuration(unknown_kind).is_err());
+
+    // Patterns that are not valid Rust regexes, in each of the three shapes.
+    let lookahead = r"(?:#(?!unit|e2e))\w+";
+    for must_match in [
+        serde_json::json!(lookahead),
+        serde_json::json!([lookahead, "custom message"]),
+        serde_json::json!({ "describe": lookahead }),
+    ] {
+        let config = serde_json::json!([{ "mustMatch": must_match }]);
+        assert!(ValidTitle::from_configuration(config).is_err());
+    }
+
+    // A pattern array must have a pattern in it.
+    let empty_pattern = serde_json::json!([{ "mustNotMatch": [] }]);
+    assert!(ValidTitle::from_configuration(empty_pattern).is_err());
+}
