@@ -1,6 +1,7 @@
 use std::{cmp::max, str};
 
 use oxc_allocator::ArenaStringBuilder;
+use oxc_data_structures::branch_hints::cold_path;
 
 use crate::{config::LexerConfig as Config, diagnostics};
 
@@ -66,7 +67,8 @@ impl<'a, C: Config> Lexer<'a, C> {
                         } else {
                             // This is last byte in file. Continue to `handle_eof`.
                             // This is illegal in valid JS, so mark this branch cold.
-                            cold_branch(|| true)
+                            cold_path();
+                            true
                         }
                     },
                     b'`' => {
@@ -256,7 +258,8 @@ impl<'a, C: Config> Lexer<'a, C> {
                     } else {
                         // This is last byte in file. Continue to `handle_eof`.
                         // This is illegal in valid JS, so mark this branch cold.
-                        cold_branch(|| true)
+                        cold_path();
+                        true
                     }
                 } else {
                     // Next byte is '`', `\r`, `\`, or first byte of lossy replacement character.
@@ -309,7 +312,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                             } else {
                                 // This is last byte in file. Continue to `handle_eof`.
                                 // This is illegal in valid JS, so mark this branch cold.
-                                cold_branch(|| {});
+                                cold_path();
                             }
 
                             // Continue searching
