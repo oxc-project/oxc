@@ -3472,7 +3472,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/valid-title": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ValidTitleOptions"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/check-access": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -10000,7 +10017,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/valid-title": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ValidTitleOptions"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "vitest/warn-todo": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -12462,6 +12496,48 @@
         "ForInStatement",
         "ForOfStatement"
       ]
+    },
+    "MatcherPattern": {
+      "description": "A single `mustMatch`/`mustNotMatch` pattern, with an optional custom\ndiagnostic message.",
+      "anyOf": [
+        {
+          "description": "A regex pattern, e.g. `\"^[^#]+$\"`.",
+          "type": "string",
+          "markdownDescription": "A regex pattern, e.g. `\"^[^#]+$\"`."
+        },
+        {
+          "description": "A regex pattern followed by a custom message, e.g.\n`[\"^[^#]+$\", \"must not include a hash\"]`.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A regex pattern followed by a custom message, e.g.\n`[\"^[^#]+$\", \"must not include a hash\"]`."
+        }
+      ],
+      "markdownDescription": "A single `mustMatch`/`mustNotMatch` pattern, with an optional custom\ndiagnostic message."
+    },
+    "MatcherPatterns": {
+      "description": "Patterns for `mustMatch`/`mustNotMatch`, either applied to all block types\nor per block type.",
+      "anyOf": [
+        {
+          "description": "A single pattern applied to `describe`, `test`, and `it` titles.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MatcherPattern"
+            }
+          ],
+          "markdownDescription": "A single pattern applied to `describe`, `test`, and `it` titles."
+        },
+        {
+          "description": "Separate patterns per block type, e.g. `{ \"describe\": \"pattern\" }`.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/MatcherPattern"
+          },
+          "markdownDescription": "Separate patterns per block type, e.g. `{ \"describe\": \"pattern\" }`."
+        }
+      ],
+      "markdownDescription": "Patterns for `mustMatch`/`mustNotMatch`, either applied to all block types\nor per block type."
     },
     "MaxClassesPerFileConfig": {
       "type": "object",
@@ -18736,6 +18812,63 @@
           "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Minimum number of arguments `expect` should be called with."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ValidTitleOptions": {
+      "type": "object",
+      "properties": {
+        "allowArguments": {
+          "description": "Whether to allow identifiers (e.g. variables holding the title) as\ntitles.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to allow identifiers (e.g. variables holding the title) as\ntitles."
+        },
+        "disallowedWords": {
+          "description": "A list of words that are not allowed to appear in titles.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of words that are not allowed to appear in titles."
+        },
+        "ignoreSpaces": {
+          "description": "Whether to allow leading and trailing spaces in titles.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to allow leading and trailing spaces in titles."
+        },
+        "ignoreTypeOfDescribeName": {
+          "description": "Whether to ignore the type of the first argument to `describe` blocks,\nso titles that are not strings are allowed.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore the type of the first argument to `describe` blocks,\nso titles that are not strings are allowed."
+        },
+        "ignoreTypeOfTestName": {
+          "description": "Whether to ignore the type of the first argument to `test` and `it`\nblocks, so titles that are not strings are allowed.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore the type of the first argument to `test` and `it`\nblocks, so titles that are not strings are allowed."
+        },
+        "mustMatch": {
+          "description": "A pattern (or per-block patterns) that titles must match, optionally\npaired with a custom message: `\"pattern\"`, `[\"pattern\", \"message\"]`,\nor `{ \"describe\" | \"test\" | \"it\": pattern }`.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MatcherPatterns"
+            }
+          ],
+          "markdownDescription": "A pattern (or per-block patterns) that titles must match, optionally\npaired with a custom message: `\"pattern\"`, `[\"pattern\", \"message\"]`,\nor `{ \"describe\" | \"test\" | \"it\": pattern }`."
+        },
+        "mustNotMatch": {
+          "description": "A pattern (or per-block patterns) that titles must **not** match,\noptionally paired with a custom message: `\"pattern\"`,\n`[\"pattern\", \"message\"]`, or `{ \"describe\" | \"test\" | \"it\": pattern }`.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MatcherPatterns"
+            }
+          ],
+          "markdownDescription": "A pattern (or per-block patterns) that titles must **not** match,\noptionally paired with a custom message: `\"pattern\"`,\n`[\"pattern\", \"message\"]`, or `{ \"describe\" | \"test\" | \"it\": pattern }`."
         }
       },
       "additionalProperties": false
