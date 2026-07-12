@@ -79,6 +79,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Make sure the title matches the `mustMatch` of your config file
 
+  ⚠ jest(valid-title): Please include a tag
+   ╭─[valid_title.tsx:1:6]
+ 1 │ test('the correct way to properly handle all things', () => {});
+   ·      ───────────────────────────────────────────────
+   ╰────
+  help: Make sure the title matches the `mustMatch` of your config file
+
+  ⚠ jest(valid-title): Please include a tag
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it('correctly sets the value', () => {});
+   ·    ──────────────────────────
+   ╰────
+  help: Make sure the title matches the `mustMatch` of your config file
+
   ⚠ jest(valid-title): describe should match (?u)#(?:unit|integration|e2e)
    ╭─[valid_title.tsx:1:10]
  1 │ describe('the test', () => {});

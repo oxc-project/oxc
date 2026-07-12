@@ -1,8 +1,8 @@
-use std::hash::Hash;
-
 use itertools::Itertools;
 use lazy_regex::{Regex, regex};
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
@@ -14,6 +14,7 @@ use oxc_str::CompactStr;
 
 use crate::{
     context::LintContext,
+    rule::DefaultRuleConfig,
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, is_string_raw_member_expression,
         parse_general_jest_fn_call,
@@ -97,20 +98,56 @@ describe('foo', () => {});
 it('bar', () => {});
 test('baz', () => {});
 ```
-
-### Options
-```typescript
-interface Options {
-    ignoreSpaces?: boolean;
-    ignoreTypeOfTestName?: boolean;
-    ignoreTypeOfDescribeName?: boolean;
-    allowArguments?: boolean;
-    disallowedWords?: string[];
-    mustNotMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
-    mustMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
-}
-```
 ";
+
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct ValidTitleOptions {
+    /// Whether to ignore the type of the first argument to `test` and `it`
+    /// blocks, so titles that are not strings are allowed.
+    ignore_type_of_test_name: bool,
+    /// Whether to ignore the type of the first argument to `describe` blocks,
+    /// so titles that are not strings are allowed.
+    ignore_type_of_describe_name: bool,
+    /// Whether to allow identifiers (e.g. variables holding the title) as
+    /// titles.
+    allow_arguments: bool,
+    /// Whether to allow leading and trailing spaces in titles.
+    ignore_spaces: bool,
+    /// A list of words that are not allowed to appear in titles.
+    disallowed_words: Vec<CompactStr>,
+    /// A pattern (or per-block patterns) that titles must **not** match,
+    /// optionally paired with a custom message: `"pattern"`,
+    /// `["pattern", "message"]`, or `{ "describe" | "test" | "it": pattern }`.
+    must_not_match: Option<MatcherPatterns>,
+    /// A pattern (or per-block patterns) that titles must match, optionally
+    /// paired with a custom message: `"pattern"`, `["pattern", "message"]`,
+    /// or `{ "describe" | "test" | "it": pattern }`.
+    must_match: Option<MatcherPatterns>,
+}
+
+/// Patterns for `mustMatch`/`mustNotMatch`, either applied to all block types
+/// or per block type.
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum MatcherPatterns {
+    /// A single pattern applied to `describe`, `test`, and `it` titles.
+    All(MatcherPattern),
+    /// Separate patterns per block type, e.g. `{ "describe": "pattern" }`.
+    PerKind(FxHashMap<MatchKind, MatcherPattern>),
+}
+
+/// A single `mustMatch`/`mustNotMatch` pattern, with an optional custom
+/// diagnostic message.
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum MatcherPattern {
+    /// A regex pattern, e.g. `"^[^#]+$"`.
+    Pattern(CompactStr),
+    /// A regex pattern followed by a custom message, e.g.
+    /// `["^[^#]+$", "must not include a hash"]`.
+    PatternAndMessage(Vec<CompactStr>),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidTitleConfig {
@@ -131,56 +168,44 @@ pub struct ValidTitleConfig {
     must_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
 }
 
-impl ValidTitleConfig {
-    #[expect(clippy::unnecessary_wraps)] // TODO: handle error
-    pub fn from_configuration(
-        value: &serde_json::Value,
-    ) -> Result<ValidTitleConfig, serde_json::error::Error> {
-        let config = value.get(0);
-        let get_as_bool = |name: &str| -> bool {
-            config
-                .and_then(|v| v.get(name))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default()
-        };
-
-        let ignore_type_of_test_name = get_as_bool("ignoreTypeOfTestName");
-        let ignore_type_of_describe_name = get_as_bool("ignoreTypeOfDescribeName");
-        let allow_arguments = get_as_bool("allowArguments");
-        let ignore_spaces = get_as_bool("ignoreSpaces");
-        let disallowed_words: Vec<&str> = config
-            .and_then(|v| v.get("disallowedWords"))
-            .and_then(|v| v.as_array())
-            .map(|v| v.iter().filter_map(|v| v.as_str()).collect())
-            .unwrap_or_default();
-        let disallowed_words_reg = (!disallowed_words.is_empty()).then(|| {
+impl From<ValidTitleOptions> for ValidTitleConfig {
+    fn from(options: ValidTitleOptions) -> Self {
+        let disallowed_words_reg = (!options.disallowed_words.is_empty()).then(|| {
             let disallowed_words_pattern =
-                disallowed_words.iter().map(|word| regex::escape(word)).join("|");
+                options.disallowed_words.iter().map(|word| regex::escape(word)).join("|");
             Regex::new(&format!(r"(?iu)\b(?:{disallowed_words_pattern})\b"))
                 .expect("escaped disallowed words should form a valid regex")
         });
-        let must_not_match_patterns = config
-            .and_then(|v| v.get("mustNotMatch"))
-            .and_then(compile_matcher_patterns)
-            .unwrap_or_default();
-        let must_match_patterns = config
-            .and_then(|v| v.get("mustMatch"))
-            .and_then(compile_matcher_patterns)
-            .unwrap_or_default();
-
-        Ok(ValidTitleConfig {
-            ignore_type_of_test_name,
-            ignore_type_of_describe_name,
-            allow_arguments,
+        ValidTitleConfig {
+            ignore_type_of_test_name: options.ignore_type_of_test_name,
+            ignore_type_of_describe_name: options.ignore_type_of_describe_name,
+            allow_arguments: options.allow_arguments,
             disallowed_words_reg,
-            ignore_spaces,
-            must_not_match_patterns,
-            must_match_patterns,
-        })
+            ignore_spaces: options.ignore_spaces,
+            must_not_match_patterns: options
+                .must_not_match
+                .as_ref()
+                .map(compile_matcher_patterns)
+                .unwrap_or_default(),
+            must_match_patterns: options
+                .must_match
+                .as_ref()
+                .map(compile_matcher_patterns)
+                .unwrap_or_default(),
+        }
+    }
+}
+
+impl ValidTitleConfig {
+    pub fn from_configuration(
+        value: serde_json::Value,
+    ) -> Result<ValidTitleConfig, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<ValidTitleOptions>>(value)
+            .map(|options| options.into_inner().into())
     }
 
     pub fn run_rule<'a>(
-        config: &ValidTitleConfig,
+        &self,
         possible_jest_fn_node: &PossibleJestNode<'a, '_>,
         ctx: &LintContext<'a>,
     ) {
@@ -219,15 +244,13 @@ impl ValidTitleConfig {
         }
 
         // Handle allowArguments option (vitest feature)
-        if config.allow_arguments && matches!(arg, Argument::Identifier(_)) {
+        if self.allow_arguments && matches!(arg, Argument::Identifier(_)) {
             return;
         }
 
         let need_report_name = match jest_fn_call.kind {
-            JestFnKind::General(JestGeneralFnKind::Test) => !config.ignore_type_of_test_name,
-            JestFnKind::General(JestGeneralFnKind::Describe) => {
-                !config.ignore_type_of_describe_name
-            }
+            JestFnKind::General(JestGeneralFnKind::Test) => !self.ignore_type_of_test_name,
+            JestFnKind::General(JestGeneralFnKind::Describe) => !self.ignore_type_of_describe_name,
             _ => unreachable!(),
         };
 
@@ -236,7 +259,7 @@ impl ValidTitleConfig {
                 validate_title(
                     &string_literal.value,
                     string_literal.span,
-                    config,
+                    self,
                     &jest_fn_call.name,
                     ctx,
                 );
@@ -254,7 +277,7 @@ impl ValidTitleConfig {
                     validate_title(
                         quasi.as_str(),
                         tagged_template.span,
-                        config,
+                        self,
                         &jest_fn_call.name,
                         ctx,
                     );
@@ -265,7 +288,7 @@ impl ValidTitleConfig {
                     validate_title(
                         quasi.as_str(),
                         template_literal.span,
-                        config,
+                        self,
                         &jest_fn_call.name,
                         ctx,
                     );
@@ -290,17 +313,13 @@ impl ValidTitleConfig {
 
 type CompiledMatcherAndMessage = (Regex, Option<CompactStr>);
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-enum MatchKind {
+/// The kind of Jest/Vitest block a `mustMatch`/`mustNotMatch` pattern applies to.
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum MatchKind {
     Describe,
     It,
     Test,
-}
-
-#[derive(Copy, Clone)]
-enum MatcherPattern<'a> {
-    String(&'a serde_json::Value),
-    Vec(&'a Vec<serde_json::Value>),
 }
 
 impl MatchKind {
@@ -315,91 +334,51 @@ impl MatchKind {
 }
 
 fn compile_matcher_patterns(
-    matcher_patterns: &serde_json::Value,
-) -> Option<FxHashMap<MatchKind, CompiledMatcherAndMessage>> {
-    matcher_patterns
-        .as_array()
-        .map_or_else(
-            || {
-                // for `{ "describe": "/pattern/" }`
-                let obj = matcher_patterns.as_object()?;
-                let mut map: FxHashMap<MatchKind, CompiledMatcherAndMessage> = FxHashMap::default();
-                for (key, value) in obj {
-                    let Some(v) = compile_matcher_pattern(MatcherPattern::String(value)) else {
-                        continue;
-                    };
-                    if let Some(kind) = MatchKind::from(key) {
-                        map.insert(kind, v);
-                    }
-                }
-
-                Some(map)
-            },
-            |value| {
-                // for `["/pattern/", "message"]`
-                let mut map: FxHashMap<MatchKind, CompiledMatcherAndMessage> = FxHashMap::default();
-                let v = &compile_matcher_pattern(MatcherPattern::Vec(value))?;
-                map.insert(MatchKind::Describe, v.clone());
-                map.insert(MatchKind::Test, v.clone());
-                map.insert(MatchKind::It, v.clone());
-                Some(map)
-            },
-        )
-        .map_or_else(
-            || {
-                // for `"/pattern/"`
-                let string = matcher_patterns.as_str()?;
-                let mut map: FxHashMap<MatchKind, CompiledMatcherAndMessage> = FxHashMap::default();
-                let v = &compile_matcher_pattern(MatcherPattern::String(
-                    &serde_json::Value::String(string.to_string()),
-                ))?;
-                map.insert(MatchKind::Describe, v.clone());
-                map.insert(MatchKind::Test, v.clone());
-                map.insert(MatchKind::It, v.clone());
-                Some(map)
-            },
-            Some,
-        )
-}
-
-fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAndMessage> {
-    match pattern {
-        MatcherPattern::String(pattern) => {
-            let pattern_str = pattern.as_str()?;
-
-            // Check for JS regex literal: /pattern/flags
-            if let Some(stripped) = pattern_str.strip_prefix('/')
-                && let Some(end) = stripped.rfind('/')
-            {
-                let (pat, _flags) = stripped.split_at(end);
-                // For now, ignore flags and just use the pattern
-                let regex = Regex::new(pat).ok()?;
-                return Some((regex, None));
+    matcher_patterns: &MatcherPatterns,
+) -> FxHashMap<MatchKind, CompiledMatcherAndMessage> {
+    let mut map: FxHashMap<MatchKind, CompiledMatcherAndMessage> = FxHashMap::default();
+    match matcher_patterns {
+        MatcherPatterns::All(pattern) => {
+            if let Some(compiled) = compile_matcher_pattern(pattern) {
+                map.insert(MatchKind::Describe, compiled.clone());
+                map.insert(MatchKind::Test, compiled.clone());
+                map.insert(MatchKind::It, compiled);
             }
-
-            // Fallback: treat as a normal Rust regex with Unicode support
-            let reg_str = format!("(?u){pattern_str}");
-            let reg = Regex::new(&reg_str).ok()?;
-            Some((reg, None))
         }
-        MatcherPattern::Vec(pattern) => {
-            let pattern_str = pattern.first().and_then(|v| v.as_str())?;
-
-            // Check for JS regex literal: /pattern/flags
-            let regex = if let Some(stripped) = pattern_str.strip_prefix('/')
-                && let Some(end) = stripped.rfind('/')
-            {
-                let (pat, _flags) = stripped.split_at(end);
-                Regex::new(pat).ok()?
-            } else {
-                let reg_str = format!("(?u){pattern_str}");
-                Regex::new(&reg_str).ok()?
-            };
-
-            let message = pattern.get(1).and_then(serde_json::Value::as_str).map(CompactStr::from);
-            Some((regex, message))
+        MatcherPatterns::PerKind(patterns) => {
+            for (kind, pattern) in patterns {
+                if let Some(compiled) = compile_matcher_pattern(pattern) {
+                    map.insert(kind.clone(), compiled);
+                }
+            }
         }
     }
+    map
+}
+
+/// Compiles a matcher pattern, returning `None` if the pattern is not a valid
+/// Rust regex (e.g. it uses JS-only features such as lookaheads).
+fn compile_matcher_pattern(pattern: &MatcherPattern) -> Option<CompiledMatcherAndMessage> {
+    let (pattern_str, message) = match pattern {
+        MatcherPattern::Pattern(pattern) => (pattern.as_str(), None),
+        MatcherPattern::PatternAndMessage(parts) => {
+            (parts.first()?.as_str(), parts.get(1).cloned())
+        }
+    };
+
+    // Check for JS regex literal: /pattern/flags
+    let regex = if let Some(stripped) = pattern_str.strip_prefix('/')
+        && let Some(end) = stripped.rfind('/')
+    {
+        let (pat, _flags) = stripped.split_at(end);
+        // For now, ignore flags and just use the pattern
+        Regex::new(pat).ok()?
+    } else {
+        // Fallback: treat as a normal Rust regex with Unicode support
+        Regex::new(&format!("(?u){pattern_str}")).ok()?
+    };
+
+    Some((regex, message))
 }
 
 fn validate_title(

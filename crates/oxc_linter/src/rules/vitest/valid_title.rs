@@ -1,5 +1,4 @@
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
 
 use crate::{
     context::LintContext,
@@ -15,16 +14,14 @@ declare_oxc_lint!(
     vitest,
     correctness,
     conditional_fix,
-    // TODO: Replace this with an actual config struct. This is a dummy value to
-    // indicate that this rule has configuration and avoid errors.
-    config = Value,
+    config = SharedValidTitle::ValidTitleOptions,
     docs = SharedValidTitle::DOCUMENTATION,
     version = "0.0.14",
 );
 
 impl Rule for ValidTitle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        SharedValidTitle::ValidTitleConfig::from_configuration(&value)
+        SharedValidTitle::ValidTitleConfig::from_configuration(value)
             .map(|config| Self(Box::new(config)))
     }
 
@@ -33,7 +30,7 @@ impl Rule for ValidTitle {
         jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        SharedValidTitle::ValidTitleConfig::run_rule(&self.0, jest_node, ctx);
+        self.0.run_rule(jest_node, ctx);
     }
 }
 
