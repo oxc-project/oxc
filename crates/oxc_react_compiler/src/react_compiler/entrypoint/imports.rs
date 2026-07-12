@@ -45,6 +45,7 @@ pub struct ProgramContext<'a> {
     pub instrument_fn_name: Option<Ident<'a>>,
     pub instrument_gating_name: Option<Ident<'a>>,
     pub hook_guard_name: Option<Ident<'a>>,
+    pub memo_cache_name: Option<Ident<'a>>,
 
     // Internal state
     known_referenced_names: IdentHashSet<'a>,
@@ -71,6 +72,7 @@ impl<'a> ProgramContext<'a> {
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
+            memo_cache_name: None,
             known_referenced_names: IdentHashSet::default(),
             imports: FxHashMap::default(),
         }
@@ -135,10 +137,30 @@ impl<'a> ProgramContext<'a> {
         }
     }
 
-    /// Add the memo cache import (the `c` function from the compiler runtime).
-    pub fn add_memo_cache_import(&mut self) -> NonLocalImportSpecifier<'a> {
-        let module = self.react_runtime_module.clone();
-        self.add_import_specifier(&module, "c", Some("_c"))
+    /// Reserve the memo cache import's local name (`_c`, `_c2`, ...) before compilation
+    /// so codegen can emit it directly. Also avoids names only referenced as globals
+    /// (Babel's `generateUid` checks `hasGlobal`); `known_referenced_names` cannot see
+    /// globals in functions that have not compiled yet. Mirrors `new_uid("_c")`.
+    pub fn reserve_memo_cache_name(&mut self, scope: &ScopeResolver<'_, 'a>) {
+        let mut name = Ident::from("_c");
+        let mut i = 2;
+        while self.has_reference(&name) || scope.has_unresolved_reference(&name) {
+            name = format_ident!(self.allocator, "_c{i}");
+            i += 1;
+        }
+        self.known_referenced_names.insert(name);
+        self.memo_cache_name = Some(name);
+    }
+
+    /// Register the memo cache import (the `c` function from the compiler runtime) under
+    /// the local name reserved by [`Self::reserve_memo_cache_name`].
+    pub fn add_memo_cache_import(&mut self) {
+        let name = self.memo_cache_name.expect("memo cache name reserved in compile_program");
+        let binding = NonLocalImportSpecifier { name, imported: Ident::from("c") };
+        self.imports
+            .entry(self.react_runtime_module.to_string())
+            .or_default()
+            .insert("c".to_string(), binding);
     }
 
     /// Add an import specifier, reusing an existing one if it was already added.

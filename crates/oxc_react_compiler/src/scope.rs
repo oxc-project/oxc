@@ -444,6 +444,11 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         self.scoping().find_binding(scope_id, name.into())
     }
 
+    /// Whether `name` is referenced as a global (unresolved reference) anywhere in the file.
+    pub fn has_unresolved_reference(&self, name: &str) -> bool {
+        self.scoping().root_unresolved_references().contains_key(name)
+    }
+
     /// Bindings declared directly in a scope.
     pub fn bindings_in(&self, scope_id: ScopeId) -> impl Iterator<Item = SymbolId> + '_ {
         self.scoping().iter_bindings_in(scope_id)

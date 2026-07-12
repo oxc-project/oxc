@@ -2477,24 +2477,8 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
     }
 }
 
-/// Visitor that renames every identifier reference matching `old_name` to `new_name`.
-/// Mirrors the Babel `RenameIdentifierVisitor` (used to rename `useMemoCache`).
-struct OxcRenameIdentifierVisitor<'a, 'b> {
-    ast: &'b AstBuilder<'a>,
-    old_name: &'b str,
-    new_name: &'b str,
-}
-
-impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcRenameIdentifierVisitor<'a, 'b> {
-    fn visit_identifier_reference(&mut self, ident: &mut oxc::IdentifierReference<'a>) {
-        if ident.name == self.old_name {
-            ident.name = ox_atom(self.ast, self.new_name).into();
-        }
-    }
-}
-
 /// Allocate a `&'a str` in the arena (satisfies the builders' `Into<Ident>` /
-/// `IntoIn` slots; convert to `Atom` via `.into()` where a bare `Atom` is needed).
+/// `IntoIn` slots).
 fn ox_atom<'a>(ast: &AstBuilder<'a>, s: &str) -> &'a str {
     oxc_allocator::StringBuilder::from_str_in(s, ast.allocator()).into_str()
 }
@@ -2676,16 +2660,9 @@ fn ox_transform_program<'a>(
     // the top level.
     program.body.extend(appended_outlined_decls);
 
-    // Register the memo cache import and rename `useMemoCache` references.
-    let needs_memo_import = replacements.iter().any(|r| r.codegen_fn.memo_slots_used > 0);
-    if needs_memo_import {
-        let import_spec = context.add_memo_cache_import();
-        let mut visitor = OxcRenameIdentifierVisitor {
-            ast,
-            old_name: "useMemoCache",
-            new_name: &import_spec.name,
-        };
-        oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
+    // Register the memo cache import; codegen emitted its pre-reserved local name.
+    if replacements.iter().any(|r| r.codegen_fn.memo_slots_used > 0) {
+        context.add_memo_cache_import();
     }
 
     ox_add_imports_to_program(ast, program, context);
@@ -2997,6 +2974,11 @@ pub fn compile_program<'a>(
     context.instrument_fn_name = instrument_fn_name;
     context.instrument_gating_name = instrument_gating_name;
     context.hook_guard_name = hook_guard_name;
+
+    // Reserve the memo-cache import's local name (`_c`, `_c2`, ...) up front so codegen
+    // can emit it directly; the import itself is registered in `ox_transform_program`,
+    // and only when an applied function uses memo slots.
+    context.reserve_memo_cache_name(&scope);
 
     // Process each function and collect compiled results
     let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_, '_>> = Vec::new();

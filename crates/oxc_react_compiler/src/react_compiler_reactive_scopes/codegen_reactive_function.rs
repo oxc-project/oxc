@@ -4,7 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 //! Code generation pass: converts a `ReactiveFunction` tree back into a Babel-compatible
-//! AST with memoization (useMemoCache) wired in.
+//! AST with memoization (the memo-cache import) wired in.
 //!
 //! This is the final pass in the compilation pipeline.
 //!
@@ -130,10 +130,12 @@ pub fn codegen_function<'a>(
     let cache_count = compiled.memo_slots_used;
     if cache_count != 0 {
         let cache_name = cx.synthesize_name("$");
-        // const $ = useMemoCache(N)
+        let memo_cache_name =
+            cx.env.memo_cache_name.expect("memo cache name reserved in compile_program");
+        // const $ = _c(N)
         let use_memo_cache = oxc_ast::ast::Expression::new_call_expression(
             SPAN,
-            oxc_ast::ast::Expression::new_identifier(SPAN, "useMemoCache", ast),
+            oxc_ast::ast::Expression::new_identifier(SPAN, memo_cache_name, ast),
             None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterInstantiation>>,
             oxc_allocator::ArenaVec::from_value_in(
                 oxc_ast::ast::Argument::from(ox_number(ast, cache_count as f64)),

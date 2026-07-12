@@ -68,11 +68,12 @@ pub struct Environment<'a> {
     // Output mode (Client, Ssr, Lint)
     pub output_mode: OutputMode,
 
-    // Pre-resolved import local names for instrumentation/hook guards.
+    // Pre-resolved import local names for instrumentation/hook guards/memo cache.
     // Set by the program-level code before compilation.
     pub instrument_fn_name: Option<Ident<'a>>,
     pub instrument_gating_name: Option<Ident<'a>>,
     pub hook_guard_name: Option<Ident<'a>>,
+    pub memo_cache_name: Option<Ident<'a>>,
 
     // Renames from lowering (collision suffixes like `name_0`), recorded per
     // resolved reference so codegen can rename identifiers inside preserved TS
@@ -183,6 +184,7 @@ impl<'a> Environment<'a> {
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
+            memo_cache_name: None,
             renames: FxHashMap::default(),
             hoisted_identifiers: FxHashSet::default(),
             validate_preserve_existing_memoization_guarantees: config
