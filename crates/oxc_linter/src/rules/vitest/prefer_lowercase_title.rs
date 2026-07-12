@@ -395,6 +395,14 @@ fn test() {
         (r#"describe("oo", function () {})"#, None),
         (r#"test("foo", function () {})"#, None),
         ("test(`123`, function () {})", None),
+        (
+            "test(`sfc compile`, function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
+        ),
+        (
+            "test(`0 sfc compile`, function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
+        ),
     ];
     pass.extend(pass_jest);
 
