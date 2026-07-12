@@ -33,9 +33,10 @@ pub struct NonLocalImportSpecifier<'a> {
 /// Equivalent to ProgramContext class in Imports.ts.
 pub struct ProgramContext<'a> {
     allocator: &'a Allocator,
+    pub source_text: &'a str,
     pub opts: PluginOptions,
     pub react_runtime_module: Cow<'static, str>,
-    pub suppressions: Vec<SuppressionRange<'a>>,
+    pub suppressions: Vec<SuppressionRange>,
     pub has_module_scope_opt_out: bool,
     /// Diagnostics (errors/warnings) accumulated during compilation. Fatality is
     /// decided separately by `panicThreshold`.
@@ -53,13 +54,15 @@ pub struct ProgramContext<'a> {
 impl<'a> ProgramContext<'a> {
     pub fn new(
         allocator: &'a Allocator,
+        source_text: &'a str,
         opts: PluginOptions,
-        suppressions: Vec<SuppressionRange<'a>>,
+        suppressions: Vec<SuppressionRange>,
         has_module_scope_opt_out: bool,
     ) -> Self {
         let react_runtime_module = get_react_compiler_runtime_module(&opts.target);
         Self {
             allocator,
+            source_text,
             opts,
             react_runtime_module,
             suppressions,

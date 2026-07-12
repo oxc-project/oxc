@@ -34,7 +34,6 @@ use super::compile_result::CodegenFunction;
 use super::compile_result::CompileResult;
 use super::imports::ProgramContext;
 use super::pipeline;
-use super::suppression::SuppressionRange;
 use super::suppression::filter_suppressions_that_affect_function;
 use super::suppression::find_program_suppressions;
 use super::suppression::suppressions_to_diagnostics;
@@ -1152,8 +1151,7 @@ fn try_compile_function<'a>(
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
         let affecting = filter_suppressions_that_affect_function(&context.suppressions, start, end);
         if !affecting.is_empty() {
-            let owned: Vec<SuppressionRange> = affecting.into_iter().cloned().collect();
-            return Err(suppressions_to_diagnostics(&owned));
+            return Err(suppressions_to_diagnostics(&affecting, context.source_text));
         }
     }
 
@@ -2904,8 +2902,13 @@ pub fn compile_program<'a>(
     .is_some();
 
     // Create program context
-    let mut context =
-        ProgramContext::new(allocator, options.clone(), suppressions, has_module_scope_opt_out);
+    let mut context = ProgramContext::new(
+        allocator,
+        program.source_text,
+        options.clone(),
+        suppressions,
+        has_module_scope_opt_out,
+    );
 
     // The codegen back-end builds oxc nodes directly via this `AstBuilder`; `scope`
     // is a read-through view over `Semantic` for binding/reference lookups.
