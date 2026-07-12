@@ -30,6 +30,15 @@ interface CommentType extends Span {
 // Export type as `Comment` for external consumers
 export type { CommentType as Comment };
 
+// Array of comment `type`s, indexed by `CommentKind` discriminant.
+const COMMENT_TYPES: CommentType["type"][] = ["Block", "Block", "Block"];
+COMMENT_TYPES[COMMENT_LINE_KIND] = "Line";
+
+// Array of numbers to subtract from `end` when slicing source text to get `value` of a comment,
+// indexed by `CommentKind` discriminant.
+const COMMENT_END_SUBTRACTIONS: number[] = [2, 2, 2];
+COMMENT_END_SUBTRACTIONS[COMMENT_LINE_KIND] = 0;
+
 // Comments for the current file.
 // Created lazily only when needed.
 export let comments: CommentType[] | null = null;
@@ -344,16 +353,15 @@ function deserializeCommentIfNeeded(index: number): Comment | null {
   // Deserialize comment into a cached `Comment` object
   const comment = cachedComments[index];
 
-  const isBlock = commentsUint8[pos + COMMENT_KIND_OFFSET] !== COMMENT_LINE_KIND;
-
   const pos32 = pos >> 2,
     start = commentsInt32[pos32],
     end = commentsInt32[pos32 + 1];
 
-  comment.type = isBlock ? "Block" : "Line";
+  const kind = commentsUint8[pos + COMMENT_KIND_OFFSET];
+  comment.type = COMMENT_TYPES[kind];
   // Line comments: `// text` -> slice `start + 2..end`
   // Block comments: `/* text */` -> slice `start + 2..end - 2`
-  comment.value = sourceText.slice(start + 2, end - (+isBlock << 1));
+  comment.value = sourceText.slice(start + 2, end - COMMENT_END_SUBTRACTIONS[kind]);
   comment.range[0] = comment.start = start;
   comment.range[1] = comment.end = end;
 
