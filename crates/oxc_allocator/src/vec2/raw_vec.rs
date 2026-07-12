@@ -21,7 +21,6 @@
     clippy::needless_pass_by_value,
     clippy::inline_always
 )]
-#![allow(unstable_name_collisions)]
 #![allow(dead_code)]
 
 use std::{
