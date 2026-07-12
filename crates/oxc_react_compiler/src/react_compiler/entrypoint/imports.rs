@@ -4,9 +4,13 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
+use std::borrow::Cow;
+
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use oxc_allocator::Allocator;
 use oxc_ast::ast::{ImportDeclarationSpecifier, ModuleExportName, Program, Statement};
+use oxc_str::{Ident, IdentHashSet, format_ident};
 
 use crate::diagnostics::ErrorCategory;
 use crate::scope::ScopeResolver;
@@ -18,41 +22,44 @@ use crate::options::{CompilerTarget, PluginOptions};
 
 /// An import specifier tracked by ProgramContext.
 /// Corresponds to NonLocalImportSpecifier in the TS compiler.
-#[derive(Debug, Clone)]
-pub struct NonLocalImportSpecifier {
-    pub name: String,
-    pub imported: String,
+#[derive(Debug, Clone, Copy)]
+pub struct NonLocalImportSpecifier<'a> {
+    pub name: Ident<'a>,
+    pub imported: Ident<'a>,
 }
 
 /// Context for the program being compiled.
 /// Tracks compiled functions, generated names, and import requirements.
 /// Equivalent to ProgramContext class in Imports.ts.
-pub struct ProgramContext {
+pub struct ProgramContext<'a> {
+    allocator: &'a Allocator,
     pub opts: PluginOptions,
-    pub react_runtime_module: String,
-    pub suppressions: Vec<SuppressionRange>,
+    pub react_runtime_module: Cow<'static, str>,
+    pub suppressions: Vec<SuppressionRange<'a>>,
     pub has_module_scope_opt_out: bool,
     /// Diagnostics (errors/warnings) accumulated during compilation. Fatality is
     /// decided separately by `panicThreshold`.
     pub diagnostics: Diagnostics,
     // Pre-resolved import local names for codegen
-    pub instrument_fn_name: Option<String>,
-    pub instrument_gating_name: Option<String>,
-    pub hook_guard_name: Option<String>,
+    pub instrument_fn_name: Option<Ident<'a>>,
+    pub instrument_gating_name: Option<Ident<'a>>,
+    pub hook_guard_name: Option<Ident<'a>>,
 
     // Internal state
-    known_referenced_names: FxHashSet<String>,
-    imports: FxHashMap<String, FxHashMap<String, NonLocalImportSpecifier>>,
+    known_referenced_names: IdentHashSet<'a>,
+    imports: FxHashMap<String, FxHashMap<String, NonLocalImportSpecifier<'a>>>,
 }
 
-impl ProgramContext {
+impl<'a> ProgramContext<'a> {
     pub fn new(
+        allocator: &'a Allocator,
         opts: PluginOptions,
-        suppressions: Vec<SuppressionRange>,
+        suppressions: Vec<SuppressionRange<'a>>,
         has_module_scope_opt_out: bool,
     ) -> Self {
         let react_runtime_module = get_react_compiler_runtime_module(&opts.target);
         Self {
+            allocator,
             opts,
             react_runtime_module,
             suppressions,
@@ -61,19 +68,19 @@ impl ProgramContext {
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
-            known_referenced_names: FxHashSet::default(),
+            known_referenced_names: IdentHashSet::default(),
             imports: FxHashMap::default(),
         }
     }
 
     /// Initialize known referenced names from scope bindings.
     /// Call this after construction to seed conflict detection with program scope bindings.
-    pub fn init_from_scope(&mut self, scope: &ScopeResolver<'_, '_>) {
+    pub fn init_from_scope(&mut self, scope: &ScopeResolver<'_, 'a>) {
         // Register ALL bindings (not just program-scope) so that UID generation
         // avoids name conflicts with any binding in the file. This matches
         // Babel's generateUid() which checks all scopes.
         for symbol_id in scope.symbols() {
-            self.known_referenced_names.insert(scope.symbol_name(symbol_id).to_string());
+            self.known_referenced_names.insert(scope.symbol_ident(symbol_id));
         }
     }
 
@@ -87,40 +94,41 @@ impl ProgramContext {
     /// For hook names (use*), preserves the original name to avoid breaking
     /// hook-name-based type inference. For other names, prefixes with underscore
     /// similar to Babel's generateUid.
-    pub fn new_uid(&mut self, name: &str) -> String {
+    pub fn new_uid(&mut self, name: &str) -> Ident<'a> {
         if is_hook_name(name) {
             // Don't prefix hooks with underscore, since InferTypes might
             // type HookKind based on callee naming convention.
-            let mut uid = name.to_string();
+            let mut uid = Ident::from_str_in(name, &self.allocator);
             let mut i = 0;
             while self.has_reference(&uid) {
-                uid = format!("{}_{}", name, i);
+                uid = format_ident!(self.allocator, "{name}_{i}");
                 i += 1;
             }
-            self.known_referenced_names.insert(uid.clone());
+            self.known_referenced_names.insert(uid);
             uid
         } else if !self.has_reference(name) {
-            self.known_referenced_names.insert(name.to_string());
-            name.to_string()
+            let uid = Ident::from_str_in(name, &self.allocator);
+            self.known_referenced_names.insert(uid);
+            uid
         } else {
             // Generate unique name with underscore prefix (similar to Babel's generateUid).
             // Babel strips leading underscores before prefixing, so:
             //   generateUid("_c") → strips to "c" → generates "_c", "_c2", "_c3", ...
             //   generateUid("foo") → generates "_foo", "_foo2", "_foo3", ...
             let base = name.trim_start_matches('_');
-            let mut uid = format!("_{}", base);
+            let mut uid = format_ident!(self.allocator, "_{base}");
             let mut i = 2;
             while self.has_reference(&uid) {
-                uid = format!("_{}{}", base, i);
+                uid = format_ident!(self.allocator, "_{base}{i}");
                 i += 1;
             }
-            self.known_referenced_names.insert(uid.clone());
+            self.known_referenced_names.insert(uid);
             uid
         }
     }
 
     /// Add the memo cache import (the `c` function from the compiler runtime).
-    pub fn add_memo_cache_import(&mut self) -> NonLocalImportSpecifier {
+    pub fn add_memo_cache_import(&mut self) -> NonLocalImportSpecifier<'a> {
         let module = self.react_runtime_module.clone();
         self.add_import_specifier(&module, "c", Some("_c"))
     }
@@ -134,39 +142,39 @@ impl ProgramContext {
         module: &str,
         specifier: &str,
         name_hint: Option<&str>,
-    ) -> NonLocalImportSpecifier {
+    ) -> NonLocalImportSpecifier<'a> {
         // Check if already imported
         if let Some(module_imports) = self.imports.get(module) {
             if let Some(existing) = module_imports.get(specifier) {
-                return existing.clone();
+                return *existing;
             }
         }
 
         let name = self.new_uid(name_hint.unwrap_or(specifier));
-        let binding = NonLocalImportSpecifier { name, imported: specifier.to_string() };
+        let binding = NonLocalImportSpecifier {
+            name,
+            imported: Ident::from_str_in(specifier, &self.allocator),
+        };
 
-        self.imports
-            .entry(module.to_string())
-            .or_default()
-            .insert(specifier.to_string(), binding.clone());
+        self.imports.entry(module.to_string()).or_default().insert(specifier.to_string(), binding);
 
         binding
     }
 
     /// Register a name as referenced so future uid generation avoids it.
-    pub fn add_new_reference(&mut self, name: String) {
+    pub fn add_new_reference(&mut self, name: Ident<'a>) {
         self.known_referenced_names.insert(name);
     }
 
     /// Get the set of known referenced names for seeding per-function Environment UID generation.
-    pub fn known_referenced_names(&self) -> &FxHashSet<String> {
+    pub fn known_referenced_names(&self) -> &IdentHashSet<'a> {
         &self.known_referenced_names
     }
 
     /// Merge UID names generated during a function compilation back into the program context,
     /// so subsequent function compilations avoid collisions.
-    pub fn merge_uid_known_names(&mut self, names: &FxHashSet<String>) {
-        self.known_referenced_names.extend(names.iter().cloned());
+    pub fn merge_uid_known_names(&mut self, names: &IdentHashSet<'a>) {
+        self.known_referenced_names.extend(names.iter().copied());
     }
 
     /// Check if there are any pending imports to add to the program.
@@ -175,7 +183,7 @@ impl ProgramContext {
     }
 
     /// Get an immutable view of the generated imports.
-    pub fn imports(&self) -> &FxHashMap<String, FxHashMap<String, NonLocalImportSpecifier>> {
+    pub fn imports(&self) -> &FxHashMap<String, FxHashMap<String, NonLocalImportSpecifier<'a>>> {
         &self.imports
     }
 }
@@ -247,14 +255,14 @@ fn is_hook_name(name: &str) -> bool {
 }
 
 /// Get the runtime module name based on the compiler target.
-pub fn get_react_compiler_runtime_module(target: &CompilerTarget) -> String {
+pub fn get_react_compiler_runtime_module(target: &CompilerTarget) -> Cow<'static, str> {
     match target {
-        CompilerTarget::Version(v) if v == "19" => "react/compiler-runtime".to_string(),
+        CompilerTarget::Version(v) if v == "19" => Cow::Borrowed("react/compiler-runtime"),
         CompilerTarget::Version(v) if v == "17" || v == "18" => {
-            "react-compiler-runtime".to_string()
+            Cow::Borrowed("react-compiler-runtime")
         }
-        CompilerTarget::MetaInternal { runtime_module, .. } => runtime_module.clone(),
+        CompilerTarget::MetaInternal { runtime_module, .. } => Cow::Owned(runtime_module.clone()),
         // Default to React 19 runtime for unrecognized versions
-        CompilerTarget::Version(_) => "react/compiler-runtime".to_string(),
+        CompilerTarget::Version(_) => Cow::Borrowed("react/compiler-runtime"),
     }
 }

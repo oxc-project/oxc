@@ -11,6 +11,7 @@
 use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_str::format_ident;
 
 use crate::react_compiler_hir::{
     DeclarationId, IdentifierId, IdentifierName, InstructionKind, InstructionValue, LValue,
@@ -134,8 +135,9 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                     // (matches TS makeTemporaryIdentifier which receives place.span)
                     env.identifiers[temp_id.0 as usize].span = place.span;
                     // Promote the temporary
-                    env.identifiers[temp_id.0 as usize].name =
-                        Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
+                    env.identifiers[temp_id.0 as usize].name = Some(IdentifierName::Promoted(
+                        format_ident!(env.allocator, "#t{}", decl_id.0),
+                    ));
                     let temporary = Place {
                         identifier: temp_id,
                         effect: place.effect,

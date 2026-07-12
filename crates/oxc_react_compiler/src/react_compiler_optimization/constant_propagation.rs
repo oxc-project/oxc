@@ -28,6 +28,9 @@ use std::mem::replace;
 
 use rustc_hash::FxHashMap;
 
+use oxc_allocator::Allocator;
+use oxc_str::Ident;
+
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BinaryOperator, BlockKind, FloatValue, FunctionId, GotoVariant, HirFunction, IdentifierId,
@@ -52,13 +55,13 @@ use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecut
 // =============================================================================
 
 #[derive(Debug, Clone)]
-enum Constant {
-    Primitive { value: PrimitiveValue, span: Option<Span> },
-    LoadGlobal { binding: NonLocalBinding, span: Option<Span> },
+enum Constant<'a> {
+    Primitive { value: PrimitiveValue<'a>, span: Option<Span> },
+    LoadGlobal { binding: NonLocalBinding<'a>, span: Option<Span> },
 }
 
-impl Constant {
-    fn into_instruction_value<'a>(self) -> InstructionValue<'a> {
+impl<'a> Constant<'a> {
+    fn into_instruction_value(self) -> InstructionValue<'a> {
         match self {
             Constant::Primitive { value, span } => InstructionValue::Primitive { value, span },
             Constant::LoadGlobal { binding, span } => {
@@ -70,21 +73,21 @@ impl Constant {
 
 /// Map of known constant values. Uses FxHashMap (not FxIndexMap) since iteration
 /// order does not affect correctness — this map is only used for lookups.
-type Constants = FxHashMap<IdentifierId, Constant>;
+type Constants<'a> = FxHashMap<IdentifierId, Constant<'a>>;
 
 // =============================================================================
 // Public entry point
 // =============================================================================
 
 pub fn constant_propagation<'a>(func: &mut HirFunction<'a>, env: &mut Environment<'a>) {
-    let mut constants: Constants = FxHashMap::default();
+    let mut constants: Constants<'a> = FxHashMap::default();
     constant_propagation_impl(func, env, &mut constants);
 }
 
 fn constant_propagation_impl<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-    constants: &mut Constants,
+    constants: &mut Constants<'a>,
 ) {
     loop {
         let have_terminals_changed = apply_constant_propagation(func, env, constants);
@@ -130,7 +133,7 @@ fn constant_propagation_impl<'a>(
 fn apply_constant_propagation<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-    constants: &mut Constants,
+    constants: &mut Constants<'a>,
 ) -> bool {
     let mut has_changes = false;
 
@@ -219,7 +222,7 @@ fn apply_constant_propagation<'a>(
 // Phi evaluation
 // =============================================================================
 
-fn evaluate_phi(phi: &Phi, constants: &Constants) -> Option<Constant> {
+fn evaluate_phi<'a>(phi: &Phi, constants: &Constants<'a>) -> Option<Constant<'a>> {
     let mut value: Option<Constant> = None;
     for (_pred, operand) in &phi.operands {
         let operand_value = constants.get(&operand.identifier)?;
@@ -262,15 +265,15 @@ fn evaluate_phi(phi: &Phi, constants: &Constants) -> Option<Constant> {
 // =============================================================================
 
 fn evaluate_instruction<'a>(
-    constants: &mut Constants,
+    constants: &mut Constants<'a>,
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
     instr_id: InstructionId,
-) -> Option<Constant> {
+) -> Option<Constant<'a>> {
     let instr = &func.instructions[instr_id.0 as usize];
     match &instr.value {
         InstructionValue::Primitive { value, span } => {
-            Some(Constant::Primitive { value: value.clone(), span: *span })
+            Some(Constant::Primitive { value: *value, span: *span })
         }
         InstructionValue::LoadGlobal { binding, span } => {
             Some(Constant::LoadGlobal { binding: binding.clone(), span: *span })
@@ -283,7 +286,7 @@ fn evaluate_instruction<'a>(
                         let object = object.clone();
                         let span = *span;
                         let new_property =
-                            PropertyLiteral::String(s.as_str().expect("guarded utf8").to_string());
+                            PropertyLiteral::String(Ident::from(s.as_str().expect("guarded utf8")));
                         func.instructions[instr_id.0 as usize].value =
                             InstructionValue::PropertyLoad { object, property: new_property, span };
                     }
@@ -311,7 +314,7 @@ fn evaluate_instruction<'a>(
                         let store_value = value.clone();
                         let span = *span;
                         let new_property =
-                            PropertyLiteral::String(s.as_str().expect("guarded utf8").to_string());
+                            PropertyLiteral::String(Ident::from(s.as_str().expect("guarded utf8")));
                         func.instructions[instr_id.0 as usize].value =
                             InstructionValue::PropertyStore {
                                 object,
@@ -434,12 +437,12 @@ fn evaluate_instruction<'a>(
                 Some(Constant::Primitive { value: rhs, .. }),
             ) = (&lhs_value, &rhs_value)
             {
-                let result = evaluate_binary_op(*operator, lhs, rhs);
-                if let Some(ref prim) = result {
+                let result = evaluate_binary_op(*operator, lhs, rhs, env.allocator);
+                if let Some(prim) = result {
                     let span = *span;
                     func.instructions[instr_id.0 as usize].value =
-                        InstructionValue::Primitive { value: prim.clone(), span };
-                    return Some(Constant::Primitive { value: prim.clone(), span });
+                        InstructionValue::Primitive { value: prim, span };
+                    return Some(Constant::Primitive { value: prim, span });
                 }
             }
             None
@@ -477,14 +480,13 @@ fn evaluate_instruction<'a>(
                     result_string.push_str(q.cooked.as_ref()?);
                 }
                 let span = *span;
-                let result = Constant::Primitive {
-                    value: PrimitiveValue::String(JsString::from_marker_string(&result_string)),
-                    span,
-                };
-                func.instructions[instr_id.0 as usize].value = InstructionValue::Primitive {
-                    value: PrimitiveValue::String(JsString::from_marker_string(&result_string)),
-                    span,
-                };
+                let value = PrimitiveValue::String(JsString::from_marker_string(
+                    &result_string,
+                    env.allocator,
+                ));
+                let result = Constant::Primitive { value, span };
+                func.instructions[instr_id.0 as usize].value =
+                    InstructionValue::Primitive { value, span };
                 return Some(result);
             }
 
@@ -497,7 +499,8 @@ fn evaluate_instruction<'a>(
             }
 
             let mut quasi_index = 0usize;
-            let mut result_string = quasis[quasi_index].cooked.as_ref().unwrap().clone();
+            let mut result_string =
+                quasis[quasi_index].cooked.as_ref().unwrap().as_str().to_string();
             quasi_index += 1;
 
             for sub_expr in subexprs {
@@ -516,7 +519,7 @@ fn evaluate_instruction<'a>(
                     PrimitiveValue::Undefined => return None,
                 };
 
-                let suffix = quasis[quasi_index].cooked.clone()?;
+                let suffix = quasis[quasi_index].cooked?;
                 quasi_index += 1;
 
                 result_string.push_str(&expression_str);
@@ -524,14 +527,11 @@ fn evaluate_instruction<'a>(
             }
 
             let span = *span;
-            let result = Constant::Primitive {
-                value: PrimitiveValue::String(JsString::from_marker_string(&result_string)),
-                span,
-            };
-            func.instructions[instr_id.0 as usize].value = InstructionValue::Primitive {
-                value: PrimitiveValue::String(JsString::from_marker_string(&result_string)),
-                span,
-            };
+            let value =
+                PrimitiveValue::String(JsString::from_marker_string(&result_string, env.allocator));
+            let result = Constant::Primitive { value, span };
+            func.instructions[instr_id.0 as usize].value =
+                InstructionValue::Primitive { value, span };
             Some(result)
         }
         InstructionValue::LoadLocal { place, .. } => {
@@ -627,7 +627,11 @@ fn evaluate_instruction<'a>(
 // Inner function processing
 // =============================================================================
 
-fn process_inner_function(func_id: FunctionId, env: &mut Environment, constants: &mut Constants) {
+fn process_inner_function<'a>(
+    func_id: FunctionId,
+    env: &mut Environment<'a>,
+    constants: &mut Constants<'a>,
+) {
     let mut inner = replace(&mut env.functions[func_id.0 as usize], placeholder_function());
     constant_propagation_impl(&mut inner, env, constants);
     env.functions[func_id.0 as usize] = inner;
@@ -637,7 +641,7 @@ fn process_inner_function(func_id: FunctionId, env: &mut Environment, constants:
 // Helper: read constant for a place
 // =============================================================================
 
-fn read(constants: &Constants, place: &Place) -> Option<Constant> {
+fn read<'a>(constants: &Constants<'a>, place: &Place) -> Option<Constant<'a>> {
     constants.get(&place.identifier).cloned()
 }
 
@@ -752,11 +756,12 @@ fn is_truthy(value: &PrimitiveValue) -> bool {
 // Binary operation evaluation
 // =============================================================================
 
-fn evaluate_binary_op(
+fn evaluate_binary_op<'a>(
     operator: BinaryOperator,
     lhs: &PrimitiveValue,
     rhs: &PrimitiveValue,
-) -> Option<PrimitiveValue> {
+    allocator: &'a Allocator,
+) -> Option<PrimitiveValue<'a>> {
     match operator {
         BinaryOperator::Add => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
@@ -767,7 +772,7 @@ fn evaluate_binary_op(
                 // halves split across the operands.
                 let mut units = l.code_units();
                 units.extend(r.code_units());
-                Some(PrimitiveValue::String(JsString::from_code_units(units)))
+                Some(PrimitiveValue::String(JsString::from_code_units(&units, allocator)))
             }
             _ => None,
         },

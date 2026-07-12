@@ -8,6 +8,7 @@
 //! Analogous to TS `Pipeline.ts` (`compileFn` → `run` → `runWithEnvironment`).
 //! Currently runs BuildHIR (lowering) and PruneMaybeThrows.
 
+use oxc_allocator::GetAllocator;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::Span;
 
@@ -96,12 +97,12 @@ use crate::options::CompilerOutputMode;
 #[allow(clippy::too_many_arguments)]
 pub fn compile_fn<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
-    func: &FunctionNode<'_>,
-    scope: &ScopeResolver<'_, '_>,
+    func: &FunctionNode<'_, 'a>,
+    scope: &ScopeResolver<'_, 'a>,
     fn_type: ReactFunctionType,
     mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
-    context: &mut ProgramContext,
+    context: &mut ProgramContext<'a>,
     fn_span: Option<Span>,
 ) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
     match run_pipeline(ast, func, scope, fn_type, mode, env_config, context) {
@@ -131,23 +132,23 @@ pub fn compile_fn<'a>(
 #[allow(clippy::too_many_arguments)]
 fn run_pipeline<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
-    func: &FunctionNode<'_>,
-    scope: &ScopeResolver<'_, '_>,
+    func: &FunctionNode<'_, 'a>,
+    scope: &ScopeResolver<'_, 'a>,
     fn_type: ReactFunctionType,
     mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
-    context: &mut ProgramContext,
+    context: &mut ProgramContext<'a>,
 ) -> Result<Result<Option<CodegenFunction<'a>>, Diagnostics>, OxcDiagnostic> {
-    let mut env = Environment::with_config(env_config.clone());
+    let mut env = Environment::with_config(ast.allocator(), env_config.clone());
     env.fn_type = fn_type;
     env.output_mode = match mode {
         CompilerOutputMode::Ssr => OutputMode::Ssr,
         CompilerOutputMode::Client => OutputMode::Client,
         CompilerOutputMode::Lint => OutputMode::Lint,
     };
-    env.instrument_fn_name = context.instrument_fn_name.clone();
-    env.instrument_gating_name = context.instrument_gating_name.clone();
-    env.hook_guard_name = context.hook_guard_name.clone();
+    env.instrument_fn_name = context.instrument_fn_name;
+    env.instrument_gating_name = context.instrument_gating_name;
+    env.hook_guard_name = context.hook_guard_name;
     env.seed_uid_known_names(context.known_referenced_names());
 
     let mut hir = lower(func, scope, &mut env)?;
@@ -346,7 +347,7 @@ fn run_pipeline<'a>(
     let unique_identifiers = rename_variables(&mut reactive_fn, &mut env);
 
     for name in &unique_identifiers {
-        context.add_new_reference(name.clone());
+        context.add_new_reference(*name);
     }
 
     prune_hoisted_contexts(&mut reactive_fn, &env)?;

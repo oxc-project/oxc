@@ -9,6 +9,7 @@
 //! This pass is conditional on `env.config.enable_jsx_outlining` (defaults to false).
 
 use crate::react_compiler_utils::FxIndexSet;
+use oxc_str::{Ident, IdentHashSet, format_ident};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_hir::Effect;
@@ -45,9 +46,9 @@ struct JsxInstrInfo {
     eval_order: EvaluationOrder,
 }
 
-struct OutlinedJsxAttribute {
-    original_name: String,
-    new_name: String,
+struct OutlinedJsxAttribute<'a> {
+    original_name: Ident<'a>,
+    new_name: Ident<'a>,
     place: Place,
 }
 
@@ -237,7 +238,7 @@ fn process_jsx_group<'a>(
     let props = collect_props(func, env, jsx_group)?;
 
     let outlined_tag = env.generate_globally_unique_identifier_name(None);
-    let new_instrs = emit_outlined_jsx(func, env, jsx_group, &props, &outlined_tag)?;
+    let new_instrs = emit_outlined_jsx(func, env, jsx_group, &props, outlined_tag)?;
     let outlined_fn = emit_outlined_fn(func, env, jsx_group, &props, globals)?;
 
     // Set the outlined function's id
@@ -251,19 +252,20 @@ fn collect_props<'a>(
     func: &HirFunction<'a>,
     env: &mut Environment<'a>,
     jsx_group: &[JsxInstrInfo],
-) -> Option<Vec<OutlinedJsxAttribute>> {
+) -> Option<Vec<OutlinedJsxAttribute<'a>>> {
     let mut id_counter = 1u32;
-    let mut seen: FxHashSet<String> = FxHashSet::default();
+    let mut seen: IdentHashSet<'a> = IdentHashSet::default();
     let mut attributes = Vec::new();
     let jsx_ids: FxHashSet<IdentifierId> = jsx_group.iter().map(|j| j.lvalue_id).collect();
 
-    let mut generate_name = |old_name: &str| -> String {
-        let mut new_name = old_name.to_string();
+    let allocator = env.allocator;
+    let mut generate_name = |old_name: Ident<'a>| -> Ident<'a> {
+        let mut new_name = old_name;
         while seen.contains(&new_name) {
-            new_name = format!("{}{}", old_name, id_counter);
+            new_name = format_ident!(allocator, "{old_name}{id_counter}");
             id_counter += 1;
         }
-        seen.insert(new_name.clone());
+        seen.insert(new_name);
         // TS: env.programContext.addNewReference(newName)
         // We don't have programContext in Rust, but this is needed for unique name tracking
         new_name
@@ -276,9 +278,9 @@ fn collect_props<'a>(
                 match attr {
                     JsxAttribute::SpreadAttribute { .. } => return None,
                     JsxAttribute::Attribute { name, place } => {
-                        let new_name = generate_name(name);
+                        let new_name = generate_name(*name);
                         attributes.push(OutlinedJsxAttribute {
-                            original_name: name.clone(),
+                            original_name: *name,
                             new_name,
                             place: place.clone(),
                         });
@@ -295,16 +297,17 @@ fn collect_props<'a>(
                     let child_id = child.identifier;
                     let decl_id = env.identifiers[child_id.0 as usize].declaration_id;
                     if env.identifiers[child_id.0 as usize].name.is_none() {
-                        env.identifiers[child_id.0 as usize].name =
-                            Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
+                        env.identifiers[child_id.0 as usize].name = Some(IdentifierName::Promoted(
+                            format_ident!(allocator, "#t{}", decl_id.0),
+                        ));
                     }
 
-                    let child_name = match &env.identifiers[child_id.0 as usize].name {
-                        Some(IdentifierName::Named(n)) => n.clone(),
-                        Some(IdentifierName::Promoted(n)) => n.clone(),
-                        None => format!("#t{}", decl_id.0),
+                    let child_name = match env.identifiers[child_id.0 as usize].name {
+                        Some(IdentifierName::Named(n)) => n,
+                        Some(IdentifierName::Promoted(n)) => n,
+                        None => format_ident!(allocator, "#t{}", decl_id.0),
                     };
-                    let new_name = generate_name("t");
+                    let new_name = generate_name(Ident::from("t"));
                     attributes.push(OutlinedJsxAttribute {
                         original_name: child_name,
                         new_name,
@@ -322,12 +325,12 @@ fn emit_outlined_jsx<'a>(
     func: &HirFunction<'a>,
     env: &mut Environment<'a>,
     jsx_group: &[JsxInstrInfo],
-    outlined_props: &[OutlinedJsxAttribute],
-    outlined_tag: &str,
+    outlined_props: &[OutlinedJsxAttribute<'a>],
+    outlined_tag: Ident<'a>,
 ) -> Option<Vec<Instruction<'a>>> {
     let props: Vec<JsxAttribute> = outlined_props
         .iter()
-        .map(|p| JsxAttribute::Attribute { name: p.new_name.clone(), place: p.place.clone() })
+        .map(|p| JsxAttribute::Attribute { name: p.new_name, place: p.place.clone() })
         .collect();
 
     // Create LoadGlobal for the outlined component
@@ -335,7 +338,7 @@ fn emit_outlined_jsx<'a>(
     // Promote it as a JSX tag temporary
     let decl_id = env.identifiers[load_id.0 as usize].declaration_id;
     env.identifiers[load_id.0 as usize].name =
-        Some(IdentifierName::Promoted(format!("#T{}", decl_id.0)));
+        Some(IdentifierName::Promoted(format_ident!(env.allocator, "#T{}", decl_id.0)));
 
     let load_place =
         Place { identifier: load_id, effect: Effect::Unknown, reactive: false, span: None };
@@ -344,7 +347,7 @@ fn emit_outlined_jsx<'a>(
         id: EvaluationOrder(0),
         lvalue: load_place.clone(),
         value: InstructionValue::LoadGlobal {
-            binding: NonLocalBinding::ModuleLocal { name: outlined_tag.to_string() },
+            binding: NonLocalBinding::ModuleLocal { name: outlined_tag },
             span: None,
         },
         span: None,
@@ -376,7 +379,7 @@ fn emit_outlined_fn<'a>(
     func: &HirFunction<'a>,
     env: &mut Environment<'a>,
     jsx_group: &[JsxInstrInfo],
-    old_props: &[OutlinedJsxAttribute],
+    old_props: &[OutlinedJsxAttribute<'a>],
     globals: &FxHashMap<IdentifierId, usize>,
 ) -> Option<HirFunction<'a>> {
     let old_to_new_props = create_old_to_new_props_mapping(env, old_props);
@@ -385,7 +388,7 @@ fn emit_outlined_fn<'a>(
     let props_obj_id = env.next_identifier_id();
     let decl_id = env.identifiers[props_obj_id.0 as usize].declaration_id;
     env.identifiers[props_obj_id.0 as usize].name =
-        Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
+        Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.0)));
     let props_obj =
         Place { identifier: props_obj_id, effect: Effect::Unknown, reactive: false, span: None };
 
@@ -478,7 +481,7 @@ fn emit_load_globals<'a>(
 fn emit_updated_jsx<'a>(
     func: &HirFunction<'a>,
     jsx_group: &[JsxInstrInfo],
-    old_to_new_props: &FxIndexMap<IdentifierId, OutlinedJsxAttribute>,
+    old_to_new_props: &FxIndexMap<IdentifierId, OutlinedJsxAttribute<'a>>,
 ) -> Vec<Instruction<'a>> {
     let jsx_ids: FxHashSet<IdentifierId> = jsx_group.iter().map(|j| j.lvalue_id).collect();
     let mut new_instrs = Vec::new();
@@ -512,7 +515,7 @@ fn emit_updated_jsx<'a>(
                     .get(&place.identifier)
                     .expect("Expected a new property for identifier");
                 new_props.push(JsxAttribute::Attribute {
-                    name: new_prop.original_name.clone(),
+                    name: new_prop.original_name,
                     place: new_prop.place.clone(),
                 });
             }
@@ -553,10 +556,10 @@ fn emit_updated_jsx<'a>(
     new_instrs
 }
 
-fn create_old_to_new_props_mapping(
-    env: &mut Environment<'_>,
-    old_props: &[OutlinedJsxAttribute],
-) -> FxIndexMap<IdentifierId, OutlinedJsxAttribute> {
+fn create_old_to_new_props_mapping<'a>(
+    env: &mut Environment<'a>,
+    old_props: &[OutlinedJsxAttribute<'a>],
+) -> FxIndexMap<IdentifierId, OutlinedJsxAttribute<'a>> {
     let mut old_to_new = FxIndexMap::default();
 
     for old_prop in old_props {
@@ -565,8 +568,7 @@ fn create_old_to_new_props_mapping(
         }
 
         let new_id = env.next_identifier_id();
-        env.identifiers[new_id.0 as usize].name =
-            Some(IdentifierName::Named(old_prop.new_name.clone()));
+        env.identifiers[new_id.0 as usize].name = Some(IdentifierName::Named(old_prop.new_name));
 
         let new_place =
             Place { identifier: new_id, effect: Effect::Unknown, reactive: false, span: None };
@@ -574,8 +576,8 @@ fn create_old_to_new_props_mapping(
         old_to_new.insert(
             old_prop.place.identifier,
             OutlinedJsxAttribute {
-                original_name: old_prop.original_name.clone(),
-                new_name: old_prop.new_name.clone(),
+                original_name: old_prop.original_name,
+                new_name: old_prop.new_name,
                 place: new_place,
             },
         );
@@ -587,12 +589,12 @@ fn create_old_to_new_props_mapping(
 fn emit_destructure_props<'a>(
     env: &mut Environment<'a>,
     props_obj: &Place,
-    old_to_new_props: &FxIndexMap<IdentifierId, OutlinedJsxAttribute>,
+    old_to_new_props: &FxIndexMap<IdentifierId, OutlinedJsxAttribute<'a>>,
 ) -> Instruction<'a> {
     let mut properties = Vec::new();
     for prop in old_to_new_props.values() {
         properties.push(ObjectPropertyOrSpread::Property(ObjectProperty {
-            key: ObjectPropertyKey::String { name: prop.new_name.clone() },
+            key: ObjectPropertyKey::String { name: prop.new_name },
             property_type: ObjectPropertyType::Property,
             place: prop.place.clone(),
         }));

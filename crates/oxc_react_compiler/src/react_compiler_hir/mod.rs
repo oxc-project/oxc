@@ -14,6 +14,7 @@ use crate::react_compiler_utils::FxIndexSet;
 use oxc_ast::ast as oxc;
 use oxc_diagnostics::OxcDiagnostic;
 pub use oxc_span::Span;
+use oxc_str::{Ident, Str};
 pub use raw::RawTypeCategory;
 pub use reactive::*;
 
@@ -156,8 +157,8 @@ pub fn format_js_number(n: f64) -> String {
 #[derive(Debug, Clone)]
 pub struct HirFunction<'a> {
     pub span: Option<Span>,
-    pub id: Option<String>,
-    pub name_hint: Option<String>,
+    pub id: Option<Ident<'a>>,
+    pub name_hint: Option<Ident<'a>>,
     pub fn_type: ReactFunctionType,
     pub params: Vec<ParamPattern>,
     pub returns: Place,
@@ -166,7 +167,7 @@ pub struct HirFunction<'a> {
     pub instructions: Vec<Instruction<'a>>,
     pub generator: bool,
     pub is_async: bool,
-    pub directives: Vec<String>,
+    pub directives: Vec<Str<'a>>,
     pub aliasing_effects: Option<Vec<AliasingEffect>>,
 }
 
@@ -535,15 +536,15 @@ pub struct LValue {
 }
 
 #[derive(Debug, Clone)]
-pub struct LValuePattern {
-    pub pattern: Pattern,
+pub struct LValuePattern<'a> {
+    pub pattern: Pattern<'a>,
     pub kind: InstructionKind,
 }
 
 #[derive(Debug, Clone)]
-pub enum Pattern {
+pub enum Pattern<'a> {
     Array(ArrayPattern),
-    Object(ObjectPattern),
+    Object(ObjectPattern<'a>),
 }
 
 // =============================================================================
@@ -579,16 +580,16 @@ pub enum InstructionValue<'a> {
         span: Option<Span>,
     },
     Destructure {
-        lvalue: LValuePattern,
+        lvalue: LValuePattern<'a>,
         value: Place,
         span: Option<Span>,
     },
     Primitive {
-        value: PrimitiveValue,
+        value: PrimitiveValue<'a>,
         span: Option<Span>,
     },
     JSXText {
-        value: String,
+        value: Str<'a>,
         span: Option<Span>,
     },
     BinaryExpression {
@@ -620,7 +621,7 @@ pub enum InstructionValue<'a> {
     },
     TypeCastExpression {
         value: Place,
-        type_annotation_kind: Option<String>,
+        type_annotation_kind: Option<&'static str>,
         /// The original oxc AST type annotation subtree, preserved for codegen,
         /// which re-emits it by cloning into the output allocator (and applying any
         /// identifier renames via the environment for the rare rename case).
@@ -628,15 +629,15 @@ pub enum InstructionValue<'a> {
         span: Option<Span>,
     },
     JsxExpression {
-        tag: JsxTag,
-        props: Vec<JsxAttribute>,
+        tag: JsxTag<'a>,
+        props: Vec<JsxAttribute<'a>>,
         children: Option<Vec<Place>>,
         span: Option<Span>,
         opening_span: Option<Span>,
         closing_span: Option<Span>,
     },
     ObjectExpression {
-        properties: Vec<ObjectPropertyOrSpread>,
+        properties: Vec<ObjectPropertyOrSpread<'a>>,
         span: Option<Span>,
     },
     ObjectMethod {
@@ -652,29 +653,29 @@ pub enum InstructionValue<'a> {
         span: Option<Span>,
     },
     RegExpLiteral {
-        pattern: String,
-        flags: String,
+        pattern: Str<'a>,
+        flags: Str<'a>,
         span: Option<Span>,
     },
     MetaProperty {
-        meta: String,
-        property: String,
+        meta: Ident<'a>,
+        property: Ident<'a>,
         span: Option<Span>,
     },
     PropertyStore {
         object: Place,
-        property: PropertyLiteral,
+        property: PropertyLiteral<'a>,
         value: Place,
         span: Option<Span>,
     },
     PropertyLoad {
         object: Place,
-        property: PropertyLiteral,
+        property: PropertyLiteral<'a>,
         span: Option<Span>,
     },
     PropertyDelete {
         object: Place,
-        property: PropertyLiteral,
+        property: PropertyLiteral<'a>,
         span: Option<Span>,
     },
     ComputedStore {
@@ -694,17 +695,17 @@ pub enum InstructionValue<'a> {
         span: Option<Span>,
     },
     LoadGlobal {
-        binding: NonLocalBinding,
+        binding: NonLocalBinding<'a>,
         span: Option<Span>,
     },
     StoreGlobal {
-        name: String,
+        name: Ident<'a>,
         value: Place,
         span: Option<Span>,
     },
     FunctionExpression {
-        name: Option<String>,
-        name_hint: Option<String>,
+        name: Option<Ident<'a>>,
+        name_hint: Option<Ident<'a>>,
         lowered_func: LoweredFunction,
         expr_type: FunctionExpressionType,
         span: Option<Span>,
@@ -715,13 +716,13 @@ pub enum InstructionValue<'a> {
         // Upstream's HIR models only a single quasi with no interpolation; the
         // oxc port extends it to support `tag`-ed templates with `${...}`
         // interpolations (a deliberate divergence from the TS reference).
-        quasis: Vec<TemplateQuasi>,
+        quasis: Vec<TemplateQuasi<'a>>,
         subexprs: Vec<Place>,
         span: Option<Span>,
     },
     TemplateLiteral {
         subexprs: Vec<Place>,
-        quasis: Vec<TemplateQuasi>,
+        quasis: Vec<TemplateQuasi<'a>>,
         span: Option<Span>,
     },
     Await {
@@ -758,7 +759,7 @@ pub enum InstructionValue<'a> {
     },
     StartMemoize {
         manual_memo_id: u32,
-        deps: Option<Vec<ManualMemoDependency>>,
+        deps: Option<Vec<ManualMemoDependency<'a>>>,
         deps_span: Option<Option<Span>>,
         has_invalid_deps: bool,
         span: Option<Span>,
@@ -832,13 +833,13 @@ impl<'a> InstructionValue<'a> {
 // Supporting types
 // =============================================================================
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum PrimitiveValue {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PrimitiveValue<'a> {
     Null,
     Undefined,
     Boolean(bool),
     Number(FloatValue),
-    String(crate::react_compiler_utils::JsString),
+    String(crate::react_compiler_utils::JsString<'a>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -942,27 +943,27 @@ pub enum FunctionExpressionType {
 }
 
 #[derive(Debug, Clone)]
-pub struct TemplateQuasi {
-    pub raw: String,
-    pub cooked: Option<String>,
+pub struct TemplateQuasi<'a> {
+    pub raw: Str<'a>,
+    pub cooked: Option<Str<'a>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct ManualMemoDependency {
-    pub root: ManualMemoDependencyRoot,
-    pub path: Vec<DependencyPathEntry>,
+pub struct ManualMemoDependency<'a> {
+    pub root: ManualMemoDependencyRoot<'a>,
+    pub path: Vec<DependencyPathEntry<'a>>,
     pub span: Option<Span>,
 }
 
 #[derive(Debug, Clone)]
-pub enum ManualMemoDependencyRoot {
+pub enum ManualMemoDependencyRoot<'a> {
     NamedLocal { value: Place, constant: bool },
-    Global { identifier_name: String },
+    Global { identifier_name: Ident<'a> },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DependencyPathEntry {
-    pub property: PropertyLiteral,
+pub struct DependencyPathEntry<'a> {
+    pub property: PropertyLiteral<'a>,
     pub optional: bool,
     pub span: Option<Span>,
 }
@@ -980,10 +981,10 @@ pub struct Place {
 }
 
 #[derive(Debug, Clone)]
-pub struct Identifier {
+pub struct Identifier<'a> {
     pub id: IdentifierId,
     pub declaration_id: DeclarationId,
-    pub name: Option<IdentifierName>,
+    pub name: Option<IdentifierName<'a>>,
     pub mutable_range: MutableRange,
     pub scope: Option<ScopeId>,
     pub type_: TypeId,
@@ -1015,16 +1016,16 @@ impl MutableRange {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum IdentifierName {
-    Named(String),
-    Promoted(String),
+#[derive(Debug, Clone, Copy)]
+pub enum IdentifierName<'a> {
+    Named(Ident<'a>),
+    Promoted(Ident<'a>),
 }
 
-impl IdentifierName {
-    pub fn value(&self) -> &str {
+impl<'a> IdentifierName<'a> {
+    pub fn value(&self) -> &'a str {
         match self {
-            IdentifierName::Named(v) | IdentifierName::Promoted(v) => v,
+            IdentifierName::Named(v) | IdentifierName::Promoted(v) => v.as_str(),
         }
     }
 }
@@ -1090,27 +1091,27 @@ pub enum ArrayPatternElement {
 }
 
 #[derive(Debug, Clone)]
-pub struct ObjectPattern {
-    pub properties: Vec<ObjectPropertyOrSpread>,
+pub struct ObjectPattern<'a> {
+    pub properties: Vec<ObjectPropertyOrSpread<'a>>,
 }
 
 #[derive(Debug, Clone)]
-pub enum ObjectPropertyOrSpread {
-    Property(ObjectProperty),
+pub enum ObjectPropertyOrSpread<'a> {
+    Property(ObjectProperty<'a>),
     Spread(SpreadPattern),
 }
 
 #[derive(Debug, Clone)]
-pub struct ObjectProperty {
-    pub key: ObjectPropertyKey,
+pub struct ObjectProperty<'a> {
+    pub key: ObjectPropertyKey<'a>,
     pub property_type: ObjectPropertyType,
     pub place: Place,
 }
 
 #[derive(Debug, Clone)]
-pub enum ObjectPropertyKey {
-    String { name: String },
-    Identifier { name: String },
+pub enum ObjectPropertyKey<'a> {
+    String { name: Ident<'a> },
+    Identifier { name: Ident<'a> },
     Computed { name: Place },
 }
 
@@ -1129,19 +1130,19 @@ impl std::fmt::Display for ObjectPropertyType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum PropertyLiteral {
-    String(String),
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PropertyLiteral<'a> {
+    String(Ident<'a>),
     Number(FloatValue),
 }
 
-impl PropertyLiteral {
+impl PropertyLiteral<'_> {
     pub fn is_string(&self, value: &str) -> bool {
-        matches!(self, Self::String(s) if s == value)
+        matches!(self, Self::String(s) if *s == value)
     }
 }
 
-impl std::fmt::Display for PropertyLiteral {
+impl std::fmt::Display for PropertyLiteral<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             PropertyLiteral::String(s) => write!(f, "{}", s),
@@ -1169,20 +1170,20 @@ pub struct LoweredFunction {
 }
 
 #[derive(Debug, Clone)]
-pub struct BuiltinTag {
-    pub name: String,
+pub struct BuiltinTag<'a> {
+    pub name: Ident<'a>,
 }
 
 #[derive(Debug, Clone)]
-pub enum JsxTag {
+pub enum JsxTag<'a> {
     Place(Place),
-    Builtin(BuiltinTag),
+    Builtin(BuiltinTag<'a>),
 }
 
 #[derive(Debug, Clone)]
-pub enum JsxAttribute {
+pub enum JsxAttribute<'a> {
     SpreadAttribute { argument: Place },
-    Attribute { name: String, place: Place },
+    Attribute { name: Ident<'a>, place: Place },
 }
 
 // =============================================================================
@@ -1202,33 +1203,33 @@ pub enum BindingKind {
 }
 
 #[derive(Debug, Clone)]
-pub enum VariableBinding {
+pub enum VariableBinding<'a> {
     Identifier { identifier: IdentifierId, binding_kind: BindingKind },
-    Global { name: String },
-    ImportDefault { name: String, module: String },
-    ImportSpecifier { name: String, module: String, imported: String },
-    ImportNamespace { name: String, module: String },
-    ModuleLocal { name: String },
+    Global { name: Ident<'a> },
+    ImportDefault { name: Ident<'a>, module: Str<'a> },
+    ImportSpecifier { name: Ident<'a>, module: Str<'a>, imported: Ident<'a> },
+    ImportNamespace { name: Ident<'a>, module: Str<'a> },
+    ModuleLocal { name: Ident<'a> },
 }
 
 #[derive(Debug, Clone)]
-pub enum NonLocalBinding {
-    ImportDefault { name: String, module: String },
-    ImportSpecifier { name: String, module: String, imported: String },
-    ImportNamespace { name: String, module: String },
-    ModuleLocal { name: String },
-    Global { name: String },
+pub enum NonLocalBinding<'a> {
+    ImportDefault { name: Ident<'a>, module: Str<'a> },
+    ImportSpecifier { name: Ident<'a>, module: Str<'a>, imported: Ident<'a> },
+    ImportNamespace { name: Ident<'a>, module: Str<'a> },
+    ModuleLocal { name: Ident<'a> },
+    Global { name: Ident<'a> },
 }
 
-impl NonLocalBinding {
+impl<'a> NonLocalBinding<'a> {
     /// Returns the `name` field common to all variants.
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> Ident<'a> {
         match self {
             NonLocalBinding::ImportDefault { name, .. }
             | NonLocalBinding::ImportSpecifier { name, .. }
             | NonLocalBinding::ImportNamespace { name, .. }
             | NonLocalBinding::ModuleLocal { name, .. }
-            | NonLocalBinding::Global { name, .. } => name,
+            | NonLocalBinding::Global { name, .. } => *name,
         }
     }
 }
@@ -1238,15 +1239,15 @@ impl NonLocalBinding {
 // =============================================================================
 
 #[derive(Debug, Clone)]
-pub enum Type {
+pub enum Type<'a> {
     Primitive,
     Function {
-        shape_id: Option<String>,
-        return_type: Box<Type>,
+        shape_id: Option<Ident<'a>>,
+        return_type: Box<Type<'a>>,
         is_constructor: bool,
     },
     Object {
-        shape_id: Option<String>,
+        shape_id: Option<Ident<'a>>,
     },
     #[allow(clippy::enum_variant_names)]
     TypeVar {
@@ -1254,19 +1255,19 @@ pub enum Type {
     },
     Poly,
     Phi {
-        operands: Vec<Type>,
+        operands: Vec<Type<'a>>,
     },
     Property {
-        object_type: Box<Type>,
-        object_name: String,
-        property_name: PropertyNameKind,
+        object_type: Box<Type<'a>>,
+        object_name: Ident<'a>,
+        property_name: PropertyNameKind<'a>,
     },
     ObjectMethod,
 }
 
 #[derive(Debug, Clone)]
-pub enum PropertyNameKind {
-    Literal { value: PropertyLiteral },
+pub enum PropertyNameKind<'a> {
+    Literal { value: PropertyLiteral<'a> },
     Computed,
 }
 
@@ -1275,12 +1276,12 @@ pub enum PropertyNameKind {
 // =============================================================================
 
 #[derive(Debug, Clone)]
-pub struct ReactiveScope {
+pub struct ReactiveScope<'a> {
     pub id: ScopeId,
     pub range: MutableRange,
 
     /// The inputs to this reactive scope (populated by later passes)
-    pub dependencies: Vec<ReactiveScopeDependency>,
+    pub dependencies: Vec<ReactiveScopeDependency<'a>>,
 
     /// The set of values produced by this scope (populated by later passes)
     pub declarations: Vec<(IdentifierId, ReactiveScopeDeclaration)>,
@@ -1300,10 +1301,10 @@ pub struct ReactiveScope {
 
 /// A dependency of a reactive scope.
 #[derive(Debug, Clone)]
-pub struct ReactiveScopeDependency {
+pub struct ReactiveScopeDependency<'a> {
     pub identifier: IdentifierId,
     pub reactive: bool,
-    pub path: Vec<DependencyPathEntry>,
+    pub path: Vec<DependencyPathEntry<'a>>,
     pub span: Option<Span>,
 }
 
@@ -1425,27 +1426,27 @@ pub fn is_primitive_type(ty: &Type) -> bool {
 
 /// Returns true if the type is the props object.
 pub fn is_props_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == BUILT_IN_PROPS_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == BUILT_IN_PROPS_ID)
 }
 
 /// Returns true if the type is an array.
 pub fn is_array_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == BUILT_IN_ARRAY_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == BUILT_IN_ARRAY_ID)
 }
 
 /// Returns true if the type is JSX.
 pub fn is_jsx_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == BUILT_IN_JSX_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == BUILT_IN_JSX_ID)
 }
 
 /// Returns true if the identifier type is a ref value.
 pub fn is_ref_value_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == BUILT_IN_REF_VALUE_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == BUILT_IN_REF_VALUE_ID)
 }
 
 /// Returns true if the identifier type is useRef.
 pub fn is_use_ref_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == BUILT_IN_USE_REF_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == BUILT_IN_USE_REF_ID)
 }
 
 /// Returns true if the type is a ref or ref value.
@@ -1455,38 +1456,38 @@ pub fn is_ref_or_ref_value(ty: &Type) -> bool {
 
 /// Returns true if the type is a useState result (BuiltInUseState).
 pub fn is_use_state_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == object_shape::BUILT_IN_USE_STATE_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == object_shape::BUILT_IN_USE_STATE_ID)
 }
 
 /// Returns true if the type is a setState function (BuiltInSetState).
 pub fn is_set_state_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_STATE_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_SET_STATE_ID)
 }
 
 /// Returns true if the type is a useEffect hook.
 pub fn is_use_effect_hook_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_USE_EFFECT_HOOK_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_USE_EFFECT_HOOK_ID)
 }
 
 /// Returns true if the type is a useLayoutEffect hook.
 pub fn is_use_layout_effect_hook_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID)
 }
 
 /// Returns true if the type is a useInsertionEffect hook.
 pub fn is_use_insertion_effect_hook_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID)
 }
 
 /// Returns true if the type is a useEffectEvent function.
 pub fn is_use_effect_event_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_USE_EFFECT_EVENT_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_USE_EFFECT_EVENT_ID)
 }
 
 /// Returns true if the type is a ref or ref-like mutable type (e.g. Reanimated shared values).
 pub fn is_ref_or_ref_like_mutable_type(ty: &Type) -> bool {
     matches!(ty, Type::Object { shape_id: Some(id) }
-        if id == object_shape::BUILT_IN_USE_REF_ID || id == object_shape::REANIMATED_SHARED_VALUE_ID)
+        if *id == object_shape::BUILT_IN_USE_REF_ID || *id == object_shape::REANIMATED_SHARED_VALUE_ID)
 }
 
 /// Returns true if the type is the `use()` operator (React.use).
@@ -1494,16 +1495,16 @@ pub fn is_use_operator_type(ty: &Type) -> bool {
     matches!(
         ty,
         Type::Function { shape_id: Some(id), .. }
-            if id == BUILT_IN_USE_OPERATOR_ID
+            if *id == BUILT_IN_USE_OPERATOR_ID
     )
 }
 
 /// Returns true if the type is a plain object (BuiltInObject).
 pub fn is_plain_object_type(ty: &Type) -> bool {
-    matches!(ty, Type::Object { shape_id: Some(id) } if id == object_shape::BUILT_IN_OBJECT_ID)
+    matches!(ty, Type::Object { shape_id: Some(id) } if *id == object_shape::BUILT_IN_OBJECT_ID)
 }
 
 /// Returns true if the type is a startTransition function (BuiltInStartTransition).
 pub fn is_start_transition_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_START_TRANSITION_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_START_TRANSITION_ID)
 }

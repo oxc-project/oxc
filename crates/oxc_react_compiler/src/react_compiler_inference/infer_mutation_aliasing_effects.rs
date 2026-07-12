@@ -3008,7 +3008,7 @@ fn conditionally_mutate_iterator(place: &Place, ty: &Type) -> Option<AliasingEff
 
 fn is_builtin_collection_type(ty: &Type) -> bool {
     matches!(ty, Type::Object { shape_id: Some(id) }
-        if id == BUILT_IN_ARRAY_ID || id == BUILT_IN_SET_ID || id == BUILT_IN_MAP_ID
+        if *id == BUILT_IN_ARRAY_ID || *id == BUILT_IN_SET_ID || *id == BUILT_IN_MAP_ID
     )
 }
 
@@ -3033,7 +3033,7 @@ fn get_hook_kind_for_type<'a>(
 }
 
 /// Format a Type for printPlace-style output, matching TS's `printType()`.
-fn format_type_for_print(ty: &Type) -> Cow<'_, str> {
+fn format_type_for_print<'t>(ty: &'t Type) -> Cow<'t, str> {
     match ty {
         Type::Primitive => Cow::Borrowed(""),
         Type::Function { shape_id, return_type, .. } => {
@@ -3144,7 +3144,7 @@ enum PatternItem<'a> {
     Spread(&'a Place),
 }
 
-fn each_pattern_items(pattern: &Pattern) -> Vec<PatternItem<'_>> {
+fn each_pattern_items<'p>(pattern: &'p Pattern) -> Vec<PatternItem<'p>> {
     let mut items = Vec::new();
     match pattern {
         Pattern::Array(arr) => {

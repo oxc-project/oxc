@@ -25,7 +25,7 @@ use crate::react_compiler_hir::{
 };
 
 /// State tracked during manual memo validation within a StartMemoize..FinishMemoize range.
-struct ManualMemoBlockState {
+struct ManualMemoBlockState<'h> {
     /// Reassigned temporaries (declaration_id -> set of identifier ids that were reassigned to it).
     reassignments: FxHashMap<DeclarationId, FxHashSet<IdentifierId>>,
     /// Source location of the StartMemoize instruction.
@@ -33,7 +33,7 @@ struct ManualMemoBlockState {
     /// Declarations produced within this manual memo block.
     decls: FxHashSet<DeclarationId>,
     /// Normalized deps from source (useMemo/useCallback dep array).
-    deps_from_source: Option<Vec<ManualMemoDependency>>,
+    deps_from_source: Option<Vec<ManualMemoDependency<'h>>>,
     /// Manual memo id from StartMemoize.
     manual_memo_id: u32,
 }
@@ -41,13 +41,13 @@ struct ManualMemoBlockState {
 /// Top-level visitor state.
 struct VisitorState<'a, 'h> {
     env: &'a mut Environment<'h>,
-    manual_memo_state: Option<ManualMemoBlockState>,
+    manual_memo_state: Option<ManualMemoBlockState<'h>>,
     /// Completed (non-pruned) scope IDs.
     scopes: FxHashSet<ScopeId>,
     /// Completed pruned scope IDs.
     pruned_scopes: FxHashSet<ScopeId>,
     /// Map from identifier ID to its normalized manual memo dependency.
-    temporaries: FxHashMap<IdentifierId, ManualMemoDependency>,
+    temporaries: FxHashMap<IdentifierId, ManualMemoDependency<'h>>,
 }
 
 /// Validate that manual memoization (useMemo/useCallback) is preserved.
@@ -57,9 +57,9 @@ struct VisitorState<'a, 'h> {
 /// 1. Dependencies' scopes have completed before the memo block starts
 /// 2. Memoized values are actually within scopes (not unmemoized)
 /// 3. Inferred scope dependencies match the source dependencies
-pub fn validate_preserved_manual_memoization(
-    func: &ReactiveFunction<'_>,
-    env: &mut Environment<'_>,
+pub fn validate_preserved_manual_memoization<'h>(
+    func: &ReactiveFunction<'h>,
+    env: &mut Environment<'h>,
 ) {
     let mut state = VisitorState {
         env,
@@ -75,13 +75,13 @@ fn is_named(ident: &Identifier) -> bool {
     matches!(ident.name, Some(IdentifierName::Named(_)))
 }
 
-fn visit_block(block: &ReactiveBlock, state: &mut VisitorState<'_, '_>) {
+fn visit_block<'h>(block: &ReactiveBlock<'h>, state: &mut VisitorState<'_, 'h>) {
     for stmt in block {
         visit_statement(stmt, state);
     }
 }
 
-fn visit_statement(stmt: &ReactiveStatement, state: &mut VisitorState<'_, '_>) {
+fn visit_statement<'h>(stmt: &ReactiveStatement<'h>, state: &mut VisitorState<'_, 'h>) {
     match stmt {
         ReactiveStatement::Instruction(instr) => {
             visit_instruction(instr, state);
@@ -98,7 +98,7 @@ fn visit_statement(stmt: &ReactiveStatement, state: &mut VisitorState<'_, '_>) {
     }
 }
 
-fn visit_terminal(terminal: &ReactiveTerminalStatement, state: &mut VisitorState) {
+fn visit_terminal<'h>(terminal: &ReactiveTerminalStatement<'h>, state: &mut VisitorState<'_, 'h>) {
     match &terminal.terminal {
         ReactiveTerminal::If { consequent, alternate, .. } => {
             visit_block(consequent, state);
@@ -131,7 +131,7 @@ fn visit_terminal(terminal: &ReactiveTerminalStatement, state: &mut VisitorState
     }
 }
 
-fn visit_scope(scope_block: &ReactiveScopeBlock, state: &mut VisitorState<'_, '_>) {
+fn visit_scope<'h>(scope_block: &ReactiveScopeBlock<'h>, state: &mut VisitorState<'_, 'h>) {
     // Traverse the scope's instructions first
     visit_block(&scope_block.instructions, state);
 
@@ -167,12 +167,12 @@ fn visit_scope(scope_block: &ReactiveScopeBlock, state: &mut VisitorState<'_, '_
     }
 }
 
-fn visit_pruned_scope(pruned: &PrunedReactiveScopeBlock, state: &mut VisitorState) {
+fn visit_pruned_scope<'h>(pruned: &PrunedReactiveScopeBlock<'h>, state: &mut VisitorState<'_, 'h>) {
     visit_block(&pruned.instructions, state);
     state.pruned_scopes.insert(pruned.scope);
 }
 
-fn visit_instruction(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '_>) {
+fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorState<'_, 'h>) {
     // Record temporaries and deps in the instruction's value
     record_temporaries(instr, state);
 
@@ -313,7 +313,7 @@ fn record_unmemoized_error(span: Option<Span>, env: &mut Environment) {
 
 /// Record temporaries from an instruction.
 /// TS: `recordTemporaries`
-fn record_temporaries(instr: &ReactiveInstruction, state: &mut VisitorState<'_, '_>) {
+fn record_temporaries<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorState<'_, 'h>) {
     let lvalue = &instr.lvalue;
     let lv_id = lvalue.as_ref().map(|lv| lv.identifier);
     if let Some(id) = lv_id {
@@ -350,7 +350,7 @@ fn record_temporaries(instr: &ReactiveInstruction, state: &mut VisitorState<'_, 
 
 /// Record dependencies from a reactive value.
 /// TS: `recordDepsInValue`
-fn record_deps_in_value(value: &ReactiveValue, state: &mut VisitorState<'_, '_>) {
+fn record_deps_in_value<'h>(value: &ReactiveValue<'h>, state: &mut VisitorState<'_, 'h>) {
     match value {
         ReactiveValue::SequenceExpression { instructions, value, .. } => {
             for instr in instructions {
@@ -442,7 +442,7 @@ fn start_memoize_operands(deps: &Option<Vec<ManualMemoDependency>>) -> Vec<Place
 }
 
 /// Get lvalue places from a Destructure pattern.
-fn destructure_lvalue_places(pattern: &Pattern) -> Vec<&Place> {
+fn destructure_lvalue_places<'p>(pattern: &'p Pattern<'_>) -> Vec<&'p Place> {
     let mut result = Vec::new();
     match pattern {
         Pattern::Array(arr) => {
@@ -613,12 +613,12 @@ fn get_compare_dependency_result_description(result: CompareDependencyResult) ->
 
 /// Validate that an inferred dependency matches a source dependency or was produced
 /// within the manual memo block.
-fn validate_inferred_dep(
+fn validate_inferred_dep<'h>(
     dep_id: IdentifierId,
-    dep_path: &[DependencyPathEntry],
-    temporaries: &FxHashMap<IdentifierId, ManualMemoDependency>,
+    dep_path: &[DependencyPathEntry<'h>],
+    temporaries: &FxHashMap<IdentifierId, ManualMemoDependency<'h>>,
     decls_within_memo_block: &FxHashSet<DeclarationId>,
-    valid_deps_in_memo_block: &[ManualMemoDependency],
+    valid_deps_in_memo_block: &[ManualMemoDependency<'h>],
     env: &mut Environment,
     memo_location: Option<Span>,
 ) {

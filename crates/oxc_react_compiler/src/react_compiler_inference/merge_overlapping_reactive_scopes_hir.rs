@@ -376,10 +376,10 @@ pub fn merge_overlapping_reactive_scopes_hir(func: &mut HirFunction, env: &mut E
 
 /// Collect operand IdentifierIds with their types from an instruction value.
 /// Used to check for Primitive type on FunctionExpression/ObjectMethod operands.
-fn each_instruction_operand_ids_with_types(
+fn each_instruction_operand_ids_with_types<'a>(
     instr: &Instruction,
-    env: &Environment,
-) -> Vec<(IdentifierId, Type)> {
+    env: &Environment<'a>,
+) -> Vec<(IdentifierId, Type<'a>)> {
     visitors::each_instruction_operand(instr, env)
         .into_iter()
         .map(|p| {

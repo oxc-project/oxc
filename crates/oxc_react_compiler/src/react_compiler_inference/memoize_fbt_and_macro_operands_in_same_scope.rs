@@ -126,7 +126,7 @@ fn populate_macro_tags(
                 }
                 InstructionValue::LoadGlobal { binding, .. } => {
                     let name = binding.name();
-                    if let Some(macro_def) = macro_kinds.get(name) {
+                    if let Some(macro_def) = macro_kinds.get(name.as_str()) {
                         macro_tags.insert(lvalue_id, macro_def.clone());
                     }
                 }

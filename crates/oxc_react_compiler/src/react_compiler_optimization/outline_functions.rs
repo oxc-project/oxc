@@ -15,6 +15,8 @@ use std::mem::replace;
 
 use rustc_hash::FxHashSet;
 
+use oxc_str::Ident;
+
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     FunctionId, HirFunction, IdentifierId, InstructionValue, NonLocalBinding,
@@ -24,9 +26,9 @@ use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 /// Outline anonymous function expressions that have no captured context variables.
 ///
 /// Ported from TS `outlineFunctions` in `Optimization/OutlineFunctions.ts`.
-pub fn outline_functions(
-    func: &mut HirFunction,
-    env: &mut Environment,
+pub fn outline_functions<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
     fbt_operands: &FxHashSet<IdentifierId>,
 ) {
     // Collect per-instruction actions to maintain depth-first name allocation order.
@@ -93,14 +95,12 @@ pub fn outline_functions(
                 env.functions[function_id.0 as usize] = inner_func;
 
                 // Then generate the name and outline (after recursion, matching TS order)
-                let hint: Option<String> = env.functions[function_id.0 as usize]
-                    .id
-                    .clone()
-                    .or_else(|| env.functions[function_id.0 as usize].name_hint.clone());
+                let inner = &env.functions[function_id.0 as usize];
+                let hint: Option<Ident<'a>> = inner.id.or(inner.name_hint);
                 let generated_name = env.generate_globally_unique_identifier_name(hint.as_deref());
 
                 // Set the id on the inner function
-                env.functions[function_id.0 as usize].id = Some(generated_name.clone());
+                env.functions[function_id.0 as usize].id = Some(generated_name);
 
                 // Outline the function
                 let outlined_func = env.functions[function_id.0 as usize].clone();

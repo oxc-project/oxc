@@ -269,7 +269,7 @@ impl<'a> Visit<'a> for IdentifierLocVisitor {
 /// Walks the function's params (`FormalParameters`) and body, mirroring the
 /// original Babel `IdentifierLocVisitor`: the function node itself is not
 /// re-entered (its own name, if any, is recorded explicitly).
-pub fn build_identifier_loc_index(func: &FunctionNode<'_>) -> IdentifierLocIndex {
+pub fn build_identifier_loc_index(func: &FunctionNode<'_, '_>) -> IdentifierLocIndex {
     let mut visitor = IdentifierLocVisitor {
         index: IdentifierLocIndex::default(),
         current_opening_element_span: None,

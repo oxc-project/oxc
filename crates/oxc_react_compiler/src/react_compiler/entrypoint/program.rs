@@ -41,6 +41,7 @@ use super::suppression::suppressions_to_diagnostics;
 use crate::options::{
     CompilationMode, CompilerOutputMode, GatingConfig, PanicThreshold, PluginOptions,
 };
+use oxc_str::{Ident, Str};
 
 // -----------------------------------------------------------------------
 // Constants
@@ -62,7 +63,7 @@ const OPT_OUT_DIRECTIVES: &[&str] = &["use no forget", "use no memo"];
 /// A function found in the program that should be compiled.
 ///
 /// `'a` is the arena lifetime of the discovered oxc function node.
-struct CompileSource<'a> {
+struct CompileSource<'b, 'a> {
     kind: CompileSourceKind,
     original_kind: OriginalFnKind,
     /// Byte span of the discovered function, used as the fallback labeled span in
@@ -73,9 +74,9 @@ struct CompileSource<'a> {
     fn_scope_id: ScopeId,
     fn_type: ReactFunctionType,
     /// The discovered oxc function node, handed straight to lowering.
-    fn_node: FunctionNode<'a>,
+    fn_node: FunctionNode<'b, 'a>,
     /// Directive values from the function body (for opt-in/opt-out checks)
-    body_directives: Vec<String>,
+    body_directives: Vec<Str<'a>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -92,7 +93,7 @@ enum CompileSourceKind {
 ///
 /// Also checks for dynamic gating directives (`use memo if(...)`)
 fn try_find_directive_enabling_memoization<'a>(
-    directives: &'a [String],
+    directives: &[Str<'a>],
     opts: &PluginOptions,
 ) -> Result<Option<&'a str>, Diagnostics> {
     // Check standard opt-in directives
@@ -130,7 +131,7 @@ struct DynamicGatingResult<'a> {
 /// Check for dynamic gating directives like `use memo if(identifier)`.
 /// Returns the directive and gating config if found, or an error if malformed.
 fn find_directives_dynamic_gating<'a>(
-    directives: &'a [String],
+    directives: &[Str<'a>],
     opts: &PluginOptions,
 ) -> Result<Option<DynamicGatingResult<'a>>, Diagnostics> {
     let dynamic_gating = match &opts.dynamic_gating {
@@ -952,7 +953,7 @@ fn get_react_function_type(
     name: Option<&str>,
     params: &oxc::FormalParameters,
     body: &FunctionBody,
-    body_directives: &[String],
+    body_directives: &[Str<'_>],
     is_declaration: bool,
     parent_callee_name: Option<&str>,
     opts: &PluginOptions,
@@ -1051,7 +1052,7 @@ fn get_component_or_hook_like(
 
 /// Extract the callee name from a CallExpression if it's a React API call
 /// (forwardRef, memo, React.forwardRef, React.memo).
-fn get_callee_name_if_react_api<'e>(callee: &'e oxc::Expression) -> Option<&'e str> {
+fn get_callee_name_if_react_api<'ast>(callee: &oxc::Expression<'ast>) -> Option<&'ast str> {
     match callee {
         oxc::Expression::Identifier(id) => {
             if id.name == "forwardRef" || id.name == "memo" {
@@ -1140,11 +1141,11 @@ fn handle_error<'a>(
 /// Debug log entries are accumulated on `context.debug_logs`.
 fn try_compile_function<'a>(
     ast: &AstBuilder<'a>,
-    source: &CompileSource,
-    scope: &ScopeResolver<'_, '_>,
+    source: &CompileSource<'_, 'a>,
+    scope: &ScopeResolver<'_, 'a>,
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
-    context: &mut ProgramContext,
+    context: &mut ProgramContext<'a>,
 ) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
     // Check for suppressions that affect this function. Suppression errors are
     // returned (not thrown), so they do NOT trigger CompileUnexpectedThrow.
@@ -1178,17 +1179,17 @@ fn try_compile_function<'a>(
 #[allow(clippy::result_large_err)]
 fn process_fn<'a>(
     ast: &AstBuilder<'a>,
-    source: &CompileSource,
-    scope: &ScopeResolver<'_, '_>,
+    source: &CompileSource<'_, 'a>,
+    scope: &ScopeResolver<'_, 'a>,
     output_mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
-    context: &mut ProgramContext,
+    context: &mut ProgramContext<'a>,
 ) -> Result<Option<CodegenFunction<'a>>, CompileResult<'a>> {
     // Parse directives from the function body
     let opt_in_result =
         try_find_directive_enabling_memoization(&source.body_directives, &context.opts);
     let opt_out = find_directive_disabling_memoization(
-        source.body_directives.iter().map(String::as_str),
+        source.body_directives.iter().map(Str::as_str),
         context.opts.custom_opt_out_directives.as_deref(),
     );
 
@@ -1267,8 +1268,8 @@ fn process_fn<'a>(
 
 /// Collect the directive value strings of a function body (for opt-in/opt-out
 /// checks). Matches the Babel-bridge directive values (`d.expression.value`).
-fn body_directive_values(body: &oxc::FunctionBody) -> Vec<String> {
-    body.directives.iter().map(|d| d.expression.value.to_string()).collect()
+fn body_directive_values<'a>(body: &oxc::FunctionBody<'a>) -> Vec<Str<'a>> {
+    body.directives.iter().map(|d| d.expression.value).collect()
 }
 
 /// Try to create a `CompileSource` from a discovered oxc function node.
@@ -1276,14 +1277,14 @@ fn body_directive_values(body: &oxc::FunctionBody) -> Vec<String> {
 /// `fn_node` is the oxc function node (its scope is the function's identity),
 /// `name` the inferred function name, `original_kind` the syntactic kind,
 /// and `parent_callee_name` the enclosing forwardRef/memo callee (if any).
-fn try_make_compile_source<'a>(
-    fn_node: FunctionNode<'a>,
+fn try_make_compile_source<'b, 'a>(
+    fn_node: FunctionNode<'b, 'a>,
     name: Option<&str>,
     original_kind: OriginalFnKind,
     parent_callee_name: Option<&str>,
     opts: &PluginOptions,
     already_compiled: &mut FxHashSet<ScopeId>,
-) -> Option<CompileSource<'a>> {
+) -> Option<CompileSource<'b, 'a>> {
     let (params, body, span, body_directives) = match fn_node {
         FunctionNode::Function(f) => {
             // Bodyless functions (`declare function`, overload signatures,
@@ -1374,17 +1375,17 @@ fn get_declarator_name<'ast>(decl: &oxc::VariableDeclarator<'ast>) -> Option<&'a
 /// functions are descended to find nested component/hook declarations. Classes
 /// are entered only structurally (their bodies carry no compilable functions for
 /// discovery — matching the Babel bridge, which extracted no metadata for them).
-struct DiscoveryWalker<'a, 'ast> {
+struct DiscoveryWalker<'a, 'b, 'ast> {
     opts: &'a PluginOptions,
     already_compiled: FxHashSet<ScopeId>,
-    queue: Vec<CompileSource<'ast>>,
+    queue: Vec<CompileSource<'b, 'ast>>,
     scope_stack: Vec<ScopeId>,
     loop_expression_depth: usize,
     current_declarator_name: Option<&'ast str>,
     parent_callee_stack: Vec<Option<&'ast str>>,
 }
 
-impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
+impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
     fn new(opts: &'a PluginOptions) -> Self {
         Self {
             opts,
@@ -1424,7 +1425,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         self.parent_callee_stack.last().copied().flatten()
     }
 
-    fn walk_program(&mut self, program: &'ast oxc::Program<'ast>) {
+    fn walk_program(&mut self, program: &'b oxc::Program<'ast>) {
         let pushed = self.try_push_scope(program.scope_id.get());
         for stmt in &program.body {
             self.walk_statement(stmt);
@@ -1434,7 +1435,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    fn walk_block(&mut self, block: &'ast oxc::BlockStatement<'ast>) {
+    fn walk_block(&mut self, block: &'b oxc::BlockStatement<'ast>) {
         let pushed = self.try_push_scope(block.scope_id.get());
         for stmt in &block.body {
             self.walk_statement(stmt);
@@ -1444,7 +1445,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    fn walk_function_body_block(&mut self, body: &'ast oxc::FunctionBody<'ast>) {
+    fn walk_function_body_block(&mut self, body: &'b oxc::FunctionBody<'ast>) {
         // A function body BlockStatement shares the function's scope in the Babel
         // model and never gets its own scope entry, so do not push a scope here.
         for stmt in &body.statements {
@@ -1452,7 +1453,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    fn walk_statement(&mut self, stmt: &'ast oxc::Statement<'ast>) {
+    fn walk_statement(&mut self, stmt: &'b oxc::Statement<'ast>) {
         match stmt {
             oxc::Statement::BlockStatement(node) => self.walk_block(node),
             oxc::Statement::ReturnStatement(node) => {
@@ -1578,14 +1579,14 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    fn walk_for_left(&mut self, left: &'ast oxc::ForStatementLeft<'ast>) {
+    fn walk_for_left(&mut self, left: &'b oxc::ForStatementLeft<'ast>) {
         if let oxc::ForStatementLeft::VariableDeclaration(decl) = left {
             self.walk_variable_declaration(decl);
         }
         // Assignment-target lefts contain no functions to discover.
     }
 
-    fn walk_variable_declaration(&mut self, decl: &'ast oxc::VariableDeclaration<'ast>) {
+    fn walk_variable_declaration(&mut self, decl: &'b oxc::VariableDeclaration<'ast>) {
         for declarator in &decl.declarations {
             // Only infer the declarator name when the init is a direct function
             // expression, arrow, or call expression (for forwardRef/memo wrappers).
@@ -1604,7 +1605,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    fn walk_declaration(&mut self, decl: &'ast oxc::Declaration<'ast>) {
+    fn walk_declaration(&mut self, decl: &'b oxc::Declaration<'ast>) {
         match decl {
             oxc::Declaration::FunctionDeclaration(node) => self.walk_function(node, None),
             oxc::Declaration::VariableDeclaration(node) => self.walk_variable_declaration(node),
@@ -1613,7 +1614,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    fn walk_export_default(&mut self, decl: &'ast oxc::ExportDefaultDeclarationKind<'ast>) {
+    fn walk_export_default(&mut self, decl: &'b oxc::ExportDefaultDeclarationKind<'ast>) {
         match decl {
             oxc::ExportDefaultDeclarationKind::FunctionDeclaration(node) => {
                 self.walk_function(node, None)
@@ -1629,7 +1630,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
     /// Walk an oxc `Function` node (declaration or expression). `inferred_name`,
     /// when `Some`, supplies the name from the enclosing variable declarator (for
     /// function expressions); `None` means use the function's own id.
-    fn walk_function(&mut self, func: &'ast oxc::Function<'ast>, inferred_name: Option<&'ast str>) {
+    fn walk_function(&mut self, func: &'b oxc::Function<'ast>, inferred_name: Option<&'ast str>) {
         let pushed = self.try_push_scope(func.scope_id.get());
 
         let original_kind = match func.r#type {
@@ -1679,7 +1680,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
 
     fn walk_arrow(
         &mut self,
-        arrow: &'ast oxc::ArrowFunctionExpression<'ast>,
+        arrow: &'b oxc::ArrowFunctionExpression<'ast>,
         inferred_name: Option<&'ast str>,
     ) {
         let pushed = self.try_push_scope(arrow.scope_id.get());
@@ -1714,7 +1715,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    fn walk_expression(&mut self, expr: &'ast oxc::Expression<'ast>) {
+    fn walk_expression(&mut self, expr: &'b oxc::Expression<'ast>) {
         match expr {
             oxc::Expression::FunctionExpression(node) => {
                 // The declarator name flows into the function expression and is
@@ -1835,7 +1836,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    fn walk_argument(&mut self, arg: &'ast oxc::Argument<'ast>) {
+    fn walk_argument(&mut self, arg: &'b oxc::Argument<'ast>) {
         if let Some(expr) = arg.as_expression() {
             self.walk_expression(expr);
         } else if let oxc::Argument::SpreadElement(s) = arg {
@@ -1843,7 +1844,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    fn walk_member_expression(&mut self, member: &'ast oxc::MemberExpression<'ast>) {
+    fn walk_member_expression(&mut self, member: &'b oxc::MemberExpression<'ast>) {
         match member {
             oxc::MemberExpression::StaticMemberExpression(m) => self.walk_expression(&m.object),
             oxc::MemberExpression::ComputedMemberExpression(m) => {
@@ -1854,7 +1855,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    fn walk_chain_element(&mut self, element: &'ast oxc::ChainElement<'ast>) {
+    fn walk_chain_element(&mut self, element: &'b oxc::ChainElement<'ast>) {
         match element {
             oxc::ChainElement::CallExpression(node) => {
                 self.walk_expression(&node.callee);
@@ -1872,7 +1873,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    fn walk_object_property(&mut self, prop: &'ast oxc::ObjectPropertyKind<'ast>) {
+    fn walk_object_property(&mut self, prop: &'b oxc::ObjectPropertyKind<'ast>) {
         match prop {
             oxc::ObjectPropertyKind::SpreadProperty(s) => self.walk_expression(&s.argument),
             oxc::ObjectPropertyKind::ObjectProperty(p) => {
@@ -1901,13 +1902,13 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    fn walk_property_key(&mut self, key: &'ast oxc::PropertyKey<'ast>) {
+    fn walk_property_key(&mut self, key: &'b oxc::PropertyKey<'ast>) {
         if let Some(expr) = key.as_expression() {
             self.walk_expression(expr);
         }
     }
 
-    fn walk_jsx_element(&mut self, node: &'ast oxc::JSXElement<'ast>) {
+    fn walk_jsx_element(&mut self, node: &'b oxc::JSXElement<'ast>) {
         for attr in &node.opening_element.attributes {
             match attr {
                 oxc::JSXAttributeItem::Attribute(a) => {
@@ -1930,7 +1931,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         self.walk_jsx_children(&node.children);
     }
 
-    fn walk_jsx_children(&mut self, children: &'ast ArenaVec<'ast, oxc::JSXChild<'ast>>) {
+    fn walk_jsx_children(&mut self, children: &'b ArenaVec<'ast, oxc::JSXChild<'ast>>) {
         for child in children {
             match child {
                 oxc::JSXChild::Element(el) => self.walk_jsx_element(el),
@@ -1942,7 +1943,7 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
         }
     }
 
-    fn walk_jsx_container(&mut self, container: &'ast oxc::JSXExpressionContainer<'ast>) {
+    fn walk_jsx_container(&mut self, container: &'b oxc::JSXExpressionContainer<'ast>) {
         if let Some(expr) = container.expression.as_expression() {
             self.walk_expression(expr);
         }
@@ -1951,10 +1952,10 @@ impl<'a, 'ast> DiscoveryWalker<'a, 'ast> {
 
 /// Find all functions in the program that should be compiled by walking the oxc
 /// `Program` directly. See [`DiscoveryWalker`] for the traversal semantics.
-fn find_functions_to_compile<'ast>(
-    program: &'ast oxc::Program<'ast>,
+fn find_functions_to_compile<'b, 'ast>(
+    program: &'b oxc::Program<'ast>,
     opts: &PluginOptions,
-) -> Vec<CompileSource<'ast>> {
+) -> Vec<CompileSource<'b, 'ast>> {
     let mut walker = DiscoveryWalker::new(opts);
     walker.walk_program(program);
     walker.queue
@@ -2102,9 +2103,9 @@ fn is_wrapper_callee(nodes: &AstNodes, node_id: NodeId) -> bool {
     get_callee_name_if_react_api(&call.callee).is_some()
 }
 
-struct CompiledFunction<'a, 'p, 's> {
+struct CompiledFunction<'a, 'b, 'p, 's> {
     kind: CompileSourceKind,
-    source: &'s CompileSource<'p>,
+    source: &'s CompileSource<'b, 'p>,
     codegen_fn: CodegenFunction<'a>,
 }
 
@@ -2283,7 +2284,7 @@ struct OxcReplaceWithGatedVisitor<'a, 'b> {
     scope_id: ScopeId,
     gating_expression: &'b oxc::Expression<'a>,
     /// Pending `export default Name;` to insert after a named export-default fn.
-    export_default_name: Option<String>,
+    export_default_name: Option<Ident<'a>>,
     done: bool,
 }
 
@@ -2317,17 +2318,17 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
                 break;
             }
             // FunctionDeclaration → `const Foo = gating() ? ... : ...;`
-            let replace_name: Option<Option<String>> = match &stmts[i] {
+            let replace_name: Option<Option<Ident<'a>>> = match &stmts[i] {
                 oxc::Statement::FunctionDeclaration(f)
                     if f.scope_id.get() == Some(self.scope_id) =>
                 {
-                    Some(f.id.as_ref().map(|id| id.name.to_string()))
+                    Some(f.id.as_ref().map(|id| id.name))
                 }
                 oxc::Statement::ExportNamedDeclaration(e) => match &e.declaration {
                     Some(oxc::Declaration::FunctionDeclaration(f))
                         if f.scope_id.get() == Some(self.scope_id) =>
                     {
-                        Some(f.id.as_ref().map(|id| id.name.to_string()))
+                        Some(f.id.as_ref().map(|id| id.name))
                     }
                     _ => None,
                 },
@@ -2364,8 +2365,8 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
             if let oxc::Statement::ExportDefaultDeclaration(e) = &stmts[i] {
                 if let oxc::ExportDefaultDeclarationKind::FunctionDeclaration(f) = &e.declaration {
                     if f.scope_id.get() == Some(self.scope_id) {
-                        if let Some(id) = f.id.as_ref().map(|id| id.name.to_string()) {
-                            stmts[i] = self.build_const_decl(&id);
+                        if let Some(id) = f.id.as_ref().map(|id| id.name) {
+                            stmts[i] = self.build_const_decl(id.as_str());
                             self.export_default_name = Some(id);
                         } else {
                             stmts[i] = oxc::Statement::ExportDefaultDeclaration(
@@ -2389,7 +2390,7 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
 
         // Insert `export default Name;` right after the replaced declaration.
         if let Some(name) = self.export_default_name.take() {
-            let ident = oxc::Expression::new_identifier(SPAN, ox_atom(self.ast, &name), self.ast);
+            let ident = oxc::Expression::new_identifier(SPAN, name, self.ast);
             let export =
                 oxc::Statement::ExportDefaultDeclaration(oxc::ExportDefaultDeclaration::boxed(
                     SPAN,
@@ -2400,7 +2401,7 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
             let pos = stmts.iter().position(|s| {
                 matches!(s, oxc::Statement::VariableDeclaration(d)
                     if d.declarations.first().is_some_and(|decl| matches!(&decl.id,
-                        oxc::BindingPattern::BindingIdentifier(b) if b.name.as_str() == name)))
+                        oxc::BindingPattern::BindingIdentifier(b) if b.name == name)))
             });
             if let Some(pos) = pos {
                 stmts.insert(pos + 1, export);
@@ -2700,11 +2701,11 @@ fn ox_add_imports_to_program<'a>(
     let imports = context.imports();
 
     // Existing non-namespaced value imports, by module name.
-    let mut existing_import_indices: FxHashMap<String, usize> = FxHashMap::default();
+    let mut existing_import_indices: FxHashMap<&str, usize> = FxHashMap::default();
     for (idx, stmt) in program.body.iter().enumerate() {
         if let oxc::Statement::ImportDeclaration(import) = stmt {
             if ox_is_non_namespaced_import(import) {
-                existing_import_indices.entry(import.source.value.to_string()).or_insert(idx);
+                existing_import_indices.entry(import.source.value.as_str()).or_insert(idx);
             }
         }
     }
@@ -2718,9 +2719,9 @@ fn ox_add_imports_to_program<'a>(
 
     for (module_name, imports_map) in sorted_modules {
         let mut sorted_imports: Vec<_> = imports_map.values().collect();
-        sorted_imports.sort_by(|a, b| a.imported.cmp(&b.imported));
+        sorted_imports.sort_by(|a, b| a.imported.as_str().cmp(b.imported.as_str()));
 
-        if let Some(&idx) = existing_import_indices.get(module_name) {
+        if let Some(&idx) = existing_import_indices.get(module_name.as_str()) {
             // Merge into the existing import declaration.
             if let oxc::Statement::ImportDeclaration(import) = &mut program.body[idx] {
                 let specifiers = import.specifiers.get_or_insert_with(|| ArenaVec::new_in(ast));
@@ -2855,10 +2856,10 @@ fn ox_is_non_namespaced_import(import: &oxc::ImportDeclaration) -> bool {
 /// - findFunctionsToCompile: traverse program to find components and hooks
 /// - processFn: per-function compilation with directive and suppression handling
 /// - applyCompiledFunctions: replace original functions with compiled versions
-pub fn compile_program<'a, 'p>(
+pub fn compile_program<'a>(
     allocator: &'a Allocator,
     semantic: &Semantic<'_>,
-    program: &'p oxc::Program<'a>,
+    program: &oxc::Program<'a>,
     options: PluginOptions,
 ) -> CompileResult<'a> {
     // Find all functions to compile. An empty queue means no work, so return
@@ -2903,12 +2904,13 @@ pub fn compile_program<'a, 'p>(
     .is_some();
 
     // Create program context
-    let mut context = ProgramContext::new(options.clone(), suppressions, has_module_scope_opt_out);
+    let mut context =
+        ProgramContext::new(allocator, options.clone(), suppressions, has_module_scope_opt_out);
 
     // The codegen back-end builds oxc nodes directly via this `AstBuilder`; `scope`
     // is a read-through view over `Semantic` for binding/reference lookups.
     let ast = AstBuilder::new(allocator);
-    let scope = ScopeResolver::new(semantic);
+    let scope = ScopeResolver::new(semantic, allocator);
 
     // Initialize known referenced names from scope bindings for UID collision detection
     context.init_from_scope(&scope);
@@ -2947,7 +2949,7 @@ pub fn compile_program<'a, 'p>(
     context.hook_guard_name = hook_guard_name;
 
     // Process each function and collect compiled results
-    let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_>> = Vec::new();
+    let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_, '_>> = Vec::new();
 
     for source in &queue {
         match process_fn(&ast, source, &scope, output_mode, &options.environment, &mut context) {

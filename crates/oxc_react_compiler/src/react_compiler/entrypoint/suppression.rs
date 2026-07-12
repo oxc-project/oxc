@@ -13,8 +13,8 @@ use crate::diagnostics::ErrorCategory;
 /// labeled span on a suppression diagnostic. The former Babel front-end carried
 /// this on `CommentData`; the oxc front-end builds it directly from oxc comments.
 #[derive(Debug, Clone)]
-pub struct CommentData {
-    pub value: String,
+pub struct CommentData<'a> {
+    pub value: &'a str,
     pub start: Option<u32>,
     pub end: Option<u32>,
     pub span: Option<CommentLoc>,
@@ -39,20 +39,20 @@ pub enum SuppressionSource {
 /// The enable comment can be missing in the case where only a disable block is present,
 /// ie the rest of the file has potential React violations.
 #[derive(Debug, Clone)]
-pub struct SuppressionRange {
-    pub disable_comment: CommentData,
-    pub enable_comment: Option<CommentData>,
+pub struct SuppressionRange<'a> {
+    pub disable_comment: CommentData<'a>,
+    pub enable_comment: Option<CommentData<'a>>,
     pub source: SuppressionSource,
 }
 
 /// Build a Babel-shaped [`CommentData`] from an oxc comment, stripping the `//`
 /// or `/* */` delimiters from the value exactly as the former Babel bridge did.
-fn comment_data(comment: &oxc_ast::ast::Comment, source_text: &str) -> CommentData {
+fn comment_data<'a>(comment: &oxc_ast::ast::Comment, source_text: &'a str) -> CommentData<'a> {
     let raw = &source_text[comment.span.start as usize..comment.span.end as usize];
     let value = if matches!(comment.kind, oxc_ast::ast::CommentKind::Line) {
-        raw.strip_prefix("//").unwrap_or(raw).trim().to_string()
+        raw.strip_prefix("//").unwrap_or(raw).trim()
     } else {
-        raw.strip_prefix("/*").unwrap_or(raw).strip_suffix("*/").unwrap_or(raw).trim().to_string()
+        raw.strip_prefix("/*").unwrap_or(raw).strip_suffix("*/").unwrap_or(raw).trim()
     };
     CommentData {
         value,
@@ -134,12 +134,12 @@ fn matches_flow_suppression(value: &str) -> bool {
 
 /// Parse eslint-disable/enable and Flow suppression comments from program comments.
 /// Equivalent to findProgramSuppressions in Suppression.ts
-pub fn find_program_suppressions(
+pub fn find_program_suppressions<'a>(
     comments: &[oxc_ast::ast::Comment],
-    source_text: &str,
+    source_text: &'a str,
     rule_names: Option<&[String]>,
     flow_suppressions: bool,
-) -> Vec<SuppressionRange> {
+) -> Vec<SuppressionRange<'a>> {
     let mut suppression_ranges: Vec<SuppressionRange> = Vec::new();
     let mut disable_comment: Option<CommentData> = None;
     let mut enable_comment: Option<CommentData> = None;
@@ -157,7 +157,7 @@ pub fn find_program_suppressions(
         // Check for eslint-disable-next-line (only if not already within a block)
         if disable_comment.is_none() && has_rules {
             if let Some(names) = rule_names {
-                if matches_eslint_disable_next_line(&data.value, names) {
+                if matches_eslint_disable_next_line(data.value, names) {
                     disable_comment = Some(data.clone());
                     enable_comment = Some(data.clone());
                     source = Some(SuppressionSource::Eslint);
@@ -166,7 +166,7 @@ pub fn find_program_suppressions(
         }
 
         // Check for Flow suppression (only if not already within a block)
-        if flow_suppressions && disable_comment.is_none() && matches_flow_suppression(&data.value) {
+        if flow_suppressions && disable_comment.is_none() && matches_flow_suppression(data.value) {
             disable_comment = Some(data.clone());
             enable_comment = Some(data.clone());
             source = Some(SuppressionSource::Flow);
@@ -175,7 +175,7 @@ pub fn find_program_suppressions(
         // Check for eslint-disable (block start)
         if has_rules {
             if let Some(names) = rule_names {
-                if matches_eslint_disable(&data.value, names) {
+                if matches_eslint_disable(data.value, names) {
                     disable_comment = Some(data.clone());
                     source = Some(SuppressionSource::Eslint);
                 }
@@ -185,7 +185,7 @@ pub fn find_program_suppressions(
         // Check for eslint-enable (block end)
         if has_rules {
             if let Some(names) = rule_names {
-                if matches_eslint_enable(&data.value, names) {
+                if matches_eslint_enable(data.value, names) {
                     if matches!(source, Some(SuppressionSource::Eslint)) {
                         enable_comment = Some(data.clone());
                     }
@@ -210,11 +210,11 @@ pub fn find_program_suppressions(
 /// A suppression affects a function if:
 /// 1. The suppression is within the function's body
 /// 2. The suppression wraps the function
-pub fn filter_suppressions_that_affect_function(
-    suppressions: &[SuppressionRange],
+pub fn filter_suppressions_that_affect_function<'s, 'a>(
+    suppressions: &'s [SuppressionRange<'a>],
     fn_start: u32,
     fn_end: u32,
-) -> Vec<&SuppressionRange> {
+) -> Vec<&'s SuppressionRange<'a>> {
     let mut suppressions_in_scope: Vec<&SuppressionRange> = Vec::new();
 
     for suppression in suppressions {

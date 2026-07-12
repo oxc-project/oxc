@@ -68,7 +68,7 @@ impl SSABuilder {
         let new_id = env.next_identifier_id();
         let old = &env.identifiers[old_id.0 as usize];
         let declaration_id = old.declaration_id;
-        let name = old.name.clone();
+        let name = old.name;
         let span = old.span;
         let new_ident = &mut env.identifiers[new_id.0 as usize];
         new_ident.declaration_id = declaration_id;

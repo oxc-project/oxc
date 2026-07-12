@@ -13,6 +13,7 @@
 use std::mem::take;
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_str::{Ident, format_ident};
 
 use crate::react_compiler_hir::{
     BlockId, Effect, EvaluationOrder, IdentifierId, IdentifierName, InstructionKind,
@@ -214,7 +215,7 @@ fn apply_early_return_to_scope<'a>(
                 span: None, // GeneratedSource
             }),
             value: ReactiveValue::Instruction(InstructionValue::LoadGlobal {
-                binding: NonLocalBinding::Global { name: "Symbol".to_string() },
+                binding: NonLocalBinding::Global { name: Ident::from("Symbol") },
                 span,
             }),
             span,
@@ -235,7 +236,7 @@ fn apply_early_return_to_scope<'a>(
                     reactive: false,
                     span: None, // GeneratedSource
                 },
-                property: PropertyLiteral::String("for".to_string()),
+                property: PropertyLiteral::String(Ident::from("for")),
                 span,
             }),
             span,
@@ -335,5 +336,5 @@ fn create_temporary_place_id(env: &mut Environment, span: Option<Span>) -> Ident
 fn promote_temporary<'a>(env: &mut Environment<'a>, identifier_id: IdentifierId) {
     let decl_id = env.identifiers[identifier_id.0 as usize].declaration_id;
     env.identifiers[identifier_id.0 as usize].name =
-        Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
+        Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.0)));
 }

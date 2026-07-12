@@ -1,3 +1,4 @@
+use oxc_allocator::Allocator;
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
     BindingIdentifier, BindingPattern, IdentifierReference, ImportDeclaration, ModuleExportName,
@@ -5,6 +6,7 @@ use oxc_ast::ast::{
 };
 use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
 use oxc_span::GetSpan;
+use oxc_str::{Ident, Str};
 use oxc_syntax::scope::ScopeFlags;
 use oxc_syntax::symbol::SymbolFlags;
 use rustc_hash::FxHashSet;
@@ -86,13 +88,13 @@ impl DeclKind {
 }
 
 #[derive(Debug, Clone)]
-pub struct ImportBindingData {
+pub struct ImportBindingData<'a> {
     /// The module specifier string (e.g., "react" in `import {useState} from 'react'`).
-    pub source: String,
+    pub source: Str<'a>,
     pub kind: ImportBindingKind,
     /// For named imports: the imported name (e.g., "bar" in `import {bar as baz} from 'foo'`).
     /// None for default and namespace imports.
-    pub imported: Option<String>,
+    pub imported: Option<Ident<'a>>,
 }
 
 #[derive(Debug, Clone)]
@@ -108,7 +110,8 @@ pub enum ImportBindingKind {
 /// is derived from `Scoping` on demand.
 pub struct ScopeResolver<'s, 'a> {
     scoping: &'s Scoping,
-    nodes: &'s AstNodes<'a>,
+    nodes: &'s AstNodes<'s>,
+    allocator: &'a Allocator,
     /// All Function-kind scopes, in scope-tree order.
     function_scopes: Vec<ScopeId>,
     /// `(start, end)` source windows of Function-kind scopes, used by the
@@ -119,12 +122,19 @@ pub struct ScopeResolver<'s, 'a> {
 }
 
 impl<'s, 'a> ScopeResolver<'s, 'a> {
-    pub fn new(semantic: &'s Semantic<'a>) -> Self {
+    pub fn new<'ast>(semantic: &'s Semantic<'ast>, allocator: &'a Allocator) -> Self {
         let scoping = semantic.scoping();
-        let nodes = semantic.nodes();
+        // `AstNodes` is covariant in its lifetime; shrink the AST references to
+        // the `Semantic` borrow so the resolver needs no third lifetime.
+        let nodes: &'s AstNodes<'s> = semantic.nodes();
 
-        let mut resolver =
-            Self { scoping, nodes, function_scopes: Vec::new(), function_scope_ranges: Vec::new() };
+        let mut resolver = Self {
+            scoping,
+            nodes,
+            allocator,
+            function_scopes: Vec::new(),
+            function_scope_ranges: Vec::new(),
+        };
 
         for scope_id in scoping.scope_descendants_from_root() {
             if resolver.scope_kind(scope_id) != ScopeKind::Function {
@@ -184,6 +194,13 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
 
     pub fn symbol_name(&self, symbol_id: SymbolId) -> &'s str {
         self.scoping().symbol_name(symbol_id)
+    }
+
+    /// The symbol's name as an arena-lifetime `Ident`, copied into the arena.
+    /// The name in `Scoping` lives in the `Semantic` borrow, not the arena, so
+    /// a copy decouples the compiled output from that borrow.
+    pub fn symbol_ident(&self, symbol_id: SymbolId) -> Ident<'a> {
+        Ident::from_str_in(self.symbol_name(symbol_id), &self.allocator)
     }
 
     /// The scope a symbol is declared in.
@@ -308,19 +325,19 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
     /// The symbol's declaration identifier (the first declaration for
     /// redeclared symbols). `None` for declaration kinds the old conversion
     /// did not map (e.g. interfaces).
-    pub fn declaration_ident(&self, symbol_id: SymbolId) -> Option<&'a BindingIdentifier<'a>> {
+    pub fn declaration_ident(&self, symbol_id: SymbolId) -> Option<&'s BindingIdentifier<'s>> {
         let decl_node = self.nodes.get_node(self.scoping.symbol_declaration(symbol_id));
         find_binding_identifier(decl_node.kind(), self.symbol_name(symbol_id))
     }
 
     /// For import bindings: the source module and import details.
-    pub fn import_data(&self, symbol_id: SymbolId) -> Option<ImportBindingData> {
+    pub fn import_data(&self, symbol_id: SymbolId) -> Option<ImportBindingData<'a>> {
         let decl_node = self.nodes.get_node(self.scoping.symbol_declaration(symbol_id));
         match decl_node.kind() {
             AstKind::ImportDefaultSpecifier(_) => {
                 let import_decl = self.find_import_declaration(decl_node.id())?;
                 Some(ImportBindingData {
-                    source: import_decl.source.value.to_string(),
+                    source: Str::from_str_in(import_decl.source.value.as_str(), &self.allocator),
                     kind: ImportBindingKind::Default,
                     imported: None,
                 })
@@ -328,7 +345,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             AstKind::ImportNamespaceSpecifier(_) => {
                 let import_decl = self.find_import_declaration(decl_node.id())?;
                 Some(ImportBindingData {
-                    source: import_decl.source.value.to_string(),
+                    source: Str::from_str_in(import_decl.source.value.as_str(), &self.allocator),
                     kind: ImportBindingKind::Namespace,
                     imported: None,
                 })
@@ -336,14 +353,14 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             AstKind::ImportSpecifier(spec) => {
                 let import_decl = self.find_import_declaration(decl_node.id())?;
                 let imported_name = match &spec.imported {
-                    ModuleExportName::IdentifierName(ident) => ident.name.to_string(),
-                    ModuleExportName::IdentifierReference(ident) => ident.name.to_string(),
-                    ModuleExportName::StringLiteral(lit) => lit.value.to_string(),
+                    ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
+                    ModuleExportName::IdentifierReference(ident) => ident.name.as_str(),
+                    ModuleExportName::StringLiteral(lit) => lit.value.as_str(),
                 };
                 Some(ImportBindingData {
-                    source: import_decl.source.value.to_string(),
+                    source: Str::from_str_in(import_decl.source.value.as_str(), &self.allocator),
                     kind: ImportBindingKind::Named,
-                    imported: Some(imported_name),
+                    imported: Some(Ident::from_str_in(imported_name, &self.allocator)),
                 })
             }
             _ => None,
@@ -354,7 +371,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
     fn find_import_declaration(
         &self,
         specifier_node_id: NodeId,
-    ) -> Option<&'s ImportDeclaration<'a>> {
+    ) -> Option<&'s ImportDeclaration<'s>> {
         let mut current_id = specifier_node_id;
         // Walk up the parent chain (max 10 levels to avoid infinite loop)
         for _ in 0..10 {

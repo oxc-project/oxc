@@ -27,12 +27,12 @@ pub fn convert_binding_kind(kind: &crate::scope::BindingKind) -> BindingKind {
 /// oxc collapses Babel's `FunctionDeclaration`/`FunctionExpression` into one
 /// [`oxc::Function`] (discriminated by `r#type`); arrows are separate.
 #[derive(Clone, Copy)]
-pub enum FunctionNode<'a> {
-    Function(&'a oxc::Function<'a>),
-    Arrow(&'a oxc::ArrowFunctionExpression<'a>),
+pub enum FunctionNode<'b, 'a> {
+    Function(&'b oxc::Function<'a>),
+    Arrow(&'b oxc::ArrowFunctionExpression<'a>),
 }
 
-impl<'a> FunctionNode<'a> {
+impl FunctionNode<'_, '_> {
     /// The scope the function node creates (its semantic `scope_id` cell).
     pub fn scope_id(&self) -> Option<oxc_syntax::scope::ScopeId> {
         match self {

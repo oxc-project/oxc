@@ -36,8 +36,8 @@ pub fn build_reactive_function<'a>(
 
     Ok(ReactiveFunction {
         span: hir.span,
-        id: hir.id.clone(),
-        name_hint: hir.name_hint.clone(),
+        id: hir.id,
+        name_hint: hir.name_hint,
         params: hir.params.clone(),
         generator: hir.generator,
         is_async: hir.is_async,

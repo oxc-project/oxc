@@ -8,12 +8,14 @@
 //! Defines the shape registry used by Environment to resolve property types
 //! and function call signatures for built-in objects, hooks, and user-defined types.
 
+use std::borrow::Cow;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use rustc_hash::FxHashMap;
+use oxc_allocator::Allocator;
+use oxc_str::{Ident, IdentHashMap, format_ident, static_ident};
 
 use crate::react_compiler_hir::Effect;
 use crate::react_compiler_hir::Type;
@@ -25,36 +27,38 @@ use crate::react_compiler_hir::type_config::{
 // Shape ID constants (matching TS ObjectShape.ts)
 // =============================================================================
 
-pub const BUILT_IN_PROPS_ID: &str = "BuiltInProps";
-pub const BUILT_IN_ARRAY_ID: &str = "BuiltInArray";
-pub const BUILT_IN_SET_ID: &str = "BuiltInSet";
-pub const BUILT_IN_MAP_ID: &str = "BuiltInMap";
-pub const BUILT_IN_WEAK_SET_ID: &str = "BuiltInWeakSet";
-pub const BUILT_IN_WEAK_MAP_ID: &str = "BuiltInWeakMap";
-pub const BUILT_IN_FUNCTION_ID: &str = "BuiltInFunction";
-pub const BUILT_IN_JSX_ID: &str = "BuiltInJsx";
-pub const BUILT_IN_OBJECT_ID: &str = "BuiltInObject";
-pub const BUILT_IN_USE_STATE_ID: &str = "BuiltInUseState";
-pub const BUILT_IN_SET_STATE_ID: &str = "BuiltInSetState";
-pub const BUILT_IN_USE_ACTION_STATE_ID: &str = "BuiltInUseActionState";
-pub const BUILT_IN_SET_ACTION_STATE_ID: &str = "BuiltInSetActionState";
-pub const BUILT_IN_USE_REF_ID: &str = "BuiltInUseRefId";
-pub const BUILT_IN_REF_VALUE_ID: &str = "BuiltInRefValue";
-pub const BUILT_IN_MIXED_READONLY_ID: &str = "BuiltInMixedReadonly";
-pub const BUILT_IN_USE_EFFECT_HOOK_ID: &str = "BuiltInUseEffectHook";
-pub const BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID: &str = "BuiltInUseLayoutEffectHook";
-pub const BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID: &str = "BuiltInUseInsertionEffectHook";
-pub const BUILT_IN_USE_OPERATOR_ID: &str = "BuiltInUseOperator";
-pub const BUILT_IN_USE_REDUCER_ID: &str = "BuiltInUseReducer";
-pub const BUILT_IN_DISPATCH_ID: &str = "BuiltInDispatch";
-pub const BUILT_IN_USE_CONTEXT_HOOK_ID: &str = "BuiltInUseContextHook";
-pub const BUILT_IN_USE_TRANSITION_ID: &str = "BuiltInUseTransition";
-pub const BUILT_IN_USE_OPTIMISTIC_ID: &str = "BuiltInUseOptimistic";
-pub const BUILT_IN_SET_OPTIMISTIC_ID: &str = "BuiltInSetOptimistic";
-pub const BUILT_IN_START_TRANSITION_ID: &str = "BuiltInStartTransition";
-pub const BUILT_IN_USE_EFFECT_EVENT_ID: &str = "BuiltInUseEffectEvent";
-pub const BUILT_IN_EFFECT_EVENT_ID: &str = "BuiltInEffectEventFunction";
-pub const REANIMATED_SHARED_VALUE_ID: &str = "ReanimatedSharedValueId";
+pub const BUILT_IN_PROPS_ID: Ident<'static> = static_ident!("BuiltInProps");
+pub const BUILT_IN_ARRAY_ID: Ident<'static> = static_ident!("BuiltInArray");
+pub const BUILT_IN_SET_ID: Ident<'static> = static_ident!("BuiltInSet");
+pub const BUILT_IN_MAP_ID: Ident<'static> = static_ident!("BuiltInMap");
+pub const BUILT_IN_WEAK_SET_ID: Ident<'static> = static_ident!("BuiltInWeakSet");
+pub const BUILT_IN_WEAK_MAP_ID: Ident<'static> = static_ident!("BuiltInWeakMap");
+pub const BUILT_IN_FUNCTION_ID: Ident<'static> = static_ident!("BuiltInFunction");
+pub const BUILT_IN_JSX_ID: Ident<'static> = static_ident!("BuiltInJsx");
+pub const BUILT_IN_OBJECT_ID: Ident<'static> = static_ident!("BuiltInObject");
+pub const BUILT_IN_USE_STATE_ID: Ident<'static> = static_ident!("BuiltInUseState");
+pub const BUILT_IN_SET_STATE_ID: Ident<'static> = static_ident!("BuiltInSetState");
+pub const BUILT_IN_USE_ACTION_STATE_ID: Ident<'static> = static_ident!("BuiltInUseActionState");
+pub const BUILT_IN_SET_ACTION_STATE_ID: Ident<'static> = static_ident!("BuiltInSetActionState");
+pub const BUILT_IN_USE_REF_ID: Ident<'static> = static_ident!("BuiltInUseRefId");
+pub const BUILT_IN_REF_VALUE_ID: Ident<'static> = static_ident!("BuiltInRefValue");
+pub const BUILT_IN_MIXED_READONLY_ID: Ident<'static> = static_ident!("BuiltInMixedReadonly");
+pub const BUILT_IN_USE_EFFECT_HOOK_ID: Ident<'static> = static_ident!("BuiltInUseEffectHook");
+pub const BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID: Ident<'static> =
+    static_ident!("BuiltInUseLayoutEffectHook");
+pub const BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID: Ident<'static> =
+    static_ident!("BuiltInUseInsertionEffectHook");
+pub const BUILT_IN_USE_OPERATOR_ID: Ident<'static> = static_ident!("BuiltInUseOperator");
+pub const BUILT_IN_USE_REDUCER_ID: Ident<'static> = static_ident!("BuiltInUseReducer");
+pub const BUILT_IN_DISPATCH_ID: Ident<'static> = static_ident!("BuiltInDispatch");
+pub const BUILT_IN_USE_CONTEXT_HOOK_ID: Ident<'static> = static_ident!("BuiltInUseContextHook");
+pub const BUILT_IN_USE_TRANSITION_ID: Ident<'static> = static_ident!("BuiltInUseTransition");
+pub const BUILT_IN_USE_OPTIMISTIC_ID: Ident<'static> = static_ident!("BuiltInUseOptimistic");
+pub const BUILT_IN_SET_OPTIMISTIC_ID: Ident<'static> = static_ident!("BuiltInSetOptimistic");
+pub const BUILT_IN_START_TRANSITION_ID: Ident<'static> = static_ident!("BuiltInStartTransition");
+pub const BUILT_IN_USE_EFFECT_EVENT_ID: Ident<'static> = static_ident!("BuiltInUseEffectEvent");
+pub const BUILT_IN_EFFECT_EVENT_ID: Ident<'static> = static_ident!("BuiltInEffectEventFunction");
+pub const REANIMATED_SHARED_VALUE_ID: Ident<'static> = static_ident!("ReanimatedSharedValueId");
 
 // =============================================================================
 // Core types
@@ -114,8 +118,8 @@ pub struct FunctionSignature {
     pub no_alias: bool,
     pub mutable_only_if_operands_are_mutable: bool,
     pub impure: bool,
-    pub known_incompatible: Option<String>,
-    pub canonical_name: Option<String>,
+    pub known_incompatible: Option<Cow<'static, str>>,
+    pub canonical_name: Option<Cow<'static, str>>,
     /// Aliasing signature in config form. Full parsing into AliasingSignature
     /// with Place values is deferred until the aliasing effects system is ported.
     pub aliasing: Option<AliasingSignatureConfig>,
@@ -124,73 +128,96 @@ pub struct FunctionSignature {
 /// Shape of an object or function type.
 /// Ported from TS `ObjectShape`.
 #[derive(Debug, Clone)]
-pub struct ObjectShape {
-    pub properties: FxHashMap<String, Type>,
+pub struct ObjectShape<'a> {
+    pub properties: IdentHashMap<'a, Type<'a>>,
     pub function_type: Option<FunctionSignature>,
 }
 
 /// Registry mapping shape IDs to their ObjectShape definitions.
 ///
 /// Supports two modes:
-/// - **Builder mode** (`base=None`): wraps a single FxHashMap, used during
+/// - **Builder mode** (`base=None`): wraps a single map, used during
 ///   `build_builtin_shapes` / `build_default_globals` to construct the static base.
-/// - **Overlay mode** (`base=Some`): holds a `&'static FxHashMap` base plus a small
-///   extras FxHashMap. Lookups check extras first, then base. Inserts go into extras.
+///   Anonymous shape ids minted here are leaked; they become part of the
+///   process-lifetime static tables anyway, and the build runs once.
+/// - **Overlay mode** (`base=Some`): holds a `&'static` base map plus a small
+///   extras map. Lookups check extras first, then base. Inserts go into extras,
+///   with anonymous ids allocated in the compilation arena.
 ///   Cloning only copies the extras map (the base pointer is shared).
-pub struct ShapeRegistry {
-    base: Option<&'static FxHashMap<String, ObjectShape>>,
-    entries: FxHashMap<String, ObjectShape>,
+pub struct ShapeRegistry<'a> {
+    base: Option<&'static IdentHashMap<'static, ObjectShape<'static>>>,
+    entries: IdentHashMap<'a, ObjectShape<'a>>,
+    allocator: Option<&'a Allocator>,
 }
 
-impl ShapeRegistry {
+impl<'a> ShapeRegistry<'a> {
     /// Create an empty builder-mode registry.
     pub fn new() -> Self {
-        Self { base: None, entries: FxHashMap::default() }
+        Self { base: None, entries: IdentHashMap::default(), allocator: None }
     }
 
     /// Create an overlay-mode registry backed by a static base.
-    pub fn with_base(base: &'static FxHashMap<String, ObjectShape>) -> Self {
-        Self { base: Some(base), entries: FxHashMap::default() }
+    pub fn with_base(
+        base: &'static IdentHashMap<'static, ObjectShape<'static>>,
+        allocator: &'a Allocator,
+    ) -> Self {
+        Self { base: Some(base), entries: IdentHashMap::default(), allocator: Some(allocator) }
     }
 
-    pub fn get(&self, key: &str) -> Option<&ObjectShape> {
-        self.entries.get(key).or_else(|| self.base.and_then(|b| b.get(key)))
+    pub fn get(&self, key: &str) -> Option<&ObjectShape<'a>> {
+        self.entries.get(key).or_else(|| self.base.and_then(|b| b.get(key).map(shrink_shape)))
     }
 
-    pub fn insert(&mut self, key: String, value: ObjectShape) {
+    pub fn insert(&mut self, key: Ident<'a>, value: ObjectShape<'a>) {
         self.entries.insert(key, value);
     }
 
-    /// Consume the registry and return the inner FxHashMap.
+    /// Consume the registry and return the inner map.
     /// Only valid in builder mode (no base).
-    pub fn into_inner(self) -> FxHashMap<String, ObjectShape> {
+    pub fn into_inner(self) -> IdentHashMap<'a, ObjectShape<'a>> {
         debug_assert!(self.base.is_none(), "into_inner() called on overlay-mode ShapeRegistry");
         self.entries
     }
+
+    /// Allocate an identifier with the registry's lifetime: in the compilation
+    /// arena in overlay mode, leaked in (once-per-process) builder mode.
+    pub fn alloc_ident(&self, s: &str) -> Ident<'a> {
+        match self.allocator {
+            Some(allocator) => Ident::from_str_in(s, &allocator),
+            None => Ident::from(&*s.to_string().leak()),
+        }
+    }
+
+    /// Mint a unique anonymous shape id. Mirrors TS `nextAnonId` in ObjectShape.ts.
+    /// The counter is process-global so ids stay unique across the static base
+    /// build and every per-compilation registry.
+    fn next_anon_id(&self) -> Ident<'a> {
+        static COUNTER: AtomicU32 = AtomicU32::new(0);
+        let id = COUNTER.fetch_add(1, Ordering::Relaxed);
+        match self.allocator {
+            Some(allocator) => format_ident!(allocator, "<generated_{id}>"),
+            // Builder mode runs once per process to construct the static base
+            // tables; its handful of generated ids are static data.
+            None => Ident::from(&*format!("<generated_{id}>").leak()),
+        }
+    }
 }
 
-impl Default for ShapeRegistry {
+/// Coerce a static shape reference to the arena lifetime (covariant).
+fn shrink_shape<'a, 'b>(shape: &'b ObjectShape<'static>) -> &'b ObjectShape<'a> {
+    shape
+}
+
+impl Default for ShapeRegistry<'_> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Clone for ShapeRegistry {
+impl Clone for ShapeRegistry<'_> {
     fn clone(&self) -> Self {
-        Self { base: self.base, entries: self.entries.clone() }
+        Self { base: self.base, entries: self.entries.clone(), allocator: self.allocator }
     }
-}
-
-// =============================================================================
-// Counter for anonymous shape IDs
-// =============================================================================
-
-/// Thread-local counter for generating unique anonymous shape IDs.
-/// Mirrors TS `nextAnonId` in ObjectShape.ts.
-fn next_anon_id() -> String {
-    static COUNTER: AtomicU32 = AtomicU32::new(0);
-    let id = COUNTER.fetch_add(1, Ordering::Relaxed);
-    format!("<generated_{}>", id)
 }
 
 // =============================================================================
@@ -199,18 +226,18 @@ fn next_anon_id() -> String {
 
 /// Add a non-hook function to a ShapeRegistry.
 /// Returns a `Type::Function` representing the added function.
-pub fn add_function(
-    registry: &mut ShapeRegistry,
-    properties: Vec<(String, Type)>,
-    sig: FunctionSignatureBuilder,
-    id: Option<&str>,
+pub fn add_function<'a>(
+    registry: &mut ShapeRegistry<'a>,
+    properties: Vec<(Ident<'a>, Type<'a>)>,
+    sig: FunctionSignatureBuilder<'a>,
+    id: Option<Ident<'a>>,
     is_constructor: bool,
-) -> Type {
-    let shape_id = id.map(|s| s.to_string()).unwrap_or_else(next_anon_id);
+) -> Type<'a> {
+    let shape_id = id.unwrap_or_else(|| registry.next_anon_id());
     let return_type = sig.return_type.clone();
     add_shape(
         registry,
-        &shape_id,
+        shape_id,
         properties,
         Some(FunctionSignature {
             positional_params: sig.positional_params,
@@ -232,12 +259,16 @@ pub fn add_function(
 
 /// Add a hook to a ShapeRegistry.
 /// Returns a `Type::Function` representing the added hook.
-pub fn add_hook(registry: &mut ShapeRegistry, sig: HookSignatureBuilder, id: Option<&str>) -> Type {
-    let shape_id = id.map(|s| s.to_string()).unwrap_or_else(next_anon_id);
+pub fn add_hook<'a>(
+    registry: &mut ShapeRegistry<'a>,
+    sig: HookSignatureBuilder<'a>,
+    id: Option<Ident<'a>>,
+) -> Type<'a> {
+    let shape_id = id.unwrap_or_else(|| registry.next_anon_id());
     let return_type = sig.return_type.clone();
     add_shape(
         registry,
-        &shape_id,
+        shape_id,
         Vec::new(),
         Some(FunctionSignature {
             positional_params: sig.positional_params,
@@ -263,27 +294,27 @@ pub fn add_hook(registry: &mut ShapeRegistry, sig: HookSignatureBuilder, id: Opt
 
 /// Add an object to a ShapeRegistry.
 /// Returns a `Type::Object` representing the added object.
-pub fn add_object(
-    registry: &mut ShapeRegistry,
-    id: Option<&str>,
-    properties: Vec<(String, Type)>,
-) -> Type {
-    let shape_id = id.map(|s| s.to_string()).unwrap_or_else(next_anon_id);
-    add_shape(registry, &shape_id, properties, None);
+pub fn add_object<'a>(
+    registry: &mut ShapeRegistry<'a>,
+    id: Option<Ident<'a>>,
+    properties: Vec<(Ident<'a>, Type<'a>)>,
+) -> Type<'a> {
+    let shape_id = id.unwrap_or_else(|| registry.next_anon_id());
+    add_shape(registry, shape_id, properties, None);
     Type::Object { shape_id: Some(shape_id) }
 }
 
-fn add_shape(
-    registry: &mut ShapeRegistry,
-    id: &str,
-    properties: Vec<(String, Type)>,
+fn add_shape<'a>(
+    registry: &mut ShapeRegistry<'a>,
+    id: Ident<'a>,
+    properties: Vec<(Ident<'a>, Type<'a>)>,
     function_type: Option<FunctionSignature>,
 ) {
     let shape = ObjectShape { properties: properties.into_iter().collect(), function_type };
     // Note: TS has an invariant that the id doesn't already exist. We use
     // insert which overwrites. In practice duplicates don't occur for built-in
     // shapes, and for user configs we want last-write-wins behavior.
-    registry.insert(id.to_string(), shape);
+    registry.insert(id, shape);
 }
 
 // =============================================================================
@@ -291,22 +322,22 @@ fn add_shape(
 // =============================================================================
 
 /// Builder for non-hook function signatures.
-pub struct FunctionSignatureBuilder {
+pub struct FunctionSignatureBuilder<'a> {
     pub positional_params: Vec<Effect>,
     pub rest_param: Option<Effect>,
-    pub return_type: Type,
+    pub return_type: Type<'a>,
     pub return_value_kind: ValueKind,
     pub return_value_reason: Option<ValueReason>,
     pub callee_effect: Effect,
     pub no_alias: bool,
     pub mutable_only_if_operands_are_mutable: bool,
     pub impure: bool,
-    pub known_incompatible: Option<String>,
-    pub canonical_name: Option<String>,
+    pub known_incompatible: Option<Cow<'static, str>>,
+    pub canonical_name: Option<Cow<'static, str>>,
     pub aliasing: Option<AliasingSignatureConfig>,
 }
 
-impl Default for FunctionSignatureBuilder {
+impl Default for FunctionSignatureBuilder<'_> {
     fn default() -> Self {
         Self {
             positional_params: Vec::new(),
@@ -326,20 +357,20 @@ impl Default for FunctionSignatureBuilder {
 }
 
 /// Builder for hook signatures.
-pub struct HookSignatureBuilder {
+pub struct HookSignatureBuilder<'a> {
     pub positional_params: Vec<Effect>,
     pub rest_param: Option<Effect>,
-    pub return_type: Type,
+    pub return_type: Type<'a>,
     pub return_value_kind: ValueKind,
     pub return_value_reason: Option<ValueReason>,
     pub callee_effect: Effect,
     pub hook_kind: HookKind,
     pub no_alias: bool,
-    pub known_incompatible: Option<String>,
+    pub known_incompatible: Option<Cow<'static, str>>,
     pub aliasing: Option<AliasingSignatureConfig>,
 }
 
-impl Default for HookSignatureBuilder {
+impl Default for HookSignatureBuilder<'_> {
     fn default() -> Self {
         Self {
             positional_params: Vec::new(),
@@ -362,7 +393,7 @@ impl Default for HookSignatureBuilder {
 
 /// Default type for hooks when enableAssumeHooksFollowRulesOfReact is true.
 /// Matches TS `DefaultNonmutatingHook`.
-pub fn default_nonmutating_hook(registry: &mut ShapeRegistry) -> Type {
+pub fn default_nonmutating_hook<'a>(registry: &mut ShapeRegistry<'a>) -> Type<'a> {
     add_hook(
         registry,
         HookSignatureBuilder {
@@ -397,13 +428,13 @@ pub fn default_nonmutating_hook(registry: &mut ShapeRegistry) -> Type {
             }),
             ..Default::default()
         },
-        Some("DefaultNonmutatingHook"),
+        Some(static_ident!("DefaultNonmutatingHook")),
     )
 }
 
 /// Default type for hooks when enableAssumeHooksFollowRulesOfReact is false.
 /// Matches TS `DefaultMutatingHook`.
-pub fn default_mutating_hook(registry: &mut ShapeRegistry) -> Type {
+pub fn default_mutating_hook<'a>(registry: &mut ShapeRegistry<'a>) -> Type<'a> {
     add_hook(
         registry,
         HookSignatureBuilder {
@@ -413,6 +444,6 @@ pub fn default_mutating_hook(registry: &mut ShapeRegistry) -> Type {
             hook_kind: HookKind::Custom,
             ..Default::default()
         },
-        Some("DefaultMutatingHook"),
+        Some(static_ident!("DefaultMutatingHook")),
     )
 }
