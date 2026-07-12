@@ -2257,13 +2257,61 @@ fn ox_build_compiled_expression<'a>(
     }
 }
 
-/// Visitor that replaces a compiled function in the oxc AST by matching the
-/// original function's scope. Mirrors the Babel `ReplaceFnVisitor`.
+/// Visitor that replaces every compiled function in the oxc AST in a single
+/// traversal, each matched by its original function's scope. Mirrors the Babel
+/// `ReplaceFnVisitor`, batched so the program is walked once regardless of how
+/// many functions were compiled.
 struct OxcReplaceFnVisitor<'a, 'b> {
     ast: &'b AstBuilder<'a>,
-    scope_id: ScopeId,
-    codegen: &'b CodegenFunction<'a>,
-    done: bool,
+    /// Compiled replacement for each original function, keyed by the function's
+    /// `scope_id` cell. Codegen-built nodes carry no cells, so they are never
+    /// matched.
+    replacements: FxHashMap<ScopeId, &'b CodegenFunction<'a>>,
+    /// Replacements not yet applied; the walk stops once it reaches zero.
+    remaining: usize,
+}
+
+impl<'a, 'b> OxcReplaceFnVisitor<'a, 'b> {
+    fn replace_function(&self, func: &mut oxc::Function<'a>, codegen: &CodegenFunction<'a>) {
+        // When the compiled function does not initialize a memo cache, the body is
+        // left essentially intact, so the original TS signature (type parameters,
+        // `this` parameter, return type, and per-parameter type annotations) is
+        // preserved. Functions that memoize drop these types, mirroring Babel.
+        let keep_types = codegen.memo_slots_used == 0;
+        let mut params = codegen.params.clone_in(self.ast.allocator());
+        if keep_types {
+            copy_param_ts_metadata(self.ast.allocator(), &mut params, &func.params);
+        } else {
+            func.type_parameters = None;
+            func.return_type = None;
+            func.this_param = None;
+        }
+        func.id = codegen.id.clone_in(self.ast.allocator());
+        func.params = params;
+        func.body = Some(codegen.body.clone_in(self.ast.allocator()));
+        func.generator = codegen.generator;
+        func.r#async = codegen.is_async;
+        func.declare = false;
+    }
+
+    fn replace_arrow(
+        &self,
+        arrow: &mut oxc::ArrowFunctionExpression<'a>,
+        codegen: &CodegenFunction<'a>,
+    ) {
+        let keep_types = codegen.memo_slots_used == 0;
+        let mut params = codegen.params.clone_in(self.ast.allocator());
+        if keep_types {
+            copy_param_ts_metadata(self.ast.allocator(), &mut params, &arrow.params);
+        } else {
+            arrow.type_parameters = None;
+            arrow.return_type = None;
+        }
+        arrow.params = params;
+        arrow.body = codegen.body.clone_in(self.ast.allocator());
+        arrow.r#async = codegen.is_async;
+        arrow.expression = false;
+    }
 }
 
 impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceFnVisitor<'a, 'b> {
@@ -2272,54 +2320,29 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceFnVisitor<'a, 'b> {
         func: &mut oxc::Function<'a>,
         flags: oxc_syntax::scope::ScopeFlags,
     ) {
-        if self.done {
+        if self.remaining == 0 {
             return;
         }
-        if func.scope_id.get() == Some(self.scope_id) {
-            // When the compiled function does not initialize a memo cache, the body is
-            // left essentially intact, so the original TS signature (type parameters,
-            // `this` parameter, return type, and per-parameter type annotations) is
-            // preserved. Functions that memoize drop these types, mirroring Babel.
-            let keep_types = self.codegen.memo_slots_used == 0;
-            let mut params = self.codegen.params.clone_in(self.ast.allocator());
-            if keep_types {
-                copy_param_ts_metadata(self.ast.allocator(), &mut params, &func.params);
-            } else {
-                func.type_parameters = None;
-                func.return_type = None;
-                func.this_param = None;
+        if let Some(scope_id) = func.scope_id.get() {
+            if let Some(&codegen) = self.replacements.get(&scope_id) {
+                self.replace_function(func, codegen);
+                self.remaining -= 1;
+                return;
             }
-            func.id = self.codegen.id.clone_in(self.ast.allocator());
-            func.params = params;
-            func.body = Some(self.codegen.body.clone_in(self.ast.allocator()));
-            func.generator = self.codegen.generator;
-            func.r#async = self.codegen.is_async;
-            func.declare = false;
-            self.done = true;
-            return;
         }
         oxc_ast_visit::walk_mut::walk_function(self, func, flags);
     }
 
     fn visit_arrow_function_expression(&mut self, arrow: &mut oxc::ArrowFunctionExpression<'a>) {
-        if self.done {
+        if self.remaining == 0 {
             return;
         }
-        if arrow.scope_id.get() == Some(self.scope_id) {
-            let keep_types = self.codegen.memo_slots_used == 0;
-            let mut params = self.codegen.params.clone_in(self.ast.allocator());
-            if keep_types {
-                copy_param_ts_metadata(self.ast.allocator(), &mut params, &arrow.params);
-            } else {
-                arrow.type_parameters = None;
-                arrow.return_type = None;
+        if let Some(scope_id) = arrow.scope_id.get() {
+            if let Some(&codegen) = self.replacements.get(&scope_id) {
+                self.replace_arrow(arrow, codegen);
+                self.remaining -= 1;
+                return;
             }
-            arrow.params = params;
-            arrow.body = self.codegen.body.clone_in(self.ast.allocator());
-            arrow.r#async = self.codegen.is_async;
-            arrow.expression = false;
-            self.done = true;
-            return;
         }
         oxc_ast_visit::walk_mut::walk_arrow_function_expression(self, arrow);
     }
@@ -2625,6 +2648,22 @@ fn ox_transform_program<'a>(
     //     would corrupt the parent expression.
     let mut appended_outlined_decls: Vec<oxc::Statement<'a>> = Vec::new();
 
+    // Substitute every non-gated compiled function into its original in a single
+    // program walk, each matched by its `scope_id` cell. In-place edits do not
+    // change `program.body`, so the outlined-decl insertion and gating below
+    // (which do restructure it) are unaffected by running first. Gated functions
+    // are replaced by a conditional in the loop below, not edited in place.
+    let replace_map: FxHashMap<ScopeId, &CodegenFunction<'a>> = replacements
+        .iter()
+        .filter(|r| r.gating.is_none())
+        .map(|r| (r.fn_scope_id, &r.codegen_fn))
+        .collect();
+    if !replace_map.is_empty() {
+        let mut visitor =
+            OxcReplaceFnVisitor { ast, remaining: replace_map.len(), replacements: replace_map };
+        oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
+    }
+
     for replacement in replacements {
         let mut sibling_outlined_decls: Vec<oxc::Statement<'a>> = Vec::new();
         let insert_as_sibling = replacement.original_kind == OriginalFnKind::FunctionDeclaration;
@@ -2641,14 +2680,6 @@ fn ox_transform_program<'a>(
 
         if let Some(ref gating_config) = replacement.gating {
             ox_apply_gated_conditional(ast, program, replacement, gating_config, context);
-        } else {
-            let mut visitor = OxcReplaceFnVisitor {
-                ast,
-                scope_id: replacement.fn_scope_id,
-                codegen: &replacement.codegen_fn,
-                done: false,
-            };
-            oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
         }
 
         if !sibling_outlined_decls.is_empty() {
