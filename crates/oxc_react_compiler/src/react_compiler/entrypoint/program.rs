@@ -17,7 +17,7 @@ use oxc_ast::AstKind;
 use oxc_ast::ast as oxc;
 use oxc_ast::builder::AstBuilder;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
-use oxc_span::{SPAN, Span};
+use oxc_span::{GetSpan, SPAN, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::diagnostics::{ErrorCategory, has_critical_errors, with_fallback_label};
@@ -2117,19 +2117,69 @@ enum OriginalFnKind {
 }
 
 // =============================================================================
-// oxc splice
+// oxc transform
 //
-// Builds the final oxc `Program` by substituting each compiled oxc function (from
-// codegen) for its original — matched by the original function's scope — applying
-// gating, inserting outlined functions, and adding the memo-cache / gating imports.
+// Rewrites the oxc `Program` in place by substituting each compiled oxc function
+// (from codegen) for its original — matched by the original function's scope —
+// applying gating, inserting outlined functions, and adding the memo-cache /
+// gating imports.
 // =============================================================================
 
-/// An owned, oxc-shaped compiled function ready to splice into the program.
+/// An owned, oxc-shaped compiled function ready to substitute into the program.
 struct OxcReplacement<'a> {
     fn_scope_id: ScopeId,
     original_kind: OriginalFnKind,
     codegen_fn: CodegenFunction<'a>,
     gating: Option<GatingConfig>,
+}
+
+/// The owned output of a [`compile`](crate::compile) that produced changes:
+/// everything the transform phase needs, carrying only the arena lifetime — no
+/// borrows of the input `Program` or `Semantic` — so the caller can drop its
+/// `Semantic` (and with it the shared borrow of the program) before mutating.
+pub struct CompileOutput<'a> {
+    replacements: Vec<OxcReplacement<'a>>,
+    context: ProgramContext<'a>,
+}
+
+impl<'a> CompileOutput<'a> {
+    /// Rewrite `program` in place: substitute each original function with its
+    /// memoized version (matched by the `scope_id` cells populated when the
+    /// caller built `Semantic`), insert outlined declarations, add the required
+    /// imports, and drop comments left dangling inside replaced functions.
+    ///
+    /// `program` must be the same, unmodified program [`compile`](crate::compile)
+    /// saw. Afterwards any previously computed `Semantic`/`Scoping` is stale.
+    pub fn transform(self, program: &mut oxc::Program<'a>) {
+        let CompileOutput { replacements, mut context } = self;
+        let ast = AstBuilder::new(context.allocator());
+        ox_transform_program(&ast, program, &replacements, &mut context);
+        // Diagnostics were extracted at the end of compilation; nothing in the
+        // transform phase may add more.
+        debug_assert!(context.diagnostics.is_empty());
+        prune_inner_comments(program);
+    }
+}
+
+/// Drop comments left dangling by compilation.
+///
+/// The compiled functions were rebuilt with fresh spans, so a comment that
+/// pointed inside one no longer lines up with any statement and codegen would
+/// re-emit it at a stale position. Keep only the comments still anchored to a
+/// top-level statement.
+fn prune_inner_comments(program: &mut oxc::Program<'_>) {
+    if program.comments.is_empty() {
+        return;
+    }
+    let mut top_level_starts = FxHashSet::default();
+    top_level_starts.insert(0u32);
+    for stmt in &program.body {
+        let start = stmt.span().start;
+        if start > 0 {
+            top_level_starts.insert(start);
+        }
+    }
+    program.comments.retain(|comment| top_level_starts.contains(&comment.attached_to));
 }
 
 /// Copy the TS metadata (type annotation, decorators, optional/modifier flags)
@@ -2569,19 +2619,18 @@ fn ox_clone_original_fn_as_expression<'a>(
     finder.found.map(|e| e.clone_in(ast.allocator()))
 }
 
-/// Splice every compiled oxc function into a clone of the original oxc program and
-/// add the required imports. Returns the final memoized program.
-fn ox_splice_program<'a>(
+/// Substitute every compiled oxc function into the program in place and add the
+/// required imports.
+///
+/// The replacement visitors match original functions by their `scope_id` cells
+/// (populated by the caller's semantic build); codegen-built nodes carry no
+/// cells, so they can never be spuriously matched.
+fn ox_transform_program<'a>(
     ast: &AstBuilder<'a>,
-    program: &oxc::Program<'a>,
+    program: &mut oxc::Program<'a>,
     replacements: &[OxcReplacement<'a>],
     context: &mut ProgramContext,
-) -> oxc::Program<'a> {
-    // Preserve the semantic id cells: the replacement visitors match original
-    // functions by their `scope_id`, and codegen-built nodes carry no cells, so
-    // they can never be spuriously matched.
-    let mut program = program.clone_in_with_semantic_ids(ast.allocator());
-
+) {
     // Outlined function declarations are placed differently depending on the
     // original function's syntactic kind, mirroring `insertNewOutlinedFunctionNode`
     // in TS `Program.ts`:
@@ -2607,7 +2656,7 @@ fn ox_splice_program<'a>(
         }
 
         if let Some(ref gating_config) = replacement.gating {
-            ox_apply_gated_conditional(ast, &mut program, replacement, gating_config, context);
+            ox_apply_gated_conditional(ast, program, replacement, gating_config, context);
         } else {
             let mut visitor = OxcReplaceFnVisitor {
                 ast,
@@ -2615,11 +2664,11 @@ fn ox_splice_program<'a>(
                 codegen: &replacement.codegen_fn,
                 done: false,
             };
-            oxc_ast_visit::VisitMut::visit_program(&mut visitor, &mut program);
+            oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
         }
 
         if !sibling_outlined_decls.is_empty() {
-            ox_insert_outlined_after(&mut program, replacement.fn_scope_id, sibling_outlined_decls);
+            ox_insert_outlined_after(program, replacement.fn_scope_id, sibling_outlined_decls);
         }
     }
 
@@ -2636,12 +2685,10 @@ fn ox_splice_program<'a>(
             old_name: "useMemoCache",
             new_name: &import_spec.name,
         };
-        oxc_ast_visit::VisitMut::visit_program(&mut visitor, &mut program);
+        oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
     }
 
-    ox_add_imports_to_program(ast, &mut program, context);
-
-    program
+    ox_add_imports_to_program(ast, program, context);
 }
 
 /// Insert outlined function declarations immediately after the top-level statement
@@ -2846,8 +2893,8 @@ fn ox_is_non_namespaced_import(import: &oxc::ImportDeclaration) -> bool {
 /// Main entry point for the React Compiler.
 ///
 /// Receives the arena allocator, semantic model, the full program AST, and
-/// resolved options. Returns a CompileResult indicating whether the AST was
-/// modified, along with any logger events.
+/// resolved options. Returns a CompileResult carrying the compiled output to
+/// apply — `None` when nothing changed — along with any diagnostics.
 ///
 /// This function implements the logic from the TS entrypoint (Program.ts):
 /// - findProgramSuppressions: find eslint/flow suppression comments
@@ -2864,11 +2911,11 @@ pub fn compile_program<'a>(
     // before all the setup below, which only compilation needs. The pre-check
     // decides emptiness from semantic data without walking the AST.
     if !may_have_functions_to_compile(semantic, &options) {
-        return CompileResult::Success { ast: None, diagnostics: Diagnostics::new() };
+        return CompileResult::Success { output: None, diagnostics: Diagnostics::new() };
     }
     let queue = find_functions_to_compile(program, &options);
     if queue.is_empty() {
-        return CompileResult::Success { ast: None, diagnostics: Diagnostics::new() };
+        return CompileResult::Success { output: None, diagnostics: Diagnostics::new() };
     }
 
     // Compute output mode once, up front
@@ -2977,7 +3024,7 @@ pub fn compile_program<'a>(
                 ));
             handle_error(&err, None, context.opts.panic_threshold, &mut context.diagnostics);
         }
-        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
+        return CompileResult::Success { output: None, diagnostics: context.diagnostics };
     }
 
     // Convert compiled functions to owned oxc replacements (dropping the borrows of
@@ -3010,14 +3057,13 @@ pub fn compile_program<'a>(
     // Drop the discovery results (and their borrows of `file.program`).
     drop(queue);
 
-    // `ast` is `None` when nothing was compiled — always so in lint mode, which
-    // applies nothing — skipping `ox_splice_program`'s whole-program clone. Splicing
-    // each compiled function in for its original (matched by the function's scope)
-    // is also what inserts the memo-cache / gating imports, so (matching
-    // TS `addImportsToProgram`) they're added only when there are replacements.
-    CompileResult::Success {
-        ast: (!replacements.is_empty())
-            .then(|| ox_splice_program(&ast, program, &replacements, &mut context)),
-        diagnostics: context.diagnostics,
-    }
+    // `output` is `None` when nothing was compiled — always so in lint mode, which
+    // applies nothing. Substituting each compiled function for its original
+    // (matched by the function's scope) is also what inserts the memo-cache /
+    // gating imports, so (matching TS `addImportsToProgram`) they're added only
+    // when there are replacements.
+    let diagnostics = std::mem::take(&mut context.diagnostics);
+    let output =
+        if replacements.is_empty() { None } else { Some(CompileOutput { replacements, context }) };
+    CompileResult::Success { output, diagnostics }
 }

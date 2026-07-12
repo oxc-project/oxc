@@ -87,6 +87,11 @@ impl<'a> ProgramContext<'a> {
         }
     }
 
+    /// The arena the compiled nodes were allocated in.
+    pub fn allocator(&self) -> &'a Allocator {
+        self.allocator
+    }
+
     /// Check if a name conflicts with known references.
     pub fn has_reference(&self, name: &str) -> bool {
         self.known_referenced_names.contains(name)
