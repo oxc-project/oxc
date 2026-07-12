@@ -168,15 +168,13 @@ fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
 
 /// Generate the `match` body for an enum's `clone_in` / `clone_in_with_semantic_ids` method.
 ///
-/// Own variants are cloned arm-by-arm. Variants inherited via `inherit_variants!` are *not*
-/// expanded individually. Instead they are delegated to the inherited enum's own `CloneIn` impl,
-/// using the `to_*` reference cast (narrow `&Self` to `&Inherited`) and the generated `From` impl
-/// (widen the cloned `Inherited` back to `Self`). Both casts are zero-cost because the inherited
-/// variants share discriminants and layout with the parent enum.
+/// Own variants are cloned arm-by-arm. Variants inherited via `INHERIT` are *not* expanded individually.
+/// Instead they are delegated to the inherited enum's own `CloneIn` impl, using `to_*` reference cast
+/// (narrow `&Self` to `&Inherited`), and the generated `From` impl (widen the clone back to `Self`).
+/// Both casts are zero-cost because the inherited variants share discriminants and layout with the parent enum.
 ///
 /// This avoids re-emitting the parent enum's variant arms (e.g. all of `Expression`'s ~30 variants)
-/// in every inheriting enum (`Argument`, `PropertyKey`, ...), which is a large source of binary
-/// bloat, and is behaviour-identical to expanding the arms inline.
+/// in every inheriting enum (`Argument`, `PropertyKey`, ...), which is a large source of binary bloat.
 fn derive_enum_body(
     enum_def: &EnumDef,
     type_ident: &Ident,
@@ -197,10 +195,12 @@ fn derive_enum_body(
 
     let inherited_arms = enum_def.inherits.iter().map(|&inherits_id| {
         let inherited = schema.enum_def(inherits_id);
+
         let patterns = inherited.all_variants(schema).map(|variant| {
             let ident = variant.ident();
             if variant.is_fieldless() { quote!( Self::#ident ) } else { quote!( Self::#ident(_) ) }
         });
+
         let to_inherited = create_ident(&format!("to_{}", inherited.snake_name()));
         quote! {
             #(#patterns)|* => {

@@ -605,13 +605,14 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         }
     });
 
-    // Variants inherited via `inherit_variants!` are delegated to the inherited enum's `ESTree`
-    // impl through the generated `to_*` reference cast, instead of re-emitting an arm for each.
-    // Inherited variants carry the parent's serialization config, so this is byte-identical, and
-    // it avoids duplicating the parent enum's arms (e.g. all of `Expression`'s variants) in every
-    // inheriting enum (`Argument`, `PropertyKey`, ...).
+    // Variants inherited via `INHERIT` are delegated to the inherited enum's `ESTree` impl
+    // through the generated `to_*` reference cast, instead of re-emitting an arm for each.
+    // This avoids duplicating the inherited enum's arms e.g. all of `Expression`'s variants
+    // in every enum that inherits `Expression` (`Argument`, `PropertyKey` etc),
+    // which reduces binary size.
     let inherited_branches = enum_def.inherits.iter().map(|&inherits_id| {
         let inherited = schema.enum_def(inherits_id);
+
         let patterns = inherited.all_variants(schema).map(|variant| {
             let variant_ident = variant.ident();
             if variant.is_fieldless() {
@@ -620,6 +621,7 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                 quote!( Self::#variant_ident(_) )
             }
         });
+
         let to_inherited = create_ident(&format!("to_{}", inherited.snake_name()));
         quote! {
             #(#patterns)|* => self.#to_inherited().serialize(serializer),
