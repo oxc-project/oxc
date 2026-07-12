@@ -180,6 +180,7 @@ impl<'a> TypeScriptEnum {
 
         let enum_name: Ident = decl.id.name;
         let func_scope_id = decl.body.scope_id();
+        ctx.scoping_mut().scope_flags_mut(func_scope_id).insert(ScopeFlags::Function);
         let param_binding =
             ctx.generate_binding(enum_name, func_scope_id, SymbolFlags::FunctionScopedVariable);
 
@@ -276,6 +277,10 @@ impl<'a> TypeScriptEnum {
         );
 
         if is_already_declared {
+            // The lowered output assigns to the existing runtime binding — drop only the
+            // enum bits and keep the flags describing that binding. Updating flags
+            // mid-traversal doesn't break member inlining — see `resolve_enum_member`.
+            *ctx.scoping_mut().symbol_flags_mut(enum_symbol_id) -= SymbolFlags::Enum;
             let op = AssignmentOperator::Assign;
             let left = ctx.create_bound_ident_reference(
                 decl.id.span,
@@ -288,11 +293,13 @@ impl<'a> TypeScriptEnum {
             return Some(Statement::new_expression_statement(span, expr, ctx));
         }
 
-        let kind = if is_export || is_not_top_scope {
-            VariableDeclarationKind::Let
+        let (kind, flags) = if is_export || is_not_top_scope {
+            (VariableDeclarationKind::Let, SymbolFlags::BlockScopedVariable)
         } else {
-            VariableDeclarationKind::Var
+            (VariableDeclarationKind::Var, SymbolFlags::FunctionScopedVariable)
         };
+        // The symbol flags now describe the emitted `var`/`let` binding.
+        *ctx.scoping_mut().symbol_flags_mut(enum_symbol_id) = flags;
         let decls = {
             let binding = BindingPattern::new_binding_identifier_with_symbol_id(
                 decl.id.span,
@@ -564,14 +571,19 @@ impl<'a> TypeScriptEnum {
         let ref_id = ident.reference_id.get()?;
         let symbol_id = ctx.scoping().get_reference(ref_id).symbol_id()?;
 
-        let flags = ctx.scoping().symbol_flags(symbol_id);
-        let is_const_enum = flags.is_const_enum() && self.optimize_const_enums;
-        let is_regular_enum = flags.contains(SymbolFlags::RegularEnum) && self.optimize_enums;
-        if !is_const_enum && !is_regular_enum {
+        // `SymbolFlags` can't identify enums here: once a declaration is lowered, its
+        // flags describe the emitted `var`/`let` binding, but references visited after
+        // it must still inline. The enum data in `Scoping` stays valid throughout.
+        let body_scopes = ctx.scoping().get_enum_body_scopes(symbol_id)?;
+        let optimize = if ctx.scoping().is_const_enum(symbol_id) {
+            self.optimize_const_enums
+        } else {
+            self.optimize_enums
+        };
+        if !optimize {
             return None;
         }
 
-        let body_scopes = ctx.scoping().get_enum_body_scopes(symbol_id)?;
         for &body_scope_id in body_scopes {
             if let Some(member_symbol_id) =
                 ctx.scoping().get_binding(body_scope_id, property_name.into())

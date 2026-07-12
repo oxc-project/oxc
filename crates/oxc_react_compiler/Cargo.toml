@@ -3,15 +3,15 @@
 # Native oxc integration for the Rust port of the React Compiler:
 # https://github.com/react/react/tree/main/compiler
 #
-# This crate owns the oxc <-> react_compiler_ast conversion layer. The React
-# Compiler *core* crates are frontend-agnostic (they depend on serde/indexmap
-# only, never on oxc), so we consume them from crates.io (a published MIT fork of
-# the React Compiler) and keep the AST/scope conversion on our side, written
-# against the live workspace oxc AST.
+# This crate owns the oxc <-> react_compiler_ast conversion layer, plus the React
+# Compiler *core* itself, vendored in-tree under `src/react_compiler*` (one module
+# per upstream crate, from the MIT fork at oxc-project/forked-react-compiler). The
+# core is frontend-agnostic (serde/indexmap only, never oxc); the AST/scope
+# conversion on our side is written against the live workspace oxc AST.
 
 [package]
 name = "oxc_react_compiler"
-version = "0.137.0"
+version = "0.139.0"
 publish = true
 authors.workspace = true
 categories.workspace = true
@@ -25,30 +25,35 @@ description = "oxc integration for the Rust port of React Compiler"
 
 [lib]
 doctest = false
+test = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
-oxc_codegen = { workspace = true }
 oxc_diagnostics = { workspace = true }
-oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 oxc_str = { workspace = true }
 oxc_syntax = { workspace = true }
 
-# React Compiler core crates — frontend-agnostic (no oxc deps). Published fork of
-# the React Compiler (MIT). `package` keeps the in-code name `react_compiler*`.
-react_compiler = { package = "forked_react_compiler", version = "0.2.0" }
-react_compiler_ast = { package = "forked_react_compiler_ast", version = "0.2.0" }
-react_compiler_hir = { package = "forked_react_compiler_hir", version = "0.2.0" }
-
-indexmap = { workspace = true, features = ["serde"] }
+# External crates the vendored React Compiler modules (`src/react_compiler*`) depend
+# on. The compiler core is frontend-agnostic — serde/indexmap/hashing only, no oxc.
+hmac-sha256 = { workspace = true }
+indexmap = { workspace = true }
 rustc-hash = { workspace = true }
-serde_json = { workspace = true, features = ["raw_value"] }
+cow-utils = { workspace = true }
 
 [dev-dependencies]
+# The example and integration tests parse source and print the compiled program; the
+# library itself takes an already-parsed `Program` and never parses or codegens.
+oxc_codegen = { workspace = true }
+oxc_parser = { workspace = true }
+
+# Snapshot testing of the compiler over the upstream fixture corpus (tests/snapshot.rs).
+insta = { workspace = true, features = ["glob"] }
+convert_case = { workspace = true }
+
 # Catch usage of old `AstBuilder` APIs in tests, without affecting downstream consumers.
 # If we enabled `disable_old_builder` feature in main dependency, feature unification would
 # cause it to be activated for `oxc_ast` for the user too.
@@ -65,6 +70,7 @@ disallowed_types = "allow" # `react_compiler_ast`'s `ScopeInfo`/`ScopeData` fiel
 collapsible_if = "allow"
 needless_return = "allow"
 unnecessary_unwrap = "allow"
+result_large_err = "allow" # `Result<T, OxcDiagnostic>` everywhere; same trade-off as the workspace allow
 
 # The vendored modules' doc comments reference types like `Vec<PatternLike>`
 # without backticks; relax rustdoc for them rather than editing upstream code.

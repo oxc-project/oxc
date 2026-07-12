@@ -48,10 +48,10 @@ impl<'a> Jsx<'a> {
         if options.jsx_plugin || options.development {
             options.conform();
         }
+        let refresh = options.refresh.take();
         let JsxOptions {
             jsx_plugin, display_name_plugin, jsx_self_plugin, jsx_source_plugin, ..
         } = options;
-        let refresh = options.refresh.clone();
         Self {
             implementation: JsxImpl::new(options, object_rest_spread_options, ast, source_type),
             display_name: ReactDisplayName::new(),
@@ -60,7 +60,7 @@ impl<'a> Jsx<'a> {
             self_plugin: jsx_self_plugin,
             source_plugin: jsx_source_plugin,
             refresh_plugin: refresh.is_some(),
-            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ast),
+            refresh: ReactRefresh::new(refresh.as_ref(), ast),
         }
     }
 }

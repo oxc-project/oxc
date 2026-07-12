@@ -3,13 +3,25 @@
 //! This module provides methods and utilities for working with [`AstKind`],
 //! including type checking, conversions, and tree traversal helpers.
 
+use std::ptr::NonNull;
+
 use oxc_allocator::{Address, GetAddress, UnstableAddress};
 use oxc_span::GetSpan;
 use oxc_str::{Ident, Str};
 
-use super::{AstKind, ast::*};
+use super::{AstKind, AstType, ast::*};
 
 impl<'a> AstKind<'a> {
+    /// Get the [`AstType`] of an [`AstKind`].
+    #[inline]
+    pub fn ty(&self) -> AstType {
+        // SAFETY: `AstKind` is `#[repr(C, u8)]`, so discriminant is stored in first byte,
+        // and it's valid to read it.
+        // `AstType` is also `#[repr(u8)]` and `AstKind` and `AstType` both have the same
+        // discriminants, so it's valid to read `AstKind`'s discriminant as `AstType`.
+        unsafe { *NonNull::from_ref(self).cast::<AstType>().as_ref() }
+    }
+
     /// Check if this AST node is a statement
     ///
     /// Returns `true` for all statement types including iteration statements,
@@ -560,7 +572,7 @@ impl AstKind<'_> {
             Self::TSNonNullExpression(_) => "TSNonNullExpression".into(),
             Self::TSInstantiationExpression(_) => "TSInstantiationExpression".into(),
 
-            Self::TSEnumDeclaration(decl) => format!("TSEnumDeclaration({})", &decl.id.name).into(),
+            Self::TSEnumDeclaration(decl) => format!("TSEnumDeclaration({})", decl.id.name).into(),
             Self::TSEnumBody(_) => "TSEnumBody".into(),
             Self::TSEnumMember(_) => "TSEnumMember".into(),
 

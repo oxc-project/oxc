@@ -1436,14 +1436,14 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 
 ### What it does
 
-Encourages using `Array.prototype.find` instead of `filter(...)[0]` or
-similar patterns when only the first matching element is needed.
+Encourages using `Array.prototype.find` and `Array.prototype.findLast` instead of
+taking the first or last matching element from `filter(...)`.
 
 ### Why is this bad?
 
-Using `filter(...)[0]` to get the first match is less efficient and more verbose
-than using `find(...)`. `find` short-circuits when a match is found,
-whereas `filter` evaluates the entire array.
+Using `filter(...)[0]` or array destructuring to get the first match is less
+efficient and more verbose than using `find(...)`. `find` and `findLast`
+short-circuit when a match is found, whereas `filter` evaluates the entire array.
 
 ### Examples
 
@@ -1451,12 +1451,18 @@ Examples of **incorrect** code for this rule:
 ```js
 const match = users.filter(u => u.id === id)[0];
 const match = users.filter(fn).shift();
+const [match] = users.filter(fn);
+
+const match = users.filter(fn).at(-1);
+const match = users.filter(fn).pop();
 ```
 
 Examples of **correct** code for this rule:
 ```js
 const match = users.find(u => u.id === id);
 const match = users.find(fn);
+
+const match = users.findLast(fn);
 ```
 
 
@@ -1617,7 +1623,7 @@ type: `array`
 An array of prop names or objects that are forbidden on DOM elements.
 
 Each array element can be a string with the property name, or an object
-with `propName`, an optional `disallowedFor` array of DOM node names,
+with `propName`, optional `disallowedFor` and `disallowedValues` arrays,
 and an optional custom `message`.
 
 Examples:
@@ -1625,6 +1631,7 @@ Examples:
 - `["error", { "forbid": ["id", "style"] }]`
 - `["error", { "forbid": [{ "propName": "className", "message": "Use class instead" }] }]`
 - `["error", { "forbid": [{ "propName": "style", "disallowedFor": ["div", "span"] }] }]`
+- `["error", { "forbid": [{ "propName": "type", "disallowedValues": ["button"] }] }]`
 
 
 #### forbid[n]
@@ -1643,6 +1650,15 @@ type: `string[]`
 A list of DOM element names (e.g. `["div", "span"]`) on which this
 prop is forbidden. If empty or omitted, the prop is forbidden on all
 DOM elements.
+
+
+##### forbid[n].disallowedValues
+
+type: `string[]`
+
+
+A list of string literal values for which this prop is forbidden. If
+omitted, the prop is forbidden for all values.
 
 
 ##### forbid[n].message

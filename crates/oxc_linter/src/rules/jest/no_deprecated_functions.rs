@@ -122,7 +122,8 @@ fn deprecated_functions_map(deprecated_fn: &str) -> Option<(usize, &'static str)
     match deprecated_fn {
         "jest.resetModuleRegistry" => Some((15, "jest.resetModules")),
         "jest.addMatchers" => Some((17, "expect.extend")),
-        "require.requireMock" | "require.requireActual" => Some((21, "jest.requireMock")),
+        "require.requireMock" => Some((21, "jest.requireMock")),
+        "require.requireActual" => Some((21, "jest.requireActual")),
         "jest.runTimersToTime" => Some((22, "jest.advanceTimersByTime")),
         "jest.genMockFromModule" => Some((26, "jest.createMockFromModule")),
         _ => None,
@@ -230,6 +231,16 @@ fn tests() {
             "jest.genMockFromModule",
             "jest.createMockFromModule",
             Some(serde_json::json!([{ "jest": { "version": "26.0.0-next.11" } }])),
+        ),
+        (
+            "require.requireMock('./m')",
+            "jest.requireMock('./m')",
+            Some(serde_json::json!([{ "jest": { "version": "21" } }])),
+        ),
+        (
+            "require.requireActual('./m')",
+            "jest.requireActual('./m')",
+            Some(serde_json::json!([{ "jest": { "version": "21" } }])),
         ),
     ];
 
@@ -341,6 +352,18 @@ fn test_version_from_config() {
             "jest.createMockFromModule",
             None,
             Some(serde_json::json!({ "settings": { "jest": { "version": "26.0.0-next.11" } }})),
+        ),
+        (
+            "require.requireMock('./m')",
+            "jest.requireMock('./m')",
+            None,
+            Some(serde_json::json!({ "settings": { "jest": { "version": "21" } }})),
+        ),
+        (
+            "require.requireActual('./m')",
+            "jest.requireActual('./m')",
+            None,
+            Some(serde_json::json!({ "settings": { "jest": { "version": "21" } }})),
         ),
     ];
 

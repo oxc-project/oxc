@@ -3,13 +3,13 @@ commit: 1fb0b771
 formatter_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
 Positive Passed: 2230/2236 (99.73%)
-Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/async-arrow-function/input.js
-
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-method/input.js
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-private-method/input.js
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/function/input.js
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/nested-parentheses/input.js
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/object-method/input.js
 

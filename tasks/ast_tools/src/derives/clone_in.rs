@@ -7,6 +7,7 @@ use syn::Ident;
 use crate::{
     Result,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
+    utils::create_ident,
 };
 
 use super::{
@@ -149,45 +150,73 @@ fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         let clone_in_body = quote!(*self);
         (clone_in_body.clone(), clone_in_body)
     } else {
-        let match_arms = enum_def.all_variants(schema).map(|variant| {
-            let ident = variant.ident();
-            if variant.is_fieldless() {
-                quote!( Self::#ident => #type_ident::#ident )
-            } else {
-                quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::clone_in(it, allocator)) )
-            }
-        });
-        let clone_in_body = quote! {
-            match self {
-                #(#match_arms),*
-            }
-        };
-
-        let match_arms = enum_def.all_variants(schema).map(|variant| {
-            let ident = variant.ident();
-            if variant.is_fieldless() {
-                quote!( Self::#ident => #type_ident::#ident )
-            } else {
-                quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::clone_in_with_semantic_ids(it, allocator)) )
-            }
-        });
-        let clone_in_with_semantic_ids_body = quote! {
-            match self {
-                #(#match_arms),*
-            }
-        };
-
-        (clone_in_body, clone_in_with_semantic_ids_body)
+        (
+            derive_enum_body(enum_def, &type_ident, schema, false),
+            derive_enum_body(enum_def, &type_ident, schema, true),
+        )
     };
 
-    // Note: Add `#[inline(always)]` to methods for fieldless enums, because they're no-ops
+    // Add `#[inline(always)]` to methods for fieldless enums, because they're no-ops
+    let inline_always = enum_def.is_fieldless();
+
     generate_impl(
         &type_ident,
         &clone_in_body,
         &clone_in_with_semantic_ids_body,
         enum_def.has_lifetime,
-        enum_def.is_fieldless(),
+        inline_always,
     )
+}
+
+/// Generate the `match` body for an enum's `clone_in` / `clone_in_with_semantic_ids` method.
+///
+/// Own variants are cloned arm-by-arm. Variants inherited via `INHERIT` are *not* expanded individually.
+/// Instead they are delegated to the inherited enum's own `CloneIn` impl, using `to_*` reference cast
+/// (narrow `&Self` to `&Inherited`), and the generated `From` impl (widen the clone back to `Self`).
+/// Both casts are zero-cost because the inherited variants share discriminants and layout with the parent enum.
+///
+/// This avoids re-emitting the parent enum's variant arms (e.g. all of `Expression`'s ~30 variants)
+/// in every inheriting enum (`Argument`, `PropertyKey`, ...), which is a large source of binary bloat.
+fn derive_enum_body(
+    enum_def: &EnumDef,
+    type_ident: &Ident,
+    schema: &Schema,
+    with_semantic_ids: bool,
+) -> TokenStream {
+    let clone_method =
+        if with_semantic_ids { quote!(clone_in_with_semantic_ids) } else { quote!(clone_in) };
+
+    let own_arms = enum_def.variants.iter().map(|variant| {
+        let ident = variant.ident();
+        if variant.is_fieldless() {
+            quote!( Self::#ident => #type_ident::#ident )
+        } else {
+            quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::#clone_method(it, allocator)) )
+        }
+    });
+
+    let inherited_arms = enum_def.inherits.iter().map(|&inherits_id| {
+        let inherited = schema.enum_def(inherits_id);
+
+        let patterns = inherited.all_variants(schema).map(|variant| {
+            let ident = variant.ident();
+            if variant.is_fieldless() { quote!( Self::#ident ) } else { quote!( Self::#ident(_) ) }
+        });
+
+        let to_inherited = create_ident(&format!("to_{}", inherited.snake_name()));
+        quote! {
+            #(#patterns)|* => {
+                #type_ident::from(CloneIn::#clone_method(self.#to_inherited(), allocator))
+            }
+        }
+    });
+
+    quote! {
+        match self {
+            #(#own_arms,)*
+            #(#inherited_arms,)*
+        }
+    }
 }
 
 fn generate_impl(

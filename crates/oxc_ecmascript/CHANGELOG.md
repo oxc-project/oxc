@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.139.0] - 2026-07-06
+
+### 🚀 Features
+
+- 60e7160 minifier: Drop side-effect-free IIFEs whose result is unused (#23967) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- e274415 minifier: Don't drop global calls that throw despite pure arguments (#23917) (Dunqing)
+
+### ⚡ Performance
+
+- bd49aff ecmascript: Avoid heap-allocating Math.min/max/imul operands (#23941) (Lawrence Lin)
+
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 8de5122 ecmascript: [**BREAKING**] Switch to new `AstBuilder` (#23834) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+
+### 📚 Documentation
+
+- 3d61dea all: Correct capitalization in comments (#23887) (overlookmotel)
+
 ## [0.137.0] - 2026-06-18
 
 ### 🚀 Features

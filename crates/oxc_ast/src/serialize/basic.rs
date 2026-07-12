@@ -24,6 +24,23 @@ impl<T> ESTree for TsNull<T> {
     }
 }
 
+/// Serialized as `null`, but typed as `TSTypeAnnotation | null`. Field only present in TS-ESTree AST.
+///
+/// Used for binding-pattern nodes (e.g. `BindingIdentifier`, `ObjectPattern`) whose `typeAnnotation`
+/// is `null` when the node is serialized standalone, but is populated with a real `TSTypeAnnotation`
+/// by the parent converter (`BindingPatternKindAndTsFields`) when the binding is annotated, as in
+/// `const x: string = ""`.
+#[ast_meta]
+#[estree(ts_type = "TSTypeAnnotation | null", raw_deser = "null", raw_deser_inline)]
+#[ts]
+pub struct TsTypeAnnotationOrNull<T>(pub T);
+
+impl<T> ESTree for TsTypeAnnotationOrNull<T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        Null(()).serialize(serializer);
+    }
+}
+
 /// Serialized as `true`.
 #[ast_meta]
 #[estree(ts_type = "true", raw_deser = "true", raw_deser_inline)]

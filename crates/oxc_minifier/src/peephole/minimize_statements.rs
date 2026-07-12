@@ -1,8 +1,6 @@
 use std::{cmp::min, iter, ops::ControlFlow};
 
-use super::PeepholeOptimizations;
 use crate::generated::ancestor::Ancestor;
-use crate::{TraverseCtx, keep_var::KeepVar};
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, HashSet, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::Visit;
@@ -13,6 +11,10 @@ use oxc_ecmascript::{
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
 use oxc_syntax::symbol::SymbolId;
+
+use crate::{TraverseCtx, keep_var::KeepVar};
+
+use super::PeepholeOptimizations;
 
 /// `false` when dropping `stmt` produces a byte-identical AST — a `var`
 /// with no initializers, which `KeepVar` re-emits unchanged at the end of
@@ -1339,7 +1341,10 @@ impl<'a> PeepholeOptimizations {
             let old_len = var_decl.declarations.len();
             var_decl.declarations.retain_mut(|decl| {
                 let should_keep = !Self::should_remove_unused_declarator(decl, ctx)
-                    || decl.init.as_ref().is_some_and(|init| init.may_have_side_effects(ctx));
+                    || decl
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| Self::has_side_effects_or_preserved_iife(init, ctx));
                 if !should_keep {
                     // Same leak hazard as `remove_unused_variable_declaration`:
                     // the `retain` silently drops the declarator, so its refs
@@ -1736,6 +1741,40 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Whether reordering this read before a side-effecting replacement could
+    /// observe `symbol_id` in its Temporal Dead Zone.
+    ///
+    /// The hazard is a block-scoped binding (`let`/`const`/`using`/`class`/`enum`)
+    /// closed over from an enclosing function: the function can suspend at an
+    /// `await`/`yield` while outer code initializes the binding, so the earlier
+    /// (reordered) read hits the TDZ where the original would not. A same-function
+    /// binding can't be initialized mid-suspension, so it stays inlinable.
+    ///
+    /// <https://github.com/rolldown/rolldown/issues/9959>
+    fn is_tdz_closed_over_read(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        ctx.scoping().symbol_flags(symbol_id).is_block_scoped()
+            && Self::read_crosses_function_boundary(
+                ctx.current_scope_id(),
+                ctx.scoping().symbol_scope_id(symbol_id),
+                ctx,
+            )
+    }
+
+    /// Whether reordering a side-effecting replacement past this member
+    /// assignment-target object is unsafe. The object is evaluated before the
+    /// replacement, so it is unsafe if its reference may change, or if it reads
+    /// a closed-over lexical that could be in its TDZ (e.g. `v.x = await f()`
+    /// reading `v` before the await). See [`Self::is_tdz_closed_over_read`].
+    fn member_object_blocks_reorder(object: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        Self::is_expression_that_reference_may_change(object, ctx)
+            || matches!(object, Expression::Identifier(id)
+                if ctx
+                    .scoping()
+                    .get_reference(id.reference_id())
+                    .symbol_id()
+                    .is_some_and(|symbol_id| Self::is_tdz_closed_over_read(symbol_id, ctx)))
+    }
+
     /// Returns Some(true) when the expression is successfully replaced.
     /// Returns Some(false) when the expression is not replaced, and cannot try the subsequent expressions.
     /// Return None when the expression is not replaced, and can try the subsequent expressions.
@@ -1764,8 +1803,17 @@ impl<'a> PeepholeOptimizations {
                 }
                 // If the identifier is not a getter and the identifier is read-only,
                 // we know that the value is same even if we reordered the expression.
+                //
+                // But a lexical binding that is closed over from an enclosing
+                // function/module scope may still be in its Temporal Dead Zone
+                // when this function runs (e.g. the function is called before the
+                // binding's declaration executes). Reordering its read earlier —
+                // in particular before a side-effecting replacement such as an
+                // `await` — can surface a `ReferenceError` that the original order
+                // avoids. https://github.com/rolldown/rolldown/issues/9959
                 if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
                     && !Self::is_symbol_mutated(symbol_id, ctx)
+                    && !Self::is_tdz_closed_over_read(symbol_id, ctx)
                 {
                     return None;
                 }
@@ -1892,13 +1940,13 @@ impl<'a> PeepholeOptimizations {
                     let may_depend_on_side_effect = match &assign_expr.left {
                         AssignmentTarget::AssignmentTargetIdentifier(_) => false,
                         AssignmentTarget::ComputedMemberExpression(member_expr) => {
-                            Self::is_expression_that_reference_may_change(&member_expr.object, ctx)
+                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
                         }
                         AssignmentTarget::PrivateFieldExpression(member_expr) => {
-                            Self::is_expression_that_reference_may_change(&member_expr.object, ctx)
+                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
                         }
                         AssignmentTarget::StaticMemberExpression(member_expr) => {
-                            Self::is_expression_that_reference_may_change(&member_expr.object, ctx)
+                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
                         }
                         AssignmentTarget::ArrayAssignmentTarget(_)
                         | AssignmentTarget::ObjectAssignmentTarget(_)

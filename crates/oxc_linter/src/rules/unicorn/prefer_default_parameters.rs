@@ -401,9 +401,7 @@ fn check_no_extra_references<'a>(
         return false;
     };
 
-    let Some(symbol_id) = binding_ident.symbol_id.get() else {
-        return false;
-    };
+    let symbol_id = binding_ident.symbol_id();
 
     let references: Vec<_> = ctx.scoping().get_resolved_references(symbol_id).collect();
 
@@ -424,9 +422,7 @@ fn check_no_extra_references_assignment<'a>(
         return false;
     };
 
-    let Some(symbol_id) = binding_ident.symbol_id.get() else {
-        return false;
-    };
+    let symbol_id = binding_ident.symbol_id();
 
     let (has_matching_read, writes) = ctx.scoping().get_resolved_references(symbol_id).fold(
         (false, 0usize),

@@ -1,5 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
 use oxc_ast::ast::*;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
@@ -743,8 +743,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         // Add `ChainExpression` to `a?.c?.b<c>`;
         if let Expression::TSInstantiationExpression(mut expr) = lhs {
-            expr.expression =
-                self.map_to_chain_expression(expr.expression.span(), expr.expression.take_in(self));
+            expr.expression.replace_with(|expr| self.map_to_chain_expression(expr.span(), expr));
             Expression::TSInstantiationExpression(expr)
         } else {
             let span = self.end_span(span);

@@ -1,0 +1,12 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/rules-of-hooks-69521d94fa03.js
+---
+// Valid because the neither the condition nor the loop affect the hook call.
+function App(props) {
+	const someObject = { propA: true };
+	for (const propName in someObject) {
+		if (propName === true) {}
+	}
+	useState(null);
+}

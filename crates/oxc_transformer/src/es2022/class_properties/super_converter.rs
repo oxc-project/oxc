@@ -1,7 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of `super` expressions.
 
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_traverse::ast_operations::get_var_name_from_node;
@@ -207,15 +207,19 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx) else {
-            unreachable!()
-        };
-        let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
-        let AssignmentTarget::StaticMemberExpression(member) = left else { unreachable!() };
-        let property =
-            Expression::new_string_literal(member.property.span, member.property.name, None, ctx);
-        *expr =
-            self.transform_super_assignment_expression_impl(span, operator, property, value, ctx);
+        expr.replace_with(|expr| {
+            let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
+            let AssignmentExpression { span, operator, right: value, left, .. } =
+                assign_expr.unbox();
+            let AssignmentTarget::StaticMemberExpression(member) = left else { unreachable!() };
+            let property = Expression::new_string_literal(
+                member.property.span,
+                member.property.name,
+                None,
+                ctx,
+            );
+            self.transform_super_assignment_expression_impl(span, operator, property, value, ctx)
+        });
     }
 
     /// Transform assignment expression where the left-hand side is a computed member expression
@@ -235,14 +239,14 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx) else {
-            unreachable!()
-        };
-        let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
-        let AssignmentTarget::ComputedMemberExpression(member) = left else { unreachable!() };
-        let property = member.unbox().expression.into_inner_expression();
-        *expr =
-            self.transform_super_assignment_expression_impl(span, operator, property, value, ctx);
+        expr.replace_with(|expr| {
+            let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
+            let AssignmentExpression { span, operator, right: value, left, .. } =
+                assign_expr.unbox();
+            let AssignmentTarget::ComputedMemberExpression(member) = left else { unreachable!() };
+            let property = member.unbox().expression.into_inner_expression();
+            self.transform_super_assignment_expression_impl(span, operator, property, value, ctx)
+        });
     }
 
     /// Transform assignment expression where the left-hand side is a member expression with `super`
@@ -370,25 +374,29 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx) else {
-            unreachable!()
-        };
-        let SimpleAssignmentTarget::StaticMemberExpression(member) = &mut update_expr.argument
-        else {
-            unreachable!()
-        };
+        expr.replace_with(|expr| {
+            let Expression::UpdateExpression(mut update_expr) = expr else { unreachable!() };
+            let SimpleAssignmentTarget::StaticMemberExpression(member) = &mut update_expr.argument
+            else {
+                unreachable!()
+            };
 
-        let temp_var_name_base = get_var_name_from_node(member.as_ref());
+            let temp_var_name_base = get_var_name_from_node(member.as_ref());
 
-        let property =
-            Expression::new_string_literal(member.property.span, member.property.name, None, ctx);
+            let property = Expression::new_string_literal(
+                member.property.span,
+                member.property.name,
+                None,
+                ctx,
+            );
 
-        *expr = self.transform_super_update_expression_impl(
-            &temp_var_name_base,
-            update_expr,
-            property,
-            ctx,
-        );
+            self.transform_super_update_expression_impl(
+                &temp_var_name_base,
+                update_expr,
+                property,
+                ctx,
+            )
+        });
     }
 
     /// Transform update expression (`++` or `--`) where argument is a computed member expression
@@ -433,24 +441,25 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx) else {
-            unreachable!()
-        };
-        let SimpleAssignmentTarget::ComputedMemberExpression(member) = &mut update_expr.argument
-        else {
-            unreachable!()
-        };
+        expr.replace_with(|expr| {
+            let Expression::UpdateExpression(mut update_expr) = expr else { unreachable!() };
+            let SimpleAssignmentTarget::ComputedMemberExpression(member) =
+                &mut update_expr.argument
+            else {
+                unreachable!()
+            };
 
-        let temp_var_name_base = get_var_name_from_node(member.as_ref());
+            let temp_var_name_base = get_var_name_from_node(member.as_ref());
 
-        let property = member.expression.get_inner_expression_mut().take_in(ctx);
+            let property = member.expression.get_inner_expression_mut().take_in(ctx);
 
-        *expr = self.transform_super_update_expression_impl(
-            &temp_var_name_base,
-            update_expr,
-            property,
-            ctx,
-        );
+            self.transform_super_update_expression_impl(
+                &temp_var_name_base,
+                update_expr,
+                property,
+                ctx,
+            )
+        });
     }
 
     /// Transform update expression (`++` or `--`) where argument is a member expression with `super`.

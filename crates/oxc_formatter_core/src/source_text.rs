@@ -32,6 +32,16 @@ impl<'a> SourceText<'a> {
         Self { text }
     }
 
+    /// The full source as `&'a str`.
+    ///
+    /// `Deref<Target = str>` re-borrows through `&self`,
+    /// which is too short for consumers that need source-lifetime slices.
+    /// (e.g. `oxc-css-parser` has span-backed accessors whose results reach the `text()` builder)
+    /// This hands back the `'a`-lived text itself.
+    pub fn as_str(&self) -> &'a str {
+        self.text
+    }
+
     // Text slicing
     /// Get text between two positions
     pub fn slice_range(&self, start: u32, end: u32) -> &'a str {
@@ -40,12 +50,12 @@ impl<'a> SourceText<'a> {
 
     // Byte slicing
     /// Get bytes from position to end
-    fn bytes_from(&self, position: u32) -> impl Iterator<Item = u8> {
+    fn bytes_from(&self, position: u32) -> impl ExactSizeIterator<Item = u8> {
         self.text.as_bytes()[position as usize..].iter().copied()
     }
 
     /// Get bytes from start to position in reverse
-    pub fn bytes_to(&self, position: u32) -> impl Iterator<Item = u8> {
+    pub fn bytes_to(&self, position: u32) -> impl ExactSizeIterator<Item = u8> {
         self.text.as_bytes()[..position as usize].iter().copied().rev()
     }
 

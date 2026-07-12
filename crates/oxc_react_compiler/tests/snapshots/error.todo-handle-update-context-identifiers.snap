@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-handle-update-context-identifiers.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: (BuildHIR::lowerExpression) Handle UpdateExpression to variables captured within lambdas.", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(71), length: 9 }, primary: false }]), help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

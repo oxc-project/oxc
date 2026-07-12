@@ -1,0 +1,16 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/rules-of-hooks-0592bd574811.js
+---
+// @expectNothingCompiled @compilationMode:"infer"
+// Regression test for some internal code.
+// This shows how the "callback rule" is more relaxed,
+// and doesn't kick in unless we're confident we're in
+// a component or a hook.
+function makeListener(instance) {
+	each(pixelsWithInferredEvents, (pixel) => {
+		if (useExtendedSelector(pixel.id) && extendedButton) {
+			foo();
+		}
+	});
+}

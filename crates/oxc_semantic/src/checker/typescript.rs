@@ -117,7 +117,7 @@ pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &Sem
 pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     check_ts_module_or_global_declaration(decl.span, ctx);
 
-    if !decl.declare && !ctx.in_declare_scope() {
+    if !decl.declare && !ctx.in_ambient_context() {
         ctx.error(diagnostics::global_scope_augmentation_should_have_declare_modifier(
             decl.global_span,
         ));
@@ -179,7 +179,7 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
         }
     }
 
-    if !class.r#declare && !ctx.in_declare_scope() {
+    if !ctx.in_ambient_context() {
         let mut is_in_overload_group = false;
         for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
             if let Some(ClassElement::MethodDefinition(a)) = a
@@ -242,23 +242,8 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     }
 
     // Illegal to have `get foo();` or `set foo(a)`
-    if method.kind.is_accessor() && is_empty_body && !is_abstract {
-        let is_declare = ctx.class_table_builder.current_class_id.map_or(
-            ctx.source_type.is_typescript_definition(),
-            |id| {
-                let node_id = ctx.class_table_builder.classes.declarations[id];
-                let AstKind::Class(class) = ctx.ancestry().find_kind_by_node_id(node_id) else {
-                    #[cfg(debug_assertions)]
-                    panic!("current_class_id is set, but does not point to a Class node.");
-                    #[cfg(not(debug_assertions))]
-                    return ctx.source_type.is_typescript_definition();
-                };
-                class.declare || ctx.source_type.is_typescript_definition()
-            },
-        );
-        if !is_declare {
-            ctx.error(diagnostics::accessor_without_body(method.key.span()));
-        }
+    if method.kind.is_accessor() && is_empty_body && !is_abstract && !ctx.in_ambient_context() {
+        ctx.error(diagnostics::accessor_without_body(method.key.span()));
     }
 }
 

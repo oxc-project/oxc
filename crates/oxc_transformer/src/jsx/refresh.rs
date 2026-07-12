@@ -8,7 +8,8 @@ use hmac_sha1_compact::Hash as Sha1;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{
-    ArenaStringBuilder, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn, UnstableAddress,
+    ArenaStringBuilder, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn,
+    UnstableAddress,
 };
 use oxc_ast::{
     ast::*,
@@ -29,7 +30,7 @@ use crate::{
     common::var_declarations::VarDeclarationsStore, context::TraverseCtx, state::TransformState,
 };
 
-use super::options::ReactRefreshOptions;
+use super::options::{DEFAULT_REFRESH_REG, DEFAULT_REFRESH_SIG, ReactRefreshOptions};
 
 /// Parse a string into a `RefreshIdentifierResolver` and convert it into an `Expression`
 #[derive(Debug)]
@@ -135,11 +136,13 @@ pub struct ReactRefresh<'a> {
 }
 
 impl<'a> ReactRefresh<'a> {
-    pub fn new(options: &ReactRefreshOptions, ast: &AstBuilder<'a>) -> Self {
+    pub fn new(options: Option<&ReactRefreshOptions>, ast: &AstBuilder<'a>) -> Self {
+        let refresh_reg = options.map_or(DEFAULT_REFRESH_REG, |options| &options.refresh_reg);
+        let refresh_sig = options.map_or(DEFAULT_REFRESH_SIG, |options| &options.refresh_sig);
         Self {
-            refresh_reg: RefreshIdentifierResolver::parse(&options.refresh_reg, ast),
-            refresh_sig: RefreshIdentifierResolver::parse(&options.refresh_sig, ast),
-            emit_full_signatures: options.emit_full_signatures,
+            refresh_reg: RefreshIdentifierResolver::parse(refresh_reg, ast),
+            refresh_sig: RefreshIdentifierResolver::parse(refresh_sig, ast),
+            emit_full_signatures: options.is_some_and(|options| options.emit_full_signatures),
             registrations: Vec::default(),
             last_signature: None,
             function_signature_keys: FxHashMap::default(),
@@ -271,15 +274,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         }
 
         let span = expr.span();
-        arguments.insert(0, Argument::from(expr.take_in(ctx)));
-        *expr = Expression::new_call_expression(
-            span,
-            binding.create_read_expression(ctx),
-            NONE,
-            arguments,
-            false,
-            ctx,
-        );
+        expr.replace_with(|expr| {
+            arguments.insert(0, Argument::from(expr));
+            Expression::new_call_expression(
+                span,
+                binding.create_read_expression(ctx),
+                NONE,
+                arguments,
+                false,
+                ctx,
+            )
+        });
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -544,13 +549,15 @@ impl<'a> ReactRefresh<'a> {
         }
 
         if !is_variable_declarator {
-            *expr = Expression::new_assignment_expression(
-                SPAN,
-                AssignmentOperator::Assign,
-                self.create_registration(Str::from_str_in(inferred_name, ctx), ctx),
-                expr.take_in(ctx),
-                ctx,
-            );
+            expr.replace_with(|expr| {
+                Expression::new_assignment_expression(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    self.create_registration(Str::from_str_in(inferred_name, ctx), ctx),
+                    expr,
+                    ctx,
+                )
+            });
         }
 
         true

@@ -405,8 +405,16 @@ pub(super) fn is_pure_global_method_call(object: &str, method: &str) -> bool {
         // target, and `Object.create` reads its `properties` argument; both are
         // handled in `CallExpression::may_have_side_effects`.
         "Object" => method == "is",
-        "String" => matches!(method, "fromCharCode" | "fromCodePoint" | "raw"),
-        "Symbol" => matches!(method, "for" | "keyFor"),
+        // `String.raw(template)` reads `template.raw` and throws a TypeError on a
+        // missing/non-template argument, which is never provably safe — kept as not-pure.
+        // `fromCharCode`/`fromCodePoint` coerce via `ToNumber` (throw-checked in
+        // `CallExpression::may_have_side_effects`).
+        "String" => matches!(method, "fromCharCode" | "fromCodePoint"),
+        // `Symbol.keyFor(sym)` requires a Symbol argument and throws otherwise, which is
+        // never provable — kept as not-pure.
+        "Symbol" => method == "for",
+        // `URL.canParse(url)` has a required first argument (throws with none); the
+        // arg-count check lives in `CallExpression::may_have_side_effects`.
         "URL" => method == "canParse",
         _ if is_typed_array_constructor(object) => method == "of",
         _ => false,

@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator, ReplaceWith};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::Str;
@@ -182,12 +182,15 @@ impl<'a> IsolatedDeclarations<'a> {
     /// const a = 1;
     /// function b() {}
     /// ```
-    pub(crate) fn strip_export_keyword(&self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
+    pub(crate) fn strip_export_keyword(stmts: &mut ArenaVec<'a, Statement<'a>>) {
         stmts.iter_mut().for_each(|stmt| {
             if let Statement::ExportNamedDeclaration(decl) = stmt
-                && let Some(declaration) = &mut decl.declaration
+                && decl.declaration.is_some()
             {
-                *stmt = Statement::from(declaration.take_in(self));
+                stmt.replace_with(|stmt| {
+                    let Statement::ExportNamedDeclaration(decl) = stmt else { unreachable!() };
+                    Statement::from(decl.unbox().declaration.unwrap())
+                });
             }
         });
     }

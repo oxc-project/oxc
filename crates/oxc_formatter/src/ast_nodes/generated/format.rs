@@ -1999,8 +1999,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, EmptyStatement> {
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExpressionStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
-        self.format_leading_comments(f);
         if is_suppressed {
+            self.format_leading_comments(f);
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
@@ -2027,7 +2027,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, DoWhileStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2154,7 +2154,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ContinueStatement<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2167,7 +2167,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BreakStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -4411,6 +4411,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnionType<'a>> {
             "(".fmt(f);
         }
         if is_suppressed {
+            self.format_leading_comments(f);
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);

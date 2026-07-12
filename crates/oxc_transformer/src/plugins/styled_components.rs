@@ -63,7 +63,7 @@ use std::{
 use rustc_hash::FxHasher;
 use serde::Deserialize;
 
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::{
     ast::*,
     builder::{AstBuilder, NONE},
@@ -460,12 +460,12 @@ impl<'a> StyledComponents<'a> {
             self.add_properties(&mut properties, ctx);
             let object = ObjectExpression::boxed(SPAN, properties, ctx);
             let arguments = ArenaVec::from_value_in(Argument::ObjectExpression(object), ctx);
-            let object = expr.take_in(ctx);
-            let property = IdentifierName::new(SPAN, "withConfig", ctx);
-            let callee =
-                Expression::new_static_member_expression(SPAN, object, property, false, ctx);
-            let call = Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx);
-            *expr = call;
+            expr.replace_with(|object| {
+                let property = IdentifierName::new(SPAN, "withConfig", ctx);
+                let callee =
+                    Expression::new_static_member_expression(SPAN, object, property, false, ctx);
+                Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx)
+            });
         } else {
             return false;
         }
@@ -881,7 +881,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: &AstBuilder<'
     /// to have this span, because it's always followed by (at minimum) a '`'.
     const REMOVE_SENTINEL: Span = Span::new(u32::MAX, u32::MAX);
 
-    debug_assert!(lit.quasis.len() == lit.expressions.len() + 1);
+    debug_assert_eq!(lit.quasis.len(), lit.expressions.len() + 1);
 
     // Type of comment currently in.
     // * `None` = not in a comment.
@@ -1178,7 +1178,7 @@ mod tests {
 
         minify_template_literal(&mut lit, &ast);
 
-        assert!(lit.quasis.len() == 1);
+        assert_eq!(lit.quasis.len(), 1);
 
         lit.quasis[0].value.raw.to_string()
     }

@@ -39,23 +39,30 @@ impl<'a> PeepholeOptimizations {
     pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::StaticMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
+        // `evaluate_value` only folds a narrow set of member accesses (currently
+        // `.length` on constant strings/arrays) and bails cheaply otherwise.
+        // Evaluate it first so the overwhelmingly common non-foldable access
+        // (e.g. `a.b.c.prop`) skips the recursive `may_have_side_effects` walk
+        // over the object's member chain.
+        let Some(value) = e.evaluate_value(ctx) else { return };
         if e.object.may_have_side_effects(ctx) {
             return;
         }
-        if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
-            ctx.replace_expression(expr, changed);
-        }
+        let changed = ctx.value_to_expr(e.span, value);
+        ctx.replace_expression(expr, changed);
     }
 
     pub fn fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ComputedMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
+        // See `fold_static_member_expr`: bail via the cheap `evaluate_value`
+        // check before walking the object and key for side effects.
+        let Some(value) = e.evaluate_value(ctx) else { return };
         if e.object.may_have_side_effects(ctx) || e.expression.may_have_side_effects(ctx) {
             return;
         }
-        if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
-            ctx.replace_expression(expr, changed);
-        }
+        let changed = ctx.value_to_expr(e.span, value);
+        ctx.replace_expression(expr, changed);
     }
 
     pub fn fold_logical_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -400,7 +407,11 @@ impl<'a> PeepholeOptimizations {
         }
 
         // a + 'b' + 'c' -> a + 'bc'
+        // Only sound when the inner operator is also `+`: for e.g. `(x - 'b') + 'c'` the inner
+        // string operand is numerically coerced (`x - 'b'` is `x - NaN`), so the literals must
+        // not be pulled out and merged.
         if let Expression::BinaryExpression(left_binary_expr) = &mut e.left
+            && left_binary_expr.operator == BinaryOperator::Addition
             && left_binary_expr.right.value_type(ctx).is_string()
         {
             if let (Some(left_str), Some(right_str)) = (

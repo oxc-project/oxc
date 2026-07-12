@@ -1,0 +1,32 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/hoisting-nested-const-declaration-2.js
+---
+import { c as _c } from "react/compiler-runtime";
+function hoisting(cond) {
+	const $ = _c(2);
+	let items;
+	if ($[0] !== cond) {
+		items = [];
+		if (cond) {
+			const foo = () => {
+				items.push(bar());
+			};
+			const bar = _temp;
+			foo();
+		}
+		$[0] = cond;
+		$[1] = items;
+	} else {
+		items = $[1];
+	}
+	return items;
+}
+function _temp() {
+	return true;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: hoisting,
+	params: [true],
+	isComponent: false
+};

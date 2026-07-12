@@ -15,6 +15,7 @@ use crate::{
     schema::{
         Def, EnumDef, FieldDef, Schema, StructDef, StructOrEnum, TypeDef, TypeId, VariantDef,
     },
+    utils::article_for,
 };
 
 use super::define_generator;
@@ -617,13 +618,5 @@ fn generate_doc_comment_for_params(params: &[Param]) -> TokenStream {
         ///
         /// ## Parameters
         #(#lines)*
-    }
-}
-
-/// Get the correct article ("a" / "an") that should precede a word in a doc comment.
-fn article_for(word: &str) -> &'static str {
-    match word.as_bytes().first().map(u8::to_ascii_uppercase) {
-        Some(b'A' | b'E' | b'I' | b'O' | b'U') => "an",
-        _ => "a",
     }
 }

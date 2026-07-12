@@ -12948,7 +12948,7 @@ function constructBoxObjectAssignmentTarget(pos, ast) {
 }
 
 function constructOptionAssignmentTargetMaybeDefault(pos, ast) {
-  if (ast.buffer[pos] === 51) return null;
+  if (ast.buffer[pos] === 255) return null;
   return constructAssignmentTargetMaybeDefault(pos, ast);
 }
 
@@ -12992,7 +12992,7 @@ function constructBoxAssignmentTargetPropertyProperty(pos, ast) {
 }
 
 function constructOptionExpression(pos, ast) {
-  if (ast.buffer[pos] === 51) return null;
+  if (ast.buffer[pos] === 255) return null;
   return constructExpression(pos, ast);
 }
 
@@ -13116,12 +13116,12 @@ function constructOptionBoxTSTypeAnnotation(pos, ast) {
 }
 
 function constructOptionStatement(pos, ast) {
-  if (ast.buffer[pos] === 70) return null;
+  if (ast.buffer[pos] === 255) return null;
   return constructStatement(pos, ast);
 }
 
 function constructOptionForStatementInit(pos, ast) {
-  if (ast.buffer[pos] === 65) return null;
+  if (ast.buffer[pos] === 255) return null;
   return constructForStatementInit(pos, ast);
 }
 
@@ -13155,7 +13155,7 @@ function constructOptionBoxBlockStatement(pos, ast) {
 }
 
 function constructOptionCatchParameter(pos, ast) {
-  if (ast.buffer[pos + 16] === 4) return null;
+  if (ast.buffer[pos + 16] === 255) return null;
   return new CatchParameter(pos, ast);
 }
 
@@ -13195,7 +13195,7 @@ function constructOptionBoxBindingRestElement(pos, ast) {
 }
 
 function constructOptionBindingPattern(pos, ast) {
-  if (ast.buffer[pos] === 4) return null;
+  if (ast.buffer[pos] === 255) return null;
   return constructBindingPattern(pos, ast);
 }
 
@@ -13271,7 +13271,7 @@ function constructOptionBoxExpression(pos, ast) {
 }
 
 function constructOptionTSAccessibility(pos, ast) {
-  if (ast.buffer[pos] === 3) return null;
+  if (ast.buffer[pos] === 255) return null;
   return constructTSAccessibility(pos, ast);
 }
 
@@ -13413,7 +13413,7 @@ function constructOptionStringLiteral(pos, ast) {
 }
 
 function constructOptionModuleExportName(pos, ast) {
-  if (ast.buffer[pos] === 3) return null;
+  if (ast.buffer[pos] === 255) return null;
   return constructModuleExportName(pos, ast);
 }
 
@@ -13475,7 +13475,7 @@ function constructBoxJSXSpreadAttribute(pos, ast) {
 }
 
 function constructOptionJSXAttributeValue(pos, ast) {
-  if (ast.buffer[pos] === 4) return null;
+  if (ast.buffer[pos] === 255) return null;
   return constructJSXAttributeValue(pos, ast);
 }
 
@@ -13674,7 +13674,7 @@ function constructBoxTSQualifiedName(pos, ast) {
 }
 
 function constructOptionTSType(pos, ast) {
-  if (ast.buffer[pos] === 38) return null;
+  if (ast.buffer[pos] === 255) return null;
   return constructTSType(pos, ast);
 }
 
@@ -13762,7 +13762,7 @@ function constructBoxTSImportTypeQualifiedName(pos, ast) {
 }
 
 function constructOptionTSMappedTypeModifierOperator(pos, ast) {
-  if (ast.buffer[pos] === 3) return null;
+  if (ast.buffer[pos] === 255) return null;
   return constructTSMappedTypeModifierOperator(pos, ast);
 }
 

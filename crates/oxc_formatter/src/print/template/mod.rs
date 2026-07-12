@@ -21,6 +21,7 @@ use crate::{
     },
     utils::{
         call_expression::is_test_each_pattern,
+        expression::is_member_expression_without_chain_wrappers,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         tailwindcss::{is_tailwind_function_call, write_tailwind_template_element},
     },
@@ -422,20 +423,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a, '_> {
                 let indent = self.expression.as_expression().is_some_and(|e| {
                     has_comment_in_expression
                         || match e.as_ref() {
-                            Expression::StaticMemberExpression(_)
-                            | Expression::ComputedMemberExpression(_)
-                            | Expression::PrivateFieldExpression(_)
-                            | Expression::ConditionalExpression(_)
+                            Expression::ConditionalExpression(_)
                             | Expression::SequenceExpression(_)
                             | Expression::TSAsExpression(_)
                             | Expression::TSSatisfiesExpression(_)
                             | Expression::BinaryExpression(_)
                             | Expression::LogicalExpression(_)
                             | Expression::Identifier(_) => true,
-                            Expression::ChainExpression(chain) => {
-                                chain.expression.is_member_expression()
-                            }
-                            _ => false,
+                            e => is_member_expression_without_chain_wrappers(e),
                         }
                 });
 

@@ -417,6 +417,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Add `@param` tag with name.
 
   ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:8:37]
+ 7 │                   */
+ 8 │                   export function testFn1 ({ prop = { a: 1, b: 2 } }) {
+   ·                                              ────     ─     ─
+ 9 │                   }
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:3:25]
  2 │                     /** Foo. */
  3 │                     function foo(a, b, c) {}
@@ -431,5 +440,34 @@ source: crates/oxc_linter/src/tester.rs
  7 │                     tokens(tokens) {
    ·                            ──────
  8 │                     }
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:6:33]
+ 5 │                            */
+ 6 │                           function quux (a, b) {}
+   ·                                             ─
+ 7 │                       
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:43]
+ 4 │                            */
+ 5 │                           const quux = function quux (foo) {
+   ·                                                       ───
+ 6 │                           };
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:6:17]
+ 5 │                           function quux ({
+ 6 │                             abc,
+   ·                             ───
+ 7 │                             def
+   ·                             ───
+ 8 │                           }) {
    ╰────
   help: Add `@param` tag with name.

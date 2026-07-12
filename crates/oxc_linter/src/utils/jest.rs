@@ -232,7 +232,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
 
                 if matches!(
                     import_decl.source.value.as_str(),
-                    "@jest/globals" | "vitest" | "vite-plus/test"
+                    "@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest"
                 ) {
                     let original = find_original_name(import_decl, name);
                     let ret = reference_ids
@@ -320,8 +320,8 @@ pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {
 }
 
 /// Checks if node names returned by getNodeName matches any of the given star patterns
-pub fn matches_assert_function_name(name: &str, patterns: &[CompactStr]) -> bool {
-    patterns.iter().any(|pattern| Regex::new(pattern).unwrap().is_match(name))
+pub fn matches_assert_function_name(name: &str, patterns: &[Regex]) -> bool {
+    patterns.iter().any(|pattern| pattern.is_match(name))
 }
 
 pub fn convert_pattern(pattern: &str) -> CompactStr {
@@ -377,6 +377,7 @@ mod test {
                     0,
                     ContextSubHostOptions::default(),
                 )],
+                &allocator,
                 LintOptions::default(),
                 Arc::default(),
             ))

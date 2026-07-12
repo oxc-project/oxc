@@ -1,0 +1,33 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/effect-derived-computations/function-expression-mutation-edge-case.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] EffectDerivationsOfState: You might not need an effect. Derive values in render, not effects.", labels: One([LabeledSpan { label: Some("This should be computed during render, not in an effect"), span: SourceSpan { offset: SourceOffset(682), length: 6 }, primary: false }]), help: Some("Using an effect triggers an additional render which can hurt performance and user experience, potentially briefly showing stale values to the user\n\nThis setState call is setting a derived value that depends on the following reactive sources:\n\nState: [foo, bar]\n\nData Flow Tree:\n└── newData\n    ├── foo (State)\n    └── bar (State)\n\nSee: https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+// @validateNoDerivedComputationsInEffects_exp @loggerTestOnly @outputMode:"lint"
+function Component() {
+	const [foo, setFoo] = useState({});
+	const [bar, setBar] = useState(new Set());
+	/*
+	* isChanged is considered context of the effect's function expression,
+	* if we don't bail out of effect mutation derivation tracking, isChanged
+	* will inherit the sources of the effect's function expression.
+	*
+	* This is innacurate and with the multiple passes ends up causing an infinite loop.
+	*/
+	useEffect(() => {
+		let isChanged = false;
+		const newData = foo.map((val) => {
+			bar.someMethod(val);
+			isChanged = true;
+		});
+		if (isChanged) {
+			setFoo(newData);
+		}
+	}, [foo, bar]);
+	return <div>
+      {foo}, {bar}
+    </div>;
+}

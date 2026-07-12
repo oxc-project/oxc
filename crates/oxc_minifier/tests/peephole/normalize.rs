@@ -56,11 +56,11 @@ fn drop_console() {
     let options = CompressOptions { drop_console: true, ..default_options() };
     test_options("console.log()", "", &options);
     test_options("(() => console.log())()", "", &options);
-    test_options(
-        "(() => { try { return console.log() } catch {} })()",
-        "(() => { try { return } catch {} })()",
-        &options,
-    );
+    // After `console.log()` is dropped the IIFE body is side-effect-free, so
+    // the whole dead call is removed. An empty result still proves the
+    // return-position `console.*` call was dropped (otherwise the call would
+    // keep the IIFE alive).
+    test_options("(() => { try { return console.log() } catch {} })()", "", &options);
 }
 
 // Same leak class as `test_void_ident_does_not_leak_reference`: dropped

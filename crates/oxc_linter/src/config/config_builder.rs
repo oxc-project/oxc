@@ -148,13 +148,38 @@ impl ConfigStoreBuilder {
         fn resolve_oxlintrc_config(
             config: Oxlintrc,
             in_object_extends: bool,
+            config_stack: &mut Vec<PathBuf>,
         ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
             if in_object_extends {
                 check_no_relative_js_plugins_in_extends(&config)?;
             }
 
             let path = config.path.clone();
-            let root_path = path.parent();
+            if path.as_os_str().is_empty() {
+                return resolve_oxlintrc_config_extends(config, config_stack);
+            }
+
+            let canonical_path = path.canonicalize().unwrap_or(path);
+            if let Some(cycle_start) = config_stack.iter().position(|path| path == &canonical_path)
+            {
+                let mut cycle = config_stack[cycle_start..].to_vec();
+                cycle.push(config_stack[cycle_start].clone());
+                let referenced_from = config_stack[..=cycle_start].to_vec();
+                return Err(ConfigBuilderError::CircularExtends { cycle, referenced_from });
+            }
+
+            config_stack.push(canonical_path);
+            let result = resolve_oxlintrc_config_extends(config, config_stack);
+            config_stack.pop();
+            result
+        }
+
+        fn resolve_oxlintrc_config_extends(
+            config: Oxlintrc,
+            config_stack: &mut Vec<PathBuf>,
+        ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
+            let config_path = config.path.clone();
+            let root_path = config_path.parent();
             let extends = config.extends.clone();
             let extends_configs = config.extends_configs.clone();
             let mut extended_paths = Vec::new();
@@ -162,7 +187,7 @@ impl ConfigStoreBuilder {
             let mut oxlintrc = config;
 
             for config in extends_configs.into_iter().rev() {
-                let (extends, extends_paths) = resolve_oxlintrc_config(config, true)?;
+                let (extends, extends_paths) = resolve_oxlintrc_config(config, true, config_stack)?;
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
             }
@@ -192,7 +217,8 @@ impl ConfigStoreBuilder {
 
                 extended_paths.push(path.clone());
 
-                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc, false)?;
+                let (extends, extends_paths) =
+                    resolve_oxlintrc_config(extends_oxlintrc, false, config_stack)?;
 
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
@@ -201,7 +227,9 @@ impl ConfigStoreBuilder {
             Ok((oxlintrc, extended_paths))
         }
 
-        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false)?;
+        validate_ignore_patterns(&oxlintrc)?;
+
+        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false, &mut Vec::new())?;
 
         // Collect external plugins from both base config and overrides
         let mut external_plugins: FxHashSet<&ExternalPluginEntry> = FxHashSet::default();
@@ -697,6 +725,18 @@ fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
     }
 }
 
+/// Validate each entry of `ignorePatterns`; see [`oxc_config::validate_ignore_pattern`].
+fn validate_ignore_patterns(oxlintrc: &Oxlintrc) -> Result<(), ConfigBuilderError> {
+    oxlintrc
+        .ignore_patterns
+        .iter()
+        .try_for_each(|pattern| oxc_config::validate_ignore_pattern(pattern))
+        .map_err(|reason| ConfigBuilderError::InvalidConfigFile {
+            file: oxlintrc.path.display().to_string(),
+            reason,
+        })
+}
+
 impl Debug for ConfigStoreBuilder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ConfigStoreBuilder")
@@ -742,6 +782,11 @@ pub enum ConfigBuilderError {
     /// An unsupported named config was found in `extends`.
     UnsupportedNamedConfig {
         name: String,
+    },
+    /// A cycle was found while resolving configuration files referenced by `extends`.
+    CircularExtends {
+        cycle: Vec<PathBuf>,
+        referenced_from: Vec<PathBuf>,
     },
 }
 
@@ -820,6 +865,19 @@ impl Display for ConfigBuilderError {
                      If this is a file path, add a file extension (e.g., \".json\")."
                 )
             }
+            ConfigBuilderError::CircularExtends { cycle, referenced_from } => {
+                writeln!(f, "Circular oxlint config extends detected:")?;
+                write!(f, "{}", cycle.iter().map(|path| path.display()).join("\n -> "))?;
+
+                if referenced_from.len() > 1 {
+                    write!(
+                        f,
+                        "\n\nReferenced from:\n{}",
+                        referenced_from.iter().map(|path| path.display()).join("\n -> ")
+                    )?;
+                }
+                Ok(())
+            }
         }
     }
 }
@@ -835,6 +893,8 @@ impl From<Vec<OverrideRulesError>> for ConfigBuilderError {
 #[cfg(test)]
 mod test {
     use std::path::PathBuf;
+
+    use cow_utils::CowUtils;
 
     use super::*;
 
@@ -863,6 +923,29 @@ mod test {
         let builder = ConfigStoreBuilder::empty();
         assert_eq!(builder.plugins(), LintPlugins::default());
         assert!(builder.rules.is_empty());
+    }
+
+    #[test]
+    fn test_ignore_patterns_with_parent_reference_rejected() {
+        fn from_ignore_pattern(pattern: &str) -> Result<ConfigStoreBuilder, ConfigBuilderError> {
+            let oxlintrc =
+                Oxlintrc { ignore_patterns: vec![pattern.to_string()], ..Oxlintrc::default() };
+            ConfigStoreBuilder::from_oxlintrc(
+                true,
+                oxlintrc,
+                None,
+                &mut ExternalPluginStore::default(),
+                None,
+            )
+        }
+
+        // Pattern-level cases are covered by `oxc_config::validate_ignore_pattern` tests;
+        // this only checks that `from_oxlintrc` rejects a config containing one.
+        assert!(matches!(
+            from_ignore_pattern("../src"),
+            Err(ConfigBuilderError::InvalidConfigFile { .. })
+        ));
+        assert!(from_ignore_pattern("dist").is_ok());
     }
 
     #[test]
@@ -1342,6 +1425,38 @@ mod test {
             assert!(file.ends_with("invalid_config.json"));
             assert!(reason.contains("Failed to parse"));
         }
+    }
+
+    #[test]
+    fn test_extends_circular() {
+        let path = PathBuf::from("fixtures/extends_config/circular/root.json");
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let error = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            Oxlintrc::from_file(&path).unwrap(),
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap_err();
+
+        let ConfigBuilderError::CircularExtends { cycle, referenced_from } = &error else {
+            panic!("expected circular extends error, got {error:?}");
+        };
+        assert_eq!(
+            cycle.iter().filter_map(|path| path.file_name()).collect::<Vec<_>>(),
+            ["a.json", "b.json", "a.json"]
+        );
+        assert_eq!(
+            referenced_from.iter().filter_map(|path| path.file_name()).collect::<Vec<_>>(),
+            ["root.json", "a.json"]
+        );
+
+        let cwd = std::env::current_dir().unwrap().canonicalize().unwrap();
+        let message = error.to_string();
+        let message = message.cow_replace(cwd.to_str().unwrap(), "<cwd>").into_owned();
+        let message = message.cow_replace('\\', "/");
+        insta::assert_snapshot!("circular_extends_error", message);
     }
 
     #[test]

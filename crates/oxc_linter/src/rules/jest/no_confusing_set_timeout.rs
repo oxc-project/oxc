@@ -81,12 +81,6 @@ impl Rule for NoConfusingSetTimeout {
     fn run_once(&self, ctx: &LintContext) {
         let scopes = ctx.scoping();
         let symbol_table = ctx.scoping();
-        let possible_nodes = collect_possible_jest_call_node(ctx);
-        let id_to_jest_node_map =
-            possible_nodes.iter().fold(FxHashMap::default(), |mut acc, cur| {
-                acc.insert(cur.node.id(), cur);
-                acc
-            });
 
         let mut jest_reference_id_list: Vec<(ReferenceId, Span)> = vec![];
         let mut reported_unordered_set_timeouts = FxHashSet::default();
@@ -103,6 +97,17 @@ impl Rule for NoConfusingSetTimeout {
                 ctx,
             );
         }
+
+        if jest_reference_id_list.is_empty() {
+            return;
+        }
+
+        let possible_nodes = collect_possible_jest_call_node(ctx);
+        let id_to_jest_node_map =
+            possible_nodes.iter().fold(FxHashMap::default(), |mut acc, cur| {
+                acc.insert(cur.node.id(), cur);
+                acc
+            });
 
         for reference_id_list in scopes.root_unresolved_references_ids() {
             handle_jest_set_time_out(

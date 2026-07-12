@@ -34,10 +34,25 @@ describe("LSP initialization", () => {
   });
 
   it.each([
-    [undefined, ["**/.oxfmtrc.json", "**/.oxfmtrc.jsonc", "**/oxfmt.config.ts", ".editorconfig"]],
+    [
+      undefined,
+      [
+        "**/.oxfmtrc.json",
+        "**/.oxfmtrc.jsonc",
+        "**/oxfmt.config.ts",
+        "**/oxfmt.config.mts",
+        ".editorconfig",
+      ],
+    ],
     [
       { "fmt.configPath": "" },
-      ["**/.oxfmtrc.json", "**/.oxfmtrc.jsonc", "**/oxfmt.config.ts", ".editorconfig"],
+      [
+        "**/.oxfmtrc.json",
+        "**/.oxfmtrc.jsonc",
+        "**/oxfmt.config.ts",
+        "**/oxfmt.config.mts",
+        ".editorconfig",
+      ],
     ],
     [{ "fmt.configPath": "./custom-config.json" }, ["custom-config.json", ".editorconfig"]],
   ])(

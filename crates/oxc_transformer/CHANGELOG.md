@@ -4,6 +4,45 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.139.0] - 2026-07-06
+
+### 🐛 Bug Fixes
+
+- e8b50ee transformer: Clean up semantics for stripped TypeScript syntax (#24180) (camc314)
+- 4b16e1a transformer/async-to-generator: Preserve direct eval scope flags (#24136) (camc314)
+- 018c0e5 transformer: Hoist lowered async declarations (#22770) (camc314)
+
+### ⚡ Performance
+
+- c5ca77b transformer: Avoid cloning refresh options (#24191) (camc314)
+- abb44a0 transformer: Build fixed object-rest arguments (#24190) (camc314)
+- ff10855 transformer: Use `ReplaceWith` instead of `TakeIn` (#24015) (overlookmotel)
+- e6d48e1 transformer/nullish_coalescing: Move cold path into separate function (#23989) (overlookmotel)
+- c4e35b5 transformer/object_rest_spread: Pre-allocate capacity in `Vec` (#23988) (overlookmotel)
+- 527b8e5 transformer/decorators: Narrow type earlier (#23987) (overlookmotel)
+
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 94fbacb ast: [**BREAKING**] Only export `AstBuilder` and `NONE` in `builder` module (#23876) (overlookmotel)
+- dc0ef38 transformer: [**BREAKING**] Switch to new `AstBuilder` (#23831) (overlookmotel)
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+
+### ⚡ Performance
+
+- e1886a0 transformer, minifier: Use `static_ident!` macro to create static `Ident`s (#23727) (overlookmotel)
+- 5527bef transformer/object-rest-spread: Reduce iteration (#23720) (overlookmotel)
+- 680ffbc transformer: Allocate AST nodes in arena directly (#23711) (overlookmotel)
+
+### 📚 Documentation
+
+- 3d61dea all: Correct capitalization in comments (#23887) (overlookmotel)
+
 ## [0.137.0] - 2026-06-18
 
 ### 🐛 Bug Fixes

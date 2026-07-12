@@ -8,7 +8,7 @@ use oxc_span::SourceType;
 use oxc_str::Str;
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
-use crate::{CompressOptions, symbol_value::SymbolValues};
+use crate::{CompressOptions, symbol_facts::PersistentSymbolFacts, symbol_value::SymbolValues};
 
 /// Dirty data accumulated by the `replace_*` / `drop_*` helper calls between
 /// two consumption points. Live from `MinifierState::new` so the pre-loop
@@ -50,7 +50,21 @@ pub struct MinifierState<'a> {
 
     pub options: CompressOptions,
 
-    /// When true, only run dead code elimination passes (subset of full peephole optimizations).
+    /// Two modes: tree-shaking only (`true`), or full minify (`false`).
+    /// `Compressor::dead_code_elimination` uses `true`; `Compressor::build`
+    /// uses `false`.
+    ///
+    /// "DCE" here does not mean "removes dead code" (full minify does that
+    /// too). It means tree-shaking: remove code that nothing imports, without
+    /// making the rest smaller. Rolldown runs this on every tree-shaking build,
+    /// with or without `minify`, so users can see this output directly.
+    ///
+    /// In this mode `exit_*` only runs the passes that remove code, plus the
+    /// constant folds those removals need. For example, `fold_binary_expr`
+    /// folds `'production' === 'production'` to `true` so the dead `else`
+    /// branch can be dropped (this is how `define` values remove branches). The
+    /// passes that only shrink code (`substitute_*`, `minimize_*`) are left
+    /// out. See the `if ctx.state.dce` branch in `peephole/mod.rs`.
     pub dce: bool,
 
     /// The return value of function declarations that are pure
@@ -61,10 +75,11 @@ pub struct MinifierState<'a> {
     /// Private member usage for classes
     pub class_symbols_stack: ClassSymbolsStack<'a>,
 
-    /// Symbols that have `__proto__` member writes.
-    /// Writing to `__proto__` changes the prototype chain, potentially installing
-    /// setters that make subsequent property writes side-effectful.
-    pub proto_write_symbols: FxHashSet<SymbolId>,
+    /// Program-wide, monotone per-symbol facts. See
+    /// [`SymbolFact`](crate::symbol_facts::SymbolFact) for each bit and its
+    /// consumer, and [`PersistentSymbolFacts`] for the lifecycle contract
+    /// every fact obeys.
+    pub symbol_facts: PersistentSymbolFacts,
 
     /// One frame per enclosing function body (program root at the bottom).
     /// `(body_scope, body_unsafe)`. While `body_unsafe` is false, the next
@@ -108,12 +123,24 @@ impl<'a> MinifierState<'a> {
             pure_functions: FxHashMap::default(),
             symbol_values: SymbolValues::new(scoping.symbols_len()),
             class_symbols_stack: ClassSymbolsStack::new(),
-            proto_write_symbols: FxHashSet::default(),
+            symbol_facts: PersistentSymbolFacts::default(),
             body_unsafe_stack: NonEmptyStack::new((scoping.root_scope_id(), false)),
             mutated: false,
             dirty: PassDirty::new(scoping.references_len(), allocator),
             concat_scratch: String::new(),
         }
+    }
+
+    /// Whether `Normalize`'s member-write scan should seed `symbol_facts`,
+    /// i.e. whether any consumer is live in this configuration. In full
+    /// minify the default-mode write-only property drop reads
+    /// `MEMBER_WRITE_HAZARD` and the shared drop predicate reads
+    /// `PROTO_WRITTEN`. In DCE mode the default path is disabled and only the
+    /// `property_write_side_effects: false` opt-in drop runs (reading
+    /// `PROTO_WRITTEN`), so with the knob left on nothing reads the facts and
+    /// seeding is skipped.
+    pub fn seeds_symbol_facts(&self) -> bool {
+        !self.dce || !self.options.treeshake.property_write_side_effects
     }
 
     /// Returns whether the AST was mutated since the last call, and resets.

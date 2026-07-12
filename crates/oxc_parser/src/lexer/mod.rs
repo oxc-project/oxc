@@ -35,6 +35,7 @@ mod typescript;
 mod unicode;
 mod whitespace;
 
+#[cfg_attr(not(feature = "benchmarking"), expect(clippy::redundant_pub_crate))]
 pub(crate) use byte_handlers::{ByteHandler, ByteHandlers, byte_handler_tables};
 pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
@@ -606,8 +607,16 @@ impl<'a, C: Config> Lexer<'a, C> {
 
 /// Call a closure while hinting to compiler that this branch is rarely taken.
 ///
+/// Unlike [`cold_path`], which only guides branch layout, this `#[cold]` trampoline also moves
+/// the closure's code and stack usage out of the caller's frame (unless compiler chooses to
+/// inline it). Use `cold_path` for pure branch hints. Use `cold_branch` where keeping large
+/// stack objects (e.g. an `OxcDiagnostic` return buffer) out of the hot function's stack frame
+/// is the aim.
+///
 /// "Cold trampoline function", suggested in:
 /// <https://users.rust-lang.org/t/is-cold-the-only-reliable-way-to-hint-to-branch-predictor/106509/2>
+///
+/// [`cold_path`]: oxc_data_structures::branch_hints::cold_path
 #[cold]
 pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
     f()

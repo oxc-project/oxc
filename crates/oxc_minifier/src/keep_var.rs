@@ -1,7 +1,7 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::{
     ast::*,
-    builder::{AstBuilder, NONE},
+    builder::{GetAstBuilder, NONE},
 };
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::BoundNames;
@@ -62,9 +62,9 @@ impl<'a> KeepVar<'a> {
         Self { vars: std::vec![], all_hoisted: true }
     }
 
-    pub fn get_variable_declaration(
+    pub fn get_variable_declaration<B: GetAstBuilder<'a> + GetAllocator<'a>>(
         self,
-        ast: &AstBuilder<'a>,
+        ast: &B,
     ) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
         if self.vars.is_empty() {
             return None;
@@ -89,7 +89,10 @@ impl<'a> KeepVar<'a> {
         Some(VariableDeclaration::boxed(SPAN, kind, decls, false, ast))
     }
 
-    pub fn get_variable_declaration_statement(self, ast: &AstBuilder<'a>) -> Option<Statement<'a>> {
+    pub fn get_variable_declaration_statement<B: GetAstBuilder<'a> + GetAllocator<'a>>(
+        self,
+        ast: &B,
+    ) -> Option<Statement<'a>> {
         self.get_variable_declaration(ast).map(Statement::VariableDeclaration)
     }
 }

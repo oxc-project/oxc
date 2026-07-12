@@ -200,6 +200,21 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// True if the scope chain from `read_scope` up to (excluding) `body_scope`
+    /// crosses a function boundary — i.e. the read is in a closure relative to
+    /// `body_scope`. Async/generator/arrow scopes are all `Function`.
+    fn read_crosses_function_boundary(
+        read_scope: ScopeId,
+        body_scope: ScopeId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let scoping = ctx.scoping();
+        scoping
+            .scope_ancestors(read_scope)
+            .take_while(|&s| s != body_scope)
+            .any(|s| scoping.scope_flags(s).is_function())
+    }
+
     /// Refresh `ScopeFlags::DirectEval` from live direct-eval call sites.
     ///
     /// `direct_eval_scopes` lists scopes that still contain a direct `eval(...)` call.
@@ -434,7 +449,6 @@ impl<'a> PeepholeOptimizations {
 impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.reset();
-        ctx.state.proto_write_symbols.clear();
         // Any module loader (`import`, `export * from`, `export … from`) can, on a
         // cycle, evaluate a foreign module that observes a not-yet-assigned binding
         // our exports close over. So the program root starts its prelude "unsafe"
@@ -591,6 +605,13 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Tree-shaking mode: fewer passes than full minify below. Only the ones
+        // that remove code, plus the constant folds those removals need. The
+        // folds stay on because the removal passes don't evaluate compound
+        // conditions themselves: `if ('production' === 'production')` must fold
+        // to `true` before the dead branch can be dropped. Passes that only
+        // shrink code (`substitute_*`, `minimize_*`) are left out. See the `dce`
+        // docs in `state.rs`.
         if ctx.state.dce {
             match expr {
                 Expression::TemplateLiteral(t) => {
