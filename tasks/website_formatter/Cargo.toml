@@ -17,12 +17,12 @@ bpaf = { workspace = true, features = ["docgen"] }
 oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 oxfmt = { workspace = true }
 pico-args = { workspace = true }
+project-root = { workspace = true }
 schemars = { workspace = true }
 website_common = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
-project-root = { workspace = true }
 
 [package.metadata.cargo-shear]
 # `oxc_ast` is a feature-only dependency, to enable its `disable_old_builder` feature

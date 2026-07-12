@@ -1,11 +1,13 @@
+use std::fs;
+
 use oxc_linter::Oxlintrc;
 use oxlint::lsp::options::LintOptions;
 use schemars::schema_for;
 use website_common::{Renderer, generate_schema_json};
 
-#[expect(clippy::print_stdout)]
-pub fn print_schema_json() {
-    println!("{}", generate_schema_json::<Oxlintrc>());
+pub fn write_schema_json(path: &str) {
+    let json = generate_schema_json::<Oxlintrc>();
+    fs::write(path, format!("{json}\n")).expect("failed to write schema JSON");
 }
 
 #[test]
