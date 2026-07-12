@@ -138,25 +138,6 @@ let activeTokensWithRegexCount = 0;
 // 16 elements = 64 bytes = 1 cache line.
 const REGEX_INDEXES_MIN_CAPACITY = 16;
 
-// Tracks indices of deserialized tokens so their `value` can be cleared on reset,
-// preventing source text strings from being held alive by stale `value` slices.
-//
-// Pre-allocated in `initTokensBuffer` to avoid growth during deserialization.
-// `Int32Array` rather than `Array` to avoid GC tracing and write barriers.
-//
-// `deserializedTokensLen` is the number of deserialized tokens in current file.
-// If all tokens have been deserialized (`allTokensDeserialized === true`), `deserializedTokensLen` is 0,
-// and no further indexes are written to `deserializedTokenIndexes`. `resetTokens` will reset all tokens,
-// up to `tokensLen`.
-let deserializedTokenIndexes = EMPTY_INT32_ARRAY;
-let deserializedTokensLen = 0;
-
-// Minimum capacity (in `u32`s) of `deserializedTokenIndexes`, when not empty.
-// 16 elements = 64 bytes = 1 cache line.
-// Note that this default aims to be a reasonable minimum for number of *deserialized* tokens,
-// not *total* number of tokens.
-const DESERIALIZED_TOKEN_INDEXES_MIN_CAPACITY = 16;
-
 // `defineGetter(obj, prop, getter)` is equivalent to `obj.__defineGetter__(prop, getter)`,
 // but without `Object.prototype` lookup at each call site
 const defineGetter = Function.prototype.call.bind(
@@ -165,9 +146,17 @@ const defineGetter = Function.prototype.call.bind(
   Object.prototype.__defineGetter__,
 ) as (obj: object, prop: string, getter: () => unknown) => void;
 
+// Getter for the `value` property on a `Token` class instance.
+// Copied into a `const` below after being defined in class static block.
+let getTokenValueTemp: (this: Token) => string;
+
 // Getter for the `loc` property on a `Token` class instance.
 // Copied into a `const` below after being defined in class static block.
 let getTokenLocTemp: (this: Token) => Location;
+
+// Setter for `#pos` private property on a `Token` class instance.
+// Copied into a `const` below after being defined in class static block.
+let setTokenPosTemp: (token: Token, pos: number) => void;
 
 // Reset `#loc` field on a `Token` class instance.
 // Copied into a `const` below after being defined in class static block.
@@ -190,26 +179,52 @@ let getTokenPrivateLoc: (token: Token) => Location | null;
  */
 class Token {
   type: TokenType["type"] = null!; // Overwritten later
-  value: string = null!; // Overwritten later
   regex: Regex | undefined;
   start: number = 0;
   end: number = 0;
   range: [number, number] = [0, 0];
 
+  declare value: string; // Defined with `__defineGetter__` in constructor
   declare loc: Location; // Defined with `__defineGetter__` in constructor
 
+  #pos: number = 0;
   #loc: Location | null = null;
 
   constructor() {
-    // Define `loc` as an own getter property (enumerable + configurable by default).
-    // This makes `{...token}` spread `loc` and `JSON.stringify(token)` serialize it.
+    // Define `value` and `loc` as own getter properties (enumerable + configurable by default).
+    // This makes `{...token}` spread `value` and `loc` and `JSON.stringify(token)` serialize them.
     // Note: `new Token()` is 25% faster with `__defineGetter__` vs `Object.defineProperty`.
     // See https://github.com/oxc-project/oxc/pull/22238.
+    defineGetter(this, "value", getTokenValue);
     defineGetter(this, "loc", getTokenLoc);
   }
 
-  // Functions requiring access to `#loc` defined in static block to avoid exposing them as public methods
+  // Functions requiring access to `#pos` or `#loc` defined in static block to avoid exposing them as public methods
   static {
+    getTokenValueTemp = function (this: Token): string {
+      // This assert can fail in real-world plugin code, and is not a bug here, only incorrect usage in plugin.
+      // Only make this an explicit error in debug build, because it should be very uncommon.
+      // In release build, it will result in an error in `tokensUint8` or `sourceText` accesses below.
+      debugAssert(
+        tokensUint8 !== null && sourceText !== null,
+        "`Token` object's `value` field accessed after file finished linting",
+      );
+
+      const pos = this.#pos;
+      const kind = tokensUint8[pos + KIND_FIELD_OFFSET];
+
+      // Get `value` as slice of source text `start..end`.
+      // Slice `start + 1..end` for private identifiers, to strip leading `#`.
+      let value = sourceText.slice(this.start + +(kind === PRIVATE_IDENTIFIER_KIND), this.end);
+
+      // Unescape if `escaped` flag is set
+      if (kind <= PRIVATE_IDENTIFIER_KIND && tokensUint8[pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
+        value = unescapeIdentifier(value);
+      }
+
+      return value;
+    };
+
     getTokenLocTemp = function (this: Token): Location {
       const loc = this.#loc;
       if (loc !== null) return loc;
@@ -228,6 +243,10 @@ class Token {
       return (this.#loc = computeLoc(this.start, this.end));
     };
 
+    setTokenPosTemp = function (token: Token, pos: number) {
+      token.#pos = pos;
+    };
+
     resetLocTemp = (token: Token) => {
       token.#loc = null;
     };
@@ -237,7 +256,9 @@ class Token {
 }
 
 // Copied into consts here to avoid checks at call site (`let` binding could be re-assigned)
+const getTokenValue = getTokenValueTemp;
 const getTokenLoc = getTokenLocTemp;
+const setTokenPos = setTokenPosTemp;
 const resetLoc = resetLocTemp;
 
 // `ESTreeKind` discriminants (set by Rust side)
@@ -317,8 +338,6 @@ export function deserializeTokens(): void {
   }
 
   allTokensDeserialized = true;
-  // No need to count any more, since all tokens have been deserialized
-  deserializedTokensLen = 0;
 
   debugCheckDeserializedTokens();
 }
@@ -331,6 +350,11 @@ export function deserializeTokens(): void {
  */
 export function initTokensBuffer(): void {
   debugAssert(tokensUint8 === null && tokensInt32 === null, "Tokens buffer already initialized");
+
+  debugAssert(
+    allTokensDeserialized === false,
+    "`allTokensDeserialized` flag should have been reset at end of last file",
+  );
 
   debugAssertIsNonNull(buffer);
 
@@ -357,19 +381,6 @@ export function initTokensBuffer(): void {
     do {
       cachedTokens.push(new Token());
     } while (cachedTokens.length < tokensLen);
-
-    // Grow `deserializedTokenIndexes` if needed.
-    // `Int32Array`s can't grow in place, so allocate a new one.
-    // First allocation uses minimum capacity. Subsequent growths double, to avoid frequent reallocations.
-    const indexesLen = deserializedTokenIndexes.length;
-    if (indexesLen < tokensLen) {
-      deserializedTokenIndexes = new Int32Array(
-        Math.max(
-          tokensLen,
-          indexesLen === 0 ? DESERIALIZED_TOKEN_INDEXES_MIN_CAPACITY : indexesLen << 1,
-        ),
-      );
-    }
   }
 
   // Check buffer data has valid ranges and ascending order
@@ -388,16 +399,7 @@ export function getToken(index: number): TokenType {
   // Skip all other checks if all tokens have been deserialized
   if (allTokensDeserialized === false) {
     const token = deserializeTokenIfNeeded(index);
-
-    if (token !== null) {
-      // Token was newly deserialized.
-      // Record the token so its `value` can be cleared on reset, preventing source text strings
-      // from being held alive by stale `value` slices.
-      // This is in `getToken` rather than `deserializeTokenIfNeeded` so the bulk path
-      // (`deserializeTokens`) skips the tracking - it uses `allTokensDeserialized` instead.
-      deserializedTokenIndexes[deserializedTokensLen++] = index;
-      return token as TokenType;
-    }
+    if (token !== null) return token as TokenType;
   }
 
   // Token was already deserialized
@@ -429,22 +431,16 @@ function deserializeTokenIfNeeded(index: number): Token | null {
   // Deserialize token into a cached `Token` object
   const token = cachedTokens[index];
 
+  // Set `#pos` private property, which is used in `value` getter
+  setTokenPos(token, pos);
+
   const kind = tokensUint8[pos + KIND_FIELD_OFFSET];
 
   const pos32 = pos >> 2,
     start = tokensInt32[pos32],
     end = tokensInt32[pos32 + 1];
 
-  // Get `value` as slice of source text `start..end`.
-  // Slice `start + 1..end` for private identifiers, to strip leading `#`.
-  let value = sourceText.slice(start + +(kind === PRIVATE_IDENTIFIER_KIND), end);
-
-  if (kind <= PRIVATE_IDENTIFIER_KIND) {
-    // Unescape if `escaped` flag is set
-    if (tokensUint8[pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
-      value = unescapeIdentifier(value);
-    }
-  } else if (kind === REGEXP_KIND) {
+  if (kind === REGEXP_KIND) {
     // Reuse cached regex descriptor object if available, otherwise create a new one.
     //
     // The array access is inside the `activeTokensWithRegexCount < regexObjects.length` branch so V8 can remove
@@ -473,13 +469,13 @@ function deserializeTokenIfNeeded(index: number): Token | null {
     // Store index of this token, so `resetTokens` can set this token's `regex` property back to `undefined`
     tokensWithRegexIndexes[activeTokensWithRegexCount++] = index;
 
+    const value = sourceText.slice(start, end);
     const patternEnd = value.lastIndexOf("/");
     regex.pattern = value.slice(1, patternEnd);
     regex.flags = value.slice(patternEnd + 1);
   }
 
   token.type = TOKEN_TYPES[kind];
-  token.value = value;
   token.range[0] = token.start = start;
   token.range[1] = token.end = end;
 
@@ -573,29 +569,8 @@ export function resetTokens() {
     return;
   }
 
-  // Clear `value` property of deserialized tokens to release source text string slices.
-  // Without this, V8's SlicedString optimization keeps the entire source text alive
-  // as long as any token's `value` (which is a slice of it) exists.
-  if (allTokensDeserialized === false) {
-    // Only a subset of tokens have been deserialized, so clear only those
-    for (let i = 0; i < deserializedTokensLen; i++) {
-      cachedTokens[deserializedTokenIndexes[i]].value = null!;
-    }
-
-    deserializedTokensLen = 0;
-  } else {
-    // All tokens have been deserialized, so clear them all
-    for (let i = 0; i < tokensLen; i++) {
-      cachedTokens[i].value = null!;
-    }
-
-    allTokensDeserialized = false;
-
-    debugAssert(
-      deserializedTokensLen === 0,
-      "Deserialized tokens counter should have been reset to 0",
-    );
-  }
+  // Reset flag for all tokens having been deserialized
+  allTokensDeserialized = false;
 
   // Reset `#loc` on tokens where `loc` has been accessed
   for (let i = 0; i < activeTokensWithLocCount; i++) {
@@ -636,10 +611,9 @@ export function resetTokens() {
 function debugAssertAllTokensCleared(): void {
   if (!DEBUG) return;
 
-  // Check all cached tokens have `value: null`, `#loc: null`, and `regex: undefined`
+  // Check all cached tokens have `#loc: null`, and `regex: undefined`
   for (let i = 0; i < cachedTokens.length; i++) {
     const token = cachedTokens[i];
-    if (token.value !== null) throw new Error(`Token ${i} has not had \`value\` cleared`);
     if (getTokenPrivateLoc(token) !== null) {
       throw new Error(`Token ${i} has not had \`#loc\` cleared`);
     }
