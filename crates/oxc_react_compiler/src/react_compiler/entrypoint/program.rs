@@ -2193,16 +2193,16 @@ fn copy_param_ts_metadata<'a>(
     source_params: &oxc::FormalParameters<'a>,
 ) {
     for (param, source) in new_params.items.iter_mut().zip(source_params.items.iter()) {
-        param.decorators = source.decorators.clone_in(allocator);
-        param.type_annotation = source.type_annotation.clone_in(allocator);
+        param.decorators = source.decorators.clone_in_with_semantic_ids(allocator);
+        param.type_annotation = source.type_annotation.clone_in_with_semantic_ids(allocator);
         param.optional = source.optional;
         param.accessibility = source.accessibility;
         param.readonly = source.readonly;
         param.r#override = source.r#override;
     }
     if let (Some(rest), Some(source_rest)) = (&mut new_params.rest, &source_params.rest) {
-        rest.decorators = source_rest.decorators.clone_in(allocator);
-        rest.type_annotation = source_rest.type_annotation.clone_in(allocator);
+        rest.decorators = source_rest.decorators.clone_in_with_semantic_ids(allocator);
+        rest.type_annotation = source_rest.type_annotation.clone_in_with_semantic_ids(allocator);
     }
 }
 
@@ -2216,15 +2216,15 @@ fn ox_build_function<'a>(
     oxc::Function::boxed(
         SPAN,
         fn_type,
-        codegen.id.clone_in(ast.allocator()),
+        codegen.id.clone_in_with_semantic_ids(ast.allocator()),
         codegen.generator,
         codegen.is_async,
         false,
         None::<ArenaBox<oxc::TSTypeParameterDeclaration>>,
         None::<ArenaBox<oxc::TSThisParameter>>,
-        codegen.params.clone_in(ast.allocator()),
+        codegen.params.clone_in_with_semantic_ids(ast.allocator()),
         None::<ArenaBox<oxc::TSTypeAnnotation>>,
-        Some(codegen.body.clone_in(ast.allocator())),
+        Some(codegen.body.clone_in_with_semantic_ids(ast.allocator())),
         ast,
     )
 }
@@ -2243,9 +2243,9 @@ fn ox_build_compiled_expression<'a>(
                 false,
                 codegen.is_async,
                 None::<ArenaBox<oxc::TSTypeParameterDeclaration>>,
-                codegen.params.clone_in(ast.allocator()),
+                codegen.params.clone_in_with_semantic_ids(ast.allocator()),
                 None::<ArenaBox<oxc::TSTypeAnnotation>>,
-                codegen.body.clone_in(ast.allocator()),
+                codegen.body.clone_in_with_semantic_ids(ast.allocator()),
                 ast,
             ))
         }
@@ -2278,7 +2278,7 @@ impl<'a, 'b> OxcReplaceFnVisitor<'a, 'b> {
         // `this` parameter, return type, and per-parameter type annotations) is
         // preserved. Functions that memoize drop these types, mirroring Babel.
         let keep_types = codegen.memo_slots_used == 0;
-        let mut params = codegen.params.clone_in(self.ast.allocator());
+        let mut params = codegen.params.clone_in_with_semantic_ids(self.ast.allocator());
         if keep_types {
             copy_param_ts_metadata(self.ast.allocator(), &mut params, &func.params);
         } else {
@@ -2286,9 +2286,9 @@ impl<'a, 'b> OxcReplaceFnVisitor<'a, 'b> {
             func.return_type = None;
             func.this_param = None;
         }
-        func.id = codegen.id.clone_in(self.ast.allocator());
+        func.id = codegen.id.clone_in_with_semantic_ids(self.ast.allocator());
         func.params = params;
-        func.body = Some(codegen.body.clone_in(self.ast.allocator()));
+        func.body = Some(codegen.body.clone_in_with_semantic_ids(self.ast.allocator()));
         func.generator = codegen.generator;
         func.r#async = codegen.is_async;
         func.declare = false;
@@ -2300,7 +2300,7 @@ impl<'a, 'b> OxcReplaceFnVisitor<'a, 'b> {
         codegen: &CodegenFunction<'a>,
     ) {
         let keep_types = codegen.memo_slots_used == 0;
-        let mut params = codegen.params.clone_in(self.ast.allocator());
+        let mut params = codegen.params.clone_in_with_semantic_ids(self.ast.allocator());
         if keep_types {
             copy_param_ts_metadata(self.ast.allocator(), &mut params, &arrow.params);
         } else {
@@ -2308,7 +2308,7 @@ impl<'a, 'b> OxcReplaceFnVisitor<'a, 'b> {
             arrow.return_type = None;
         }
         arrow.params = params;
-        arrow.body = codegen.body.clone_in(self.ast.allocator());
+        arrow.body = codegen.body.clone_in_with_semantic_ids(self.ast.allocator());
         arrow.r#async = codegen.is_async;
         arrow.expression = false;
     }
@@ -2367,7 +2367,7 @@ impl<'a, 'b> OxcReplaceWithGatedVisitor<'a, 'b> {
             oxc::VariableDeclarationKind::Const,
             oxc::BindingPattern::new_binding_identifier(SPAN, ox_atom(self.ast, name), self.ast),
             None::<ArenaBox<oxc::TSTypeAnnotation>>,
-            Some(self.gating_expression.clone_in(self.ast.allocator())),
+            Some(self.gating_expression.clone_in_with_semantic_ids(self.ast.allocator())),
             false,
             self.ast,
         );
@@ -2444,7 +2444,8 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
                                 oxc::ExportDefaultDeclaration::boxed(
                                     SPAN,
                                     oxc::ExportDefaultDeclarationKind::from(
-                                        self.gating_expression.clone_in(self.ast.allocator()),
+                                        self.gating_expression
+                                            .clone_in_with_semantic_ids(self.ast.allocator()),
                                     ),
                                     self.ast,
                                 ),
@@ -2492,7 +2493,7 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
             _ => false,
         };
         if matched {
-            *expr = self.gating_expression.clone_in(self.ast.allocator());
+            *expr = self.gating_expression.clone_in_with_semantic_ids(self.ast.allocator());
             self.done = true;
             return;
         }
@@ -2591,15 +2592,15 @@ fn ox_clone_original_fn_as_expression<'a>(
                 let f = oxc::Function::boxed(
                     SPAN,
                     oxc::FunctionType::FunctionExpression,
-                    func.id.clone_in(self.ast.allocator()),
+                    func.id.clone_in_with_semantic_ids(self.ast.allocator()),
                     func.generator,
                     func.r#async,
                     false,
                     None::<ArenaBox<oxc::TSTypeParameterDeclaration>>,
                     None::<ArenaBox<oxc::TSThisParameter>>,
-                    func.params.clone_in(self.ast.allocator()),
+                    func.params.clone_in_with_semantic_ids(self.ast.allocator()),
                     None::<ArenaBox<oxc::TSTypeAnnotation>>,
-                    func.body.clone_in(self.ast.allocator()),
+                    func.body.clone_in_with_semantic_ids(self.ast.allocator()),
                     self.ast,
                 );
                 self.found = Some(oxc::Expression::FunctionExpression(f));
@@ -2613,7 +2614,7 @@ fn ox_clone_original_fn_as_expression<'a>(
             }
             if arrow.scope_id.get() == Some(self.scope_id) {
                 self.found = Some(oxc::Expression::ArrowFunctionExpression(ArenaBox::new_in(
-                    arrow.clone_in(self.ast.allocator()),
+                    arrow.clone_in_with_semantic_ids(self.ast.allocator()),
                     self.ast,
                 )));
                 return;
@@ -2623,7 +2624,7 @@ fn ox_clone_original_fn_as_expression<'a>(
     }
     let mut finder = Finder { ast, scope_id, found: None };
     oxc_ast_visit::Visit::visit_program(&mut finder, program);
-    finder.found.map(|e| e.clone_in(ast.allocator()))
+    finder.found.map(|e| e.clone_in_with_semantic_ids(ast.allocator()))
 }
 
 /// Substitute every compiled oxc function into the program in place and add the

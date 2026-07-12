@@ -258,10 +258,10 @@ enum OxValue<'a> {
 }
 
 impl<'a> OxValue<'a> {
-    fn clone_in(&self, allocator: &'a oxc_allocator::Allocator) -> OxValue<'a> {
+    fn clone_in_with_semantic_ids(&self, allocator: &'a oxc_allocator::Allocator) -> OxValue<'a> {
         match self {
-            OxValue::Expression(e) => OxValue::Expression(e.clone_in(allocator)),
-            OxValue::JsxText(t) => OxValue::JsxText(t.clone_in(allocator)),
+            OxValue::Expression(e) => OxValue::Expression(e.clone_in_with_semantic_ids(allocator)),
+            OxValue::JsxText(t) => OxValue::JsxText(t.clone_in_with_semantic_ids(allocator)),
         }
     }
 }
@@ -271,7 +271,9 @@ fn ox_clone_temporaries<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     temp: &OxcTemporaries<'a>,
 ) -> OxcTemporaries<'a> {
-    temp.iter().map(|(id, v)| (*id, v.as_ref().map(|v| v.clone_in(ast.allocator())))).collect()
+    temp.iter()
+        .map(|(id, v)| (*id, v.as_ref().map(|v| v.clone_in_with_semantic_ids(ast.allocator()))))
+        .collect()
 }
 
 struct OxcContext<'a, 'env> {
@@ -400,7 +402,7 @@ fn ox_str<'a>(ast: &oxc_ast::builder::AstBuilder<'a>, s: &str) -> &'a str {
 /// `reference_id` cells, so renames apply by reference identity.
 fn ox_reemit_ts_type<'a>(cx: &OxcContext<'a, '_>, ty: &oxc::TSType<'_>) -> oxc::TSType<'a> {
     if cx.env.renames.is_empty() {
-        return ty.clone_in(cx.ast.allocator());
+        return ty.clone_in_with_semantic_ids(cx.ast.allocator());
     }
 
     struct Renamer<'a, 'env> {
@@ -2243,7 +2245,7 @@ fn ox_codegen_place<'a>(
     let declaration_id = ident.declaration_id;
     if let Some(tmp) = cx.temp.get(&declaration_id) {
         if let Some(val) = tmp {
-            return Ok(val.clone_in(cx.ast.allocator()));
+            return Ok(val.clone_in_with_semantic_ids(cx.ast.allocator()));
         }
     } else if ident.name.is_none() {
         return Err(invariant_err(
