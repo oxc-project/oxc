@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.59.0] - 2026-07-13
+
+### 🚀 Features
+
+- 3a7fe74 formatter_css: Update oxc-css-parser to 0.0.7 (#24434) (leaysgur)
+- 0173cd3 formatter_css: Format Less :extend and merge props (#24358) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- fcc28df formatter_css: Keep glued-braket-value tight (#24352) (leaysgur)
+- eeabc4a formatter_css: Bail on EOF-recovered parse errors (#24282) (leaysgur)
+
 ## [0.58.0] - 2026-07-06
 
 ### 🚀 Features
