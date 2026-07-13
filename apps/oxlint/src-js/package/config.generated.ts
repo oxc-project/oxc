@@ -6496,6 +6496,9 @@ export interface NoReservedPropsConfig {
   vueVersion?: number;
 }
 export interface Options {
+  /**
+   * Prop names to ignore, as regular expression patterns.
+   */
   ignoreProps?: string[];
 }
 export interface RequireDirectExport {

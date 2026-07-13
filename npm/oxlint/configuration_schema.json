@@ -16295,11 +16295,12 @@
       "type": "object",
       "properties": {
         "ignoreProps": {
-          "default": [],
+          "description": "Prop names to ignore, as regular expression patterns.",
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "markdownDescription": "Prop names to ignore, as regular expression patterns."
         }
       },
       "additionalProperties": false
