@@ -59,7 +59,6 @@ impl TypeCast<'_> {
 /// both [`format_type_cast_comment_node`] and [`format_leading_comments_and_open_paren`] consume it.
 pub fn classify_type_cast<'a>(span: Span, f: &JsFormatter<'_, 'a>) -> TypeCast<'a> {
     let comments = f.context().comments();
-    let source = f.source_text();
 
     // The cast comment may already be printed:
     // by the re-entry from `format_type_cast_comment_node`,
@@ -69,19 +68,13 @@ pub fn classify_type_cast<'a>(span: Span, f: &JsFormatter<'_, 'a>) -> TypeCast<'
         && last_printed_comment.span.end <= span.start
         && comments.is_type_cast_comment_followed_by_paren(last_printed_comment)
     {
-        // Cheap gate first: a cast target must be followed by `)`.
-        // Every node formatted after a printed cast comment re-enters this branch
-        // (e.g. each member chain link), and `has_closed_parentheses` scans the source up to the node end.
-        return if !is_followed_by_closing_paren(span, f) {
-            TypeCast::None
-        } else if has_closed_parentheses(
-            source.bytes_range(last_printed_comment.span.end, span.end),
-        ) {
-            // The cast binds to an inner node; since the comment is already printed,
+        return match classify_cast_comment_gap(last_printed_comment.span.end, span.start, f) {
+            CastCommentGap::ParensAndTrivia if is_followed_by_closing_paren(span, f) => {
+                TypeCast::Target(&[])
+            }
+            // `Trivia` here means the cast binds to an inner node; since the comment is already printed,
             // there is nothing left to keep adjacent at this level.
-            TypeCast::None
-        } else {
-            TypeCast::Target(&[])
+            _ => TypeCast::None,
         };
     }
 
@@ -89,12 +82,14 @@ pub fn classify_type_cast<'a>(span: Span, f: &JsFormatter<'_, 'a>) -> TypeCast<'
         let unprinted_comments = comments.unprinted_comments();
         let type_cast_comment = &unprinted_comments[type_cast_comment_index];
 
-        return if has_closed_parentheses(source.bytes_range(type_cast_comment.span.end, span.end)) {
-            TypeCast::BindsInner(&unprinted_comments[..=type_cast_comment_index])
-        } else if is_followed_by_closing_paren(span, f) {
-            TypeCast::Target(&unprinted_comments[..=type_cast_comment_index])
-        } else {
-            TypeCast::None
+        return match classify_cast_comment_gap(type_cast_comment.span.end, span.start, f) {
+            CastCommentGap::Trivia => {
+                TypeCast::BindsInner(&unprinted_comments[..=type_cast_comment_index])
+            }
+            CastCommentGap::ParensAndTrivia if is_followed_by_closing_paren(span, f) => {
+                TypeCast::Target(&unprinted_comments[..=type_cast_comment_index])
+            }
+            _ => TypeCast::None,
         };
     }
 
@@ -187,76 +182,55 @@ pub fn format_leading_comments_and_open_paren(
     }
 }
 
-/// Check if the source text has properly closed parentheses starting with '('.
-/// Returns true if the text starts with '(' and all parentheses are balanced.
+/// What the source between a cast comment and the node start contains.
 ///
-/// NOTE: This lexical scan skips strings and comments but NOT regex literals,
-/// so a `)` byte inside a regex (`/\)/`, `/[)]/`) is miscounted as a closing parenthesis
-/// and the cast target is misidentified:
-/// `/** @type {D} */ (s.replace(/\)/g, ""))` loses its cast parentheses.
+/// Where the cast parenthesis closes is derived from this gap plus the span,
+/// with no scanning of expression bytes
+/// (where a lexical paren count would be confused by regex literals like `/\)/`).
 ///
-/// This interior scan can be replaced by a span-based check with
-/// no scanning of expression bytes at all: even with `preserve_parens: false`,
-/// the parser excludes a node's own wrapping parentheses from its span
-/// but includes a leftmost descendant's parentheses (`(a).b ?? c` spans from `(`).
-/// So: span starts at the `(` right after the cast comment → the cast binds inner;
-/// the gap between the comment and span start holds only `(`s/trivia (and the node is followed by `)`)
-/// → the node is the cast target.
-fn has_closed_parentheses(source: &[u8]) -> bool {
-    let mut paren_count = 0i32;
-    let mut i = 0;
+/// NOTE: Two parser guarantees make this sound even under `preserve_parens: false`:
+/// - a node's own wrapping parentheses are excluded from its span,
+///   so a `(` in the gap opened before the node and cannot close inside it
+///   (parentheses do not cross node boundaries), the node is the cast target;
+/// - a leftmost descendant's parentheses are included in the span (`(a).b ?? c` spans from `(`),
+///   so a pure-trivia gap means the cast parenthesis at the span start belongs to a descendant
+///   and closes inside the node, the cast binds inner.
+enum CastCommentGap {
+    /// Only whitespace and comments: the node's extent starts at the cast parenthesis.
+    Trivia,
+    /// Only `(`s, whitespace, and comments: the parentheses wrap the node.
+    ParensAndTrivia,
+    /// Anything else: the cast comment does not belong to this node.
+    Code,
+}
 
-    while i < source.len() {
-        match source[i] {
-            b'(' => paren_count += 1,
-            b')' => {
-                paren_count -= 1;
-                if paren_count == 0 {
-                    return true;
-                }
-            }
-            b'/' if i + 1 < source.len() => {
-                match source[i + 1] {
-                    b'/' => {
-                        // Skip to end of line comment
-                        i += 2;
-                        while i < source.len() && source[i] != b'\n' {
-                            i += 1;
-                        }
-                        continue;
-                    }
-                    b'*' => {
-                        // Skip to end of block comment
-                        i += 2;
-                        while i + 1 < source.len() {
-                            if source[i] == b'*' && source[i + 1] == b'/' {
-                                i += 2;
-                                break;
-                            }
-                            i += 1;
-                        }
-                        continue;
-                    }
-                    _ => {}
-                }
-            }
-            quote @ (b'"' | b'\'' | b'`') => {
-                // Skip string literal (double-quoted, single-quoted, or template)
-                i += 1;
-                while i < source.len() {
-                    match source[i] {
-                        b if b == quote => break,
-                        b'\\' if i + 1 < source.len() => i += 1, // Skip escaped character
-                        _ => {}
-                    }
-                    i += 1;
-                }
-            }
-            _ => {}
+/// Classifies the source between a cast comment end (`start`) and the node start (`end`).
+/// Comments in the gap are skipped via their known spans
+/// (they are unprinted at both call sites: they come after the cast comment,
+/// which is the newest printed comment in the printed branch);
+/// between them only whitespace and `(` are grammatically possible,
+/// so anything else is conservatively [`CastCommentGap::Code`].
+fn classify_cast_comment_gap(start: u32, end: u32, f: &JsFormatter<'_, '_>) -> CastCommentGap {
+    let source = f.source_text();
+    let is_gap_byte = |b: u8| b.is_ascii_whitespace() || b == b'(';
+
+    let mut has_paren = false;
+    let mut pos = start;
+    for comment in f.context().comments().comments_in_range(start, end) {
+        // A comment ending exactly at `start` lies before the range
+        if comment.span.start < pos {
+            continue;
         }
-        i += 1;
+        if !source.all_bytes_match(pos, comment.span.start, is_gap_byte) {
+            return CastCommentGap::Code;
+        }
+        has_paren = has_paren || source.bytes_contain(pos, comment.span.start, b'(');
+        pos = comment.span.end;
     }
+    if !source.all_bytes_match(pos, end, is_gap_byte) {
+        return CastCommentGap::Code;
+    }
+    has_paren = has_paren || source.bytes_contain(pos, end, b'(');
 
-    // Return true only if parentheses are properly balanced
-    paren_count == 0
+    if has_paren { CastCommentGap::ParensAndTrivia } else { CastCommentGap::Trivia }
 }
