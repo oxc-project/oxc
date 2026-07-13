@@ -136,19 +136,21 @@ pub fn infer_mutation_aliasing_effects(
         state: InferenceState,
     ) {
         if let Some(queued_state) = queued_states.get(&block_id) {
-            let merged = queued_state.merge(&state);
-            let new_state = merged.unwrap_or_else(|| queued_state.clone());
-            queued_states.insert(block_id, new_state);
-        } else {
-            let prev_state = states_by_block.get(&block_id);
-            if let Some(prev) = prev_state {
-                let next_state = prev.merge(&state);
-                if let Some(next) = next_state {
-                    queued_states.insert(block_id, next);
-                }
-            } else {
-                queued_states.insert(block_id, state);
+            // Merge into the already-queued state; only rewrite the slot when the
+            // merge actually grew it. When `merge` returns `None` the existing
+            // entry already subsumes `state`, so leave it in place rather than
+            // reinserting an identical clone.
+            if let Some(merged) = queued_state.merge(&state) {
+                queued_states.insert(block_id, merged);
             }
+        } else if let Some(prev) = states_by_block.get(&block_id) {
+            // Block was already processed; re-queue only if the new incoming
+            // state adds information over what it was last processed with.
+            if let Some(next) = prev.merge(&state) {
+                queued_states.insert(block_id, next);
+            }
+        } else {
+            queued_states.insert(block_id, state);
         }
     }
 
@@ -172,6 +174,11 @@ pub fn infer_mutation_aliasing_effects(
 
     let mut iteration_count = 0;
 
+    // The block key set is fixed for the lifetime of the pass (inference rewrites
+    // effects on existing blocks but never adds or removes blocks), so compute the
+    // processing order once instead of re-collecting it every fixpoint iteration.
+    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+
     while !queued_states.is_empty() {
         iteration_count += 1;
         if iteration_count > 100 {
@@ -181,16 +188,17 @@ pub fn infer_mutation_aliasing_effects(
             ));
         }
 
-        // Collect block IDs to process in order
-        let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
-        for block_id in block_ids {
+        for &block_id in &block_ids {
             let incoming_state = match queued_states.swap_remove(&block_id) {
                 Some(s) => s,
                 None => continue,
             };
 
+            // Retain the incoming state for future merge comparisons, then reuse
+            // the owned copy as the mutable working state instead of cloning it a
+            // second time.
             states_by_block.insert(block_id, incoming_state.clone());
-            let mut state = incoming_state.clone();
+            let mut state = incoming_state;
 
             infer_block(&mut context, &mut state, block_id, func, env)?;
 
@@ -222,10 +230,18 @@ pub fn infer_mutation_aliasing_effects(
                 return Err(diag);
             }
 
-            // Queue successors
+            // Queue successors. Every successor needs its own copy of the working
+            // state except the last, which can take ownership of `state` directly —
+            // eliminating a clone on the common single-successor (straight-line) path.
             let successors = terminal_successors(&func.body.blocks[&block_id].terminal);
-            for next_block_id in successors {
-                queue(&mut queued_states, &states_by_block, next_block_id, state.clone());
+            let mut successors = successors.into_iter().peekable();
+            while let Some(next_block_id) = successors.next() {
+                if successors.peek().is_some() {
+                    queue(&mut queued_states, &states_by_block, next_block_id, state.clone());
+                } else {
+                    queue(&mut queued_states, &states_by_block, next_block_id, state);
+                    break;
+                }
             }
         }
     }
