@@ -11,6 +11,7 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use oxc_allocator::{Allocator, HashMap as ArenaHashMap, HashSet as ArenaHashSet, Vec as ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 
 use crate::diagnostics::ErrorCategory;
@@ -42,23 +43,23 @@ impl PostDominator {
 // Graph representation
 // =============================================================================
 
-struct Node {
+struct Node<'alloc> {
     id: BlockId,
     index: usize,
-    preds: FxHashSet<BlockId>,
-    succs: FxHashSet<BlockId>,
+    preds: ArenaHashSet<'alloc, BlockId>,
+    succs: ArenaHashSet<'alloc, BlockId>,
 }
 
-struct Graph {
+struct Graph<'alloc> {
     entry: BlockId,
     /// Nodes stored in iteration order (RPO for reverse graph).
-    nodes: Vec<Node>,
+    nodes: ArenaVec<'alloc, Node<'alloc>>,
     /// Map from BlockId to index in the nodes vec.
-    node_index: FxHashMap<BlockId, usize>,
+    node_index: ArenaHashMap<'alloc, BlockId, usize>,
 }
 
-impl Graph {
-    fn get_node(&self, id: BlockId) -> &Node {
+impl<'alloc> Graph<'alloc> {
+    fn get_node(&self, id: BlockId) -> &Node<'alloc> {
         let idx = self.node_index[&id];
         &self.nodes[idx]
     }
@@ -77,7 +78,11 @@ pub fn compute_post_dominator_tree(
     next_block_id_counter: u32,
     include_throws_as_exit_node: bool,
 ) -> Result<PostDominator, OxcDiagnostic> {
-    let graph = build_reverse_graph(func, next_block_id_counter, include_throws_as_exit_node);
+    // Scratch arena for the temporary reverse graph; released on return.
+    let scratch = Allocator::default();
+    let scratch = &scratch;
+    let graph =
+        build_reverse_graph(func, next_block_id_counter, include_throws_as_exit_node, scratch);
     let mut nodes = compute_immediate_dominators(&graph)?;
 
     // When include_throws_as_exit_node is false, nodes that flow into a throw
@@ -96,26 +101,33 @@ pub fn compute_post_dominator_tree(
 ///
 /// Reverses all edges and adds a synthetic exit node that receives edges from
 /// return (and optionally throw) terminals. The result is put into RPO order.
-fn build_reverse_graph(
+fn build_reverse_graph<'alloc>(
     func: &HirFunction,
     next_block_id_counter: u32,
     include_throws_as_exit_node: bool,
-) -> Graph {
+    allocator: &'alloc Allocator,
+) -> Graph<'alloc> {
     let exit_id = BlockId(next_block_id_counter);
 
     // Build initial nodes with reversed edges
-    let mut raw_nodes: FxHashMap<BlockId, Node> = FxHashMap::default();
+    let mut raw_nodes: ArenaHashMap<'alloc, BlockId, Node<'alloc>> =
+        ArenaHashMap::new_in(allocator);
 
     // Create exit node
     raw_nodes.insert(
         exit_id,
-        Node { id: exit_id, index: 0, preds: FxHashSet::default(), succs: FxHashSet::default() },
+        Node {
+            id: exit_id,
+            index: 0,
+            preds: ArenaHashSet::new_in(allocator),
+            succs: ArenaHashSet::new_in(allocator),
+        },
     );
 
     for (id, block) in &func.body.blocks {
         let successors = each_terminal_successor(&block.terminal);
-        let mut preds_set: FxHashSet<BlockId> = successors.into_iter().collect();
-        let succs_set: FxHashSet<BlockId> = block.preds.iter().copied().collect();
+        let mut preds_set = ArenaHashSet::from_iter_in(successors, allocator);
+        let succs_set = ArenaHashSet::from_iter_in(block.preds.iter().copied(), allocator);
 
         let is_return = matches!(&block.terminal, Terminal::Return { .. });
         let is_throw = matches!(&block.terminal, Terminal::Throw { .. });
@@ -129,15 +141,16 @@ fn build_reverse_graph(
     }
 
     // DFS from exit to compute RPO
-    let mut visited = FxHashSet::default();
-    let mut postorder = Vec::new();
+    let mut visited: ArenaHashSet<'alloc, BlockId> = ArenaHashSet::new_in(allocator);
+    let mut postorder: ArenaVec<'alloc, BlockId> = ArenaVec::new_in(&allocator);
     dfs_postorder(exit_id, &raw_nodes, &mut visited, &mut postorder);
 
     // Reverse postorder
     postorder.reverse();
 
-    let mut nodes = Vec::with_capacity(postorder.len());
-    let mut node_index = FxHashMap::default();
+    let mut nodes: ArenaVec<'alloc, Node<'alloc>> =
+        ArenaVec::with_capacity_in(postorder.len(), &allocator);
+    let mut node_index: ArenaHashMap<'alloc, BlockId, usize> = ArenaHashMap::new_in(allocator);
     for (idx, id) in postorder.into_iter().enumerate() {
         let mut node = raw_nodes.remove(&id).unwrap();
         node.index = idx;
@@ -148,11 +161,11 @@ fn build_reverse_graph(
     Graph { entry: exit_id, nodes, node_index }
 }
 
-fn dfs_postorder(
+fn dfs_postorder<'alloc>(
     id: BlockId,
-    nodes: &FxHashMap<BlockId, Node>,
-    visited: &mut FxHashSet<BlockId>,
-    postorder: &mut Vec<BlockId>,
+    nodes: &ArenaHashMap<'alloc, BlockId, Node<'alloc>>,
+    visited: &mut ArenaHashSet<'alloc, BlockId>,
+    postorder: &mut ArenaVec<'alloc, BlockId>,
 ) {
     if !visited.insert(id) {
         return;

@@ -15,7 +15,7 @@
 
 use std::mem::replace;
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use oxc_allocator::{Allocator, HashMap as ArenaHashMap, HashSet as ArenaHashSet, Vec as ArenaVec};
 
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
@@ -54,18 +54,22 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
         functions[func_id] = inner_func;
     }
 
+    // Scratch arena for this pass's temporary collections; released on return.
+    let scratch = Allocator::default();
+    let scratch = &scratch;
+
     // Build fallthrough set
-    let mut fallthrough_blocks: FxHashSet<BlockId> = FxHashSet::default();
+    let mut fallthrough_blocks: ArenaHashSet<'_, BlockId> = ArenaHashSet::new_in(scratch);
     for block in func.body.blocks.values() {
         if let Some(ft) = visitors::terminal_fallthrough(&block.terminal) {
             fallthrough_blocks.insert(ft);
         }
     }
 
-    let mut merged = MergedBlocks::new();
+    let mut merged = MergedBlocks::new_in(scratch);
 
     // Collect block IDs for iteration (since we modify during iteration)
-    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    let block_ids = ArenaVec::from_iter_in(func.body.blocks.keys().copied(), &scratch);
 
     for block_id in &block_ids {
         let block = match func.body.blocks.get(block_id) {
@@ -117,7 +121,7 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
         let block_terminal = block.terminal.clone();
 
         // Create phi instructions and add to instruction table
-        let mut new_instr_ids = Vec::new();
+        let mut new_instr_ids = ArenaVec::new_in(&scratch);
         for (identifier, operand) in phis {
             let lvalue = Place {
                 identifier,
@@ -184,13 +188,13 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
 }
 
 /// Tracks which blocks have been merged and into which target.
-struct MergedBlocks {
-    map: FxHashMap<BlockId, BlockId>,
+struct MergedBlocks<'alloc> {
+    map: ArenaHashMap<'alloc, BlockId, BlockId>,
 }
 
-impl MergedBlocks {
-    fn new() -> Self {
-        Self { map: FxHashMap::default() }
+impl<'alloc> MergedBlocks<'alloc> {
+    fn new_in(allocator: &'alloc Allocator) -> Self {
+        Self { map: ArenaHashMap::new_in(allocator) }
     }
 
     /// Record that `block` was merged into `into`.

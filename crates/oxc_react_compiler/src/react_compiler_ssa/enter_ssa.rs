@@ -1,7 +1,8 @@
 use std::mem::{replace, take};
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
+use oxc_allocator::{Allocator, HashMap as ArenaHashMap, HashSet as ArenaHashSet, Vec as ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 
 use crate::diagnostics::ErrorCategory;
@@ -19,47 +20,54 @@ struct IncompletePhi {
     new_place: Place,
 }
 
-struct State {
-    defs: FxHashMap<IdentifierId, IdentifierId>,
-    incomplete_phis: Vec<IncompletePhi>,
+struct State<'alloc> {
+    defs: ArenaHashMap<'alloc, IdentifierId, IdentifierId>,
+    incomplete_phis: ArenaVec<'alloc, IncompletePhi>,
 }
 
-struct SSABuilder {
-    states: FxHashMap<BlockId, State>,
+struct SSABuilder<'alloc> {
+    allocator: &'alloc Allocator,
+    states: ArenaHashMap<'alloc, BlockId, State<'alloc>>,
     current: Option<BlockId>,
-    unsealed_preds: FxHashMap<BlockId, u32>,
-    block_preds: FxHashMap<BlockId, Vec<BlockId>>,
-    unknown: FxHashSet<IdentifierId>,
-    context: FxHashSet<IdentifierId>,
+    unsealed_preds: ArenaHashMap<'alloc, BlockId, u32>,
+    block_preds: ArenaHashMap<'alloc, BlockId, ArenaVec<'alloc, BlockId>>,
+    unknown: ArenaHashSet<'alloc, IdentifierId>,
+    context: ArenaHashSet<'alloc, IdentifierId>,
+    // Stays on the heap: `Phi.operands` is an insertion-ordered `FxIndexMap`,
+    // which has no arena equivalent, so `Phi` (and `Vec<Phi>`) is a `Drop` type.
     pending_phis: FxHashMap<BlockId, Vec<Phi>>,
-    processed_functions: Vec<FunctionId>,
+    processed_functions: ArenaVec<'alloc, FunctionId>,
 }
 
-impl SSABuilder {
-    fn new(blocks: &FxIndexMap<BlockId, BasicBlock>) -> Self {
-        let mut block_preds = FxHashMap::default();
+impl<'alloc> SSABuilder<'alloc> {
+    fn new_in(blocks: &FxIndexMap<BlockId, BasicBlock>, allocator: &'alloc Allocator) -> Self {
+        let mut block_preds = ArenaHashMap::new_in(allocator);
         for (id, block) in blocks {
-            block_preds.insert(*id, block.preds.iter().copied().collect());
+            block_preds
+                .insert(*id, ArenaVec::from_iter_in(block.preds.iter().copied(), &allocator));
         }
         SSABuilder {
-            states: FxHashMap::default(),
+            allocator,
+            states: ArenaHashMap::new_in(allocator),
             current: None,
-            unsealed_preds: FxHashMap::default(),
+            unsealed_preds: ArenaHashMap::new_in(allocator),
             block_preds,
-            unknown: FxHashSet::default(),
-            context: FxHashSet::default(),
+            unknown: ArenaHashSet::new_in(allocator),
+            context: ArenaHashSet::new_in(allocator),
             pending_phis: FxHashMap::default(),
-            processed_functions: Vec::new(),
+            processed_functions: ArenaVec::new_in(&allocator),
         }
     }
 
     fn define_function(&mut self, func: &HirFunction) {
+        let allocator = self.allocator;
         for (id, block) in &func.body.blocks {
-            self.block_preds.insert(*id, block.preds.iter().copied().collect());
+            self.block_preds
+                .insert(*id, ArenaVec::from_iter_in(block.preds.iter().copied(), &allocator));
         }
     }
 
-    fn state_mut(&mut self) -> &mut State {
+    fn state_mut(&mut self) -> &mut State<'alloc> {
         let current = self.current.expect("we need to be in a block to access state!");
         self.states.get_mut(&current).expect("state not found for current block")
     }
@@ -148,7 +156,11 @@ impl SSABuilder {
             }
         }
 
-        let preds = self.block_preds.get(&block_id).cloned().unwrap_or_default();
+        let allocator = self.allocator;
+        let preds: ArenaVec<BlockId> = ArenaVec::from_iter_in(
+            self.block_preds.get(&block_id).into_iter().flatten().copied(),
+            &allocator,
+        );
 
         if preds.is_empty() {
             self.unknown.insert(old_place.identifier);
@@ -196,7 +208,11 @@ impl SSABuilder {
         new_place: &Place,
         env: &mut Environment,
     ) {
-        let preds = self.block_preds.get(&block_id).cloned().unwrap_or_default();
+        let allocator = self.allocator;
+        let preds: ArenaVec<BlockId> = ArenaVec::from_iter_in(
+            self.block_preds.get(&block_id).into_iter().flatten().copied(),
+            &allocator,
+        );
 
         let mut pred_defs: FxIndexMap<BlockId, Place> = FxIndexMap::default();
         for pred_block_id in &preds {
@@ -218,17 +234,26 @@ impl SSABuilder {
     }
 
     fn fix_incomplete_phis(&mut self, block_id: BlockId, env: &mut Environment) {
-        let incomplete_phis: Vec<IncompletePhi> =
-            self.states.get_mut(&block_id).unwrap().incomplete_phis.drain(..).collect();
+        let allocator = self.allocator;
+        let incomplete_phis = ArenaVec::from_iter_in(
+            self.states.get_mut(&block_id).unwrap().incomplete_phis.drain(..),
+            &allocator,
+        );
         for phi in &incomplete_phis {
             self.add_phi(block_id, &phi.old_place, &phi.new_place, env);
         }
     }
 
     fn start_block(&mut self, block_id: BlockId) {
+        let allocator = self.allocator;
         self.current = Some(block_id);
-        self.states
-            .insert(block_id, State { defs: FxHashMap::default(), incomplete_phis: Vec::new() });
+        self.states.insert(
+            block_id,
+            State {
+                defs: ArenaHashMap::new_in(allocator),
+                incomplete_phis: ArenaVec::new_in(&allocator),
+            },
+        );
     }
 }
 
@@ -237,7 +262,10 @@ impl SSABuilder {
 // =============================================================================
 
 pub fn enter_ssa(func: &mut HirFunction, env: &mut Environment) -> Result<(), OxcDiagnostic> {
-    let mut builder = SSABuilder::new(&func.body.blocks);
+    // Scratch arena for this pass's temporary SSA state; released on return.
+    let scratch = Allocator::default();
+    let scratch = &scratch;
+    let mut builder = SSABuilder::new_in(&func.body.blocks, scratch);
     let root_entry = func.body.entry;
     enter_ssa_impl(func, &mut builder, env, root_entry)?;
 
@@ -253,7 +281,10 @@ fn apply_pending_phis(func: &mut HirFunction, env: &mut Environment, builder: &m
             block.phis.extend(phis);
         }
     }
-    for fid in &builder.processed_functions.clone() {
+    let allocator = builder.allocator;
+    let processed_functions =
+        ArenaVec::from_iter_in(builder.processed_functions.iter().copied(), &allocator);
+    for fid in &processed_functions {
         let inner_func = &mut env.functions[fid.0 as usize];
         for (block_id, block) in inner_func.body.blocks.iter_mut() {
             if let Some(phis) = builder.pending_phis.remove(block_id) {
@@ -269,8 +300,9 @@ fn enter_ssa_impl(
     env: &mut Environment,
     root_entry: BlockId,
 ) -> Result<(), OxcDiagnostic> {
-    let mut visited_blocks: FxHashSet<BlockId> = FxHashSet::default();
-    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    let allocator = builder.allocator;
+    let mut visited_blocks: ArenaHashSet<'_, BlockId> = ArenaHashSet::new_in(allocator);
+    let block_ids = ArenaVec::from_iter_in(func.body.blocks.keys().copied(), &allocator);
 
     for block_id in &block_ids {
         let block_id = *block_id;
@@ -304,8 +336,10 @@ fn enter_ssa_impl(
         }
 
         // Process instructions
-        let instruction_ids: Vec<InstructionId> =
-            func.body.blocks.get(&block_id).unwrap().instructions.clone();
+        let instruction_ids = ArenaVec::from_iter_in(
+            func.body.blocks.get(&block_id).unwrap().instructions.iter().copied(),
+            &allocator,
+        );
 
         for instr_id in &instruction_ids {
             let instr_idx = instr_id.0 as usize;
@@ -351,11 +385,10 @@ fn enter_ssa_impl(
 
             // Handle inner function SSA
             if let Some(fid) = func_expr_id {
-                let context_ids: Vec<IdentifierId> = env.functions[fid.0 as usize]
-                    .context
-                    .iter()
-                    .map(|place| place.identifier)
-                    .collect();
+                let context_ids = ArenaVec::from_iter_in(
+                    env.functions[fid.0 as usize].context.iter().map(|place| place.identifier),
+                    &allocator,
+                );
                 for id in context_ids {
                     builder.unmark_unknown(id);
                 }
@@ -409,7 +442,7 @@ fn enter_ssa_impl(
                     .unwrap()
                     .preds
                     .clear();
-                builder.block_preds.insert(inner_entry, Vec::new());
+                builder.block_preds.insert(inner_entry, ArenaVec::new_in(&allocator));
             }
         }
 
