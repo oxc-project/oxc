@@ -13,7 +13,7 @@ use crate::{
     utils::{
         assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        suppressed::FormatSuppressedNode,
+        suppressed::FormatSuppressedNode, typecast::format_leading_comments_and_open_paren,
     },
     write,
 };
@@ -193,24 +193,34 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         || (matches!(self.arrow.parent(), AstNodes::JSXExpressionContainer(container)
                             if !f.context().comments().has_comment_in_range(arrow.span.end, container.span.end)));
 
-                    write!(
-                        f,
-                        group(&format_args!(
-                            soft_line_indent_or_space(&format_with(|f| {
-                                if should_add_parens {
-                                    write!(f, if_group_fits_on_line(&"("));
-                                }
-
-                                write!(f, format_body);
-
-                                if should_add_parens {
-                                    write!(f, if_group_fits_on_line(&")"));
-                                }
-                            })),
-                            is_last_call_arg.then_some(&FormatTrailingCommas::All),
-                            should_add_soft_line.then_some(soft_line_break())
-                        ))
-                    );
+                    if should_add_parens {
+                        // The leading space must be a literal space rather than a soft line:
+                        // it is counted when measuring whether the signature fits,
+                        // so a signature that fills the line exactly gets broken,
+                        // matching Prettier's `printArrowFunctionBody`.
+                        write!(
+                            f,
+                            [
+                                space(),
+                                group(&format_args!(
+                                    if_group_fits_on_line(&token("(")),
+                                    indent(&format_args!(soft_line_break(), format_body)),
+                                    if_group_fits_on_line(&token(")")),
+                                    is_last_call_arg.then_some(&FormatTrailingCommas::All),
+                                    should_add_soft_line.then_some(soft_line_break())
+                                ))
+                            ]
+                        );
+                    } else {
+                        write!(
+                            f,
+                            group(&format_args!(
+                                soft_line_indent_or_space(&format_body),
+                                is_last_call_arg.then_some(&FormatTrailingCommas::All),
+                                should_add_soft_line.then_some(soft_line_break())
+                            ))
+                        );
+                    }
                 }
             }
         }
@@ -645,6 +655,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
             } else {
                 let should_add_parens = tail.expression && should_add_parens(tail_body);
                 if should_add_parens {
+                    // Known divergence from Prettier: with a signature that exactly fills the line,
+                    // Prettier breaks it because the hug layout's literal space is counted
+                    // when measuring fits (see the single-arrow branch above), while this soft-line
+                    // wrapping (`soft_line_indent_or_space` in `format_tail_body`) stops the measurement.
+                    // Porting the literal-space structure here is NOT enough: Prettier gates the hug
+                    // on `!shouldBreakChain` (`expand_signatures` here) and otherwise breaks without
+                    // parens; a naive port regresses `js/arrows/currying-4.js`.
                     write!(
                         f,
                         [
@@ -877,7 +894,7 @@ fn format_sequence_with_leading_comment<'a, 'b>(
     let is_suppressed = f.comments().is_suppressed(sequence_span.start);
 
     let format_sequence = format_with(move |f| {
-        write!(f, [format_leading_comments(sequence_span), "("]);
+        format_leading_comments_and_open_paren(sequence_span, true, f);
         if is_suppressed {
             write!(f, FormatSuppressedNode(sequence_span));
         } else {

@@ -27,8 +27,7 @@ static NUM_CHUNK_ALLOC: AtomicUsize = AtomicUsize::new(0);
 pub fn record_chunk_allocation() {
     // Counter maxes out at `usize::MAX`, but if there's that many allocations,
     // the exact number is not important
-    let _ = NUM_CHUNK_ALLOC
-        .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |count| Some(count.saturating_add(1)));
+    NUM_CHUNK_ALLOC.update(Ordering::Relaxed, Ordering::Relaxed, |count| count.saturating_add(1));
 }
 
 /// Counters of allocations and reallocations made in an [`Allocator`].

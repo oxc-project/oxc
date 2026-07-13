@@ -169,7 +169,7 @@ pub struct JSDocTagKindPart<'a> {
 impl<'a> JSDocTagKindPart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
         debug_assert!(part_content.starts_with('@'));
-        debug_assert!(part_content.trim() == part_content);
+        debug_assert_eq!(part_content.trim(), part_content);
 
         Self { raw: part_content, span }
     }
@@ -262,7 +262,7 @@ pub struct JSDocTagTypeNamePart<'a> {
 
 impl<'a> JSDocTagTypeNamePart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
-        debug_assert!(part_content.trim() == part_content);
+        debug_assert_eq!(part_content.trim(), part_content);
 
         let optional = part_content.starts_with('[') && part_content.ends_with(']');
         let default = optional && part_content.contains('=');

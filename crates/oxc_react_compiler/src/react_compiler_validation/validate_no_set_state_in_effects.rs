@@ -14,36 +14,38 @@
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_index::IndexSlice;
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::ObjectPropertyOrSpread;
 use crate::react_compiler_hir::Pattern;
 use crate::react_compiler_hir::dominator::{compute_post_dominator_tree, post_dominator_frontier};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
-    BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, PlaceOrSpread, Span,
-    Terminal, Type, is_ref_value_type, is_set_state_type, is_use_effect_event_type,
+    BlockId, FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue, PlaceOrSpread,
+    Terminal, Type, TypeId, is_ref_value_type, is_set_state_type, is_use_effect_event_type,
     is_use_effect_hook_type, is_use_insertion_effect_hook_type, is_use_layout_effect_hook_type,
     is_use_ref_type, visitors,
 };
+use oxc_span::Span;
 
 pub fn validate_no_set_state_in_effects(
     func: &HirFunction,
     env: &Environment,
-) -> Result<CompilerError, OxcDiagnostic> {
+) -> Result<Diagnostics, OxcDiagnostic> {
     let identifiers = &env.identifiers;
     let types = &env.types;
     let functions = &env.functions;
 
     // Map from IdentifierId to the Place where the setState originated
     let mut set_state_functions: FxHashMap<IdentifierId, SetStateInfo> = FxHashMap::default();
-    let mut errors = CompilerError::new();
+    let mut errors = Diagnostics::new();
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::LoadLocal { place, .. } => {
                     if set_state_functions.contains_key(&place.identifier) {
@@ -60,7 +62,7 @@ pub fn validate_no_set_state_in_effects(
                 }
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
                     // Check if any context capture references a setState
-                    let inner_func = &functions[lowered_func.func.0 as usize];
+                    let inner_func = &functions[lowered_func.func];
                     let has_set_state_operand = inner_func.context.iter().any(|ctx_place| {
                         is_set_state_type_by_id(ctx_place.identifier, identifiers, types)
                             || set_state_functions.contains_key(&ctx_place.identifier)
@@ -82,51 +84,45 @@ pub fn validate_no_set_state_in_effects(
                     }
                 }
                 InstructionValue::MethodCall { property, args, .. } => {
-                    let prop_type =
-                        &types[identifiers[property.identifier.0 as usize].type_.0 as usize];
+                    let prop_type = &types[identifiers[property.identifier].type_];
                     if is_use_effect_event_type(prop_type) {
-                        if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
-                            if let Some(info) = set_state_functions.get(&arg_place.identifier) {
-                                set_state_functions.insert(instr.lvalue.identifier, info.clone());
-                            }
+                        if let Some(PlaceOrSpread::Place(arg_place)) = args.first()
+                            && let Some(info) = set_state_functions.get(&arg_place.identifier)
+                        {
+                            set_state_functions.insert(instr.lvalue.identifier, info.clone());
                         }
-                    } else if is_use_effect_hook_type(prop_type)
+                    } else if (is_use_effect_hook_type(prop_type)
                         || is_use_layout_effect_hook_type(prop_type)
-                        || is_use_insertion_effect_hook_type(prop_type)
+                        || is_use_insertion_effect_hook_type(prop_type))
+                        && let Some(PlaceOrSpread::Place(arg_place)) = args.first()
+                        && let Some(info) = set_state_functions.get(&arg_place.identifier)
                     {
-                        if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
-                            if let Some(info) = set_state_functions.get(&arg_place.identifier) {
-                                push_error(
-                                    &mut errors,
-                                    info,
-                                    env.config.enable_verbose_no_set_state_in_effect,
-                                );
-                            }
-                        }
+                        push_error(
+                            &mut errors,
+                            info,
+                            env.config.enable_verbose_no_set_state_in_effect,
+                        );
                     }
                 }
                 InstructionValue::CallExpression { callee, args, .. } => {
-                    let callee_type =
-                        &types[identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                    let callee_type = &types[identifiers[callee.identifier].type_];
                     if is_use_effect_event_type(callee_type) {
-                        if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
-                            if let Some(info) = set_state_functions.get(&arg_place.identifier) {
-                                set_state_functions.insert(instr.lvalue.identifier, info.clone());
-                            }
+                        if let Some(PlaceOrSpread::Place(arg_place)) = args.first()
+                            && let Some(info) = set_state_functions.get(&arg_place.identifier)
+                        {
+                            set_state_functions.insert(instr.lvalue.identifier, info.clone());
                         }
-                    } else if is_use_effect_hook_type(callee_type)
+                    } else if (is_use_effect_hook_type(callee_type)
                         || is_use_layout_effect_hook_type(callee_type)
-                        || is_use_insertion_effect_hook_type(callee_type)
+                        || is_use_insertion_effect_hook_type(callee_type))
+                        && let Some(PlaceOrSpread::Place(arg_place)) = args.first()
+                        && let Some(info) = set_state_functions.get(&arg_place.identifier)
                     {
-                        if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
-                            if let Some(info) = set_state_functions.get(&arg_place.identifier) {
-                                push_error(
-                                    &mut errors,
-                                    info,
-                                    env.config.enable_verbose_no_set_state_in_effect,
-                                );
-                            }
-                        }
+                        push_error(
+                            &mut errors,
+                            info,
+                            env.config.enable_verbose_no_set_state_in_effect,
+                        );
                     }
                 }
                 _ => {}
@@ -144,15 +140,15 @@ struct SetStateInfo {
 
 fn is_set_state_type_by_id(
     identifier_id: IdentifierId,
-    identifiers: &[Identifier],
-    types: &[Type],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
 ) -> bool {
-    let ident = &identifiers[identifier_id.0 as usize];
-    let ty = &types[ident.type_.0 as usize];
+    let ident = &identifiers[identifier_id];
+    let ty = &types[ident.type_];
     is_set_state_type(ty)
 }
 
-fn push_error(errors: &mut CompilerError, info: &SetStateInfo, enable_verbose: bool) {
+fn push_error(errors: &mut Diagnostics, info: &SetStateInfo, enable_verbose: bool) {
     if enable_verbose {
         errors.push(
             ErrorCategory::EffectSetState
@@ -235,20 +231,23 @@ fn collect_destructure_places(pattern: &Pattern, ref_derived_values: &mut FxHash
 fn is_derived_from_ref(
     id: IdentifierId,
     ref_derived_values: &FxHashSet<IdentifierId>,
-    identifiers: &[Identifier],
-    types: &[Type],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
 ) -> bool {
     if ref_derived_values.contains(&id) {
         return true;
     }
-    let ident = &identifiers[id.0 as usize];
-    let ty = &types[ident.type_.0 as usize];
+    let ident = &identifiers[id];
+    let ty = &types[ident.type_];
     is_use_ref_type(ty) || is_ref_value_type(ty)
 }
 
 /// Collects all operand IdentifierIds from an instruction value.
 /// Uses the canonical `each_instruction_value_operand_with_functions` from visitors.
-fn collect_operands(value: &InstructionValue, functions: &[HirFunction]) -> Vec<IdentifierId> {
+fn collect_operands(
+    value: &InstructionValue,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
+) -> Vec<IdentifierId> {
     visitors::each_instruction_value_operand_with_functions(value, functions)
         .into_iter()
         .map(|p| p.identifier)
@@ -262,8 +261,8 @@ fn create_ref_controlled_block_checker(
     func: &HirFunction,
     next_block_id_counter: u32,
     ref_derived_values: &FxHashSet<IdentifierId>,
-    identifiers: &[Identifier],
-    types: &[Type],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
 ) -> Result<FxHashMap<BlockId, bool>, OxcDiagnostic> {
     let post_dominators = compute_post_dominator_tree(func, next_block_id_counter, false)?;
     let mut cache: FxHashMap<BlockId, bool> = FxHashMap::default();
@@ -289,16 +288,16 @@ fn create_ref_controlled_block_checker(
                         break;
                     }
                     for case in cases {
-                        if let Some(case_test) = &case.test {
-                            if is_derived_from_ref(
+                        if let Some(case_test) = &case.test
+                            && is_derived_from_ref(
                                 case_test.identifier,
                                 ref_derived_values,
                                 identifiers,
                                 types,
-                            ) {
-                                is_controlled = true;
-                                break;
-                            }
+                            )
+                        {
+                            is_controlled = true;
+                            break;
                         }
                     }
                     if is_controlled {
@@ -322,9 +321,9 @@ fn create_ref_controlled_block_checker(
 fn get_set_state_call(
     func: &HirFunction,
     set_state_functions: &mut FxHashMap<IdentifierId, SetStateInfo>,
-    identifiers: &[Identifier],
-    types: &[Type],
-    functions: &[HirFunction],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
     enable_allow_set_state_from_refs: bool,
     next_block_id_counter: u32,
 ) -> Result<Option<SetStateInfo>, OxcDiagnostic> {
@@ -344,7 +343,7 @@ fn get_set_state_call(
             }
 
             for &instr_id in &block.instructions {
-                let instr = &func.instructions[instr_id.0 as usize];
+                let instr = &func.instructions[instr_id.index()];
 
                 let operands = collect_operands(&instr.value, functions);
                 let has_ref_operand = operands.iter().any(|op_id| {
@@ -361,13 +360,13 @@ fn get_set_state_call(
                     }
                 }
 
-                if let InstructionValue::PropertyLoad { object, property, .. } = &instr.value {
-                    if property.is_string("current") {
-                        let obj_ident = &identifiers[object.identifier.0 as usize];
-                        let obj_ty = &types[obj_ident.type_.0 as usize];
-                        if is_use_ref_type(obj_ty) || is_ref_value_type(obj_ty) {
-                            ref_derived_values.insert(instr.lvalue.identifier);
-                        }
+                if let InstructionValue::PropertyLoad { object, property, .. } = &instr.value
+                    && property.is_string("current")
+                {
+                    let obj_ident = &identifiers[object.identifier];
+                    let obj_ty = &types[obj_ident.type_];
+                    if is_use_ref_type(obj_ty) || is_ref_value_type(obj_ty) {
+                        ref_derived_values.insert(instr.lvalue.identifier);
                     }
                 }
             }
@@ -429,7 +428,7 @@ fn get_set_state_call(
         }
 
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
 
             // Track ref-derived values through instructions
             if enable_allow_set_state_from_refs {
@@ -451,13 +450,13 @@ fn get_set_state_call(
                 }
 
                 // Special case: PropertyLoad of .current on ref/refValue
-                if let InstructionValue::PropertyLoad { object, property, .. } = &instr.value {
-                    if property.is_string("current") {
-                        let obj_ident = &identifiers[object.identifier.0 as usize];
-                        let obj_ty = &types[obj_ident.type_.0 as usize];
-                        if is_use_ref_type(obj_ty) || is_ref_value_type(obj_ty) {
-                            ref_derived_values.insert(instr.lvalue.identifier);
-                        }
+                if let InstructionValue::PropertyLoad { object, property, .. } = &instr.value
+                    && property.is_string("current")
+                {
+                    let obj_ident = &identifiers[object.identifier];
+                    let obj_ty = &types[obj_ident.type_];
+                    if is_use_ref_type(obj_ty) || is_ref_value_type(obj_ty) {
+                        ref_derived_values.insert(instr.lvalue.identifier);
                     }
                 }
             }
@@ -482,16 +481,16 @@ fn get_set_state_call(
                 {
                     if enable_allow_set_state_from_refs {
                         // Check if the first argument is ref-derived
-                        if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
-                            if is_derived_from_ref(
+                        if let Some(PlaceOrSpread::Place(arg_place)) = args.first()
+                            && is_derived_from_ref(
                                 arg_place.identifier,
                                 &ref_derived_values,
                                 identifiers,
                                 types,
-                            ) {
-                                // Allow setState when value is derived from ref
-                                return Ok(None);
-                            }
+                            )
+                        {
+                            // Allow setState when value is derived from ref
+                            return Ok(None);
                         }
                         // Check if the current block is controlled by a ref-derived condition
                         if is_ref_controlled_block(block.id) {

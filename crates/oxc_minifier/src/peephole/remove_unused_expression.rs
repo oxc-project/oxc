@@ -12,7 +12,7 @@ use oxc_ecmascript::{
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
 };
 use oxc_span::GetSpan;
-use oxc_syntax::symbol::SymbolId;
+use oxc_syntax::symbol::{SymbolFlags, SymbolId};
 
 use super::PeepholeOptimizations;
 use super::fold_constants::is_cjs_module_exports_hint;
@@ -1005,12 +1005,24 @@ impl<'a> PeepholeOptimizations {
         c: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<ArenaVec<'a, Expression<'a>>> {
-        // TypeError `class C extends (() => {}) {}`
-        if c.super_class
-            .as_ref()
-            .is_some_and(|e| matches!(e, Expression::ArrowFunctionExpression(_)))
-        {
-            return None;
+        if let Some(super_class) = &c.super_class {
+            // Unwrap parens and sequence tails — `(0, x)` — so the check sees
+            // the value the heritage actually evaluates to.
+            let mut e = super_class.get_inner_expression();
+            while let Expression::SequenceExpression(seq) = e {
+                let Some(last) = seq.expressions.last() else { break };
+                e = last.get_inner_expression();
+            }
+            match e {
+                // TypeError `class C extends (() => {}) {}`
+                Expression::ArrowFunctionExpression(_) => return None,
+                Expression::Identifier(ident)
+                    if Self::heritage_may_be_uninitialized(ident, ctx) =>
+                {
+                    return None;
+                }
+                _ => {}
+            }
         }
         // Don't remove classes with decorators - they may have side effects
         if !c.decorators.is_empty() {
@@ -1078,5 +1090,31 @@ impl<'a> PeepholeOptimizations {
 
         ctx.notice_change();
         Some(exprs)
+    }
+
+    /// A heritage identifier can throw at class-evaluation time regardless
+    /// of expression purity: the class's own name and any lexical binding
+    /// declared later are in their TDZ (ReferenceError — test262
+    /// class/name-binding/in-extends-expression.js), and a
+    /// hoisted-but-unassigned `var` or missing parameter evaluates to
+    /// `undefined` (TypeError: not a constructor). Reference order cannot be
+    /// proven mid-minification (transforms copy and move spans), so any
+    /// heritage resolving to a class, lexical, or `var` binding is
+    /// conservatively unremovable. Hoisted plain function declarations and
+    /// import bindings are initialized before evaluation and stay removable;
+    /// unresolved identifiers keep flowing through the global side-effect
+    /// machinery. The deeper fix — modeling potentially-uninitialized
+    /// identifier reads — belongs in `oxc_ecmascript`'s side-effect layer,
+    /// which currently treats every resolved identifier read as pure.
+    fn heritage_may_be_uninitialized(
+        ident: &IdentifierReference<'_>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        const UNINIT_RISK: SymbolFlags = SymbolFlags::Variable.union(SymbolFlags::Class);
+        ident
+            .reference_id
+            .get()
+            .and_then(|reference_id| ctx.scoping().get_reference(reference_id).symbol_id())
+            .is_some_and(|symbol_id| ctx.scoping().symbol_flags(symbol_id).intersects(UNINIT_RISK))
     }
 }

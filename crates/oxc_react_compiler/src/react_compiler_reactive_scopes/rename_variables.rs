@@ -9,7 +9,8 @@
 //! Corresponds to `src/ReactiveScopes/RenameVariables.ts`.
 
 use rustc_hash::FxHashMap;
-use rustc_hash::FxHashSet;
+
+use oxc_str::{Ident, IdentHashMap, IdentHashSet, format_ident};
 
 use crate::react_compiler_hir::DeclarationId;
 use crate::react_compiler_hir::EvaluationOrder;
@@ -36,27 +37,27 @@ use crate::react_compiler_reactive_scopes::visitors::ReactiveFunctionVisitor;
 // Scopes
 // =============================================================================
 
-struct Scopes {
-    seen: FxHashMap<DeclarationId, IdentifierName>,
-    stack: Vec<FxHashMap<String, DeclarationId>>,
-    globals: FxHashSet<String>,
-    names: FxHashSet<String>,
+struct Scopes<'a> {
+    seen: FxHashMap<DeclarationId, IdentifierName<'a>>,
+    stack: Vec<IdentHashMap<'a, DeclarationId>>,
+    globals: IdentHashSet<'a>,
+    names: IdentHashSet<'a>,
 }
 
-impl Scopes {
-    fn new(globals: FxHashSet<String>) -> Self {
+impl<'a> Scopes<'a> {
+    fn new(globals: IdentHashSet<'a>) -> Self {
         Self {
             seen: FxHashMap::default(),
-            stack: vec![FxHashMap::default()],
+            stack: vec![IdentHashMap::default()],
             globals,
-            names: FxHashSet::default(),
+            names: IdentHashSet::default(),
         }
     }
 
-    fn visit_identifier(&mut self, identifier_id: IdentifierId, env: &Environment) {
-        let identifier = &env.identifiers[identifier_id.0 as usize];
+    fn visit_identifier(&mut self, identifier_id: IdentifierId, env: &Environment<'a>) {
+        let identifier = &env.identifiers[identifier_id];
         let original_name = match &identifier.name {
-            Some(name) => name.clone(),
+            Some(name) => *name,
             None => return,
         };
         let declaration_id = identifier.declaration_id;
@@ -65,39 +66,39 @@ impl Scopes {
             return;
         }
 
-        let original_value = original_name.value().to_string();
+        let original_value = original_name.value();
         let is_promoted = matches!(original_name, IdentifierName::Promoted(_));
         let is_promoted_temp = is_promoted && original_value.starts_with("#t");
         let is_promoted_jsx = is_promoted && original_value.starts_with("#T");
 
-        let mut name: String;
+        let mut name: Ident<'a>;
         let mut id: u32 = 0;
         if is_promoted_temp {
-            name = format!("t{}", id);
+            name = format_ident!(env.allocator, "t{}", id);
             id += 1;
         } else if is_promoted_jsx {
-            name = format!("T{}", id);
+            name = format_ident!(env.allocator, "T{}", id);
             id += 1;
         } else {
-            name = original_value.clone();
+            name = Ident::from(original_value);
         }
 
         while self.lookup(&name).is_some() || self.globals.contains(&name) {
             if is_promoted_temp {
-                name = format!("t{}", id);
+                name = format_ident!(env.allocator, "t{}", id);
                 id += 1;
             } else if is_promoted_jsx {
-                name = format!("T{}", id);
+                name = format_ident!(env.allocator, "T{}", id);
                 id += 1;
             } else {
-                name = format!("{}${}", original_value, id);
+                name = format_ident!(env.allocator, "{}${}", original_value, id);
                 id += 1;
             }
         }
 
-        let identifier_name = IdentifierName::Named(name.clone());
+        let identifier_name = IdentifierName::Named(name);
         self.seen.insert(declaration_id, identifier_name);
-        self.stack.last_mut().unwrap().insert(name.clone(), declaration_id);
+        self.stack.last_mut().unwrap().insert(name, declaration_id);
         self.names.insert(name);
     }
 
@@ -111,7 +112,7 @@ impl Scopes {
     }
 
     fn enter(&mut self) {
-        self.stack.push(FxHashMap::default());
+        self.stack.push(IdentHashMap::default());
     }
 
     fn leave(&mut self) {
@@ -128,29 +129,29 @@ struct Visitor<'a, 'e> {
 }
 
 impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
-    type State = Scopes;
+    type State = Scopes<'a>;
 
     fn env(&self) -> &Environment<'a> {
         self.env
     }
 
     /// TS: `visitParam(place, state) { state.visit(place.identifier) }`
-    fn visit_param(&self, place: &Place, state: &mut Scopes) {
+    fn visit_param(&self, place: &Place, state: &mut Scopes<'a>) {
         state.visit_identifier(place.identifier, self.env);
     }
 
     /// TS: `visitLValue(_id, lvalue, state) { state.visit(lvalue.identifier) }`
-    fn visit_lvalue(&self, _id: EvaluationOrder, lvalue: &Place, state: &mut Scopes) {
+    fn visit_lvalue(&self, _id: EvaluationOrder, lvalue: &Place, state: &mut Scopes<'a>) {
         state.visit_identifier(lvalue.identifier, self.env);
     }
 
     /// TS: `visitPlace(_id, place, state) { state.visit(place.identifier) }`
-    fn visit_place(&self, _id: EvaluationOrder, place: &Place, state: &mut Scopes) {
+    fn visit_place(&self, _id: EvaluationOrder, place: &Place, state: &mut Scopes<'a>) {
         state.visit_identifier(place.identifier, self.env);
     }
 
     /// TS: `visitBlock(block, state) { state.enter(() => { this.traverseBlock(block, state) }) }`
-    fn visit_block(&self, block: &ReactiveBlock<'a>, state: &mut Scopes) {
+    fn visit_block(&self, block: &ReactiveBlock<'a>, state: &mut Scopes<'a>) {
         state.enter();
         self.traverse_block(block, state);
         state.leave();
@@ -159,13 +160,13 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
     /// TS: `visitPrunedScope(scopeBlock, state) { this.traverseBlock(scopeBlock.instructions, state) }`
     /// No enter/leave — names assigned inside pruned scopes remain visible in
     /// the enclosing scope, preventing name reuse.
-    fn visit_pruned_scope(&self, scope: &PrunedReactiveScopeBlock<'a>, state: &mut Scopes) {
+    fn visit_pruned_scope(&self, scope: &PrunedReactiveScopeBlock<'a>, state: &mut Scopes<'a>) {
         self.traverse_block(&scope.instructions, state);
     }
 
     /// TS: `visitScope(scope, state) { for (const [_, decl] of scope.scope.declarations) state.visit(decl.identifier); this.traverseScope(scope, state) }`
-    fn visit_scope(&self, scope: &ReactiveScopeBlock<'a>, state: &mut Scopes) {
-        let scope_data = &self.env.scopes[scope.scope.0 as usize];
+    fn visit_scope(&self, scope: &ReactiveScopeBlock<'a>, state: &mut Scopes<'a>) {
+        let scope_data = &self.env.scopes[scope.scope];
         let decl_ids: Vec<IdentifierId> =
             scope_data.declarations.iter().map(|(_, d)| d.identifier).collect();
         for id in decl_ids {
@@ -175,7 +176,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
     }
 
     /// TS: `visitValue(id, value, state) { this.traverseValue(id, value, state); if (value.kind === 'FunctionExpression' || value.kind === 'ObjectMethod') this.visitHirFunction(value.loweredFunc.func, state) }`
-    fn visit_value(&self, id: EvaluationOrder, value: &ReactiveValue<'a>, state: &mut Scopes) {
+    fn visit_value(&self, id: EvaluationOrder, value: &ReactiveValue<'a>, state: &mut Scopes<'a>) {
         self.traverse_value(id, value, state);
         if let ReactiveValue::Instruction(
             InstructionValue::FunctionExpression { lowered_func, .. }
@@ -197,15 +198,15 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
 pub fn rename_variables<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &mut Environment<'a>,
-) -> FxHashSet<String> {
+) -> IdentHashSet<'a> {
     rename_variables_with_parent(func, env, None)
 }
 
 fn rename_variables_with_parent<'a>(
     func: &mut ReactiveFunction<'a>,
     env: &mut Environment<'a>,
-    parent_names: Option<&FxHashSet<String>>,
-) -> FxHashSet<String> {
+    parent_names: Option<&IdentHashSet<'a>>,
+) -> IdentHashSet<'a> {
     let globals = collect_referenced_globals(&func.body, env);
 
     // Phase 1: Use ReactiveFunctionVisitor to compute the rename mapping.
@@ -218,22 +219,24 @@ fn rename_variables_with_parent<'a>(
     if let Some(parent) = parent_names {
         scopes.enter();
         for name in parent {
-            scopes.stack.last_mut().unwrap().insert(name.clone(), DeclarationId(u32::MAX));
-            scopes.names.insert(name.clone());
+            // Sentinel value: `stack` is used purely as a set (only key presence is
+            // read via `lookup().is_some()`), so any id works here.
+            scopes.stack.last_mut().unwrap().insert(*name, DeclarationId::from_usize(0));
+            scopes.names.insert(*name);
         }
     }
     rename_variables_impl(func, &Visitor { env }, &mut scopes);
 
     // Phase 2: Apply the computed renames to all identifiers in env.
     for identifier in env.identifiers.iter_mut() {
-        if let Some(mapped_name) = scopes.seen.get(&identifier.declaration_id) {
-            if identifier.name.is_some() {
-                identifier.name = Some(mapped_name.clone());
-            }
+        if let Some(mapped_name) = scopes.seen.get(&identifier.declaration_id)
+            && identifier.name.is_some()
+        {
+            identifier.name = Some(*mapped_name);
         }
     }
 
-    let mut result: FxHashSet<String> = scopes.names;
+    let mut result: IdentHashSet<'a> = scopes.names;
     result.extend(globals);
     result
 }
@@ -242,7 +245,7 @@ fn rename_variables_with_parent<'a>(
 fn rename_variables_impl<'a>(
     func: &ReactiveFunction<'a>,
     visitor: &Visitor<'a, '_>,
-    scopes: &mut Scopes,
+    scopes: &mut Scopes<'a>,
 ) {
     scopes.enter();
     for param in &func.params {
@@ -265,15 +268,15 @@ fn rename_variables_impl<'a>(
 fn collect_referenced_globals<'a>(
     block: &ReactiveBlock<'a>,
     env: &Environment<'a>,
-) -> FxHashSet<String> {
-    let mut globals = FxHashSet::default();
+) -> IdentHashSet<'a> {
+    let mut globals = IdentHashSet::default();
     collect_globals_block(block, &mut globals, env);
     globals
 }
 
 fn collect_globals_block<'a>(
     block: &ReactiveBlock<'a>,
-    globals: &mut FxHashSet<String>,
+    globals: &mut IdentHashSet<'a>,
     env: &Environment<'a>,
 ) {
     for stmt in block {
@@ -296,13 +299,13 @@ fn collect_globals_block<'a>(
 
 fn collect_globals_value<'a>(
     value: &ReactiveValue<'a>,
-    globals: &mut FxHashSet<String>,
+    globals: &mut IdentHashSet<'a>,
     env: &Environment<'a>,
 ) {
     match value {
         ReactiveValue::Instruction(iv) => {
             if let InstructionValue::LoadGlobal { binding, .. } = iv {
-                globals.insert(binding.name().to_string());
+                globals.insert(binding.name());
             }
             // Visit inner functions
             match iv {
@@ -337,18 +340,18 @@ fn collect_globals_value<'a>(
 /// Recursively collects LoadGlobal names from an inner HIR function.
 fn collect_globals_hir_function<'a>(
     func_id: FunctionId,
-    globals: &mut FxHashSet<String>,
+    globals: &mut IdentHashSet<'a>,
     env: &Environment<'a>,
 ) {
-    let inner_func = &env.functions[func_id.0 as usize];
+    let inner_func = &env.functions[func_id];
     let block_ids: Vec<_> = inner_func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
-        let inner_func = &env.functions[func_id.0 as usize];
+        let inner_func = &env.functions[func_id];
         let block = &inner_func.body.blocks[&block_id];
         for instr_id in &block.instructions {
-            let instr = &inner_func.instructions[instr_id.0 as usize];
+            let instr = &inner_func.instructions[instr_id.index()];
             if let InstructionValue::LoadGlobal { binding, .. } = &instr.value {
-                globals.insert(binding.name().to_string());
+                globals.insert(binding.name());
             }
             // Recurse into nested function expressions
             match &instr.value {
@@ -364,7 +367,7 @@ fn collect_globals_hir_function<'a>(
 
 fn collect_globals_terminal<'a>(
     stmt: &ReactiveTerminalStatement<'a>,
-    globals: &mut FxHashSet<String>,
+    globals: &mut IdentHashSet<'a>,
     env: &Environment<'a>,
 ) {
     match &stmt.terminal {

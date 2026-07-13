@@ -126,7 +126,7 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@16b05812d776ae1dfaabc8277e421fb6d2506419 # v2.82.7
+      - uses: taiki-e/install-action@c7eb1735f09259a5035e8e5d44b1406b1cddc0fb # v2.83.0
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -143,7 +143,7 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@16b05812d776ae1dfaabc8277e421fb6d2506419 # v2.82.7
+      - uses: taiki-e/install-action@c7eb1735f09259a5035e8e5d44b1406b1cddc0fb # v2.83.0
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -479,6 +479,8 @@ jobs:
   lint:
     name: Lint
     runs-on: namespace-profile-linux-x64-default
+    env:
+      CARGO_BUILD_WARNINGS: deny
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
@@ -489,15 +491,15 @@ jobs:
             rust
             pnpm
       - run: rustup component add clippy
-      - run: cargo lint -- -D warnings
+      - run: cargo lint
       # Catch lints which only fire with `debug_assertions` off (i.e. release mode),
       # e.g. code becoming unused when a `#[cfg(debug_assertions)]` block vanishes.
       # Main-only and without `--all-targets`: these failures are rare and a post-merge
       # failure pinpoints the culprit commit, so not worth doubling clippy time on every PR.
       # `--all-targets` is omitted because test/bench code is never built in release mode
-      # with `-D warnings`.
+      # with warnings denied.
       - if: ${{ github.ref_name == 'main' }}
-        run: cargo clippy --all-features --profile dev-no-debug-assertions -- -D warnings
+        run: cargo clippy --all-features --profile dev-no-debug-assertions
       - run: pnpm --filter oxlint-app build-js
       - run: pnpm --filter oxfmt-app build-js
       - run: node --run lint
@@ -549,7 +551,7 @@ jobs:
             rust
             pnpm
 
-      - uses: taiki-e/install-action@16b05812d776ae1dfaabc8277e421fb6d2506419 # v2.82.7
+      - uses: taiki-e/install-action@c7eb1735f09259a5035e8e5d44b1406b1cddc0fb # v2.83.0
         if: steps.filter.outputs.changed == 'true'
         with:
           tool: just

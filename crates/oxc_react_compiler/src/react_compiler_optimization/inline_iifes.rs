@@ -41,6 +41,7 @@
 //! Analogous to TS `Inference/InlineImmediatelyInvokedFunctionExpressions.ts`.
 
 use crate::react_compiler_utils::FxIndexSet;
+use oxc_str::format_ident;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_hir::environment::Environment;
@@ -93,12 +94,12 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
         let num_instructions = block.instructions.len();
         for ii in 0..num_instructions {
             let instr_id = func.body.blocks[&block_id].instructions[ii];
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
 
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
                     let identifier_id = instr.lvalue.identifier;
-                    if env.identifiers[identifier_id.0 as usize].name.is_none() {
+                    if env.identifiers[identifier_id].name.is_none() {
                         functions.insert(identifier_id, lowered_func.func);
                     }
                     continue;
@@ -115,7 +116,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                         None => continue, // Not invoking a local function expression
                     };
 
-                    let inner_func = &env.functions[inner_func_id.0 as usize];
+                    let inner_func = &env.functions[inner_func_id];
                     if !inner_func.params.is_empty() || inner_func.is_async || inner_func.generator
                     {
                         // Can't inline functions with params, or async/generator functions
@@ -126,7 +127,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                     inlined_functions.insert(callee_id);
 
                     // Capture the lvalue from the call instruction
-                    let call_lvalue = func.instructions[instr_id.0 as usize].lvalue.clone();
+                    let call_lvalue = func.instructions[instr_id.index()].lvalue.clone();
                     let block_terminal_id = func.body.blocks[&block_id].terminal.evaluation_order();
                     let block_terminal_span = func.body.blocks[&block_id].terminal.span().cloned();
                     let block_kind = func.body.blocks[&block_id].kind;
@@ -151,8 +152,8 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                     func.body.blocks.get_mut(&block_id).unwrap().instructions.truncate(ii);
 
                     let has_single_return =
-                        has_single_exit_return_terminal(&env.functions[inner_func_id.0 as usize]);
-                    let inner_entry = env.functions[inner_func_id.0 as usize].body.entry;
+                        has_single_exit_return_terminal(&env.functions[inner_func_id]);
+                    let inner_entry = env.functions[inner_func_id].body.entry;
 
                     if has_single_return {
                         // Single-return path: simple goto replacement
@@ -164,7 +165,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                         };
 
                         // Take blocks and instructions from inner function
-                        let inner_func = &mut env.functions[inner_func_id.0 as usize];
+                        let inner_func = &mut env.functions[inner_func_id];
                         let inner_blocks: Vec<(BlockId, BasicBlock)> =
                             inner_func.body.blocks.drain(..).collect();
                         let inner_instructions: Vec<Instruction> =
@@ -177,7 +178,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                         for (_, mut inner_block) in inner_blocks {
                             // Remap instruction IDs in the block
                             for iid in &mut inner_block.instructions {
-                                *iid = InstructionId(iid.0 + instr_offset);
+                                *iid += instr_offset as usize;
                             }
                             inner_block.preds.clear();
 
@@ -186,7 +187,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                             {
                                 // Replace return with LoadLocal + goto
                                 let load_instr = Instruction {
-                                    id: EvaluationOrder(0),
+                                    id: EvaluationOrder::UNSET,
                                     span: *ret_span,
                                     lvalue: call_lvalue.clone(),
                                     value: InstructionValue::LoadLocal {
@@ -195,7 +196,8 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                                     },
                                     effects: None,
                                 };
-                                let load_instr_id = InstructionId(func.instructions.len() as u32);
+                                let load_instr_id =
+                                    InstructionId::from_usize(func.instructions.len());
                                 func.instructions.push(load_instr);
                                 inner_block.instructions.push(load_instr_id);
 
@@ -218,7 +220,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                         // Set block terminal to Label
                         func.body.blocks.get_mut(&block_id).unwrap().terminal = Terminal::Label {
                             block: inner_entry,
-                            id: EvaluationOrder(0),
+                            id: EvaluationOrder::UNSET,
                             fallthrough: continuation_block_id,
                             span: block_terminal_span,
                         };
@@ -228,12 +230,12 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
 
                         // Promote the temporary with a name as we require this to persist
                         let identifier_id = result.identifier;
-                        if env.identifiers[identifier_id.0 as usize].name.is_none() {
+                        if env.identifiers[identifier_id].name.is_none() {
                             promote_temporary(env, identifier_id);
                         }
 
                         // Take blocks and instructions from inner function
-                        let inner_func = &mut env.functions[inner_func_id.0 as usize];
+                        let inner_func = &mut env.functions[inner_func_id];
                         let inner_blocks: Vec<(BlockId, BasicBlock)> =
                             inner_func.body.blocks.drain(..).collect();
                         let inner_instructions: Vec<Instruction> =
@@ -245,7 +247,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
 
                         for (_, mut inner_block) in inner_blocks {
                             for iid in &mut inner_block.instructions {
-                                *iid = InstructionId(iid.0 + instr_offset);
+                                *iid += instr_offset as usize;
                             }
                             inner_block.preds.clear();
 
@@ -283,7 +285,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
         // Remove instructions that define lambdas which we inlined
         for block in func.body.blocks.values_mut() {
             block.instructions.retain(|instr_id| {
-                let instr = &func.instructions[instr_id.0 as usize];
+                let instr = &func.instructions[instr_id.index()];
                 !inlined_functions.contains(&instr.lvalue.identifier)
             });
         }
@@ -335,7 +337,7 @@ fn rewrite_block<'a>(
     if let Terminal::Return { value, span: ret_span, .. } = &block.terminal {
         let store_lvalue = create_temporary_place(env, *ret_span);
         let store_instr = Instruction {
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: *ret_span,
             lvalue: store_lvalue,
             value: InstructionValue::StoreLocal {
@@ -345,14 +347,14 @@ fn rewrite_block<'a>(
             },
             effects: None,
         };
-        let store_instr_id = InstructionId(instructions.len() as u32);
+        let store_instr_id = InstructionId::from_usize(instructions.len());
         instructions.push(store_instr);
         block.instructions.push(store_instr_id);
 
         let ret_span = *ret_span;
         block.terminal = Terminal::Goto {
             block: return_target,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             variant: GotoVariant::Break,
             span: ret_span,
         };
@@ -368,7 +370,7 @@ fn declare_temporary<'a>(
 ) {
     let declare_lvalue = create_temporary_place(env, result.span);
     let declare_instr = Instruction {
-        id: EvaluationOrder(0),
+        id: EvaluationOrder::UNSET,
         span: GENERATED_SOURCE,
         lvalue: declare_lvalue,
         value: InstructionValue::DeclareLocal {
@@ -377,14 +379,14 @@ fn declare_temporary<'a>(
         },
         effects: None,
     };
-    let instr_id = InstructionId(func.instructions.len() as u32);
+    let instr_id = InstructionId::from_usize(func.instructions.len());
     func.instructions.push(declare_instr);
     func.body.blocks.get_mut(&block_id).unwrap().instructions.push(instr_id);
 }
 
 /// Promote a temporary identifier to a named identifier.
 fn promote_temporary(env: &mut Environment<'_>, identifier_id: IdentifierId) {
-    let decl_id = env.identifiers[identifier_id.0 as usize].declaration_id;
-    env.identifiers[identifier_id.0 as usize].name =
-        Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
+    let decl_id = env.identifiers[identifier_id].declaration_id;
+    env.identifiers[identifier_id].name =
+        Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.index())));
 }

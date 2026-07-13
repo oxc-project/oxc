@@ -47,16 +47,21 @@ ready:
   git status
 
 # Run cargo check
-check:
-  cargo ck
+check *args:
+  cargo ck {{args}}
 
 # Run all the tests
-test:
-  cargo test --all-features
+test *args:
+  cargo test --all-features {{args}}
 
 # Lint the whole project
-lint:
-  cargo lint -- --deny warnings
+[unix]
+lint *args:
+  CARGO_BUILD_WARNINGS=deny cargo lint {{args}}
+
+[windows]
+lint *args:
+  $Env:CARGO_BUILD_WARNINGS='deny'; cargo lint {{args}}
 
 # Format all files
 fmt:
@@ -65,12 +70,12 @@ fmt:
   node --run fmt
 
 [unix]
-doc:
-  RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items --all-features
+doc *args:
+  RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items --all-features {{args}}
 
 [windows]
-doc:
-  $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items --all-features
+doc *args:
+  $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items --all-features {{args}}
 
 # Fix all auto-fixable format and lint issues
 fix:

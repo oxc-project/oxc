@@ -21,7 +21,6 @@
     clippy::needless_pass_by_value,
     clippy::inline_always
 )]
-#![allow(unstable_name_collisions)]
 #![allow(dead_code)]
 
 use std::{
@@ -806,7 +805,7 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
                 ) -> NonNull<u8> {
                     alloc.grow(ptr, old_layout, new_layout)
                 }
-                debug_assert!(new_layout.align() == layout.align());
+                debug_assert_eq!(new_layout.align(), layout.align());
                 grow(self.alloc, self.ptr.cast(), layout, new_layout)
             },
             None => self.alloc.alloc(new_layout),

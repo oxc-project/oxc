@@ -1,4 +1,4 @@
-commit: 1fb0b771
+commit: c86e9e4b
 
 node: v24.14.0
 
@@ -103,8 +103,8 @@ TypeError: e.has is not a function
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js
 AssertionError: expected [Function] to throw error including '@@toPrimitive must return a primitive…' but got 'Cannot convert object to primitive va…'
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.9/node_modules/@vitest/expect/dist/index.js:1552:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.9/node_modules/@vitest/expect/dist/index.js:1156:15)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.10/node_modules/@vitest/expect/dist/index.js:1552:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.10/node_modules/@vitest/expect/dist/index.js:1156:15)
     at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js:37:5
 
@@ -496,8 +496,8 @@ AssertionError: expected 2 to be 5 // Object.is equality
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.9/node_modules/@vitest/expect/dist/index.js:1552:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.9/node_modules/@vitest/expect/dist/index.js:1156:15)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.10/node_modules/@vitest/expect/dist/index.js:1552:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.10/node_modules/@vitest/expect/dist/index.js:1156:15)
     at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js:6:9
 

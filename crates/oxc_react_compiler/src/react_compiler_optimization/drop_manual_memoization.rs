@@ -37,11 +37,11 @@ use crate::react_compiler_hir::NonLocalBinding;
 use crate::react_compiler_hir::Place;
 use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PropertyLiteral;
-use crate::react_compiler_hir::Span;
 use crate::react_compiler_hir::Terminal;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_lowering::create_temporary_place;
 use crate::react_compiler_lowering::mark_instruction_ids;
+use oxc_span::Span;
 
 // =============================================================================
 // Types
@@ -60,7 +60,7 @@ struct ManualMemoCallee {
     load_instr_id: InstructionId,
 }
 
-struct IdentifierSidemap {
+struct IdentifierSidemap<'a> {
     /// Maps identifier id -> InstructionId of FunctionExpression instructions
     functions: FxHashSet<IdentifierId>,
     /// Maps identifier id -> ManualMemoCallee for useMemo/useCallback callees
@@ -70,7 +70,7 @@ struct IdentifierSidemap {
     /// Maps identifier id -> deps list info for array expressions
     maybe_deps_lists: FxHashMap<IdentifierId, MaybeDepsListInfo>,
     /// Maps identifier id -> ManualMemoDependency for dependency tracking
-    maybe_deps: FxHashMap<IdentifierId, ManualMemoDependency>,
+    maybe_deps: FxHashMap<IdentifierId, ManualMemoDependency<'a>>,
     /// Set of identifier ids that are results of optional chains
     optionals: FxHashSet<IdentifierId>,
 }
@@ -81,9 +81,9 @@ struct MaybeDepsListInfo {
     deps: Vec<Place>,
 }
 
-struct ExtractedMemoArgs {
+struct ExtractedMemoArgs<'a> {
     fn_place: Place,
-    deps_list: Option<Vec<ManualMemoDependency>>,
+    deps_list: Option<Vec<ManualMemoDependency<'a>>>,
     deps_span: Option<Span>,
 }
 
@@ -126,7 +126,7 @@ pub fn drop_manual_memoization<'a>(
 
     for block_instructions in &all_block_instructions {
         for &instr_id in block_instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
 
             // Extract the identifier we need to look up, and whether it's a call/method
             let lookup_id = match &instr.value {
@@ -168,7 +168,7 @@ pub fn drop_manual_memoization<'a>(
                     let ni = next_instructions.as_mut().unwrap();
                     ni.push(instr_id);
                     // Add the new instruction to the flat table and get its InstructionId
-                    let new_instr_id = InstructionId(func.instructions.len() as u32);
+                    let new_instr_id = InstructionId::from_usize(func.instructions.len());
                     func.instructions.push(insert_instr);
                     ni.push(new_instr_id);
                 } else if let Some(ni) = next_instructions.as_mut() {
@@ -199,12 +199,12 @@ fn process_manual_memo_call<'a>(
     env: &mut Environment<'a>,
     instr_id: InstructionId,
     manual_memo: &ManualMemoCallee,
-    sidemap: &mut IdentifierSidemap,
+    sidemap: &mut IdentifierSidemap<'a>,
     is_validation_enabled: bool,
     next_manual_memo_id: &mut u32,
     queued_inserts: &mut FxHashMap<InstructionId, Instruction<'a>>,
 ) {
-    let instr = &func.instructions[instr_id.0 as usize];
+    let instr = &func.instructions[instr_id.index()];
 
     let memo_details = extract_manual_memoization_args(instr, manual_memo.kind, sidemap, env);
 
@@ -214,11 +214,11 @@ fn process_manual_memo_call<'a>(
 
     let ExtractedMemoArgs { fn_place, deps_list, deps_span } = memo_details;
 
-    let span = func.instructions[instr_id.0 as usize].value.span().cloned();
+    let span = func.instructions[instr_id.index()].value.span().cloned();
 
     // Replace the instruction value with the memoization replacement
     let replacement = get_manual_memoization_replacement(&fn_place, span, manual_memo.kind);
-    func.instructions[instr_id.0 as usize].value = replacement;
+    func.instructions[instr_id.index()].value = replacement;
 
     if is_validation_enabled {
         // Bail out when we encounter manual memoization without inline function expressions
@@ -239,7 +239,7 @@ fn process_manual_memo_call<'a>(
         }
 
         let memo_decl: Place = if manual_memo.kind == ManualMemoKind::UseMemo {
-            func.instructions[instr_id.0 as usize].lvalue.clone()
+            func.instructions[instr_id.index()].lvalue.clone()
         } else {
             Place {
                 identifier: fn_place.identifier,
@@ -266,13 +266,13 @@ fn process_manual_memo_call<'a>(
     }
 }
 
-fn collect_temporaries(
-    func: &HirFunction<'_>,
-    env: &Environment<'_>,
+fn collect_temporaries<'a>(
+    func: &HirFunction<'a>,
+    env: &Environment<'a>,
     instr_id: InstructionId,
-    sidemap: &mut IdentifierSidemap,
+    sidemap: &mut IdentifierSidemap<'a>,
 ) {
-    let instr = &func.instructions[instr_id.0 as usize];
+    let instr = &func.instructions[instr_id.index()];
     let lvalue_id = instr.lvalue.identifier;
 
     match &instr.value {
@@ -305,25 +305,22 @@ fn collect_temporaries(
             }
         }
         InstructionValue::PropertyLoad { object, property, .. } => {
-            if sidemap.react.contains(&object.identifier) {
-                if let PropertyLiteral::String(prop_name) = property {
-                    if prop_name == "useMemo" {
-                        sidemap.manual_memos.insert(
-                            lvalue_id,
-                            ManualMemoCallee {
-                                kind: ManualMemoKind::UseMemo,
-                                load_instr_id: instr_id,
-                            },
-                        );
-                    } else if prop_name == "useCallback" {
-                        sidemap.manual_memos.insert(
-                            lvalue_id,
-                            ManualMemoCallee {
-                                kind: ManualMemoKind::UseCallback,
-                                load_instr_id: instr_id,
-                            },
-                        );
-                    }
+            if sidemap.react.contains(&object.identifier)
+                && let PropertyLiteral::String(prop_name) = property
+            {
+                if prop_name == "useMemo" {
+                    sidemap.manual_memos.insert(
+                        lvalue_id,
+                        ManualMemoCallee { kind: ManualMemoKind::UseMemo, load_instr_id: instr_id },
+                    );
+                } else if prop_name == "useCallback" {
+                    sidemap.manual_memos.insert(
+                        lvalue_id,
+                        ManualMemoCallee {
+                            kind: ManualMemoKind::UseCallback,
+                            load_instr_id: instr_id,
+                        },
+                    );
                 }
             }
         }
@@ -367,15 +364,15 @@ fn collect_temporaries(
 
 /// Collect loads from named variables and property reads into `maybe_deps`.
 /// Returns the variable + property reads represented by the instruction value.
-pub fn collect_maybe_memo_dependencies(
-    value: &InstructionValue<'_>,
-    maybe_deps: &FxHashMap<IdentifierId, ManualMemoDependency>,
+pub fn collect_maybe_memo_dependencies<'a>(
+    value: &InstructionValue<'a>,
+    maybe_deps: &FxHashMap<IdentifierId, ManualMemoDependency<'a>>,
     optional: bool,
-    env: &Environment<'_>,
-) -> Option<ManualMemoDependency> {
+    env: &Environment<'a>,
+) -> Option<ManualMemoDependency<'a>> {
     match value {
         InstructionValue::LoadGlobal { binding, span, .. } => Some(ManualMemoDependency {
-            root: ManualMemoDependencyRoot::Global { identifier_name: binding.name().to_string() },
+            root: ManualMemoDependencyRoot::Global { identifier_name: binding.name() },
             path: vec![],
             span: *span,
         }),
@@ -384,11 +381,7 @@ pub fn collect_maybe_memo_dependencies(
                 root: object_dep.root.clone(),
                 path: {
                     let mut path = object_dep.path.clone();
-                    path.push(DependencyPathEntry {
-                        property: property.clone(),
-                        optional,
-                        span: *span,
-                    });
+                    path.push(DependencyPathEntry { property: *property, optional, span: *span });
                     path
                 },
                 span: *span,
@@ -398,7 +391,7 @@ pub fn collect_maybe_memo_dependencies(
             if let Some(source) = maybe_deps.get(&place.identifier) {
                 Some(source.clone())
             } else if matches!(
-                &env.identifiers[place.identifier.0 as usize].name,
+                &env.identifiers[place.identifier].name,
                 Some(IdentifierName::Named(_))
             ) {
                 Some(ManualMemoDependency {
@@ -420,7 +413,7 @@ pub fn collect_maybe_memo_dependencies(
             let lvalue_id = lvalue.place.identifier;
             let rvalue_id = val.identifier;
             if let Some(aliased) = maybe_deps.get(&rvalue_id) {
-                let lvalue_name = &env.identifiers[lvalue_id.0 as usize].name;
+                let lvalue_name = &env.identifiers[lvalue_id].name;
                 if !matches!(lvalue_name, Some(IdentifierName::Named(_))) {
                     // Note: we can't insert into maybe_deps here since we only have
                     // a shared reference. The caller handles insertion.
@@ -462,13 +455,13 @@ fn get_manual_memoization_replacement<'a>(
 fn make_manual_memoization_markers<'a>(
     fn_expr: &Place,
     env: &mut Environment<'a>,
-    deps_list: Option<Vec<ManualMemoDependency>>,
+    deps_list: Option<Vec<ManualMemoDependency<'a>>>,
     deps_span: Option<Span>,
     memo_decl: &Place,
     manual_memo_id: u32,
 ) -> (Instruction<'a>, Instruction<'a>) {
     let start = Instruction {
-        id: EvaluationOrder(0),
+        id: EvaluationOrder::UNSET,
         lvalue: create_temporary_place(env, fn_expr.span),
         value: InstructionValue::StartMemoize {
             manual_memo_id,
@@ -481,7 +474,7 @@ fn make_manual_memoization_markers<'a>(
         effects: None,
     };
     let finish = Instruction {
-        id: EvaluationOrder(0),
+        id: EvaluationOrder::UNSET,
         lvalue: create_temporary_place(env, fn_expr.span),
         value: InstructionValue::FinishMemoize {
             manual_memo_id,
@@ -495,12 +488,12 @@ fn make_manual_memoization_markers<'a>(
     (start, finish)
 }
 
-fn extract_manual_memoization_args(
+fn extract_manual_memoization_args<'a>(
     instr: &Instruction,
     kind: ManualMemoKind,
-    sidemap: &IdentifierSidemap,
+    sidemap: &IdentifierSidemap<'a>,
     env: &mut Environment,
-) -> Option<ExtractedMemoArgs> {
+) -> Option<ExtractedMemoArgs<'a>> {
     let args: &[PlaceOrSpread] = match &instr.value {
         InstructionValue::CallExpression { args, .. } => args,
         InstructionValue::MethodCall { args, .. } => args,
@@ -573,7 +566,7 @@ fn extract_manual_memoization_args(
     }
 
     let deps_info = maybe_deps_list.unwrap();
-    let mut deps_list: Vec<ManualMemoDependency> = Vec::new();
+    let mut deps_list: Vec<ManualMemoDependency<'a>> = Vec::new();
     for dep in &deps_info.deps {
         let maybe_dep = sidemap.maybe_deps.get(&dep.identifier);
         if let Some(d) = maybe_dep {
@@ -611,7 +604,7 @@ fn find_optional_places(func: &HirFunction) -> Result<FxHashSet<IdentifierId>, O
                             // Found it
                             let consequent_block = &func.body.blocks[consequent];
                             if let Some(&last_instr_id) = consequent_block.instructions.last() {
-                                let last_instr = &func.instructions[last_instr_id.0 as usize];
+                                let last_instr = &func.instructions[last_instr_id.index()];
                                 if let InstructionValue::StoreLocal { value, .. } =
                                     &last_instr.value
                                 {
@@ -662,7 +655,7 @@ fn is_known_react_module(module: &str) -> bool {
 /// - `ModuleLocal`: return None (same reason as above)
 /// - `ImportDefault`/`ImportNamespace` from known React module: use the local name
 /// - `ImportDefault`/`ImportNamespace` from unknown module: return None
-fn get_hook_detection_name(binding: &NonLocalBinding) -> Option<&str> {
+fn get_hook_detection_name<'a>(binding: &NonLocalBinding<'a>) -> Option<&'a str> {
     match binding {
         NonLocalBinding::Global { name } => Some(name.as_str()),
         NonLocalBinding::ImportSpecifier { imported, module, .. } => {

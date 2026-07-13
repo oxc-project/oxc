@@ -11,14 +11,16 @@
 //!
 //! Ported from TypeScript `src/Optimization/DeadCodeElimination.ts`.
 
+use oxc_index::IndexSlice;
+use oxc_str::IdentHashSet;
 use rustc_hash::FxHashSet;
 
 use crate::react_compiler_hir::environment::{Environment, OutputMode};
 use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
-    ArrayPatternElement, BlockId, BlockKind, HirFunction, Identifier, IdentifierId, InstructionId,
-    InstructionKind, InstructionValue, ObjectPropertyOrSpread, Pattern,
+    ArrayPatternElement, BlockId, BlockKind, HirFunction, Identifier, IdentifierId, IdentifierName,
+    InstructionId, InstructionKind, InstructionValue, ObjectPropertyOrSpread, Pattern,
 };
 
 /// Implements dead-code elimination, eliminating instructions whose values are unused.
@@ -26,7 +28,7 @@ use crate::react_compiler_hir::{
 /// Note that unreachable blocks are already pruned during HIR construction.
 ///
 /// Corresponds to TS `deadCodeElimination(fn: HIRFunction): void`.
-pub fn dead_code_elimination(func: &mut HirFunction, env: &Environment) {
+pub fn dead_code_elimination<'a>(func: &mut HirFunction<'a>, env: &Environment<'a>) {
     // Phase 1: Find/mark all referenced identifiers
     let state = find_referenced_identifiers(func, env);
 
@@ -40,7 +42,7 @@ pub fn dead_code_elimination(func: &mut HirFunction, env: &Environment) {
 
         // Remove instructions with unused lvalues
         block.instructions.retain(|instr_id| {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             is_id_or_name_used(&state, &env.identifiers, instr.lvalue.identifier)
         });
 
@@ -64,16 +66,16 @@ pub fn dead_code_elimination(func: &mut HirFunction, env: &Environment) {
 }
 
 /// State for tracking referenced identifiers during mark phase.
-struct State {
+struct State<'a> {
     /// SSA-specific usages (by IdentifierId)
     identifiers: FxHashSet<IdentifierId>,
     /// Named variable usages (any version)
-    named: FxHashSet<String>,
+    named: IdentHashSet<'a>,
 }
 
-impl State {
+impl State<'_> {
     fn new() -> Self {
-        State { identifiers: FxHashSet::default(), named: FxHashSet::default() }
+        State { identifiers: FxHashSet::default(), named: IdentHashSet::default() }
     }
 
     fn count(&self) -> usize {
@@ -82,11 +84,15 @@ impl State {
 }
 
 /// Mark an identifier as being referenced (not dead code).
-fn reference(state: &mut State, identifiers: &[Identifier], identifier_id: IdentifierId) {
+fn reference<'a>(
+    state: &mut State<'a>,
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
+    identifier_id: IdentifierId,
+) {
     state.identifiers.insert(identifier_id);
-    let ident = &identifiers[identifier_id.0 as usize];
-    if let Some(ref name) = ident.name {
-        state.named.insert(name.value().to_string());
+    let ident = &identifiers[identifier_id];
+    if let Some(IdentifierName::Named(name) | IdentifierName::Promoted(name)) = ident.name {
+        state.named.insert(name);
     }
 }
 
@@ -94,13 +100,13 @@ fn reference(state: &mut State, identifiers: &[Identifier], identifier_id: Ident
 /// Checks both the specific SSA id and (for named identifiers) any usage of that name.
 fn is_id_or_name_used(
     state: &State,
-    identifiers: &[Identifier],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     identifier_id: IdentifierId,
 ) -> bool {
     if state.identifiers.contains(&identifier_id) {
         return true;
     }
-    let ident = &identifiers[identifier_id.0 as usize];
+    let ident = &identifiers[identifier_id];
     if let Some(ref name) = ident.name { state.named.contains(name.value()) } else { false }
 }
 
@@ -110,7 +116,7 @@ fn is_id_used(state: &State, identifier_id: IdentifierId) -> bool {
 }
 
 /// Phase 1: Find all referenced identifiers via fixed-point iteration.
-fn find_referenced_identifiers(func: &HirFunction, env: &Environment) -> State {
+fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>) -> State<'a> {
     let has_loop = has_back_edge(func);
     // Collect block ids in reverse order (postorder - successors before predecessors)
     let reversed_block_ids: Vec<BlockId> = func.body.blocks.keys().rev().copied().collect();
@@ -133,7 +139,7 @@ fn find_referenced_identifiers(func: &HirFunction, env: &Environment) -> State {
             let instr_count = block.instructions.len();
             for i in (0..instr_count).rev() {
                 let instr_id = block.instructions[i];
-                let instr = &func.instructions[instr_id.0 as usize];
+                let instr = &func.instructions[instr_id.index()];
 
                 let is_block_value = block.kind != BlockKind::Block && i == instr_count - 1;
 
@@ -189,7 +195,7 @@ fn rewrite_instruction(
     state: &State,
     env: &Environment,
 ) {
-    let instr = &mut func.instructions[instr_id.0 as usize];
+    let instr = &mut func.instructions[instr_id.index()];
 
     match &mut instr.value {
         InstructionValue::Destructure { lvalue, .. } => {
@@ -303,8 +309,7 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
         }
         InstructionValue::CallExpression { callee, .. } => {
             if env.output_mode == OutputMode::Ssr {
-                let callee_ty =
-                    &env.types[env.identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                 if let Some(HookKind::UseState | HookKind::UseReducer | HookKind::UseRef) =
                     env.get_hook_kind_for_type(callee_ty).ok().flatten()
                 {
@@ -315,8 +320,7 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
         }
         InstructionValue::MethodCall { property, .. } => {
             if env.output_mode == OutputMode::Ssr {
-                let callee_ty =
-                    &env.types[env.identifiers[property.identifier.0 as usize].type_.0 as usize];
+                let callee_ty = &env.types[env.identifiers[property.identifier].type_];
                 if let Some(HookKind::UseState | HookKind::UseReducer | HookKind::UseRef) =
                     env.get_hook_kind_for_type(callee_ty).ok().flatten()
                 {
@@ -335,7 +339,6 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
             false
         }
         InstructionValue::NewExpression { .. }
-        | InstructionValue::UnsupportedNode { .. }
         | InstructionValue::TaggedTemplateExpression { .. } => {
             // Potentially safe to prune, but we conservatively keep them
             false

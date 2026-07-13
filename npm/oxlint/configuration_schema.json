@@ -48,13 +48,13 @@
       "markdownDescription": "Enabled or disabled specific global variables."
     },
     "ignorePatterns": {
-      "description": "Globs to ignore during linting. These are resolved from the configuration file path.",
+      "description": "Globs to ignore during linting. Patterns use gitignore-style matching,\nrooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..`\nare rejected as a configuration error.",
       "default": [],
       "type": "array",
       "items": {
         "type": "string"
       },
-      "markdownDescription": "Globs to ignore during linting. These are resolved from the configuration file path."
+      "markdownDescription": "Globs to ignore during linting. Patterns use gitignore-style matching,\nrooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..`\nare rejected as a configuration error."
     },
     "jsPlugins": {
       "description": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```",
@@ -3544,7 +3544,24 @@
           ]
         },
         "jsdoc/require-param": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireParamConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/require-param-description": {
           "anyOf": [
@@ -13036,6 +13053,26 @@
       },
       "additionalProperties": false
     },
+    "Namespaces": {
+      "oneOf": [
+        {
+          "description": "Allow declarations directly inside TypeScript namespace or module bodies.",
+          "type": "string",
+          "enum": [
+            "allow"
+          ],
+          "markdownDescription": "Allow declarations directly inside TypeScript namespace or module bodies."
+        },
+        {
+          "description": "Disallow declarations directly inside TypeScript namespace or module bodies.",
+          "type": "string",
+          "enum": [
+            "disallow"
+          ],
+          "markdownDescription": "Disallow declarations directly inside TypeScript namespace or module bodies."
+        }
+      ]
+    },
     "NativeAllowList": {
       "anyOf": [
         {
@@ -14116,6 +14153,16 @@
             }
           ],
           "markdownDescription": "Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior)."
+        },
+        "namespaces": {
+          "description": "Controls whether declarations directly inside TypeScript namespace or module bodies are allowed.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/Namespaces"
+            }
+          ],
+          "markdownDescription": "Controls whether declarations directly inside TypeScript namespace or module bodies are allowed."
         }
       },
       "additionalProperties": false
@@ -14812,7 +14859,6 @@
       "properties": {
         "allow": {
           "description": "These strings will be compiled into regular expressions with the u flag and be used to test against the imported path.\nA common use case is to allow importing `package.json`. This is because `package.json` commonly lives outside of the TS root directory,\nso statically importing it would lead to root directory conflicts, especially with `resolveJsonModule` enabled.\nYou can also use it to allow importing any JSON if your environment doesn't support JSON modules, or use it for other cases where `import` statements cannot work.\n\nWith `{ allow: ['/package\\\\.json$'] }`:\n\nExamples of **correct** code for this rule:\n```ts\nconsole.log(require('../package.json').version);\n```",
-          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -16249,11 +16295,12 @@
       "type": "object",
       "properties": {
         "ignoreProps": {
-          "default": [],
+          "description": "Prop names to ignore, as regular expression patterns.",
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "markdownDescription": "Prop names to ignore, as regular expression patterns."
         }
       },
       "additionalProperties": false
@@ -17716,6 +17763,83 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Also require type parameters for `importActual` and `importMock`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RequireParamConfig": {
+      "type": "object",
+      "properties": {
+        "checkConstructors": {
+          "description": "Whether to check constructor methods.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check constructor methods."
+        },
+        "checkDestructured": {
+          "description": "Whether to check destructured parameters.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check destructured parameters."
+        },
+        "checkDestructuredRoots": {
+          "description": "Whether to check destructured parameters when you have code like\n`function doSomething({ a, b }) { ... }`. Because there is no named\nparameter in this example, when this option is `true` you must\nhave a `@param` tag that corresponds to `{a, b}`.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check destructured parameters when you have code like\n`function doSomething({ a, b }) { ... }`. Because there is no named\nparameter in this example, when this option is `true` you must\nhave a `@param` tag that corresponds to `{a, b}`."
+        },
+        "checkGetters": {
+          "description": "Whether to check getter methods.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check getter methods."
+        },
+        "checkRestProperty": {
+          "description": "Whether to check rest properties.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check rest properties."
+        },
+        "checkSetters": {
+          "description": "Whether to check setter methods.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check setter methods."
+        },
+        "checkTypesPattern": {
+          "description": "Regex pattern to match types that exempt parameters from checking.",
+          "default": "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$",
+          "type": "string",
+          "markdownDescription": "Regex pattern to match types that exempt parameters from checking."
+        },
+        "exemptedBy": {
+          "description": "List of JSDoc tags that exempt functions from `@param` checking.",
+          "default": [
+            "inheritdoc"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of JSDoc tags that exempt functions from `@param` checking."
+        },
+        "ignoreWhenAllParamsMissing": {
+          "description": "Set to `true` to ignore reporting when all params are missing. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set to `true` to ignore reporting when all params are missing. Defaults to `false`."
+        },
+        "interfaceExemptsParamsCheck": {
+          "description": "Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.\nWill check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.\nWill check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`."
+        },
+        "useDefaultObjectProperties": {
+          "description": "Set to `true` if you wish to expect documentation of properties on objects supplied as default values. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set to `true` if you wish to expect documentation of properties on objects supplied as default values. Defaults to `false`."
         }
       },
       "additionalProperties": false

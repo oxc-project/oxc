@@ -1,20 +1,25 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use oxc_index::IndexSlice;
+
+use oxc_diagnostics::Diagnostics;
+
+use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{
     each_instruction_value_operand_with_functions, each_terminal_operand,
 };
 use crate::react_compiler_hir::{
     FunctionId, HirFunction, IdentifierId, InstructionValue, ParamPattern, Place, PlaceOrSpread,
-    PropertyLiteral, ReturnVariant, Span, Terminal,
+    PropertyLiteral, ReturnVariant, Terminal,
 };
+use oxc_span::Span;
 
 /// Validates useMemo() usage patterns.
 ///
 /// Port of ValidateUseMemo.ts.
 /// Returns VoidUseMemo errors separately (for logging via logErrors, not as compile errors).
-pub fn validate_use_memo(func: &HirFunction, env: &mut Environment) -> CompilerError {
+pub fn validate_use_memo(func: &HirFunction, env: &mut Environment) -> Diagnostics {
     validate_use_memo_impl(
         func,
         &env.functions,
@@ -31,11 +36,11 @@ struct FuncExprInfo {
 
 fn validate_use_memo_impl(
     func: &HirFunction,
-    functions: &[HirFunction],
-    errors: &mut CompilerError,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
+    errors: &mut Diagnostics,
     validate_no_void_use_memo: bool,
-) -> CompilerError {
-    let mut void_memo_errors = CompilerError::new();
+) -> Diagnostics {
+    let mut void_memo_errors = Diagnostics::new();
     let mut use_memos: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut react: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut func_exprs: FxHashMap<IdentifierId, FuncExprInfo> = FxHashMap::default();
@@ -44,7 +49,7 @@ fn validate_use_memo_impl(
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue = &instr.lvalue;
             let value = &instr.value;
 
@@ -65,12 +70,11 @@ fn validate_use_memo_impl(
                     }
                 }
                 InstructionValue::PropertyLoad { object, property, .. } => {
-                    if react.contains(&object.identifier) {
-                        if let PropertyLiteral::String(prop_name) = property {
-                            if prop_name == "useMemo" {
-                                use_memos.insert(lvalue.identifier);
-                            }
-                        }
+                    if react.contains(&object.identifier)
+                        && let PropertyLiteral::String(prop_name) = property
+                        && prop_name == "useMemo"
+                    {
+                        use_memos.insert(lvalue.identifier);
                     }
                 }
                 InstructionValue::FunctionExpression { lowered_func, span, .. } => {
@@ -138,9 +142,9 @@ fn validate_use_memo_impl(
 
 #[allow(clippy::too_many_arguments)]
 fn handle_possible_use_memo_call(
-    functions: &[HirFunction],
-    errors: &mut CompilerError,
-    void_memo_errors: &mut CompilerError,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
+    errors: &mut Diagnostics,
+    void_memo_errors: &mut Diagnostics,
     use_memos: &FxHashSet<IdentifierId>,
     func_exprs: &FxHashMap<IdentifierId, FuncExprInfo>,
     unused_use_memos: &mut FxHashMap<IdentifierId, (Span, Option<String>)>,
@@ -164,7 +168,7 @@ fn handle_possible_use_memo_call(
         None => return,
     };
 
-    let body_func = &functions[body_info.func_id.0 as usize];
+    let body_func = &functions[body_info.func_id];
 
     // Validate no parameters
     if !body_func.params.is_empty() {
@@ -213,25 +217,24 @@ fn handle_possible_use_memo_call(
                     body_info.span.map(|s| s.label("useMemo() callbacks must return a value")),
                 ),
         );
-    } else if validate_no_void_use_memo {
-        if let Some(callee_span) = callee.span {
-            // The callee is always useMemo/React.useMemo since we checked is_use_memo above.
-            // The identifierName in Babel's AST Span is "useMemo".
-            unused_use_memos.insert(lvalue.identifier, (callee_span, Some("useMemo".to_string())));
-        }
+    } else if validate_no_void_use_memo && let Some(callee_span) = callee.span {
+        // The callee is always useMemo/React.useMemo since we checked is_use_memo above.
+        // The identifierName in Babel's AST Span is "useMemo".
+        unused_use_memos.insert(lvalue.identifier, (callee_span, Some("useMemo".to_string())));
     }
 }
 
-fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut CompilerError) {
+fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Diagnostics) {
     let context: FxHashSet<IdentifierId> =
         func.context.iter().map(|place| place.identifier).collect();
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
-            if let InstructionValue::StoreContext { lvalue, .. } = &instr.value {
-                if context.contains(&lvalue.place.identifier) {
-                    errors.push(
+            let instr = &func.instructions[instr_id.index()];
+            if let InstructionValue::StoreContext { lvalue, .. } = &instr.value
+                && context.contains(&lvalue.place.identifier)
+            {
+                errors.push(
                         ErrorCategory::UseMemo
                             .diagnostic(
                                 "useMemo() callbacks may not reassign variables declared outside of the callback",
@@ -243,7 +246,6 @@ fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Comp
                                 lvalue.place.span.map(|s| s.label("Cannot reassign variable")),
                             ),
                     );
-                }
             }
         }
     }
@@ -251,10 +253,10 @@ fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Comp
 
 fn has_non_void_return(func: &HirFunction) -> bool {
     for (_block_id, block) in &func.body.blocks {
-        if let Terminal::Return { return_variant, .. } = &block.terminal {
-            if matches!(return_variant, ReturnVariant::Explicit | ReturnVariant::Implicit) {
-                return true;
-            }
+        if let Terminal::Return { return_variant, .. } = &block.terminal
+            && matches!(return_variant, ReturnVariant::Explicit | ReturnVariant::Implicit)
+        {
+            return true;
         }
     }
     false
@@ -264,7 +266,7 @@ fn has_non_void_return(func: &HirFunction) -> bool {
 /// Thin wrapper around canonical `each_instruction_value_operand_with_functions` that maps to ids.
 fn each_instruction_value_operand_ids(
     value: &InstructionValue,
-    functions: &[HirFunction],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
 ) -> Vec<IdentifierId> {
     each_instruction_value_operand_with_functions(value, functions)
         .into_iter()

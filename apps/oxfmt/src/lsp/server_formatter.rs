@@ -444,7 +444,10 @@ fn compute_minimal_text_edit<'a>(
     source_text: &str,
     formatted_text: &'a str,
 ) -> (u32, u32, &'a str) {
-    debug_assert!(source_text != formatted_text);
+    debug_assert_ne!(
+        source_text, formatted_text,
+        "compute_minimal_text_edit: source_text and formatted_text must be different"
+    );
 
     // Find common prefix (byte offset)
     let mut prefix_byte = 0;
@@ -531,7 +534,9 @@ mod tests {
     use oxc_language_server::offset_to_position;
 
     #[test]
-    #[should_panic(expected = "assertion failed")]
+    #[should_panic(
+        expected = "compute_minimal_text_edit: source_text and formatted_text must be different"
+    )]
     fn test_no_change() {
         let src = "abc";
         let formatted = "abc";

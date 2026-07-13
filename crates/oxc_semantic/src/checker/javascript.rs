@@ -11,7 +11,7 @@ use oxc_syntax::{
     number::NumberBase,
     operator::UnaryOperator,
     scope::{ScopeFlags, ScopeId},
-    symbol::{SymbolFlags, SymbolId},
+    symbol::SymbolFlags,
 };
 
 use crate::{
@@ -151,20 +151,10 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     });
 }
 
-pub fn check_identifier(
-    name: &str,
-    span: Span,
-    symbol_id: Option<SymbolId>,
-    ctx: &SemanticBuilder<'_>,
-) {
-    // reserved keywords are allowed in ambient contexts
-    fn is_allowed_context(symbol_id: Option<SymbolId>, ctx: &SemanticBuilder<'_>) -> bool {
-        ctx.source_type.is_typescript_definition() || is_in_ambient_context(symbol_id, ctx)
-    }
-
+pub fn check_identifier(name: &str, span: Span, ctx: &SemanticBuilder<'_>) {
     match name {
         "await" => {
-            if is_allowed_context(symbol_id, ctx) {
+            if ctx.in_ambient_context() {
                 return;
             }
 
@@ -181,7 +171,7 @@ pub fn check_identifier(
         // becomes better for performance again.
         "implements" | "interface" | "let" | "package" | "private" | "protected" | "public"
         | "static" | "yield" => {
-            if !ctx.strict_mode() || is_allowed_context(symbol_id, ctx) {
+            if !ctx.strict_mode() || ctx.in_ambient_context() {
                 return;
             }
             // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
@@ -189,24 +179,6 @@ pub fn check_identifier(
         }
         _ => {}
     }
-}
-
-fn is_in_ambient_context(symbol_id: Option<SymbolId>, ctx: &SemanticBuilder<'_>) -> bool {
-    if ctx.current_scope_flags().is_ts_module_block() {
-        return true;
-    }
-
-    if let Some(symbol_id) = symbol_id
-        && ctx.scoping.symbol_flags(symbol_id).contains(SymbolFlags::Ambient)
-    {
-        return true;
-    }
-
-    ctx.ancestry().ancestor_kinds().any(|kind| match kind {
-        AstKind::VariableDeclaration(decl) => decl.declare,
-        AstKind::PropertyDefinition(prop) => prop.declare,
-        _ => false,
-    })
 }
 
 pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder<'_>) {

@@ -23,7 +23,7 @@ use crate::{
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use super::typecast::is_type_cast_node;
+use super::typecast::classify_type_cast;
 
 #[derive(Debug)]
 pub struct MemberChain<'a, 'b> {
@@ -435,7 +435,7 @@ fn chain_members_iter<'a, 'b>(
 
         let expression = next.take()?;
 
-        if is_type_cast_node(expression, f).is_some() {
+        if classify_type_cast(expression.span(), f).is_target() {
             return ChainMember::Node(expression).into();
         }
 

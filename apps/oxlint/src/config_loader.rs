@@ -15,7 +15,11 @@ use oxc_linter::{
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use crate::{DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME};
+use crate::utils::normalize_path;
+use crate::{
+    DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_MTS_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME,
+    DEFAULT_TS_OXLINTRC_NAME,
+};
 use crate::{VITE_CONFIG_NAME, vp_version};
 
 const GIT_DIR: &str = ".git";
@@ -34,7 +38,7 @@ pub struct JsConfigResult {
 const OXLINT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
     json: DEFAULT_OXLINTRC_NAME,
     jsonc: DEFAULT_JSONC_OXLINTRC_NAME,
-    js: DEFAULT_TS_OXLINTRC_NAME,
+    js: &[DEFAULT_TS_OXLINTRC_NAME, DEFAULT_MTS_OXLINTRC_NAME],
     vite: VITE_CONFIG_NAME,
 };
 
@@ -505,7 +509,8 @@ impl<'a> ConfigLoader<'a> {
     /// Try to load config from a specific directory.
     ///
     /// In Vite+ mode (`VP_VERSION` set): only checks for `vite.config.ts`.
-    /// Otherwise: checks for `.oxlintrc.json`, `.oxlintrc.jsonc`, and `oxlint.config.ts`.
+    /// Otherwise: checks for `.oxlintrc.json`, `.oxlintrc.jsonc`, `oxlint.config.ts`,
+    /// and `oxlint.config.mts`.
     ///
     /// Returns `Ok(Some(config))` if found, `Ok(None)` if not found, or `Err` on error.
     fn try_load_config_from_dir(
@@ -522,7 +527,10 @@ impl<'a> ConfigLoader<'a> {
             }
             Some(DiscoveredConfigFile::Js(path)) => {
                 let config = self.load_root_js_config(&path)?;
-                debug_assert!(config.is_some(), "oxlint.config.ts should always return a config");
+                debug_assert!(
+                    config.is_some(),
+                    "oxlint JS/TS config should always return a config"
+                );
                 Ok(config)
             }
             Some(DiscoveredConfigFile::Vite(path)) => self.load_root_js_config(&path),
@@ -571,7 +579,11 @@ impl<'a> ConfigLoader<'a> {
         cwd: &Path,
         config_path: &Path,
     ) -> Result<Oxlintrc, OxcDiagnostic> {
-        let full_path = cwd.join(config_path);
+        // Normalize away `.`/`..` components:
+        // this path (config's parent directory) becomes the root for `ignorePatterns` matching,
+        // which is compared against the (normalized) lint target paths as a literal prefix.
+        // If a root containing `..`, it never matches.
+        let full_path = normalize_path(cwd.join(config_path));
         if is_js_config_path(&full_path) {
             return self.load_root_js_config(&full_path)?.ok_or_else(|| {
                 OxcDiagnostic::error(format!(
@@ -826,13 +838,9 @@ mod test {
         let result = loader.load_root_config(&cwd, Some(&valid_parent_config));
         assert!(result.is_ok(), "Expected config lookup to succeed with parent directory syntax");
 
-        // Verify the resolved path is correct
+        // Verify the resolved path is normalized, without `.`/`..` components
         if let Ok(config) = result {
-            assert_eq!(
-                config.path.file_name().unwrap().to_str().unwrap(),
-                "eslintrc.json",
-                "Config file name should be preserved after path resolution"
-            );
+            assert_eq!(config.path, cwd.join("fixtures/cli/linter/eslintrc.json"));
         }
     }
 

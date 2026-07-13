@@ -506,7 +506,7 @@ mod test {
     }
 
     #[test]
-    #[expect(clippy::op_ref)]
+    #[expect(clippy::manual_assert_eq, clippy::op_ref)]
     fn vec_partial_eq() {
         let allocator = Allocator::default();
         let allocator = &allocator;

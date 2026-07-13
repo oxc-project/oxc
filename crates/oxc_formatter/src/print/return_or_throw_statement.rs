@@ -7,7 +7,10 @@ use crate::{
     format_args,
     formatter::prelude::*,
     print::{ExpressionLeftSide, semicolon::OptionalSemicolon},
-    utils::format_node_without_trailing_comments::format_content_without_comments_after,
+    utils::{
+        format_node_without_trailing_comments::format_content_without_comments_after,
+        typecast::format_leading_comments_and_open_paren,
+    },
     write,
 };
 
@@ -113,15 +116,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
             // e.g. `return ( // comment\n a, b )` -> `return (\n  // comment\n  (a, b)\n)`
             let inner = format_with(|f| {
                 if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
-                    write!(
-                        f,
-                        [
-                            format_leading_comments(argument.span()),
-                            token("("),
-                            argument,
-                            token(")")
-                        ]
-                    );
+                    format_leading_comments_and_open_paren(argument.span(), true, f);
+                    write!(f, [argument, token(")")]);
                 } else {
                     write!(f, argument);
                 }

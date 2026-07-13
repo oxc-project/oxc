@@ -1,4 +1,4 @@
-js compatibility: 764/808 (94.55%), 23 files skipped
+js compatibility: 764/809 (94.44%), 23 files skipped
 
 # Failed
 
@@ -18,8 +18,9 @@ js compatibility: 764/808 (94.55%), 23 files skipped
 | js/comments/between-head-and-body/non-block.js | 💥 | 82.86% |
 | js/comments/first-argument/first-argument.js | 💥 | 92.98% |
 | js/comments/in-list/dangling-comment-in-list.js | 💥 | 95.91% |
-| js/comments/while-like/while.js | 💥 | 82.35% |
-| js/comments/while-like/with.js | 💥 | 65.45% |
+| js/comments/while-like/if.js | 💥 | 96.97% |
+| js/comments/while-like/while.js | 💥 | 82.76% |
+| js/comments/while-like/with.js | 💥 | 74.47% |
 | js/comments-closure-typecast/closure-compiler-type-cast.js | 💥 | 88.00% |
 | js/comments-closure-typecast/iife.js | 💥 | 76.92% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 85.71% |

@@ -92,6 +92,6 @@ rebuilt        : SymbolId(9): []
 
 semantic Error: tasks/coverage/misc/pass/reserved-kw-ambient-context.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["C2", "f"]
-rebuilt        : ScopeId(0): ["C2"]
+after transform: ScopeId(0): ["C", "C2", "f", "f2"]
+rebuilt        : ScopeId(0): ["C"]
 

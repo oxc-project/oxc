@@ -15,9 +15,13 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 
+use oxc_str::{Ident, Str};
+
 use crate::react_compiler_hir::{
-    BlockId, EvaluationOrder, InstructionValue, LogicalOperator, ParamPattern, Place, ScopeId, Span,
+    BlockId, EvaluationOrder, InstructionValue, ParamPattern, Place, ScopeId,
 };
+use oxc_ast::ast::LogicalOperator;
+use oxc_span::Span;
 
 // =============================================================================
 // ReactiveFunction
@@ -28,13 +32,13 @@ use crate::react_compiler_hir::{
 #[derive(Debug, Clone)]
 pub struct ReactiveFunction<'a> {
     pub span: Option<Span>,
-    pub id: Option<String>,
-    pub name_hint: Option<String>,
+    pub id: Option<Ident<'a>>,
+    pub name_hint: Option<Ident<'a>>,
     pub params: Vec<ParamPattern>,
     pub generator: bool,
     pub is_async: bool,
     pub body: ReactiveBlock<'a>,
-    pub directives: Vec<String>,
+    pub directives: Vec<Str<'a>>,
     // No env field — passed separately per established Rust convention
 }
 
@@ -47,10 +51,9 @@ pub type ReactiveBlock<'a> = Vec<ReactiveStatement<'a>>;
 
 /// TS: ReactiveStatement (discriminated union with 'kind' field)
 #[derive(Debug, Clone)]
-#[allow(clippy::large_enum_variant)]
 pub enum ReactiveStatement<'a> {
     Instruction(ReactiveInstruction<'a>),
-    Terminal(ReactiveTerminalStatement<'a>),
+    Terminal(Box<ReactiveTerminalStatement<'a>>),
     Scope(ReactiveScopeBlock<'a>),
     PrunedScope(PrunedReactiveScopeBlock<'a>),
 }

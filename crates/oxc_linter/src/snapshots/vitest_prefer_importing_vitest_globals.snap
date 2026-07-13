@@ -21,6 +21,15 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ vitest(prefer-importing-vitest-globals): Do not use Vitest global functions
    ╭─[prefer_importing_vitest_globals.tsx:2:13]
+ 1 │ import { it } from 'vite-plus/test';
+ 2 │             describe('suite', () => {});
+   ·             ────┬───
+   ·                 ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ vitest(prefer-importing-vitest-globals): Do not use Vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:2:13]
  1 │ import { describe } from 'jest';
  2 │             describe('suite', () => {});
    ·             ─────────────┬─────────────
@@ -40,6 +49,15 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ vitest(prefer-importing-vitest-globals): Do not use Vitest global functions
    ╭─[prefer_importing_vitest_globals.tsx:2:13]
  1 │ import * as abc from 'vitest';
+ 2 │             describe('suite', () => {});
+   ·             ────┬───
+   ·                 ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ vitest(prefer-importing-vitest-globals): Do not use Vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:2:13]
+ 1 │ import * as abc from 'vite-plus/test';
  2 │             describe('suite', () => {});
    ·             ────┬───
    ·                 ╰── Add this global vitest import
@@ -79,6 +97,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Import global functions `describe` from `vitest` package instead of using globals.
 
   ⚠ vitest(prefer-importing-vitest-globals): Do not use Vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:1:49]
+ 1 │ const vitePlusTest = require('vite-plus/test'); describe('suite', () => {});
+   ·                                                 ────┬───
+   ·                                                     ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ vitest(prefer-importing-vitest-globals): Do not use Vitest global functions
    ╭─[prefer_importing_vitest_globals.tsx:1:40]
  1 │ const { ...rest } = require('vitest'); describe('suite', () => {});
    ·                                        ────┬───
@@ -97,6 +123,15 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ vitest(prefer-importing-vitest-globals): Do not use Vitest global functions
    ╭─[prefer_importing_vitest_globals.tsx:2:13]
  1 │ const { it } = require('vitest');
+ 2 │             describe('suite', () => {});
+   ·             ────┬───
+   ·                 ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ vitest(prefer-importing-vitest-globals): Do not use Vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:2:13]
+ 1 │ const { it } = require('vite-plus/test');
  2 │             describe('suite', () => {});
    ·             ────┬───
    ·                 ╰── Add this global vitest import

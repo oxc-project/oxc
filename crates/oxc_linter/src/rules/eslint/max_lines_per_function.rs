@@ -400,7 +400,7 @@ fn test() {
         ),
     ];
 
-    let repeat_60 = format!("() => {{{}}}", &"foo\n".repeat(60));
+    let repeat_60 = format!("() => {{{}}}", "foo\n".repeat(60));
 
     let fail = vec![
         (

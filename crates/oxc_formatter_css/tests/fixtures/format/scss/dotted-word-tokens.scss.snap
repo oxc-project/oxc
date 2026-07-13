@@ -13,6 +13,9 @@ a {
   e: colors.modes.dark;
   f: sandstone.10;
   g: theme(colors.blue.500);
+  h: theme(fontSize.sm[1].lineHeight);
+  i: $var[0];
+  j: #fff[0];
 }
 
 ==================== Output ====================
@@ -30,6 +33,9 @@ a {
   e: colors.modes.dark;
   f: sandstone.10;
   g: theme(colors.blue.500);
+  h: theme(fontSize.sm[1].lineHeight);
+  i: $var[0];
+  j: #fff[0];
 }
 
 -------------------
@@ -46,6 +52,9 @@ a {
   e: colors.modes.dark;
   f: sandstone.10;
   g: theme(colors.blue.500);
+  h: theme(fontSize.sm[1].lineHeight);
+  i: $var[0];
+  j: #fff[0];
 }
 
 ===================== End =====================

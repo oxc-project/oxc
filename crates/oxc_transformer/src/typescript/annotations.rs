@@ -61,8 +61,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
-                Statement::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
-                    decl.declaration.as_ref().is_some_and(|decl| !decl.is_typescript_syntax())
+                Statement::ExportNamedDeclaration(decl)
+                    if let Some(declaration) = &decl.declaration =>
+                {
+                    !declaration.is_typescript_syntax()
                 }
                 Statement::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {

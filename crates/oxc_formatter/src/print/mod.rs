@@ -72,13 +72,14 @@ use crate::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         is_keyword_property_key,
         object::{
-            format_property_key, should_preserve_quote, should_preserve_quote_for_enum_member,
+            format_property_key, is_quoted_new_method_signature, should_preserve_quote,
+            should_preserve_quote_for_enum_member,
         },
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         suppressed::FormatSuppressedNode,
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
-        typecast::is_type_cast_node,
+        typecast::classify_type_cast,
     },
     write,
 };
@@ -542,7 +543,7 @@ fn expression_statement_needs_semicolon<'a>(
                 // so the line starts with `(` even though `needs_parentheses` is false:
                 // `/** @type {string} */ (this.s).length`
                 // Checked last: this scans source text/comments, unlike the checks above.
-                || is_type_cast_node(expr, f).is_some()
+                || classify_type_cast(expr.span(), f).is_target()
         }
         ExpressionLeftSide::AssignmentTarget(assignment) => {
             matches!(
@@ -1710,7 +1711,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSSignatur
             let quote_needed = self.as_ref().iter().any(|signature| {
                 let key = match signature {
                     TSSignature::TSPropertySignature(property) => &property.key,
-                    TSSignature::TSMethodSignature(property) => &property.key,
+                    TSSignature::TSMethodSignature(method) => {
+                        // A quoted `new` method keeps its quotes, so it forces quoting the sibling members as well
+                        if is_quoted_new_method_signature(method) {
+                            return true;
+                        }
+                        &method.key
+                    }
                     _ => return false,
                 };
                 should_preserve_quote(key, f)

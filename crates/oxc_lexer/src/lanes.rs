@@ -8,7 +8,7 @@
     clippy::collapsible_match
 )]
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 use core::arch::x86_64::*;
 
 use crate::error::{Diagnostic, diag_code, diag_severity};
@@ -34,6 +34,7 @@ pub struct Lanes {
     /// code-level survivors pay the identifier-char check. Empty for
     /// pure-ASCII input.
     pub unicode_leads: Vec<u32>,
+    pub module: bool,
 }
 
 impl Lanes {
@@ -481,7 +482,7 @@ static KEEP: [u64; 9] = [
     0xffff_ffff_ffff_ffff,
 ];
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline]
 fn cook_short<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
@@ -507,7 +508,7 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
     }
 }
 
-#[cfg(not(target_arch = "x86_64"))]
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
 #[inline]
 fn cook_short<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
@@ -538,7 +539,7 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
     }
 }
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline]
 fn span_has_bs(src: &[u8], bs: usize, be: usize) -> bool {
     let mut i = bs;
@@ -560,14 +561,14 @@ fn span_has_bs(src: &[u8], bs: usize, be: usize) -> bool {
     false
 }
 
-#[cfg(not(target_arch = "x86_64"))]
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
 #[inline]
 fn span_has_bs(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr(b'\\', &src[bs..be]).is_some()
 }
 
 /// Template variant of [`span_has_bs`]: a raw CR also forces the decode path.
-#[cfg(target_arch = "x86_64")]
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline]
 fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
     let mut i = bs;
@@ -593,7 +594,7 @@ fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
     false
 }
 
-#[cfg(not(target_arch = "x86_64"))]
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
 #[inline]
 fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr2(b'\\', b'\r', &src[bs..be]).is_some()

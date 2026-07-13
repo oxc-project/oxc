@@ -563,11 +563,6 @@ impl RuleFixMeta {
         matches!(self, Self::Fixable(_) | Self::Conditional(_))
     }
 
-    #[inline]
-    pub fn is_pending(self) -> bool {
-        matches!(self, Self::FixPending)
-    }
-
     pub fn supports_fix(self, kind: FixKind) -> bool {
         matches!(self, Self::Fixable(fix_kind) | Self::Conditional(fix_kind) if fix_kind.can_apply(kind))
     }

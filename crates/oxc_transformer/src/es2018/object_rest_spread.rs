@@ -588,7 +588,7 @@ impl<'a> ObjectRestSpread<'a> {
                 if arrow.expression {
                     arrow.expression = false;
 
-                    debug_assert!(arrow.body.statements.len() == 1);
+                    debug_assert_eq!(arrow.body.statements.len(), 1);
 
                     let Statement::ExpressionStatement(stmt) = arrow.body.statements.pop().unwrap()
                     else {

@@ -1,6 +1,6 @@
 //! Diagnostic coverage for every code class. Each positive test has a
 //! `*_never_flagged` counterpart: valid input must emit nothing.
-#![cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#![cfg(target_endian = "little")]
 #![expect(
     clippy::cast_possible_truncation,
     clippy::unreadable_literal,

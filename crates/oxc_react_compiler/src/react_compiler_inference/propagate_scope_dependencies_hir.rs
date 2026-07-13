@@ -24,9 +24,9 @@ use crate::react_compiler_hir::{
     GotoVariant, HirFunction, IdentifierId, Instruction, InstructionId, InstructionKind,
     InstructionValue, JsxAttribute, ManualMemoDependencyRoot, MutableRange, ParamPattern, Place,
     PlaceOrSpread, PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration,
-    ReactiveScopeDependency, ScopeId, Span, Terminal, Type, is_ref_value_type, is_use_ref_type,
-    visitors,
+    ReactiveScopeDependency, ScopeId, Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
 };
+use oxc_span::Span;
 
 // =============================================================================
 // Public entry point
@@ -34,7 +34,7 @@ use crate::react_compiler_hir::{
 
 /// Main entry point: propagate scope dependencies through the HIR.
 /// Corresponds to TS `propagateScopeDependenciesHIR(fn)`.
-pub fn propagate_scope_dependencies_hir(func: &mut HirFunction, env: &mut Environment) {
+pub fn propagate_scope_dependencies_hir<'a>(func: &mut HirFunction<'a>, env: &mut Environment<'a>) {
     let used_outside_declaring_scope = find_temporaries_used_outside_declaring_scope(func, env);
     let temporaries = collect_temporaries_sidemap(func, env, &used_outside_declaring_scope);
 
@@ -50,14 +50,12 @@ pub fn propagate_scope_dependencies_hir(func: &mut HirFunction, env: &mut Enviro
         // Convert to scope-keyed map with full dependency paths
         let mut keyed: FxHashMap<ScopeId, Vec<ReactiveScopeDependency>> = FxHashMap::default();
         for (_block_id, block) in &func.body.blocks {
-            if let Terminal::Scope { scope, block: inner_block, .. } = &block.terminal {
-                if let Some(node_indices) = working.get(inner_block) {
-                    let deps: Vec<ReactiveScopeDependency> = node_indices
-                        .iter()
-                        .map(|&idx| registry.nodes[idx].full_path.clone())
-                        .collect();
-                    keyed.insert(*scope, deps);
-                }
+            if let Terminal::Scope { scope, block: inner_block, .. } = &block.terminal
+                && let Some(node_indices) = working.get(inner_block)
+            {
+                let deps: Vec<ReactiveScopeDependency> =
+                    node_indices.iter().map(|&idx| registry.nodes[idx].full_path.clone()).collect();
+                keyed.insert(*scope, deps);
             }
         }
         keyed
@@ -69,13 +67,8 @@ pub fn propagate_scope_dependencies_hir(func: &mut HirFunction, env: &mut Enviro
         merged_temporaries.insert(k, v);
     }
 
-    let scope_deps = collect_dependencies(
-        func,
-        env,
-        &used_outside_declaring_scope,
-        &merged_temporaries,
-        &processed_instrs_in_optional,
-    );
+    let scope_deps =
+        collect_dependencies(func, env, &merged_temporaries, &processed_instrs_in_optional);
 
     // Derive the minimal set of hoistable dependencies for each scope.
     for (scope_id, deps) in &scope_deps {
@@ -95,13 +88,11 @@ pub fn propagate_scope_dependencies_hir(func: &mut HirFunction, env: &mut Enviro
 
         // Step 3: Reduce dependencies to a minimal set.
         let candidates = tree.derive_minimal_dependencies();
-        let scope = &mut env.scopes[scope_id.0 as usize];
+        let scope = &mut env.scopes[*scope_id];
         for candidate_dep in candidates {
             let already_exists = scope.dependencies.iter().any(|existing_dep| {
-                let existing_decl_id =
-                    env.identifiers[existing_dep.identifier.0 as usize].declaration_id;
-                let candidate_decl_id =
-                    env.identifiers[candidate_dep.identifier.0 as usize].declaration_id;
+                let existing_decl_id = env.identifiers[existing_dep.identifier].declaration_id;
+                let candidate_decl_id = env.identifiers[candidate_dep.identifier].declaration_id;
                 existing_decl_id == candidate_decl_id
                     && are_equal_paths(&existing_dep.path, &candidate_dep.path)
             });
@@ -139,13 +130,12 @@ fn find_temporaries_used_outside_declaring_scope(
                         pruned_scopes: &FxHashSet<ScopeId>,
                         used_outside: &mut FxHashSet<DeclarationId>,
                         env: &Environment| {
-        let decl_id = env.identifiers[place_id.0 as usize].declaration_id;
-        if let Some(&declaring_scope) = declarations.get(&decl_id) {
-            if !traversal.is_scope_active(declaring_scope)
-                && !pruned_scopes.contains(&declaring_scope)
-            {
-                used_outside.insert(decl_id);
-            }
+        let decl_id = env.identifiers[place_id].declaration_id;
+        if let Some(&declaring_scope) = declarations.get(&decl_id)
+            && !traversal.is_scope_active(declaring_scope)
+            && !pruned_scopes.contains(&declaring_scope)
+        {
+            used_outside.insert(decl_id);
         }
     };
 
@@ -159,7 +149,7 @@ fn find_temporaries_used_outside_declaring_scope(
         }
 
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             // Handle operands
             for op_id in visitors::each_instruction_operand(instr, env)
                 .into_iter()
@@ -177,18 +167,17 @@ fn find_temporaries_used_outside_declaring_scope(
             }
             // Handle instruction (track declarations)
             let current_scope = traversal.current_scope();
-            if let Some(scope) = current_scope {
-                if !pruned_scopes.contains(&scope) {
-                    match &instr.value {
-                        InstructionValue::LoadLocal { .. }
-                        | InstructionValue::LoadContext { .. }
-                        | InstructionValue::PropertyLoad { .. } => {
-                            let decl_id =
-                                env.identifiers[instr.lvalue.identifier.0 as usize].declaration_id;
-                            declarations.insert(decl_id, scope);
-                        }
-                        _ => {}
+            if let Some(scope) = current_scope
+                && !pruned_scopes.contains(&scope)
+            {
+                match &instr.value {
+                    InstructionValue::LoadLocal { .. }
+                    | InstructionValue::LoadContext { .. }
+                    | InstructionValue::PropertyLoad { .. } => {
+                        let decl_id = env.identifiers[instr.lvalue.identifier].declaration_id;
+                        declarations.insert(decl_id, scope);
                     }
+                    _ => {}
                 }
             }
         }
@@ -218,11 +207,11 @@ fn find_temporaries_used_outside_declaring_scope(
 // =============================================================================
 
 /// Corresponds to TS `collectTemporariesSidemap`.
-fn collect_temporaries_sidemap(
-    func: &HirFunction,
-    env: &Environment,
+fn collect_temporaries_sidemap<'a>(
+    func: &HirFunction<'a>,
+    env: &Environment<'a>,
     used_outside_declaring_scope: &FxHashSet<DeclarationId>,
-) -> FxHashMap<IdentifierId, ReactiveScopeDependency> {
+) -> FxHashMap<IdentifierId, ReactiveScopeDependency<'a>> {
     let mut temporaries = FxHashMap::default();
     collect_temporaries_sidemap_impl(
         func,
@@ -240,11 +229,11 @@ fn is_load_context_mutable(
     id: EvaluationOrder,
     env: &Environment,
 ) -> bool {
-    if let InstructionValue::LoadContext { place, .. } = value {
-        if let Some(scope_id) = env.identifiers[place.identifier.0 as usize].scope {
-            let scope_range = &env.scopes[scope_id.0 as usize].range;
-            return id >= scope_range.end;
-        }
+    if let InstructionValue::LoadContext { place, .. } = value
+        && let Some(scope_id) = env.identifiers[place.identifier].scope
+    {
+        let scope_range = &env.scopes[scope_id].range;
+        return id >= scope_range.end;
     }
     false
 }
@@ -260,19 +249,19 @@ fn convert_hoisted_lvalue_kind(kind: InstructionKind) -> Option<InstructionKind>
 }
 
 /// Recursive implementation. Corresponds to TS `collectTemporariesSidemapImpl`.
-fn collect_temporaries_sidemap_impl(
-    func: &HirFunction,
-    env: &Environment,
+fn collect_temporaries_sidemap_impl<'a>(
+    func: &HirFunction<'a>,
+    env: &Environment<'a>,
     used_outside_declaring_scope: &FxHashSet<DeclarationId>,
-    temporaries: &mut FxHashMap<IdentifierId, ReactiveScopeDependency>,
+    temporaries: &mut FxHashMap<IdentifierId, ReactiveScopeDependency<'a>>,
     inner_fn_context: Option<EvaluationOrder>,
 ) {
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let instr_eval_order =
                 if let Some(outer_id) = inner_fn_context { outer_id } else { instr.id };
-            let lvalue_decl_id = env.identifiers[instr.lvalue.identifier.0 as usize].declaration_id;
+            let lvalue_decl_id = env.identifiers[instr.lvalue.identifier].declaration_id;
             let used_outside = used_outside_declaring_scope.contains(&lvalue_decl_id);
 
             match &instr.value {
@@ -283,8 +272,8 @@ fn collect_temporaries_sidemap_impl(
                     }
                 }
                 InstructionValue::LoadLocal { place, span, .. }
-                    if env.identifiers[instr.lvalue.identifier.0 as usize].name.is_none()
-                        && env.identifiers[place.identifier.0 as usize].name.is_some()
+                    if env.identifiers[instr.lvalue.identifier].name.is_none()
+                        && env.identifiers[place.identifier].name.is_some()
                         && !used_outside =>
                 {
                     if inner_fn_context.is_none()
@@ -303,8 +292,8 @@ fn collect_temporaries_sidemap_impl(
                 }
                 value @ InstructionValue::LoadContext { place, span, .. }
                     if is_load_context_mutable(value, instr_eval_order, env)
-                        && env.identifiers[instr.lvalue.identifier.0 as usize].name.is_none()
-                        && env.identifiers[place.identifier.0 as usize].name.is_some()
+                        && env.identifiers[instr.lvalue.identifier].name.is_none()
+                        && env.identifiers[place.identifier].name.is_some()
                         && !used_outside =>
                 {
                     if inner_fn_context.is_none()
@@ -323,7 +312,7 @@ fn collect_temporaries_sidemap_impl(
                 }
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    let inner_func = &env.functions[lowered_func.func.0 as usize];
+                    let inner_func = &env.functions[lowered_func.func];
                     let ctx = inner_fn_context.unwrap_or(instr.id);
                     collect_temporaries_sidemap_impl(
                         inner_func,
@@ -340,17 +329,17 @@ fn collect_temporaries_sidemap_impl(
 }
 
 /// Corresponds to TS `getProperty`.
-fn get_property(
+fn get_property<'a>(
     object: &Place,
-    property_name: &PropertyLiteral,
+    property_name: &PropertyLiteral<'a>,
     optional: bool,
     span: Option<Span>,
-    temporaries: &FxHashMap<IdentifierId, ReactiveScopeDependency>,
-) -> ReactiveScopeDependency {
+    temporaries: &FxHashMap<IdentifierId, ReactiveScopeDependency<'a>>,
+) -> ReactiveScopeDependency<'a> {
     let resolved = temporaries.get(&object.identifier);
     if let Some(resolved) = resolved {
         let mut path = resolved.path.clone();
-        path.push(DependencyPathEntry { property: property_name.clone(), optional, span });
+        path.push(DependencyPathEntry { property: *property_name, optional, span });
         ReactiveScopeDependency {
             identifier: resolved.identifier,
             reactive: resolved.reactive,
@@ -361,7 +350,7 @@ fn get_property(
         ReactiveScopeDependency {
             identifier: object.identifier,
             reactive: object.reactive,
-            path: vec![DependencyPathEntry { property: property_name.clone(), optional, span }],
+            path: vec![DependencyPathEntry { property: *property_name, optional, span }],
             span,
         }
     }
@@ -371,10 +360,10 @@ fn get_property(
 // CollectOptionalChainDependencies
 // =============================================================================
 
-struct OptionalChainSidemap {
-    temporaries_read_in_optional: FxHashMap<IdentifierId, ReactiveScopeDependency>,
+struct OptionalChainSidemap<'a> {
+    temporaries_read_in_optional: FxHashMap<IdentifierId, ReactiveScopeDependency<'a>>,
     processed_instrs_in_optional: FxHashSet<ProcessedInstr>,
-    hoistable_objects: FxHashMap<BlockId, ReactiveScopeDependency>,
+    hoistable_objects: FxHashMap<BlockId, ReactiveScopeDependency<'a>>,
 }
 
 /// We track processed instructions/terminals by their lvalue IdentifierId + block id.
@@ -388,7 +377,10 @@ enum ProcessedInstr {
     Terminal(BlockId),
 }
 
-fn collect_optional_chain_sidemap(func: &HirFunction, env: &Environment) -> OptionalChainSidemap {
+fn collect_optional_chain_sidemap<'a>(
+    func: &HirFunction<'a>,
+    env: &Environment<'a>,
+) -> OptionalChainSidemap<'a> {
     let mut ctx = OptionalTraversalContext {
         seen_optionals: FxHashSet::default(),
         processed_instrs_in_optional: FxHashSet::default(),
@@ -405,48 +397,51 @@ fn collect_optional_chain_sidemap(func: &HirFunction, env: &Environment) -> Opti
     }
 }
 
-struct OptionalTraversalContext {
+struct OptionalTraversalContext<'a> {
     seen_optionals: FxHashSet<BlockId>,
     processed_instrs_in_optional: FxHashSet<ProcessedInstr>,
-    temporaries_read_in_optional: FxHashMap<IdentifierId, ReactiveScopeDependency>,
-    hoistable_objects: FxHashMap<BlockId, ReactiveScopeDependency>,
+    temporaries_read_in_optional: FxHashMap<IdentifierId, ReactiveScopeDependency<'a>>,
+    hoistable_objects: FxHashMap<BlockId, ReactiveScopeDependency<'a>>,
 }
 
-fn traverse_function_optional(
-    func: &HirFunction,
-    env: &Environment,
-    ctx: &mut OptionalTraversalContext,
+fn traverse_function_optional<'a>(
+    func: &HirFunction<'a>,
+    env: &Environment<'a>,
+    ctx: &mut OptionalTraversalContext<'a>,
 ) {
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    let inner_func = &env.functions[lowered_func.func.0 as usize];
+                    let inner_func = &env.functions[lowered_func.func];
                     traverse_function_optional(inner_func, env, ctx);
                 }
                 _ => {}
             }
         }
-        if let Terminal::Optional { .. } = &block.terminal {
-            if !ctx.seen_optionals.contains(&block.id) {
-                traverse_optional_block(block, func, ctx, None);
-            }
+        if let Terminal::Optional { .. } = &block.terminal
+            && !ctx.seen_optionals.contains(&block.id)
+        {
+            traverse_optional_block(block, func, ctx, None);
         }
     }
 }
 
-struct MatchConsequentResult {
+struct MatchConsequentResult<'a> {
     consequent_id: IdentifierId,
-    property: PropertyLiteral,
+    property: PropertyLiteral<'a>,
     property_id: IdentifierId,
     store_local_lvalue_id: IdentifierId,
     consequent_goto: BlockId,
     property_load_span: Option<Span>,
 }
 
-fn match_optional_test_block(test: &Terminal, func: &HirFunction) -> Option<MatchConsequentResult> {
+fn match_optional_test_block<'a>(
+    test: &Terminal,
+    func: &HirFunction<'a>,
+) -> Option<MatchConsequentResult<'a>> {
     let (test_place, consequent_block_id, alternate_block_id) = match test {
         Terminal::Branch { test, consequent, alternate, .. } => (test, *consequent, *alternate),
         _ => return None,
@@ -457,8 +452,8 @@ fn match_optional_test_block(test: &Terminal, func: &HirFunction) -> Option<Matc
         return None;
     }
 
-    let instr0 = &func.instructions[consequent_block.instructions[0].0 as usize];
-    let instr1 = &func.instructions[consequent_block.instructions[1].0 as usize];
+    let instr0 = &func.instructions[consequent_block.instructions[0].index()];
+    let instr1 = &func.instructions[consequent_block.instructions[1].index()];
 
     let (property_load_object, property, property_load_span) = match &instr0.value {
         InstructionValue::PropertyLoad { object, property, span } => (object, property, span),
@@ -489,8 +484,8 @@ fn match_optional_test_block(test: &Terminal, func: &HirFunction) -> Option<Matc
             if alternate_block.instructions.len() != 2 {
                 return None;
             }
-            let alt_instr0 = &func.instructions[alternate_block.instructions[0].0 as usize];
-            let alt_instr1 = &func.instructions[alternate_block.instructions[1].0 as usize];
+            let alt_instr0 = &func.instructions[alternate_block.instructions[0].index()];
+            let alt_instr1 = &func.instructions[alternate_block.instructions[1].index()];
             match (&alt_instr0.value, &alt_instr1.value) {
                 (InstructionValue::Primitive { .. }, InstructionValue::StoreLocal { .. }) => {}
                 _ => return None,
@@ -498,7 +493,7 @@ fn match_optional_test_block(test: &Terminal, func: &HirFunction) -> Option<Matc
 
             Some(MatchConsequentResult {
                 consequent_id: store_local_value.identifier,
-                property: property.clone(),
+                property: *property,
                 property_id: instr0.lvalue.identifier,
                 store_local_lvalue_id: instr1.lvalue.identifier,
                 consequent_goto: *goto_block,
@@ -509,10 +504,10 @@ fn match_optional_test_block(test: &Terminal, func: &HirFunction) -> Option<Matc
     }
 }
 
-fn traverse_optional_block(
+fn traverse_optional_block<'a>(
     optional_block: &BasicBlock,
-    func: &HirFunction,
-    ctx: &mut OptionalTraversalContext,
+    func: &HirFunction<'a>,
+    ctx: &mut OptionalTraversalContext<'a>,
     outer_alternate: Option<BlockId>,
 ) -> Option<IdentifierId> {
     ctx.seen_optionals.insert(optional_block.id);
@@ -534,22 +529,21 @@ fn traverse_optional_block(
             if maybe_test_block.instructions.is_empty() {
                 return None;
             }
-            let first_instr = &func.instructions[maybe_test_block.instructions[0].0 as usize];
+            let first_instr = &func.instructions[maybe_test_block.instructions[0].index()];
             if !matches!(&first_instr.value, InstructionValue::LoadLocal { .. }) {
                 return None;
             }
 
             let mut path: Vec<DependencyPathEntry> = Vec::new();
             for i in 1..maybe_test_block.instructions.len() {
-                let curr_instr = &func.instructions[maybe_test_block.instructions[i].0 as usize];
-                let prev_instr =
-                    &func.instructions[maybe_test_block.instructions[i - 1].0 as usize];
+                let curr_instr = &func.instructions[maybe_test_block.instructions[i].index()];
+                let prev_instr = &func.instructions[maybe_test_block.instructions[i - 1].index()];
                 match &curr_instr.value {
                     InstructionValue::PropertyLoad { object, property, span, .. }
                         if object.identifier == prev_instr.lvalue.identifier =>
                     {
                         path.push(DependencyPathEntry {
-                            property: property.clone(),
+                            property: *property,
                             optional: false,
                             span: *span,
                         });
@@ -560,7 +554,7 @@ fn traverse_optional_block(
 
             // Verify test expression matches last instruction's lvalue
             let last_instr_id = *maybe_test_block.instructions.last().unwrap();
-            let last_instr = &func.instructions[last_instr_id.0 as usize];
+            let last_instr = &func.instructions[last_instr_id.index()];
             let test_ident = match &maybe_test_block.terminal {
                 Terminal::Branch { test, .. } => test.identifier,
                 _ => return None,
@@ -648,7 +642,7 @@ fn traverse_optional_block(
         path: {
             let mut p = base_object.path;
             p.push(DependencyPathEntry {
-                property: match_result.property.clone(),
+                property: match_result.property,
                 optional: is_optional,
                 span: match_result.property_load_span,
             });
@@ -692,7 +686,7 @@ fn traverse_optional_block(
 
             // For simplicity, use a sentinel approach: just check all blocks.
             // This is O(n) but only happens for optional chains.
-            let mut found_block = BlockId(0);
+            let mut found_block = BlockId::from_usize(0);
             for (bid, blk) in &func.body.blocks {
                 if eq(&blk.terminal, test_terminal) {
                     found_block = *bid;
@@ -701,7 +695,7 @@ fn traverse_optional_block(
             }
             found_block
         }
-        _ => BlockId(0),
+        _ => BlockId::from_usize(0),
     }));
     ctx.temporaries_read_in_optional.insert(match_result.consequent_id, load.clone());
     ctx.temporaries_read_in_optional.insert(match_result.property_id, load);
@@ -714,23 +708,19 @@ fn traverse_optional_block(
 // =============================================================================
 
 #[derive(Debug, Clone)]
-struct PropertyPathNode {
-    properties: FxHashMap<PropertyLiteral, usize>, // index into registry
-    optional_properties: FxHashMap<PropertyLiteral, usize>, // index into registry
-    #[allow(dead_code)]
-    parent: Option<usize>,
-    full_path: ReactiveScopeDependency,
+struct PropertyPathNode<'a> {
+    properties: FxHashMap<PropertyLiteral<'a>, usize>, // index into registry
+    optional_properties: FxHashMap<PropertyLiteral<'a>, usize>, // index into registry
+    full_path: ReactiveScopeDependency<'a>,
     has_optional: bool,
-    #[allow(dead_code)]
-    root: Option<IdentifierId>,
 }
 
-struct PropertyPathRegistry {
-    nodes: Vec<PropertyPathNode>,
+struct PropertyPathRegistry<'a> {
+    nodes: Vec<PropertyPathNode<'a>>,
     roots: FxHashMap<IdentifierId, usize>,
 }
 
-impl PropertyPathRegistry {
+impl<'a> PropertyPathRegistry<'a> {
     fn new() -> Self {
         Self { nodes: Vec::new(), roots: FxHashMap::default() }
     }
@@ -748,7 +738,6 @@ impl PropertyPathRegistry {
         self.nodes.push(PropertyPathNode {
             properties: FxHashMap::default(),
             optional_properties: FxHashMap::default(),
-            parent: None,
             full_path: ReactiveScopeDependency {
                 identifier: identifier_id,
                 reactive,
@@ -756,7 +745,6 @@ impl PropertyPathRegistry {
                 span,
             },
             has_optional: false,
-            root: Some(identifier_id),
         });
         self.roots.insert(identifier_id, idx);
         idx
@@ -765,9 +753,9 @@ impl PropertyPathRegistry {
     fn get_or_create_property_entry(
         &mut self,
         parent_idx: usize,
-        entry: &DependencyPathEntry,
+        entry: &DependencyPathEntry<'a>,
     ) -> usize {
-        let map_key = entry.property.clone();
+        let map_key = entry.property;
         let existing = if entry.optional {
             self.nodes[parent_idx].optional_properties.get(&map_key).copied()
         } else {
@@ -784,7 +772,6 @@ impl PropertyPathRegistry {
         self.nodes.push(PropertyPathNode {
             properties: FxHashMap::default(),
             optional_properties: FxHashMap::default(),
-            parent: Some(parent_idx),
             full_path: ReactiveScopeDependency {
                 identifier: parent_full_path.identifier,
                 reactive: parent_full_path.reactive,
@@ -792,7 +779,6 @@ impl PropertyPathRegistry {
                 span: entry.span,
             },
             has_optional: parent_has_optional || entry.optional,
-            root: None,
         });
         if entry.optional {
             self.nodes[parent_idx].optional_properties.insert(map_key, idx);
@@ -802,7 +788,7 @@ impl PropertyPathRegistry {
         idx
     }
 
-    fn get_or_create_property(&mut self, dep: &ReactiveScopeDependency) -> usize {
+    fn get_or_create_property(&mut self, dep: &ReactiveScopeDependency<'a>) -> usize {
         let mut curr = self.get_or_create_identifier(dep.identifier, dep.reactive, dep.span);
         for entry in &dep.path {
             curr = self.get_or_create_property_entry(curr, entry);
@@ -847,7 +833,7 @@ fn reduce_maybe_optional_chains(nodes: &mut BTreeSet<usize>, registry: &mut Prop
                 // If the base is known to be non-null (in the set), replace optional with non-optional
                 let next_entry = if entry.optional && nodes.contains(&curr_node) {
                     DependencyPathEntry {
-                        property: entry.property.clone(),
+                        property: entry.property,
                         optional: false,
                         span: entry.span,
                     }
@@ -877,47 +863,12 @@ struct BlockInfo {
     assumed_non_null_objects: BTreeSet<usize>, // indices into PropertyPathRegistry
 }
 
-#[allow(dead_code)]
-fn collect_hoistable_property_loads(
-    func: &HirFunction,
-    env: &Environment,
-    temporaries: &FxHashMap<IdentifierId, ReactiveScopeDependency>,
-    hoistable_from_optionals: &FxHashMap<BlockId, ReactiveScopeDependency>,
-) -> FxHashMap<BlockId, BlockInfo> {
-    let mut registry = PropertyPathRegistry::new();
-    let known_immutable_identifiers: FxHashSet<IdentifierId> = if func.fn_type
-        == ReactFunctionType::Component
-        || func.fn_type == ReactFunctionType::Hook
-    {
-        func.params
-            .iter()
-            .filter_map(|p| match p {
-                ParamPattern::Place(place) => Some(place.identifier),
-                _ => None,
-            })
-            .collect()
-    } else {
-        FxHashSet::default()
-    };
-
-    let assumed_invoked_fns = get_assumed_invoked_functions(func, env);
-    let ctx = CollectHoistableContext {
-        temporaries,
-        known_immutable_identifiers: &known_immutable_identifiers,
-        hoistable_from_optionals,
-        nested_fn_immutable_context: None,
-        assumed_invoked_fns: &assumed_invoked_fns,
-    };
-
-    collect_hoistable_property_loads_impl(func, env, &ctx, &mut registry)
-}
-
-struct CollectHoistableContext<'a> {
-    temporaries: &'a FxHashMap<IdentifierId, ReactiveScopeDependency>,
-    known_immutable_identifiers: &'a FxHashSet<IdentifierId>,
-    hoistable_from_optionals: &'a FxHashMap<BlockId, ReactiveScopeDependency>,
-    nested_fn_immutable_context: Option<&'a FxHashSet<IdentifierId>>,
-    assumed_invoked_fns: &'a FxHashSet<FunctionId>,
+struct CollectHoistableContext<'a, 'e> {
+    temporaries: &'e FxHashMap<IdentifierId, ReactiveScopeDependency<'a>>,
+    known_immutable_identifiers: &'e FxHashSet<IdentifierId>,
+    hoistable_from_optionals: &'e FxHashMap<BlockId, ReactiveScopeDependency<'a>>,
+    nested_fn_immutable_context: Option<&'e FxHashSet<IdentifierId>>,
+    assumed_invoked_fns: &'e FxHashSet<FunctionId>,
 }
 
 fn is_immutable_at_instr(
@@ -929,12 +880,10 @@ fn is_immutable_at_instr(
     if let Some(nested_ctx) = ctx.nested_fn_immutable_context {
         return nested_ctx.contains(&identifier_id);
     }
-    let ident = &env.identifiers[identifier_id.0 as usize];
-    let mutable_at_instr = ident.mutable_range.end
-        > EvaluationOrder(ident.mutable_range.start.0 + 1)
-        && ident.scope.is_some()
-        && {
-            let scope = &env.scopes[ident.scope.unwrap().0 as usize];
+    let ident = &env.identifiers[identifier_id];
+    let mutable_at_instr =
+        ident.mutable_range.end > ident.mutable_range.start + 1 && ident.scope.is_some() && {
+            let scope = &env.scopes[ident.scope.unwrap()];
             in_range(instr_id, &scope.range)
         };
     !mutable_at_instr || ctx.known_immutable_identifiers.contains(&identifier_id)
@@ -944,10 +893,10 @@ fn in_range(id: EvaluationOrder, range: &MutableRange) -> bool {
     id >= range.start && id < range.end
 }
 
-fn get_maybe_non_null_in_instruction(
-    value: &InstructionValue,
-    temporaries: &FxHashMap<IdentifierId, ReactiveScopeDependency>,
-) -> Option<ReactiveScopeDependency> {
+fn get_maybe_non_null_in_instruction<'a>(
+    value: &InstructionValue<'a>,
+    temporaries: &FxHashMap<IdentifierId, ReactiveScopeDependency<'a>>,
+) -> Option<ReactiveScopeDependency<'a>> {
     match value {
         InstructionValue::PropertyLoad { object, .. } => {
             Some(temporaries.get(&object.identifier).cloned().unwrap_or_else(|| {
@@ -967,19 +916,6 @@ fn get_maybe_non_null_in_instruction(
         }
         _ => None,
     }
-}
-
-#[allow(dead_code)]
-fn collect_hoistable_property_loads_impl(
-    func: &HirFunction,
-    env: &Environment,
-    ctx: &CollectHoistableContext,
-    registry: &mut PropertyPathRegistry,
-) -> FxHashMap<BlockId, BlockInfo> {
-    let nodes = collect_non_nulls_in_blocks(func, env, ctx, registry);
-    let working = propagate_non_null(func, &nodes, registry);
-    // Return the propagated results, converting FxHashSet<usize> back to BlockInfo
-    working.into_iter().map(|(k, v)| (k, BlockInfo { assumed_non_null_objects: v })).collect()
 }
 
 /// Corresponds to TS `getAssumedInvokedFunctions`.
@@ -1002,7 +938,7 @@ fn get_assumed_invoked_functions_impl(
     // Step 1: Collect identifier to function expression mappings
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
                     temporaries
@@ -1026,11 +962,10 @@ fn get_assumed_invoked_functions_impl(
     // Step 2: Forward pass to analyze assumed function calls
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::CallExpression { callee, args, .. } => {
-                    let callee_ty =
-                        &env.types[env.identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                    let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     let maybe_hook = env.get_hook_kind_for_type(callee_ty).ok().flatten();
                     if let Some(entry) = temporaries.get(&callee.identifier) {
                         // Direct calls
@@ -1038,10 +973,10 @@ fn get_assumed_invoked_functions_impl(
                     } else if maybe_hook.is_some() {
                         // Assume arguments to all hooks are safe to invoke
                         for arg in args {
-                            if let PlaceOrSpread::Place(p) = arg {
-                                if let Some(entry) = temporaries.get(&p.identifier) {
-                                    hoistable.insert(entry.0);
-                                }
+                            if let PlaceOrSpread::Place(p) = arg
+                                && let Some(entry) = temporaries.get(&p.identifier)
+                            {
+                                hoistable.insert(entry.0);
                             }
                         }
                     }
@@ -1049,10 +984,10 @@ fn get_assumed_invoked_functions_impl(
                 InstructionValue::JsxExpression { props, children, .. } => {
                     // Assume JSX attributes and children are safe to invoke
                     for prop in props {
-                        if let JsxAttribute::Attribute { place, .. } = prop {
-                            if let Some(entry) = temporaries.get(&place.identifier) {
-                                hoistable.insert(entry.0);
-                            }
+                        if let JsxAttribute::Attribute { place, .. } = prop
+                            && let Some(entry) = temporaries.get(&place.identifier)
+                        {
+                            hoistable.insert(entry.0);
                         }
                     }
                     if let Some(children) = children {
@@ -1073,7 +1008,7 @@ fn get_assumed_invoked_functions_impl(
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
                     // Recursively traverse into other function expressions
                     // TS passes the shared temporaries map to the recursive call
-                    let inner_func = &env.functions[lowered_func.func.0 as usize];
+                    let inner_func = &env.functions[lowered_func.func];
                     let lambdas_called =
                         get_assumed_invoked_functions_impl(inner_func, env, temporaries);
                     if let Some(entry) = temporaries.get_mut(&instr.lvalue.identifier) {
@@ -1087,10 +1022,10 @@ fn get_assumed_invoked_functions_impl(
         }
 
         // Assume directly returned functions are safe to call
-        if let Terminal::Return { value, .. } = &block.terminal {
-            if let Some(entry) = temporaries.get(&value.identifier) {
-                hoistable.insert(entry.0);
-            }
+        if let Terminal::Return { value, .. } = &block.terminal
+            && let Some(entry) = temporaries.get(&value.identifier)
+        {
+            hoistable.insert(entry.0);
         }
     }
 
@@ -1100,7 +1035,7 @@ fn get_assumed_invoked_functions_impl(
         changed = false;
         // Two-phase: collect then insert
         let mut to_add = Vec::new();
-        for (_, (func_id, may_invoke)) in temporaries.iter() {
+        for (func_id, may_invoke) in temporaries.values() {
             if hoistable.contains(func_id) {
                 for &called in may_invoke {
                     if !hoistable.contains(&called) {
@@ -1121,19 +1056,20 @@ fn get_assumed_invoked_functions_impl(
     hoistable
 }
 
-fn collect_non_nulls_in_blocks(
-    func: &HirFunction,
-    env: &Environment,
-    ctx: &CollectHoistableContext,
-    registry: &mut PropertyPathRegistry,
+fn collect_non_nulls_in_blocks<'a>(
+    func: &HirFunction<'a>,
+    env: &Environment<'a>,
+    ctx: &CollectHoistableContext<'a, '_>,
+    registry: &mut PropertyPathRegistry<'a>,
 ) -> FxHashMap<BlockId, BlockInfo> {
     // Known non-null identifiers (e.g. component props)
     let mut known_non_null: BTreeSet<usize> = BTreeSet::new();
-    if func.fn_type == ReactFunctionType::Component && !func.params.is_empty() {
-        if let ParamPattern::Place(place) = &func.params[0] {
-            let node_idx = registry.get_or_create_identifier(place.identifier, true, place.span);
-            known_non_null.insert(node_idx);
-        }
+    if func.fn_type == ReactFunctionType::Component
+        && !func.params.is_empty()
+        && let ParamPattern::Place(place) = &func.params[0]
+    {
+        let node_idx = registry.get_or_create_identifier(place.identifier, true, place.span);
+        known_non_null.insert(node_idx);
     }
 
     let mut nodes: FxHashMap<BlockId, BlockInfo> = FxHashMap::default();
@@ -1148,7 +1084,7 @@ fn collect_non_nulls_in_blocks(
         }
 
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             if let Some(path) = get_maybe_non_null_in_instruction(&instr.value, ctx.temporaries) {
                 let path_ident = path.identifier;
                 if is_immutable_at_instr(path_ident, instr.id, env, ctx) {
@@ -1158,68 +1094,67 @@ fn collect_non_nulls_in_blocks(
             }
 
             // Handle StartMemoize deps for enablePreserveExistingMemoizationGuarantees
-            if env.enable_preserve_existing_memoization_guarantees {
-                if let InstructionValue::StartMemoize { deps: Some(deps), .. } = &instr.value {
-                    for dep in deps {
-                        if let ManualMemoDependencyRoot::NamedLocal { value: val, .. } = &dep.root {
-                            if !is_immutable_at_instr(val.identifier, instr.id, env, ctx) {
-                                continue;
+            if env.enable_preserve_existing_memoization_guarantees
+                && let InstructionValue::StartMemoize { deps: Some(deps), .. } = &instr.value
+            {
+                for dep in deps {
+                    if let ManualMemoDependencyRoot::NamedLocal { value: val, .. } = &dep.root {
+                        if !is_immutable_at_instr(val.identifier, instr.id, env, ctx) {
+                            continue;
+                        }
+                        for i in 0..dep.path.len() {
+                            if dep.path[i].optional {
+                                break;
                             }
-                            for i in 0..dep.path.len() {
-                                if dep.path[i].optional {
-                                    break;
-                                }
-                                let sub_dep = ReactiveScopeDependency {
-                                    identifier: val.identifier,
-                                    reactive: val.reactive,
-                                    path: dep.path[..i].to_vec(),
-                                    span: dep.span,
-                                };
-                                let node_idx = registry.get_or_create_property(&sub_dep);
-                                assumed.insert(node_idx);
-                            }
+                            let sub_dep = ReactiveScopeDependency {
+                                identifier: val.identifier,
+                                reactive: val.reactive,
+                                path: dep.path[..i].to_vec(),
+                                span: dep.span,
+                            };
+                            let node_idx = registry.get_or_create_property(&sub_dep);
+                            assumed.insert(node_idx);
                         }
                     }
                 }
             }
 
             // Handle assumed-invoked inner functions
-            if let InstructionValue::FunctionExpression { lowered_func, .. } = &instr.value {
-                if ctx.assumed_invoked_fns.contains(&lowered_func.func) {
-                    let inner_func = &env.functions[lowered_func.func.0 as usize];
-                    // Build nested fn immutable context
-                    let nested_fn_immutable_context: FxHashSet<IdentifierId> =
-                        if ctx.nested_fn_immutable_context.is_some() {
-                            // Already in a nested fn context, use existing
-                            ctx.nested_fn_immutable_context.unwrap().clone()
-                        } else {
-                            inner_func
-                                .context
-                                .iter()
-                                .filter(|place| {
-                                    is_immutable_at_instr(place.identifier, instr.id, env, ctx)
-                                })
-                                .map(|place| place.identifier)
-                                .collect()
-                        };
-                    let inner_assumed = get_assumed_invoked_functions(inner_func, env);
-                    let inner_ctx = CollectHoistableContext {
-                        temporaries: ctx.temporaries,
-                        known_immutable_identifiers: &FxHashSet::default(),
-                        hoistable_from_optionals: ctx.hoistable_from_optionals,
-                        nested_fn_immutable_context: Some(&nested_fn_immutable_context),
-                        assumed_invoked_fns: &inner_assumed,
-                    };
-                    let inner_nodes =
-                        collect_non_nulls_in_blocks(inner_func, env, &inner_ctx, registry);
-                    // Propagate non-null from inner function
-                    let inner_working = propagate_non_null(inner_func, &inner_nodes, registry);
-                    // Get hoistables from inner function's entry block (after propagation)
-                    let inner_entry = inner_func.body.entry;
-                    if let Some(inner_set) = inner_working.get(&inner_entry) {
-                        for &node_idx in inner_set {
-                            assumed.insert(node_idx);
-                        }
+            if let InstructionValue::FunctionExpression { lowered_func, .. } = &instr.value
+                && ctx.assumed_invoked_fns.contains(&lowered_func.func)
+            {
+                let inner_func = &env.functions[lowered_func.func];
+                // Build nested fn immutable context
+                let nested_fn_immutable_context: FxHashSet<IdentifierId> = if let Some(existing) =
+                    ctx.nested_fn_immutable_context
+                {
+                    // Already in a nested fn context, use existing
+                    existing.clone()
+                } else {
+                    inner_func
+                        .context
+                        .iter()
+                        .filter(|place| is_immutable_at_instr(place.identifier, instr.id, env, ctx))
+                        .map(|place| place.identifier)
+                        .collect()
+                };
+                let inner_assumed = get_assumed_invoked_functions(inner_func, env);
+                let inner_ctx = CollectHoistableContext {
+                    temporaries: ctx.temporaries,
+                    known_immutable_identifiers: &FxHashSet::default(),
+                    hoistable_from_optionals: ctx.hoistable_from_optionals,
+                    nested_fn_immutable_context: Some(&nested_fn_immutable_context),
+                    assumed_invoked_fns: &inner_assumed,
+                };
+                let inner_nodes =
+                    collect_non_nulls_in_blocks(inner_func, env, &inner_ctx, registry);
+                // Propagate non-null from inner function
+                let inner_working = propagate_non_null(inner_func, &inner_nodes, registry);
+                // Get hoistables from inner function's entry block (after propagation)
+                let inner_entry = inner_func.body.entry;
+                if let Some(inner_set) = inner_working.get(&inner_entry) {
+                    for &node_idx in inner_set {
+                        assumed.insert(node_idx);
                     }
                 }
             }
@@ -1384,12 +1319,12 @@ fn recursively_propagate_non_null(
     changed
 }
 
-fn collect_hoistable_and_propagate(
-    func: &HirFunction,
-    env: &Environment,
-    temporaries: &FxHashMap<IdentifierId, ReactiveScopeDependency>,
-    hoistable_from_optionals: &FxHashMap<BlockId, ReactiveScopeDependency>,
-) -> (FxHashMap<BlockId, BTreeSet<usize>>, PropertyPathRegistry) {
+fn collect_hoistable_and_propagate<'a>(
+    func: &HirFunction<'a>,
+    env: &Environment<'a>,
+    temporaries: &FxHashMap<IdentifierId, ReactiveScopeDependency<'a>>,
+    hoistable_from_optionals: &FxHashMap<BlockId, ReactiveScopeDependency<'a>>,
+) -> (FxHashMap<BlockId, BTreeSet<usize>>, PropertyPathRegistry<'a>) {
     let mut registry = PropertyPathRegistry::new();
     let assumed_invoked_fns = get_assumed_invoked_functions(func, env);
     let known_immutable_identifiers: FxHashSet<IdentifierId> = if func.fn_type
@@ -1419,23 +1354,6 @@ fn collect_hoistable_and_propagate(
     let working = propagate_non_null(func, &nodes, &mut registry);
 
     (working, registry)
-}
-
-// Restructured version used by the main entry point
-#[allow(dead_code)]
-fn key_by_scope_id(
-    func: &HirFunction,
-    block_keyed: &FxHashMap<BlockId, BlockInfo>,
-) -> FxHashMap<ScopeId, BlockInfo> {
-    let mut keyed: FxHashMap<ScopeId, BlockInfo> = FxHashMap::default();
-    for (_block_id, block) in &func.body.blocks {
-        if let Terminal::Scope { scope, block: inner_block, .. } = &block.terminal {
-            if let Some(info) = block_keyed.get(inner_block) {
-                keyed.insert(*scope, info.clone());
-            }
-        }
-    }
-    keyed
 }
 
 // =============================================================================
@@ -1478,33 +1396,36 @@ enum HoistableAccessType {
     NonNull,
 }
 
-struct HoistableNode {
-    properties: FxHashMap<PropertyLiteral, Box<HoistableNodeEntry>>,
+struct HoistableNode<'a> {
+    properties: FxHashMap<PropertyLiteral<'a>, Box<HoistableNodeEntry<'a>>>,
     access_type: HoistableAccessType,
 }
 
-struct HoistableNodeEntry {
-    node: HoistableNode,
+struct HoistableNodeEntry<'a> {
+    node: HoistableNode<'a>,
 }
 
-struct DependencyNode {
-    properties: FxIndexMap<PropertyLiteral, Box<DependencyNodeEntry>>,
+struct DependencyNode<'a> {
+    properties: FxIndexMap<PropertyLiteral<'a>, Box<DependencyNodeEntry<'a>>>,
     access_type: PropertyAccessType,
     span: Option<Span>,
 }
 
-struct DependencyNodeEntry {
-    node: DependencyNode,
+struct DependencyNodeEntry<'a> {
+    node: DependencyNode<'a>,
 }
 
-struct ReactiveScopeDependencyTreeHIR {
-    hoistable_roots: FxHashMap<IdentifierId, (HoistableNode, bool)>, // node + reactive
-    dep_roots: FxIndexMap<IdentifierId, (DependencyNode, bool)>, // node + reactive (preserves insertion order like JS Map)
+struct ReactiveScopeDependencyTreeHIR<'a> {
+    hoistable_roots: FxHashMap<IdentifierId, (HoistableNode<'a>, bool)>, // node + reactive
+    dep_roots: FxIndexMap<IdentifierId, (DependencyNode<'a>, bool)>, // node + reactive (preserves insertion order like JS Map)
 }
 
-impl ReactiveScopeDependencyTreeHIR {
-    fn new<'a>(hoistable_objects: impl Iterator<Item = &'a ReactiveScopeDependency>) -> Self {
-        let mut hoistable_roots: FxHashMap<IdentifierId, (HoistableNode, bool)> =
+impl<'a> ReactiveScopeDependencyTreeHIR<'a> {
+    fn new<'i>(hoistable_objects: impl Iterator<Item = &'i ReactiveScopeDependency<'a>>) -> Self
+    where
+        'a: 'i,
+    {
+        let mut hoistable_roots: FxHashMap<IdentifierId, (HoistableNode<'a>, bool)> =
             FxHashMap::default();
 
         // Sort hoistable objects so that entries with optional first path come
@@ -1536,12 +1457,11 @@ impl ReactiveScopeDependencyTreeHIR {
                 } else {
                     HoistableAccessType::NonNull
                 };
-                let entry =
-                    curr.properties.entry(dep.path[i].property.clone()).or_insert_with(|| {
-                        Box::new(HoistableNodeEntry {
-                            node: HoistableNode { properties: FxHashMap::default(), access_type },
-                        })
-                    });
+                let entry = curr.properties.entry(dep.path[i].property).or_insert_with(|| {
+                    Box::new(HoistableNodeEntry {
+                        node: HoistableNode { properties: FxHashMap::default(), access_type },
+                    })
+                });
                 curr = &mut entry.node;
             }
         }
@@ -1549,7 +1469,7 @@ impl ReactiveScopeDependencyTreeHIR {
         Self { hoistable_roots, dep_roots: FxIndexMap::default() }
     }
 
-    fn add_dependency(&mut self, dep: ReactiveScopeDependency) {
+    fn add_dependency(&mut self, dep: ReactiveScopeDependency<'a>) {
         let root = self.dep_roots.entry(dep.identifier).or_insert_with(|| {
             (
                 DependencyNode {
@@ -1578,7 +1498,7 @@ impl ReactiveScopeDependencyTreeHIR {
             };
 
             // make_or_merge_property
-            let child = dep_cursor.properties.entry(entry.property.clone()).or_insert_with(|| {
+            let child = dep_cursor.properties.entry(entry.property).or_insert_with(|| {
                 Box::new(DependencyNodeEntry {
                     node: DependencyNode {
                         properties: FxIndexMap::default(),
@@ -1598,7 +1518,7 @@ impl ReactiveScopeDependencyTreeHIR {
             merge_access(dep_cursor.access_type, PropertyAccessType::OptionalDependency);
     }
 
-    fn derive_minimal_dependencies(&self) -> Vec<ReactiveScopeDependency> {
+    fn derive_minimal_dependencies(&self) -> Vec<ReactiveScopeDependency<'a>> {
         let mut results = Vec::new();
         for (&root_id, (root_node, reactive)) in &self.dep_roots {
             collect_minimal_deps_in_subtree(root_node, *reactive, root_id, &[], &mut results);
@@ -1607,12 +1527,12 @@ impl ReactiveScopeDependencyTreeHIR {
     }
 }
 
-fn collect_minimal_deps_in_subtree(
-    node: &DependencyNode,
+fn collect_minimal_deps_in_subtree<'a>(
+    node: &DependencyNode<'a>,
     reactive: bool,
     root_id: IdentifierId,
-    path: &[DependencyPathEntry],
-    results: &mut Vec<ReactiveScopeDependency>,
+    path: &[DependencyPathEntry<'a>],
+    results: &mut Vec<ReactiveScopeDependency<'a>>,
 ) {
     if is_dependency_access(node.access_type) {
         results.push(ReactiveScopeDependency {
@@ -1625,7 +1545,7 @@ fn collect_minimal_deps_in_subtree(
         for (child_name, child_entry) in &node.properties {
             let mut new_path = path.to_vec();
             new_path.push(DependencyPathEntry {
-                property: child_name.clone(),
+                property: *child_name,
                 optional: is_optional_access(child_entry.node.access_type),
                 span: child_entry.node.span,
             });
@@ -1652,24 +1572,21 @@ struct Decl {
 }
 
 /// Context for dependency collection.
-struct DependencyCollectionContext<'a> {
+struct DependencyCollectionContext<'a, 'e> {
     declarations: FxHashMap<DeclarationId, Decl>,
     reassignments: FxHashMap<IdentifierId, Decl>,
     scope_stack: Vec<ScopeId>,
-    dep_stack: Vec<Vec<ReactiveScopeDependency>>,
-    deps: FxIndexMap<ScopeId, Vec<ReactiveScopeDependency>>,
-    temporaries: &'a FxHashMap<IdentifierId, ReactiveScopeDependency>,
-    #[allow(dead_code)]
-    temporaries_used_outside_scope: &'a FxHashSet<DeclarationId>,
-    processed_instrs_in_optional: &'a FxHashSet<ProcessedInstr>,
+    dep_stack: Vec<Vec<ReactiveScopeDependency<'a>>>,
+    deps: FxIndexMap<ScopeId, Vec<ReactiveScopeDependency<'a>>>,
+    temporaries: &'e FxHashMap<IdentifierId, ReactiveScopeDependency<'a>>,
+    processed_instrs_in_optional: &'e FxHashSet<ProcessedInstr>,
     inner_fn_context: Option<EvaluationOrder>,
 }
 
-impl<'a> DependencyCollectionContext<'a> {
+impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
     fn new(
-        temporaries_used_outside_scope: &'a FxHashSet<DeclarationId>,
-        temporaries: &'a FxHashMap<IdentifierId, ReactiveScopeDependency>,
-        processed_instrs_in_optional: &'a FxHashSet<ProcessedInstr>,
+        temporaries: &'e FxHashMap<IdentifierId, ReactiveScopeDependency<'a>>,
+        processed_instrs_in_optional: &'e FxHashSet<ProcessedInstr>,
     ) -> Self {
         Self {
             declarations: FxHashMap::default(),
@@ -1678,7 +1595,6 @@ impl<'a> DependencyCollectionContext<'a> {
             dep_stack: Vec::new(),
             deps: FxIndexMap::default(),
             temporaries,
-            temporaries_used_outside_scope,
             processed_instrs_in_optional,
             inner_fn_context: None,
         }
@@ -1696,10 +1612,10 @@ impl<'a> DependencyCollectionContext<'a> {
 
         // Propagate dependencies upward
         for dep in &scoped_deps {
-            if self.check_valid_dependency(dep, env) {
-                if let Some(top) = self.dep_stack.last_mut() {
-                    top.push(dep.clone());
-                }
+            if self.check_valid_dependency(dep, env)
+                && let Some(top) = self.dep_stack.last_mut()
+            {
+                top.push(dep.clone());
             }
         }
 
@@ -1716,19 +1632,19 @@ impl<'a> DependencyCollectionContext<'a> {
         if self.inner_fn_context.is_some() {
             return;
         }
-        let decl_id = env.identifiers[identifier_id.0 as usize].declaration_id;
+        let decl_id = env.identifiers[identifier_id].declaration_id;
         self.declarations.entry(decl_id).or_insert_with(|| decl.clone());
         self.reassignments.insert(identifier_id, decl);
     }
 
     fn has_declared(&self, identifier_id: IdentifierId, env: &Environment) -> bool {
-        let decl_id = env.identifiers[identifier_id.0 as usize].declaration_id;
+        let decl_id = env.identifiers[identifier_id].declaration_id;
         self.declarations.contains_key(&decl_id)
     }
 
     fn check_valid_dependency(&self, dep: &ReactiveScopeDependency, env: &Environment) -> bool {
         // Ref value is not a valid dep
-        let ty = &env.types[env.identifiers[dep.identifier.0 as usize].type_.0 as usize];
+        let ty = &env.types[env.identifiers[dep.identifier].type_];
         if is_ref_value_type(ty) {
             return false;
         }
@@ -1737,17 +1653,17 @@ impl<'a> DependencyCollectionContext<'a> {
             return false;
         }
 
-        let ident = &env.identifiers[dep.identifier.0 as usize];
+        let ident = &env.identifiers[dep.identifier];
         let current_declaration = self
             .reassignments
             .get(&dep.identifier)
             .or_else(|| self.declarations.get(&ident.declaration_id));
 
-        if let Some(current_scope) = self.current_scope() {
-            if let Some(decl) = current_declaration {
-                let scope_range_start = env.scopes[current_scope.0 as usize].range.start;
-                return decl.id < scope_range_start;
-            }
+        if let Some(current_scope) = self.current_scope()
+            && let Some(decl) = current_declaration
+        {
+            let scope_range_start = env.scopes[current_scope].range.start;
+            return decl.id < scope_range_start;
         }
         false
     }
@@ -1767,7 +1683,7 @@ impl<'a> DependencyCollectionContext<'a> {
     fn visit_property(
         &mut self,
         object: &Place,
-        property: &PropertyLiteral,
+        property: &PropertyLiteral<'a>,
         optional: bool,
         span: Option<Span>,
         env: &mut Environment,
@@ -1776,40 +1692,38 @@ impl<'a> DependencyCollectionContext<'a> {
         self.visit_dependency(dep, env);
     }
 
-    fn visit_dependency(&mut self, dep: ReactiveScopeDependency, env: &mut Environment) {
-        let ident = &env.identifiers[dep.identifier.0 as usize];
+    fn visit_dependency(&mut self, dep: ReactiveScopeDependency<'a>, env: &mut Environment) {
+        let ident = &env.identifiers[dep.identifier];
         let decl_id = ident.declaration_id;
 
         // Record scope declarations for values used outside their declaring scope
-        if let Some(original_decl) = self.declarations.get(&decl_id) {
-            if !original_decl.scope_stack.is_empty() {
-                let orig_scope_stack = original_decl.scope_stack.clone();
-                for &scope_id in &orig_scope_stack {
-                    if !self.scope_stack.contains(&scope_id) {
-                        // Check if already declared in this scope
-                        let scope = &env.scopes[scope_id.0 as usize];
-                        let already_declared = scope.declarations.iter().any(|(_, d)| {
-                            env.identifiers[d.identifier.0 as usize].declaration_id == decl_id
-                        });
-                        if !already_declared {
-                            let orig_scope_id = *orig_scope_stack.last().unwrap();
-                            let new_decl = ReactiveScopeDeclaration {
-                                identifier: dep.identifier,
-                                scope: orig_scope_id,
-                            };
-                            env.scopes[scope_id.0 as usize]
-                                .declarations
-                                .push((dep.identifier, new_decl));
-                        }
+        if let Some(original_decl) = self.declarations.get(&decl_id)
+            && !original_decl.scope_stack.is_empty()
+        {
+            let orig_scope_stack = original_decl.scope_stack.clone();
+            for &scope_id in &orig_scope_stack {
+                if !self.scope_stack.contains(&scope_id) {
+                    // Check if already declared in this scope
+                    let scope = &env.scopes[scope_id];
+                    let already_declared = scope
+                        .declarations
+                        .iter()
+                        .any(|(_, d)| env.identifiers[d.identifier].declaration_id == decl_id);
+                    if !already_declared {
+                        let orig_scope_id = *orig_scope_stack.last().unwrap();
+                        let new_decl = ReactiveScopeDeclaration {
+                            identifier: dep.identifier,
+                            scope: orig_scope_id,
+                        };
+                        env.scopes[scope_id].declarations.push((dep.identifier, new_decl));
                     }
                 }
             }
         }
 
         // Handle ref.current access
-        let dep = if is_use_ref_type(
-            &env.types[env.identifiers[dep.identifier.0 as usize].type_.0 as usize],
-        ) && dep.path.first().map(|p| p.property.is_string("current")).unwrap_or(false)
+        let dep = if is_use_ref_type(&env.types[env.identifiers[dep.identifier].type_])
+            && dep.path.first().map(|p| p.property.is_string("current")).unwrap_or(false)
         {
             ReactiveScopeDependency {
                 identifier: dep.identifier,
@@ -1821,19 +1735,19 @@ impl<'a> DependencyCollectionContext<'a> {
             dep
         };
 
-        if self.check_valid_dependency(&dep, env) {
-            if let Some(top) = self.dep_stack.last_mut() {
-                top.push(dep);
-            }
+        if self.check_valid_dependency(&dep, env)
+            && let Some(top) = self.dep_stack.last_mut()
+        {
+            top.push(dep);
         }
     }
 
     fn visit_reassignment(&mut self, place: &Place, env: &mut Environment) {
         if let Some(current_scope) = self.current_scope() {
-            let scope = &env.scopes[current_scope.0 as usize];
+            let scope = &env.scopes[current_scope];
             let already = scope.reassignments.iter().any(|id| {
-                env.identifiers[id.0 as usize].declaration_id
-                    == env.identifiers[place.identifier.0 as usize].declaration_id
+                env.identifiers[*id].declaration_id
+                    == env.identifiers[place.identifier].declaration_id
             });
             if !already
                 && self.check_valid_dependency(
@@ -1846,7 +1760,7 @@ impl<'a> DependencyCollectionContext<'a> {
                     env,
                 )
             {
-                env.scopes[current_scope.0 as usize].reassignments.push(place.identifier);
+                env.scopes[current_scope].reassignments.push(place.identifier);
             }
         }
     }
@@ -1865,16 +1779,16 @@ impl<'a> DependencyCollectionContext<'a> {
 /// Recursively visit an inner function's blocks, processing all instructions
 /// including nested FunctionExpressions. This mirrors the TS pattern of
 /// `context.enterInnerFn(instr, () => handleFunction(innerFn))`.
-fn visit_inner_function_blocks(
+fn visit_inner_function_blocks<'a>(
     func_id: FunctionId,
-    ctx: &mut DependencyCollectionContext,
-    env: &mut Environment,
+    ctx: &mut DependencyCollectionContext<'a, '_>,
+    env: &mut Environment<'a>,
 ) {
     // Clone inner function's instructions and block structure to avoid
     // borrow conflicts when mutating env through handle_instruction.
-    let inner_instrs: Vec<Instruction> = env.functions[func_id.0 as usize].instructions.clone();
+    let inner_instrs: Vec<Instruction> = env.functions[func_id].instructions.clone();
     type InnerBlockSnapshot = (BlockId, Vec<InstructionId>, Vec<(BlockId, IdentifierId)>, Terminal);
-    let inner_blocks: Vec<InnerBlockSnapshot> = env.functions[func_id.0 as usize]
+    let inner_blocks: Vec<InnerBlockSnapshot> = env.functions[func_id]
         .body
         .blocks
         .iter()
@@ -1896,7 +1810,7 @@ fn visit_inner_function_blocks(
         }
 
         for &iid in inner_instr_ids {
-            let inner_instr = &inner_instrs[iid.0 as usize];
+            let inner_instr = &inner_instrs[iid.index()];
             match &inner_instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
@@ -1924,10 +1838,10 @@ fn visit_inner_function_blocks(
     }
 }
 
-fn handle_instruction(
-    instr: &Instruction,
-    ctx: &mut DependencyCollectionContext,
-    env: &mut Environment,
+fn handle_instruction<'a>(
+    instr: &Instruction<'a>,
+    ctx: &mut DependencyCollectionContext<'a, '_>,
+    env: &mut Environment<'a>,
 ) {
     let id = instr.id;
     let scope_stack_copy = ctx.scope_stack.clone();
@@ -1996,18 +1910,13 @@ fn handle_instruction(
     }
 }
 
-fn collect_dependencies(
-    func: &HirFunction,
-    env: &mut Environment,
-    used_outside_declaring_scope: &FxHashSet<DeclarationId>,
-    temporaries: &FxHashMap<IdentifierId, ReactiveScopeDependency>,
+fn collect_dependencies<'a>(
+    func: &HirFunction<'a>,
+    env: &mut Environment<'a>,
+    temporaries: &FxHashMap<IdentifierId, ReactiveScopeDependency<'a>>,
     processed_instrs_in_optional: &FxHashSet<ProcessedInstr>,
-) -> FxIndexMap<ScopeId, Vec<ReactiveScopeDependency>> {
-    let mut ctx = DependencyCollectionContext::new(
-        used_outside_declaring_scope,
-        temporaries,
-        processed_instrs_in_optional,
-    );
+) -> FxIndexMap<ScopeId, Vec<ReactiveScopeDependency<'a>>> {
+    let mut ctx = DependencyCollectionContext::new(temporaries, processed_instrs_in_optional);
 
     // Declare params
     for param in &func.params {
@@ -2015,14 +1924,14 @@ fn collect_dependencies(
             ParamPattern::Place(place) => {
                 ctx.declare(
                     place.identifier,
-                    Decl { id: EvaluationOrder(0), scope_stack: vec![] },
+                    Decl { id: EvaluationOrder::UNSET, scope_stack: vec![] },
                     env,
                 );
             }
             ParamPattern::Spread(spread) => {
                 ctx.declare(
                     spread.place.identifier,
-                    Decl { id: EvaluationOrder(0), scope_stack: vec![] },
+                    Decl { id: EvaluationOrder::UNSET, scope_stack: vec![] },
                     env,
                 );
             }
@@ -2036,10 +1945,10 @@ fn collect_dependencies(
     ctx.deps
 }
 
-fn handle_function_deps(
-    func: &HirFunction,
-    env: &mut Environment,
-    ctx: &mut DependencyCollectionContext,
+fn handle_function_deps<'a>(
+    func: &HirFunction<'a>,
+    env: &mut Environment<'a>,
+    ctx: &mut DependencyCollectionContext<'a, '_>,
     traversal: &mut ScopeBlockTraversal,
 ) {
     for (block_id, block) in &func.body.blocks {
@@ -2067,7 +1976,7 @@ fn handle_function_deps(
         }
 
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {

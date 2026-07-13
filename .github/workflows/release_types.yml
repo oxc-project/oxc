@@ -43,8 +43,6 @@ jobs:
 
       - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
 
-      - run: npm install -g npm@latest # For trusted publishing support
-
       # Trusted publishing is configured, publish token is not required.
       - name: Trusted Publish
         working-directory: npm/oxc-types

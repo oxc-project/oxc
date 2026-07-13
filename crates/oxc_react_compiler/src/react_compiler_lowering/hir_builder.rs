@@ -1,4 +1,3 @@
-use crate::diagnostics::CompilerError;
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::each_terminal_successor;
@@ -6,6 +5,7 @@ use crate::react_compiler_hir::visitors::terminal_fallthrough;
 use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
+use crate::react_compiler_utils::IdentIndexMap;
 use crate::scope::DeclKind;
 use crate::scope::ImportBindingKind;
 use crate::scope::ScopeId;
@@ -14,12 +14,13 @@ use crate::scope::SymbolId;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
+use oxc_str::{Ident, format_ident};
 
 use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
 
 type BuildResult<'a> = Result<
-    (HIR, Vec<Instruction<'a>>, FxIndexMap<String, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
-    CompilerError,
+    (HIR, Vec<Instruction<'a>>, IdentIndexMap<'a, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
+    OxcDiagnostic,
 >;
 
 // ---------------------------------------------------------------------------
@@ -79,13 +80,13 @@ pub(crate) fn reserved_identifier_diagnostic(name: &str) -> OxcDiagnostic {
 // Scope types for tracking break/continue targets
 // ---------------------------------------------------------------------------
 
-enum Scope {
-    Loop { label: Option<String>, continue_block: BlockId, break_block: BlockId },
-    Label { label: String, break_block: BlockId },
-    Switch { label: Option<String>, break_block: BlockId },
+enum Scope<'a> {
+    Loop { label: Option<Ident<'a>>, continue_block: BlockId, break_block: BlockId },
+    Label { label: Ident<'a>, break_block: BlockId },
+    Switch { label: Option<Ident<'a>>, break_block: BlockId },
 }
 
-impl Scope {
+impl Scope<'_> {
     fn label(&self) -> Option<&str> {
         match self {
             Scope::Loop { label, .. } => label.as_deref(),
@@ -125,7 +126,7 @@ pub struct HirBuilder<'a, 'b> {
     completed: FxIndexMap<BlockId, BasicBlock>,
     current: WipBlock,
     entry: BlockId,
-    scopes: Vec<Scope>,
+    scopes: Vec<Scope<'a>>,
     /// Context identifiers: variables captured from an outer scope.
     /// Maps the outer scope's symbol to the source location where it was referenced.
     context: FxIndexMap<SymbolId, Option<Span>>,
@@ -133,7 +134,7 @@ pub struct HirBuilder<'a, 'b> {
     bindings: FxIndexMap<SymbolId, IdentifierId>,
     /// Names already used by bindings, for collision avoidance.
     /// Maps name string -> how many times it has been used (for appending _0, _1, ...).
-    used_names: FxIndexMap<String, SymbolId>,
+    used_names: IdentIndexMap<'a, SymbolId>,
     env: &'b mut Environment<'a>,
     scope: &'b ScopeResolver<'b, 'a>,
     exception_handler_stack: Vec<BlockId>,
@@ -177,7 +178,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         bindings: Option<FxIndexMap<SymbolId, IdentifierId>>,
         context: Option<FxIndexMap<SymbolId, Option<Span>>>,
         entry_block_kind: Option<BlockKind>,
-        used_names: Option<FxIndexMap<String, SymbolId>>,
+        used_names: Option<IdentIndexMap<'a, SymbolId>>,
         identifier_spans: &'b IdentifierLocIndex,
     ) -> Self {
         let entry = env.next_block_id();
@@ -200,12 +201,6 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             context_identifiers,
             identifier_spans,
         }
-    }
-
-    /// The HIR `Span` for an oxc byte span. Always `Some` (oxc nodes
-    /// always have a span); a `Span` is the byte span itself.
-    pub fn source_location(&self, span: Span) -> Option<Span> {
-        Some(span)
     }
 
     /// Check if a scope is the component scope or a descendant of it.
@@ -232,9 +227,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Create a new unique TypeVar type, allocated from the environment's type arena
     /// so that TypeIds are consistent with identifier type slots.
-    pub fn make_type(&mut self) -> Type {
+    pub fn make_type(&mut self) -> Type<'a> {
         let type_id = self.env.make_type();
-        Type::TypeVar { id: type_id }
+        Type::Var { id: type_id }
     }
 
     /// Access the scope resolver.
@@ -243,9 +238,10 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         self.scope
     }
 
-    /// Look up the source location of an identifier by its node_id.
-    pub fn get_identifier_span(&self, node_id: u32) -> Option<Span> {
-        self.identifier_spans.get(&node_id).map(|entry| entry.span)
+    /// The declaration identifier's span, when the declaration was recorded
+    /// in the compiled function's identifier index.
+    pub fn declaration_span(&self, symbol_id: SymbolId) -> Option<Span> {
+        self.identifier_spans.declaration_span(symbol_id)
     }
 
     /// Access the function scope (the scope of the function being compiled).
@@ -285,13 +281,13 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     }
 
     /// Access the used names map.
-    pub fn used_names(&self) -> &FxIndexMap<String, SymbolId> {
+    pub fn used_names(&self) -> &IdentIndexMap<'a, SymbolId> {
         &self.used_names
     }
 
     /// Merge used names from a child builder back into this builder.
     /// This ensures name deduplication works across function scopes.
-    pub fn merge_used_names(&mut self, child_used_names: FxIndexMap<String, SymbolId>) {
+    pub fn merge_used_names(&mut self, child_used_names: IdentIndexMap<'a, SymbolId>) {
         for (name, symbol_id) in child_used_names {
             self.used_names.entry(name).or_insert(symbol_id);
         }
@@ -316,7 +312,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// then continues in a new block.
     pub fn push(&mut self, instruction: Instruction<'a>) {
         let span = instruction.span;
-        let instr_id = InstructionId(self.instruction_table.len() as u32);
+        let instr_id = InstructionId::from_usize(self.instruction_table.len());
         self.instruction_table.push(instruction);
         self.current.instructions.push(instr_id);
 
@@ -326,7 +322,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 Terminal::MaybeThrow {
                     continuation: continuation.id,
                     handler: Some(handler),
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                     effects: None,
                 },
@@ -359,12 +355,12 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// If `next_block_kind` is `Some`, a new current block is created with that kind.
     /// Returns the BlockId of the completed block.
     pub fn terminate(&mut self, terminal: Terminal, next_block_kind: Option<BlockKind>) -> BlockId {
-        // The placeholder block created here (BlockId(u32::MAX)) is only used when
+        // The placeholder block created here (`BlockId::PLACEHOLDER`) is only used when
         // next_block_kind is None, meaning this is the final terminate() call.
         // It will never be read or completed because build() consumes self
         // immediately after, and no further operations should occur on the builder.
         let wip =
-            std::mem::replace(&mut self.current, new_block(BlockId(u32::MAX), BlockKind::Block));
+            std::mem::replace(&mut self.current, new_block(BlockId::PLACEHOLDER, BlockKind::Block));
         let block_id = wip.id;
 
         self.complete_block(wip, terminal);
@@ -436,12 +432,12 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Push a Loop scope, run the closure, pop and verify.
     pub fn loop_scope<T>(
         &mut self,
-        label: Option<String>,
+        label: Option<Ident<'a>>,
         continue_block: BlockId,
         break_block: BlockId,
         f: impl FnOnce(&mut Self) -> Result<T, OxcDiagnostic>,
     ) -> Result<T, OxcDiagnostic> {
-        self.scopes.push(Scope::Loop { label: label.clone(), continue_block, break_block });
+        self.scopes.push(Scope::Loop { label, continue_block, break_block });
         let value = f(self)?;
         let last = self.scopes.pop().expect("Mismatched loop scope: stack empty");
         match &last {
@@ -462,11 +458,11 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Push a Label scope, run the closure, pop and verify.
     pub fn label_scope<T>(
         &mut self,
-        label: String,
+        label: Ident<'a>,
         break_block: BlockId,
         f: impl FnOnce(&mut Self) -> Result<T, OxcDiagnostic>,
     ) -> Result<T, OxcDiagnostic> {
-        self.scopes.push(Scope::Label { label: label.clone(), break_block });
+        self.scopes.push(Scope::Label { label, break_block });
         let value = f(self)?;
         let last = self.scopes.pop().expect("Mismatched label scope: stack empty");
         match &last {
@@ -484,11 +480,11 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Push a Switch scope, run the closure, pop and verify.
     pub fn switch_scope<T>(
         &mut self,
-        label: Option<String>,
+        label: Option<Ident<'a>>,
         break_block: BlockId,
         f: impl FnOnce(&mut Self) -> Result<T, OxcDiagnostic>,
     ) -> Result<T, OxcDiagnostic> {
-        self.scopes.push(Scope::Switch { label: label.clone(), break_block });
+        self.scopes.push(Scope::Switch { label, break_block });
         let value = f(self)?;
         let last = self.scopes.pop().expect("Mismatched switch scope: stack empty");
         match &last {
@@ -546,13 +542,13 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn make_temporary(&mut self, span: Option<Span>) -> IdentifierId {
         let id = self.env.next_identifier_id();
         // Update the span on the allocated identifier
-        self.env.identifiers[id.0 as usize].span = span;
+        self.env.identifiers[id].span = span;
         id
     }
 
     /// Record an error on the environment.
     /// Returns `Err` for Invariant errors (matching TS throw behavior).
-    pub fn record_error(&mut self, error: OxcDiagnostic) -> Result<(), CompilerError> {
+    pub fn record_error(&mut self, error: OxcDiagnostic) -> Result<(), OxcDiagnostic> {
         self.env.record_error(error)
     }
 
@@ -600,7 +596,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             if !rpo_blocks.contains_key(id) {
                 let has_function_expr = block.instructions.iter().any(|&instr_id| {
                     matches!(
-                        instructions[instr_id.0 as usize].value,
+                        instructions[instr_id.index()].value,
                         InstructionValue::FunctionExpression { .. }
                     )
                 });
@@ -608,7 +604,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                     let span = block
                         .instructions
                         .first()
-                        .and_then(|&i| instructions[i.0 as usize].span)
+                        .and_then(|&i| instructions[i.index()].span)
                         .or_else(|| block.terminal.span().copied());
                     self.env.record_error(
                         ErrorCategory::Todo
@@ -643,19 +639,19 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Records errors for variables named 'fbt' or 'this'.
     pub fn resolve_binding(
         &mut self,
-        name: &str,
+        name: Ident<'a>,
         symbol_id: SymbolId,
-    ) -> Result<IdentifierId, CompilerError> {
+    ) -> Result<IdentifierId, OxcDiagnostic> {
         self.resolve_binding_with_span(name, symbol_id, None)
     }
 
     /// Map a symbol to an HIR IdentifierId, with an optional source location.
     pub fn resolve_binding_with_span(
         &mut self,
-        name: &str,
+        name: Ident<'a>,
         symbol_id: SymbolId,
         span: Option<Span>,
-    ) -> Result<IdentifierId, CompilerError> {
+    ) -> Result<IdentifierId, OxcDiagnostic> {
         // Check for unsupported names BEFORE the cache check.
         // In TS, resolveBinding records fbt errors when node.name === 'fbt'. After a name collision
         // causes a rename (e.g., "fbt" -> "fbt_0"), TS's scope.rename changes the AST node's name,
@@ -666,7 +662,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             let should_record_fbt_error =
                 if let Some(&identifier_id) = self.bindings.get(&symbol_id) {
                     // Already resolved - check if the resolved name is still "fbt"
-                    match &self.env.identifiers[identifier_id.0 as usize].name {
+                    match &self.env.identifiers[identifier_id].name {
                         Some(IdentifierName::Named(resolved_name)) => resolved_name == "fbt",
                         _ => false,
                     }
@@ -675,11 +671,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                     true
                 };
             if should_record_fbt_error {
-                let error_span = self
-                    .scope
-                    .declaration_start(symbol_id)
-                    .and_then(|nid| self.get_identifier_span(nid))
-                    .or(span);
+                let error_span = self.declaration_span(symbol_id).or(span);
                 self.env.record_error(
                     ErrorCategory::Todo
                         .diagnostic("Support local variables named `fbt`")
@@ -694,13 +686,13 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             return Ok(identifier_id);
         }
 
-        if is_always_reserved_word(name) {
+        if is_always_reserved_word(name.as_str()) {
             // Match TS behavior: makeIdentifierName throws for reserved words.
-            return Err(CompilerError::from(reserved_identifier_diagnostic(name)));
+            return Err(reserved_identifier_diagnostic(name.as_str()));
         }
 
         // Find a unique name: start with the original name, then try name_0, name_1, ...
-        let mut candidate = name.to_string();
+        let mut candidate = name;
         let mut index = 0u32;
         while let Some(&existing_symbol_id) = self.used_names.get(&candidate) {
             if existing_symbol_id == symbol_id {
@@ -708,34 +700,30 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 break;
             }
             // Name collision with a different binding, try the next suffix
-            candidate = format!("{}_{}", name, index);
+            candidate = format_ident!(self.env.allocator, "{name}_{index}");
             index += 1;
         }
 
-        // Record rename if the candidate differs from the original name
+        // Record the rename on each resolved reference of the binding, so codegen
+        // can rename matching identifiers inside preserved TS type annotations.
         if candidate != name {
-            if let Some(decl_start) = self.scope.declaration_start(symbol_id) {
-                self.env.renames.push(crate::react_compiler_hir::environment::BindingRename {
-                    original: name.to_string(),
-                    renamed: candidate.clone(),
-                    declaration_start: decl_start,
-                });
+            for &reference_id in self.scope.reference_ids(symbol_id) {
+                self.env.renames.insert(reference_id, candidate);
             }
         }
 
         // Allocate identifier in the arena
         let id = self.env.next_identifier_id();
         // Update the name and span on the allocated identifier
-        self.env.identifiers[id.0 as usize].name = Some(IdentifierName::Named(candidate.clone()));
+        self.env.identifiers[id].name = Some(IdentifierName::Named(candidate));
         // Prefer the binding's declaration span over the reference span.
         // This matches TS behavior where Babel's resolveBinding returns the
         // binding identifier's original span (the declaration site).
-        let decl_span =
-            self.scope.declaration_start(symbol_id).and_then(|nid| self.get_identifier_span(nid));
+        let decl_span = self.declaration_span(symbol_id);
         if let Some(ref dl) = decl_span {
-            self.env.identifiers[id.0 as usize].span = Some(*dl);
+            self.env.identifiers[id].span = Some(*dl);
         } else if let Some(ref span) = span {
-            self.env.identifiers[id.0 as usize].span = Some(*span);
+            self.env.identifiers[id].span = Some(*span);
         }
 
         self.used_names.insert(candidate, symbol_id);
@@ -745,10 +733,8 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Set the span on an identifier to the declaration-site span.
     /// This overrides any previously-set span (which may have come from a reference site).
-    pub fn set_identifier_declaration_span(&mut self, id: IdentifierId, span: &Option<Span>) {
-        if let Some(span_val) = span {
-            self.env.identifiers[id.0 as usize].span = Some(*span_val);
-        }
+    pub fn set_identifier_declaration_span(&mut self, id: IdentifierId, span: Span) {
+        self.env.identifiers[id].span = Some(span);
     }
 
     /// Resolve an identifier reference to a VariableBinding.
@@ -760,55 +746,53 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// - Identifier (local binding, resolved via resolve_binding)
     pub fn resolve_identifier(
         &mut self,
-        name: &str,
-        span: Option<Span>,
+        name: Ident<'a>,
+        span: Span,
         symbol: Option<SymbolId>,
-    ) -> Result<VariableBinding, CompilerError> {
+    ) -> Result<VariableBinding<'a>, OxcDiagnostic> {
         let Some(symbol_id) = symbol else {
             // No binding found: this is a global
-            return Ok(VariableBinding::Global { name: name.to_string() });
+            return Ok(VariableBinding::Global { name });
         };
         // Treat type-only declarations as globals so the compiler
         // doesn't try to create/initialize HIR bindings for them.
-        // TSEnumDeclaration is included because enums inside function
-        // bodies are lowered as UnsupportedNode and their binding
-        // is never initialized in HIR.
+        // TSEnumDeclaration is included because a function with an inline
+        // enum is skipped (`skip_compilation`) and the enum binding is
+        // never initialized in HIR.
         if matches!(
             self.scope.decl_kind(symbol_id),
             DeclKind::TSTypeAliasDeclaration
                 | DeclKind::TSEnumDeclaration
                 | DeclKind::TSModuleDeclaration
         ) {
-            return Ok(VariableBinding::Global { name: name.to_string() });
+            return Ok(VariableBinding::Global { name });
         }
         let symbol_scope = self.scope.symbol_scope(symbol_id);
         if symbol_scope == self.scope.program_scope() {
             // Module-level binding: check import info
             Ok(match self.scope.import_data(symbol_id) {
                 Some(import_info) => match import_info.kind {
-                    ImportBindingKind::Default => VariableBinding::ImportDefault {
-                        name: name.to_string(),
-                        module: import_info.source,
-                    },
+                    ImportBindingKind::Default => {
+                        VariableBinding::ImportDefault { name, module: import_info.source }
+                    }
                     ImportBindingKind::Named => VariableBinding::ImportSpecifier {
-                        name: name.to_string(),
+                        name,
                         module: import_info.source,
-                        imported: import_info.imported.unwrap_or_else(|| name.to_string()),
+                        imported: import_info.imported.unwrap_or(name),
                     },
-                    ImportBindingKind::Namespace => VariableBinding::ImportNamespace {
-                        name: name.to_string(),
-                        module: import_info.source,
-                    },
+                    ImportBindingKind::Namespace => {
+                        VariableBinding::ImportNamespace { name, module: import_info.source }
+                    }
                 },
-                None => VariableBinding::ModuleLocal { name: name.to_string() },
+                None => VariableBinding::ModuleLocal { name },
             })
         } else if !self.is_scope_within_compiled_function(symbol_scope) {
-            Ok(VariableBinding::ModuleLocal { name: name.to_string() })
+            Ok(VariableBinding::ModuleLocal { name })
         } else {
             let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
                 &self.scope.binding_kind(symbol_id),
             );
-            let identifier_id = self.resolve_binding_with_span(name, symbol_id, span)?;
+            let identifier_id = self.resolve_binding_with_span(name, symbol_id, Some(span))?;
             Ok(VariableBinding::Identifier { identifier: identifier_id, binding_kind })
         }
     }
@@ -864,7 +848,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         // None = unresolved binding; Some(matches) = resolved, current name comparison
         let resolved_name_matches = |sid: SymbolId| -> Option<bool> {
             let &identifier_id = self.bindings.get(&sid)?;
-            match &self.env.identifiers[identifier_id.0 as usize].name {
+            match &self.env.identifiers[identifier_id].name {
                 Some(IdentifierName::Named(n)) => Some(n == name),
                 _ => Some(false),
             }
@@ -873,12 +857,12 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         while let Some(id) = current {
             let mut found =
                 self.scope.bindings_in(id).find(|&sid| resolved_name_matches(sid) == Some(true));
-            if found.is_none() {
-                if let Some(sid) = self.scope.get_binding(id, name) {
-                    // Skip bindings that were renamed away from `name`.
-                    if resolved_name_matches(sid) != Some(false) {
-                        found = Some(sid);
-                    }
+            if found.is_none()
+                && let Some(sid) = self.scope.get_binding(id, name)
+            {
+                // Skip bindings that were renamed away from `name`.
+                if resolved_name_matches(sid) != Some(false) {
+                    found = Some(sid);
                 }
             }
             if let Some(sid) = found {
@@ -993,12 +977,11 @@ pub fn get_reverse_postordered_blocks(hir: &HIR) -> FxIndexMap<BlockId, BasicBlo
 pub fn remove_unreachable_for_updates(hir: &mut HIR) {
     let block_ids: FxIndexSet<BlockId> = hir.blocks.keys().copied().collect();
     for block in hir.blocks.values_mut() {
-        if let Terminal::For { update, .. } = &mut block.terminal {
-            if let Some(update_id) = *update {
-                if !block_ids.contains(&update_id) {
-                    *update = None;
-                }
-            }
+        if let Terminal::For { update, .. } = &mut block.terminal
+            && let Some(update_id) = *update
+            && !block_ids.contains(&update_id)
+        {
+            *update = None;
         }
     }
 }
@@ -1013,14 +996,14 @@ pub fn remove_dead_do_while_statements(hir: &mut HIR) {
         } else {
             false
         };
-        if should_replace {
-            if let Terminal::DoWhile { loop_block, id, span, .. } = std::mem::replace(
+        if should_replace
+            && let Terminal::DoWhile { loop_block, id, span, .. } = std::mem::replace(
                 &mut block.terminal,
-                Terminal::Unreachable { id: EvaluationOrder(0), span: None },
-            ) {
-                block.terminal =
-                    Terminal::Goto { block: loop_block, variant: GotoVariant::Break, id, span };
-            }
+                Terminal::Unreachable { id: EvaluationOrder::UNSET, span: None },
+            )
+        {
+            block.terminal =
+                Terminal::Goto { block: loop_block, variant: GotoVariant::Break, id, span };
         }
     }
 }
@@ -1040,10 +1023,9 @@ pub fn remove_unnecessary_try_catch(hir: &mut HIR) {
         .filter_map(|(&block_id, block)| {
             if let Terminal::Try { block: try_block, handler, fallthrough, span, .. } =
                 &block.terminal
+                && !block_ids.contains(handler)
             {
-                if !block_ids.contains(handler) {
-                    return Some((block_id, *try_block, *handler, *fallthrough, *span));
-                }
+                return Some((block_id, *try_block, *handler, *fallthrough, *span));
             }
             None
         })
@@ -1054,7 +1036,7 @@ pub fn remove_unnecessary_try_catch(hir: &mut HIR) {
         if let Some(block) = hir.blocks.get_mut(&block_id) {
             block.terminal = Terminal::Goto {
                 block: try_block,
-                id: EvaluationOrder(0),
+                id: EvaluationOrder::UNSET,
                 span,
                 variant: GotoVariant::Break,
             };
@@ -1078,10 +1060,10 @@ pub fn mark_instruction_ids(hir: &mut HIR, instructions: &mut [Instruction]) {
     for block in hir.blocks.values_mut() {
         for &instr_id in &block.instructions {
             order += 1;
-            instructions[instr_id.0 as usize].id = EvaluationOrder(order);
+            instructions[instr_id.index()].id = EvaluationOrder::from_usize(order as usize);
         }
         order += 1;
-        block.terminal.set_evaluation_order(EvaluationOrder(order));
+        block.terminal.set_evaluation_order(EvaluationOrder::from_usize(order as usize));
     }
 }
 
@@ -1143,6 +1125,6 @@ pub fn mark_predecessors(hir: &mut HIR) {
 pub fn create_temporary_place(env: &mut Environment<'_>, span: Option<Span>) -> Place {
     let id = env.next_identifier_id();
     // Update the span on the allocated identifier
-    env.identifiers[id.0 as usize].span = span;
+    env.identifiers[id].span = span;
     Place { identifier: id, reactive: false, effect: Effect::Unknown, span: None }
 }
