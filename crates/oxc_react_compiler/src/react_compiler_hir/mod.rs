@@ -15,6 +15,7 @@ use oxc_ast::ast as oxc;
 use oxc_diagnostics::OxcDiagnostic;
 pub use oxc_span::Span;
 use oxc_str::{Ident, Str};
+use oxc_syntax::number::ToJsString;
 pub use raw::RawTypeCategory;
 pub use reactive::*;
 
@@ -102,50 +103,7 @@ impl std::hash::Hash for FloatValue {
 
 impl std::fmt::Display for FloatValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format_js_number(self.value()))
-    }
-}
-
-/// Format an f64 the way JavaScript's `Number.prototype.toString()` does.
-///
-/// Key differences from Rust's default `Display`:
-/// - Uses scientific notation for |x| >= 1e21 (e.g. `1e+21`, `2.18739127891275e+22`)
-/// - Uses scientific notation for 0 < |x| < 1e-6 (e.g. `1e-7`, `1.5e-8`)
-/// - Uses minimal significant digits that round-trip to the same f64
-/// - Formats -0 as "0"
-pub fn format_js_number(n: f64) -> String {
-    if n.is_nan() {
-        return "NaN".to_string();
-    }
-    if n.is_infinite() {
-        return if n > 0.0 { "Infinity".to_string() } else { "-Infinity".to_string() };
-    }
-    if n == 0.0 {
-        return "0".to_string();
-    }
-
-    let abs = n.abs();
-    let sign = if n < 0.0 { "-" } else { "" };
-
-    if abs >= 1e21 || (abs > 0.0 && abs < 1e-6) {
-        // Use scientific notation matching JS format: coefficient + "e+" or "e-" + exponent
-        // Rust's {:e} uses "e" (lowercase) like JS, but formats as e.g. "1.5e21" not "1.5e+21"
-        let formatted = format!("{:e}", abs);
-        // Split into coefficient and exponent parts
-        let (coeff, exp_str) = formatted.split_once('e').unwrap();
-        let exp: i32 = exp_str.parse().unwrap();
-        // JS uses e+N for positive exponents, e-N for negative
-        if exp >= 0 {
-            format!("{}{}e+{}", sign, coeff, exp)
-        } else {
-            format!("{}{}e-{}", sign, coeff, exp.unsigned_abs())
-        }
-    } else if abs.fract() == 0.0 && abs < (i64::MAX as f64) {
-        // Integer that fits in i64 — format without decimal point
-        format!("{}{}", sign, abs as i64)
-    } else {
-        // Regular float: Rust's default Display gives us the right digits
-        format!("{}", n)
+        write!(f, "{}", self.value().to_js_string())
     }
 }
 

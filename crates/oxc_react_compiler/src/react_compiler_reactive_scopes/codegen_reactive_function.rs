@@ -3355,16 +3355,9 @@ fn ox_codegen_primitive_value<'a>(
 fn ox_parse_regexp_flags(flags_str: &str) -> oxc::RegExpFlags {
     let mut flags = oxc::RegExpFlags::empty();
     for c in flags_str.chars() {
-        match c {
-            'g' => flags |= oxc::RegExpFlags::G,
-            'i' => flags |= oxc::RegExpFlags::I,
-            'm' => flags |= oxc::RegExpFlags::M,
-            's' => flags |= oxc::RegExpFlags::S,
-            'u' => flags |= oxc::RegExpFlags::U,
-            'y' => flags |= oxc::RegExpFlags::Y,
-            'd' => flags |= oxc::RegExpFlags::D,
-            'v' => flags |= oxc::RegExpFlags::V,
-            _ => {}
+        // Unknown flag chars are ignored (oxc's `TryFrom` returns `Err` for them).
+        if let Ok(flag) = oxc::RegExpFlags::try_from(c) {
+            flags |= flag;
         }
     }
     flags

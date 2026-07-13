@@ -29,14 +29,17 @@ use std::mem::replace;
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
+use oxc_ecmascript::{StringToNumber, ToInt32, ToUint32};
 use oxc_str::Ident;
+use oxc_syntax::identifier::is_identifier_name;
+use oxc_syntax::keyword::is_reserved_keyword;
+use oxc_syntax::number::ToJsString;
 
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BinaryOperator, BlockKind, FloatValue, FunctionId, GotoVariant, HirFunction, IdentifierId,
     InstructionId, InstructionValue, ManualMemoDependencyRoot, NonLocalBinding, Phi, Place,
     PrimitiveValue, PropertyLiteral, Span, Terminal, UnaryOperator, UpdateOperator,
-    format_js_number,
 };
 use crate::react_compiler_lowering::{
     get_reverse_postordered_blocks, mark_instruction_ids, mark_predecessors,
@@ -513,7 +516,7 @@ fn evaluate_instruction<'a>(
                 let expression_str = match sub_prim {
                     PrimitiveValue::Null => "null".to_string(),
                     PrimitiveValue::Boolean(b) => b.to_string(),
-                    PrimitiveValue::Number(n) => format_js_number(n.value()),
+                    PrimitiveValue::Number(n) => n.value().to_js_string(),
                     PrimitiveValue::String(s) => s.to_marker_string(),
                     // TS rejects undefined subexpression values
                     PrimitiveValue::Undefined => return None,
@@ -648,90 +651,10 @@ fn read<'a>(constants: &Constants<'a>, place: &Place) -> Option<Constant<'a>> {
 // Helper: is_valid_identifier
 // =============================================================================
 
-/// Check if a string is a valid JavaScript identifier.
-/// Supports Unicode identifier characters per ECMAScript spec (ID_Start / ID_Continue).
-/// Rejects JS reserved words (matching Babel's `isValidIdentifier` default behavior).
+/// Check if a string is a valid JavaScript identifier that is not a reserved
+/// word (matching Babel's `isValidIdentifier` default behavior).
 fn is_valid_identifier(s: &str) -> bool {
-    if s.is_empty() {
-        return false;
-    }
-    let mut chars = s.chars();
-    match chars.next() {
-        Some(c) if is_id_start(c) => {}
-        _ => return false,
-    }
-    if !chars.all(is_id_continue) {
-        return false;
-    }
-    !is_reserved_word(s)
-}
-
-/// JS reserved words that cannot be used as identifiers.
-/// Includes keywords, future reserved words, and strict mode reserved words.
-fn is_reserved_word(s: &str) -> bool {
-    matches!(
-        s,
-        "break"
-            | "case"
-            | "catch"
-            | "continue"
-            | "debugger"
-            | "default"
-            | "do"
-            | "else"
-            | "finally"
-            | "for"
-            | "function"
-            | "if"
-            | "in"
-            | "instanceof"
-            | "new"
-            | "return"
-            | "switch"
-            | "this"
-            | "throw"
-            | "try"
-            | "typeof"
-            | "var"
-            | "void"
-            | "while"
-            | "with"
-            | "class"
-            | "const"
-            | "enum"
-            | "export"
-            | "extends"
-            | "import"
-            | "super"
-            | "implements"
-            | "interface"
-            | "let"
-            | "package"
-            | "private"
-            | "protected"
-            | "public"
-            | "static"
-            | "yield"
-            | "await"
-            | "delete"
-            | "null"
-            | "true"
-            | "false"
-    )
-}
-
-/// Check if a character is valid as the start of a JS identifier (ID_Start + _ + $).
-fn is_id_start(c: char) -> bool {
-    c == '_' || c == '$' || c.is_alphabetic()
-}
-
-/// Check if a character is valid as a continuation of a JS identifier (ID_Continue + $ + \u200C + \u200D).
-fn is_id_continue(c: char) -> bool {
-    c == '$'
-        || c == '_'
-        || c.is_alphanumeric()
-        || c == '\u{200C}' // ZWNJ
-        || c == '\u{200D}' // ZWJ
+    is_identifier_name(s) && !is_reserved_keyword(s)
 }
 
 // =============================================================================
@@ -807,42 +730,42 @@ fn evaluate_binary_op<'a>(
         },
         BinaryOperator::BitwiseOr => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
-                let result = js_to_int32(l.value()) | js_to_int32(r.value());
+                let result = l.value().to_int_32() | r.value().to_int_32();
                 Some(PrimitiveValue::Number(FloatValue::new(result as f64)))
             }
             _ => None,
         },
         BinaryOperator::BitwiseAnd => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
-                let result = js_to_int32(l.value()) & js_to_int32(r.value());
+                let result = l.value().to_int_32() & r.value().to_int_32();
                 Some(PrimitiveValue::Number(FloatValue::new(result as f64)))
             }
             _ => None,
         },
         BinaryOperator::BitwiseXor => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
-                let result = js_to_int32(l.value()) ^ js_to_int32(r.value());
+                let result = l.value().to_int_32() ^ r.value().to_int_32();
                 Some(PrimitiveValue::Number(FloatValue::new(result as f64)))
             }
             _ => None,
         },
         BinaryOperator::ShiftLeft => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
-                let result = js_to_int32(l.value()) << (js_to_uint32(r.value()) & 0x1f);
+                let result = l.value().to_int_32() << (r.value().to_uint_32() & 0x1f);
                 Some(PrimitiveValue::Number(FloatValue::new(result as f64)))
             }
             _ => None,
         },
         BinaryOperator::ShiftRight => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
-                let result = js_to_int32(l.value()) >> (js_to_uint32(r.value()) & 0x1f);
+                let result = l.value().to_int_32() >> (r.value().to_uint_32() & 0x1f);
                 Some(PrimitiveValue::Number(FloatValue::new(result as f64)))
             }
             _ => None,
         },
         BinaryOperator::UnsignedShiftRight => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
-                let result = js_to_uint32(l.value()) >> (js_to_uint32(r.value()) & 0x1f);
+                let result = l.value().to_uint_32() >> (r.value().to_uint_32() & 0x1f);
                 Some(PrimitiveValue::Number(FloatValue::new(result as f64)))
             }
             _ => None,
@@ -903,43 +826,6 @@ fn js_strict_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
     }
 }
 
-/// Convert a string to a number using JS `ToNumber` semantics.
-/// In JS: `""` → 0, `" "` → 0, `" 42 "` → 42, `"0x1A"` → 26, `"Infinity"` → Infinity.
-fn js_to_number(s: &str) -> f64 {
-    let trimmed = s.trim();
-    if trimmed.is_empty() {
-        return 0.0;
-    }
-    if trimmed == "Infinity" || trimmed == "+Infinity" {
-        return f64::INFINITY;
-    }
-    if trimmed == "-Infinity" {
-        return f64::NEG_INFINITY;
-    }
-    // Handle hex literals (0x/0X)
-    if trimmed.starts_with("0x") || trimmed.starts_with("0X") {
-        return match u64::from_str_radix(&trimmed[2..], 16) {
-            Ok(v) => v as f64,
-            Err(_) => f64::NAN,
-        };
-    }
-    // Handle octal literals (0o/0O)
-    if trimmed.starts_with("0o") || trimmed.starts_with("0O") {
-        return match u64::from_str_radix(&trimmed[2..], 8) {
-            Ok(v) => v as f64,
-            Err(_) => f64::NAN,
-        };
-    }
-    // Handle binary literals (0b/0B)
-    if trimmed.starts_with("0b") || trimmed.starts_with("0B") {
-        return match u64::from_str_radix(&trimmed[2..], 2) {
-            Ok(v) => v as f64,
-            Err(_) => f64::NAN,
-        };
-    }
-    trimmed.parse::<f64>().unwrap_or(f64::NAN)
-}
-
 fn js_abstract_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
     match (lhs, rhs) {
         (PrimitiveValue::Null, PrimitiveValue::Null) => true,
@@ -962,7 +848,7 @@ fn js_abstract_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
             // String is coerced to number using JS ToNumber semantics.
             // Ill-formed strings coerce to NaN, like any non-numeric text.
             let sv = match s.as_str() {
-                Some(utf8) => js_to_number(utf8),
+                Some(utf8) => utf8.string_to_number(),
                 None => f64::NAN,
             };
             let nv = n.value();
@@ -979,24 +865,4 @@ fn js_abstract_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
         // null/undefined vs number/string => false
         _ => false,
     }
-}
-
-// =============================================================================
-// JavaScript Number.toString() approximation
-// =============================================================================
-
-/// ECMAScript ToInt32: convert f64 to i32 with modular (wrapping) semantics.
-fn js_to_int32(n: f64) -> i32 {
-    if n.is_nan() || n.is_infinite() || n == 0.0 {
-        return 0;
-    }
-    // Truncate, then wrap to 32 bits
-    let int64 = (n.trunc() as i64) & 0xFFFFFFFF;
-    // Reinterpret as signed i32
-    if int64 >= 0x80000000 { (int64 as u32) as i32 } else { int64 as i32 }
-}
-
-/// ECMAScript ToUint32: convert f64 to u32 with modular (wrapping) semantics.
-fn js_to_uint32(n: f64) -> u32 {
-    js_to_int32(n) as u32
 }

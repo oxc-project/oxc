@@ -27,6 +27,8 @@ use crate::react_compiler_lowering::FunctionNode;
 use crate::scope::ScopeResolver;
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator};
 use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
+use oxc_syntax::identifier::is_identifier_name;
+use oxc_syntax::keyword::is_reserved_keyword;
 use oxc_syntax::scope::ScopeId;
 use oxc_syntax::symbol::SymbolId;
 
@@ -193,69 +195,10 @@ fn parse_dynamic_gating_directive(value: &str) -> Option<&str> {
     Some(condition)
 }
 
-/// Simple check for valid JavaScript identifier (alphanumeric + underscore + $, starting with letter/$/_ )
-/// Also rejects reserved words like `true`, `false`, `null`, etc.
+/// Check if a string is a valid JavaScript identifier that is not a reserved
+/// word (matching Babel's `isValidIdentifier`).
 fn is_valid_identifier(s: &str) -> bool {
-    if s.is_empty() {
-        return false;
-    }
-    let mut chars = s.chars();
-    let first = chars.next().unwrap();
-    if !first.is_alphabetic() && first != '_' && first != '$' {
-        return false;
-    }
-    if !chars.all(|c| c.is_alphanumeric() || c == '_' || c == '$') {
-        return false;
-    }
-    // Check for reserved words (matching Babel's t.isValidIdentifier)
-    !matches!(
-        s,
-        "break"
-            | "case"
-            | "catch"
-            | "continue"
-            | "debugger"
-            | "default"
-            | "do"
-            | "else"
-            | "finally"
-            | "for"
-            | "function"
-            | "if"
-            | "in"
-            | "instanceof"
-            | "new"
-            | "return"
-            | "switch"
-            | "this"
-            | "throw"
-            | "try"
-            | "typeof"
-            | "var"
-            | "void"
-            | "while"
-            | "with"
-            | "class"
-            | "const"
-            | "enum"
-            | "export"
-            | "extends"
-            | "import"
-            | "super"
-            | "implements"
-            | "interface"
-            | "let"
-            | "package"
-            | "private"
-            | "protected"
-            | "public"
-            | "static"
-            | "yield"
-            | "null"
-            | "true"
-            | "false"
-            | "delete"
-    )
+    is_identifier_name(s) && !is_reserved_keyword(s)
 }
 
 // -----------------------------------------------------------------------
