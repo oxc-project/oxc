@@ -35,3 +35,6 @@ pub mod str;
 
 #[cfg(feature = "string_ext")]
 pub mod string_ext;
+
+#[cfg(feature = "types")]
+pub mod types;

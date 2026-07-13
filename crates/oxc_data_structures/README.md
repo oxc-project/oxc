@@ -19,6 +19,7 @@ This crate provides specialized data structures and utilities that are used thro
 - **Branch prediction hints**: `likely` and `unlikely` functions to hint to the compiler whether a branch is likely to be taken (also re-exports `std::hint::cold_path`)
 - **`StringExt` trait**: Add methods to `String` to push without capacity checks
 - **String utilities**: `const`-compatible string helpers (e.g. `const_str_eq` for comparing strings in a `const` context)
+- **Type utilities**: `implements!` macro to determine if a type implements a trait
 
 ## Architecture
 

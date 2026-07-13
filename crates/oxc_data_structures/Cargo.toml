@@ -39,6 +39,7 @@ all = [
   "stack",
   "str",
   "string_ext",
+  "types",
 ]
 assert_unchecked = []
 box_macros = []
@@ -52,3 +53,4 @@ slice_iter = ["assert_unchecked"]
 stack = []
 str = []
 string_ext = ["assert_unchecked"]
+types = []
