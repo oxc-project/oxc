@@ -72,7 +72,8 @@ use crate::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         is_keyword_property_key,
         object::{
-            format_property_key, should_preserve_quote, should_preserve_quote_for_enum_member,
+            format_property_key, is_quoted_new_method_signature, should_preserve_quote,
+            should_preserve_quote_for_enum_member,
         },
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
@@ -1710,7 +1711,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSSignatur
             let quote_needed = self.as_ref().iter().any(|signature| {
                 let key = match signature {
                     TSSignature::TSPropertySignature(property) => &property.key,
-                    TSSignature::TSMethodSignature(property) => &property.key,
+                    TSSignature::TSMethodSignature(method) => {
+                        // A quoted `new` method keeps its quotes, so it forces quoting the sibling members as well
+                        if is_quoted_new_method_signature(method) {
+                            return true;
+                        }
+                        &method.key
+                    }
                     _ => return false,
                 };
                 should_preserve_quote(key, f)
