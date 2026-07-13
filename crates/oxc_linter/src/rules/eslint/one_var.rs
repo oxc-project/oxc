@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, VariableDeclaration, VariableDeclarationKind},
+    ast::{Declaration, Expression, VariableDeclaration, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -99,9 +99,11 @@ impl Rule for OneVar {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let mut scopes: FxHashMap<(ScopeId, u8), ScopeState> = FxHashMap::default();
-        let previous_statements = previous_statement_ids(ctx);
+        let mut previous_statements = PreviousStatementTracker::default();
+        let separate_requires = self.separate_requires();
 
         for node in ctx.nodes().iter() {
+            let previous_statement_id = previous_statements.visit(node, ctx);
             let AstKind::VariableDeclaration(declaration) = node.kind() else {
                 continue;
             };
@@ -110,16 +112,11 @@ impl Rule for OneVar {
                 continue;
             }
 
-            let counts = DeclarationCounts::new(declaration);
-            let requires = declaration
-                .declarations
-                .iter()
-                .filter(|decl| is_require(decl.init.as_ref()))
-                .count();
-            if self.separate_requires()
+            let facts = DeclarationFacts::new(declaration);
+            if separate_requires
                 && modes.initialized == Some(OneVarMode::Always)
-                && requires > 0
-                && requires != declaration.declarations.len()
+                && facts.requires > 0
+                && facts.requires != declaration.declarations.len()
             {
                 ctx.diagnostic(one_var_diagnostic(
                     declaration.span,
@@ -127,77 +124,85 @@ impl Rule for OneVar {
                 ));
             }
 
-            if let Some(previous) = previous_declaration(node, ctx, &previous_statements)
+            let previous_declaration = previous_statement_id
+                .map(|id| ctx.nodes().get_node(id))
+                .and_then(|node| match node.kind() {
+                    AstKind::VariableDeclaration(declaration) => Some(declaration),
+                    _ => None,
+                });
+            if (modes.initialized == Some(OneVarMode::Consecutive)
+                || modes.uninitialized == Some(OneVarMode::Consecutive))
+                && let Some(previous) = previous_declaration
                 && previous.kind == declaration.kind
-                && !mixed_requires(previous, declaration)
             {
-                let previous_counts = DeclarationCounts::new(previous);
-                if modes.initialized == Some(OneVarMode::Consecutive)
-                    && modes.uninitialized == Some(OneVarMode::Consecutive)
-                {
-                    report_join(
-                        ctx,
-                        declaration,
-                        previous,
-                        format!(
-                            "Combine this with the previous '{}' statement.",
-                            declaration.kind.as_str()
-                        ),
-                    );
-                } else {
+                let previous_facts = DeclarationFacts::new(previous);
+                if !facts.mixed_requires_with(&previous_facts) {
                     if modes.initialized == Some(OneVarMode::Consecutive)
-                        && counts.initialized > 0
-                        && previous_counts.initialized > 0
+                        && modes.uninitialized == Some(OneVarMode::Consecutive)
                     {
                         report_join(
                             ctx,
                             declaration,
                             previous,
                             format!(
-                                "Combine this with the previous '{}' statement with initialized variables.",
+                                "Combine this with the previous '{}' statement.",
                                 declaration.kind.as_str()
                             ),
                         );
-                    }
-                    if modes.uninitialized == Some(OneVarMode::Consecutive)
-                        && counts.uninitialized > 0
-                        && previous_counts.uninitialized > 0
-                    {
-                        report_join(
-                            ctx,
-                            declaration,
-                            previous,
-                            format!(
-                                "Combine this with the previous '{}' statement with uninitialized variables.",
-                                declaration.kind.as_str()
-                            ),
-                        );
+                    } else {
+                        if modes.initialized == Some(OneVarMode::Consecutive)
+                            && facts.initialized > 0
+                            && previous_facts.initialized > 0
+                        {
+                            report_join(
+                                ctx,
+                                declaration,
+                                previous,
+                                format!(
+                                    "Combine this with the previous '{}' statement with initialized variables.",
+                                    declaration.kind.as_str()
+                                ),
+                            );
+                        }
+                        if modes.uninitialized == Some(OneVarMode::Consecutive)
+                            && facts.uninitialized > 0
+                            && previous_facts.uninitialized > 0
+                        {
+                            report_join(
+                                ctx,
+                                declaration,
+                                previous,
+                                format!(
+                                    "Combine this with the previous '{}' statement with uninitialized variables.",
+                                    declaration.kind.as_str()
+                                ),
+                            );
+                        }
                     }
                 }
             }
 
             let scope_id = declaration_scope(node, ctx);
             let state = scopes.entry((scope_id, declaration.kind as u8)).or_default();
-            let has_requires = requires > 0;
+            let has_requires = facts.requires > 0;
             let should_join_initialized = modes.initialized == Some(OneVarMode::Always)
-                && counts.initialized > 0
+                && facts.initialized > 0
                 && state.initialized
                 && !has_requires;
             let should_join_uninitialized = modes.uninitialized == Some(OneVarMode::Always)
-                && counts.uninitialized > 0
+                && facts.uninitialized > 0
                 && state.uninitialized;
             let should_join_all = modes.initialized == Some(OneVarMode::Always)
                 && modes.uninitialized == Some(OneVarMode::Always)
                 && (state.initialized || state.uninitialized)
                 && !has_requires;
-            let should_join_require = self.separate_requires() && has_requires && state.required;
+            let should_join_require = separate_requires && has_requires && state.required;
 
             if should_join_all || should_join_require {
                 report_join_with_optional_previous(
                     ctx,
-                    node,
                     declaration,
-                    &previous_statements,
+                    previous_declaration,
                     format!(
                         "Combine this with the previous '{}' statement.",
                         declaration.kind.as_str()
@@ -207,9 +212,8 @@ impl Rule for OneVar {
                 if should_join_initialized {
                     report_join_with_optional_previous(
                         ctx,
-                        node,
                         declaration,
-                        &previous_statements,
+                        previous_declaration,
                         format!(
                             "Combine this with the previous '{}' statement with initialized variables.",
                             declaration.kind.as_str()
@@ -219,9 +223,8 @@ impl Rule for OneVar {
                 if should_join_uninitialized && !is_for_in_or_of_left(node, ctx) {
                     report_join_with_optional_previous(
                         ctx,
-                        node,
                         declaration,
-                        &previous_statements,
+                        previous_declaration,
                         format!(
                             "Combine this with the previous '{}' statement with uninitialized variables.",
                             declaration.kind.as_str()
@@ -230,14 +233,14 @@ impl Rule for OneVar {
                 }
             }
 
-            if modes.initialized == Some(OneVarMode::Always) && counts.initialized > 0 {
-                if self.separate_requires() && has_requires {
+            if modes.initialized == Some(OneVarMode::Always) && facts.initialized > 0 {
+                if separate_requires && has_requires {
                     state.required = true;
                 } else {
                     state.initialized = true;
                 }
             }
-            if modes.uninitialized == Some(OneVarMode::Always) && counts.uninitialized > 0 {
+            if modes.uninitialized == Some(OneVarMode::Always) && facts.uninitialized > 0 {
                 state.uninitialized = true;
             }
 
@@ -255,7 +258,7 @@ impl Rule for OneVar {
                         ),
                     );
                 } else {
-                    if modes.initialized == Some(OneVarMode::Never) && counts.initialized > 0 {
+                    if modes.initialized == Some(OneVarMode::Never) && facts.initialized > 0 {
                         report_split(
                             ctx,
                             node,
@@ -266,7 +269,7 @@ impl Rule for OneVar {
                             ),
                         );
                     }
-                    if modes.uninitialized == Some(OneVarMode::Never) && counts.uninitialized > 0 {
+                    if modes.uninitialized == Some(OneVarMode::Never) && facts.uninitialized > 0 {
                         report_split(
                             ctx,
                             node,
@@ -323,35 +326,35 @@ struct ScopeState {
     required: bool,
 }
 
-struct DeclarationCounts {
+struct DeclarationFacts {
     initialized: usize,
     uninitialized: usize,
+    requires: usize,
 }
 
-impl DeclarationCounts {
+impl DeclarationFacts {
     fn new(declaration: &VariableDeclaration<'_>) -> Self {
-        let initialized =
-            declaration.declarations.iter().filter(|decl| decl.init.is_some()).count();
-        Self { initialized, uninitialized: declaration.declarations.len() - initialized }
+        let mut initialized = 0;
+        let mut requires = 0;
+        for declarator in &declaration.declarations {
+            if let Some(initializer) = &declarator.init {
+                initialized += 1;
+                requires += usize::from(is_require(Some(initializer)));
+            }
+        }
+        Self { initialized, uninitialized: declaration.declarations.len() - initialized, requires }
+    }
+
+    fn mixed_requires_with(&self, other: &Self) -> bool {
+        let requires = self.requires + other.requires;
+        requires > 0
+            && requires
+                != self.initialized + self.uninitialized + other.initialized + other.uninitialized
     }
 }
 
 fn is_require(expression: Option<&Expression<'_>>) -> bool {
     matches!(expression, Some(Expression::CallExpression(call)) if call.callee_name() == Some("require"))
-}
-
-fn mixed_requires(left: &VariableDeclaration<'_>, right: &VariableDeclaration<'_>) -> bool {
-    let declarations = left.declarations.iter().chain(&right.declarations);
-    let mut require = false;
-    let mut other = false;
-    for declaration in declarations {
-        if is_require(declaration.init.as_ref()) {
-            require = true;
-        } else {
-            other = true;
-        }
-    }
-    require && other
 }
 
 fn declaration_scope(node: &AstNode<'_>, ctx: &LintContext<'_>) -> ScopeId {
@@ -391,42 +394,36 @@ fn statement_node_id(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<NodeId
     }
 }
 
-fn previous_statement_ids(ctx: &LintContext<'_>) -> FxHashMap<NodeId, NodeId> {
-    let mut statement_lists: FxHashMap<NodeId, Vec<(u32, NodeId)>> = FxHashMap::default();
-    for node in ctx.nodes().iter() {
+#[derive(Default)]
+struct PreviousStatementTracker {
+    last_by_parent: FxHashMap<NodeId, NodeId>,
+    exported_variable_previous: FxHashMap<NodeId, NodeId>,
+}
+
+impl PreviousStatementTracker {
+    fn visit(&mut self, node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<NodeId> {
         let parent = ctx.nodes().parent_node(node.id());
         if is_statement_list_parent(parent.kind()) {
-            statement_lists.entry(parent.id()).or_default().push((node.span().start, node.id()));
+            let previous = self.last_by_parent.insert(parent.id(), node.id());
+            debug_assert!(
+                previous.is_none_or(|id| {
+                    ctx.nodes().get_node(id).span().start <= node.span().start
+                })
+            );
+            if matches!(
+                node.kind(),
+                AstKind::ExportNamedDeclaration(export)
+                    if matches!(export.declaration.as_ref(), Some(Declaration::VariableDeclaration(_)))
+            ) && let Some(previous) = previous
+            {
+                self.exported_variable_previous.insert(node.id(), previous);
+            }
+            previous
+        } else if matches!(parent.kind(), AstKind::ExportNamedDeclaration(_)) {
+            self.exported_variable_previous.remove(&parent.id())
+        } else {
+            None
         }
-    }
-
-    let mut previous = FxHashMap::default();
-    for statements in statement_lists.values_mut() {
-        statements.sort_unstable_by_key(|&(start, _)| start);
-        for pair in statements.windows(2) {
-            previous.insert(pair[1].1, pair[0].1);
-        }
-    }
-    previous
-}
-
-fn previous_statement<'a, 'c>(
-    node: &AstNode<'a>,
-    ctx: &'c LintContext<'a>,
-    previous_statements: &FxHashMap<NodeId, NodeId>,
-) -> Option<&'c AstNode<'a>> {
-    let statement_id = statement_node_id(node, ctx)?;
-    previous_statements.get(&statement_id).map(|&previous_id| ctx.nodes().get_node(previous_id))
-}
-
-fn previous_declaration<'a, 'c>(
-    node: &AstNode<'a>,
-    ctx: &'c LintContext<'a>,
-    previous_statements: &FxHashMap<NodeId, NodeId>,
-) -> Option<&'c VariableDeclaration<'a>> {
-    match previous_statement(node, ctx, previous_statements)?.kind() {
-        AstKind::VariableDeclaration(declaration) => Some(declaration),
-        _ => None,
     }
 }
 
@@ -443,14 +440,11 @@ fn is_for_in_or_of_left(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
 
 fn report_join_with_optional_previous<'a>(
     ctx: &LintContext<'a>,
-    node: &AstNode<'a>,
     declaration: &VariableDeclaration<'a>,
-    previous_statements: &FxHashMap<NodeId, NodeId>,
+    previous: Option<&VariableDeclaration<'a>>,
     message: String,
 ) {
-    if let Some(previous) = previous_declaration(node, ctx, previous_statements)
-        .filter(|previous| previous.kind == declaration.kind)
-    {
+    if let Some(previous) = previous.filter(|previous| previous.kind == declaration.kind) {
         report_join(ctx, declaration, previous, message);
     } else {
         ctx.diagnostic(one_var_diagnostic(declaration.span, message));
