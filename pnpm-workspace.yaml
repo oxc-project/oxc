@@ -10,7 +10,7 @@ packages:
 catalog:
   "@emnapi/core": 1.11.1
   "@emnapi/runtime": 1.11.1
-  "@arethetypeswrong/core": 0.18.4
+  "@arethetypeswrong/core": 0.18.5
   "@napi-rs/cli": 3.7.3
   "@napi-rs/wasm-runtime": 1.1.6
   "@types/node": 24.1.0
@@ -22,7 +22,7 @@ catalog:
   rolldown: 1.1.5
   tsdown: 0.22.5
   vite-plus: 0.2.4
-  vitest: 4.1.9
+  vitest: 4.1.10
 
 overrides:
   rolldown: "catalog:"
