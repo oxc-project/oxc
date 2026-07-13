@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.140.0] - 2026-07-13
+
+### 🚀 Features
+
+- 616bfa2 minifier: Remove unreachable code after terminating statements (#24441) (Dunqing)
+- b79eef7 minifier: Apply De Morgan's law to negated comparison chains in jump guards and loop tests (#24279) (Dunqing)
+- 34ff7b4 minifier: Drop write-only property assignments to unused local bindings by default (#24112) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 7d33363 minifier: Preserve guaranteed throws from class heritage evaluation (#24349) (Dunqing)
+- 40f769d minifier: Make `__proto__` write tracking execution-order independent (#24280) (Dunqing)
+
+### ⚡ Performance
+
+- b227a06 minifier: Use `ReplaceWith` instead of `TakeIn` (#24017) (overlookmotel)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🚀 Features

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.140.0] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- c3057da transformer: Preserve generated class binding spans (#24220) (camc314)
+
 ## [0.139.0] - 2026-07-06
 
 ### ⚡ Performance
