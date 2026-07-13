@@ -13,7 +13,7 @@ use crate::{
     utils::{
         assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        suppressed::FormatSuppressedNode,
+        suppressed::FormatSuppressedNode, typecast::format_leading_comments_and_open_paren,
     },
     write,
 };
@@ -894,7 +894,7 @@ fn format_sequence_with_leading_comment<'a, 'b>(
     let is_suppressed = f.comments().is_suppressed(sequence_span.start);
 
     let format_sequence = format_with(move |f| {
-        write!(f, [format_leading_comments(sequence_span), "("]);
+        format_leading_comments_and_open_paren(sequence_span, true, f);
         if is_suppressed {
             write!(f, FormatSuppressedNode(sequence_span));
         } else {

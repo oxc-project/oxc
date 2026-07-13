@@ -1,9 +1,13 @@
 use oxc_ast::Comment;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     Buffer, Format, format_args,
-    formatter::{JsFormatter, prelude::*, trivia::FormatLeadingComments},
+    formatter::{
+        JsFormatter,
+        prelude::*,
+        trivia::{FormatLeadingComments, format_leading_comments},
+    },
     write,
 };
 
@@ -122,6 +126,51 @@ pub fn format_type_cast_comment_node<'a>(
     }
 
     true
+}
+
+/// Prints a node's leading comments and the formatter-added `(` in the correct order.
+/// The caller prints the matching `)` when `needs_parentheses` is true.
+///
+/// When the leading comments end with a type cast comment whose cast binds to an
+/// inner expression (the `(` right after the comment closes before the end of the
+/// node; a cast applying to the node itself is already handled by
+/// [`format_type_cast_comment_node`]), printing the comments first would insert
+/// the added `(` between the comment and its cast target, rebinding the cast and
+/// changing the type semantics:
+/// `x ? y : /** @type {D} */ (a).b ?? c`
+/// must become `x ? y : (/** @type {D} */ (a).b ?? c)`,
+/// not `x ? y : /** @type {D} */ ((a).b ?? c)`.
+/// In that case the comments are printed inside the added parenthesis.
+pub fn format_leading_comments_and_open_paren(
+    span: Span,
+    needs_parentheses: bool,
+    f: &mut JsFormatter<'_, '_>,
+) {
+    if needs_parentheses {
+        let comments = f.context().comments().comments_before(span.start);
+        if let Some(last) = comments.last() {
+            let source = f.source_text();
+            if source.next_non_whitespace_byte_is(last.span.end, b'(')
+                && f.comments().is_type_cast_comment(last)
+                && has_closed_parentheses(source.bytes_range(last.span.end, span.end))
+            {
+                // Only the cast comment moves inside; earlier comments stay outside.
+                let split = comments.len() - 1;
+                write!(
+                    f,
+                    [
+                        FormatLeadingComments::Comments(&comments[..split]),
+                        "(",
+                        FormatLeadingComments::Comments(&comments[split..])
+                    ]
+                );
+                return;
+            }
+        }
+        write!(f, [format_leading_comments(span), "("]);
+    } else {
+        write!(f, format_leading_comments(span));
+    }
 }
 
 /// Check if the source text has properly closed parentheses starting with '('.
