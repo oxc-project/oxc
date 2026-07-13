@@ -269,8 +269,8 @@ impl AliasingState {
             node.last_mutated = node.last_mutated.max(index);
 
             if let Some(end_val) = end {
-                let ident = &mut env.identifiers[node.id.0 as usize];
-                ident.mutable_range.end = EvaluationOrder(ident.mutable_range.end.0.max(end_val.0));
+                let ident = &mut env.identifiers[node.id.index()];
+                ident.mutable_range.end = ident.mutable_range.end.max(end_val);
             }
 
             if let NodeValue::Function { function_id } = &node.value {
@@ -398,7 +398,7 @@ impl AliasingState {
 // =============================================================================
 
 fn append_function_errors(env: &mut Environment, function_id: FunctionId) {
-    let func = &env.functions[function_id.0 as usize];
+    let func = &env.functions[function_id.index()];
     if let Some(ref effects) = func.aliasing_effects {
         // Collect errors first to avoid borrow conflict
         let errors: Vec<_> = effects
@@ -508,7 +508,7 @@ pub fn infer_mutation_aliasing_ranges(
         // Process instruction effects
         let instr_ids: Vec<_> = block.instructions.clone();
         for instr_id in &instr_ids {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let instr_eval_order = instr.id;
             let effects = match &instr.effects {
                 Some(e) => e.clone(),
@@ -657,7 +657,7 @@ pub fn infer_mutation_aliasing_ranges(
         state.mutate(
             mutation.index,
             mutation.place.identifier,
-            Some(EvaluationOrder(mutation.id.0 + 1)),
+            Some(mutation.id + 1),
             mutation.transitive,
             mutation.kind,
             mutation.place.span,
@@ -742,11 +742,11 @@ pub fn infer_mutation_aliasing_ranges(
                 let first_instr_id = block
                     .instructions
                     .first()
-                    .map(|id| func.instructions[id.0 as usize].id)
+                    .map(|id| func.instructions[id.index()].id)
                     .unwrap_or_else(|| block.terminal.evaluation_order());
 
                 let is_mutated_after_creation =
-                    env.identifiers[phi.place.identifier.0 as usize].mutable_range.end
+                    env.identifiers[phi.place.identifier.index()].mutable_range.end
                         > first_instr_id;
 
                 (
@@ -774,9 +774,10 @@ pub fn infer_mutation_aliasing_ranges(
             }
 
             if *is_mutated_after_creation {
-                let ident = &mut env.identifiers[phi_id.0 as usize];
-                if ident.mutable_range.start == EvaluationOrder(0) {
-                    ident.mutable_range.start = EvaluationOrder(first_instr_id.0.saturating_sub(1));
+                let ident = &mut env.identifiers[phi_id.index()];
+                if ident.mutable_range.start == EvaluationOrder::UNSET {
+                    ident.mutable_range.start =
+                        EvaluationOrder::from_usize(first_instr_id.index().saturating_sub(1));
                 }
             }
         }
@@ -785,42 +786,40 @@ pub fn infer_mutation_aliasing_ranges(
         let instr_ids: Vec<_> = block.instructions.clone();
 
         for instr_id in &instr_ids {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let eval_order = instr.id;
 
             // Set lvalue effect to ConditionallyMutate and fix up mutable range
             // This covers the top-level lvalue
             let lvalue_id = instr.lvalue.identifier;
             {
-                let ident = &mut env.identifiers[lvalue_id.0 as usize];
-                if ident.mutable_range.start == EvaluationOrder(0) {
+                let ident = &mut env.identifiers[lvalue_id.index()];
+                if ident.mutable_range.start == EvaluationOrder::UNSET {
                     ident.mutable_range.start = eval_order;
                 }
-                if ident.mutable_range.end == EvaluationOrder(0) {
-                    ident.mutable_range.end =
-                        EvaluationOrder((eval_order.0 + 1).max(ident.mutable_range.end.0));
+                if ident.mutable_range.end == EvaluationOrder::UNSET {
+                    ident.mutable_range.end = (eval_order + 1).max(ident.mutable_range.end);
                 }
             }
-            func.instructions[instr_id.0 as usize].lvalue.effect = Effect::ConditionallyMutate;
+            func.instructions[instr_id.index()].lvalue.effect = Effect::ConditionallyMutate;
 
             // Also handle value-level lvalues (DeclareLocal, StoreLocal, etc.)
             let value_lvalue_ids: Vec<IdentifierId> =
-                each_instruction_value_lvalue(&func.instructions[instr_id.0 as usize].value)
+                each_instruction_value_lvalue(&func.instructions[instr_id.index()].value)
                     .into_iter()
                     .map(|p| p.identifier)
                     .collect();
             for vlid in &value_lvalue_ids {
-                let ident = &mut env.identifiers[vlid.0 as usize];
-                if ident.mutable_range.start == EvaluationOrder(0) {
+                let ident = &mut env.identifiers[vlid.index()];
+                if ident.mutable_range.start == EvaluationOrder::UNSET {
                     ident.mutable_range.start = eval_order;
                 }
-                if ident.mutable_range.end == EvaluationOrder(0) {
-                    ident.mutable_range.end =
-                        EvaluationOrder((eval_order.0 + 1).max(ident.mutable_range.end.0));
+                if ident.mutable_range.end == EvaluationOrder::UNSET {
+                    ident.mutable_range.end = (eval_order + 1).max(ident.mutable_range.end);
                 }
             }
             for_each_instruction_value_lvalue_mut(
-                &mut func.instructions[instr_id.0 as usize].value,
+                &mut func.instructions[instr_id.index()].value,
                 &mut |place| {
                     place.effect = Effect::ConditionallyMutate;
                 },
@@ -828,13 +827,13 @@ pub fn infer_mutation_aliasing_ranges(
 
             // Set operand effects to Read
             for_each_instruction_value_operand_mut(
-                &mut func.instructions[instr_id.0 as usize].value,
+                &mut func.instructions[instr_id.index()].value,
                 &mut |place| {
                     place.effect = Effect::Read;
                 },
             );
 
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             if instr.effects.is_none() {
                 continue;
             }
@@ -851,8 +850,7 @@ pub fn infer_mutation_aliasing_ranges(
                     | AliasingEffect::CreateFrom { from, into }
                     | AliasingEffect::MaybeAlias { from, into } => {
                         let is_mutated_or_reassigned =
-                            env.identifiers[into.identifier.0 as usize].mutable_range.end
-                                > eval_order;
+                            env.identifiers[into.identifier.index()].mutable_range.end > eval_order;
                         if is_mutated_or_reassigned {
                             operand_effects.insert(from.identifier, Effect::Capture);
                             operand_effects.insert(into.identifier, Effect::Store);
@@ -893,7 +891,7 @@ pub fn infer_mutation_aliasing_ranges(
             }
 
             // Apply operand effects to top-level lvalue
-            let instr = &mut func.instructions[instr_id.0 as usize];
+            let instr = &mut func.instructions[instr_id.index()];
             let lvalue_id = instr.lvalue.identifier;
             if let Some(&effect) = operand_effects.get(&lvalue_id) {
                 instr.lvalue.effect = effect;
@@ -909,12 +907,11 @@ pub fn infer_mutation_aliasing_ranges(
             {
                 let mut apply = |place: &mut Place| {
                     // Fix up mutable range start
-                    let ident = &env.identifiers[place.identifier.0 as usize];
+                    let ident = &env.identifiers[place.identifier.index()];
                     if ident.mutable_range.end > eval_order
-                        && ident.mutable_range.start == EvaluationOrder(0)
+                        && ident.mutable_range.start == EvaluationOrder::UNSET
                     {
-                        env.identifiers[place.identifier.0 as usize].mutable_range.start =
-                            eval_order;
+                        env.identifiers[place.identifier.index()].mutable_range.start = eval_order;
                     }
                     // Apply effect
                     if let Some(&effect) = operand_effects.get(&place.identifier) {
@@ -929,20 +926,20 @@ pub fn infer_mutation_aliasing_ranges(
                 | InstructionValue::ObjectMethod { lowered_func, .. } = &instr.value
                 {
                     let func_id = lowered_func.func;
-                    let ctx_ids: Vec<IdentifierId> = env.functions[func_id.0 as usize]
+                    let ctx_ids: Vec<IdentifierId> = env.functions[func_id.index()]
                         .context
                         .iter()
                         .map(|c| c.identifier)
                         .collect();
                     for ctx_id in &ctx_ids {
-                        let ident = &env.identifiers[ctx_id.0 as usize];
+                        let ident = &env.identifiers[ctx_id.index()];
                         if ident.mutable_range.end > eval_order
-                            && ident.mutable_range.start == EvaluationOrder(0)
+                            && ident.mutable_range.start == EvaluationOrder::UNSET
                         {
-                            env.identifiers[ctx_id.0 as usize].mutable_range.start = eval_order;
+                            env.identifiers[ctx_id.index()].mutable_range.start = eval_order;
                         }
                         let effect = operand_effects.get(ctx_id).copied().unwrap_or(Effect::Read);
-                        let inner_func = &mut env.functions[func_id.0 as usize];
+                        let inner_func = &mut env.functions[func_id.index()];
                         for ctx_place in &mut inner_func.context {
                             if ctx_place.identifier == *ctx_id {
                                 ctx_place.effect = effect;
@@ -953,13 +950,12 @@ pub fn infer_mutation_aliasing_ranges(
             }
 
             // Handle StoreContext case: extend rvalue range if needed
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             if let InstructionValue::StoreContext { value, .. } = &instr.value {
                 let val_id = value.identifier;
-                let val_range_end = env.identifiers[val_id.0 as usize].mutable_range.end;
+                let val_range_end = env.identifiers[val_id.index()].mutable_range.end;
                 if val_range_end <= eval_order {
-                    env.identifiers[val_id.0 as usize].mutable_range.end =
-                        EvaluationOrder(eval_order.0 + 1);
+                    env.identifiers[val_id.index()].mutable_range.end = eval_order + 1;
                 }
             }
         }
@@ -982,8 +978,8 @@ pub fn infer_mutation_aliasing_ranges(
     // Part 3: Finish populating the externally visible effects
     // =========================================================================
     let returns_id = func.returns.identifier;
-    let returns_type_id = env.identifiers[returns_id.0 as usize].type_;
-    let returns_type = &env.types[returns_type_id.0 as usize];
+    let returns_type_id = env.identifiers[returns_id.index()].type_;
+    let returns_type = &env.types[returns_type_id.index()];
     let return_value_kind = if is_primitive_type(returns_type) {
         ValueKind::Primitive
     } else if is_jsx_type(returns_type) {

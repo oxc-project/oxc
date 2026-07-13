@@ -197,7 +197,7 @@ pub fn infer_mutation_aliasing_effects(
             // Check for uninitialized identifier access (matches TS invariant:
             // "Expected value kind to be initialized")
             if let Some((uninitialized_id, usage_span)) = state.uninitialized_access.get() {
-                let ident_info = env.identifiers.get(uninitialized_id.0 as usize);
+                let ident_info = env.identifiers.get(uninitialized_id.index());
                 let name = ident_info
                     .and_then(|ident| ident.name.as_ref())
                     .map(|n| n.value().to_string())
@@ -207,11 +207,12 @@ pub fn infer_mutation_aliasing_effects(
                 // Match TS printPlace format: "<unknown> name$id:type"
                 let type_str = ident_info
                     .map(|ident| {
-                        let ty = &env.types[ident.type_.0 as usize];
+                        let ty = &env.types[ident.type_.index()];
                         format_type_for_print(ty)
                     })
                     .unwrap_or_default();
-                let description = format!("<unknown> {}${}{}", name, uninitialized_id.0, type_str);
+                let description =
+                    format!("<unknown> {}${}{}", name, uninitialized_id.index(), type_str);
                 let diag = ErrorCategory::Invariant
                     .diagnostic(
                         "[InferMutationAliasingEffects] Expected value kind to be initialized",
@@ -247,6 +248,12 @@ static NEXT_VALUE_ID: AtomicU32 = AtomicU32::new(1);
 impl ValueId {
     fn new() -> Self {
         ValueId(NEXT_VALUE_ID.fetch_add(1, Ordering::Relaxed))
+    }
+
+    /// Deterministic value id derived from an identifier's current value. The high bit is
+    /// set so these never collide with the counter-allocated ids from `new()`.
+    fn from_identifier(id: IdentifierId) -> Self {
+        ValueId(id.index() as u32 | 0x80000000)
     }
 }
 
@@ -344,7 +351,7 @@ impl InferenceState {
             None => {
                 // Create a stable value for uninitialized identifiers
                 // Use a deterministic ID based on the from identifier
-                let vid = ValueId(from.0 | 0x80000000);
+                let vid = ValueId::from_identifier(from);
                 let mut set = FxHashSet::default();
                 set.insert(vid);
                 self.values.entry(vid).or_insert_with(|| AbstractValue {
@@ -423,7 +430,7 @@ impl InferenceState {
         env: &Environment,
         usage_span: Option<Span>,
     ) -> MutationResult {
-        let ty = &env.types[env.identifiers[place_id.0 as usize].type_.0 as usize];
+        let ty = &env.types[env.identifiers[place_id.index()].type_.index()];
         if is_ref_or_ref_value(ty) {
             return MutationResult::MutateRef;
         }
@@ -596,67 +603,74 @@ fn hash_effect(effect: &AliasingEffect) -> String {
                 .iter()
                 .map(|a| match a {
                     PlaceOrSpreadOrHole::Hole => Cow::Borrowed(""),
-                    PlaceOrSpreadOrHole::Place(p) => Cow::Owned(format!("{}", p.identifier.0)),
+                    PlaceOrSpreadOrHole::Place(p) => {
+                        Cow::Owned(format!("{}", p.identifier.index()))
+                    }
                     PlaceOrSpreadOrHole::Spread(s) => {
-                        Cow::Owned(format!("...{}", s.place.identifier.0))
+                        Cow::Owned(format!("...{}", s.place.identifier.index()))
                     }
                 })
                 .collect();
             format!(
                 "Apply:{}:{}:{}:{}:{}",
-                receiver.identifier.0,
-                function.identifier.0,
+                receiver.identifier.index(),
+                function.identifier.index(),
                 mutates_function,
                 args_str.join(","),
-                into.identifier.0
+                into.identifier.index()
             )
         }
         AliasingEffect::CreateFrom { from, into } => {
-            format!("CreateFrom:{}:{}", from.identifier.0, into.identifier.0)
+            format!("CreateFrom:{}:{}", from.identifier.index(), into.identifier.index())
         }
         AliasingEffect::ImmutableCapture { from, into } => {
-            format!("ImmutableCapture:{}:{}", from.identifier.0, into.identifier.0)
+            format!("ImmutableCapture:{}:{}", from.identifier.index(), into.identifier.index())
         }
         AliasingEffect::Assign { from, into } => {
-            format!("Assign:{}:{}", from.identifier.0, into.identifier.0)
+            format!("Assign:{}:{}", from.identifier.index(), into.identifier.index())
         }
         AliasingEffect::Alias { from, into } => {
-            format!("Alias:{}:{}", from.identifier.0, into.identifier.0)
+            format!("Alias:{}:{}", from.identifier.index(), into.identifier.index())
         }
         AliasingEffect::Capture { from, into } => {
-            format!("Capture:{}:{}", from.identifier.0, into.identifier.0)
+            format!("Capture:{}:{}", from.identifier.index(), into.identifier.index())
         }
         AliasingEffect::MaybeAlias { from, into } => {
-            format!("MaybeAlias:{}:{}", from.identifier.0, into.identifier.0)
+            format!("MaybeAlias:{}:{}", from.identifier.index(), into.identifier.index())
         }
         AliasingEffect::Create { into, value, reason } => {
-            format!("Create:{}:{:?}:{:?}", into.identifier.0, value, reason)
+            format!("Create:{}:{:?}:{:?}", into.identifier.index(), value, reason)
         }
         AliasingEffect::Freeze { value, reason } => {
-            format!("Freeze:{}:{:?}", value.identifier.0, reason)
+            format!("Freeze:{}:{:?}", value.identifier.index(), reason)
         }
-        AliasingEffect::Impure { place, .. } => format!("Impure:{}", place.identifier.0),
-        AliasingEffect::Render { place } => format!("Render:{}", place.identifier.0),
+        AliasingEffect::Impure { place, .. } => format!("Impure:{}", place.identifier.index()),
+        AliasingEffect::Render { place } => format!("Render:{}", place.identifier.index()),
         AliasingEffect::MutateFrozen { place, error } => {
-            format!("MutateFrozen:{}:{}:{:?}", place.identifier.0, error.message, error.help)
+            format!("MutateFrozen:{}:{}:{:?}", place.identifier.index(), error.message, error.help)
         }
         AliasingEffect::MutateGlobal { place, error } => {
-            format!("MutateGlobal:{}:{}:{:?}", place.identifier.0, error.message, error.help)
+            format!("MutateGlobal:{}:{}:{:?}", place.identifier.index(), error.message, error.help)
         }
-        AliasingEffect::Mutate { value, .. } => format!("Mutate:{}", value.identifier.0),
+        AliasingEffect::Mutate { value, .. } => format!("Mutate:{}", value.identifier.index()),
         AliasingEffect::MutateConditionally { value } => {
-            format!("MutateConditionally:{}", value.identifier.0)
+            format!("MutateConditionally:{}", value.identifier.index())
         }
         AliasingEffect::MutateTransitive { value } => {
-            format!("MutateTransitive:{}", value.identifier.0)
+            format!("MutateTransitive:{}", value.identifier.index())
         }
         AliasingEffect::MutateTransitiveConditionally { value } => {
-            format!("MutateTransitiveConditionally:{}", value.identifier.0)
+            format!("MutateTransitiveConditionally:{}", value.identifier.index())
         }
         AliasingEffect::CreateFunction { into, function_id, captures } => {
             let cap_str: Vec<String> =
-                captures.iter().map(|p| format!("{}", p.identifier.0)).collect();
-            format!("CreateFunction:{}:{}:{}", into.identifier.0, function_id.0, cap_str.join(","))
+                captures.iter().map(|p| format!("{}", p.identifier.index())).collect();
+            format!(
+                "CreateFunction:{}:{}:{}",
+                into.identifier.index(),
+                function_id.index(),
+                cap_str.join(",")
+            )
         }
     }
 }
@@ -724,7 +738,7 @@ fn find_hoisted_context_declarations(
         place: &Place,
         env: &Environment,
     ) {
-        let decl_id = env.identifiers[place.identifier.0 as usize].declaration_id;
+        let decl_id = env.identifiers[place.identifier.index()].declaration_id;
         if hoisted.contains_key(&decl_id) && hoisted.get(&decl_id).unwrap().is_none() {
             hoisted.insert(decl_id, Some(place.clone()));
         }
@@ -732,7 +746,7 @@ fn find_hoisted_context_declarations(
 
     for (_block_id, block) in &func.body.blocks {
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::DeclareContext { lvalue, .. } => {
                     let kind = lvalue.kind;
@@ -741,7 +755,7 @@ fn find_hoisted_context_declarations(
                         || kind == InstructionKind::HoistedLet
                     {
                         let decl_id =
-                            env.identifiers[lvalue.place.identifier.0 as usize].declaration_id;
+                            env.identifiers[lvalue.place.identifier.index()].declaration_id;
                         hoisted.insert(decl_id, None);
                     }
                 }
@@ -791,7 +805,7 @@ fn find_non_mutated_destructure_spreads(
             }
         }
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue_id = instr.lvalue.identifier;
             match &instr.value {
                 InstructionValue::Destructure { lvalue, value, .. } => {
@@ -839,7 +853,7 @@ fn find_non_mutated_destructure_spreads(
                 InstructionValue::CallExpression { callee, .. }
                 | InstructionValue::MethodCall { property: callee, .. } => {
                     let callee_ty =
-                        &env.types[env.identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                        &env.types[env.identifiers[callee.identifier.index()].type_.index()];
                     if get_hook_kind_for_type(env, callee_ty).ok().flatten().is_some() {
                         if !is_ref_or_ref_value_for_id(env, lvalue_id) {
                             known_frozen.insert(lvalue_id);
@@ -913,7 +927,7 @@ fn infer_block(
     }
 
     // Process instructions
-    let instr_ids: Vec<u32> = block.instructions.iter().map(|id| id.0).collect();
+    let instr_ids: Vec<u32> = block.instructions.iter().map(|id| id.index() as u32).collect();
     for instr_idx in &instr_ids {
         let instr_index = *instr_idx as usize;
 
@@ -1034,7 +1048,7 @@ fn apply_signature(
     match &instr.value {
         InstructionValue::FunctionExpression { lowered_func, .. }
         | InstructionValue::ObjectMethod { lowered_func, .. } => {
-            let inner_func = &env.functions[lowered_func.func.0 as usize];
+            let inner_func = &env.functions[lowered_func.func.index()];
             if let Some(ref aliasing_effects) = inner_func.aliasing_effects {
                 let context_ids: FxHashSet<IdentifierId> =
                     inner_func.context.iter().map(|p| p.identifier).collect();
@@ -1053,7 +1067,7 @@ fn apply_signature(
                     let value_abstract = state.kind(mutate_value.identifier);
                     if value_abstract.kind == ValueKind::Frozen {
                         let reason_str = get_write_error_reason(&value_abstract);
-                        let ident = &env.identifiers[mutate_value.identifier.0 as usize];
+                        let ident = &env.identifiers[mutate_value.identifier.index()];
                         let variable = match &ident.name {
                             Some(IdentifierName::Named(n)) => {
                                 format!("`{}`", n)
@@ -1094,7 +1108,7 @@ fn apply_signature(
     // The TS version asserts this as an invariant, but the Rust port may have
     // edge cases where effects don't cover the lvalue (e.g. missing signature entries).
     if !state.is_defined(instr.lvalue.identifier) {
-        let vid = ValueId(instr.lvalue.identifier.0 | 0x80000000);
+        let vid = ValueId::from_identifier(instr.lvalue.identifier);
         state.initialize(
             vid,
             AbstractValue { kind: ValueKind::Mutable, reason: hashset_of(ValueReason::Other) },
@@ -1122,7 +1136,7 @@ fn freeze_function_captures_transitive(
 ) {
     if let Some(&func_id) = context.function_values.get(&value_id) {
         let ctx_ids: Vec<IdentifierId> =
-            env.functions[func_id.0 as usize].context.iter().map(|p| p.identifier).collect();
+            env.functions[func_id.index()].context.iter().map(|p| p.identifier).collect();
         for ctx_id in ctx_ids {
             // Replicate InferenceState::freeze() logic inline —
             // we need to recurse with context/env which freeze() doesn't have.
@@ -1266,7 +1280,7 @@ fn apply_effect(
                 k == ValueKind::Context || k == ValueKind::Mutable
             });
 
-            let inner_func = &env.functions[function_id.0 as usize];
+            let inner_func = &env.functions[function_id.index()];
             let has_tracked_side_effects = inner_func
                 .aliasing_effects
                 .as_ref()
@@ -1304,7 +1318,7 @@ fn apply_effect(
                     || kind == ValueKind::Global
                 {
                     // Downgrade to Read - we need to mutate the inner function
-                    let inner_func_mut = &mut env.functions[function_id.0 as usize];
+                    let inner_func_mut = &mut env.functions[function_id.index()];
                     for ctx in &mut inner_func_mut.context {
                         if ctx.identifier == operand.identifier && ctx.effect == Effect::Capture {
                             ctx.effect = Effect::Read;
@@ -1410,8 +1424,11 @@ fn apply_effect(
                         env,
                         func,
                     )?;
-                    let cache_key =
-                        format!("Assign_frozen:{}:{}", from.identifier.0, into.identifier.0);
+                    let cache_key = format!(
+                        "Assign_frozen:{}:{}",
+                        from.identifier.index(),
+                        into.identifier.index()
+                    );
                     let value_id = *context
                         .effect_value_id_cache
                         .entry(cache_key)
@@ -1423,8 +1440,11 @@ fn apply_effect(
                     state.define(into.identifier, value_id);
                 }
                 ValueKind::Global | ValueKind::Primitive => {
-                    let cache_key =
-                        format!("Assign_copy:{}:{}", from.identifier.0, into.identifier.0);
+                    let cache_key = format!(
+                        "Assign_copy:{}:{}",
+                        from.identifier.index(),
+                        into.identifier.index()
+                    );
                     let value_id = *context
                         .effect_value_id_cache
                         .entry(cache_key)
@@ -1457,7 +1477,7 @@ fn apply_effect(
                 if function_values.len() == 1 {
                     let value_id = function_values[0];
                     if let Some(func_id) = context.function_values.get(&value_id).copied() {
-                        let inner_func = &env.functions[func_id.0 as usize];
+                        let inner_func = &env.functions[func_id.index()];
                         if inner_func.aliasing_effects.is_some() {
                             // Build or retrieve the signature from the function expression
                             context.function_signature_cache.entry(func_id).or_insert_with(|| {
@@ -1465,7 +1485,7 @@ fn apply_effect(
                             });
                             let sig =
                                 context.function_signature_cache.get(&func_id).unwrap().clone();
-                            let inner_func = &env.functions[func_id.0 as usize];
+                            let inner_func = &env.functions[func_id.index()];
                             let context_places: Vec<Place> = inner_func.context.clone();
                             let sig_effects = compute_effects_for_aliasing_signature(
                                 env,
@@ -1603,8 +1623,8 @@ fn apply_effect(
                     }
 
                     if *is_spread {
-                        let ty = &env.types
-                            [env.identifiers[operand.identifier.0 as usize].type_.0 as usize];
+                        let ty =
+                            &env.types[env.identifiers[operand.identifier.index()].type_.index()];
                         if let Some(mutate_iter) = conditionally_mutate_iterator(operand, ty) {
                             apply_effect(
                                 context,
@@ -1680,7 +1700,7 @@ fn apply_effect(
             {
                 let abstract_value = state.kind(value.identifier);
 
-                let ident = &env.identifiers[value.identifier.0 as usize];
+                let ident = &env.identifiers[value.identifier.index()];
                 let decl_id = ident.declaration_id;
 
                 if mutation_kind == MutationResult::MutateFrozen
@@ -1786,8 +1806,8 @@ fn compute_signature_for_instruction(
                         });
                     }
                     ArrayElement::Spread(s) => {
-                        let ty = &env.types
-                            [env.identifiers[s.place.identifier.0 as usize].type_.0 as usize];
+                        let ty =
+                            &env.types[env.identifiers[s.place.identifier.index()].type_.index()];
                         if let Some(mutate_iter) = conditionally_mutate_iterator(&s.place, ty) {
                             effects.push(mutate_iter);
                         }
@@ -1881,7 +1901,7 @@ fn compute_signature_for_instruction(
         }
         InstructionValue::PropertyLoad { object, .. }
         | InstructionValue::ComputedLoad { object, .. } => {
-            let ty = &env.types[env.identifiers[lvalue.identifier.0 as usize].type_.0 as usize];
+            let ty = &env.types[env.identifiers[lvalue.identifier.index()].type_.index()];
             if is_primitive_type(ty) {
                 effects.push(AliasingEffect::Create {
                     into: lvalue.clone(),
@@ -1897,8 +1917,7 @@ fn compute_signature_for_instruction(
         }
         InstructionValue::PropertyStore { object, property, value: store_value, .. } => {
             let mutation_reason: Option<MutationReason> = {
-                let obj_ty =
-                    &env.types[env.identifiers[object.identifier.0 as usize].type_.0 as usize];
+                let obj_ty = &env.types[env.identifiers[object.identifier.index()].type_.index()];
                 if let PropertyLiteral::String(prop_name) = property {
                     if prop_name == "current" && matches!(obj_ty, Type::TypeVar { .. }) {
                         Some(MutationReason::AssignCurrentProperty)
@@ -1930,7 +1949,7 @@ fn compute_signature_for_instruction(
         }
         InstructionValue::FunctionExpression { lowered_func, .. }
         | InstructionValue::ObjectMethod { lowered_func, .. } => {
-            let inner_func = &env.functions[lowered_func.func.0 as usize];
+            let inner_func = &env.functions[lowered_func.func.index()];
             let captures: Vec<Place> = inner_func
                 .context
                 .iter()
@@ -1949,7 +1968,7 @@ fn compute_signature_for_instruction(
                 value: ValueKind::Mutable,
                 reason: ValueReason::Other,
             });
-            let ty = &env.types[env.identifiers[collection.identifier.0 as usize].type_.0 as usize];
+            let ty = &env.types[env.identifiers[collection.identifier.index()].type_.index()];
             if is_builtin_collection_type(ty) {
                 effects.push(AliasingEffect::Capture {
                     from: collection.clone(),
@@ -2001,8 +2020,8 @@ fn compute_signature_for_instruction(
             }
             for prop in props {
                 if let JsxAttribute::Attribute { place: prop_place, .. } = prop {
-                    let prop_ty = &env.types
-                        [env.identifiers[prop_place.identifier.0 as usize].type_.0 as usize];
+                    let prop_ty =
+                        &env.types[env.identifiers[prop_place.identifier.index()].type_.index()];
                     if let Type::Function { return_type, .. } = prop_ty {
                         if is_jsx_type(return_type) || is_phi_with_jsx(return_type) {
                             effects.push(AliasingEffect::Render { place: prop_place.clone() });
@@ -2042,8 +2061,8 @@ fn compute_signature_for_instruction(
             for pat_item in each_pattern_items(&dl.pattern) {
                 match pat_item {
                     PatternItem::Place(place) => {
-                        let ty = &env.types
-                            [env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+                        let ty =
+                            &env.types[env.identifiers[place.identifier.index()].type_.index()];
                         if is_primitive_type(ty) {
                             effects.push(AliasingEffect::Create {
                                 into: place.clone(),
@@ -2082,7 +2101,7 @@ fn compute_signature_for_instruction(
             effects.push(AliasingEffect::CreateFrom { from: place.clone(), into: lvalue.clone() });
         }
         InstructionValue::DeclareContext { lvalue: dcl, .. } => {
-            let decl_id = env.identifiers[dcl.place.identifier.0 as usize].declaration_id;
+            let decl_id = env.identifiers[dcl.place.identifier.index()].declaration_id;
             let kind = dcl.kind;
             if !context.hoisted_context_declarations.contains_key(&decl_id)
                 || kind == InstructionKind::HoistedConst
@@ -2104,7 +2123,7 @@ fn compute_signature_for_instruction(
             });
         }
         InstructionValue::StoreContext { lvalue: scl, value: sc_value, .. } => {
-            let decl_id = env.identifiers[scl.place.identifier.0 as usize].declaration_id;
+            let decl_id = env.identifiers[scl.place.identifier.index()].declaration_id;
             if scl.kind == InstructionKind::Reassign
                 || context.hoisted_context_declarations.contains_key(&decl_id)
             {
@@ -2281,7 +2300,7 @@ fn compute_effects_for_legacy_signature(
             effects.push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
         }
         Effect::ConditionallyMutateIterator => {
-            let ty = &env.types[env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+            let ty = &env.types[env.identifiers[place.identifier.index()].type_.index()];
             if let Some(mutate_iter) = conditionally_mutate_iterator(place, ty) {
                 effects.push(mutate_iter);
             }
@@ -2389,8 +2408,7 @@ fn are_arguments_immutable_and_non_mutating(
                 // Check if it's a function type with a known signature
                 let is_place = matches!(arg, PlaceOrSpreadOrHole::Place(_));
                 if is_place {
-                    let ty =
-                        &env.types[env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+                    let ty = &env.types[env.identifiers[place.identifier.index()].type_.index()];
                     if let Type::Function { .. } = ty {
                         let fn_shape = env.get_function_signature(ty).ok().flatten();
                         if let Some(fn_sig) = fn_shape {
@@ -2420,14 +2438,14 @@ fn are_arguments_immutable_and_non_mutating(
                 let value_ids = state.values_for(place.identifier);
                 for vid in &value_ids {
                     if let Some(&func_id) = function_values.get(vid) {
-                        let inner_func = &env.functions[func_id.0 as usize];
+                        let inner_func = &env.functions[func_id.index()];
                         let mutates_params = inner_func.params.iter().any(|param| {
                             let param_id = match param {
                                 ParamPattern::Place(p) => p.identifier,
                                 ParamPattern::Spread(s) => s.place.identifier,
                             };
-                            let ident = &env.identifiers[param_id.0 as usize];
-                            ident.mutable_range.end.0 > ident.mutable_range.start.0 + 1
+                            let ident = &env.identifiers[param_id.index()];
+                            ident.mutable_range.end > ident.mutable_range.start + 1
                         });
                         if mutates_params {
                             return false;
@@ -2486,8 +2504,7 @@ fn compute_effects_for_aliasing_signature_config(
                 }
 
                 if matches!(arg, PlaceOrSpreadOrHole::Spread(_)) {
-                    let ty =
-                        &env.types[env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+                    let ty = &env.types[env.identifiers[place.identifier.index()].type_.index()];
                     let mutate_iterator = conditionally_mutate_iterator(place, ty);
                     if mutate_iterator.is_some() {
                         mutable_spreads.insert(place.identifier);
@@ -2498,7 +2515,7 @@ fn compute_effects_for_aliasing_signature_config(
     }
 
     for operand in context {
-        let ident = &env.identifiers[operand.identifier.0 as usize];
+        let ident = &env.identifiers[operand.identifier.index()];
         if let Some(ref name) = ident.name {
             substitutions.insert(format!("@{}", name.value()), vec![operand.clone()]);
         }
@@ -2673,7 +2690,7 @@ fn build_signature_from_function_expression(
     env: &mut Environment,
     func_id: FunctionId,
 ) -> AliasingSignature {
-    let inner_func = &env.functions[func_id.0 as usize];
+    let inner_func = &env.functions[func_id.index()];
     let mut params: Vec<IdentifierId> = Vec::new();
     let mut rest: Option<IdentifierId> = None;
     for param in &inner_func.params {
@@ -2692,7 +2709,7 @@ fn build_signature_from_function_expression(
     }
 
     AliasingSignature {
-        receiver: IdentifierId(0),
+        receiver: IdentifierId::from_usize(0),
         params,
         rest,
         returns,
@@ -2738,8 +2755,7 @@ fn compute_effects_for_aliasing_signature(
                 }
 
                 if is_spread {
-                    let ty =
-                        &env.types[env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+                    let ty = &env.types[env.identifiers[place.identifier.index()].type_.index()];
                     let mutate_iterator = conditionally_mutate_iterator(place, ty);
                     if mutate_iterator.is_some() {
                         mutable_spreads.insert(place.identifier);
@@ -2991,12 +3007,12 @@ fn get_function_call_signature(
     env: &Environment,
     callee_id: IdentifierId,
 ) -> Result<Option<FunctionSignature>, OxcDiagnostic> {
-    let ty = &env.types[env.identifiers[callee_id.0 as usize].type_.0 as usize];
+    let ty = &env.types[env.identifiers[callee_id.index()].type_.index()];
     Ok(env.get_function_signature(ty)?.cloned())
 }
 
 fn is_ref_or_ref_value_for_id(env: &Environment, id: IdentifierId) -> bool {
-    let ty = &env.types[env.identifiers[id.0 as usize].type_.0 as usize];
+    let ty = &env.types[env.identifiers[id.index()].type_.index()];
     is_ref_or_ref_value(ty)
 }
 
@@ -3069,7 +3085,7 @@ fn build_apply_operands(
 
 fn create_temp_place(env: &mut Environment, span: Option<Span>) -> Place {
     let id = env.next_identifier_id();
-    env.identifiers[id.0 as usize].span = span;
+    env.identifiers[id.index()].span = span;
     Place { identifier: id, effect: Effect::Unknown, reactive: false, span }
 }
 

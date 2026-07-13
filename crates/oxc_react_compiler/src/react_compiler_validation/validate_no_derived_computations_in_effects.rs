@@ -240,16 +240,16 @@ fn maybe_record_set_state_for_instr(
                 set_state_loads.insert(lvalue_id, Some(place.identifier));
             } else {
                 // Only check root setState if not a LoadLocal from a known chain
-                let lvalue_ident = &identifiers[lvalue_id.0 as usize];
-                let lvalue_ty = &types[lvalue_ident.type_.0 as usize];
+                let lvalue_ident = &identifiers[lvalue_id.index()];
+                let lvalue_ty = &types[lvalue_ident.type_.index()];
                 if is_set_state_type(lvalue_ty) {
                     set_state_loads.insert(lvalue_id, None);
                 }
             }
         } else {
             // Check if lvalue is a setState type (root setState)
-            let lvalue_ident = &identifiers[lvalue_id.0 as usize];
-            let lvalue_ty = &types[lvalue_ident.type_.0 as usize];
+            let lvalue_ident = &identifiers[lvalue_id.index()];
+            let lvalue_ty = &types[lvalue_ident.type_.index()];
             if is_set_state_type(lvalue_ty) {
                 set_state_loads.insert(lvalue_id, None);
             }
@@ -271,7 +271,7 @@ fn is_mutable_at(
     eval_order: EvaluationOrder,
     identifier_id: IdentifierId,
 ) -> bool {
-    env.identifiers[identifier_id.0 as usize].mutable_range.contains(eval_order)
+    env.identifiers[identifier_id.index()].mutable_range.contains(eval_order)
 }
 
 pub fn validate_no_derived_computations_in_effects_exp(
@@ -293,7 +293,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
     if func.fn_type == ReactFunctionType::Hook {
         for param in &func.params {
             if let ParamPattern::Place(place) = param {
-                let name = identifiers[place.identifier.0 as usize].name;
+                let name = identifiers[place.identifier.index()].name;
                 context.derivation_cache.cache.insert(
                     place.identifier,
                     DerivationMetadata {
@@ -308,7 +308,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
         }
     } else if func.fn_type == ReactFunctionType::Component {
         if let Some(ParamPattern::Place(place)) = func.params.first() {
-            let name = identifiers[place.identifier.0 as usize].name;
+            let name = identifiers[place.identifier.index()].name;
             context.derivation_cache.cache.insert(
                 place.identifier,
                 DerivationMetadata {
@@ -331,7 +331,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
         for (_block_id, block) in &func.body.blocks {
             record_phi_derivations(block, &mut context, env);
             for &instr_id in &block.instructions {
-                let instr = &func.instructions[instr_id.0 as usize];
+                let instr = &func.instructions[instr_id.index()];
                 record_instruction_derivations(instr, &mut context, is_first_pass, env)?;
             }
         }
@@ -383,7 +383,7 @@ fn record_phi_derivations<'a>(
         }
 
         if type_of_value != TypeOfValue::Ignored {
-            let name = identifiers[phi.place.identifier.0 as usize].name;
+            let name = identifiers[phi.place.identifier.index()].name;
             context.derivation_cache.add_derivation_entry(
                 phi.place.identifier,
                 name,
@@ -423,17 +423,17 @@ fn record_instruction_derivations<'a>(
         InstructionValue::FunctionExpression { lowered_func, .. } => {
             context.functions.insert(lvalue_id, lowered_func.func);
             // Recurse into the inner function
-            let inner_func = &functions[lowered_func.func.0 as usize];
+            let inner_func = &functions[lowered_func.func.index()];
             for (_block_id, block) in &inner_func.body.blocks {
                 record_phi_derivations(block, context, env);
                 for &inner_instr_id in &block.instructions {
-                    let inner_instr = &inner_func.instructions[inner_instr_id.0 as usize];
+                    let inner_instr = &inner_func.instructions[inner_instr_id.index()];
                     record_instruction_derivations(inner_instr, context, is_first_pass, env)?;
                 }
             }
         }
         InstructionValue::CallExpression { callee, args, .. } => {
-            let callee_type = &types[identifiers[callee.identifier.0 as usize].type_.0 as usize];
+            let callee_type = &types[identifiers[callee.identifier.index()].type_.index()];
             if is_use_effect_hook_type(callee_type) && args.len() == 2 {
                 if let (PlaceOrSpread::Place(arg0), PlaceOrSpread::Place(arg1)) =
                     (&args[0], &args[1])
@@ -450,9 +450,9 @@ fn record_instruction_derivations<'a>(
             }
 
             // Check if lvalue is useState type
-            let lvalue_type = &types[identifiers[lvalue_id.0 as usize].type_.0 as usize];
+            let lvalue_type = &types[identifiers[lvalue_id.index()].type_.index()];
             if is_use_state_type(lvalue_type) {
-                let name = identifiers[lvalue_id.0 as usize].name;
+                let name = identifiers[lvalue_id.index()].name;
                 context.derivation_cache.add_derivation_entry(
                     lvalue_id,
                     name,
@@ -464,7 +464,7 @@ fn record_instruction_derivations<'a>(
             }
         }
         InstructionValue::MethodCall { property, args, .. } => {
-            let prop_type = &types[identifiers[property.identifier.0 as usize].type_.0 as usize];
+            let prop_type = &types[identifiers[property.identifier.index()].type_.index()];
             if is_use_effect_hook_type(prop_type) && args.len() == 2 {
                 if let (PlaceOrSpread::Place(arg0), PlaceOrSpread::Place(arg1)) =
                     (&args[0], &args[1])
@@ -481,9 +481,9 @@ fn record_instruction_derivations<'a>(
             }
 
             // Check if lvalue is useState type
-            let lvalue_type = &types[identifiers[lvalue_id.0 as usize].type_.0 as usize];
+            let lvalue_type = &types[identifiers[lvalue_id.index()].type_.index()];
             if is_use_state_type(lvalue_type) {
-                let name = identifiers[lvalue_id.0 as usize].name;
+                let name = identifiers[lvalue_id.index()].name;
                 context.derivation_cache.add_derivation_entry(
                     lvalue_id,
                     name,
@@ -534,7 +534,7 @@ fn record_instruction_derivations<'a>(
 
     // Record derivation for ALL lvalue places (including destructured variables)
     for &lv_id in &each_instruction_lvalue_ids(instr) {
-        let name = identifiers[lv_id.0 as usize].name;
+        let name = identifiers[lv_id.index()].name;
         context.derivation_cache.add_derivation_entry(
             lv_id,
             name,
@@ -556,7 +556,7 @@ fn record_instruction_derivations<'a>(
                 if let Some(existing) = context.derivation_cache.cache.get_mut(&operand.id) {
                     existing.type_of_value = join_value(type_of_value, existing.type_of_value);
                 } else {
-                    let name = identifiers[operand.id.0 as usize].name;
+                    let name = identifiers[operand.id.index()].name;
                     context.derivation_cache.add_derivation_entry(
                         operand.id,
                         name,
@@ -726,12 +726,12 @@ fn get_fn_local_deps(
     env: &Environment,
 ) -> Option<FxHashSet<IdentifierId>> {
     let func_id = func_id?;
-    let inner = &env.functions[func_id.0 as usize];
+    let inner = &env.functions[func_id.index()];
     let mut deps: FxHashSet<IdentifierId> = FxHashSet::default();
 
     for (_block_id, block) in &inner.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &inner.instructions[instr_id.0 as usize];
+            let instr = &inner.instructions[instr_id.index()];
             if let InstructionValue::LoadLocal { place, .. } = &instr.value {
                 deps.insert(place.identifier);
             }
@@ -751,7 +751,7 @@ fn validate_effect<'a>(
     let identifiers = &env.identifiers;
     let types = &env.types;
     let functions = &env.functions;
-    let effect_function = &functions[effect_func_id.0 as usize];
+    let effect_function = &functions[effect_func_id.index()];
     let mut seen_blocks: FxHashSet<BlockId> = FxHashSet::default();
 
     struct DerivedSetStateCall {
@@ -794,11 +794,10 @@ fn validate_effect<'a>(
         }
 
         for &instr_id in &block.instructions {
-            let instr = &effect_function.instructions[instr_id.0 as usize];
+            let instr = &effect_function.instructions[instr_id.index()];
 
             // Early return if any instruction derives from a ref
-            let lvalue_type =
-                &types[identifiers[instr.lvalue.identifier.0 as usize].type_.0 as usize];
+            let lvalue_type = &types[identifiers[instr.lvalue.identifier.index()].type_.index()];
             if is_use_ref_type(lvalue_type) {
                 return;
             }
@@ -829,8 +828,7 @@ fn validate_effect<'a>(
 
             match &instr.value {
                 InstructionValue::CallExpression { callee, args, .. } => {
-                    let callee_type =
-                        &types[identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                    let callee_type = &types[identifiers[callee.identifier.index()].type_.index()];
                     if is_set_state_type(callee_type) && args.len() == 1 {
                         if let PlaceOrSpread::Place(arg0) = &args[0] {
                             let callee_metadata =
@@ -999,7 +997,7 @@ pub fn validate_no_derived_computations_in_effects(
 
         for (_, block) in &func.body.blocks {
             for &iid in &block.instructions {
-                let instr = &func.instructions[iid.0 as usize];
+                let instr = &func.instructions[iid.index()];
                 match &instr.value {
                     InstructionValue::LoadLocal { place, .. } => {
                         locals_map.insert(instr.lvalue.identifier, place.identifier);
@@ -1020,7 +1018,7 @@ pub fn validate_no_derived_computations_in_effects(
                         functions_map.insert(instr.lvalue.identifier, lowered_func.func);
                     }
                     InstructionValue::CallExpression { callee, args, .. } => {
-                        let callee_ty = &tys[ids[callee.identifier.0 as usize].type_.0 as usize];
+                        let callee_ty = &tys[ids[callee.identifier.index()].type_.index()];
                         if is_use_effect_hook_type(callee_ty) && args.len() == 2 {
                             if let (PlaceOrSpread::Place(arg0), PlaceOrSpread::Place(arg1)) =
                                 (&args[0], &args[1])
@@ -1041,7 +1039,7 @@ pub fn validate_no_derived_computations_in_effects(
                         }
                     }
                     InstructionValue::MethodCall { property, args, .. } => {
-                        let callee_ty = &tys[ids[property.identifier.0 as usize].type_.0 as usize];
+                        let callee_ty = &tys[ids[property.identifier.index()].type_.index()];
                         if is_use_effect_hook_type(callee_ty) && args.len() == 2 {
                             if let (PlaceOrSpread::Place(arg0), PlaceOrSpread::Place(arg1)) =
                                 (&args[0], &args[1])
@@ -1072,7 +1070,7 @@ pub fn validate_no_derived_computations_in_effects(
     // Matches TS behavior where env.recordError(new CompilerErrorDetail({...})) is used.
     for (func_id, resolved_deps) in effects_to_validate {
         let details = validate_effect_non_exp(
-            &env.functions[func_id.0 as usize],
+            &env.functions[func_id.index()],
             &resolved_deps,
             &env.identifiers,
             &env.types,
@@ -1092,7 +1090,7 @@ fn validate_effect_non_exp(
 ) -> Vec<OxcDiagnostic> {
     // Check that the effect function only captures effect deps and setState
     for ctx in &effect_func.context {
-        let ctx_ty = &tys[ids[ctx.identifier.0 as usize].type_.0 as usize];
+        let ctx_ty = &tys[ids[ctx.identifier.index()].type_.index()];
         if is_set_state_type(ctx_ty) || effect_deps.contains(&ctx.identifier) {
             continue;
         } else {
@@ -1137,7 +1135,7 @@ fn validate_effect_non_exp(
         }
 
         for &iid in &block.instructions {
-            let instr = &effect_func.instructions[iid.0 as usize];
+            let instr = &effect_func.instructions[iid.index()];
             match &instr.value {
                 InstructionValue::Primitive { .. }
                 | InstructionValue::JSXText { .. }
@@ -1166,7 +1164,7 @@ fn validate_effect_non_exp(
                     }
 
                     if let InstructionValue::CallExpression { callee, args, .. } = &instr.value {
-                        let callee_ty = &tys[ids[callee.identifier.0 as usize].type_.0 as usize];
+                        let callee_ty = &tys[ids[callee.identifier.index()].type_.index()];
                         if is_set_state_type(callee_ty) && args.len() == 1 {
                             if let PlaceOrSpread::Place(arg) = &args[0] {
                                 if let Some(deps) = dep_values.get(&arg.identifier) {

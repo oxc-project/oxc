@@ -13,6 +13,7 @@ use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::define_nonmax_u32_index_type;
 use oxc_str::{Ident, Str};
 use oxc_syntax::number::ToJsString;
 pub use raw::RawTypeCategory;
@@ -25,35 +26,58 @@ pub const GENERATED_SOURCE: Option<Span> = None;
 // ID newtypes
 // =============================================================================
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct BlockId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct BlockId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct IdentifierId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct IdentifierId;
+}
 
-/// Index into the flat instruction table on HirFunction.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct InstructionId(pub u32);
+define_nonmax_u32_index_type! {
+    /// Index into the flat instruction table on HirFunction.
+    pub struct InstructionId;
+}
 
-/// Evaluation order assigned to instructions and terminals during numbering.
-/// This was previously called InstructionId in the TypeScript compiler.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EvaluationOrder(pub u32);
+define_nonmax_u32_index_type! {
+    /// Evaluation order assigned to instructions and terminals during numbering.
+    /// This was previously called InstructionId in the TypeScript compiler.
+    pub struct EvaluationOrder;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct DeclarationId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct DeclarationId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ScopeId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct ScopeId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct TypeId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct TypeId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct FunctionId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct FunctionId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct MutableRangeId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct MutableRangeId;
+}
+
+impl BlockId {
+    /// Placeholder id for the never-read block that the final `terminate()` installs as
+    /// `current`. Uses the largest representable index so it can never alias a real block
+    /// (blocks are numbered from 0).
+    pub const PLACEHOLDER: Self = Self::from_usize(Self::MAX_INDEX);
+}
+
+impl EvaluationOrder {
+    /// Placeholder order for instructions, terminals, and ranges before
+    /// `mark_instruction_ids` assigns the real, 1-based orders. `0` is never a valid
+    /// assigned order.
+    pub const UNSET: Self = Self::from_usize(0);
+}
 
 // =============================================================================
 // FloatValue wrapper

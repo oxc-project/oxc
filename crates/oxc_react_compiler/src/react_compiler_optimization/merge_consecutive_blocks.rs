@@ -34,11 +34,11 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
         .values()
         .flat_map(|block| block.instructions.iter())
         .filter_map(|instr_id| {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    Some(lowered_func.func.0 as usize)
+                    Some(lowered_func.func.index())
                 }
                 _ => None,
             }
@@ -135,7 +135,7 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
                 span: GENERATED_SOURCE,
                 effects: Some(vec![AliasingEffect::Alias { from: operand, into: lvalue }]),
             };
-            let instr_id = InstructionId(func.instructions.len() as u32);
+            let instr_id = InstructionId::from_usize(func.instructions.len());
             func.instructions.push(instr);
             new_instr_ids.push(instr_id);
         }

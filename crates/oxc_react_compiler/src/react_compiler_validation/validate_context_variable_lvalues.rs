@@ -76,7 +76,7 @@ fn validate_context_variable_lvalues_impl(
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let value = &instr.value;
 
             match value {
@@ -136,7 +136,7 @@ fn validate_context_variable_lvalues_impl(
 
     // Process inner functions after the block loop to avoid borrow conflicts
     for func_id in inner_function_ids {
-        let inner_func = &functions[func_id.0 as usize];
+        let inner_func = &functions[func_id.index()];
         validate_context_variable_lvalues_impl(
             inner_func,
             identifier_kinds,
@@ -152,9 +152,9 @@ fn validate_context_variable_lvalues_impl(
 /// Format a place like TS `printPlace()`: `<effect> <name>$<id>`
 fn format_place(place: &Place, identifiers: &[Identifier]) -> String {
     let id = place.identifier;
-    let ident = &identifiers[id.0 as usize];
+    let ident = &identifiers[id.index()];
     let name = ident.name.as_ref().map_or("", |name| name.value());
-    format!("{} {}${}", place.effect, name, id.0)
+    format!("{} {}${}", place.effect, name, id.index())
 }
 
 fn visit(

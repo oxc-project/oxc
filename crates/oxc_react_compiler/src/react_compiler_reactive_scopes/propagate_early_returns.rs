@@ -85,7 +85,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         let scope_id = scope_block.scope;
 
         // Exit early if an earlier pass has already created an early return
-        if self.env.scopes[scope_id.0 as usize].early_return_value.is_some() {
+        if self.env.scopes[scope_id.index()].early_return_value.is_some() {
             return Ok(());
         }
 
@@ -135,7 +135,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                 return Ok(Transformed::ReplaceMany(vec![
                     // StoreLocal: reassign the early return value
                     ReactiveStatement::Instruction(ReactiveInstruction {
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         lvalue: None,
                         value: ReactiveValue::Instruction(InstructionValue::StoreLocal {
                             lvalue: LValue {
@@ -156,7 +156,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                     ReactiveStatement::Terminal(ReactiveTerminalStatement {
                         terminal: ReactiveTerminal::Break {
                             target: early_return_value.label,
-                            id: EvaluationOrder(0),
+                            id: EvaluationOrder::UNSET,
                             target_kind: ReactiveTerminalTargetKind::Labeled,
                         },
                         label: None,
@@ -184,14 +184,14 @@ fn apply_early_return_to_scope<'a>(
     let span = early_return.span;
 
     // Set early return value on the scope
-    env.scopes[scope_id.0 as usize].early_return_value = Some(ReactiveScopeEarlyReturn {
+    env.scopes[scope_id.index()].early_return_value = Some(ReactiveScopeEarlyReturn {
         value: early_return.value,
         span: early_return.span,
         label: early_return.label,
     });
 
     // Add the early return identifier as a scope declaration
-    env.scopes[scope_id.0 as usize].declarations.push((
+    env.scopes[scope_id.index()].declarations.push((
         early_return.value,
         ReactiveScopeDeclaration { identifier: early_return.value, scope: scope_id },
     ));
@@ -207,7 +207,7 @@ fn apply_early_return_to_scope<'a>(
     scope_block.instructions = vec![
         // LoadGlobal Symbol
         ReactiveStatement::Instruction(ReactiveInstruction {
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             lvalue: Some(Place {
                 identifier: symbol_temp,
                 effect: Effect::Unknown,
@@ -222,7 +222,7 @@ fn apply_early_return_to_scope<'a>(
         }),
         // PropertyLoad Symbol.for
         ReactiveStatement::Instruction(ReactiveInstruction {
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             lvalue: Some(Place {
                 identifier: for_temp,
                 effect: Effect::Unknown,
@@ -243,7 +243,7 @@ fn apply_early_return_to_scope<'a>(
         }),
         // Primitive: the sentinel string
         ReactiveStatement::Instruction(ReactiveInstruction {
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             lvalue: Some(Place {
                 identifier: arg_temp,
                 effect: Effect::Unknown,
@@ -258,7 +258,7 @@ fn apply_early_return_to_scope<'a>(
         }),
         // MethodCall: Symbol.for("react.early_return_sentinel")
         ReactiveStatement::Instruction(ReactiveInstruction {
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             lvalue: Some(Place {
                 identifier: sentinel_temp,
                 effect: Effect::Unknown,
@@ -290,7 +290,7 @@ fn apply_early_return_to_scope<'a>(
         }),
         // StoreLocal: let earlyReturnValue = sentinel
         ReactiveStatement::Instruction(ReactiveInstruction {
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             lvalue: None,
             value: ReactiveValue::Instruction(InstructionValue::StoreLocal {
                 lvalue: LValue {
@@ -317,7 +317,7 @@ fn apply_early_return_to_scope<'a>(
             label: Some(ReactiveLabel { id: early_return.label, implicit: false }),
             terminal: ReactiveTerminal::Label {
                 block: original_instructions,
-                id: EvaluationOrder(0),
+                id: EvaluationOrder::UNSET,
             },
         }),
     ];
@@ -329,12 +329,12 @@ fn apply_early_return_to_scope<'a>(
 
 fn create_temporary_place_id(env: &mut Environment, span: Option<Span>) -> IdentifierId {
     let id = env.next_identifier_id();
-    env.identifiers[id.0 as usize].span = span;
+    env.identifiers[id.index()].span = span;
     id
 }
 
 fn promote_temporary<'a>(env: &mut Environment<'a>, identifier_id: IdentifierId) {
-    let decl_id = env.identifiers[identifier_id.0 as usize].declaration_id;
-    env.identifiers[identifier_id.0 as usize].name =
-        Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.0)));
+    let decl_id = env.identifiers[identifier_id.index()].declaration_id;
+    env.identifiers[identifier_id.index()].name =
+        Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.index())));
 }

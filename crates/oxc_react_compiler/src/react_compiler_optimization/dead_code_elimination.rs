@@ -41,7 +41,7 @@ pub fn dead_code_elimination<'a>(func: &mut HirFunction<'a>, env: &Environment<'
 
         // Remove instructions with unused lvalues
         block.instructions.retain(|instr_id| {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             is_id_or_name_used(&state, &env.identifiers, instr.lvalue.identifier)
         });
 
@@ -89,7 +89,7 @@ fn reference<'a>(
     identifier_id: IdentifierId,
 ) {
     state.identifiers.insert(identifier_id);
-    let ident = &identifiers[identifier_id.0 as usize];
+    let ident = &identifiers[identifier_id.index()];
     if let Some(IdentifierName::Named(name) | IdentifierName::Promoted(name)) = ident.name {
         state.named.insert(name);
     }
@@ -105,7 +105,7 @@ fn is_id_or_name_used(
     if state.identifiers.contains(&identifier_id) {
         return true;
     }
-    let ident = &identifiers[identifier_id.0 as usize];
+    let ident = &identifiers[identifier_id.index()];
     if let Some(ref name) = ident.name { state.named.contains(name.value()) } else { false }
 }
 
@@ -138,7 +138,7 @@ fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>
             let instr_count = block.instructions.len();
             for i in (0..instr_count).rev() {
                 let instr_id = block.instructions[i];
-                let instr = &func.instructions[instr_id.0 as usize];
+                let instr = &func.instructions[instr_id.index()];
 
                 let is_block_value = block.kind != BlockKind::Block && i == instr_count - 1;
 
@@ -194,7 +194,7 @@ fn rewrite_instruction(
     state: &State,
     env: &Environment,
 ) {
-    let instr = &mut func.instructions[instr_id.0 as usize];
+    let instr = &mut func.instructions[instr_id.index()];
 
     match &mut instr.value {
         InstructionValue::Destructure { lvalue, .. } => {
@@ -309,7 +309,7 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
         InstructionValue::CallExpression { callee, .. } => {
             if env.output_mode == OutputMode::Ssr {
                 let callee_ty =
-                    &env.types[env.identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                    &env.types[env.identifiers[callee.identifier.index()].type_.index()];
                 if let Some(HookKind::UseState | HookKind::UseReducer | HookKind::UseRef) =
                     env.get_hook_kind_for_type(callee_ty).ok().flatten()
                 {
@@ -321,7 +321,7 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
         InstructionValue::MethodCall { property, .. } => {
             if env.output_mode == OutputMode::Ssr {
                 let callee_ty =
-                    &env.types[env.identifiers[property.identifier.0 as usize].type_.0 as usize];
+                    &env.types[env.identifiers[property.identifier.index()].type_.index()];
                 if let Some(HookKind::UseState | HookKind::UseReducer | HookKind::UseRef) =
                     env.get_hook_kind_for_type(callee_ty).ok().flatten()
                 {

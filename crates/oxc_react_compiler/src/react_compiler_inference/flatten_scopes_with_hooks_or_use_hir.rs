@@ -56,11 +56,11 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
 
         // Check instructions for hook or use calls
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::CallExpression { callee, .. } => {
                     let callee_ty =
-                        &env.types[env.identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                        &env.types[env.identifiers[callee.identifier.index()].type_.index()];
                     if is_hook_or_use(env, callee_ty)? {
                         // All active scopes must be pruned
                         prune.extend(active_scopes.iter().map(|s| s.block));
@@ -68,8 +68,8 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
                     }
                 }
                 InstructionValue::MethodCall { property, .. } => {
-                    let property_ty = &env.types
-                        [env.identifiers[property.identifier.0 as usize].type_.0 as usize];
+                    let property_ty =
+                        &env.types[env.identifiers[property.identifier.index()].type_.index()];
                     if is_hook_or_use(env, property_ty)? {
                         prune.extend(active_scopes.iter().map(|s| s.block));
                         active_scopes.clear();
@@ -95,8 +95,10 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
                 (*block, *fallthrough, *id, *span, *scope)
             }
             _ => {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic(format!("Expected block bb{} to end in a scope terminal", id.0)));
+                return Err(ErrorCategory::Invariant.diagnostic(format!(
+                    "Expected block bb{} to end in a scope terminal",
+                    id.index()
+                )));
             }
         };
 

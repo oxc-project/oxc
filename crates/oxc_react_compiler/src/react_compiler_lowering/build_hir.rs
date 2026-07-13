@@ -72,9 +72,9 @@ fn build_temporary_place(builder: &mut HirBuilder<'_, '_>, span: Option<Span>) -
 /// Corresponds to TS `promoteTemporary(identifier)`.
 fn promote_temporary(builder: &mut HirBuilder<'_, '_>, identifier_id: IdentifierId) {
     let env = builder.environment_mut();
-    let decl_id = env.identifiers[identifier_id.0 as usize].declaration_id;
-    env.identifiers[identifier_id.0 as usize].name =
-        Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.0)));
+    let decl_id = env.identifiers[identifier_id.index()].declaration_id;
+    env.identifiers[identifier_id.index()].name =
+        Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.index())));
 }
 
 fn lower_value_to_temporary<'a>(
@@ -83,7 +83,7 @@ fn lower_value_to_temporary<'a>(
 ) -> Result<Place, OxcDiagnostic> {
     // Optimization: if loading an unnamed temporary, skip creating a new instruction
     if let InstructionValue::LoadLocal { ref place, .. } = value {
-        let ident = &builder.environment().identifiers[place.identifier.0 as usize];
+        let ident = &builder.environment().identifiers[place.identifier.index()];
         if ident.name.is_none() {
             return Ok(place.clone());
         }
@@ -91,7 +91,7 @@ fn lower_value_to_temporary<'a>(
     let span = value.span().cloned();
     let place = build_temporary_place(builder, span);
     builder.push(Instruction {
-        id: EvaluationOrder(0),
+        id: EvaluationOrder::UNSET,
         lvalue: place.clone(),
         value,
         span,
@@ -758,7 +758,7 @@ fn lower_inner<'a>(
                 Terminal::Return {
                     value,
                     return_variant: ReturnVariant::Implicit,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: None,
                     effects: None,
                 },
@@ -781,7 +781,7 @@ fn lower_inner<'a>(
         Terminal::Return {
             value: return_value,
             return_variant: ReturnVariant::Void,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: None,
             effects: None,
         },
@@ -1660,7 +1660,7 @@ fn lower_default_to_temp<'a>(
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(pat_span),
         })
     });
@@ -1679,7 +1679,7 @@ fn lower_default_to_temp<'a>(
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(pat_span),
         })
     });
@@ -1688,7 +1688,7 @@ fn lower_default_to_temp<'a>(
         Terminal::Ternary {
             test: test_block.id,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(pat_span),
         },
         test_block,
@@ -1713,7 +1713,7 @@ fn lower_default_to_temp<'a>(
             consequent: consequent?,
             alternate: alternate?,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(pat_span),
         },
         continuation_block,
@@ -2498,7 +2498,7 @@ fn lower_assignment_target_default<'a>(
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(span),
         })
     });
@@ -2517,7 +2517,7 @@ fn lower_assignment_target_default<'a>(
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(span),
         })
     });
@@ -2526,7 +2526,7 @@ fn lower_assignment_target_default<'a>(
         Terminal::Ternary {
             test: test_block.id,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(span),
         },
         test_block,
@@ -2551,7 +2551,7 @@ fn lower_assignment_target_default<'a>(
             consequent: consequent?,
             alternate: alternate?,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(span),
         },
         continuation_block,
@@ -2691,7 +2691,7 @@ fn lower_optional_member_expression_impl<'a>(
             Ok(Terminal::Goto {
                 block: continuation_id,
                 variant: GotoVariant::Break,
-                id: EvaluationOrder(0),
+                id: EvaluationOrder::UNSET,
                 span,
             })
         })
@@ -2727,7 +2727,7 @@ fn lower_optional_member_expression_impl<'a>(
             consequent: consequent.id,
             alternate,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span,
         })
     });
@@ -2749,7 +2749,7 @@ fn lower_optional_member_expression_impl<'a>(
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span,
         })
     })?;
@@ -2759,7 +2759,7 @@ fn lower_optional_member_expression_impl<'a>(
             optional,
             test: test_block?,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span,
         },
         continuation_block,
@@ -2800,7 +2800,7 @@ fn lower_optional_call_expression_impl<'a>(
             Ok(Terminal::Goto {
                 block: continuation_id,
                 variant: GotoVariant::Break,
-                id: EvaluationOrder(0),
+                id: EvaluationOrder::UNSET,
                 span,
             })
         })
@@ -2859,7 +2859,7 @@ fn lower_optional_call_expression_impl<'a>(
             consequent: consequent.id,
             alternate,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span,
         })
     });
@@ -2872,7 +2872,7 @@ fn lower_optional_call_expression_impl<'a>(
         match callee_info.as_ref().unwrap() {
             CalleeInfo::CallExpression { callee } => {
                 builder.push(Instruction {
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     lvalue: temp.clone(),
                     value: InstructionValue::CallExpression { callee: callee.clone(), args, span },
                     span,
@@ -2881,7 +2881,7 @@ fn lower_optional_call_expression_impl<'a>(
             }
             CalleeInfo::MethodCall { receiver, property } => {
                 builder.push(Instruction {
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     lvalue: temp.clone(),
                     value: InstructionValue::MethodCall {
                         receiver: receiver.clone(),
@@ -2906,7 +2906,7 @@ fn lower_optional_call_expression_impl<'a>(
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span,
         })
     })?;
@@ -2916,7 +2916,7 @@ fn lower_optional_call_expression_impl<'a>(
             optional: call.optional,
             test: test_block?,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span,
         },
         continuation_block,
@@ -3490,7 +3490,7 @@ fn lower_expression<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: left_place.span,
                 })
             });
@@ -3509,7 +3509,7 @@ fn lower_expression<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: right_span,
                 })
             });
@@ -3521,7 +3521,7 @@ fn lower_expression<'a>(
                     operator: hir_op,
                     test: test_block_id,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 test_block,
@@ -3529,7 +3529,7 @@ fn lower_expression<'a>(
 
             let left_value = lower_expression_to_temporary(builder, &logical.left)?;
             builder.push(Instruction {
-                id: EvaluationOrder(0),
+                id: EvaluationOrder::UNSET,
                 lvalue: left_place.clone(),
                 value: InstructionValue::LoadLocal { place: left_value, span },
                 effects: None,
@@ -3542,7 +3542,7 @@ fn lower_expression<'a>(
                     consequent: consequent_block?,
                     alternate: alternate_block?,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -3592,7 +3592,7 @@ fn lower_expression<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: consequent_ast_span,
                 })
             });
@@ -3612,7 +3612,7 @@ fn lower_expression<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: alternate_ast_span,
                 })
             });
@@ -3621,7 +3621,7 @@ fn lower_expression<'a>(
                 Terminal::Ternary {
                     test: test_block_id,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 test_block,
@@ -3635,7 +3635,7 @@ fn lower_expression<'a>(
                     consequent: consequent_block?,
                     alternate: alternate_block?,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -3677,7 +3677,7 @@ fn lower_expression<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 })
             });
@@ -3686,7 +3686,7 @@ fn lower_expression<'a>(
                 Terminal::Sequence {
                     block: sequence_block?,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -5573,7 +5573,7 @@ fn lower_statement<'a>(
                 Terminal::Return {
                     value,
                     return_variant: ReturnVariant::Explicit,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                     effects: None,
                 },
@@ -5594,7 +5594,7 @@ fn lower_statement<'a>(
             }
             let fallthrough = builder.reserve(BlockKind::Block);
             builder.terminate_with_continuation(
-                Terminal::Throw { value, id: EvaluationOrder(0), span },
+                Terminal::Throw { value, id: EvaluationOrder::UNSET, span },
                 fallthrough,
             );
         }
@@ -5620,7 +5620,7 @@ fn lower_statement<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: consequent_span,
                 })
             })?;
@@ -5633,7 +5633,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: continuation_id,
                         variant: GotoVariant::Break,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: alternate_span,
                     })
                 })?
@@ -5649,7 +5649,7 @@ fn lower_statement<'a>(
                     consequent: consequent_block,
                     alternate: alternate_block,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -5696,7 +5696,7 @@ fn lower_statement<'a>(
                 Ok(Terminal::Goto {
                     block: test_block_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: init_span,
                 })
             })?;
@@ -5709,7 +5709,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: test_block_id,
                         variant: GotoVariant::Break,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: update_span,
                     })
                 })?)
@@ -5726,7 +5726,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: continue_target,
                         variant: GotoVariant::Continue,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: body_span,
                     })
                 })
@@ -5740,7 +5740,7 @@ fn lower_statement<'a>(
                     update: update_block_id,
                     loop_block: body_block,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 test_block,
@@ -5755,7 +5755,7 @@ fn lower_statement<'a>(
                         consequent: body_block,
                         alternate: continuation_id,
                         fallthrough: continuation_id,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span,
                     },
                     continuation_block,
@@ -5776,7 +5776,7 @@ fn lower_statement<'a>(
                         consequent: body_block,
                         alternate: continuation_id,
                         fallthrough: continuation_id,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span,
                     },
                     continuation_block,
@@ -5800,7 +5800,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: conditional_id,
                         variant: GotoVariant::Continue,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: body_span,
                     })
                 })
@@ -5812,7 +5812,7 @@ fn lower_statement<'a>(
                     test: conditional_id,
                     loop_block,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 conditional_block,
@@ -5826,7 +5826,7 @@ fn lower_statement<'a>(
                     consequent: loop_block,
                     alternate: continuation_id,
                     fallthrough: conditional_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -5849,7 +5849,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: conditional_id,
                         variant: GotoVariant::Continue,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: body_span,
                     })
                 })
@@ -5861,7 +5861,7 @@ fn lower_statement<'a>(
                     loop_block,
                     test: conditional_id,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 conditional_block,
@@ -5875,7 +5875,7 @@ fn lower_statement<'a>(
                     consequent: loop_block,
                     alternate: continuation_id,
                     fallthrough: conditional_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -5895,7 +5895,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: init_block_id,
                         variant: GotoVariant::Continue,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: body_span,
                     })
                 })
@@ -5907,7 +5907,7 @@ fn lower_statement<'a>(
                     init: init_block_id,
                     loop_block,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 init_block,
@@ -5934,7 +5934,7 @@ fn lower_statement<'a>(
                     consequent: loop_block,
                     alternate: continuation_id,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -5965,7 +5965,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: init_block_id,
                         variant: GotoVariant::Continue,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: body_span,
                     })
                 })
@@ -5978,7 +5978,7 @@ fn lower_statement<'a>(
                     test: test_block_id,
                     loop_block,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 init_block,
@@ -5993,7 +5993,7 @@ fn lower_statement<'a>(
                 Terminal::Goto {
                     block: test_block_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 test_block,
@@ -6024,7 +6024,7 @@ fn lower_statement<'a>(
                     consequent: loop_block,
                     alternate: continuation_id,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -6068,7 +6068,7 @@ fn lower_statement<'a>(
                         Ok(Terminal::Goto {
                             block: fallthrough_target,
                             variant: GotoVariant::Break,
-                            id: EvaluationOrder(0),
+                            id: EvaluationOrder::UNSET,
                             span: case_span,
                         })
                     })
@@ -6098,7 +6098,7 @@ fn lower_statement<'a>(
                     test,
                     cases,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -6209,7 +6209,7 @@ fn lower_statement<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: Some(handler_span),
                 })
             })?;
@@ -6229,7 +6229,7 @@ fn lower_statement<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Try,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: try_body_span,
                 })
             })?;
@@ -6240,7 +6240,7 @@ fn lower_statement<'a>(
                     handler_binding: handler_binding_info.map(|(place, _)| place),
                     handler: handler_block,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -6255,7 +6255,7 @@ fn lower_statement<'a>(
                 Terminal::Goto {
                     block: target,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 fallthrough,
@@ -6270,7 +6270,7 @@ fn lower_statement<'a>(
                 Terminal::Goto {
                     block: target,
                     variant: GotoVariant::Continue,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 fallthrough,
@@ -6303,7 +6303,7 @@ fn lower_statement<'a>(
                         Ok(Terminal::Goto {
                             block: continuation_id,
                             variant: GotoVariant::Break,
-                            id: EvaluationOrder(0),
+                            id: EvaluationOrder::UNSET,
                             span: body_span,
                         })
                     })?;
@@ -6312,7 +6312,7 @@ fn lower_statement<'a>(
                         Terminal::Label {
                             block,
                             fallthrough: continuation_id,
-                            id: EvaluationOrder(0),
+                            id: EvaluationOrder::UNSET,
                             span,
                         },
                         continuation_block,

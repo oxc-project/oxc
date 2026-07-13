@@ -64,10 +64,10 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CollectVisitor<'a, 'e> {
     fn visit_pruned_scope(&self, scope: &PrunedReactiveScopeBlock<'a>, state: &mut Self::State) {
         self.traverse_pruned_scope(scope, state);
 
-        let scope_data = &self.env.scopes[scope.scope.0 as usize];
+        let scope_data = &self.env.scopes[scope.scope.index()];
         for (_id, decl) in &scope_data.declarations {
-            let identifier = &self.env.identifiers[decl.identifier.0 as usize];
-            let ty = &self.env.types[identifier.type_.0 as usize];
+            let identifier = &self.env.identifiers[decl.identifier.index()];
+            let ty = &self.env.types[identifier.type_.index()];
             if !is_primitive_type(ty) && !is_stable_ref_type(ty, state, identifier.id) {
                 state.insert(*_id);
             }
@@ -181,8 +181,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneVisitor<'a, 'e> {
             }) => {
                 if state.contains(&destr_value.identifier) {
                     for operand in hir_visitors::each_pattern_operand(&destr_lvalue.pattern) {
-                        let ident = &self.env.identifiers[operand.identifier.0 as usize];
-                        let ty = &self.env.types[ident.type_.0 as usize];
+                        let ident = &self.env.identifiers[operand.identifier.index()];
+                        let ty = &self.env.types[ident.type_.index()];
                         if is_stable_type(ty) {
                             continue;
                         }
@@ -195,8 +195,8 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneVisitor<'a, 'e> {
             }
             ReactiveValue::Instruction(InstructionValue::PropertyLoad { object, .. }) => {
                 if let Some(lv) = lvalue {
-                    let ident = &self.env.identifiers[lv.identifier.0 as usize];
-                    let ty = &self.env.types[ident.type_.0 as usize];
+                    let ident = &self.env.identifiers[lv.identifier.index()];
+                    let ty = &self.env.types[ident.type_.index()];
                     if state.contains(&object.identifier) && !is_stable_type(ty) {
                         state.insert(lv.identifier);
                     }
@@ -224,7 +224,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneVisitor<'a, 'e> {
         self.traverse_scope(scope, state)?;
 
         let scope_id = scope.scope;
-        let scope_data = &mut self.env.scopes[scope_id.0 as usize];
+        let scope_data = &mut self.env.scopes[scope_id.index()];
 
         // Remove non-reactive dependencies
         scope_data.dependencies.retain(|dep| state.contains(&dep.identifier));

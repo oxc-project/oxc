@@ -47,7 +47,7 @@ fn validate_use_memo_impl(
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue = &instr.lvalue;
             let value = &instr.value;
 
@@ -167,7 +167,7 @@ fn handle_possible_use_memo_call(
         None => return,
     };
 
-    let body_func = &functions[body_info.func_id.0 as usize];
+    let body_func = &functions[body_info.func_id.index()];
 
     // Validate no parameters
     if !body_func.params.is_empty() {
@@ -231,7 +231,7 @@ fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Diag
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             if let InstructionValue::StoreContext { lvalue, .. } = &instr.value {
                 if context.contains(&lvalue.place.identifier) {
                     errors.push(

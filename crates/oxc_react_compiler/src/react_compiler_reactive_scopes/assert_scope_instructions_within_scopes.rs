@@ -89,9 +89,9 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CheckInstructionsAgainstScopesVisit
 
     fn visit_place(&self, id: EvaluationOrder, place: &Place, state: &mut CheckState) {
         // getPlaceScope: check if the place's identifier has a scope that is active at this id
-        let identifier = &self.env.identifiers[place.identifier.0 as usize];
+        let identifier = &self.env.identifiers[place.identifier.index()];
         if let Some(scope_id) = identifier.scope {
-            let scope = &self.env.scopes[scope_id.0 as usize];
+            let scope = &self.env.scopes[scope_id.index()];
             // isScopeActive: id >= scope.range.start && id < scope.range.end
             let is_active_at_id = id >= scope.range.start && id < scope.range.end;
             if is_active_at_id

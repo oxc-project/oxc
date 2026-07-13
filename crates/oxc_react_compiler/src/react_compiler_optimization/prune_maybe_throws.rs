@@ -54,7 +54,7 @@ pub fn prune_maybe_throws(
                                     .diagnostic("Expected non-existing phi operand's predecessor to have been mapped to a new terminal")
                                     .with_help(format!(
                                         "Could not find mapping for predecessor bb{} in block bb{}",
-                                        predecessor.0, block.id.0,
+                                        predecessor.index(), block.id.index(),
                                     ))
                             })?;
                         updates.push((*predecessor, mapped_terminal));
@@ -89,7 +89,7 @@ fn prune_maybe_throws_impl(func: &mut HirFunction) -> Option<FxHashMap<BlockId, 
         let can_throw = block
             .instructions
             .iter()
-            .any(|instr_id| instruction_may_throw(&instructions[instr_id.0 as usize]));
+            .any(|instr_id| instruction_may_throw(&instructions[instr_id.index()]));
 
         if !can_throw {
             let source = terminal_mapping.get(&block.id).copied().unwrap_or(block.id);

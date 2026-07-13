@@ -50,7 +50,7 @@ pub trait ReactiveFunctionVisitor<'a> {
     /// value-lvalues, operands, and nested functions), and terminal operands.
     /// TS: `visitHirFunction`
     fn visit_hir_function(&self, func_id: FunctionId, state: &mut Self::State) {
-        let inner_func = &self.env().functions[func_id.0 as usize];
+        let inner_func = &self.env().functions[func_id.index()];
         for param in &inner_func.params {
             let place = match param {
                 ParamPattern::Place(p) => p,
@@ -60,15 +60,15 @@ pub trait ReactiveFunctionVisitor<'a> {
         }
         let block_ids: Vec<_> = inner_func.body.blocks.keys().copied().collect();
         for block_id in block_ids {
-            let inner_func = &self.env().functions[func_id.0 as usize];
+            let inner_func = &self.env().functions[func_id.index()];
             let block = &inner_func.body.blocks[&block_id];
             let instr_ids: Vec<_> = block.instructions.clone();
             let terminal_operands: Vec<Place> = each_terminal_operand(&block.terminal);
             let terminal_id = block.terminal.evaluation_order();
 
             for instr_id in &instr_ids {
-                let inner_func = &self.env().functions[func_id.0 as usize];
-                let instr = &inner_func.instructions[instr_id.0 as usize];
+                let inner_func = &self.env().functions[func_id.index()];
+                let instr = &inner_func.instructions[instr_id.index()];
                 // Build a temporary ReactiveInstruction for the visitor
                 let reactive_instr = ReactiveInstruction {
                     id: instr.id,
@@ -585,7 +585,7 @@ pub trait ReactiveFunctionTransform<'a> {
                 &mut block[i],
                 // Placeholder — will be overwritten or discarded
                 ReactiveStatement::Instruction(ReactiveInstruction {
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     lvalue: None,
                     value: ReactiveValue::Instruction(InstructionValue::Debugger { span: None }),
                     span: None,

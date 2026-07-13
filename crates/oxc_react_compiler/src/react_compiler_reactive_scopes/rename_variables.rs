@@ -55,7 +55,7 @@ impl<'a> Scopes<'a> {
     }
 
     fn visit_identifier(&mut self, identifier_id: IdentifierId, env: &Environment<'a>) {
-        let identifier = &env.identifiers[identifier_id.0 as usize];
+        let identifier = &env.identifiers[identifier_id.index()];
         let original_name = match &identifier.name {
             Some(name) => *name,
             None => return,
@@ -166,7 +166,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
 
     /// TS: `visitScope(scope, state) { for (const [_, decl] of scope.scope.declarations) state.visit(decl.identifier); this.traverseScope(scope, state) }`
     fn visit_scope(&self, scope: &ReactiveScopeBlock<'a>, state: &mut Scopes<'a>) {
-        let scope_data = &self.env.scopes[scope.scope.0 as usize];
+        let scope_data = &self.env.scopes[scope.scope.index()];
         let decl_ids: Vec<IdentifierId> =
             scope_data.declarations.iter().map(|(_, d)| d.identifier).collect();
         for id in decl_ids {
@@ -219,7 +219,9 @@ fn rename_variables_with_parent<'a>(
     if let Some(parent) = parent_names {
         scopes.enter();
         for name in parent {
-            scopes.stack.last_mut().unwrap().insert(*name, DeclarationId(u32::MAX));
+            // Sentinel value: `stack` is used purely as a set (only key presence is
+            // read via `lookup().is_some()`), so any id works here.
+            scopes.stack.last_mut().unwrap().insert(*name, DeclarationId::from_usize(0));
             scopes.names.insert(*name);
         }
     }
@@ -341,13 +343,13 @@ fn collect_globals_hir_function<'a>(
     globals: &mut IdentHashSet<'a>,
     env: &Environment<'a>,
 ) {
-    let inner_func = &env.functions[func_id.0 as usize];
+    let inner_func = &env.functions[func_id.index()];
     let block_ids: Vec<_> = inner_func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
-        let inner_func = &env.functions[func_id.0 as usize];
+        let inner_func = &env.functions[func_id.index()];
         let block = &inner_func.body.blocks[&block_id];
         for instr_id in &block.instructions {
-            let instr = &inner_func.instructions[instr_id.0 as usize];
+            let instr = &inner_func.instructions[instr_id.index()];
             if let InstructionValue::LoadGlobal { binding, .. } = &instr.value {
                 globals.insert(binding.name());
             }

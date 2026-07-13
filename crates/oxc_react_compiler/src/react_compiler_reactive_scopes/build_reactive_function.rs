@@ -143,7 +143,7 @@ impl<'a, 'h> Context<'a, 'h> {
         self.next_schedule_id += 1;
         if self.scheduled.contains(&block) {
             return Err(ErrorCategory::Invariant
-                .diagnostic(format!("Break block is already scheduled: bb{}", block.0)));
+                .diagnostic(format!("Break block is already scheduled: bb{}", block.index())));
         }
         self.scheduled.insert(block);
         let target = match target_type {
@@ -171,7 +171,7 @@ impl<'a, 'h> Context<'a, 'h> {
         if self.scheduled.contains(&continue_block) {
             return Err(ErrorCategory::Invariant.diagnostic(format!(
                 "Continue block is already scheduled: bb{}",
-                continue_block.0
+                continue_block.index()
             )));
         }
         self.scheduled.insert(continue_block);
@@ -250,7 +250,7 @@ impl<'a, 'h> Context<'a, 'h> {
             has_preceding_loop = has_preceding_loop || target.is_loop();
         }
         Err(ErrorCategory::Invariant
-            .diagnostic(format!("Expected a break target for bb{}", block.0)))
+            .diagnostic(format!("Expected a break target for bb{}", block.index())))
     }
 
     fn get_continue_target(&self, block: BlockId) -> Option<(BlockId, ReactiveTerminalTargetKind)> {
@@ -311,12 +311,12 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
 
             if !self.cx.emitted.insert(block_id_val) {
                 return Err(ErrorCategory::Invariant
-                    .diagnostic(format!("Block bb{} was already emitted", block_id_val.0)));
+                    .diagnostic(format!("Block bb{} was already emitted", block_id_val.index())));
             }
 
             // Emit instructions
             for instr_id in &instructions {
-                let instr = &self.hir.instructions[instr_id.0 as usize];
+                let instr = &self.hir.instructions[instr_id.index()];
                 block_value.push(ReactiveStatement::Instruction(ReactiveInstruction {
                     id: instr.id,
                     lvalue: Some(instr.lvalue.clone()),
@@ -349,7 +349,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let consequent_block = if self.cx.is_scheduled(*consequent) {
                         return Err(ErrorCategory::Invariant.diagnostic(format!(
                             "Unexpected 'if' where consequent is already scheduled (bb{})",
-                            consequent.0
+                            consequent.index()
                         )));
                     } else {
                         self.traverse_block(*consequent)?
@@ -359,7 +359,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         if self.cx.is_scheduled(alt) {
                             return Err(ErrorCategory::Invariant.diagnostic(format!(
                                 "Unexpected 'if' where the alternate is already scheduled (bb{})",
-                                alt.0
+                                alt.index()
                             )));
                         } else {
                             Some(self.traverse_block(alt)?)
@@ -892,7 +892,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             if block_id == ft {
                 return Err(ErrorCategory::Invariant.diagnostic(format!(
                     "Did not expect to reach the fallthrough of a value block (bb{})",
-                    block_id.0
+                    block_id.index()
                 )));
             }
         }
@@ -917,7 +917,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 if instructions.is_empty() {
                     return Err(ErrorCategory::Invariant
                         .diagnostic("Unexpected empty block with `goto` terminal")
-                        .with_help(format!("Block bb{} is empty", block_id.0))
+                        .with_help(format!("Block bb{} is empty", block_id.index()))
                         .with_labels(
                             span.map(|s| s.label("Unexpected empty block with `goto` terminal")),
                         ));
@@ -957,7 +957,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 let mut all_instrs: Vec<ReactiveInstruction<'a>> = instructions
                     .iter()
                     .map(|iid| {
-                        let instr = &self.hir.instructions[iid.0 as usize];
+                        let instr = &self.hir.instructions[iid.index()];
                         ReactiveInstruction {
                             id: instr.id,
                             lvalue: Some(instr.lvalue.clone()),
@@ -1110,12 +1110,12 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         block_id: BlockId,
     ) -> ValueBlockResult<'a> {
         let last_id = instructions.last().expect("Expected non-empty instructions");
-        let last_instr = &self.hir.instructions[last_id.0 as usize];
+        let last_instr = &self.hir.instructions[last_id.index()];
 
         let remaining: Vec<ReactiveInstruction<'a>> = instructions[..instructions.len() - 1]
             .iter()
             .map(|iid| {
-                let instr = &self.hir.instructions[iid.0 as usize];
+                let instr = &self.hir.instructions[iid.index()];
                 ReactiveInstruction {
                     id: instr.id,
                     lvalue: Some(instr.lvalue.clone()),
@@ -1129,7 +1129,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         // convert it to a LoadLocal of the value being stored, matching the TS behavior.
         let (value, place) = match &last_instr.value {
             InstructionValue::StoreLocal { lvalue, value: store_value, .. } => {
-                let ident = &self.env.identifiers[lvalue.place.identifier.0 as usize];
+                let ident = &self.env.identifiers[lvalue.place.identifier.index()];
                 if ident.name.is_none() {
                     (
                         ReactiveValue::Instruction(InstructionValue::LoadLocal {
@@ -1177,7 +1177,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         let reactive_instrs: Vec<ReactiveInstruction<'a>> = instructions
             .iter()
             .map(|iid| {
-                let instr = &self.hir.instructions[iid.0 as usize];
+                let instr = &self.hir.instructions[iid.index()];
                 ReactiveInstruction {
                     id: instr.id,
                     lvalue: Some(instr.lvalue.clone()),
@@ -1281,7 +1281,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             None => {
                 return Err(ErrorCategory::Invariant.diagnostic(format!(
                     "Expected continue target to be scheduled for bb{}",
-                    block.0
+                    block.index()
                 )));
             }
         };

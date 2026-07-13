@@ -173,7 +173,7 @@ fn apply_constant_propagation<'a>(
             }
             let result = evaluate_instruction(constants, func, env, *instr_id);
             if let Some(value) = result {
-                let lvalue_id = func.instructions[instr_id.0 as usize].lvalue.identifier;
+                let lvalue_id = func.instructions[instr_id.index()].lvalue.identifier;
                 constants.insert(lvalue_id, value);
             }
         }
@@ -274,7 +274,7 @@ fn evaluate_instruction<'a>(
     env: &mut Environment<'a>,
     instr_id: InstructionId,
 ) -> Option<Constant<'a>> {
-    let instr = &func.instructions[instr_id.0 as usize];
+    let instr = &func.instructions[instr_id.index()];
     match &instr.value {
         InstructionValue::Primitive { value, span } => {
             Some(Constant::Primitive { value: *value, span: *span })
@@ -290,14 +290,14 @@ fn evaluate_instruction<'a>(
                         let object = object.clone();
                         let span = *span;
                         let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
-                        func.instructions[instr_id.0 as usize].value =
+                        func.instructions[instr_id.index()].value =
                             InstructionValue::PropertyLoad { object, property: new_property, span };
                     }
                     PrimitiveValue::Number(n) => {
                         let object = object.clone();
                         let span = *span;
                         let new_property = PropertyLiteral::Number(*n);
-                        func.instructions[instr_id.0 as usize].value =
+                        func.instructions[instr_id.index()].value =
                             InstructionValue::PropertyLoad { object, property: new_property, span };
                     }
                     PrimitiveValue::Null
@@ -317,7 +317,7 @@ fn evaluate_instruction<'a>(
                         let store_value = value.clone();
                         let span = *span;
                         let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
-                        func.instructions[instr_id.0 as usize].value =
+                        func.instructions[instr_id.index()].value =
                             InstructionValue::PropertyStore {
                                 object,
                                 property: new_property,
@@ -330,7 +330,7 @@ fn evaluate_instruction<'a>(
                         let store_value = value.clone();
                         let span = *span;
                         let new_property = PropertyLiteral::Number(*n);
-                        func.instructions[instr_id.0 as usize].value =
+                        func.instructions[instr_id.index()].value =
                             InstructionValue::PropertyStore {
                                 object,
                                 property: new_property,
@@ -400,7 +400,7 @@ fn evaluate_instruction<'a>(
                     let span = *span;
                     let result =
                         Constant::Primitive { value: PrimitiveValue::Boolean(negated), span };
-                    func.instructions[instr_id.0 as usize].value = InstructionValue::Primitive {
+                    func.instructions[instr_id.index()].value = InstructionValue::Primitive {
                         value: PrimitiveValue::Boolean(negated),
                         span,
                     };
@@ -418,7 +418,7 @@ fn evaluate_instruction<'a>(
                         value: PrimitiveValue::Number(FloatValue::new(negated)),
                         span,
                     };
-                    func.instructions[instr_id.0 as usize].value = InstructionValue::Primitive {
+                    func.instructions[instr_id.index()].value = InstructionValue::Primitive {
                         value: PrimitiveValue::Number(FloatValue::new(negated)),
                         span,
                     };
@@ -442,7 +442,7 @@ fn evaluate_instruction<'a>(
                 let result = evaluate_binary_op(*operator, lhs, rhs, env.allocator);
                 if let Some(prim) = result {
                     let span = *span;
-                    func.instructions[instr_id.0 as usize].value =
+                    func.instructions[instr_id.index()].value =
                         InstructionValue::Primitive { value: prim, span };
                     return Some(Constant::Primitive { value: prim, span });
                 }
@@ -463,11 +463,10 @@ fn evaluate_instruction<'a>(
                             value: PrimitiveValue::Number(FloatValue::new(len)),
                             span,
                         };
-                        func.instructions[instr_id.0 as usize].value =
-                            InstructionValue::Primitive {
-                                value: PrimitiveValue::Number(FloatValue::new(len)),
-                                span,
-                            };
+                        func.instructions[instr_id.index()].value = InstructionValue::Primitive {
+                            value: PrimitiveValue::Number(FloatValue::new(len)),
+                            span,
+                        };
                         return Some(result);
                     }
                 }
@@ -485,7 +484,7 @@ fn evaluate_instruction<'a>(
                 let value =
                     PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator));
                 let result = Constant::Primitive { value, span };
-                func.instructions[instr_id.0 as usize].value =
+                func.instructions[instr_id.index()].value =
                     InstructionValue::Primitive { value, span };
                 return Some(result);
             }
@@ -529,15 +528,14 @@ fn evaluate_instruction<'a>(
             let span = *span;
             let value = PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator));
             let result = Constant::Primitive { value, span };
-            func.instructions[instr_id.0 as usize].value =
-                InstructionValue::Primitive { value, span };
+            func.instructions[instr_id.index()].value = InstructionValue::Primitive { value, span };
             Some(result)
         }
         InstructionValue::LoadLocal { place, .. } => {
             let place_value = read(constants, place);
             if let Some(ref constant) = place_value {
                 // Replace the LoadLocal with the constant value (including the constant's original span)
-                func.instructions[instr_id.0 as usize].value =
+                func.instructions[instr_id.index()].value =
                     constant.clone().into_instruction_value();
             }
             place_value
@@ -578,7 +576,7 @@ fn evaluate_instruction<'a>(
                     .collect();
                 for idx in const_dep_indices {
                     if let InstructionValue::StartMemoize { deps: Some(ref mut deps), .. } =
-                        func.instructions[instr_id.0 as usize].value
+                        func.instructions[instr_id.index()].value
                     {
                         if let ManualMemoDependencyRoot::NamedLocal { constant, .. } =
                             &mut deps[idx].root
@@ -630,9 +628,9 @@ fn process_inner_function<'a>(
     env: &mut Environment<'a>,
     constants: &mut Constants<'a>,
 ) {
-    let mut inner = replace(&mut env.functions[func_id.0 as usize], placeholder_function());
+    let mut inner = replace(&mut env.functions[func_id.index()], placeholder_function());
     constant_propagation_impl(&mut inner, env, constants);
-    env.functions[func_id.0 as usize] = inner;
+    env.functions[func_id.index()] = inner;
 }
 
 // =============================================================================

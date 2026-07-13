@@ -63,7 +63,7 @@ pub fn validate_locals_not_reassigned_after_render(func: &HirFunction, env: &mut
 /// Format a variable name for error messages. Uses the named identifier if
 /// available, otherwise falls back to "variable".
 fn format_variable_name(place: &Place, identifiers: &[Identifier]) -> String {
-    let identifier = &identifiers[place.identifier.0 as usize];
+    let identifier = &identifiers[place.identifier.index()];
     match &identifier.name {
         Some(IdentifierName::Named(name)) => format!("`{}`", name),
         _ => "variable".to_string(),
@@ -91,12 +91,12 @@ fn get_context_reassignment(
 
     for (_block_id, block) in &func.body.blocks {
         for &instruction_id in &block.instructions {
-            let instr = &func.instructions[instruction_id.0 as usize];
+            let instr = &func.instructions[instruction_id.index()];
 
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    let inner_function = &functions[lowered_func.func.0 as usize];
+                    let inner_function = &functions[lowered_func.func.index()];
                     let inner_is_async = is_async || inner_function.is_async;
 
                     // Recursively check the inner function

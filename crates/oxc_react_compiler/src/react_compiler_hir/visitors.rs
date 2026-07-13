@@ -218,7 +218,7 @@ pub fn each_instruction_value_operand_with_functions(
         }
         InstructionValue::ObjectMethod { lowered_func, .. }
         | InstructionValue::FunctionExpression { lowered_func, .. } => {
-            let func = &functions[lowered_func.func.0 as usize];
+            let func = &functions[lowered_func.func.index()];
             for ctx_place in &func.context {
                 result.push(ctx_place.clone());
             }
@@ -857,7 +857,7 @@ pub fn each_terminal_operand_ids(terminal: &Terminal) -> Vec<IdentifierId> {
 //   for_each_instruction_value_operand_mut(&mut instr.value, &mut |place| { ... });
 //   if let InstructionValue::FunctionExpression { lowered_func, .. }
 //       | InstructionValue::ObjectMethod { lowered_func, .. } = &mut instr.value {
-//       let func = &mut env.functions[lowered_func.func.0 as usize];
+//       let func = &mut env.functions[lowered_func.func.index()];
 //       for ctx in func.context.iter_mut() { ... }
 //   }
 //

@@ -81,7 +81,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut VisitorState,
     ) -> Result<(), OxcDiagnostic> {
-        let scope_data = &self.env.scopes[scope.scope.0 as usize];
+        let scope_data = &self.env.scopes[scope.scope.index()];
         let decl_ids: FxHashSet<IdentifierId> =
             scope_data.declarations.iter().map(|(id, _)| *id).collect();
 
@@ -95,7 +95,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         state.active_scopes.pop();
 
         // Clean up uninitialized after scope
-        let scope_data = &self.env.scopes[scope.scope.0 as usize];
+        let scope_data = &self.env.scopes[scope.scope.index()];
         for (_, decl) in &scope_data.declarations {
             state.uninitialized.remove(&decl.identifier);
         }

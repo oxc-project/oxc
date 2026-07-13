@@ -59,7 +59,7 @@ fn check_no_freezing_known_mutable_functions(
 
     for (_block_id, block) in &func.body.blocks {
         for &instruction_id in &block.instructions {
-            let instr = &func.instructions[instruction_id.0 as usize];
+            let instr = &func.instructions[instruction_id.index()];
 
             match &instr.value {
                 InstructionValue::LoadLocal { place, .. } => {
@@ -82,7 +82,7 @@ fn check_no_freezing_known_mutable_functions(
                 }
 
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
-                    let inner_function = &functions[lowered_func.func.0 as usize];
+                    let inner_function = &functions[lowered_func.func.index()];
                     if let Some(ref aliasing_effects) = inner_function.aliasing_effects {
                         let context_ids: FxHashSet<IdentifierId> =
                             inner_function.context.iter().map(|place| place.identifier).collect();
@@ -174,7 +174,7 @@ fn check_operand_for_freeze_violation(
 ) {
     if operand.effect == Effect::Freeze {
         if let Some(mutation_info) = context_mutation_effects.get(&operand.identifier) {
-            let identifier = &identifiers[mutation_info.value_identifier.0 as usize];
+            let identifier = &identifiers[mutation_info.value_identifier.index()];
             let variable_name = match &identifier.name {
                 Some(IdentifierName::Named(name)) => format!("`{}`", name),
                 _ => "a local variable".to_string(),
@@ -211,6 +211,6 @@ fn is_ref_or_ref_like_mutable_type(
     identifiers: &[Identifier],
     types: &[Type],
 ) -> bool {
-    let identifier = &identifiers[identifier_id.0 as usize];
-    crate::react_compiler_hir::is_ref_or_ref_like_mutable_type(&types[identifier.type_.0 as usize])
+    let identifier = &identifiers[identifier_id.index()];
+    crate::react_compiler_hir::is_ref_or_ref_like_mutable_type(&types[identifier.type_.index()])
 }

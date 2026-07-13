@@ -24,7 +24,7 @@ pub fn validate_no_set_state_in_render(
     env: &mut Environment,
 ) -> Result<(), OxcDiagnostic> {
     let mut unconditional_set_state_functions: FxHashSet<IdentifierId> = FxHashSet::default();
-    let next_block_id = env.next_block_id().0;
+    let next_block_id = env.next_block_id().index() as u32;
     let diagnostics = validate_impl(
         func,
         &env.identifiers,
@@ -45,8 +45,8 @@ fn is_set_state_id(
     identifiers: &[Identifier],
     types: &[Type],
 ) -> bool {
-    let ident = &identifiers[identifier_id.0 as usize];
-    let ty = &types[ident.type_.0 as usize];
+    let ident = &identifiers[identifier_id.index()];
+    let ty = &types[ident.type_.index()];
     is_set_state_type(ty)
 }
 
@@ -66,7 +66,7 @@ fn validate_impl(
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::LoadLocal { place, .. } => {
                     if unconditional_set_state_functions.contains(&place.identifier) {
@@ -81,7 +81,7 @@ fn validate_impl(
                 }
                 InstructionValue::ObjectMethod { lowered_func, .. }
                 | InstructionValue::FunctionExpression { lowered_func, .. } => {
-                    let inner_func = &functions[lowered_func.func.0 as usize];
+                    let inner_func = &functions[lowered_func.func.index()];
 
                     // Check if any operand references a setState.
                     // For FunctionExpression/ObjectMethod, operands are the context captures.

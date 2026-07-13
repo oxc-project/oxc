@@ -126,7 +126,7 @@ pub fn drop_manual_memoization<'a>(
 
     for block_instructions in &all_block_instructions {
         for &instr_id in block_instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
 
             // Extract the identifier we need to look up, and whether it's a call/method
             let lookup_id = match &instr.value {
@@ -168,7 +168,7 @@ pub fn drop_manual_memoization<'a>(
                     let ni = next_instructions.as_mut().unwrap();
                     ni.push(instr_id);
                     // Add the new instruction to the flat table and get its InstructionId
-                    let new_instr_id = InstructionId(func.instructions.len() as u32);
+                    let new_instr_id = InstructionId::from_usize(func.instructions.len());
                     func.instructions.push(insert_instr);
                     ni.push(new_instr_id);
                 } else if let Some(ni) = next_instructions.as_mut() {
@@ -204,7 +204,7 @@ fn process_manual_memo_call<'a>(
     next_manual_memo_id: &mut u32,
     queued_inserts: &mut FxHashMap<InstructionId, Instruction<'a>>,
 ) {
-    let instr = &func.instructions[instr_id.0 as usize];
+    let instr = &func.instructions[instr_id.index()];
 
     let memo_details = extract_manual_memoization_args(instr, manual_memo.kind, sidemap, env);
 
@@ -214,11 +214,11 @@ fn process_manual_memo_call<'a>(
 
     let ExtractedMemoArgs { fn_place, deps_list, deps_span } = memo_details;
 
-    let span = func.instructions[instr_id.0 as usize].value.span().cloned();
+    let span = func.instructions[instr_id.index()].value.span().cloned();
 
     // Replace the instruction value with the memoization replacement
     let replacement = get_manual_memoization_replacement(&fn_place, span, manual_memo.kind);
-    func.instructions[instr_id.0 as usize].value = replacement;
+    func.instructions[instr_id.index()].value = replacement;
 
     if is_validation_enabled {
         // Bail out when we encounter manual memoization without inline function expressions
@@ -239,7 +239,7 @@ fn process_manual_memo_call<'a>(
         }
 
         let memo_decl: Place = if manual_memo.kind == ManualMemoKind::UseMemo {
-            func.instructions[instr_id.0 as usize].lvalue.clone()
+            func.instructions[instr_id.index()].lvalue.clone()
         } else {
             Place {
                 identifier: fn_place.identifier,
@@ -272,7 +272,7 @@ fn collect_temporaries<'a>(
     instr_id: InstructionId,
     sidemap: &mut IdentifierSidemap<'a>,
 ) {
-    let instr = &func.instructions[instr_id.0 as usize];
+    let instr = &func.instructions[instr_id.index()];
     let lvalue_id = instr.lvalue.identifier;
 
     match &instr.value {
@@ -394,7 +394,7 @@ pub fn collect_maybe_memo_dependencies<'a>(
             if let Some(source) = maybe_deps.get(&place.identifier) {
                 Some(source.clone())
             } else if matches!(
-                &env.identifiers[place.identifier.0 as usize].name,
+                &env.identifiers[place.identifier.index()].name,
                 Some(IdentifierName::Named(_))
             ) {
                 Some(ManualMemoDependency {
@@ -416,7 +416,7 @@ pub fn collect_maybe_memo_dependencies<'a>(
             let lvalue_id = lvalue.place.identifier;
             let rvalue_id = val.identifier;
             if let Some(aliased) = maybe_deps.get(&rvalue_id) {
-                let lvalue_name = &env.identifiers[lvalue_id.0 as usize].name;
+                let lvalue_name = &env.identifiers[lvalue_id.index()].name;
                 if !matches!(lvalue_name, Some(IdentifierName::Named(_))) {
                     // Note: we can't insert into maybe_deps here since we only have
                     // a shared reference. The caller handles insertion.
@@ -464,7 +464,7 @@ fn make_manual_memoization_markers<'a>(
     manual_memo_id: u32,
 ) -> (Instruction<'a>, Instruction<'a>) {
     let start = Instruction {
-        id: EvaluationOrder(0),
+        id: EvaluationOrder::UNSET,
         lvalue: create_temporary_place(env, fn_expr.span),
         value: InstructionValue::StartMemoize {
             manual_memo_id,
@@ -477,7 +477,7 @@ fn make_manual_memoization_markers<'a>(
         effects: None,
     };
     let finish = Instruction {
-        id: EvaluationOrder(0),
+        id: EvaluationOrder::UNSET,
         lvalue: create_temporary_place(env, fn_expr.span),
         value: InstructionValue::FinishMemoize {
             manual_memo_id,
@@ -607,7 +607,7 @@ fn find_optional_places(func: &HirFunction) -> Result<FxHashSet<IdentifierId>, O
                             // Found it
                             let consequent_block = &func.body.blocks[consequent];
                             if let Some(&last_instr_id) = consequent_block.instructions.last() {
-                                let last_instr = &func.instructions[last_instr_id.0 as usize];
+                                let last_instr = &func.instructions[last_instr_id.index()];
                                 if let InstructionValue::StoreLocal { value, .. } =
                                     &last_instr.value
                                 {

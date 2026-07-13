@@ -219,12 +219,12 @@ fn get_identifier_type<'a>(
     identifiers: &'a [Identifier<'a>],
     types: &'a [Type<'a>],
 ) -> &'a Type<'a> {
-    let ident = &identifiers[id.0 as usize];
-    &types[ident.type_.0 as usize]
+    let ident = &identifiers[id.index()];
+    &types[ident.type_.index()]
 }
 
 fn get_identifier_name<'a>(id: IdentifierId, identifiers: &[Identifier<'a>]) -> Option<&'a str> {
-    identifiers[id.0 as usize].name.as_ref().map(IdentifierName::value)
+    identifiers[id.index()].name.as_ref().map(IdentifierName::value)
 }
 
 // =============================================================================
@@ -265,7 +265,7 @@ fn collect_reactive_identifiers(
     let mut reactive = FxHashSet::default();
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             // Check instruction lvalue
             if instr.lvalue.reactive {
                 reactive.insert(instr.lvalue.identifier);
@@ -327,7 +327,7 @@ fn find_optional_places(func: &HirFunction) -> FxHashMap<IdentifierId, bool> {
                             // Found the end of the optional chain
                             let consequent_block = &func.body.blocks[consequent];
                             if let Some(last_id) = consequent_block.instructions.last() {
-                                let last_instr = &func.instructions[last_id.0 as usize];
+                                let last_instr = &func.instructions[last_id.index()];
                                 if let InstructionValue::StoreLocal { value, .. } =
                                     &last_instr.value
                                 {
@@ -536,7 +536,7 @@ fn collect_dependencies<'a>(
 
         // Process instructions
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue_id = instr.lvalue.identifier;
 
             match &instr.value {
@@ -577,7 +577,7 @@ fn collect_dependencies<'a>(
                     locals.insert(decl_lv.place.identifier);
                 }
                 InstructionValue::StoreLocal { lvalue: store_lv, value: store_val, .. } => {
-                    let has_name = identifiers[store_lv.place.identifier.0 as usize].name.is_some();
+                    let has_name = identifiers[store_lv.place.identifier.index()].name.is_some();
                     if !has_name {
                         // Unnamed: propagate temporary
                         if let Some(temp) = temporaries.get(&store_val.identifier).cloned() {
@@ -702,7 +702,7 @@ fn collect_dependencies<'a>(
                 }
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    let inner_func = &functions[lowered_func.func.0 as usize];
+                    let inner_func = &functions[lowered_func.func.index()];
                     let function_deps = collect_dependencies(
                         inner_func,
                         identifiers,

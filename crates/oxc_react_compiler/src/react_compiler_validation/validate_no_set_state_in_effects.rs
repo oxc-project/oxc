@@ -43,7 +43,7 @@ pub fn validate_no_set_state_in_effects(
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::LoadLocal { place, .. } => {
                     if set_state_functions.contains_key(&place.identifier) {
@@ -60,7 +60,7 @@ pub fn validate_no_set_state_in_effects(
                 }
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
                     // Check if any context capture references a setState
-                    let inner_func = &functions[lowered_func.func.0 as usize];
+                    let inner_func = &functions[lowered_func.func.index()];
                     let has_set_state_operand = inner_func.context.iter().any(|ctx_place| {
                         is_set_state_type_by_id(ctx_place.identifier, identifiers, types)
                             || set_state_functions.contains_key(&ctx_place.identifier)
@@ -82,8 +82,7 @@ pub fn validate_no_set_state_in_effects(
                     }
                 }
                 InstructionValue::MethodCall { property, args, .. } => {
-                    let prop_type =
-                        &types[identifiers[property.identifier.0 as usize].type_.0 as usize];
+                    let prop_type = &types[identifiers[property.identifier.index()].type_.index()];
                     if is_use_effect_event_type(prop_type) {
                         if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
                             if let Some(info) = set_state_functions.get(&arg_place.identifier) {
@@ -106,8 +105,7 @@ pub fn validate_no_set_state_in_effects(
                     }
                 }
                 InstructionValue::CallExpression { callee, args, .. } => {
-                    let callee_type =
-                        &types[identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                    let callee_type = &types[identifiers[callee.identifier.index()].type_.index()];
                     if is_use_effect_event_type(callee_type) {
                         if let Some(PlaceOrSpread::Place(arg_place)) = args.first() {
                             if let Some(info) = set_state_functions.get(&arg_place.identifier) {
@@ -147,8 +145,8 @@ fn is_set_state_type_by_id(
     identifiers: &[Identifier],
     types: &[Type],
 ) -> bool {
-    let ident = &identifiers[identifier_id.0 as usize];
-    let ty = &types[ident.type_.0 as usize];
+    let ident = &identifiers[identifier_id.index()];
+    let ty = &types[ident.type_.index()];
     is_set_state_type(ty)
 }
 
@@ -241,8 +239,8 @@ fn is_derived_from_ref(
     if ref_derived_values.contains(&id) {
         return true;
     }
-    let ident = &identifiers[id.0 as usize];
-    let ty = &types[ident.type_.0 as usize];
+    let ident = &identifiers[id.index()];
+    let ty = &types[ident.type_.index()];
     is_use_ref_type(ty) || is_ref_value_type(ty)
 }
 
@@ -344,7 +342,7 @@ fn get_set_state_call(
             }
 
             for &instr_id in &block.instructions {
-                let instr = &func.instructions[instr_id.0 as usize];
+                let instr = &func.instructions[instr_id.index()];
 
                 let operands = collect_operands(&instr.value, functions);
                 let has_ref_operand = operands.iter().any(|op_id| {
@@ -363,8 +361,8 @@ fn get_set_state_call(
 
                 if let InstructionValue::PropertyLoad { object, property, .. } = &instr.value {
                     if property.is_string("current") {
-                        let obj_ident = &identifiers[object.identifier.0 as usize];
-                        let obj_ty = &types[obj_ident.type_.0 as usize];
+                        let obj_ident = &identifiers[object.identifier.index()];
+                        let obj_ty = &types[obj_ident.type_.index()];
                         if is_use_ref_type(obj_ty) || is_ref_value_type(obj_ty) {
                             ref_derived_values.insert(instr.lvalue.identifier);
                         }
@@ -429,7 +427,7 @@ fn get_set_state_call(
         }
 
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
 
             // Track ref-derived values through instructions
             if enable_allow_set_state_from_refs {
@@ -453,8 +451,8 @@ fn get_set_state_call(
                 // Special case: PropertyLoad of .current on ref/refValue
                 if let InstructionValue::PropertyLoad { object, property, .. } = &instr.value {
                     if property.is_string("current") {
-                        let obj_ident = &identifiers[object.identifier.0 as usize];
-                        let obj_ty = &types[obj_ident.type_.0 as usize];
+                        let obj_ident = &identifiers[object.identifier.index()];
+                        let obj_ty = &types[obj_ident.type_.index()];
                         if is_use_ref_type(obj_ty) || is_ref_value_type(obj_ty) {
                             ref_derived_values.insert(instr.lvalue.identifier);
                         }

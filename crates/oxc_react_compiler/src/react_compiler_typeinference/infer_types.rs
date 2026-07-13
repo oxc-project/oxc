@@ -65,13 +65,13 @@ pub fn infer_types<'a>(
 
 /// Get the type for an identifier as a TypeVar referencing its type slot.
 fn get_type<'a>(id: IdentifierId, identifiers: &[Identifier<'a>]) -> Type<'a> {
-    let type_id = identifiers[id.0 as usize].type_;
+    let type_id = identifiers[id.index()].type_;
     Type::TypeVar { id: type_id }
 }
 
 /// Allocate a new TypeVar in the types arena (standalone, no &mut Environment needed).
 fn make_type<'a>(types: &mut Vec<Type<'a>>) -> Type<'a> {
-    let id = TypeId(types.len() as u32);
+    let id = TypeId::from_usize(types.len());
     types.push(Type::TypeVar { id });
     Type::TypeVar { id }
 }
@@ -84,7 +84,7 @@ fn pre_resolve_globals<'a>(
     global_types: &mut FxHashMap<(u32, InstructionId), Type<'a>>,
 ) {
     for &instr_id in func.body.blocks.values().flat_map(|b| &b.instructions) {
-        let instr = &func.instructions[instr_id.0 as usize];
+        let instr = &func.instructions[instr_id.index()];
         if let InstructionValue::LoadGlobal { binding, span, .. } = &instr.value {
             if let Some(global_type) = env.get_global_declaration(binding, *span).ok().flatten() {
                 global_types.insert((function_key, instr_id), global_type);
@@ -102,13 +102,13 @@ fn pre_resolve_globals_recursive<'a>(
     // Collect LoadGlobal bindings and child function IDs in one pass to avoid
     // borrow conflicts (we need &env.functions to read, then &mut env for
     // get_global_declaration).
-    let inner = &env.functions[func_id.0 as usize];
+    let inner = &env.functions[func_id.index()];
     let mut load_globals: Vec<(InstructionId, NonLocalBinding, Option<Span>)> = Vec::new();
     let mut child_func_ids: Vec<FunctionId> = Vec::new();
 
     for block in inner.body.blocks.values() {
         for &instr_id in &block.instructions {
-            let instr = &inner.instructions[instr_id.0 as usize];
+            let instr = &inner.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::LoadGlobal { binding, span, .. } => {
                     load_globals.push((instr_id, binding.clone(), *span));
@@ -131,7 +131,7 @@ fn pre_resolve_globals_recursive<'a>(
     // Now resolve globals (no longer borrowing env.functions)
     for (instr_id, binding, span) in load_globals {
         if let Some(global_type) = env.get_global_declaration(&binding, span).ok().flatten() {
-            global_types.insert((func_id.0, instr_id), global_type);
+            global_types.insert((func_id.index() as u32, instr_id), global_type);
         }
     }
 
@@ -306,12 +306,12 @@ fn generate<'a>(
     // this before the instruction loop because get_global_declaration needs
     // &mut env, but generate_instruction_types takes split borrows on env fields.
     // The key is (function_key, InstructionId) where function_key is u32::MAX
-    // for the outer function and FunctionId.0 for inner functions.
+    // for the outer function and the FunctionId index for inner functions.
     let mut global_types: FxHashMap<(u32, InstructionId), Type<'a>> = FxHashMap::default();
     pre_resolve_globals(func, u32::MAX, env, &mut global_types);
     // Also pre-resolve inner functions recursively
     for &instr_id in func.body.blocks.values().flat_map(|b| &b.instructions) {
-        let instr = &func.instructions[instr_id.0 as usize];
+        let instr = &func.instructions[instr_id.index()];
         match &instr.value {
             InstructionValue::FunctionExpression {
                 lowered_func: LoweredFunction { func: func_id },
@@ -342,7 +342,7 @@ fn generate<'a>(
         // Instructions — use split borrows: &env.identifiers, &env.shapes
         // are immutable, while &mut env.types and &mut env.functions are mutable.
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             generate_instruction_types(
                 instr,
                 instr_id,
@@ -387,7 +387,7 @@ fn generate_for_function_id<'a>(
     allocator: &'a Allocator,
 ) -> Result<(), OxcDiagnostic> {
     // Take the function out temporarily to avoid borrow conflicts
-    let inner = replace(&mut functions[func_id.0 as usize], placeholder_function());
+    let inner = replace(&mut functions[func_id.index()], placeholder_function());
 
     // Process params for component inner functions
     if inner.fn_type == ReactFunctionType::Component {
@@ -415,11 +415,11 @@ fn generate_for_function_id<'a>(
         }
 
         for &instr_id in &block.instructions {
-            let instr = &inner.instructions[instr_id.0 as usize];
+            let instr = &inner.instructions[instr_id.index()];
             generate_instruction_types(
                 instr,
                 instr_id,
-                func_id.0,
+                func_id.index() as u32,
                 identifiers,
                 types,
                 functions,
@@ -444,7 +444,7 @@ fn generate_for_function_id<'a>(
     }
 
     // Put the function back
-    functions[func_id.0 as usize] = inner;
+    functions[func_id.index()] = inner;
     Ok(())
 }
 
@@ -476,7 +476,7 @@ fn generate_instruction_types<'a>(
         }
 
         InstructionValue::LoadLocal { place, .. } => {
-            set_name(names, instr.lvalue.identifier, &identifiers[place.identifier.0 as usize]);
+            set_name(names, instr.lvalue.identifier, &identifiers[place.identifier.index()]);
             let place_type = get_type(place.identifier, identifiers);
             unifier.unify(left, place_type, shapes)?;
         }
@@ -718,7 +718,7 @@ fn generate_instruction_types<'a>(
                 allocator,
             )?;
             // Get the inner function's return type
-            let inner_func = &functions[func_id.0 as usize];
+            let inner_func = &functions[func_id.index()];
             let inner_return_type = get_type(inner_func.returns.identifier, identifiers);
             unifier.unify(
                 left,
@@ -840,7 +840,7 @@ fn apply_function<'a>(
         }
 
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
 
             // Instruction lvalue
             resolve_identifier(instr.lvalue.identifier, identifiers, types, unifier);
@@ -861,7 +861,7 @@ fn apply_function<'a>(
                     lowered_func: LoweredFunction { func: func_id },
                     ..
                 } => {
-                    let inner_func = &functions[func_id.0 as usize];
+                    let inner_func = &functions[func_id.index()];
                     // Resolve types for captured context variable places (matching TS
                     // where eachInstructionValueOperand yields func.context places)
                     for ctx in &inner_func.context {
@@ -884,10 +884,10 @@ fn resolve_identifier<'a>(
     types: &mut [Type<'a>],
     unifier: &Unifier<'a>,
 ) {
-    let type_id = identifiers[id.0 as usize].type_;
-    let current_type = types[type_id.0 as usize].clone();
+    let type_id = identifiers[id.index()].type_;
+    let current_type = types[type_id.index()].clone();
     let resolved = unifier.get(&current_type);
-    types[type_id.0 as usize] = resolved;
+    types[type_id.index()] = resolved;
 }
 
 /// Resolve types for instruction lvalues (mirrors TS eachInstructionLValue).

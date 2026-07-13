@@ -312,7 +312,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// then continues in a new block.
     pub fn push(&mut self, instruction: Instruction<'a>) {
         let span = instruction.span;
-        let instr_id = InstructionId(self.instruction_table.len() as u32);
+        let instr_id = InstructionId::from_usize(self.instruction_table.len());
         self.instruction_table.push(instruction);
         self.current.instructions.push(instr_id);
 
@@ -322,7 +322,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 Terminal::MaybeThrow {
                     continuation: continuation.id,
                     handler: Some(handler),
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                     effects: None,
                 },
@@ -355,12 +355,12 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// If `next_block_kind` is `Some`, a new current block is created with that kind.
     /// Returns the BlockId of the completed block.
     pub fn terminate(&mut self, terminal: Terminal, next_block_kind: Option<BlockKind>) -> BlockId {
-        // The placeholder block created here (BlockId(u32::MAX)) is only used when
+        // The placeholder block created here (`BlockId::PLACEHOLDER`) is only used when
         // next_block_kind is None, meaning this is the final terminate() call.
         // It will never be read or completed because build() consumes self
         // immediately after, and no further operations should occur on the builder.
         let wip =
-            std::mem::replace(&mut self.current, new_block(BlockId(u32::MAX), BlockKind::Block));
+            std::mem::replace(&mut self.current, new_block(BlockId::PLACEHOLDER, BlockKind::Block));
         let block_id = wip.id;
 
         self.complete_block(wip, terminal);
@@ -542,7 +542,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn make_temporary(&mut self, span: Option<Span>) -> IdentifierId {
         let id = self.env.next_identifier_id();
         // Update the span on the allocated identifier
-        self.env.identifiers[id.0 as usize].span = span;
+        self.env.identifiers[id.index()].span = span;
         id
     }
 
@@ -596,7 +596,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             if !rpo_blocks.contains_key(id) {
                 let has_function_expr = block.instructions.iter().any(|&instr_id| {
                     matches!(
-                        instructions[instr_id.0 as usize].value,
+                        instructions[instr_id.index()].value,
                         InstructionValue::FunctionExpression { .. }
                     )
                 });
@@ -604,7 +604,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                     let span = block
                         .instructions
                         .first()
-                        .and_then(|&i| instructions[i.0 as usize].span)
+                        .and_then(|&i| instructions[i.index()].span)
                         .or_else(|| block.terminal.span().copied());
                     self.env.record_error(
                         ErrorCategory::Todo
@@ -662,7 +662,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             let should_record_fbt_error =
                 if let Some(&identifier_id) = self.bindings.get(&symbol_id) {
                     // Already resolved - check if the resolved name is still "fbt"
-                    match &self.env.identifiers[identifier_id.0 as usize].name {
+                    match &self.env.identifiers[identifier_id.index()].name {
                         Some(IdentifierName::Named(resolved_name)) => resolved_name == "fbt",
                         _ => false,
                     }
@@ -715,15 +715,15 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         // Allocate identifier in the arena
         let id = self.env.next_identifier_id();
         // Update the name and span on the allocated identifier
-        self.env.identifiers[id.0 as usize].name = Some(IdentifierName::Named(candidate));
+        self.env.identifiers[id.index()].name = Some(IdentifierName::Named(candidate));
         // Prefer the binding's declaration span over the reference span.
         // This matches TS behavior where Babel's resolveBinding returns the
         // binding identifier's original span (the declaration site).
         let decl_span = self.declaration_span(symbol_id);
         if let Some(ref dl) = decl_span {
-            self.env.identifiers[id.0 as usize].span = Some(*dl);
+            self.env.identifiers[id.index()].span = Some(*dl);
         } else if let Some(ref span) = span {
-            self.env.identifiers[id.0 as usize].span = Some(*span);
+            self.env.identifiers[id.index()].span = Some(*span);
         }
 
         self.used_names.insert(candidate, symbol_id);
@@ -734,7 +734,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Set the span on an identifier to the declaration-site span.
     /// This overrides any previously-set span (which may have come from a reference site).
     pub fn set_identifier_declaration_span(&mut self, id: IdentifierId, span: Span) {
-        self.env.identifiers[id.0 as usize].span = Some(span);
+        self.env.identifiers[id.index()].span = Some(span);
     }
 
     /// Resolve an identifier reference to a VariableBinding.
@@ -848,7 +848,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         // None = unresolved binding; Some(matches) = resolved, current name comparison
         let resolved_name_matches = |sid: SymbolId| -> Option<bool> {
             let &identifier_id = self.bindings.get(&sid)?;
-            match &self.env.identifiers[identifier_id.0 as usize].name {
+            match &self.env.identifiers[identifier_id.index()].name {
                 Some(IdentifierName::Named(n)) => Some(n == name),
                 _ => Some(false),
             }
@@ -1000,7 +1000,7 @@ pub fn remove_dead_do_while_statements(hir: &mut HIR) {
         if should_replace {
             if let Terminal::DoWhile { loop_block, id, span, .. } = std::mem::replace(
                 &mut block.terminal,
-                Terminal::Unreachable { id: EvaluationOrder(0), span: None },
+                Terminal::Unreachable { id: EvaluationOrder::UNSET, span: None },
             ) {
                 block.terminal =
                     Terminal::Goto { block: loop_block, variant: GotoVariant::Break, id, span };
@@ -1038,7 +1038,7 @@ pub fn remove_unnecessary_try_catch(hir: &mut HIR) {
         if let Some(block) = hir.blocks.get_mut(&block_id) {
             block.terminal = Terminal::Goto {
                 block: try_block,
-                id: EvaluationOrder(0),
+                id: EvaluationOrder::UNSET,
                 span,
                 variant: GotoVariant::Break,
             };
@@ -1062,10 +1062,10 @@ pub fn mark_instruction_ids(hir: &mut HIR, instructions: &mut [Instruction]) {
     for block in hir.blocks.values_mut() {
         for &instr_id in &block.instructions {
             order += 1;
-            instructions[instr_id.0 as usize].id = EvaluationOrder(order);
+            instructions[instr_id.index()].id = EvaluationOrder::from_usize(order as usize);
         }
         order += 1;
-        block.terminal.set_evaluation_order(EvaluationOrder(order));
+        block.terminal.set_evaluation_order(EvaluationOrder::from_usize(order as usize));
     }
 }
 
@@ -1127,6 +1127,6 @@ pub fn mark_predecessors(hir: &mut HIR) {
 pub fn create_temporary_place(env: &mut Environment<'_>, span: Option<Span>) -> Place {
     let id = env.next_identifier_id();
     // Update the span on the allocated identifier
-    env.identifiers[id.0 as usize].span = span;
+    env.identifiers[id.index()].span = span;
     Place { identifier: id, reactive: false, effect: Effect::Unknown, span: None }
 }

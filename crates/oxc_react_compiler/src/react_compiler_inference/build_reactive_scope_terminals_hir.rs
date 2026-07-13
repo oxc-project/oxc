@@ -45,8 +45,8 @@ fn get_scopes(func: &HirFunction, env: &Environment) -> Vec<ScopeId> {
     let mut scope_ids: FxHashSet<ScopeId> = FxHashSet::default();
 
     let mut visit_place = |identifier_id: IdentifierId| {
-        if let Some(scope_id) = env.identifiers[identifier_id.0 as usize].scope {
-            let range = &env.scopes[scope_id.0 as usize].range;
+        if let Some(scope_id) = env.identifiers[identifier_id.index()].scope {
+            let range = &env.scopes[scope_id.index()].range;
             if range.start != range.end {
                 scope_ids.insert(scope_id);
             }
@@ -55,7 +55,7 @@ fn get_scopes(func: &HirFunction, env: &Environment) -> Vec<ScopeId> {
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             // lvalues
             for id in each_instruction_lvalue_ids(instr) {
                 visit_place(id);
@@ -111,13 +111,13 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
     // Sort: ascending by start, descending by end for ties
     let mut items: Vec<ScopeId> = scope_ids;
     items.sort_by(|a, b| {
-        let a_range = &env.scopes[a.0 as usize].range;
-        let b_range = &env.scopes[b.0 as usize].range;
-        let start_diff = a_range.start.0.cmp(&b_range.start.0);
+        let a_range = &env.scopes[a.index()].range;
+        let b_range = &env.scopes[b.index()].range;
+        let start_diff = a_range.start.cmp(&b_range.start);
         if start_diff != Ordering::Equal {
             return start_diff;
         }
-        b_range.end.0.cmp(&a_range.end.0)
+        b_range.end.cmp(&a_range.end)
     });
 
     let mut rewrites: Vec<TerminalRewriteInfo> = Vec::new();
@@ -125,15 +125,15 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
     let mut active_items: Vec<ScopeId> = Vec::new();
 
     for &curr in &items {
-        let curr_start = env.scopes[curr.0 as usize].range.start;
-        let curr_end = env.scopes[curr.0 as usize].range.end;
+        let curr_start = env.scopes[curr.index()].range.start;
+        let curr_end = env.scopes[curr.index()].range.end;
 
         // Pop active items that are disjoint with current
         let mut j = active_items.len();
         while j > 0 {
             j -= 1;
             let maybe_parent = active_items[j];
-            let parent_end = env.scopes[maybe_parent.0 as usize].range.end;
+            let parent_end = env.scopes[maybe_parent.index()].range.end;
             let disjoint = curr_start >= parent_end;
             let nested = curr_end <= parent_end;
             assert!(disjoint || nested, "Invalid nesting in program blocks or scopes");
@@ -141,7 +141,7 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
                 // Exit this scope
                 let fallthrough_id =
                     *fallthroughs.get(&maybe_parent).expect("Expected scope to exist");
-                let end_instr_id = env.scopes[maybe_parent.0 as usize].range.end;
+                let end_instr_id = env.scopes[maybe_parent.index()].range.end;
                 rewrites
                     .push(TerminalRewriteInfo::EndScope { instr_id: end_instr_id, fallthrough_id });
                 active_items.truncate(j);
@@ -153,7 +153,7 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
         // Enter scope
         let block_id = env.next_block_id();
         let fallthrough_id = env.next_block_id();
-        let start_instr_id = env.scopes[curr.0 as usize].range.start;
+        let start_instr_id = env.scopes[curr.index()].range.start;
         rewrites.push(TerminalRewriteInfo::StartScope {
             block_id,
             fallthrough_id,
@@ -167,7 +167,7 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
     // Exit remaining active items
     while let Some(curr) = active_items.pop() {
         let fallthrough_id = *fallthroughs.get(&curr).expect("Expected scope to exist");
-        let end_instr_id = env.scopes[curr.0 as usize].range.end;
+        let end_instr_id = env.scopes[curr.index()].range.end;
         rewrites.push(TerminalRewriteInfo::EndScope { instr_id: end_instr_id, fallthrough_id });
     }
 
@@ -267,7 +267,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
         for i in 0..block.instructions.len() + 1 {
             let instr_id = if i < block.instructions.len() {
                 let instr_idx = block.instructions[i];
-                func.instructions[instr_idx.0 as usize].id
+                func.instructions[instr_idx.index()].id
             } else {
                 block.terminal.evaluation_order()
             };
@@ -365,12 +365,12 @@ fn fix_scope_and_identifier_ranges(func: &HirFunction, env: &mut Environment) {
             | Terminal::PrunedScope { fallthrough, scope, id, .. } => {
                 let fallthrough_block = func.body.blocks.get(fallthrough).unwrap();
                 let first_id = if !fallthrough_block.instructions.is_empty() {
-                    func.instructions[fallthrough_block.instructions[0].0 as usize].id
+                    func.instructions[fallthrough_block.instructions[0].index()].id
                 } else {
                     fallthrough_block.terminal.evaluation_order()
                 };
-                env.scopes[scope.0 as usize].range.start = *id;
-                env.scopes[scope.0 as usize].range.end = first_id;
+                env.scopes[scope.index()].range.start = *id;
+                env.scopes[scope.index()].range.end = first_id;
             }
             _ => {}
         }
@@ -386,9 +386,9 @@ fn fix_scope_and_identifier_ranges(func: &HirFunction, env: &mut Environment) {
     // not the root scope's range — so they should NOT be synced here.
     for ident in &mut env.identifiers {
         if let Some(scope_id) = ident.scope {
-            let original = &original_scope_ranges[scope_id.0 as usize];
+            let original = &original_scope_ranges[scope_id.index()];
             if ident.mutable_range.same_range(original) {
-                let scope_range = &env.scopes[scope_id.0 as usize].range;
+                let scope_range = &env.scopes[scope_id.index()].range;
                 ident.mutable_range.start = scope_range.start;
                 ident.mutable_range.end = scope_range.end;
             }

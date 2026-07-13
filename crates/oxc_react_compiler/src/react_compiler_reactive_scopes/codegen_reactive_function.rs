@@ -300,12 +300,12 @@ impl<'a, 'env> OxcContext<'a, 'env> {
     }
 
     fn declare(&mut self, identifier_id: IdentifierId) {
-        let ident = &self.env.identifiers[identifier_id.0 as usize];
+        let ident = &self.env.identifiers[identifier_id.index()];
         self.declarations.insert(ident.declaration_id);
     }
 
     fn has_declared(&self, identifier_id: IdentifierId) -> bool {
-        let ident = &self.env.identifiers[identifier_id.0 as usize];
+        let ident = &self.env.identifiers[identifier_id.index()];
         self.declarations.contains(&ident.declaration_id)
     }
 
@@ -451,7 +451,7 @@ fn ox_codegen_reactive_function<'a>(
             ParamPattern::Place(p) => p,
             ParamPattern::Spread(sp) => &sp.place,
         };
-        let ident = &cx.env.identifiers[place.identifier.0 as usize];
+        let ident = &cx.env.identifiers[place.identifier.index()];
         cx.temp.insert(ident.declaration_id, None);
         cx.declare(place.identifier);
     }
@@ -555,7 +555,7 @@ fn ox_identifier_name<'a>(
     env: &Environment<'a>,
     identifier_id: IdentifierId,
 ) -> Result<Ident<'a>, OxcDiagnostic> {
-    let ident = &env.identifiers[identifier_id.0 as usize];
+    let ident = &env.identifiers[identifier_id.index()];
     match ident.name {
         Some(crate::react_compiler_hir::IdentifierName::Named(n))
         | Some(crate::react_compiler_hir::IdentifierName::Promoted(n)) => Ok(n),
@@ -670,9 +670,9 @@ fn ox_codegen_reactive_scope<'a>(
     scope_id: ScopeId,
     block: &ReactiveBlock<'a>,
 ) -> Result<(), OxcDiagnostic> {
-    let scope_deps = cx.env.scopes[scope_id.0 as usize].dependencies.clone();
-    let scope_decls = cx.env.scopes[scope_id.0 as usize].declarations.clone();
-    let scope_reassignments = cx.env.scopes[scope_id.0 as usize].reassignments.clone();
+    let scope_deps = cx.env.scopes[scope_id.index()].dependencies.clone();
+    let scope_decls = cx.env.scopes[scope_id.index()].declarations.clone();
+    let scope_reassignments = cx.env.scopes[scope_id.index()].reassignments.clone();
 
     let mut cache_store_stmts: oxc_allocator::Vec<'a, oxc::Statement<'a>> =
         oxc_allocator::ArenaVec::new_in(&cx.ast);
@@ -832,9 +832,9 @@ fn ox_codegen_reactive_scope<'a>(
     statements.push(memo_stmt);
 
     // Early return
-    let early_return_value = cx.env.scopes[scope_id.0 as usize].early_return_value.clone();
+    let early_return_value = cx.env.scopes[scope_id.index()].early_return_value.clone();
     if let Some(ref early_return) = early_return_value {
-        let early_ident = &cx.env.identifiers[early_return.value.0 as usize];
+        let early_ident = &cx.env.identifiers[early_return.value.index()];
         let name = match &early_ident.name {
             Some(
                 crate::react_compiler_hir::IdentifierName::Named(n)
@@ -1041,7 +1041,7 @@ fn ox_codegen_terminal<'a>(
         ReactiveTerminal::Try { block, handler_binding, handler, .. } => {
             let catch_param = match handler_binding.as_ref() {
                 Some(binding) => {
-                    let ident = &cx.env.identifiers[binding.identifier.0 as usize];
+                    let ident = &cx.env.identifiers[binding.identifier.index()];
                     cx.temp.insert(ident.declaration_id, None);
                     let pattern = ox_binding_for_identifier(cx, binding.identifier)?;
                     Some(oxc_ast::ast::CatchParameter::new(
@@ -1383,7 +1383,7 @@ fn ox_codegen_store_or_declare<'a>(
             let kind = lvalue.kind;
             for place in crate::react_compiler_hir::visitors::each_pattern_operand(&lvalue.pattern)
             {
-                let ident = &cx.env.identifiers[place.identifier.0 as usize];
+                let ident = &cx.env.identifiers[place.identifier.index()];
                 if kind != InstructionKind::Reassign && ident.name.is_none() {
                     cx.temp.insert(ident.declaration_id, None);
                 }
@@ -1483,7 +1483,7 @@ fn ox_emit_store<'a>(
                     ReactiveValue::Instruction(InstructionValue::StoreContext { .. })
                 );
                 if !is_store_context {
-                    let ident = &cx.env.identifiers[lvalue_place.identifier.0 as usize];
+                    let ident = &cx.env.identifiers[lvalue_place.identifier.index()];
                     cx.temp.insert(ident.declaration_id, Some(OxValue::Expression(expr)));
                     return Ok(None);
                 }
@@ -1541,7 +1541,7 @@ fn ox_codegen_instruction<'a>(
         let expr = ox_convert_value_to_expression(&cx.ast, value);
         return Ok(oxc_ast::ast::Statement::new_expression_statement(SPAN, expr, &cx.ast));
     };
-    let ident = &cx.env.identifiers[lvalue.identifier.0 as usize];
+    let ident = &cx.env.identifiers[lvalue.identifier.index()];
     if ident.name.is_none() {
         cx.temp.insert(ident.declaration_id, Some(value));
         return Ok(oxc_ast::ast::Statement::new_empty_statement(SPAN, &cx.ast));
@@ -2201,7 +2201,7 @@ fn ox_codegen_place<'a>(
     cx: &mut OxcContext<'a, '_>,
     place: &Place,
 ) -> Result<OxValue<'a>, OxcDiagnostic> {
-    let ident = &cx.env.identifiers[place.identifier.0 as usize];
+    let ident = &cx.env.identifiers[place.identifier.index()];
     let declaration_id = ident.declaration_id;
     if let Some(tmp) = cx.temp.get(&declaration_id) {
         if let Some(val) = tmp {
@@ -2211,7 +2211,7 @@ fn ox_codegen_place<'a>(
         return Err(invariant_err(
             &format!(
                 "[Codegen] No value found for temporary, identifier id={}",
-                place.identifier.0
+                place.identifier.index()
             ),
             place.span,
         ));
@@ -2548,7 +2548,7 @@ fn ox_codegen_function_expression<'a>(
     lowered_func: &crate::react_compiler_hir::LoweredFunction,
     expr_type: &FunctionExpressionType,
 ) -> Result<OxValue<'a>, OxcDiagnostic> {
-    let func = cx.env.functions[lowered_func.func.0 as usize].clone();
+    let func = cx.env.functions[lowered_func.func.index()].clone();
     let mut reactive_fn = build_reactive_function(&func, cx.env)?;
     prune_unused_labels(&mut reactive_fn, cx.env)?;
     prune_unused_lvalues(&mut reactive_fn, cx.env);
@@ -2734,7 +2734,7 @@ fn ox_codegen_object_expression<'a>(
                             return Err(invariant_err("Expected ObjectMethod instruction", None));
                         };
 
-                        let func = cx.env.functions[lowered_func.func.0 as usize].clone();
+                        let func = cx.env.functions[lowered_func.func.index()].clone();
                         let mut reactive_fn = build_reactive_function(&func, cx.env)?;
                         prune_unused_labels(&mut reactive_fn, cx.env)?;
                         prune_unused_lvalues(&mut reactive_fn, cx.env);
@@ -3321,7 +3321,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CountMemoBlockVisitor<'a, 'e> {
 
     fn visit_scope(&self, scope_block: &ReactiveScopeBlock<'a>, state: &mut CountMemoBlockState) {
         state.memo_blocks += 1;
-        let scope = &self.env.scopes[scope_block.scope.0 as usize];
+        let scope = &self.env.scopes[scope_block.scope.index()];
         state.memo_values += scope.declarations.len() as u32;
         self.traverse_scope(scope_block, state);
     }
@@ -3332,7 +3332,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CountMemoBlockVisitor<'a, 'e> {
         state: &mut CountMemoBlockState,
     ) {
         state.pruned_memo_blocks += 1;
-        let scope = &self.env.scopes[scope_block.scope.0 as usize];
+        let scope = &self.env.scopes[scope_block.scope.index()];
         state.pruned_memo_values += scope.declarations.len() as u32;
         self.traverse_pruned_scope(scope_block, state);
     }
@@ -3354,7 +3354,7 @@ fn count_memo_blocks<'a>(
 }
 
 fn codegen_label(id: BlockId) -> String {
-    format!("bb{}", id.0)
+    format!("bb{}", id.index())
 }
 
 fn get_instruction_value<'x, 'a>(
@@ -3398,10 +3398,10 @@ fn dep_to_sort_key(
     dep: &crate::react_compiler_hir::ReactiveScopeDependency,
     env: &Environment,
 ) -> String {
-    let ident = &env.identifiers[dep.identifier.0 as usize];
+    let ident = &env.identifiers[dep.identifier.index()];
     let base = match ident.name {
         Some(name) => name.value().to_string(),
-        None => format!("_t{}", dep.identifier.0),
+        None => format!("_t{}", dep.identifier.index()),
     };
     let mut parts = vec![base];
     for entry in &dep.path {
@@ -3426,9 +3426,9 @@ fn compare_scope_declaration(
 }
 
 fn ident_sort_key(id: IdentifierId, env: &Environment) -> String {
-    let ident = &env.identifiers[id.0 as usize];
+    let ident = &env.identifiers[id.index()];
     match ident.name {
         Some(name) => name.value().to_string(),
-        None => format!("_t{}", id.0),
+        None => format!("_t{}", id.index()),
     }
 }

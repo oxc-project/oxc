@@ -30,7 +30,7 @@ pub fn validate_no_jsx_in_try_statement(func: &HirFunction) -> Diagnostics {
 
         if !active_try_blocks.is_empty() {
             for &instr_id in &block.instructions {
-                let instr = &func.instructions[instr_id.0 as usize];
+                let instr = &func.instructions[instr_id.index()];
                 match &instr.value {
                     InstructionValue::JsxExpression { span, .. }
                     | InstructionValue::JsxFragment { span, .. } => {

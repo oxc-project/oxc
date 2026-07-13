@@ -24,12 +24,14 @@ const ERROR_DESCRIPTION: &str = "React refs are values that are not needed for r
 
 // --- RefId ---
 
-type RefId = u32;
+oxc_index::define_nonmax_u32_index_type! {
+    struct RefId;
+}
 
 static REF_ID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 fn next_ref_id() -> RefId {
-    REF_ID_COUNTER.fetch_add(1, Ordering::Relaxed)
+    RefId::from_usize(REF_ID_COUNTER.fetch_add(1, Ordering::Relaxed) as usize)
 }
 
 // --- RefAccessType / RefAccessRefType / RefFnType ---
@@ -256,8 +258,8 @@ impl Env {
 // --- Helper functions ---
 
 fn ref_type_of_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]) -> RefAccessType {
-    let identifier = &identifiers[id.0 as usize];
-    let ty = &types[identifier.type_.0 as usize];
+    let identifier = &identifiers[id.index()];
+    let ty = &types[identifier.type_.index()];
     if crate::react_compiler_hir::is_ref_value_type(ty) {
         RefAccessType::RefValue { span: None, ref_id: None }
     } else if is_use_ref_type(ty) {
@@ -268,13 +270,13 @@ fn ref_type_of_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]
 }
 
 fn is_ref_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]) -> bool {
-    let identifier = &identifiers[id.0 as usize];
-    is_use_ref_type(&types[identifier.type_.0 as usize])
+    let identifier = &identifiers[id.index()];
+    is_use_ref_type(&types[identifier.type_.index()])
 }
 
 fn is_ref_value_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]) -> bool {
-    let identifier = &identifiers[id.0 as usize];
-    crate::react_compiler_hir::is_ref_value_type(&types[identifier.type_.0 as usize])
+    let identifier = &identifiers[id.index()];
+    crate::react_compiler_hir::is_ref_value_type(&types[identifier.type_.index()])
 }
 
 fn destructure(ty: &RefAccessType) -> RefAccessType {
@@ -448,7 +450,7 @@ fn collect_temporaries_sidemap(
 ) {
     for (_, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::LoadLocal { place, .. } => {
                     let temp = env
@@ -510,7 +512,7 @@ fn validate_no_ref_access_in_render_impl(
     let mut interpolated_as_jsx: FxHashSet<IdentifierId> = FxHashSet::default();
     for (_, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::JsxExpression { children: Some(children), .. } => {
                     for child in children {
@@ -553,7 +555,7 @@ fn validate_no_ref_access_in_render_impl(
 
             // Process instructions
             for &instr_id in &block.instructions {
-                let instr = &func.instructions[instr_id.0 as usize];
+                let instr = &func.instructions[instr_id.index()];
                 match &instr.value {
                     InstructionValue::JsxExpression { .. }
                     | InstructionValue::JsxFragment { .. } => {
@@ -658,7 +660,7 @@ fn validate_no_ref_access_in_render_impl(
                     }
                     InstructionValue::ObjectMethod { lowered_func, .. }
                     | InstructionValue::FunctionExpression { lowered_func, .. } => {
-                        let inner = &functions[lowered_func.func.0 as usize];
+                        let inner = &functions[lowered_func.func.index()];
                         let mut inner_errors: Vec<OxcDiagnostic> = Vec::new();
                         let result = validate_no_ref_access_in_render_impl(
                             inner,
@@ -716,8 +718,8 @@ fn validate_no_ref_access_in_render_impl(
                         if !did_error {
                             let is_ref_lvalue =
                                 is_ref_type(instr.lvalue.identifier, identifiers, types);
-                            let callee_identifier = &identifiers[callee.identifier.0 as usize];
-                            let callee_type = &types[callee_identifier.type_.0 as usize];
+                            let callee_identifier = &identifiers[callee.identifier.index()];
+                            let callee_type = &types[callee_identifier.type_.index()];
                             let hook_kind = env.get_hook_kind_for_type(callee_type).ok().flatten();
 
                             if is_ref_lvalue
@@ -806,7 +808,8 @@ fn validate_no_ref_access_in_render_impl(
                                             if validation != "none" {
                                                 let key = format!(
                                                     "{}:{}",
-                                                    place.identifier.0, validation
+                                                    place.identifier.index(),
+                                                    validation
                                                 );
                                                 if visited_effects.insert(key) {
                                                     if validation == "direct-ref" {
