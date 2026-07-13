@@ -1,6 +1,6 @@
 use std::mem::{replace, take};
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, HashMap as ArenaHashMap, HashSet as ArenaHashSet, Vec as ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
@@ -156,11 +156,12 @@ impl<'alloc> SSABuilder<'alloc> {
             }
         }
 
-        let allocator = self.allocator;
-        let preds: ArenaVec<BlockId> = ArenaVec::from_iter_in(
-            self.block_preds.get(&block_id).into_iter().flatten().copied(),
-            &allocator,
-        );
+        // Per-lookup temporary: keep on the heap so it is freed when this call
+        // returns. The pass-lived scratch arena is not reset mid-pass, so cloning
+        // predecessor lists into it here (once per operand, recursively) would
+        // accumulate O(uses x preds) retained memory.
+        let preds: Vec<BlockId> =
+            self.block_preds.get(&block_id).into_iter().flatten().copied().collect();
 
         if preds.is_empty() {
             self.unknown.insert(old_place.identifier);
@@ -208,11 +209,9 @@ impl<'alloc> SSABuilder<'alloc> {
         new_place: &Place,
         env: &mut Environment,
     ) {
-        let allocator = self.allocator;
-        let preds: ArenaVec<BlockId> = ArenaVec::from_iter_in(
-            self.block_preds.get(&block_id).into_iter().flatten().copied(),
-            &allocator,
-        );
+        // Per-call temporary: keep on the heap (see `get_id_at`).
+        let preds: Vec<BlockId> =
+            self.block_preds.get(&block_id).into_iter().flatten().copied().collect();
 
         let mut pred_defs: FxIndexMap<BlockId, Place> = FxIndexMap::default();
         for pred_block_id in &preds {
@@ -234,11 +233,9 @@ impl<'alloc> SSABuilder<'alloc> {
     }
 
     fn fix_incomplete_phis(&mut self, block_id: BlockId, env: &mut Environment) {
-        let allocator = self.allocator;
-        let incomplete_phis = ArenaVec::from_iter_in(
-            self.states.get_mut(&block_id).unwrap().incomplete_phis.drain(..),
-            &allocator,
-        );
+        // Per-call temporary: keep on the heap (see `get_id_at`).
+        let incomplete_phis: Vec<IncompletePhi> =
+            self.states.get_mut(&block_id).unwrap().incomplete_phis.drain(..).collect();
         for phi in &incomplete_phis {
             self.add_phi(block_id, &phi.old_place, &phi.new_place, env);
         }
@@ -281,9 +278,9 @@ fn apply_pending_phis(func: &mut HirFunction, env: &mut Environment, builder: &m
             block.phis.extend(phis);
         }
     }
-    let allocator = builder.allocator;
-    let processed_functions =
-        ArenaVec::from_iter_in(builder.processed_functions.iter().copied(), &allocator);
+    // Per-call temporary: keep on the heap so it is freed when this call returns.
+    let processed_functions: Vec<FunctionId> =
+        builder.processed_functions.iter().copied().collect();
     for fid in &processed_functions {
         let inner_func = &mut env.functions[fid.0 as usize];
         for (block_id, block) in inner_func.body.blocks.iter_mut() {
@@ -300,9 +297,11 @@ fn enter_ssa_impl(
     env: &mut Environment,
     root_entry: BlockId,
 ) -> Result<(), OxcDiagnostic> {
+    // `allocator` is used only to grow the pass-lived `block_preds` map below;
+    // per-call worklists (`visited_blocks`, `block_ids`, ...) stay on the heap.
     let allocator = builder.allocator;
-    let mut visited_blocks: ArenaHashSet<'_, BlockId> = ArenaHashSet::new_in(allocator);
-    let block_ids = ArenaVec::from_iter_in(func.body.blocks.keys().copied(), &allocator);
+    let mut visited_blocks: FxHashSet<BlockId> = FxHashSet::default();
+    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
 
     for block_id in &block_ids {
         let block_id = *block_id;
@@ -336,10 +335,8 @@ fn enter_ssa_impl(
         }
 
         // Process instructions
-        let instruction_ids = ArenaVec::from_iter_in(
-            func.body.blocks.get(&block_id).unwrap().instructions.iter().copied(),
-            &allocator,
-        );
+        let instruction_ids: Vec<InstructionId> =
+            func.body.blocks.get(&block_id).unwrap().instructions.clone();
 
         for instr_id in &instruction_ids {
             let instr_idx = instr_id.0 as usize;
@@ -385,10 +382,11 @@ fn enter_ssa_impl(
 
             // Handle inner function SSA
             if let Some(fid) = func_expr_id {
-                let context_ids = ArenaVec::from_iter_in(
-                    env.functions[fid.0 as usize].context.iter().map(|place| place.identifier),
-                    &allocator,
-                );
+                let context_ids: Vec<IdentifierId> = env.functions[fid.0 as usize]
+                    .context
+                    .iter()
+                    .map(|place| place.identifier)
+                    .collect();
                 for id in context_ids {
                     builder.unmark_unknown(id);
                 }
