@@ -1,8 +1,8 @@
-commit: de8e621c
+commit: d1d583db
 
 parser_test262 Summary:
-AST Parsed     : 47240/47240 (100.00%)
-Positive Passed: 47240/47240 (100.00%)
+AST Parsed     : 47267/47267 (100.00%)
+Positive Passed: 47267/47267 (100.00%)
 Negative Passed: 4588/4651 (98.65%)
 Expect Syntax Error: tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-defer-no-new-call-expression-prop-access.js
 
