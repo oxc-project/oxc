@@ -580,7 +580,7 @@ impl<'a> PeepholeOptimizations {
                 return !binding_identifier_symbol_ids.iter().any(|symbol_id| {
                     Self::array_elements_have_reference_to_symbol_id(
                         &init_expr.elements,
-                        symbol_id,
+                        *symbol_id,
                         ctx,
                     )
                 });
@@ -598,7 +598,7 @@ impl<'a> PeepholeOptimizations {
     /// Returns true If its components contain a reference to the given symbol ID.
     fn array_elements_have_reference_to_symbol_id(
         elements: &ArenaVec<'a, ArrayExpressionElement<'a>>,
-        symbol_id: &SymbolId,
+        symbol_id: SymbolId,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         elements.iter().any(|e| match e {
@@ -625,7 +625,7 @@ impl<'a> PeepholeOptimizations {
     /// Returns true If the expression or its components contain a reference to the given symbol ID.
     fn expression_has_reference_to_symbol_id(
         e: &Expression<'a>,
-        symbol_id: &SymbolId,
+        symbol_id: SymbolId,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         match e {
@@ -643,7 +643,7 @@ impl<'a> PeepholeOptimizations {
                     return false; // global reference
                 };
                 // check whatever id is present in init [a] = [b]
-                ref_symbol == symbol_id
+                *ref_symbol == symbol_id
             }
             _ => !e.is_literal_value(false, ctx),
         }
@@ -734,7 +734,10 @@ impl<'a> PeepholeOptimizations {
             Some(id) => Some((Some(id), Some(init_item))),
             // `[] = [??]` => `[] = [??]`
             None => {
-                if !init_item.is_literal_value(false, ctx) {
+                if init_item.is_literal_value(false, ctx) {
+                    ctx.drop_expression(&init_item);
+                    Some((None, None))
+                } else {
                     Some((
                         Some(BindingPattern::new_array_pattern(
                             decl.span,
@@ -748,9 +751,6 @@ impl<'a> PeepholeOptimizations {
                             ctx,
                         )),
                     ))
-                } else {
-                    ctx.drop_expression(&init_item);
-                    Some((None, None))
                 }
             }
         }
