@@ -246,6 +246,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         constant: Option<ConstantValue<'a>>,
         kind: FreshValueKind,
         falsy_init: bool,
+        init_absent: bool,
     ) {
         let mut exported = false;
         if self.scoping.current_scope_id() == self.scoping().root_scope_id() {
@@ -293,8 +294,14 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             && !scope_flags.contains(ScopeFlags::DirectEval)
             && !(self.source_type().is_script() && scope_id == self.scoping().root_scope_id());
 
+        // See `SymbolValue::implicit_undefined` — only meaningful when the
+        // recorded constant is the hoist-produced `undefined` of `let x;`.
+        let implicit_undefined =
+            init_absent && initialized_constant.as_ref().is_some_and(ConstantValue::is_undefined);
+
         let symbol_value = SymbolValue {
             initialized_constant,
+            implicit_undefined,
             exported,
             read_references_count,
             write_references_count,

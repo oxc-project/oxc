@@ -34,7 +34,7 @@ impl<'a> PeepholeOptimizations {
             decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |_| init_constant)
         };
         let kind = decl.init.as_ref().map_or(FreshValueKind::None, Self::fresh_value_kind);
-        ctx.init_value(symbol_id, value, kind, falsy_init);
+        ctx.init_value(symbol_id, value, kind, falsy_init, decl.init.is_none());
     }
 
     /// A `ConstantValue` that coerces to `false` (`false`, `0`/`-0`/`NaN`, `""`,
@@ -206,7 +206,7 @@ impl<'a> PeepholeOptimizations {
     ) {
         let Some(id) = id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        ctx.init_value(symbol_id, None, FreshValueKind::Function, false);
+        ctx.init_value(symbol_id, None, FreshValueKind::Function, false, false);
     }
 
     /// Initialize symbol value for class declarations.
@@ -220,7 +220,7 @@ impl<'a> PeepholeOptimizations {
         } else {
             FreshValueKind::Class
         };
-        ctx.init_value(symbol_id, None, kind, false);
+        ctx.init_value(symbol_id, None, kind, false, false);
     }
 
     fn is_for_statement_init(ctx: &TraverseCtx<'a>) -> bool {
@@ -239,6 +239,11 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Some(cv) = &symbol_value.initialized_constant else { return };
+        // Textually inlining the implicit `undefined` of `let x;` can only grow
+        // the output; see `SymbolValue::implicit_undefined` (rolldown#10174).
+        if symbol_value.implicit_undefined {
+            return;
+        }
         if symbol_value.read_references_count == 1
             || match cv {
                 ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,

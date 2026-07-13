@@ -292,6 +292,46 @@ fn dead_code_depending_on_const() {
     );
 }
 
+// https://github.com/rolldown/rolldown/issues/10174
+// A never-assigned binding with no initializer reads as `undefined`, but the
+// textual inline prints `void 0` — longer than a mangled identifier read plus
+// its share of a declaration, and with no initializer there is nothing whose
+// removal pays for it. Keep the read; constant-driven folds still see the
+// value through `SymbolValue` tracking.
+#[test]
+fn keep_value_context_read_of_uninitialized_binding() {
+    let options = CompressOptions::smallest();
+    // The exact rolldown#10174 shape: a value-context assignment read.
+    test_options(
+        "let undefinedVar; export let value; export function reset() { value = undefinedVar; }",
+        "let undefinedVar; export let value; export function reset() { value = undefinedVar; }",
+        &options,
+    );
+    // Multi-read value context.
+    test_options(
+        "let u; export function f() { g(u), g(u); }",
+        "let u; export function f() { g(u), g(u); }",
+        &options,
+    );
+
+    // Near-misses: folds that consume the value must keep working without the
+    // textual inline — evaluation resolves the read through `SymbolValue`.
+    test_options("let u; export function f() { return u; }", "export function f() {}", &options);
+    test_options("let u; export function f() { if (u) g(); }", "export function f() {}", &options);
+    test_options(
+        "let u; export function f() { return u === void 0; }",
+        "export function f() { return !0; }",
+        &options,
+    );
+    // Near-miss: an explicit `undefined` initializer still inlines — the inline
+    // eliminates the `= void 0` initializer text along with the declaration.
+    test_options(
+        "const foo = undefined; export function f() { g(foo); }",
+        "export function f() { g(void 0); }",
+        &options,
+    );
+}
+
 #[test]
 fn small_value() {
     let options = CompressOptions::smallest();

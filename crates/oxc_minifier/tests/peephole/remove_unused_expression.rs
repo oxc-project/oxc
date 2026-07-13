@@ -650,7 +650,9 @@ fn remove_unused_assignment_expression() {
 
     // For loops
     test_options("for (let i;;) i = 0", "for (;;);", &options);
-    test_options("for (let i;;) foo(i)", "for (;;) foo(void 0)", &options);
+    // `i` reads as the implicit `undefined`, but `void 0` prints longer than a
+    // mangled identifier read, so the read (and thus the decl) stays (rolldown#10174).
+    test_same_options("for (let i;;) foo(i)", &options);
     test_same_options("for (let i;;) i = 0, foo(i)", &options);
     test_same_options("for (let i in []) foo(i)", &options);
     test_same_options("for (let element of list) element && (element.foo = bar)", &options);
