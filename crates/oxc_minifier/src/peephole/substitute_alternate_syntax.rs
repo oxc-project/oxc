@@ -1827,82 +1827,36 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn fold_sequence_in_binary_expression(
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        let Expression::BinaryExpression(binary_expr) = expr else { return };
+    pub fn fold_sequence_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let argument = match expr {
+            Expression::BinaryExpression(binary_expr) => &mut binary_expr.left,
+            Expression::LogicalExpression(logical_expr) => &mut logical_expr.left,
+            Expression::UnaryExpression(unary_expr)
+                if !unary_expr.operator.is_keyword() && !unary_expr.operator.is_not() =>
+            {
+                &mut unary_expr.argument
+            }
+            Expression::AwaitExpression(await_expr) => &mut await_expr.argument,
+            Expression::YieldExpression(yield_expr) => {
+                let Some(maybe_sequence_expression) = &mut yield_expr.argument else { return };
+                maybe_sequence_expression
+            }
+            _ => {
+                return;
+            }
+        };
 
-        if let Expression::SequenceExpression(argument) = &mut binary_expr.left
-            && argument.expressions.len() > 1
-        {
-            let mut seq_expr = argument.take_in_box(ctx);
-            binary_expr.left = seq_expr.expressions.pop().unwrap();
-            seq_expr.expressions.push(expr.take_in(ctx));
-            let new_value = Expression::SequenceExpression(seq_expr);
-            ctx.replace_expression(expr, new_value);
+        let Expression::SequenceExpression(seq_expr) = argument else { return };
+
+        if seq_expr.expressions.len() <= 1 {
+            return;
         }
-    }
 
-    pub fn fold_sequence_in_logical_expression(
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        let Expression::LogicalExpression(logical_expr) = expr else { return };
-
-        if let Expression::SequenceExpression(argument) = &mut logical_expr.left
-            && argument.expressions.len() > 1
-        {
-            let mut seq_expr = argument.take_in_box(ctx);
-            logical_expr.left = seq_expr.expressions.pop().unwrap();
-            seq_expr.expressions.push(expr.take_in(ctx));
-            let new_value = Expression::SequenceExpression(seq_expr);
-            ctx.replace_expression(expr, new_value);
-        }
-    }
-
-    pub fn fold_sequence_in_unary_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::UnaryExpression(unary_expr) = expr else { return };
-
-        if !unary_expr.operator.is_keyword()
-            && !unary_expr.operator.is_not()
-            && let Expression::SequenceExpression(argument) = &mut unary_expr.argument
-            && argument.expressions.len() > 1
-        {
-            let mut seq_expr = argument.take_in_box(ctx);
-            unary_expr.argument = seq_expr.expressions.pop().unwrap();
-            seq_expr.expressions.push(expr.take_in(ctx));
-            let new_value = Expression::SequenceExpression(seq_expr);
-            ctx.replace_expression(expr, new_value);
-        }
-    }
-
-    pub fn fold_sequence_in_await_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::AwaitExpression(await_expr) = expr else { return };
-
-        if let Expression::SequenceExpression(argument) = &mut await_expr.argument
-            && argument.expressions.len() > 1
-        {
-            let mut seq_expr = argument.take_in_box(ctx);
-            await_expr.argument = seq_expr.expressions.pop().unwrap();
-            seq_expr.expressions.push(expr.take_in(ctx));
-            let new_value = Expression::SequenceExpression(seq_expr);
-            ctx.replace_expression(expr, new_value);
-        }
-    }
-
-    pub fn fold_sequence_in_yield_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::YieldExpression(yield_expr) = expr else { return };
-
-        if let Some(Expression::SequenceExpression(argument)) = &mut yield_expr.argument
-            && argument.expressions.len() > 1
-        {
-            let mut seq_expr = argument.take_in_box(ctx);
-            yield_expr.argument = seq_expr.expressions.pop();
-            seq_expr.expressions.push(expr.take_in(ctx));
-            let new_value = Expression::SequenceExpression(seq_expr);
-            ctx.replace_expression(expr, new_value);
-        }
+        let mut seq_expr = seq_expr.take_in_box(ctx);
+        *argument = seq_expr.expressions.pop().unwrap();
+        seq_expr.expressions.push(expr.take_in(ctx));
+        let new_value = Expression::SequenceExpression(seq_expr);
+        ctx.replace_expression(expr, new_value);
     }
 
     fn catch_body_has_same_name_var(body: &BlockStatement<'a>, name: &str) -> bool {
