@@ -701,16 +701,15 @@ impl<'a> PeepholeOptimizations {
             Some(BindingPattern::AssignmentPattern(mut pattern)) => {
                 if init_item.is_literal_value(false, ctx) {
                     // if value is determined, `[a = b] = [c]` => `a = c` or `a = b`
-                    Some((
-                        Some(pattern.left.take_in(ctx)),
-                        Some(if init_item.is_void() || init_item.is_undefined() {
-                            // `[a = b] = [undefined]` => `a = b`
-                            pattern.right.take_in(ctx)
-                        } else {
-                            // `[a = b] = [c]` => `a = c`
-                            init_item
-                        }),
-                    ))
+                    if init_item.is_void() || init_item.is_undefined() {
+                        // `[a = b] = [undefined]` => `a = b`
+                        ctx.drop_expression(&init_item);
+                        Some((Some(pattern.left.take_in(ctx)), Some(pattern.right.take_in(ctx))))
+                    } else {
+                        // `[a = b] = [c]` => `a = c`
+                        ctx.drop_expression(&pattern.right);
+                        Some((Some(pattern.left.take_in(ctx)), Some(init_item)))
+                    }
                 } else {
                     // `[a = b] = [c]` where c is undetermined => `[a = b] = [c]`
                     Some((
@@ -750,6 +749,7 @@ impl<'a> PeepholeOptimizations {
                         )),
                     ))
                 } else {
+                    ctx.drop_expression(&init_item);
                     Some((None, None))
                 }
             }
@@ -795,12 +795,8 @@ impl<'a> PeepholeOptimizations {
                     ctx.notice_change();
                     i += 2;
                 }
-            } else {
-                if Self::is_empty_array_destruction_assignment(last) {
-                    ctx.drop_variable_declarator(&declarations.remove(i));
-                } else {
-                    ctx.notice_change();
-                }
+            } else if Self::is_empty_array_destruction_assignment(last) {
+                ctx.drop_variable_declarator(&declarations.remove(i));
             }
         }
     }
