@@ -3,7 +3,7 @@ commit: 637d5746
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
 Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1644/2640 (62.27%)
+Negative Passed: 1645/2640 (62.31%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -947,8 +947,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/voidAsNonAmb
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/widenedTypes.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsPatterns_merging3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbient.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbientExternalModule.ts
 
@@ -10961,6 +10959,38 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  150 │     }
      ╰────
 
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:22:27]
+ 21 │ 
+ 22 │     export declare module "m1_M3_public" {
+    ·                           ──────────────
+ 23 │         export function f1();
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:30:20]
+ 29 │ 
+ 30 │     declare module "m1_M4_private" {
+    ·                    ───────────────
+ 31 │         export function f1();
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:133:24]
+ 132 │     namespace m2 {
+ 133 │         declare module "abc" {
+     ·                        ─────
+ 134 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:138:16]
+ 137 │     namespace m2 {
+ 138 │         module "abc2" {
+     ·                ──────
+ 139 │         }
+     ╰────
+
   × TS(1147): Import declarations in a namespace cannot reference a module.
     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:59:5]
  58 │ 
@@ -11088,6 +11118,86 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  353 │         import m2 = require("use_glo_M1_public");
      ·         ─────────────────────────────────────────
  354 │     }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:22:27]
+ 21 │ 
+ 22 │     export declare module "m1_M3_public" {
+    ·                           ──────────────
+ 23 │         export function f1();
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:30:20]
+ 29 │ 
+ 30 │     declare module "m1_M4_private" {
+    ·                    ───────────────
+ 31 │         export function f1();
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:106:27]
+ 105 │ 
+ 106 │     export declare module "m2_M3_public" {
+     ·                           ──────────────
+ 107 │         export function f1();
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:114:20]
+ 113 │ 
+ 114 │     declare module "m2_M4_private" {
+     ·                    ───────────────
+ 115 │         export function f1();
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:314:24]
+ 313 │     namespace m2 {
+ 314 │         declare module "abc" {
+     ·                        ─────
+ 315 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:319:16]
+ 318 │     namespace m2 {
+ 319 │         module "abc2" {
+     ·                ──────
+ 320 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:322:12]
+ 321 │     }
+ 322 │     module "abc3" {
+     ·            ──────
+ 323 │     }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:328:24]
+ 327 │     namespace m2 {
+ 328 │         declare module "abc" {
+     ·                        ─────
+ 329 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:333:16]
+ 332 │     namespace m2 {
+ 333 │         module "abc2" {
+     ·                ──────
+ 334 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:336:12]
+ 335 │     }
+ 336 │     module "abc3" {
+     ·            ──────
+ 337 │     }
      ╰────
 
   × Unexpected token
@@ -14025,6 +14135,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  42 │     }
     ╰────
 
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:47:20]
+ 46 │ namespace M2 {
+ 47 │     declare module 'nope' { }
+    ·                    ──────
+ 48 │ }
+    ╰────
+
   × TS(2309): An export assignment cannot be used in a module with other exported elements
     ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:57:5]
  56 │     export var q;
@@ -14033,6 +14151,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  58 │ }
     ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+   ╭─[typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbient.ts:2:27]
+ 1 │ namespace M {
+ 2 │     export declare module "M" { }
+   ·                           ───
+ 3 │ }
+   ╰────
 
   × Identifier expected. 'debugger' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:3:26]

@@ -111,7 +111,40 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
 
 pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     check_ts_module_or_global_declaration(decl.span, ctx);
+    check_nested_ambient_module(decl, ctx);
     check_ts_export_assignment_in_module_decl(decl, ctx);
+}
+
+fn check_nested_ambient_module(decl: &TSModuleDeclaration<'_>, ctx: &SemanticBuilder<'_>) {
+    if !decl.id.is_string_literal() {
+        return;
+    }
+
+    // These nodes wrap a module declaration without changing its semantic container.
+    let mut ancestors = ctx.ancestry().ancestor_kinds().filter(|kind| {
+        !matches!(kind, AstKind::ExportNamedDeclaration(_) | AstKind::TSModuleBlock(_))
+    });
+
+    let Some(container) = ancestors.next() else {
+        return;
+    };
+    let container_is_top_level = matches!(ancestors.next(), Some(AstKind::Program(_)));
+
+    // In a script, a quoted module directly inside a top-level ambient module or `global`
+    // declaration is an external module augmentation, not a nested ambient module.
+    let is_top_level_script_augmentation = ctx.source_type.is_script()
+        && container_is_top_level
+        && match container {
+            AstKind::TSModuleDeclaration(parent) => parent.id.is_string_literal(),
+            AstKind::TSGlobalDeclaration(_) => true,
+            _ => false,
+        };
+
+    if matches!(container, AstKind::TSModuleDeclaration(_) | AstKind::TSGlobalDeclaration(_))
+        && !is_top_level_script_augmentation
+    {
+        ctx.error(diagnostics::ambient_module_cannot_be_nested(decl.id.span()));
+    }
 }
 
 pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &SemanticBuilder<'a>) {

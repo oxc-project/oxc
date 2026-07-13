@@ -330,6 +330,12 @@ pub fn global_scope_augmentation_should_have_declare_modifier(span: Span) -> Oxc
 }
 
 #[cold]
+pub fn ambient_module_cannot_be_nested(span: Span) -> OxcDiagnostic {
+    ts_error("2435", "Ambient modules cannot be nested in other modules or namespaces.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn enum_member_must_have_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Enum member must have initializer.").with_label(span)
 }
