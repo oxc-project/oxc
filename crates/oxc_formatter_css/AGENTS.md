@@ -226,7 +226,12 @@ Notable divergences are:
     - We print `(not (screen and (color)))`
   - Reproducing the half-normalization is pure tokenizer-artifact matching;
     - Gap-based spacing never fuses tokens the source kept apart (`and (` can't become a function token `and(`)
-- `@custom-media` preludes always print structured (e.g. `--viewport-medium (width <= 50rem)`)
+- A source-glued value-position `[...]` stays glued to ANY typed left neighbor and prints verbatim
+  - `theme(fontSize.af-md[0])`, `foo[0.50]`: matching Prettier, which lexes the run as ONE postcss word;
+    But also `var(--x)[0]`, where Prettier prints `var(--x) [0]`)
+    - Prettier's space there is a word-lexing artifact (`[` extends a word, but not across `)`)
+    - Ours is one gap-based rule for all variants: never add a space the source doesn't have
+  - Less lookups (`@config[@key]`) are unaffected: the typed lookup rule wins and keeps printing structurally
   - With the name GLUED to the `(` (`--viewport-medium(width<=50rem)`)
   - Prettier keeps the whole prelude verbatim (ONE `media-type` token)
 - A declaration swallowed by a `;`-less css-in-js placeholder (`${m}\ncolor: red`)
