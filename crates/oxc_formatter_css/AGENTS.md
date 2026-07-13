@@ -248,7 +248,7 @@ Notable divergences are:
   - We print the normal indent (prettier/prettier#19427)
 - SCSS: The map-item break (one element per line + trailing comma) applies ONLY to parens whose contents are already a comma-separated list (semantics)
   - `(x,)` is a single-element list in Sass, so the added comma is a semantic no-op for a comma list and NOWHERE else
-  - Prettier 3.9.1 changes `key: ($a + $b)` from a number to a list,
+  - Prettier 3.9.5 changes `key: ($a + $b)` from a number to a list,
     restructures `key: (a b)` (2-element space list → nested 1-element list),
     and emits non-compiling output for `key: 2 * ($a + $b)` inside `$var:` declarations (dart-sass: `Undefined operation "2 * (3px,)"`)
   - Prettier's own #18530 (math siblings in args) / #19091 (single-node scalars) fixed subsets of this;
@@ -310,8 +310,8 @@ Fixtures are grouped per language (`format/{css,scss,less}/`; test modules mirro
 Unit tests in `tests/fixtures/mod.rs` cover parse-error `Err` semantics (`parse_error_is_err`).
 Fixtures under `embedded/` route through `format_to_ir` instead of `format()`; the `embedded_debug` example formats files the same way for quick comparison.
 
-Every expected output must be verified against Prettier (3.9.1, the current submodule).
-`npx prettier@3.9.1 --parser <variant>` at both `--print-width 80` and `100` (the harness snapshots both).
+Every expected output must be verified against Prettier (3.9.5, the current submodule).
+`npx prettier@3.9.5 --parser <variant>` at both `--print-width 80` and `100` (the harness snapshots both).
 
 Exception: a fixture may pin an entry from "Known divergences" (e.g. `map-item-parens.scss`);
 its comments must say which lines deviate from Prettier and why.
@@ -333,7 +333,7 @@ cargo run -p oxc_prettier_conformance
 cargo run -p oxc_prettier_conformance -- --filter css/atrule
 ```
 
-At the current version (v3.9.1), the divergences of six files have been confirmed and are intentional (see "Known divergences"):
+At the current version (v3.9.5), the divergences of six files have been confirmed and are intentional (see "Known divergences"):
 
 - CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/postcss-plugins/postcss-nesting.css`
 - SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/variables/apply-rule.scss`
