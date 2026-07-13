@@ -30,6 +30,9 @@ struct NoInnerDeclarationsOptions {
     /// Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).
     #[schemars(with = "BlockScopedFunctions")]
     block_scoped_functions: Option<BlockScopedFunctions>,
+    /// Controls whether declarations directly inside TypeScript namespace or module bodies are allowed.
+    #[schemars(with = "Namespaces")]
+    namespaces: Option<Namespaces>,
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -39,6 +42,16 @@ enum BlockScopedFunctions {
     #[default]
     Allow,
     /// Disallow function declarations in nested blocks regardless of strict mode.
+    Disallow,
+}
+
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+enum Namespaces {
+    /// Allow declarations directly inside TypeScript namespace or module bodies.
+    Allow,
+    /// Disallow declarations directly inside TypeScript namespace or module bodies.
+    #[default]
     Disallow,
 }
 
@@ -91,6 +104,8 @@ impl Rule for NoInnerDeclarations {
             },
         );
 
+        // Options follow the mode string, matching ESLint's positional schema
+        // `[("functions" | "both"), { … }]`.
         let block_scoped_functions = if value.is_array() && !value.is_null() {
             value
                 .get(1)
@@ -105,7 +120,15 @@ impl Rule for NoInnerDeclarations {
             None
         };
 
-        Ok(Self(config, NoInnerDeclarationsOptions { block_scoped_functions }))
+        let namespaces =
+            value.get(1).and_then(|v| v.get("namespaces")).and_then(serde_json::Value::as_str).map(
+                |value| match value {
+                    "allow" => Namespaces::Allow,
+                    _ => Namespaces::Disallow,
+                },
+            );
+
+        Ok(Self(config, NoInnerDeclarationsOptions { block_scoped_functions, namespaces }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -115,7 +138,7 @@ impl Rule for NoInnerDeclarations {
                     return;
                 }
 
-                check_rule(node, ctx);
+                check_rule(node, ctx, self.1.namespaces == Some(Namespaces::Allow));
             }
             AstKind::Function(func) => {
                 if !func.is_function_declaration() {
@@ -139,17 +162,35 @@ impl Rule for NoInnerDeclarations {
                     }
                 }
 
-                check_rule(node, ctx);
+                check_rule(node, ctx, self.1.namespaces == Some(Namespaces::Allow));
             }
             _ => {}
         }
     }
 }
 
-fn check_rule<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+fn check_rule<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, allow_namespaces: bool) {
     let parent_node = ctx.nodes().parent_node(node.id());
-    if matches!(
-        parent_node.kind(),
+    let parent_kind = parent_node.kind();
+
+    // A declaration may be wrapped in `export`; look through it to find the real enclosing scope.
+    let enclosing = if matches!(
+        parent_kind,
+        AstKind::ExportNamedDeclaration(_) | AstKind::ExportDefaultDeclaration(_)
+    ) {
+        ctx.nodes().parent_node(parent_node.id()).kind()
+    } else {
+        parent_kind
+    };
+
+    // Declarations directly inside a TS namespace/module body (exported or not) are governed
+    // by the `namespaces` option.
+    if matches!(enclosing, AstKind::TSModuleBlock(_)) {
+        if allow_namespaces {
+            return;
+        }
+    } else if matches!(
+        parent_kind,
         AstKind::Program(_)
             | AstKind::FunctionBody(_)
             | AstKind::StaticBlock(_)
@@ -255,6 +296,27 @@ fn test() {
             "const C = class { method() { if(test) { function somethingElse() { } } } }",
             Some(serde_json::json!(["functions", { "blockScopedFunctions": "allow" }])),
         ), // { "ecmaVersion": 2022 }
+        // `namespaces: "allow"` exempts declarations directly in a TS namespace/module body
+        (
+            "namespace N { function foo() {} }",
+            Some(serde_json::json!(["both", { "namespaces": "allow" }])),
+        ),
+        (
+            "namespace N { var x = 1; }",
+            Some(serde_json::json!(["both", { "namespaces": "allow" }])),
+        ),
+        (
+            "module M { function foo() {} }",
+            Some(serde_json::json!(["both", { "namespaces": "allow" }])),
+        ),
+        (
+            "namespace N { export function bar() {} }",
+            Some(serde_json::json!(["both", { "namespaces": "allow" }])),
+        ),
+        (
+            "namespace N { function foo() {} }",
+            Some(serde_json::json!(["functions", { "namespaces": "allow" }])),
+        ),
     ];
 
     let fail = vec![
@@ -328,9 +390,18 @@ fn test() {
              console.log('foo called'); } }",
             Some(serde_json::json!(["both"])),
         ), // { "ecmaVersion": 2022 }
+        // `namespaces` default (disallow); nested blocks inside a namespace still report
+        ("namespace N { function foo() {} }", Some(serde_json::json!(["both"]))),
+        ("namespace N { var x = 1; }", Some(serde_json::json!(["both"]))),
+        // an exported declaration inside a namespace is still governed by `namespaces`
+        ("namespace N { export function bar() {} }", Some(serde_json::json!(["both"]))),
+        (
+            "namespace N { if (x) { function foo() {} } }",
+            Some(serde_json::json!(["both", { "namespaces": "allow" }])),
+        ),
     ];
 
     Tester::new(NoInnerDeclarations::NAME, NoInnerDeclarations::PLUGIN, pass, fail)
-        .change_rule_path_extension("mjs")
+        .change_rule_path_extension("mts")
         .test_and_snapshot();
 }

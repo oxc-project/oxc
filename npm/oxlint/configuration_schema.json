@@ -13036,6 +13036,26 @@
       },
       "additionalProperties": false
     },
+    "Namespaces": {
+      "oneOf": [
+        {
+          "description": "Allow declarations directly inside TypeScript namespace or module bodies.",
+          "type": "string",
+          "enum": [
+            "allow"
+          ],
+          "markdownDescription": "Allow declarations directly inside TypeScript namespace or module bodies."
+        },
+        {
+          "description": "Disallow declarations directly inside TypeScript namespace or module bodies.",
+          "type": "string",
+          "enum": [
+            "disallow"
+          ],
+          "markdownDescription": "Disallow declarations directly inside TypeScript namespace or module bodies."
+        }
+      ]
+    },
     "NativeAllowList": {
       "anyOf": [
         {
@@ -14116,6 +14136,16 @@
             }
           ],
           "markdownDescription": "Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior)."
+        },
+        "namespaces": {
+          "description": "Controls whether declarations directly inside TypeScript namespace or module bodies are allowed.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/Namespaces"
+            }
+          ],
+          "markdownDescription": "Controls whether declarations directly inside TypeScript namespace or module bodies are allowed."
         }
       },
       "additionalProperties": false

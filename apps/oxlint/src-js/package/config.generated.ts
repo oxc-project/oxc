@@ -147,6 +147,7 @@ export type AllowKind =
  */
 export type NoInnerDeclarationsConfig = "functions" | "both";
 export type BlockScopedFunctions = "allow" | "disallow";
+export type Namespaces = "allow" | "disallow";
 export type NoMagicNumbersNumber = number | string;
 export type NoRestrictedImportsConfigEnum = string | RestrictedPath | NoRestrictedImportsConfig;
 export type PossiblePaths = string | RestrictedPath;
@@ -3132,6 +3133,10 @@ export interface NoInnerDeclarationsOptions {
    * Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).
    */
   blockScopedFunctions?: BlockScopedFunctions;
+  /**
+   * Controls whether declarations directly inside TypeScript namespace or module bodies are allowed.
+   */
+  namespaces?: Namespaces;
 }
 export interface NoInvalidRegexpConfig {
   /**
