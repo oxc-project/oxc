@@ -1827,6 +1827,14 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Move sequence expressions out of operand positions so the trailing
+    /// expression can be folded into the parent operator.
+    ///
+    /// - `(a, b) + c` -> `a, b + c`
+    /// - `(a, b) || c` -> `a, b || c`
+    /// - `-(a, b)` -> `a, -b`
+    /// - `await (a, b)` -> `a, await b`
+    /// - `yield (a, b)` -> `a, yield b`
     pub fn fold_sequence_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let argument = match expr {
             Expression::BinaryExpression(binary_expr) => &mut binary_expr.left,
