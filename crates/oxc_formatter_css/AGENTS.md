@@ -276,6 +276,12 @@ Notable divergences are:
     - Each mode is internally consistent with what its parser produces
   - The value syntax `--p: { ... }` itself is valid CSS, but its only intended consumer was the `@apply --p;` at-rule from the dropped CSS Apply Rule proposal
     - With no consumer, real-world usage is near zero, so the cross-mode behavior difference is theoretical
+- Less: statement-position `&:extend(...)` breaks only on overflow, like the selector-position form
+  - Prettier (3.9.5+) ALWAYS breaks multiple selectors one per line there and never breaks a single one:
+    postcss-less models the statement as a rule node, so the top-level selector-list printer
+    (hardline commas) leaks into the parens (prettier#19550 only fixed the indentation)
+  - Ours prints BOTH positions with the same pseudo-args layout for consistency
+    (inline when it fits; parens on their own lines + one selector per line on overflow, the same shape as Prettier's break)
 - Less: `func(x, + 20px)` unary gluing
   - Prettier prints `+20px`; `oxc-css-parser` ASTs `, +` as a comma-left binary operation, so matching is ad-hoc for a torture-test-only shape
 - Less: Nested math in a function arg / multi-value shorthand

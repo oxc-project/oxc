@@ -21,7 +21,7 @@ use oxc_formatter_core::{
 use crate::{
     TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX, comments,
     format::to_span,
-    print::{CssFormatter, format_with, normalize_whitespace, value, write_maybe_lowercase},
+    print::{CssFormatter, format_with, less, normalize_whitespace, value, write_maybe_lowercase},
 };
 
 /// Detects an ICSS rule (`:import { ... }` / `:export { ... }`)
@@ -407,20 +407,31 @@ fn write_pseudo_class<'a>(pseudo: &PseudoClassSelector<'a>, f: &mut CssFormatter
     let name_span = to_span(pseudo.name.span());
     write_maybe_lowercase(source.text_for(&name_span), f);
     if let Some(arg) = &pseudo.arg {
-        let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-            write!(f, soft_line_break());
-            write_pseudo_class_arg(&arg.kind, f);
-        });
-        write!(
-            f,
-            group(&format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                write!(f, "(");
-                write!(f, indent(&body));
-                write!(f, soft_line_break());
-                write!(f, ")");
-            }))
-        );
+        write_pseudo_args_group(|f| write_pseudo_class_arg(&arg.kind, f), f);
     }
+}
+
+/// The breakable parens around pseudo args:
+/// inline when they fit, own-line parens + indented args on overflow.
+/// Shared with the statement-position `&:extend(...)` (less.rs),
+/// so both `:extend()` positions keep the same layout by construction.
+pub(super) fn write_pseudo_args_group<'a>(
+    args: impl Fn(&mut CssFormatter<'_, 'a>),
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+        write!(f, soft_line_break());
+        args(f);
+    });
+    write!(
+        f,
+        group(&format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            write!(f, "(");
+            write!(f, indent(&body));
+            write!(f, soft_line_break());
+            write!(f, ")");
+        }))
+    );
 }
 
 fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut CssFormatter<'_, 'a>) {
@@ -450,13 +461,17 @@ fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut Css
         }
         PseudoClassSelectorArgKind::Ident(ident) => write_interpolable_ident(ident, f),
         PseudoClassSelectorArgKind::Nth(nth) => write_nth(nth, f),
-        // Number, LanguageRangeList, TokenSeq, LessExtendList:
+        // `:extend(...)`:
+        // structured like any pseudo selector list (spacing normalized), breaking only on overflow.
+        // The enclosing pseudo group owns the parens and the break.
+        // The statement form (`&:extend(...)`, see less.rs) shares this writer.
+        PseudoClassSelectorArgKind::LessExtendList(list) => {
+            less::write_less_extend_list(list, f);
+        }
+        // Number, LanguageRangeList, TokenSeq:
         // print the source verbatim (normalized below where needed).
-        //
-        // NOTE: `oxc-css-parser` provides structured AST for these (notably `LessExtendList`),
-        // so a structured printer would be feasible.
         // They are kept verbatim because `postcss-selector-parser` tokenizes them as opaque strings
-        // and Prettier emits them raw (matching that keeps `:lang(...)`, `:extend(...)` etc.)
+        // and Prettier emits them raw (matching that keeps `:lang(...)` etc.)
         // byte-identical to Prettier output.
         // Real-world usage is rare enough that the consistency cost is negligible.
         _ => {
