@@ -1,8 +1,8 @@
-commit: 1fb0b771
+commit: c86e9e4b
 
 semantic_babel Summary:
-AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2146/2236 (95.97%)
+AST Parsed     : 2235/2235 (100.00%)
+Positive Passed: 2146/2235 (96.02%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
@@ -129,12 +129,7 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 A parameter cannot have a question mark and an initializer.
 A required parameter cannot follow an optional parameter.
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts
-Declarations with definite assignment assertions must also have type annotations.
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
-Declarations with definite assignment assertions must also have type annotations.
-Identifier `x` has already been declared
 Identifier `x` has already been declared
 Identifier `x` has already been declared
 Identifier `x` has already been declared
