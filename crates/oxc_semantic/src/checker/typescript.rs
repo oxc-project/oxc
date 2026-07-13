@@ -130,9 +130,10 @@ fn check_nested_ambient_module(decl: &TSModuleDeclaration<'_>, ctx: &SemanticBui
     };
     let container_is_top_level = matches!(ancestors.next(), Some(AstKind::Program(_)));
 
-    // In a script, a quoted module directly inside a top-level ambient module or `global`
-    // declaration is an external module augmentation, not a nested ambient module.
-    let is_top_level_script_augmentation = ctx.source_type.is_script()
+    // In a script or declaration file, a quoted module directly inside a top-level ambient
+    // module or `global` declaration is not a nested ambient module.
+    let is_top_level_ambient_context = (ctx.source_type.is_script()
+        || ctx.source_type.is_typescript_definition())
         && container_is_top_level
         && match container {
             AstKind::TSModuleDeclaration(parent) => parent.id.is_string_literal(),
@@ -141,7 +142,7 @@ fn check_nested_ambient_module(decl: &TSModuleDeclaration<'_>, ctx: &SemanticBui
         };
 
     if matches!(container, AstKind::TSModuleDeclaration(_) | AstKind::TSGlobalDeclaration(_))
-        && !is_top_level_script_augmentation
+        && !is_top_level_ambient_context
     {
         ctx.error(diagnostics::ambient_module_cannot_be_nested(decl.id.span()));
     }
