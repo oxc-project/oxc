@@ -11,9 +11,8 @@ pub mod visitors;
 
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
-use oxc_ast::ast as oxc;
+use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
-pub use oxc_span::Span;
 use oxc_str::{Ident, Str};
 use oxc_syntax::number::ToJsString;
 pub use raw::RawTypeCategory;
@@ -445,23 +444,6 @@ pub struct Case {
     pub block: BlockId,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum LogicalOperator {
-    And,
-    Or,
-    NullishCoalescing,
-}
-
-impl std::fmt::Display for LogicalOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            LogicalOperator::And => write!(f, "&&"),
-            LogicalOperator::Or => write!(f, "||"),
-            LogicalOperator::NullishCoalescing => write!(f, "??"),
-        }
-    }
-}
-
 // =============================================================================
 // Instruction types
 // =============================================================================
@@ -732,9 +714,9 @@ pub enum InstructionValue<'a> {
 #[derive(Debug, Clone, Copy)]
 pub enum TypeCast<'a> {
     /// `expr as T` (`TSAsExpression`) and `<T>expr` (`TSTypeAssertion`)
-    As(&'a oxc::TSType<'a>),
+    As(&'a TSType<'a>),
     /// `expr satisfies T` (`TSSatisfiesExpression`)
-    Satisfies(&'a oxc::TSType<'a>),
+    Satisfies(&'a TSType<'a>),
 }
 
 impl<'a> InstructionValue<'a> {
@@ -800,61 +782,6 @@ pub enum PrimitiveValue<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BinaryOperator {
-    Equal,
-    NotEqual,
-    StrictEqual,
-    StrictNotEqual,
-    LessThan,
-    LessEqual,
-    GreaterThan,
-    GreaterEqual,
-    ShiftLeft,
-    ShiftRight,
-    UnsignedShiftRight,
-    Add,
-    Subtract,
-    Multiply,
-    Divide,
-    Modulo,
-    Exponent,
-    BitwiseOr,
-    BitwiseXor,
-    BitwiseAnd,
-    In,
-    InstanceOf,
-}
-
-impl std::fmt::Display for BinaryOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            BinaryOperator::Equal => write!(f, "=="),
-            BinaryOperator::NotEqual => write!(f, "!="),
-            BinaryOperator::StrictEqual => write!(f, "==="),
-            BinaryOperator::StrictNotEqual => write!(f, "!=="),
-            BinaryOperator::LessThan => write!(f, "<"),
-            BinaryOperator::LessEqual => write!(f, "<="),
-            BinaryOperator::GreaterThan => write!(f, ">"),
-            BinaryOperator::GreaterEqual => write!(f, ">="),
-            BinaryOperator::ShiftLeft => write!(f, "<<"),
-            BinaryOperator::ShiftRight => write!(f, ">>"),
-            BinaryOperator::UnsignedShiftRight => write!(f, ">>>"),
-            BinaryOperator::Add => write!(f, "+"),
-            BinaryOperator::Subtract => write!(f, "-"),
-            BinaryOperator::Multiply => write!(f, "*"),
-            BinaryOperator::Divide => write!(f, "/"),
-            BinaryOperator::Modulo => write!(f, "%"),
-            BinaryOperator::Exponent => write!(f, "**"),
-            BinaryOperator::BitwiseOr => write!(f, "|"),
-            BinaryOperator::BitwiseXor => write!(f, "^"),
-            BinaryOperator::BitwiseAnd => write!(f, "&"),
-            BinaryOperator::In => write!(f, "in"),
-            BinaryOperator::InstanceOf => write!(f, "instanceof"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UnaryOperator {
     Minus,
     Plus,
@@ -873,21 +800,6 @@ impl std::fmt::Display for UnaryOperator {
             UnaryOperator::BitwiseNot => write!(f, "~"),
             UnaryOperator::TypeOf => write!(f, "typeof"),
             UnaryOperator::Void => write!(f, "void"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum UpdateOperator {
-    Increment,
-    Decrement,
-}
-
-impl std::fmt::Display for UpdateOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            UpdateOperator::Increment => write!(f, "++"),
-            UpdateOperator::Decrement => write!(f, "--"),
         }
     }
 }

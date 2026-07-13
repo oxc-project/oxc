@@ -13,8 +13,9 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     AliasingEffect, BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, ParamPattern,
-    Place, PrimitiveValue, Span, Terminal, Type, UnaryOperator, is_use_ref_type,
+    Place, PrimitiveValue, Terminal, Type, UnaryOperator, is_use_ref_type,
 };
+use oxc_span::Span;
 
 const ERROR_DESCRIPTION: &str = "React refs are values that are not needed for rendering. \
     Refs should only be accessed outside of render, such as in event handlers or effects. \

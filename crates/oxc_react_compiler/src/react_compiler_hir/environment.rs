@@ -6,6 +6,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::{Allocator, GetAllocator};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_span::Span;
 use oxc_str::{Ident, IdentHashMap, IdentHashSet, format_ident};
 use oxc_syntax::reference::ReferenceId;
 use oxc_syntax::symbol::SymbolId;

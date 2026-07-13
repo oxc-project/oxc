@@ -28,9 +28,10 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     AliasingEffect, BlockId, Effect, EvaluationOrder, FunctionId, HirFunction, IdentifierId,
-    InstructionValue, MutationReason, ParamPattern, Place, Span, Terminal, is_jsx_type,
+    InstructionValue, MutationReason, ParamPattern, Place, Terminal, is_jsx_type,
     is_primitive_type,
 };
+use oxc_span::Span;
 
 // =============================================================================
 // MutationKind

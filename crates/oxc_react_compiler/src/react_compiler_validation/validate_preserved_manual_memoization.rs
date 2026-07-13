@@ -15,7 +15,7 @@ use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     ArrayPatternElement, Effect, ObjectPropertyOrSpread, Pattern, PropertyLiteral,
-    PrunedReactiveScopeBlock, ReactiveTerminalStatement, Span,
+    PrunedReactiveScopeBlock, ReactiveTerminalStatement,
 };
 use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, Identifier, IdentifierId, IdentifierName, InstructionKind,
@@ -23,6 +23,7 @@ use crate::react_compiler_hir::{
     ReactiveFunction, ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveTerminal,
     ReactiveValue, ScopeId,
 };
+use oxc_span::Span;
 
 /// State tracked during manual memo validation within a StartMemoize..FinishMemoize range.
 struct ManualMemoBlockState<'h> {

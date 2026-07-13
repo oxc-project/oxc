@@ -23,9 +23,10 @@ use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors::{each_pattern_operand, each_terminal_operand};
 use crate::react_compiler_hir::{
     FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue, ParamPattern, Place,
-    PlaceOrSpread, PropertyLiteral, Span, Type, visitors,
+    PlaceOrSpread, PropertyLiteral, Type, visitors,
 };
 use crate::react_compiler_utils::FxIndexMap;
+use oxc_span::Span;
 
 /// Value classification for hook validation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

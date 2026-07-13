@@ -23,11 +23,11 @@ use crate::react_compiler_hir::Pattern;
 use crate::react_compiler_hir::dominator::{compute_post_dominator_tree, post_dominator_frontier};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
-    BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, PlaceOrSpread, Span,
-    Terminal, Type, is_ref_value_type, is_set_state_type, is_use_effect_event_type,
-    is_use_effect_hook_type, is_use_insertion_effect_hook_type, is_use_layout_effect_hook_type,
-    is_use_ref_type, visitors,
+    BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, PlaceOrSpread, Terminal,
+    Type, is_ref_value_type, is_set_state_type, is_use_effect_event_type, is_use_effect_hook_type,
+    is_use_insertion_effect_hook_type, is_use_layout_effect_hook_type, is_use_ref_type, visitors,
 };
+use oxc_span::Span;
 
 pub fn validate_no_set_state_in_effects(
     func: &HirFunction,

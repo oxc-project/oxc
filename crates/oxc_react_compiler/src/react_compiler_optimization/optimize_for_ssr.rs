@@ -24,9 +24,10 @@ use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
 use crate::react_compiler_hir::{
     ArrayPatternElement, HirFunction, IdentifierId, InstructionValue, JsxAttribute, JsxTag, LValue,
-    Pattern, Place, PlaceOrSpread, PrimitiveValue, Span, is_array_type, is_plain_object_type,
+    Pattern, Place, PlaceOrSpread, PrimitiveValue, is_array_type, is_plain_object_type,
     is_primitive_type, is_set_state_type, is_start_transition_type,
 };
+use oxc_span::Span;
 
 /// Optimizes a function for SSR by inlining state hooks, removing effects,
 /// removing event handlers, and stripping known event handler / ref JSX props.

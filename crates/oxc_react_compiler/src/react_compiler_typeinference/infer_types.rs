@@ -24,13 +24,15 @@ use crate::react_compiler_hir::object_shape::{
     BUILT_IN_USE_REF_ID, ShapeRegistry,
 };
 use crate::react_compiler_hir::{
-    ArrayElement, ArrayPatternElement, BinaryOperator, FunctionId, HirFunction, Identifier,
-    IdentifierId, IdentifierName, Instruction, InstructionId, InstructionKind, InstructionValue,
-    JsxAttribute, JsxTag, LoweredFunction, ManualMemoDependencyRoot, NonLocalBinding,
-    ObjectPropertyKey, ObjectPropertyOrSpread, ParamPattern, Pattern, PlaceOrSpread,
-    PropertyLiteral, PropertyNameKind, ReactFunctionType, Span, Terminal, Type, TypeId,
+    ArrayElement, ArrayPatternElement, FunctionId, HirFunction, Identifier, IdentifierId,
+    IdentifierName, Instruction, InstructionId, InstructionKind, InstructionValue, JsxAttribute,
+    JsxTag, LoweredFunction, ManualMemoDependencyRoot, NonLocalBinding, ObjectPropertyKey,
+    ObjectPropertyOrSpread, ParamPattern, Pattern, PlaceOrSpread, PropertyLiteral,
+    PropertyNameKind, ReactFunctionType, Terminal, Type, TypeId,
 };
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
+use oxc_ast::ast::BinaryOperator;
+use oxc_span::Span;
 
 // =============================================================================
 // Public API
@@ -142,21 +144,21 @@ fn pre_resolve_globals_recursive<'a>(
 fn is_primitive_binary_op(op: &BinaryOperator) -> bool {
     matches!(
         op,
-        BinaryOperator::Add
-            | BinaryOperator::Subtract
-            | BinaryOperator::Divide
-            | BinaryOperator::Modulo
-            | BinaryOperator::Multiply
-            | BinaryOperator::Exponent
+        BinaryOperator::Addition
+            | BinaryOperator::Subtraction
+            | BinaryOperator::Division
+            | BinaryOperator::Remainder
+            | BinaryOperator::Multiplication
+            | BinaryOperator::Exponential
             | BinaryOperator::BitwiseAnd
-            | BinaryOperator::BitwiseOr
+            | BinaryOperator::BitwiseOR
             | BinaryOperator::ShiftRight
             | BinaryOperator::ShiftLeft
-            | BinaryOperator::BitwiseXor
+            | BinaryOperator::BitwiseXOR
             | BinaryOperator::GreaterThan
             | BinaryOperator::LessThan
-            | BinaryOperator::GreaterEqual
-            | BinaryOperator::LessEqual
+            | BinaryOperator::GreaterEqualThan
+            | BinaryOperator::LessEqualThan
     )
 }
 

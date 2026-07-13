@@ -25,7 +25,6 @@ use crate::react_compiler_hir::InstructionKind;
 use crate::react_compiler_hir::InstructionValue;
 use crate::react_compiler_hir::JsxAttribute;
 use crate::react_compiler_hir::JsxTag;
-use crate::react_compiler_hir::LogicalOperator;
 use crate::react_compiler_hir::ObjectPattern;
 use crate::react_compiler_hir::ObjectPropertyKey;
 use crate::react_compiler_hir::ObjectPropertyOrSpread;
@@ -1593,11 +1592,7 @@ fn ox_codegen_instruction_value<'a>(
             let left_expr = ox_codegen_instruction_value_to_expression(cx, left)?;
             let right_expr = ox_codegen_instruction_value_to_expression(cx, right)?;
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_logical_expression(
-                SPAN,
-                left_expr,
-                ox_convert_logical_operator(operator),
-                right_expr,
-                &cx.ast,
+                SPAN, left_expr, *operator, right_expr, &cx.ast,
             )))
         }
         ReactiveValue::ConditionalExpression { test, consequent, alternate, .. } => {
@@ -1788,11 +1783,7 @@ fn ox_codegen_base_instruction_value<'a>(
             let left_expr = ox_codegen_place_to_expression(cx, left)?;
             let right_expr = ox_codegen_place_to_expression(cx, right)?;
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_binary_expression(
-                SPAN,
-                left_expr,
-                ox_convert_binary_operator(operator),
-                right_expr,
-                &cx.ast,
+                SPAN, left_expr, *operator, right_expr, &cx.ast,
             )))
         }
         InstructionValue::UnaryExpression { operator, value, .. } => {
@@ -1979,22 +1970,14 @@ fn ox_codegen_base_instruction_value<'a>(
             let arg = ox_codegen_place_to_expression(cx, lvalue)?;
             let target = ox_expression_to_simple_assignment_target(cx, arg)?;
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_update_expression(
-                SPAN,
-                ox_convert_update_operator(operation),
-                false,
-                target,
-                &cx.ast,
+                SPAN, *operation, false, target, &cx.ast,
             )))
         }
         InstructionValue::PrefixUpdate { operation, lvalue, .. } => {
             let arg = ox_codegen_place_to_expression(cx, lvalue)?;
             let target = ox_expression_to_simple_assignment_target(cx, arg)?;
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_update_expression(
-                SPAN,
-                ox_convert_update_operator(operation),
-                true,
-                target,
-                &cx.ast,
+                SPAN, *operation, true, target, &cx.ast,
             )))
         }
         InstructionValue::StoreLocal { lvalue, value, .. } => {
@@ -3242,37 +3225,6 @@ fn ox_create_call_expression<'a>(
 // Operator conversions (HIR -> oxc)
 // =============================================================================
 
-fn ox_convert_binary_operator(
-    op: &crate::react_compiler_hir::BinaryOperator,
-) -> oxc::BinaryOperator {
-    use crate::react_compiler_hir::BinaryOperator as Hir;
-    use oxc::BinaryOperator as Ox;
-    match op {
-        Hir::Equal => Ox::Equality,
-        Hir::NotEqual => Ox::Inequality,
-        Hir::StrictEqual => Ox::StrictEquality,
-        Hir::StrictNotEqual => Ox::StrictInequality,
-        Hir::LessThan => Ox::LessThan,
-        Hir::LessEqual => Ox::LessEqualThan,
-        Hir::GreaterThan => Ox::GreaterThan,
-        Hir::GreaterEqual => Ox::GreaterEqualThan,
-        Hir::ShiftLeft => Ox::ShiftLeft,
-        Hir::ShiftRight => Ox::ShiftRight,
-        Hir::UnsignedShiftRight => Ox::ShiftRightZeroFill,
-        Hir::Add => Ox::Addition,
-        Hir::Subtract => Ox::Subtraction,
-        Hir::Multiply => Ox::Multiplication,
-        Hir::Divide => Ox::Division,
-        Hir::Modulo => Ox::Remainder,
-        Hir::Exponent => Ox::Exponential,
-        Hir::BitwiseOr => Ox::BitwiseOR,
-        Hir::BitwiseXor => Ox::BitwiseXOR,
-        Hir::BitwiseAnd => Ox::BitwiseAnd,
-        Hir::In => Ox::In,
-        Hir::InstanceOf => Ox::Instanceof,
-    }
-}
-
 fn ox_convert_unary_operator(op: &crate::react_compiler_hir::UnaryOperator) -> oxc::UnaryOperator {
     use crate::react_compiler_hir::UnaryOperator as Hir;
     use oxc::UnaryOperator as Ox;
@@ -3283,23 +3235,6 @@ fn ox_convert_unary_operator(op: &crate::react_compiler_hir::UnaryOperator) -> o
         Hir::BitwiseNot => Ox::BitwiseNot,
         Hir::TypeOf => Ox::Typeof,
         Hir::Void => Ox::Void,
-    }
-}
-
-fn ox_convert_logical_operator(op: &LogicalOperator) -> oxc::LogicalOperator {
-    match op {
-        LogicalOperator::And => oxc::LogicalOperator::And,
-        LogicalOperator::Or => oxc::LogicalOperator::Or,
-        LogicalOperator::NullishCoalescing => oxc::LogicalOperator::Coalesce,
-    }
-}
-
-fn ox_convert_update_operator(
-    op: &crate::react_compiler_hir::UpdateOperator,
-) -> oxc::UpdateOperator {
-    match op {
-        crate::react_compiler_hir::UpdateOperator::Increment => oxc::UpdateOperator::Increment,
-        crate::react_compiler_hir::UpdateOperator::Decrement => oxc::UpdateOperator::Decrement,
     }
 }
 

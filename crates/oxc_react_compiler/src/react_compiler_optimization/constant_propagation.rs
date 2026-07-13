@@ -37,9 +37,9 @@ use oxc_syntax::number::ToJsString;
 
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
-    BinaryOperator, BlockKind, FloatValue, FunctionId, GotoVariant, HirFunction, IdentifierId,
-    InstructionId, InstructionValue, ManualMemoDependencyRoot, NonLocalBinding, Phi, Place,
-    PrimitiveValue, PropertyLiteral, Span, Terminal, UnaryOperator, UpdateOperator,
+    BlockKind, FloatValue, FunctionId, GotoVariant, HirFunction, IdentifierId, InstructionId,
+    InstructionValue, ManualMemoDependencyRoot, NonLocalBinding, Phi, Place, PrimitiveValue,
+    PropertyLiteral, Terminal, UnaryOperator,
 };
 use crate::react_compiler_lowering::{
     get_reverse_postordered_blocks, mark_instruction_ids, mark_predecessors,
@@ -47,6 +47,8 @@ use crate::react_compiler_lowering::{
 };
 use crate::react_compiler_ssa::eliminate_redundant_phi;
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
+use oxc_ast::ast::{BinaryOperator, UpdateOperator};
+use oxc_span::Span;
 
 use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecutive_blocks;
 
@@ -679,7 +681,7 @@ fn evaluate_binary_op<'a>(
     allocator: &'a Allocator,
 ) -> Option<PrimitiveValue<'a>> {
     match operator {
-        BinaryOperator::Add => match (lhs, rhs) {
+        BinaryOperator::Addition => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
                 Some(PrimitiveValue::Number(FloatValue::new(l.value() + r.value())))
             }
@@ -688,37 +690,37 @@ fn evaluate_binary_op<'a>(
             )),
             _ => None,
         },
-        BinaryOperator::Subtract => match (lhs, rhs) {
+        BinaryOperator::Subtraction => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
                 Some(PrimitiveValue::Number(FloatValue::new(l.value() - r.value())))
             }
             _ => None,
         },
-        BinaryOperator::Multiply => match (lhs, rhs) {
+        BinaryOperator::Multiplication => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
                 Some(PrimitiveValue::Number(FloatValue::new(l.value() * r.value())))
             }
             _ => None,
         },
-        BinaryOperator::Divide => match (lhs, rhs) {
+        BinaryOperator::Division => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
                 Some(PrimitiveValue::Number(FloatValue::new(l.value() / r.value())))
             }
             _ => None,
         },
-        BinaryOperator::Modulo => match (lhs, rhs) {
+        BinaryOperator::Remainder => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
                 Some(PrimitiveValue::Number(FloatValue::new(l.value() % r.value())))
             }
             _ => None,
         },
-        BinaryOperator::Exponent => match (lhs, rhs) {
+        BinaryOperator::Exponential => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
                 Some(PrimitiveValue::Number(FloatValue::new(l.value().powf(r.value()))))
             }
             _ => None,
         },
-        BinaryOperator::BitwiseOr => match (lhs, rhs) {
+        BinaryOperator::BitwiseOR => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
                 let result = l.value().to_int_32() | r.value().to_int_32();
                 Some(PrimitiveValue::Number(FloatValue::new(result as f64)))
@@ -732,7 +734,7 @@ fn evaluate_binary_op<'a>(
             }
             _ => None,
         },
-        BinaryOperator::BitwiseXor => match (lhs, rhs) {
+        BinaryOperator::BitwiseXOR => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
                 let result = l.value().to_int_32() ^ r.value().to_int_32();
                 Some(PrimitiveValue::Number(FloatValue::new(result as f64)))
@@ -753,7 +755,7 @@ fn evaluate_binary_op<'a>(
             }
             _ => None,
         },
-        BinaryOperator::UnsignedShiftRight => match (lhs, rhs) {
+        BinaryOperator::ShiftRightZeroFill => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
                 let result = l.value().to_uint_32() >> (r.value().to_uint_32() & 0x1f);
                 Some(PrimitiveValue::Number(FloatValue::new(result as f64)))
@@ -766,7 +768,7 @@ fn evaluate_binary_op<'a>(
             }
             _ => None,
         },
-        BinaryOperator::LessEqual => match (lhs, rhs) {
+        BinaryOperator::LessEqualThan => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
                 Some(PrimitiveValue::Boolean(l.value() <= r.value()))
             }
@@ -778,17 +780,19 @@ fn evaluate_binary_op<'a>(
             }
             _ => None,
         },
-        BinaryOperator::GreaterEqual => match (lhs, rhs) {
+        BinaryOperator::GreaterEqualThan => match (lhs, rhs) {
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
                 Some(PrimitiveValue::Boolean(l.value() >= r.value()))
             }
             _ => None,
         },
-        BinaryOperator::StrictEqual => Some(PrimitiveValue::Boolean(js_strict_equal(lhs, rhs))),
-        BinaryOperator::StrictNotEqual => Some(PrimitiveValue::Boolean(!js_strict_equal(lhs, rhs))),
-        BinaryOperator::Equal => Some(PrimitiveValue::Boolean(js_abstract_equal(lhs, rhs))),
-        BinaryOperator::NotEqual => Some(PrimitiveValue::Boolean(!js_abstract_equal(lhs, rhs))),
-        BinaryOperator::In | BinaryOperator::InstanceOf => None,
+        BinaryOperator::StrictEquality => Some(PrimitiveValue::Boolean(js_strict_equal(lhs, rhs))),
+        BinaryOperator::StrictInequality => {
+            Some(PrimitiveValue::Boolean(!js_strict_equal(lhs, rhs)))
+        }
+        BinaryOperator::Equality => Some(PrimitiveValue::Boolean(js_abstract_equal(lhs, rhs))),
+        BinaryOperator::Inequality => Some(PrimitiveValue::Boolean(!js_abstract_equal(lhs, rhs))),
+        BinaryOperator::In | BinaryOperator::Instanceof => None,
     }
 }
 

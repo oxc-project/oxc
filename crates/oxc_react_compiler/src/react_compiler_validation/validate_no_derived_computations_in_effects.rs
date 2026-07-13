@@ -28,9 +28,10 @@ use crate::react_compiler_hir::visitors::{
 use crate::react_compiler_hir::{
     ArrayElement, BlockId, Effect, EvaluationOrder, FunctionId, HirFunction, Identifier,
     IdentifierId, IdentifierName, InstructionValue, ParamPattern, PlaceOrSpread, ReactFunctionType,
-    ReturnVariant, Span, Type, is_set_state_type, is_use_effect_hook_type, is_use_ref_type,
+    ReturnVariant, Type, is_set_state_type, is_use_effect_hook_type, is_use_ref_type,
     is_use_state_type,
 };
+use oxc_span::Span;
 
 const MAX_FIXPOINT_ITERATIONS: usize = 100;
 

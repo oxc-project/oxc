@@ -14,8 +14,9 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
 use crate::react_compiler_hir::{
     AliasingEffect, Effect, HirFunction, Identifier, IdentifierId, IdentifierName,
-    InstructionValue, Place, Span, Type,
+    InstructionValue, Place, Type,
 };
+use oxc_span::Span;
 
 /// Information about a known mutation effect: which identifier is mutated, and
 /// the source location of the mutation.

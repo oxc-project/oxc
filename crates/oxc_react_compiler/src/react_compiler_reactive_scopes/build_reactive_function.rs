@@ -19,8 +19,9 @@ use crate::react_compiler_hir::{
     InstructionValue, Place, PrimitiveValue, PrunedReactiveScopeBlock, ReactiveBlock,
     ReactiveFunction, ReactiveInstruction, ReactiveLabel, ReactiveScopeBlock, ReactiveStatement,
     ReactiveSwitchCase, ReactiveTerminal, ReactiveTerminalStatement, ReactiveTerminalTargetKind,
-    ReactiveValue, Span, Terminal,
+    ReactiveValue, Terminal,
 };
+use oxc_span::Span;
 
 /// Convert the HIR CFG into a tree-structured ReactiveFunction.
 pub fn build_reactive_function<'a>(

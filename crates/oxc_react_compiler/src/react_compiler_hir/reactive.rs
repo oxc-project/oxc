@@ -18,8 +18,10 @@ use std::fmt::Result as FmtResult;
 use oxc_str::{Ident, Str};
 
 use crate::react_compiler_hir::{
-    BlockId, EvaluationOrder, InstructionValue, LogicalOperator, ParamPattern, Place, ScopeId, Span,
+    BlockId, EvaluationOrder, InstructionValue, ParamPattern, Place, ScopeId,
 };
+use oxc_ast::ast::LogicalOperator;
+use oxc_span::Span;
 
 // =============================================================================
 // ReactiveFunction

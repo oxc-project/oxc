@@ -23,9 +23,10 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
     DeclarationId, EvaluationOrder, HirFunction, IdentifierId, InstructionValue, Pattern, ScopeId,
-    Span, is_primitive_type,
+    is_primitive_type,
 };
 use crate::react_compiler_utils::DisjointSet;
+use oxc_span::Span;
 
 // =============================================================================
 // Public API

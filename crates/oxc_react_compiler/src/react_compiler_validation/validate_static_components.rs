@@ -14,7 +14,8 @@ use rustc_hash::FxHashMap;
 use oxc_diagnostics::Diagnostics;
 
 use crate::diagnostics::ErrorCategory;
-use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, JsxTag, Span};
+use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, JsxTag};
+use oxc_span::Span;
 
 /// Validates that components used in JSX are not dynamically created during render.
 ///

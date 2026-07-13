@@ -37,11 +37,11 @@ use crate::react_compiler_hir::NonLocalBinding;
 use crate::react_compiler_hir::Place;
 use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PropertyLiteral;
-use crate::react_compiler_hir::Span;
 use crate::react_compiler_hir::Terminal;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_lowering::create_temporary_place;
 use crate::react_compiler_lowering::mark_instruction_ids;
+use oxc_span::Span;
 
 // =============================================================================
 // Types

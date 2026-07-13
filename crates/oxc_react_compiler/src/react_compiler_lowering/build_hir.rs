@@ -16,8 +16,9 @@ use crate::scope::SymbolId;
 
 use oxc_allocator::CloneIn;
 use oxc_ast::ast as oxc;
+use oxc_ast::ast::BinaryOperator;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, Str, format_ident};
 
 use crate::react_compiler_lowering::FunctionNode;
@@ -872,34 +873,6 @@ fn lower_identifier<'a>(
     }
 }
 
-fn convert_binary_operator(op: oxc::BinaryOperator) -> BinaryOperator {
-    use oxc::BinaryOperator as O;
-    match op {
-        O::Addition => BinaryOperator::Add,
-        O::Subtraction => BinaryOperator::Subtract,
-        O::Multiplication => BinaryOperator::Multiply,
-        O::Division => BinaryOperator::Divide,
-        O::Remainder => BinaryOperator::Modulo,
-        O::Exponential => BinaryOperator::Exponent,
-        O::Equality => BinaryOperator::Equal,
-        O::StrictEquality => BinaryOperator::StrictEqual,
-        O::Inequality => BinaryOperator::NotEqual,
-        O::StrictInequality => BinaryOperator::StrictNotEqual,
-        O::LessThan => BinaryOperator::LessThan,
-        O::LessEqualThan => BinaryOperator::LessEqual,
-        O::GreaterThan => BinaryOperator::GreaterThan,
-        O::GreaterEqualThan => BinaryOperator::GreaterEqual,
-        O::ShiftLeft => BinaryOperator::ShiftLeft,
-        O::ShiftRight => BinaryOperator::ShiftRight,
-        O::ShiftRightZeroFill => BinaryOperator::UnsignedShiftRight,
-        O::BitwiseOR => BinaryOperator::BitwiseOr,
-        O::BitwiseXOR => BinaryOperator::BitwiseXor,
-        O::BitwiseAnd => BinaryOperator::BitwiseAnd,
-        O::In => BinaryOperator::In,
-        O::Instanceof => BinaryOperator::InstanceOf,
-    }
-}
-
 fn convert_unary_operator(op: oxc::UnaryOperator) -> UnaryOperator {
     use oxc::UnaryOperator as O;
     match op {
@@ -1729,7 +1702,7 @@ fn lower_default_to_temp<'a>(
         builder,
         InstructionValue::BinaryExpression {
             left: value,
-            operator: BinaryOperator::StrictEqual,
+            operator: BinaryOperator::StrictEquality,
             right: undef,
             span: Some(pat_span),
         },
@@ -2567,7 +2540,7 @@ fn lower_assignment_target_default<'a>(
         builder,
         InstructionValue::BinaryExpression {
             left: value,
-            operator: BinaryOperator::StrictEqual,
+            operator: BinaryOperator::StrictEquality,
             right: undef,
             span: Some(span),
         },
@@ -3441,12 +3414,7 @@ fn lower_expression<'a>(
             let span = Some(bin.span);
             let left = lower_expression_to_temporary(builder, &bin.left)?;
             let right = lower_expression_to_temporary(builder, &bin.right)?;
-            Ok(InstructionValue::BinaryExpression {
-                operator: convert_binary_operator(bin.operator),
-                left,
-                right,
-                span,
-            })
+            Ok(InstructionValue::BinaryExpression { operator: bin.operator, left, right, span })
         }
         oxc::Expression::UnaryExpression(unary) => {
             let span = Some(unary.span);
@@ -3546,11 +3514,7 @@ fn lower_expression<'a>(
                 })
             });
 
-            let hir_op = match logical.operator {
-                oxc::LogicalOperator::And => LogicalOperator::And,
-                oxc::LogicalOperator::Or => LogicalOperator::Or,
-                oxc::LogicalOperator::Coalesce => LogicalOperator::NullishCoalescing,
-            };
+            let hir_op = logical.operator;
 
             builder.terminate_with_continuation(
                 Terminal::Logical {
@@ -3878,8 +3842,8 @@ fn lower_expression<'a>(
                 | oxc::SimpleAssignmentTarget::ComputedMemberExpression(_)
                 | oxc::SimpleAssignmentTarget::PrivateFieldExpression(_) => {
                     let binary_op = match update.operator {
-                        oxc::UpdateOperator::Increment => BinaryOperator::Add,
-                        oxc::UpdateOperator::Decrement => BinaryOperator::Subtract,
+                        oxc::UpdateOperator::Increment => BinaryOperator::Addition,
+                        oxc::UpdateOperator::Decrement => BinaryOperator::Subtraction,
                     };
                     // Use the member expression's span (not the update expression's)
                     // to match TS behavior where the inner operations use leftExpr.node.span
@@ -3994,10 +3958,7 @@ fn lower_expression<'a>(
                         builder.scope().resolve_reference(ident),
                     )?;
 
-                    let operation = match update.operator {
-                        oxc::UpdateOperator::Increment => UpdateOperator::Increment,
-                        oxc::UpdateOperator::Decrement => UpdateOperator::Decrement,
-                    };
+                    let operation = update.operator;
 
                     if update.prefix {
                         Ok(InstructionValue::PrefixUpdate {
@@ -4319,17 +4280,17 @@ fn lower_assignment_expression<'a>(
     } else {
         // Compound assignment operators
         let binary_op = match assign.operator {
-            oxc::AssignmentOperator::Addition => Some(BinaryOperator::Add),
-            oxc::AssignmentOperator::Subtraction => Some(BinaryOperator::Subtract),
-            oxc::AssignmentOperator::Multiplication => Some(BinaryOperator::Multiply),
-            oxc::AssignmentOperator::Division => Some(BinaryOperator::Divide),
-            oxc::AssignmentOperator::Remainder => Some(BinaryOperator::Modulo),
-            oxc::AssignmentOperator::Exponential => Some(BinaryOperator::Exponent),
+            oxc::AssignmentOperator::Addition => Some(BinaryOperator::Addition),
+            oxc::AssignmentOperator::Subtraction => Some(BinaryOperator::Subtraction),
+            oxc::AssignmentOperator::Multiplication => Some(BinaryOperator::Multiplication),
+            oxc::AssignmentOperator::Division => Some(BinaryOperator::Division),
+            oxc::AssignmentOperator::Remainder => Some(BinaryOperator::Remainder),
+            oxc::AssignmentOperator::Exponential => Some(BinaryOperator::Exponential),
             oxc::AssignmentOperator::ShiftLeft => Some(BinaryOperator::ShiftLeft),
             oxc::AssignmentOperator::ShiftRight => Some(BinaryOperator::ShiftRight),
-            oxc::AssignmentOperator::ShiftRightZeroFill => Some(BinaryOperator::UnsignedShiftRight),
-            oxc::AssignmentOperator::BitwiseOR => Some(BinaryOperator::BitwiseOr),
-            oxc::AssignmentOperator::BitwiseXOR => Some(BinaryOperator::BitwiseXor),
+            oxc::AssignmentOperator::ShiftRightZeroFill => Some(BinaryOperator::ShiftRightZeroFill),
+            oxc::AssignmentOperator::BitwiseOR => Some(BinaryOperator::BitwiseOR),
+            oxc::AssignmentOperator::BitwiseXOR => Some(BinaryOperator::BitwiseXOR),
             oxc::AssignmentOperator::BitwiseAnd => Some(BinaryOperator::BitwiseAnd),
             oxc::AssignmentOperator::LogicalOr
             | oxc::AssignmentOperator::LogicalAnd

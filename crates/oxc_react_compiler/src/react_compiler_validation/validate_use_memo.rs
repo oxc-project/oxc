@@ -9,8 +9,9 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     FunctionId, HirFunction, IdentifierId, InstructionValue, ParamPattern, Place, PlaceOrSpread,
-    PropertyLiteral, ReturnVariant, Span, Terminal,
+    PropertyLiteral, ReturnVariant, Terminal,
 };
+use oxc_span::Span;
 
 /// Validates useMemo() usage patterns.
 ///

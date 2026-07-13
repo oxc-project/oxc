@@ -44,7 +44,6 @@ use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PlaceOrSpreadOrHole;
 use crate::react_compiler_hir::PropertyLiteral;
 use crate::react_compiler_hir::ReactFunctionType;
-use crate::react_compiler_hir::Span;
 use crate::react_compiler_hir::SpreadPattern;
 use crate::react_compiler_hir::Terminal;
 use crate::react_compiler_hir::Type;
@@ -64,6 +63,7 @@ use crate::react_compiler_hir::type_config::ValueKind;
 use crate::react_compiler_hir::type_config::ValueReason;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_utils::FxIndexSet;
+use oxc_span::Span;
 use std::cell::Cell;
 
 // =============================================================================

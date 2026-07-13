@@ -24,9 +24,9 @@ use crate::react_compiler_hir::{
     GotoVariant, HirFunction, IdentifierId, Instruction, InstructionId, InstructionKind,
     InstructionValue, JsxAttribute, ManualMemoDependencyRoot, MutableRange, ParamPattern, Place,
     PlaceOrSpread, PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration,
-    ReactiveScopeDependency, ScopeId, Span, Terminal, Type, is_ref_value_type, is_use_ref_type,
-    visitors,
+    ReactiveScopeDependency, ScopeId, Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
 };
+use oxc_span::Span;
 
 // =============================================================================
 // Public entry point

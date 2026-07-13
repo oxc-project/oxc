@@ -25,8 +25,8 @@ use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::visitors::each_pattern_operand;
 use crate::react_compiler_hir::{
     BlockKind, DeclarationId, HirFunction, InstructionKind, InstructionValue, ParamPattern, Place,
-    Span,
 };
+use oxc_span::Span;
 
 use crate::react_compiler_hir::environment::Environment;
 

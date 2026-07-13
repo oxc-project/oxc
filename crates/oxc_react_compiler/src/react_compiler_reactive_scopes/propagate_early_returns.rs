@@ -20,12 +20,12 @@ use crate::react_compiler_hir::{
     InstructionValue, LValue, NonLocalBinding, Place, PlaceOrSpread, PrimitiveValue,
     PropertyLiteral, ReactiveFunction, ReactiveInstruction, ReactiveLabel, ReactiveScopeBlock,
     ReactiveScopeDeclaration, ReactiveScopeEarlyReturn, ReactiveStatement, ReactiveTerminal,
-    ReactiveTerminalStatement, ReactiveTerminalTargetKind, ReactiveValue, Span,
-    environment::Environment,
+    ReactiveTerminalStatement, ReactiveTerminalTargetKind, ReactiveValue, environment::Environment,
 };
 use crate::react_compiler_reactive_scopes::visitors::{
     ReactiveFunctionTransform, Transformed, transform_reactive_function,
 };
+use oxc_span::Span;
 
 /// The sentinel string used to detect early returns.
 /// TS: `EARLY_RETURN_SENTINEL` from CodegenReactiveFunction.

@@ -17,8 +17,9 @@ use crate::react_compiler_hir::{
     ArrayElement, BlockId, DependencyPathEntry, Effect, HirFunction, Identifier, IdentifierId,
     IdentifierName, InstructionKind, InstructionValue, ManualMemoDependency,
     ManualMemoDependencyRoot, NonLocalBinding, ParamPattern, Place, PlaceOrSpread, PropertyLiteral,
-    Span, Terminal, Type,
+    Terminal, Type,
 };
+use oxc_span::Span;
 
 /// Port of ValidateExhaustiveDependencies.ts
 ///
