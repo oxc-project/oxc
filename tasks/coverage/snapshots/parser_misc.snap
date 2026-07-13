@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 73/73 (100.00%)
 Positive Passed: 73/73 (100.00%)
-Negative Passed: 149/149 (100.00%)
+Negative Passed: 150/150 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -473,6 +473,22 @@ Negative Passed: 149/149 (100.00%)
  1 │ const foo = 1 ? 2
    ·               ┬
    ·               ╰── Conditional starts here
+   ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+   ╭─[misc/fail/nested-ambient-module-external.d.ts:4:12]
+ 3 │ declare module "outer" {
+ 4 │     module "inner" {}
+   ·            ───────
+ 5 │ }
+   ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+   ╭─[misc/fail/nested-ambient-module-external.d.ts:8:12]
+ 7 │ declare global {
+ 8 │     module "global-inner" {}
+   ·            ──────────────
+ 9 │ }
    ╰────
 
   × Identifier `b` has already been declared

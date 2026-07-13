@@ -128,13 +128,17 @@ fn check_nested_ambient_module(decl: &TSModuleDeclaration<'_>, ctx: &SemanticBui
     let Some(container) = ancestors.next() else {
         return;
     };
-    let container_is_top_level = matches!(ancestors.next(), Some(AstKind::Program(_)));
+    let top_level_program = match ancestors.next() {
+        Some(AstKind::Program(program)) => Some(program),
+        _ => None,
+    };
+    let is_global_declaration_file = ctx.source_type.is_typescript_definition()
+        && top_level_program.is_some_and(|program| !has_external_module_indicator(program));
 
-    // In a script or declaration file, a quoted module directly inside a top-level ambient
-    // module or `global` declaration is not a nested ambient module.
-    let is_top_level_ambient_context = (ctx.source_type.is_script()
-        || ctx.source_type.is_typescript_definition())
-        && container_is_top_level
+    // In a script or global declaration file, a quoted module directly inside a top-level
+    // ambient module or `global` declaration is not a nested ambient module.
+    let is_top_level_ambient_context = (ctx.source_type.is_script() || is_global_declaration_file)
+        && top_level_program.is_some()
         && match container {
             AstKind::TSModuleDeclaration(parent) => parent.id.is_string_literal(),
             AstKind::TSGlobalDeclaration(_) => true,
@@ -146,6 +150,17 @@ fn check_nested_ambient_module(decl: &TSModuleDeclaration<'_>, ctx: &SemanticBui
     {
         ctx.error(diagnostics::ambient_module_cannot_be_nested(decl.id.span()));
     }
+}
+
+fn has_external_module_indicator(program: &Program<'_>) -> bool {
+    program.body.iter().any(|stmt| {
+        stmt.is_module_declaration()
+            || matches!(
+                stmt,
+                Statement::TSImportEqualsDeclaration(decl)
+                    if decl.module_reference.is_external()
+            )
+    })
 }
 
 pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
