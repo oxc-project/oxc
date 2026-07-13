@@ -1,10 +1,11 @@
-use std::{cmp::min, iter, ops::ControlFlow};
+use std::{iter, ops::ControlFlow};
 
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, HashSet, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{
+    BoundNames,
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
@@ -525,20 +526,18 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Determines whether an array destruction assignment can be simplified based on the provided variable declaration.
+    /// Determines whether an array destruction assignment can be simplified.
     /// - `let [x, y] = [1, 2];` -> true
     /// - `let [x, y] = [...arr];` -> false
     fn can_simplify_array_to_array_destruction_assignment(
-        decl: &VariableDeclarator<'a>,
+        id_kind: &ArrayPattern<'a>,
+        init_expr: &ArrayExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        let BindingPattern::ArrayPattern(id_kind) = &decl.id else { return false };
         // if left side of assignment is empty do not process it
         if id_kind.is_empty() {
             return false;
         }
-
-        let Some(Expression::ArrayExpression(init_expr)) = &decl.init else { return false };
 
         let init_len = init_expr.elements.len();
         // [???] = [] or [...rest] = [??]
@@ -569,72 +568,71 @@ impl<'a> PeepholeOptimizations {
         }
 
         if init_len > 1 {
-            let binding_identifiers = decl.id.get_binding_identifiers();
+            // check if any symbol used in init is defined in binding identifiers of id
+            // `id = init`
+            // `[a, b] = [b, a]`
+            let mut binding_identifier_symbol_ids = HashSet::new_in(GetAllocator::allocator(ctx));
+            id_kind.bound_names(&mut |ident| {
+                binding_identifier_symbol_ids.insert(ident.symbol_id());
+            });
 
-            if !binding_identifiers.is_empty() {
-                // check if any symbol used in init is defined in binding identifiers of id
-                // `id = init`
-                // `[a, b] = [b, a]`
-
-                let binding_identifier_symbol_ids = HashSet::from_iter_in(
-                    binding_identifiers.iter().map(|id| id.symbol_id()),
-                    GetAllocator::allocator(ctx),
-                );
-
-                return !Self::array_elements_have_reference_to_symbol_ids(
-                    &init_expr.elements,
-                    &binding_identifier_symbol_ids,
-                    ctx,
-                );
+            if !binding_identifier_symbol_ids.is_empty() {
+                return !binding_identifier_symbol_ids.iter().any(|symbol_id| {
+                    Self::array_elements_have_reference_to_symbol_id(
+                        &init_expr.elements,
+                        symbol_id,
+                        ctx,
+                    )
+                });
             }
         }
 
         true
     }
 
-    /// Checks if any element within an array expression has a reference to a set of specific symbol IDs.
+    /// Checks if any element within an array expression has a reference to a specific symbol ID.
     ///
     /// - If the element is a `SpreadElement`, it inspects the `argument` of the spread for references.
     /// - For other elements, it checks if they can be resolved to an expression and then inspects those expressions.
     ///
-    /// Returns true If its components contain a reference to any of the given symbol IDs.
-    fn array_elements_have_reference_to_symbol_ids(
+    /// Returns true If its components contain a reference to the given symbol ID.
+    fn array_elements_have_reference_to_symbol_id(
         elements: &ArenaVec<'a, ArrayExpressionElement<'a>>,
-        symbol_ids: &HashSet<'a, SymbolId>,
+        symbol_id: &SymbolId,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         elements.iter().any(|e| match e {
             ArrayExpressionElement::SpreadElement(e) => {
-                Self::expression_has_reference_to_symbol_ids(&e.argument, symbol_ids, ctx)
+                Self::expression_has_reference_to_symbol_id(&e.argument, symbol_id, ctx)
             }
             ArrayExpressionElement::Elision(_) => false,
             _ => e.as_expression().is_none_or(|expr| {
-                Self::expression_has_reference_to_symbol_ids(expr, symbol_ids, ctx)
+                Self::expression_has_reference_to_symbol_id(expr, symbol_id, ctx)
             }),
         })
     }
 
-    /// Determines if a given expression references any of the specified symbol IDs.
+    /// Determines if a given expression references the specified symbol ID.
     ///
     /// - If the expression is an array, it checks whether any of the elements in the
-    ///   array reference the symbol IDs by delegating to the `array_elements_have_reference_to_symbol_ids` method.
+    ///   array reference the symbol ID by delegating to the `array_elements_have_reference_to_symbol_id` method.
     /// - If the expression is an identifier, it resolves the symbol ID associated with
-    ///   the identifier using the provided context (`ctx`). If the symbol ID matches
-    ///   one in the `symbol_ids` set, the function returns `true`.
+    ///   the identifier using the provided context (`ctx`). If the symbol ID matches,
+    ///   the function returns `true`.
     /// - For other expression types, the function checks if the expression is a literal
-    ///   value. If so, it is considered not to reference any symbol IDs.
+    ///   value. If so, it is considered not to reference the symbol ID.
     ///
-    /// Returns true If the expression or its components contain a reference to any of the given symbol IDs.
-    fn expression_has_reference_to_symbol_ids(
+    /// Returns true If the expression or its components contain a reference to the given symbol ID.
+    fn expression_has_reference_to_symbol_id(
         e: &Expression<'a>,
-        symbol_ids: &HashSet<'a, SymbolId>,
+        symbol_id: &SymbolId,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         match e {
             Expression::ArrayExpression(array_expr) => {
-                Self::array_elements_have_reference_to_symbol_ids(
+                Self::array_elements_have_reference_to_symbol_id(
                     &array_expr.elements,
-                    symbol_ids,
+                    symbol_id,
                     ctx,
                 )
             }
@@ -645,184 +643,116 @@ impl<'a> PeepholeOptimizations {
                     return false; // global reference
                 };
                 // check whatever id is present in init [a] = [b]
-                symbol_ids.contains(ref_symbol)
+                ref_symbol == symbol_id
             }
             _ => !e.is_literal_value(false, ctx),
         }
     }
 
+    fn is_empty_array_destruction_assignment(decl: &VariableDeclarator<'a>) -> bool {
+        let BindingPattern::ArrayPattern(id_pattern) = &decl.id else {
+            return false;
+        };
+        let Some(Expression::ArrayExpression(array_expr)) = &decl.init else {
+            return false;
+        };
+        id_pattern.elements.is_empty()
+            && id_pattern.rest.is_none()
+            && array_expr.elements.is_empty()
+    }
+
     fn simplify_array_destruction_assignment(
         decl: &mut VariableDeclarator<'a>,
-        result: &mut ArenaVec<'a, VariableDeclarator<'a>>,
-        ctx: &TraverseCtx<'a>,
-    ) -> bool {
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<(Option<BindingPattern<'a>>, Option<Expression<'a>>)> {
         let BindingPattern::ArrayPattern(id_pattern) = &mut decl.id else {
-            return false;
+            return None;
         };
         let Some(Expression::ArrayExpression(init_expr)) = &mut decl.init else {
-            return false;
+            return None;
         };
-
-        // limit iteration of id (left) to last spread of init (right)
-        // [a, b, c] = [b, ...spread]
-        let index = if let Some(spread_index) =
-            init_expr.elements.iter().position(ArrayExpressionElement::is_spread)
-        {
-            min(id_pattern.elements.len(), spread_index)
-        } else {
-            id_pattern.elements.len()
-        };
-
-        let mut init_iter = init_expr.elements.drain(..);
-
-        for id_item in id_pattern.elements.drain(0..index) {
-            let init_item = match init_iter.next() {
-                None | Some(ArrayExpressionElement::Elision(_)) => {
-                    Expression::new_void_0(SPAN, ctx)
-                }
-                Some(ArrayExpressionElement::SpreadElement(_)) => {
-                    unreachable!("spread element does not exist until `index`")
-                }
-                Some(init_item) => init_item.into_expression(),
-            };
-
-            match id_item {
-                // `[a = b] = [??]`
-                Some(BindingPattern::AssignmentPattern(mut pattern)) => {
-                    if init_item.is_literal_value(false, ctx) {
-                        // if value is determined, `[a = b] = [c]` => `a = c` or `a = b`
-                        result.push(VariableDeclarator::new(
-                            pattern.span(),
-                            decl.kind,
-                            pattern.left.take_in(ctx),
-                            NONE,
-                            Some(if init_item.is_void() || init_item.is_undefined() {
-                                // `[a = b] = [undefined]` => `a = b`
-                                pattern.right.take_in(ctx)
-                            } else {
-                                // `[a = b] = [c]` => `a = c`
-                                init_item
-                            }),
-                            decl.definite,
-                            ctx,
-                        ));
-                    } else {
-                        // `[a = b] = [c]` where c is undetermined => `[a = b] = [c]`
-                        result.push(VariableDeclarator::new(
-                            pattern.span(),
-                            decl.kind,
-                            BindingPattern::new_array_pattern(
-                                decl.span,
-                                ArenaVec::from_value_in(
-                                    Some(BindingPattern::AssignmentPattern(pattern)),
-                                    ctx,
-                                ),
-                                NONE,
-                                ctx,
-                            ),
-                            NONE,
-                            Some(Expression::new_array_expression(
-                                init_item.span(),
-                                ArenaVec::from_value_in(
-                                    ArrayExpressionElement::from(init_item),
-                                    ctx,
-                                ),
-                                ctx,
-                            )),
-                            decl.definite,
-                            ctx,
-                        ));
-                    }
-                }
-                // `[a, b] = [c, d]` => `a = c, b = d`
-                Some(id) => {
-                    result.push(VariableDeclarator::new(
-                        id.span(),
-                        decl.kind,
-                        id,
-                        NONE,
-                        Some(init_item),
-                        decl.definite,
-                        ctx,
-                    ));
-                }
-                // `[] = [??]` => `[] = [??]`
-                None => {
-                    // unused literals can be removed `[] = [1]`, `[] = [void 0]`
-                    if !init_item.is_literal_value(false, ctx) {
-                        result.push(VariableDeclarator::new(
-                            init_item.span(),
-                            decl.kind,
-                            BindingPattern::new_array_pattern(
-                                decl.span,
-                                ArenaVec::new_in(ctx),
-                                NONE,
-                                ctx,
-                            ),
-                            NONE,
-                            Some(Expression::new_array_expression(
-                                init_item.span(),
-                                ArenaVec::from_value_in(
-                                    ArrayExpressionElement::from(init_item),
-                                    ctx,
-                                ),
-                                ctx,
-                            )),
-                            decl.definite,
-                            ctx,
-                        ));
-                    }
-                }
-            }
+        if !Self::can_simplify_array_to_array_destruction_assignment(id_pattern, init_expr, ctx) {
+            return None;
         }
 
-        if init_iter.len() == 0 {
-            if !id_pattern.elements.is_empty() {
-                for id in id_pattern.elements.drain(..).flatten() {
-                    result.push(VariableDeclarator::new(
-                        id.span(),
-                        decl.kind,
-                        id,
-                        NONE,
-                        Some(Expression::new_void_0(SPAN, ctx)),
-                        decl.definite,
-                        ctx,
-                    ));
+        if id_pattern.elements.is_empty() {
+            let Some(mut rest) = id_pattern.rest.take() else {
+                return None;
+            };
+            return Some((
+                Some(rest.argument.take_in(ctx)),
+                Some(Expression::ArrayExpression(init_expr.take_in_box(ctx))),
+            ));
+        }
+
+        let init_item = match init_expr.elements.first() {
+            None => Expression::new_void_0(SPAN, ctx),
+            Some(ArrayExpressionElement::Elision(_)) => {
+                init_expr.elements.remove(0);
+                Expression::new_void_0(SPAN, ctx)
+            }
+            Some(ArrayExpressionElement::SpreadElement(_)) => return None,
+            Some(_) => init_expr.elements.remove(0).into_expression(),
+        };
+        let id_item = id_pattern.elements.remove(0);
+
+        match id_item {
+            // `[a = b] = [??]`
+            Some(BindingPattern::AssignmentPattern(mut pattern)) => {
+                if init_item.is_literal_value(false, ctx) {
+                    // if value is determined, `[a = b] = [c]` => `a = c` or `a = b`
+                    Some((
+                        Some(pattern.left.take_in(ctx)),
+                        Some(if init_item.is_void() || init_item.is_undefined() {
+                            // `[a = b] = [undefined]` => `a = b`
+                            pattern.right.take_in(ctx)
+                        } else {
+                            // `[a = b] = [c]` => `a = c`
+                            init_item
+                        }),
+                    ))
+                } else {
+                    // `[a = b] = [c]` where c is undetermined => `[a = b] = [c]`
+                    Some((
+                        Some(BindingPattern::new_array_pattern(
+                            decl.span,
+                            ArenaVec::from_value_in(
+                                Some(BindingPattern::AssignmentPattern(pattern)),
+                                ctx,
+                            ),
+                            NONE,
+                            ctx,
+                        )),
+                        Some(Expression::new_array_expression(
+                            init_item.span(),
+                            ArenaVec::from_value_in(ArrayExpressionElement::from(init_item), ctx),
+                            ctx,
+                        )),
+                    ))
                 }
             }
-            if let Some(rest) = &mut id_pattern.rest {
-                result.push(VariableDeclarator::new(
-                    rest.span(),
-                    decl.kind,
-                    rest.argument.take_in(ctx),
-                    NONE,
-                    Some(Expression::new_array_expression(rest.span(), ArenaVec::new_in(ctx), ctx)),
-                    decl.definite,
-                    ctx,
-                ));
+            // `[a, b] = [c, d]` => `a = c, b = d`
+            Some(id) => Some((Some(id), Some(init_item))),
+            // `[] = [??]` => `[] = [??]`
+            None => {
+                if !init_item.is_literal_value(false, ctx) {
+                    Some((
+                        Some(BindingPattern::new_array_pattern(
+                            decl.span,
+                            ArenaVec::new_in(ctx),
+                            NONE,
+                            ctx,
+                        )),
+                        Some(Expression::new_array_expression(
+                            init_item.span(),
+                            ArenaVec::from_value_in(ArrayExpressionElement::from(init_item), ctx),
+                            ctx,
+                        )),
+                    ))
+                } else {
+                    Some((None, None))
+                }
             }
-            true
-        } else if id_pattern.elements.is_empty()
-            && let Some(rest) = &mut id_pattern.rest
-        {
-            // `[...rest] = [a, b, c]` => `rest = [a, b, c]`
-            result.push(VariableDeclarator::new(
-                rest.span(),
-                decl.kind,
-                rest.argument.take_in(ctx),
-                NONE,
-                Some(Expression::new_array_expression(
-                    rest.span(),
-                    ArenaVec::from_iter_in(init_iter, ctx),
-                    ctx,
-                )),
-                decl.definite,
-                ctx,
-            ));
-            true
-        } else {
-            init_expr.elements = ArenaVec::from_iter_in(init_iter, ctx);
-            false
         }
     }
 
@@ -840,24 +770,35 @@ impl<'a> PeepholeOptimizations {
             let Some(last) = declarations.get_mut(i) else {
                 continue;
             };
+            let Some((new_id, new_init)) = Self::simplify_array_destruction_assignment(last, ctx)
+            else {
+                continue;
+            };
 
-            if Self::can_simplify_array_to_array_destruction_assignment(last, ctx) {
-                let mut new_var_decl: ArenaVec<'a, VariableDeclarator<'a>> = ArenaVec::new_in(ctx);
-                let to_remove =
-                    Self::simplify_array_destruction_assignment(last, &mut new_var_decl, ctx);
-
-                if !new_var_decl.is_empty() {
-                    let len = new_var_decl.len();
-                    if to_remove {
-                        declarations.splice(i..=i, new_var_decl);
-                    } else {
-                        declarations.splice(i..i, new_var_decl);
-                    }
+            if new_init.is_some()
+                && let Some(new_id) = new_id
+            {
+                let new_decl = VariableDeclarator::new(
+                    new_id.span(),
+                    last.kind,
+                    new_id,
+                    NONE,
+                    new_init,
+                    last.definite,
+                    ctx,
+                );
+                if Self::is_empty_array_destruction_assignment(last) {
+                    ctx.replace_variable_declarator(last, new_decl);
+                    i += 1;
+                } else {
+                    declarations.insert(i, new_decl);
                     ctx.notice_change();
-                    // check for nested destructuring
-                    i += len;
-                } else if to_remove {
-                    declarations.remove(i);
+                    i += 2;
+                }
+            } else {
+                if Self::is_empty_array_destruction_assignment(last) {
+                    ctx.drop_variable_declarator(&declarations.remove(i));
+                } else {
                     ctx.notice_change();
                 }
             }
