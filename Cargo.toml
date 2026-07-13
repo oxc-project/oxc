@@ -269,7 +269,7 @@ editorconfig-parser = "0.0.4"
 natord = "1.0.9"
 oxfmt = { path = "apps/oxfmt" }
 sort-package-json = "0.0.13"
-oxc-toml = "0.14.4"
+oxc-toml = "0.14.5"
 unicode-width = "0.2"
 website_common = { path = "tasks/website_common" }
 
