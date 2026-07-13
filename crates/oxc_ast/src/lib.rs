@@ -67,9 +67,11 @@ mod generated {
     mod derive_get_address;
     mod derive_get_span;
     mod derive_get_span_mut;
+    mod derive_replace_with;
     mod derive_take_in;
     mod derive_unstable_address;
     mod get_id;
+    pub mod inherit_variants;
 }
 pub use generated::ast_kind;
 

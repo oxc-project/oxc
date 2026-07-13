@@ -36,7 +36,7 @@ bitflags! {
         const Function         = 1 << 2;
         const Arrow            = 1 << 3;
         const ClassStaticBlock = 1 << 4;
-        const TsModuleBlock    = 1 << 5; // `declare namespace`
+        const TsModuleBlock    = 1 << 5; // `namespace`
         const Constructor      = 1 << 6;
         const GetAccessor      = 1 << 7;
         const SetAccessor      = 1 << 8;

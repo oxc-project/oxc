@@ -137,6 +137,17 @@ export interface MangleOptions {
    * @default false
    */
   keepNames?: boolean | MangleOptionsKeepNames
+  /**
+   * Names that bindings must not be renamed to, and that bindings already
+   * carrying them keep. Equivalent to terser's `mangle.reserved`.
+   *
+   * Pass `['exports', 'module']` when minifying prebuilt CommonJS / UMD files
+   * that Node consumers `import` directly, so Node's cjs-module-lexer can still
+   * detect the mangled module's named exports.
+   *
+   * @default []
+   */
+  reserved?: Array<string>
   /** Debug mangled names. */
   debug?: boolean
 }

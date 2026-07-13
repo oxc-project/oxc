@@ -1,0 +1,23 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/invalid-setState-in-useEffect-transitive.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] EffectSetState: Calling setState synchronously within an effect can trigger cascading renders", labels: One([LabeledSpan { label: Some("Avoid calling setState() directly within an effect"), span: SourceSpan { offset: SourceOffset(284), length: 1 }, primary: false }]), help: Some("Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect)"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+// @loggerTestOnly @validateNoSetStateInEffects @outputMode:"lint"
+import { useEffect, useState } from "react";
+function Component() {
+	const [state, setState] = useState(0);
+	const f = () => {
+		setState((s) => s + 1);
+	};
+	const g = () => {
+		f();
+	};
+	useEffect(() => {
+		g();
+	});
+	return state;
+}

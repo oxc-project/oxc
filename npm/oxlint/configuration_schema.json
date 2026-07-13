@@ -48,13 +48,13 @@
       "markdownDescription": "Enabled or disabled specific global variables."
     },
     "ignorePatterns": {
-      "description": "Globs to ignore during linting. These are resolved from the configuration file path.",
+      "description": "Globs to ignore during linting. Patterns use gitignore-style matching,\nrooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..`\nare rejected as a configuration error.",
       "default": [],
       "type": "array",
       "items": {
         "type": "string"
       },
-      "markdownDescription": "Globs to ignore during linting. These are resolved from the configuration file path."
+      "markdownDescription": "Globs to ignore during linting. Patterns use gitignore-style matching,\nrooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..`\nare rejected as a configuration error."
     },
     "jsPlugins": {
       "description": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```",
@@ -3544,7 +3544,24 @@
           ]
         },
         "jsdoc/require-param": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireParamConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/require-param-description": {
           "anyOf": [
@@ -4441,7 +4458,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "no-constant-binary-expression": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoConstantBinaryExpressionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "no-constant-condition": {
           "anyOf": [
@@ -5323,6 +5357,26 @@
         },
         "no-unreachable": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "no-unreachable-loop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoUnreachableLoop"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "no-unsafe-finally": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -8634,6 +8688,26 @@
             }
           ]
         },
+        "unicorn/explicit-timer-delay": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExplicitTimerDelayMode"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "unicorn/filename-case": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -8765,6 +8839,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/no-await-in-promise-methods": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "unicorn/no-confusing-array-with": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/no-console-spaces": {
@@ -10698,6 +10775,26 @@
       },
       "additionalProperties": false
     },
+    "ExplicitTimerDelayMode": {
+      "oneOf": [
+        {
+          "description": "Require explicit `delay` argument for clarity.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Require explicit `delay` argument for clarity."
+        },
+        {
+          "description": "Disallow explicit `0` delay, prefer implicit default.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallow explicit `0` delay, prefer implicit default."
+        }
+      ]
+    },
     "ExtensionRule": {
       "description": "Extension rule configuration; Copy to avoid extra indirection.",
       "type": "string",
@@ -10819,12 +10916,12 @@
       "type": "object",
       "properties": {
         "forbid": {
-          "description": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, an optional `disallowedFor` array of DOM node names,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`",
+          "description": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, optional `disallowedFor` and `disallowedValues` arrays,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"type\", \"disallowedValues\": [\"button\"] }] }]`",
           "type": "array",
           "items": {
             "$ref": "#/definitions/ForbidDomPropsItem"
           },
-          "markdownDescription": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, an optional `disallowedFor` array of DOM node names,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`"
+          "markdownDescription": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, optional `disallowedFor` and `disallowedValues` arrays,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"type\", \"disallowedValues\": [\"button\"] }] }]`"
         }
       },
       "additionalProperties": false,
@@ -10839,13 +10936,13 @@
           "markdownDescription": "A prop name to forbid on all DOM elements."
         },
         {
-          "description": "A prop with optional `disallowedFor` DOM node list and custom `message`.",
+          "description": "A prop with optional `disallowedFor` DOM node list, optional\n`disallowedValues` value list, and custom `message`.",
           "allOf": [
             {
               "$ref": "#/definitions/PropWithOptions"
             }
           ],
-          "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+          "markdownDescription": "A prop with optional `disallowedFor` DOM node list, optional\n`disallowedValues` value list, and custom `message`."
         }
       ],
       "markdownDescription": "A forbidden prop, either as a plain prop name string or with options."
@@ -10914,15 +11011,10 @@
     },
     "ForbidItemObject": {
       "type": "object",
-      "required": [
-        "allowedFor",
-        "allowedForPatterns",
-        "disallowedFor",
-        "disallowedForPatterns"
-      ],
       "properties": {
         "allowedFor": {
           "description": "Component names for which this prop is **allowed** (all others are\nforbidden).",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10931,6 +11023,7 @@
         },
         "allowedForPatterns": {
           "description": "Glob patterns for component names where the prop is **allowed**.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10939,6 +11032,7 @@
         },
         "disallowedFor": {
           "description": "Component names for which this prop is **disallowed** (all others are\nallowed).",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -10947,6 +11041,7 @@
         },
         "disallowedForPatterns": {
           "description": "Glob patterns for component names where the prop is **disallowed**.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -12375,6 +12470,16 @@
       },
       "additionalProperties": false
     },
+    "LoopType": {
+      "type": "string",
+      "enum": [
+        "WhileStatement",
+        "DoWhileStatement",
+        "ForStatement",
+        "ForInStatement",
+        "ForOfStatement"
+      ]
+    },
     "MaxClassesPerFileConfig": {
       "type": "object",
       "properties": {
@@ -12948,6 +13053,26 @@
       },
       "additionalProperties": false
     },
+    "Namespaces": {
+      "oneOf": [
+        {
+          "description": "Allow declarations directly inside TypeScript namespace or module bodies.",
+          "type": "string",
+          "enum": [
+            "allow"
+          ],
+          "markdownDescription": "Allow declarations directly inside TypeScript namespace or module bodies."
+        },
+        {
+          "description": "Disallow declarations directly inside TypeScript namespace or module bodies.",
+          "type": "string",
+          "enum": [
+            "disallow"
+          ],
+          "markdownDescription": "Disallow declarations directly inside TypeScript namespace or module bodies."
+        }
+      ]
+    },
     "NativeAllowList": {
       "anyOf": [
         {
@@ -13187,6 +13312,12 @@
     "NoArraySort": {
       "type": "object",
       "properties": {
+        "allowAfterSpread": {
+          "description": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```"
+        },
         "allowExpressionStatement": {
           "description": "When set to `true` (default), allows `array.sort()` as an expression statement.\nSet to `false` to forbid `Array#sort()` even if it's an expression statement.\n\nExample of **incorrect** code for this rule with `allowExpressionStatement` set to `false`:\n```js\narray.sort();\n```",
           "default": true,
@@ -13403,6 +13534,16 @@
             "type": "string"
           },
           "markdownDescription": "The `allow` option permits the given list of console methods to be used as exceptions to\nthis rule.\n\nSay the option was configured as `{ \"allow\": [\"info\"] }` then the rule would behave as\nfollows:\n\nExample of **incorrect** code for this option:\n```javascript\nconsole.log('foo');\n```\n\nExample of **correct** code for this option:\n```javascript\nconsole.info('foo');\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoConstantBinaryExpressionConfig": {
+      "type": "object",
+      "properties": {
+        "checkRelationalComparisons": {
+          "default": true,
+          "type": "boolean"
         }
       },
       "additionalProperties": false
@@ -14012,6 +14153,16 @@
             }
           ],
           "markdownDescription": "Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior)."
+        },
+        "namespaces": {
+          "description": "Controls whether declarations directly inside TypeScript namespace or module bodies are allowed.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/Namespaces"
+            }
+          ],
+          "markdownDescription": "Controls whether declarations directly inside TypeScript namespace or module bodies are allowed."
         }
       },
       "additionalProperties": false
@@ -14708,7 +14859,6 @@
       "properties": {
         "allow": {
           "description": "These strings will be compiled into regular expressions with the u flag and be used to test against the imported path.\nA common use case is to allow importing `package.json`. This is because `package.json` commonly lives outside of the TS root directory,\nso statically importing it would lead to root directory conflicts, especially with `resolveJsonModule` enabled.\nYou can also use it to allow importing any JSON if your environment doesn't support JSON modules, or use it for other cases where `import` statements cannot work.\n\nWith `{ allow: ['/package\\\\.json$'] }`:\n\nExamples of **correct** code for this rule:\n```ts\nconsole.log(require('../package.json').version);\n```",
-          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -15328,6 +15478,21 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "Whether to allow the default assignment pattern `x ? x : y`.\n\nWhen set to `false`, the rule also flags cases like `x ? x : y` and suggests using\nthe logical OR form `x || y` instead. When `true` (default), such default assignments\nare allowed and not reported."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoUnreachableLoop": {
+      "$ref": "#/definitions/NoUnreachableLoopConfig"
+    },
+    "NoUnreachableLoopConfig": {
+      "type": "object",
+      "properties": {
+        "ignore": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LoopType"
+          }
         }
       },
       "additionalProperties": false
@@ -16130,11 +16295,12 @@
       "type": "object",
       "properties": {
         "ignoreProps": {
-          "default": [],
+          "description": "Prop names to ignore, as regular expression patterns.",
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "markdownDescription": "Prop names to ignore, as regular expression patterns."
         }
       },
       "additionalProperties": false
@@ -16824,15 +16990,12 @@
           "markdownDescription": "An array of function names that should also be treated as test blocks."
         },
         "assertFunctionNames": {
-          "description": "A list of function names that should be treated as assertion functions.",
-          "default": [
-            "expect"
-          ],
+          "description": "A list of function names that should be treated as assertion functions.\nDefault: `[\"expect\"]`",
           "type": "array",
           "items": {
             "type": "string"
           },
-          "markdownDescription": "A list of function names that should be treated as assertion functions."
+          "markdownDescription": "A list of function names that should be treated as assertion functions.\nDefault: `[\"expect\"]`"
         }
       },
       "additionalProperties": false
@@ -17321,7 +17484,7 @@
       "additionalProperties": false
     },
     "PropWithOptions": {
-      "description": "A prop with optional `disallowedFor` DOM node list and custom `message`.",
+      "description": "A prop with optional `disallowedFor` DOM node list, optional `disallowedValues`\nvalue list, and custom `message`.",
       "type": "object",
       "required": [
         "propName"
@@ -17335,6 +17498,14 @@
           },
           "markdownDescription": "A list of DOM element names (e.g. `[\"div\", \"span\"]`) on which this\nprop is forbidden. If empty or omitted, the prop is forbidden on all\nDOM elements."
         },
+        "disallowedValues": {
+          "description": "A list of string literal values for which this prop is forbidden. If\nomitted, the prop is forbidden for all values.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of string literal values for which this prop is forbidden. If\nomitted, the prop is forbidden for all values."
+        },
         "message": {
           "description": "A custom message to display when this prop is used.",
           "type": "string",
@@ -17347,7 +17518,7 @@
         }
       },
       "additionalProperties": false,
-      "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+      "markdownDescription": "A prop with optional `disallowedFor` DOM node list, optional `disallowedValues`\nvalue list, and custom `message`."
     },
     "PropertyDetails": {
       "type": "object",
@@ -17592,6 +17763,83 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Also require type parameters for `importActual` and `importMock`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RequireParamConfig": {
+      "type": "object",
+      "properties": {
+        "checkConstructors": {
+          "description": "Whether to check constructor methods.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check constructor methods."
+        },
+        "checkDestructured": {
+          "description": "Whether to check destructured parameters.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check destructured parameters."
+        },
+        "checkDestructuredRoots": {
+          "description": "Whether to check destructured parameters when you have code like\n`function doSomething({ a, b }) { ... }`. Because there is no named\nparameter in this example, when this option is `true` you must\nhave a `@param` tag that corresponds to `{a, b}`.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check destructured parameters when you have code like\n`function doSomething({ a, b }) { ... }`. Because there is no named\nparameter in this example, when this option is `true` you must\nhave a `@param` tag that corresponds to `{a, b}`."
+        },
+        "checkGetters": {
+          "description": "Whether to check getter methods.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check getter methods."
+        },
+        "checkRestProperty": {
+          "description": "Whether to check rest properties.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check rest properties."
+        },
+        "checkSetters": {
+          "description": "Whether to check setter methods.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check setter methods."
+        },
+        "checkTypesPattern": {
+          "description": "Regex pattern to match types that exempt parameters from checking.",
+          "default": "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$",
+          "type": "string",
+          "markdownDescription": "Regex pattern to match types that exempt parameters from checking."
+        },
+        "exemptedBy": {
+          "description": "List of JSDoc tags that exempt functions from `@param` checking.",
+          "default": [
+            "inheritdoc"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of JSDoc tags that exempt functions from `@param` checking."
+        },
+        "ignoreWhenAllParamsMissing": {
+          "description": "Set to `true` to ignore reporting when all params are missing. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set to `true` to ignore reporting when all params are missing. Defaults to `false`."
+        },
+        "interfaceExemptsParamsCheck": {
+          "description": "Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.\nWill check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.\nWill check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`."
+        },
+        "useDefaultObjectProperties": {
+          "description": "Set to `true` if you wish to expect documentation of properties on objects supplied as default values. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set to `true` if you wish to expect documentation of properties on objects supplied as default values. Defaults to `false`."
         }
       },
       "additionalProperties": false

@@ -1,13 +1,14 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::AstKind;
 use oxc_cfg::{
-    EdgeType, ErrorEdgeKind, InstructionKind,
+    BlockNodeId, ControlFlowGraph, EdgeType, InstructionKind, ReturnInstructionKind,
     graph::{Direction, visit::EdgeRef},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashSet;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -169,29 +170,6 @@ impl NoUselessReturn {
                 }
 
                 AstKind::SwitchCase(case) => {
-                    let parent_kind = nodes.parent_kind(ancestor_id);
-                    if let AstKind::SwitchStatement(switch_stmt) = parent_kind
-                        && let Some((idx, _)) =
-                            switch_stmt.cases.iter().enumerate().find(|(_, c)| c.span == case.span)
-                    {
-                        let is_last_case = idx == switch_stmt.cases.len() - 1;
-
-                        if !is_last_case
-                            && case.consequent.last().is_some_and(|last_stmt| {
-                                last_stmt.span().contains_inclusive(current_span)
-                            })
-                        {
-                            let subsequent_cases_empty = switch_stmt
-                                .cases
-                                .iter()
-                                .skip(idx + 1)
-                                .all(|c| c.consequent.is_empty());
-
-                            if !subsequent_cases_empty {
-                                return AncestorAnalysis::NotUseless;
-                            }
-                        }
-                    }
                     current_span = case.span;
                 }
 
@@ -228,38 +206,86 @@ impl NoUselessReturn {
         AncestorAnalysis::NotAtFunctionEnd
     }
 
-    /// Check if removing this return would make code after it reachable.
-    /// Returns true if the return prevents reachable code from executing.
+    /// Check if removing this return would make later code execute.
     fn has_reachable_code_after(return_node: &AstNode, ctx: &LintContext) -> bool {
         let cfg = ctx.cfg();
         let graph = cfg.graph();
         let return_block_id = ctx.nodes().cfg_id(return_node.id());
+        let mut stack = graph
+            .edges_directed(return_block_id, Direction::Outgoing)
+            .filter_map(|edge| {
+                matches!(edge.weight(), EdgeType::Unreachable).then_some(edge.target())
+            })
+            .collect::<Vec<_>>();
+        let mut visited = FxHashSet::default();
 
-        for edge in graph.edges_directed(return_block_id, Direction::Outgoing) {
-            let dominated = matches!(
-                edge.weight(),
-                EdgeType::Normal | EdgeType::Jump | EdgeType::Error(ErrorEdgeKind::Explicit)
-            );
+        while let Some(block_id) = stack.pop() {
+            if !visited.insert(block_id) {
+                continue;
+            }
 
-            if dominated {
-                let target = edge.target();
-                let target_block = cfg.basic_block(target);
-
-                if target_block.is_unreachable() {
+            let mut path_stopped = false;
+            for instr in cfg.basic_block(block_id).instructions() {
+                if instr.node_id.is_some_and(|node_id| Self::is_inside_finalizer(node_id, ctx)) {
+                    if matches!(
+                        instr.kind,
+                        InstructionKind::Throw
+                            | InstructionKind::Return(_)
+                            | InstructionKind::Break(_)
+                            | InstructionKind::Continue(_)
+                    ) {
+                        path_stopped = true;
+                        break;
+                    }
                     continue;
                 }
 
-                let has_meaningful_code = target_block.instructions().iter().any(|instr| {
-                    !matches!(
-                        instr.kind,
-                        InstructionKind::ImplicitReturn | InstructionKind::Unreachable
-                    )
-                });
-
-                if has_meaningful_code {
-                    return true;
+                match instr.kind {
+                    InstructionKind::Statement
+                        if Self::is_meaningful_statement(instr.node_id, ctx) =>
+                    {
+                        return true;
+                    }
+                    InstructionKind::Throw
+                    | InstructionKind::Iteration(_)
+                    | InstructionKind::Return(ReturnInstructionKind::NotImplicitUndefined) => {
+                        return true;
+                    }
+                    InstructionKind::Break(_)
+                    | InstructionKind::Continue(_)
+                    | InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined) => {
+                        path_stopped = true;
+                        break;
+                    }
+                    InstructionKind::Statement
+                    | InstructionKind::Condition
+                    | InstructionKind::ImplicitReturn
+                    | InstructionKind::Unreachable => {}
                 }
             }
+
+            if path_stopped {
+                continue;
+            }
+
+            let is_switch_case_entry_block = Self::is_switch_case_entry_block(cfg, ctx, block_id);
+            stack.extend(graph.edges_directed(block_id, Direction::Outgoing).filter_map(|edge| {
+                let is_continuation_edge = if is_switch_case_entry_block {
+                    matches!(edge.weight(), EdgeType::Jump)
+                } else {
+                    matches!(
+                        edge.weight(),
+                        EdgeType::Normal
+                            | EdgeType::Jump
+                            | EdgeType::Backedge
+                            | EdgeType::Finalize
+                            | EdgeType::Join
+                            | EdgeType::Unreachable
+                    )
+                };
+
+                is_continuation_edge.then_some(edge.target())
+            }));
         }
 
         false
@@ -272,6 +298,58 @@ impl NoUselessReturn {
         span: Span,
     ) -> bool {
         statements.last().is_some_and(|last| last.span().contains_inclusive(span))
+    }
+
+    fn is_meaningful_statement(node_id: Option<NodeId>, ctx: &LintContext) -> bool {
+        let Some(node_id) = node_id else {
+            return true;
+        };
+
+        !matches!(
+            ctx.nodes().kind(node_id),
+            AstKind::EmptyStatement(_) | AstKind::Function(_) | AstKind::BlockStatement(_)
+        )
+    }
+
+    fn is_inside_finalizer(node_id: NodeId, ctx: &LintContext) -> bool {
+        let nodes = ctx.nodes();
+
+        for ancestor_id in std::iter::once(node_id).chain(nodes.ancestor_ids(node_id)) {
+            match nodes.kind(ancestor_id) {
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => return false,
+                AstKind::BlockStatement(block) => {
+                    if let AstKind::TryStatement(try_stmt) = nodes.parent_kind(ancestor_id)
+                        && try_stmt
+                            .finalizer
+                            .as_ref()
+                            .is_some_and(|finalizer| finalizer.span == block.span)
+                    {
+                        return true;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        false
+    }
+
+    fn is_switch_case_entry_block(
+        cfg: &ControlFlowGraph,
+        ctx: &LintContext,
+        block_id: BlockNodeId,
+    ) -> bool {
+        let block = cfg.basic_block(block_id);
+        block.instructions().iter().any(|instr| {
+            matches!(instr.kind, InstructionKind::Condition)
+                && instr.node_id.is_some_and(|node_id| {
+                    matches!(ctx.nodes().parent_kind(node_id), AstKind::SwitchCase(_))
+                })
+        }) || (block.instructions().is_empty()
+            && cfg
+                .graph()
+                .edges_directed(block_id, Direction::Outgoing)
+                .any(|edge| matches!(edge.weight(), EdgeType::Jump)))
     }
 }
 
@@ -334,6 +412,27 @@ fn test() {
                     }
                 default:
                     doSomethingElse();
+            }
+        }
+        ",
+        // return skips statements after the containing branch in the same switch case
+        "
+        const changeStep = () => {
+            switch (direction) {
+                case DIRECTION.BACKWARD:
+                    if (step === STEPS.Step1) {
+                        setIsFlowShown(false);
+                        return;
+                    }
+                    setStep(1);
+                    break;
+                case DIRECTION.FORWARD:
+                    if (step === STEPS.Step5) {
+                        setIsFlowShown(false);
+                        return;
+                    }
+                    setStep(2);
+                    break;
             }
         }
         ",
@@ -470,6 +569,8 @@ fn test() {
         "function foo() { try { throw new Error(); } catch (e) { return; } doSomething(); }",
         // Nested try-catch where return in inner catch prevents outer code
         "function foo() { try { try { throw 1; } catch (e) { return; } } catch (e) { } doSomething(); }",
+        // Removing the return reaches code after the finalizer
+        "function foo(x, a) { switch (x) { case 1: try { if (a) return; } finally {} setStep(1); break; } }",
     ];
 
     // ESLint invalid test cases
@@ -496,6 +597,11 @@ fn test() {
         "function foo() { switch (bar) { case 1: if (a) { doSomething(); return; } break; default: doSomethingElse(); } }",
         "function foo() { switch (bar) { case 1: if (a) { doSomething(); return; } else { doSomething(); } break; default: doSomethingElse(); } }",
         "function foo() { switch (bar) { case 1: if (a) { doSomething(); return; } default: } }",
+        "function foo() { switch (bar) { case 1: if (a) return; ; break; default: doSomethingElse(); } }",
+        "function foo() { switch (bar) { case 1: if (a) return; {} break; default: doSomethingElse(); } }",
+        "function foo() { switch (bar) { case 1: if (a) return; { break; } default: doSomethingElse(); } }",
+        "function foo() { switch (bar) { case 1: if (a) return; case 2: break; default: doSomethingElse(); } }",
+        "function foo() { switch (bar) { case 1: if (a) return; default: break; case 2: doSomethingElse(); } }",
         // try-catch (useless return in catch)
         "function foo() { try {} catch (err) { return; } }",
         // try with useless return, catch has return value

@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.73.0] - 2026-07-06
+
+### 🚀 Features
+
+- a2c97f3 linter/unicorn: Implement `explicit-timer-delay` rule (#23612) (Mikhail Baev)
+- 85735cb linter/unicorn: Implement `no-confusing-array-with` rule (#23638) (Shekhu☺️)
+- cb4fbb9 linter/eslint: Implement no-unreachable-loop rule (#23975) (Todor Andonov)
+- dc32112 linter/eslint/no-constant-binary-expression: Check relational comparisons (#24088) (camc314)
+- d963967 linter/unicorn/no-array-sort: Add `allowAfterSpread` option (#24043) (Boshen)
+- 0a75682 linter: Add per-rule timings for type-aware linting (#22488) (camchenry)
+- 743e222 linter/react: Add `disallowedValues` option for `forbid-dom-props` rule (#23970) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 0b25582 ast: Type binding node `typeAnnotation` as `TSTypeAnnotation | null` (#23113) (Boshen)
+- bdb51c7 linter/jest/prefer-ending-with-an-expect: Validate config patterns (#24122) (camc314)
+- 45d607d linter/react/forbid-component-props: Make allow/disallow lists optional in schema (#24024) (Boshen)
+
+## [1.72.0] - 2026-06-29
+
+### 🚀 Features
+
+- 1c8f50c linter: Add schema for `eslint/no-restricted-import` (#23642) (Sysix)
+
+### 🐛 Bug Fixes
+
+- f7d1f50 oxlint, oxfmt: Enable `disable_old_builder` Cargo feature for `oxc_ast` crate (#23886) (overlookmotel)
+- 94b6599 linter: Deduplicate missing plugin errors (#23853) (camc314)
+- d86f60b lsp: Normalize user config path to watch pattern (#23723) (Sysix)
+- 52032cf linter: Newline-terminate tsgolint errors (#23762) (Mikhail Baev)
+- 742be36 refactor/node/handle-callback-err: Reject invalid regex config (#23740) (camc314)
+
+### 🛡️ Security
+
+- 3cdd18f deps: Update npm packages (#23690) (renovate[bot])
+
 ## [1.71.0] - 2026-06-22
 
 ### 🚀 Features

@@ -1,7 +1,6 @@
 use cow_utils::CowUtils;
-use oxc_css_parser::{
-    ParserBuilder, Spanned,
-    ast::{ComponentValue, Declaration, InterpolableIdent, QualifiedRule, SimpleBlock, Statement},
+use oxc_css_parser::ast::{
+    ComponentValue, Declaration, InterpolableIdent, QualifiedRule, SimpleBlock, Statement,
 };
 
 use oxc_formatter_core::{
@@ -18,7 +17,7 @@ use crate::{
     },
     format::to_span,
     print::{
-        CssFormatter, at_rule, format_with, less, scss, selector,
+        CssFormatter, at_rule, format_with, less, postcss_simple_vars, scss, selector,
         value::{self, ValueContext},
         write_maybe_lowercase,
     },
@@ -173,8 +172,11 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
                     write!(f, ";");
                 }
             } else if !matches!(decl.value.last(), Some(ComponentValue::SassNestingDeclaration(_)))
+                || matches!(&decl.name, InterpolableIdent::Literal(ident) if ident.name.starts_with("--"))
             {
-                // Nested declaration blocks (`background: { ... }`) get no `;`
+                // No `;` after a nested declaration block (`background: { ... }`),
+                // except a custom-property rule block (`--p: { ... };`).
+                // See AGENTS.md "Known divergences" for the `--*` exception.
                 write!(f, ";");
             }
         }
@@ -187,7 +189,7 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
             // Preserve a trailing `;` from the source
             // (Prettier keeps `${foo};` as `${foo};` and `${foo}` as `${foo}`):
             // the `;` is consumed by the statement separator, so recover it from the source gap.
-            let end = to_span(placeholder.span()).end;
+            let end = to_span(&placeholder.span).end;
             if end_with_semicolon(end, f) > end {
                 write!(f, ";");
             }
@@ -207,6 +209,10 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
         }
         Statement::SassVariableDeclaration(decl) => {
             scss::write_sass_variable_declaration(decl, f);
+            write!(f, ";");
+        }
+        Statement::PostcssSimpleVarDeclaration(decl) => {
+            postcss_simple_vars::write_postcss_simple_var_declaration(decl, f);
             write!(f, ";");
         }
         Statement::SassIfAtRule(if_rule) => scss::write_sass_if_at_rule(if_rule, f),
@@ -242,8 +248,11 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
             write!(f, space());
             write_block(&keyframe_block.block, f);
         }
+        Statement::LessExtendRule(rule) => {
+            less::write_less_extend_rule(rule, f);
+            write!(f, ";");
+        }
         // Not yet ported: emit the original source verbatim.
-        // - LessExtendRule
         // - LessFunctionCall
         // - LessVariableCall
         _ => {
@@ -291,6 +300,12 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     let source = f.context().source_text();
     let name_span = to_span(decl.name.span());
     let prop = source.text_for(&name_span);
+    // Legacy IE hack prefix glued to the property name
+    // (`*color: red`; `oxc-css-parser` also accepts `.`/`:`/`#` in Css mode);
+    // postcss keeps it as part of the prop, so Prettier preserves it.
+    if let Some(prefix) = decl.name_prefix {
+        write!(f, text(f.allocator().alloc_str(prefix.encode_utf8(&mut [0; 4]))));
+    }
     if let InterpolableIdent::Placeholder(placeholder) = &decl.name {
         // A css-in-js placeholder property name (`${foo}: ...`) is a typed marker
         // the host replaces with `${expr}`; never lowercase it like a real property.
@@ -314,7 +329,19 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     // one indent under the prop (`indent([hardline, dedent(value)])`).
     let between_breaks = trimmed_between != ":"
         && trimmed_between.rsplit(['\n', '\r']).next().unwrap_or(trimmed_between).contains("//");
-    if trimmed_between == ":" {
+    // A Less merge marker (`prop+: val` / `prop+_: val`)
+    // glues to the property name and its spaces drop, leaving only `:`
+    // (Prettier 3.9.5 #19517; the SPACED `+_` is ours alone, postcss-less cannot parse it).
+    // Comments around the marker keep the verbatim path.
+    let merge_marker =
+        decl.less_property_merge.as_ref().map(|merge| to_span(&merge.span)).filter(|span| {
+            source.slice_range(name_span.end, span.start).trim_ascii().is_empty()
+                && source.slice_range(span.end, between_upper).trim_ascii() == ":"
+        });
+    if let Some(span) = merge_marker {
+        write!(f, text(source.text_for(&span)));
+        write!(f, ":");
+    } else if trimmed_between == ":" {
         write!(f, ":");
     } else {
         let _ = f.context().comments().take_before(between_upper);
@@ -346,7 +373,6 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             write!(f, text(trimmed_between));
         }
     }
-    let mut reparsed_important_start: Option<u32> = None;
     if decl.value.is_empty() {
         // Custom properties with a whitespace-only value keep it verbatim
         // (`--one-space: ;` stays as-is). Scan up to the `;` in the source.
@@ -409,26 +435,11 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             // The raw text includes any comments; drop them from the cursor.
             let _ = f.context().comments().take_before(value_end);
         } else {
-            // Custom property values come back from `oxc-css-parser` as a raw token stream
-            // (per spec, `<declaration-value>` is any token soup),
-            // but Prettier (postcss) value-parses them like any other declaration,
-            // so `var(...)` etc. get the normal group/break layout.
-            let reparsed = if prop.starts_with("--")
-                && decl.value.iter().all(|v| matches!(v, ComponentValue::TokenWithSpan(_)))
-            {
-                reparse_custom_property_value(decl, f)
-            } else {
-                None
-            };
-            let values: &[ComponentValue<'a>] = reparsed.as_ref().map_or(&decl.value, |d| &d.value);
-            // A custom property's `!important` lands in the REPARSED declaration
-            // (the original token-soup decl has `important: None`);
-            // remember its source offset so the tail printing below doesn't drop it.
-            // The padded copy keeps original offsets.
-            reparsed_important_start = reparsed
-                .as_ref()
-                .and_then(|d| d.important.as_ref())
-                .map(|important| to_span(important.span()).start);
+            // Custom property values (`--*`) are parsed as a normal `<declaration-value>`
+            // via the `try_parsing_value_in_custom_property` parser option, matching Prettier (postcss).
+            // The parser keeps the raw token stream when the value does not parse (e.g. `--p: { decls };` rule blocks),
+            // so anything reaching here is uniformly a structured `ComponentValue` slice handled below.
+            let values = &*decl.value;
 
             let ctx = ValueContext {
                 decl_prop: Some(prop_lower),
@@ -448,7 +459,6 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             // A single interpolated component is exempt,
             // its fill-chunk fit ignores the line tail (see `is_single_sass_interpolation`).
             let has_tail = decl.important.is_none()
-                && reparsed_important_start.is_none()
                 && !value::is_single_sass_interpolation(values)
                 && f.context().comments().iter_before(bound).any(|c| c.span.start >= value_end);
             let ctx = ValueContext { tail_bound: has_tail.then_some(bound), ..ctx };
@@ -481,9 +491,6 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     if let Some(important) = &decl.important {
         value::flush_trailing_value_comments(to_span(important.span()).start, f);
         write!(f, [space(), "!important"]);
-    } else if let Some(start) = reparsed_important_start {
-        value::flush_trailing_value_comments(start, f);
-        write!(f, [space(), "!important"]);
     }
     // Comments between the value and the `;`.
     // NOTE: the `;` position is the flush bound, so a comment after `;` stays for the trailing-comment pass.
@@ -496,51 +503,6 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             write!(f, space());
         }
     }
-}
-
-/// Re-parse a custom property's raw token-stream value as a normal declaration,
-/// so the value gets the standard group/break layout.
-///
-/// The declaration is rebuilt at the same source offsets,
-/// (the prefix is blanked out and the `--name` prop replaced by a same-length plain ident)
-/// so every span in the re-parsed value stays valid against the original source.
-/// (Prettier pulls the same offset-preserving trick for custom-property rule blocks in `parser-postcss.js`)
-///
-/// Returns `None` (caller keeps the token stream) when the value does not parse as a plain declaration value.
-fn reparse_custom_property_value<'a>(
-    decl: &Declaration<'a>,
-    f: &CssFormatter<'_, 'a>,
-) -> Option<Declaration<'a>> {
-    let source = f.context().source_text();
-    let decl_span = to_span(decl.span());
-    let name_span = to_span(decl.name.span());
-
-    let mut padded = String::with_capacity(decl_span.end as usize);
-    for c in source.slice_range(0, name_span.start).chars() {
-        if c == '\n' || c == '\r' {
-            padded.push(c);
-        } else {
-            // One space per BYTE (not per char): spans are byte offsets,
-            // so a multi-byte char (e.g. `º` in a comment) must keep its width.
-            for _ in 0..c.len_utf8() {
-                padded.push(' ');
-            }
-        }
-    }
-    for _ in name_span.start..name_span.end {
-        padded.push('a');
-    }
-    padded.push_str(source.slice_range(name_span.end, decl_span.end));
-
-    let allocator = f.allocator();
-    let padded: &'a str = allocator.alloc_str(&padded);
-    let syntax = f.options().variant.to_css_syntax();
-    let mut parser = ParserBuilder::new(padded).syntax(syntax).build();
-    let reparsed = parser.parse::<Declaration>().ok()?;
-    if !parser.recoverable_errors().is_empty() {
-        return None;
-    }
-    Some(reparsed)
 }
 
 /// Prints a `--prop: { a: b; c: d }` rule-block value by re-flowing the raw text:

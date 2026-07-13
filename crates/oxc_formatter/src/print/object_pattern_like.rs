@@ -145,7 +145,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectPatternLike<'a, '_> {
 
         match self.layout(f) {
             ObjectPatternLayout::Empty => {
-                write!(f, format_dangling_comments(self.span()).with_block_indent());
+                write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
             }
             ObjectPatternLayout::Inline => {
                 write!(f, format_properties);

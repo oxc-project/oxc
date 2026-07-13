@@ -159,7 +159,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     ///
     /// Shortcut for `ctx.ancestry.ancestors`.
     #[inline]
-    pub fn ancestors<'t>(&'t self) -> impl Iterator<Item = Ancestor<'a, 't>> {
+    pub fn ancestors<'t>(&'t self) -> impl ExactSizeIterator<Item = Ancestor<'a, 't>> {
         self.ancestry.ancestors()
     }
 
@@ -375,6 +375,21 @@ impl<'a, State> TraverseCtx<'a, State> {
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
         self.scoping.generate_binding(name, scope_id, flags)
+    }
+
+    /// Generate binding with a source span.
+    ///
+    /// Creates a symbol with the provided name, span, and flags and adds it to the specified scope.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_spanned_binding`.
+    pub fn generate_spanned_binding(
+        &mut self,
+        name: Ident<'a>,
+        span: Span,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        self.scoping.generate_spanned_binding(name, span, scope_id, flags)
     }
 
     /// Generate binding in current scope.

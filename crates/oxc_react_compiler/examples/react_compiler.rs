@@ -17,9 +17,10 @@ use std::path::Path;
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
-use oxc_react_compiler::{default_plugin_options, transform};
+use oxc_react_compiler::{PluginOptions, compile};
 
 /// Compile a React component with the Rust React Compiler and print the result.
 fn main() {
@@ -36,26 +37,30 @@ fn main() {
     println!("{source_text}");
 
     let allocator = Allocator::default();
-    let program = Parser::new(&allocator, &source_text, source_type).parse().program;
+    let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
 
-    let result = transform(&program, &allocator, default_plugin_options());
+    let (output, diagnostics) = {
+        let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
+        compile(&program, &semantic, &allocator, PluginOptions::default())
+    };
+    let changed = output.is_some();
+    if let Some(output) = output {
+        output.transform(&mut program);
+    }
 
-    if !result.diagnostics.is_empty() {
+    if !diagnostics.is_empty() {
         println!("Diagnostics:\n");
-        for diagnostic in &result.diagnostics {
+        for diagnostic in &diagnostics {
             println!("{diagnostic:?}");
         }
         println!();
     }
 
-    match result.program {
-        Some(compiled) => {
-            let output = Codegen::new().build(&compiled).code;
-            println!("Compiled:\n");
-            println!("{output}");
-        }
-        None => {
-            println!("No changes: no React component or hook found (or compilation bailed out).");
-        }
+    if changed {
+        let code = Codegen::new().build(&program).code;
+        println!("Compiled:\n");
+        println!("{code}");
+    } else {
+        println!("No changes: no React component or hook found (or compilation bailed out).");
     }
 }

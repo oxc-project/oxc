@@ -12,6 +12,8 @@ Prettier compatible CSS/SCSS/Less formatter (`oxfmt`'s Tier 1 backend), using th
     tolerates `${}` placeholders and `TopLevelDeclaration`
 - The canonical reference is Prettier's `src/language-css/printer-postcss.js`
   - port its layout decisions, do not invent new ones
+  - ONE exception: never reproduce output that changes program semantics
+    - See "Known divergences" section
 
 ### Forked parser
 
@@ -33,8 +35,12 @@ The fork adds:
   - `margin: -@a -@b` = two values, NOT `(-@a) - @b` subtraction), `@a - @b` is subtraction
 - Various bug fixes for valid CSS/SCSS/Less syntax `oxc-css-parser` miss-parses or rejects
   - selector / at-rule / value-token coverage gaps
+- Additive leniencies for syntax reference compilers reject but postcss (and so Prettier) accepts
+  - the IE `*color` hack, Scss dotted words (`foo.bar`, xstyled / tailwind-theme tokens), plain-CSS `%placeholder` selectors (postcss-extend-rule), non-standard `@import` tails, ...
+  - Each is additive: it only accepts previously-erroring input, never changes the AST of input that already parsed
+  - See "Policy: how to take in non-spec / non-Sass dialect syntax" below
 
-On the other hand, Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `postcss-values-parser`, `postcss-media-query-parser`) and depends on `raws` (source gaps).
+Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `postcss-values-parser`, `postcss-media-query-parser`) and depends on `raws` (source gaps).
 
 `oxc-css-parser` parses everything structurally in one pass; source gaps are recovered by comparing span boundaries (`hasEmptyRawBefore(x)` == "no gap between spans").
 
@@ -118,57 +124,173 @@ Ports prettier-plugin-tailwindcss's `transformCss`: with the option on, `@apply`
 
 See `write_apply_prelude` in `at_rule.rs` (collection + `!important` / Less `~"..."` extraction) and `format.rs` (sorter dispatch).
 
-### Intentionally unsupported: postcss plugin syntax
+### postcss plugin syntax
 
-These syntax that only "works" in Prettier because `postcss` parses without validation and a build-time plugin interprets it later is mostly NOT supported.
-(`postcss` is permissive with any syntax it doesn't understand, while we parse strictly with `oxc-css-parser`.)
+`postcss` parses everything permissively and lets plugins interpret syntax at runtime; `oxc-css-parser` parses strictly, so plugin-specific syntax is rejected by default. Failures emit a LOUD diagnostic.
 
-These plugins were once common but are now mostly legacy. Representative examples we do NOT support:
+However, some plugin-flavored constructs work anyway, because:
 
-- `postcss-simple-vars`: `$blue: #056ef0;` declarations, value-position `$blue`, `$(dir)` interpolation
-- `postcss-mixins`: parametered `@define-mixin x $a, $b` and `$var` inside body
-  - Plain `@define-mixin icon {}` / `@mixin icon;` / `@mixin icon a, b;` DO parse fine
-- `postcss-nested-props` (`font: { ... }`), ICSS nested `:export { nest: {} }`, `--element(...)` (CSS Extensions, zero implementations)
+- 1: Now standard CSS
+  - CSS nesting
+  - Tailwind v3/v4 at-rules (`@tailwind`, `@apply`, `@layer`, `@theme`, `@utility`, `@variant`, `@config`, `@custom-media`)
+  - CSS Modules (`@value` incl. `from`, `:global`/`:local`, `composes`, plain `:import`/`:export`)
+- 2: CSS forward-compat
+  - Unknown at-rules (`postcss-mixins`'s `@define-mixin`, `@mixin`, etc.) round-trip as `UnknownAtRule` with the prelude held as a verbatim `TokenSeq`
+  - `@media`/`@supports` preludes `oxc-css-parser` can't structure fall through to `<general-enclosed>` as a verbatim `TokenSeq`
 
-Failures emit a LOUD diagnostic; ignore-listing is the escape hatch.
+Beyond those, we add support per-plugin when there's real demand.
 
-We DO support, however, the following popular plugin-flavored syntaxes:
+#### Policy: how to take in non-spec / non-Sass dialect syntax
 
-- Tailwind v3/v4 at-rules: `@tailwind`, `@apply`, `@layer`, `@theme`, `@utility`, `@variant`, `@config`, `@custom-media`
-- CSS Modules constructs: `@value` (incl. `from`), `:global`/`:local`, `composes`, plain `:import`/`:export`
-- Standard CSS nesting
+Plugin dialects (`xstyled` dotted tokens, Tailwind `theme()` paths, postcss plugin at-rules, ...) look like an unbounded support surface.
+They are not — the oracle is never "the dialect", it is what Prettier does with the bytes, and Prettier's answer is almost always "preserve verbatim".
+`postcss` is a token-soup preserver, not a grammar: everything it doesn't positively recognize is a "word" that round-trips untouched.
+So the target behavior is finite: never destroy tokens Prettier wouldn't destroy.
 
-Less also rejects (matching `lessc`):
+When a dialect report comes in, first translate it: "which GENERAL postcss behavior are we missing?" Not "how do we support plugin Xxx?".
+Then absorb it at the highest possible rung of the escape-hatch hierarchy (top = cheapest, each rung covers whole classes of dialects at once):
 
-- Value-position `@{var}` interpolation
-- Whitespace inside a Less lookup (`@config   [   option1]`)
+1. Unknown at-rule prelude verbatim (`write_verbatim_at_rule_tail`)
+   zero-cost bucket: Tailwind, postcss-mixins, ICSS ride it for free
+2. Raw fallbacks when the typed grammar rejects (raw component values, `TokenSeq`, `ImportPrelude.modifiers`)
+   `[attr=;]`, weird import tails
+3. postcss word rules at the separator layer (`is_word_glued_number`, the `1#{$var}` glue, solidus words)
+   variant-agnostic, fixes xstyled + `theme()` + future unknown tokens in one place
+4. `ParserOptions` flag + typed node (postcss-simple-vars)
+   ONLY when the formatter must make layout decisions INSIDE the construct.
+   Promotion criteria, all three:
+   (a) real user demand, (b) Prettier itself formats it structurally (not verbatim), (c) rungs 1-3 can't express it
+5. A dedicated `CssVariant`
+   only for real languages with reference compilers (css/scss/less).
+   Never for a plugin.
 
-If there is high demand, we can also consider making some parts acceptable by updating the `oxc-css-parser` parser side.
+Parser-side leniencies (in the `oxc-css-parser` fork) must be additive:
+accept only input that previously errored, and never change the AST of input that already parsed
+(e.g. dotted words try the typed `foo.$var` / `foo.bar(...)` parse first; only dart-sass-invalid shapes take the lenient path).
+Every lenient path carries a comment citing the reference-compiler vs postcss behavior, a test pinning the strict shapes, and shows up as a visible expected-error flip in the parser's conformance snapshots.
+
+Triage order for reports (failure modes are asymmetric, a parse error is a SAFE failure, oxfmt leaves the file/template as-is; silent token corruption like `sandstone.10` → `sandstone 0.1` is the UNSAFE one):
+don't corrupt (verbatim paths) → then accept (leniency) → then pretty-print (structure).
+
+Red flags that the approach is drifting:
+specific plugin names accumulating in code, or a leniency that reinterprets previously-valid input.
+Either means the fix is at the wrong rung.
+
+#### Supported: postcss-simple-vars (auto-enabled for `CssVariant::Css`)
+
+Covered:
+
+- `$var: value !important;` declarations (top-level and inside rules)
+- `$var` references in property values
+- `$var` references inside `@media`/at-rule preludes
+
+NOT covered: `$(var)` interpolation (`margin-$(dir): 10px`, `.icon.is-$(network)`), selector-position bare `$var` (`.$prefix`), comment substitutions (`<<$(var)>>`).
 
 ### Known divergences
 
-Deliberate divergences from Prettier (impact does not justify the matching cost):
+Deliberate divergences from Prettier. Two admission reasons:
 
-- Less `func(x, + 20px)` unary gluing
-  - Prettier prints `+20px`; `oxc-css-parser` ASTs `, +` as a comma-left binary operation, so matching is ad-hoc for a torture-test-only shape
-- Nested Less math in a function arg / multi-value shorthand
-  - Prettier's fill fit-check breaks INSIDE the wide chunk; our core `fill` (biome semantics) breaks the SEPARATOR instead.
-  - Principled fix is the shared core-fill fit-check change (needs JS-conformance impact experiment first)
+1. Prettier's output would change program semantics (formatting must never do that)
+2. The impact does not justify the matching cost
+
+Notable divergences are:
+
 - Broken `:not(...)` selector args indent at +2
   - Prettier lands at +4 (arg) / +2 (`)`)
   - Layout-only, rare trigger (selector longer than line width)
-- Selector-position Sass interpolation normalizes inner spaces (`#{ $name }` → `#{$name}`)
-  - We normalize BOTH positions for output consistency
-  - Prettier keeps SELECTOR interpolation verbatim
-- `@warn` / `@error` prelude strings re-quote per `singleQuote` option (`@error "x"` → `@error 'x'`)
-  - `oxc-css-parser` parses them as `SassExpr`, so they go through the structured printer (see `at_rule.rs`)
-  - Prettier keeps them as a raw string verbatim
-- A function call directly after a `//` comment in nested-args position
-  - Prettier double-indents it
-  - We print the normal indent (prettier/prettier#19427)
+- `@nest <selector-list>` continuation lines indent at +2 (same class as the `:not(...)` entry above)
+  - Prettier lands at +4 (comma-separated selectors) / +6 (wrapped selector parts)
+    - An artifact of its generic at-rule params indent
+  - Ours matches how selector lists indent everywhere else
+    - This is layout-only, deprecated syntax, triggers only on width overflow
+- SCSS: `@forward` with `show`/`hide` members AND a `with (...)` config
+  - Prettier parses the whole prelude as ONE comma list, so the config's forced break spills into the member commas
+    (`show b,\n  c with (` even when the head fits) and the config body lands one level deeper (+4 body / +2 `)`)
+  - We break members only on width overflow (fill, matching Prettier's break positions when no config is present)
+    and keep the config at the standalone `with (...)` indent (+2 body / 0 `)`, same as `@use`)
+  - Layout-only, rare combo
+- SCSS: `@forward` members after an over-wide FIRST member pack at +2
+  - The prelude head (`path`, `as <ns>`/`as <prefix>-*`, `show`/`hide`, members) is one flat fill,
+    so overflow breaks at the token seams with a +2 continuation
+    - Matching Prettier's break points (its params are a comma list of `line`-joined words in a fill), incl. the trailing-`;` exclusion from the last chunk's fit
+  - The one difference: when the FIRST member alone overflows, Prettier indents it at +4 and puts
+    every later member on its own line at +2 (artifacts of its nested comma-chunk fill);
+    our flat fill packs the continuation members at +2 (`show\n  <wide-member>, second;`)
+  - Same class as the `:not(...)` indent entry; pinned in `module-head-seams.scss`
+  - Remaining printers of this overflow class (heads that still never break): `@for` bounds
+    and `@namespace` — Prettier value-parses both, so it breaks their word seams too;
+    extend the same fill shape if reported
+- `<general-enclosed>` media preludes (`@media (not all)`, `(screen and (color))` unparsable as `<media-condition>`) normalize whitespace fully
+  - Source gap → one space, paren inner edges tight
+  - Prettier only collapses space RUNS inside the unparsable paren, leaving `(not ( screen and ( color ) ))`
+    - We print `(not (screen and (color)))`
+  - Reproducing the half-normalization is pure tokenizer-artifact matching;
+    - Gap-based spacing never fuses tokens the source kept apart (`and (` can't become a function token `and(`)
+- A source-glued value-position `[...]` stays glued to ANY typed left neighbor and prints verbatim
+  - `theme(fontSize.af-md[0])`, `foo[0.50]`: matching Prettier, which lexes the run as ONE postcss word;
+    But also `var(--x)[0]`, where Prettier prints `var(--x) [0]`)
+    - Prettier's space there is a word-lexing artifact (`[` extends a word, but not across `)`)
+    - Ours is one gap-based rule for all variants: never add a space the source doesn't have
+  - Less lookups (`@config[@key]`) are unaffected: the typed lookup rule wins and keeps printing structurally
+  - With the name GLUED to the `(` (`--viewport-medium(width<=50rem)`)
+  - Prettier keeps the whole prelude verbatim (ONE `media-type` token)
 - A declaration swallowed by a `;`-less css-in-js placeholder (`${m}\ncolor: red`)
   - We parse it structurally and FORMAT it (spacing/hex/number normalization)
   - Prettier keeps it verbatim, postcss swallows the run as an opaque prelude string it can't format, so `color   :   red` / `#FFFFFF` survive unformatted
+- SCSS: Selector-position Sass interpolation normalizes inner spaces (`#{ $name }` → `#{$name}`)
+  - We normalize BOTH positions for output consistency
+  - Prettier keeps SELECTOR interpolation verbatim
+- SCSS: `@warn` / `@error` prelude strings re-quote per `singleQuote` option (`@error "x"` → `@error 'x'`)
+  - `oxc-css-parser` parses them as `SassExpr`, so they go through the structured printer (see `at_rule.rs`)
+  - Prettier keeps them as a raw string verbatim
+- SCSS: A function call directly after a `//` comment in nested-args position
+  - Prettier double-indents it
+  - We print the normal indent (prettier/prettier#19427)
+- SCSS: The map-item break (one element per line + trailing comma) applies ONLY to parens whose contents are already a comma-separated list (semantics)
+  - `(x,)` is a single-element list in Sass, so the added comma is a semantic no-op for a comma list and NOWHERE else
+  - Prettier 3.9.5 changes `key: ($a + $b)` from a number to a list,
+    restructures `key: (a b)` (2-element space list → nested 1-element list),
+    and emits non-compiling output for `key: 2 * ($a + $b)` inside `$var:` declarations (dart-sass: `Undefined operation "2 * (3px,)"`)
+  - Prettier's own #18530 (math siblings in args) / #19091 (single-node scalars) fixed subsets of this;
+    we extend the same rule to every non-comma-list, so these stay inline
+- SCSS: An own-line trailing comment before a list's closing `)` keeps its own line
+  - Applies to maps AND `@use`/`@forward with (...)` configs (`$e: 5\n  // c\n)` stays as-is;
+    for maps the trailing comma is also kept)
+  - Prettier pulls the comment up onto the last item's line (`$e: 5 // c`, a `lineSuffix`
+    artifact of its comma-group printing) and drops the map's trailing comma
+  - Same-line trailing comments still glue (matching Prettier);
+    moving an own-line comment up would destroy the author's visual grouping
+- SCSS: A map whose FIRST item is preceded by a block comment always breaks one-per-line
+  - Prettier stops treating it as a map item (the comment becomes `groups[0]`, so `isKeyValuePairInParenGroupNode` fails) and inlines it when it fits: `$b: (/* c */ a: 1);`
+  - We reproduce the map-item-ness loss for the trailing comma (dropped, like Prettier)
+    - But keep the forced break; matching the inline layout needs comment support in the soft map path
+- SCSS: Consecutive `//` comments in a comment-only map indent uniformly
+  - Prettier misaligns the second one with a stray extra leading space (`   // b`), an artifact of its `join(line)` separator printing before the deferred `lineSuffix` flushes
+  - A meaningless glitch (may well be fixed upstream); we print the normal indent
+- SCSS: A `;`-less custom-property rule block followed by another declaration (`--p: {color:red;} /* <- no semi */ --q: blue;`)
+  - SCSS output: we treat it as two separate declarations: format the inner block, add the missing `;`, and format `--q` normally
+  - Prettier behavior: keeps the whole run verbatim, postcss swallows everything past the `}` as an opaque prelude string until a source `;`
+  - Why SCSS only: It falls out of the AST shape `oxc-css-parser` produces
+    - SCSS parses `{...}` declaration values as `SassNestingDeclaration`, so the formatter handles them like any other nested block
+    - CSS/Less do NOT structure `{...}` in declaration value position so the token-soup fallback runs, the formatter emits verbatim, and the output incidentally matches Prettier
+    - Each mode is internally consistent with what its parser produces
+  - The value syntax `--p: { ... }` itself is valid CSS, but its only intended consumer was the `@apply --p;` at-rule from the dropped CSS Apply Rule proposal
+    - With no consumer, real-world usage is near zero, so the cross-mode behavior difference is theoretical
+- Less: statement-position `&:extend(...)` breaks only on overflow, like the selector-position form
+  - Prettier (3.9.5+) ALWAYS breaks multiple selectors one per line there and never breaks a single one:
+    postcss-less models the statement as a rule node, so the top-level selector-list printer
+    (hardline commas) leaks into the parens (prettier#19550 only fixed the indentation)
+  - Ours prints BOTH positions with the same pseudo-args layout for consistency
+    (inline when it fits; parens on their own lines + one selector per line on overflow, the same shape as Prettier's break)
+- Less: `func(x, + 20px)` unary gluing
+  - Prettier prints `+20px`; `oxc-css-parser` ASTs `, +` as a comma-left binary operation, so matching is ad-hoc for a torture-test-only shape
+- Less: Nested math in a function arg / multi-value shorthand
+  - Prettier's fill fit-check breaks INSIDE the wide chunk; our core `fill` (biome semantics) breaks the SEPARATOR instead.
+  - Principled fix is the shared core-fill fit-check change (needs JS-conformance impact experiment first)
+- Less: Value-position `@{var}` interpolation
+  - `oxc-css-parser` rejects it matching `lessc`; Prettier (postcss) accepts and prints verbatim
+- Less: Lookup with whitespace inside (`@config   [   option1]`)
+  - `oxc-css-parser` rejects matching `lessc`; Prettier accepts
 
 ## Verification
 
@@ -188,8 +310,11 @@ Fixtures are grouped per language (`format/{css,scss,less}/`; test modules mirro
 Unit tests in `tests/fixtures/mod.rs` cover parse-error `Err` semantics (`parse_error_is_err`).
 Fixtures under `embedded/` route through `format_to_ir` instead of `format()`; the `embedded_debug` example formats files the same way for quick comparison.
 
-Every expected output must be verified against Prettier (3.8.4, the current submodule).
-`npx prettier@3.8.4 --parser <variant>` at both `--print-width 80` and `100` (the harness snapshots both).
+Every expected output must be verified against Prettier (3.9.5, the current submodule).
+`npx prettier@3.9.5 --parser <variant>` at both `--print-width 80` and `100` (the harness snapshots both).
+
+Exception: a fixture may pin an entry from "Known divergences" (e.g. `map-item-parens.scss`);
+its comments must say which lines deviate from Prettier and why.
 
 ```sh
 cargo test -p oxc_formatter_css
@@ -208,7 +333,25 @@ cargo run -p oxc_prettier_conformance
 cargo run -p oxc_prettier_conformance -- --filter css/atrule
 ```
 
-At the current version (v3.8.4), the divergences of two files has been confirmed in the SCSS conformance, but this is intentional.
+At the current version (v3.9.5), the divergences of six files have been confirmed and are intentional (see "Known divergences"):
+
+- CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/postcss-plugins/postcss-nesting.css`
+- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/variables/apply-rule.scss`
+
+Two more files fail with MIXED hunks; they can't pass as files (the intentional hunks alone keep them failing), so the remaining diffs are itemized here:
+
+- `css/fill-value/fill.css` (~96% match) one hunk:
+  - a fill break-point inside a math-y value (`... * -1 +` vs breaking before `/ 2`);
+    - the "Less: nested math fill fit-check" divergence class (core-fill semantics)
+- `css/parens/parens.css` (~93% match) token-soup math spacing, three hunk classes:
+  - intentional (Prettier artifact): Prettier splits SOME source-glued `-(` into `- (`
+    - `prop`/`prop44`, an operator-heuristic side effect; ours keeps them all glued and consistent
+    - and glues a source-spaced `+ 20px` (`prop34`, the documented Less `func(x, + 20px)` divergence in Css mode)
+  - normalization-direction difference (open question, low value)
+    - a math operator adjacent to a function/paren boundary gets uniform `op` spacing from Prettier regardless of source (`round(1.5)+2` -> `round(1.5) + 2`, calc `*`/`/`);
+    - ours preserves the source spacing per token (`prop13/14`, `prop57-60`, `prop73/74`)
+  - within-a-word runs (`1+1+1+1`, `calc(100%+2px)`) match
+    - glued number-ish runs are ONE postcss word and print raw (see `is_word_glued_number`)
 
 ### Embedded conformance (`apps/oxfmt`)
 
@@ -232,7 +375,3 @@ cargo run -p oxc_formatter_css --example embedded_debug file.scss               
 ## Roadmap (TODO: Follow Prettier main)
 
 The guiding axis is Prettier compatibility, matching what is in Prettier's unreleased changelog (main has them, next stable will).
-
-- [#18605](https://github.com/prettier/prettier/blob/main/changelog_unreleased/css/18605.md):
-  Don't break a selector when its attribute value contains an escaped literal newline (`foo="long\\<newline>continuation"`).
-  We currently break before the long span; Prettier main keeps the selector on one line.

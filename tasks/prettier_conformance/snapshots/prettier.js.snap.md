@@ -1,16 +1,54 @@
-js compatibility: 746/753 (99.07%), 23 files skipped
+js compatibility: 764/809 (94.44%), 23 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| js/comments/15661.js | 💥💥 | 55.17% |
+| js/arrows/issue-17421.js | 💥💥 | 90.43% |
+| js/assignment-comments/indentable-block-comment.js | 💥 | 12.50% |
+| js/call/no-argument/no-arguments.js | 💥 | 57.53% |
+| js/comments/15661.js | 💥💥 | 43.53% |
+| js/comments/break-continue-statements-2.js | 💥💥 | 87.18% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
-| js/comments/function-declaration.js | 💥💥 | 92.80% |
-| js/comments/return-statement.js | 💥💥 | 98.85% |
-| js/explicit-resource-management/valid-await-using-comments.js | 💥 | 80.00% |
-| js/for/9812-unstable.js | 💥 | 63.64% |
-| js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
+| js/comments/if.js | 💥💥 | 97.99% |
+| js/comments/return-statement-2.js | 💥💥 | 77.78% |
+| js/comments/return-statement.js | 💥💥 | 97.25% |
+| js/comments/between-head-and-body/between-head-and-body.js | 💥 | 33.10% |
+| js/comments/between-head-and-body/empty-statement.js | 💥 | 51.25% |
+| js/comments/between-head-and-body/non-block.js | 💥 | 82.86% |
+| js/comments/first-argument/first-argument.js | 💥 | 92.98% |
+| js/comments/in-list/dangling-comment-in-list.js | 💥 | 95.91% |
+| js/comments/while-like/if.js | 💥 | 96.97% |
+| js/comments/while-like/while.js | 💥 | 82.76% |
+| js/comments/while-like/with.js | 💥 | 74.47% |
+| js/comments-closure-typecast/closure-compiler-type-cast.js | 💥 | 88.00% |
+| js/comments-closure-typecast/iife.js | 💥 | 76.92% |
+| js/explicit-resource-management/valid-await-using-comments.js | 💥 | 85.71% |
+| js/for/9812-2.js | 💥 | 58.33% |
+| js/for/continue-and-break-comment-without-blocks.js | 💥 | 42.77% |
+| js/for-of/comments.js | 💥 | 50.00% |
+| js/function/iife.js | 💥 | 14.89% |
+| js/function/issue-12967.js | 💥 | 0.00% |
+| js/if/blank-lines.js | 💥 | 94.83% |
+| js/if/comment-between-condition-and-body.js | 💥 | 92.11% |
+| js/if/if_comments.js | 💥 | 91.89% |
+| js/if/condition-break/boolean-expression.js | 💥 | 94.03% |
+| js/if/condition-break/unary-expression.js | 💥 | 59.59% |
+| js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
+| js/logical-expressions/in-unary-expression.js | 💥 | 33.33% |
+| js/no-semi/debugger-statement.js | 💥💥 | 91.18% |
+| js/no-semi/for-in-statement.js | 💥💥 | 63.89% |
+| js/no-semi/for-of-statement.js | 💥💥 | 66.67% |
+| js/no-semi/for-statement.js | 💥💥 | 63.89% |
+| js/no-semi/if-statement.js | 💥💥 | 67.50% |
+| js/no-semi/labeled-statement.js | 💥💥 | 63.89% |
+| js/no-semi/return-statement.js | 💥💥 | 67.65% |
+| js/no-semi/while-statement.js | 💥💥 | 63.89% |
+| js/no-semi/with-statement.js | 💥💥 | 63.89% |
+| js/template-literals/expression-break.js | 💥 | 80.00% |
+| js/template-literals/expressions.js | 💥 | 97.64% |
+| js/test-declarations/jest-each.js | 💥💥 | 95.71% |
+| js/unary-expression/comments.js | 💥 | 96.47% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
 

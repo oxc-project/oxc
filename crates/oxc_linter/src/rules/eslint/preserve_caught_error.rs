@@ -234,9 +234,7 @@ fn is_catch_parameter(expr: &Expression, catch_param: &BindingPattern, ctx: &Lin
         return false;
     };
 
-    let Some(catch_symbol_id) = binding.symbol_id.get() else {
-        return false;
-    };
+    let catch_symbol_id = binding.symbol_id();
 
     let Expression::Identifier(ident) = expr else {
         return false;

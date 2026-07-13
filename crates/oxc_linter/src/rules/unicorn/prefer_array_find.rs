@@ -26,14 +26,14 @@ pub struct PreferArrayFind;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Encourages using `Array.prototype.find` instead of `filter(...)[0]` or
-    /// similar patterns when only the first matching element is needed.
+    /// Encourages using `Array.prototype.find` and `Array.prototype.findLast` instead of
+    /// taking the first or last matching element from `filter(...)`.
     ///
     /// ### Why is this bad?
     ///
-    /// Using `filter(...)[0]` to get the first match is less efficient and more verbose
-    /// than using `find(...)`. `find` short-circuits when a match is found,
-    /// whereas `filter` evaluates the entire array.
+    /// Using `filter(...)[0]` or array destructuring to get the first match is less
+    /// efficient and more verbose than using `find(...)`. `find` and `findLast`
+    /// short-circuit when a match is found, whereas `filter` evaluates the entire array.
     ///
     /// ### Examples
     ///
@@ -41,19 +41,25 @@ declare_oxc_lint!(
     /// ```js
     /// const match = users.filter(u => u.id === id)[0];
     /// const match = users.filter(fn).shift();
+    /// const [match] = users.filter(fn);
+    ///
+    /// const match = users.filter(fn).at(-1);
+    /// const match = users.filter(fn).pop();
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// const match = users.find(u => u.id === id);
     /// const match = users.find(fn);
+    ///
+    /// const match = users.findLast(fn);
     /// ```
     PreferArrayFind,
     unicorn,
     perf, // Encourages more efficient use of built-in methods
     pending,
     version = "0.16.12",
-    short_description = "Encourages using `Array.prototype.find` instead of `filter(...)[0]` or similar patterns when only the first matching element is needed.",
+    short_description = "Encourages using `Array.prototype.find` and `Array.prototype.findLast` instead of taking the first or last matching element from `filter(...)`.",
 );
 
 impl Rule for PreferArrayFind {
@@ -131,6 +137,7 @@ impl Rule for PreferArrayFind {
                 if let BindingPattern::ArrayPattern(array_pat) = &var_decl.id
                     && array_pat.elements.len() == 1
                     && array_pat.elements[0].is_some()
+                    && array_pat.rest.is_none()
                     && let Some(Expression::CallExpression(array_filter)) = &var_decl.init
                     && is_filter_call(array_filter)
                 {
@@ -165,6 +172,7 @@ impl Rule for PreferArrayFind {
                                 if let BindingPattern::ArrayPattern(array_pat) = &var_declarator.id
                                     && array_pat.elements.len() == 1
                                     && array_pat.elements[0].is_some()
+                                    && array_pat.rest.is_none()
                                 {
                                     destructuring_nodes.push(reference);
                                 }
@@ -174,7 +182,10 @@ impl Rule for PreferArrayFind {
                                 if let AssignmentTarget::ArrayAssignmentTarget(target) =
                                     &assignment_expr.left
                                 {
-                                    if target.elements.len() == 1 && target.elements[0].is_some() {
+                                    if target.elements.len() == 1
+                                        && target.elements[0].is_some()
+                                        && target.rest.is_none()
+                                    {
                                         destructuring_nodes.push(reference);
                                     }
                                 } else if let Some(
@@ -208,6 +219,7 @@ impl Rule for PreferArrayFind {
                     &assignment_expr.left
                     && array_assignment_target.elements.len() == 1
                     && array_assignment_target.elements[0].is_some()
+                    && array_assignment_target.rest.is_none()
                     && let Expression::CallExpression(array_filter) = &assignment_expr.right
                     && is_filter_call(array_filter)
                 {
@@ -290,6 +302,7 @@ fn test() {
         "const [, foo] = array.filter(bar)",
         "const [,] = array.filter(bar)",
         "const [...foo] = array.filter(bar)",
+        "const [foo, ...rest] = array.filter(bar)",
         "const [foo] = array.filter",
         "const [foo] = filter(bar)",
         // r#"const [foo] = array["filter"](bar)"#,
@@ -307,6 +320,7 @@ fn test() {
         "[, foo] = array.filter(bar)",
         "[,] = array.filter(bar)",
         "[...foo] = array.filter(bar)",
+        "[foo, ...rest] = array.filter(bar)",
         "[foo] = array.filter",
         "[foo] = filter(bar)",
         // r#"[foo] = array["filter"](bar)"#,
@@ -351,6 +365,8 @@ fn test() {
         "const foo = array.filter(bar); [,] = foo;",
         "const foo = array.filter(bar); const [...first] = foo;",
         "const foo = array.filter(bar); [...first] = foo;",
+        "const foo = array.filter(bar); const [first, ...rest] = foo;",
+        "const foo = array.filter(bar); [first, ...rest] = foo;",
         "const foo = array.filter(bar);
             function a([bar] = foo) {}",
         "const foo = array.filter; const first = foo[0]",

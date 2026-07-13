@@ -4,7 +4,7 @@ use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_semantic::{NodeId, Reference, Scoping};
-use oxc_span::SPAN;
+use oxc_span::{SPAN, Span};
 use oxc_str::Ident;
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
@@ -237,7 +237,19 @@ impl<'a> TraverseScoping<'a> {
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> SymbolId {
-        let symbol_id = self.scoping.create_symbol(SPAN, name, flags, scope_id, NodeId::DUMMY);
+        self.add_spanned_binding(name, SPAN, scope_id, flags)
+    }
+
+    /// Add binding to `ScopeTree` and `SymbolTable` with a source span.
+    #[inline]
+    pub(crate) fn add_spanned_binding(
+        &mut self,
+        name: Ident<'_>,
+        span: Span,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> SymbolId {
+        let symbol_id = self.scoping.create_symbol(span, name, flags, scope_id, NodeId::DUMMY);
         self.scoping.add_binding(scope_id, name, symbol_id);
 
         symbol_id
@@ -252,7 +264,20 @@ impl<'a> TraverseScoping<'a> {
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        let symbol_id = self.add_binding(name, scope_id, flags);
+        self.generate_spanned_binding(name, SPAN, scope_id, flags)
+    }
+
+    /// Generate binding with a source span.
+    ///
+    /// Creates a symbol with the provided name, span, and flags and adds it to the specified scope.
+    pub fn generate_spanned_binding(
+        &mut self,
+        name: Ident<'a>,
+        span: Span,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        let symbol_id = self.add_spanned_binding(name, span, scope_id, flags);
         BoundIdentifier::new(name, symbol_id)
     }
 

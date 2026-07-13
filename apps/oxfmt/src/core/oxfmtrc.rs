@@ -24,7 +24,8 @@ pub struct Oxfmtrc {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub overrides: Option<Vec<OxfmtOverrideConfig>>,
     /// Ignore files matching these glob patterns.
-    /// Patterns are based on the location of the Oxfmt configuration file.
+    /// Patterns use gitignore-style matching, rooted at the directory containing the configuration file.
+    /// Files outside that directory cannot be matched; patterns containing `..` are rejected as a configuration error.
     ///
     /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -27,11 +27,11 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-object-rest-spread>
 //! * Object rest/spread TC39 proposal: <https://github.com/tc39/proposal-object-rest-spread>
 
-use std::mem;
+use std::{iter, mem};
 
 use serde::Deserialize;
 
-use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, GetAllocator, TakeIn};
+use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
@@ -384,9 +384,10 @@ impl<'a> ObjectRestSpread<'a> {
         let mut exprs = vec![];
         Self::recursive_walk_assignment_target(&mut assign_expr.left, &mut decls, &mut exprs, ctx);
         Self::insert_var_declaration_before_containing_statement(decls, ctx);
-        let mut expressions = ArenaVec::from_value_in(expr.take_in(ctx), ctx);
-        expressions.extend(exprs);
-        *expr = Expression::new_sequence_expression(SPAN, expressions, ctx);
+        expr.replace_with(|expr| {
+            let expressions = ArenaVec::from_iter_in(iter::chain([expr], exprs), ctx);
+            Expression::new_sequence_expression(SPAN, expressions, ctx)
+        });
     }
 
     // Insert `var _foo` before the statement that contains the transformed assignment.
@@ -587,7 +588,7 @@ impl<'a> ObjectRestSpread<'a> {
                 if arrow.expression {
                     arrow.expression = false;
 
-                    debug_assert!(arrow.body.statements.len() == 1);
+                    debug_assert_eq!(arrow.body.statements.len(), 1);
 
                     let Statement::ExpressionStatement(stmt) = arrow.body.statements.pop().unwrap()
                     else {
@@ -716,13 +717,15 @@ impl<'a> ObjectRestSpread<'a> {
             return block.scope_id();
         }
         let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-        let (span, stmts) = if let Statement::EmptyStatement(empty_stmt) = stmt {
-            (empty_stmt.span, ArenaVec::new_in(ctx))
-        } else {
+        stmt.replace_with(|stmt| {
             let span = stmt.span();
-            (span, ArenaVec::from_value_in(stmt.take_in(ctx), ctx))
-        };
-        *stmt = Statement::new_block_statement_with_scope_id(span, stmts, scope_id, ctx);
+            let stmts = if matches!(stmt, Statement::EmptyStatement(_)) {
+                ArenaVec::new_in(ctx)
+            } else {
+                ArenaVec::from_value_in(stmt, ctx)
+            };
+            Statement::new_block_statement_with_scope_id(span, stmts, scope_id, ctx)
+        });
         scope_id
     }
 
@@ -1138,35 +1141,34 @@ impl<'a> SpreadPair<'a> {
         let rhs = if self.has_no_properties {
             // The `ObjectDestructuringEmpty` function throws a type error when destructuring null.
             // `function _objectDestructuringEmpty(t) { if (null == t) throw new TypeError("Cannot destructure " + t); }`
-            let mut arguments = ArenaVec::new_in(ctx);
-            // Add `{}`.
-            arguments.push(Argument::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx));
             // Add `(_objectDestructuringEmpty(b), b);`
-            arguments.push(Argument::new_sequence_expression(
-                SPAN,
-                {
-                    let mut sequence = ArenaVec::new_in(ctx);
-                    sequence.push(helper_call_expr(
+            let sequence = ArenaVec::from_array_in(
+                [
+                    helper_call_expr(
                         Helper::ObjectDestructuringEmpty,
                         ArenaVec::from_value_in(
                             Argument::from(reference_builder.create_read_expression(ctx)),
                             ctx,
                         ),
                         ctx,
-                    ));
-                    sequence.push(reference_builder.create_read_expression(ctx));
-                    sequence
-                },
+                    ),
+                    reference_builder.create_read_expression(ctx),
+                ],
                 ctx,
-            ));
+            );
+            let arguments = ArenaVec::from_array_in(
+                [
+                    // Add `{}`.
+                    Argument::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx),
+                    Argument::new_sequence_expression(SPAN, sequence, ctx),
+                ],
+                ctx,
+            );
             helper_call_expr(Helper::Extends, arguments, ctx)
         } else {
             // / `let { a, b, ...c } = z` -> _objectWithoutProperties(_z, ["a", "b"]);
             // / `_objectWithoutProperties(_z, ["a", "b"])`
-            let mut arguments = ArenaVec::from_value_in(
-                Argument::from(reference_builder.create_read_expression(ctx)),
-                ctx,
-            );
+            let object_argument = Argument::from(reference_builder.create_read_expression(ctx));
             let key_expression = Expression::new_array_expression(SPAN, self.keys, ctx);
 
             let key_expression = if self.all_primitives
@@ -1208,7 +1210,8 @@ impl<'a> SpreadPair<'a> {
             } else {
                 key_expression
             };
-            arguments.push(Argument::from(key_expression));
+            let arguments =
+                ArenaVec::from_array_in([object_argument, Argument::from(key_expression)], ctx);
             helper_call_expr(Helper::ObjectWithoutProperties, arguments, ctx)
         };
         (self.lhs, rhs)

@@ -254,86 +254,99 @@ impl<'a> SourcemapBuilder<'a> {
 
     #[expect(clippy::cast_possible_truncation)]
     fn update_generated_line_and_column(&mut self, output: &[u8]) {
-        const BATCH_SIZE: usize = 32;
+        // Bytes processed per iteration when fast-forwarding over "boring" bytes
+        // (ASCII that is neither a line break nor part of a Unicode char).
+        const STRIDE: usize = 8;
+        const LO: u64 = 0x0101_0101_0101_0101;
+        const HI: u64 = 0x8080_8080_8080_8080;
 
+        let len = output.len();
         let start_index = self.last_generated_update;
 
         // Find last line break
         let mut line_start_index = start_index;
-        let mut idx = line_start_index;
+        let mut idx = start_index;
         let mut last_line_is_ascii = true;
 
-        macro_rules! handle_byte {
-            ($byte:ident) => {
-                match $byte {
-                    b'\n' => {}
-                    b'\r' => {
-                        // Handle Windows-specific "\r\n" newlines
-                        if output.get(idx + 1) == Some(&b'\n') {
-                            idx += 1;
-                        }
-                    }
-                    _ if $byte.is_ascii() => {
+        while idx < len {
+            // Fast-forward over runs of "boring" bytes `STRIDE` at a time. The vast
+            // majority of output is ASCII that is neither a line break nor part of a
+            // Unicode char; such bytes don't change the line count or the last-line
+            // ASCII flag, so a run of them can be skipped in bulk instead of matched
+            // byte-by-byte. SWAR (SIMD-within-a-register) detects, branchlessly, whether
+            // any byte of an 8-byte word is `\n` (0x0A), `\r` (0x0D), or non-ASCII
+            // (>= 0x80) using the classic "zero byte in a word" bit trick; if none are,
+            // the whole word is skipped.
+            while idx + STRIDE <= len {
+                let word = u64::from_ne_bytes(output[idx..idx + STRIDE].try_into().unwrap());
+                let lf = word ^ (LO * u64::from(b'\n'));
+                let cr = word ^ (LO * u64::from(b'\r'));
+                let has_lf = lf.wrapping_sub(LO) & !lf & HI;
+                let has_cr = cr.wrapping_sub(LO) & !cr & HI;
+                let non_ascii = word & HI;
+                if (has_lf | has_cr | non_ascii) != 0 {
+                    break;
+                }
+                idx += STRIDE;
+            }
+            if idx >= len {
+                break;
+            }
+
+            let byte = output[idx];
+            match byte {
+                b'\n' => {}
+                b'\r' => {
+                    // Handle Windows-specific "\r\n" newlines
+                    if output.get(idx + 1) == Some(&b'\n') {
                         idx += 1;
-                        continue;
                     }
-                    LS_OR_PS_FIRST_BYTE => {
-                        let next_two_bytes = output.get(idx + 1..idx + 3);
-                        if next_two_bytes != Some(&LS_LAST_2_BYTES[..])
-                            && next_two_bytes != Some(&PS_LAST_2_BYTES[..])
-                        {
-                            last_line_is_ascii = false;
-                            // 3-byte Unicode char that isn't a line break.
-                            // We know it's 3 bytes, so we could do `idx += 3`, but that's more instruction bytes
-                            // than `idx += 1` (`inc` instruction). This branch is extremely rarely taken, and this
-                            // is in a hot loop, so it's better to optimize for the common case.
-                            // The remaining 2 bytes will hit the "Unicode char" branch below on next turns of the loop,
-                            // and they'll be skipped too.
-                            idx += 1;
-                            continue;
-                        }
-                        // 3-byte line break. Add 2 to `idx` here, as 1 more is added below.
-                        idx += 2;
-                    }
-                    _ => {
-                        // Unicode char
+                }
+                _ if byte.is_ascii() => {
+                    idx += 1;
+                    continue;
+                }
+                LS_OR_PS_FIRST_BYTE => {
+                    let next_two_bytes = output.get(idx + 1..idx + 3);
+                    if next_two_bytes != Some(&LS_LAST_2_BYTES[..])
+                        && next_two_bytes != Some(&PS_LAST_2_BYTES[..])
+                    {
                         last_line_is_ascii = false;
-                        // Note: Only increment `idx` by 1. We don't know how many bytes the char is, and non-ASCII
-                        // chars are rare, so it's not worthwhile adding more instructions to this hot loop to find out.
-                        // The remaining bytes of the char will hit this branch again on next turns of the loop,
+                        // 3-byte Unicode char that isn't a line break.
+                        // We know it's 3 bytes, so we could do `idx += 3`, but that's more instruction bytes
+                        // than `idx += 1` (`inc` instruction). This branch is extremely rarely taken, and this
+                        // is in a hot loop, so it's better to optimize for the common case.
+                        // The remaining 2 bytes will hit the "Unicode char" branch below on next turns of the loop,
                         // and they'll be skipped too.
                         idx += 1;
                         continue;
                     }
+                    // 3-byte line break. Add 2 to `idx` here, as 1 more is added below.
+                    idx += 2;
                 }
-
-                // Line break found.
-                // `iter` is now positioned after line break.
-                line_start_index = idx + 1;
-                self.generated_line += 1;
-                self.generated_column = 0;
-                last_line_is_ascii = true;
-                idx += 1;
-            };
-        }
-
-        while let (end, overflow) = idx.overflowing_add(BATCH_SIZE)
-            && !overflow
-            && end < output.len()
-        {
-            while idx < end {
-                let b = output[idx];
-                handle_byte!(b);
+                _ => {
+                    // Unicode char
+                    last_line_is_ascii = false;
+                    // Note: Only increment `idx` by 1. We don't know how many bytes the char is, and non-ASCII
+                    // chars are rare, so it's not worthwhile adding more instructions to this hot loop to find out.
+                    // The remaining bytes of the char will hit this branch again on next turns of the loop,
+                    // and they'll be skipped too.
+                    idx += 1;
+                    continue;
+                }
             }
-        }
-        while idx < output.len() {
-            let b = output[idx];
-            handle_byte!(b);
+
+            // Line break found.
+            line_start_index = idx + 1;
+            self.generated_line += 1;
+            self.generated_column = 0;
+            last_line_is_ascii = true;
+            idx += 1;
         }
 
         // Calculate column
         self.generated_column += if last_line_is_ascii {
-            (output.len() - line_start_index) as u32
+            (len - line_start_index) as u32
         } else {
             // TODO: It'd be better if could use `from_utf8_unchecked` here, but we'd need to make this
             // function unsafe and caller guarantees `output` contains a valid UTF-8 string
@@ -341,7 +354,7 @@ impl<'a> SourcemapBuilder<'a> {
             // Mozilla's "source-map" library counts columns using UTF-16 code units
             last_line.encode_utf16().count() as u32
         };
-        self.last_generated_update = output.len();
+        self.last_generated_update = len;
     }
 
     fn generate_line_offset_tables(content: &str) -> LineOffsetTables {
@@ -585,6 +598,21 @@ mod test {
         create_mappings("a\u{2029}b", 1, 1);
         create_mappings("`\u{2028}`", 1, 1);
         create_mappings("`\u{2029}`", 1, 1);
+
+        // Long lines (>= 8 bytes) to exercise the SWAR boring-byte fast-forward in
+        // `update_generated_line_and_column`, with line breaks / unicode at various offsets.
+        create_mappings("abcdefghijklmnop", 0, 16);
+        create_mappings("abcdefgh\nijklmnop", 1, 8);
+        create_mappings("abcdefghijklmnop\n", 1, 0);
+        create_mappings("\nabcdefghijklmnop", 1, 16);
+        create_mappings("aaaaaaaaaa\r\nbbbbbbbbbb", 1, 10);
+        create_mappings("aaaaaaaaaa\rbbbbbbbbbb", 1, 10);
+        create_mappings("aaaaaaaaÖbbbbbbbb", 0, 17);
+        create_mappings("aaaaaaaaaaaaaaaa\u{2028}bbbbbbbbbbbbbbbb", 1, 16);
+        create_mappings("abcdefghijklmnopqrstuvwxyz0123456789", 0, 36);
+        // Line breaks straddling the 8-byte SWAR word boundary (`\r` at index 7).
+        create_mappings("aaaaaaa\r\nbbbbbbbb", 1, 8);
+        create_mappings("aaaaaaa\rbbbbbbbb", 1, 8);
     }
 
     #[test]

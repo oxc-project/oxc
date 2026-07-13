@@ -1171,3 +1171,141 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                       ╰── When this condition is false, this Hook is skipped.
    ╰────
   help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component.
+   ╭─[rules_of_hooks.tsx:7:17]
+ 6 │               useCustomHook(() => {
+ 7 │                 onClick();
+   ·                 ───┬───
+   ·                    ╰── Effect Event escapes its component or custom Hook.
+ 8 │               });
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component. It cannot be assigned to a variable or passed down.
+   ╭─[rules_of_hooks.tsx:6:40]
+ 5 │                 });
+ 6 │                 return <Child onClick={onClick}></Child>;
+   ·                                        ───┬───
+   ·                                           ╰── Effect Event escapes its component or custom Hook.
+ 7 │             }
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useEffectEvent" can only be called at the top level of your component. It cannot be passed down.
+   ╭─[rules_of_hooks.tsx:3:40]
+ 2 │                 function MyComponent({ theme }) {
+ 3 │ ╭─▶                 return <Child onClick={useEffectEvent(() => {
+ 4 │ │                       showNotification(theme);
+ 5 │ ├─▶                 })} />;
+   · ╰──── Effect Event is passed directly instead of being assigned locally.
+ 6 │                 }
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component. It cannot be assigned to a variable or passed down.
+   ╭─[rules_of_hooks.tsx:6:40]
+ 5 │                 });
+ 6 │                 return <Child onClick={onClick} />
+   ·                                        ───┬───
+   ·                                           ╰── Effect Event escapes its component or custom Hook.
+ 7 │             }
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component.
+    ╭─[rules_of_hooks.tsx:13:46]
+ 12 │                 });
+ 13 │                 return <Child onClick={() => onClick()} />
+    ·                                              ───┬───
+    ·                                                 ╰── Effect Event escapes its component or custom Hook.
+ 14 │             }
+    ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component. It cannot be assigned to a variable or passed down.
+   ╭─[rules_of_hooks.tsx:6:38]
+ 5 │               });
+ 6 │               return <Child onClick={onClick}></Child>;
+   ·                                      ───┬───
+   ·                                         ╰── Effect Event escapes its component or custom Hook.
+ 7 │             }
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component. It cannot be assigned to a variable or passed down.
+   ╭─[rules_of_hooks.tsx:6:25]
+ 5 │               });
+ 6 │               let foo = onClick;
+   ·                         ───┬───
+   ·                            ╰── Effect Event escapes its component or custom Hook.
+ 7 │               return <Bar onClick={foo} />
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component. It cannot be assigned to a variable or passed down.
+    ╭─[rules_of_hooks.tsx:9:38]
+  8 │               });
+  9 │               return <Child onClick={onClick} />
+    ·                                      ───┬───
+    ·                                         ╰── Effect Event escapes its component or custom Hook.
+ 10 │             }
+    ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component.
+   ╭─[rules_of_hooks.tsx:6:40]
+ 5 │               });
+ 6 │               const onClick2 = () => { onClick() };
+   ·                                        ───┬───
+   ·                                           ╰── Effect Event escapes its component or custom Hook.
+ 7 │               const onClick3 = useCallback(() => onClick(), []);
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component.
+   ╭─[rules_of_hooks.tsx:7:50]
+ 6 │               const onClick2 = () => { onClick() };
+ 7 │               const onClick3 = useCallback(() => onClick(), []);
+   ·                                                  ───┬───
+   ·                                                     ╰── Effect Event escapes its component or custom Hook.
+ 8 │               const onClick4 = onClick;
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component. It cannot be assigned to a variable or passed down.
+   ╭─[rules_of_hooks.tsx:8:32]
+ 7 │               const onClick3 = useCallback(() => onClick(), []);
+ 8 │               const onClick4 = onClick;
+   ·                                ───┬───
+   ·                                   ╰── Effect Event escapes its component or custom Hook.
+ 9 │               return <>
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component. It cannot be assigned to a variable or passed down.
+    ╭─[rules_of_hooks.tsx:10:33]
+  9 │               return <>
+ 10 │                 <Child onClick={onClick}></Child>
+    ·                                 ───┬───
+    ·                                    ╰── Effect Event escapes its component or custom Hook.
+ 11 │                 <Child onClick={onClick2}></Child>
+    ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onEvent` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component. It cannot be assigned to a variable or passed down.
+   ╭─[rules_of_hooks.tsx:4:26]
+ 3 │                 const onEvent = useEffectEvent(() => {});
+ 4 │                 return { onEvent };
+   ·                          ───┬───
+   ·                             ╰── Effect Event escapes its component or custom Hook.
+ 5 │             }
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useEffectEvent" is called in function "notAComponent" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
+   ╭─[rules_of_hooks.tsx:2:19]
+ 1 │ function notAComponent() {
+   ·          ──────┬──────
+   ·                ╰── Outer function
+ 2 │   const onEvent = useEffectEvent(() => {});
+   ·                   ───────┬──────
+   ·                          ╰── Hook is called here
+ 3 │   return onEvent;
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component.
+   ╭─[rules_of_hooks.tsx:7:17]
+ 6 │               useWrongHook(() => {
+ 7 │                 onClick();
+   ·                 ───┬───
+   ·                    ╰── Effect Event escapes its component or custom Hook.
+ 8 │               });
+   ╰────

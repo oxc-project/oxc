@@ -52,6 +52,27 @@ pub const fn soft_line_break_or_space() -> Line {
     Line::new(LineMode::SoftOrSpace)
 }
 
+/// A forced line break that starts the next line at the marked root indention (Prettier's `literalline`).
+///
+/// Unlike [hard_line_break]:
+/// - trailing whitespace on the current line is preserved (never trimmed)
+/// - the newline always prints, even on an empty line
+/// - the next line starts at the [mark_as_root] indention (column 0 when unmarked)
+///   instead of the current indention
+///
+/// Used for verbatim multi-line content whose line structure is built element by element
+/// (e.g. YAML block scalars). For verbatim content held as ONE string,
+/// a multiline [text] already prints its embedded newlines with these semantics.
+///
+/// Known divergence from Prettier:
+/// a [hard_line_break] directly after a COLUMN-0 literal line is absorbed
+/// by the printer's "only print a newline if the line isn't already empty" rule (Prettier prints both newlines).
+/// Use [empty_line] when the extra structural newline is required, it prints exactly one newline in this state.
+#[inline]
+pub const fn literal_line_break() -> Line {
+    Line::new(LineMode::Literal)
+}
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Line {
     mode: LineMode,
@@ -199,7 +220,7 @@ impl std::fmt::Debug for Token {
 /// Creates a text from a dynamic string and a range of the input source
 pub fn text(text: &str) -> Text<'_> {
     debug_assert_no_cr_line_break(text);
-    Text { text, width: None }
+    Text { text, width: None, expand_parent: true }
 }
 
 /// Creates a text from a dynamic string that contains no whitespace characters
@@ -208,13 +229,27 @@ pub fn text_without_whitespace(text: &str) -> Text<'_> {
         text.as_bytes().iter().all(|&b| !b.is_ascii_whitespace()),
         "The content '{text}' contains whitespace characters but text must not contain any whitespace characters."
     );
-    Text { text, width: Some(TextWidth::from_non_whitespace_str(text)) }
+    Text { text, width: Some(TextWidth::from_non_whitespace_str(text)), expand_parent: true }
 }
 
 #[derive(Eq, PartialEq)]
 pub struct Text<'a> {
+    #[expect(clippy::struct_field_names)] // Keep the name the same as it is in the original source
     text: &'a str,
     width: Option<TextWidth>,
+    expand_parent: bool,
+}
+
+impl Text<'_> {
+    /// Prints embedded newlines literally but does NOT force enclosing groups to expand
+    /// (Prettier's `replaceEndOfLine(..., literallineWithoutBreakParent)`).
+    ///
+    /// Fits measurement still only counts the first line, and each newline resets the line width.
+    #[must_use]
+    pub fn without_expand_parent(mut self) -> Self {
+        self.expand_parent = false;
+        self
+    }
 }
 
 impl<'a, C> Format<'a, C> for Text<'a>
@@ -222,12 +257,11 @@ where
     C: FormatContext,
 {
     fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
-        f.write_element(FormatElement::Text {
-            text: self.text,
-            width: self
-                .width
-                .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width())),
-        });
+        let width = self
+            .width
+            .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width()));
+        let width = if self.expand_parent { width } else { width.without_expand_parent() };
+        f.write_element(FormatElement::Text { text: self.text, width });
     }
 }
 
@@ -416,13 +450,47 @@ where
     Dedent { content: Argument::new(content), mode: DedentMode::Level }
 }
 
-/// Resets the indent document so that the content will be printed at the start of the line.
+/// Resets the indention so that the content prints at the [mark_as_root] indention,
+/// or at the start of the line when no `mark_as_root` is active (Prettier's `dedentToRoot`).
 #[inline]
 pub fn dedent_to_root<'ast, C, Content>(content: &Content) -> Dedent<'_, 'ast, C>
 where
     Content: Format<'ast, C>,
 {
     Dedent { content: Argument::new(content), mode: DedentMode::Root }
+}
+
+/// Marks the current indention as the root that [literal_line_break] and [dedent_to_root]
+/// inside `content` return to (Prettier's `markAsRoot`).
+///
+/// Without an enclosing `mark_as_root`, the root is column 0.
+/// e.g. YAML block scalars wrap each line boundary in `mark_as_root(&literal_line_break())`
+/// so continuation lines keep the block's base indention.
+#[inline]
+pub fn mark_as_root<'ast, C, Content>(content: &Content) -> MarkAsRoot<'_, 'ast, C>
+where
+    Content: Format<'ast, C>,
+{
+    MarkAsRoot { content: Argument::new(content) }
+}
+
+#[derive(Copy, Clone)]
+pub struct MarkAsRoot<'a, 'ast, C> {
+    content: Argument<'a, 'ast, C>,
+}
+
+impl<'ast, C> Format<'ast, C> for MarkAsRoot<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
+        f.write_element(FormatElement::Tag(Tag::StartMarkAsRoot));
+        Arguments::from(&self.content).fmt(f);
+        f.write_element(FormatElement::Tag(Tag::EndMarkAsRoot));
+    }
+}
+
+impl<C> std::fmt::Debug for MarkAsRoot<'_, '_, C> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("MarkAsRoot").field(&"{{content}}").finish()
+    }
 }
 
 #[derive(Copy, Clone)]

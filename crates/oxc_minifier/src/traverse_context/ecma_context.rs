@@ -16,8 +16,10 @@ use oxc_str::format_str;
 use oxc_syntax::{reference::ReferenceId, scope::ScopeFlags};
 
 use crate::{
-    generated::ancestor::Ancestor, options::CompressOptions, state::MinifierState,
-    symbol_value::SymbolValue,
+    generated::ancestor::Ancestor,
+    options::CompressOptions,
+    state::MinifierState,
+    symbol_value::{FreshValueKind, SymbolValue},
 };
 
 use oxc_ast_visit::Visit;
@@ -242,7 +244,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         &mut self,
         symbol_id: SymbolId,
         constant: Option<ConstantValue<'a>>,
-        is_fresh_value: bool,
+        kind: FreshValueKind,
         falsy_init: bool,
     ) {
         let mut exported = false;
@@ -297,7 +299,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             read_references_count,
             write_references_count,
             member_write_target_read_count,
-            is_fresh_value,
+            kind,
             boolean_falsy,
         };
         self.state.symbol_values.init_value(symbol_id, symbol_value);

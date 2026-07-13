@@ -178,8 +178,36 @@ fn remove_unreachable() {
     test("while(true) { throw a; unreachable;}", "for(;;) throw a");
     test("while(true) { return a; unreachable;}", "for(;;) return a");
 
-    test("(function () { return; var a })()", "(function () { return; var a })()");
+    // A kept function declaration (not a dead IIFE) so the unreachable `var a`
+    // after `return` is preserved under `unused: Keep`.
+    test("function f() { return; var a }", "function f() { return; var a }");
     test_unused("(function () { return; var a })()", "");
+
+    // https://github.com/rolldown/rolldown/issues/10184
+    // A statement that never completes normally also terminates the list:
+    // a block pinned by its lexical declaration, or a try/catch where both
+    // blocks jump.
+    test(
+        "function f() { { const a = g(); a.x = a; return a; } h(); }",
+        "function f() { { let a = g(); return a.x = a, a; } }",
+    );
+    test(
+        "function f() { try { return g(); } catch { return h(); } i(); }",
+        "function f() { try { return g(); } catch { return h(); } }",
+    );
+    // Negative: the block can complete normally, so the tail stays.
+    test_same("function f(c) { { let a = g(); if (c) return a; } return foo(); }");
+    // Hoisting survivors trailing the jump inside the block — a kept
+    // `function` declaration or a `var` stub re-emitted by `KeepVar` — don't
+    // hide that the block terminates.
+    test(
+        "function f() { { const a = g(); a.x = a; return a; function g() { return {} } } h(); }",
+        "function f() { { let a = g(); return a.x = a, a; function g() { return {} } } }",
+    );
+    test(
+        "function f() { use(() => x); { let a = g(); use(a); return a; var x = h(); } tail(); }",
+        "function f() { use(() => x); { let a = g(); return use(a), a; var x; } }",
+    );
 }
 
 #[test]

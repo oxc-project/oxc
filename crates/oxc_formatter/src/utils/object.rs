@@ -13,7 +13,16 @@ use crate::{
     write,
 };
 
-pub fn format_property_key<'a>(key: &AstNode<'a, PropertyKey<'a>>, f: &mut JsFormatter<'_, 'a>) {
+pub fn format_property_key<'a>(
+    key: &AstNode<'a, PropertyKey<'a>>,
+    computed: bool,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    if computed {
+        write!(f, ["[", key, "]"]);
+        return;
+    }
+
     // Check if we're in a Tailwind context and the key is a string literal with multiple classes
     if let AstNodes::StringLiteral(string) = key.as_ast_nodes() {
         if let Some(ctx) = tailwind_context_for_string_literal(string, f) {
@@ -22,11 +31,14 @@ pub fn format_property_key<'a>(key: &AstNode<'a, PropertyKey<'a>>, f: &mut JsFor
             return;
         }
 
-        // For TypeScript class property declarations, quotes should always be preserved.
-        // https://github.com/prettier/prettier/issues/4516
-        let kind = if matches!(key.parent(), AstNodes::PropertyDefinition(_))
-            && f.context().source_type().is_typescript()
-        {
+        let preserve_quotes = match key.parent() {
+            // For TypeScript class property declarations, quotes should always be preserved.
+            // https://github.com/prettier/prettier/issues/4516
+            AstNodes::PropertyDefinition(_) => f.context().source_type().is_typescript(),
+            AstNodes::TSMethodSignature(method) => is_quoted_new_method_signature(method),
+            _ => false,
+        };
+        let kind = if preserve_quotes {
             StringLiteralParentKind::Expression
         } else {
             StringLiteralParentKind::Member
@@ -79,10 +91,34 @@ pub fn write_member_name<'a>(
     }
 }
 
+/// Determine if this is a method signature named `"new"` via a quoted key, which must keep its quotes.
+/// Unquoted `new(...)` in an interface or type literal is a construct signature, not a method.
+/// Optional (`new?()`), getter/setter, and property forms stay a member named `new` and are safe to unquote.
+pub fn is_quoted_new_method_signature(method: &TSMethodSignature<'_>) -> bool {
+    method.kind == TSMethodSignatureKind::Method
+        && !method.computed
+        && !method.optional
+        && matches!(&method.key, PropertyKey::StringLiteral(string) if string.value == "new")
+}
+
+/// Determine if the string literal key should preserve its quotes,
+/// i.e. its content cannot be written as a plain identifier.
+pub fn should_preserve_string_quote(string: &StringLiteral<'_>, f: &JsFormatter<'_, '_>) -> bool {
+    let quote_less_content = f.source_text().text_for(&string.span.shrink(1));
+    !is_identifier_name_patched(quote_less_content)
+}
+
 /// Determine if the property key string literal should preserve its quotes
 pub fn should_preserve_quote(key: &PropertyKey<'_>, f: &JsFormatter<'_, '_>) -> bool {
-    matches!(&key, PropertyKey::StringLiteral(string) if {
-        let quote_less_content = f.source_text().text_for(&string.span.shrink(1));
-        !is_identifier_name_patched(quote_less_content)
-    })
+    matches!(&key, PropertyKey::StringLiteral(string) if should_preserve_string_quote(string, f))
+}
+
+/// Determine if the enum member name string literal should preserve its quotes.
+/// Enum member names behave like object property keys for `quoteProps`.
+pub fn should_preserve_quote_for_enum_member(
+    id: &TSEnumMemberName<'_>,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
+    matches!(id, TSEnumMemberName::String(string) | TSEnumMemberName::ComputedString(string)
+        if should_preserve_string_quote(string, f))
 }

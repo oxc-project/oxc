@@ -1,0 +1,306 @@
+// Script to amend test fixtures for transforms.
+//
+// Babel's test fixtures for some plugins are not usable for us because they either use
+// `@babel/preset-env` or transforms which we haven't implemented yet (e.g. `@babel/transform-classes`).
+//
+// This script:
+// 1. Removes unsupported options from `options.json` files.
+// 2. Transforms the input code with Babel using the updated options, and saves as `output.js`.
+
+// TODO: We follow Babel 8 not Babel 7. So need to:
+// 1. Use Babel 8 to transform code.
+// 2. Skip the fixtures which are marked "SKIP_babel7plugins_babel8core"
+//    (or maybe don't - what does this option mean?)
+
+import { transformFileAsync } from "@babel/core";
+import { readdir, readFile, rename, writeFile } from "node:fs/promises";
+import { extname, join as pathJoin } from "node:path";
+
+type Plugin = string | [string, Record<string, unknown>];
+type Options = {
+  presets?: Plugin[];
+  plugins?: Plugin[];
+  assumptions?: Record<string, boolean>;
+  externalHelpers?: boolean;
+  [key: string]: unknown;
+};
+
+const PACKAGES = [
+  "babel-plugin-transform-class-properties",
+  "babel-plugin-transform-private-methods",
+  "babel-plugin-transform-private-property-in-object",
+  "babel-plugin-transform-logical-assignment-operators",
+  "babel-plugin-transform-explicit-resource-management",
+];
+const FILTER_OUT_PRESETS = ["env"];
+const FILTER_OUT_PLUGINS = [
+  "transform-classes",
+  "transform-block-scoping",
+  "transform-destructuring",
+];
+
+const CLASS_PLUGINS = [
+  "transform-class-properties",
+  "transform-private-methods",
+  "transform-private-property-in-object",
+];
+const OPTIONAL_CHAINING_PLUGIN = "transform-optional-chaining";
+
+const PACKAGES_PATH = pathJoin(import.meta.dirname, "../coverage/babel/packages");
+
+// These fixtures transform incorrectly by Babel. Haven't figured out why yet.
+const IGNORED_FIXTURES = [
+  "compile-to-class/constructor-collision-ignores-types",
+  "compile-to-class/constructor-collision-ignores-types-loose",
+];
+
+// Copied from `@babel/helper-transform-fixture-test-runner`
+const EXTERNAL_HELPERS_VERSION = "7.100.0";
+
+for (const packageName of PACKAGES) {
+  const dirPath = pathJoin(PACKAGES_PATH, packageName, "test/fixtures");
+  // oxlint-disable-next-line no-await-in-loop
+  await updateDir(dirPath, {}, false);
+}
+
+/**
+ * Update fixtures in directory, and its sub-directories.
+ */
+async function updateDir(
+  dirPath: string,
+  options: Options,
+  hasChangedOptions: boolean,
+): Promise<void> {
+  if (IGNORED_FIXTURES.some((p) => dirPath.endsWith(p))) {
+    return;
+  }
+
+  const files = await readdir(dirPath, { withFileTypes: true });
+
+  const dirFiles: string[] = [];
+  const filenames: Record<"options" | "input" | "output", string | null> = {
+    options: null,
+    input: null,
+    output: null,
+  };
+
+  // Find files in dir
+  for (const file of files) {
+    const filename = file.name;
+    if (file.isDirectory()) {
+      dirFiles.push(filename);
+    } else {
+      const ext = extname(filename),
+        type = ext === "" ? filename : filename.slice(0, -ext.length);
+      if (type === "options" || type === "input" || type === "output") {
+        filenames[type] = filename;
+      }
+    }
+  }
+
+  // Update options, save to file, and merge options with parent
+  if (filenames.options) {
+    const path = pathJoin(dirPath, filenames.options);
+    const localOptions: Options = JSON.parse(await readFile(path, "utf8"));
+    if (updateOptions(localOptions)) {
+      hasChangedOptions = true;
+      await backupFile(path);
+      await writeFile(path, JSON.stringify(localOptions, null, 2) + "\n");
+    }
+    options = { ...options, ...localOptions };
+  }
+
+  // Run Babel with updated options/input
+  if (filenames.input && filenames.output && hasChangedOptions) {
+    const inputPath = pathJoin(dirPath, filenames.input),
+      outputPath = pathJoin(dirPath, filenames.output);
+
+    const transformedCode = await transform(inputPath, options);
+    const originalTransformedCode = await readFile(outputPath, "utf8");
+
+    if (transformedCode.trim() !== originalTransformedCode.trim()) {
+      await backupFile(outputPath);
+      await writeFile(outputPath, transformedCode);
+    }
+  }
+
+  // Process subfolders
+  for (const filename of dirFiles) {
+    const path = pathJoin(dirPath, filename);
+    // oxlint-disable-next-line no-await-in-loop
+    await updateDir(path, options, hasChangedOptions);
+  }
+}
+
+// Remove unsupported presets + plugins from `options`.
+function updateOptions(options: Options): boolean {
+  let hasChangedOptions = false;
+
+  function filter(key: "presets" | "plugins", filterOut: string[]): void {
+    const plugins = options[key];
+    if (!plugins) return;
+    options[key] = plugins.filter((plugin) => {
+      if (filterOut.includes(getName(plugin))) {
+        hasChangedOptions = true;
+        return false;
+      }
+      return true;
+    });
+    if (options[key].length === 0) delete options[key];
+  }
+
+  filter("presets", FILTER_OUT_PRESETS);
+  if (migrateDeprecatedLooseOptions(options)) {
+    hasChangedOptions = true;
+  }
+  filter("plugins", FILTER_OUT_PLUGINS);
+  if (ensureAllClassPluginsEnabled(options)) {
+    hasChangedOptions = true;
+  }
+
+  return hasChangedOptions;
+}
+
+// Babel 8 deprecates plugin-level `loose` options in favor of top-level assumptions.
+// Keep these generated fixture updates aligned with Babel's migration docs:
+// https://babeljs.io/docs/assumptions/
+function migrateDeprecatedLooseOptions(options: Options): boolean {
+  const { plugins } = options;
+  if (!plugins) return false;
+
+  let hasChangedOptions = false;
+
+  for (let index = 0; index < plugins.length; index++) {
+    const plugin = plugins[index];
+    if (!Array.isArray(plugin)) continue;
+
+    const pluginName = getName(plugin);
+    const pluginOptions = plugin[1];
+    if (!pluginOptions || !Object.hasOwn(pluginOptions, "loose")) continue;
+
+    if (CLASS_PLUGINS.includes(pluginName)) {
+      if (pluginOptions.loose) {
+        options.assumptions ??= {};
+        options.assumptions.setPublicClassFields ??= true;
+        options.assumptions.constantSuper ??= true;
+        if (
+          !Object.hasOwn(options.assumptions, "privateFieldsAsProperties") &&
+          !Object.hasOwn(options.assumptions, "privateFieldsAsSymbols")
+        ) {
+          options.assumptions.privateFieldsAsProperties = true;
+        }
+      }
+    } else if (pluginName === OPTIONAL_CHAINING_PLUGIN) {
+      if (pluginOptions.loose) {
+        options.assumptions ??= {};
+        options.assumptions.noDocumentAll ??= true;
+        options.assumptions.pureGetters ??= true;
+      }
+    } else {
+      continue;
+    }
+
+    delete pluginOptions.loose;
+    if (Object.keys(pluginOptions).length === 0) {
+      plugins[index] = pluginName;
+    }
+    hasChangedOptions = true;
+  }
+
+  return hasChangedOptions;
+}
+
+// Ensure all class plugins are enabled if any of class related plugins are enabled
+function ensureAllClassPluginsEnabled(options: Options): boolean {
+  const { plugins } = options;
+  if (!plugins) return false;
+
+  const already_enabled: string[] = [];
+  let pluginOptions: Record<string, unknown> | undefined;
+  plugins.forEach((plugin) => {
+    const pluginName = getName(plugin);
+    if (CLASS_PLUGINS.includes(pluginName)) {
+      if (Array.isArray(plugin) && plugin[1]) {
+        // Store options for the plugin, so that we can ensure all plugins are
+        // enabled with the same options
+        pluginOptions = plugin[1];
+      }
+      already_enabled.push(pluginName);
+    }
+  });
+
+  if (already_enabled.length) {
+    CLASS_PLUGINS.forEach((pluginName) => {
+      if (!already_enabled.includes(pluginName)) {
+        if (pluginOptions) {
+          plugins.push([pluginName, pluginOptions]);
+        } else {
+          plugins.push(pluginName);
+        }
+      }
+    });
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// Transform input with Babel.
+async function transform(inputPath: string, options: Options): Promise<string> {
+  options = {
+    ...options,
+    configFile: false,
+    babelrc: false,
+    cwd: import.meta.dirname,
+  };
+  delete options.BABEL_8_BREAKING;
+  delete options.SKIP_babel7plugins_babel8core;
+  delete options.minNodeVersion;
+  delete options.validateLogs;
+  delete options.SKIP_ON_PUBLISH;
+
+  function prefixName(plugin: Plugin, type: "preset" | "plugin"): Plugin {
+    if (Array.isArray(plugin)) {
+      plugin = [...plugin];
+      plugin[0] = `@babel/${type}-${plugin[0]}`;
+    } else {
+      plugin = `@babel/${type}-${plugin}`;
+    }
+    return plugin;
+  }
+
+  if (options.presets) {
+    options.presets = options.presets.map((preset) => prefixName(preset, "preset"));
+  }
+
+  options.plugins = (options.plugins || []).map((plugin) => prefixName(plugin, "plugin"));
+
+  let addExternalHelpersPlugin = true;
+  if (Object.hasOwn(options, "externalHelpers")) {
+    if (!options.externalHelpers) addExternalHelpersPlugin = false;
+    delete options.externalHelpers;
+  }
+
+  if (addExternalHelpersPlugin) {
+    options.plugins.push([
+      "@babel/plugin-external-helpers",
+      { helperVersion: EXTERNAL_HELPERS_VERSION },
+    ]);
+  }
+
+  const result = await transformFileAsync(inputPath, options);
+  return result?.code ?? "";
+}
+
+// Get name of plugin/preset.
+function getName(stringOrArray: Plugin): string {
+  if (Array.isArray(stringOrArray)) return stringOrArray[0];
+  return stringOrArray;
+}
+
+// Backup file.
+async function backupFile(path: string): Promise<void> {
+  const ext = extname(path),
+    backupPath = `${path.slice(0, -ext.length)}.original${ext}`;
+  await rename(path, backupPath);
+}

@@ -2,23 +2,25 @@
 //!
 //! Prettier prints `StringValue` from graphql-js's *cooked* `node.value`
 //! (escapes decoded, block strings dedented), then re-encodes it.
-//! `oxc-graphql-parser` hands us the raw source, so this module reimplements both the
-//! cooking (GraphQL spec string/block-string value algorithms)
-//! and Prettier's re-encoding (`"`/`\` escaped, newline as `\n`, `"""` as `\"""`).
+//! `oxc-graphql-parser`'s `StringValue.value` is cooked too, but NOT to spec:
+//! no block-string dedent / blank-line trimming, no surrogate pairing, and
+//! invalid escapes are silently dropped.
+//! So this module cooks from `raw` itself (GraphQL spec string/block-string value algorithms)
+//! and then applies Prettier's re-encoding (`"`/`\` escaped, newline as `\n`, `"""` as `\"""`).
 
 use cow_utils::CowUtils;
-use oxc_graphql_parser::{cst, cst::CstNode};
 
 use oxc_formatter_core::{
     Buffer,
     builders::{hard_line_break, text},
     write,
 };
+use oxc_graphql_parser::ast::StringValue;
 
-use super::{GraphqlFormatter, sig::node_text};
+use super::GraphqlFormatter;
 
-pub fn write_string_value(sv: &cst::StringValue, f: &mut GraphqlFormatter<'_, '_>) {
-    let raw = node_text(f, sv.syntax());
+pub(super) fn write_string_value<'a>(sv: &StringValue<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
+    let raw = sv.raw;
     if let Some(body) = raw.strip_prefix("\"\"\"").and_then(|r| r.strip_suffix("\"\"\"")) {
         write_block_string(body, f);
     } else if let Some(body) = raw.strip_prefix('"').and_then(|r| r.strip_suffix('"')) {

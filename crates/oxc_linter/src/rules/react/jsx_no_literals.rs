@@ -179,7 +179,7 @@ impl JsxNoLiterals {
 
         for prop in &obj.properties {
             if let BindingPattern::BindingIdentifier(local) = &prop.value
-                && local.symbol_id.get() == Some(symbol_id)
+                && local.symbol_id() == symbol_id
                 && let PropertyKey::StaticIdentifier(key) = &prop.key
             {
                 return Some(key.name.to_compact_str());

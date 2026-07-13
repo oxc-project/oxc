@@ -78,6 +78,7 @@ enum StartTagInfo {
     Entry,
     LineSuffix,
     Labelled,
+    MarkAsRoot,
 }
 
 /// Simulates a subset of the `oxc_formatter` printer's runtime state.
@@ -186,6 +187,13 @@ fn convert_elements(
                         } else {
                             push_line(current_children_mut(&mut stack)?, *mode);
                         }
+                    }
+                    LineMode::Literal => {
+                        // A literal line always prints (no `last_was_hardline` dedup) and
+                        // preserves the pending space (the printer never trims it away),
+                        // matching a `\n` embedded in `FormatElement::Text` below.
+                        printer.flush_pending_space(&mut stack)?;
+                        push_line(current_children_mut(&mut stack)?, *mode);
                     }
                 }
                 printer.last_was_hardline = matches!(mode, LineMode::Hard | LineMode::Empty);
@@ -420,6 +428,9 @@ fn push_line(children: &mut Vec<Value>, mode: LineMode) {
             children.push(json!({"type": "line", "hard": true}));
             children.push(json!({"type": "break-parent"}));
         }
+        LineMode::Literal => {
+            push_literal_line(children);
+        }
     }
 }
 
@@ -445,6 +456,7 @@ fn extract_start_tag_info(tag: &Tag) -> StartTagInfo {
         Tag::StartEntry => StartTagInfo::Entry,
         Tag::StartLineSuffix => StartTagInfo::LineSuffix,
         Tag::StartLabelled(_) => StartTagInfo::Labelled,
+        Tag::StartMarkAsRoot => StartTagInfo::MarkAsRoot,
         _ => unreachable!("end tags should not be passed to `extract_start_tag_info()`"),
     }
 }
@@ -467,6 +479,10 @@ fn build_doc(start_info: Option<&StartTagInfo>, children: Vec<Value>) -> Value {
         }
         StartTagInfo::Align(count) => {
             json!({"type": "align", "n": *count, "contents": normalize_array(children)})
+        }
+        StartTagInfo::MarkAsRoot => {
+            // Prettier's `markAsRoot()` = `align({type: "root"}, ...)`
+            json!({"type": "align", "n": {"type": "root"}, "contents": normalize_array(children)})
         }
         StartTagInfo::Dedent(mode) => {
             let n: Value = match mode {

@@ -4,6 +4,41 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.58.0] - 2026-07-06
+
+### 🚀 Features
+
+- 4f4313e formatter_css: Update oxc-css-parser 0.0.5 (#24120) (leaysgur)
+- 0ccd8a1 formatter_graphql: Update oxc-graphql-parser 0.0.5 (#24106) (leaysgur)
+- 89ec3d9 formatter_core: Add literal line and root indention primitives (#24051) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 2121a55 oxfmt: Reuse tinypool process during the same LSP process (#24197) (leaysgur)
+- cd2452e formatter_css: Align SCSS output to Prettier 3.9.1 (#24097) (leaysgur)
+- ea5d095 oxfmt: Update `--migrate prettier` (#23963) (leaysgur)
+
+## [0.57.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 259e0cd oxfmt,formatter_graphql: [**BREAKING**] Support draft syntax with removing prettier fallback (#23326) (leaysgur)
+- accbc49 oxfmt: [**BREAKING**] Format `parser:css,less,scss` files + css-in-js by `oxc_formatter_css` (#23321) (leaysgur)
+
+### 🚀 Features
+
+- 01de9ec oxfmt: Format `parser:graphql` files by `oxc_formatter_graphql` (#23318) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 48e2d78 formatter_css: Improve major prettier diffs (#23327) (leaysgur)
+- f7d1f50 oxlint, oxfmt: Enable `disable_old_builder` Cargo feature for `oxc_ast` crate (#23886) (overlookmotel)
+- d86f60b lsp: Normalize user config path to watch pattern (#23723) (Sysix)
+
+### 📚 Documentation
+
+- b4d0dc9 oxfmt,formatter,formatter_css,formatter_core: Update AGENTS.md (#23814) (leaysgur)
+
 ## [0.56.0] - 2026-06-22
 
 ### 🐛 Bug Fixes

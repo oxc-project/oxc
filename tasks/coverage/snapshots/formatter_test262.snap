@@ -2,22 +2,12 @@ commit: de8e621c
 
 formatter_test262 Summary:
 AST Parsed     : 47240/47240 (100.00%)
-Positive Passed: 47231/47240 (99.98%)
+Positive Passed: 47236/47240 (99.99%)
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR-LF.js
 
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR.js
 
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-LF.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/arrow-function/scope-paramsbody-var-close.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/call/scope-lex-close.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/call/scope-var-close.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/function/scope-paramsbody-var-close.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/generators/scope-paramsbody-var-close.js
 
 Mismatch: tasks/coverage/test262/test/language/statements/let/syntax/escaped-let.js
 

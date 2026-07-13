@@ -1,0 +1,23 @@
+/* xstyled / tailwind-theme tokens: `word.number` is ONE postcss word */
+a {
+  color: sandstone.10;
+  box-shadow: 0px 2px 8px -2px rgb(from theme(colors.blue.500) r g b / 0.4);
+}
+/* real numbers still normalize */
+b {
+  opacity: .10;
+  margin: .50em .25em;
+}
+/* glued number chains and postcss-simple-vars values stay words too */
+c {
+  width: theme(spacing.2.5);
+}
+$brand: sandstone.10;
+/* glued number-ish runs are one word too: no space injection */
+d {
+  padding: 1+1+1+1;
+  margin: 1px+1px+1px+1px;
+  width: calc(100%+2px);
+}
+/* multi-value lists in $var declarations break one per line */
+$fontFamily: "Lato", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;

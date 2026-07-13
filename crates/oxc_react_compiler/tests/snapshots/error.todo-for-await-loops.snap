@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-for-await-loops.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: (BuildHIR::lowerStatement) Handle for-await loops", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(54), length: 55 }, primary: false }]), help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

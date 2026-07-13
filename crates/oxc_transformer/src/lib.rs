@@ -7,11 +7,11 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, ArenaVec, TakeIn};
+use oxc_allocator::{Allocator, ArenaVec, ReplaceWith};
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_diagnostics::Diagnostics;
 #[cfg(feature = "react_compiler")]
-use oxc_react_compiler::{PluginOptions, transform as react_compiler_transform};
+use oxc_react_compiler::{PluginOptions, compile as react_compiler_compile};
 use oxc_semantic::Scoping;
 #[cfg(feature = "react_compiler")]
 use oxc_semantic::SemanticBuilder;
@@ -228,14 +228,17 @@ impl<'a> Transformer<'a> {
         let Some(options) = self.react_compiler.take() else {
             return (scoping, Diagnostics::new());
         };
-        let result = react_compiler_transform(program, self.allocator, options);
-        let Some(compiled) = result.program else {
-            return (scoping, result.diagnostics);
+        let (output, diagnostics) = {
+            let semantic = SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
+            react_compiler_compile(program, &semantic, self.allocator, options)
         };
-        *program = compiled;
+        let Some(output) = output else {
+            return (scoping, diagnostics);
+        };
+        output.transform(program);
         let scoping =
             SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
-        (scoping, result.diagnostics)
+        (scoping, diagnostics)
     }
 }
 
@@ -642,11 +645,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
             // };
             // ```
             for stmt in statements.iter_mut().rev() {
-                let Statement::ExpressionStatement(expr_stmt) = stmt else {
+                if !matches!(stmt, Statement::ExpressionStatement(_)) {
                     continue;
-                };
-                let expression = Some(expr_stmt.expression.take_in(ctx));
-                *stmt = Statement::new_return_statement(SPAN, expression, ctx);
+                }
+                stmt.replace_with(|stmt| {
+                    let Statement::ExpressionStatement(expr_stmt) = stmt else { unreachable!() };
+                    Statement::new_return_statement(SPAN, Some(expr_stmt.unbox().expression), ctx)
+                });
                 return;
             }
             unreachable!("At least one statement should be expression statement")

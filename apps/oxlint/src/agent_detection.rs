@@ -11,6 +11,7 @@ pub enum AgentInfo {
     Codex,
     Copilot,
     OpenCode,
+    Junie,
     Pi,
     Devin,
     Cursor,
@@ -49,6 +50,8 @@ fn detect_agent_from_env(env: impl Fn(&str) -> Option<OsString>) -> Option<Agent
         Some(AgentInfo::Copilot)
     } else if has_any_env(&env, &["OPENCODE"]) {
         Some(AgentInfo::OpenCode)
+    } else if has_any_env(&env, &["JUNIE_DATA", "JUNIE_SHIM_PATH"]) {
+        Some(AgentInfo::Junie)
     } else if env_contains_path_segment(&env, "PATH", ".pi/agent") {
         Some(AgentInfo::Pi)
     } else if env_contains(&env, "EDITOR", "devin") {
@@ -134,6 +137,8 @@ mod tests {
             (AgentInfo::Codex, "CODEX_THREAD_ID"),
             (AgentInfo::Copilot, "COPILOT_CLI"),
             (AgentInfo::OpenCode, "OPENCODE"),
+            (AgentInfo::Junie, "JUNIE_DATA"),
+            (AgentInfo::Junie, "JUNIE_SHIM_PATH"),
             (AgentInfo::Cursor, "CURSOR_AGENT"),
         ];
 

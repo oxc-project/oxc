@@ -20,6 +20,8 @@ extend input Filter {
   extra: String
 }
 
+extend directive @directive @meta
+
 extend schema @directive
 
 extend schema {
@@ -48,6 +50,8 @@ extend input Filter {
   extra: String
 }
 
+extend directive @directive @meta
+
 extend schema @directive
 
 extend schema {
@@ -74,6 +78,8 @@ extend enum Role {
 extend input Filter {
   extra: String
 }
+
+extend directive @directive @meta
 
 extend schema @directive
 

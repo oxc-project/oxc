@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_ast::{
     AstKind,
@@ -592,8 +594,20 @@ impl Extensions {
     ) {
         let config = &self.0;
 
-        // Prefer resolved extension (actual file), fallback to written extension (import text)
-        let extension_to_check = resolved_extension.or(written_extension);
+        // Prefer the resolved extension, but honor an explicitly-written genuine extension that
+        // differs from it: TS ESM `import './foo.js'` resolves to `./foo.ts`, yet `js: never`
+        // must still flag the written `.js`. "Genuine" excludes compound-name parts like
+        // `.stories` in `./foo.stories` (which resolves to `foo.stories.tsx`).
+        let written_is_genuine_extension = written_extension.is_some_and(|written| {
+            resolved_extension != Some(written)
+                && (ExtensionsConfig::is_standard_extension(written) || config.has_rule(written))
+        });
+
+        let extension_to_check = if written_is_genuine_extension {
+            written_extension
+        } else {
+            resolved_extension.or(written_extension)
+        };
 
         if let Some(ext_str) = extension_to_check {
             // Skip validation for unconfigured extensions (prevents false positives)
@@ -610,7 +624,10 @@ impl Extensions {
             // For files with multiple extensions (e.g., foo.stories.tsx), we need to check
             // if the ACTUAL file extension (resolved) matches what's written in the import.
             // If resolved is "tsx" but written is "stories", then tsx is NOT written.
-            let extension_is_written = if let Some(resolved) = resolved_extension {
+            let extension_is_written = if written_is_genuine_extension {
+                // The specifier explicitly ends with this genuine extension.
+                true
+            } else if let Some(resolved) = resolved_extension {
                 // If we have a resolved extension, check if it matches the written extension
                 written_extension == Some(resolved)
             } else {
@@ -656,6 +673,14 @@ impl Extensions {
         is_import: bool,
     ) {
         let config = &self.0;
+
+        // Default / empty config: nothing is enforced (all imports pass).
+        if config.require_extension.is_none()
+            && config.extensions.is_empty()
+            && config.path_group_overrides.is_empty()
+        {
+            return;
+        }
 
         // Type imports check (only for ESM, always false for require)
         if is_type_import && !config.check_type_imports {
@@ -807,17 +832,16 @@ fn is_package_import(module_name: &str) -> bool {
 /// - `"./foo"` → `None`
 /// - `"./foo."` → `None` (empty extension)
 /// - `"./foo.bar/"` → `None` (directory path)
-fn get_file_extension_from_module_name(module_name: &str) -> Option<String> {
+fn get_file_extension_from_module_name(module_name: &str) -> Option<Cow<'_, str>> {
     use cow_utils::CowUtils;
-    if let Some((_, extension)) =
-        module_name.split('?').next().unwrap_or(module_name).rsplit_once('.')
-        && !extension.is_empty()
-        && !extension.starts_with('/')
-    {
-        return Some(extension.cow_to_ascii_lowercase().into_owned());
+    let path = module_name.split_once('?').map_or(module_name, |(path, _)| path);
+    let file_name = path.rsplit_once('/').map_or(path, |(_, file_name)| file_name);
+    let (_, extension) = file_name.rsplit_once('.')?;
+    if extension.is_empty() {
+        return None;
     }
 
-    None
+    Some(extension.cow_to_ascii_lowercase())
 }
 
 /// Get the actual file extension from the resolved module path.
@@ -1300,6 +1324,8 @@ fn test() {
         (r"import { Component } from './Component.stories';", Some(json!([{ "tsx": "never" }]))),
         (r"import { testUtil } from './utils.test';", Some(json!([{ "ts": "never" }]))),
         (r"import { helper } from './helper.spec';", Some(json!([{ "js": "never" }]))),
+        // `./typescript.js` resolves to `typescript.ts`; the written `.js` is allowed under `js: always`.
+        (r#"import x from "./typescript.js";"#, Some(json!(["always", { "js": "always" }]))),
         // Subpath imports
         // https://nodejs.org/api/packages.html#subpath-imports
         // (
@@ -1733,6 +1759,9 @@ fn test() {
         (r"import x from './foo#section';", Some(json!(["always"]))),
         // Edge case fail: Path alias without extension
         (r"import x from '@/components/Button';", Some(json!(["always"]))),
+        // Edge case fail: Dot in a directory segment is not a written file extension
+        (r"import x from './foo.bar/baz';", Some(json!(["always"]))),
+        (r"import x from './foo.bar/';", Some(json!(["always"]))),
         // Edge case fail: Mixed - some with, some without extensions
         (
             r"
@@ -1778,6 +1807,14 @@ fn test() {
             Some(json!(["never", { "ts": "never" }])),
         ),
         (r"import utils from './utils.spec.js';", Some(json!(["never", { "js": "never" }]))),
+        // `./typescript.js` resolves to `typescript.ts`, but the written `.js` must still be flagged under `never`.
+        (
+            r#"import def from "./typescript.js";"#,
+            Some(json!(["never", { "checkTypeImports": true, "js": "never" }])),
+        ),
+        (r#"import x from "./typescript.js";"#, Some(json!(["never"]))),
+        (r#"import x from "./typescript.js";"#, Some(json!([{ "js": "never" }]))),
+        (r#"import x from "./typescript.js";"#, Some(json!(["always", { "js": "never" }]))),
         // TODO: This should probably fail? Needs further investigation.
         // (
         //     r"import useState from '@foo/bar/useState';",

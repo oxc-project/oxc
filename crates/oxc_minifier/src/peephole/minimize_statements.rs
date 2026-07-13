@@ -74,17 +74,17 @@ impl<'a> PeepholeOptimizations {
                 }
                 continue; // drop: `stmt` is intentionally not pushed into `stmts`.
             }
-            if Self::minimize_statement(
-                stmt,
-                i,
-                &mut old_stmts,
-                stmts,
-                &mut is_control_flow_dead,
-                ctx,
-            )
-            .is_break()
-            {
+            if Self::minimize_statement(stmt, i, &mut old_stmts, stmts, ctx).is_break() {
                 break;
+            }
+            // A statement that never completes normally — a direct jump, a
+            // kept block ending in a jump, an if/else or try/catch where
+            // every branch jumps — makes the rest of the list unreachable.
+            // https://github.com/rolldown/rolldown/issues/10184
+            if !is_control_flow_dead
+                && stmts.last().is_some_and(Self::statement_never_completes_normally)
+            {
+                is_control_flow_dead = true;
             }
         }
         if let Some(stmt) = keep_var.get_variable_declaration_statement(&ctx.ast) {
@@ -364,22 +364,10 @@ impl<'a> PeepholeOptimizations {
         i: usize,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        is_control_flow_dead: &mut bool,
-
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         match stmt {
             Statement::EmptyStatement(_) => (),
-            Statement::BreakStatement(s) => {
-                // Local `&mut bool` flag, not an AST slot.
-                *is_control_flow_dead = true;
-                result.push(Statement::BreakStatement(s));
-            }
-            Statement::ContinueStatement(s) => {
-                // Local `&mut bool` flag, not an AST slot.
-                *is_control_flow_dead = true;
-                result.push(Statement::ContinueStatement(s));
-            }
             Statement::VariableDeclaration(var_decl) => {
                 Self::handle_variable_declaration(var_decl, result, ctx);
             }
@@ -395,10 +383,10 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Statement::ReturnStatement(ret_stmt) => {
-                Self::handle_return_statement(ret_stmt, result, is_control_flow_dead, ctx);
+                Self::handle_return_statement(ret_stmt, result, ctx);
             }
             Statement::ThrowStatement(throw_stmt) => {
-                Self::handle_throw_statement(throw_stmt, result, is_control_flow_dead, ctx);
+                Self::handle_throw_statement(throw_stmt, result, ctx);
             }
             Statement::ForStatement(for_stmt) => {
                 Self::handle_for_statement(for_stmt, result, ctx);
@@ -443,6 +431,65 @@ impl<'a> PeepholeOptimizations {
             return left.content_eq(right);
         }
         false
+    }
+
+    /// Whether control never falls through to the statement after this one in
+    /// the same statement list (terser's `aborts`).
+    ///
+    /// Any abrupt completion qualifies, whatever its target: a `break` or
+    /// `continue` transfers control past the end of the enclosing statement
+    /// list, never to the next statement in it.
+    ///
+    /// Conservative on purpose:
+    /// - A labeled statement completes normally when its body breaks out of
+    ///   its own label (`a: { break a; }`), so it never counts.
+    /// - Loops and switches count as completing normally; `while (true)`
+    ///   without `break` is handled by loop-specific folds instead.
+    fn statement_never_completes_normally(stmt: &Statement<'a>) -> bool {
+        match stmt {
+            Statement::ReturnStatement(_)
+            | Statement::ThrowStatement(_)
+            | Statement::BreakStatement(_)
+            | Statement::ContinueStatement(_) => true,
+            Statement::BlockStatement(block) => Self::block_never_completes_normally(block),
+            Statement::IfStatement(if_stmt) => {
+                if_stmt.alternate.as_ref().is_some_and(Self::statement_never_completes_normally)
+                    && Self::statement_never_completes_normally(&if_stmt.consequent)
+            }
+            Statement::TryStatement(try_stmt) => {
+                // A finalizer that aborts overrides however the other
+                // blocks complete. Otherwise the try block must abort, and
+                // so must the catch block when present (an exception
+                // thrown before the try block's jump lands there).
+                try_stmt.finalizer.as_ref().is_some_and(|f| Self::block_never_completes_normally(f))
+                    || (Self::block_never_completes_normally(&try_stmt.block)
+                        && try_stmt
+                            .handler
+                            .as_ref()
+                            .is_none_or(|h| Self::block_never_completes_normally(&h.body)))
+            }
+            _ => false,
+        }
+    }
+
+    fn block_never_completes_normally(block: &BlockStatement<'a>) -> bool {
+        // A minimized dead zone keeps only hoisting survivors after the jump:
+        // `function` declarations and the initializer-less `var` stub
+        // re-emitted by `KeepVar`. Their bindings initialize at scope entry
+        // and nothing after an aborting statement ever runs, so skip them
+        // from the back before testing how the block completes.
+        block
+            .body
+            .iter()
+            .rev()
+            .find(|stmt| match stmt {
+                Statement::FunctionDeclaration(_) => false,
+                Statement::VariableDeclaration(decl) => {
+                    !(decl.kind.is_var() && decl.declarations.iter().all(|d| d.init.is_none()))
+                }
+                _ => true,
+            })
+            .is_some_and(Self::statement_never_completes_normally)
     }
 
     /// For variable declarations:
@@ -903,7 +950,6 @@ impl<'a> PeepholeOptimizations {
     fn handle_return_statement(
         mut ret_stmt: ArenaBox<'a, ReturnStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -934,8 +980,6 @@ impl<'a> PeepholeOptimizations {
                 ctx.drop_expression(&old);
             }
             result.push(Statement::ReturnStatement(ret_stmt));
-            // Local `&mut bool` flag, not an AST slot.
-            *is_control_flow_dead = true;
             return;
         }
 
@@ -949,14 +993,11 @@ impl<'a> PeepholeOptimizations {
             result.pop();
         }
         result.push(Statement::ReturnStatement(ret_stmt));
-        // Local `&mut bool` flag, not an AST slot.
-        *is_control_flow_dead = true;
     }
 
     fn handle_throw_statement(
         mut throw_stmt: ArenaBox<'a, ThrowStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -977,8 +1018,6 @@ impl<'a> PeepholeOptimizations {
             ctx.drop_statement(&dropped);
         }
         result.push(Statement::ThrowStatement(throw_stmt));
-        // Local `&mut bool` flag, not an AST slot.
-        *is_control_flow_dead = true;
     }
 
     fn handle_for_statement(
@@ -1018,7 +1057,10 @@ impl<'a> PeepholeOptimizations {
             let old_len = var_decl.declarations.len();
             var_decl.declarations.retain_mut(|decl| {
                 let should_keep = !Self::should_remove_unused_declarator(decl, ctx)
-                    || decl.init.as_ref().is_some_and(|init| init.may_have_side_effects(ctx));
+                    || decl
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| Self::has_side_effects_or_preserved_iife(init, ctx));
                 if !should_keep {
                     // Same leak hazard as `remove_unused_variable_declaration`:
                     // the `retain` silently drops the declarator, so its refs

@@ -288,15 +288,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 if property.readonly {
                     write!(f, ["readonly", space()]);
                 }
-
-                // Write the property key
-                if property.computed {
-                    write!(f, ["[", property.key(), "]"]);
-                } else {
-                    format_property_key(property.key(), f);
-                }
-
-                // Write optional, definite, and type annotation
+                format_property_key(property.key(), property.computed, f);
                 if property.optional {
                     write!(f, "?");
                 }
@@ -325,15 +317,7 @@ impl<'a> AssignmentLike<'a, '_> {
                     write!(f, ["override", space()]);
                 }
                 write!(f, ["accessor", space()]);
-
-                // Write the property key
-                if property.computed {
-                    write!(f, ["[", property.key(), "]"]);
-                } else {
-                    format_property_key(property.key(), f);
-                }
-
-                // Write definite and type annotation
+                format_property_key(property.key(), property.computed, f);
                 if property.definite {
                     write!(f, "!");
                 }

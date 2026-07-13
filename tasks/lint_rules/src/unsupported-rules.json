@@ -39,8 +39,18 @@
     "import/no-deprecated": "No need to implement, already implemented by `typescript/no-deprecated` via tsgolint.",
     "n/no-restricted-import": "No need to implement, already implemented by `no-restricted-imports` rule.",
     "n/no-restricted-require": "No need to implement, already implemented by `no-restricted-imports` rule.",
+    "n/prefer-global/buffer": "No need to implement, the same policy can be enforced with generic restriction rules such as `no-restricted-imports` and `no-restricted-globals`.",
+    "n/prefer-global/console": "No need to implement, the same policy can be enforced with generic restriction rules such as `no-restricted-imports` and `no-restricted-globals`.",
+    "n/prefer-global/crypto": "No need to implement, the same policy can be enforced with generic restriction rules such as `no-restricted-imports` and `no-restricted-globals`.",
+    "n/prefer-global/process": "No need to implement, the same policy can be enforced with generic restriction rules such as `no-restricted-imports` and `no-restricted-globals`.",
+    "n/prefer-global/text-decoder": "No need to implement, the same policy can be enforced with generic restriction rules such as `no-restricted-imports` and `no-restricted-globals`.",
+    "n/prefer-global/text-encoder": "No need to implement, the same policy can be enforced with generic restriction rules such as `no-restricted-imports` and `no-restricted-globals`.",
+    "n/prefer-global/timers": "No need to implement, the same policy can be enforced with generic restriction rules such as `no-restricted-imports` and `no-restricted-globals`.",
+    "n/prefer-global/url": "No need to implement, the same policy can be enforced with generic restriction rules such as `no-restricted-imports` and `no-restricted-globals`.",
+    "n/prefer-global/url-search-params": "No need to implement, the same policy can be enforced with generic restriction rules such as `no-restricted-imports` and `no-restricted-globals`.",
     "import/order": "Not implementing this in Oxlint as its behavior is covered very well by [Oxfmt's import sorting](https://oxc.rs/docs/guide/usage/formatter/sorting.html).",
     "unicorn/template-indent": "Stylistic rule.",
+    "unicorn/no-non-function-verb-prefix": "Requires type information. Not currently possible to implement in oxlint.",
 
     "jsdoc/type-formatting": "Experimental rule in the original plugin, may reconsider once stable.",
     "jsdoc/convert-to-jsdoc-comments": "Experimental rule in the original plugin, may reconsider once stable.",
@@ -216,6 +226,7 @@
 
     "unicorn/no-named-default": "Implemented via `import/no-named-default`.",
     "unicorn/no-double-comparison": "Use `oxc/double-comparisons` instead.",
+    "unicorn/no-chained-comparison": "Use `oxc/bad-comparison-sequence` instead. TypeScript also reports errors for these comparisons.",
 
     "vue/no-lone-template": "Not currently possible, as it requires Vue template parsing.",
     "vue/no-v-html": "Not currently possible, as it requires Vue template parsing.",
