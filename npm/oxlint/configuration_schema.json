@@ -3544,7 +3544,24 @@
           ]
         },
         "jsdoc/require-param": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireParamConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/require-param-description": {
           "anyOf": [
@@ -17746,6 +17763,83 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Also require type parameters for `importActual` and `importMock`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RequireParamConfig": {
+      "type": "object",
+      "properties": {
+        "checkConstructors": {
+          "description": "Whether to check constructor methods.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check constructor methods."
+        },
+        "checkDestructured": {
+          "description": "Whether to check destructured parameters.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check destructured parameters."
+        },
+        "checkDestructuredRoots": {
+          "description": "Whether to check destructured parameters when you have code like\n`function doSomething({ a, b }) { ... }`. Because there is no named\nparameter in this example, when this option is `true` you must\nhave a `@param` tag that corresponds to `{a, b}`.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check destructured parameters when you have code like\n`function doSomething({ a, b }) { ... }`. Because there is no named\nparameter in this example, when this option is `true` you must\nhave a `@param` tag that corresponds to `{a, b}`."
+        },
+        "checkGetters": {
+          "description": "Whether to check getter methods.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check getter methods."
+        },
+        "checkRestProperty": {
+          "description": "Whether to check rest properties.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check rest properties."
+        },
+        "checkSetters": {
+          "description": "Whether to check setter methods.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check setter methods."
+        },
+        "checkTypesPattern": {
+          "description": "Regex pattern to match types that exempt parameters from checking.",
+          "default": "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$",
+          "type": "string",
+          "markdownDescription": "Regex pattern to match types that exempt parameters from checking."
+        },
+        "exemptedBy": {
+          "description": "List of JSDoc tags that exempt functions from `@param` checking.",
+          "default": [
+            "inheritdoc"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of JSDoc tags that exempt functions from `@param` checking."
+        },
+        "ignoreWhenAllParamsMissing": {
+          "description": "Set to `true` to ignore reporting when all params are missing. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set to `true` to ignore reporting when all params are missing. Defaults to `false`."
+        },
+        "interfaceExemptsParamsCheck": {
+          "description": "Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.\nWill check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.\nWill check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`."
+        },
+        "useDefaultObjectProperties": {
+          "description": "Set to `true` if you wish to expect documentation of properties on objects supplied as default values. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set to `true` if you wish to expect documentation of properties on objects supplied as default values. Defaults to `false`."
         }
       },
       "additionalProperties": false
