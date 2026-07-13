@@ -549,28 +549,32 @@ impl<'a> Comments<'a> {
         false
     }
 
+    /// Checks if a comment forms the type cast pattern:
+    /// a type cast comment immediately followed by an opening parenthesis.
+    pub fn is_type_cast_comment_followed_by_paren(&self, comment: &Comment) -> bool {
+        self.source_text.next_non_whitespace_byte_is(comment.span.end, b'(')
+            && self.is_type_cast_comment(comment)
+    }
+
     /// Finds the index of a type cast comment before the given span.
     ///
     /// Searches for a JSDoc comment containing @type or @satisfies that is followed
     /// by an opening parenthesis, which indicates a type cast pattern.
     pub fn get_type_cast_comment_index(&self, span: Span) -> Option<usize> {
-        self.unprinted_comments().iter().take_while(|c| c.span.end <= span.start).position(
-            |comment| {
-                self.source_text.next_non_whitespace_byte_is(comment.span.end, b'(')
-                    && self.is_type_cast_comment(comment)
-            },
-        )
+        self.unprinted_comments()
+            .iter()
+            .take_while(|c| c.span.end <= span.start)
+            .position(|comment| self.is_type_cast_comment_followed_by_paren(comment))
     }
 
     /// Checks if there is a type cast comment in the given range,
     /// searching all comments regardless of print state.
     pub fn has_type_cast_comment_in_range(&self, start: u32, end: u32) -> bool {
-        self.inner.iter().skip_while(|c| c.span.end < start).take_while(|c| c.span.end <= end).any(
-            |comment| {
-                self.source_text.next_non_whitespace_byte_is(comment.span.end, b'(')
-                    && self.is_type_cast_comment(comment)
-            },
-        )
+        self.inner
+            .iter()
+            .skip_while(|c| c.span.end < start)
+            .take_while(|c| c.span.end <= end)
+            .any(|comment| self.is_type_cast_comment_followed_by_paren(comment))
     }
 
     /// Marks the given span as a type cast node.
@@ -584,8 +588,11 @@ impl<'a> Comments<'a> {
         self.printed_count == self.last_handled_type_cast_comment
     }
 
+    /// Checks if the node is the one currently being formatted as a cast target
+    /// (the read side of [`Comments::mark_as_type_cast_node`];
+    /// not the source-based classification, see `classify_type_cast`).
     #[inline]
-    pub fn is_type_cast_node(&self, node: &impl GetSpan) -> bool {
+    pub fn is_marked_as_type_cast_node(&self, node: &impl GetSpan) -> bool {
         self.type_cast_node_span == node.span()
     }
 

@@ -11,102 +11,117 @@ use crate::{
     write,
 };
 
-/// Checks if a node is a type cast node and returns the comments to be printed.
+/// How a JSDoc type cast comment relates to a node.
 ///
-/// This function detects if a node is part of a TypeScript type cast pattern
-/// by checking for JSDoc type cast comments and proper parenthesis structure.
-///
-/// Returns:
-/// - `Some(&[])` if the node is a type cast node but no comments need to be printed
-/// - `Some(&[Comment, ...])` if the node is a type cast node with comments to print
-/// - `None` if the node is not a type cast node
-pub fn is_type_cast_node<'a>(
-    node: &impl GetSpan,
-    f: &JsFormatter<'_, 'a>,
-) -> Option<&'a [Comment]> {
-    let comments = f.context().comments();
-    let span = node.span();
-    let source = f.source_text();
+/// A cast is a `/** @type */`-like comment immediately followed by a
+/// parenthesized expression; where that parenthesis closes decides the binding.
+pub enum TypeCast<'a> {
+    /// The node itself is the cast target
+    /// (the parenthesis right after the comment closes right after the node):
+    /// ```js
+    /// /** @type {string} */ (value).length
+    ///                        ^^^^^ Target
+    /// /** @type {Document} */ (root.head ?? fallback)
+    ///                          ^^^^^^^^^^^^^^^^^^^^^ Target
+    /// ```
+    /// The slice holds the comments still to be printed;
+    /// it is empty when the cast comment was already printed
+    /// (re-entry from [`format_type_cast_comment_node`], or printed by an ancestor).
+    Target(&'a [Comment]),
+    /// The node's unprinted leading comments end with a cast comment that binds
+    /// to an inner expression (its parenthesis closes before the node ends):
+    /// ```js
+    /// /** @type {Number} */ (bar).zoo
+    ///                       ^^^^^^^^^ BindsInner (the member expression)
+    ///                       ^^^^^ the cast target is inside it
+    /// x ? y : /** @type {D} */ (a).b ?? c
+    ///                          ^^^^^^^^^^ BindsInner (the `??` expression)
+    /// ```
+    /// Formatter-added parentheses around the node must not separate the
+    /// comment from its target (see [`format_leading_comments_and_open_paren`]).
+    /// The slice holds the node's leading comments, ending with the cast comment.
+    BindsInner(&'a [Comment]),
+    /// No cast is involved with this node:
+    /// no adjacent cast comment, a cast-shaped comment without following `(`
+    /// (`/** @type {N} */ value`), or an already-printed cast settled at an
+    /// inner level (`.zoo` in the `BindsInner` example above, once the comment is printed).
+    None,
+}
 
-    // Check if there's a closing parenthesis after the node (possibly after comments)
-    if !source.next_non_whitespace_byte_is(span.end, b')') {
-        let comments_after_node = comments.comments_after(span.end);
-        let mut start = span.end;
-        // Skip comments after the node to find the next non-whitespace byte whether it's a `)`
-        for comment in comments_after_node {
-            if !source.bytes_range(start, comment.span.start).trim_ascii_start().is_empty() {
-                break;
-            }
-            start = comment.span.end;
-        }
-        // Still not a `)`, return early because it's not a type cast
-        if !source.next_non_whitespace_byte_is(start, b')') {
-            return None;
-        }
-    }
-
-    // Check for type cast comment in printed or unprinted comments
-    if !comments.is_handled_type_cast_comment()
-        && let Some(last_printed_comment) = comments.printed_comments().last()
-        && last_printed_comment.span.end <= span.start
-        && source.next_non_whitespace_byte_is(last_printed_comment.span.end, b'(')
-        && f.comments().is_type_cast_comment(last_printed_comment)
-    {
-        // Get the source text from the end of type cast comment to the node span
-        let node_source_text = source.bytes_range(last_printed_comment.span.end, span.end);
-
-        // `(/** @type {Number} */ (bar).zoo)`
-        //                         ^^^^
-        // Should wrap for `baz` rather than `baz.zoo`
-        if has_closed_parentheses(node_source_text) {
-            None
-        } else {
-            // Type cast node, but comment was already printed
-            Some(&[])
-        }
-    } else if let Some(type_cast_comment_index) = comments.get_type_cast_comment_index(span) {
-        let comments = f.context().comments().unprinted_comments();
-        let type_cast_comment = &comments[type_cast_comment_index];
-
-        // Get the source text from the end of type cast comment to the node span
-        let node_source_text = source.bytes_range(type_cast_comment.span.end, span.end);
-
-        // `(/** @type {Number} */ (bar).zoo)`
-        //                         ^^^^
-        // Should wrap for `baz` rather than `baz.zoo`
-        if has_closed_parentheses(node_source_text) {
-            None
-        } else {
-            // Type cast node with comments to print
-            Some(&comments[..=type_cast_comment_index])
-        }
-    } else {
-        // No typecast comment
-        None
+impl TypeCast<'_> {
+    pub fn is_target(&self) -> bool {
+        matches!(self, TypeCast::Target(_))
     }
 }
 
-/// Formats a node with TypeScript type cast comments if present.
+/// Classifies how a type cast comment relates to the node at `span`.
+/// This is the single source of truth for cast binding;
+/// both [`format_type_cast_comment_node`] and [`format_leading_comments_and_open_paren`] consume it.
+pub fn classify_type_cast<'a>(span: Span, f: &JsFormatter<'_, 'a>) -> TypeCast<'a> {
+    let comments = f.context().comments();
+    let source = f.source_text();
+
+    // The cast comment may already be printed:
+    // by the re-entry from `format_type_cast_comment_node`,
+    // or as the leading comment of an ancestor starting at the same position.
+    if !comments.is_handled_type_cast_comment()
+        && let Some(last_printed_comment) = comments.printed_comments().last()
+        && last_printed_comment.span.end <= span.start
+        && comments.is_type_cast_comment_followed_by_paren(last_printed_comment)
+    {
+        // Cheap gate first: a cast target must be followed by `)`.
+        // Every node formatted after a printed cast comment re-enters this branch
+        // (e.g. each member chain link), and `has_closed_parentheses` scans the source up to the node end.
+        return if !is_followed_by_closing_paren(span, f) {
+            TypeCast::None
+        } else if has_closed_parentheses(
+            source.bytes_range(last_printed_comment.span.end, span.end),
+        ) {
+            // The cast binds to an inner node; since the comment is already printed,
+            // there is nothing left to keep adjacent at this level.
+            TypeCast::None
+        } else {
+            TypeCast::Target(&[])
+        };
+    }
+
+    if let Some(type_cast_comment_index) = comments.get_type_cast_comment_index(span) {
+        let unprinted_comments = comments.unprinted_comments();
+        let type_cast_comment = &unprinted_comments[type_cast_comment_index];
+
+        return if has_closed_parentheses(source.bytes_range(type_cast_comment.span.end, span.end)) {
+            TypeCast::BindsInner(&unprinted_comments[..=type_cast_comment_index])
+        } else if is_followed_by_closing_paren(span, f) {
+            TypeCast::Target(&unprinted_comments[..=type_cast_comment_index])
+        } else {
+            TypeCast::None
+        };
+    }
+
+    TypeCast::None
+}
+
+/// Whether the next non-whitespace byte after the node (skipping comments adjacent to it) is `)`.
+/// i.e. source parentheses close right after the node, as a cast target requires.
+fn is_followed_by_closing_paren(span: Span, f: &JsFormatter<'_, '_>) -> bool {
+    f.source_text().next_non_whitespace_byte_is(span.end, b')')
+        || f.context().comments().comments_before_closing_paren(span.end).is_some()
+}
+
+/// Formats a node that is the target of a JSDoc type cast (see [`TypeCast::Target`]):
+/// prints the pending cast comments, marks the node
+/// (so `NeedsParentheses` rules skip their own parentheses), and wraps it in parentheses,
+/// like `/** @type {string} */ (value)` or `/** @type {number} */ ((expression))`.
 ///
-/// This function handles the formatting of JSDoc type cast comments that appear
-/// immediately before parenthesized expressions, creating patterns like:
-/// `(/** @type {string} */ value)` or `(/** @type {number} */ (expression))`
-///
-/// The function:
-/// 1. Checks if there's a closing parenthesis after the node (indicating a type cast)
-/// 2. Looks for associated type cast comments that precede the node
-/// 3. Wraps the node in parentheses with proper formatting and indentation
-/// 4. Handles both object/array expressions and other expression types differently
-///
-/// Returns `Ok(true)` if the node was formatted as a type cast, `Ok(false)` otherwise.
-/// This allows callers to know whether they need to apply their own formatting.
+/// Returns `true` if the node was formatted as a cast target, `false` otherwise;
+/// callers apply their own formatting on `false`.
 pub fn format_type_cast_comment_node<'a>(
     node: &(impl Format<'a, JsFormatContext<'a>> + GetSpan),
     is_object_or_array_expression: bool,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
-    // Check if this is a type cast node and get the comments to print
-    let Some(type_cast_comments) = is_type_cast_node(node, f) else {
+    // Check if this node is a cast target and get the comments to print
+    let TypeCast::Target(type_cast_comments) = classify_type_cast(node.span(), f) else {
         return false;
     };
 
@@ -131,43 +146,42 @@ pub fn format_type_cast_comment_node<'a>(
 /// Prints a node's leading comments and the formatter-added `(` in the correct order.
 /// The caller prints the matching `)` when `needs_parentheses` is true.
 ///
-/// When the leading comments end with a type cast comment whose cast binds to an
-/// inner expression (the `(` right after the comment closes before the end of the
-/// node; a cast applying to the node itself is already handled by
-/// [`format_type_cast_comment_node`]), printing the comments first would insert
-/// the added `(` between the comment and its cast target, rebinding the cast and
-/// changing the type semantics:
-/// `x ? y : /** @type {D} */ (a).b ?? c`
-/// must become `x ? y : (/** @type {D} */ (a).b ?? c)`,
-/// not `x ? y : /** @type {D} */ ((a).b ?? c)`.
-/// In that case the comments are printed inside the added parenthesis.
+/// When the leading comments end with a cast comment binding into the node (see [`TypeCast::BindsInner`]),
+/// printing them all first would insert the added `(` between the comment and its cast target,
+/// rebinding the cast and changing the type semantics:
+/// ```js
+/// x ? y : /** @type {D} */ (a).b ?? c
+/// ```
+/// must become:
+/// ```js
+/// x ? y : (/** @type {D} */ (a).b ?? c)
+/// ```
+/// Not
+/// ```js
+/// x ? y : /** @type {D} */ ((a).b ?? c)
+/// ```
+/// So the cast comment is printed inside the added parenthesis.
 pub fn format_leading_comments_and_open_paren(
     span: Span,
     needs_parentheses: bool,
     f: &mut JsFormatter<'_, '_>,
 ) {
     if needs_parentheses {
-        let comments = f.context().comments().comments_before(span.start);
-        if let Some(last) = comments.last() {
-            let source = f.source_text();
-            if source.next_non_whitespace_byte_is(last.span.end, b'(')
-                && f.comments().is_type_cast_comment(last)
-                && has_closed_parentheses(source.bytes_range(last.span.end, span.end))
-            {
-                // Only the cast comment moves inside; earlier comments stay outside.
-                let split = comments.len() - 1;
-                write!(
-                    f,
-                    [
-                        FormatLeadingComments::Comments(&comments[..split]),
-                        "(",
-                        FormatLeadingComments::Comments(&comments[split..])
-                    ]
-                );
-                return;
-            }
+        if let TypeCast::BindsInner(comments) = classify_type_cast(span, f)
+            && let Some((cast_comment, rest)) = comments.split_last()
+        {
+            // Only the cast comment moves inside; earlier comments stay outside.
+            write!(
+                f,
+                [
+                    FormatLeadingComments::Comments(rest),
+                    "(",
+                    FormatLeadingComments::Comments(std::slice::from_ref(cast_comment))
+                ]
+            );
+        } else {
+            write!(f, [format_leading_comments(span), "("]);
         }
-        write!(f, [format_leading_comments(span), "("]);
     } else {
         write!(f, format_leading_comments(span));
     }
@@ -175,6 +189,19 @@ pub fn format_leading_comments_and_open_paren(
 
 /// Check if the source text has properly closed parentheses starting with '('.
 /// Returns true if the text starts with '(' and all parentheses are balanced.
+///
+/// NOTE: This lexical scan skips strings and comments but NOT regex literals,
+/// so a `)` byte inside a regex (`/\)/`, `/[)]/`) is miscounted as a closing parenthesis
+/// and the cast target is misidentified:
+/// `/** @type {D} */ (s.replace(/\)/g, ""))` loses its cast parentheses.
+///
+/// This interior scan can be replaced by a span-based check with
+/// no scanning of expression bytes at all: even with `preserve_parens: false`,
+/// the parser excludes a node's own wrapping parentheses from its span
+/// but includes a leftmost descendant's parentheses (`(a).b ?? c` spans from `(`).
+/// So: span starts at the `(` right after the cast comment → the cast binds inner;
+/// the gap between the comment and span start holds only `(`s/trivia (and the node is followed by `)`)
+/// → the node is the cast target.
 fn has_closed_parentheses(source: &[u8]) -> bool {
     let mut paren_count = 0i32;
     let mut i = 0;

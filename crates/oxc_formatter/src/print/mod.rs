@@ -79,7 +79,7 @@ use crate::{
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         suppressed::FormatSuppressedNode,
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
-        typecast::is_type_cast_node,
+        typecast::classify_type_cast,
     },
     write,
 };
@@ -543,7 +543,7 @@ fn expression_statement_needs_semicolon<'a>(
                 // so the line starts with `(` even though `needs_parentheses` is false:
                 // `/** @type {string} */ (this.s).length`
                 // Checked last: this scans source text/comments, unlike the checks above.
-                || is_type_cast_node(expr, f).is_some()
+                || classify_type_cast(expr.span(), f).is_target()
         }
         ExpressionLeftSide::AssignmentTarget(assignment) => {
             matches!(
