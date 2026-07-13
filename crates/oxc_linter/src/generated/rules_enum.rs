@@ -438,6 +438,7 @@ pub use crate::rules::react::jsx_max_depth::JsxMaxDepth as ReactJsxMaxDepth;
 pub use crate::rules::react::jsx_no_comment_textnodes::JsxNoCommentTextnodes as ReactJsxNoCommentTextnodes;
 pub use crate::rules::react::jsx_no_constructed_context_values::JsxNoConstructedContextValues as ReactJsxNoConstructedContextValues;
 pub use crate::rules::react::jsx_no_duplicate_props::JsxNoDuplicateProps as ReactJsxNoDuplicateProps;
+pub use crate::rules::react::jsx_no_leaked_render::JsxNoLeakedRender as ReactJsxNoLeakedRender;
 pub use crate::rules::react::jsx_no_literals::JsxNoLiterals as ReactJsxNoLiterals;
 pub use crate::rules::react::jsx_no_script_url::JsxNoScriptUrl as ReactJsxNoScriptUrl;
 pub use crate::rules::react::jsx_no_target_blank::JsxNoTargetBlank as ReactJsxNoTargetBlank;
@@ -1271,6 +1272,7 @@ pub enum RuleEnum {
     ReactJsxNoCommentTextnodes(ReactJsxNoCommentTextnodes),
     ReactJsxNoConstructedContextValues(ReactJsxNoConstructedContextValues),
     ReactJsxNoDuplicateProps(ReactJsxNoDuplicateProps),
+    ReactJsxNoLeakedRender(ReactJsxNoLeakedRender),
     ReactJsxNoLiterals(ReactJsxNoLiterals),
     ReactJsxNoScriptUrl(ReactJsxNoScriptUrl),
     ReactJsxNoTargetBlank(ReactJsxNoTargetBlank),
@@ -2168,7 +2170,8 @@ const REACT_JSX_NO_COMMENT_TEXTNODES_ID: usize = REACT_JSX_MAX_DEPTH_ID + 1usize
 const REACT_JSX_NO_CONSTRUCTED_CONTEXT_VALUES_ID: usize =
     REACT_JSX_NO_COMMENT_TEXTNODES_ID + 1usize;
 const REACT_JSX_NO_DUPLICATE_PROPS_ID: usize = REACT_JSX_NO_CONSTRUCTED_CONTEXT_VALUES_ID + 1usize;
-const REACT_JSX_NO_LITERALS_ID: usize = REACT_JSX_NO_DUPLICATE_PROPS_ID + 1usize;
+const REACT_JSX_NO_LEAKED_RENDER_ID: usize = REACT_JSX_NO_DUPLICATE_PROPS_ID + 1usize;
+const REACT_JSX_NO_LITERALS_ID: usize = REACT_JSX_NO_LEAKED_RENDER_ID + 1usize;
 const REACT_JSX_NO_SCRIPT_URL_ID: usize = REACT_JSX_NO_LITERALS_ID + 1usize;
 const REACT_JSX_NO_TARGET_BLANK_ID: usize = REACT_JSX_NO_SCRIPT_URL_ID + 1usize;
 const REACT_JSX_NO_UNDEF_ID: usize = REACT_JSX_NO_TARGET_BLANK_ID + 1usize;
@@ -3145,6 +3148,7 @@ impl RuleEnum {
                 REACT_JSX_NO_CONSTRUCTED_CONTEXT_VALUES_ID
             }
             Self::ReactJsxNoDuplicateProps(_) => REACT_JSX_NO_DUPLICATE_PROPS_ID,
+            Self::ReactJsxNoLeakedRender(_) => REACT_JSX_NO_LEAKED_RENDER_ID,
             Self::ReactJsxNoLiterals(_) => REACT_JSX_NO_LITERALS_ID,
             Self::ReactJsxNoScriptUrl(_) => REACT_JSX_NO_SCRIPT_URL_ID,
             Self::ReactJsxNoTargetBlank(_) => REACT_JSX_NO_TARGET_BLANK_ID,
@@ -4114,6 +4118,7 @@ impl RuleEnum {
             Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::NAME,
             Self::ReactJsxNoConstructedContextValues(_) => ReactJsxNoConstructedContextValues::NAME,
             Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::NAME,
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::NAME,
             Self::ReactJsxNoLiterals(_) => ReactJsxNoLiterals::NAME,
             Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::NAME,
             Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::NAME,
@@ -5099,6 +5104,7 @@ impl RuleEnum {
                 ReactJsxNoConstructedContextValues::CATEGORY
             }
             Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::CATEGORY,
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::CATEGORY,
             Self::ReactJsxNoLiterals(_) => ReactJsxNoLiterals::CATEGORY,
             Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::CATEGORY,
             Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::CATEGORY,
@@ -6091,6 +6097,7 @@ impl RuleEnum {
             Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::FIX,
             Self::ReactJsxNoConstructedContextValues(_) => ReactJsxNoConstructedContextValues::FIX,
             Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::FIX,
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::FIX,
             Self::ReactJsxNoLiterals(_) => ReactJsxNoLiterals::FIX,
             Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::FIX,
             Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::FIX,
@@ -7159,6 +7166,7 @@ impl RuleEnum {
                 ReactJsxNoConstructedContextValues::documentation()
             }
             Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::documentation(),
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::documentation(),
             Self::ReactJsxNoLiterals(_) => ReactJsxNoLiterals::documentation(),
             Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::documentation(),
             Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::documentation(),
@@ -8962,6 +8970,8 @@ impl RuleEnum {
             }
             Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::config_schema(generator)
                 .or_else(|| ReactJsxNoDuplicateProps::schema(generator)),
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::config_schema(generator)
+                .or_else(|| ReactJsxNoLeakedRender::schema(generator)),
             Self::ReactJsxNoLiterals(_) => ReactJsxNoLiterals::config_schema(generator)
                 .or_else(|| ReactJsxNoLiterals::schema(generator)),
             Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::config_schema(generator)
@@ -10629,6 +10639,7 @@ impl RuleEnum {
             Self::ReactJsxNoCommentTextnodes(_) => "react",
             Self::ReactJsxNoConstructedContextValues(_) => "react",
             Self::ReactJsxNoDuplicateProps(_) => "react",
+            Self::ReactJsxNoLeakedRender(_) => "react",
             Self::ReactJsxNoLiterals(_) => "react",
             Self::ReactJsxNoScriptUrl(_) => "react",
             Self::ReactJsxNoTargetBlank(_) => "react",
@@ -12383,6 +12394,9 @@ impl RuleEnum {
             Self::ReactJsxNoDuplicateProps(_) => Ok(Self::ReactJsxNoDuplicateProps(
                 ReactJsxNoDuplicateProps::from_configuration(value)?,
             )),
+            Self::ReactJsxNoLeakedRender(_) => {
+                Ok(Self::ReactJsxNoLeakedRender(ReactJsxNoLeakedRender::from_configuration(value)?))
+            }
             Self::ReactJsxNoLiterals(_) => {
                 Ok(Self::ReactJsxNoLiterals(ReactJsxNoLiterals::from_configuration(value)?))
             }
@@ -14190,6 +14204,7 @@ impl RuleEnum {
             Self::ReactJsxNoCommentTextnodes(rule) => rule.to_configuration(),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.to_configuration(),
             Self::ReactJsxNoDuplicateProps(rule) => rule.to_configuration(),
+            Self::ReactJsxNoLeakedRender(rule) => rule.to_configuration(),
             Self::ReactJsxNoLiterals(rule) => rule.to_configuration(),
             Self::ReactJsxNoScriptUrl(rule) => rule.to_configuration(),
             Self::ReactJsxNoTargetBlank(rule) => rule.to_configuration(),
@@ -15038,6 +15053,7 @@ impl RuleEnum {
             Self::ReactJsxNoCommentTextnodes(rule) => rule.run(node, ctx),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.run(node, ctx),
             Self::ReactJsxNoDuplicateProps(rule) => rule.run(node, ctx),
+            Self::ReactJsxNoLeakedRender(rule) => rule.run(node, ctx),
             Self::ReactJsxNoLiterals(rule) => rule.run(node, ctx),
             Self::ReactJsxNoScriptUrl(rule) => rule.run(node, ctx),
             Self::ReactJsxNoTargetBlank(rule) => rule.run(node, ctx),
@@ -15896,6 +15912,7 @@ impl RuleEnum {
             Self::ReactJsxNoCommentTextnodes(rule) => rule.run_once(ctx),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.run_once(ctx),
             Self::ReactJsxNoDuplicateProps(rule) => rule.run_once(ctx),
+            Self::ReactJsxNoLeakedRender(rule) => rule.run_once(ctx),
             Self::ReactJsxNoLiterals(rule) => rule.run_once(ctx),
             Self::ReactJsxNoScriptUrl(rule) => rule.run_once(ctx),
             Self::ReactJsxNoTargetBlank(rule) => rule.run_once(ctx),
@@ -16825,6 +16842,7 @@ impl RuleEnum {
             Self::ReactJsxNoCommentTextnodes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxNoDuplicateProps(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactJsxNoLeakedRender(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxNoLiterals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxNoScriptUrl(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxNoTargetBlank(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17730,6 +17748,7 @@ impl RuleEnum {
             Self::ReactJsxNoCommentTextnodes(rule) => rule.should_run(ctx),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.should_run(ctx),
             Self::ReactJsxNoDuplicateProps(rule) => rule.should_run(ctx),
+            Self::ReactJsxNoLeakedRender(rule) => rule.should_run(ctx),
             Self::ReactJsxNoLiterals(rule) => rule.should_run(ctx),
             Self::ReactJsxNoScriptUrl(rule) => rule.should_run(ctx),
             Self::ReactJsxNoTargetBlank(rule) => rule.should_run(ctx),
@@ -18751,6 +18770,7 @@ impl RuleEnum {
                 ReactJsxNoConstructedContextValues::IS_TSGOLINT_RULE
             }
             Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::IS_TSGOLINT_RULE,
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::IS_TSGOLINT_RULE,
             Self::ReactJsxNoLiterals(_) => ReactJsxNoLiterals::IS_TSGOLINT_RULE,
             Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::IS_TSGOLINT_RULE,
             Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::IS_TSGOLINT_RULE,
@@ -19894,6 +19914,7 @@ impl RuleEnum {
                 ReactJsxNoConstructedContextValues::VERSION
             }
             Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::VERSION,
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::VERSION,
             Self::ReactJsxNoLiterals(_) => ReactJsxNoLiterals::VERSION,
             Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::VERSION,
             Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::VERSION,
@@ -20928,6 +20949,7 @@ impl RuleEnum {
                 ReactJsxNoConstructedContextValues::HAS_CONFIG
             }
             Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::HAS_CONFIG,
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::HAS_CONFIG,
             Self::ReactJsxNoLiterals(_) => ReactJsxNoLiterals::HAS_CONFIG,
             Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::HAS_CONFIG,
             Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::HAS_CONFIG,
@@ -21943,6 +21965,7 @@ impl RuleEnum {
             Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::INFO,
             Self::ReactJsxNoConstructedContextValues(_) => ReactJsxNoConstructedContextValues::INFO,
             Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::INFO,
+            Self::ReactJsxNoLeakedRender(_) => ReactJsxNoLeakedRender::INFO,
             Self::ReactJsxNoLiterals(_) => ReactJsxNoLiterals::INFO,
             Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::INFO,
             Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::INFO,
@@ -22839,6 +22862,7 @@ impl RuleEnum {
             Self::ReactJsxNoCommentTextnodes(rule) => rule.types_info(),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.types_info(),
             Self::ReactJsxNoDuplicateProps(rule) => rule.types_info(),
+            Self::ReactJsxNoLeakedRender(rule) => rule.types_info(),
             Self::ReactJsxNoLiterals(rule) => rule.types_info(),
             Self::ReactJsxNoScriptUrl(rule) => rule.types_info(),
             Self::ReactJsxNoTargetBlank(rule) => rule.types_info(),
@@ -23684,6 +23708,7 @@ impl RuleEnum {
             Self::ReactJsxNoCommentTextnodes(rule) => rule.run_info(),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.run_info(),
             Self::ReactJsxNoDuplicateProps(rule) => rule.run_info(),
+            Self::ReactJsxNoLeakedRender(rule) => rule.run_info(),
             Self::ReactJsxNoLiterals(rule) => rule.run_info(),
             Self::ReactJsxNoScriptUrl(rule) => rule.run_info(),
             Self::ReactJsxNoTargetBlank(rule) => rule.run_info(),
@@ -24619,6 +24644,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactJsxNoCommentTextnodes(ReactJsxNoCommentTextnodes::default()),
         RuleEnum::ReactJsxNoConstructedContextValues(ReactJsxNoConstructedContextValues::default()),
         RuleEnum::ReactJsxNoDuplicateProps(ReactJsxNoDuplicateProps::default()),
+        RuleEnum::ReactJsxNoLeakedRender(ReactJsxNoLeakedRender::default()),
         RuleEnum::ReactJsxNoLiterals(ReactJsxNoLiterals::default()),
         RuleEnum::ReactJsxNoScriptUrl(ReactJsxNoScriptUrl::default()),
         RuleEnum::ReactJsxNoTargetBlank(ReactJsxNoTargetBlank::default()),
