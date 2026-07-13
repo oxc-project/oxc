@@ -150,14 +150,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for Expression<'_> {
             Self::V8IntrinsicExpression(it) => {
                 Expression::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
             }
-            Self::ComputedMemberExpression(it) => {
-                Expression::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticMemberExpression(it) => {
-                Expression::StaticMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                Expression::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => {
+                Expression::from(CloneIn::clone_in(self.to_member_expression(), allocator))
             }
         }
     }
@@ -284,14 +280,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for Expression<'_> {
             Self::V8IntrinsicExpression(it) => Expression::V8IntrinsicExpression(
                 CloneIn::clone_in_with_semantic_ids(it, allocator),
             ),
-            Self::ComputedMemberExpression(it) => Expression::ComputedMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::StaticMemberExpression(it) => Expression::StaticMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::PrivateFieldExpression(it) => Expression::PrivateFieldExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => Expression::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_member_expression(), allocator),
             ),
         }
     }
@@ -428,132 +420,50 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrayExpressionElement<'_> {
                 ArrayExpressionElement::SpreadElement(CloneIn::clone_in(it, allocator))
             }
             Self::Elision(it) => ArrayExpressionElement::Elision(CloneIn::clone_in(it, allocator)),
-            Self::BooleanLiteral(it) => {
-                ArrayExpressionElement::BooleanLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::NullLiteral(it) => {
-                ArrayExpressionElement::NullLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::NumericLiteral(it) => {
-                ArrayExpressionElement::NumericLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::BigIntLiteral(it) => {
-                ArrayExpressionElement::BigIntLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::RegExpLiteral(it) => {
-                ArrayExpressionElement::RegExpLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::StringLiteral(it) => {
-                ArrayExpressionElement::StringLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::TemplateLiteral(it) => {
-                ArrayExpressionElement::TemplateLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::Identifier(it) => {
-                ArrayExpressionElement::Identifier(CloneIn::clone_in(it, allocator))
-            }
-            Self::MetaProperty(it) => {
-                ArrayExpressionElement::MetaProperty(CloneIn::clone_in(it, allocator))
-            }
-            Self::Super(it) => ArrayExpressionElement::Super(CloneIn::clone_in(it, allocator)),
-            Self::ArrayExpression(it) => {
-                ArrayExpressionElement::ArrayExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ArrowFunctionExpression(it) => {
-                ArrayExpressionElement::ArrowFunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AssignmentExpression(it) => {
-                ArrayExpressionElement::AssignmentExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AwaitExpression(it) => {
-                ArrayExpressionElement::AwaitExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::BinaryExpression(it) => {
-                ArrayExpressionElement::BinaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::CallExpression(it) => {
-                ArrayExpressionElement::CallExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ChainExpression(it) => {
-                ArrayExpressionElement::ChainExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ClassExpression(it) => {
-                ArrayExpressionElement::ClassExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ConditionalExpression(it) => {
-                ArrayExpressionElement::ConditionalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::FunctionExpression(it) => {
-                ArrayExpressionElement::FunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ImportExpression(it) => {
-                ArrayExpressionElement::ImportExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::LogicalExpression(it) => {
-                ArrayExpressionElement::LogicalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::NewExpression(it) => {
-                ArrayExpressionElement::NewExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ObjectExpression(it) => {
-                ArrayExpressionElement::ObjectExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ParenthesizedExpression(it) => {
-                ArrayExpressionElement::ParenthesizedExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::SequenceExpression(it) => {
-                ArrayExpressionElement::SequenceExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TaggedTemplateExpression(it) => {
-                ArrayExpressionElement::TaggedTemplateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ThisExpression(it) => {
-                ArrayExpressionElement::ThisExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UnaryExpression(it) => {
-                ArrayExpressionElement::UnaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UpdateExpression(it) => {
-                ArrayExpressionElement::UpdateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::YieldExpression(it) => {
-                ArrayExpressionElement::YieldExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateInExpression(it) => {
-                ArrayExpressionElement::PrivateInExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSXElement(it) => {
-                ArrayExpressionElement::JSXElement(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSXFragment(it) => {
-                ArrayExpressionElement::JSXFragment(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSAsExpression(it) => {
-                ArrayExpressionElement::TSAsExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => {
-                ArrayExpressionElement::TSSatisfiesExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeAssertion(it) => {
-                ArrayExpressionElement::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                ArrayExpressionElement::TSNonNullExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                ArrayExpressionElement::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::V8IntrinsicExpression(it) => {
-                ArrayExpressionElement::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ComputedMemberExpression(it) => {
-                ArrayExpressionElement::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticMemberExpression(it) => {
-                ArrayExpressionElement::StaticMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                ArrayExpressionElement::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => {
+                ArrayExpressionElement::from(CloneIn::clone_in(self.to_expression(), allocator))
             }
         }
     }
@@ -566,136 +476,50 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrayExpressionElement<'_> {
             Self::Elision(it) => {
                 ArrayExpressionElement::Elision(CloneIn::clone_in_with_semantic_ids(it, allocator))
             }
-            Self::BooleanLiteral(it) => ArrayExpressionElement::BooleanLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::NullLiteral(it) => ArrayExpressionElement::NullLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::NumericLiteral(it) => ArrayExpressionElement::NumericLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::BigIntLiteral(it) => ArrayExpressionElement::BigIntLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::RegExpLiteral(it) => ArrayExpressionElement::RegExpLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::StringLiteral(it) => ArrayExpressionElement::StringLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TemplateLiteral(it) => ArrayExpressionElement::TemplateLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::Identifier(it) => ArrayExpressionElement::Identifier(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::MetaProperty(it) => ArrayExpressionElement::MetaProperty(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::Super(it) => {
-                ArrayExpressionElement::Super(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ArrayExpression(it) => ArrayExpressionElement::ArrayExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ArrowFunctionExpression(it) => ArrayExpressionElement::ArrowFunctionExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::AssignmentExpression(it) => ArrayExpressionElement::AssignmentExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::AwaitExpression(it) => ArrayExpressionElement::AwaitExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::BinaryExpression(it) => ArrayExpressionElement::BinaryExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::CallExpression(it) => ArrayExpressionElement::CallExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ChainExpression(it) => ArrayExpressionElement::ChainExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ClassExpression(it) => ArrayExpressionElement::ClassExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ConditionalExpression(it) => ArrayExpressionElement::ConditionalExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::FunctionExpression(it) => ArrayExpressionElement::FunctionExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ImportExpression(it) => ArrayExpressionElement::ImportExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::LogicalExpression(it) => ArrayExpressionElement::LogicalExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::NewExpression(it) => ArrayExpressionElement::NewExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ObjectExpression(it) => ArrayExpressionElement::ObjectExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ParenthesizedExpression(it) => ArrayExpressionElement::ParenthesizedExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::SequenceExpression(it) => ArrayExpressionElement::SequenceExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TaggedTemplateExpression(it) => ArrayExpressionElement::TaggedTemplateExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ThisExpression(it) => ArrayExpressionElement::ThisExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::UnaryExpression(it) => ArrayExpressionElement::UnaryExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::UpdateExpression(it) => ArrayExpressionElement::UpdateExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::YieldExpression(it) => ArrayExpressionElement::YieldExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::PrivateInExpression(it) => ArrayExpressionElement::PrivateInExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::JSXElement(it) => ArrayExpressionElement::JSXElement(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::JSXFragment(it) => ArrayExpressionElement::JSXFragment(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSAsExpression(it) => ArrayExpressionElement::TSAsExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSSatisfiesExpression(it) => ArrayExpressionElement::TSSatisfiesExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSTypeAssertion(it) => ArrayExpressionElement::TSTypeAssertion(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSNonNullExpression(it) => ArrayExpressionElement::TSNonNullExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSInstantiationExpression(it) => {
-                ArrayExpressionElement::TSInstantiationExpression(
-                    CloneIn::clone_in_with_semantic_ids(it, allocator),
-                )
-            }
-            Self::V8IntrinsicExpression(it) => ArrayExpressionElement::V8IntrinsicExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ComputedMemberExpression(it) => ArrayExpressionElement::ComputedMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::StaticMemberExpression(it) => ArrayExpressionElement::StaticMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::PrivateFieldExpression(it) => ArrayExpressionElement::PrivateFieldExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => ArrayExpressionElement::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_expression(), allocator),
             ),
         }
     }
@@ -803,114 +627,50 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
             Self::PrivateIdentifier(it) => {
                 PropertyKey::PrivateIdentifier(CloneIn::clone_in(it, allocator))
             }
-            Self::BooleanLiteral(it) => {
-                PropertyKey::BooleanLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::NullLiteral(it) => PropertyKey::NullLiteral(CloneIn::clone_in(it, allocator)),
-            Self::NumericLiteral(it) => {
-                PropertyKey::NumericLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::BigIntLiteral(it) => PropertyKey::BigIntLiteral(CloneIn::clone_in(it, allocator)),
-            Self::RegExpLiteral(it) => PropertyKey::RegExpLiteral(CloneIn::clone_in(it, allocator)),
-            Self::StringLiteral(it) => PropertyKey::StringLiteral(CloneIn::clone_in(it, allocator)),
-            Self::TemplateLiteral(it) => {
-                PropertyKey::TemplateLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::Identifier(it) => PropertyKey::Identifier(CloneIn::clone_in(it, allocator)),
-            Self::MetaProperty(it) => PropertyKey::MetaProperty(CloneIn::clone_in(it, allocator)),
-            Self::Super(it) => PropertyKey::Super(CloneIn::clone_in(it, allocator)),
-            Self::ArrayExpression(it) => {
-                PropertyKey::ArrayExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ArrowFunctionExpression(it) => {
-                PropertyKey::ArrowFunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AssignmentExpression(it) => {
-                PropertyKey::AssignmentExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AwaitExpression(it) => {
-                PropertyKey::AwaitExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::BinaryExpression(it) => {
-                PropertyKey::BinaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::CallExpression(it) => {
-                PropertyKey::CallExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ChainExpression(it) => {
-                PropertyKey::ChainExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ClassExpression(it) => {
-                PropertyKey::ClassExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ConditionalExpression(it) => {
-                PropertyKey::ConditionalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::FunctionExpression(it) => {
-                PropertyKey::FunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ImportExpression(it) => {
-                PropertyKey::ImportExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::LogicalExpression(it) => {
-                PropertyKey::LogicalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::NewExpression(it) => PropertyKey::NewExpression(CloneIn::clone_in(it, allocator)),
-            Self::ObjectExpression(it) => {
-                PropertyKey::ObjectExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ParenthesizedExpression(it) => {
-                PropertyKey::ParenthesizedExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::SequenceExpression(it) => {
-                PropertyKey::SequenceExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TaggedTemplateExpression(it) => {
-                PropertyKey::TaggedTemplateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ThisExpression(it) => {
-                PropertyKey::ThisExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UnaryExpression(it) => {
-                PropertyKey::UnaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UpdateExpression(it) => {
-                PropertyKey::UpdateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::YieldExpression(it) => {
-                PropertyKey::YieldExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateInExpression(it) => {
-                PropertyKey::PrivateInExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSXElement(it) => PropertyKey::JSXElement(CloneIn::clone_in(it, allocator)),
-            Self::JSXFragment(it) => PropertyKey::JSXFragment(CloneIn::clone_in(it, allocator)),
-            Self::TSAsExpression(it) => {
-                PropertyKey::TSAsExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => {
-                PropertyKey::TSSatisfiesExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeAssertion(it) => {
-                PropertyKey::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                PropertyKey::TSNonNullExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                PropertyKey::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::V8IntrinsicExpression(it) => {
-                PropertyKey::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ComputedMemberExpression(it) => {
-                PropertyKey::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticMemberExpression(it) => {
-                PropertyKey::StaticMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                PropertyKey::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => {
+                PropertyKey::from(CloneIn::clone_in(self.to_expression(), allocator))
             }
         }
     }
@@ -923,134 +683,50 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
             Self::PrivateIdentifier(it) => {
                 PropertyKey::PrivateIdentifier(CloneIn::clone_in_with_semantic_ids(it, allocator))
             }
-            Self::BooleanLiteral(it) => {
-                PropertyKey::BooleanLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NullLiteral(it) => {
-                PropertyKey::NullLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NumericLiteral(it) => {
-                PropertyKey::NumericLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::BigIntLiteral(it) => {
-                PropertyKey::BigIntLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::RegExpLiteral(it) => {
-                PropertyKey::RegExpLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::StringLiteral(it) => {
-                PropertyKey::StringLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TemplateLiteral(it) => {
-                PropertyKey::TemplateLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::Identifier(it) => {
-                PropertyKey::Identifier(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::MetaProperty(it) => {
-                PropertyKey::MetaProperty(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::Super(it) => {
-                PropertyKey::Super(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ArrayExpression(it) => {
-                PropertyKey::ArrayExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ArrowFunctionExpression(it) => PropertyKey::ArrowFunctionExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::AssignmentExpression(it) => PropertyKey::AssignmentExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::AwaitExpression(it) => {
-                PropertyKey::AwaitExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::BinaryExpression(it) => {
-                PropertyKey::BinaryExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::CallExpression(it) => {
-                PropertyKey::CallExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ChainExpression(it) => {
-                PropertyKey::ChainExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ClassExpression(it) => {
-                PropertyKey::ClassExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ConditionalExpression(it) => PropertyKey::ConditionalExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::FunctionExpression(it) => {
-                PropertyKey::FunctionExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ImportExpression(it) => {
-                PropertyKey::ImportExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::LogicalExpression(it) => {
-                PropertyKey::LogicalExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NewExpression(it) => {
-                PropertyKey::NewExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ObjectExpression(it) => {
-                PropertyKey::ObjectExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ParenthesizedExpression(it) => PropertyKey::ParenthesizedExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::SequenceExpression(it) => {
-                PropertyKey::SequenceExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TaggedTemplateExpression(it) => PropertyKey::TaggedTemplateExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ThisExpression(it) => {
-                PropertyKey::ThisExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::UnaryExpression(it) => {
-                PropertyKey::UnaryExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::UpdateExpression(it) => {
-                PropertyKey::UpdateExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::YieldExpression(it) => {
-                PropertyKey::YieldExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::PrivateInExpression(it) => {
-                PropertyKey::PrivateInExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::JSXElement(it) => {
-                PropertyKey::JSXElement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::JSXFragment(it) => {
-                PropertyKey::JSXFragment(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSAsExpression(it) => {
-                PropertyKey::TSAsExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => PropertyKey::TSSatisfiesExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSTypeAssertion(it) => {
-                PropertyKey::TSTypeAssertion(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                PropertyKey::TSNonNullExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => PropertyKey::TSInstantiationExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::V8IntrinsicExpression(it) => PropertyKey::V8IntrinsicExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ComputedMemberExpression(it) => PropertyKey::ComputedMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::StaticMemberExpression(it) => PropertyKey::StaticMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::PrivateFieldExpression(it) => PropertyKey::PrivateFieldExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => PropertyKey::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_expression(), allocator),
             ),
         }
     }
@@ -1364,104 +1040,50 @@ impl<'new_alloc> CloneIn<'new_alloc> for Argument<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::SpreadElement(it) => Argument::SpreadElement(CloneIn::clone_in(it, allocator)),
-            Self::BooleanLiteral(it) => Argument::BooleanLiteral(CloneIn::clone_in(it, allocator)),
-            Self::NullLiteral(it) => Argument::NullLiteral(CloneIn::clone_in(it, allocator)),
-            Self::NumericLiteral(it) => Argument::NumericLiteral(CloneIn::clone_in(it, allocator)),
-            Self::BigIntLiteral(it) => Argument::BigIntLiteral(CloneIn::clone_in(it, allocator)),
-            Self::RegExpLiteral(it) => Argument::RegExpLiteral(CloneIn::clone_in(it, allocator)),
-            Self::StringLiteral(it) => Argument::StringLiteral(CloneIn::clone_in(it, allocator)),
-            Self::TemplateLiteral(it) => {
-                Argument::TemplateLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::Identifier(it) => Argument::Identifier(CloneIn::clone_in(it, allocator)),
-            Self::MetaProperty(it) => Argument::MetaProperty(CloneIn::clone_in(it, allocator)),
-            Self::Super(it) => Argument::Super(CloneIn::clone_in(it, allocator)),
-            Self::ArrayExpression(it) => {
-                Argument::ArrayExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ArrowFunctionExpression(it) => {
-                Argument::ArrowFunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AssignmentExpression(it) => {
-                Argument::AssignmentExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AwaitExpression(it) => {
-                Argument::AwaitExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::BinaryExpression(it) => {
-                Argument::BinaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::CallExpression(it) => Argument::CallExpression(CloneIn::clone_in(it, allocator)),
-            Self::ChainExpression(it) => {
-                Argument::ChainExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ClassExpression(it) => {
-                Argument::ClassExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ConditionalExpression(it) => {
-                Argument::ConditionalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::FunctionExpression(it) => {
-                Argument::FunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ImportExpression(it) => {
-                Argument::ImportExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::LogicalExpression(it) => {
-                Argument::LogicalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::NewExpression(it) => Argument::NewExpression(CloneIn::clone_in(it, allocator)),
-            Self::ObjectExpression(it) => {
-                Argument::ObjectExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ParenthesizedExpression(it) => {
-                Argument::ParenthesizedExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::SequenceExpression(it) => {
-                Argument::SequenceExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TaggedTemplateExpression(it) => {
-                Argument::TaggedTemplateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ThisExpression(it) => Argument::ThisExpression(CloneIn::clone_in(it, allocator)),
-            Self::UnaryExpression(it) => {
-                Argument::UnaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UpdateExpression(it) => {
-                Argument::UpdateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::YieldExpression(it) => {
-                Argument::YieldExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateInExpression(it) => {
-                Argument::PrivateInExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSXElement(it) => Argument::JSXElement(CloneIn::clone_in(it, allocator)),
-            Self::JSXFragment(it) => Argument::JSXFragment(CloneIn::clone_in(it, allocator)),
-            Self::TSAsExpression(it) => Argument::TSAsExpression(CloneIn::clone_in(it, allocator)),
-            Self::TSSatisfiesExpression(it) => {
-                Argument::TSSatisfiesExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeAssertion(it) => {
-                Argument::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                Argument::TSNonNullExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                Argument::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::V8IntrinsicExpression(it) => {
-                Argument::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ComputedMemberExpression(it) => {
-                Argument::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticMemberExpression(it) => {
-                Argument::StaticMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                Argument::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => {
+                Argument::from(CloneIn::clone_in(self.to_expression(), allocator))
             }
         }
     }
@@ -1471,132 +1093,50 @@ impl<'new_alloc> CloneIn<'new_alloc> for Argument<'_> {
             Self::SpreadElement(it) => {
                 Argument::SpreadElement(CloneIn::clone_in_with_semantic_ids(it, allocator))
             }
-            Self::BooleanLiteral(it) => {
-                Argument::BooleanLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NullLiteral(it) => {
-                Argument::NullLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NumericLiteral(it) => {
-                Argument::NumericLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::BigIntLiteral(it) => {
-                Argument::BigIntLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::RegExpLiteral(it) => {
-                Argument::RegExpLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::StringLiteral(it) => {
-                Argument::StringLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TemplateLiteral(it) => {
-                Argument::TemplateLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::Identifier(it) => {
-                Argument::Identifier(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::MetaProperty(it) => {
-                Argument::MetaProperty(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::Super(it) => Argument::Super(CloneIn::clone_in_with_semantic_ids(it, allocator)),
-            Self::ArrayExpression(it) => {
-                Argument::ArrayExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ArrowFunctionExpression(it) => Argument::ArrowFunctionExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::AssignmentExpression(it) => {
-                Argument::AssignmentExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::AwaitExpression(it) => {
-                Argument::AwaitExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::BinaryExpression(it) => {
-                Argument::BinaryExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::CallExpression(it) => {
-                Argument::CallExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ChainExpression(it) => {
-                Argument::ChainExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ClassExpression(it) => {
-                Argument::ClassExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ConditionalExpression(it) => {
-                Argument::ConditionalExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::FunctionExpression(it) => {
-                Argument::FunctionExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ImportExpression(it) => {
-                Argument::ImportExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::LogicalExpression(it) => {
-                Argument::LogicalExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NewExpression(it) => {
-                Argument::NewExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ObjectExpression(it) => {
-                Argument::ObjectExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ParenthesizedExpression(it) => Argument::ParenthesizedExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::SequenceExpression(it) => {
-                Argument::SequenceExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TaggedTemplateExpression(it) => Argument::TaggedTemplateExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ThisExpression(it) => {
-                Argument::ThisExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::UnaryExpression(it) => {
-                Argument::UnaryExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::UpdateExpression(it) => {
-                Argument::UpdateExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::YieldExpression(it) => {
-                Argument::YieldExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::PrivateInExpression(it) => {
-                Argument::PrivateInExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::JSXElement(it) => {
-                Argument::JSXElement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::JSXFragment(it) => {
-                Argument::JSXFragment(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSAsExpression(it) => {
-                Argument::TSAsExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => {
-                Argument::TSSatisfiesExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSTypeAssertion(it) => {
-                Argument::TSTypeAssertion(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                Argument::TSNonNullExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => Argument::TSInstantiationExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::V8IntrinsicExpression(it) => {
-                Argument::V8IntrinsicExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ComputedMemberExpression(it) => Argument::ComputedMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::StaticMemberExpression(it) => {
-                Argument::StaticMemberExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                Argument::PrivateFieldExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => {
+                Argument::from(CloneIn::clone_in_with_semantic_ids(self.to_expression(), allocator))
             }
         }
     }
@@ -1771,71 +1311,44 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTarget<'_> {
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::AssignmentTargetIdentifier(it) => {
-                AssignmentTarget::AssignmentTargetIdentifier(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSAsExpression(it) => {
-                AssignmentTarget::TSAsExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => {
-                AssignmentTarget::TSSatisfiesExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                AssignmentTarget::TSNonNullExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeAssertion(it) => {
-                AssignmentTarget::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::ComputedMemberExpression(it) => {
-                AssignmentTarget::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticMemberExpression(it) => {
-                AssignmentTarget::StaticMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                AssignmentTarget::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ArrayAssignmentTarget(it) => {
-                AssignmentTarget::ArrayAssignmentTarget(CloneIn::clone_in(it, allocator))
-            }
-            Self::ObjectAssignmentTarget(it) => {
-                AssignmentTarget::ObjectAssignmentTarget(CloneIn::clone_in(it, allocator))
+            Self::AssignmentTargetIdentifier(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => AssignmentTarget::from(CloneIn::clone_in(
+                self.to_simple_assignment_target(),
+                allocator,
+            )),
+            Self::ArrayAssignmentTarget(_) | Self::ObjectAssignmentTarget(_) => {
+                AssignmentTarget::from(CloneIn::clone_in(
+                    self.to_assignment_target_pattern(),
+                    allocator,
+                ))
             }
         }
     }
 
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::AssignmentTargetIdentifier(it) => AssignmentTarget::AssignmentTargetIdentifier(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::AssignmentTargetIdentifier(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => AssignmentTarget::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_simple_assignment_target(), allocator),
             ),
-            Self::TSAsExpression(it) => {
-                AssignmentTarget::TSAsExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
+            Self::ArrayAssignmentTarget(_) | Self::ObjectAssignmentTarget(_) => {
+                AssignmentTarget::from(CloneIn::clone_in_with_semantic_ids(
+                    self.to_assignment_target_pattern(),
+                    allocator,
+                ))
             }
-            Self::TSSatisfiesExpression(it) => AssignmentTarget::TSSatisfiesExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSNonNullExpression(it) => AssignmentTarget::TSNonNullExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSTypeAssertion(it) => AssignmentTarget::TSTypeAssertion(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ComputedMemberExpression(it) => AssignmentTarget::ComputedMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::StaticMemberExpression(it) => AssignmentTarget::StaticMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::PrivateFieldExpression(it) => AssignmentTarget::PrivateFieldExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ArrayAssignmentTarget(it) => AssignmentTarget::ArrayAssignmentTarget(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ObjectAssignmentTarget(it) => AssignmentTarget::ObjectAssignmentTarget(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
         }
     }
 }
@@ -1860,15 +1373,12 @@ impl<'new_alloc> CloneIn<'new_alloc> for SimpleAssignmentTarget<'_> {
             Self::TSTypeAssertion(it) => {
                 SimpleAssignmentTarget::TSTypeAssertion(CloneIn::clone_in(it, allocator))
             }
-            Self::ComputedMemberExpression(it) => {
-                SimpleAssignmentTarget::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticMemberExpression(it) => {
-                SimpleAssignmentTarget::StaticMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                SimpleAssignmentTarget::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
-            }
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => SimpleAssignmentTarget::from(CloneIn::clone_in(
+                self.to_member_expression(),
+                allocator,
+            )),
         }
     }
 
@@ -1891,14 +1401,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for SimpleAssignmentTarget<'_> {
             Self::TSTypeAssertion(it) => SimpleAssignmentTarget::TSTypeAssertion(
                 CloneIn::clone_in_with_semantic_ids(it, allocator),
             ),
-            Self::ComputedMemberExpression(it) => SimpleAssignmentTarget::ComputedMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::StaticMemberExpression(it) => SimpleAssignmentTarget::StaticMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::PrivateFieldExpression(it) => SimpleAssignmentTarget::PrivateFieldExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => SimpleAssignmentTarget::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_member_expression(), allocator),
             ),
         }
     }
@@ -2004,46 +1510,18 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTargetMaybeDefault<'_> {
                     it, allocator,
                 ))
             }
-            Self::AssignmentTargetIdentifier(it) => {
-                AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(CloneIn::clone_in(
-                    it, allocator,
-                ))
-            }
-            Self::TSAsExpression(it) => {
-                AssignmentTargetMaybeDefault::TSAsExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => AssignmentTargetMaybeDefault::TSSatisfiesExpression(
-                CloneIn::clone_in(it, allocator),
+            Self::AssignmentTargetIdentifier(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_)
+            | Self::ArrayAssignmentTarget(_)
+            | Self::ObjectAssignmentTarget(_) => AssignmentTargetMaybeDefault::from(
+                CloneIn::clone_in(self.to_assignment_target(), allocator),
             ),
-            Self::TSNonNullExpression(it) => {
-                AssignmentTargetMaybeDefault::TSNonNullExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeAssertion(it) => {
-                AssignmentTargetMaybeDefault::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::ComputedMemberExpression(it) => {
-                AssignmentTargetMaybeDefault::ComputedMemberExpression(CloneIn::clone_in(
-                    it, allocator,
-                ))
-            }
-            Self::StaticMemberExpression(it) => {
-                AssignmentTargetMaybeDefault::StaticMemberExpression(CloneIn::clone_in(
-                    it, allocator,
-                ))
-            }
-            Self::PrivateFieldExpression(it) => {
-                AssignmentTargetMaybeDefault::PrivateFieldExpression(CloneIn::clone_in(
-                    it, allocator,
-                ))
-            }
-            Self::ArrayAssignmentTarget(it) => AssignmentTargetMaybeDefault::ArrayAssignmentTarget(
-                CloneIn::clone_in(it, allocator),
-            ),
-            Self::ObjectAssignmentTarget(it) => {
-                AssignmentTargetMaybeDefault::ObjectAssignmentTarget(CloneIn::clone_in(
-                    it, allocator,
-                ))
-            }
         }
     }
 
@@ -2054,46 +1532,18 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTargetMaybeDefault<'_> {
                     CloneIn::clone_in_with_semantic_ids(it, allocator),
                 )
             }
-            Self::AssignmentTargetIdentifier(it) => {
-                AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(
-                    CloneIn::clone_in_with_semantic_ids(it, allocator),
-                )
-            }
-            Self::TSAsExpression(it) => AssignmentTargetMaybeDefault::TSAsExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::AssignmentTargetIdentifier(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_)
+            | Self::ArrayAssignmentTarget(_)
+            | Self::ObjectAssignmentTarget(_) => AssignmentTargetMaybeDefault::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_assignment_target(), allocator),
             ),
-            Self::TSSatisfiesExpression(it) => AssignmentTargetMaybeDefault::TSSatisfiesExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSNonNullExpression(it) => AssignmentTargetMaybeDefault::TSNonNullExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSTypeAssertion(it) => AssignmentTargetMaybeDefault::TSTypeAssertion(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ComputedMemberExpression(it) => {
-                AssignmentTargetMaybeDefault::ComputedMemberExpression(
-                    CloneIn::clone_in_with_semantic_ids(it, allocator),
-                )
-            }
-            Self::StaticMemberExpression(it) => {
-                AssignmentTargetMaybeDefault::StaticMemberExpression(
-                    CloneIn::clone_in_with_semantic_ids(it, allocator),
-                )
-            }
-            Self::PrivateFieldExpression(it) => {
-                AssignmentTargetMaybeDefault::PrivateFieldExpression(
-                    CloneIn::clone_in_with_semantic_ids(it, allocator),
-                )
-            }
-            Self::ArrayAssignmentTarget(it) => AssignmentTargetMaybeDefault::ArrayAssignmentTarget(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ObjectAssignmentTarget(it) => {
-                AssignmentTargetMaybeDefault::ObjectAssignmentTarget(
-                    CloneIn::clone_in_with_semantic_ids(it, allocator),
-                )
-            }
         }
     }
 }
@@ -2286,14 +1736,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for ChainElement<'_> {
             Self::TSNonNullExpression(it) => {
                 ChainElement::TSNonNullExpression(CloneIn::clone_in(it, allocator))
             }
-            Self::ComputedMemberExpression(it) => {
-                ChainElement::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticMemberExpression(it) => {
-                ChainElement::StaticMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                ChainElement::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => {
+                ChainElement::from(CloneIn::clone_in(self.to_member_expression(), allocator))
             }
         }
     }
@@ -2306,14 +1752,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for ChainElement<'_> {
             Self::TSNonNullExpression(it) => ChainElement::TSNonNullExpression(
                 CloneIn::clone_in_with_semantic_ids(it, allocator),
             ),
-            Self::ComputedMemberExpression(it) => ChainElement::ComputedMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::StaticMemberExpression(it) => ChainElement::StaticMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::PrivateFieldExpression(it) => ChainElement::PrivateFieldExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => ChainElement::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_member_expression(), allocator),
             ),
         }
     }
@@ -2376,50 +1818,24 @@ impl<'new_alloc> CloneIn<'new_alloc> for Statement<'_> {
             Self::TryStatement(it) => Statement::TryStatement(CloneIn::clone_in(it, allocator)),
             Self::WhileStatement(it) => Statement::WhileStatement(CloneIn::clone_in(it, allocator)),
             Self::WithStatement(it) => Statement::WithStatement(CloneIn::clone_in(it, allocator)),
-            Self::VariableDeclaration(it) => {
-                Statement::VariableDeclaration(CloneIn::clone_in(it, allocator))
+            Self::VariableDeclaration(_)
+            | Self::FunctionDeclaration(_)
+            | Self::ClassDeclaration(_)
+            | Self::TSTypeAliasDeclaration(_)
+            | Self::TSInterfaceDeclaration(_)
+            | Self::TSEnumDeclaration(_)
+            | Self::TSModuleDeclaration(_)
+            | Self::TSGlobalDeclaration(_)
+            | Self::TSImportEqualsDeclaration(_) => {
+                Statement::from(CloneIn::clone_in(self.to_declaration(), allocator))
             }
-            Self::FunctionDeclaration(it) => {
-                Statement::FunctionDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::ClassDeclaration(it) => {
-                Statement::ClassDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeAliasDeclaration(it) => {
-                Statement::TSTypeAliasDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInterfaceDeclaration(it) => {
-                Statement::TSInterfaceDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSEnumDeclaration(it) => {
-                Statement::TSEnumDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSModuleDeclaration(it) => {
-                Statement::TSModuleDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSGlobalDeclaration(it) => {
-                Statement::TSGlobalDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSImportEqualsDeclaration(it) => {
-                Statement::TSImportEqualsDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::ImportDeclaration(it) => {
-                Statement::ImportDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::ExportAllDeclaration(it) => {
-                Statement::ExportAllDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::ExportDefaultDeclaration(it) => {
-                Statement::ExportDefaultDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::ExportNamedDeclaration(it) => {
-                Statement::ExportNamedDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSExportAssignment(it) => {
-                Statement::TSExportAssignment(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNamespaceExportDeclaration(it) => {
-                Statement::TSNamespaceExportDeclaration(CloneIn::clone_in(it, allocator))
+            Self::ImportDeclaration(_)
+            | Self::ExportAllDeclaration(_)
+            | Self::ExportDefaultDeclaration(_)
+            | Self::ExportNamedDeclaration(_)
+            | Self::TSExportAssignment(_)
+            | Self::TSNamespaceExportDeclaration(_) => {
+                Statement::from(CloneIn::clone_in(self.to_module_declaration(), allocator))
             }
         }
     }
@@ -2480,50 +1896,24 @@ impl<'new_alloc> CloneIn<'new_alloc> for Statement<'_> {
             Self::WithStatement(it) => {
                 Statement::WithStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
             }
-            Self::VariableDeclaration(it) => {
-                Statement::VariableDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::FunctionDeclaration(it) => {
-                Statement::FunctionDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ClassDeclaration(it) => {
-                Statement::ClassDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSTypeAliasDeclaration(it) => Statement::TSTypeAliasDeclaration(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::VariableDeclaration(_)
+            | Self::FunctionDeclaration(_)
+            | Self::ClassDeclaration(_)
+            | Self::TSTypeAliasDeclaration(_)
+            | Self::TSInterfaceDeclaration(_)
+            | Self::TSEnumDeclaration(_)
+            | Self::TSModuleDeclaration(_)
+            | Self::TSGlobalDeclaration(_)
+            | Self::TSImportEqualsDeclaration(_) => Statement::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_declaration(), allocator),
             ),
-            Self::TSInterfaceDeclaration(it) => Statement::TSInterfaceDeclaration(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSEnumDeclaration(it) => {
-                Statement::TSEnumDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSModuleDeclaration(it) => {
-                Statement::TSModuleDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSGlobalDeclaration(it) => {
-                Statement::TSGlobalDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSImportEqualsDeclaration(it) => Statement::TSImportEqualsDeclaration(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ImportDeclaration(it) => {
-                Statement::ImportDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ExportAllDeclaration(it) => {
-                Statement::ExportAllDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ExportDefaultDeclaration(it) => Statement::ExportDefaultDeclaration(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ExportNamedDeclaration(it) => Statement::ExportNamedDeclaration(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSExportAssignment(it) => {
-                Statement::TSExportAssignment(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSNamespaceExportDeclaration(it) => Statement::TSNamespaceExportDeclaration(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::ImportDeclaration(_)
+            | Self::ExportAllDeclaration(_)
+            | Self::ExportDefaultDeclaration(_)
+            | Self::ExportNamedDeclaration(_)
+            | Self::TSExportAssignment(_)
+            | Self::TSNamespaceExportDeclaration(_) => Statement::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_module_declaration(), allocator),
             ),
         }
     }
@@ -2869,128 +2259,50 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementInit<'_> {
             Self::VariableDeclaration(it) => {
                 ForStatementInit::VariableDeclaration(CloneIn::clone_in(it, allocator))
             }
-            Self::BooleanLiteral(it) => {
-                ForStatementInit::BooleanLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::NullLiteral(it) => {
-                ForStatementInit::NullLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::NumericLiteral(it) => {
-                ForStatementInit::NumericLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::BigIntLiteral(it) => {
-                ForStatementInit::BigIntLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::RegExpLiteral(it) => {
-                ForStatementInit::RegExpLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::StringLiteral(it) => {
-                ForStatementInit::StringLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::TemplateLiteral(it) => {
-                ForStatementInit::TemplateLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::Identifier(it) => ForStatementInit::Identifier(CloneIn::clone_in(it, allocator)),
-            Self::MetaProperty(it) => {
-                ForStatementInit::MetaProperty(CloneIn::clone_in(it, allocator))
-            }
-            Self::Super(it) => ForStatementInit::Super(CloneIn::clone_in(it, allocator)),
-            Self::ArrayExpression(it) => {
-                ForStatementInit::ArrayExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ArrowFunctionExpression(it) => {
-                ForStatementInit::ArrowFunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AssignmentExpression(it) => {
-                ForStatementInit::AssignmentExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AwaitExpression(it) => {
-                ForStatementInit::AwaitExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::BinaryExpression(it) => {
-                ForStatementInit::BinaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::CallExpression(it) => {
-                ForStatementInit::CallExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ChainExpression(it) => {
-                ForStatementInit::ChainExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ClassExpression(it) => {
-                ForStatementInit::ClassExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ConditionalExpression(it) => {
-                ForStatementInit::ConditionalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::FunctionExpression(it) => {
-                ForStatementInit::FunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ImportExpression(it) => {
-                ForStatementInit::ImportExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::LogicalExpression(it) => {
-                ForStatementInit::LogicalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::NewExpression(it) => {
-                ForStatementInit::NewExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ObjectExpression(it) => {
-                ForStatementInit::ObjectExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ParenthesizedExpression(it) => {
-                ForStatementInit::ParenthesizedExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::SequenceExpression(it) => {
-                ForStatementInit::SequenceExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TaggedTemplateExpression(it) => {
-                ForStatementInit::TaggedTemplateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ThisExpression(it) => {
-                ForStatementInit::ThisExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UnaryExpression(it) => {
-                ForStatementInit::UnaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UpdateExpression(it) => {
-                ForStatementInit::UpdateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::YieldExpression(it) => {
-                ForStatementInit::YieldExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateInExpression(it) => {
-                ForStatementInit::PrivateInExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSXElement(it) => ForStatementInit::JSXElement(CloneIn::clone_in(it, allocator)),
-            Self::JSXFragment(it) => {
-                ForStatementInit::JSXFragment(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSAsExpression(it) => {
-                ForStatementInit::TSAsExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => {
-                ForStatementInit::TSSatisfiesExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeAssertion(it) => {
-                ForStatementInit::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                ForStatementInit::TSNonNullExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                ForStatementInit::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::V8IntrinsicExpression(it) => {
-                ForStatementInit::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ComputedMemberExpression(it) => {
-                ForStatementInit::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticMemberExpression(it) => {
-                ForStatementInit::StaticMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                ForStatementInit::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => {
+                ForStatementInit::from(CloneIn::clone_in(self.to_expression(), allocator))
             }
         }
     }
@@ -3000,134 +2312,50 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementInit<'_> {
             Self::VariableDeclaration(it) => ForStatementInit::VariableDeclaration(
                 CloneIn::clone_in_with_semantic_ids(it, allocator),
             ),
-            Self::BooleanLiteral(it) => {
-                ForStatementInit::BooleanLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NullLiteral(it) => {
-                ForStatementInit::NullLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NumericLiteral(it) => {
-                ForStatementInit::NumericLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::BigIntLiteral(it) => {
-                ForStatementInit::BigIntLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::RegExpLiteral(it) => {
-                ForStatementInit::RegExpLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::StringLiteral(it) => {
-                ForStatementInit::StringLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TemplateLiteral(it) => ForStatementInit::TemplateLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::Identifier(it) => {
-                ForStatementInit::Identifier(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::MetaProperty(it) => {
-                ForStatementInit::MetaProperty(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::Super(it) => {
-                ForStatementInit::Super(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ArrayExpression(it) => ForStatementInit::ArrayExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ArrowFunctionExpression(it) => ForStatementInit::ArrowFunctionExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::AssignmentExpression(it) => ForStatementInit::AssignmentExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::AwaitExpression(it) => ForStatementInit::AwaitExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::BinaryExpression(it) => ForStatementInit::BinaryExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::CallExpression(it) => {
-                ForStatementInit::CallExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ChainExpression(it) => ForStatementInit::ChainExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ClassExpression(it) => ForStatementInit::ClassExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ConditionalExpression(it) => ForStatementInit::ConditionalExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::FunctionExpression(it) => ForStatementInit::FunctionExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ImportExpression(it) => ForStatementInit::ImportExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::LogicalExpression(it) => ForStatementInit::LogicalExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::NewExpression(it) => {
-                ForStatementInit::NewExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ObjectExpression(it) => ForStatementInit::ObjectExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ParenthesizedExpression(it) => ForStatementInit::ParenthesizedExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::SequenceExpression(it) => ForStatementInit::SequenceExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TaggedTemplateExpression(it) => ForStatementInit::TaggedTemplateExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ThisExpression(it) => {
-                ForStatementInit::ThisExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::UnaryExpression(it) => ForStatementInit::UnaryExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::UpdateExpression(it) => ForStatementInit::UpdateExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::YieldExpression(it) => ForStatementInit::YieldExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::PrivateInExpression(it) => ForStatementInit::PrivateInExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::JSXElement(it) => {
-                ForStatementInit::JSXElement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::JSXFragment(it) => {
-                ForStatementInit::JSXFragment(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSAsExpression(it) => {
-                ForStatementInit::TSAsExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => ForStatementInit::TSSatisfiesExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSTypeAssertion(it) => ForStatementInit::TSTypeAssertion(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSNonNullExpression(it) => ForStatementInit::TSNonNullExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSInstantiationExpression(it) => ForStatementInit::TSInstantiationExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::V8IntrinsicExpression(it) => ForStatementInit::V8IntrinsicExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ComputedMemberExpression(it) => ForStatementInit::ComputedMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::StaticMemberExpression(it) => ForStatementInit::StaticMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::PrivateFieldExpression(it) => ForStatementInit::PrivateFieldExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => ForStatementInit::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_expression(), allocator),
             ),
         }
     }
@@ -3167,35 +2395,17 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementLeft<'_> {
             Self::VariableDeclaration(it) => {
                 ForStatementLeft::VariableDeclaration(CloneIn::clone_in(it, allocator))
             }
-            Self::AssignmentTargetIdentifier(it) => {
-                ForStatementLeft::AssignmentTargetIdentifier(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSAsExpression(it) => {
-                ForStatementLeft::TSAsExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => {
-                ForStatementLeft::TSSatisfiesExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                ForStatementLeft::TSNonNullExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeAssertion(it) => {
-                ForStatementLeft::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::ComputedMemberExpression(it) => {
-                ForStatementLeft::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticMemberExpression(it) => {
-                ForStatementLeft::StaticMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                ForStatementLeft::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ArrayAssignmentTarget(it) => {
-                ForStatementLeft::ArrayAssignmentTarget(CloneIn::clone_in(it, allocator))
-            }
-            Self::ObjectAssignmentTarget(it) => {
-                ForStatementLeft::ObjectAssignmentTarget(CloneIn::clone_in(it, allocator))
+            Self::AssignmentTargetIdentifier(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_)
+            | Self::ArrayAssignmentTarget(_)
+            | Self::ObjectAssignmentTarget(_) => {
+                ForStatementLeft::from(CloneIn::clone_in(self.to_assignment_target(), allocator))
             }
         }
     }
@@ -3205,35 +2415,17 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementLeft<'_> {
             Self::VariableDeclaration(it) => ForStatementLeft::VariableDeclaration(
                 CloneIn::clone_in_with_semantic_ids(it, allocator),
             ),
-            Self::AssignmentTargetIdentifier(it) => ForStatementLeft::AssignmentTargetIdentifier(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSAsExpression(it) => {
-                ForStatementLeft::TSAsExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => ForStatementLeft::TSSatisfiesExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSNonNullExpression(it) => ForStatementLeft::TSNonNullExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSTypeAssertion(it) => ForStatementLeft::TSTypeAssertion(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ComputedMemberExpression(it) => ForStatementLeft::ComputedMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::StaticMemberExpression(it) => ForStatementLeft::StaticMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::PrivateFieldExpression(it) => ForStatementLeft::PrivateFieldExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ArrayAssignmentTarget(it) => ForStatementLeft::ArrayAssignmentTarget(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ObjectAssignmentTarget(it) => ForStatementLeft::ObjectAssignmentTarget(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::AssignmentTargetIdentifier(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_)
+            | Self::ArrayAssignmentTarget(_)
+            | Self::ObjectAssignmentTarget(_) => ForStatementLeft::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_assignment_target(), allocator),
             ),
         }
     }
@@ -4664,149 +3856,51 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclarationKind<'_> {
                     it, allocator,
                 ))
             }
-            Self::BooleanLiteral(it) => {
-                ExportDefaultDeclarationKind::BooleanLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::NullLiteral(it) => {
-                ExportDefaultDeclarationKind::NullLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::NumericLiteral(it) => {
-                ExportDefaultDeclarationKind::NumericLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::BigIntLiteral(it) => {
-                ExportDefaultDeclarationKind::BigIntLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::RegExpLiteral(it) => {
-                ExportDefaultDeclarationKind::RegExpLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::StringLiteral(it) => {
-                ExportDefaultDeclarationKind::StringLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::TemplateLiteral(it) => {
-                ExportDefaultDeclarationKind::TemplateLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::Identifier(it) => {
-                ExportDefaultDeclarationKind::Identifier(CloneIn::clone_in(it, allocator))
-            }
-            Self::MetaProperty(it) => {
-                ExportDefaultDeclarationKind::MetaProperty(CloneIn::clone_in(it, allocator))
-            }
-            Self::Super(it) => {
-                ExportDefaultDeclarationKind::Super(CloneIn::clone_in(it, allocator))
-            }
-            Self::ArrayExpression(it) => {
-                ExportDefaultDeclarationKind::ArrayExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ArrowFunctionExpression(it) => {
-                ExportDefaultDeclarationKind::ArrowFunctionExpression(CloneIn::clone_in(
-                    it, allocator,
-                ))
-            }
-            Self::AssignmentExpression(it) => {
-                ExportDefaultDeclarationKind::AssignmentExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AwaitExpression(it) => {
-                ExportDefaultDeclarationKind::AwaitExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::BinaryExpression(it) => {
-                ExportDefaultDeclarationKind::BinaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::CallExpression(it) => {
-                ExportDefaultDeclarationKind::CallExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ChainExpression(it) => {
-                ExportDefaultDeclarationKind::ChainExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ClassExpression(it) => {
-                ExportDefaultDeclarationKind::ClassExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ConditionalExpression(it) => ExportDefaultDeclarationKind::ConditionalExpression(
-                CloneIn::clone_in(it, allocator),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => ExportDefaultDeclarationKind::from(
+                CloneIn::clone_in(self.to_expression(), allocator),
             ),
-            Self::FunctionExpression(it) => {
-                ExportDefaultDeclarationKind::FunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ImportExpression(it) => {
-                ExportDefaultDeclarationKind::ImportExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::LogicalExpression(it) => {
-                ExportDefaultDeclarationKind::LogicalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::NewExpression(it) => {
-                ExportDefaultDeclarationKind::NewExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ObjectExpression(it) => {
-                ExportDefaultDeclarationKind::ObjectExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ParenthesizedExpression(it) => {
-                ExportDefaultDeclarationKind::ParenthesizedExpression(CloneIn::clone_in(
-                    it, allocator,
-                ))
-            }
-            Self::SequenceExpression(it) => {
-                ExportDefaultDeclarationKind::SequenceExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TaggedTemplateExpression(it) => {
-                ExportDefaultDeclarationKind::TaggedTemplateExpression(CloneIn::clone_in(
-                    it, allocator,
-                ))
-            }
-            Self::ThisExpression(it) => {
-                ExportDefaultDeclarationKind::ThisExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UnaryExpression(it) => {
-                ExportDefaultDeclarationKind::UnaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UpdateExpression(it) => {
-                ExportDefaultDeclarationKind::UpdateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::YieldExpression(it) => {
-                ExportDefaultDeclarationKind::YieldExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateInExpression(it) => {
-                ExportDefaultDeclarationKind::PrivateInExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSXElement(it) => {
-                ExportDefaultDeclarationKind::JSXElement(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSXFragment(it) => {
-                ExportDefaultDeclarationKind::JSXFragment(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSAsExpression(it) => {
-                ExportDefaultDeclarationKind::TSAsExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => ExportDefaultDeclarationKind::TSSatisfiesExpression(
-                CloneIn::clone_in(it, allocator),
-            ),
-            Self::TSTypeAssertion(it) => {
-                ExportDefaultDeclarationKind::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                ExportDefaultDeclarationKind::TSNonNullExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                ExportDefaultDeclarationKind::TSInstantiationExpression(CloneIn::clone_in(
-                    it, allocator,
-                ))
-            }
-            Self::V8IntrinsicExpression(it) => ExportDefaultDeclarationKind::V8IntrinsicExpression(
-                CloneIn::clone_in(it, allocator),
-            ),
-            Self::ComputedMemberExpression(it) => {
-                ExportDefaultDeclarationKind::ComputedMemberExpression(CloneIn::clone_in(
-                    it, allocator,
-                ))
-            }
-            Self::StaticMemberExpression(it) => {
-                ExportDefaultDeclarationKind::StaticMemberExpression(CloneIn::clone_in(
-                    it, allocator,
-                ))
-            }
-            Self::PrivateFieldExpression(it) => {
-                ExportDefaultDeclarationKind::PrivateFieldExpression(CloneIn::clone_in(
-                    it, allocator,
-                ))
-            }
         }
     }
 
@@ -4823,149 +3917,51 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclarationKind<'_> {
                     CloneIn::clone_in_with_semantic_ids(it, allocator),
                 )
             }
-            Self::BooleanLiteral(it) => ExportDefaultDeclarationKind::BooleanLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => ExportDefaultDeclarationKind::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_expression(), allocator),
             ),
-            Self::NullLiteral(it) => ExportDefaultDeclarationKind::NullLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::NumericLiteral(it) => ExportDefaultDeclarationKind::NumericLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::BigIntLiteral(it) => ExportDefaultDeclarationKind::BigIntLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::RegExpLiteral(it) => ExportDefaultDeclarationKind::RegExpLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::StringLiteral(it) => ExportDefaultDeclarationKind::StringLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TemplateLiteral(it) => ExportDefaultDeclarationKind::TemplateLiteral(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::Identifier(it) => ExportDefaultDeclarationKind::Identifier(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::MetaProperty(it) => ExportDefaultDeclarationKind::MetaProperty(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::Super(it) => ExportDefaultDeclarationKind::Super(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ArrayExpression(it) => ExportDefaultDeclarationKind::ArrayExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ArrowFunctionExpression(it) => {
-                ExportDefaultDeclarationKind::ArrowFunctionExpression(
-                    CloneIn::clone_in_with_semantic_ids(it, allocator),
-                )
-            }
-            Self::AssignmentExpression(it) => ExportDefaultDeclarationKind::AssignmentExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::AwaitExpression(it) => ExportDefaultDeclarationKind::AwaitExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::BinaryExpression(it) => ExportDefaultDeclarationKind::BinaryExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::CallExpression(it) => ExportDefaultDeclarationKind::CallExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ChainExpression(it) => ExportDefaultDeclarationKind::ChainExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ClassExpression(it) => ExportDefaultDeclarationKind::ClassExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ConditionalExpression(it) => ExportDefaultDeclarationKind::ConditionalExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::FunctionExpression(it) => ExportDefaultDeclarationKind::FunctionExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ImportExpression(it) => ExportDefaultDeclarationKind::ImportExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::LogicalExpression(it) => ExportDefaultDeclarationKind::LogicalExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::NewExpression(it) => ExportDefaultDeclarationKind::NewExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ObjectExpression(it) => ExportDefaultDeclarationKind::ObjectExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ParenthesizedExpression(it) => {
-                ExportDefaultDeclarationKind::ParenthesizedExpression(
-                    CloneIn::clone_in_with_semantic_ids(it, allocator),
-                )
-            }
-            Self::SequenceExpression(it) => ExportDefaultDeclarationKind::SequenceExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TaggedTemplateExpression(it) => {
-                ExportDefaultDeclarationKind::TaggedTemplateExpression(
-                    CloneIn::clone_in_with_semantic_ids(it, allocator),
-                )
-            }
-            Self::ThisExpression(it) => ExportDefaultDeclarationKind::ThisExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::UnaryExpression(it) => ExportDefaultDeclarationKind::UnaryExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::UpdateExpression(it) => ExportDefaultDeclarationKind::UpdateExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::YieldExpression(it) => ExportDefaultDeclarationKind::YieldExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::PrivateInExpression(it) => ExportDefaultDeclarationKind::PrivateInExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::JSXElement(it) => ExportDefaultDeclarationKind::JSXElement(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::JSXFragment(it) => ExportDefaultDeclarationKind::JSXFragment(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSAsExpression(it) => ExportDefaultDeclarationKind::TSAsExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSSatisfiesExpression(it) => ExportDefaultDeclarationKind::TSSatisfiesExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSTypeAssertion(it) => ExportDefaultDeclarationKind::TSTypeAssertion(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSNonNullExpression(it) => ExportDefaultDeclarationKind::TSNonNullExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSInstantiationExpression(it) => {
-                ExportDefaultDeclarationKind::TSInstantiationExpression(
-                    CloneIn::clone_in_with_semantic_ids(it, allocator),
-                )
-            }
-            Self::V8IntrinsicExpression(it) => ExportDefaultDeclarationKind::V8IntrinsicExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ComputedMemberExpression(it) => {
-                ExportDefaultDeclarationKind::ComputedMemberExpression(
-                    CloneIn::clone_in_with_semantic_ids(it, allocator),
-                )
-            }
-            Self::StaticMemberExpression(it) => {
-                ExportDefaultDeclarationKind::StaticMemberExpression(
-                    CloneIn::clone_in_with_semantic_ids(it, allocator),
-                )
-            }
-            Self::PrivateFieldExpression(it) => {
-                ExportDefaultDeclarationKind::PrivateFieldExpression(
-                    CloneIn::clone_in_with_semantic_ids(it, allocator),
-                )
-            }
         }
     }
 }
@@ -5469,122 +4465,50 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXExpression<'_> {
             Self::EmptyExpression(it) => {
                 JSXExpression::EmptyExpression(CloneIn::clone_in(it, allocator))
             }
-            Self::BooleanLiteral(it) => {
-                JSXExpression::BooleanLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::NullLiteral(it) => JSXExpression::NullLiteral(CloneIn::clone_in(it, allocator)),
-            Self::NumericLiteral(it) => {
-                JSXExpression::NumericLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::BigIntLiteral(it) => {
-                JSXExpression::BigIntLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::RegExpLiteral(it) => {
-                JSXExpression::RegExpLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::StringLiteral(it) => {
-                JSXExpression::StringLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::TemplateLiteral(it) => {
-                JSXExpression::TemplateLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::Identifier(it) => JSXExpression::Identifier(CloneIn::clone_in(it, allocator)),
-            Self::MetaProperty(it) => JSXExpression::MetaProperty(CloneIn::clone_in(it, allocator)),
-            Self::Super(it) => JSXExpression::Super(CloneIn::clone_in(it, allocator)),
-            Self::ArrayExpression(it) => {
-                JSXExpression::ArrayExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ArrowFunctionExpression(it) => {
-                JSXExpression::ArrowFunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AssignmentExpression(it) => {
-                JSXExpression::AssignmentExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AwaitExpression(it) => {
-                JSXExpression::AwaitExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::BinaryExpression(it) => {
-                JSXExpression::BinaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::CallExpression(it) => {
-                JSXExpression::CallExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ChainExpression(it) => {
-                JSXExpression::ChainExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ClassExpression(it) => {
-                JSXExpression::ClassExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ConditionalExpression(it) => {
-                JSXExpression::ConditionalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::FunctionExpression(it) => {
-                JSXExpression::FunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ImportExpression(it) => {
-                JSXExpression::ImportExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::LogicalExpression(it) => {
-                JSXExpression::LogicalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::NewExpression(it) => {
-                JSXExpression::NewExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ObjectExpression(it) => {
-                JSXExpression::ObjectExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ParenthesizedExpression(it) => {
-                JSXExpression::ParenthesizedExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::SequenceExpression(it) => {
-                JSXExpression::SequenceExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TaggedTemplateExpression(it) => {
-                JSXExpression::TaggedTemplateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ThisExpression(it) => {
-                JSXExpression::ThisExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UnaryExpression(it) => {
-                JSXExpression::UnaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UpdateExpression(it) => {
-                JSXExpression::UpdateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::YieldExpression(it) => {
-                JSXExpression::YieldExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateInExpression(it) => {
-                JSXExpression::PrivateInExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSXElement(it) => JSXExpression::JSXElement(CloneIn::clone_in(it, allocator)),
-            Self::JSXFragment(it) => JSXExpression::JSXFragment(CloneIn::clone_in(it, allocator)),
-            Self::TSAsExpression(it) => {
-                JSXExpression::TSAsExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => {
-                JSXExpression::TSSatisfiesExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeAssertion(it) => {
-                JSXExpression::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                JSXExpression::TSNonNullExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                JSXExpression::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::V8IntrinsicExpression(it) => {
-                JSXExpression::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ComputedMemberExpression(it) => {
-                JSXExpression::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticMemberExpression(it) => {
-                JSXExpression::StaticMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                JSXExpression::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => {
+                JSXExpression::from(CloneIn::clone_in(self.to_expression(), allocator))
             }
         }
     }
@@ -5594,134 +4518,50 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXExpression<'_> {
             Self::EmptyExpression(it) => {
                 JSXExpression::EmptyExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
             }
-            Self::BooleanLiteral(it) => {
-                JSXExpression::BooleanLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NullLiteral(it) => {
-                JSXExpression::NullLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NumericLiteral(it) => {
-                JSXExpression::NumericLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::BigIntLiteral(it) => {
-                JSXExpression::BigIntLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::RegExpLiteral(it) => {
-                JSXExpression::RegExpLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::StringLiteral(it) => {
-                JSXExpression::StringLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TemplateLiteral(it) => {
-                JSXExpression::TemplateLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::Identifier(it) => {
-                JSXExpression::Identifier(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::MetaProperty(it) => {
-                JSXExpression::MetaProperty(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::Super(it) => {
-                JSXExpression::Super(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ArrayExpression(it) => {
-                JSXExpression::ArrayExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ArrowFunctionExpression(it) => JSXExpression::ArrowFunctionExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::AssignmentExpression(it) => JSXExpression::AssignmentExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::AwaitExpression(it) => {
-                JSXExpression::AwaitExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::BinaryExpression(it) => {
-                JSXExpression::BinaryExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::CallExpression(it) => {
-                JSXExpression::CallExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ChainExpression(it) => {
-                JSXExpression::ChainExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ClassExpression(it) => {
-                JSXExpression::ClassExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ConditionalExpression(it) => JSXExpression::ConditionalExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::FunctionExpression(it) => JSXExpression::FunctionExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ImportExpression(it) => {
-                JSXExpression::ImportExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::LogicalExpression(it) => {
-                JSXExpression::LogicalExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NewExpression(it) => {
-                JSXExpression::NewExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ObjectExpression(it) => {
-                JSXExpression::ObjectExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ParenthesizedExpression(it) => JSXExpression::ParenthesizedExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::SequenceExpression(it) => JSXExpression::SequenceExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TaggedTemplateExpression(it) => JSXExpression::TaggedTemplateExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ThisExpression(it) => {
-                JSXExpression::ThisExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::UnaryExpression(it) => {
-                JSXExpression::UnaryExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::UpdateExpression(it) => {
-                JSXExpression::UpdateExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::YieldExpression(it) => {
-                JSXExpression::YieldExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::PrivateInExpression(it) => JSXExpression::PrivateInExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::JSXElement(it) => {
-                JSXExpression::JSXElement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::JSXFragment(it) => {
-                JSXExpression::JSXFragment(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSAsExpression(it) => {
-                JSXExpression::TSAsExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => JSXExpression::TSSatisfiesExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSTypeAssertion(it) => {
-                JSXExpression::TSTypeAssertion(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => JSXExpression::TSNonNullExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSInstantiationExpression(it) => JSXExpression::TSInstantiationExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::V8IntrinsicExpression(it) => JSXExpression::V8IntrinsicExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ComputedMemberExpression(it) => JSXExpression::ComputedMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::StaticMemberExpression(it) => JSXExpression::StaticMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::PrivateFieldExpression(it) => JSXExpression::PrivateFieldExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => JSXExpression::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_expression(), allocator),
             ),
         }
     }
@@ -6624,104 +5464,44 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTupleElement<'_> {
                 TSTupleElement::TSOptionalType(CloneIn::clone_in(it, allocator))
             }
             Self::TSRestType(it) => TSTupleElement::TSRestType(CloneIn::clone_in(it, allocator)),
-            Self::TSAnyKeyword(it) => {
-                TSTupleElement::TSAnyKeyword(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSBigIntKeyword(it) => {
-                TSTupleElement::TSBigIntKeyword(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSBooleanKeyword(it) => {
-                TSTupleElement::TSBooleanKeyword(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSIntrinsicKeyword(it) => {
-                TSTupleElement::TSIntrinsicKeyword(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNeverKeyword(it) => {
-                TSTupleElement::TSNeverKeyword(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNullKeyword(it) => {
-                TSTupleElement::TSNullKeyword(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNumberKeyword(it) => {
-                TSTupleElement::TSNumberKeyword(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSObjectKeyword(it) => {
-                TSTupleElement::TSObjectKeyword(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSStringKeyword(it) => {
-                TSTupleElement::TSStringKeyword(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSSymbolKeyword(it) => {
-                TSTupleElement::TSSymbolKeyword(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSUndefinedKeyword(it) => {
-                TSTupleElement::TSUndefinedKeyword(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSUnknownKeyword(it) => {
-                TSTupleElement::TSUnknownKeyword(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSVoidKeyword(it) => {
-                TSTupleElement::TSVoidKeyword(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSArrayType(it) => TSTupleElement::TSArrayType(CloneIn::clone_in(it, allocator)),
-            Self::TSConditionalType(it) => {
-                TSTupleElement::TSConditionalType(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSConstructorType(it) => {
-                TSTupleElement::TSConstructorType(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSFunctionType(it) => {
-                TSTupleElement::TSFunctionType(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSImportType(it) => {
-                TSTupleElement::TSImportType(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSIndexedAccessType(it) => {
-                TSTupleElement::TSIndexedAccessType(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInferType(it) => TSTupleElement::TSInferType(CloneIn::clone_in(it, allocator)),
-            Self::TSIntersectionType(it) => {
-                TSTupleElement::TSIntersectionType(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSLiteralType(it) => {
-                TSTupleElement::TSLiteralType(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSMappedType(it) => {
-                TSTupleElement::TSMappedType(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNamedTupleMember(it) => {
-                TSTupleElement::TSNamedTupleMember(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTemplateLiteralType(it) => {
-                TSTupleElement::TSTemplateLiteralType(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSThisType(it) => TSTupleElement::TSThisType(CloneIn::clone_in(it, allocator)),
-            Self::TSTupleType(it) => TSTupleElement::TSTupleType(CloneIn::clone_in(it, allocator)),
-            Self::TSTypeLiteral(it) => {
-                TSTupleElement::TSTypeLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeOperatorType(it) => {
-                TSTupleElement::TSTypeOperatorType(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypePredicate(it) => {
-                TSTupleElement::TSTypePredicate(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeQuery(it) => TSTupleElement::TSTypeQuery(CloneIn::clone_in(it, allocator)),
-            Self::TSTypeReference(it) => {
-                TSTupleElement::TSTypeReference(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSUnionType(it) => TSTupleElement::TSUnionType(CloneIn::clone_in(it, allocator)),
-            Self::TSParenthesizedType(it) => {
-                TSTupleElement::TSParenthesizedType(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSDocNullableType(it) => {
-                TSTupleElement::JSDocNullableType(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSDocNonNullableType(it) => {
-                TSTupleElement::JSDocNonNullableType(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSDocUnknownType(it) => {
-                TSTupleElement::JSDocUnknownType(CloneIn::clone_in(it, allocator))
+            Self::TSAnyKeyword(_)
+            | Self::TSBigIntKeyword(_)
+            | Self::TSBooleanKeyword(_)
+            | Self::TSIntrinsicKeyword(_)
+            | Self::TSNeverKeyword(_)
+            | Self::TSNullKeyword(_)
+            | Self::TSNumberKeyword(_)
+            | Self::TSObjectKeyword(_)
+            | Self::TSStringKeyword(_)
+            | Self::TSSymbolKeyword(_)
+            | Self::TSUndefinedKeyword(_)
+            | Self::TSUnknownKeyword(_)
+            | Self::TSVoidKeyword(_)
+            | Self::TSArrayType(_)
+            | Self::TSConditionalType(_)
+            | Self::TSConstructorType(_)
+            | Self::TSFunctionType(_)
+            | Self::TSImportType(_)
+            | Self::TSIndexedAccessType(_)
+            | Self::TSInferType(_)
+            | Self::TSIntersectionType(_)
+            | Self::TSLiteralType(_)
+            | Self::TSMappedType(_)
+            | Self::TSNamedTupleMember(_)
+            | Self::TSTemplateLiteralType(_)
+            | Self::TSThisType(_)
+            | Self::TSTupleType(_)
+            | Self::TSTypeLiteral(_)
+            | Self::TSTypeOperatorType(_)
+            | Self::TSTypePredicate(_)
+            | Self::TSTypeQuery(_)
+            | Self::TSTypeReference(_)
+            | Self::TSUnionType(_)
+            | Self::TSParenthesizedType(_)
+            | Self::JSDocNullableType(_)
+            | Self::JSDocNonNullableType(_)
+            | Self::JSDocUnknownType(_) => {
+                TSTupleElement::from(CloneIn::clone_in(self.to_ts_type(), allocator))
             }
         }
     }
@@ -6734,117 +5514,45 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTupleElement<'_> {
             Self::TSRestType(it) => {
                 TSTupleElement::TSRestType(CloneIn::clone_in_with_semantic_ids(it, allocator))
             }
-            Self::TSAnyKeyword(it) => {
-                TSTupleElement::TSAnyKeyword(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSBigIntKeyword(it) => {
-                TSTupleElement::TSBigIntKeyword(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSBooleanKeyword(it) => {
-                TSTupleElement::TSBooleanKeyword(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSIntrinsicKeyword(it) => TSTupleElement::TSIntrinsicKeyword(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            Self::TSAnyKeyword(_)
+            | Self::TSBigIntKeyword(_)
+            | Self::TSBooleanKeyword(_)
+            | Self::TSIntrinsicKeyword(_)
+            | Self::TSNeverKeyword(_)
+            | Self::TSNullKeyword(_)
+            | Self::TSNumberKeyword(_)
+            | Self::TSObjectKeyword(_)
+            | Self::TSStringKeyword(_)
+            | Self::TSSymbolKeyword(_)
+            | Self::TSUndefinedKeyword(_)
+            | Self::TSUnknownKeyword(_)
+            | Self::TSVoidKeyword(_)
+            | Self::TSArrayType(_)
+            | Self::TSConditionalType(_)
+            | Self::TSConstructorType(_)
+            | Self::TSFunctionType(_)
+            | Self::TSImportType(_)
+            | Self::TSIndexedAccessType(_)
+            | Self::TSInferType(_)
+            | Self::TSIntersectionType(_)
+            | Self::TSLiteralType(_)
+            | Self::TSMappedType(_)
+            | Self::TSNamedTupleMember(_)
+            | Self::TSTemplateLiteralType(_)
+            | Self::TSThisType(_)
+            | Self::TSTupleType(_)
+            | Self::TSTypeLiteral(_)
+            | Self::TSTypeOperatorType(_)
+            | Self::TSTypePredicate(_)
+            | Self::TSTypeQuery(_)
+            | Self::TSTypeReference(_)
+            | Self::TSUnionType(_)
+            | Self::TSParenthesizedType(_)
+            | Self::JSDocNullableType(_)
+            | Self::JSDocNonNullableType(_)
+            | Self::JSDocUnknownType(_) => TSTupleElement::from(
+                CloneIn::clone_in_with_semantic_ids(self.to_ts_type(), allocator),
             ),
-            Self::TSNeverKeyword(it) => {
-                TSTupleElement::TSNeverKeyword(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSNullKeyword(it) => {
-                TSTupleElement::TSNullKeyword(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSNumberKeyword(it) => {
-                TSTupleElement::TSNumberKeyword(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSObjectKeyword(it) => {
-                TSTupleElement::TSObjectKeyword(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSStringKeyword(it) => {
-                TSTupleElement::TSStringKeyword(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSSymbolKeyword(it) => {
-                TSTupleElement::TSSymbolKeyword(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSUndefinedKeyword(it) => TSTupleElement::TSUndefinedKeyword(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSUnknownKeyword(it) => {
-                TSTupleElement::TSUnknownKeyword(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSVoidKeyword(it) => {
-                TSTupleElement::TSVoidKeyword(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSArrayType(it) => {
-                TSTupleElement::TSArrayType(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSConditionalType(it) => TSTupleElement::TSConditionalType(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSConstructorType(it) => TSTupleElement::TSConstructorType(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSFunctionType(it) => {
-                TSTupleElement::TSFunctionType(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSImportType(it) => {
-                TSTupleElement::TSImportType(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSIndexedAccessType(it) => TSTupleElement::TSIndexedAccessType(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSInferType(it) => {
-                TSTupleElement::TSInferType(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSIntersectionType(it) => TSTupleElement::TSIntersectionType(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSLiteralType(it) => {
-                TSTupleElement::TSLiteralType(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSMappedType(it) => {
-                TSTupleElement::TSMappedType(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSNamedTupleMember(it) => TSTupleElement::TSNamedTupleMember(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSTemplateLiteralType(it) => TSTupleElement::TSTemplateLiteralType(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSThisType(it) => {
-                TSTupleElement::TSThisType(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSTupleType(it) => {
-                TSTupleElement::TSTupleType(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSTypeLiteral(it) => {
-                TSTupleElement::TSTypeLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSTypeOperatorType(it) => TSTupleElement::TSTypeOperatorType(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSTypePredicate(it) => {
-                TSTupleElement::TSTypePredicate(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSTypeQuery(it) => {
-                TSTupleElement::TSTypeQuery(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSTypeReference(it) => {
-                TSTupleElement::TSTypeReference(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSUnionType(it) => {
-                TSTupleElement::TSUnionType(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSParenthesizedType(it) => TSTupleElement::TSParenthesizedType(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::JSDocNullableType(it) => TSTupleElement::JSDocNullableType(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::JSDocNonNullableType(it) => TSTupleElement::JSDocNonNullableType(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::JSDocUnknownType(it) => {
-                TSTupleElement::JSDocUnknownType(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
         }
     }
 }
@@ -7861,14 +6569,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeQueryExprName<'_> {
             Self::TSImportType(it) => {
                 TSTypeQueryExprName::TSImportType(CloneIn::clone_in(it, allocator))
             }
-            Self::IdentifierReference(it) => {
-                TSTypeQueryExprName::IdentifierReference(CloneIn::clone_in(it, allocator))
-            }
-            Self::QualifiedName(it) => {
-                TSTypeQueryExprName::QualifiedName(CloneIn::clone_in(it, allocator))
-            }
-            Self::ThisExpression(it) => {
-                TSTypeQueryExprName::ThisExpression(CloneIn::clone_in(it, allocator))
+            Self::IdentifierReference(_) | Self::QualifiedName(_) | Self::ThisExpression(_) => {
+                TSTypeQueryExprName::from(CloneIn::clone_in(self.to_ts_type_name(), allocator))
             }
         }
     }
@@ -7878,15 +6580,12 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeQueryExprName<'_> {
             Self::TSImportType(it) => TSTypeQueryExprName::TSImportType(
                 CloneIn::clone_in_with_semantic_ids(it, allocator),
             ),
-            Self::IdentifierReference(it) => TSTypeQueryExprName::IdentifierReference(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::QualifiedName(it) => TSTypeQueryExprName::QualifiedName(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ThisExpression(it) => TSTypeQueryExprName::ThisExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
+            Self::IdentifierReference(_) | Self::QualifiedName(_) | Self::ThisExpression(_) => {
+                TSTypeQueryExprName::from(CloneIn::clone_in_with_semantic_ids(
+                    self.to_ts_type_name(),
+                    allocator,
+                ))
+            }
         }
     }
 }

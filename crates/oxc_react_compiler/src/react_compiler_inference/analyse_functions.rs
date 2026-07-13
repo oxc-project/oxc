@@ -102,9 +102,9 @@ where
 /// Run mutation/aliasing inference on an inner function.
 ///
 /// Corresponds to TS `lowerWithMutationAliasing(fn: HIRFunction): void`.
-fn lower_with_mutation_aliasing<F>(
-    func: &mut HirFunction,
-    env: &mut Environment,
+fn lower_with_mutation_aliasing<'a, F>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
     debug_logger: &mut F,
 ) -> Result<(), OxcDiagnostic>
 where

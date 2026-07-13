@@ -4,7 +4,9 @@ use cow_utils::CowUtils;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::{Allocator, GetAllocator};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_str::{Ident, IdentHashMap, IdentHashSet, format_ident};
 use oxc_syntax::reference::ReferenceId;
 use oxc_syntax::symbol::SymbolId;
 
@@ -35,15 +37,20 @@ pub enum OutputMode {
 }
 
 pub struct Environment<'a> {
+    // Arena allocator for the compilation unit. HIR strings (identifier names,
+    // shape ids, property keys) live here so they can be borrowed from the
+    // source AST at lowering and emitted into the output AST without copies.
+    pub allocator: &'a Allocator,
+
     // Counters
     pub next_block_id_counter: u32,
     pub next_scope_id_counter: u32,
     next_mutable_range_id_counter: u32,
 
     // Arenas (use direct field access for sliced borrows)
-    pub identifiers: Vec<Identifier>,
-    pub types: Vec<Type>,
-    pub scopes: Vec<ReactiveScope>,
+    pub identifiers: Vec<Identifier<'a>>,
+    pub types: Vec<Type<'a>>,
+    pub scopes: Vec<ReactiveScope<'a>>,
     pub functions: Vec<HirFunction<'a>>,
 
     // Error accumulation
@@ -61,16 +68,17 @@ pub struct Environment<'a> {
     // Output mode (Client, Ssr, Lint)
     pub output_mode: OutputMode,
 
-    // Pre-resolved import local names for instrumentation/hook guards.
+    // Pre-resolved import local names for instrumentation/hook guards/memo cache.
     // Set by the program-level code before compilation.
-    pub instrument_fn_name: Option<String>,
-    pub instrument_gating_name: Option<String>,
-    pub hook_guard_name: Option<String>,
+    pub instrument_fn_name: Option<Ident<'a>>,
+    pub instrument_gating_name: Option<Ident<'a>>,
+    pub hook_guard_name: Option<Ident<'a>>,
+    pub memo_cache_name: Option<Ident<'a>>,
 
     // Renames from lowering (collision suffixes like `name_0`), recorded per
     // resolved reference so codegen can rename identifiers inside preserved TS
     // type annotations by reference identity.
-    pub renames: FxHashMap<ReferenceId, String>,
+    pub renames: FxHashMap<ReferenceId, Ident<'a>>,
 
     // Hoisted identifiers: tracks which bindings have already been hoisted
     // via DeclareContext to avoid duplicate hoisting.
@@ -82,17 +90,17 @@ pub struct Environment<'a> {
     pub enable_preserve_existing_memoization_guarantees: bool,
 
     // Type system registries
-    globals: GlobalRegistry,
-    pub shapes: ShapeRegistry,
-    module_types: FxHashMap<String, Option<Global>>,
-    module_type_errors: FxHashMap<String, Vec<String>>,
+    globals: GlobalRegistry<'a>,
+    pub shapes: ShapeRegistry<'a>,
+    module_types: IdentHashMap<'a, Option<Global<'a>>>,
+    module_type_errors: IdentHashMap<'a, Vec<String>>,
 
     // Environment configuration (feature flags, custom hooks, etc.)
     pub config: EnvironmentConfig,
 
     // Cached default hook types (lazily initialized)
-    default_nonmutating_hook: Option<Global>,
-    default_mutating_hook: Option<Global>,
+    default_nonmutating_hook: Option<Global<'a>>,
+    default_mutating_hook: Option<Global<'a>>,
 
     // Outlined functions: functions extracted from the component during outlining passes
     outlined_functions: Vec<OutlinedFunctionEntry<'a>>,
@@ -100,7 +108,7 @@ pub struct Environment<'a> {
     // Known names for collision-aware UID generation. Lazily populated from
     // identifiers on first use, then updated with each generated name.
     // Matches Babel's generateUid behavior of checking hasBinding/hasReference.
-    uid_known_names: Option<FxHashSet<String>>,
+    uid_known_names: Option<IdentHashSet<'a>>,
 }
 
 /// An outlined function entry, stored on Environment during compilation.
@@ -111,17 +119,19 @@ pub struct OutlinedFunctionEntry<'a> {
     pub fn_type: Option<ReactFunctionType>,
 }
 
-impl<'a> Environment<'a> {
-    pub fn new() -> Self {
-        Self::with_config(EnvironmentConfig::default())
+impl<'a> GetAllocator<'a> for Environment<'a> {
+    fn allocator(&self) -> &'a Allocator {
+        self.allocator
     }
+}
 
+impl<'a> Environment<'a> {
     /// Create a new Environment with the given configuration.
     ///
     /// Initializes the shape and global registries, registers custom hooks,
     /// and sets up the module type cache.
-    pub fn with_config(config: EnvironmentConfig) -> Self {
-        let mut shapes = ShapeRegistry::with_base(globals::base_shapes());
+    pub fn with_config(allocator: &'a Allocator, config: EnvironmentConfig) -> Self {
+        let mut shapes = ShapeRegistry::with_base(globals::base_shapes(), allocator);
         let mut global_registry = GlobalRegistry::with_base(globals::base_globals());
 
         // Register custom hooks from config
@@ -131,7 +141,7 @@ impl<'a> Environment<'a> {
                 continue;
             }
             let return_type = if hook.transitive_mixed_data {
-                Type::Object { shape_id: Some(BUILT_IN_MIXED_READONLY_ID.to_string()) }
+                Type::Object { shape_id: Some(BUILT_IN_MIXED_READONLY_ID) }
             } else {
                 Type::Poly
             };
@@ -147,18 +157,19 @@ impl<'a> Environment<'a> {
                 },
                 None,
             );
-            global_registry.insert(hook_name.clone(), hook_type);
+            global_registry.insert(Ident::from_str_in(hook_name, &allocator), hook_type);
         }
 
         // Register reanimated module type when enabled
-        let mut module_types: FxHashMap<String, Option<Global>> = FxHashMap::default();
+        let mut module_types: IdentHashMap<'a, Option<Global<'a>>> = IdentHashMap::default();
         if config.enable_custom_type_definition_for_reanimated {
             let reanimated_module_type = globals::get_reanimated_module_type(&mut shapes);
             module_types
-                .insert("react-native-reanimated".to_string(), Some(reanimated_module_type));
+                .insert(Ident::from("react-native-reanimated"), Some(reanimated_module_type));
         }
 
         Self {
+            allocator,
             next_block_id_counter: 0,
             next_scope_id_counter: 0,
             next_mutable_range_id_counter: 0,
@@ -173,6 +184,7 @@ impl<'a> Environment<'a> {
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
+            memo_cache_name: None,
             renames: FxHashMap::default(),
             hoisted_identifiers: FxHashSet::default(),
             validate_preserve_existing_memoization_guarantees: config
@@ -183,7 +195,7 @@ impl<'a> Environment<'a> {
             globals: global_registry,
             shapes,
             module_types,
-            module_type_errors: FxHashMap::default(),
+            module_type_errors: IdentHashMap::default(),
             default_nonmutating_hook: None,
             default_mutating_hook: None,
             outlined_functions: Vec::new(),
@@ -326,7 +338,7 @@ impl<'a> Environment<'a> {
         &mut self,
         binding: &NonLocalBinding,
         span: Option<Span>,
-    ) -> Result<Option<Global>, OxcDiagnostic> {
+    ) -> Result<Option<Global<'a>>, OxcDiagnostic> {
         match binding {
             NonLocalBinding::ModuleLocal { name, .. } => {
                 if is_hook_name(name) {
@@ -446,10 +458,10 @@ impl<'a> Environment<'a> {
     /// Used internally to avoid double-borrow of `self`. Includes hook-name
     /// fallback matching TS `getPropertyType`.
     fn get_property_type_from_shapes(
-        shapes: &ShapeRegistry,
-        receiver: &Type,
+        shapes: &ShapeRegistry<'a>,
+        receiver: &Type<'a>,
         property: &str,
-    ) -> Option<Type> {
+    ) -> Option<Type<'a>> {
         let shape_id = match receiver {
             Type::Object { shape_id } | Type::Function { shape_id, .. } => shape_id.as_deref(),
             _ => None,
@@ -499,7 +511,7 @@ impl<'a> Environment<'a> {
     /// Resolve the module type provider for a given module name.
     /// Caches results. Checks pre-resolved provider results first, then falls
     /// back to `defaultModuleTypeProvider` (hardcoded).
-    fn resolve_module_type(&mut self, module_name: &str) -> Option<Global> {
+    fn resolve_module_type(&mut self, module_name: &str) -> Option<Global<'a>> {
         if let Some(cached) = self.module_types.get(module_name) {
             return cached.clone();
         }
@@ -522,11 +534,15 @@ impl<'a> Environment<'a> {
             );
             // Store errors for later reporting when the import is actually used
             for err in type_errors {
-                self.module_type_errors.entry(module_name.to_string()).or_default().push(err);
+                self.module_type_errors
+                    .entry(Ident::from_str_in(module_name, &self.allocator))
+                    .or_default()
+                    .push(err);
             }
             ty
         });
-        self.module_types.insert(module_name.to_string(), module_type.clone());
+        self.module_types
+            .insert(Ident::from_str_in(module_name, &self.allocator), module_type.clone());
         module_type
     }
 
@@ -535,7 +551,7 @@ impl<'a> Environment<'a> {
         lower == "react" || lower == "react-dom"
     }
 
-    fn get_custom_hook_type(&mut self) -> Global {
+    fn get_custom_hook_type(&mut self) -> Global<'a> {
         if self.config.enable_assume_hooks_follow_rules_of_react {
             if self.default_nonmutating_hook.is_none() {
                 self.default_nonmutating_hook = Some(default_nonmutating_hook(&mut self.shapes));
@@ -551,12 +567,12 @@ impl<'a> Environment<'a> {
 
     /// Public accessor for the custom hook type, used by InferTypes for
     /// property resolution fallback when a property name looks like a hook.
-    pub fn get_custom_hook_type_opt(&mut self) -> Option<Global> {
+    pub fn get_custom_hook_type_opt(&mut self) -> Option<Global<'a>> {
         Some(self.get_custom_hook_type())
     }
 
     /// Get a reference to the globals registry.
-    pub fn globals(&self) -> &GlobalRegistry {
+    pub fn globals(&self) -> &GlobalRegistry<'a> {
         &self.globals
     }
 
@@ -569,7 +585,7 @@ impl<'a> Environment<'a> {
     /// Like Babel's `generateUid`, checks for collisions against existing
     /// bindings (source-level identifier names) and previously generated UIDs,
     /// rather than using a blind counter.
-    pub fn generate_globally_unique_identifier_name(&mut self, name: Option<&str>) -> String {
+    pub fn generate_globally_unique_identifier_name(&mut self, name: Option<&str>) -> Ident<'a> {
         let base = name.unwrap_or("temp");
         // Apply Babel's toIdentifier sanitization:
         // 1. Replace non-identifier chars with '-'
@@ -613,10 +629,10 @@ impl<'a> Environment<'a> {
         // Lazily build the set of known names from existing identifiers.
         // This approximates Babel's hasBinding/hasGlobal/hasReference checks.
         if self.uid_known_names.is_none() {
-            let mut known = FxHashSet::default();
+            let mut known = IdentHashSet::default();
             for id in &self.identifiers {
                 if let Some(name) = &id.name {
-                    known.insert(name.value().to_string());
+                    known.insert(Ident::from(name.value()));
                 }
             }
             self.uid_known_names = Some(known);
@@ -625,8 +641,11 @@ impl<'a> Environment<'a> {
         // Find a name that doesn't collide, matching Babel's generateUid loop
         let mut i = 1u32;
         let uid = loop {
-            let candidate =
-                if i == 1 { format!("_{}", uid_base) } else { format!("_{}{}", uid_base, i) };
+            let candidate = if i == 1 {
+                format_ident!(self.allocator, "_{uid_base}")
+            } else {
+                format_ident!(self.allocator, "_{uid_base}{i}")
+            };
             i += 1;
             if !self.uid_known_names.as_ref().unwrap().contains(&candidate) {
                 break candidate;
@@ -634,7 +653,7 @@ impl<'a> Environment<'a> {
         };
 
         // Register the generated name so subsequent calls see it
-        self.uid_known_names.as_mut().unwrap().insert(uid.clone());
+        self.uid_known_names.as_mut().unwrap().insert(uid);
 
         uid
     }
@@ -642,15 +661,15 @@ impl<'a> Environment<'a> {
     /// Seed the UID known names set with external names (e.g. from ProgramContext).
     /// This ensures UID generation avoids names generated by previous function compilations,
     /// matching Babel's behavior where the program scope accumulates all generated UIDs.
-    pub fn seed_uid_known_names(&mut self, names: &FxHashSet<String>) {
+    pub fn seed_uid_known_names(&mut self, names: &IdentHashSet<'a>) {
         match &mut self.uid_known_names {
-            Some(existing) => existing.extend(names.iter().cloned()),
+            Some(existing) => existing.extend(names.iter().copied()),
             None => self.uid_known_names = Some(names.clone()),
         }
     }
 
     /// Return the UID known names accumulated during this compilation.
-    pub fn take_uid_known_names(&mut self) -> Option<FxHashSet<String>> {
+    pub fn take_uid_known_names(&mut self) -> Option<IdentHashSet<'a>> {
         self.uid_known_names.take()
     }
 
@@ -702,12 +721,6 @@ impl<'a> Environment<'a> {
     ) -> Result<Option<&HookKind>, OxcDiagnostic> {
         let ty = &self.types[self.identifiers[identifier_id.0 as usize].type_.0 as usize];
         self.get_hook_kind_for_type(ty)
-    }
-}
-
-impl Default for Environment<'_> {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

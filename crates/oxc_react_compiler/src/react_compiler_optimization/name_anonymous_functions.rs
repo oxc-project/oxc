@@ -16,6 +16,9 @@ use std::mem::take;
 
 use rustc_hash::FxHashMap;
 
+use oxc_allocator::Allocator;
+use oxc_str::{Ident, format_ident};
+
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::{
@@ -26,18 +29,24 @@ use crate::react_compiler_hir::{
 /// Assign generated names to anonymous function expressions.
 ///
 /// Ported from TS `nameAnonymousFunctions` in `Transform/NameAnonymousFunctions.ts`.
-pub fn name_anonymous_functions(func: &mut HirFunction, env: &mut Environment) {
-    let fn_id = match &func.id {
-        Some(id) => id.clone(),
+pub fn name_anonymous_functions<'a>(func: &mut HirFunction<'a>, env: &mut Environment<'a>) {
+    let fn_id = match func.id {
+        Some(id) => id,
         None => return,
     };
 
     let nodes = name_anonymous_functions_impl(func, env);
 
-    fn visit(node: &Node, prefix: &str, updates: &mut Vec<(FunctionId, String)>) {
+    fn visit<'a>(
+        node: &Node<'a>,
+        prefix: &str,
+        updates: &mut Vec<(FunctionId, Ident<'a>)>,
+        allocator: &'a Allocator,
+    ) {
         if node.generated_name.is_some() && node.existing_name_hint.is_none() {
             // Only add the prefix to anonymous functions regardless of nesting depth
-            let name = format!("{}{}]", prefix, node.generated_name.as_ref().unwrap());
+            let name =
+                format_ident!(allocator, "{}{}]", prefix, node.generated_name.as_ref().unwrap());
             updates.push((node.function_id, name));
         }
         // Whether or not we generated a name for the function at this node,
@@ -46,25 +55,24 @@ pub fn name_anonymous_functions(func: &mut HirFunction, env: &mut Environment) {
             node.generated_name.as_deref().or(node.fn_name.as_deref()).unwrap_or("<anonymous>");
         let next_prefix = format!("{}{} > ", prefix, label);
         for inner in &node.inner {
-            visit(inner, &next_prefix, updates);
+            visit(inner, &next_prefix, updates, allocator);
         }
     }
 
-    let mut updates: Vec<(FunctionId, String)> = Vec::new();
+    let mut updates: Vec<(FunctionId, Ident<'a>)> = Vec::new();
     let prefix = format!("{}[", fn_id);
     for node in &nodes {
-        visit(node, &prefix, &mut updates);
+        visit(node, &prefix, &mut updates, env.allocator);
     }
 
     if updates.is_empty() {
         return;
     }
-    let update_map: FxHashMap<FunctionId, &str> =
-        updates.iter().map(|(fid, name)| (*fid, name.as_str())).collect();
+    let update_map: FxHashMap<FunctionId, Ident<'a>> = updates.iter().copied().collect();
 
     // Apply name updates to the inner HirFunction in the arena
     for (function_id, name) in &updates {
-        env.functions[function_id.0 as usize].name_hint = Some(name.clone());
+        env.functions[function_id.0 as usize].name_hint = Some(*name);
     }
 
     // Update name_hint on FunctionExpression instruction values in the outer function
@@ -80,41 +88,44 @@ pub fn name_anonymous_functions(func: &mut HirFunction, env: &mut Environment) {
 }
 
 /// Apply name hints to FunctionExpression instruction values.
-fn apply_name_hints_to_instructions(
-    instructions: &mut [Instruction],
-    update_map: &FxHashMap<FunctionId, &str>,
+fn apply_name_hints_to_instructions<'a>(
+    instructions: &mut [Instruction<'a>],
+    update_map: &FxHashMap<FunctionId, Ident<'a>>,
 ) {
     for instr in instructions.iter_mut() {
         if let InstructionValue::FunctionExpression { lowered_func, name_hint, .. } =
             &mut instr.value
         {
             if let Some(new_name) = update_map.get(&lowered_func.func) {
-                *name_hint = Some((*new_name).to_string());
+                *name_hint = Some(*new_name);
             }
         }
     }
 }
 
-struct Node {
+struct Node<'a> {
     /// The FunctionId for the inner function (via lowered_func.func)
     function_id: FunctionId,
     /// The generated name for this anonymous function (set based on usage context)
-    generated_name: Option<String>,
+    generated_name: Option<Ident<'a>>,
     /// The existing `name` on the FunctionExpression (non-anonymous functions have this)
-    fn_name: Option<String>,
+    fn_name: Option<Ident<'a>>,
     /// Whether the inner HirFunction already has a name_hint
-    existing_name_hint: Option<String>,
+    existing_name_hint: Option<Ident<'a>>,
     /// Nested function nodes
-    inner: Vec<Node>,
+    inner: Vec<Node<'a>>,
 }
 
-fn name_anonymous_functions_impl(func: &HirFunction, env: &Environment) -> Vec<Node> {
+fn name_anonymous_functions_impl<'a>(
+    func: &HirFunction<'a>,
+    env: &Environment<'a>,
+) -> Vec<Node<'a>> {
     // Functions that we track to generate names for
     let mut functions: FxHashMap<IdentifierId, usize> = FxHashMap::default();
     // Tracks temporaries that read from variables/globals/properties
-    let mut names: FxHashMap<IdentifierId, String> = FxHashMap::default();
+    let mut names: FxHashMap<IdentifierId, Ident<'a>> = FxHashMap::default();
     // Tracks all function nodes
-    let mut nodes: Vec<Node> = Vec::new();
+    let mut nodes: Vec<Node<'a>> = Vec::new();
 
     for block in func.body.blocks.values() {
         for instr_id in &block.instructions {
@@ -122,13 +133,13 @@ fn name_anonymous_functions_impl(func: &HirFunction, env: &Environment) -> Vec<N
             let lvalue_id = instr.lvalue.identifier;
             match &instr.value {
                 InstructionValue::LoadGlobal { binding, .. } => {
-                    names.insert(lvalue_id, binding.name().to_string());
+                    names.insert(lvalue_id, binding.name());
                 }
                 InstructionValue::LoadContext { place, .. }
                 | InstructionValue::LoadLocal { place, .. } => {
                     let ident = &env.identifiers[place.identifier.0 as usize];
-                    if let Some(IdentifierName::Named(ref name)) = ident.name {
-                        names.insert(lvalue_id, name.clone());
+                    if let Some(IdentifierName::Named(name)) = ident.name {
+                        names.insert(lvalue_id, name);
                     }
                     // If the loaded place was tracked as a function, propagate
                     if let Some(&node_idx) = functions.get(&place.identifier) {
@@ -137,7 +148,8 @@ fn name_anonymous_functions_impl(func: &HirFunction, env: &Environment) -> Vec<N
                 }
                 InstructionValue::PropertyLoad { object, property, .. } => {
                     if let Some(object_name) = names.get(&object.identifier) {
-                        names.insert(lvalue_id, format!("{}.{}", object_name, property));
+                        let name = format_ident!(env.allocator, "{}.{}", object_name, property);
+                        names.insert(lvalue_id, name);
                     }
                 }
                 InstructionValue::FunctionExpression { name, lowered_func, .. } => {
@@ -146,8 +158,8 @@ fn name_anonymous_functions_impl(func: &HirFunction, env: &Environment) -> Vec<N
                     let node = Node {
                         function_id: lowered_func.func,
                         generated_name: None,
-                        fn_name: name.clone(),
-                        existing_name_hint: inner_func.name_hint.clone(),
+                        fn_name: *name,
+                        existing_name_hint: inner_func.name_hint,
                         inner,
                     };
                     let idx = nodes.len();
@@ -163,8 +175,8 @@ fn name_anonymous_functions_impl(func: &HirFunction, env: &Environment) -> Vec<N
                         let node = &mut nodes[node_idx];
                         let var_ident = &env.identifiers[store_lvalue.place.identifier.0 as usize];
                         if node.generated_name.is_none() {
-                            if let Some(IdentifierName::Named(ref var_name)) = var_ident.name {
-                                node.generated_name = Some(var_name.clone());
+                            if let Some(IdentifierName::Named(var_name)) = var_ident.name {
+                                node.generated_name = Some(var_name);
                                 functions.remove(&value.identifier);
                             }
                         }
@@ -185,16 +197,19 @@ fn name_anonymous_functions_impl(func: &HirFunction, env: &Environment) -> Vec<N
                                     let node = &mut nodes[node_idx];
                                     if node.generated_name.is_none() {
                                         let element_name = match tag {
-                                            JsxTag::Builtin(builtin) => Some(builtin.name.clone()),
+                                            JsxTag::Builtin(builtin) => Some(builtin.name),
                                             JsxTag::Place(tag_place) => {
-                                                names.get(&tag_place.identifier).cloned()
+                                                names.get(&tag_place.identifier).copied()
                                             }
                                         };
                                         let prop_name = match element_name {
-                                            None => attr_name.clone(),
-                                            Some(ref el_name) => {
-                                                format!("<{}>.{}", el_name, attr_name)
-                                            }
+                                            None => *attr_name,
+                                            Some(el_name) => format_ident!(
+                                                env.allocator,
+                                                "<{}>.{}",
+                                                el_name,
+                                                attr_name
+                                            ),
                                         };
                                         node.generated_name = Some(prop_name);
                                         functions.remove(&place.identifier);
@@ -213,13 +228,13 @@ fn name_anonymous_functions_impl(func: &HirFunction, env: &Environment) -> Vec<N
 }
 
 /// Handle CallExpression / MethodCall to generate names for function arguments.
-fn handle_call(
-    env: &Environment,
+fn handle_call<'a>(
+    env: &Environment<'a>,
     callee_id: IdentifierId,
     args: &[PlaceOrSpread],
     functions: &mut FxHashMap<IdentifierId, usize>,
-    names: &FxHashMap<IdentifierId, String>,
-    nodes: &mut [Node],
+    names: &FxHashMap<IdentifierId, Ident<'a>>,
+    nodes: &mut [Node<'a>],
 ) {
     let callee_ident = &env.identifiers[callee_id.0 as usize];
     let callee_ty = &env.types[callee_ident.type_.0 as usize];
@@ -260,9 +275,9 @@ fn handle_call(
             let node = &mut nodes[node_idx];
             if node.generated_name.is_none() {
                 let generated_name = if fn_arg_count > 1 {
-                    format!("{}(arg{})", callee_name, i)
+                    format_ident!(env.allocator, "{}(arg{})", callee_name, i)
                 } else {
-                    format!("{}()", callee_name)
+                    format_ident!(env.allocator, "{}()", callee_name)
                 };
                 node.generated_name = Some(generated_name);
                 functions.remove(&place.identifier);

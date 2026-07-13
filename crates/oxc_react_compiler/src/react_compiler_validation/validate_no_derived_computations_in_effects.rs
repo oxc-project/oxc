@@ -10,10 +10,12 @@
 //!
 //! Port of ValidateNoDerivedComputationsInEffects_exp.ts.
 
-use crate::react_compiler_utils::{FxIndexMap, FxIndexSet};
+use crate::react_compiler_utils::{FxIndexSet, IdentIndexMap};
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use oxc_allocator::IdentBuildHasher;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_str::{Ident, IdentHashSet};
 
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::BasicBlock;
@@ -32,6 +34,9 @@ use crate::react_compiler_hir::{
 
 const MAX_FIXPOINT_ITERATIONS: usize = 100;
 
+/// `IndexSet` keyed by [`Ident`], reusing its precomputed hash.
+type IdentIndexSet<'a> = indexmap::IndexSet<Ident<'a>, IdentBuildHasher>;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum TypeOfValue {
     Ignored,
@@ -41,10 +46,10 @@ enum TypeOfValue {
 }
 
 #[derive(Debug, Clone)]
-struct DerivationMetadata {
+struct DerivationMetadata<'a> {
     type_of_value: TypeOfValue,
     place_identifier: IdentifierId,
-    place_name: Option<IdentifierName>,
+    place_name: Option<IdentifierName<'a>>,
     source_ids: FxIndexSet<IdentifierId>,
     is_state_source: bool,
 }
@@ -61,25 +66,25 @@ struct DepElement {
     span: Option<Span>,
 }
 
-struct ValidationContext {
+struct ValidationContext<'a> {
     /// Map from lvalue identifier to the FunctionId of function expressions
     functions: FxHashMap<IdentifierId, FunctionId>,
     /// Map from lvalue identifier to ArrayExpression elements (candidate deps)
     candidate_dependencies: FxHashMap<IdentifierId, Vec<DepElement>>,
-    derivation_cache: DerivationCache,
+    derivation_cache: DerivationCache<'a>,
     effects_cache: FxHashMap<IdentifierId, EffectMetadata>,
     set_state_loads: FxHashMap<IdentifierId, Option<IdentifierId>>,
     set_state_usages: FxHashMap<IdentifierId, FxHashSet<Span>>,
 }
 
 #[derive(Debug, Clone)]
-struct DerivationCache {
+struct DerivationCache<'a> {
     has_changes: bool,
-    cache: FxHashMap<IdentifierId, DerivationMetadata>,
-    previous_cache: Option<FxHashMap<IdentifierId, DerivationMetadata>>,
+    cache: FxHashMap<IdentifierId, DerivationMetadata<'a>>,
+    previous_cache: Option<FxHashMap<IdentifierId, DerivationMetadata<'a>>>,
 }
 
-impl DerivationCache {
+impl<'a> DerivationCache<'a> {
     fn new() -> Self {
         DerivationCache { has_changes: false, cache: FxHashMap::default(), previous_cache: None }
     }
@@ -91,7 +96,7 @@ impl DerivationCache {
                 *key,
                 DerivationMetadata {
                     place_identifier: value.place_identifier,
-                    place_name: value.place_name.clone(),
+                    place_name: value.place_name,
                     source_ids: value.source_ids.clone(),
                     type_of_value: value.type_of_value,
                     is_state_source: value.is_state_source,
@@ -140,7 +145,7 @@ impl DerivationCache {
     fn add_derivation_entry(
         &mut self,
         derived_id: IdentifierId,
-        derived_name: Option<IdentifierName>,
+        derived_name: Option<IdentifierName<'a>>,
         source_ids: FxIndexSet<IdentifierId>,
         type_of_value: TypeOfValue,
         is_state_source: bool,
@@ -172,7 +177,7 @@ impl DerivationCache {
     }
 }
 
-fn is_derivation_equal(a: &DerivationMetadata, b: &DerivationMetadata) -> bool {
+fn is_derivation_equal(a: &DerivationMetadata<'_>, b: &DerivationMetadata<'_>) -> bool {
     if a.type_of_value != b.type_of_value {
         return false;
     }
@@ -269,8 +274,8 @@ fn is_mutable_at(
 }
 
 pub fn validate_no_derived_computations_in_effects_exp(
-    func: &HirFunction,
-    env: &Environment,
+    func: &HirFunction<'_>,
+    env: &Environment<'_>,
 ) -> Result<Diagnostics, OxcDiagnostic> {
     let identifiers = &env.identifiers;
 
@@ -287,7 +292,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
     if func.fn_type == ReactFunctionType::Hook {
         for param in &func.params {
             if let ParamPattern::Place(place) = param {
-                let name = identifiers[place.identifier.0 as usize].name.clone();
+                let name = identifiers[place.identifier.0 as usize].name;
                 context.derivation_cache.cache.insert(
                     place.identifier,
                     DerivationMetadata {
@@ -302,7 +307,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
         }
     } else if func.fn_type == ReactFunctionType::Component {
         if let Some(ParamPattern::Place(place)) = func.params.first() {
-            let name = identifiers[place.identifier.0 as usize].name.clone();
+            let name = identifiers[place.identifier.0 as usize].name;
             context.derivation_cache.cache.insert(
                 place.identifier,
                 DerivationMetadata {
@@ -358,7 +363,11 @@ pub fn validate_no_derived_computations_in_effects_exp(
     Ok(errors)
 }
 
-fn record_phi_derivations(block: &BasicBlock, context: &mut ValidationContext, env: &Environment) {
+fn record_phi_derivations<'a>(
+    block: &BasicBlock,
+    context: &mut ValidationContext<'a>,
+    env: &Environment<'a>,
+) {
     let identifiers = &env.identifiers;
     for phi in &block.phis {
         let mut type_of_value = TypeOfValue::Ignored;
@@ -373,7 +382,7 @@ fn record_phi_derivations(block: &BasicBlock, context: &mut ValidationContext, e
         }
 
         if type_of_value != TypeOfValue::Ignored {
-            let name = identifiers[phi.place.identifier.0 as usize].name.clone();
+            let name = identifiers[phi.place.identifier.0 as usize].name;
             context.derivation_cache.add_derivation_entry(
                 phi.place.identifier,
                 name,
@@ -386,11 +395,11 @@ fn record_phi_derivations(block: &BasicBlock, context: &mut ValidationContext, e
 }
 
 #[allow(clippy::only_used_in_recursion)]
-fn record_instruction_derivations(
+fn record_instruction_derivations<'a>(
     instr: &Instruction,
-    context: &mut ValidationContext,
+    context: &mut ValidationContext<'a>,
     is_first_pass: bool,
-    env: &Environment,
+    env: &Environment<'a>,
 ) -> Result<(), OxcDiagnostic> {
     let identifiers = &env.identifiers;
     let types = &env.types;
@@ -442,7 +451,7 @@ fn record_instruction_derivations(
             // Check if lvalue is useState type
             let lvalue_type = &types[identifiers[lvalue_id.0 as usize].type_.0 as usize];
             if is_use_state_type(lvalue_type) {
-                let name = identifiers[lvalue_id.0 as usize].name.clone();
+                let name = identifiers[lvalue_id.0 as usize].name;
                 context.derivation_cache.add_derivation_entry(
                     lvalue_id,
                     name,
@@ -473,7 +482,7 @@ fn record_instruction_derivations(
             // Check if lvalue is useState type
             let lvalue_type = &types[identifiers[lvalue_id.0 as usize].type_.0 as usize];
             if is_use_state_type(lvalue_type) {
-                let name = identifiers[lvalue_id.0 as usize].name.clone();
+                let name = identifiers[lvalue_id.0 as usize].name;
                 context.derivation_cache.add_derivation_entry(
                     lvalue_id,
                     name,
@@ -524,7 +533,7 @@ fn record_instruction_derivations(
 
     // Record derivation for ALL lvalue places (including destructured variables)
     for &lv_id in &each_instruction_lvalue_ids(instr) {
-        let name = identifiers[lv_id.0 as usize].name.clone();
+        let name = identifiers[lv_id.0 as usize].name;
         context.derivation_cache.add_derivation_entry(
             lv_id,
             name,
@@ -546,7 +555,7 @@ fn record_instruction_derivations(
                 if let Some(existing) = context.derivation_cache.cache.get_mut(&operand.id) {
                     existing.type_of_value = join_value(type_of_value, existing.type_of_value);
                 } else {
-                    let name = identifiers[operand.id.0 as usize].name.clone();
+                    let name = identifiers[operand.id.0 as usize].name;
                     context.derivation_cache.add_derivation_entry(
                         operand.id,
                         name,
@@ -597,18 +606,18 @@ fn each_instruction_operand_with_effect(
 // Tree building and rendering (for error messages)
 // =============================================================================
 
-struct TreeNode {
-    name: String,
+struct TreeNode<'a> {
+    name: Ident<'a>,
     type_of_value: TypeOfValue,
     is_source: bool,
-    children: Vec<TreeNode>,
+    children: Vec<TreeNode<'a>>,
 }
 
-fn build_tree_node(
+fn build_tree_node<'a>(
     source_id: IdentifierId,
-    context: &ValidationContext,
-    visited: &FxHashSet<String>,
-) -> Vec<TreeNode> {
+    context: &ValidationContext<'a>,
+    visited: &IdentHashSet<'a>,
+) -> Vec<TreeNode<'a>> {
     let source_metadata = match context.derivation_cache.cache.get(&source_id) {
         Some(m) => m,
         None => return Vec::new(),
@@ -617,7 +626,7 @@ fn build_tree_node(
     if source_metadata.is_state_source {
         if let Some(IdentifierName::Named(name)) = &source_metadata.place_name {
             return vec![TreeNode {
-                name: name.clone(),
+                name: *name,
                 type_of_value: source_metadata.type_of_value,
                 is_source: true,
                 children: Vec::new(),
@@ -626,7 +635,7 @@ fn build_tree_node(
     }
 
     let mut children: Vec<TreeNode> = Vec::new();
-    let mut named_siblings: FxIndexSet<String> = FxIndexSet::default();
+    let mut named_siblings: IdentIndexSet = IdentIndexSet::default();
 
     for child_id in &source_metadata.source_ids {
         assert_ne!(
@@ -636,13 +645,13 @@ fn build_tree_node(
 
         let mut new_visited = visited.clone();
         if let Some(IdentifierName::Named(name)) = &source_metadata.place_name {
-            new_visited.insert(name.clone());
+            new_visited.insert(*name);
         }
 
         let child_nodes = build_tree_node(*child_id, context, &new_visited);
         for child_node in child_nodes {
             if !named_siblings.contains(&child_node.name) {
-                named_siblings.insert(child_node.name.clone());
+                named_siblings.insert(child_node.name);
                 children.push(child_node);
             }
         }
@@ -651,7 +660,7 @@ fn build_tree_node(
     if let Some(IdentifierName::Named(name)) = &source_metadata.place_name {
         if !visited.contains(name) {
             return vec![TreeNode {
-                name: name.clone(),
+                name: *name,
                 type_of_value: source_metadata.type_of_value,
                 is_source: source_metadata.is_state_source,
                 children,
@@ -662,12 +671,12 @@ fn build_tree_node(
     children
 }
 
-fn render_tree(
-    node: &TreeNode,
+fn render_tree<'a>(
+    node: &TreeNode<'a>,
     indent: &str,
     is_last: bool,
-    props_set: &mut FxIndexSet<String>,
-    state_set: &mut FxIndexSet<String>,
+    props_set: &mut IdentIndexSet<'a>,
+    state_set: &mut IdentIndexSet<'a>,
 ) -> String {
     let prefix = format!(
         "{}{}",
@@ -681,16 +690,16 @@ fn render_tree(
     if node.is_source {
         let type_label = match node.type_of_value {
             TypeOfValue::FromProps => {
-                props_set.insert(node.name.clone());
+                props_set.insert(node.name);
                 "Prop"
             }
             TypeOfValue::FromState => {
-                state_set.insert(node.name.clone());
+                state_set.insert(node.name);
                 "State"
             }
             _ => {
-                props_set.insert(node.name.clone());
-                state_set.insert(node.name.clone());
+                props_set.insert(node.name);
+                state_set.insert(node.name);
                 "Prop and State"
             }
         };
@@ -731,11 +740,11 @@ fn get_fn_local_deps(
     Some(deps)
 }
 
-fn validate_effect(
+fn validate_effect<'a>(
     effect_func_id: FunctionId,
     dependencies: &[DepElement],
-    context: &mut ValidationContext,
-    env: &Environment,
+    context: &mut ValidationContext<'a>,
+    env: &Environment<'a>,
     errors: &mut Diagnostics,
 ) {
     let identifiers = &env.identifiers;
@@ -889,15 +898,15 @@ fn validate_effect(
                 && context.set_state_usages.contains_key(&root_id)
                 && effect_usage_count == total_usage_count - 1
             {
-                let mut props_set: FxIndexSet<String> = FxIndexSet::default();
-                let mut state_set: FxIndexSet<String> = FxIndexSet::default();
+                let mut props_set: IdentIndexSet = IdentIndexSet::default();
+                let mut state_set: IdentIndexSet = IdentIndexSet::default();
 
-                let mut root_nodes_map: FxIndexMap<String, TreeNode> = FxIndexMap::default();
+                let mut root_nodes_map: IdentIndexMap<TreeNode> = IdentIndexMap::default();
                 for id in &derived.source_ids {
-                    let nodes = build_tree_node(*id, context, &FxHashSet::default());
+                    let nodes = build_tree_node(*id, context, &IdentHashSet::default());
                     for node in nodes {
                         if !root_nodes_map.contains_key(&node.name) {
-                            root_nodes_map.insert(node.name.clone(), node);
+                            root_nodes_map.insert(node.name, node);
                         }
                     }
                 }

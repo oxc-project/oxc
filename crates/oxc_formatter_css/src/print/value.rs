@@ -389,7 +389,7 @@ fn is_func_like(value: &ComponentValue<'_>) -> bool {
 /// but postcss lexes the whole contiguous run as ONE word
 /// (an xstyled / tailwind-theme token, or plugin-processed pseudo-math).
 ///
-/// Such a number stays glued (`Separator::Tight`) and prints raw.
+/// Such a number stays glued and prints raw (`Separator::Word`).
 /// `.10` must not normalize to `0.1`, `+1` must not gain a space.
 /// Two glued number-ish values can never be valid CSS,
 /// so a number-ish neighbor is as sure a word sign as a word-like one.
@@ -853,7 +853,7 @@ pub(super) fn write_comma_group<'a>(
             while run_end < values.len()
                 && matches!(
                     separator_between(values, run_end, ctx, source),
-                    Separator::Tight | Separator::Space
+                    Separator::Tight | Separator::Word | Separator::Space
                 )
             {
                 run_end += 1;
@@ -871,9 +871,9 @@ pub(super) fn write_comma_group<'a>(
                         if sep == Separator::Space {
                             write!(f, " ");
                         }
-                        // A word-glued number prints raw, not normalized (see `is_word_glued_number`);
-                        // gated on Tight so the spacing and text halves always come from one rule.
-                        if sep == Separator::Tight && is_word_glued_number(values, run_start + j) {
+                        // A word continuation prints raw, not normalized
+                        // (`sandstone.10`, `[0.50]` must survive as-is).
+                        if sep == Separator::Word {
                             write!(f, text(source.text_for(&to_span(v.span()))));
                             continue;
                         }
@@ -961,6 +961,9 @@ pub(super) fn write_comma_group<'a>(
 enum Separator {
     /// No separator (components merged into one run).
     Tight,
+    /// `Tight`, AND the right component prints raw from source:
+    /// the pair continues ONE postcss word (`sandstone.10`, `foo[0.50]`).
+    Word,
     /// Plain space, no break opportunity (word before a math operator).
     Space,
     /// Breakable, no space when flat (placeholder glued to a paren group).
@@ -1089,6 +1092,21 @@ fn separator_between(
         return Separator::Tight;
     }
 
+    // A source-glued `[...]` is part of ONE postcss word
+    // (`theme(fontSize.af-md[0])`, `foo[0]bar`, `10px[0]`): keep the glue and print verbatim;
+    // a source gap (`af-md [0]`) keeps two words.
+    // Less lookup chains never reach here (the rule above wins),
+    // so their brackets still print structurally.
+    // NOTE: Prettier re-splits SOME glued neighbors (`var(--x)[0]` -> `var(--x) [0]`,
+    // a word-lexing artifact of `[` not extending a word across `)`);
+    // one gap-based rule never adds a space the source doesn't have.
+    if gap_empty
+        && (matches!(curr, ComponentValue::BracketBlock(_))
+            || matches!(prev, ComponentValue::BracketBlock(_)))
+    {
+        return Separator::Word;
+    }
+
     // Raw token punctuation:
     // `:` hugs left and spaces right, braces hug their contents (custom-property JSON-ish values).
     {
@@ -1208,10 +1226,9 @@ fn separator_between(
         return Separator::Tight;
     }
 
-    // A word-glued number is part of ONE postcss word (`sandstone.10`);
-    // it also prints raw, see `is_word_glued_number`.
+    // A word-glued number is part of ONE postcss word (`sandstone.10`); see `is_word_glued_number`.
     if gap_empty && is_word_glued_number(values, i) {
-        return Separator::Tight;
+        return Separator::Word;
     }
 
     // postcss-values lexes `1#{$var}` as ONE word:

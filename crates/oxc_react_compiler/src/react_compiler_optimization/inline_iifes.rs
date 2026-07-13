@@ -41,6 +41,7 @@
 //! Analogous to TS `Inference/InlineImmediatelyInvokedFunctionExpressions.ts`.
 
 use crate::react_compiler_utils::FxIndexSet;
+use oxc_str::format_ident;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_hir::environment::Environment;
@@ -386,5 +387,5 @@ fn declare_temporary<'a>(
 fn promote_temporary(env: &mut Environment<'_>, identifier_id: IdentifierId) {
     let decl_id = env.identifiers[identifier_id.0 as usize].declaration_id;
     env.identifiers[identifier_id.0 as usize].name =
-        Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
+        Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.0)));
 }

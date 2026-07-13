@@ -5,6 +5,7 @@ use crate::react_compiler_hir::visitors::terminal_fallthrough;
 use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
+use crate::react_compiler_utils::IdentIndexMap;
 use crate::scope::DeclKind;
 use crate::scope::ImportBindingKind;
 use crate::scope::ScopeId;
@@ -13,11 +14,12 @@ use crate::scope::SymbolId;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
+use oxc_str::{Ident, format_ident};
 
 use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
 
 type BuildResult<'a> = Result<
-    (HIR, Vec<Instruction<'a>>, FxIndexMap<String, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
+    (HIR, Vec<Instruction<'a>>, IdentIndexMap<'a, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
     OxcDiagnostic,
 >;
 
@@ -78,13 +80,13 @@ pub(crate) fn reserved_identifier_diagnostic(name: &str) -> OxcDiagnostic {
 // Scope types for tracking break/continue targets
 // ---------------------------------------------------------------------------
 
-enum Scope {
-    Loop { label: Option<String>, continue_block: BlockId, break_block: BlockId },
-    Label { label: String, break_block: BlockId },
-    Switch { label: Option<String>, break_block: BlockId },
+enum Scope<'a> {
+    Loop { label: Option<Ident<'a>>, continue_block: BlockId, break_block: BlockId },
+    Label { label: Ident<'a>, break_block: BlockId },
+    Switch { label: Option<Ident<'a>>, break_block: BlockId },
 }
 
-impl Scope {
+impl Scope<'_> {
     fn label(&self) -> Option<&str> {
         match self {
             Scope::Loop { label, .. } => label.as_deref(),
@@ -124,7 +126,7 @@ pub struct HirBuilder<'a, 'b> {
     completed: FxIndexMap<BlockId, BasicBlock>,
     current: WipBlock,
     entry: BlockId,
-    scopes: Vec<Scope>,
+    scopes: Vec<Scope<'a>>,
     /// Context identifiers: variables captured from an outer scope.
     /// Maps the outer scope's symbol to the source location where it was referenced.
     context: FxIndexMap<SymbolId, Option<Span>>,
@@ -132,7 +134,7 @@ pub struct HirBuilder<'a, 'b> {
     bindings: FxIndexMap<SymbolId, IdentifierId>,
     /// Names already used by bindings, for collision avoidance.
     /// Maps name string -> how many times it has been used (for appending _0, _1, ...).
-    used_names: FxIndexMap<String, SymbolId>,
+    used_names: IdentIndexMap<'a, SymbolId>,
     env: &'b mut Environment<'a>,
     scope: &'b ScopeResolver<'b, 'a>,
     exception_handler_stack: Vec<BlockId>,
@@ -176,7 +178,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         bindings: Option<FxIndexMap<SymbolId, IdentifierId>>,
         context: Option<FxIndexMap<SymbolId, Option<Span>>>,
         entry_block_kind: Option<BlockKind>,
-        used_names: Option<FxIndexMap<String, SymbolId>>,
+        used_names: Option<IdentIndexMap<'a, SymbolId>>,
         identifier_spans: &'b IdentifierLocIndex,
     ) -> Self {
         let entry = env.next_block_id();
@@ -225,7 +227,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Create a new unique TypeVar type, allocated from the environment's type arena
     /// so that TypeIds are consistent with identifier type slots.
-    pub fn make_type(&mut self) -> Type {
+    pub fn make_type(&mut self) -> Type<'a> {
         let type_id = self.env.make_type();
         Type::TypeVar { id: type_id }
     }
@@ -279,13 +281,13 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     }
 
     /// Access the used names map.
-    pub fn used_names(&self) -> &FxIndexMap<String, SymbolId> {
+    pub fn used_names(&self) -> &IdentIndexMap<'a, SymbolId> {
         &self.used_names
     }
 
     /// Merge used names from a child builder back into this builder.
     /// This ensures name deduplication works across function scopes.
-    pub fn merge_used_names(&mut self, child_used_names: FxIndexMap<String, SymbolId>) {
+    pub fn merge_used_names(&mut self, child_used_names: IdentIndexMap<'a, SymbolId>) {
         for (name, symbol_id) in child_used_names {
             self.used_names.entry(name).or_insert(symbol_id);
         }
@@ -430,12 +432,12 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Push a Loop scope, run the closure, pop and verify.
     pub fn loop_scope<T>(
         &mut self,
-        label: Option<String>,
+        label: Option<Ident<'a>>,
         continue_block: BlockId,
         break_block: BlockId,
         f: impl FnOnce(&mut Self) -> Result<T, OxcDiagnostic>,
     ) -> Result<T, OxcDiagnostic> {
-        self.scopes.push(Scope::Loop { label: label.clone(), continue_block, break_block });
+        self.scopes.push(Scope::Loop { label, continue_block, break_block });
         let value = f(self)?;
         let last = self.scopes.pop().expect("Mismatched loop scope: stack empty");
         match &last {
@@ -456,11 +458,11 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Push a Label scope, run the closure, pop and verify.
     pub fn label_scope<T>(
         &mut self,
-        label: String,
+        label: Ident<'a>,
         break_block: BlockId,
         f: impl FnOnce(&mut Self) -> Result<T, OxcDiagnostic>,
     ) -> Result<T, OxcDiagnostic> {
-        self.scopes.push(Scope::Label { label: label.clone(), break_block });
+        self.scopes.push(Scope::Label { label, break_block });
         let value = f(self)?;
         let last = self.scopes.pop().expect("Mismatched label scope: stack empty");
         match &last {
@@ -478,11 +480,11 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Push a Switch scope, run the closure, pop and verify.
     pub fn switch_scope<T>(
         &mut self,
-        label: Option<String>,
+        label: Option<Ident<'a>>,
         break_block: BlockId,
         f: impl FnOnce(&mut Self) -> Result<T, OxcDiagnostic>,
     ) -> Result<T, OxcDiagnostic> {
-        self.scopes.push(Scope::Switch { label: label.clone(), break_block });
+        self.scopes.push(Scope::Switch { label, break_block });
         let value = f(self)?;
         let last = self.scopes.pop().expect("Mismatched switch scope: stack empty");
         match &last {
@@ -637,7 +639,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Records errors for variables named 'fbt' or 'this'.
     pub fn resolve_binding(
         &mut self,
-        name: &str,
+        name: Ident<'a>,
         symbol_id: SymbolId,
     ) -> Result<IdentifierId, OxcDiagnostic> {
         self.resolve_binding_with_span(name, symbol_id, None)
@@ -646,7 +648,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Map a symbol to an HIR IdentifierId, with an optional source location.
     pub fn resolve_binding_with_span(
         &mut self,
-        name: &str,
+        name: Ident<'a>,
         symbol_id: SymbolId,
         span: Option<Span>,
     ) -> Result<IdentifierId, OxcDiagnostic> {
@@ -684,13 +686,13 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             return Ok(identifier_id);
         }
 
-        if is_always_reserved_word(name) {
+        if is_always_reserved_word(name.as_str()) {
             // Match TS behavior: makeIdentifierName throws for reserved words.
-            return Err(reserved_identifier_diagnostic(name));
+            return Err(reserved_identifier_diagnostic(name.as_str()));
         }
 
         // Find a unique name: start with the original name, then try name_0, name_1, ...
-        let mut candidate = name.to_string();
+        let mut candidate = name;
         let mut index = 0u32;
         while let Some(&existing_symbol_id) = self.used_names.get(&candidate) {
             if existing_symbol_id == symbol_id {
@@ -698,7 +700,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 break;
             }
             // Name collision with a different binding, try the next suffix
-            candidate = format!("{}_{}", name, index);
+            candidate = format_ident!(self.env.allocator, "{name}_{index}");
             index += 1;
         }
 
@@ -706,14 +708,14 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         // can rename matching identifiers inside preserved TS type annotations.
         if candidate != name {
             for &reference_id in self.scope.reference_ids(symbol_id) {
-                self.env.renames.insert(reference_id, candidate.clone());
+                self.env.renames.insert(reference_id, candidate);
             }
         }
 
         // Allocate identifier in the arena
         let id = self.env.next_identifier_id();
         // Update the name and span on the allocated identifier
-        self.env.identifiers[id.0 as usize].name = Some(IdentifierName::Named(candidate.clone()));
+        self.env.identifiers[id.0 as usize].name = Some(IdentifierName::Named(candidate));
         // Prefer the binding's declaration span over the reference span.
         // This matches TS behavior where Babel's resolveBinding returns the
         // binding identifier's original span (the declaration site).
@@ -744,50 +746,48 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// - Identifier (local binding, resolved via resolve_binding)
     pub fn resolve_identifier(
         &mut self,
-        name: &str,
+        name: Ident<'a>,
         span: Span,
         symbol: Option<SymbolId>,
-    ) -> Result<VariableBinding, OxcDiagnostic> {
+    ) -> Result<VariableBinding<'a>, OxcDiagnostic> {
         let Some(symbol_id) = symbol else {
             // No binding found: this is a global
-            return Ok(VariableBinding::Global { name: name.to_string() });
+            return Ok(VariableBinding::Global { name });
         };
         // Treat type-only declarations as globals so the compiler
         // doesn't try to create/initialize HIR bindings for them.
-        // TSEnumDeclaration is included because enums inside function
-        // bodies are lowered as UnsupportedNode and their binding
-        // is never initialized in HIR.
+        // TSEnumDeclaration is included because a function with an inline
+        // enum is skipped (`skip_compilation`) and the enum binding is
+        // never initialized in HIR.
         if matches!(
             self.scope.decl_kind(symbol_id),
             DeclKind::TSTypeAliasDeclaration
                 | DeclKind::TSEnumDeclaration
                 | DeclKind::TSModuleDeclaration
         ) {
-            return Ok(VariableBinding::Global { name: name.to_string() });
+            return Ok(VariableBinding::Global { name });
         }
         let symbol_scope = self.scope.symbol_scope(symbol_id);
         if symbol_scope == self.scope.program_scope() {
             // Module-level binding: check import info
             Ok(match self.scope.import_data(symbol_id) {
                 Some(import_info) => match import_info.kind {
-                    ImportBindingKind::Default => VariableBinding::ImportDefault {
-                        name: name.to_string(),
-                        module: import_info.source,
-                    },
+                    ImportBindingKind::Default => {
+                        VariableBinding::ImportDefault { name, module: import_info.source }
+                    }
                     ImportBindingKind::Named => VariableBinding::ImportSpecifier {
-                        name: name.to_string(),
+                        name,
                         module: import_info.source,
-                        imported: import_info.imported.unwrap_or_else(|| name.to_string()),
+                        imported: import_info.imported.unwrap_or(name),
                     },
-                    ImportBindingKind::Namespace => VariableBinding::ImportNamespace {
-                        name: name.to_string(),
-                        module: import_info.source,
-                    },
+                    ImportBindingKind::Namespace => {
+                        VariableBinding::ImportNamespace { name, module: import_info.source }
+                    }
                 },
-                None => VariableBinding::ModuleLocal { name: name.to_string() },
+                None => VariableBinding::ModuleLocal { name },
             })
         } else if !self.is_scope_within_compiled_function(symbol_scope) {
-            Ok(VariableBinding::ModuleLocal { name: name.to_string() })
+            Ok(VariableBinding::ModuleLocal { name })
         } else {
             let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
                 &self.scope.binding_kind(symbol_id),

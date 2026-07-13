@@ -15,6 +15,8 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 
+use oxc_str::{Ident, Str};
+
 use crate::react_compiler_hir::{
     BlockId, EvaluationOrder, InstructionValue, LogicalOperator, ParamPattern, Place, ScopeId, Span,
 };
@@ -28,13 +30,13 @@ use crate::react_compiler_hir::{
 #[derive(Debug, Clone)]
 pub struct ReactiveFunction<'a> {
     pub span: Option<Span>,
-    pub id: Option<String>,
-    pub name_hint: Option<String>,
+    pub id: Option<Ident<'a>>,
+    pub name_hint: Option<Ident<'a>>,
     pub params: Vec<ParamPattern>,
     pub generator: bool,
     pub is_async: bool,
     pub body: ReactiveBlock<'a>,
-    pub directives: Vec<String>,
+    pub directives: Vec<Str<'a>>,
     // No env field — passed separately per established Rust convention
 }
 

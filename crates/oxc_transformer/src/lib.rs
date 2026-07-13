@@ -11,7 +11,7 @@ use oxc_allocator::{Allocator, ArenaVec, ReplaceWith};
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_diagnostics::Diagnostics;
 #[cfg(feature = "react_compiler")]
-use oxc_react_compiler::{PluginOptions, transform as react_compiler_transform};
+use oxc_react_compiler::{PluginOptions, compile as react_compiler_compile};
 use oxc_semantic::Scoping;
 #[cfg(feature = "react_compiler")]
 use oxc_semantic::SemanticBuilder;
@@ -228,17 +228,17 @@ impl<'a> Transformer<'a> {
         let Some(options) = self.react_compiler.take() else {
             return (scoping, Diagnostics::new());
         };
-        let mut result = {
+        let (output, diagnostics) = {
             let semantic = SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
-            react_compiler_transform(program, &semantic, self.allocator, options)
+            react_compiler_compile(program, &semantic, self.allocator, options)
         };
-        if !result.changed {
-            return (scoping, result.diagnostics);
-        }
-        *program = result.program.take().expect("changed result should include a program");
+        let Some(output) = output else {
+            return (scoping, diagnostics);
+        };
+        output.transform(program);
         let scoping =
             SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
-        (scoping, result.diagnostics)
+        (scoping, diagnostics)
     }
 }
 

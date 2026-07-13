@@ -249,8 +249,6 @@ jobs:
       - run: pnpm -C ${package_path} build-browser-bundle --npmDir ../../${npm_dir}
         if: ${{ inputs.name == 'parser' }}
 
-      - run: npm install -g npm@latest # For trusted publishing support
-
       - name: Check Publish
         run: node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
 

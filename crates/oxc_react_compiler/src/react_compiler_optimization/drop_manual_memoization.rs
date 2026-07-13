@@ -60,7 +60,7 @@ struct ManualMemoCallee {
     load_instr_id: InstructionId,
 }
 
-struct IdentifierSidemap {
+struct IdentifierSidemap<'a> {
     /// Maps identifier id -> InstructionId of FunctionExpression instructions
     functions: FxHashSet<IdentifierId>,
     /// Maps identifier id -> ManualMemoCallee for useMemo/useCallback callees
@@ -70,7 +70,7 @@ struct IdentifierSidemap {
     /// Maps identifier id -> deps list info for array expressions
     maybe_deps_lists: FxHashMap<IdentifierId, MaybeDepsListInfo>,
     /// Maps identifier id -> ManualMemoDependency for dependency tracking
-    maybe_deps: FxHashMap<IdentifierId, ManualMemoDependency>,
+    maybe_deps: FxHashMap<IdentifierId, ManualMemoDependency<'a>>,
     /// Set of identifier ids that are results of optional chains
     optionals: FxHashSet<IdentifierId>,
 }
@@ -81,9 +81,9 @@ struct MaybeDepsListInfo {
     deps: Vec<Place>,
 }
 
-struct ExtractedMemoArgs {
+struct ExtractedMemoArgs<'a> {
     fn_place: Place,
-    deps_list: Option<Vec<ManualMemoDependency>>,
+    deps_list: Option<Vec<ManualMemoDependency<'a>>>,
     deps_span: Option<Span>,
 }
 
@@ -199,7 +199,7 @@ fn process_manual_memo_call<'a>(
     env: &mut Environment<'a>,
     instr_id: InstructionId,
     manual_memo: &ManualMemoCallee,
-    sidemap: &mut IdentifierSidemap,
+    sidemap: &mut IdentifierSidemap<'a>,
     is_validation_enabled: bool,
     next_manual_memo_id: &mut u32,
     queued_inserts: &mut FxHashMap<InstructionId, Instruction<'a>>,
@@ -266,11 +266,11 @@ fn process_manual_memo_call<'a>(
     }
 }
 
-fn collect_temporaries(
-    func: &HirFunction<'_>,
-    env: &Environment<'_>,
+fn collect_temporaries<'a>(
+    func: &HirFunction<'a>,
+    env: &Environment<'a>,
     instr_id: InstructionId,
-    sidemap: &mut IdentifierSidemap,
+    sidemap: &mut IdentifierSidemap<'a>,
 ) {
     let instr = &func.instructions[instr_id.0 as usize];
     let lvalue_id = instr.lvalue.identifier;
@@ -367,15 +367,15 @@ fn collect_temporaries(
 
 /// Collect loads from named variables and property reads into `maybe_deps`.
 /// Returns the variable + property reads represented by the instruction value.
-pub fn collect_maybe_memo_dependencies(
-    value: &InstructionValue<'_>,
-    maybe_deps: &FxHashMap<IdentifierId, ManualMemoDependency>,
+pub fn collect_maybe_memo_dependencies<'a>(
+    value: &InstructionValue<'a>,
+    maybe_deps: &FxHashMap<IdentifierId, ManualMemoDependency<'a>>,
     optional: bool,
-    env: &Environment<'_>,
-) -> Option<ManualMemoDependency> {
+    env: &Environment<'a>,
+) -> Option<ManualMemoDependency<'a>> {
     match value {
         InstructionValue::LoadGlobal { binding, span, .. } => Some(ManualMemoDependency {
-            root: ManualMemoDependencyRoot::Global { identifier_name: binding.name().to_string() },
+            root: ManualMemoDependencyRoot::Global { identifier_name: binding.name() },
             path: vec![],
             span: *span,
         }),
@@ -384,11 +384,7 @@ pub fn collect_maybe_memo_dependencies(
                 root: object_dep.root.clone(),
                 path: {
                     let mut path = object_dep.path.clone();
-                    path.push(DependencyPathEntry {
-                        property: property.clone(),
-                        optional,
-                        span: *span,
-                    });
+                    path.push(DependencyPathEntry { property: *property, optional, span: *span });
                     path
                 },
                 span: *span,
@@ -462,7 +458,7 @@ fn get_manual_memoization_replacement<'a>(
 fn make_manual_memoization_markers<'a>(
     fn_expr: &Place,
     env: &mut Environment<'a>,
-    deps_list: Option<Vec<ManualMemoDependency>>,
+    deps_list: Option<Vec<ManualMemoDependency<'a>>>,
     deps_span: Option<Span>,
     memo_decl: &Place,
     manual_memo_id: u32,
@@ -495,12 +491,12 @@ fn make_manual_memoization_markers<'a>(
     (start, finish)
 }
 
-fn extract_manual_memoization_args(
+fn extract_manual_memoization_args<'a>(
     instr: &Instruction,
     kind: ManualMemoKind,
-    sidemap: &IdentifierSidemap,
+    sidemap: &IdentifierSidemap<'a>,
     env: &mut Environment,
-) -> Option<ExtractedMemoArgs> {
+) -> Option<ExtractedMemoArgs<'a>> {
     let args: &[PlaceOrSpread] = match &instr.value {
         InstructionValue::CallExpression { args, .. } => args,
         InstructionValue::MethodCall { args, .. } => args,
@@ -573,7 +569,7 @@ fn extract_manual_memoization_args(
     }
 
     let deps_info = maybe_deps_list.unwrap();
-    let mut deps_list: Vec<ManualMemoDependency> = Vec::new();
+    let mut deps_list: Vec<ManualMemoDependency<'a>> = Vec::new();
     for dep in &deps_info.deps {
         let maybe_dep = sidemap.maybe_deps.get(&dep.identifier);
         if let Some(d) = maybe_dep {
@@ -662,7 +658,7 @@ fn is_known_react_module(module: &str) -> bool {
 /// - `ModuleLocal`: return None (same reason as above)
 /// - `ImportDefault`/`ImportNamespace` from known React module: use the local name
 /// - `ImportDefault`/`ImportNamespace` from unknown module: return None
-fn get_hook_detection_name(binding: &NonLocalBinding) -> Option<&str> {
+fn get_hook_detection_name<'a>(binding: &NonLocalBinding<'a>) -> Option<&'a str> {
     match binding {
         NonLocalBinding::Global { name } => Some(name.as_str()),
         NonLocalBinding::ImportSpecifier { imported, module, .. } => {

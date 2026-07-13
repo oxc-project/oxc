@@ -381,20 +381,6 @@ impl InferenceState {
         }
     }
 
-    #[allow(dead_code)]
-    fn kind_opt(&self, place_id: IdentifierId) -> Option<AbstractValue> {
-        let values = self.variables.get(&place_id)?;
-        let mut merged_kind: Option<AbstractValue> = None;
-        for value_id in values {
-            let kind = self.values.get(value_id)?;
-            merged_kind = Some(match merged_kind {
-                Some(prev) => merge_abstract_values(&prev, kind),
-                None => kind.clone(),
-            });
-        }
-        merged_kind
-    }
-
     fn kind(&self, place_id: IdentifierId) -> AbstractValue {
         self.kind_with_span(place_id, None)
     }
@@ -428,16 +414,6 @@ impl InferenceState {
         // Note: In TS, this also transitively freezes FunctionExpression captures
         // if enableTransitivelyFreezeFunctionExpressions is set. We skip that here
         // since we don't have access to the function arena from within state.
-    }
-
-    #[allow(dead_code)]
-    fn mutate(
-        &self,
-        variant: MutateVariant,
-        place_id: IdentifierId,
-        env: &Environment,
-    ) -> MutationResult {
-        self.mutate_with_span(variant, place_id, env, None)
     }
 
     fn mutate_with_span(
@@ -2213,8 +2189,7 @@ fn compute_signature_for_instruction(
         | InstructionValue::Primitive { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::TemplateLiteral { .. }
-        | InstructionValue::UnaryExpression { .. }
-        | InstructionValue::UnsupportedNode { .. } => {
+        | InstructionValue::UnaryExpression { .. } => {
             effects.push(AliasingEffect::Create {
                 into: lvalue.clone(),
                 value: ValueKind::Primitive,
@@ -3008,7 +2983,7 @@ fn conditionally_mutate_iterator(place: &Place, ty: &Type) -> Option<AliasingEff
 
 fn is_builtin_collection_type(ty: &Type) -> bool {
     matches!(ty, Type::Object { shape_id: Some(id) }
-        if id == BUILT_IN_ARRAY_ID || id == BUILT_IN_SET_ID || id == BUILT_IN_MAP_ID
+        if *id == BUILT_IN_ARRAY_ID || *id == BUILT_IN_SET_ID || *id == BUILT_IN_MAP_ID
     )
 }
 
@@ -3033,7 +3008,7 @@ fn get_hook_kind_for_type<'a>(
 }
 
 /// Format a Type for printPlace-style output, matching TS's `printType()`.
-fn format_type_for_print(ty: &Type) -> Cow<'_, str> {
+fn format_type_for_print<'t>(ty: &'t Type) -> Cow<'t, str> {
     match ty {
         Type::Primitive => Cow::Borrowed(""),
         Type::Function { shape_id, return_type, .. } => {
@@ -3144,7 +3119,7 @@ enum PatternItem<'a> {
     Spread(&'a Place),
 }
 
-fn each_pattern_items(pattern: &Pattern) -> Vec<PatternItem<'_>> {
+fn each_pattern_items<'p>(pattern: &'p Pattern) -> Vec<PatternItem<'p>> {
     let mut items = Vec::new();
     match pattern {
         Pattern::Array(arr) => {

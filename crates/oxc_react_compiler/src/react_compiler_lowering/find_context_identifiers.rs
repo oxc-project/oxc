@@ -423,7 +423,7 @@ fn is_captured_by_function(
 ///
 /// This is the Rust equivalent of the TypeScript `FindContextIdentifiers` pass.
 pub fn find_context_identifiers(
-    func: &FunctionNode<'_>,
+    func: &FunctionNode<'_, '_>,
     scope: &ScopeResolver<'_, '_>,
     identifier_spans: &crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex,
 ) -> Result<FxHashSet<SymbolId>, OxcDiagnostic> {

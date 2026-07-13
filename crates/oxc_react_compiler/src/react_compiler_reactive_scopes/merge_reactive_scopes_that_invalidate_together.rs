@@ -86,7 +86,7 @@ struct MergeTransform<'a, 'e> {
 }
 
 impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
-    type State = Option<Vec<ReactiveScopeDependency>>;
+    type State = Option<Vec<ReactiveScopeDependency<'a>>>;
 
     fn env(&self) -> &Environment<'a> {
         self.env

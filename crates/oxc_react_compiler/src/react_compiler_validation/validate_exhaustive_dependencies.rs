@@ -4,6 +4,7 @@ use std::mem::{replace, take};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_str::Ident;
 
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
@@ -52,12 +53,10 @@ pub fn validate_exhaustive_dependencies(
     }
 
     let mut start_memo: Option<StartMemoInfo> = None;
-    let mut memo_locals: FxHashSet<IdentifierId> = FxHashSet::default();
 
     // Callbacks struct holding the mutable state
     let mut callbacks = Callbacks {
         start_memo: &mut start_memo,
-        memo_locals: &mut memo_locals,
         validate_memo: env.config.validate_exhaustive_memoization_dependencies,
         validate_effect: env.config.validate_exhaustive_effect_dependencies,
         reactive: &reactive,
@@ -100,61 +99,59 @@ pub fn validate_exhaustive_dependencies(
 // =============================================================================
 
 /// Info extracted from a StartMemoize instruction
-struct StartMemoInfo {
+struct StartMemoInfo<'a> {
     manual_memo_id: u32,
-    deps: Option<Vec<ManualMemoDependency>>,
+    deps: Option<Vec<ManualMemoDependency<'a>>>,
     deps_span: Option<Option<Span>>,
-    #[allow(dead_code)]
-    span: Option<Span>,
 }
 
 /// A temporary value tracked during dependency collection
 #[derive(Debug, Clone)]
-enum Temporary {
+enum Temporary<'a> {
     Local {
         identifier: IdentifierId,
-        path: Vec<DependencyPathEntry>,
+        path: Vec<DependencyPathEntry<'a>>,
         context: bool,
         span: Option<Span>,
     },
     Global {
-        binding: NonLocalBinding,
+        binding: NonLocalBinding<'a>,
     },
     Aggregate {
-        dependencies: Vec<InferredDependency>,
+        dependencies: Vec<InferredDependency<'a>>,
         span: Option<Span>,
     },
 }
 
 /// An inferred dependency (Local or Global)
 #[derive(Debug, Clone)]
-enum InferredDependency {
+enum InferredDependency<'a> {
     Local {
         identifier: IdentifierId,
-        path: Vec<DependencyPathEntry>,
+        path: Vec<DependencyPathEntry<'a>>,
         #[allow(dead_code)]
         context: bool,
         span: Option<Span>,
     },
     Global {
-        binding: NonLocalBinding,
+        binding: NonLocalBinding<'a>,
     },
 }
 
 /// Hashable key for deduplicating inferred dependencies in a Set
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum InferredDependencyKey {
+enum InferredDependencyKey<'a> {
     Local { identifier: IdentifierId, path_key: String },
-    Global { name: String },
+    Global { name: Ident<'a> },
 }
 
-fn dep_to_key(dep: &InferredDependency) -> InferredDependencyKey {
+fn dep_to_key<'a>(dep: &InferredDependency<'a>) -> InferredDependencyKey<'a> {
     match dep {
         InferredDependency::Local { identifier, path, .. } => {
             InferredDependencyKey::Local { identifier: *identifier, path_key: path_to_string(path) }
         }
         InferredDependency::Global { binding } => {
-            InferredDependencyKey::Global { name: binding.name().to_string() }
+            InferredDependencyKey::Global { name: binding.name() }
         }
     }
 }
@@ -167,13 +164,11 @@ fn path_to_string(path: &[DependencyPathEntry]) -> String {
 }
 
 /// Callbacks for StartMemoize/FinishMemoize/Effect events
-struct Callbacks<'a> {
-    start_memo: &'a mut Option<StartMemoInfo>,
-    #[allow(dead_code)]
-    memo_locals: &'a mut FxHashSet<IdentifierId>,
+struct Callbacks<'s, 'a> {
+    start_memo: &'s mut Option<StartMemoInfo<'a>>,
     validate_memo: bool,
     validate_effect: ExhaustiveEffectDepsMode,
-    reactive: &'a FxHashSet<IdentifierId>,
+    reactive: &'s FxHashSet<IdentifierId>,
     diagnostics: Vec<OxcDiagnostic>,
     /// manual_memo_ids that had validation errors (to set has_invalid_deps)
     invalid_memo_ids: FxHashSet<u32>,
@@ -220,14 +215,14 @@ fn is_use_ref_type(ty: &Type) -> bool {
 
 fn get_identifier_type<'a>(
     id: IdentifierId,
-    identifiers: &'a [Identifier],
-    types: &'a [Type],
-) -> &'a Type {
+    identifiers: &'a [Identifier<'a>],
+    types: &'a [Type<'a>],
+) -> &'a Type<'a> {
     let ident = &identifiers[id.0 as usize];
     &types[ident.type_.0 as usize]
 }
 
-fn get_identifier_name(id: IdentifierId, identifiers: &[Identifier]) -> Option<&str> {
+fn get_identifier_name<'a>(id: IdentifierId, identifiers: &[Identifier<'a>]) -> Option<&'a str> {
     identifiers[id.0 as usize].name.as_ref().map(IdentifierName::value)
 }
 
@@ -378,10 +373,10 @@ fn find_optional_places(func: &HirFunction) -> FxHashMap<IdentifierId, bool> {
 // Dependency collection
 // =============================================================================
 
-fn add_dependency(
-    dep: &Temporary,
-    dependencies: &mut Vec<InferredDependency>,
-    dep_keys: &mut FxHashSet<InferredDependencyKey>,
+fn add_dependency<'a>(
+    dep: &Temporary<'a>,
+    dependencies: &mut Vec<InferredDependency<'a>>,
+    dep_keys: &mut FxHashSet<InferredDependencyKey<'a>>,
     locals: &FxHashSet<IdentifierId>,
 ) {
     match dep {
@@ -414,10 +409,10 @@ fn add_dependency(
     }
 }
 
-fn add_dependency_inferred(
-    dep: &InferredDependency,
-    dependencies: &mut Vec<InferredDependency>,
-    dep_keys: &mut FxHashSet<InferredDependencyKey>,
+fn add_dependency_inferred<'a>(
+    dep: &InferredDependency<'a>,
+    dependencies: &mut Vec<InferredDependency<'a>>,
+    dep_keys: &mut FxHashSet<InferredDependencyKey<'a>>,
     locals: &FxHashSet<IdentifierId>,
 ) {
     match dep {
@@ -438,11 +433,11 @@ fn add_dependency_inferred(
     }
 }
 
-fn visit_candidate_dependency(
+fn visit_candidate_dependency<'a>(
     place: &Place,
-    temporaries: &FxHashMap<IdentifierId, Temporary>,
-    dependencies: &mut Vec<InferredDependency>,
-    dep_keys: &mut FxHashSet<InferredDependencyKey>,
+    temporaries: &FxHashMap<IdentifierId, Temporary<'a>>,
+    dependencies: &mut Vec<InferredDependency<'a>>,
+    dep_keys: &mut FxHashSet<InferredDependencyKey<'a>>,
     locals: &FxHashSet<IdentifierId>,
 ) {
     if let Some(dep) = temporaries.get(&place.identifier) {
@@ -450,15 +445,15 @@ fn visit_candidate_dependency(
     }
 }
 
-fn collect_dependencies(
-    func: &HirFunction,
-    identifiers: &[Identifier],
-    types: &[Type],
-    functions: &[HirFunction],
-    temporaries: &mut FxHashMap<IdentifierId, Temporary>,
-    callbacks: &mut Option<&mut Callbacks<'_>>,
+fn collect_dependencies<'a>(
+    func: &HirFunction<'a>,
+    identifiers: &[Identifier<'a>],
+    types: &[Type<'a>],
+    functions: &[HirFunction<'a>],
+    temporaries: &mut FxHashMap<IdentifierId, Temporary<'a>>,
+    callbacks: &mut Option<&mut Callbacks<'_, 'a>>,
     is_function_expression: bool,
-) -> Result<Temporary, OxcDiagnostic> {
+) -> Result<Temporary<'a>, OxcDiagnostic> {
     let optionals = find_optional_places(func);
     let mut locals: FxHashSet<IdentifierId> = FxHashSet::default();
 
@@ -689,7 +684,7 @@ fn collect_dependencies(
                             let mut new_path = path.clone();
                             new_path.push(DependencyPathEntry {
                                 optional,
-                                property: property.clone(),
+                                property: *property,
                                 span: instr.value.span().copied(),
                             });
                             temporaries.insert(
@@ -719,16 +714,13 @@ fn collect_dependencies(
                     temporaries.insert(lvalue_id, function_deps.clone());
                     add_dependency(&function_deps, &mut dependencies, &mut dep_keys, &locals);
                 }
-                InstructionValue::StartMemoize {
-                    manual_memo_id, deps, deps_span, span, ..
-                } => {
+                InstructionValue::StartMemoize { manual_memo_id, deps, deps_span, .. } => {
                     if let Some(cb) = callbacks.as_mut() {
                         // onStartMemoize — mirrors TS behavior of clearing dependencies and locals
                         *cb.start_memo = Some(StartMemoInfo {
                             manual_memo_id: *manual_memo_id,
                             deps: deps.clone(),
                             deps_span: *deps_span,
-                            span: *span,
                         });
                         // Save current state and clear, matching TS which clears the shared
                         // dependencies/locals sets on StartMemoize
@@ -900,9 +892,7 @@ fn collect_dependencies(
                                                         ManualMemoDependency {
                                                             root:
                                                                 ManualMemoDependencyRoot::Global {
-                                                                    identifier_name: binding
-                                                                        .name()
-                                                                        .to_string(),
+                                                                    identifier_name: binding.name(),
                                                                 },
                                                             path: Vec::new(),
                                                             span: None,
@@ -1009,9 +999,7 @@ fn collect_dependencies(
                                                         ManualMemoDependency {
                                                             root:
                                                                 ManualMemoDependencyRoot::Global {
-                                                                    identifier_name: binding
-                                                                        .name()
-                                                                        .to_string(),
+                                                                    identifier_name: binding.name(),
                                                                 },
                                                             path: Vec::new(),
                                                             span: None,
@@ -1107,14 +1095,14 @@ fn collect_dependencies(
 
 #[allow(clippy::too_many_arguments)]
 fn validate_dependencies(
-    mut inferred: Vec<InferredDependency>,
-    manual_dependencies: &[ManualMemoDependency],
+    mut inferred: Vec<InferredDependency<'_>>,
+    manual_dependencies: &[ManualMemoDependency<'_>],
     reactive: &FxHashSet<IdentifierId>,
     manual_memo_span: Option<Span>,
     category: ErrorCategory,
     exhaustive_deps_report_mode: &str,
-    identifiers: &[Identifier],
-    types: &[Type],
+    identifiers: &[Identifier<'_>],
+    types: &[Type<'_>],
 ) -> Result<Option<OxcDiagnostic>, OxcDiagnostic> {
     // Sort dependencies by name and path
     inferred.sort_by(|a, b| {
@@ -1122,7 +1110,7 @@ fn validate_dependencies(
             (
                 InferredDependency::Global { binding: ab },
                 InferredDependency::Global { binding: bb },
-            ) => ab.name().cmp(bb.name()),
+            ) => ab.name().as_str().cmp(bb.name().as_str()),
             (
                 InferredDependency::Local { identifier: a_id, path: a_path, .. },
                 InferredDependency::Local { identifier: b_id, path: b_path, .. },
@@ -1162,7 +1150,7 @@ fn validate_dependencies(
                 let a_name = ab.name();
                 let b_name = get_identifier_name(*b_id, identifiers);
                 match b_name {
-                    Some(bn) => a_name.cmp(bn),
+                    Some(bn) => a_name.as_str().cmp(bn),
                     None => Ordering::Equal,
                 }
             }
@@ -1173,7 +1161,7 @@ fn validate_dependencies(
                 let a_name = get_identifier_name(*a_id, identifiers);
                 let b_name = bb.name();
                 match a_name {
-                    Some(an) => an.cmp(b_name),
+                    Some(an) => an.cmp(b_name.as_str()),
                     None => Ordering::Equal,
                 }
             }
@@ -1235,7 +1223,7 @@ fn validate_dependencies(
             InferredDependency::Global { binding } => {
                 for (i, manual_dep) in manual_dependencies.iter().enumerate() {
                     if let ManualMemoDependencyRoot::Global { identifier_name } = &manual_dep.root {
-                        if identifier_name == binding.name() {
+                        if *identifier_name == binding.name() {
                             matched.insert(i);
                             extra.push(manual_dep);
                         }

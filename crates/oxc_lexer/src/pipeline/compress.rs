@@ -1,11 +1,15 @@
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 use core::arch::x86_64::*;
 
 use crate::error::diag_code;
 use crate::lanes::Lanes;
 use crate::tables::Tables;
 
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+use super::find::{eqm, load8};
 use super::{BIGINT, IDENT_ESC, NUM, PRIV_IDENT_ESC};
 
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 pub(super) unsafe fn compress(
     t: &Tables,
     st: *const u64,
@@ -54,6 +58,94 @@ pub(super) unsafe fn compress(
     }
     m
 }
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+pub(super) unsafe fn compress(
+    _t: &Tables,
+    st: *const u64,
+    kind: *const u8,
+    nb: usize,
+    starts: *mut u32,
+    kinds: *mut u8,
+) -> usize {
+    let mut m = 0usize;
+    for b in 0..nb {
+        let mut w = *st.add(b);
+        if w == 0 {
+            continue;
+        }
+        let base = (b * 64) as u32;
+        while w != 0 {
+            let bit = w.trailing_zeros();
+            w &= w - 1;
+            *starts.add(m) = base + bit;
+            *kinds.add(m) = *kind.add((base + bit) as usize);
+            m += 1;
+        }
+    }
+    m
+}
+#[inline(always)]
+unsafe fn emit_value(
+    src: &[u8],
+    out_kinds: *const u8,
+    out_starts: *const u32,
+    j: usize,
+    lanes: &mut Lanes,
+) {
+    let s = *out_starts.add(j) as usize;
+    let e = *out_starts.add(j + 1) as usize;
+    let k = *out_kinds.add(j);
+    if k < IDENT_ESC {
+        lanes.push_number_swar(src, s, e);
+    } else if k == IDENT_ESC {
+        lanes.push_atom(src, s, e);
+    } else {
+        lanes.push_atom(src, s + 1, e);
+    }
+}
+#[cold]
+unsafe fn invalid_diags(
+    src: &[u8],
+    out_kinds: *const u8,
+    out_starts: *const u32,
+    m: usize,
+    lanes: &mut Lanes,
+) {
+    let nn = *out_starts.add(m);
+    let char_after = |cs: u32| -> u32 {
+        if cs >= nn {
+            return 0;
+        }
+        let b = src[cs as usize];
+        let l: u32 = if b < 0x80 {
+            1
+        } else if b >= 0xF0 {
+            4
+        } else if b >= 0xE0 {
+            3
+        } else if b >= 0xC0 {
+            2
+        } else {
+            1
+        };
+        l.min(nn - cs)
+    };
+    for j in 0..m {
+        if *out_kinds.add(j) == 255 {
+            let s = *out_starts.add(j);
+            let e = *out_starts.add(j + 1);
+            let b0 = src[s as usize];
+            if b0 == b'\\' {
+                lanes.push_diag(s + 1, char_after(s + 1), diag_code::INVALID_IDENTIFIER_ESCAPE);
+            } else if b0 == b'#' {
+                lanes.push_diag(s + 1, char_after(s + 1), diag_code::UNEXPECTED_CHARACTER);
+            } else {
+                lanes.push_diag(s, e - s, diag_code::UNEXPECTED_CHARACTER);
+            }
+        }
+    }
+}
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 pub(super) unsafe fn lanes_post(
     src: &[u8],
     out_kinds: *const u8,
@@ -74,21 +166,6 @@ pub(super) unsafe fn lanes_post(
             )
         }};
     }
-    macro_rules! emit {
-        ($j:expr) => {{
-            let j = $j;
-            let s = *out_starts.add(j) as usize;
-            let e = *out_starts.add(j + 1) as usize;
-            let k = *out_kinds.add(j);
-            if k < IDENT_ESC {
-                lanes.push_number_swar(src, s, e);
-            } else if k == IDENT_ESC {
-                lanes.push_atom(src, s, e);
-            } else {
-                lanes.push_atom(src, s + 1, e);
-            }
-        }};
-    }
     // 255 (INVALID) is the byte-class default for stray/control bytes and
     // reaches the output as a 1-byte token. Track "any seen" alongside the
     // value sweep; localize cold.
@@ -107,7 +184,7 @@ pub(super) unsafe fn lanes_post(
         let mut mask = (_mm256_movemask_epi8(h0) as u32 as u64)
             | ((_mm256_movemask_epi8(h1) as u32 as u64) << 32);
         while mask != 0 {
-            emit!(i + mask.trailing_zeros() as usize);
+            emit_value(src, out_kinds, out_starts, i + mask.trailing_zeros() as usize, lanes);
             mask &= mask - 1;
         }
         i += 64;
@@ -125,53 +202,51 @@ pub(super) unsafe fn lanes_post(
         }
         inv_dirty |= invm != 0;
         while mask != 0 {
-            emit!(i + mask.trailing_zeros() as usize);
+            emit_value(src, out_kinds, out_starts, i + mask.trailing_zeros() as usize, lanes);
             mask &= mask - 1;
         }
         i += 32;
     }
-    // Cold, invalid input only: each 255 token is itself the bad byte.
     if inv_dirty {
-        let nn = *out_starts.add(m); // EOF sentinel == n
-        // Span of the one char at `cs` (utf8 length, clamped, empty at EOF):
-        // `\` and `#` errors blame the char after them, like oxc_parser.
-        let char_after = |cs: u32| -> u32 {
-            if cs >= nn {
-                return 0;
-            }
-            let b = src[cs as usize];
-            let l: u32 = if b < 0x80 {
-                1
-            } else if b >= 0xF0 {
-                4
-            } else if b >= 0xE0 {
-                3
-            } else if b >= 0xC0 {
-                2
-            } else {
-                1 // continuation/invalid byte: code 6 fires alongside
-            };
-            l.min(nn - cs)
-        };
-        for j in 0..m {
-            if *out_kinds.add(j) == 255 {
-                let s = *out_starts.add(j);
-                let e = *out_starts.add(j + 1);
-                let b0 = src[s as usize];
-                if b0 == b'\\' {
-                    // Bare code-level `\` (`x = \A`): literal-interior
-                    // backslashes never survive carve, so this is a real
-                    // identifier-escape error. The parser spans the one char
-                    // after the `\`.
-                    lanes.push_diag(s + 1, char_after(s + 1), diag_code::INVALID_IDENTIFIER_ESCAPE);
-                } else if b0 == b'#' {
-                    // Misplaced `#` (including `#!` past offset 0): the
-                    // parser consumes the char after `#` and reports on it.
-                    lanes.push_diag(s + 1, char_after(s + 1), diag_code::UNEXPECTED_CHARACTER);
-                } else {
-                    lanes.push_diag(s, e - s, diag_code::UNEXPECTED_CHARACTER);
-                }
-            }
+        invalid_diags(src, out_kinds, out_starts, m, lanes);
+    }
+}
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+pub(super) unsafe fn lanes_post(
+    src: &[u8],
+    out_kinds: *const u8,
+    out_starts: *const u32,
+    m: usize,
+    lanes: &mut Lanes,
+) {
+    let mut inv = 0u64;
+    let mut i = 0usize;
+    while i + 8 <= m {
+        let x = load8(out_kinds, i);
+        let mut hits = eqm(x, NUM) | eqm(x, BIGINT) | eqm(x, IDENT_ESC) | eqm(x, PRIV_IDENT_ESC);
+        inv |= eqm(x, 255);
+        while hits != 0 {
+            emit_value(
+                src,
+                out_kinds,
+                out_starts,
+                i + (hits.trailing_zeros() >> 3) as usize,
+                lanes,
+            );
+            hits &= hits - 1;
         }
+        i += 8;
+    }
+    let mut inv_dirty = inv != 0;
+    while i < m {
+        let k = *out_kinds.add(i);
+        if k == NUM || k == BIGINT || k == IDENT_ESC || k == PRIV_IDENT_ESC {
+            emit_value(src, out_kinds, out_starts, i, lanes);
+        }
+        inv_dirty |= k == 255;
+        i += 1;
+    }
+    if inv_dirty {
+        invalid_diags(src, out_kinds, out_starts, m, lanes);
     }
 }

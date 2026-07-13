@@ -11,6 +11,8 @@
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
+use oxc_str::format_ident;
+
 use crate::react_compiler_hir::DeclarationId;
 use crate::react_compiler_hir::FunctionId;
 use crate::react_compiler_hir::IdentifierId;
@@ -1027,10 +1029,10 @@ fn promote_identifier(identifier_id: IdentifierId, state: &mut State, env: &mut 
     if state.tags.contains(&decl_id) {
         // JSX tag temporary: use capitalized name
         env.identifiers[identifier_id.0 as usize].name =
-            Some(IdentifierName::Promoted(format!("#T{}", decl_id.0)));
+            Some(IdentifierName::Promoted(format_ident!(env.allocator, "#T{}", decl_id.0)));
     } else {
         env.identifiers[identifier_id.0 as usize].name =
-            Some(IdentifierName::Promoted(format!("#t{}", decl_id.0)));
+            Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.0)));
     }
     state.promoted.insert(decl_id);
 }

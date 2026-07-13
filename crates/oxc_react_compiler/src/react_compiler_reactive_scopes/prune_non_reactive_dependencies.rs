@@ -99,23 +99,23 @@ fn is_stable_type(ty: &Type) -> bool {
 }
 
 fn is_set_state_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_STATE_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_SET_STATE_ID)
 }
 
 fn is_set_action_state_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_ACTION_STATE_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_SET_ACTION_STATE_ID)
 }
 
 fn is_dispatcher_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_DISPATCH_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_DISPATCH_ID)
 }
 
 fn is_start_transition_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_START_TRANSITION_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_START_TRANSITION_ID)
 }
 
 fn is_set_optimistic_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if id == object_shape::BUILT_IN_SET_OPTIMISTIC_ID)
+    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_SET_OPTIMISTIC_ID)
 }
 
 // =============================================================================

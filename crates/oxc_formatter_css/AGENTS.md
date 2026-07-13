@@ -226,7 +226,12 @@ Notable divergences are:
     - We print `(not (screen and (color)))`
   - Reproducing the half-normalization is pure tokenizer-artifact matching;
     - Gap-based spacing never fuses tokens the source kept apart (`and (` can't become a function token `and(`)
-- `@custom-media` preludes always print structured (e.g. `--viewport-medium (width <= 50rem)`)
+- A source-glued value-position `[...]` stays glued to ANY typed left neighbor and prints verbatim
+  - `theme(fontSize.af-md[0])`, `foo[0.50]`: matching Prettier, which lexes the run as ONE postcss word;
+    But also `var(--x)[0]`, where Prettier prints `var(--x) [0]`)
+    - Prettier's space there is a word-lexing artifact (`[` extends a word, but not across `)`)
+    - Ours is one gap-based rule for all variants: never add a space the source doesn't have
+  - Less lookups (`@config[@key]`) are unaffected: the typed lookup rule wins and keeps printing structurally
   - With the name GLUED to the `(` (`--viewport-medium(width<=50rem)`)
   - Prettier keeps the whole prelude verbatim (ONE `media-type` token)
 - A declaration swallowed by a `;`-less css-in-js placeholder (`${m}\ncolor: red`)
@@ -243,7 +248,7 @@ Notable divergences are:
   - We print the normal indent (prettier/prettier#19427)
 - SCSS: The map-item break (one element per line + trailing comma) applies ONLY to parens whose contents are already a comma-separated list (semantics)
   - `(x,)` is a single-element list in Sass, so the added comma is a semantic no-op for a comma list and NOWHERE else
-  - Prettier 3.9.1 changes `key: ($a + $b)` from a number to a list,
+  - Prettier 3.9.5 changes `key: ($a + $b)` from a number to a list,
     restructures `key: (a b)` (2-element space list → nested 1-element list),
     and emits non-compiling output for `key: 2 * ($a + $b)` inside `$var:` declarations (dart-sass: `Undefined operation "2 * (3px,)"`)
   - Prettier's own #18530 (math siblings in args) / #19091 (single-node scalars) fixed subsets of this;
@@ -271,6 +276,12 @@ Notable divergences are:
     - Each mode is internally consistent with what its parser produces
   - The value syntax `--p: { ... }` itself is valid CSS, but its only intended consumer was the `@apply --p;` at-rule from the dropped CSS Apply Rule proposal
     - With no consumer, real-world usage is near zero, so the cross-mode behavior difference is theoretical
+- Less: statement-position `&:extend(...)` breaks only on overflow, like the selector-position form
+  - Prettier (3.9.5+) ALWAYS breaks multiple selectors one per line there and never breaks a single one:
+    postcss-less models the statement as a rule node, so the top-level selector-list printer
+    (hardline commas) leaks into the parens (prettier#19550 only fixed the indentation)
+  - Ours prints BOTH positions with the same pseudo-args layout for consistency
+    (inline when it fits; parens on their own lines + one selector per line on overflow, the same shape as Prettier's break)
 - Less: `func(x, + 20px)` unary gluing
   - Prettier prints `+20px`; `oxc-css-parser` ASTs `, +` as a comma-left binary operation, so matching is ad-hoc for a torture-test-only shape
 - Less: Nested math in a function arg / multi-value shorthand
@@ -299,8 +310,8 @@ Fixtures are grouped per language (`format/{css,scss,less}/`; test modules mirro
 Unit tests in `tests/fixtures/mod.rs` cover parse-error `Err` semantics (`parse_error_is_err`).
 Fixtures under `embedded/` route through `format_to_ir` instead of `format()`; the `embedded_debug` example formats files the same way for quick comparison.
 
-Every expected output must be verified against Prettier (3.9.1, the current submodule).
-`npx prettier@3.9.1 --parser <variant>` at both `--print-width 80` and `100` (the harness snapshots both).
+Every expected output must be verified against Prettier (3.9.5, the current submodule).
+`npx prettier@3.9.5 --parser <variant>` at both `--print-width 80` and `100` (the harness snapshots both).
 
 Exception: a fixture may pin an entry from "Known divergences" (e.g. `map-item-parens.scss`);
 its comments must say which lines deviate from Prettier and why.
@@ -322,7 +333,7 @@ cargo run -p oxc_prettier_conformance
 cargo run -p oxc_prettier_conformance -- --filter css/atrule
 ```
 
-At the current version (v3.9.1), the divergences of six files have been confirmed and are intentional (see "Known divergences"):
+At the current version (v3.9.5), the divergences of six files have been confirmed and are intentional (see "Known divergences"):
 
 - CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/postcss-plugins/postcss-nesting.css`
 - SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/variables/apply-rule.scss`

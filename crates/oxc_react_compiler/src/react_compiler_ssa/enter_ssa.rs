@@ -68,7 +68,7 @@ impl SSABuilder {
         let new_id = env.next_identifier_id();
         let old = &env.identifiers[old_id.0 as usize];
         let declaration_id = old.declaration_id;
-        let name = old.name.clone();
+        let name = old.name;
         let span = old.span;
         let new_ident = &mut env.identifiers[new_id.0 as usize];
         new_ident.declaration_id = declaration_id;
@@ -111,18 +111,6 @@ impl SSABuilder {
             reactive: old_place.reactive,
             span: old_place.span,
         })
-    }
-
-    #[allow(dead_code)]
-    fn define_context(
-        &mut self,
-        old_place: &Place,
-        env: &mut Environment,
-    ) -> Result<Place, OxcDiagnostic> {
-        let old_id = old_place.identifier;
-        let new_place = self.define_place(old_place, env)?;
-        self.context.insert(old_id);
-        Ok(new_place)
     }
 
     /// A function's context places capture a *binding*, not a value: the

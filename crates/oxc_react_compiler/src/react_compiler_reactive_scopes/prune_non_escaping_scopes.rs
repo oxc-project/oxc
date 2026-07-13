@@ -772,14 +772,6 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                     operands.iter().map(|p| (p.identifier, id)).collect();
                 (lvalues, rvalues)
             }
-            InstructionValue::UnsupportedNode { .. } => {
-                let lvalues = if let Some(lv) = lvalue {
-                    vec![LValueMemoization { place_identifier: lv, level: MemoizationLevel::Never }]
-                } else {
-                    vec![]
-                };
-                (lvalues, vec![])
-            }
         }
     }
 
