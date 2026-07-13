@@ -3339,12 +3339,9 @@ fn ox_codegen_primitive_value<'a>(
             }
         }
         PrimitiveValue::Boolean(b) => oxc_ast::ast::Expression::new_boolean_literal(SPAN, *b, ast),
-        PrimitiveValue::String(s) => oxc_ast::ast::Expression::new_string_literal(
-            SPAN,
-            ox_str(ast, &s.to_string_lossy()),
-            None,
-            ast,
-        ),
+        PrimitiveValue::String(s) => {
+            oxc_ast::ast::Expression::new_string_literal(SPAN, ox_str(ast, s.as_str()), None, ast)
+        }
         PrimitiveValue::Null => oxc_ast::ast::Expression::new_null_literal(SPAN, ast),
         PrimitiveValue::Undefined => {
             oxc_ast::ast::Expression::new_identifier(SPAN, "undefined", ast)

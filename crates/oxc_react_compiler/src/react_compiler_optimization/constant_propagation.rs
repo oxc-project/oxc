@@ -30,7 +30,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
 use oxc_ecmascript::{StringToNumber, ToInt32, ToUint32};
-use oxc_str::Ident;
+use oxc_str::{Ident, Str};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_syntax::keyword::is_reserved_keyword;
 use oxc_syntax::number::ToJsString;
@@ -47,7 +47,6 @@ use crate::react_compiler_lowering::{
 };
 use crate::react_compiler_ssa::eliminate_redundant_phi;
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
-use crate::react_compiler_utils::JsString;
 
 use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecutive_blocks;
 
@@ -285,11 +284,10 @@ fn evaluate_instruction<'a>(
             let prop_value = read(constants, property);
             if let Some(Constant::Primitive { value: ref prim, .. }) = prop_value {
                 match prim {
-                    PrimitiveValue::String(s) if s.as_str().is_some_and(is_valid_identifier) => {
+                    PrimitiveValue::String(s) if is_valid_identifier(s.as_str()) => {
                         let object = object.clone();
                         let span = *span;
-                        let new_property =
-                            PropertyLiteral::String(Ident::from(s.as_str().expect("guarded utf8")));
+                        let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
                         func.instructions[instr_id.0 as usize].value =
                             InstructionValue::PropertyLoad { object, property: new_property, span };
                     }
@@ -312,12 +310,11 @@ fn evaluate_instruction<'a>(
             let prop_value = read(constants, property);
             if let Some(Constant::Primitive { value: ref prim, .. }) = prop_value {
                 match prim {
-                    PrimitiveValue::String(s) if s.as_str().is_some_and(is_valid_identifier) => {
+                    PrimitiveValue::String(s) if is_valid_identifier(s.as_str()) => {
                         let object = object.clone();
                         let store_value = value.clone();
                         let span = *span;
-                        let new_property =
-                            PropertyLiteral::String(Ident::from(s.as_str().expect("guarded utf8")));
+                        let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
                         func.instructions[instr_id.0 as usize].value =
                             InstructionValue::PropertyStore {
                                 object,
@@ -458,7 +455,7 @@ fn evaluate_instruction<'a>(
                 if let PropertyLiteral::String(prop_name) = property {
                     if prop_name == "length" {
                         // Use UTF-16 code unit count to match JS .length semantics
-                        let len = s.len_utf16() as f64;
+                        let len = s.as_str().encode_utf16().count() as f64;
                         let span = *span;
                         let result = Constant::Primitive {
                             value: PrimitiveValue::Number(FloatValue::new(len)),
@@ -483,10 +480,8 @@ fn evaluate_instruction<'a>(
                     result_string.push_str(q.cooked.as_ref()?);
                 }
                 let span = *span;
-                let value = PrimitiveValue::String(JsString::from_marker_string(
-                    &result_string,
-                    env.allocator,
-                ));
+                let value =
+                    PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator));
                 let result = Constant::Primitive { value, span };
                 func.instructions[instr_id.0 as usize].value =
                     InstructionValue::Primitive { value, span };
@@ -517,7 +512,7 @@ fn evaluate_instruction<'a>(
                     PrimitiveValue::Null => "null".to_string(),
                     PrimitiveValue::Boolean(b) => b.to_string(),
                     PrimitiveValue::Number(n) => n.value().to_js_string(),
-                    PrimitiveValue::String(s) => s.to_marker_string(),
+                    PrimitiveValue::String(s) => s.as_str().to_string(),
                     // TS rejects undefined subexpression values
                     PrimitiveValue::Undefined => return None,
                 };
@@ -530,8 +525,7 @@ fn evaluate_instruction<'a>(
             }
 
             let span = *span;
-            let value =
-                PrimitiveValue::String(JsString::from_marker_string(&result_string, env.allocator));
+            let value = PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator));
             let result = Constant::Primitive { value, span };
             func.instructions[instr_id.0 as usize].value =
                 InstructionValue::Primitive { value, span };
@@ -670,7 +664,7 @@ fn is_truthy(value: &PrimitiveValue) -> bool {
             let v = n.value();
             v != 0.0 && !v.is_nan()
         }
-        PrimitiveValue::String(s) => s.len_utf16() != 0,
+        PrimitiveValue::String(s) => !s.as_str().is_empty(),
     }
 }
 
@@ -689,13 +683,9 @@ fn evaluate_binary_op<'a>(
             (PrimitiveValue::Number(l), PrimitiveValue::Number(r)) => {
                 Some(PrimitiveValue::Number(FloatValue::new(l.value() + r.value())))
             }
-            (PrimitiveValue::String(l), PrimitiveValue::String(r)) => {
-                // Concatenate as code units: JS `+` can pair up surrogate
-                // halves split across the operands.
-                let mut units = l.code_units();
-                units.extend(r.code_units());
-                Some(PrimitiveValue::String(JsString::from_code_units(&units, allocator)))
-            }
+            (PrimitiveValue::String(l), PrimitiveValue::String(r)) => Some(PrimitiveValue::String(
+                Str::from_strs_array_in([l.as_str(), r.as_str()], &allocator),
+            )),
             _ => None,
         },
         BinaryOperator::Subtract => match (lhs, rhs) {
@@ -846,11 +836,7 @@ fn js_abstract_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
         (PrimitiveValue::Number(n), PrimitiveValue::String(s))
         | (PrimitiveValue::String(s), PrimitiveValue::Number(n)) => {
             // String is coerced to number using JS ToNumber semantics.
-            // Ill-formed strings coerce to NaN, like any non-numeric text.
-            let sv = match s.as_str() {
-                Some(utf8) => utf8.string_to_number(),
-                None => f64::NAN,
-            };
+            let sv = s.as_str().string_to_number();
             let nv = n.value();
             if nv.is_nan() || sv.is_nan() { false } else { nv == sv }
         }

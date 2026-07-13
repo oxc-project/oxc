@@ -6,7 +6,7 @@ use rustc_hash::FxHashSet;
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::*;
-use crate::react_compiler_utils::{FxIndexMap, FxIndexSet, IdentIndexMap, JsString};
+use crate::react_compiler_utils::{FxIndexMap, FxIndexSet, IdentIndexMap};
 use crate::scope::BindingKind as AstBindingKind;
 use crate::scope::DeclKind;
 use crate::scope::ScopeId;
@@ -3426,7 +3426,7 @@ fn lower_expression<'a>(
             span: Some(lit.span),
         }),
         oxc::Expression::StringLiteral(lit) => Ok(InstructionValue::Primitive {
-            value: PrimitiveValue::String(lit.value.into()),
+            value: PrimitiveValue::String(lit.value),
             span: Some(lit.span),
         }),
         oxc::Expression::RegExpLiteral(regexp) => Ok(InstructionValue::RegExpLiteral {
@@ -4515,9 +4515,9 @@ fn lower_jsx_element_expr<'a>(
                     Some(oxc::JSXAttributeValue::StringLiteral(s)) => {
                         let str_span = Some(s.span);
                         let decoded = match decode_jsx_entities(s.value.as_str()) {
-                            Cow::Borrowed(text) => JsString::from(text),
+                            Cow::Borrowed(text) => Str::from(text),
                             Cow::Owned(text) => {
-                                JsString::from_str_in(&text, builder.environment().allocator)
+                                Str::from_str_in(&text, &builder.environment().allocator)
                             }
                         };
                         lower_value_to_temporary(
@@ -4753,9 +4753,9 @@ fn lower_jsx_element_name<'a>(
             let place = lower_value_to_temporary(
                 builder,
                 InstructionValue::Primitive {
-                    value: PrimitiveValue::String(JsString::from_str_in(
+                    value: PrimitiveValue::String(Str::from_str_in(
                         &tag,
-                        builder.environment().allocator,
+                        &builder.environment().allocator,
                     )),
                     span,
                 },

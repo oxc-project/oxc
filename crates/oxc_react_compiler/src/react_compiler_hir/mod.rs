@@ -796,7 +796,7 @@ pub enum PrimitiveValue<'a> {
     Undefined,
     Boolean(bool),
     Number(FloatValue),
-    String(crate::react_compiler_utils::JsString<'a>),
+    String(Str<'a>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
