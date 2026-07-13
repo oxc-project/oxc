@@ -446,18 +446,21 @@ fn merge_imports_fix<'a>(
         }
     }
 
+    let should_inline_type_imports = prefer_inline
+        || !first.import_kind.is_type()
+        || specifiers.iter().any(|specifier| !specifier.is_type);
     let specifiers_text = build_specifiers_text(
         &specifiers,
         &mut existing,
         first_has_trailing_comma,
         first_is_empty,
-        prefer_inline,
+        should_inline_type_imports,
     );
 
     let fixer = fixer.for_multifix();
     let mut fixes = fixer.new_fix_with_capacity(decls.len() + 1);
 
-    if should_add_specifiers && prefer_inline && first.import_kind.is_type() {
+    if should_add_specifiers && should_inline_type_imports && first.import_kind.is_type() {
         if let Some(offset) = ctx.find_next_token_from(first.span.start, "type") {
             let type_start = first.span.start + offset;
             let mut type_end = type_start + u32::try_from("type".len()).unwrap();
@@ -522,7 +525,7 @@ fn build_specifiers_text<'a>(
     existing: &mut FxHashSet<&'a str>,
     first_has_trailing_comma: bool,
     first_is_empty: bool,
-    prefer_inline: bool,
+    inline_type_imports: bool,
 ) -> String {
     let mut result = String::new();
     let mut needs_comma = !first_has_trailing_comma && !first_is_empty;
@@ -531,15 +534,20 @@ fn build_specifiers_text<'a>(
         let mut specifier_text = String::new();
         for cur in &specifier.identifiers {
             let trimmed = cur.trim();
-            let with_type: Cow<str> = if !trimmed.is_empty() && prefer_inline && specifier.is_type {
-                Cow::Owned(format!("type {trimmed}"))
-            } else if !trimmed.is_empty() && ends_with_line_comment(trimmed) {
-                Cow::Owned(format!("{trimmed}\n"))
-            } else if cur.contains('\n') {
-                Cow::Borrowed(strip_leading_inline_whitespace(cur.trim_end()))
-            } else {
-                Cow::Borrowed(trimmed)
-            };
+            let with_type: Cow<str> =
+                if !trimmed.is_empty() && inline_type_imports && specifier.is_type {
+                    if ends_with_line_comment(trimmed) {
+                        Cow::Owned(format!("type {trimmed}\n"))
+                    } else {
+                        Cow::Owned(format!("type {trimmed}"))
+                    }
+                } else if !trimmed.is_empty() && ends_with_line_comment(trimmed) {
+                    Cow::Owned(format!("{trimmed}\n"))
+                } else if cur.contains('\n') {
+                    Cow::Borrowed(strip_leading_inline_whitespace(cur.trim_end()))
+                } else {
+                    Cow::Borrowed(trimmed)
+                };
             if existing.contains(trimmed) {
                 continue;
             }
@@ -964,6 +972,25 @@ fn test() {
             r"import type {x} from 'foo'; import {type y} from 'foo'",
             r"import {type x,type y} from 'foo'; ",
             Some(json!([{ "prefer-inline": true }])),
+        ),
+        (
+            r"import type { ZodError } from 'zod'; import { ZodParsedType, util, type ZodIssue } from 'zod'",
+            r"import { type ZodError,ZodParsedType,util,type ZodIssue } from 'zod'; ",
+            None,
+        ),
+        (
+            r"import { ZodParsedType, util, type ZodIssue } from 'zod'; import type { ZodError } from 'zod'",
+            r"import { ZodParsedType, util, type ZodIssue,type ZodError } from 'zod'; ",
+            None,
+        ),
+        (
+            r"import {Foo, type Existing} from 'm';
+import type {Bar // comment
+} from 'm'",
+            r"import {Foo, type Existing,type Bar // comment
+} from 'm';
+",
+            None,
         ),
         // Namespace as the first import cannot be merged.
         (
