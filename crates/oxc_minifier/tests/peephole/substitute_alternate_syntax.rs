@@ -1022,3 +1022,28 @@ fn test_flatten_array_spread_elements() {
     test_same("var y = [0, ...[1, , , 3]]");
     test("var y = [...[1, , ,], ...[, 2], , 2];", "var y = [...[1, , , ], void 0, 2, , 2];");
 }
+
+#[test]
+fn fold_sequence_expression() {
+    test("(a(), b) + c", "a(), b + c");
+    test("(a(), b, c) + d", "a(), b, c + d");
+
+    test("(a(), b) || c", "a(), b || c");
+    test("(a(), b) && c", "a(), b && c");
+    test("(a(), b, c) || d", "a(), b, c || d");
+
+    test("-(a(), b)", "a(), -b");
+    test("~(a(), b)", "a(), ~b");
+    test("-(a(), b, c)", "a(), b, -c");
+
+    test("function* a() { yield (c(1), 2) }", "function* a() { c(1), yield 2 }");
+    test("function* a() { b(yield (c(1), 2)) }", "function* a() { b((c(1), yield 2)) }");
+    test("function* a() { yield (c(1), d(2), 3) }", "function* a() { c(1), d(2), yield 3 }");
+
+    test("async function a() { await (c(1), 2) }", "async function a() { c(1), await 2 }");
+    test("async function a() { b(await (c(1), 2)) }", "async function a() { b((c(1), await 2)) }");
+    test(
+        "async function a() { await (c(1), d(2), 3) }",
+        "async function a() { c(1), d(2), await 3 }",
+    );
+}
