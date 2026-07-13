@@ -17,7 +17,7 @@ use oxc_ast::AstKind;
 use oxc_ast::ast as oxc;
 use oxc_ast::builder::AstBuilder;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
-use oxc_span::{SPAN, Span};
+use oxc_span::{GetSpan, SPAN, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::diagnostics::{ErrorCategory, has_critical_errors, with_fallback_label};
@@ -2117,19 +2117,69 @@ enum OriginalFnKind {
 }
 
 // =============================================================================
-// oxc splice
+// oxc transform
 //
-// Builds the final oxc `Program` by substituting each compiled oxc function (from
-// codegen) for its original — matched by the original function's scope — applying
-// gating, inserting outlined functions, and adding the memo-cache / gating imports.
+// Rewrites the oxc `Program` in place by substituting each compiled oxc function
+// (from codegen) for its original — matched by the original function's scope —
+// applying gating, inserting outlined functions, and adding the memo-cache /
+// gating imports.
 // =============================================================================
 
-/// An owned, oxc-shaped compiled function ready to splice into the program.
+/// An owned, oxc-shaped compiled function ready to substitute into the program.
 struct OxcReplacement<'a> {
     fn_scope_id: ScopeId,
     original_kind: OriginalFnKind,
     codegen_fn: CodegenFunction<'a>,
     gating: Option<GatingConfig>,
+}
+
+/// The owned output of a [`compile`](crate::compile) that produced changes:
+/// everything the transform phase needs, carrying only the arena lifetime — no
+/// borrows of the input `Program` or `Semantic` — so the caller can drop its
+/// `Semantic` (and with it the shared borrow of the program) before mutating.
+pub struct CompileOutput<'a> {
+    replacements: Vec<OxcReplacement<'a>>,
+    context: ProgramContext<'a>,
+}
+
+impl<'a> CompileOutput<'a> {
+    /// Rewrite `program` in place: substitute each original function with its
+    /// memoized version (matched by the `scope_id` cells populated when the
+    /// caller built `Semantic`), insert outlined declarations, add the required
+    /// imports, and drop comments left dangling inside replaced functions.
+    ///
+    /// `program` must be the same, unmodified program [`compile`](crate::compile)
+    /// saw. Afterwards any previously computed `Semantic`/`Scoping` is stale.
+    pub fn transform(self, program: &mut oxc::Program<'a>) {
+        let CompileOutput { replacements, mut context } = self;
+        let ast = AstBuilder::new(context.allocator());
+        ox_transform_program(&ast, program, &replacements, &mut context);
+        // Diagnostics were extracted at the end of compilation; nothing in the
+        // transform phase may add more.
+        debug_assert!(context.diagnostics.is_empty());
+        prune_inner_comments(program);
+    }
+}
+
+/// Drop comments left dangling by compilation.
+///
+/// The compiled functions were rebuilt with fresh spans, so a comment that
+/// pointed inside one no longer lines up with any statement and codegen would
+/// re-emit it at a stale position. Keep only the comments still anchored to a
+/// top-level statement.
+fn prune_inner_comments(program: &mut oxc::Program<'_>) {
+    if program.comments.is_empty() {
+        return;
+    }
+    let mut top_level_starts = FxHashSet::default();
+    top_level_starts.insert(0u32);
+    for stmt in &program.body {
+        let start = stmt.span().start;
+        if start > 0 {
+            top_level_starts.insert(start);
+        }
+    }
+    program.comments.retain(|comment| top_level_starts.contains(&comment.attached_to));
 }
 
 /// Copy the TS metadata (type annotation, decorators, optional/modifier flags)
@@ -2143,16 +2193,16 @@ fn copy_param_ts_metadata<'a>(
     source_params: &oxc::FormalParameters<'a>,
 ) {
     for (param, source) in new_params.items.iter_mut().zip(source_params.items.iter()) {
-        param.decorators = source.decorators.clone_in(allocator);
-        param.type_annotation = source.type_annotation.clone_in(allocator);
+        param.decorators = source.decorators.clone_in_with_semantic_ids(allocator);
+        param.type_annotation = source.type_annotation.clone_in_with_semantic_ids(allocator);
         param.optional = source.optional;
         param.accessibility = source.accessibility;
         param.readonly = source.readonly;
         param.r#override = source.r#override;
     }
     if let (Some(rest), Some(source_rest)) = (&mut new_params.rest, &source_params.rest) {
-        rest.decorators = source_rest.decorators.clone_in(allocator);
-        rest.type_annotation = source_rest.type_annotation.clone_in(allocator);
+        rest.decorators = source_rest.decorators.clone_in_with_semantic_ids(allocator);
+        rest.type_annotation = source_rest.type_annotation.clone_in_with_semantic_ids(allocator);
     }
 }
 
@@ -2166,15 +2216,15 @@ fn ox_build_function<'a>(
     oxc::Function::boxed(
         SPAN,
         fn_type,
-        codegen.id.clone_in(ast.allocator()),
+        codegen.id.clone_in_with_semantic_ids(ast.allocator()),
         codegen.generator,
         codegen.is_async,
         false,
         None::<ArenaBox<oxc::TSTypeParameterDeclaration>>,
         None::<ArenaBox<oxc::TSThisParameter>>,
-        codegen.params.clone_in(ast.allocator()),
+        codegen.params.clone_in_with_semantic_ids(ast.allocator()),
         None::<ArenaBox<oxc::TSTypeAnnotation>>,
-        Some(codegen.body.clone_in(ast.allocator())),
+        Some(codegen.body.clone_in_with_semantic_ids(ast.allocator())),
         ast,
     )
 }
@@ -2193,9 +2243,9 @@ fn ox_build_compiled_expression<'a>(
                 false,
                 codegen.is_async,
                 None::<ArenaBox<oxc::TSTypeParameterDeclaration>>,
-                codegen.params.clone_in(ast.allocator()),
+                codegen.params.clone_in_with_semantic_ids(ast.allocator()),
                 None::<ArenaBox<oxc::TSTypeAnnotation>>,
-                codegen.body.clone_in(ast.allocator()),
+                codegen.body.clone_in_with_semantic_ids(ast.allocator()),
                 ast,
             ))
         }
@@ -2207,13 +2257,61 @@ fn ox_build_compiled_expression<'a>(
     }
 }
 
-/// Visitor that replaces a compiled function in the oxc AST by matching the
-/// original function's scope. Mirrors the Babel `ReplaceFnVisitor`.
+/// Visitor that replaces every compiled function in the oxc AST in a single
+/// traversal, each matched by its original function's scope. Mirrors the Babel
+/// `ReplaceFnVisitor`, batched so the program is walked once regardless of how
+/// many functions were compiled.
 struct OxcReplaceFnVisitor<'a, 'b> {
     ast: &'b AstBuilder<'a>,
-    scope_id: ScopeId,
-    codegen: &'b CodegenFunction<'a>,
-    done: bool,
+    /// Compiled replacement for each original function, keyed by the function's
+    /// `scope_id` cell. Codegen-built nodes carry no cells, so they are never
+    /// matched.
+    replacements: FxHashMap<ScopeId, &'b CodegenFunction<'a>>,
+    /// Replacements not yet applied; the walk stops once it reaches zero.
+    remaining: usize,
+}
+
+impl<'a, 'b> OxcReplaceFnVisitor<'a, 'b> {
+    fn replace_function(&self, func: &mut oxc::Function<'a>, codegen: &CodegenFunction<'a>) {
+        // When the compiled function does not initialize a memo cache, the body is
+        // left essentially intact, so the original TS signature (type parameters,
+        // `this` parameter, return type, and per-parameter type annotations) is
+        // preserved. Functions that memoize drop these types, mirroring Babel.
+        let keep_types = codegen.memo_slots_used == 0;
+        let mut params = codegen.params.clone_in_with_semantic_ids(self.ast.allocator());
+        if keep_types {
+            copy_param_ts_metadata(self.ast.allocator(), &mut params, &func.params);
+        } else {
+            func.type_parameters = None;
+            func.return_type = None;
+            func.this_param = None;
+        }
+        func.id = codegen.id.clone_in_with_semantic_ids(self.ast.allocator());
+        func.params = params;
+        func.body = Some(codegen.body.clone_in_with_semantic_ids(self.ast.allocator()));
+        func.generator = codegen.generator;
+        func.r#async = codegen.is_async;
+        func.declare = false;
+    }
+
+    fn replace_arrow(
+        &self,
+        arrow: &mut oxc::ArrowFunctionExpression<'a>,
+        codegen: &CodegenFunction<'a>,
+    ) {
+        let keep_types = codegen.memo_slots_used == 0;
+        let mut params = codegen.params.clone_in_with_semantic_ids(self.ast.allocator());
+        if keep_types {
+            copy_param_ts_metadata(self.ast.allocator(), &mut params, &arrow.params);
+        } else {
+            arrow.type_parameters = None;
+            arrow.return_type = None;
+        }
+        arrow.params = params;
+        arrow.body = codegen.body.clone_in_with_semantic_ids(self.ast.allocator());
+        arrow.r#async = codegen.is_async;
+        arrow.expression = false;
+    }
 }
 
 impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceFnVisitor<'a, 'b> {
@@ -2222,54 +2320,29 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceFnVisitor<'a, 'b> {
         func: &mut oxc::Function<'a>,
         flags: oxc_syntax::scope::ScopeFlags,
     ) {
-        if self.done {
+        if self.remaining == 0 {
             return;
         }
-        if func.scope_id.get() == Some(self.scope_id) {
-            // When the compiled function does not initialize a memo cache, the body is
-            // left essentially intact, so the original TS signature (type parameters,
-            // `this` parameter, return type, and per-parameter type annotations) is
-            // preserved. Functions that memoize drop these types, mirroring Babel.
-            let keep_types = self.codegen.memo_slots_used == 0;
-            let mut params = self.codegen.params.clone_in(self.ast.allocator());
-            if keep_types {
-                copy_param_ts_metadata(self.ast.allocator(), &mut params, &func.params);
-            } else {
-                func.type_parameters = None;
-                func.return_type = None;
-                func.this_param = None;
+        if let Some(scope_id) = func.scope_id.get() {
+            if let Some(&codegen) = self.replacements.get(&scope_id) {
+                self.replace_function(func, codegen);
+                self.remaining -= 1;
+                return;
             }
-            func.id = self.codegen.id.clone_in(self.ast.allocator());
-            func.params = params;
-            func.body = Some(self.codegen.body.clone_in(self.ast.allocator()));
-            func.generator = self.codegen.generator;
-            func.r#async = self.codegen.is_async;
-            func.declare = false;
-            self.done = true;
-            return;
         }
         oxc_ast_visit::walk_mut::walk_function(self, func, flags);
     }
 
     fn visit_arrow_function_expression(&mut self, arrow: &mut oxc::ArrowFunctionExpression<'a>) {
-        if self.done {
+        if self.remaining == 0 {
             return;
         }
-        if arrow.scope_id.get() == Some(self.scope_id) {
-            let keep_types = self.codegen.memo_slots_used == 0;
-            let mut params = self.codegen.params.clone_in(self.ast.allocator());
-            if keep_types {
-                copy_param_ts_metadata(self.ast.allocator(), &mut params, &arrow.params);
-            } else {
-                arrow.type_parameters = None;
-                arrow.return_type = None;
+        if let Some(scope_id) = arrow.scope_id.get() {
+            if let Some(&codegen) = self.replacements.get(&scope_id) {
+                self.replace_arrow(arrow, codegen);
+                self.remaining -= 1;
+                return;
             }
-            arrow.params = params;
-            arrow.body = self.codegen.body.clone_in(self.ast.allocator());
-            arrow.r#async = self.codegen.is_async;
-            arrow.expression = false;
-            self.done = true;
-            return;
         }
         oxc_ast_visit::walk_mut::walk_arrow_function_expression(self, arrow);
     }
@@ -2294,7 +2367,7 @@ impl<'a, 'b> OxcReplaceWithGatedVisitor<'a, 'b> {
             oxc::VariableDeclarationKind::Const,
             oxc::BindingPattern::new_binding_identifier(SPAN, ox_atom(self.ast, name), self.ast),
             None::<ArenaBox<oxc::TSTypeAnnotation>>,
-            Some(self.gating_expression.clone_in(self.ast.allocator())),
+            Some(self.gating_expression.clone_in_with_semantic_ids(self.ast.allocator())),
             false,
             self.ast,
         );
@@ -2371,7 +2444,8 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
                                 oxc::ExportDefaultDeclaration::boxed(
                                     SPAN,
                                     oxc::ExportDefaultDeclarationKind::from(
-                                        self.gating_expression.clone_in(self.ast.allocator()),
+                                        self.gating_expression
+                                            .clone_in_with_semantic_ids(self.ast.allocator()),
                                     ),
                                     self.ast,
                                 ),
@@ -2419,7 +2493,7 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
             _ => false,
         };
         if matched {
-            *expr = self.gating_expression.clone_in(self.ast.allocator());
+            *expr = self.gating_expression.clone_in_with_semantic_ids(self.ast.allocator());
             self.done = true;
             return;
         }
@@ -2427,24 +2501,8 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
     }
 }
 
-/// Visitor that renames every identifier reference matching `old_name` to `new_name`.
-/// Mirrors the Babel `RenameIdentifierVisitor` (used to rename `useMemoCache`).
-struct OxcRenameIdentifierVisitor<'a, 'b> {
-    ast: &'b AstBuilder<'a>,
-    old_name: &'b str,
-    new_name: &'b str,
-}
-
-impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcRenameIdentifierVisitor<'a, 'b> {
-    fn visit_identifier_reference(&mut self, ident: &mut oxc::IdentifierReference<'a>) {
-        if ident.name == self.old_name {
-            ident.name = ox_atom(self.ast, self.new_name).into();
-        }
-    }
-}
-
 /// Allocate a `&'a str` in the arena (satisfies the builders' `Into<Ident>` /
-/// `IntoIn` slots; convert to `Atom` via `.into()` where a bare `Atom` is needed).
+/// `IntoIn` slots).
 fn ox_atom<'a>(ast: &AstBuilder<'a>, s: &str) -> &'a str {
     oxc_allocator::StringBuilder::from_str_in(s, ast.allocator()).into_str()
 }
@@ -2534,15 +2592,15 @@ fn ox_clone_original_fn_as_expression<'a>(
                 let f = oxc::Function::boxed(
                     SPAN,
                     oxc::FunctionType::FunctionExpression,
-                    func.id.clone_in(self.ast.allocator()),
+                    func.id.clone_in_with_semantic_ids(self.ast.allocator()),
                     func.generator,
                     func.r#async,
                     false,
                     None::<ArenaBox<oxc::TSTypeParameterDeclaration>>,
                     None::<ArenaBox<oxc::TSThisParameter>>,
-                    func.params.clone_in(self.ast.allocator()),
+                    func.params.clone_in_with_semantic_ids(self.ast.allocator()),
                     None::<ArenaBox<oxc::TSTypeAnnotation>>,
-                    func.body.clone_in(self.ast.allocator()),
+                    func.body.clone_in_with_semantic_ids(self.ast.allocator()),
                     self.ast,
                 );
                 self.found = Some(oxc::Expression::FunctionExpression(f));
@@ -2556,7 +2614,7 @@ fn ox_clone_original_fn_as_expression<'a>(
             }
             if arrow.scope_id.get() == Some(self.scope_id) {
                 self.found = Some(oxc::Expression::ArrowFunctionExpression(ArenaBox::new_in(
-                    arrow.clone_in(self.ast.allocator()),
+                    arrow.clone_in_with_semantic_ids(self.ast.allocator()),
                     self.ast,
                 )));
                 return;
@@ -2566,22 +2624,21 @@ fn ox_clone_original_fn_as_expression<'a>(
     }
     let mut finder = Finder { ast, scope_id, found: None };
     oxc_ast_visit::Visit::visit_program(&mut finder, program);
-    finder.found.map(|e| e.clone_in(ast.allocator()))
+    finder.found.map(|e| e.clone_in_with_semantic_ids(ast.allocator()))
 }
 
-/// Splice every compiled oxc function into a clone of the original oxc program and
-/// add the required imports. Returns the final memoized program.
-fn ox_splice_program<'a>(
+/// Substitute every compiled oxc function into the program in place and add the
+/// required imports.
+///
+/// The replacement visitors match original functions by their `scope_id` cells
+/// (populated by the caller's semantic build); codegen-built nodes carry no
+/// cells, so they can never be spuriously matched.
+fn ox_transform_program<'a>(
     ast: &AstBuilder<'a>,
-    program: &oxc::Program<'a>,
+    program: &mut oxc::Program<'a>,
     replacements: &[OxcReplacement<'a>],
     context: &mut ProgramContext,
-) -> oxc::Program<'a> {
-    // Preserve the semantic id cells: the replacement visitors match original
-    // functions by their `scope_id`, and codegen-built nodes carry no cells, so
-    // they can never be spuriously matched.
-    let mut program = program.clone_in_with_semantic_ids(ast.allocator());
-
+) {
     // Outlined function declarations are placed differently depending on the
     // original function's syntactic kind, mirroring `insertNewOutlinedFunctionNode`
     // in TS `Program.ts`:
@@ -2591,6 +2648,22 @@ fn ox_splice_program<'a>(
     //     body (Babel `pushContainer('body', ...)`), since inserting as a sibling
     //     would corrupt the parent expression.
     let mut appended_outlined_decls: Vec<oxc::Statement<'a>> = Vec::new();
+
+    // Substitute every non-gated compiled function into its original in a single
+    // program walk, each matched by its `scope_id` cell. In-place edits do not
+    // change `program.body`, so the outlined-decl insertion and gating below
+    // (which do restructure it) are unaffected by running first. Gated functions
+    // are replaced by a conditional in the loop below, not edited in place.
+    let replace_map: FxHashMap<ScopeId, &CodegenFunction<'a>> = replacements
+        .iter()
+        .filter(|r| r.gating.is_none())
+        .map(|r| (r.fn_scope_id, &r.codegen_fn))
+        .collect();
+    if !replace_map.is_empty() {
+        let mut visitor =
+            OxcReplaceFnVisitor { ast, remaining: replace_map.len(), replacements: replace_map };
+        oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
+    }
 
     for replacement in replacements {
         let mut sibling_outlined_decls: Vec<oxc::Statement<'a>> = Vec::new();
@@ -2607,19 +2680,11 @@ fn ox_splice_program<'a>(
         }
 
         if let Some(ref gating_config) = replacement.gating {
-            ox_apply_gated_conditional(ast, &mut program, replacement, gating_config, context);
-        } else {
-            let mut visitor = OxcReplaceFnVisitor {
-                ast,
-                scope_id: replacement.fn_scope_id,
-                codegen: &replacement.codegen_fn,
-                done: false,
-            };
-            oxc_ast_visit::VisitMut::visit_program(&mut visitor, &mut program);
+            ox_apply_gated_conditional(ast, program, replacement, gating_config, context);
         }
 
         if !sibling_outlined_decls.is_empty() {
-            ox_insert_outlined_after(&mut program, replacement.fn_scope_id, sibling_outlined_decls);
+            ox_insert_outlined_after(program, replacement.fn_scope_id, sibling_outlined_decls);
         }
     }
 
@@ -2627,21 +2692,12 @@ fn ox_splice_program<'a>(
     // the top level.
     program.body.extend(appended_outlined_decls);
 
-    // Register the memo cache import and rename `useMemoCache` references.
-    let needs_memo_import = replacements.iter().any(|r| r.codegen_fn.memo_slots_used > 0);
-    if needs_memo_import {
-        let import_spec = context.add_memo_cache_import();
-        let mut visitor = OxcRenameIdentifierVisitor {
-            ast,
-            old_name: "useMemoCache",
-            new_name: &import_spec.name,
-        };
-        oxc_ast_visit::VisitMut::visit_program(&mut visitor, &mut program);
+    // Register the memo cache import; codegen emitted its pre-reserved local name.
+    if replacements.iter().any(|r| r.codegen_fn.memo_slots_used > 0) {
+        context.add_memo_cache_import();
     }
 
-    ox_add_imports_to_program(ast, &mut program, context);
-
-    program
+    ox_add_imports_to_program(ast, program, context);
 }
 
 /// Insert outlined function declarations immediately after the top-level statement
@@ -2846,8 +2902,8 @@ fn ox_is_non_namespaced_import(import: &oxc::ImportDeclaration) -> bool {
 /// Main entry point for the React Compiler.
 ///
 /// Receives the arena allocator, semantic model, the full program AST, and
-/// resolved options. Returns a CompileResult indicating whether the AST was
-/// modified, along with any logger events.
+/// resolved options. Returns a CompileResult carrying the compiled output to
+/// apply — `None` when nothing changed — along with any diagnostics.
 ///
 /// This function implements the logic from the TS entrypoint (Program.ts):
 /// - findProgramSuppressions: find eslint/flow suppression comments
@@ -2864,11 +2920,11 @@ pub fn compile_program<'a>(
     // before all the setup below, which only compilation needs. The pre-check
     // decides emptiness from semantic data without walking the AST.
     if !may_have_functions_to_compile(semantic, &options) {
-        return CompileResult::Success { ast: None, diagnostics: Diagnostics::new() };
+        return CompileResult::Success { output: None, diagnostics: Diagnostics::new() };
     }
     let queue = find_functions_to_compile(program, &options);
     if queue.is_empty() {
-        return CompileResult::Success { ast: None, diagnostics: Diagnostics::new() };
+        return CompileResult::Success { output: None, diagnostics: Diagnostics::new() };
     }
 
     // Compute output mode once, up front
@@ -2951,6 +3007,11 @@ pub fn compile_program<'a>(
     context.instrument_gating_name = instrument_gating_name;
     context.hook_guard_name = hook_guard_name;
 
+    // Reserve the memo-cache import's local name (`_c`, `_c2`, ...) up front so codegen
+    // can emit it directly; the import itself is registered in `ox_transform_program`,
+    // and only when an applied function uses memo slots.
+    context.reserve_memo_cache_name(&scope);
+
     // Process each function and collect compiled results
     let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_, '_>> = Vec::new();
 
@@ -2977,7 +3038,7 @@ pub fn compile_program<'a>(
                 ));
             handle_error(&err, None, context.opts.panic_threshold, &mut context.diagnostics);
         }
-        return CompileResult::Success { ast: None, diagnostics: context.diagnostics };
+        return CompileResult::Success { output: None, diagnostics: context.diagnostics };
     }
 
     // Convert compiled functions to owned oxc replacements (dropping the borrows of
@@ -3010,14 +3071,13 @@ pub fn compile_program<'a>(
     // Drop the discovery results (and their borrows of `file.program`).
     drop(queue);
 
-    // `ast` is `None` when nothing was compiled — always so in lint mode, which
-    // applies nothing — skipping `ox_splice_program`'s whole-program clone. Splicing
-    // each compiled function in for its original (matched by the function's scope)
-    // is also what inserts the memo-cache / gating imports, so (matching
-    // TS `addImportsToProgram`) they're added only when there are replacements.
-    CompileResult::Success {
-        ast: (!replacements.is_empty())
-            .then(|| ox_splice_program(&ast, program, &replacements, &mut context)),
-        diagnostics: context.diagnostics,
-    }
+    // `output` is `None` when nothing was compiled — always so in lint mode, which
+    // applies nothing. Substituting each compiled function for its original
+    // (matched by the function's scope) is also what inserts the memo-cache /
+    // gating imports, so (matching TS `addImportsToProgram`) they're added only
+    // when there are replacements.
+    let diagnostics = std::mem::take(&mut context.diagnostics);
+    let output =
+        if replacements.is_empty() { None } else { Some(CompileOutput { replacements, context }) };
+    CompileResult::Success { output, diagnostics }
 }

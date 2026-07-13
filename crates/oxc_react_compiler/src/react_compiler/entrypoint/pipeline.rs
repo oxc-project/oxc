@@ -149,6 +149,7 @@ fn run_pipeline<'a>(
     env.instrument_fn_name = context.instrument_fn_name;
     env.instrument_gating_name = context.instrument_gating_name;
     env.hook_guard_name = context.hook_guard_name;
+    env.memo_cache_name = context.memo_cache_name;
     env.seed_uid_known_names(context.known_referenced_names());
 
     let mut hir = lower(func, scope, &mut env)?;
@@ -362,11 +363,12 @@ fn run_pipeline<'a>(
         codegen_function(ast, &reactive_fn, &mut env, unique_identifiers, fbt_operands)?;
 
     // NOTE: we intentionally do NOT register the memo cache import here.
-    // The import is registered in apply_compiled_functions() only for functions
-    // that are actually applied to the output. Registering it here would cause
-    // a spurious `import { c as _c }` when a function compiles with memo slots
-    // but is later discarded (e.g., due to "use no memo" opt-out or errors),
-    // while other functions in the same file compile to 0 memo slots.
+    // The local name is reserved up front by `ProgramContext::reserve_memo_cache_name`,
+    // and the import itself is registered in `ox_transform_program` only when an applied
+    // function uses memo slots. Registering it here would cause a spurious
+    // `import { c as _c }` when a function compiles with memo slots but is later
+    // discarded (e.g., due to "use no memo" opt-out or errors), while other functions
+    // in the same file compile to 0 memo slots.
 
     // Stage 2 Phase 1: `validate_source_locations` operated on the Babel-shaped
     // codegen result and is disabled while the oxc emission is stubbed. It will be

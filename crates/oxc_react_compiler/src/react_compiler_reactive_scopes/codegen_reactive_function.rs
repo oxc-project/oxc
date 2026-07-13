@@ -4,7 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 //! Code generation pass: converts a `ReactiveFunction` tree back into a Babel-compatible
-//! AST with memoization (useMemoCache) wired in.
+//! AST with memoization (the memo-cache import) wired in.
 //!
 //! This is the final pass in the compilation pipeline.
 //!
@@ -130,10 +130,12 @@ pub fn codegen_function<'a>(
     let cache_count = compiled.memo_slots_used;
     if cache_count != 0 {
         let cache_name = cx.synthesize_name("$");
-        // const $ = useMemoCache(N)
+        let memo_cache_name =
+            cx.env.memo_cache_name.expect("memo cache name reserved in compile_program");
+        // const $ = _c(N)
         let use_memo_cache = oxc_ast::ast::Expression::new_call_expression(
             SPAN,
-            oxc_ast::ast::Expression::new_identifier(SPAN, "useMemoCache", ast),
+            oxc_ast::ast::Expression::new_identifier(SPAN, memo_cache_name, ast),
             None::<oxc_allocator::Box<oxc_ast::ast::TSTypeParameterInstantiation>>,
             oxc_allocator::ArenaVec::from_value_in(
                 oxc_ast::ast::Argument::from(ox_number(ast, cache_count as f64)),
@@ -256,10 +258,10 @@ enum OxValue<'a> {
 }
 
 impl<'a> OxValue<'a> {
-    fn clone_in(&self, allocator: &'a oxc_allocator::Allocator) -> OxValue<'a> {
+    fn clone_in_with_semantic_ids(&self, allocator: &'a oxc_allocator::Allocator) -> OxValue<'a> {
         match self {
-            OxValue::Expression(e) => OxValue::Expression(e.clone_in(allocator)),
-            OxValue::JsxText(t) => OxValue::JsxText(t.clone_in(allocator)),
+            OxValue::Expression(e) => OxValue::Expression(e.clone_in_with_semantic_ids(allocator)),
+            OxValue::JsxText(t) => OxValue::JsxText(t.clone_in_with_semantic_ids(allocator)),
         }
     }
 }
@@ -269,7 +271,9 @@ fn ox_clone_temporaries<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     temp: &OxcTemporaries<'a>,
 ) -> OxcTemporaries<'a> {
-    temp.iter().map(|(id, v)| (*id, v.as_ref().map(|v| v.clone_in(ast.allocator())))).collect()
+    temp.iter()
+        .map(|(id, v)| (*id, v.as_ref().map(|v| v.clone_in_with_semantic_ids(ast.allocator()))))
+        .collect()
 }
 
 struct OxcContext<'a, 'env> {
@@ -398,7 +402,7 @@ fn ox_str<'a>(ast: &oxc_ast::builder::AstBuilder<'a>, s: &str) -> &'a str {
 /// `reference_id` cells, so renames apply by reference identity.
 fn ox_reemit_ts_type<'a>(cx: &OxcContext<'a, '_>, ty: &oxc::TSType<'_>) -> oxc::TSType<'a> {
     if cx.env.renames.is_empty() {
-        return ty.clone_in(cx.ast.allocator());
+        return ty.clone_in_with_semantic_ids(cx.ast.allocator());
     }
 
     struct Renamer<'a, 'env> {
@@ -2241,7 +2245,7 @@ fn ox_codegen_place<'a>(
     let declaration_id = ident.declaration_id;
     if let Some(tmp) = cx.temp.get(&declaration_id) {
         if let Some(val) = tmp {
-            return Ok(val.clone_in(cx.ast.allocator()));
+            return Ok(val.clone_in_with_semantic_ids(cx.ast.allocator()));
         }
     } else if ident.name.is_none() {
         return Err(invariant_err(

@@ -16,7 +16,6 @@ use crate::{
     config::{
         ESLintRule, OxlintOverrides, OxlintRules,
         external_plugins::ExternalPluginEntry,
-        overrides::OxlintOverride,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
         rules::OverrideRulesError,
     },
@@ -341,11 +340,6 @@ impl ConfigStoreBuilder {
         self
     }
 
-    pub fn with_categories(mut self, categories: OxlintCategories) -> Self {
-        self.categories = categories;
-        self
-    }
-
     /// Enable or disable a set of plugins, leaving unrelated plugins alone.
     ///
     /// See [`ConfigStoreBuilder::with_builtin_plugins`] for details on how plugin configuration affects your
@@ -389,12 +383,6 @@ impl ConfigStoreBuilder {
     #[cfg(test)]
     pub(crate) fn with_rule(mut self, rule: RuleEnum, severity: AllowWarnDeny) -> Self {
         self.rules.insert(rule, severity);
-        self
-    }
-
-    /// Appends an override to the end of the current list of overrides.
-    pub fn with_overrides<O: IntoIterator<Item = OxlintOverride>>(mut self, overrides: O) -> Self {
-        self.overrides.extend(overrides);
         self
     }
 
