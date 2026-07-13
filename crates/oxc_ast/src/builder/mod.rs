@@ -95,13 +95,12 @@
 //! `disable_old_builder` Cargo feature is enabled in all Oxc crates which utilize `AstBuilder`.
 //! Where those crates expose the `AstBuilder` they use to user code, the feature is only enabled in tests.
 
+use std::cell::Cell;
+
 use oxc_allocator::{Allocator, ArenaBox, FromIn, GetAllocator};
 use oxc_syntax::node::NodeId;
 
 mod custom;
-
-#[cfg(not(feature = "disable_old_builder"))]
-mod methods;
 
 /// Trait for types which can create AST nodes.
 ///
@@ -117,8 +116,24 @@ mod methods;
 /// * Version for parser which counts AST nodes (to accurately pre-allocate `Vec`s in `SemanticBuilder`).
 /// * Version for transformer/minifier which assigns unique [`NodeId`]s to all AST nodes.
 pub trait AstBuild<'a>: GetAllocator<'a> {
+    /// Record creation of an AST node.
+    #[inline]
+    fn record_node(&self) {}
+
     /// Get [`NodeId`] to assign to an AST node.
     fn node_id(&self) -> NodeId;
+
+    /// Record creation of an AST node which may create a lexical scope.
+    #[inline]
+    fn record_scope(&self) {}
+
+    /// Record creation of an AST node which may create a semantic symbol.
+    #[inline]
+    fn record_symbol(&self) {}
+
+    /// Record creation of an AST node which may create an identifier reference.
+    #[inline]
+    fn record_reference(&self) {}
 }
 
 /// Trait for types which provide access to an [`AstBuild`]er.
@@ -134,11 +149,27 @@ pub trait GetAstBuilder<'a> {
     fn builder(&self) -> &Self::Builder;
 }
 
+/// Approximate count of AST nodes and semantic data created by an [`AstBuilder`].
+///
+/// These counts are intended for pre-allocation and must be treated as upper bounds.
+/// Some parser paths may overcount because speculative parsing and reparsing can create
+/// abandoned AST nodes, and exact scope/symbol/reference counts require semantic context.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct AstBuilderStats {
+    /// Count of AST nodes created.
+    pub nodes: u32,
+    /// Approximate count of lexical scopes created.
+    pub scopes: u32,
+    /// Approximate count of semantic symbols created.
+    pub symbols: u32,
+    /// Approximate count of identifier references created.
+    pub references: u32,
+}
+
 /// AST builder which assigns dummy [`NodeId`]s to AST nodes.
 ///
 /// For use where no `NodeId`s are required on AST nodes as they are built
 /// e.g. parser, because `NodeId`s are assigned later when building `Semantic`.
-#[cfg_attr(not(feature = "disable_old_builder"), derive(Clone, Copy))]
 pub struct AstBuilder<'a> {
     /// The memory allocator used to allocate AST nodes in the arena.
     #[cfg(feature = "disable_old_builder")]
@@ -147,13 +178,42 @@ pub struct AstBuilder<'a> {
     /// The memory allocator used to allocate AST nodes in the arena.
     #[cfg(not(feature = "disable_old_builder"))]
     pub allocator: &'a Allocator,
+
+    /// Count of AST nodes created.
+    nodes: Cell<u32>,
+
+    /// Approximate count of lexical scopes created.
+    scopes: Cell<u32>,
+
+    /// Approximate count of semantic symbols created.
+    symbols: Cell<u32>,
+
+    /// Approximate count of identifier references created.
+    references: Cell<u32>,
 }
 
 impl<'a> AstBuilder<'a> {
     /// Create a new [`AstBuilder`] that will allocate AST types in the provided [`Allocator`].
     #[inline]
     pub fn new(allocator: &'a Allocator) -> Self {
-        Self { allocator }
+        Self {
+            allocator,
+            nodes: Cell::new(0),
+            scopes: Cell::new(0),
+            symbols: Cell::new(0),
+            references: Cell::new(0),
+        }
+    }
+
+    /// Get approximate statistics for AST and semantic data created by this builder.
+    #[inline]
+    pub fn stats(&self) -> AstBuilderStats {
+        AstBuilderStats {
+            nodes: self.nodes.get(),
+            scopes: self.scopes.get(),
+            symbols: self.symbols.get(),
+            references: self.references.get(),
+        }
     }
 }
 
@@ -166,12 +226,33 @@ impl<'a> GetAllocator<'a> for AstBuilder<'a> {
 }
 
 impl<'a> AstBuild<'a> for AstBuilder<'a> {
+    #[inline]
+    fn record_node(&self) {
+        self.nodes.set(self.nodes.get() + 1);
+    }
+
     /// Get [`NodeId`] to assign to an AST node.
     ///
     /// [`AstBuilder`] does not assign real `NodeId`s - it always returns [`NodeId::DUMMY`].
     #[inline]
     fn node_id(&self) -> NodeId {
+        self.record_node();
         NodeId::DUMMY
+    }
+
+    #[inline]
+    fn record_scope(&self) {
+        self.scopes.set(self.scopes.get() + 1);
+    }
+
+    #[inline]
+    fn record_symbol(&self) {
+        self.symbols.set(self.symbols.get() + 1);
+    }
+
+    #[inline]
+    fn record_reference(&self) {
+        self.references.set(self.references.get() + 1);
     }
 }
 

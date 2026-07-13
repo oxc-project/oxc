@@ -56,8 +56,6 @@ mod generated {
 
     #[cfg(debug_assertions)]
     mod assert_layouts;
-    #[cfg(not(feature = "disable_old_builder"))]
-    mod ast_builder;
     mod builder_methods;
     mod derive_clone_in;
     mod derive_content_eq;

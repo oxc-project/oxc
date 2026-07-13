@@ -3,6 +3,7 @@ use std::cell::Cell;
 use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, IdentifierReference, Program, TSEnumMemberName},
+    builder::AstBuilderStats,
 };
 use oxc_ast_visit::{Visit, walk::walk_ts_enum_member_name};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
@@ -119,14 +120,14 @@ impl Stats {
         self
     }
 
-    /// Assert that estimated [`Stats`] match actual.
+    /// Assert that estimated [`Stats`] are no smaller than actual stats.
     ///
     /// # Panics
-    /// Panics if stats are not accurate.
+    /// Panics if any estimated count is smaller than actual.
     pub fn assert_accurate(self, actual: Self) {
-        assert_eq!(self.nodes, actual.nodes, "nodes count mismatch");
-        assert_eq!(self.scopes, actual.scopes, "scopes count mismatch");
-        assert_eq!(self.references, actual.references, "references count mismatch");
+        assert_ge!(self.nodes, actual.nodes, "nodes count mismatch");
+        assert_ge!(self.scopes, actual.scopes, "scopes count mismatch");
+        assert_ge!(self.references, actual.references, "references count mismatch");
         // `Counter` may overestimate number of symbols, because multiple `BindingIdentifier`s
         // can result in only a single symbol.
         // e.g. `var x; var x;` = 2 x `BindingIdentifier` but 1 x symbol.
@@ -134,6 +135,18 @@ impl Stats {
         // It's allocating with *not enough* capacity which is costly, as then the `Vec`
         // will grow and reallocate.
         assert_ge!(self.symbols, actual.symbols, "symbols count mismatch");
+    }
+}
+
+impl From<AstBuilderStats> for Stats {
+    fn from(stats: AstBuilderStats) -> Self {
+        Self::new(stats.nodes, stats.scopes, stats.symbols, stats.references)
+    }
+}
+
+impl From<&AstBuilderStats> for Stats {
+    fn from(stats: &AstBuilderStats) -> Self {
+        (*stats).into()
     }
 }
 
@@ -170,5 +183,66 @@ impl<'a> Visit<'a> for Counter {
     fn visit_ts_enum_member_name(&mut self, it: &TSEnumMemberName<'a>) {
         self.stats.symbols += 1;
         walk_ts_enum_member_name(self, it);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_allocator::Allocator;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    use crate::{SemanticBuilder, Stats};
+
+    #[test]
+    fn parser_stats_are_semantic_upper_bounds() {
+        let cases = [
+            (
+                "test.js",
+                r#"
+                    import { foo, bar as baz } from "mod";
+                    export { foo, baz };
+                    var duplicate;
+                    var duplicate;
+                    function f(param) {
+                        let local = param;
+                        {
+                            const nested = local;
+                            baz(nested);
+                        }
+                    }
+                    class C {
+                        #value;
+                        method() { return this.#value; }
+                    }
+                "#,
+            ),
+            (
+                "test.ts",
+                r#"
+                    enum E { A, "b", ["c"] }
+                    type Box<T> = T extends infer U ? U : never;
+                    interface I<T> { method(value: T): void }
+                    namespace N { export const value = E.A; }
+                "#,
+            ),
+            ("test.tsx", "const element = <div>{foo}</div>;"),
+            ("test.js", "await /x/g; export {};"),
+        ];
+
+        for (path, source_text) in cases {
+            let allocator = Allocator::default();
+            let source_type = SourceType::from_path(path).unwrap();
+            let parse = Parser::new(&allocator, source_text, source_type).parse();
+            assert!(parse.diagnostics.is_empty(), "{path}: {:?}", parse.diagnostics);
+            assert!(!parse.panicked, "{path}: parser panicked");
+            assert!(parse.stats.nodes > 0, "{path}: parser did not count AST nodes");
+            assert!(parse.stats.scopes > 0, "{path}: parser did not count scopes");
+
+            let estimated = Stats::from(parse.stats);
+            let semantic =
+                SemanticBuilder::new().with_stats(parse.stats).build(&parse.program).semantic;
+            estimated.assert_accurate(semantic.stats());
+        }
     }
 }

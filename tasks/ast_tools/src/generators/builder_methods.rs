@@ -229,6 +229,7 @@ fn generate_builder_methods_for_struct_impl(
     }
 
     let params_docs = generate_doc_comment_for_params(params);
+    let record_calls = record_calls_for_struct(struct_def);
 
     let new_method = quote! {
         ///@@line_break
@@ -237,6 +238,7 @@ fn generate_builder_methods_for_struct_impl(
         #[inline]
         pub fn #new_fn_name #generic_params (#fn_params, builder: &B) -> Self #where_clause {
             let builder = builder.builder();
+            #record_calls
             #struct_ident { #fields }
         }
     };
@@ -561,6 +563,11 @@ fn generate_builder_method_for_enum_variant_impl(
         fn_docs.extend(quote!( #[doc = ""] #[doc = #fn_doc2] ));
     }
     let params_docs = generate_doc_comment_for_params(params);
+    let record_symbol = if enum_def.name() == "TSEnumMemberName" {
+        quote!( builder.builder().record_symbol(); )
+    } else {
+        quote!()
+    };
 
     quote! {
         ///@@line_break
@@ -568,9 +575,25 @@ fn generate_builder_method_for_enum_variant_impl(
         #params_docs
         #[inline]
         pub fn #fn_name #generic_params (#(#fn_params),*, builder: &B) -> Self #where_clause {
+            #record_symbol
             Self::#variant_ident(#struct_ident::#inner_fn_name(#(#args),*, builder))
         }
     }
+}
+
+/// Generate calls to record semantic-capacity hints for a struct builder method.
+fn record_calls_for_struct(struct_def: &StructDef) -> TokenStream {
+    let mut record_calls = TokenStream::new();
+    if struct_def.fields.iter().any(|field| field.name() == "scope_id") {
+        record_calls.extend(quote!( builder.record_scope(); ));
+    }
+    if struct_def.fields.iter().any(|field| field.name() == "symbol_id") {
+        record_calls.extend(quote!( builder.record_symbol(); ));
+    }
+    if struct_def.fields.iter().any(|field| field.name() == "reference_id") {
+        record_calls.extend(quote!( builder.record_reference(); ));
+    }
+    record_calls
 }
 
 /// Wrap the value of a default field in `Cell::new(...)` or `Some(...)` if necessary.

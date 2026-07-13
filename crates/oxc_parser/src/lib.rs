@@ -90,7 +90,7 @@ pub mod lexer;
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
     ast::{Expression, Program, Statement},
-    builder::{AstBuilder, GetAstBuilder},
+    builder::{AstBuilder, AstBuilderStats, GetAstBuilder},
 };
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
@@ -190,6 +190,11 @@ pub struct ParserReturn<'a> {
 
     /// Whether the file is [flow](https://flow.org).
     pub is_flow_language: bool,
+
+    /// Approximate statistics about AST nodes created during parsing.
+    ///
+    /// These counts are upper bounds intended for pre-allocating semantic data structures.
+    pub stats: AstBuilderStats,
 }
 
 /// Parse options
@@ -734,6 +739,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             if panicked { ArenaVec::new_in(&self.ast) } else { self.lexer.finalize_tokens() };
 
         program.comments = self.lexer.trivia_builder.comments;
+        let stats = self.ast.stats();
 
         ParserReturn {
             program,
@@ -743,6 +749,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             tokens,
             panicked,
             is_flow_language,
+            stats,
         }
     }
 
