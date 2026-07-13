@@ -534,20 +534,22 @@ fn build_specifiers_text<'a>(
         let mut specifier_text = String::new();
         for cur in &specifier.identifiers {
             let trimmed = cur.trim();
-            let with_type: Cow<str> =
-                if !trimmed.is_empty() && inline_type_imports && specifier.is_type {
-                    if ends_with_line_comment(trimmed) {
-                        Cow::Owned(format!("type {trimmed}\n"))
-                    } else {
-                        Cow::Owned(format!("type {trimmed}"))
-                    }
-                } else if !trimmed.is_empty() && ends_with_line_comment(trimmed) {
-                    Cow::Owned(format!("{trimmed}\n"))
-                } else if cur.contains('\n') {
-                    Cow::Borrowed(strip_leading_inline_whitespace(cur.trim_end()))
+            if trimmed.is_empty() {
+                continue;
+            }
+            let with_type: Cow<str> = if inline_type_imports && specifier.is_type {
+                if ends_with_line_comment(trimmed) {
+                    Cow::Owned(format!("type {trimmed}\n"))
                 } else {
-                    Cow::Borrowed(trimmed)
-                };
+                    Cow::Owned(format!("type {trimmed}"))
+                }
+            } else if ends_with_line_comment(trimmed) {
+                Cow::Owned(format!("{trimmed}\n"))
+            } else if cur.contains('\n') {
+                Cow::Borrowed(strip_leading_inline_whitespace(cur.trim_end()))
+            } else {
+                Cow::Borrowed(trimmed)
+            };
             if existing.contains(trimmed) {
                 continue;
             }
@@ -941,6 +943,11 @@ fn test() {
         (
             r"import {x} from './foo'; import {y} from './foo'; import { z } from './foo'",
             r"import {x,y,z} from './foo';  ",
+            None,
+        ),
+        (
+            r"import {a} from 'foo'; import {b,} from 'foo'; import {c} from 'foo'",
+            r"import {a,b,c} from 'foo';  ",
             None,
         ),
         (r"import './foo'; import {x} from './foo'", r"import {x} from './foo'; ", None),
