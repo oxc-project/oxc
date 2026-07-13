@@ -39,7 +39,6 @@ oxc_syntax = { workspace = true }
 
 # External crates the vendored React Compiler modules (`src/react_compiler*`) depend
 # on. The compiler core is frontend-agnostic — serde/indexmap/hashing only, no oxc.
-hmac-sha256 = { workspace = true }
 indexmap = { workspace = true }
 rustc-hash = { workspace = true }
 cow-utils = { workspace = true }

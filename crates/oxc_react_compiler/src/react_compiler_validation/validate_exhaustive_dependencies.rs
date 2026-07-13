@@ -53,12 +53,10 @@ pub fn validate_exhaustive_dependencies(
     }
 
     let mut start_memo: Option<StartMemoInfo> = None;
-    let mut memo_locals: FxHashSet<IdentifierId> = FxHashSet::default();
 
     // Callbacks struct holding the mutable state
     let mut callbacks = Callbacks {
         start_memo: &mut start_memo,
-        memo_locals: &mut memo_locals,
         validate_memo: env.config.validate_exhaustive_memoization_dependencies,
         validate_effect: env.config.validate_exhaustive_effect_dependencies,
         reactive: &reactive,
@@ -105,8 +103,6 @@ struct StartMemoInfo<'a> {
     manual_memo_id: u32,
     deps: Option<Vec<ManualMemoDependency<'a>>>,
     deps_span: Option<Option<Span>>,
-    #[allow(dead_code)]
-    span: Option<Span>,
 }
 
 /// A temporary value tracked during dependency collection
@@ -170,8 +166,6 @@ fn path_to_string(path: &[DependencyPathEntry]) -> String {
 /// Callbacks for StartMemoize/FinishMemoize/Effect events
 struct Callbacks<'s, 'a> {
     start_memo: &'s mut Option<StartMemoInfo<'a>>,
-    #[allow(dead_code)]
-    memo_locals: &'s mut FxHashSet<IdentifierId>,
     validate_memo: bool,
     validate_effect: ExhaustiveEffectDepsMode,
     reactive: &'s FxHashSet<IdentifierId>,
@@ -720,16 +714,13 @@ fn collect_dependencies<'a>(
                     temporaries.insert(lvalue_id, function_deps.clone());
                     add_dependency(&function_deps, &mut dependencies, &mut dep_keys, &locals);
                 }
-                InstructionValue::StartMemoize {
-                    manual_memo_id, deps, deps_span, span, ..
-                } => {
+                InstructionValue::StartMemoize { manual_memo_id, deps, deps_span, .. } => {
                     if let Some(cb) = callbacks.as_mut() {
                         // onStartMemoize — mirrors TS behavior of clearing dependencies and locals
                         *cb.start_memo = Some(StartMemoInfo {
                             manual_memo_id: *manual_memo_id,
                             deps: deps.clone(),
                             deps_span: *deps_span,
-                            span: *span,
                         });
                         // Save current state and clear, matching TS which clears the shared
                         // dependencies/locals sets on StartMemoize

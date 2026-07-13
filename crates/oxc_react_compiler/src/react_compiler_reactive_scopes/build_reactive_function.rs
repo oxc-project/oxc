@@ -66,8 +66,6 @@ enum ControlFlowTarget {
     },
     Loop {
         block: BlockId,
-        #[allow(dead_code)]
-        owns_block: bool,
         continue_block: BlockId,
         loop_block: Option<BlockId>,
         owns_loop: bool,
@@ -168,7 +166,6 @@ impl<'a, 'h> Context<'a, 'h> {
     ) -> Result<u32, OxcDiagnostic> {
         let id = self.next_schedule_id;
         self.next_schedule_id += 1;
-        let owns_block = !self.scheduled.contains(&fallthrough_block);
         self.scheduled.insert(fallthrough_block);
         if self.scheduled.contains(&continue_block) {
             return Err(ErrorCategory::Invariant.diagnostic(format!(
@@ -185,7 +182,6 @@ impl<'a, 'h> Context<'a, 'h> {
 
         self.control_flow_stack.push(ControlFlowTarget::Loop {
             block: fallthrough_block,
-            owns_block,
             continue_block,
             loop_block,
             owns_loop,

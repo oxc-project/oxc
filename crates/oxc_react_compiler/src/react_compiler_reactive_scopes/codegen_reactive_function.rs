@@ -37,7 +37,6 @@ use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PrimitiveValue;
 use crate::react_compiler_hir::PropertyLiteral;
 use crate::react_compiler_hir::ScopeId;
-use crate::react_compiler_hir::SpreadPattern;
 use crate::react_compiler_hir::TypeCast;
 use crate::react_compiler_hir::environment::{Environment, OutputMode};
 use crate::react_compiler_hir::reactive::PrunedReactiveScopeBlock;
@@ -70,18 +69,6 @@ pub const EARLY_RETURN_SENTINEL: &str = "react.early_return_sentinel";
 /// FBT tags whose children get special codegen treatment.
 const SINGLE_CHILD_FBT_TAGS: &[&str] = &["fbt:param", "fbs:param"];
 
-/// Computes the Fast Refresh source hash used to bust the memo cache when the
-/// source file changes. Matches the TS compiler's
-/// `createHmac('sha256', code).digest('hex')`: an HMAC-SHA256 keyed by the
-/// source code, hashing empty data.
-///
-/// Not yet wired into the oxc emission path (Fast Refresh hashing is deferred);
-/// kept with its verified test as the primitive the port will reuse.
-#[allow(dead_code)]
-fn source_file_hash(code: &str) -> String {
-    hmac_sha256::HMAC::mac(b"", code.as_bytes()).iter().map(|b| format!("{b:02x}")).collect()
-}
-
 /// Top-level entry point: produces an oxc-shaped
 /// [`crate::react_compiler::entrypoint::compile_result::CodegenFunction`] from a
 /// reactive function, building oxc AST directly via [`oxc_ast::builder::AstBuilder`].
@@ -95,14 +82,12 @@ pub fn codegen_function<'a>(
     use crate::react_compiler::entrypoint::compile_result::CodegenFunction as OxcCodegenFunction;
     use oxc_span::SPAN;
 
-    let fn_name = func.id.unwrap_or(Ident::from("[[ anonymous ]]"));
     // Outlined functions reuse the same `fbtOperands` set as the main function
     // (see TS `codegenFunction`), so keep a copy before it is moved into the context.
     let fbt_operands_for_outlined = fbt_operands.clone();
     let mut cx = OxcContext::new(
         oxc_ast::builder::AstBuilder::new(ast.allocator()),
         env,
-        fn_name,
         unique_identifiers,
         fbt_operands,
     );
@@ -279,8 +264,6 @@ fn ox_clone_temporaries<'a>(
 struct OxcContext<'a, 'env> {
     ast: oxc_ast::builder::AstBuilder<'a>,
     env: &'env mut Environment<'a>,
-    #[allow(dead_code)]
-    fn_name: Ident<'a>,
     next_cache_index: u32,
     declarations: FxHashSet<DeclarationId>,
     temp: OxcTemporaries<'a>,
@@ -295,14 +278,12 @@ impl<'a, 'env> OxcContext<'a, 'env> {
     fn new(
         ast: oxc_ast::builder::AstBuilder<'a>,
         env: &'env mut Environment<'a>,
-        fn_name: Ident<'a>,
         unique_identifiers: IdentHashSet<'a>,
         fbt_operands: FxHashSet<IdentifierId>,
     ) -> Self {
         OxcContext {
             ast,
             env,
-            fn_name,
             next_cache_index: 0,
             declarations: FxHashSet::default(),
             temp: FxHashMap::default(),
@@ -376,10 +357,6 @@ const STRING_REQUIRES_EXPR_CONTAINER_CHARS: &str = "\"\\";
 enum LvalueRef<'a> {
     Place(&'a Place),
     Pattern(&'a Pattern<'a>),
-    // Constructed once nested spread/rest lvalue emission is ported; the match arm
-    // in `ox_codegen_lvalue` already handles it.
-    #[allow(dead_code)]
-    Spread(&'a SpreadPattern),
 }
 
 fn ox_number<'a>(ast: &oxc_ast::builder::AstBuilder<'a>, value: f64) -> oxc::Expression<'a> {
@@ -2274,7 +2251,6 @@ fn ox_codegen_lvalue<'a>(
             Pattern::Array(arr) => ox_codegen_array_pattern(cx, arr),
             Pattern::Object(obj) => ox_codegen_object_pattern(cx, obj),
         },
-        LvalueRef::Spread(spread) => ox_binding_for_identifier(cx, spread.place.identifier),
     }
 }
 
@@ -2721,11 +2697,9 @@ fn ox_codegen_inner_function<'a>(
     cx: &mut OxcContext<'a, '_>,
     reactive_fn: &ReactiveFunction<'a>,
 ) -> Result<OxcCompiledFunction<'a>, OxcDiagnostic> {
-    let fn_name = reactive_fn.id.unwrap_or(Ident::from("[[ anonymous ]]"));
     let mut inner_cx = OxcContext::new(
         oxc_ast::builder::AstBuilder::new(cx.ast.allocator()),
         cx.env,
-        fn_name,
         cx.unique_identifiers.clone(),
         cx.fbt_operands.clone(),
     );

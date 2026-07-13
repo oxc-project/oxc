@@ -216,7 +216,6 @@ futures = "0.3.32" # Async utilities
 handlebars = "6.4.2" # Template engine
 hashbrown = { version = "0.17.1", default-features = false } # Fast hash map
 hmac-sha1-compact = "1.1.7" # Self-contained, zero-dependency SHA-1
-hmac-sha256 = "1" # Self-contained, zero-dependency SHA-256 (react_compiler reactive-scope cache keys)
 humansize = "2.1.3" # Human-readable sizes
 ignore = "0.4.27" # Gitignore matching
 insta = "1.48.0" # Snapshot testing

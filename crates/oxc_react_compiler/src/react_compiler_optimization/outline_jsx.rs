@@ -40,8 +40,6 @@ pub fn outline_jsx<'a>(func: &mut HirFunction<'a>, env: &mut Environment<'a>) {
 /// Data about a JSX instruction for outlining
 struct JsxInstrInfo {
     instr_idx: usize, // index into func.instructions
-    #[allow(dead_code)]
-    instr_id: InstructionId, // the InstructionId
     lvalue_id: IdentifierId,
     eval_order: EvaluationOrder,
 }
@@ -150,12 +148,7 @@ fn outline_jsx_impl<'a>(
                         jsx_group.clear();
                         children_ids.clear();
                     }
-                    jsx_group.push(JsxInstrInfo {
-                        instr_idx,
-                        instr_id: InstructionId(instr_idx as u32),
-                        lvalue_id,
-                        eval_order,
-                    });
+                    jsx_group.push(JsxInstrInfo { instr_idx, lvalue_id, eval_order });
                     for child_id in child_ids {
                         children_ids.insert(child_id);
                     }

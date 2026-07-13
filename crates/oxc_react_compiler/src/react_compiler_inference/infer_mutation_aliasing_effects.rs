@@ -381,20 +381,6 @@ impl InferenceState {
         }
     }
 
-    #[allow(dead_code)]
-    fn kind_opt(&self, place_id: IdentifierId) -> Option<AbstractValue> {
-        let values = self.variables.get(&place_id)?;
-        let mut merged_kind: Option<AbstractValue> = None;
-        for value_id in values {
-            let kind = self.values.get(value_id)?;
-            merged_kind = Some(match merged_kind {
-                Some(prev) => merge_abstract_values(&prev, kind),
-                None => kind.clone(),
-            });
-        }
-        merged_kind
-    }
-
     fn kind(&self, place_id: IdentifierId) -> AbstractValue {
         self.kind_with_span(place_id, None)
     }
@@ -428,16 +414,6 @@ impl InferenceState {
         // Note: In TS, this also transitively freezes FunctionExpression captures
         // if enableTransitivelyFreezeFunctionExpressions is set. We skip that here
         // since we don't have access to the function arena from within state.
-    }
-
-    #[allow(dead_code)]
-    fn mutate(
-        &self,
-        variant: MutateVariant,
-        place_id: IdentifierId,
-        env: &Environment,
-    ) -> MutationResult {
-        self.mutate_with_span(variant, place_id, env, None)
     }
 
     fn mutate_with_span(
