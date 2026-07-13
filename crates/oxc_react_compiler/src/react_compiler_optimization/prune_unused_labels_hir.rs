@@ -26,13 +26,11 @@ pub fn prune_unused_labels_hir(func: &mut HirFunction) {
             let fallthrough = &func.body.blocks[fallthrough_id];
             if let Terminal::Goto { block: goto_target, variant: GotoVariant::Break, .. } =
                 &next.terminal
+                && goto_target == fallthrough_id
+                && next.kind == BlockKind::Block
+                && fallthrough.kind == BlockKind::Block
             {
-                if goto_target == fallthrough_id
-                    && next.kind == BlockKind::Block
-                    && fallthrough.kind == BlockKind::Block
-                {
-                    merged.push((block_id, *next_id, *fallthrough_id));
-                }
+                merged.push((block_id, *next_id, *fallthrough_id));
             }
         }
     }

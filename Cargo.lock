@@ -1387,9 +1387,9 @@ dependencies = [
 
 [[package]]
 name = "napi"
-version = "3.10.4"
+version = "3.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59b7fbd5f12adbf51ddec954d4ef9cecb3542a9d53bce2fe0653696c4cd06d73"
+checksum = "6826e5ddc15589b2d68c8ad5321c18e85d40488e93e32962f362e572669bccf6"
 dependencies = [
  "bitflags",
  "ctor",
@@ -1656,9 +1656,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "3.0.10"
+version = "3.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ba6d4ec62141713c219f47ac59f1926d73fae83b672ff3f797c2744ac151b91"
+checksum = "50a403a3c6be65be7bc7730d07d959ec6c143e4ff8117da485df78cd5582260a"
 dependencies = [
  "miniz_oxide 0.9.1",
  "postcard",
@@ -1669,9 +1669,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-css-parser"
-version = "0.0.6"
+version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50f622c8a4f8654d6c2e0638fa4f91b22d9240abd0efb1dda62ff4f70bed4958"
+checksum = "39176e812faa433a4f046e65844cb7bdbee4ef7708d377d050ddde3ae35d5b4f"
 dependencies = [
  "oxc_allocator",
 ]
@@ -2439,6 +2439,8 @@ dependencies = [
  "oxc_ast_visit",
  "oxc_codegen",
  "oxc_diagnostics",
+ "oxc_ecmascript",
+ "oxc_index",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
@@ -3577,9 +3579,9 @@ checksum = "e8e2fb0f499abb4d162f2bedad68f5ef91a1682b5a03596ddb67efd37768d100"
 
 [[package]]
 name = "sort-package-json"
-version = "0.0.13"
+version = "0.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b10fc928d9500d5dd0596172c091ff05cf0fc78c8158802fd63d5f81825f0e8"
+checksum = "c1c63477d7f55c3cc7c13fd41a677b999fda93d1b0df1cbe2dcca3fd31b5bc9f"
 dependencies = [
  "serde_json",
 ]

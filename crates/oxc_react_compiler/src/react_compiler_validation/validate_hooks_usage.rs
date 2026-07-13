@@ -23,9 +23,11 @@ use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors::{each_pattern_operand, each_terminal_operand};
 use crate::react_compiler_hir::{
     FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue, ParamPattern, Place,
-    PlaceOrSpread, PropertyLiteral, Span, Type, visitors,
+    PlaceOrSpread, PropertyLiteral, Type, TypeId, visitors,
 };
 use crate::react_compiler_utils::FxIndexMap;
+use oxc_index::IndexSlice;
+use oxc_span::Span;
 
 /// Value classification for hook validation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -54,31 +56,34 @@ fn join_kinds(a: Kind, b: Kind) -> Kind {
 fn get_kind_for_place(
     place: &Place,
     value_kinds: &FxHashMap<IdentifierId, Kind>,
-    identifiers: &[Identifier],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
 ) -> Kind {
     let known_kind = value_kinds.get(&place.identifier).copied();
-    let ident = &identifiers[place.identifier.0 as usize];
-    if let Some(ref name) = ident.name {
-        if is_hook_name(name.value()) {
-            return join_kinds(known_kind.unwrap_or(Kind::Local), Kind::PotentialHook);
-        }
+    let ident = &identifiers[place.identifier];
+    if let Some(ref name) = ident.name
+        && is_hook_name(name.value())
+    {
+        return join_kinds(known_kind.unwrap_or(Kind::Local), Kind::PotentialHook);
     }
     known_kind.unwrap_or(Kind::Local)
 }
 
-fn ident_is_hook_name(identifier_id: IdentifierId, identifiers: &[Identifier]) -> bool {
-    let ident = &identifiers[identifier_id.0 as usize];
+fn ident_is_hook_name(
+    identifier_id: IdentifierId,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+) -> bool {
+    let ident = &identifiers[identifier_id];
     if let Some(ref name) = ident.name { is_hook_name(name.value()) } else { false }
 }
 
 fn get_hook_kind_for_id<'a>(
     identifier_id: IdentifierId,
-    identifiers: &[Identifier],
-    types: &[Type],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
     env: &'a Environment,
 ) -> Result<Option<&'a HookKind>, OxcDiagnostic> {
-    let identifier = &identifiers[identifier_id.0 as usize];
-    let ty = &types[identifier.type_.0 as usize];
+    let identifier = &identifiers[identifier_id];
+    let ty = &types[identifier.type_];
     env.get_hook_kind_for_type(ty)
 }
 
@@ -152,7 +157,8 @@ pub fn validate_hooks_usage(
     func: &HirFunction,
     env: &mut Environment,
 ) -> Result<(), OxcDiagnostic> {
-    let unconditional_blocks = compute_unconditional_blocks(func, env.next_block_id().0)?;
+    let unconditional_blocks =
+        compute_unconditional_blocks(func, env.next_block_id().index() as u32)?;
     let mut errors_by_span: FxIndexMap<Span, OxcDiagnostic> = FxIndexMap::default();
     let mut value_kinds: FxHashMap<IdentifierId, Kind> = FxHashMap::default();
 
@@ -185,7 +191,7 @@ pub fn validate_hooks_usage(
 
         // Process instructions
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue_id = instr.lvalue.identifier;
 
             match &instr.value {
@@ -378,12 +384,12 @@ fn visit_function_expression(
         NestedFunc(FunctionId),
     }
 
-    let func = &env.functions[func_id.0 as usize];
+    let func = &env.functions[func_id];
     let mut items: Vec<Item> = Vec::new();
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::ObjectMethod { lowered_func, .. }
                 | InstructionValue::FunctionExpression { lowered_func, .. } => {
@@ -405,8 +411,8 @@ fn visit_function_expression(
     for item in items {
         match item {
             Item::Call(identifier_id, span) => {
-                let identifier = &env.identifiers[identifier_id.0 as usize];
-                let ty = &env.types[identifier.type_.0 as usize];
+                let identifier = &env.identifiers[identifier_id];
+                let ty = &env.types[identifier.type_];
                 let hook_kind = env.get_hook_kind_for_type(ty).ok().flatten().cloned();
                 if let Some(hook_kind) = hook_kind {
                     let description = format!(

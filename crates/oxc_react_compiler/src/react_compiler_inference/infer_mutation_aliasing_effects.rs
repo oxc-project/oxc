@@ -44,7 +44,6 @@ use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PlaceOrSpreadOrHole;
 use crate::react_compiler_hir::PropertyLiteral;
 use crate::react_compiler_hir::ReactFunctionType;
-use crate::react_compiler_hir::Span;
 use crate::react_compiler_hir::SpreadPattern;
 use crate::react_compiler_hir::Terminal;
 use crate::react_compiler_hir::Type;
@@ -64,7 +63,9 @@ use crate::react_compiler_hir::type_config::ValueKind;
 use crate::react_compiler_hir::type_config::ValueReason;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_utils::FxIndexSet;
+use oxc_span::Span;
 use std::cell::Cell;
+use std::rc::Rc;
 
 // =============================================================================
 // Public entry point
@@ -135,10 +136,10 @@ pub fn infer_mutation_aliasing_effects(
         block_id: BlockId,
         state: InferenceState,
     ) {
-        if let Some(queued_state) = queued_states.get(&block_id) {
-            let merged = queued_state.merge(&state);
-            let new_state = merged.unwrap_or_else(|| queued_state.clone());
-            queued_states.insert(block_id, new_state);
+        if let Some(queued_state) = queued_states.get_mut(&block_id) {
+            // Merge in place: same contents (and iteration order) as replacing
+            // the entry with `merge`'s result, without cloning the whole state.
+            queued_state.merge_from(&state);
         } else {
             let prev_state = states_by_block.get(&block_id);
             if let Some(prev) = prev_state {
@@ -170,6 +171,23 @@ pub fn infer_mutation_aliasing_effects(
         aliasing_config_temp_cache: FxHashMap::default(),
     };
 
+    // `states_by_block` is only ever read when a block is queued again after it
+    // was already processed, which requires a CFG cycle. If every edge targets a
+    // strictly later block in the map, the graph is acyclic and one pass over the
+    // blocks suffices, so skip the per-block state snapshots. Reverse postorder
+    // (the stored order) only makes this test precise for acyclic CFGs; soundness
+    // needs no ordering assumption, and a successor missing from the map counts
+    // as a back edge to stay conservative. The scan cannot go stale: `infer_block`
+    // rewrites only terminal effects, never successor ids.
+    let has_back_edge = func.body.blocks.iter().enumerate().any(|(index, (_, block))| {
+        terminal_successors(&block.terminal).into_iter().any(|successor| {
+            match func.body.blocks.get_index_of(&successor) {
+                Some(successor_index) => successor_index <= index,
+                None => true,
+            }
+        })
+    });
+
     let mut iteration_count = 0;
 
     while !queued_states.is_empty() {
@@ -189,15 +207,17 @@ pub fn infer_mutation_aliasing_effects(
                 None => continue,
             };
 
-            states_by_block.insert(block_id, incoming_state.clone());
-            let mut state = incoming_state.clone();
+            if has_back_edge {
+                states_by_block.insert(block_id, incoming_state.clone());
+            }
+            let mut state = incoming_state;
 
             infer_block(&mut context, &mut state, block_id, func, env)?;
 
             // Check for uninitialized identifier access (matches TS invariant:
             // "Expected value kind to be initialized")
             if let Some((uninitialized_id, usage_span)) = state.uninitialized_access.get() {
-                let ident_info = env.identifiers.get(uninitialized_id.0 as usize);
+                let ident_info = env.identifiers.get(uninitialized_id);
                 let name = ident_info
                     .and_then(|ident| ident.name.as_ref())
                     .map(|n| n.value().to_string())
@@ -207,11 +227,12 @@ pub fn infer_mutation_aliasing_effects(
                 // Match TS printPlace format: "<unknown> name$id:type"
                 let type_str = ident_info
                     .map(|ident| {
-                        let ty = &env.types[ident.type_.0 as usize];
+                        let ty = &env.types[ident.type_];
                         format_type_for_print(ty)
                     })
                     .unwrap_or_default();
-                let description = format!("<unknown> {}${}{}", name, uninitialized_id.0, type_str);
+                let description =
+                    format!("<unknown> {}${}{}", name, uninitialized_id.index(), type_str);
                 let diag = ErrorCategory::Invariant
                     .diagnostic(
                         "[InferMutationAliasingEffects] Expected value kind to be initialized",
@@ -221,10 +242,16 @@ pub fn infer_mutation_aliasing_effects(
                 return Err(diag);
             }
 
-            // Queue successors
+            // Queue successors. Every successor receives the same post-block state;
+            // the last one takes it by move instead of by clone.
             let successors = terminal_successors(&func.body.blocks[&block_id].terminal);
-            for next_block_id in successors {
-                queue(&mut queued_states, &states_by_block, next_block_id, state.clone());
+            let mut successors = successors.into_iter();
+            if let Some(mut next_block_id) = successors.next() {
+                for later_block_id in successors {
+                    queue(&mut queued_states, &states_by_block, next_block_id, state.clone());
+                    next_block_id = later_block_id;
+                }
+                queue(&mut queued_states, &states_by_block, next_block_id, state);
             }
         }
     }
@@ -247,6 +274,12 @@ static NEXT_VALUE_ID: AtomicU32 = AtomicU32::new(1);
 impl ValueId {
     fn new() -> Self {
         ValueId(NEXT_VALUE_ID.fetch_add(1, Ordering::Relaxed))
+    }
+
+    /// Deterministic value id derived from an identifier's current value. The high bit is
+    /// set so these never collide with the counter-allocated ids from `new()`.
+    fn from_identifier(id: IdentifierId) -> Self {
+        ValueId(id.index() as u32 | 0x80000000)
     }
 }
 
@@ -271,15 +304,22 @@ fn hashset_of(r: ValueReason) -> FxIndexSet<ValueReason> {
 // =============================================================================
 
 /// The abstract state tracked during inference.
-/// Uses interior mutability via a struct with direct fields (no Rc needed since
-/// we always have exclusive access in the pass).
+/// The pass has exclusive access to each state (interior mutability only via
+/// the `uninitialized_access` Cell); the one shared piece is the immutable
+/// per-variable value sets (see `variables`).
 #[derive(Debug, Clone)]
 struct InferenceState {
     is_function_expression: bool,
     /// The kind of each value, based on its allocation site
     values: FxHashMap<ValueId, AbstractValue>,
-    /// The set of values pointed to by each identifier
-    variables: FxHashMap<IdentifierId, FxHashSet<ValueId>>,
+    /// The set of values pointed to by each identifier. The sets are shared via
+    /// `Rc`: every write to the map replaces the whole entry (sets are never
+    /// mutated in place), so state clones and assignments bump a refcount
+    /// instead of deep-copying each set. Shared sets iterate the very table a
+    /// deep clone would have copied; freshly built union/phi/singleton sets are
+    /// constructed by the same insert sequence as before. Either way iteration
+    /// order is unchanged.
+    variables: FxHashMap<IdentifierId, Rc<FxHashSet<ValueId>>>,
     /// Tracks uninitialized identifier access errors (matches TS invariant).
     /// Uses Cell so it can be set from `&self` methods like `kind()`.
     /// Stores (IdentifierId, usage_span) where usage_span is the source location
@@ -312,7 +352,7 @@ impl InferenceState {
             }
         };
         let mut merged_kind: Option<AbstractValue> = None;
-        for value_id in values {
+        for value_id in values.iter() {
             let kind = match self.values.get(value_id) {
                 Some(k) => k,
                 None => continue,
@@ -335,23 +375,23 @@ impl InferenceState {
     fn define(&mut self, place_id: IdentifierId, value_id: ValueId) {
         let mut set = FxHashSet::default();
         set.insert(value_id);
-        self.variables.insert(place_id, set);
+        self.variables.insert(place_id, Rc::new(set));
     }
 
     fn assign(&mut self, into: IdentifierId, from: IdentifierId) {
         let values = match self.variables.get(&from) {
-            Some(v) => v.clone(),
+            Some(v) => Rc::clone(v),
             None => {
                 // Create a stable value for uninitialized identifiers
                 // Use a deterministic ID based on the from identifier
-                let vid = ValueId(from.0 | 0x80000000);
+                let vid = ValueId::from_identifier(from);
                 let mut set = FxHashSet::default();
                 set.insert(vid);
                 self.values.entry(vid).or_insert_with(|| AbstractValue {
                     kind: ValueKind::Mutable,
                     reason: hashset_of(ValueReason::Other),
                 });
-                set
+                Rc::new(set)
             }
         };
         self.variables.insert(into, values);
@@ -359,15 +399,15 @@ impl InferenceState {
 
     fn append_alias(&mut self, place: IdentifierId, value: IdentifierId) {
         let new_values = match self.variables.get(&value) {
-            Some(v) => v.clone(),
+            Some(v) => Rc::clone(v),
             None => return,
         };
         let prev_values = match self.variables.get(&place) {
-            Some(v) => v.clone(),
+            Some(v) => Rc::clone(v),
             None => return,
         };
         let merged: FxHashSet<ValueId> = prev_values.union(&new_values).copied().collect();
-        self.variables.insert(place, merged);
+        self.variables.insert(place, Rc::new(merged));
     }
 
     fn is_defined(&self, place_id: IdentifierId) -> bool {
@@ -423,7 +463,7 @@ impl InferenceState {
         env: &Environment,
         usage_span: Option<Span>,
     ) -> MutationResult {
-        let ty = &env.types[env.identifiers[place_id.0 as usize].type_.0 as usize];
+        let ty = &env.types[env.identifiers[place_id].type_];
         if is_ref_or_ref_value(ty) {
             return MutationResult::MutateRef;
         }
@@ -446,7 +486,7 @@ impl InferenceState {
 
     fn merge(&self, other: &InferenceState) -> Option<InferenceState> {
         let mut next_values: Option<FxHashMap<ValueId, AbstractValue>> = None;
-        let mut next_variables: Option<FxHashMap<IdentifierId, FxHashSet<ValueId>>> = None;
+        let mut next_variables: Option<FxHashMap<IdentifierId, Rc<FxHashSet<ValueId>>>> = None;
 
         // Merge values present in both
         for (id, this_value) in &self.values {
@@ -472,7 +512,7 @@ impl InferenceState {
         for (id, this_values) in &self.variables {
             if let Some(other_values) = other.variables.get(id) {
                 let mut has_new = false;
-                for ov in other_values {
+                for ov in other_values.iter() {
                     if !this_values.contains(ov) {
                         has_new = true;
                         break;
@@ -482,7 +522,7 @@ impl InferenceState {
                     let nvars = next_variables.get_or_insert_with(|| self.variables.clone());
                     let merged: FxHashSet<ValueId> =
                         this_values.union(other_values).copied().collect();
-                    nvars.insert(*id, merged);
+                    nvars.insert(*id, Rc::new(merged));
                 }
             }
         }
@@ -490,7 +530,7 @@ impl InferenceState {
         for (id, other_values) in &other.variables {
             if !self.variables.contains_key(id) {
                 let nvars = next_variables.get_or_insert_with(|| self.variables.clone());
-                nvars.insert(*id, other_values.clone());
+                nvars.insert(*id, Rc::clone(other_values));
             }
         }
 
@@ -506,18 +546,65 @@ impl InferenceState {
         }
     }
 
+    /// In-place variant of [`InferenceState::merge`] for updating an
+    /// already-queued state: applies the same per-entry updates directly to
+    /// `self` instead of building a replacement state. Because `FxHashMap`'s
+    /// `clone` preserves table layout, this leaves `self` with exactly the same
+    /// contents *and iteration order* as `merge` + reinsert would. Like
+    /// `merge`'s result, the access flag ends up cleared (queued states never
+    /// carry a set flag: a set flag errors out before the state is queued).
+    fn merge_from(&mut self, other: &InferenceState) {
+        for (id, other_value) in &other.values {
+            match self.values.get(id) {
+                Some(this_value) => {
+                    let merged = merge_abstract_values(this_value, other_value);
+                    if merged.kind != this_value.kind
+                        || !is_superset(&this_value.reason, &merged.reason)
+                    {
+                        self.values.insert(*id, merged);
+                    }
+                }
+                None => {
+                    self.values.insert(*id, other_value.clone());
+                }
+            }
+        }
+
+        for (id, other_values) in &other.variables {
+            match self.variables.get(id) {
+                Some(this_values) => {
+                    let has_new = other_values.iter().any(|ov| !this_values.contains(ov));
+                    if has_new {
+                        // Build the union as a fresh set exactly like `merge`, so
+                        // the resulting iteration order matches.
+                        let merged: FxHashSet<ValueId> =
+                            this_values.union(other_values).copied().collect();
+                        self.variables.insert(*id, Rc::new(merged));
+                    }
+                }
+                None => {
+                    self.variables.insert(*id, Rc::clone(other_values));
+                }
+            }
+        }
+
+        // `merge` builds its result with a cleared access flag.
+        debug_assert!(self.uninitialized_access.get().is_none());
+        self.uninitialized_access.set(None);
+    }
+
     fn infer_phi(&mut self, phi_place_id: IdentifierId, phi_operands: &FxIndexMap<BlockId, Place>) {
         let mut values: FxHashSet<ValueId> = FxHashSet::default();
         for (_, operand) in phi_operands {
             if let Some(operand_values) = self.variables.get(&operand.identifier) {
-                for v in operand_values {
+                for v in operand_values.iter() {
                     values.insert(*v);
                 }
             }
             // If not found, it's a backedge that will be handled later by merge
         }
         if !values.is_empty() {
-            self.variables.insert(phi_place_id, values);
+            self.variables.insert(phi_place_id, Rc::new(values));
         }
     }
 }
@@ -596,67 +683,74 @@ fn hash_effect(effect: &AliasingEffect) -> String {
                 .iter()
                 .map(|a| match a {
                     PlaceOrSpreadOrHole::Hole => Cow::Borrowed(""),
-                    PlaceOrSpreadOrHole::Place(p) => Cow::Owned(format!("{}", p.identifier.0)),
+                    PlaceOrSpreadOrHole::Place(p) => {
+                        Cow::Owned(format!("{}", p.identifier.index()))
+                    }
                     PlaceOrSpreadOrHole::Spread(s) => {
-                        Cow::Owned(format!("...{}", s.place.identifier.0))
+                        Cow::Owned(format!("...{}", s.place.identifier.index()))
                     }
                 })
                 .collect();
             format!(
                 "Apply:{}:{}:{}:{}:{}",
-                receiver.identifier.0,
-                function.identifier.0,
+                receiver.identifier.index(),
+                function.identifier.index(),
                 mutates_function,
                 args_str.join(","),
-                into.identifier.0
+                into.identifier.index()
             )
         }
         AliasingEffect::CreateFrom { from, into } => {
-            format!("CreateFrom:{}:{}", from.identifier.0, into.identifier.0)
+            format!("CreateFrom:{}:{}", from.identifier.index(), into.identifier.index())
         }
         AliasingEffect::ImmutableCapture { from, into } => {
-            format!("ImmutableCapture:{}:{}", from.identifier.0, into.identifier.0)
+            format!("ImmutableCapture:{}:{}", from.identifier.index(), into.identifier.index())
         }
         AliasingEffect::Assign { from, into } => {
-            format!("Assign:{}:{}", from.identifier.0, into.identifier.0)
+            format!("Assign:{}:{}", from.identifier.index(), into.identifier.index())
         }
         AliasingEffect::Alias { from, into } => {
-            format!("Alias:{}:{}", from.identifier.0, into.identifier.0)
+            format!("Alias:{}:{}", from.identifier.index(), into.identifier.index())
         }
         AliasingEffect::Capture { from, into } => {
-            format!("Capture:{}:{}", from.identifier.0, into.identifier.0)
+            format!("Capture:{}:{}", from.identifier.index(), into.identifier.index())
         }
         AliasingEffect::MaybeAlias { from, into } => {
-            format!("MaybeAlias:{}:{}", from.identifier.0, into.identifier.0)
+            format!("MaybeAlias:{}:{}", from.identifier.index(), into.identifier.index())
         }
         AliasingEffect::Create { into, value, reason } => {
-            format!("Create:{}:{:?}:{:?}", into.identifier.0, value, reason)
+            format!("Create:{}:{:?}:{:?}", into.identifier.index(), value, reason)
         }
         AliasingEffect::Freeze { value, reason } => {
-            format!("Freeze:{}:{:?}", value.identifier.0, reason)
+            format!("Freeze:{}:{:?}", value.identifier.index(), reason)
         }
-        AliasingEffect::Impure { place, .. } => format!("Impure:{}", place.identifier.0),
-        AliasingEffect::Render { place } => format!("Render:{}", place.identifier.0),
+        AliasingEffect::Impure { place, .. } => format!("Impure:{}", place.identifier.index()),
+        AliasingEffect::Render { place } => format!("Render:{}", place.identifier.index()),
         AliasingEffect::MutateFrozen { place, error } => {
-            format!("MutateFrozen:{}:{}:{:?}", place.identifier.0, error.message, error.help)
+            format!("MutateFrozen:{}:{}:{:?}", place.identifier.index(), error.message, error.help)
         }
         AliasingEffect::MutateGlobal { place, error } => {
-            format!("MutateGlobal:{}:{}:{:?}", place.identifier.0, error.message, error.help)
+            format!("MutateGlobal:{}:{}:{:?}", place.identifier.index(), error.message, error.help)
         }
-        AliasingEffect::Mutate { value, .. } => format!("Mutate:{}", value.identifier.0),
+        AliasingEffect::Mutate { value, .. } => format!("Mutate:{}", value.identifier.index()),
         AliasingEffect::MutateConditionally { value } => {
-            format!("MutateConditionally:{}", value.identifier.0)
+            format!("MutateConditionally:{}", value.identifier.index())
         }
         AliasingEffect::MutateTransitive { value } => {
-            format!("MutateTransitive:{}", value.identifier.0)
+            format!("MutateTransitive:{}", value.identifier.index())
         }
         AliasingEffect::MutateTransitiveConditionally { value } => {
-            format!("MutateTransitiveConditionally:{}", value.identifier.0)
+            format!("MutateTransitiveConditionally:{}", value.identifier.index())
         }
         AliasingEffect::CreateFunction { into, function_id, captures } => {
             let cap_str: Vec<String> =
-                captures.iter().map(|p| format!("{}", p.identifier.0)).collect();
-            format!("CreateFunction:{}:{}:{}", into.identifier.0, function_id.0, cap_str.join(","))
+                captures.iter().map(|p| format!("{}", p.identifier.index())).collect();
+            format!(
+                "CreateFunction:{}:{}:{}",
+                into.identifier.index(),
+                function_id.index(),
+                cap_str.join(",")
+            )
         }
     }
 }
@@ -724,7 +818,7 @@ fn find_hoisted_context_declarations(
         place: &Place,
         env: &Environment,
     ) {
-        let decl_id = env.identifiers[place.identifier.0 as usize].declaration_id;
+        let decl_id = env.identifiers[place.identifier].declaration_id;
         if hoisted.contains_key(&decl_id) && hoisted.get(&decl_id).unwrap().is_none() {
             hoisted.insert(decl_id, Some(place.clone()));
         }
@@ -732,7 +826,7 @@ fn find_hoisted_context_declarations(
 
     for (_block_id, block) in &func.body.blocks {
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::DeclareContext { lvalue, .. } => {
                     let kind = lvalue.kind;
@@ -740,8 +834,7 @@ fn find_hoisted_context_declarations(
                         || kind == InstructionKind::HoistedFunction
                         || kind == InstructionKind::HoistedLet
                     {
-                        let decl_id =
-                            env.identifiers[lvalue.place.identifier.0 as usize].declaration_id;
+                        let decl_id = env.identifiers[lvalue.place.identifier].declaration_id;
                         hoisted.insert(decl_id, None);
                     }
                 }
@@ -791,7 +884,7 @@ fn find_non_mutated_destructure_spreads(
             }
         }
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue_id = instr.lvalue.identifier;
             match &instr.value {
                 InstructionValue::Destructure { lvalue, value, .. } => {
@@ -838,8 +931,7 @@ fn find_non_mutated_destructure_spreads(
                 }
                 InstructionValue::CallExpression { callee, .. }
                 | InstructionValue::MethodCall { property: callee, .. } => {
-                    let callee_ty =
-                        &env.types[env.identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                    let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     if get_hook_kind_for_type(env, callee_ty).ok().flatten().is_some() {
                         if !is_ref_or_ref_value_for_id(env, lvalue_id) {
                             known_frozen.insert(lvalue_id);
@@ -913,7 +1005,7 @@ fn infer_block(
     }
 
     // Process instructions
-    let instr_ids: Vec<u32> = block.instructions.iter().map(|id| id.0).collect();
+    let instr_ids: Vec<u32> = block.instructions.iter().map(|id| id.index() as u32).collect();
     for instr_idx in &instr_ids {
         let instr_index = *instr_idx as usize;
 
@@ -925,14 +1017,8 @@ fn infer_block(
         }
 
         // Apply signature
-        let effects = apply_signature(
-            context,
-            state,
-            *instr_idx,
-            &func.instructions[instr_index],
-            env,
-            func,
-        )?;
+        let effects =
+            apply_signature(context, state, *instr_idx, &func.instructions[instr_index], env)?;
         func.instructions[instr_index].effects = effects;
     }
 
@@ -963,38 +1049,35 @@ fn infer_block(
             context.catch_handlers.insert(handler, binding);
         }
         TerminalAction::MaybeThrow { handler_id } => {
-            if let Some(handler_param) = context.catch_handlers.get(&handler_id).cloned() {
-                if state.is_defined(handler_param.identifier) {
-                    let mut terminal_effects: Vec<AliasingEffect> = Vec::new();
-                    for instr_idx in &instr_ids {
-                        let instr = &func.instructions[*instr_idx as usize];
-                        match &instr.value {
-                            InstructionValue::CallExpression { .. }
-                            | InstructionValue::MethodCall { .. } => {
-                                state.append_alias(
-                                    handler_param.identifier,
-                                    instr.lvalue.identifier,
-                                );
-                                let kind = state.kind(instr.lvalue.identifier).kind;
-                                if kind == ValueKind::Mutable || kind == ValueKind::Context {
-                                    terminal_effects.push(context.intern_effect(
-                                        AliasingEffect::Alias {
-                                            from: instr.lvalue.clone(),
-                                            into: handler_param.clone(),
-                                        },
-                                    ));
-                                }
+            if let Some(handler_param) = context.catch_handlers.get(&handler_id).cloned()
+                && state.is_defined(handler_param.identifier)
+            {
+                let mut terminal_effects: Vec<AliasingEffect> = Vec::new();
+                for instr_idx in &instr_ids {
+                    let instr = &func.instructions[*instr_idx as usize];
+                    match &instr.value {
+                        InstructionValue::CallExpression { .. }
+                        | InstructionValue::MethodCall { .. } => {
+                            state.append_alias(handler_param.identifier, instr.lvalue.identifier);
+                            let kind = state.kind(instr.lvalue.identifier).kind;
+                            if kind == ValueKind::Mutable || kind == ValueKind::Context {
+                                terminal_effects.push(context.intern_effect(
+                                    AliasingEffect::Alias {
+                                        from: instr.lvalue.clone(),
+                                        into: handler_param.clone(),
+                                    },
+                                ));
                             }
-                            _ => {}
                         }
+                        _ => {}
                     }
-                    let block_mut = func.body.blocks.get_mut(&block_id).unwrap();
-                    if let Terminal::MaybeThrow { effects: ref mut term_effects, .. } =
-                        block_mut.terminal
-                    {
-                        *term_effects =
-                            if terminal_effects.is_empty() { None } else { Some(terminal_effects) };
-                    }
+                }
+                let block_mut = func.body.blocks.get_mut(&block_id).unwrap();
+                if let Terminal::MaybeThrow { effects: ref mut term_effects, .. } =
+                    block_mut.terminal
+                {
+                    *term_effects =
+                        if terminal_effects.is_empty() { None } else { Some(terminal_effects) };
                 }
             }
         }
@@ -1026,7 +1109,6 @@ fn apply_signature(
     instr_idx: u32,
     instr: &Instruction,
     env: &mut Environment,
-    func: &HirFunction,
 ) -> Result<Option<Vec<AliasingEffect>>, OxcDiagnostic> {
     let mut effects: Vec<AliasingEffect> = Vec::new();
 
@@ -1034,7 +1116,7 @@ fn apply_signature(
     match &instr.value {
         InstructionValue::FunctionExpression { lowered_func, .. }
         | InstructionValue::ObjectMethod { lowered_func, .. } => {
-            let inner_func = &env.functions[lowered_func.func.0 as usize];
+            let inner_func = &env.functions[lowered_func.func];
             if let Some(ref aliasing_effects) = inner_func.aliasing_effects {
                 let context_ids: FxHashSet<IdentifierId> =
                     inner_func.context.iter().map(|p| p.identifier).collect();
@@ -1053,7 +1135,7 @@ fn apply_signature(
                     let value_abstract = state.kind(mutate_value.identifier);
                     if value_abstract.kind == ValueKind::Frozen {
                         let reason_str = get_write_error_reason(&value_abstract);
-                        let ident = &env.identifiers[mutate_value.identifier.0 as usize];
+                        let ident = &env.identifiers[mutate_value.identifier];
                         let variable = match &ident.name {
                             Some(IdentifierName::Named(n)) => {
                                 format!("`{}`", n)
@@ -1087,14 +1169,14 @@ fn apply_signature(
     let sig_effects: Vec<AliasingEffect> = sig.effects.clone();
 
     for effect in &sig_effects {
-        apply_effect(context, state, effect.clone(), &mut initialized, &mut effects, env, func)?;
+        apply_effect(context, state, effect.clone(), &mut initialized, &mut effects, env)?;
     }
 
     // If lvalue is not yet defined, initialize it with a default value.
     // The TS version asserts this as an invariant, but the Rust port may have
     // edge cases where effects don't cover the lvalue (e.g. missing signature entries).
     if !state.is_defined(instr.lvalue.identifier) {
-        let vid = ValueId(instr.lvalue.identifier.0 | 0x80000000);
+        let vid = ValueId::from_identifier(instr.lvalue.identifier);
         state.initialize(
             vid,
             AbstractValue { kind: ValueKind::Mutable, reason: hashset_of(ValueReason::Other) },
@@ -1122,7 +1204,7 @@ fn freeze_function_captures_transitive(
 ) {
     if let Some(&func_id) = context.function_values.get(&value_id) {
         let ctx_ids: Vec<IdentifierId> =
-            env.functions[func_id.0 as usize].context.iter().map(|p| p.identifier).collect();
+            env.functions[func_id].context.iter().map(|p| p.identifier).collect();
         for ctx_id in ctx_ids {
             // Replicate InferenceState::freeze() logic inline —
             // we need to recurse with context/env which freeze() doesn't have.
@@ -1151,7 +1233,6 @@ fn freeze_function_captures_transitive(
 // applyEffect
 // =============================================================================
 
-#[allow(clippy::only_used_in_recursion)]
 fn apply_effect(
     context: &mut Context,
     state: &mut InferenceState,
@@ -1159,7 +1240,6 @@ fn apply_effect(
     initialized: &mut FxHashSet<IdentifierId>,
     effects: &mut Vec<AliasingEffect>,
     env: &mut Environment,
-    func: &HirFunction,
 ) -> Result<(), OxcDiagnostic> {
     let effect = context.intern_effect(effect);
     match effect {
@@ -1241,7 +1321,6 @@ fn apply_effect(
                         initialized,
                         effects,
                         env,
-                        func,
                     )?;
                 }
                 _ => {
@@ -1266,7 +1345,7 @@ fn apply_effect(
                 k == ValueKind::Context || k == ValueKind::Mutable
             });
 
-            let inner_func = &env.functions[function_id.0 as usize];
+            let inner_func = &env.functions[function_id];
             let has_tracked_side_effects = inner_func
                 .aliasing_effects
                 .as_ref()
@@ -1304,7 +1383,7 @@ fn apply_effect(
                     || kind == ValueKind::Global
                 {
                     // Downgrade to Read - we need to mutate the inner function
-                    let inner_func_mut = &mut env.functions[function_id.0 as usize];
+                    let inner_func_mut = &mut env.functions[function_id];
                     for ctx in &mut inner_func_mut.context {
                         if ctx.identifier == operand.identifier && ctx.effect == Effect::Capture {
                             ctx.effect = Effect::Read;
@@ -1333,7 +1412,6 @@ fn apply_effect(
                     initialized,
                     effects,
                     env,
-                    func,
                 )?;
             }
         }
@@ -1372,7 +1450,6 @@ fn apply_effect(
                     initialized,
                     effects,
                     env,
-                    func,
                 )?;
             } else if (source_type == Some("mutable") && destination_type == Some("mutable"))
                 || is_maybe_alias
@@ -1388,7 +1465,6 @@ fn apply_effect(
                     initialized,
                     effects,
                     env,
-                    func,
                 )?;
             }
         }
@@ -1408,10 +1484,12 @@ fn apply_effect(
                         initialized,
                         effects,
                         env,
-                        func,
                     )?;
-                    let cache_key =
-                        format!("Assign_frozen:{}:{}", from.identifier.0, into.identifier.0);
+                    let cache_key = format!(
+                        "Assign_frozen:{}:{}",
+                        from.identifier.index(),
+                        into.identifier.index()
+                    );
                     let value_id = *context
                         .effect_value_id_cache
                         .entry(cache_key)
@@ -1423,8 +1501,11 @@ fn apply_effect(
                     state.define(into.identifier, value_id);
                 }
                 ValueKind::Global | ValueKind::Primitive => {
-                    let cache_key =
-                        format!("Assign_copy:{}:{}", from.identifier.0, into.identifier.0);
+                    let cache_key = format!(
+                        "Assign_copy:{}:{}",
+                        from.identifier.index(),
+                        into.identifier.index()
+                    );
                     let value_id = *context
                         .effect_value_id_cache
                         .entry(cache_key)
@@ -1457,7 +1538,7 @@ fn apply_effect(
                 if function_values.len() == 1 {
                     let value_id = function_values[0];
                     if let Some(func_id) = context.function_values.get(&value_id).copied() {
-                        let inner_func = &env.functions[func_id.0 as usize];
+                        let inner_func = &env.functions[func_id];
                         if inner_func.aliasing_effects.is_some() {
                             // Build or retrieve the signature from the function expression
                             context.function_signature_cache.entry(func_id).or_insert_with(|| {
@@ -1465,7 +1546,7 @@ fn apply_effect(
                             });
                             let sig =
                                 context.function_signature_cache.get(&func_id).unwrap().clone();
-                            let inner_func = &env.functions[func_id.0 as usize];
+                            let inner_func = &env.functions[func_id];
                             let context_places: Vec<Place> = inner_func.context.clone();
                             let sig_effects = compute_effects_for_aliasing_signature(
                                 env,
@@ -1487,18 +1568,9 @@ fn apply_effect(
                                     initialized,
                                     effects,
                                     env,
-                                    func,
                                 )?;
                                 for se in sig_effs {
-                                    apply_effect(
-                                        context,
-                                        state,
-                                        se,
-                                        initialized,
-                                        effects,
-                                        env,
-                                        func,
-                                    )?;
+                                    apply_effect(context, state, se, initialized, effects, env)?;
                                 }
                                 return Ok(());
                             }
@@ -1508,9 +1580,10 @@ fn apply_effect(
             }
             if let Some(sig) = signature {
                 // Check known_incompatible (TS line 2351-2370)
-                if let Some(ref incompatible_msg) = sig.known_incompatible {
-                    if env.enable_validations() {
-                        let diagnostic = ErrorCategory::IncompatibleLibrary
+                if let Some(ref incompatible_msg) = sig.known_incompatible
+                    && env.enable_validations()
+                {
+                    let diagnostic = ErrorCategory::IncompatibleLibrary
                             .diagnostic("Use of incompatible library")
                             .with_help(
                                 "This API returns functions which cannot be memoized without leading to stale UI. \
@@ -1521,9 +1594,8 @@ fn apply_effect(
                             .with_labels(
                                 receiver.span.map(|s| s.label(incompatible_msg.clone())),
                             );
-                        // TS throws here, aborting compilation for this function
-                        return Err(diagnostic);
-                    }
+                    // TS throws here, aborting compilation for this function
+                    return Err(diagnostic);
                 }
 
                 if let Some(ref aliasing) = sig.aliasing {
@@ -1539,7 +1611,7 @@ fn apply_effect(
                     )?;
                     if let Some(sig_effs) = sig_effects {
                         for se in sig_effs {
-                            apply_effect(context, state, se, initialized, effects, env, func)?;
+                            apply_effect(context, state, se, initialized, effects, env)?;
                         }
                         return Ok(());
                     }
@@ -1563,7 +1635,7 @@ fn apply_effect(
                     return Err(err_detail);
                 }
                 for le in legacy_effects {
-                    apply_effect(context, state, le, initialized, effects, env, func)?;
+                    apply_effect(context, state, le, initialized, effects, env)?;
                 }
             } else {
                 // No signature: default behavior
@@ -1578,7 +1650,6 @@ fn apply_effect(
                     initialized,
                     effects,
                     env,
-                    func,
                 )?;
 
                 let all_operands = build_apply_operands(receiver, function, args);
@@ -1598,23 +1669,13 @@ fn apply_effect(
                             initialized,
                             effects,
                             env,
-                            func,
                         )?;
                     }
 
                     if *is_spread {
-                        let ty = &env.types
-                            [env.identifiers[operand.identifier.0 as usize].type_.0 as usize];
+                        let ty = &env.types[env.identifiers[operand.identifier].type_];
                         if let Some(mutate_iter) = conditionally_mutate_iterator(operand, ty) {
-                            apply_effect(
-                                context,
-                                state,
-                                mutate_iter,
-                                initialized,
-                                effects,
-                                env,
-                                func,
-                            )?;
+                            apply_effect(context, state, mutate_iter, initialized, effects, env)?;
                         }
                     }
 
@@ -1625,7 +1686,6 @@ fn apply_effect(
                         initialized,
                         effects,
                         env,
-                        func,
                     )?;
 
                     // In TS, `other === arg` compares the Place extracted from
@@ -1646,7 +1706,6 @@ fn apply_effect(
                             initialized,
                             effects,
                             env,
-                            func,
                         )?;
                     }
                 }
@@ -1680,7 +1739,7 @@ fn apply_effect(
             {
                 let abstract_value = state.kind(value.identifier);
 
-                let ident = &env.identifiers[value.identifier.0 as usize];
+                let ident = &env.identifiers[value.identifier];
                 let decl_id = ident.declaration_id;
 
                 if mutation_kind == MutationResult::MutateFrozen
@@ -1698,15 +1757,15 @@ fn apply_effect(
                             "{} is accessed before it is declared, which prevents the earlier access from updating when this value changes over time",
                             variable.as_deref().unwrap_or("This variable")
                         ));
-                    if let Some(ref access) = hoisted_access {
-                        if access.span != value.span {
-                            diagnostic.labels.extend(access.span.map(|s| {
-                                s.label(format!(
-                                    "{} accessed before it is declared",
-                                    variable.as_deref().unwrap_or("variable")
-                                ))
-                            }));
-                        }
+                    if let Some(ref access) = hoisted_access
+                        && access.span != value.span
+                    {
+                        diagnostic.labels.extend(access.span.map(|s| {
+                            s.label(format!(
+                                "{} accessed before it is declared",
+                                variable.as_deref().unwrap_or("variable")
+                            ))
+                        }));
                     }
                     diagnostic.labels.extend(value.span.map(|s| {
                         s.label(format!(
@@ -1721,7 +1780,6 @@ fn apply_effect(
                         initialized,
                         effects,
                         env,
-                        func,
                     )?;
                 } else {
                     let reason_str = get_write_error_reason(&abstract_value);
@@ -1743,7 +1801,7 @@ fn apply_effect(
                     } else {
                         AliasingEffect::MutateGlobal { place: value.clone(), error: diagnostic }
                     };
-                    apply_effect(context, state, error_kind, initialized, effects, env, func)?;
+                    apply_effect(context, state, error_kind, initialized, effects, env)?;
                 }
             }
         }
@@ -1786,8 +1844,7 @@ fn compute_signature_for_instruction(
                         });
                     }
                     ArrayElement::Spread(s) => {
-                        let ty = &env.types
-                            [env.identifiers[s.place.identifier.0 as usize].type_.0 as usize];
+                        let ty = &env.types[env.identifiers[s.place.identifier].type_];
                         if let Some(mutate_iter) = conditionally_mutate_iterator(&s.place, ty) {
                             effects.push(mutate_iter);
                         }
@@ -1881,7 +1938,7 @@ fn compute_signature_for_instruction(
         }
         InstructionValue::PropertyLoad { object, .. }
         | InstructionValue::ComputedLoad { object, .. } => {
-            let ty = &env.types[env.identifiers[lvalue.identifier.0 as usize].type_.0 as usize];
+            let ty = &env.types[env.identifiers[lvalue.identifier].type_];
             if is_primitive_type(ty) {
                 effects.push(AliasingEffect::Create {
                     into: lvalue.clone(),
@@ -1897,10 +1954,9 @@ fn compute_signature_for_instruction(
         }
         InstructionValue::PropertyStore { object, property, value: store_value, .. } => {
             let mutation_reason: Option<MutationReason> = {
-                let obj_ty =
-                    &env.types[env.identifiers[object.identifier.0 as usize].type_.0 as usize];
+                let obj_ty = &env.types[env.identifiers[object.identifier].type_];
                 if let PropertyLiteral::String(prop_name) = property {
-                    if prop_name == "current" && matches!(obj_ty, Type::TypeVar { .. }) {
+                    if prop_name == "current" && matches!(obj_ty, Type::Var { .. }) {
                         Some(MutationReason::AssignCurrentProperty)
                     } else {
                         None
@@ -1930,7 +1986,7 @@ fn compute_signature_for_instruction(
         }
         InstructionValue::FunctionExpression { lowered_func, .. }
         | InstructionValue::ObjectMethod { lowered_func, .. } => {
-            let inner_func = &env.functions[lowered_func.func.0 as usize];
+            let inner_func = &env.functions[lowered_func.func];
             let captures: Vec<Place> = inner_func
                 .context
                 .iter()
@@ -1949,7 +2005,7 @@ fn compute_signature_for_instruction(
                 value: ValueKind::Mutable,
                 reason: ValueReason::Other,
             });
-            let ty = &env.types[env.identifiers[collection.identifier.0 as usize].type_.0 as usize];
+            let ty = &env.types[env.identifiers[collection.identifier].type_];
             if is_builtin_collection_type(ty) {
                 effects.push(AliasingEffect::Capture {
                     from: collection.clone(),
@@ -2001,12 +2057,11 @@ fn compute_signature_for_instruction(
             }
             for prop in props {
                 if let JsxAttribute::Attribute { place: prop_place, .. } = prop {
-                    let prop_ty = &env.types
-                        [env.identifiers[prop_place.identifier.0 as usize].type_.0 as usize];
-                    if let Type::Function { return_type, .. } = prop_ty {
-                        if is_jsx_type(return_type) || is_phi_with_jsx(return_type) {
-                            effects.push(AliasingEffect::Render { place: prop_place.clone() });
-                        }
+                    let prop_ty = &env.types[env.identifiers[prop_place.identifier].type_];
+                    if let Type::Function { return_type, .. } = prop_ty
+                        && (is_jsx_type(return_type) || is_phi_with_jsx(return_type))
+                    {
+                        effects.push(AliasingEffect::Render { place: prop_place.clone() });
                     }
                 }
             }
@@ -2042,8 +2097,7 @@ fn compute_signature_for_instruction(
             for pat_item in each_pattern_items(&dl.pattern) {
                 match pat_item {
                     PatternItem::Place(place) => {
-                        let ty = &env.types
-                            [env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+                        let ty = &env.types[env.identifiers[place.identifier].type_];
                         if is_primitive_type(ty) {
                             effects.push(AliasingEffect::Create {
                                 into: place.clone(),
@@ -2082,7 +2136,7 @@ fn compute_signature_for_instruction(
             effects.push(AliasingEffect::CreateFrom { from: place.clone(), into: lvalue.clone() });
         }
         InstructionValue::DeclareContext { lvalue: dcl, .. } => {
-            let decl_id = env.identifiers[dcl.place.identifier.0 as usize].declaration_id;
+            let decl_id = env.identifiers[dcl.place.identifier].declaration_id;
             let kind = dcl.kind;
             if !context.hoisted_context_declarations.contains_key(&decl_id)
                 || kind == InstructionKind::HoistedConst
@@ -2104,7 +2158,7 @@ fn compute_signature_for_instruction(
             });
         }
         InstructionValue::StoreContext { lvalue: scl, value: sc_value, .. } => {
-            let decl_id = env.identifiers[scl.place.identifier.0 as usize].declaration_id;
+            let decl_id = env.identifiers[scl.place.identifier].declaration_id;
             if scl.kind == InstructionKind::Reassign
                 || context.hoisted_context_declarations.contains_key(&decl_id)
             {
@@ -2281,7 +2335,7 @@ fn compute_effects_for_legacy_signature(
             effects.push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
         }
         Effect::ConditionallyMutateIterator => {
-            let ty = &env.types[env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+            let ty = &env.types[env.identifiers[place.identifier].type_];
             if let Some(mutate_iter) = conditionally_mutate_iterator(place, ty) {
                 effects.push(mutate_iter);
             }
@@ -2389,8 +2443,7 @@ fn are_arguments_immutable_and_non_mutating(
                 // Check if it's a function type with a known signature
                 let is_place = matches!(arg, PlaceOrSpreadOrHole::Place(_));
                 if is_place {
-                    let ty =
-                        &env.types[env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+                    let ty = &env.types[env.identifiers[place.identifier].type_];
                     if let Type::Function { .. } = ty {
                         let fn_shape = env.get_function_signature(ty).ok().flatten();
                         if let Some(fn_sig) = fn_shape {
@@ -2420,14 +2473,14 @@ fn are_arguments_immutable_and_non_mutating(
                 let value_ids = state.values_for(place.identifier);
                 for vid in &value_ids {
                     if let Some(&func_id) = function_values.get(vid) {
-                        let inner_func = &env.functions[func_id.0 as usize];
+                        let inner_func = &env.functions[func_id];
                         let mutates_params = inner_func.params.iter().any(|param| {
                             let param_id = match param {
                                 ParamPattern::Place(p) => p.identifier,
                                 ParamPattern::Spread(s) => s.place.identifier,
                             };
-                            let ident = &env.identifiers[param_id.0 as usize];
-                            ident.mutable_range.end.0 > ident.mutable_range.start.0 + 1
+                            let ident = &env.identifiers[param_id];
+                            ident.mutable_range.end > ident.mutable_range.start + 1
                         });
                         if mutates_params {
                             return false;
@@ -2486,8 +2539,7 @@ fn compute_effects_for_aliasing_signature_config(
                 }
 
                 if matches!(arg, PlaceOrSpreadOrHole::Spread(_)) {
-                    let ty =
-                        &env.types[env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+                    let ty = &env.types[env.identifiers[place.identifier].type_];
                     let mutate_iterator = conditionally_mutate_iterator(place, ty);
                     if mutate_iterator.is_some() {
                         mutable_spreads.insert(place.identifier);
@@ -2498,7 +2550,7 @@ fn compute_effects_for_aliasing_signature_config(
     }
 
     for operand in context {
-        let ident = &env.identifiers[operand.identifier.0 as usize];
+        let ident = &env.identifiers[operand.identifier];
         if let Some(ref name) = ident.name {
             substitutions.insert(format!("@{}", name.value()), vec![operand.clone()]);
         }
@@ -2627,19 +2679,19 @@ fn compute_effects_for_aliasing_signature_config(
                                 apply_args.push(PlaceOrSpreadOrHole::Hole);
                             }
                             ApplyArgConfig::Place(name) => {
-                                if let Some(places) = substitutions.get(name) {
-                                    if let Some(p) = places.first() {
-                                        apply_args.push(PlaceOrSpreadOrHole::Place(p.clone()));
-                                    }
+                                if let Some(places) = substitutions.get(name)
+                                    && let Some(p) = places.first()
+                                {
+                                    apply_args.push(PlaceOrSpreadOrHole::Place(p.clone()));
                                 }
                             }
                             ApplyArgConfig::Spread { place: name, .. } => {
-                                if let Some(places) = substitutions.get(name) {
-                                    if let Some(p) = places.first() {
-                                        apply_args.push(PlaceOrSpreadOrHole::Spread(
-                                            SpreadPattern { place: p.clone() },
-                                        ));
-                                    }
+                                if let Some(places) = substitutions.get(name)
+                                    && let Some(p) = places.first()
+                                {
+                                    apply_args.push(PlaceOrSpreadOrHole::Spread(SpreadPattern {
+                                        place: p.clone(),
+                                    }));
                                 }
                             }
                         }
@@ -2673,7 +2725,7 @@ fn build_signature_from_function_expression(
     env: &mut Environment,
     func_id: FunctionId,
 ) -> AliasingSignature {
-    let inner_func = &env.functions[func_id.0 as usize];
+    let inner_func = &env.functions[func_id];
     let mut params: Vec<IdentifierId> = Vec::new();
     let mut rest: Option<IdentifierId> = None;
     for param in &inner_func.params {
@@ -2692,7 +2744,7 @@ fn build_signature_from_function_expression(
     }
 
     AliasingSignature {
-        receiver: IdentifierId(0),
+        receiver: IdentifierId::from_usize(0),
         params,
         rest,
         returns,
@@ -2738,8 +2790,7 @@ fn compute_effects_for_aliasing_signature(
                 }
 
                 if is_spread {
-                    let ty =
-                        &env.types[env.identifiers[place.identifier.0 as usize].type_.0 as usize];
+                    let ty = &env.types[env.identifiers[place.identifier].type_];
                     let mutate_iterator = conditionally_mutate_iterator(place, ty);
                     if mutate_iterator.is_some() {
                         mutable_spreads.insert(place.identifier);
@@ -2888,19 +2939,19 @@ fn compute_effects_for_aliasing_signature(
                         match arg {
                             PlaceOrSpreadOrHole::Hole => apply_args.push(PlaceOrSpreadOrHole::Hole),
                             PlaceOrSpreadOrHole::Place(p) => {
-                                if let Some(places) = substitutions.get(&p.identifier) {
-                                    if let Some(place) = places.first() {
-                                        apply_args.push(PlaceOrSpreadOrHole::Place(place.clone()));
-                                    }
+                                if let Some(places) = substitutions.get(&p.identifier)
+                                    && let Some(place) = places.first()
+                                {
+                                    apply_args.push(PlaceOrSpreadOrHole::Place(place.clone()));
                                 }
                             }
                             PlaceOrSpreadOrHole::Spread(sp) => {
-                                if let Some(places) = substitutions.get(&sp.place.identifier) {
-                                    if let Some(place) = places.first() {
-                                        apply_args.push(PlaceOrSpreadOrHole::Spread(
-                                            SpreadPattern { place: place.clone() },
-                                        ));
-                                    }
+                                if let Some(places) = substitutions.get(&sp.place.identifier)
+                                    && let Some(place) = places.first()
+                                {
+                                    apply_args.push(PlaceOrSpreadOrHole::Spread(SpreadPattern {
+                                        place: place.clone(),
+                                    }));
                                 }
                             }
                         }
@@ -2991,12 +3042,12 @@ fn get_function_call_signature(
     env: &Environment,
     callee_id: IdentifierId,
 ) -> Result<Option<FunctionSignature>, OxcDiagnostic> {
-    let ty = &env.types[env.identifiers[callee_id.0 as usize].type_.0 as usize];
+    let ty = &env.types[env.identifiers[callee_id].type_];
     Ok(env.get_function_signature(ty)?.cloned())
 }
 
 fn is_ref_or_ref_value_for_id(env: &Environment, id: IdentifierId) -> bool {
-    let ty = &env.types[env.identifiers[id.0 as usize].type_.0 as usize];
+    let ty = &env.types[env.identifiers[id].type_];
     is_ref_or_ref_value(ty)
 }
 
@@ -3033,7 +3084,7 @@ fn format_type_for_print<'t>(ty: &'t Type) -> Cow<'t, str> {
         Type::Poly => Cow::Borrowed(":TPoly"),
         Type::Phi { .. } => Cow::Borrowed(":TPhi"),
         Type::Property { .. } => Cow::Borrowed(":TProperty"),
-        Type::TypeVar { .. } => Cow::Borrowed(""),
+        Type::Var { .. } => Cow::Borrowed(""),
         Type::ObjectMethod => Cow::Borrowed(":TObjectMethod"),
     }
 }
@@ -3069,7 +3120,7 @@ fn build_apply_operands(
 
 fn create_temp_place(env: &mut Environment, span: Option<Span>) -> Place {
     let id = env.next_identifier_id();
-    env.identifiers[id.0 as usize].span = span;
+    env.identifiers[id].span = span;
     Place { identifier: id, effect: Effect::Unknown, reactive: false, span }
 }
 

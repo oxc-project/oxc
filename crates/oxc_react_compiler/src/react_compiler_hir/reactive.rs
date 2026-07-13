@@ -18,8 +18,10 @@ use std::fmt::Result as FmtResult;
 use oxc_str::{Ident, Str};
 
 use crate::react_compiler_hir::{
-    BlockId, EvaluationOrder, InstructionValue, LogicalOperator, ParamPattern, Place, ScopeId, Span,
+    BlockId, EvaluationOrder, InstructionValue, ParamPattern, Place, ScopeId,
 };
+use oxc_ast::ast::LogicalOperator;
+use oxc_span::Span;
 
 // =============================================================================
 // ReactiveFunction
@@ -49,10 +51,9 @@ pub type ReactiveBlock<'a> = Vec<ReactiveStatement<'a>>;
 
 /// TS: ReactiveStatement (discriminated union with 'kind' field)
 #[derive(Debug, Clone)]
-#[allow(clippy::large_enum_variant)]
 pub enum ReactiveStatement<'a> {
     Instruction(ReactiveInstruction<'a>),
-    Terminal(ReactiveTerminalStatement<'a>),
+    Terminal(Box<ReactiveTerminalStatement<'a>>),
     Scope(ReactiveScopeBlock<'a>),
     PrunedScope(PrunedReactiveScopeBlock<'a>),
 }

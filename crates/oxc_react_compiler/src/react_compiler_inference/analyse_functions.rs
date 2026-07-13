@@ -54,7 +54,7 @@ where
     let mut inner_func_ids: Vec<FunctionId> = Vec::new();
     for (_block_id, block) in &func.body.blocks {
         for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
@@ -68,14 +68,13 @@ where
     // Process each inner function
     for func_id in inner_func_ids {
         // Take the inner function out of the arena to avoid borrow conflicts
-        let mut inner_func =
-            replace(&mut env.functions[func_id.0 as usize], placeholder_function());
+        let mut inner_func = replace(&mut env.functions[func_id], placeholder_function());
 
         lower_with_mutation_aliasing(&mut inner_func, env, debug_logger)?;
 
         // If an invariant error was recorded, put the function back and stop processing
         if env.has_invariant_errors() {
-            env.functions[func_id.0 as usize] = inner_func;
+            env.functions[func_id] = inner_func;
             return Ok(());
         }
 
@@ -86,14 +85,14 @@ where
         // are stored in an arena, so we reset both the identifier's range
         // and clear its scope.
         for operand in &inner_func.context {
-            let new_range = env.new_mutable_range(EvaluationOrder(0), EvaluationOrder(0));
-            let ident = &mut env.identifiers[operand.identifier.0 as usize];
+            let new_range = env.new_mutable_range(EvaluationOrder::UNSET, EvaluationOrder::UNSET);
+            let ident = &mut env.identifiers[operand.identifier];
             ident.mutable_range = new_range;
             ident.scope = None;
         }
 
         // Put the function back
-        env.functions[func_id.0 as usize] = inner_func;
+        env.functions[func_id] = inner_func;
     }
 
     Ok(())
@@ -201,13 +200,13 @@ fn placeholder_function<'a>() -> HirFunction<'a> {
         fn_type: ReactFunctionType::Other,
         params: Vec::new(),
         returns: Place {
-            identifier: IdentifierId(0),
+            identifier: IdentifierId::from_usize(0),
             effect: Effect::Unknown,
             reactive: false,
             span: None,
         },
         context: Vec::new(),
-        body: HIR { entry: BlockId(0), blocks: FxIndexMap::default() },
+        body: HIR { entry: BlockId::ENTRY, blocks: FxIndexMap::default() },
         instructions: Vec::new(),
         generator: false,
         is_async: false,

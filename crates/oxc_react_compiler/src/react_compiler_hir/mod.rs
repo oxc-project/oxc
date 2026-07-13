@@ -11,10 +11,11 @@ pub mod visitors;
 
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::FxIndexSet;
-use oxc_ast::ast as oxc;
+use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
-pub use oxc_span::Span;
+use oxc_index::define_nonmax_u32_index_type;
 use oxc_str::{Ident, Str};
+use oxc_syntax::number::ToJsString;
 pub use raw::RawTypeCategory;
 pub use reactive::*;
 
@@ -25,35 +26,62 @@ pub const GENERATED_SOURCE: Option<Span> = None;
 // ID newtypes
 // =============================================================================
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct BlockId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct BlockId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct IdentifierId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct IdentifierId;
+}
 
-/// Index into the flat instruction table on HirFunction.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct InstructionId(pub u32);
+define_nonmax_u32_index_type! {
+    /// Index into the flat instruction table on HirFunction.
+    pub struct InstructionId;
+}
 
-/// Evaluation order assigned to instructions and terminals during numbering.
-/// This was previously called InstructionId in the TypeScript compiler.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EvaluationOrder(pub u32);
+define_nonmax_u32_index_type! {
+    /// Evaluation order assigned to instructions and terminals during numbering.
+    /// This was previously called InstructionId in the TypeScript compiler.
+    pub struct EvaluationOrder;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct DeclarationId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct DeclarationId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ScopeId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct ScopeId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct TypeId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct TypeId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct FunctionId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct FunctionId;
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct MutableRangeId(pub u32);
+define_nonmax_u32_index_type! {
+    pub struct MutableRangeId;
+}
+
+impl BlockId {
+    /// The entry block of a function's CFG. Blocks are numbered from 0, so the first
+    /// block allocated is always the entry.
+    pub const ENTRY: Self = Self::from_usize(0);
+
+    /// Placeholder id for the never-read block that the final `terminate()` installs as
+    /// `current`. Uses the largest representable index so it can never alias a real block
+    /// (blocks are numbered from 0).
+    pub const PLACEHOLDER: Self = Self::from_usize(Self::MAX_INDEX);
+}
+
+impl EvaluationOrder {
+    /// Placeholder order for instructions, terminals, and ranges before
+    /// `mark_instruction_ids` assigns the real, 1-based orders. `0` is never a valid
+    /// assigned order.
+    pub const UNSET: Self = Self::from_usize(0);
+}
 
 // =============================================================================
 // FloatValue wrapper
@@ -102,50 +130,7 @@ impl std::hash::Hash for FloatValue {
 
 impl std::fmt::Display for FloatValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format_js_number(self.value()))
-    }
-}
-
-/// Format an f64 the way JavaScript's `Number.prototype.toString()` does.
-///
-/// Key differences from Rust's default `Display`:
-/// - Uses scientific notation for |x| >= 1e21 (e.g. `1e+21`, `2.18739127891275e+22`)
-/// - Uses scientific notation for 0 < |x| < 1e-6 (e.g. `1e-7`, `1.5e-8`)
-/// - Uses minimal significant digits that round-trip to the same f64
-/// - Formats -0 as "0"
-pub fn format_js_number(n: f64) -> String {
-    if n.is_nan() {
-        return "NaN".to_string();
-    }
-    if n.is_infinite() {
-        return if n > 0.0 { "Infinity".to_string() } else { "-Infinity".to_string() };
-    }
-    if n == 0.0 {
-        return "0".to_string();
-    }
-
-    let abs = n.abs();
-    let sign = if n < 0.0 { "-" } else { "" };
-
-    if abs >= 1e21 || (abs > 0.0 && abs < 1e-6) {
-        // Use scientific notation matching JS format: coefficient + "e+" or "e-" + exponent
-        // Rust's {:e} uses "e" (lowercase) like JS, but formats as e.g. "1.5e21" not "1.5e+21"
-        let formatted = format!("{:e}", abs);
-        // Split into coefficient and exponent parts
-        let (coeff, exp_str) = formatted.split_once('e').unwrap();
-        let exp: i32 = exp_str.parse().unwrap();
-        // JS uses e+N for positive exponents, e-N for negative
-        if exp >= 0 {
-            format!("{}{}e+{}", sign, coeff, exp)
-        } else {
-            format!("{}{}e-{}", sign, coeff, exp.unsigned_abs())
-        }
-    } else if abs.fract() == 0.0 && abs < (i64::MAX as f64) {
-        // Integer that fits in i64 — format without decimal point
-        format!("{}{}", sign, abs as i64)
-    } else {
-        // Regular float: Rust's default Display gives us the right digits
-        format!("{}", n)
+        write!(f, "{}", self.value().to_js_string())
     }
 }
 
@@ -487,23 +472,6 @@ pub struct Case {
     pub block: BlockId,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum LogicalOperator {
-    And,
-    Or,
-    NullishCoalescing,
-}
-
-impl std::fmt::Display for LogicalOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            LogicalOperator::And => write!(f, "&&"),
-            LogicalOperator::Or => write!(f, "||"),
-            LogicalOperator::NullishCoalescing => write!(f, "??"),
-        }
-    }
-}
-
 // =============================================================================
 // Instruction types
 // =============================================================================
@@ -774,9 +742,9 @@ pub enum InstructionValue<'a> {
 #[derive(Debug, Clone, Copy)]
 pub enum TypeCast<'a> {
     /// `expr as T` (`TSAsExpression`) and `<T>expr` (`TSTypeAssertion`)
-    As(&'a oxc::TSType<'a>),
+    As(&'a TSType<'a>),
     /// `expr satisfies T` (`TSSatisfiesExpression`)
-    Satisfies(&'a oxc::TSType<'a>),
+    Satisfies(&'a TSType<'a>),
 }
 
 impl<'a> InstructionValue<'a> {
@@ -838,62 +806,7 @@ pub enum PrimitiveValue<'a> {
     Undefined,
     Boolean(bool),
     Number(FloatValue),
-    String(crate::react_compiler_utils::JsString<'a>),
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BinaryOperator {
-    Equal,
-    NotEqual,
-    StrictEqual,
-    StrictNotEqual,
-    LessThan,
-    LessEqual,
-    GreaterThan,
-    GreaterEqual,
-    ShiftLeft,
-    ShiftRight,
-    UnsignedShiftRight,
-    Add,
-    Subtract,
-    Multiply,
-    Divide,
-    Modulo,
-    Exponent,
-    BitwiseOr,
-    BitwiseXor,
-    BitwiseAnd,
-    In,
-    InstanceOf,
-}
-
-impl std::fmt::Display for BinaryOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            BinaryOperator::Equal => write!(f, "=="),
-            BinaryOperator::NotEqual => write!(f, "!="),
-            BinaryOperator::StrictEqual => write!(f, "==="),
-            BinaryOperator::StrictNotEqual => write!(f, "!=="),
-            BinaryOperator::LessThan => write!(f, "<"),
-            BinaryOperator::LessEqual => write!(f, "<="),
-            BinaryOperator::GreaterThan => write!(f, ">"),
-            BinaryOperator::GreaterEqual => write!(f, ">="),
-            BinaryOperator::ShiftLeft => write!(f, "<<"),
-            BinaryOperator::ShiftRight => write!(f, ">>"),
-            BinaryOperator::UnsignedShiftRight => write!(f, ">>>"),
-            BinaryOperator::Add => write!(f, "+"),
-            BinaryOperator::Subtract => write!(f, "-"),
-            BinaryOperator::Multiply => write!(f, "*"),
-            BinaryOperator::Divide => write!(f, "/"),
-            BinaryOperator::Modulo => write!(f, "%"),
-            BinaryOperator::Exponent => write!(f, "**"),
-            BinaryOperator::BitwiseOr => write!(f, "|"),
-            BinaryOperator::BitwiseXor => write!(f, "^"),
-            BinaryOperator::BitwiseAnd => write!(f, "&"),
-            BinaryOperator::In => write!(f, "in"),
-            BinaryOperator::InstanceOf => write!(f, "instanceof"),
-        }
-    }
+    String(Str<'a>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -915,21 +828,6 @@ impl std::fmt::Display for UnaryOperator {
             UnaryOperator::BitwiseNot => write!(f, "~"),
             UnaryOperator::TypeOf => write!(f, "typeof"),
             UnaryOperator::Void => write!(f, "void"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum UpdateOperator {
-    Increment,
-    Decrement,
-}
-
-impl std::fmt::Display for UpdateOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            UpdateOperator::Increment => write!(f, "++"),
-            UpdateOperator::Decrement => write!(f, "--"),
         }
     }
 }
@@ -1248,8 +1146,7 @@ pub enum Type<'a> {
     Object {
         shape_id: Option<Ident<'a>>,
     },
-    #[allow(clippy::enum_variant_names)]
-    TypeVar {
+    Var {
         id: TypeId,
     },
     Poly,
@@ -1339,7 +1236,6 @@ pub enum MutationReason {
 /// Describes the aliasing/mutation/data-flow effects of an instruction or terminal.
 /// Ported from TS `AliasingEffect` in `AliasingEffects.ts`.
 #[derive(Debug, Clone)]
-#[allow(clippy::large_enum_variant)]
 pub enum AliasingEffect {
     /// Marks the given value and its direct aliases as frozen.
     Freeze { value: Place, reason: ValueReason },

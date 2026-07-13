@@ -101,7 +101,7 @@ fn build_reverse_graph(
     next_block_id_counter: u32,
     include_throws_as_exit_node: bool,
 ) -> Graph {
-    let exit_id = BlockId(next_block_id_counter);
+    let exit_id = BlockId::from_usize(next_block_id_counter as usize);
 
     // Build initial nodes with reversed edges
     let mut raw_nodes: FxHashMap<BlockId, Node> = FxHashMap::default();

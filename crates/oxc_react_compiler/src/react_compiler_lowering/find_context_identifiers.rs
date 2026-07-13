@@ -28,8 +28,8 @@
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use oxc_ast::ast as oxc;
 use oxc_ast::ast::AssignmentTargetMaybeDefault;
+use oxc_ast::ast::*;
 use oxc_ast::match_assignment_target;
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -119,11 +119,10 @@ impl<'a> ContextIdentifierVisitor<'a> {
         if let Some(symbol_id) = self.scope.find_binding(current_scope, name) {
             let info = self.binding_info.entry(symbol_id).or_default();
             info.reassigned = true;
-            if let Some(&fn_scope) = self.function_stack.last() {
-                if is_captured_by_function(self.scope, self.scope.symbol_scope(symbol_id), fn_scope)
-                {
-                    info.reassigned_by_inner_fn = true;
-                }
+            if let Some(&fn_scope) = self.function_stack.last()
+                && is_captured_by_function(self.scope, self.scope.symbol_scope(symbol_id), fn_scope)
+            {
+                info.reassigned_by_inner_fn = true;
             }
         }
     }
@@ -141,7 +140,7 @@ impl<'a> ContextIdentifierVisitor<'a> {
 impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
     // ---- function scopes (push BOTH the generic scope and the function stack) ----
 
-    fn visit_function(&mut self, it: &oxc::Function<'a>, _flags: ScopeFlags) {
+    fn visit_function(&mut self, it: &Function<'a>, _flags: ScopeFlags) {
         let scope_pushed = self.enter_scope(it.scope_id.get());
         let fn_pushed = self.push_function_scope(it.scope_id.get());
         // The original Babel walker never visited the function NAME identifier
@@ -163,7 +162,7 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
         self.exit_scope(scope_pushed);
     }
 
-    fn visit_arrow_function_expression(&mut self, it: &oxc::ArrowFunctionExpression<'a>) {
+    fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
         let scope_pushed = self.enter_scope(it.scope_id.get());
         let fn_pushed = self.push_function_scope(it.scope_id.get());
         oxc_ast_visit::walk::walk_arrow_function_expression(self, it);
@@ -173,43 +172,43 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
 
     // ---- non-function scope-creating nodes (push only the generic scope) ----
 
-    fn visit_block_statement(&mut self, it: &oxc::BlockStatement<'a>) {
+    fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
         oxc_ast_visit::walk::walk_block_statement(self, it);
         self.exit_scope(pushed);
     }
 
-    fn visit_for_statement(&mut self, it: &oxc::ForStatement<'a>) {
+    fn visit_for_statement(&mut self, it: &ForStatement<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
         oxc_ast_visit::walk::walk_for_statement(self, it);
         self.exit_scope(pushed);
     }
 
-    fn visit_for_in_statement(&mut self, it: &oxc::ForInStatement<'a>) {
+    fn visit_for_in_statement(&mut self, it: &ForInStatement<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
         oxc_ast_visit::walk::walk_for_in_statement(self, it);
         self.exit_scope(pushed);
     }
 
-    fn visit_for_of_statement(&mut self, it: &oxc::ForOfStatement<'a>) {
+    fn visit_for_of_statement(&mut self, it: &ForOfStatement<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
         oxc_ast_visit::walk::walk_for_of_statement(self, it);
         self.exit_scope(pushed);
     }
 
-    fn visit_switch_statement(&mut self, it: &oxc::SwitchStatement<'a>) {
+    fn visit_switch_statement(&mut self, it: &SwitchStatement<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
         oxc_ast_visit::walk::walk_switch_statement(self, it);
         self.exit_scope(pushed);
     }
 
-    fn visit_catch_clause(&mut self, it: &oxc::CatchClause<'a>) {
+    fn visit_catch_clause(&mut self, it: &CatchClause<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
         oxc_ast_visit::walk::walk_catch_clause(self, it);
         self.exit_scope(pushed);
     }
 
-    fn visit_static_block(&mut self, it: &oxc::StaticBlock<'a>) {
+    fn visit_static_block(&mut self, it: &StaticBlock<'a>) {
         let pushed = self.enter_scope(it.scope_id.get());
         oxc_ast_visit::walk::walk_static_block(self, it);
         self.exit_scope(pushed);
@@ -217,24 +216,24 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
 
     // ---- identifier references (the captured-reference check) ----
 
-    fn visit_identifier_reference(&mut self, it: &oxc::IdentifierReference<'a>) {
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
         self.check_captured_symbol(self.scope.resolve_reference(it));
     }
 
-    fn visit_binding_identifier(&mut self, it: &oxc::BindingIdentifier<'a>) {
+    fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
         // Mirrors the original `enter_identifier`, which fired on pattern
         // binding identifiers too. Only the declaration site of a captured
         // binding resolves; everything else is a no-op.
         self.check_captured_symbol(self.scope.resolve_binding_identifier(it));
     }
 
-    fn visit_jsx_identifier(&mut self, _it: &oxc::JSXIdentifier<'a>) {
+    fn visit_jsx_identifier(&mut self, _it: &JSXIdentifier<'a>) {
         // JSXIdentifiers (lowercase tag names, member-expression parts) carry no
         // reference and never resolved to a binding in the old position map, so
         // this is a no-op.
     }
 
-    fn visit_jsx_attribute(&mut self, it: &oxc::JSXAttribute<'a>) {
+    fn visit_jsx_attribute(&mut self, it: &JSXAttribute<'a>) {
         // The original `AstWalker.walk_jsx_element` walked only attribute VALUES;
         // the attribute NAME was never visited. oxc's `walk_jsx_attribute` would
         // otherwise fire `visit_jsx_identifier` on the name. Visit only the value.
@@ -243,7 +242,7 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
         }
     }
 
-    fn visit_jsx_namespaced_name(&mut self, _it: &oxc::JSXNamespacedName<'a>) {
+    fn visit_jsx_namespaced_name(&mut self, _it: &JSXNamespacedName<'a>) {
         // The original explicitly skipped JSXNamespacedName (both as an element
         // name and as an attribute name), never visiting its namespace/name
         // identifiers. oxc's `walk_jsx_namespaced_name` would visit both.
@@ -251,7 +250,7 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
 
     // ---- reassignment tracking ----
 
-    fn visit_assignment_expression(&mut self, it: &oxc::AssignmentExpression<'a>) {
+    fn visit_assignment_expression(&mut self, it: &AssignmentExpression<'a>) {
         let current_scope = self.current_scope();
         if self.error.is_none() {
             self.walk_assignment_target_for_reassignment(&it.left, current_scope);
@@ -259,8 +258,8 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
         oxc_ast_visit::walk::walk_assignment_expression(self, it);
     }
 
-    fn visit_update_expression(&mut self, it: &oxc::UpdateExpression<'a>) {
-        if let oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) = &it.argument {
+    fn visit_update_expression(&mut self, it: &UpdateExpression<'a>) {
+        if let SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) = &it.argument {
             let current_scope = self.current_scope();
             self.handle_reassignment_identifier(&ident.name, current_scope);
         }
@@ -269,12 +268,12 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
 
     // ---- positions deliberately NOT visited, matching the original walker ----
 
-    fn visit_static_member_expression(&mut self, it: &oxc::StaticMemberExpression<'a>) {
+    fn visit_static_member_expression(&mut self, it: &StaticMemberExpression<'a>) {
         // Non-computed member property names (`a.b` → `b`) were never visited.
         self.visit_expression(&it.object);
     }
 
-    fn visit_object_property(&mut self, it: &oxc::ObjectProperty<'a>) {
+    fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
         // Non-computed object keys were never visited.
         if it.computed {
             self.visit_property_key(&it.key);
@@ -282,7 +281,7 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
         self.visit_expression(&it.value);
     }
 
-    fn visit_class(&mut self, _it: &oxc::Class<'a>) {
+    fn visit_class(&mut self, _it: &Class<'a>) {
         // The original walker did not recurse into a class's `super_class`
         // (extends) clause nor its body members; only the type-bearing parts
         // were walked, and those carried no `enter_identifier` calls. So the
@@ -291,25 +290,21 @@ impl<'a> Visit<'a> for ContextIdentifierVisitor<'a> {
 
     // ---- skip TS type subtrees (the original walked them as opaque RawNodes) ----
 
-    fn visit_ts_type(&mut self, _it: &oxc::TSType<'a>) {}
+    fn visit_ts_type(&mut self, _it: &TSType<'a>) {}
 
-    fn visit_ts_type_annotation(&mut self, _it: &oxc::TSTypeAnnotation<'a>) {}
+    fn visit_ts_type_annotation(&mut self, _it: &TSTypeAnnotation<'a>) {}
 
-    fn visit_ts_type_parameter_instantiation(
-        &mut self,
-        _it: &oxc::TSTypeParameterInstantiation<'a>,
-    ) {
-    }
+    fn visit_ts_type_parameter_instantiation(&mut self, _it: &TSTypeParameterInstantiation<'a>) {}
 
-    fn visit_ts_type_parameter_declaration(&mut self, _it: &oxc::TSTypeParameterDeclaration<'a>) {}
+    fn visit_ts_type_parameter_declaration(&mut self, _it: &TSTypeParameterDeclaration<'a>) {}
 
-    fn visit_ts_type_alias_declaration(&mut self, _it: &oxc::TSTypeAliasDeclaration<'a>) {}
+    fn visit_ts_type_alias_declaration(&mut self, _it: &TSTypeAliasDeclaration<'a>) {}
 
-    fn visit_ts_interface_declaration(&mut self, _it: &oxc::TSInterfaceDeclaration<'a>) {}
+    fn visit_ts_interface_declaration(&mut self, _it: &TSInterfaceDeclaration<'a>) {}
 
-    fn visit_ts_enum_declaration(&mut self, _it: &oxc::TSEnumDeclaration<'a>) {}
+    fn visit_ts_enum_declaration(&mut self, _it: &TSEnumDeclaration<'a>) {}
 
-    fn visit_ts_module_declaration(&mut self, _it: &oxc::TSModuleDeclaration<'a>) {}
+    fn visit_ts_module_declaration(&mut self, _it: &TSModuleDeclaration<'a>) {}
 }
 
 impl<'a> ContextIdentifierVisitor<'a> {
@@ -317,14 +312,14 @@ impl<'a> ContextIdentifierVisitor<'a> {
     /// identifiers, mirroring the original `walk_lval_for_reassignment`.
     fn walk_assignment_target_for_reassignment(
         &mut self,
-        target: &oxc::AssignmentTarget<'a>,
+        target: &AssignmentTarget<'a>,
         current_scope: ScopeId,
     ) {
         match target {
-            oxc::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+            AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 self.handle_reassignment_identifier(&ident.name, current_scope);
             }
-            oxc::AssignmentTarget::ArrayAssignmentTarget(pat) => {
+            AssignmentTarget::ArrayAssignmentTarget(pat) => {
                 for element in pat.elements.iter().flatten() {
                     self.walk_maybe_default_for_reassignment(element, current_scope);
                 }
@@ -332,13 +327,13 @@ impl<'a> ContextIdentifierVisitor<'a> {
                     self.walk_assignment_target_for_reassignment(&rest.target, current_scope);
                 }
             }
-            oxc::AssignmentTarget::ObjectAssignmentTarget(pat) => {
+            AssignmentTarget::ObjectAssignmentTarget(pat) => {
                 for prop in &pat.properties {
                     match prop {
-                        oxc::AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(p) => {
+                        AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(p) => {
                             self.handle_reassignment_identifier(&p.binding.name, current_scope);
                         }
-                        oxc::AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
+                        AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
                             self.walk_maybe_default_for_reassignment(&p.binding, current_scope);
                         }
                     }
@@ -349,20 +344,20 @@ impl<'a> ContextIdentifierVisitor<'a> {
             }
             // Member expressions are interior mutability, not a variable
             // reassignment — no-op.
-            oxc::AssignmentTarget::StaticMemberExpression(_)
-            | oxc::AssignmentTarget::ComputedMemberExpression(_)
-            | oxc::AssignmentTarget::PrivateFieldExpression(_) => {}
+            AssignmentTarget::StaticMemberExpression(_)
+            | AssignmentTarget::ComputedMemberExpression(_)
+            | AssignmentTarget::PrivateFieldExpression(_) => {}
             // Unsupported TS assignment-target wrappers throw a TS-faithful Todo.
-            oxc::AssignmentTarget::TSAsExpression(node) => {
+            AssignmentTarget::TSAsExpression(node) => {
                 self.record_unsupported_lval("TSAsExpression", node.span);
             }
-            oxc::AssignmentTarget::TSSatisfiesExpression(node) => {
+            AssignmentTarget::TSSatisfiesExpression(node) => {
                 self.record_unsupported_lval("TSSatisfiesExpression", node.span);
             }
-            oxc::AssignmentTarget::TSNonNullExpression(node) => {
+            AssignmentTarget::TSNonNullExpression(node) => {
                 self.record_unsupported_lval("TSNonNullExpression", node.span);
             }
-            oxc::AssignmentTarget::TSTypeAssertion(node) => {
+            AssignmentTarget::TSTypeAssertion(node) => {
                 self.record_unsupported_lval("TSTypeAssertion", node.span);
             }
         }
@@ -370,11 +365,11 @@ impl<'a> ContextIdentifierVisitor<'a> {
 
     fn walk_maybe_default_for_reassignment(
         &mut self,
-        target: &oxc::AssignmentTargetMaybeDefault<'a>,
+        target: &AssignmentTargetMaybeDefault<'a>,
         current_scope: ScopeId,
     ) {
         match target {
-            oxc::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(node) => {
+            AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(node) => {
                 self.walk_assignment_target_for_reassignment(&node.binding, current_scope);
             }
             inner @ match_assignment_target!(AssignmentTargetMaybeDefault) => {
@@ -452,8 +447,7 @@ pub fn find_context_identifiers(
         FunctionNode::Arrow(arrow) => {
             visitor.visit_formal_parameters(&arrow.params);
             if arrow.expression {
-                if let Some(oxc::Statement::ExpressionStatement(es)) = arrow.body.statements.first()
-                {
+                if let Some(Statement::ExpressionStatement(es)) = arrow.body.statements.first() {
                     visitor.visit_expression(&es.expression);
                 } else {
                     visitor.visit_function_body(&arrow.body);

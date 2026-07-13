@@ -242,7 +242,7 @@ pico-args = "0.5.0" # Minimal argument parser
 prettyplease = "0.2.37" # Rust code formatting
 project-root = "0.2.2" # Project root detection
 quickcheck = "1.1.0" # Property-based testing
-oxc-css-parser = "0.0.6" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `template_placeholder` typed placeholders for css-in-js + valid-syntax coverage fixes (see crates/oxc_formatter_css/AGENTS.md))
+oxc-css-parser = "0.0.7" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `template_placeholder` typed placeholders for css-in-js + valid-syntax coverage fixes (see crates/oxc_formatter_css/AGENTS.md))
 rand = "0.10.2" # Random number generation
 rayon = "1.12.0" # Data parallelism
 ropey = "1.6.1" # Rope text structure
@@ -268,7 +268,7 @@ windows-sys = { version = "0.61.2" } # Windows API bindings
 editorconfig-parser = "0.0.4"
 natord = "1.0.9"
 oxfmt = { path = "apps/oxfmt" }
-sort-package-json = "0.0.13"
+sort-package-json = "0.0.14"
 oxc-toml = "0.14.5"
 unicode-width = "0.2"
 website_common = { path = "tasks/website_common" }

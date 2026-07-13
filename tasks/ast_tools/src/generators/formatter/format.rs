@@ -104,7 +104,7 @@ impl Generator for FormatterFormatGenerator {
                 formatter::{Format, JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
-                utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
+                utils::{suppressed::FormatSuppressedNode, typecast::{format_type_cast_comment_node, format_leading_comments_and_open_paren}},
                 print::{FormatWrite #(#options)*},
             };
 
@@ -130,7 +130,12 @@ fn generate_struct_implementation(
     let do_not_print_leading_comment = do_not_print_comment
         || AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST.contains(&struct_name);
 
-    let leading_comments = (!do_not_print_leading_comment).then(|| {
+    let needs_parentheses = parenthesis_type_ids.contains(&struct_def.id);
+
+    // For nodes that may get formatter-added parentheses,
+    // leading comments are printed by the parentheses block below (ordering depends on the comments),
+    // not as a standalone step.
+    let leading_comments = (!do_not_print_leading_comment && !needs_parentheses).then(|| {
         quote! {
             self.format_leading_comments(f);
         }
@@ -141,13 +146,21 @@ fn generate_struct_implementation(
         }
     });
 
-    let needs_parentheses = parenthesis_type_ids.contains(&struct_def.id);
-
     let needs_parentheses_before = if needs_parentheses {
-        quote! {
-            let needs_parentheses = self.needs_parentheses(f);
-            if needs_parentheses {
-                "(".fmt(f);
+        if do_not_print_leading_comment {
+            quote! {
+                let needs_parentheses = self.needs_parentheses(f);
+                if needs_parentheses {
+                    "(".fmt(f);
+                }
+            }
+        } else {
+            // A leading type cast comment must stay adjacent to the `(` of its cast target inside this node;
+            // the helper prints the comments inside the added parentheses in that case,
+            // or the cast would rebind to them.
+            quote! {
+                let needs_parentheses = self.needs_parentheses(f);
+                format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
             }
         }
     } else {
@@ -216,7 +229,7 @@ fn generate_struct_implementation(
             }
         };
 
-        let type_cast_comment_formatting = parenthesis_type_ids.contains(&struct_def.id).then(|| {
+        let type_cast_comment_formatting = needs_parentheses.then(|| {
             let is_object_or_array_argument =
                 if matches!(struct_def.name.as_str(), "ObjectExpression" | "ArrayExpression") {
                     quote! {
@@ -239,7 +252,7 @@ fn generate_struct_implementation(
             }
         });
 
-        if needs_parentheses_before.is_empty() && trailing_comments.is_none() {
+        if !needs_parentheses && trailing_comments.is_none() {
             quote! {
                 #suppressed_check
                 #type_cast_comment_formatting

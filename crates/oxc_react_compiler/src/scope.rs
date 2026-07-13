@@ -151,12 +151,12 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             // ObjectMethod extent (which starts at the property, not the function).
             if let AstKind::Function(_) = node.kind() {
                 let parent = nodes.parent_node(node.id());
-                if let AstKind::ObjectProperty(prop) = parent.kind() {
-                    if is_object_method_property(prop) {
-                        let prop_start = parent.kind().span().start;
-                        if prop_start != span.start {
-                            resolver.function_scope_ranges.push((prop_start, span.end));
-                        }
+                if let AstKind::ObjectProperty(prop) = parent.kind()
+                    && is_object_method_property(prop)
+                {
+                    let prop_start = parent.kind().span().start;
+                    if prop_start != span.start {
+                        resolver.function_scope_ranges.push((prop_start, span.end));
                     }
                 }
             }
@@ -497,10 +497,10 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         let node = self.nodes.get_node(node_id);
         if let AstKind::Function(_) = node.kind() {
             let parent = self.nodes.parent_node(node_id);
-            if let AstKind::ObjectProperty(prop) = parent.kind() {
-                if is_object_method_property(prop) {
-                    return parent.id();
-                }
+            if let AstKind::ObjectProperty(prop) = parent.kind()
+                && is_object_method_property(prop)
+            {
+                return parent.id();
             }
         }
         node_id
@@ -555,11 +555,11 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
                 if descendants.contains(&raw) {
                     continue;
                 }
-                if let Some(parent) = scoping.scope_parent_id(scope_id) {
-                    if descendants.contains(&(parent.index() as u32)) {
-                        descendants.insert(raw);
-                        changed = true;
-                    }
+                if let Some(parent) = scoping.scope_parent_id(scope_id)
+                    && descendants.contains(&(parent.index() as u32))
+                {
+                    descendants.insert(raw);
+                    changed = true;
                 }
             }
         }

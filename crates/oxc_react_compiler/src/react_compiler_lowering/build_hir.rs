@@ -6,7 +6,7 @@ use rustc_hash::FxHashSet;
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::*;
-use crate::react_compiler_utils::{FxIndexMap, FxIndexSet, IdentIndexMap, JsString};
+use crate::react_compiler_utils::{FxIndexMap, FxIndexSet, IdentIndexMap};
 use crate::scope::BindingKind as AstBindingKind;
 use crate::scope::DeclKind;
 use crate::scope::ScopeId;
@@ -16,8 +16,9 @@ use crate::scope::SymbolId;
 
 use oxc_allocator::CloneIn;
 use oxc_ast::ast as oxc;
+use oxc_ast::ast::BinaryOperator;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, Str, format_ident};
 
 use crate::react_compiler_lowering::FunctionNode;
@@ -71,9 +72,9 @@ fn build_temporary_place(builder: &mut HirBuilder<'_, '_>, span: Option<Span>) -
 /// Corresponds to TS `promoteTemporary(identifier)`.
 fn promote_temporary(builder: &mut HirBuilder<'_, '_>, identifier_id: IdentifierId) {
     let env = builder.environment_mut();
-    let decl_id = env.identifiers[identifier_id.0 as usize].declaration_id;
-    env.identifiers[identifier_id.0 as usize].name =
-        Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.0)));
+    let decl_id = env.identifiers[identifier_id].declaration_id;
+    env.identifiers[identifier_id].name =
+        Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.index())));
 }
 
 fn lower_value_to_temporary<'a>(
@@ -82,7 +83,7 @@ fn lower_value_to_temporary<'a>(
 ) -> Result<Place, OxcDiagnostic> {
     // Optimization: if loading an unnamed temporary, skip creating a new instruction
     if let InstructionValue::LoadLocal { ref place, .. } = value {
-        let ident = &builder.environment().identifiers[place.identifier.0 as usize];
+        let ident = &builder.environment().identifiers[place.identifier];
         if ident.name.is_none() {
             return Ok(place.clone());
         }
@@ -90,7 +91,7 @@ fn lower_value_to_temporary<'a>(
     let span = value.span().cloned();
     let place = build_temporary_place(builder, span);
     builder.push(Instruction {
-        id: EvaluationOrder(0),
+        id: EvaluationOrder::UNSET,
         lvalue: place.clone(),
         value,
         span,
@@ -354,12 +355,12 @@ fn lower_block_statement_inner<'a>(
             // declaration statement, the declaration site itself counts as a
             // reference (Babel's binding references include the declaration).
             let decl_counts_as_ref = matches!(kind, AstBindingKind::Hoisted) && !is_function_decl;
-            if decl_counts_as_ref {
-                if let Some(decl_span) = builder.identifier_spans().declaration_span(*binding_id) {
-                    if decl_span.start >= stmt_start && decl_span.start < stmt_end {
-                        refs_in_stmt.push(decl_span);
-                    }
-                }
+            if decl_counts_as_ref
+                && let Some(decl_span) = builder.identifier_spans().declaration_span(*binding_id)
+                && decl_span.start >= stmt_start
+                && decl_span.start < stmt_end
+            {
+                refs_in_stmt.push(decl_span);
             }
 
             if refs_in_stmt.is_empty() {
@@ -479,10 +480,10 @@ fn lower_block_statement_inner<'a>(
         // This must cover all statement types that can introduce bindings.
         match body_stmt {
             oxc::Statement::FunctionDeclaration(func) => {
-                if let Some(id) = &func.id {
-                    if let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str()) {
-                        declared.insert(symbol_id);
-                    }
+                if let Some(id) = &func.id
+                    && let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str())
+                {
+                    declared.insert(symbol_id);
                 }
             }
             oxc::Statement::VariableDeclaration(var_decl) => {
@@ -491,10 +492,10 @@ fn lower_block_statement_inner<'a>(
                 }
             }
             oxc::Statement::ClassDeclaration(cls) => {
-                if let Some(id) = &cls.id {
-                    if let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str()) {
-                        declared.insert(symbol_id);
-                    }
+                if let Some(id) = &cls.id
+                    && let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str())
+                {
+                    declared.insert(symbol_id);
                 }
             }
             _ => {
@@ -663,21 +664,17 @@ fn lower_inner<'a>(
                 param_span,
                 builder.scope().resolve_binding_identifier(ident),
             )?;
-            if !matches!(binding, VariableBinding::Identifier { .. }) {
-                if let Some(symbol_id) = builder
+            if !matches!(binding, VariableBinding::Identifier { .. })
+                && let Some(symbol_id) = builder
                     .scope()
                     .find_binding_in_descendants(ident.name.as_str(), builder.function_scope())
-                {
-                    let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
-                        &builder.scope().binding_kind(symbol_id),
-                    );
-                    let identifier = builder.resolve_binding_with_span(
-                        ident.name,
-                        symbol_id,
-                        Some(param_span),
-                    )?;
-                    binding = VariableBinding::Identifier { identifier, binding_kind };
-                }
+            {
+                let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
+                    &builder.scope().binding_kind(symbol_id),
+                );
+                let identifier =
+                    builder.resolve_binding_with_span(ident.name, symbol_id, Some(param_span))?;
+                binding = VariableBinding::Identifier { identifier, binding_kind };
             }
             match binding {
                 VariableBinding::Identifier { identifier, .. } => {
@@ -757,7 +754,7 @@ fn lower_inner<'a>(
                 Terminal::Return {
                     value,
                     return_variant: ReturnVariant::Implicit,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: None,
                     effects: None,
                 },
@@ -780,7 +777,7 @@ fn lower_inner<'a>(
         Terminal::Return {
             value: return_value,
             return_variant: ReturnVariant::Void,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: None,
             effects: None,
         },
@@ -841,15 +838,15 @@ fn lower_identifier<'a>(
             Ok(Place { identifier, effect: Effect::Unknown, reactive: false, span: Some(span) })
         }
         _ => {
-            if let VariableBinding::Global { name } = binding {
-                if name == "eval" {
-                    builder.record_error(
+            if let VariableBinding::Global { name } = binding
+                && name == "eval"
+            {
+                builder.record_error(
                         ErrorCategory::UnsupportedSyntax
                             .diagnostic("The 'eval' function is not supported")
                             .with_help("Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler")
                             .with_label(span),
                     )?;
-                }
             }
             let non_local_binding = match binding {
                 VariableBinding::Global { name } => NonLocalBinding::Global { name },
@@ -869,34 +866,6 @@ fn lower_identifier<'a>(
                 InstructionValue::LoadGlobal { binding: non_local_binding, span: Some(span) };
             lower_value_to_temporary(builder, instr_value)
         }
-    }
-}
-
-fn convert_binary_operator(op: oxc::BinaryOperator) -> BinaryOperator {
-    use oxc::BinaryOperator as O;
-    match op {
-        O::Addition => BinaryOperator::Add,
-        O::Subtraction => BinaryOperator::Subtract,
-        O::Multiplication => BinaryOperator::Multiply,
-        O::Division => BinaryOperator::Divide,
-        O::Remainder => BinaryOperator::Modulo,
-        O::Exponential => BinaryOperator::Exponent,
-        O::Equality => BinaryOperator::Equal,
-        O::StrictEquality => BinaryOperator::StrictEqual,
-        O::Inequality => BinaryOperator::NotEqual,
-        O::StrictInequality => BinaryOperator::StrictNotEqual,
-        O::LessThan => BinaryOperator::LessThan,
-        O::LessEqualThan => BinaryOperator::LessEqual,
-        O::GreaterThan => BinaryOperator::GreaterThan,
-        O::GreaterEqualThan => BinaryOperator::GreaterEqual,
-        O::ShiftLeft => BinaryOperator::ShiftLeft,
-        O::ShiftRight => BinaryOperator::ShiftRight,
-        O::ShiftRightZeroFill => BinaryOperator::UnsignedShiftRight,
-        O::BitwiseOR => BinaryOperator::BitwiseOr,
-        O::BitwiseXOR => BinaryOperator::BitwiseXor,
-        O::BitwiseAnd => BinaryOperator::BitwiseAnd,
-        O::In => BinaryOperator::In,
-        O::Instanceof => BinaryOperator::InstanceOf,
     }
 }
 
@@ -1221,17 +1190,16 @@ fn lower_identifier_for_assignment<'a>(
     symbol: Option<SymbolId>,
 ) -> Result<Option<IdentifierForAssignment<'a>>, OxcDiagnostic> {
     let mut binding = builder.resolve_identifier(name, ident_span, symbol)?;
-    if !matches!(binding, VariableBinding::Identifier { .. }) && kind != InstructionKind::Reassign {
-        if let Some(symbol_id) =
+    if !matches!(binding, VariableBinding::Identifier { .. })
+        && kind != InstructionKind::Reassign
+        && let Some(symbol_id) =
             builder.scope().find_binding_in_descendants(name.as_str(), builder.function_scope())
-        {
-            let bk = crate::react_compiler_lowering::convert_binding_kind(
-                &builder.scope().binding_kind(symbol_id),
-            );
-            let identifier =
-                builder.resolve_binding_with_span(name, symbol_id, Some(ident_span))?;
-            binding = VariableBinding::Identifier { identifier, binding_kind: bk };
-        }
+    {
+        let bk = crate::react_compiler_lowering::convert_binding_kind(
+            &builder.scope().binding_kind(symbol_id),
+        );
+        let identifier = builder.resolve_binding_with_span(name, symbol_id, Some(ident_span))?;
+        binding = VariableBinding::Identifier { identifier, binding_kind: bk };
     }
     match binding {
         VariableBinding::Identifier { identifier, binding_kind, .. } => {
@@ -1687,7 +1655,7 @@ fn lower_default_to_temp<'a>(
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(pat_span),
         })
     });
@@ -1706,7 +1674,7 @@ fn lower_default_to_temp<'a>(
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(pat_span),
         })
     });
@@ -1715,7 +1683,7 @@ fn lower_default_to_temp<'a>(
         Terminal::Ternary {
             test: test_block.id,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(pat_span),
         },
         test_block,
@@ -1729,7 +1697,7 @@ fn lower_default_to_temp<'a>(
         builder,
         InstructionValue::BinaryExpression {
             left: value,
-            operator: BinaryOperator::StrictEqual,
+            operator: BinaryOperator::StrictEquality,
             right: undef,
             span: Some(pat_span),
         },
@@ -1740,7 +1708,7 @@ fn lower_default_to_temp<'a>(
             consequent: consequent?,
             alternate: alternate?,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(pat_span),
         },
         continuation_block,
@@ -2525,7 +2493,7 @@ fn lower_assignment_target_default<'a>(
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(span),
         })
     });
@@ -2544,7 +2512,7 @@ fn lower_assignment_target_default<'a>(
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(span),
         })
     });
@@ -2553,7 +2521,7 @@ fn lower_assignment_target_default<'a>(
         Terminal::Ternary {
             test: test_block.id,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(span),
         },
         test_block,
@@ -2567,7 +2535,7 @@ fn lower_assignment_target_default<'a>(
         builder,
         InstructionValue::BinaryExpression {
             left: value,
-            operator: BinaryOperator::StrictEqual,
+            operator: BinaryOperator::StrictEquality,
             right: undef,
             span: Some(span),
         },
@@ -2578,7 +2546,7 @@ fn lower_assignment_target_default<'a>(
             consequent: consequent?,
             alternate: alternate?,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span: Some(span),
         },
         continuation_block,
@@ -2718,7 +2686,7 @@ fn lower_optional_member_expression_impl<'a>(
             Ok(Terminal::Goto {
                 block: continuation_id,
                 variant: GotoVariant::Break,
-                id: EvaluationOrder(0),
+                id: EvaluationOrder::UNSET,
                 span,
             })
         })
@@ -2754,7 +2722,7 @@ fn lower_optional_member_expression_impl<'a>(
             consequent: consequent.id,
             alternate,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span,
         })
     });
@@ -2776,7 +2744,7 @@ fn lower_optional_member_expression_impl<'a>(
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span,
         })
     })?;
@@ -2786,7 +2754,7 @@ fn lower_optional_member_expression_impl<'a>(
             optional,
             test: test_block?,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span,
         },
         continuation_block,
@@ -2827,7 +2795,7 @@ fn lower_optional_call_expression_impl<'a>(
             Ok(Terminal::Goto {
                 block: continuation_id,
                 variant: GotoVariant::Break,
-                id: EvaluationOrder(0),
+                id: EvaluationOrder::UNSET,
                 span,
             })
         })
@@ -2886,7 +2854,7 @@ fn lower_optional_call_expression_impl<'a>(
             consequent: consequent.id,
             alternate,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span,
         })
     });
@@ -2899,7 +2867,7 @@ fn lower_optional_call_expression_impl<'a>(
         match callee_info.as_ref().unwrap() {
             CalleeInfo::CallExpression { callee } => {
                 builder.push(Instruction {
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     lvalue: temp.clone(),
                     value: InstructionValue::CallExpression { callee: callee.clone(), args, span },
                     span,
@@ -2908,7 +2876,7 @@ fn lower_optional_call_expression_impl<'a>(
             }
             CalleeInfo::MethodCall { receiver, property } => {
                 builder.push(Instruction {
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     lvalue: temp.clone(),
                     value: InstructionValue::MethodCall {
                         receiver: receiver.clone(),
@@ -2933,7 +2901,7 @@ fn lower_optional_call_expression_impl<'a>(
         Ok(Terminal::Goto {
             block: continuation_id,
             variant: GotoVariant::Break,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span,
         })
     })?;
@@ -2943,7 +2911,7 @@ fn lower_optional_call_expression_impl<'a>(
             optional: call.optional,
             test: test_block?,
             fallthrough: continuation_id,
-            id: EvaluationOrder(0),
+            id: EvaluationOrder::UNSET,
             span,
         },
         continuation_block,
@@ -3143,97 +3111,95 @@ fn lower_function_declaration<'a>(
     // todo-repro-named-function-with-shadowed-local-same-name). Fall back to
     // node-based resolution when the scope walk fails (degraded scope info,
     // e.g. synthetic scopes, or backends that split function-body scopes).
-    if let Some(name) = func_name {
-        if let Some(id_node) = &func_decl.id {
-            let ident_span = id_node.span;
-            let scope_binding =
-                builder.get_function_declaration_binding(function_scope, name.as_str());
-            let mut is_context = false;
-            let binding = match scope_binding {
-                Some(symbol_id) => {
-                    is_context = builder.is_context_binding(symbol_id);
-                    let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
-                        &builder.scope().binding_kind(symbol_id),
-                    );
-                    let identifier =
-                        builder.resolve_binding_with_span(name, symbol_id, Some(ident_span))?;
-                    VariableBinding::Identifier { identifier, binding_kind }
-                }
-                None => {
-                    let mut binding = builder.resolve_identifier(
-                        name,
-                        ident_span,
-                        builder.scope().resolve_binding_identifier(id_node),
-                    )?;
-                    if matches!(&binding, VariableBinding::Global { .. }) {
-                        // For function redeclarations (e.g., `function x() {} function x() {}`),
-                        // the redeclaration's identifier does not resolve as a declaration
-                        // site (only the first declaration does). Retry with the binding
-                        // found on the scope chain, resolving through its first declaration.
-                        let fallback = {
-                            let scope = builder.scope();
-                            let scope_id =
-                                func_decl.scope_id.get().unwrap_or_else(|| scope.program_scope());
-                            scope.find_binding(scope_id, name.as_str())
-                        };
-                        if let Some(symbol_id) = fallback {
-                            let symbol =
-                                builder.scope().declaration_ident(symbol_id).map(|_| symbol_id);
-                            binding = builder.resolve_identifier(name, ident_span, symbol)?;
-                        }
-                    }
-                    if matches!(&binding, VariableBinding::Identifier { .. }) {
-                        is_context = builder.is_context_identifier(
-                            builder.scope().resolve_binding_identifier(id_node),
-                        );
-                    }
-                    binding
-                }
-            };
-            match binding {
-                VariableBinding::Identifier { identifier, .. } => {
-                    // Don't override the identifier's declaration span here.
+    if let Some(name) = func_name
+        && let Some(id_node) = &func_decl.id
+    {
+        let ident_span = id_node.span;
+        let scope_binding = builder.get_function_declaration_binding(function_scope, name.as_str());
+        let mut is_context = false;
+        let binding = match scope_binding {
+            Some(symbol_id) => {
+                is_context = builder.is_context_binding(symbol_id);
+                let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
+                    &builder.scope().binding_kind(symbol_id),
+                );
+                let identifier =
+                    builder.resolve_binding_with_span(name, symbol_id, Some(ident_span))?;
+                VariableBinding::Identifier { identifier, binding_kind }
+            }
+            None => {
+                let mut binding = builder.resolve_identifier(
+                    name,
+                    ident_span,
+                    builder.scope().resolve_binding_identifier(id_node),
+                )?;
+                if matches!(&binding, VariableBinding::Global { .. }) {
                     // For function redeclarations (e.g., `function x() {} function x() {}`),
-                    // the identifier's span should remain the first declaration's span,
-                    // which was already set during define_binding.
-                    // Use the full function declaration span for the Place,
-                    // matching the TS behavior where lowerAssignment uses stmt.node.span
-                    let place = Place {
-                        identifier,
-                        reactive: false,
-                        effect: Effect::Unknown,
-                        span: Some(span),
+                    // the redeclaration's identifier does not resolve as a declaration
+                    // site (only the first declaration does). Retry with the binding
+                    // found on the scope chain, resolving through its first declaration.
+                    let fallback = {
+                        let scope = builder.scope();
+                        let scope_id =
+                            func_decl.scope_id.get().unwrap_or_else(|| scope.program_scope());
+                        scope.find_binding(scope_id, name.as_str())
                     };
-                    if is_context {
-                        lower_value_to_temporary(
-                            builder,
-                            InstructionValue::StoreContext {
-                                lvalue: LValue { kind: InstructionKind::Function, place },
-                                value: fn_place,
-                                span: Some(span),
-                            },
-                        )?;
-                    } else {
-                        lower_value_to_temporary(
-                            builder,
-                            InstructionValue::StoreLocal {
-                                lvalue: LValue { kind: InstructionKind::Function, place },
-                                value: fn_place,
-                                span: Some(span),
-                            },
-                        )?;
+                    if let Some(symbol_id) = fallback {
+                        let symbol =
+                            builder.scope().declaration_ident(symbol_id).map(|_| symbol_id);
+                        binding = builder.resolve_identifier(name, ident_span, symbol)?;
                     }
                 }
-                _ => {
-                    builder.record_error(
-                        ErrorCategory::Invariant
-                            .diagnostic(format!(
-                                "Could not find binding for function declaration `{}`",
-                                name
-                            ))
-                            .with_label(span),
+                if matches!(&binding, VariableBinding::Identifier { .. }) {
+                    is_context = builder
+                        .is_context_identifier(builder.scope().resolve_binding_identifier(id_node));
+                }
+                binding
+            }
+        };
+        match binding {
+            VariableBinding::Identifier { identifier, .. } => {
+                // Don't override the identifier's declaration span here.
+                // For function redeclarations (e.g., `function x() {} function x() {}`),
+                // the identifier's span should remain the first declaration's span,
+                // which was already set during define_binding.
+                // Use the full function declaration span for the Place,
+                // matching the TS behavior where lowerAssignment uses stmt.node.span
+                let place = Place {
+                    identifier,
+                    reactive: false,
+                    effect: Effect::Unknown,
+                    span: Some(span),
+                };
+                if is_context {
+                    lower_value_to_temporary(
+                        builder,
+                        InstructionValue::StoreContext {
+                            lvalue: LValue { kind: InstructionKind::Function, place },
+                            value: fn_place,
+                            span: Some(span),
+                        },
+                    )?;
+                } else {
+                    lower_value_to_temporary(
+                        builder,
+                        InstructionValue::StoreLocal {
+                            lvalue: LValue { kind: InstructionKind::Function, place },
+                            value: fn_place,
+                            span: Some(span),
+                        },
                     )?;
                 }
+            }
+            _ => {
+                builder.record_error(
+                    ErrorCategory::Invariant
+                        .diagnostic(format!(
+                            "Could not find binding for function declaration `{}`",
+                            name
+                        ))
+                        .with_label(span),
+                )?;
             }
         }
     }
@@ -3426,7 +3392,7 @@ fn lower_expression<'a>(
             span: Some(lit.span),
         }),
         oxc::Expression::StringLiteral(lit) => Ok(InstructionValue::Primitive {
-            value: PrimitiveValue::String(lit.value.into()),
+            value: PrimitiveValue::String(lit.value),
             span: Some(lit.span),
         }),
         oxc::Expression::RegExpLiteral(regexp) => Ok(InstructionValue::RegExpLiteral {
@@ -3441,12 +3407,7 @@ fn lower_expression<'a>(
             let span = Some(bin.span);
             let left = lower_expression_to_temporary(builder, &bin.left)?;
             let right = lower_expression_to_temporary(builder, &bin.right)?;
-            Ok(InstructionValue::BinaryExpression {
-                operator: convert_binary_operator(bin.operator),
-                left,
-                right,
-                span,
-            })
+            Ok(InstructionValue::BinaryExpression { operator: bin.operator, left, right, span })
         }
         oxc::Expression::UnaryExpression(unary) => {
             let span = Some(unary.span);
@@ -3522,7 +3483,7 @@ fn lower_expression<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: left_place.span,
                 })
             });
@@ -3541,23 +3502,19 @@ fn lower_expression<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: right_span,
                 })
             });
 
-            let hir_op = match logical.operator {
-                oxc::LogicalOperator::And => LogicalOperator::And,
-                oxc::LogicalOperator::Or => LogicalOperator::Or,
-                oxc::LogicalOperator::Coalesce => LogicalOperator::NullishCoalescing,
-            };
+            let hir_op = logical.operator;
 
             builder.terminate_with_continuation(
                 Terminal::Logical {
                     operator: hir_op,
                     test: test_block_id,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 test_block,
@@ -3565,7 +3522,7 @@ fn lower_expression<'a>(
 
             let left_value = lower_expression_to_temporary(builder, &logical.left)?;
             builder.push(Instruction {
-                id: EvaluationOrder(0),
+                id: EvaluationOrder::UNSET,
                 lvalue: left_place.clone(),
                 value: InstructionValue::LoadLocal { place: left_value, span },
                 effects: None,
@@ -3578,7 +3535,7 @@ fn lower_expression<'a>(
                     consequent: consequent_block?,
                     alternate: alternate_block?,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -3628,7 +3585,7 @@ fn lower_expression<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: consequent_ast_span,
                 })
             });
@@ -3648,7 +3605,7 @@ fn lower_expression<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: alternate_ast_span,
                 })
             });
@@ -3657,7 +3614,7 @@ fn lower_expression<'a>(
                 Terminal::Ternary {
                     test: test_block_id,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 test_block,
@@ -3671,7 +3628,7 @@ fn lower_expression<'a>(
                     consequent: consequent_block?,
                     alternate: alternate_block?,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -3713,7 +3670,7 @@ fn lower_expression<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 })
             });
@@ -3722,7 +3679,7 @@ fn lower_expression<'a>(
                 Terminal::Sequence {
                     block: sequence_block?,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -3878,8 +3835,8 @@ fn lower_expression<'a>(
                 | oxc::SimpleAssignmentTarget::ComputedMemberExpression(_)
                 | oxc::SimpleAssignmentTarget::PrivateFieldExpression(_) => {
                     let binary_op = match update.operator {
-                        oxc::UpdateOperator::Increment => BinaryOperator::Add,
-                        oxc::UpdateOperator::Decrement => BinaryOperator::Subtract,
+                        oxc::UpdateOperator::Increment => BinaryOperator::Addition,
+                        oxc::UpdateOperator::Decrement => BinaryOperator::Subtraction,
                     };
                     // Use the member expression's span (not the update expression's)
                     // to match TS behavior where the inner operations use leftExpr.node.span
@@ -3994,10 +3951,7 @@ fn lower_expression<'a>(
                         builder.scope().resolve_reference(ident),
                     )?;
 
-                    let operation = match update.operator {
-                        oxc::UpdateOperator::Increment => UpdateOperator::Increment,
-                        oxc::UpdateOperator::Decrement => UpdateOperator::Decrement,
-                    };
+                    let operation = update.operator;
 
                     if update.prefix {
                         Ok(InstructionValue::PrefixUpdate {
@@ -4319,17 +4273,17 @@ fn lower_assignment_expression<'a>(
     } else {
         // Compound assignment operators
         let binary_op = match assign.operator {
-            oxc::AssignmentOperator::Addition => Some(BinaryOperator::Add),
-            oxc::AssignmentOperator::Subtraction => Some(BinaryOperator::Subtract),
-            oxc::AssignmentOperator::Multiplication => Some(BinaryOperator::Multiply),
-            oxc::AssignmentOperator::Division => Some(BinaryOperator::Divide),
-            oxc::AssignmentOperator::Remainder => Some(BinaryOperator::Modulo),
-            oxc::AssignmentOperator::Exponential => Some(BinaryOperator::Exponent),
+            oxc::AssignmentOperator::Addition => Some(BinaryOperator::Addition),
+            oxc::AssignmentOperator::Subtraction => Some(BinaryOperator::Subtraction),
+            oxc::AssignmentOperator::Multiplication => Some(BinaryOperator::Multiplication),
+            oxc::AssignmentOperator::Division => Some(BinaryOperator::Division),
+            oxc::AssignmentOperator::Remainder => Some(BinaryOperator::Remainder),
+            oxc::AssignmentOperator::Exponential => Some(BinaryOperator::Exponential),
             oxc::AssignmentOperator::ShiftLeft => Some(BinaryOperator::ShiftLeft),
             oxc::AssignmentOperator::ShiftRight => Some(BinaryOperator::ShiftRight),
-            oxc::AssignmentOperator::ShiftRightZeroFill => Some(BinaryOperator::UnsignedShiftRight),
-            oxc::AssignmentOperator::BitwiseOR => Some(BinaryOperator::BitwiseOr),
-            oxc::AssignmentOperator::BitwiseXOR => Some(BinaryOperator::BitwiseXor),
+            oxc::AssignmentOperator::ShiftRightZeroFill => Some(BinaryOperator::ShiftRightZeroFill),
+            oxc::AssignmentOperator::BitwiseOR => Some(BinaryOperator::BitwiseOR),
+            oxc::AssignmentOperator::BitwiseXOR => Some(BinaryOperator::BitwiseXOR),
             oxc::AssignmentOperator::BitwiseAnd => Some(BinaryOperator::BitwiseAnd),
             oxc::AssignmentOperator::LogicalOr
             | oxc::AssignmentOperator::LogicalAnd
@@ -4515,9 +4469,9 @@ fn lower_jsx_element_expr<'a>(
                     Some(oxc::JSXAttributeValue::StringLiteral(s)) => {
                         let str_span = Some(s.span);
                         let decoded = match decode_jsx_entities(s.value.as_str()) {
-                            Cow::Borrowed(text) => JsString::from(text),
+                            Cow::Borrowed(text) => Str::from(text),
                             Cow::Owned(text) => {
-                                JsString::from_str_in(&text, builder.environment().allocator)
+                                Str::from_str_in(&text, &builder.environment().allocator)
                             }
                         };
                         lower_value_to_temporary(
@@ -4753,9 +4707,9 @@ fn lower_jsx_element_name<'a>(
             let place = lower_value_to_temporary(
                 builder,
                 InstructionValue::Primitive {
-                    value: PrimitiveValue::String(JsString::from_str_in(
+                    value: PrimitiveValue::String(Str::from_str_in(
                         &tag,
-                        builder.environment().allocator,
+                        &builder.environment().allocator,
                     )),
                     span,
                 },
@@ -4936,15 +4890,15 @@ fn collect_fbt_sub_tags_from_element(
     plural_spans: &mut Vec<Option<Span>>,
     pronoun_spans: &mut Vec<Option<Span>>,
 ) {
-    if let oxc::JSXElementName::NamespacedName(ns) = &el.opening_element.name {
-        if ns.namespace.name == tag_name {
-            let span = Some(ns.span);
-            match ns.name.name.as_str() {
-                "enum" => enum_spans.push(span),
-                "plural" => plural_spans.push(span),
-                "pronoun" => pronoun_spans.push(span),
-                _ => {}
-            }
+    if let oxc::JSXElementName::NamespacedName(ns) = &el.opening_element.name
+        && ns.namespace.name == tag_name
+    {
+        let span = Some(ns.span);
+        match ns.name.name.as_str() {
+            "enum" => enum_spans.push(span),
+            "plural" => plural_spans.push(span),
+            "pronoun" => pronoun_spans.push(span),
+            _ => {}
         }
     }
     collect_fbt_sub_tags(builder, &el.children, tag_name, enum_spans, plural_spans, pronoun_spans);
@@ -5612,7 +5566,7 @@ fn lower_statement<'a>(
                 Terminal::Return {
                     value,
                     return_variant: ReturnVariant::Explicit,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                     effects: None,
                 },
@@ -5633,7 +5587,7 @@ fn lower_statement<'a>(
             }
             let fallthrough = builder.reserve(BlockKind::Block);
             builder.terminate_with_continuation(
-                Terminal::Throw { value, id: EvaluationOrder(0), span },
+                Terminal::Throw { value, id: EvaluationOrder::UNSET, span },
                 fallthrough,
             );
         }
@@ -5659,7 +5613,7 @@ fn lower_statement<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: consequent_span,
                 })
             })?;
@@ -5672,7 +5626,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: continuation_id,
                         variant: GotoVariant::Break,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: alternate_span,
                     })
                 })?
@@ -5688,7 +5642,7 @@ fn lower_statement<'a>(
                     consequent: consequent_block,
                     alternate: alternate_block,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -5735,7 +5689,7 @@ fn lower_statement<'a>(
                 Ok(Terminal::Goto {
                     block: test_block_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: init_span,
                 })
             })?;
@@ -5748,7 +5702,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: test_block_id,
                         variant: GotoVariant::Break,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: update_span,
                     })
                 })?)
@@ -5765,7 +5719,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: continue_target,
                         variant: GotoVariant::Continue,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: body_span,
                     })
                 })
@@ -5779,7 +5733,7 @@ fn lower_statement<'a>(
                     update: update_block_id,
                     loop_block: body_block,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 test_block,
@@ -5794,7 +5748,7 @@ fn lower_statement<'a>(
                         consequent: body_block,
                         alternate: continuation_id,
                         fallthrough: continuation_id,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span,
                     },
                     continuation_block,
@@ -5815,7 +5769,7 @@ fn lower_statement<'a>(
                         consequent: body_block,
                         alternate: continuation_id,
                         fallthrough: continuation_id,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span,
                     },
                     continuation_block,
@@ -5839,7 +5793,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: conditional_id,
                         variant: GotoVariant::Continue,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: body_span,
                     })
                 })
@@ -5851,7 +5805,7 @@ fn lower_statement<'a>(
                     test: conditional_id,
                     loop_block,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 conditional_block,
@@ -5865,7 +5819,7 @@ fn lower_statement<'a>(
                     consequent: loop_block,
                     alternate: continuation_id,
                     fallthrough: conditional_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -5888,7 +5842,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: conditional_id,
                         variant: GotoVariant::Continue,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: body_span,
                     })
                 })
@@ -5900,7 +5854,7 @@ fn lower_statement<'a>(
                     loop_block,
                     test: conditional_id,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 conditional_block,
@@ -5914,7 +5868,7 @@ fn lower_statement<'a>(
                     consequent: loop_block,
                     alternate: continuation_id,
                     fallthrough: conditional_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -5934,7 +5888,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: init_block_id,
                         variant: GotoVariant::Continue,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: body_span,
                     })
                 })
@@ -5946,7 +5900,7 @@ fn lower_statement<'a>(
                     init: init_block_id,
                     loop_block,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 init_block,
@@ -5973,7 +5927,7 @@ fn lower_statement<'a>(
                     consequent: loop_block,
                     alternate: continuation_id,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -6004,7 +5958,7 @@ fn lower_statement<'a>(
                     Ok(Terminal::Goto {
                         block: init_block_id,
                         variant: GotoVariant::Continue,
-                        id: EvaluationOrder(0),
+                        id: EvaluationOrder::UNSET,
                         span: body_span,
                     })
                 })
@@ -6017,7 +5971,7 @@ fn lower_statement<'a>(
                     test: test_block_id,
                     loop_block,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 init_block,
@@ -6032,7 +5986,7 @@ fn lower_statement<'a>(
                 Terminal::Goto {
                     block: test_block_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 test_block,
@@ -6063,7 +6017,7 @@ fn lower_statement<'a>(
                     consequent: loop_block,
                     alternate: continuation_id,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -6107,7 +6061,7 @@ fn lower_statement<'a>(
                         Ok(Terminal::Goto {
                             block: fallthrough_target,
                             variant: GotoVariant::Break,
-                            id: EvaluationOrder(0),
+                            id: EvaluationOrder::UNSET,
                             span: case_span,
                         })
                     })
@@ -6137,7 +6091,7 @@ fn lower_statement<'a>(
                     test,
                     cases,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -6248,7 +6202,7 @@ fn lower_statement<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: Some(handler_span),
                 })
             })?;
@@ -6268,7 +6222,7 @@ fn lower_statement<'a>(
                 Ok(Terminal::Goto {
                     block: continuation_id,
                     variant: GotoVariant::Try,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span: try_body_span,
                 })
             })?;
@@ -6279,7 +6233,7 @@ fn lower_statement<'a>(
                     handler_binding: handler_binding_info.map(|(place, _)| place),
                     handler: handler_block,
                     fallthrough: continuation_id,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 continuation_block,
@@ -6294,7 +6248,7 @@ fn lower_statement<'a>(
                 Terminal::Goto {
                     block: target,
                     variant: GotoVariant::Break,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 fallthrough,
@@ -6309,7 +6263,7 @@ fn lower_statement<'a>(
                 Terminal::Goto {
                     block: target,
                     variant: GotoVariant::Continue,
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                 },
                 fallthrough,
@@ -6342,7 +6296,7 @@ fn lower_statement<'a>(
                         Ok(Terminal::Goto {
                             block: continuation_id,
                             variant: GotoVariant::Break,
-                            id: EvaluationOrder(0),
+                            id: EvaluationOrder::UNSET,
                             span: body_span,
                         })
                     })?;
@@ -6351,7 +6305,7 @@ fn lower_statement<'a>(
                         Terminal::Label {
                             block,
                             fallthrough: continuation_id,
-                            id: EvaluationOrder(0),
+                            id: EvaluationOrder::UNSET,
                             span,
                         },
                         continuation_block,

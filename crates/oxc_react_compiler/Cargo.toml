@@ -32,10 +32,12 @@ oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_diagnostics = { workspace = true }
+oxc_ecmascript = { workspace = true }
+oxc_index = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 oxc_str = { workspace = true }
-oxc_syntax = { workspace = true }
+oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
 # External crates the vendored React Compiler modules (`src/react_compiler*`) depend
 # on. The compiler core is frontend-agnostic — serde/indexmap/hashing only, no oxc.
@@ -59,16 +61,11 @@ convert_case = { workspace = true }
 oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 
 # The `src/` conversion modules are vendored close to upstream `react_compiler_oxc`
-# (kept near byte-for-byte to ease re-syncing), so relax the handful of lints they
-# trip here rather than editing the code. Defining `[lints.clippy]` means this crate
-# does not inherit `[lints] workspace = true`, which keeps the in-house restriction
-# lints (`todo!`/`unimplemented!`/...) off the vendored code while clippy's default
-# correctness and perf checks still apply.
+# (kept near byte-for-byte to ease re-syncing). Defining `[lints.clippy]` means this
+# crate does not inherit `[lints] workspace = true`, which keeps the in-house
+# restriction lints (`todo!`/`unimplemented!`/...) off the vendored code while clippy's
+# default correctness and perf checks still apply.
 [lints.clippy]
-disallowed_types = "allow" # `react_compiler_ast`'s `ScopeInfo`/`ScopeData` fields are std `HashMap`
-collapsible_if = "allow"
-needless_return = "allow"
-unnecessary_unwrap = "allow"
 result_large_err = "allow" # `Result<T, OxcDiagnostic>` everywhere; same trade-off as the workspace allow
 
 # The vendored modules' doc comments reference types like `Vec<PatternLike>`

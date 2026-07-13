@@ -147,6 +147,7 @@ export type AllowKind =
  */
 export type NoInnerDeclarationsConfig = "functions" | "both";
 export type BlockScopedFunctions = "allow" | "disallow";
+export type Namespaces = "allow" | "disallow";
 export type NoMagicNumbersNumber = number | string;
 export type NoRestrictedImportsConfigEnum = string | RestrictedPath | NoRestrictedImportsConfig;
 export type PossiblePaths = string | RestrictedPath;
@@ -1006,7 +1007,7 @@ export interface DummyRuleMap {
   "jsdoc/empty-tags"?: RuleNoConfig | [AllowWarnDeny, EmptyTagsConfig];
   "jsdoc/implements-on-classes"?: RuleNoConfig;
   "jsdoc/no-defaults"?: RuleNoConfig | [AllowWarnDeny, NoDefaultsConfig];
-  "jsdoc/require-param"?: DummyRule;
+  "jsdoc/require-param"?: RuleNoConfig | [AllowWarnDeny, RequireParamConfig];
   "jsdoc/require-param-description"?: RuleNoConfig | [AllowWarnDeny, RequireParamDescriptionConfig];
   "jsdoc/require-param-name"?: RuleNoConfig;
   "jsdoc/require-param-type"?: RuleNoConfig | [AllowWarnDeny, RequireParamTypeConfig];
@@ -2453,6 +2454,56 @@ export interface NoDefaultsConfig {
    */
   noOptionalParamNames?: boolean;
 }
+export interface RequireParamConfig {
+  /**
+   * Whether to check constructor methods.
+   */
+  checkConstructors?: boolean;
+  /**
+   * Whether to check destructured parameters.
+   */
+  checkDestructured?: boolean;
+  /**
+   * Whether to check destructured parameters when you have code like
+   * `function doSomething({ a, b }) { ... }`. Because there is no named
+   * parameter in this example, when this option is `true` you must
+   * have a `@param` tag that corresponds to `{a, b}`.
+   */
+  checkDestructuredRoots?: boolean;
+  /**
+   * Whether to check getter methods.
+   */
+  checkGetters?: boolean;
+  /**
+   * Whether to check rest properties.
+   */
+  checkRestProperty?: boolean;
+  /**
+   * Whether to check setter methods.
+   */
+  checkSetters?: boolean;
+  /**
+   * Regex pattern to match types that exempt parameters from checking.
+   */
+  checkTypesPattern?: string;
+  /**
+   * List of JSDoc tags that exempt functions from `@param` checking.
+   */
+  exemptedBy?: string[];
+  /**
+   * Set to `true` to ignore reporting when all params are missing. Defaults to `false`.
+   */
+  ignoreWhenAllParamsMissing?: boolean;
+  /**
+   * Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.
+   * Will check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`.
+   */
+  interfaceExemptsParamsCheck?: boolean;
+  /**
+   * Set to `true` if you wish to expect documentation of properties on objects supplied as default values. Defaults to `false`.
+   */
+  useDefaultObjectProperties?: boolean;
+}
 export interface RequireParamDescriptionConfig {
   /**
    * The description string to set by default for destructured roots. Defaults to "The root object".
@@ -3132,6 +3183,10 @@ export interface NoInnerDeclarationsOptions {
    * Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).
    */
   blockScopedFunctions?: BlockScopedFunctions;
+  /**
+   * Controls whether declarations directly inside TypeScript namespace or module bodies are allowed.
+   */
+  namespaces?: Namespaces;
 }
 export interface NoInvalidRegexpConfig {
   /**
@@ -6441,6 +6496,9 @@ export interface NoReservedPropsConfig {
   vueVersion?: number;
 }
 export interface Options {
+  /**
+   * Prop names to ignore, as regular expression patterns.
+   */
   ignoreProps?: string[];
 }
 export interface RequireDirectExport {

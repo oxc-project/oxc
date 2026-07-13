@@ -8,13 +8,12 @@ use crate::react_compiler_hir::ReactFunctionType;
 use super::program::CompileOutput;
 
 /// Main result type returned by the compile function.
-#[allow(clippy::large_enum_variant)] // built once per compile; `ProgramContext` carries the options
 pub enum CompileResult<'a> {
     /// Compilation succeeded (or no functions needed compilation).
     /// `output` is None if no changes are to be made to the program — always so
     /// in lint output mode.
     Success {
-        output: Option<CompileOutput<'a>>,
+        output: Option<Box<CompileOutput<'a>>>,
         /// Errors and warnings accumulated during compilation.
         diagnostics: Diagnostics,
     },

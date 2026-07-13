@@ -98,7 +98,7 @@ fn eliminate_redundant_phi_impl(
                 ir.blocks.get(&block_id).unwrap().instructions.clone();
 
             for instr_id in &instruction_ids {
-                let instr_idx = instr_id.0 as usize;
+                let instr_idx = instr_id.index();
                 let instr = &mut func.instructions[instr_idx];
 
                 // Rewrite all lvalues (matches TS eachInstructionLValue)
@@ -127,18 +127,17 @@ fn eliminate_redundant_phi_impl(
 
                 if let Some(fid) = func_expr_id {
                     // Rewrite context places
-                    let context = &mut env.functions[fid.0 as usize].context;
+                    let context = &mut env.functions[fid].context;
                     for place in context.iter_mut() {
                         rewrite_place(place, rewrites);
                     }
 
                     // Take inner function out, process it, put it back
-                    let mut inner_func =
-                        replace(&mut env.functions[fid.0 as usize], placeholder_function());
+                    let mut inner_func = replace(&mut env.functions[fid], placeholder_function());
 
                     eliminate_redundant_phi_impl(&mut inner_func, env, rewrites);
 
-                    env.functions[fid.0 as usize] = inner_func;
+                    env.functions[fid] = inner_func;
                 }
             }
 

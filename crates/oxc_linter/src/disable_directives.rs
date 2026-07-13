@@ -546,10 +546,6 @@ impl DisableDirectivesBuilder {
             // `comment.span` is the full outer span (including `//` or `/* */` delimiters).
             // It is used as the diagnostic span.
             let outer_span = comment.span;
-            // Pre-compute the fix span for this comment:
-            // - whole line (incl. leading whitespace + newline) if the comment is alone on the line
-            // - outer comment span (incl. `//` / `/* */` delimiters) otherwise
-            let comment_fix_span = Self::compute_comment_fix_span(comment, source_text);
             let text_source = comment_span.source_text(source_text);
             let text = text_source.trim_start();
             let Some((directive_prefix, directive_kind, rule_list_text)) =
@@ -557,6 +553,11 @@ impl DisableDirectivesBuilder {
             else {
                 continue;
             };
+
+            // Pre-compute the fix span for this directive comment:
+            // - whole line (incl. leading whitespace + newline) if the comment is alone on the line
+            // - outer comment span (incl. `//` / `/* */` delimiters) otherwise
+            let comment_fix_span = Self::compute_comment_fix_span(comment, source_text);
 
             let rule_names = Self::collect_rule_names(rule_list_text);
             let rule_list_start = comment_span.end - rule_list_text.len() as u32;

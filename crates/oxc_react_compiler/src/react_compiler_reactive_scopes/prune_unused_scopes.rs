@@ -68,7 +68,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         self.visit_scope(scope, &mut scope_state)?;
 
         let scope_id = scope.scope;
-        let scope_data = &self.env.scopes[scope_id.0 as usize];
+        let scope_data = &self.env.scopes[scope_id];
 
         if !scope_state.has_return_statement
             && scope_data.reassignments.is_empty()

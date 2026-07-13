@@ -8,8 +8,9 @@ packages:
   - tasks/compat_data
 
 catalog:
-  "@emnapi/core": 1.11.1
-  "@emnapi/runtime": 1.11.1
+  "@emnapi/core": 1.11.2
+  "@emnapi/runtime": 1.11.2
+  emnapi: 1.11.2
   "@arethetypeswrong/core": 0.18.5
   "@napi-rs/cli": 3.7.3
   "@napi-rs/wasm-runtime": 1.1.6
@@ -26,6 +27,7 @@ catalog:
 
 overrides:
   rolldown: "catalog:"
+  emnapi: "catalog:"
 
 allowBuilds:
   "@vscode/vsce-sign@2.0.8": true
