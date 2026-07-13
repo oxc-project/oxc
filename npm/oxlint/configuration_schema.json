@@ -14859,7 +14859,6 @@
       "properties": {
         "allow": {
           "description": "These strings will be compiled into regular expressions with the u flag and be used to test against the imported path.\nA common use case is to allow importing `package.json`. This is because `package.json` commonly lives outside of the TS root directory,\nso statically importing it would lead to root directory conflicts, especially with `resolveJsonModule` enabled.\nYou can also use it to allow importing any JSON if your environment doesn't support JSON modules, or use it for other cases where `import` statements cannot work.\n\nWith `{ allow: ['/package\\\\.json$'] }`:\n\nExamples of **correct** code for this rule:\n```ts\nconsole.log(require('../package.json').version);\n```",
-          "default": [],
           "type": "array",
           "items": {
             "type": "string"
