@@ -1,0 +1,629 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:2:21]
+ 1 │     
+ 2 │ ╭─▶                     function Hello(props) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `function Hello(props) {
+                              return <div/>;
+                            }` with `const Hello = (props) => {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = function(props) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     };
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = function(props) {
+                              return <div/>;
+                            };` with `var Hello = (props) => {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function declaration
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = (props) => {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     };
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = (props) => {
+                              return <div/>;
+                            };` with `function Hello(props) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function declaration
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = function(props) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     };
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = function(props) {
+                              return <div/>;
+                            };` with `function Hello(props) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = (props) => {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     };
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = (props) => {
+                              return <div/>;
+                            };` with `var Hello = function(props) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     let Hello = (props) => {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `let Hello = (props) => {
+                              return <div/>;
+                            }` with `let Hello = function(props) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:3:29]
+ 2 │                         let Hello;
+ 3 │ ╭─▶                     Hello = (props) => {
+ 4 │ │                         return <div/>;
+ 5 │ ╰─▶                     }
+ 6 │                       
+   ╰────
+  help: Replace `(props) => {
+                              return <div/>;
+                            }` with `function(props) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     let Hello = (props) => {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                         Hello = function(props) {
+   ╰────
+  help: Replace `let Hello = (props) => {
+                              return <div/>;
+                            }` with `let Hello = function(props) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:2:21]
+ 1 │     
+ 2 │ ╭─▶                     function Hello(props) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `function Hello(props) {
+                              return <div/>;
+                            }` with `const Hello = function(props) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:3:30]
+ 2 │                         function wrap(Component) {
+ 3 │ ╭─▶                       return function(props) {
+ 4 │ │                           return <div><Component {...props}/></div>;
+ 5 │ ╰─▶                       };
+ 6 │                         }
+   ╰────
+  help: Replace `function(props) {
+                                return <div><Component {...props}/></div>;
+                              }` with `(props) => {
+                                return <div><Component {...props}/></div>;
+                              }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:3:30]
+ 2 │                         function wrap(Component) {
+ 3 │ ╭─▶                       return (props) => {
+ 4 │ │                           return <div><Component {...props}/></div>;
+ 5 │ ╰─▶                       };
+ 6 │                         }
+   ╰────
+  help: Replace `(props) => {
+                                return <div><Component {...props}/></div>;
+                              }` with `function(props) {
+                                return <div><Component {...props}/></div>;
+                              }`.
+
+  ⚠ react(function-component-definition): Function component is not a function declaration
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = (props: Test) => {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     };
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = (props: Test) => {
+                              return <div/>;
+                            };` with `function Hello(props: Test) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function declaration
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = function(props: Test) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     };
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = function(props: Test) {
+                              return <div/>;
+                            };` with `function Hello(props: Test) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:2:21]
+ 1 │     
+ 2 │ ╭─▶                     function Hello(props: Test) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `function Hello(props: Test) {
+                              return <div/>;
+                            }` with `const Hello = (props: Test) => {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = function(props: Test) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = function(props: Test) {
+                              return <div/>;
+                            }` with `var Hello = (props: Test) => {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:2:21]
+ 1 │     
+ 2 │ ╭─▶                     function Hello(props: Test) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `function Hello(props: Test) {
+                              return <div/>;
+                            }` with `const Hello = function(props: Test) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:2:21]
+ 1 │     
+ 2 │ ╭─▶                     function Hello(props: Test) {
+ 3 │ │                         return React.createElement('div');
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `function Hello(props: Test) {
+                              return React.createElement('div');
+                            }` with `var Hello = function(props: Test) {
+                              return React.createElement('div');
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:3:21]
+ 2 │                         import * as React from 'react';
+ 3 │ ╭─▶                     function Hello(props: Test) {
+ 4 │ │                         return React.createElement('div');
+ 5 │ ╰─▶                     }
+ 6 │                       
+   ╰────
+  help: Replace `function Hello(props: Test) {
+                              return React.createElement('div');
+                            }` with `const Hello = function(props: Test) {
+                              return React.createElement('div');
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:2:28]
+ 1 │     
+ 2 │ ╭─▶                     export function Hello(props: Test) {
+ 3 │ │                         return React.createElement('div');
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `function Hello(props: Test) {
+                              return React.createElement('div');
+                            }` with `const Hello = function(props: Test) {
+                              return React.createElement('div');
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:2:21]
+ 1 │     
+ 2 │ ╭─▶                     function Hello(props) {
+ 3 │ │                         return React.createElement('div');
+ 4 │ ╰─▶                     }
+ 5 │                         export default Hello;
+   ╰────
+  help: Replace `function Hello(props) {
+                              return React.createElement('div');
+                            }` with `const Hello = function(props) {
+                              return React.createElement('div');
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = (props: Test) => {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = (props: Test) => {
+                              return <div/>;
+                            }` with `var Hello = function(props: Test) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:2:49]
+ 1 │     
+ 2 │ ╭─▶                     var Hello: React.FC<Test> = (props) => {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `var Hello: React.FC<Test> = (props) => {
+                              return <div/>;
+                            }` with `var Hello: React.FC<Test> = function(props) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:2:49]
+ 1 │     
+ 2 │ ╭─▶                     var Hello: React.FC<Test> = function(props) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `var Hello: React.FC<Test> = function(props) {
+                              return <div/>;
+                            }` with `var Hello: React.FC<Test> = (props) => {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function declaration
+   ╭─[function_component_definition.tsx:2:49]
+ 1 │     
+ 2 │ ╭─▶                     var Hello: React.FC<Test> = function(props) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+
+  ⚠ react(function-component-definition): Function component is not a function declaration
+   ╭─[function_component_definition.tsx:2:49]
+ 1 │     
+ 2 │ ╭─▶                     var Hello: React.FC<Test> = (props) => {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     };
+ 5 │                       
+   ╰────
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:2:21]
+ 1 │     
+ 2 │ ╭─▶                     function Hello<Test extends {}>(props: Test) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `function Hello<Test extends {}>(props: Test) {
+                              return <div/>;
+                            }` with `const Hello = <Test extends {}>(props: Test) => {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:2:21]
+ 1 │     
+ 2 │ ╭─▶                     function Hello<Test>(props: Test) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:2:21]
+ 1 │     
+ 2 │ ╭─▶                     function Hello<Test extends {}>(props: Test) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `function Hello<Test extends {}>(props: Test) {
+                              return <div/>;
+                            }` with `const Hello = function<Test extends {}>(props: Test) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function declaration
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = function<Test extends {}>(props: Test) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     };
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = function<Test extends {}>(props: Test) {
+                              return <div/>;
+                            };` with `function Hello<Test extends {}>(props: Test) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = <Test extends {}>(props: Test) => {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = <Test extends {}>(props: Test) => {
+                              return <div/>;
+                            }` with `var Hello = function<Test extends {}>(props: Test) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = function<Test extends {}>(props: Test) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = function<Test extends {}>(props: Test) {
+                              return <div/>;
+                            }` with `var Hello = <Test extends {}>(props: Test) => {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function declaration
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = function<Test extends {}>(props: Test) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = function<Test extends {}>(props: Test) {
+                              return <div/>;
+                            }` with `function Hello<Test extends {}>(props: Test) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:3:30]
+ 2 │                         function wrap(Component) {
+ 3 │ ╭─▶                       return function<Test extends {}>(props) {
+ 4 │ │                           return <div><Component {...props}/></div>
+ 5 │ ╰─▶                       }
+ 6 │                         }
+   ╰────
+  help: Replace `function<Test extends {}>(props) {
+                                return <div><Component {...props}/></div>
+                              }` with `<Test extends {}>(props) => {
+                                return <div><Component {...props}/></div>
+                              }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:3:30]
+ 2 │                         function wrap(Component) {
+ 3 │ ╭─▶                       return function<Test>(props) {
+ 4 │ │                           return <div><Component {...props}/></div>
+ 5 │ ╰─▶                       }
+ 6 │                         }
+   ╰────
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:3:30]
+ 2 │                         function wrap(Component) {
+ 3 │ ╭─▶                       return <Test extends {}>(props) => {
+ 4 │ │                           return <div><Component {...props}/></div>
+ 5 │ ╰─▶                       }
+ 6 │                         }
+   ╰────
+  help: Replace `<Test extends {}>(props) => {
+                                return <div><Component {...props}/></div>
+                              }` with `function<Test extends {}>(props) {
+                                return <div><Component {...props}/></div>
+                              }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:3:30]
+ 2 │                         function wrap(Component) {
+ 3 │ ╭─▶                       return function(props): ReactNode {
+ 4 │ │                           return <div><Component {...props}/></div>
+ 5 │ ╰─▶                       }
+ 6 │                         }
+   ╰────
+  help: Replace `function(props): ReactNode {
+                                return <div><Component {...props}/></div>
+                              }` with `(props): ReactNode => {
+                                return <div><Component {...props}/></div>
+                              }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:3:30]
+ 2 │                         function wrap(Component) {
+ 3 │ ╭─▶                       return (props): ReactNode => {
+ 4 │ │                           return <div><Component {...props}/></div>
+ 5 │ ╰─▶                       }
+ 6 │                         }
+   ╰────
+  help: Replace `(props): ReactNode => {
+                                return <div><Component {...props}/></div>
+                              }` with `function(props): ReactNode {
+                                return <div><Component {...props}/></div>
+                              }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:2:28]
+ 1 │     
+ 2 │ ╭─▶                     export function Hello(props) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `function Hello(props) {
+                              return <div/>;
+                            }` with `const Hello = (props) => {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:2:40]
+ 1 │     
+ 2 │ ╭─▶                     export var Hello = function(props) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = function(props) {
+                              return <div/>;
+                            }` with `var Hello = (props) => {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function declaration
+   ╭─[function_component_definition.tsx:2:40]
+ 1 │     
+ 2 │ ╭─▶                     export var Hello = (props) => {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = (props) => {
+                              return <div/>;
+                            }` with `function Hello(props) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:2:36]
+ 1 │     
+ 2 │ ╭─▶                     export default function Hello(props) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:2:38]
+ 1 │     
+ 2 │ ╭─▶                     module.exports = function Hello(props) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+
+  ⚠ react(function-component-definition): Function component is not an arrow function
+   ╭─[function_component_definition.tsx:2:21]
+ 1 │     
+ 2 │ ╭─▶                     function Hello(props) {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     }
+ 5 │                       
+   ╰────
+  help: Replace `function Hello(props) {
+                              return <div/>;
+                            }` with `const Hello = (props) => {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function declaration
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = (props) => {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     };
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = (props) => {
+                              return <div/>;
+                            };` with `function Hello(props) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function expression
+   ╭─[function_component_definition.tsx:2:33]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = (props) => {
+ 3 │ │                         return <div/>;
+ 4 │ ╰─▶                     };
+ 5 │                       
+   ╰────
+  help: Replace `var Hello = (props) => {
+                              return <div/>;
+                            };` with `var Hello = function(props) {
+                              return <div/>;
+                            }`.
+
+  ⚠ react(function-component-definition): Function component is not a function declaration
+    ╭─[function_component_definition.tsx:4:39]
+  3 │                 
+  4 │ ╭─▶                     const IndexPage = () => {
+  5 │ │                         return (
+  6 │ │                           <div>
+  7 │ │                             Hello World.{genX('$')}
+  8 │ │                           </div>
+  9 │ │                         )
+ 10 │ ╰─▶                     }
+ 11 │                 
+    ╰────
+  help: Replace `const IndexPage = () => {
+                              return (
+                                <div>
+                                  Hello World.{genX('$')}
+                                </div>
+                              )
+                            }` with `function IndexPage() {
+                              return (
+                                <div>
+                                  Hello World.{genX('$')}
+                                </div>
+                              )
+                            }`.

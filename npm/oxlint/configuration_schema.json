@@ -6506,6 +6506,26 @@
         "react/forward-ref-uses-ref": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "react/function-component-definition": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/FunctionComponentDefinition"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "react/hook-use-state": {
           "anyOf": [
             {
@@ -11210,6 +11230,31 @@
       },
       "additionalProperties": false
     },
+    "FunctionComponentDefinition": {
+      "$ref": "#/definitions/FunctionComponentDefinitionConfig"
+    },
+    "FunctionComponentDefinitionConfig": {
+      "type": "object",
+      "properties": {
+        "namedComponents": {
+          "default": "function-declaration",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NamedComponents"
+            }
+          ]
+        },
+        "unnamedComponents": {
+          "default": "function-expression",
+          "allOf": [
+            {
+              "$ref": "#/definitions/UnnamedComponents"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
     "GetterReturn": {
       "type": "object",
       "properties": {
@@ -13032,6 +13077,27 @@
         }
       ],
       "markdownDescription": "Name specifier that can be a single string or array of strings"
+    },
+    "NamedComponentStyle": {
+      "type": "string",
+      "enum": [
+        "function-declaration",
+        "arrow-function",
+        "function-expression"
+      ]
+    },
+    "NamedComponents": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/NamedComponentStyle"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NamedComponentStyle"
+          }
+        }
+      ]
     },
     "NamedExports": {
       "type": "string",
@@ -18805,6 +18871,26 @@
         }
       },
       "additionalProperties": false
+    },
+    "UnnamedComponentStyle": {
+      "type": "string",
+      "enum": [
+        "arrow-function",
+        "function-expression"
+      ]
+    },
+    "UnnamedComponents": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/UnnamedComponentStyle"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UnnamedComponentStyle"
+          }
+        }
+      ]
     },
     "UseIsnan": {
       "type": "object",
