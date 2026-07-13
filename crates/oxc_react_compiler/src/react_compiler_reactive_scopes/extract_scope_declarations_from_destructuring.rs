@@ -40,7 +40,7 @@ pub fn extract_scope_declarations_from_destructuring<'a>(
             ParamPattern::Place(p) => p,
             ParamPattern::Spread(s) => &s.place,
         };
-        let identifier = &env.identifiers[place.identifier.index()];
+        let identifier = &env.identifiers[place.identifier];
         declared.insert(identifier.declaration_id);
     }
     let mut transform = Transform { env };
@@ -68,12 +68,12 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut ExtractState,
     ) -> Result<(), OxcDiagnostic> {
-        let scope_data = &self.env.scopes[scope.scope.index()];
+        let scope_data = &self.env.scopes[scope.scope];
         let decl_ids: Vec<DeclarationId> = scope_data
             .declarations
             .iter()
             .map(|(_, d)| {
-                let identifier = &self.env.identifiers[d.identifier.index()];
+                let identifier = &self.env.identifiers[d.identifier];
                 identifier.declaration_id
             })
             .collect();
@@ -103,7 +103,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
             let mut has_declaration = false;
 
             for place in visitors::each_pattern_operand(&lvalue.pattern) {
-                let identifier = &self.env.identifiers[place.identifier.index()];
+                let identifier = &self.env.identifiers[place.identifier];
                 if state.declared.contains(&identifier.declaration_id) {
                     reassigned.insert(place.identifier);
                 } else {
@@ -127,17 +127,19 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                     }
                     // Create a temporary place (matches TS clonePlaceToTemporary)
                     let temp_id = env.next_identifier_id();
-                    let decl_id = env.identifiers[temp_id.index()].declaration_id;
+                    let decl_id = env.identifiers[temp_id].declaration_id;
                     // Copy type from original identifier to temporary
-                    let original_type = env.identifiers[place.identifier.index()].type_;
-                    env.identifiers[temp_id.index()].type_ = original_type;
+                    let original_type = env.identifiers[place.identifier].type_;
+                    env.identifiers[temp_id].type_ = original_type;
                     // Set identifier span to the place's source location
                     // (matches TS makeTemporaryIdentifier which receives place.span)
-                    env.identifiers[temp_id.index()].span = place.span;
+                    env.identifiers[temp_id].span = place.span;
                     // Promote the temporary
-                    env.identifiers[temp_id.index()].name = Some(IdentifierName::Promoted(
-                        format_ident!(env.allocator, "#t{}", decl_id.index()),
-                    ));
+                    env.identifiers[temp_id].name = Some(IdentifierName::Promoted(format_ident!(
+                        env.allocator,
+                        "#t{}",
+                        decl_id.index()
+                    )));
                     let temporary = Place {
                         identifier: temp_id,
                         effect: place.effect,
@@ -205,7 +207,7 @@ fn update_declared_from_instruction<'a>(
             | InstructionValue::DeclareLocal { lvalue, .. }
             | InstructionValue::StoreLocal { lvalue, .. } => {
                 if lvalue.kind != InstructionKind::Reassign {
-                    let identifier = &env.identifiers[lvalue.place.identifier.index()];
+                    let identifier = &env.identifiers[lvalue.place.identifier];
                     state.declared.insert(identifier.declaration_id);
                 }
             }
@@ -213,7 +215,7 @@ fn update_declared_from_instruction<'a>(
                 if lvalue.kind != InstructionKind::Reassign =>
             {
                 for place in visitors::each_pattern_operand(&lvalue.pattern) {
-                    let identifier = &env.identifiers[place.identifier.index()];
+                    let identifier = &env.identifiers[place.identifier];
                     state.declared.insert(identifier.declaration_id);
                 }
             }

@@ -115,7 +115,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         self.visit_scope(scope, &mut within_scope)?;
 
         let scope_id = scope.scope;
-        let scope_data = &self.env.scopes[scope_id.index()];
+        let scope_data = &self.env.scopes[scope_id];
 
         for dep in &scope_data.dependencies {
             if self.unmemoized_values.contains(&dep.identifier) {

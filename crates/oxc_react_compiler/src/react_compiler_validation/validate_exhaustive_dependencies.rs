@@ -4,6 +4,7 @@ use std::mem::{replace, take};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexSlice;
 use oxc_str::Ident;
 
 use crate::diagnostics::ErrorCategory;
@@ -14,10 +15,10 @@ use crate::react_compiler_hir::visitors::{
     each_terminal_operand,
 };
 use crate::react_compiler_hir::{
-    ArrayElement, BlockId, DependencyPathEntry, Effect, HirFunction, Identifier, IdentifierId,
-    IdentifierName, InstructionKind, InstructionValue, ManualMemoDependency,
+    ArrayElement, BlockId, DependencyPathEntry, Effect, FunctionId, HirFunction, Identifier,
+    IdentifierId, IdentifierName, InstructionKind, InstructionValue, ManualMemoDependency,
     ManualMemoDependencyRoot, NonLocalBinding, ParamPattern, Place, PlaceOrSpread, PropertyLiteral,
-    Terminal, Type,
+    Terminal, Type, TypeId,
 };
 use oxc_span::Span;
 
@@ -216,15 +217,18 @@ fn is_use_ref_type(ty: &Type) -> bool {
 
 fn get_identifier_type<'a>(
     id: IdentifierId,
-    identifiers: &'a [Identifier<'a>],
-    types: &'a [Type<'a>],
+    identifiers: &'a IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &'a IndexSlice<TypeId, [Type<'a>]>,
 ) -> &'a Type<'a> {
-    let ident = &identifiers[id.index()];
-    &types[ident.type_.index()]
+    let ident = &identifiers[id];
+    &types[ident.type_]
 }
 
-fn get_identifier_name<'a>(id: IdentifierId, identifiers: &[Identifier<'a>]) -> Option<&'a str> {
-    identifiers[id.index()].name.as_ref().map(IdentifierName::value)
+fn get_identifier_name<'a>(
+    id: IdentifierId,
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
+) -> Option<&'a str> {
+    identifiers[id].name.as_ref().map(IdentifierName::value)
 }
 
 // =============================================================================
@@ -260,7 +264,7 @@ fn is_sub_path_ignoring_optionals(
 
 fn collect_reactive_identifiers(
     func: &HirFunction,
-    functions: &[HirFunction],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
 ) -> FxHashSet<IdentifierId> {
     let mut reactive = FxHashSet::default();
     for (_block_id, block) in &func.body.blocks {
@@ -448,9 +452,9 @@ fn visit_candidate_dependency<'a>(
 
 fn collect_dependencies<'a>(
     func: &HirFunction<'a>,
-    identifiers: &[Identifier<'a>],
-    types: &[Type<'a>],
-    functions: &[HirFunction<'a>],
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &IndexSlice<TypeId, [Type<'a>]>,
+    functions: &IndexSlice<FunctionId, [HirFunction<'a>]>,
     temporaries: &mut FxHashMap<IdentifierId, Temporary<'a>>,
     callbacks: &mut Option<&mut Callbacks<'_, 'a>>,
     is_function_expression: bool,
@@ -577,7 +581,7 @@ fn collect_dependencies<'a>(
                     locals.insert(decl_lv.place.identifier);
                 }
                 InstructionValue::StoreLocal { lvalue: store_lv, value: store_val, .. } => {
-                    let has_name = identifiers[store_lv.place.identifier.index()].name.is_some();
+                    let has_name = identifiers[store_lv.place.identifier].name.is_some();
                     if !has_name {
                         // Unnamed: propagate temporary
                         if let Some(temp) = temporaries.get(&store_val.identifier).cloned() {
@@ -702,7 +706,7 @@ fn collect_dependencies<'a>(
                 }
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    let inner_func = &functions[lowered_func.func.index()];
+                    let inner_func = &functions[lowered_func.func];
                     let function_deps = collect_dependencies(
                         inner_func,
                         identifiers,
@@ -1102,8 +1106,8 @@ fn validate_dependencies(
     manual_memo_span: Option<Span>,
     category: ErrorCategory,
     exhaustive_deps_report_mode: &str,
-    identifiers: &[Identifier<'_>],
-    types: &[Type<'_>],
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'_>]>,
+    types: &IndexSlice<TypeId, [Type<'_>]>,
 ) -> Result<Option<OxcDiagnostic>, OxcDiagnostic> {
     // Sort dependencies by name and path
     inferred.sort_by(|a, b| {
@@ -1383,7 +1387,10 @@ fn validate_dependencies(
 // Printing helpers
 // =============================================================================
 
-fn print_inferred_dependency(dep: &InferredDependency, identifiers: &[Identifier]) -> String {
+fn print_inferred_dependency(
+    dep: &InferredDependency,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+) -> String {
     match dep {
         InferredDependency::Global { binding } => binding.name().to_string(),
         InferredDependency::Local { identifier, path, .. } => {
@@ -1397,7 +1404,10 @@ fn print_inferred_dependency(dep: &InferredDependency, identifiers: &[Identifier
     }
 }
 
-fn print_manual_memo_dependency(dep: &ManualMemoDependency, identifiers: &[Identifier]) -> String {
+fn print_manual_memo_dependency(
+    dep: &ManualMemoDependency,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+) -> String {
     let name = match &dep.root {
         ManualMemoDependencyRoot::Global { identifier_name } => identifier_name.as_str(),
         ManualMemoDependencyRoot::NamedLocal { value, .. } => {
@@ -1419,8 +1429,8 @@ fn print_manual_memo_dependency(dep: &ManualMemoDependency, identifiers: &[Ident
 fn is_optional_dependency(
     identifier: IdentifierId,
     reactive: &FxHashSet<IdentifierId>,
-    identifiers: &[Identifier],
-    types: &[Type],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
 ) -> bool {
     if reactive.contains(&identifier) {
         return false;
@@ -1432,8 +1442,8 @@ fn is_optional_dependency(
 fn is_optional_dependency_inferred(
     dep: &InferredDependency,
     reactive: &FxHashSet<IdentifierId>,
-    identifiers: &[Identifier],
-    types: &[Type],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
 ) -> bool {
     match dep {
         InferredDependency::Local { identifier, .. } => {

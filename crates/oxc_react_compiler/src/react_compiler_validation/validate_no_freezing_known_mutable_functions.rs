@@ -8,13 +8,14 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexSlice;
 
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
 use crate::react_compiler_hir::{
-    AliasingEffect, Effect, HirFunction, Identifier, IdentifierId, IdentifierName,
-    InstructionValue, Place, Type,
+    AliasingEffect, Effect, FunctionId, HirFunction, Identifier, IdentifierId, IdentifierName,
+    InstructionValue, Place, Type, TypeId,
 };
 use oxc_span::Span;
 
@@ -48,9 +49,9 @@ pub fn validate_no_freezing_known_mutable_functions(func: &HirFunction, env: &mu
 
 fn check_no_freezing_known_mutable_functions(
     func: &HirFunction,
-    identifiers: &[Identifier],
-    types: &[Type],
-    functions: &[HirFunction],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
     env: &Environment,
 ) -> Vec<OxcDiagnostic> {
     // Maps an identifier to the mutation effect that makes it "known mutable"
@@ -82,7 +83,7 @@ fn check_no_freezing_known_mutable_functions(
                 }
 
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
-                    let inner_function = &functions[lowered_func.func.index()];
+                    let inner_function = &functions[lowered_func.func];
                     if let Some(ref aliasing_effects) = inner_function.aliasing_effects {
                         let context_ids: FxHashSet<IdentifierId> =
                             inner_function.context.iter().map(|place| place.identifier).collect();
@@ -169,12 +170,12 @@ fn check_no_freezing_known_mutable_functions(
 fn check_operand_for_freeze_violation(
     operand: &Place,
     context_mutation_effects: &FxHashMap<IdentifierId, MutationInfo>,
-    identifiers: &[Identifier],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     diagnostics: &mut Vec<OxcDiagnostic>,
 ) {
     if operand.effect == Effect::Freeze {
         if let Some(mutation_info) = context_mutation_effects.get(&operand.identifier) {
-            let identifier = &identifiers[mutation_info.value_identifier.index()];
+            let identifier = &identifiers[mutation_info.value_identifier];
             let variable_name = match &identifier.name {
                 Some(IdentifierName::Named(name)) => format!("`{}`", name),
                 _ => "a local variable".to_string(),
@@ -208,9 +209,9 @@ fn check_operand_for_freeze_violation(
 /// Check if an identifier's type is a ref or ref-like mutable type.
 fn is_ref_or_ref_like_mutable_type(
     identifier_id: IdentifierId,
-    identifiers: &[Identifier],
-    types: &[Type],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
 ) -> bool {
-    let identifier = &identifiers[identifier_id.index()];
-    crate::react_compiler_hir::is_ref_or_ref_like_mutable_type(&types[identifier.type_.index()])
+    let identifier = &identifiers[identifier_id];
+    crate::react_compiler_hir::is_ref_or_ref_like_mutable_type(&types[identifier.type_])
 }

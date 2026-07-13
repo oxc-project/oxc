@@ -99,7 +99,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
                     let identifier_id = instr.lvalue.identifier;
-                    if env.identifiers[identifier_id.index()].name.is_none() {
+                    if env.identifiers[identifier_id].name.is_none() {
                         functions.insert(identifier_id, lowered_func.func);
                     }
                     continue;
@@ -116,7 +116,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                         None => continue, // Not invoking a local function expression
                     };
 
-                    let inner_func = &env.functions[inner_func_id.index()];
+                    let inner_func = &env.functions[inner_func_id];
                     if !inner_func.params.is_empty() || inner_func.is_async || inner_func.generator
                     {
                         // Can't inline functions with params, or async/generator functions
@@ -152,8 +152,8 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                     func.body.blocks.get_mut(&block_id).unwrap().instructions.truncate(ii);
 
                     let has_single_return =
-                        has_single_exit_return_terminal(&env.functions[inner_func_id.index()]);
-                    let inner_entry = env.functions[inner_func_id.index()].body.entry;
+                        has_single_exit_return_terminal(&env.functions[inner_func_id]);
+                    let inner_entry = env.functions[inner_func_id].body.entry;
 
                     if has_single_return {
                         // Single-return path: simple goto replacement
@@ -165,7 +165,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                         };
 
                         // Take blocks and instructions from inner function
-                        let inner_func = &mut env.functions[inner_func_id.index()];
+                        let inner_func = &mut env.functions[inner_func_id];
                         let inner_blocks: Vec<(BlockId, BasicBlock)> =
                             inner_func.body.blocks.drain(..).collect();
                         let inner_instructions: Vec<Instruction> =
@@ -230,12 +230,12 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
 
                         // Promote the temporary with a name as we require this to persist
                         let identifier_id = result.identifier;
-                        if env.identifiers[identifier_id.index()].name.is_none() {
+                        if env.identifiers[identifier_id].name.is_none() {
                             promote_temporary(env, identifier_id);
                         }
 
                         // Take blocks and instructions from inner function
-                        let inner_func = &mut env.functions[inner_func_id.index()];
+                        let inner_func = &mut env.functions[inner_func_id];
                         let inner_blocks: Vec<(BlockId, BasicBlock)> =
                             inner_func.body.blocks.drain(..).collect();
                         let inner_instructions: Vec<Instruction> =
@@ -386,7 +386,7 @@ fn declare_temporary<'a>(
 
 /// Promote a temporary identifier to a named identifier.
 fn promote_temporary(env: &mut Environment<'_>, identifier_id: IdentifierId) {
-    let decl_id = env.identifiers[identifier_id.index()].declaration_id;
-    env.identifiers[identifier_id.index()].name =
+    let decl_id = env.identifiers[identifier_id].declaration_id;
+    env.identifiers[identifier_id].name =
         Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.index())));
 }

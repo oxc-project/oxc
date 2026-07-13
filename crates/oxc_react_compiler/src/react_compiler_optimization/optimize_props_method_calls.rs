@@ -27,8 +27,8 @@ pub fn optimize_props_method_calls(func: &mut HirFunction, env: &Environment) {
                 &instr.value,
                 InstructionValue::MethodCall { receiver, .. }
                     if {
-                        let identifier = &env.identifiers[receiver.identifier.index()];
-                        let ty = &env.types[identifier.type_.index()];
+                        let identifier = &env.identifiers[receiver.identifier];
+                        let ty = &env.types[identifier.type_];
                         is_props_type(ty)
                     }
             );

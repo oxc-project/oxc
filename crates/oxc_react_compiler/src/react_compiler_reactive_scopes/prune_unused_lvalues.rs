@@ -64,7 +64,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
 
     /// TS: `visitPlace(_id, place, state) { state.delete(place.identifier.declarationId) }`
     fn visit_place(&self, _id: EvaluationOrder, place: &Place, state: &mut LValues) {
-        let ident = &self.env.identifiers[place.identifier.index()];
+        let ident = &self.env.identifiers[place.identifier];
         state.remove(&ident.declaration_id);
     }
 
@@ -74,7 +74,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for Visitor<'a, 'e> {
     fn visit_instruction(&self, instruction: &ReactiveInstruction<'a>, state: &mut LValues) {
         self.traverse_instruction(instruction, state);
         if let Some(lv) = &instruction.lvalue {
-            let ident = &self.env.identifiers[lv.identifier.index()];
+            let ident = &self.env.identifiers[lv.identifier];
             if ident.name.is_none() {
                 state.insert(ident.declaration_id);
             }
@@ -113,7 +113,7 @@ fn null_unused_in_instruction<'a>(
     unused: &FxHashSet<DeclarationId>,
 ) {
     if let Some(lv) = &instr.lvalue {
-        let ident = &env.identifiers[lv.identifier.index()];
+        let ident = &env.identifiers[lv.identifier];
         if unused.contains(&ident.declaration_id) {
             instr.lvalue = None;
         }

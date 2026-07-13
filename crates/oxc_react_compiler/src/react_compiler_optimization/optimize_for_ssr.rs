@@ -52,7 +52,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::Destructure { value, lvalue, .. } => {
-                    if inlined_state.contains_key(&env.identifiers[value.identifier.index()].id) {
+                    if inlined_state.contains_key(&env.identifiers[value.identifier].id) {
                         if let Pattern::Array(arr) = &lvalue.pattern {
                             if !arr.items.is_empty() {
                                 if let ArrayPatternElement::Place(_) = &arr.items[0] {
@@ -74,8 +74,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                 if let (PlaceOrSpread::Place(_), PlaceOrSpread::Place(arg)) =
                                     (&args[0], &args[1])
                                 {
-                                    let lvalue_id =
-                                        env.identifiers[instr.lvalue.identifier.index()].id;
+                                    let lvalue_id = env.identifiers[instr.lvalue.identifier].id;
                                     inlined_state.insert(
                                         lvalue_id,
                                         InlinedStateReplacement::LoadLocal {
@@ -91,8 +90,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                     PlaceOrSpread::Place(initializer),
                                 ) = (&args[0], &args[1], &args[2])
                                 {
-                                    let lvalue_id =
-                                        env.identifiers[instr.lvalue.identifier.index()].id;
+                                    let lvalue_id = env.identifiers[instr.lvalue.identifier].id;
                                     let call_span = instr.value.span().copied();
                                     inlined_state.insert(
                                         lvalue_id,
@@ -107,14 +105,12 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                         }
                         Some(HookKind::UseState) if args.len() == 1 => {
                             if let PlaceOrSpread::Place(arg) = &args[0] {
-                                let arg_type = &env.types
-                                    [env.identifiers[arg.identifier.index()].type_.index()];
+                                let arg_type = &env.types[env.identifiers[arg.identifier].type_];
                                 if is_primitive_type(arg_type)
                                     || is_plain_object_type(arg_type)
                                     || is_array_type(arg_type)
                                 {
-                                    let lvalue_id =
-                                        env.identifiers[instr.lvalue.identifier.index()].id;
+                                    let lvalue_id = env.identifiers[instr.lvalue.identifier].id;
                                     inlined_state.insert(
                                         lvalue_id,
                                         InlinedStateReplacement::LoadLocal {
@@ -135,7 +131,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
             if !inlined_state.is_empty() {
                 let operands = each_instruction_value_operand(&instr.value, env);
                 for operand in &operands {
-                    let id = env.identifiers[operand.identifier.index()].id;
+                    let id = env.identifiers[operand.identifier].id;
                     inlined_state.remove(&id);
                 }
             }
@@ -143,7 +139,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
         if !inlined_state.is_empty() {
             let operands = each_terminal_operand(&block.terminal);
             for operand in &operands {
-                let id = env.identifiers[operand.identifier.index()].id;
+                let id = env.identifiers[operand.identifier].id;
                 inlined_state.remove(&id);
             }
         }
@@ -162,7 +158,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
             let instr = &mut func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, span, .. } => {
-                    let inner_func = &env.functions[lowered_func.func.index()];
+                    let inner_func = &env.functions[lowered_func.func];
                     if has_known_non_render_call(inner_func, env) {
                         let span = *span;
                         instr.value =
@@ -184,7 +180,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                     }
                 }
                 InstructionValue::Destructure { value, lvalue, span } => {
-                    let value_id = env.identifiers[value.identifier.index()].id;
+                    let value_id = env.identifiers[value.identifier].id;
                     if inlined_state.contains_key(&value_id) {
                         // Invariant: destructuring pattern must be ArrayPattern with at least one Identifier item
                         if let Pattern::Array(arr) = &lvalue.pattern {
@@ -229,7 +225,7 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                             };
                         }
                         Some(HookKind::UseReducer | HookKind::UseState) => {
-                            let lvalue_id = env.identifiers[instr.lvalue.identifier.index()].id;
+                            let lvalue_id = env.identifiers[instr.lvalue.identifier].id;
                             if let Some(replacement) = inlined_state.get(&lvalue_id) {
                                 instr.value = match replacement {
                                     InlinedStateReplacement::LoadLocal { place, span } => {
@@ -278,8 +274,7 @@ fn has_known_non_render_call(func: &HirFunction, env: &Environment) -> bool {
         for &instr_id in &block.instructions {
             let instr = &func.instructions[instr_id.index()];
             if let InstructionValue::CallExpression { callee, .. } = &instr.value {
-                let callee_type =
-                    &env.types[env.identifiers[callee.identifier.index()].type_.index()];
+                let callee_type = &env.types[env.identifiers[callee.identifier].type_];
                 if is_set_state_type(callee_type) || is_start_transition_type(callee_type) {
                     return true;
                 }

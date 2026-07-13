@@ -628,9 +628,9 @@ fn process_inner_function<'a>(
     env: &mut Environment<'a>,
     constants: &mut Constants<'a>,
 ) {
-    let mut inner = replace(&mut env.functions[func_id.index()], placeholder_function());
+    let mut inner = replace(&mut env.functions[func_id], placeholder_function());
     constant_propagation_impl(&mut inner, env, constants);
-    env.functions[func_id.index()] = inner;
+    env.functions[func_id] = inner;
 }
 
 // =============================================================================

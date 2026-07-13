@@ -15,20 +15,24 @@
 
 use std::mem::replace;
 
+use oxc_index::IndexSlice;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
-    AliasingEffect, BlockId, BlockKind, Effect, GENERATED_SOURCE, HirFunction, Instruction,
-    InstructionId, InstructionValue, Place, Terminal,
+    AliasingEffect, BlockId, BlockKind, Effect, FunctionId, GENERATED_SOURCE, HirFunction,
+    Instruction, InstructionId, InstructionValue, Place, Terminal,
 };
 use crate::react_compiler_lowering::mark_predecessors;
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 
 /// Merge consecutive blocks in the function's CFG, including inner functions.
-pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunction]) {
+pub fn merge_consecutive_blocks(
+    func: &mut HirFunction,
+    functions: &mut IndexSlice<FunctionId, [HirFunction]>,
+) {
     // Collect inner function IDs for recursive processing
-    let inner_func_ids: Vec<usize> = func
+    let inner_func_ids: Vec<FunctionId> = func
         .body
         .blocks
         .values()
@@ -37,9 +41,7 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
-                | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    Some(lowered_func.func.index())
-                }
+                | InstructionValue::ObjectMethod { lowered_func, .. } => Some(lowered_func.func),
                 _ => None,
             }
         })

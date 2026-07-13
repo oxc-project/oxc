@@ -1,5 +1,7 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use oxc_index::IndexSlice;
+
 use oxc_diagnostics::Diagnostics;
 
 use crate::diagnostics::ErrorCategory;
@@ -34,7 +36,7 @@ struct FuncExprInfo {
 
 fn validate_use_memo_impl(
     func: &HirFunction,
-    functions: &[HirFunction],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
     errors: &mut Diagnostics,
     validate_no_void_use_memo: bool,
 ) -> Diagnostics {
@@ -141,7 +143,7 @@ fn validate_use_memo_impl(
 
 #[allow(clippy::too_many_arguments)]
 fn handle_possible_use_memo_call(
-    functions: &[HirFunction],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
     errors: &mut Diagnostics,
     void_memo_errors: &mut Diagnostics,
     use_memos: &FxHashSet<IdentifierId>,
@@ -167,7 +169,7 @@ fn handle_possible_use_memo_call(
         None => return,
     };
 
-    let body_func = &functions[body_info.func_id.index()];
+    let body_func = &functions[body_info.func_id];
 
     // Validate no parameters
     if !body_func.params.is_empty() {
@@ -267,7 +269,7 @@ fn has_non_void_return(func: &HirFunction) -> bool {
 /// Thin wrapper around canonical `each_instruction_value_operand_with_functions` that maps to ids.
 fn each_instruction_value_operand_ids(
     value: &InstructionValue,
-    functions: &[HirFunction],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
 ) -> Vec<IdentifierId> {
     each_instruction_value_operand_with_functions(value, functions)
         .into_iter()

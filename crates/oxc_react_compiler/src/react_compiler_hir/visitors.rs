@@ -6,11 +6,13 @@
  */
 use rustc_hash::FxHashMap;
 
+use oxc_index::IndexSlice;
+
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
-    ArrayElement, ArrayPatternElement, BasicBlock, BlockId, HirFunction, IdentifierId, Instruction,
-    InstructionValue, JsxAttribute, JsxTag, ManualMemoDependencyRoot, ObjectPropertyKey,
-    ObjectPropertyOrSpread, Pattern, Place, PlaceOrSpread, ScopeId, Terminal,
+    ArrayElement, ArrayPatternElement, BasicBlock, BlockId, FunctionId, HirFunction, IdentifierId,
+    Instruction, InstructionValue, JsxAttribute, JsxTag, ManualMemoDependencyRoot,
+    ObjectPropertyKey, ObjectPropertyOrSpread, Pattern, Place, PlaceOrSpread, ScopeId, Terminal,
 };
 
 // =============================================================================
@@ -100,7 +102,7 @@ pub fn each_instruction_value_operand(value: &InstructionValue, env: &Environmen
 /// Useful when borrow splitting prevents passing the full `Environment`.
 pub fn each_instruction_value_operand_with_functions(
     value: &InstructionValue,
-    functions: &[HirFunction],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
 ) -> Vec<Place> {
     let mut result = Vec::new();
     match value {
@@ -218,7 +220,7 @@ pub fn each_instruction_value_operand_with_functions(
         }
         InstructionValue::ObjectMethod { lowered_func, .. }
         | InstructionValue::FunctionExpression { lowered_func, .. } => {
-            let func = &functions[lowered_func.func.index()];
+            let func = &functions[lowered_func.func];
             for ctx_place in &func.context {
                 result.push(ctx_place.clone());
             }
@@ -857,7 +859,7 @@ pub fn each_terminal_operand_ids(terminal: &Terminal) -> Vec<IdentifierId> {
 //   for_each_instruction_value_operand_mut(&mut instr.value, &mut |place| { ... });
 //   if let InstructionValue::FunctionExpression { lowered_func, .. }
 //       | InstructionValue::ObjectMethod { lowered_func, .. } = &mut instr.value {
-//       let func = &mut env.functions[lowered_func.func.index()];
+//       let func = &mut env.functions[lowered_func.func];
 //       for ctx in func.context.iter_mut() { ... }
 //   }
 //

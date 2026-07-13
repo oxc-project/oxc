@@ -127,18 +127,17 @@ fn eliminate_redundant_phi_impl(
 
                 if let Some(fid) = func_expr_id {
                     // Rewrite context places
-                    let context = &mut env.functions[fid.index()].context;
+                    let context = &mut env.functions[fid].context;
                     for place in context.iter_mut() {
                         rewrite_place(place, rewrites);
                     }
 
                     // Take inner function out, process it, put it back
-                    let mut inner_func =
-                        replace(&mut env.functions[fid.index()], placeholder_function());
+                    let mut inner_func = replace(&mut env.functions[fid], placeholder_function());
 
                     eliminate_redundant_phi_impl(&mut inner_func, env, rewrites);
 
-                    env.functions[fid.index()] = inner_func;
+                    env.functions[fid] = inner_func;
                 }
             }
 

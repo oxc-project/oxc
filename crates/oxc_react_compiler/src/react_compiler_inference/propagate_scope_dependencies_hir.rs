@@ -90,13 +90,11 @@ pub fn propagate_scope_dependencies_hir<'a>(func: &mut HirFunction<'a>, env: &mu
 
         // Step 3: Reduce dependencies to a minimal set.
         let candidates = tree.derive_minimal_dependencies();
-        let scope = &mut env.scopes[scope_id.index()];
+        let scope = &mut env.scopes[*scope_id];
         for candidate_dep in candidates {
             let already_exists = scope.dependencies.iter().any(|existing_dep| {
-                let existing_decl_id =
-                    env.identifiers[existing_dep.identifier.index()].declaration_id;
-                let candidate_decl_id =
-                    env.identifiers[candidate_dep.identifier.index()].declaration_id;
+                let existing_decl_id = env.identifiers[existing_dep.identifier].declaration_id;
+                let candidate_decl_id = env.identifiers[candidate_dep.identifier].declaration_id;
                 existing_decl_id == candidate_decl_id
                     && are_equal_paths(&existing_dep.path, &candidate_dep.path)
             });
@@ -134,7 +132,7 @@ fn find_temporaries_used_outside_declaring_scope(
                         pruned_scopes: &FxHashSet<ScopeId>,
                         used_outside: &mut FxHashSet<DeclarationId>,
                         env: &Environment| {
-        let decl_id = env.identifiers[place_id.index()].declaration_id;
+        let decl_id = env.identifiers[place_id].declaration_id;
         if let Some(&declaring_scope) = declarations.get(&decl_id) {
             if !traversal.is_scope_active(declaring_scope)
                 && !pruned_scopes.contains(&declaring_scope)
@@ -178,8 +176,7 @@ fn find_temporaries_used_outside_declaring_scope(
                         InstructionValue::LoadLocal { .. }
                         | InstructionValue::LoadContext { .. }
                         | InstructionValue::PropertyLoad { .. } => {
-                            let decl_id =
-                                env.identifiers[instr.lvalue.identifier.index()].declaration_id;
+                            let decl_id = env.identifiers[instr.lvalue.identifier].declaration_id;
                             declarations.insert(decl_id, scope);
                         }
                         _ => {}
@@ -236,8 +233,8 @@ fn is_load_context_mutable(
     env: &Environment,
 ) -> bool {
     if let InstructionValue::LoadContext { place, .. } = value {
-        if let Some(scope_id) = env.identifiers[place.identifier.index()].scope {
-            let scope_range = &env.scopes[scope_id.index()].range;
+        if let Some(scope_id) = env.identifiers[place.identifier].scope {
+            let scope_range = &env.scopes[scope_id].range;
             return id >= scope_range.end;
         }
     }
@@ -267,7 +264,7 @@ fn collect_temporaries_sidemap_impl<'a>(
             let instr = &func.instructions[instr_id.index()];
             let instr_eval_order =
                 if let Some(outer_id) = inner_fn_context { outer_id } else { instr.id };
-            let lvalue_decl_id = env.identifiers[instr.lvalue.identifier.index()].declaration_id;
+            let lvalue_decl_id = env.identifiers[instr.lvalue.identifier].declaration_id;
             let used_outside = used_outside_declaring_scope.contains(&lvalue_decl_id);
 
             match &instr.value {
@@ -278,8 +275,8 @@ fn collect_temporaries_sidemap_impl<'a>(
                     }
                 }
                 InstructionValue::LoadLocal { place, span, .. }
-                    if env.identifiers[instr.lvalue.identifier.index()].name.is_none()
-                        && env.identifiers[place.identifier.index()].name.is_some()
+                    if env.identifiers[instr.lvalue.identifier].name.is_none()
+                        && env.identifiers[place.identifier].name.is_some()
                         && !used_outside =>
                 {
                     if inner_fn_context.is_none()
@@ -298,8 +295,8 @@ fn collect_temporaries_sidemap_impl<'a>(
                 }
                 value @ InstructionValue::LoadContext { place, span, .. }
                     if is_load_context_mutable(value, instr_eval_order, env)
-                        && env.identifiers[instr.lvalue.identifier.index()].name.is_none()
-                        && env.identifiers[place.identifier.index()].name.is_some()
+                        && env.identifiers[instr.lvalue.identifier].name.is_none()
+                        && env.identifiers[place.identifier].name.is_some()
                         && !used_outside =>
                 {
                     if inner_fn_context.is_none()
@@ -318,7 +315,7 @@ fn collect_temporaries_sidemap_impl<'a>(
                 }
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    let inner_func = &env.functions[lowered_func.func.index()];
+                    let inner_func = &env.functions[lowered_func.func];
                     let ctx = inner_fn_context.unwrap_or(instr.id);
                     collect_temporaries_sidemap_impl(
                         inner_func,
@@ -421,7 +418,7 @@ fn traverse_function_optional<'a>(
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    let inner_func = &env.functions[lowered_func.func.index()];
+                    let inner_func = &env.functions[lowered_func.func];
                     traverse_function_optional(inner_func, env, ctx);
                 }
                 _ => {}
@@ -886,10 +883,10 @@ fn is_immutable_at_instr(
     if let Some(nested_ctx) = ctx.nested_fn_immutable_context {
         return nested_ctx.contains(&identifier_id);
     }
-    let ident = &env.identifiers[identifier_id.index()];
+    let ident = &env.identifiers[identifier_id];
     let mutable_at_instr =
         ident.mutable_range.end > ident.mutable_range.start + 1 && ident.scope.is_some() && {
-            let scope = &env.scopes[ident.scope.unwrap().index()];
+            let scope = &env.scopes[ident.scope.unwrap()];
             in_range(instr_id, &scope.range)
         };
     !mutable_at_instr || ctx.known_immutable_identifiers.contains(&identifier_id)
@@ -971,8 +968,7 @@ fn get_assumed_invoked_functions_impl(
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::CallExpression { callee, args, .. } => {
-                    let callee_ty =
-                        &env.types[env.identifiers[callee.identifier.index()].type_.index()];
+                    let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     let maybe_hook = env.get_hook_kind_for_type(callee_ty).ok().flatten();
                     if let Some(entry) = temporaries.get(&callee.identifier) {
                         // Direct calls
@@ -1015,7 +1011,7 @@ fn get_assumed_invoked_functions_impl(
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
                     // Recursively traverse into other function expressions
                     // TS passes the shared temporaries map to the recursive call
-                    let inner_func = &env.functions[lowered_func.func.index()];
+                    let inner_func = &env.functions[lowered_func.func];
                     let lambdas_called =
                         get_assumed_invoked_functions_impl(inner_func, env, temporaries);
                     if let Some(entry) = temporaries.get_mut(&instr.lvalue.identifier) {
@@ -1128,7 +1124,7 @@ fn collect_non_nulls_in_blocks<'a>(
             // Handle assumed-invoked inner functions
             if let InstructionValue::FunctionExpression { lowered_func, .. } = &instr.value {
                 if ctx.assumed_invoked_fns.contains(&lowered_func.func) {
-                    let inner_func = &env.functions[lowered_func.func.index()];
+                    let inner_func = &env.functions[lowered_func.func];
                     // Build nested fn immutable context
                     let nested_fn_immutable_context: FxHashSet<IdentifierId> =
                         if ctx.nested_fn_immutable_context.is_some() {
@@ -1639,19 +1635,19 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
         if self.inner_fn_context.is_some() {
             return;
         }
-        let decl_id = env.identifiers[identifier_id.index()].declaration_id;
+        let decl_id = env.identifiers[identifier_id].declaration_id;
         self.declarations.entry(decl_id).or_insert_with(|| decl.clone());
         self.reassignments.insert(identifier_id, decl);
     }
 
     fn has_declared(&self, identifier_id: IdentifierId, env: &Environment) -> bool {
-        let decl_id = env.identifiers[identifier_id.index()].declaration_id;
+        let decl_id = env.identifiers[identifier_id].declaration_id;
         self.declarations.contains_key(&decl_id)
     }
 
     fn check_valid_dependency(&self, dep: &ReactiveScopeDependency, env: &Environment) -> bool {
         // Ref value is not a valid dep
-        let ty = &env.types[env.identifiers[dep.identifier.index()].type_.index()];
+        let ty = &env.types[env.identifiers[dep.identifier].type_];
         if is_ref_value_type(ty) {
             return false;
         }
@@ -1660,7 +1656,7 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
             return false;
         }
 
-        let ident = &env.identifiers[dep.identifier.index()];
+        let ident = &env.identifiers[dep.identifier];
         let current_declaration = self
             .reassignments
             .get(&dep.identifier)
@@ -1668,7 +1664,7 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
 
         if let Some(current_scope) = self.current_scope() {
             if let Some(decl) = current_declaration {
-                let scope_range_start = env.scopes[current_scope.index()].range.start;
+                let scope_range_start = env.scopes[current_scope].range.start;
                 return decl.id < scope_range_start;
             }
         }
@@ -1700,7 +1696,7 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
     }
 
     fn visit_dependency(&mut self, dep: ReactiveScopeDependency<'a>, env: &mut Environment) {
-        let ident = &env.identifiers[dep.identifier.index()];
+        let ident = &env.identifiers[dep.identifier];
         let decl_id = ident.declaration_id;
 
         // Record scope declarations for values used outside their declaring scope
@@ -1710,19 +1706,18 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
                 for &scope_id in &orig_scope_stack {
                     if !self.scope_stack.contains(&scope_id) {
                         // Check if already declared in this scope
-                        let scope = &env.scopes[scope_id.index()];
-                        let already_declared = scope.declarations.iter().any(|(_, d)| {
-                            env.identifiers[d.identifier.index()].declaration_id == decl_id
-                        });
+                        let scope = &env.scopes[scope_id];
+                        let already_declared = scope
+                            .declarations
+                            .iter()
+                            .any(|(_, d)| env.identifiers[d.identifier].declaration_id == decl_id);
                         if !already_declared {
                             let orig_scope_id = *orig_scope_stack.last().unwrap();
                             let new_decl = ReactiveScopeDeclaration {
                                 identifier: dep.identifier,
                                 scope: orig_scope_id,
                             };
-                            env.scopes[scope_id.index()]
-                                .declarations
-                                .push((dep.identifier, new_decl));
+                            env.scopes[scope_id].declarations.push((dep.identifier, new_decl));
                         }
                     }
                 }
@@ -1730,19 +1725,18 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
         }
 
         // Handle ref.current access
-        let dep =
-            if is_use_ref_type(&env.types[env.identifiers[dep.identifier.index()].type_.index()])
-                && dep.path.first().map(|p| p.property.is_string("current")).unwrap_or(false)
-            {
-                ReactiveScopeDependency {
-                    identifier: dep.identifier,
-                    reactive: dep.reactive,
-                    path: vec![],
-                    span: dep.span,
-                }
-            } else {
-                dep
-            };
+        let dep = if is_use_ref_type(&env.types[env.identifiers[dep.identifier].type_])
+            && dep.path.first().map(|p| p.property.is_string("current")).unwrap_or(false)
+        {
+            ReactiveScopeDependency {
+                identifier: dep.identifier,
+                reactive: dep.reactive,
+                path: vec![],
+                span: dep.span,
+            }
+        } else {
+            dep
+        };
 
         if self.check_valid_dependency(&dep, env) {
             if let Some(top) = self.dep_stack.last_mut() {
@@ -1753,10 +1747,10 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
 
     fn visit_reassignment(&mut self, place: &Place, env: &mut Environment) {
         if let Some(current_scope) = self.current_scope() {
-            let scope = &env.scopes[current_scope.index()];
+            let scope = &env.scopes[current_scope];
             let already = scope.reassignments.iter().any(|id| {
-                env.identifiers[id.index()].declaration_id
-                    == env.identifiers[place.identifier.index()].declaration_id
+                env.identifiers[*id].declaration_id
+                    == env.identifiers[place.identifier].declaration_id
             });
             if !already
                 && self.check_valid_dependency(
@@ -1769,7 +1763,7 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
                     env,
                 )
             {
-                env.scopes[current_scope.index()].reassignments.push(place.identifier);
+                env.scopes[current_scope].reassignments.push(place.identifier);
             }
         }
     }
@@ -1795,9 +1789,9 @@ fn visit_inner_function_blocks<'a>(
 ) {
     // Clone inner function's instructions and block structure to avoid
     // borrow conflicts when mutating env through handle_instruction.
-    let inner_instrs: Vec<Instruction> = env.functions[func_id.index()].instructions.clone();
+    let inner_instrs: Vec<Instruction> = env.functions[func_id].instructions.clone();
     type InnerBlockSnapshot = (BlockId, Vec<InstructionId>, Vec<(BlockId, IdentifierId)>, Terminal);
-    let inner_blocks: Vec<InnerBlockSnapshot> = env.functions[func_id.index()]
+    let inner_blocks: Vec<InnerBlockSnapshot> = env.functions[func_id]
         .body
         .blocks
         .iter()

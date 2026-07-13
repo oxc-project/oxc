@@ -72,8 +72,8 @@ fn build_temporary_place(builder: &mut HirBuilder<'_, '_>, span: Option<Span>) -
 /// Corresponds to TS `promoteTemporary(identifier)`.
 fn promote_temporary(builder: &mut HirBuilder<'_, '_>, identifier_id: IdentifierId) {
     let env = builder.environment_mut();
-    let decl_id = env.identifiers[identifier_id.index()].declaration_id;
-    env.identifiers[identifier_id.index()].name =
+    let decl_id = env.identifiers[identifier_id].declaration_id;
+    env.identifiers[identifier_id].name =
         Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.index())));
 }
 
@@ -83,7 +83,7 @@ fn lower_value_to_temporary<'a>(
 ) -> Result<Place, OxcDiagnostic> {
     // Optimization: if loading an unnamed temporary, skip creating a new instruction
     if let InstructionValue::LoadLocal { ref place, .. } = value {
-        let ident = &builder.environment().identifiers[place.identifier.index()];
+        let ident = &builder.environment().identifiers[place.identifier];
         if ident.name.is_none() {
             return Ok(place.clone());
         }

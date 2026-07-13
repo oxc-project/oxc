@@ -394,7 +394,7 @@ pub fn collect_maybe_memo_dependencies<'a>(
             if let Some(source) = maybe_deps.get(&place.identifier) {
                 Some(source.clone())
             } else if matches!(
-                &env.identifiers[place.identifier.index()].name,
+                &env.identifiers[place.identifier].name,
                 Some(IdentifierName::Named(_))
             ) {
                 Some(ManualMemoDependency {
@@ -416,7 +416,7 @@ pub fn collect_maybe_memo_dependencies<'a>(
             let lvalue_id = lvalue.place.identifier;
             let rvalue_id = val.identifier;
             if let Some(aliased) = maybe_deps.get(&rvalue_id) {
-                let lvalue_name = &env.identifiers[lvalue_id.index()].name;
+                let lvalue_name = &env.identifiers[lvalue_id].name;
                 if !matches!(lvalue_name, Some(IdentifierName::Named(_))) {
                     // Note: we can't insert into maybe_deps here since we only have
                     // a shared reference. The caller handles insertion.

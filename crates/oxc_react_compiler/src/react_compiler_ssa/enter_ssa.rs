@@ -66,11 +66,11 @@ impl SSABuilder {
 
     fn make_id(&mut self, old_id: IdentifierId, env: &mut Environment) -> IdentifierId {
         let new_id = env.next_identifier_id();
-        let old = &env.identifiers[old_id.index()];
+        let old = &env.identifiers[old_id];
         let declaration_id = old.declaration_id;
         let name = old.name;
         let span = old.span;
-        let new_ident = &mut env.identifiers[new_id.index()];
+        let new_ident = &mut env.identifiers[new_id];
         new_ident.declaration_id = declaration_id;
         new_ident.name = name;
         new_ident.span = span;
@@ -85,7 +85,7 @@ impl SSABuilder {
         let old_id = old_place.identifier;
 
         if self.unknown.contains(&old_id) {
-            let ident = &env.identifiers[old_id.index()];
+            let ident = &env.identifiers[old_id];
             let name = match &ident.name {
                 Some(name) => format!("{}${}", name.value(), old_id.index()),
                 None => format!("${}", old_id.index()),
@@ -253,8 +253,8 @@ fn apply_pending_phis(func: &mut HirFunction, env: &mut Environment, builder: &m
             block.phis.extend(phis);
         }
     }
-    for fid in &builder.processed_functions.clone() {
-        let inner_func = &mut env.functions[fid.index()];
+    for &fid in &builder.processed_functions.clone() {
+        let inner_func = &mut env.functions[fid];
         for (block_id, block) in inner_func.body.blocks.iter_mut() {
             if let Some(phis) = builder.pending_phis.remove(block_id) {
                 block.phis.extend(phis);
@@ -323,8 +323,8 @@ fn enter_ssa_impl(
 
             // Map context places for function expressions before other operands
             if let Some(fid) = func_expr_id {
-                let context = take(&mut env.functions[fid.index()].context);
-                env.functions[fid.index()].context =
+                let context = take(&mut env.functions[fid].context);
+                env.functions[fid].context =
                     context.into_iter().map(|place| builder.get_place(&place, env)).collect();
             }
 
@@ -351,16 +351,13 @@ fn enter_ssa_impl(
 
             // Handle inner function SSA
             if let Some(fid) = func_expr_id {
-                let context_ids: Vec<IdentifierId> = env.functions[fid.index()]
-                    .context
-                    .iter()
-                    .map(|place| place.identifier)
-                    .collect();
+                let context_ids: Vec<IdentifierId> =
+                    env.functions[fid].context.iter().map(|place| place.identifier).collect();
                 for id in context_ids {
                     builder.unmark_unknown(id);
                 }
                 builder.processed_functions.push(fid);
-                let inner_func = &mut env.functions[fid.index()];
+                let inner_func = &mut env.functions[fid];
                 let inner_entry = inner_func.body.entry;
                 let entry_block = inner_func.body.blocks.get_mut(&inner_entry).unwrap();
 
@@ -376,7 +373,7 @@ fn enter_ssa_impl(
                 let saved_current = builder.current;
 
                 // Map inner function params
-                let inner_params = take(&mut env.functions[fid.index()].params);
+                let inner_params = take(&mut env.functions[fid].params);
                 let mut new_inner_params = Vec::with_capacity(inner_params.len());
                 for param in inner_params {
                     new_inner_params.push(match param {
@@ -388,21 +385,20 @@ fn enter_ssa_impl(
                         }),
                     });
                 }
-                env.functions[fid.index()].params = new_inner_params;
+                env.functions[fid].params = new_inner_params;
 
                 // Take the inner function out of the arena to process it
-                let mut inner_func =
-                    replace(&mut env.functions[fid.index()], placeholder_function());
+                let mut inner_func = replace(&mut env.functions[fid], placeholder_function());
 
                 enter_ssa_impl(&mut inner_func, builder, env, root_entry)?;
 
                 // Put it back
-                env.functions[fid.index()] = inner_func;
+                env.functions[fid] = inner_func;
 
                 builder.current = saved_current;
 
                 // Clear entry preds
-                env.functions[fid.index()].body.blocks.get_mut(&inner_entry).unwrap().preds.clear();
+                env.functions[fid].body.blocks.get_mut(&inner_entry).unwrap().preds.clear();
                 builder.block_preds.insert(inner_entry, Vec::new());
             }
         }
@@ -453,7 +449,7 @@ pub fn placeholder_function<'a>() -> HirFunction<'a> {
             span: None,
         },
         context: Vec::new(),
-        body: HIR { entry: BlockId::from_usize(0), blocks: FxIndexMap::default() },
+        body: HIR { entry: BlockId::ENTRY, blocks: FxIndexMap::default() },
         instructions: Vec::new(),
         generator: false,
         is_async: false,

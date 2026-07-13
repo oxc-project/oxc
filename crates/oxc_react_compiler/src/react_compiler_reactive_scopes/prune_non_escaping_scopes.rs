@@ -70,7 +70,7 @@ pub fn prune_non_escaping_scopes<'a>(
             ParamPattern::Place(p) => p,
             ParamPattern::Spread(s) => &s.place,
         };
-        let identifier = &env.identifiers[place.identifier.index()];
+        let identifier = &env.identifiers[place.identifier];
         state.declare(identifier.declaration_id);
     }
     let visitor = CollectDependenciesVisitor::new(env);
@@ -188,11 +188,11 @@ impl CollectState {
     ) {
         if let Some(scope_id) = get_place_scope(env, id, place.identifier) {
             self.scopes.entry(scope_id).or_insert_with(|| {
-                let scope_data = &env.scopes[scope_id.index()];
+                let scope_data = &env.scopes[scope_id];
                 let dependencies = scope_data
                     .dependencies
                     .iter()
-                    .map(|dep| env.identifiers[dep.identifier.index()].declaration_id)
+                    .map(|dep| env.identifiers[dep.identifier].declaration_id)
                     .collect();
                 ScopeNode { dependencies, seen: false }
             });
@@ -237,8 +237,8 @@ fn get_place_scope<'a>(
     id: EvaluationOrder,
     identifier_id: IdentifierId,
 ) -> Option<ScopeId> {
-    let scope_id = env.identifiers[identifier_id.index()].scope?;
-    if env.scopes[scope_id.index()].range.contains(id) { Some(scope_id) } else { None }
+    let scope_id = env.identifiers[identifier_id].scope?;
+    if env.scopes[scope_id].range.contains(id) { Some(scope_id) } else { None }
 }
 
 // =============================================================================
@@ -792,7 +792,7 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
         let rvalue_data: Vec<(IdentifierId, DeclarationId)> = aliasing_rvalues
             .iter()
             .map(|(identifier_id, _)| {
-                let decl_id = env.identifiers[identifier_id.index()].declaration_id;
+                let decl_id = env.identifiers[*identifier_id].declaration_id;
                 let operand_id = state.resolve(decl_id);
                 (*identifier_id, operand_id)
             })
@@ -815,7 +815,7 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
 
         // Add the operands as dependencies of all lvalues
         for lv in &aliasing_lvalues {
-            let lvalue_decl_id = env.identifiers[lv.place_identifier.index()].declaration_id;
+            let lvalue_decl_id = env.identifiers[lv.place_identifier].declaration_id;
             let lvalue_id = state.resolve(lvalue_decl_id);
             let node = state.identifiers.entry(lvalue_id).or_insert_with(|| IdentifierNode {
                 level: MemoizationLevel::Never,
@@ -849,8 +849,8 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
         if let ReactiveValue::Instruction(instr_value) = value {
             if let InstructionValue::LoadLocal { place, .. } = instr_value {
                 if let Some(lv_id) = lvalue {
-                    let lv_decl = env.identifiers[lv_id.index()].declaration_id;
-                    let place_decl = env.identifiers[place.identifier.index()].declaration_id;
+                    let lv_decl = env.identifiers[lv_id].declaration_id;
+                    let place_decl = env.identifiers[place.identifier].declaration_id;
                     state.definitions.insert(lv_decl, place_decl);
                 }
             } else if let InstructionValue::CallExpression { callee, args, .. } = instr_value {
@@ -862,7 +862,7 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                                 PlaceOrSpread::Spread(spread) => &spread.place,
                                 PlaceOrSpread::Place(place) => place,
                             };
-                            let decl = env.identifiers[place.identifier.index()].declaration_id;
+                            let decl = env.identifiers[place.identifier].declaration_id;
                             state.escaping_values.insert(decl);
                         }
                     }
@@ -876,7 +876,7 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                                 PlaceOrSpread::Spread(spread) => &spread.place,
                                 PlaceOrSpread::Place(place) => place,
                             };
-                            let decl = env.identifiers[place.identifier.index()].declaration_id;
+                            let decl = env.identifiers[place.identifier].declaration_id;
                             state.escaping_values.insert(decl);
                         }
                     }
@@ -913,7 +913,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CollectDependenciesVisitor<'a, 'e> 
         // Handle return terminals
         if let ReactiveTerminal::Return { value, .. } = &stmt.terminal {
             let env = self.env;
-            let decl = env.identifiers[value.identifier.index()].declaration_id;
+            let decl = env.identifiers[value.identifier].declaration_id;
             state.0.escaping_values.insert(decl);
 
             // If the return is within a scope, associate those scopes with the returned value
@@ -928,12 +928,12 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CollectDependenciesVisitor<'a, 'e> 
     fn visit_scope(&self, scope: &ReactiveScopeBlock<'a>, state: &mut Self::State) {
         let env = self.env;
         let scope_id = scope.scope;
-        let scope_data = &env.scopes[scope_id.index()];
+        let scope_data = &env.scopes[scope_id];
 
         // If a scope reassigns any variables, set the chain of active scopes as a dependency
         // of those variables.
         for reassignment_id in &scope_data.reassignments {
-            let decl = env.identifiers[reassignment_id.index()].declaration_id;
+            let decl = env.identifiers[*reassignment_id].declaration_id;
             let identifier_node =
                 state.0.identifiers.get_mut(&decl).expect("Expected identifier to be initialized");
             for s in &state.1 {
@@ -1075,7 +1075,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneScopesTransform<'a, 'e> {
         self.visit_scope(scope, state)?;
 
         let scope_id = scope.scope;
-        let scope_data = &self.env.scopes[scope_id.index()];
+        let scope_data = &self.env.scopes[scope_id];
 
         // Keep scopes that appear empty (value being memoized may be early-returned)
         // or have early return values
@@ -1086,10 +1086,10 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneScopesTransform<'a, 'e> {
         }
 
         let has_memoized_output = scope_data.declarations.iter().any(|(_, decl)| {
-            let decl_id = self.env.identifiers[decl.identifier.index()].declaration_id;
+            let decl_id = self.env.identifiers[decl.identifier].declaration_id;
             state.contains(&decl_id)
         }) || scope_data.reassignments.iter().any(|reassign_id| {
-            let decl_id = self.env.identifiers[reassign_id.index()].declaration_id;
+            let decl_id = self.env.identifiers[*reassign_id].declaration_id;
             state.contains(&decl_id)
         });
 
@@ -1114,21 +1114,20 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneScopesTransform<'a, 'e> {
                 lvalue: store_lvalue,
                 ..
             }) if store_lvalue.kind == InstructionKind::Reassign => {
-                let decl_id =
-                    self.env.identifiers[store_lvalue.place.identifier.index()].declaration_id;
+                let decl_id = self.env.identifiers[store_lvalue.place.identifier].declaration_id;
                 let ids = self.reassignments.entry(decl_id).or_default();
                 ids.insert(store_value.identifier);
             }
             ReactiveValue::Instruction(InstructionValue::LoadLocal { place, .. }) => {
-                let has_scope = self.env.identifiers[place.identifier.index()].scope.is_some();
+                let has_scope = self.env.identifiers[place.identifier].scope.is_some();
                 let lvalue_no_scope = instruction
                     .lvalue
                     .as_ref()
-                    .map(|lv| self.env.identifiers[lv.identifier.index()].scope.is_none())
+                    .map(|lv| self.env.identifiers[lv.identifier].scope.is_none())
                     .unwrap_or(false);
                 if has_scope && lvalue_no_scope {
                     if let Some(lv) = &instruction.lvalue {
-                        let decl_id = self.env.identifiers[lv.identifier.index()].declaration_id;
+                        let decl_id = self.env.identifiers[lv.identifier].declaration_id;
                         let ids = self.reassignments.entry(decl_id).or_default();
                         ids.insert(place.identifier);
                     }
@@ -1137,11 +1136,11 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneScopesTransform<'a, 'e> {
             ReactiveValue::Instruction(InstructionValue::FinishMemoize {
                 decl, pruned, ..
             }) => {
-                let decl_has_scope = self.env.identifiers[decl.identifier.index()].scope.is_some();
+                let decl_has_scope = self.env.identifiers[decl.identifier].scope.is_some();
                 if !decl_has_scope {
                     // If the manual memo was a useMemo that got inlined, iterate through
                     // all reassignments to the iife temporary to ensure they're memoized.
-                    let decl_id = self.env.identifiers[decl.identifier.index()].declaration_id;
+                    let decl_id = self.env.identifiers[decl.identifier].declaration_id;
                     let decls: Vec<IdentifierId> = self
                         .reassignments
                         .get(&decl_id)
@@ -1149,13 +1148,13 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneScopesTransform<'a, 'e> {
                         .unwrap_or_else(|| vec![decl.identifier]);
 
                     if decls.iter().all(|d| {
-                        let scope = self.env.identifiers[d.index()].scope;
+                        let scope = self.env.identifiers[*d].scope;
                         scope.is_none() || self.pruned_scopes.contains(&scope.unwrap())
                     }) {
                         *pruned = true;
                     }
                 } else {
-                    let scope = self.env.identifiers[decl.identifier.index()].scope;
+                    let scope = self.env.identifiers[decl.identifier].scope;
                     if let Some(scope_id) = scope {
                         if self.pruned_scopes.contains(&scope_id) {
                             *pruned = true;

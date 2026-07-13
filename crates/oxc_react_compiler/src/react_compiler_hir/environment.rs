@@ -6,6 +6,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::{Allocator, GetAllocator};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_index::IndexVec;
 use oxc_span::Span;
 use oxc_str::{Ident, IdentHashMap, IdentHashSet, format_ident};
 use oxc_syntax::reference::ReferenceId;
@@ -49,10 +50,10 @@ pub struct Environment<'a> {
     next_mutable_range_id_counter: u32,
 
     // Arenas (use direct field access for sliced borrows)
-    pub identifiers: Vec<Identifier<'a>>,
-    pub types: Vec<Type<'a>>,
-    pub scopes: Vec<ReactiveScope<'a>>,
-    pub functions: Vec<HirFunction<'a>>,
+    pub identifiers: IndexVec<IdentifierId, Identifier<'a>>,
+    pub types: IndexVec<TypeId, Type<'a>>,
+    pub scopes: IndexVec<ScopeId, ReactiveScope<'a>>,
+    pub functions: IndexVec<FunctionId, HirFunction<'a>>,
 
     // Error accumulation
     pub errors: Diagnostics,
@@ -174,10 +175,10 @@ impl<'a> Environment<'a> {
             next_block_id_counter: 0,
             next_scope_id_counter: 0,
             next_mutable_range_id_counter: 0,
-            identifiers: Vec::new(),
-            types: Vec::new(),
-            scopes: Vec::new(),
-            functions: Vec::new(),
+            identifiers: IndexVec::new(),
+            types: IndexVec::new(),
+            scopes: IndexVec::new(),
+            functions: IndexVec::new(),
             errors: Diagnostics::new(),
             skip_compilation: false,
             fn_type: ReactFunctionType::Other,
@@ -227,7 +228,7 @@ impl<'a> Environment<'a> {
     /// Allocate a new Identifier in the arena with default values,
     /// returns its IdentifierId.
     pub fn next_identifier_id(&mut self) -> IdentifierId {
-        let id = IdentifierId::from_usize(self.identifiers.len());
+        let id = self.identifiers.next_idx();
         let type_id = self.make_type();
         let mutable_range = self.new_mutable_range(EvaluationOrder::UNSET, EvaluationOrder::UNSET);
         self.identifiers.push(Identifier {
@@ -262,7 +263,7 @@ impl<'a> Environment<'a> {
 
     /// Allocate a new Type in the arena, returns its TypeId.
     pub fn next_type_id(&mut self) -> TypeId {
-        let id = TypeId::from_usize(self.types.len());
+        let id = self.types.next_idx();
         self.types.push(Type::TypeVar { id });
         id
     }
@@ -273,7 +274,7 @@ impl<'a> Environment<'a> {
     }
 
     pub fn add_function(&mut self, func: HirFunction<'a>) -> FunctionId {
-        let id = FunctionId::from_usize(self.functions.len());
+        let id = self.functions.next_idx();
         self.functions.push(func);
         id
     }
@@ -710,7 +711,7 @@ impl<'a> Environment<'a> {
     /// Check whether the function type for an identifier has a noAlias signature.
     /// Looks up the identifier's type and checks its function signature.
     pub fn has_no_alias_signature(&self, identifier_id: IdentifierId) -> bool {
-        let ty = &self.types[self.identifiers[identifier_id.index()].type_.index()];
+        let ty = &self.types[self.identifiers[identifier_id].type_];
         self.get_function_signature(ty).ok().flatten().is_some_and(|sig| sig.no_alias)
     }
 
@@ -720,7 +721,7 @@ impl<'a> Environment<'a> {
         &self,
         identifier_id: IdentifierId,
     ) -> Result<Option<&HookKind>, OxcDiagnostic> {
-        let ty = &self.types[self.identifiers[identifier_id.index()].type_.index()];
+        let ty = &self.types[self.identifiers[identifier_id].type_];
         self.get_hook_kind_for_type(ty)
     }
 }

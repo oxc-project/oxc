@@ -197,7 +197,7 @@ pub fn infer_mutation_aliasing_effects(
             // Check for uninitialized identifier access (matches TS invariant:
             // "Expected value kind to be initialized")
             if let Some((uninitialized_id, usage_span)) = state.uninitialized_access.get() {
-                let ident_info = env.identifiers.get(uninitialized_id.index());
+                let ident_info = env.identifiers.get(uninitialized_id);
                 let name = ident_info
                     .and_then(|ident| ident.name.as_ref())
                     .map(|n| n.value().to_string())
@@ -207,7 +207,7 @@ pub fn infer_mutation_aliasing_effects(
                 // Match TS printPlace format: "<unknown> name$id:type"
                 let type_str = ident_info
                     .map(|ident| {
-                        let ty = &env.types[ident.type_.index()];
+                        let ty = &env.types[ident.type_];
                         format_type_for_print(ty)
                     })
                     .unwrap_or_default();
@@ -430,7 +430,7 @@ impl InferenceState {
         env: &Environment,
         usage_span: Option<Span>,
     ) -> MutationResult {
-        let ty = &env.types[env.identifiers[place_id.index()].type_.index()];
+        let ty = &env.types[env.identifiers[place_id].type_];
         if is_ref_or_ref_value(ty) {
             return MutationResult::MutateRef;
         }
@@ -738,7 +738,7 @@ fn find_hoisted_context_declarations(
         place: &Place,
         env: &Environment,
     ) {
-        let decl_id = env.identifiers[place.identifier.index()].declaration_id;
+        let decl_id = env.identifiers[place.identifier].declaration_id;
         if hoisted.contains_key(&decl_id) && hoisted.get(&decl_id).unwrap().is_none() {
             hoisted.insert(decl_id, Some(place.clone()));
         }
@@ -754,8 +754,7 @@ fn find_hoisted_context_declarations(
                         || kind == InstructionKind::HoistedFunction
                         || kind == InstructionKind::HoistedLet
                     {
-                        let decl_id =
-                            env.identifiers[lvalue.place.identifier.index()].declaration_id;
+                        let decl_id = env.identifiers[lvalue.place.identifier].declaration_id;
                         hoisted.insert(decl_id, None);
                     }
                 }
@@ -852,8 +851,7 @@ fn find_non_mutated_destructure_spreads(
                 }
                 InstructionValue::CallExpression { callee, .. }
                 | InstructionValue::MethodCall { property: callee, .. } => {
-                    let callee_ty =
-                        &env.types[env.identifiers[callee.identifier.index()].type_.index()];
+                    let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     if get_hook_kind_for_type(env, callee_ty).ok().flatten().is_some() {
                         if !is_ref_or_ref_value_for_id(env, lvalue_id) {
                             known_frozen.insert(lvalue_id);
@@ -1048,7 +1046,7 @@ fn apply_signature(
     match &instr.value {
         InstructionValue::FunctionExpression { lowered_func, .. }
         | InstructionValue::ObjectMethod { lowered_func, .. } => {
-            let inner_func = &env.functions[lowered_func.func.index()];
+            let inner_func = &env.functions[lowered_func.func];
             if let Some(ref aliasing_effects) = inner_func.aliasing_effects {
                 let context_ids: FxHashSet<IdentifierId> =
                     inner_func.context.iter().map(|p| p.identifier).collect();
@@ -1067,7 +1065,7 @@ fn apply_signature(
                     let value_abstract = state.kind(mutate_value.identifier);
                     if value_abstract.kind == ValueKind::Frozen {
                         let reason_str = get_write_error_reason(&value_abstract);
-                        let ident = &env.identifiers[mutate_value.identifier.index()];
+                        let ident = &env.identifiers[mutate_value.identifier];
                         let variable = match &ident.name {
                             Some(IdentifierName::Named(n)) => {
                                 format!("`{}`", n)
@@ -1136,7 +1134,7 @@ fn freeze_function_captures_transitive(
 ) {
     if let Some(&func_id) = context.function_values.get(&value_id) {
         let ctx_ids: Vec<IdentifierId> =
-            env.functions[func_id.index()].context.iter().map(|p| p.identifier).collect();
+            env.functions[func_id].context.iter().map(|p| p.identifier).collect();
         for ctx_id in ctx_ids {
             // Replicate InferenceState::freeze() logic inline —
             // we need to recurse with context/env which freeze() doesn't have.
@@ -1280,7 +1278,7 @@ fn apply_effect(
                 k == ValueKind::Context || k == ValueKind::Mutable
             });
 
-            let inner_func = &env.functions[function_id.index()];
+            let inner_func = &env.functions[function_id];
             let has_tracked_side_effects = inner_func
                 .aliasing_effects
                 .as_ref()
@@ -1318,7 +1316,7 @@ fn apply_effect(
                     || kind == ValueKind::Global
                 {
                     // Downgrade to Read - we need to mutate the inner function
-                    let inner_func_mut = &mut env.functions[function_id.index()];
+                    let inner_func_mut = &mut env.functions[function_id];
                     for ctx in &mut inner_func_mut.context {
                         if ctx.identifier == operand.identifier && ctx.effect == Effect::Capture {
                             ctx.effect = Effect::Read;
@@ -1477,7 +1475,7 @@ fn apply_effect(
                 if function_values.len() == 1 {
                     let value_id = function_values[0];
                     if let Some(func_id) = context.function_values.get(&value_id).copied() {
-                        let inner_func = &env.functions[func_id.index()];
+                        let inner_func = &env.functions[func_id];
                         if inner_func.aliasing_effects.is_some() {
                             // Build or retrieve the signature from the function expression
                             context.function_signature_cache.entry(func_id).or_insert_with(|| {
@@ -1485,7 +1483,7 @@ fn apply_effect(
                             });
                             let sig =
                                 context.function_signature_cache.get(&func_id).unwrap().clone();
-                            let inner_func = &env.functions[func_id.index()];
+                            let inner_func = &env.functions[func_id];
                             let context_places: Vec<Place> = inner_func.context.clone();
                             let sig_effects = compute_effects_for_aliasing_signature(
                                 env,
@@ -1623,8 +1621,7 @@ fn apply_effect(
                     }
 
                     if *is_spread {
-                        let ty =
-                            &env.types[env.identifiers[operand.identifier.index()].type_.index()];
+                        let ty = &env.types[env.identifiers[operand.identifier].type_];
                         if let Some(mutate_iter) = conditionally_mutate_iterator(operand, ty) {
                             apply_effect(
                                 context,
@@ -1700,7 +1697,7 @@ fn apply_effect(
             {
                 let abstract_value = state.kind(value.identifier);
 
-                let ident = &env.identifiers[value.identifier.index()];
+                let ident = &env.identifiers[value.identifier];
                 let decl_id = ident.declaration_id;
 
                 if mutation_kind == MutationResult::MutateFrozen
@@ -1806,8 +1803,7 @@ fn compute_signature_for_instruction(
                         });
                     }
                     ArrayElement::Spread(s) => {
-                        let ty =
-                            &env.types[env.identifiers[s.place.identifier.index()].type_.index()];
+                        let ty = &env.types[env.identifiers[s.place.identifier].type_];
                         if let Some(mutate_iter) = conditionally_mutate_iterator(&s.place, ty) {
                             effects.push(mutate_iter);
                         }
@@ -1901,7 +1897,7 @@ fn compute_signature_for_instruction(
         }
         InstructionValue::PropertyLoad { object, .. }
         | InstructionValue::ComputedLoad { object, .. } => {
-            let ty = &env.types[env.identifiers[lvalue.identifier.index()].type_.index()];
+            let ty = &env.types[env.identifiers[lvalue.identifier].type_];
             if is_primitive_type(ty) {
                 effects.push(AliasingEffect::Create {
                     into: lvalue.clone(),
@@ -1917,7 +1913,7 @@ fn compute_signature_for_instruction(
         }
         InstructionValue::PropertyStore { object, property, value: store_value, .. } => {
             let mutation_reason: Option<MutationReason> = {
-                let obj_ty = &env.types[env.identifiers[object.identifier.index()].type_.index()];
+                let obj_ty = &env.types[env.identifiers[object.identifier].type_];
                 if let PropertyLiteral::String(prop_name) = property {
                     if prop_name == "current" && matches!(obj_ty, Type::TypeVar { .. }) {
                         Some(MutationReason::AssignCurrentProperty)
@@ -1949,7 +1945,7 @@ fn compute_signature_for_instruction(
         }
         InstructionValue::FunctionExpression { lowered_func, .. }
         | InstructionValue::ObjectMethod { lowered_func, .. } => {
-            let inner_func = &env.functions[lowered_func.func.index()];
+            let inner_func = &env.functions[lowered_func.func];
             let captures: Vec<Place> = inner_func
                 .context
                 .iter()
@@ -1968,7 +1964,7 @@ fn compute_signature_for_instruction(
                 value: ValueKind::Mutable,
                 reason: ValueReason::Other,
             });
-            let ty = &env.types[env.identifiers[collection.identifier.index()].type_.index()];
+            let ty = &env.types[env.identifiers[collection.identifier].type_];
             if is_builtin_collection_type(ty) {
                 effects.push(AliasingEffect::Capture {
                     from: collection.clone(),
@@ -2020,8 +2016,7 @@ fn compute_signature_for_instruction(
             }
             for prop in props {
                 if let JsxAttribute::Attribute { place: prop_place, .. } = prop {
-                    let prop_ty =
-                        &env.types[env.identifiers[prop_place.identifier.index()].type_.index()];
+                    let prop_ty = &env.types[env.identifiers[prop_place.identifier].type_];
                     if let Type::Function { return_type, .. } = prop_ty {
                         if is_jsx_type(return_type) || is_phi_with_jsx(return_type) {
                             effects.push(AliasingEffect::Render { place: prop_place.clone() });
@@ -2061,8 +2056,7 @@ fn compute_signature_for_instruction(
             for pat_item in each_pattern_items(&dl.pattern) {
                 match pat_item {
                     PatternItem::Place(place) => {
-                        let ty =
-                            &env.types[env.identifiers[place.identifier.index()].type_.index()];
+                        let ty = &env.types[env.identifiers[place.identifier].type_];
                         if is_primitive_type(ty) {
                             effects.push(AliasingEffect::Create {
                                 into: place.clone(),
@@ -2101,7 +2095,7 @@ fn compute_signature_for_instruction(
             effects.push(AliasingEffect::CreateFrom { from: place.clone(), into: lvalue.clone() });
         }
         InstructionValue::DeclareContext { lvalue: dcl, .. } => {
-            let decl_id = env.identifiers[dcl.place.identifier.index()].declaration_id;
+            let decl_id = env.identifiers[dcl.place.identifier].declaration_id;
             let kind = dcl.kind;
             if !context.hoisted_context_declarations.contains_key(&decl_id)
                 || kind == InstructionKind::HoistedConst
@@ -2123,7 +2117,7 @@ fn compute_signature_for_instruction(
             });
         }
         InstructionValue::StoreContext { lvalue: scl, value: sc_value, .. } => {
-            let decl_id = env.identifiers[scl.place.identifier.index()].declaration_id;
+            let decl_id = env.identifiers[scl.place.identifier].declaration_id;
             if scl.kind == InstructionKind::Reassign
                 || context.hoisted_context_declarations.contains_key(&decl_id)
             {
@@ -2300,7 +2294,7 @@ fn compute_effects_for_legacy_signature(
             effects.push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
         }
         Effect::ConditionallyMutateIterator => {
-            let ty = &env.types[env.identifiers[place.identifier.index()].type_.index()];
+            let ty = &env.types[env.identifiers[place.identifier].type_];
             if let Some(mutate_iter) = conditionally_mutate_iterator(place, ty) {
                 effects.push(mutate_iter);
             }
@@ -2408,7 +2402,7 @@ fn are_arguments_immutable_and_non_mutating(
                 // Check if it's a function type with a known signature
                 let is_place = matches!(arg, PlaceOrSpreadOrHole::Place(_));
                 if is_place {
-                    let ty = &env.types[env.identifiers[place.identifier.index()].type_.index()];
+                    let ty = &env.types[env.identifiers[place.identifier].type_];
                     if let Type::Function { .. } = ty {
                         let fn_shape = env.get_function_signature(ty).ok().flatten();
                         if let Some(fn_sig) = fn_shape {
@@ -2438,13 +2432,13 @@ fn are_arguments_immutable_and_non_mutating(
                 let value_ids = state.values_for(place.identifier);
                 for vid in &value_ids {
                     if let Some(&func_id) = function_values.get(vid) {
-                        let inner_func = &env.functions[func_id.index()];
+                        let inner_func = &env.functions[func_id];
                         let mutates_params = inner_func.params.iter().any(|param| {
                             let param_id = match param {
                                 ParamPattern::Place(p) => p.identifier,
                                 ParamPattern::Spread(s) => s.place.identifier,
                             };
-                            let ident = &env.identifiers[param_id.index()];
+                            let ident = &env.identifiers[param_id];
                             ident.mutable_range.end > ident.mutable_range.start + 1
                         });
                         if mutates_params {
@@ -2504,7 +2498,7 @@ fn compute_effects_for_aliasing_signature_config(
                 }
 
                 if matches!(arg, PlaceOrSpreadOrHole::Spread(_)) {
-                    let ty = &env.types[env.identifiers[place.identifier.index()].type_.index()];
+                    let ty = &env.types[env.identifiers[place.identifier].type_];
                     let mutate_iterator = conditionally_mutate_iterator(place, ty);
                     if mutate_iterator.is_some() {
                         mutable_spreads.insert(place.identifier);
@@ -2515,7 +2509,7 @@ fn compute_effects_for_aliasing_signature_config(
     }
 
     for operand in context {
-        let ident = &env.identifiers[operand.identifier.index()];
+        let ident = &env.identifiers[operand.identifier];
         if let Some(ref name) = ident.name {
             substitutions.insert(format!("@{}", name.value()), vec![operand.clone()]);
         }
@@ -2690,7 +2684,7 @@ fn build_signature_from_function_expression(
     env: &mut Environment,
     func_id: FunctionId,
 ) -> AliasingSignature {
-    let inner_func = &env.functions[func_id.index()];
+    let inner_func = &env.functions[func_id];
     let mut params: Vec<IdentifierId> = Vec::new();
     let mut rest: Option<IdentifierId> = None;
     for param in &inner_func.params {
@@ -2755,7 +2749,7 @@ fn compute_effects_for_aliasing_signature(
                 }
 
                 if is_spread {
-                    let ty = &env.types[env.identifiers[place.identifier.index()].type_.index()];
+                    let ty = &env.types[env.identifiers[place.identifier].type_];
                     let mutate_iterator = conditionally_mutate_iterator(place, ty);
                     if mutate_iterator.is_some() {
                         mutable_spreads.insert(place.identifier);
@@ -3007,12 +3001,12 @@ fn get_function_call_signature(
     env: &Environment,
     callee_id: IdentifierId,
 ) -> Result<Option<FunctionSignature>, OxcDiagnostic> {
-    let ty = &env.types[env.identifiers[callee_id.index()].type_.index()];
+    let ty = &env.types[env.identifiers[callee_id].type_];
     Ok(env.get_function_signature(ty)?.cloned())
 }
 
 fn is_ref_or_ref_value_for_id(env: &Environment, id: IdentifierId) -> bool {
-    let ty = &env.types[env.identifiers[id.index()].type_.index()];
+    let ty = &env.types[env.identifiers[id].type_];
     is_ref_or_ref_value(ty)
 }
 
@@ -3085,7 +3079,7 @@ fn build_apply_operands(
 
 fn create_temp_place(env: &mut Environment, span: Option<Span>) -> Place {
     let id = env.next_identifier_id();
-    env.identifiers[id.index()].span = span;
+    env.identifiers[id].span = span;
     Place { identifier: id, effect: Effect::Unknown, reactive: false, span }
 }
 

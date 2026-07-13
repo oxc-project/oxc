@@ -66,7 +66,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for FindLastUsageVisitor<'a, 'e> {
     }
 
     fn visit_place(&self, id: EvaluationOrder, place: &Place, state: &mut Self::State) {
-        let decl_id = self.env.identifiers[place.identifier.index()].declaration_id;
+        let decl_id = self.env.identifiers[place.identifier].declaration_id;
         let entry = state.entry(decl_id).or_insert(id);
         if id > *entry {
             *entry = id;
@@ -98,7 +98,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
     ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
-        let scope_deps = self.env.scopes[scope.scope.index()].dependencies.clone();
+        let scope_deps = self.env.scopes[scope.scope].dependencies.clone();
         // Save parent state and recurse with this scope's deps as state
         let parent_state = state.take();
         *state = Some(scope_deps.clone());
@@ -180,14 +180,13 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                                 | InstructionValue::UnaryExpression { .. } => {
                                     if let Some(ref mut c) = current {
                                         if let Some(lvalue) = &instr.lvalue {
-                                            let decl_id = self.env.identifiers
-                                                [lvalue.identifier.index()]
-                                            .declaration_id;
+                                            let decl_id = self.env.identifiers[lvalue.identifier]
+                                                .declaration_id;
                                             c.lvalues.insert(decl_id);
                                             if let InstructionValue::LoadLocal { place, .. } = iv {
                                                 let src_decl = self.env.identifiers
-                                                    [place.identifier.index()]
-                                                .declaration_id;
+                                                    [place.identifier]
+                                                    .declaration_id;
                                                 self.temporaries.insert(decl_id, src_decl);
                                             }
                                         }
@@ -199,19 +198,18 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                                             // Add the instruction lvalue (if any)
                                             if let Some(instr_lvalue) = &instr.lvalue {
                                                 let decl_id = self.env.identifiers
-                                                    [instr_lvalue.identifier.index()]
-                                                .declaration_id;
+                                                    [instr_lvalue.identifier]
+                                                    .declaration_id;
                                                 c.lvalues.insert(decl_id);
                                             }
                                             // Add the StoreLocal's lvalue place
                                             let store_decl = self.env.identifiers
-                                                [lvalue.place.identifier.index()]
-                                            .declaration_id;
+                                                [lvalue.place.identifier]
+                                                .declaration_id;
                                             c.lvalues.insert(store_decl);
                                             // Track temporary mapping
-                                            let value_decl = self.env.identifiers
-                                                [value.identifier.index()]
-                                            .declaration_id;
+                                            let value_decl = self.env.identifiers[value.identifier]
+                                                .declaration_id;
                                             let mapped = self
                                                 .temporaries
                                                 .get(&value_decl)
@@ -263,18 +261,16 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                             self.env,
                         ) {
                             // Merge: extend the current scope's range
-                            let next_range_end = self.env.scopes[next_scope_id.index()].range.end;
-                            let current_range_end =
-                                self.env.scopes[current_scope_id.index()].range.end;
-                            self.env.scopes[current_scope_id.index()].range.end =
+                            let next_range_end = self.env.scopes[next_scope_id].range.end;
+                            let current_range_end = self.env.scopes[current_scope_id].range.end;
+                            self.env.scopes[current_scope_id].range.end =
                                 current_range_end.max(next_range_end);
 
                             // Merge declarations from next into current
-                            let next_decls =
-                                self.env.scopes[next_scope_id.index()].declarations.clone();
+                            let next_decls = self.env.scopes[next_scope_id].declarations.clone();
                             for (key, value) in next_decls {
                                 let current_decls =
-                                    &mut self.env.scopes[current_scope_id.index()].declarations;
+                                    &mut self.env.scopes[current_scope_id].declarations;
                                 if let Some(existing) =
                                     current_decls.iter_mut().find(|(k, _)| *k == key)
                                 {
@@ -363,7 +359,7 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                 match stmt {
                     ReactiveStatement::Scope(inner_scope) => {
                         merged_scope.instructions.extend(inner_scope.instructions.clone());
-                        self.env.scopes[merged_scope.scope.index()].merged.push(inner_scope.scope);
+                        self.env.scopes[merged_scope.scope].merged.push(inner_scope.scope);
                     }
                     _ => {
                         merged_scope.instructions.push(stmt.clone());
@@ -393,9 +389,9 @@ fn update_scope_declarations<'a>(
     last_usage: &FxHashMap<DeclarationId, EvaluationOrder>,
     env: &mut Environment<'a>,
 ) {
-    let range_end = env.scopes[scope_id.index()].range.end;
-    env.scopes[scope_id.index()].declarations.retain(|(_id, decl)| {
-        let decl_declaration_id = env.identifiers[decl.identifier.index()].declaration_id;
+    let range_end = env.scopes[scope_id].range.end;
+    env.scopes[scope_id].declarations.retain(|(_id, decl)| {
+        let decl_declaration_id = env.identifiers[decl.identifier].declaration_id;
         match last_usage.get(&decl_declaration_id) {
             Some(last_used_at) => *last_used_at >= range_end,
             // If not tracked, keep the declaration (conservative)
@@ -411,7 +407,7 @@ fn are_lvalues_last_used_by_scope<'a>(
     last_usage: &FxHashMap<DeclarationId, EvaluationOrder>,
     env: &Environment<'a>,
 ) -> bool {
-    let range_end = env.scopes[scope_id.index()].range.end;
+    let range_end = env.scopes[scope_id].range.end;
     for lvalue in lvalues {
         if let Some(&last_used_at) = last_usage.get(lvalue) {
             if last_used_at >= range_end {
@@ -429,8 +425,8 @@ fn can_merge_scopes<'a>(
     env: &Environment<'a>,
     temporaries: &FxHashMap<DeclarationId, DeclarationId>,
 ) -> bool {
-    let current = &env.scopes[current_id.index()];
-    let next = &env.scopes[next_id.index()];
+    let current = &env.scopes[current_id];
+    let next = &env.scopes[next_id];
 
     // Don't merge scopes with reassignments
     if !current.reassignments.is_empty() || !next.reassignments.is_empty() {
@@ -466,13 +462,13 @@ fn can_merge_scopes<'a>(
             if !dep.path.is_empty() {
                 return false;
             }
-            let dep_type = &env.types[env.identifiers[dep.identifier.index()].type_.index()];
+            let dep_type = &env.types[env.identifiers[dep.identifier].type_];
             if !is_always_invalidating_type(dep_type) {
                 return false;
             }
-            let dep_decl = env.identifiers[dep.identifier.index()].declaration_id;
+            let dep_decl = env.identifiers[dep.identifier].declaration_id;
             current.declarations.iter().any(|(_key, decl)| {
-                let decl_decl_id = env.identifiers[decl.identifier.index()].declaration_id;
+                let decl_decl_id = env.identifiers[decl.identifier].declaration_id;
                 decl_decl_id == dep_decl
                     || temporaries.get(&dep_decl).copied() == Some(decl_decl_id)
             })
@@ -510,9 +506,9 @@ fn are_equal_dependencies<'a>(
         return false;
     }
     for a_val in a {
-        let a_decl = env.identifiers[a_val.identifier.index()].declaration_id;
+        let a_decl = env.identifiers[a_val.identifier].declaration_id;
         let found = b.iter().any(|b_val| {
-            let b_decl = env.identifiers[b_val.identifier.index()].declaration_id;
+            let b_decl = env.identifiers[b_val.identifier].declaration_id;
             a_decl == b_decl && are_equal_paths(&a_val.path, &b_val.path)
         });
         if !found {
@@ -532,13 +528,13 @@ fn are_equal_paths(a: &[DependencyPathEntry], b: &[DependencyPathEntry]) -> bool
 
 /// Check if a scope is eligible for merging with subsequent scopes.
 fn scope_is_eligible_for_merging<'a>(scope_id: ScopeId, env: &Environment<'a>) -> bool {
-    let scope = &env.scopes[scope_id.index()];
+    let scope = &env.scopes[scope_id];
     if scope.dependencies.is_empty() {
         // No dependencies means output never changes — eligible
         return true;
     }
     scope.declarations.iter().any(|(_key, decl)| {
-        let ty = &env.types[env.identifiers[decl.identifier.index()].type_.index()];
+        let ty = &env.types[env.identifiers[decl.identifier].type_];
         is_always_invalidating_type(ty)
     })
 }

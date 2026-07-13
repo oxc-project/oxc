@@ -49,7 +49,7 @@ pub fn outline_functions<'a>(
 
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
-                    let inner_func = &env.functions[lowered_func.func.index()];
+                    let inner_func = &env.functions[lowered_func.func];
 
                     // Check outlining conditions (TS only checks func.id === null, not name):
                     // 1. No captured context variables
@@ -83,27 +83,27 @@ pub fn outline_functions<'a>(
         match action {
             Action::Recurse(function_id) => {
                 let mut inner_func =
-                    replace(&mut env.functions[function_id.index()], placeholder_function());
+                    replace(&mut env.functions[function_id], placeholder_function());
                 outline_functions(&mut inner_func, env, fbt_operands);
-                env.functions[function_id.index()] = inner_func;
+                env.functions[function_id] = inner_func;
             }
             Action::RecurseAndOutline { instr_idx, function_id } => {
                 // First recurse into the inner function (depth-first)
                 let mut inner_func =
-                    replace(&mut env.functions[function_id.index()], placeholder_function());
+                    replace(&mut env.functions[function_id], placeholder_function());
                 outline_functions(&mut inner_func, env, fbt_operands);
-                env.functions[function_id.index()] = inner_func;
+                env.functions[function_id] = inner_func;
 
                 // Then generate the name and outline (after recursion, matching TS order)
-                let inner = &env.functions[function_id.index()];
+                let inner = &env.functions[function_id];
                 let hint: Option<Ident<'a>> = inner.id.or(inner.name_hint);
                 let generated_name = env.generate_globally_unique_identifier_name(hint.as_deref());
 
                 // Set the id on the inner function
-                env.functions[function_id.index()].id = Some(generated_name);
+                env.functions[function_id].id = Some(generated_name);
 
                 // Outline the function
-                let outlined_func = env.functions[function_id.index()].clone();
+                let outlined_func = env.functions[function_id].clone();
                 env.outline_function(outlined_func, None);
 
                 // Replace the instruction value with LoadGlobal

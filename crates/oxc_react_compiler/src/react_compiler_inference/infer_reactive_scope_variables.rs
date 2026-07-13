@@ -50,19 +50,19 @@ pub fn infer_reactive_scope_variables(
     let mut scopes: FxHashMap<IdentifierId, ScopeState> = FxHashMap::default();
 
     scope_identifiers.for_each(|identifier_id, group_id| {
-        let ident_range = env.identifiers[identifier_id.index()].mutable_range.clone();
-        let ident_span = env.identifiers[identifier_id.index()].span;
+        let ident_range = env.identifiers[identifier_id].mutable_range.clone();
+        let ident_span = env.identifiers[identifier_id].span;
 
         let state = scopes.entry(group_id).or_insert_with(|| {
             let scope_id = env.next_scope_id();
             // Initialize scope range from the first member
-            let scope = &mut env.scopes[scope_id.index()];
+            let scope = &mut env.scopes[scope_id];
             scope.range = ident_range.clone();
             ScopeState { scope_id, span: ident_span }
         });
 
         // Update scope range
-        let scope = &mut env.scopes[state.scope_id.index()];
+        let scope = &mut env.scopes[state.scope_id];
 
         // If this is not the first identifier (scope was already created), merge ranges
         if scope.range.start != ident_range.start || scope.range.end != ident_range.end {
@@ -79,17 +79,17 @@ pub fn infer_reactive_scope_variables(
 
         // Assign the scope to this identifier
         let scope_id = state.scope_id;
-        env.identifiers[identifier_id.index()].scope = Some(scope_id);
+        env.identifiers[identifier_id].scope = Some(scope_id);
     });
 
     // Set span on each scope
     for state in scopes.values() {
-        env.scopes[state.scope_id.index()].span = state.span;
+        env.scopes[state.scope_id].span = state.span;
     }
 
     // Update each identifier's mutable_range to match its scope's range
     for (&_identifier_id, state) in &scopes {
-        let scope_range = env.scopes[state.scope_id.index()].range.clone();
+        let scope_range = env.scopes[state.scope_id].range.clone();
         // Find all identifiers with this scope and update their mutable_range
         // We iterate through all identifiers and check their scope
         for ident in &mut env.identifiers {
@@ -110,7 +110,7 @@ pub fn infer_reactive_scope_variables(
     }
 
     for state in scopes.values() {
-        let scope = &env.scopes[state.scope_id.index()];
+        let scope = &env.scopes[state.scope_id];
         if scope.range.start == EvaluationOrder::UNSET
             || scope.range.end == EvaluationOrder::UNSET
             || max_instruction == EvaluationOrder::UNSET
@@ -241,8 +241,8 @@ pub(crate) fn find_disjoint_mutable_values(
         // Handle phi nodes
         for phi in &block.phis {
             let phi_id = phi.place.identifier;
-            let phi_range = &env.identifiers[phi_id.index()].mutable_range;
-            let phi_decl_id = env.identifiers[phi_id.index()].declaration_id;
+            let phi_range = &env.identifiers[phi_id].mutable_range;
+            let phi_decl_id = env.identifiers[phi_id].declaration_id;
 
             let first_instr_id = block
                 .instructions
@@ -264,8 +264,7 @@ pub(crate) fn find_disjoint_mutable_values(
             // compared at the top of the scope).
             let is_loop_carried_reassignment = !is_phi_mutated_after_creation
                 && phi.operands.iter().any(|(_pred_id, operand)| {
-                    env.identifiers[operand.identifier.index()].mutable_range.start
-                        >= first_instr_id
+                    env.identifiers[operand.identifier].mutable_range.start >= first_instr_id
                 });
             if is_phi_mutated_after_creation || is_loop_carried_reassignment {
                 let mut operands = vec![phi_id];
@@ -289,8 +288,8 @@ pub(crate) fn find_disjoint_mutable_values(
             let mut operands: Vec<IdentifierId> = Vec::new();
 
             let lvalue_id = instr.lvalue.identifier;
-            let lvalue_range = &env.identifiers[lvalue_id.index()].mutable_range;
-            let lvalue_type = &env.types[env.identifiers[lvalue_id.index()].type_.index()];
+            let lvalue_range = &env.identifiers[lvalue_id].mutable_range;
+            let lvalue_type = &env.types[env.identifiers[lvalue_id].type_];
             let lvalue_type_is_primitive = is_primitive_type(lvalue_type);
 
             if lvalue_range.end > lvalue_range.start + 1
@@ -303,21 +302,21 @@ pub(crate) fn find_disjoint_mutable_values(
                 InstructionValue::DeclareLocal { lvalue, .. }
                 | InstructionValue::DeclareContext { lvalue, .. } => {
                     let place_id = lvalue.place.identifier;
-                    let decl_id = env.identifiers[place_id.index()].declaration_id;
+                    let decl_id = env.identifiers[place_id].declaration_id;
                     declarations.entry(decl_id).or_insert(place_id);
                 }
                 InstructionValue::StoreLocal { lvalue, value, .. }
                 | InstructionValue::StoreContext { lvalue, value, .. } => {
                     let place_id = lvalue.place.identifier;
-                    let decl_id = env.identifiers[place_id.index()].declaration_id;
+                    let decl_id = env.identifiers[place_id].declaration_id;
                     declarations.entry(decl_id).or_insert(place_id);
 
-                    let place_range = &env.identifiers[place_id.index()].mutable_range;
+                    let place_range = &env.identifiers[place_id].mutable_range;
                     if place_range.end > place_range.start + 1 {
                         operands.push(place_id);
                     }
 
-                    let value_range = &env.identifiers[value.identifier.index()].mutable_range;
+                    let value_range = &env.identifiers[value.identifier].mutable_range;
                     if value_range.contains(instr.id) && value_range.start > 0 {
                         operands.push(value.identifier);
                     }
@@ -325,16 +324,16 @@ pub(crate) fn find_disjoint_mutable_values(
                 InstructionValue::Destructure { lvalue, value, .. } => {
                     let pattern_places = each_pattern_operand(&lvalue.pattern);
                     for place_id in &pattern_places {
-                        let decl_id = env.identifiers[place_id.index()].declaration_id;
+                        let decl_id = env.identifiers[*place_id].declaration_id;
                         declarations.entry(decl_id).or_insert(*place_id);
 
-                        let place_range = &env.identifiers[place_id.index()].mutable_range;
+                        let place_range = &env.identifiers[*place_id].mutable_range;
                         if place_range.end > place_range.start + 1 {
                             operands.push(*place_id);
                         }
                     }
 
-                    let value_range = &env.identifiers[value.identifier.index()].mutable_range;
+                    let value_range = &env.identifiers[value.identifier].mutable_range;
                     if value_range.contains(instr.id) && value_range.start > 0 {
                         operands.push(value.identifier);
                     }
@@ -343,7 +342,7 @@ pub(crate) fn find_disjoint_mutable_values(
                     // For MethodCall: include all mutable operands plus the computed property
                     let all_operands = each_instruction_value_operand(&instr.value, env);
                     for op_id in &all_operands {
-                        let op_range = &env.identifiers[op_id.index()].mutable_range;
+                        let op_range = &env.identifiers[*op_id].mutable_range;
                         if op_range.contains(instr.id) && op_range.start > 0 {
                             operands.push(*op_id);
                         }
@@ -355,7 +354,7 @@ pub(crate) fn find_disjoint_mutable_values(
                     // For all other instructions: include mutable operands
                     let all_operands = each_instruction_value_operand(&instr.value, env);
                     for op_id in &all_operands {
-                        let op_range = &env.identifiers[op_id.index()].mutable_range;
+                        let op_range = &env.identifiers[*op_id].mutable_range;
                         if op_range.contains(instr.id) && op_range.start > 0 {
                             operands.push(*op_id);
                         }

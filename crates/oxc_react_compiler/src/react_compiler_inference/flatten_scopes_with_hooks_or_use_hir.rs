@@ -59,8 +59,7 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::CallExpression { callee, .. } => {
-                    let callee_ty =
-                        &env.types[env.identifiers[callee.identifier.index()].type_.index()];
+                    let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     if is_hook_or_use(env, callee_ty)? {
                         // All active scopes must be pruned
                         prune.extend(active_scopes.iter().map(|s| s.block));
@@ -68,8 +67,7 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
                     }
                 }
                 InstructionValue::MethodCall { property, .. } => {
-                    let property_ty =
-                        &env.types[env.identifiers[property.identifier.index()].type_.index()];
+                    let property_ty = &env.types[env.identifiers[property.identifier].type_];
                     if is_hook_or_use(env, property_ty)? {
                         prune.extend(active_scopes.iter().map(|s| s.block));
                         active_scopes.clear();

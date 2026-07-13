@@ -8,6 +8,7 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexSlice;
 
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
@@ -15,7 +16,8 @@ use crate::react_compiler_hir::visitors::{
     each_instruction_lvalue_ids, each_instruction_value_operand, each_terminal_operand,
 };
 use crate::react_compiler_hir::{
-    Effect, HirFunction, Identifier, IdentifierId, IdentifierName, InstructionValue, Place, Type,
+    Effect, FunctionId, HirFunction, Identifier, IdentifierId, IdentifierName, InstructionValue,
+    Place, Type, TypeId,
 };
 
 /// Validates that local variables cannot be reassigned after render.
@@ -62,8 +64,11 @@ pub fn validate_locals_not_reassigned_after_render(func: &HirFunction, env: &mut
 
 /// Format a variable name for error messages. Uses the named identifier if
 /// available, otherwise falls back to "variable".
-fn format_variable_name(place: &Place, identifiers: &[Identifier]) -> String {
-    let identifier = &identifiers[place.identifier.index()];
+fn format_variable_name(
+    place: &Place,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+) -> String {
+    let identifier = &identifiers[place.identifier];
     match &identifier.name {
         Some(IdentifierName::Named(name)) => format!("`{}`", name),
         _ => "variable".to_string(),
@@ -77,9 +82,9 @@ fn format_variable_name(place: &Place, identifiers: &[Identifier]) -> String {
 #[allow(clippy::only_used_in_recursion, clippy::too_many_arguments)]
 fn get_context_reassignment(
     func: &HirFunction,
-    identifiers: &[Identifier],
-    types: &[Type],
-    functions: &[HirFunction],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
     env: &Environment,
     context_variables: &mut FxHashSet<IdentifierId>,
     is_function_expression: bool,
@@ -96,7 +101,7 @@ fn get_context_reassignment(
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
                 | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    let inner_function = &functions[lowered_func.func.index()];
+                    let inner_function = &functions[lowered_func.func];
                     let inner_is_async = is_async || inner_function.is_async;
 
                     // Recursively check the inner function

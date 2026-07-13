@@ -61,7 +61,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CollectReferencedLabels<'a, 'e> {
     }
 
     fn visit_scope(&self, scope: &ReactiveScopeBlock<'a>, state: &mut Self::State) {
-        let scope_data = &self.env.scopes[scope.scope.index()];
+        let scope_data = &self.env.scopes[scope.scope];
         if let Some(ref early_return) = scope_data.early_return_value {
             state.insert(early_return.label);
         }
@@ -104,7 +104,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for RewriteBlockIds<'a, 'e> {
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
     ) -> Result<(), OxcDiagnostic> {
-        let scope_data = &mut self.env.scopes[scope.scope.index()];
+        let scope_data = &mut self.env.scopes[scope.scope];
         if let Some(ref mut early_return) = scope_data.early_return_value {
             early_return.label = get_or_insert_mapping(state, early_return.label);
         }

@@ -11,6 +11,7 @@
 //!
 //! Ported from TypeScript `src/Optimization/DeadCodeElimination.ts`.
 
+use oxc_index::IndexSlice;
 use oxc_str::IdentHashSet;
 use rustc_hash::FxHashSet;
 
@@ -85,11 +86,11 @@ impl State<'_> {
 /// Mark an identifier as being referenced (not dead code).
 fn reference<'a>(
     state: &mut State<'a>,
-    identifiers: &[Identifier<'a>],
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
     identifier_id: IdentifierId,
 ) {
     state.identifiers.insert(identifier_id);
-    let ident = &identifiers[identifier_id.index()];
+    let ident = &identifiers[identifier_id];
     if let Some(IdentifierName::Named(name) | IdentifierName::Promoted(name)) = ident.name {
         state.named.insert(name);
     }
@@ -99,13 +100,13 @@ fn reference<'a>(
 /// Checks both the specific SSA id and (for named identifiers) any usage of that name.
 fn is_id_or_name_used(
     state: &State,
-    identifiers: &[Identifier],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     identifier_id: IdentifierId,
 ) -> bool {
     if state.identifiers.contains(&identifier_id) {
         return true;
     }
-    let ident = &identifiers[identifier_id.index()];
+    let ident = &identifiers[identifier_id];
     if let Some(ref name) = ident.name { state.named.contains(name.value()) } else { false }
 }
 
@@ -308,8 +309,7 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
         }
         InstructionValue::CallExpression { callee, .. } => {
             if env.output_mode == OutputMode::Ssr {
-                let callee_ty =
-                    &env.types[env.identifiers[callee.identifier.index()].type_.index()];
+                let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                 if let Some(HookKind::UseState | HookKind::UseReducer | HookKind::UseRef) =
                     env.get_hook_kind_for_type(callee_ty).ok().flatten()
                 {
@@ -320,8 +320,7 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
         }
         InstructionValue::MethodCall { property, .. } => {
             if env.output_mode == OutputMode::Ssr {
-                let callee_ty =
-                    &env.types[env.identifiers[property.identifier.index()].type_.index()];
+                let callee_ty = &env.types[env.identifiers[property.identifier].type_];
                 if let Some(HookKind::UseState | HookKind::UseReducer | HookKind::UseRef) =
                     env.get_hook_kind_for_type(callee_ty).ok().flatten()
                 {

@@ -1129,7 +1129,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         // convert it to a LoadLocal of the value being stored, matching the TS behavior.
         let (value, place) = match &last_instr.value {
             InstructionValue::StoreLocal { lvalue, value: store_value, .. } => {
-                let ident = &self.env.identifiers[lvalue.place.identifier.index()];
+                let ident = &self.env.identifiers[lvalue.place.identifier];
                 if ident.name.is_none() {
                     (
                         ReactiveValue::Instruction(InstructionValue::LoadLocal {

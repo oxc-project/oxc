@@ -14,6 +14,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::{IndexSlice, IndexVec};
 use oxc_str::{Ident, format_ident};
 
 use crate::diagnostics::ErrorCategory;
@@ -64,13 +65,16 @@ pub fn infer_types<'a>(
 // =============================================================================
 
 /// Get the type for an identifier as a TypeVar referencing its type slot.
-fn get_type<'a>(id: IdentifierId, identifiers: &[Identifier<'a>]) -> Type<'a> {
-    let type_id = identifiers[id.index()].type_;
+fn get_type<'a>(
+    id: IdentifierId,
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
+) -> Type<'a> {
+    let type_id = identifiers[id].type_;
     Type::TypeVar { id: type_id }
 }
 
 /// Allocate a new TypeVar in the types arena (standalone, no &mut Environment needed).
-fn make_type<'a>(types: &mut Vec<Type<'a>>) -> Type<'a> {
+fn make_type<'a>(types: &mut IndexVec<TypeId, Type<'a>>) -> Type<'a> {
     let id = TypeId::from_usize(types.len());
     types.push(Type::TypeVar { id });
     Type::TypeVar { id }
@@ -79,9 +83,9 @@ fn make_type<'a>(types: &mut Vec<Type<'a>>) -> Type<'a> {
 /// Pre-resolve LoadGlobal types for a single function's instructions.
 fn pre_resolve_globals<'a>(
     func: &HirFunction<'a>,
-    function_key: u32,
+    function_key: Option<FunctionId>,
     env: &mut Environment<'a>,
-    global_types: &mut FxHashMap<(u32, InstructionId), Type<'a>>,
+    global_types: &mut FxHashMap<(Option<FunctionId>, InstructionId), Type<'a>>,
 ) {
     for &instr_id in func.body.blocks.values().flat_map(|b| &b.instructions) {
         let instr = &func.instructions[instr_id.index()];
@@ -97,12 +101,12 @@ fn pre_resolve_globals<'a>(
 fn pre_resolve_globals_recursive<'a>(
     func_id: FunctionId,
     env: &mut Environment<'a>,
-    global_types: &mut FxHashMap<(u32, InstructionId), Type<'a>>,
+    global_types: &mut FxHashMap<(Option<FunctionId>, InstructionId), Type<'a>>,
 ) {
     // Collect LoadGlobal bindings and child function IDs in one pass to avoid
     // borrow conflicts (we need &env.functions to read, then &mut env for
     // get_global_declaration).
-    let inner = &env.functions[func_id.index()];
+    let inner = &env.functions[func_id];
     let mut load_globals: Vec<(InstructionId, NonLocalBinding, Option<Span>)> = Vec::new();
     let mut child_func_ids: Vec<FunctionId> = Vec::new();
 
@@ -131,7 +135,7 @@ fn pre_resolve_globals_recursive<'a>(
     // Now resolve globals (no longer borrowing env.functions)
     for (instr_id, binding, span) in load_globals {
         if let Some(global_type) = env.get_global_declaration(&binding, span).ok().flatten() {
-            global_types.insert((func_id.index() as u32, instr_id), global_type);
+            global_types.insert((Some(func_id), instr_id), global_type);
         }
     }
 
@@ -305,10 +309,11 @@ fn generate<'a>(
     // Pre-resolve LoadGlobal types for all functions (outer + inner). We do
     // this before the instruction loop because get_global_declaration needs
     // &mut env, but generate_instruction_types takes split borrows on env fields.
-    // The key is (function_key, InstructionId) where function_key is u32::MAX
-    // for the outer function and the FunctionId index for inner functions.
-    let mut global_types: FxHashMap<(u32, InstructionId), Type<'a>> = FxHashMap::default();
-    pre_resolve_globals(func, u32::MAX, env, &mut global_types);
+    // The key is (function_key, InstructionId) where function_key is None for the
+    // outer function and Some(FunctionId) for inner functions.
+    let mut global_types: FxHashMap<(Option<FunctionId>, InstructionId), Type<'a>> =
+        FxHashMap::default();
+    pre_resolve_globals(func, None, env, &mut global_types);
     // Also pre-resolve inner functions recursively
     for &instr_id in func.body.blocks.values().flat_map(|b| &b.instructions) {
         let instr = &func.instructions[instr_id.index()];
@@ -346,7 +351,7 @@ fn generate<'a>(
             generate_instruction_types(
                 instr,
                 instr_id,
-                u32::MAX,
+                None,
                 &env.identifiers,
                 &mut env.types,
                 &mut env.functions,
@@ -378,16 +383,16 @@ fn generate<'a>(
 #[allow(clippy::too_many_arguments)]
 fn generate_for_function_id<'a>(
     func_id: FunctionId,
-    identifiers: &[Identifier<'a>],
-    types: &mut Vec<Type<'a>>,
-    functions: &mut Vec<HirFunction<'a>>,
-    global_types: &FxHashMap<(u32, InstructionId), Type<'a>>,
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &mut IndexVec<TypeId, Type<'a>>,
+    functions: &mut IndexVec<FunctionId, HirFunction<'a>>,
+    global_types: &FxHashMap<(Option<FunctionId>, InstructionId), Type<'a>>,
     shapes: &ShapeRegistry<'a>,
     unifier: &mut Unifier<'a>,
     allocator: &'a Allocator,
 ) -> Result<(), OxcDiagnostic> {
     // Take the function out temporarily to avoid borrow conflicts
-    let inner = replace(&mut functions[func_id.index()], placeholder_function());
+    let inner = replace(&mut functions[func_id], placeholder_function());
 
     // Process params for component inner functions
     if inner.fn_type == ReactFunctionType::Component {
@@ -419,7 +424,7 @@ fn generate_for_function_id<'a>(
             generate_instruction_types(
                 instr,
                 instr_id,
-                func_id.index() as u32,
+                Some(func_id),
                 identifiers,
                 types,
                 functions,
@@ -444,7 +449,7 @@ fn generate_for_function_id<'a>(
     }
 
     // Put the function back
-    functions[func_id.index()] = inner;
+    functions[func_id] = inner;
     Ok(())
 }
 
@@ -452,12 +457,12 @@ fn generate_for_function_id<'a>(
 fn generate_instruction_types<'a>(
     instr: &Instruction<'a>,
     instr_id: InstructionId,
-    function_key: u32,
-    identifiers: &[Identifier<'a>],
-    types: &mut Vec<Type<'a>>,
-    functions: &mut Vec<HirFunction<'a>>,
+    function_key: Option<FunctionId>,
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &mut IndexVec<TypeId, Type<'a>>,
+    functions: &mut IndexVec<FunctionId, HirFunction<'a>>,
     names: &mut FxHashMap<IdentifierId, Ident<'a>>,
-    global_types: &FxHashMap<(u32, InstructionId), Type<'a>>,
+    global_types: &FxHashMap<(Option<FunctionId>, InstructionId), Type<'a>>,
     shapes: &ShapeRegistry<'a>,
     unifier: &mut Unifier<'a>,
     allocator: &'a Allocator,
@@ -476,7 +481,7 @@ fn generate_instruction_types<'a>(
         }
 
         InstructionValue::LoadLocal { place, .. } => {
-            set_name(names, instr.lvalue.identifier, &identifiers[place.identifier.index()]);
+            set_name(names, instr.lvalue.identifier, &identifiers[place.identifier]);
             let place_type = get_type(place.identifier, identifiers);
             unifier.unify(left, place_type, shapes)?;
         }
@@ -718,7 +723,7 @@ fn generate_instruction_types<'a>(
                 allocator,
             )?;
             // Get the inner function's return type
-            let inner_func = &functions[func_id.index()];
+            let inner_func = &functions[*func_id];
             let inner_return_type = get_type(inner_func.returns.identifier, identifiers);
             unifier.unify(
                 left,
@@ -828,9 +833,9 @@ fn generate_instruction_types<'a>(
 
 fn apply_function<'a>(
     func: &HirFunction<'a>,
-    functions: &[HirFunction<'a>],
-    identifiers: &mut [Identifier<'a>],
-    types: &mut [Type<'a>],
+    functions: &IndexSlice<FunctionId, [HirFunction<'a>]>,
+    identifiers: &mut IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &mut IndexSlice<TypeId, [Type<'a>]>,
     unifier: &Unifier<'a>,
 ) {
     for (_block_id, block) in &func.body.blocks {
@@ -861,7 +866,7 @@ fn apply_function<'a>(
                     lowered_func: LoweredFunction { func: func_id },
                     ..
                 } => {
-                    let inner_func = &functions[func_id.index()];
+                    let inner_func = &functions[*func_id];
                     // Resolve types for captured context variable places (matching TS
                     // where eachInstructionValueOperand yields func.context places)
                     for ctx in &inner_func.context {
@@ -880,21 +885,21 @@ fn apply_function<'a>(
 
 fn resolve_identifier<'a>(
     id: IdentifierId,
-    identifiers: &mut [Identifier<'a>],
-    types: &mut [Type<'a>],
+    identifiers: &mut IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &mut IndexSlice<TypeId, [Type<'a>]>,
     unifier: &Unifier<'a>,
 ) {
-    let type_id = identifiers[id.index()].type_;
-    let current_type = types[type_id.index()].clone();
+    let type_id = identifiers[id].type_;
+    let current_type = types[type_id].clone();
     let resolved = unifier.get(&current_type);
-    types[type_id.index()] = resolved;
+    types[type_id] = resolved;
 }
 
 /// Resolve types for instruction lvalues (mirrors TS eachInstructionLValue).
 fn apply_instruction_lvalues<'a>(
     value: &InstructionValue<'a>,
-    identifiers: &mut [Identifier<'a>],
-    types: &mut [Type<'a>],
+    identifiers: &mut IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &mut IndexSlice<TypeId, [Type<'a>]>,
     unifier: &Unifier<'a>,
 ) {
     match value {
@@ -955,8 +960,8 @@ fn apply_instruction_lvalues<'a>(
 /// Resolve types for instruction operands (mirrors TS eachInstructionOperand).
 fn apply_instruction_operands<'a>(
     value: &InstructionValue<'a>,
-    identifiers: &mut [Identifier<'a>],
-    types: &mut [Type<'a>],
+    identifiers: &mut IndexSlice<IdentifierId, [Identifier<'a>]>,
+    types: &mut IndexSlice<TypeId, [Type<'a>]>,
     unifier: &Unifier<'a>,
 ) {
     match value {

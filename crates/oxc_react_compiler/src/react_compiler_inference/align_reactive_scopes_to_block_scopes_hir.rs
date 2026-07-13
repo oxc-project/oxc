@@ -112,7 +112,7 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
         let starting_id = block_first_id(func, block_id);
 
         // Retain only active scopes whose range.end > startingId
-        active_scopes.retain(|&scope_id| env.scopes[scope_id.index()].range.end > starting_id);
+        active_scopes.retain(|&scope_id| env.scopes[scope_id].range.end > starting_id);
 
         // Check if we've reached a fallthrough block
         if let Some(top) = active_block_fallthrough_ranges.last().cloned() {
@@ -121,7 +121,7 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
                 // All active scopes overlap this block-fallthrough range;
                 // extend their start to include the range start.
                 for &scope_id in &active_scopes {
-                    let scope = &mut env.scopes[scope_id.index()];
+                    let scope = &mut env.scopes[scope_id];
                     scope.range.start = min(scope.range.start, top.range.start);
                 }
             }
@@ -182,7 +182,7 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
                 let next_id = block_first_id(func, ft);
 
                 for &scope_id in &active_scopes {
-                    let scope = &mut env.scopes[scope_id.index()];
+                    let scope = &mut env.scopes[scope_id];
                     if scope.range.end > terminal_eval_order {
                         scope.range.end = max(scope.range.end, next_id);
                     }
@@ -216,7 +216,7 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
                     let first_id = block_first_id(func, start_range.fallthrough);
 
                     for &scope_id in &active_scopes {
-                        let scope = &mut env.scopes[scope_id.index()];
+                        let scope = &mut env.scopes[scope_id];
                         if scope.range.end <= terminal_eval_order {
                             continue;
                         }
@@ -271,7 +271,7 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
         if let Some(scope_id) = ident.scope {
             let original = &original_scope_ranges[scope_id.index()];
             if ident.mutable_range.same_range(original) {
-                let scope_range = &env.scopes[scope_id.index()].range;
+                let scope_range = &env.scopes[scope_id].range;
                 ident.mutable_range.start = scope_range.start;
                 ident.mutable_range.end = scope_range.end;
             }
@@ -291,9 +291,9 @@ fn record_place_id(
     seen: &mut FxHashSet<ScopeId>,
 ) {
     // Get the scope for this identifier, if active at this instruction
-    let scope_id = match env.identifiers[identifier_id.index()].scope {
+    let scope_id = match env.identifiers[identifier_id].scope {
         Some(scope_id) => {
-            let scope = &env.scopes[scope_id.index()];
+            let scope = &env.scopes[scope_id];
             if id >= scope.range.start && id < scope.range.end { Some(scope_id) } else { None }
         }
         None => None,
@@ -308,7 +308,7 @@ fn record_place_id(
         seen.insert(scope_id);
 
         if let Some(n) = node {
-            let scope = &mut env.scopes[scope_id.index()];
+            let scope = &mut env.scopes[scope_id];
             scope.range.start = min(n.value_range.start, scope.range.start);
             scope.range.end = max(n.value_range.end, scope.range.end);
         }

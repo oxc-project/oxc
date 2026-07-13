@@ -40,8 +40,8 @@ pub fn align_method_call_scopes(func: &mut HirFunction, env: &mut Environment) {
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::MethodCall { property, .. } => {
-                    let lvalue_scope = env.identifiers[instr.lvalue.identifier.index()].scope;
-                    let property_scope = env.identifiers[property.identifier.index()].scope;
+                    let lvalue_scope = env.identifiers[instr.lvalue.identifier].scope;
+                    let property_scope = env.identifiers[property.identifier].scope;
 
                     match (lvalue_scope, property_scope) {
                         (Some(lvalue_sid), Some(property_sid)) => {
@@ -68,9 +68,9 @@ pub fn align_method_call_scopes(func: &mut HirFunction, env: &mut Environment) {
                     // Recurse into inner functions
                     let func_id = lowered_func.func;
                     let mut inner_func =
-                        replace(&mut env.functions[func_id.index()], placeholder_function());
+                        replace(&mut env.functions[func_id], placeholder_function());
                     align_method_call_scopes(&mut inner_func, env);
-                    env.functions[func_id.index()] = inner_func;
+                    env.functions[func_id] = inner_func;
                 }
                 _ => {}
             }
@@ -87,8 +87,8 @@ pub fn align_method_call_scopes(func: &mut HirFunction, env: &mut Environment) {
         if scope_id == root_id {
             return;
         }
-        let scope_range = env.scopes[scope_id.index()].range.clone();
-        let root_range = env.scopes[root_id.index()].range.clone();
+        let scope_range = env.scopes[scope_id].range.clone();
+        let root_range = env.scopes[root_id].range.clone();
 
         let entry =
             range_updates.entry(root_id).or_insert_with(|| (root_range.start, root_range.end));
@@ -100,14 +100,14 @@ pub fn align_method_call_scopes(func: &mut HirFunction, env: &mut Environment) {
     let original_range_ids: FxHashMap<ScopeId, MutableRangeId> = range_updates
         .keys()
         .map(|&root_id| {
-            let range_id = env.scopes[root_id.index()].range.id;
+            let range_id = env.scopes[root_id].range.id;
             (root_id, range_id)
         })
         .collect();
 
     for (root_id, (new_start, new_end)) in &range_updates {
-        env.scopes[root_id.index()].range.start = *new_start;
-        env.scopes[root_id.index()].range.end = *new_end;
+        env.scopes[*root_id].range.start = *new_start;
+        env.scopes[*root_id].range.end = *new_end;
     }
 
     // Sync identifier mutable_ranges that shared the old scope range.
@@ -116,7 +116,7 @@ pub fn align_method_call_scopes(func: &mut HirFunction, env: &mut Environment) {
         if let Some(scope_id) = ident.scope {
             if let Some(&orig_range_id) = original_range_ids.get(&scope_id) {
                 if ident.mutable_range.id == orig_range_id {
-                    let new_range = &env.scopes[scope_id.index()].range;
+                    let new_range = &env.scopes[scope_id].range;
                     ident.mutable_range.start = new_range.start;
                     ident.mutable_range.end = new_range.end;
                 }
@@ -130,11 +130,11 @@ pub fn align_method_call_scopes(func: &mut HirFunction, env: &mut Environment) {
             let lvalue_id = func.instructions[instr_id.index()].lvalue.identifier;
 
             if let Some(mapped_scope) = scope_mapping.get(&lvalue_id) {
-                env.identifiers[lvalue_id.index()].scope = *mapped_scope;
-            } else if let Some(current_scope) = env.identifiers[lvalue_id.index()].scope {
+                env.identifiers[lvalue_id].scope = *mapped_scope;
+            } else if let Some(current_scope) = env.identifiers[lvalue_id].scope {
                 // TS: mergedScopes.find() returns null if not in the set
                 if let Some(merged) = merged_scopes.find_opt(current_scope) {
-                    env.identifiers[lvalue_id.index()].scope = Some(merged);
+                    env.identifiers[lvalue_id].scope = Some(merged);
                 }
             }
         }

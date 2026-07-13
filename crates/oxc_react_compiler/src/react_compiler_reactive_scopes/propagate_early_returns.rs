@@ -85,7 +85,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         let scope_id = scope_block.scope;
 
         // Exit early if an earlier pass has already created an early return
-        if self.env.scopes[scope_id.index()].early_return_value.is_some() {
+        if self.env.scopes[scope_id].early_return_value.is_some() {
             return Ok(());
         }
 
@@ -184,14 +184,14 @@ fn apply_early_return_to_scope<'a>(
     let span = early_return.span;
 
     // Set early return value on the scope
-    env.scopes[scope_id.index()].early_return_value = Some(ReactiveScopeEarlyReturn {
+    env.scopes[scope_id].early_return_value = Some(ReactiveScopeEarlyReturn {
         value: early_return.value,
         span: early_return.span,
         label: early_return.label,
     });
 
     // Add the early return identifier as a scope declaration
-    env.scopes[scope_id.index()].declarations.push((
+    env.scopes[scope_id].declarations.push((
         early_return.value,
         ReactiveScopeDeclaration { identifier: early_return.value, scope: scope_id },
     ));
@@ -329,12 +329,12 @@ fn apply_early_return_to_scope<'a>(
 
 fn create_temporary_place_id(env: &mut Environment, span: Option<Span>) -> IdentifierId {
     let id = env.next_identifier_id();
-    env.identifiers[id.index()].span = span;
+    env.identifiers[id].span = span;
     id
 }
 
 fn promote_temporary<'a>(env: &mut Environment<'a>, identifier_id: IdentifierId) {
-    let decl_id = env.identifiers[identifier_id.index()].declaration_id;
-    env.identifiers[identifier_id.index()].name =
+    let decl_id = env.identifiers[identifier_id].declaration_id;
+    env.identifiers[identifier_id].name =
         Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.index())));
 }

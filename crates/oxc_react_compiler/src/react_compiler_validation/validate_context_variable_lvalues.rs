@@ -2,6 +2,8 @@ use rustc_hash::FxHashMap;
 use std::fmt::Display;
 use std::fmt::Formatter;
 
+use oxc_index::IndexSlice;
+
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 
 use crate::diagnostics::ErrorCategory;
@@ -51,8 +53,8 @@ pub fn validate_context_variable_lvalues(
 /// discard the diagnostics (e.g. when lowering is incomplete).
 pub fn validate_context_variable_lvalues_with_errors(
     func: &HirFunction,
-    functions: &[HirFunction],
-    identifiers: &[Identifier],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     errors: &mut Diagnostics,
 ) -> Result<(), OxcDiagnostic> {
     let mut identifier_kinds: IdentifierKinds = FxHashMap::default();
@@ -68,8 +70,8 @@ pub fn validate_context_variable_lvalues_with_errors(
 fn validate_context_variable_lvalues_impl(
     func: &HirFunction,
     identifier_kinds: &mut IdentifierKinds,
-    functions: &[HirFunction],
-    identifiers: &[Identifier],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     errors: &mut Diagnostics,
 ) -> Result<(), OxcDiagnostic> {
     let mut inner_function_ids: Vec<FunctionId> = Vec::new();
@@ -136,7 +138,7 @@ fn validate_context_variable_lvalues_impl(
 
     // Process inner functions after the block loop to avoid borrow conflicts
     for func_id in inner_function_ids {
-        let inner_func = &functions[func_id.index()];
+        let inner_func = &functions[func_id];
         validate_context_variable_lvalues_impl(
             inner_func,
             identifier_kinds,
@@ -150,9 +152,9 @@ fn validate_context_variable_lvalues_impl(
 }
 
 /// Format a place like TS `printPlace()`: `<effect> <name>$<id>`
-fn format_place(place: &Place, identifiers: &[Identifier]) -> String {
+fn format_place(place: &Place, identifiers: &IndexSlice<IdentifierId, [Identifier]>) -> String {
     let id = place.identifier;
-    let ident = &identifiers[id.index()];
+    let ident = &identifiers[id];
     let name = ident.name.as_ref().map_or("", |name| name.value());
     format!("{} {}${}", place.effect, name, id.index())
 }
@@ -161,7 +163,7 @@ fn visit(
     identifiers: &mut IdentifierKinds,
     place: &Place,
     kind: VarRefKind,
-    env_identifiers: &[Identifier],
+    env_identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     errors: &mut Diagnostics,
 ) -> Result<(), OxcDiagnostic> {
     if let Some((prev_place, prev_kind)) = identifiers.get(&place.identifier) {

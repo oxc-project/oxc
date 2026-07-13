@@ -3,6 +3,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexSlice;
 
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
@@ -12,8 +13,8 @@ use crate::react_compiler_hir::visitors::{
     each_pattern_operand, each_terminal_operand,
 };
 use crate::react_compiler_hir::{
-    AliasingEffect, BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, ParamPattern,
-    Place, PrimitiveValue, Terminal, Type, UnaryOperator, is_use_ref_type,
+    AliasingEffect, BlockId, FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue,
+    ParamPattern, Place, PrimitiveValue, Terminal, Type, TypeId, UnaryOperator, is_use_ref_type,
 };
 use oxc_span::Span;
 
@@ -257,9 +258,13 @@ impl Env {
 
 // --- Helper functions ---
 
-fn ref_type_of_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]) -> RefAccessType {
-    let identifier = &identifiers[id.index()];
-    let ty = &types[identifier.type_.index()];
+fn ref_type_of_type(
+    id: IdentifierId,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
+) -> RefAccessType {
+    let identifier = &identifiers[id];
+    let ty = &types[identifier.type_];
     if crate::react_compiler_hir::is_ref_value_type(ty) {
         RefAccessType::RefValue { span: None, ref_id: None }
     } else if is_use_ref_type(ty) {
@@ -269,14 +274,22 @@ fn ref_type_of_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]
     }
 }
 
-fn is_ref_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]) -> bool {
-    let identifier = &identifiers[id.index()];
-    is_use_ref_type(&types[identifier.type_.index()])
+fn is_ref_type(
+    id: IdentifierId,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
+) -> bool {
+    let identifier = &identifiers[id];
+    is_use_ref_type(&types[identifier.type_])
 }
 
-fn is_ref_value_type(id: IdentifierId, identifiers: &[Identifier], types: &[Type]) -> bool {
-    let identifier = &identifiers[id.index()];
-    crate::react_compiler_hir::is_ref_value_type(&types[identifier.type_.index()])
+fn is_ref_value_type(
+    id: IdentifierId,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
+) -> bool {
+    let identifier = &identifiers[id];
+    crate::react_compiler_hir::is_ref_value_type(&types[identifier.type_])
 }
 
 fn destructure(ty: &RefAccessType) -> RefAccessType {
@@ -445,8 +458,8 @@ pub fn validate_no_ref_access_in_render(func: &HirFunction, env: &mut Environmen
 fn collect_temporaries_sidemap(
     func: &HirFunction,
     env: &mut Env,
-    identifiers: &[Identifier],
-    types: &[Type],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
 ) {
     for (_, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
@@ -490,9 +503,9 @@ fn collect_temporaries_sidemap(
 
 fn validate_no_ref_access_in_render_impl(
     func: &HirFunction,
-    identifiers: &[Identifier],
-    types: &[Type],
-    functions: &[HirFunction],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
     env: &Environment,
     ref_env: &mut Env,
     errors: &mut Vec<OxcDiagnostic>,
@@ -660,7 +673,7 @@ fn validate_no_ref_access_in_render_impl(
                     }
                     InstructionValue::ObjectMethod { lowered_func, .. }
                     | InstructionValue::FunctionExpression { lowered_func, .. } => {
-                        let inner = &functions[lowered_func.func.index()];
+                        let inner = &functions[lowered_func.func];
                         let mut inner_errors: Vec<OxcDiagnostic> = Vec::new();
                         let result = validate_no_ref_access_in_render_impl(
                             inner,
@@ -718,8 +731,8 @@ fn validate_no_ref_access_in_render_impl(
                         if !did_error {
                             let is_ref_lvalue =
                                 is_ref_type(instr.lvalue.identifier, identifiers, types);
-                            let callee_identifier = &identifiers[callee.identifier.index()];
-                            let callee_type = &types[callee_identifier.type_.index()];
+                            let callee_identifier = &identifiers[callee.identifier];
+                            let callee_type = &types[callee_identifier.type_];
                             let hook_kind = env.get_hook_kind_for_type(callee_type).ok().flatten();
 
                             if is_ref_lvalue

@@ -9,6 +9,7 @@
 //! This pass is conditional on `env.config.enable_jsx_outlining` (defaults to false).
 
 use crate::react_compiler_utils::FxIndexSet;
+use oxc_index::IndexVec;
 use oxc_str::{Ident, IdentHashSet, format_ident};
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -29,7 +30,7 @@ use std::mem::replace;
 ///
 /// Ported from TS `outlineJSX` in `Optimization/OutlineJsx.ts`.
 pub fn outline_jsx<'a>(func: &mut HirFunction<'a>, env: &mut Environment<'a>) {
-    let mut outlined_fns: Vec<HirFunction<'a>> = Vec::new();
+    let mut outlined_fns: IndexVec<FunctionId, HirFunction<'a>> = IndexVec::new();
     outline_jsx_impl(func, env, &mut outlined_fns);
 
     for outlined_fn in outlined_fns {
@@ -58,7 +59,7 @@ struct OutlinedResult<'a> {
 fn outline_jsx_impl<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-    outlined_fns: &mut Vec<HirFunction<'a>>,
+    outlined_fns: &mut IndexVec<FunctionId, HirFunction<'a>>,
 ) {
     // Collect LoadGlobal instructions (tag -> instr)
     let mut globals: FxHashMap<IdentifierId, usize> = FxHashMap::default(); // id -> instr_idx
@@ -131,9 +132,9 @@ fn outline_jsx_impl<'a>(
                 }
                 InstrAction::FunctionExpr { func_id } => {
                     let mut inner_func =
-                        replace(&mut env.functions[func_id.index()], placeholder_function());
+                        replace(&mut env.functions[func_id], placeholder_function());
                     outline_jsx_impl(&mut inner_func, env, outlined_fns);
-                    env.functions[func_id.index()] = inner_func;
+                    env.functions[func_id] = inner_func;
                 }
                 InstrAction::JsxExpr { lvalue_id, instr_idx, eval_order, child_ids } => {
                     if !children_ids.contains(&lvalue_id) {
@@ -197,7 +198,7 @@ fn process_and_outline_jsx<'a>(
     jsx_group: &mut [JsxInstrInfo],
     globals: &FxHashMap<IdentifierId, usize>,
     rewrite_instr: &mut FxHashMap<EvaluationOrder, Vec<Instruction<'a>>>,
-    outlined_fns: &mut Vec<HirFunction<'a>>,
+    outlined_fns: &mut IndexVec<FunctionId, HirFunction<'a>>,
 ) {
     if jsx_group.len() <= 1 {
         return;
@@ -288,14 +289,14 @@ fn collect_props<'a>(
                     }
                     // Promote the child's identifier to a named temporary
                     let child_id = child.identifier;
-                    let decl_id = env.identifiers[child_id.index()].declaration_id;
-                    if env.identifiers[child_id.index()].name.is_none() {
-                        env.identifiers[child_id.index()].name = Some(IdentifierName::Promoted(
+                    let decl_id = env.identifiers[child_id].declaration_id;
+                    if env.identifiers[child_id].name.is_none() {
+                        env.identifiers[child_id].name = Some(IdentifierName::Promoted(
                             format_ident!(allocator, "#t{}", decl_id.index()),
                         ));
                     }
 
-                    let child_name = match env.identifiers[child_id.index()].name {
+                    let child_name = match env.identifiers[child_id].name {
                         Some(IdentifierName::Named(n)) => n,
                         Some(IdentifierName::Promoted(n)) => n,
                         None => format_ident!(allocator, "#t{}", decl_id.index()),
@@ -329,8 +330,8 @@ fn emit_outlined_jsx<'a>(
     // Create LoadGlobal for the outlined component
     let load_id = env.next_identifier_id();
     // Promote it as a JSX tag temporary
-    let decl_id = env.identifiers[load_id.index()].declaration_id;
-    env.identifiers[load_id.index()].name =
+    let decl_id = env.identifiers[load_id].declaration_id;
+    env.identifiers[load_id].name =
         Some(IdentifierName::Promoted(format_ident!(env.allocator, "#T{}", decl_id.index())));
 
     let load_place =
@@ -379,8 +380,8 @@ fn emit_outlined_fn<'a>(
 
     // Create props parameter
     let props_obj_id = env.next_identifier_id();
-    let decl_id = env.identifiers[props_obj_id.index()].declaration_id;
-    env.identifiers[props_obj_id.index()].name =
+    let decl_id = env.identifiers[props_obj_id].declaration_id;
+    env.identifiers[props_obj_id].name =
         Some(IdentifierName::Promoted(format_ident!(env.allocator, "#t{}", decl_id.index())));
     let props_obj =
         Place { identifier: props_obj_id, effect: Effect::Unknown, reactive: false, span: None };
@@ -419,7 +420,7 @@ fn emit_outlined_fn<'a>(
 
     let block = BasicBlock {
         kind: BlockKind::Block,
-        id: BlockId::from_usize(0),
+        id: BlockId::ENTRY,
         instructions: instr_ids,
         preds: FxIndexSet::default(),
         terminal: Terminal::Return {
@@ -433,7 +434,7 @@ fn emit_outlined_fn<'a>(
     };
 
     let mut blocks = FxIndexMap::default();
-    blocks.insert(BlockId::from_usize(0), block);
+    blocks.insert(BlockId::ENTRY, block);
 
     let outlined_fn = HirFunction {
         id: None,
@@ -442,7 +443,7 @@ fn emit_outlined_fn<'a>(
         params: vec![ParamPattern::Place(props_obj)],
         returns: returns_place,
         context: Vec::new(),
-        body: HIR { entry: BlockId::from_usize(0), blocks },
+        body: HIR { entry: BlockId::ENTRY, blocks },
         instructions: instr_table,
         generator: false,
         is_async: false,
@@ -561,7 +562,7 @@ fn create_old_to_new_props_mapping<'a>(
         }
 
         let new_id = env.next_identifier_id();
-        env.identifiers[new_id.index()].name = Some(IdentifierName::Named(old_prop.new_name));
+        env.identifiers[new_id].name = Some(IdentifierName::Named(old_prop.new_name));
 
         let new_place =
             Place { identifier: new_id, effect: Effect::Unknown, reactive: false, span: None };

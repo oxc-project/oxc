@@ -12,10 +12,14 @@
 
 use rustc_hash::FxHashMap;
 
+use oxc_index::IndexSlice;
+
 use oxc_diagnostics::OxcDiagnostic;
 
 use crate::diagnostics::ErrorCategory;
-use crate::react_compiler_hir::{BlockId, HirFunction, Instruction, InstructionValue, Terminal};
+use crate::react_compiler_hir::{
+    BlockId, FunctionId, HirFunction, Instruction, InstructionValue, Terminal,
+};
 use crate::react_compiler_lowering::{
     get_reverse_postordered_blocks, mark_instruction_ids, remove_dead_do_while_statements,
     remove_unnecessary_try_catch, remove_unreachable_for_updates,
@@ -26,7 +30,7 @@ use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecut
 /// Prune `MaybeThrow` terminals for blocks that cannot throw, then clean up the CFG.
 pub fn prune_maybe_throws(
     func: &mut HirFunction,
-    functions: &mut [HirFunction],
+    functions: &mut IndexSlice<FunctionId, [HirFunction]>,
 ) -> Result<(), OxcDiagnostic> {
     let terminal_mapping = prune_maybe_throws_impl(func);
     if let Some(terminal_mapping) = terminal_mapping {

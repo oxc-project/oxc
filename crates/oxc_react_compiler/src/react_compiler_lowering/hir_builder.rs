@@ -542,7 +542,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn make_temporary(&mut self, span: Option<Span>) -> IdentifierId {
         let id = self.env.next_identifier_id();
         // Update the span on the allocated identifier
-        self.env.identifiers[id.index()].span = span;
+        self.env.identifiers[id].span = span;
         id
     }
 
@@ -662,7 +662,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             let should_record_fbt_error =
                 if let Some(&identifier_id) = self.bindings.get(&symbol_id) {
                     // Already resolved - check if the resolved name is still "fbt"
-                    match &self.env.identifiers[identifier_id.index()].name {
+                    match &self.env.identifiers[identifier_id].name {
                         Some(IdentifierName::Named(resolved_name)) => resolved_name == "fbt",
                         _ => false,
                     }
@@ -715,15 +715,15 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         // Allocate identifier in the arena
         let id = self.env.next_identifier_id();
         // Update the name and span on the allocated identifier
-        self.env.identifiers[id.index()].name = Some(IdentifierName::Named(candidate));
+        self.env.identifiers[id].name = Some(IdentifierName::Named(candidate));
         // Prefer the binding's declaration span over the reference span.
         // This matches TS behavior where Babel's resolveBinding returns the
         // binding identifier's original span (the declaration site).
         let decl_span = self.declaration_span(symbol_id);
         if let Some(ref dl) = decl_span {
-            self.env.identifiers[id.index()].span = Some(*dl);
+            self.env.identifiers[id].span = Some(*dl);
         } else if let Some(ref span) = span {
-            self.env.identifiers[id.index()].span = Some(*span);
+            self.env.identifiers[id].span = Some(*span);
         }
 
         self.used_names.insert(candidate, symbol_id);
@@ -734,7 +734,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Set the span on an identifier to the declaration-site span.
     /// This overrides any previously-set span (which may have come from a reference site).
     pub fn set_identifier_declaration_span(&mut self, id: IdentifierId, span: Span) {
-        self.env.identifiers[id.index()].span = Some(span);
+        self.env.identifiers[id].span = Some(span);
     }
 
     /// Resolve an identifier reference to a VariableBinding.
@@ -848,7 +848,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         // None = unresolved binding; Some(matches) = resolved, current name comparison
         let resolved_name_matches = |sid: SymbolId| -> Option<bool> {
             let &identifier_id = self.bindings.get(&sid)?;
-            match &self.env.identifiers[identifier_id.index()].name {
+            match &self.env.identifiers[identifier_id].name {
                 Some(IdentifierName::Named(n)) => Some(n == name),
                 _ => Some(false),
             }
@@ -1127,6 +1127,6 @@ pub fn mark_predecessors(hir: &mut HIR) {
 pub fn create_temporary_place(env: &mut Environment<'_>, span: Option<Span>) -> Place {
     let id = env.next_identifier_id();
     // Update the span on the allocated identifier
-    env.identifiers[id.index()].span = span;
+    env.identifiers[id].span = span;
     Place { identifier: id, reactive: false, effect: Effect::Unknown, span: None }
 }

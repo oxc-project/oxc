@@ -67,7 +67,7 @@ fn format_kind(kind: Option<InstructionKind>) -> &'static str {
 
 /// Format a Place like TS `printPlace()`: `<effect> <name>$<id>[<range>]{reactive}`
 fn format_place(place: &Place, env: &Environment) -> String {
-    let ident = &env.identifiers[place.identifier.index()];
+    let ident = &env.identifiers[place.identifier];
     let name = ident.name.as_ref().map_or("", |name| name.value());
     let scope = ident
         .scope
@@ -130,7 +130,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
             ParamPattern::Place(p) => p,
             ParamPattern::Spread(s) => &s.place,
         };
-        let ident = &env.identifiers[place.identifier.index()];
+        let ident = &env.identifiers[place.identifier];
         if ident.name.is_some() {
             declarations.insert(ident.declaration_id, DeclarationLoc::ParamOrContext);
         }
@@ -138,7 +138,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
 
     // Seed with context variables
     for place in &func.context {
-        let ident = &env.identifiers[place.identifier.index()];
+        let ident = &env.identifiers[place.identifier];
         if ident.name.is_some() {
             declarations.insert(ident.declaration_id, DeclarationLoc::ParamOrContext);
         }
@@ -153,7 +153,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::DeclareLocal { lvalue, .. } => {
-                    let decl_id = env.identifiers[lvalue.place.identifier.index()].declaration_id;
+                    let decl_id = env.identifiers[lvalue.place.identifier].declaration_id;
                     if declarations.contains_key(&decl_id) {
                         return Err(invariant_error_with_span(
                             "Expected variable not to be defined prior to declaration",
@@ -170,7 +170,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                     );
                 }
                 InstructionValue::StoreLocal { lvalue, .. } => {
-                    let ident = &env.identifiers[lvalue.place.identifier.index()];
+                    let ident = &env.identifiers[lvalue.place.identifier];
                     if ident.name.is_some() {
                         let decl_id = ident.declaration_id;
                         if let Some(existing) = declarations.get(&decl_id) {
@@ -214,7 +214,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                 InstructionValue::Destructure { lvalue, .. } => {
                     let mut kind: Option<InstructionKind> = None;
                     for place in each_pattern_operand(&lvalue.pattern) {
-                        let ident = &env.identifiers[place.identifier.index()];
+                        let ident = &env.identifiers[place.identifier];
                         if ident.name.is_none() {
                             if !(kind.is_none() || kind == Some(InstructionKind::Const)) {
                                 return Err(invariant_error_with_span(
@@ -292,7 +292,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                 }
                 InstructionValue::PostfixUpdate { lvalue, .. }
                 | InstructionValue::PrefixUpdate { lvalue, .. } => {
-                    let ident = &env.identifiers[lvalue.identifier.index()];
+                    let ident = &env.identifiers[lvalue.identifier];
                     let decl_id = ident.declaration_id;
                     let Some(existing) = declarations.get(&decl_id) else {
                         return Err(invariant_error_with_span(

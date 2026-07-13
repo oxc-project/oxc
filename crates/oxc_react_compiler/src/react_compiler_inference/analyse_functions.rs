@@ -68,13 +68,13 @@ where
     // Process each inner function
     for func_id in inner_func_ids {
         // Take the inner function out of the arena to avoid borrow conflicts
-        let mut inner_func = replace(&mut env.functions[func_id.index()], placeholder_function());
+        let mut inner_func = replace(&mut env.functions[func_id], placeholder_function());
 
         lower_with_mutation_aliasing(&mut inner_func, env, debug_logger)?;
 
         // If an invariant error was recorded, put the function back and stop processing
         if env.has_invariant_errors() {
-            env.functions[func_id.index()] = inner_func;
+            env.functions[func_id] = inner_func;
             return Ok(());
         }
 
@@ -86,13 +86,13 @@ where
         // and clear its scope.
         for operand in &inner_func.context {
             let new_range = env.new_mutable_range(EvaluationOrder::UNSET, EvaluationOrder::UNSET);
-            let ident = &mut env.identifiers[operand.identifier.index()];
+            let ident = &mut env.identifiers[operand.identifier];
             ident.mutable_range = new_range;
             ident.scope = None;
         }
 
         // Put the function back
-        env.functions[func_id.index()] = inner_func;
+        env.functions[func_id] = inner_func;
     }
 
     Ok(())
@@ -206,7 +206,7 @@ fn placeholder_function<'a>() -> HirFunction<'a> {
             span: None,
         },
         context: Vec::new(),
-        body: HIR { entry: BlockId::from_usize(0), blocks: FxIndexMap::default() },
+        body: HIR { entry: BlockId::ENTRY, blocks: FxIndexMap::default() },
         instructions: Vec::new(),
         generator: false,
         is_async: false,

@@ -66,6 +66,10 @@ define_nonmax_u32_index_type! {
 }
 
 impl BlockId {
+    /// The entry block of a function's CFG. Blocks are numbered from 0, so the first
+    /// block allocated is always the entry.
+    pub const ENTRY: Self = Self::from_usize(0);
+
     /// Placeholder id for the never-read block that the final `terminate()` installs as
     /// `current`. Uses the largest representable index so it can never alias a real block
     /// (blocks are numbered from 0).
