@@ -151,17 +151,11 @@ fn is_safe_order(expr: &Expression<'_>) -> bool {
         | Expression::AwaitExpression(_)
         | Expression::YieldExpression(_)
         | Expression::ImportExpression(_)
-        | Expression::TaggedTemplateExpression(_) 
-
-        // Member access can throw if object is nullish
-        |Expression::StaticMemberExpression(_) 
-        |Expression::ComputedMemberExpression(_) 
-
-        //  Optional chaining still produces values and can trigger getters
-        |Expression::ChainExpression(_)
-
-        // BinaryExpression: conservatively unsafe (type coercion, in/instanceof throw)
-        |Expression::BinaryExpression(_) => false,
+        | Expression::TaggedTemplateExpression(_)
+        | Expression::StaticMemberExpression(_)
+        | Expression::ComputedMemberExpression(_)
+        | Expression::ChainExpression(_)
+        | Expression::BinaryExpression(_) => false,
 
         Expression::UnaryExpression(unary) => is_safe_order(&unary.argument),
         Expression::LogicalExpression(logical) => {
