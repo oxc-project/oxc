@@ -5749,6 +5749,26 @@
             }
           ]
         },
+        "one-var": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/OneVar"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "operator-assignment": {
           "anyOf": [
             {
@@ -16220,6 +16240,93 @@
           }
         }
       ]
+    },
+    "OneVar": {
+      "$ref": "#/definitions/OneVarConfig"
+    },
+    "OneVarConfig": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/OneVarMode"
+        },
+        {
+          "$ref": "#/definitions/OneVarOptions"
+        }
+      ]
+    },
+    "OneVarMode": {
+      "type": "string",
+      "enum": [
+        "always",
+        "never",
+        "consecutive"
+      ]
+    },
+    "OneVarOptions": {
+      "type": "object",
+      "properties": {
+        "awaitUsing": {
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ]
+        },
+        "const": {
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ]
+        },
+        "initialized": {
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ]
+        },
+        "let": {
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ]
+        },
+        "separateRequires": {
+          "default": false,
+          "type": "boolean"
+        },
+        "uninitialized": {
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ]
+        },
+        "using": {
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ]
+        },
+        "var": {
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
     },
     "OnlyExportComponentsConfig": {
       "type": "object",
