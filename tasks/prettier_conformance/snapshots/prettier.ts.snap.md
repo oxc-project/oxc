@@ -25,7 +25,7 @@ ts compatibility: 627/666 (94.14%), 19 files skipped
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 80.00% |
 | typescript/template-literals/member-expression.ts | 💥 | 65.12% |
-| typescript/type-parameters-arguments/10732.ts | 💥 | 50.00% |
+| typescript/type-parameters-arguments/10732.ts | 💥 | 66.67% |
 | typescript/type-parameters-arguments/18041.ts | 💥 | 91.43% |
 | typescript/type-parameters-arguments/18604.ts | 💥 | 60.00% |
 | typescript/type-parameters-arguments/19505.ts | 💥 | 61.54% |

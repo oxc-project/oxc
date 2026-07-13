@@ -180,6 +180,12 @@ impl NeedsParentheses<'_> for AstNode<'_, TSConditionalType<'_>> {
             AstNodes::TSConditionalType(ty) => {
                 ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
             }
+            // A conditional type is not allowed bare in a type parameter's constraint position:
+            // `<T extends (A extends B ? C : D)>` requires the parentheses.
+            // The default position (`= ...`) does not.
+            AstNodes::TSTypeParameter(param) => {
+                param.constraint().is_some_and(|c| c.span() == self.span())
+            }
             AstNodes::TSUnionType(union) => union.types.len() > 1,
             AstNodes::TSIntersectionType(intersection) => intersection.types.len() > 1,
             _ => operator_type_or_higher_needs_parens(self.span, parent),
