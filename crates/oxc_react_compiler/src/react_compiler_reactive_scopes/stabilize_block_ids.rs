@@ -69,10 +69,10 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CollectReferencedLabels<'a, 'e> {
     }
 
     fn visit_terminal(&self, stmt: &ReactiveTerminalStatement<'a>, state: &mut Self::State) {
-        if let Some(ref label) = stmt.label {
-            if !label.implicit {
-                state.insert(label.id);
-            }
+        if let Some(ref label) = stmt.label
+            && !label.implicit
+        {
+            state.insert(label.id);
         }
         self.traverse_terminal(stmt, state);
     }

@@ -90,7 +90,7 @@ pub fn compile<'a>(
     }
 
     match compile_program(allocator, semantic, program, options) {
-        CompileResult::Success { output, diagnostics } => (output, diagnostics),
+        CompileResult::Success { output, diagnostics } => (output.map(|b| *b), diagnostics),
         CompileResult::Error { diagnostics } => (None, diagnostics),
     }
 }

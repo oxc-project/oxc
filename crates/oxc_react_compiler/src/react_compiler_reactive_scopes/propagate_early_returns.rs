@@ -114,55 +114,55 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         stmt: &mut ReactiveTerminalStatement<'a>,
         state: &mut State,
     ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
-        if state.within_reactive_scope {
-            if let ReactiveTerminal::Return { value, .. } = &stmt.terminal {
-                let span = value.span;
+        if state.within_reactive_scope
+            && let ReactiveTerminal::Return { value, .. } = &stmt.terminal
+        {
+            let span = value.span;
 
-                let early_return_value = if let Some(ref existing) = state.early_return_value {
-                    existing.clone()
-                } else {
-                    // Create a new early return identifier
-                    let identifier_id = create_temporary_place_id(self.env, span);
-                    promote_temporary(self.env, identifier_id);
-                    let label = self.env.next_block_id();
-                    EarlyReturnInfo { value: identifier_id, span, label }
-                };
+            let early_return_value = if let Some(ref existing) = state.early_return_value {
+                existing.clone()
+            } else {
+                // Create a new early return identifier
+                let identifier_id = create_temporary_place_id(self.env, span);
+                promote_temporary(self.env, identifier_id);
+                let label = self.env.next_block_id();
+                EarlyReturnInfo { value: identifier_id, span, label }
+            };
 
-                state.early_return_value = Some(early_return_value.clone());
+            state.early_return_value = Some(early_return_value.clone());
 
-                let return_value = value.clone();
+            let return_value = value.clone();
 
-                return Ok(Transformed::ReplaceMany(vec![
-                    // StoreLocal: reassign the early return value
-                    ReactiveStatement::Instruction(ReactiveInstruction {
-                        id: EvaluationOrder::UNSET,
-                        lvalue: None,
-                        value: ReactiveValue::Instruction(InstructionValue::StoreLocal {
-                            lvalue: LValue {
-                                kind: InstructionKind::Reassign,
-                                place: Place {
-                                    identifier: early_return_value.value,
-                                    effect: Effect::Capture,
-                                    reactive: true,
-                                    span,
-                                },
+            return Ok(Transformed::ReplaceMany(vec![
+                // StoreLocal: reassign the early return value
+                ReactiveStatement::Instruction(ReactiveInstruction {
+                    id: EvaluationOrder::UNSET,
+                    lvalue: None,
+                    value: ReactiveValue::Instruction(InstructionValue::StoreLocal {
+                        lvalue: LValue {
+                            kind: InstructionKind::Reassign,
+                            place: Place {
+                                identifier: early_return_value.value,
+                                effect: Effect::Capture,
+                                reactive: true,
+                                span,
                             },
-                            value: return_value,
-                            span,
-                        }),
+                        },
+                        value: return_value,
                         span,
                     }),
-                    // Break to the label
-                    ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::Break {
-                            target: early_return_value.label,
-                            id: EvaluationOrder::UNSET,
-                            target_kind: ReactiveTerminalTargetKind::Labeled,
-                        },
-                        label: None,
-                    }),
-                ]));
-            }
+                    span,
+                }),
+                // Break to the label
+                ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
+                    terminal: ReactiveTerminal::Break {
+                        target: early_return_value.label,
+                        id: EvaluationOrder::UNSET,
+                        target_kind: ReactiveTerminalTargetKind::Labeled,
+                    },
+                    label: None,
+                })),
+            ]));
         }
 
         // Default: traverse into the terminal's sub-blocks
@@ -313,13 +313,13 @@ fn apply_early_return_to_scope<'a>(
             span,
         }),
         // Label terminal wrapping the original instructions
-        ReactiveStatement::Terminal(ReactiveTerminalStatement {
+        ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
             label: Some(ReactiveLabel { id: early_return.label, implicit: false }),
             terminal: ReactiveTerminal::Label {
                 block: original_instructions,
                 id: EvaluationOrder::UNSET,
             },
-        }),
+        })),
     ];
 }
 

@@ -119,11 +119,10 @@ impl<'a> ContextIdentifierVisitor<'a> {
         if let Some(symbol_id) = self.scope.find_binding(current_scope, name) {
             let info = self.binding_info.entry(symbol_id).or_default();
             info.reassigned = true;
-            if let Some(&fn_scope) = self.function_stack.last() {
-                if is_captured_by_function(self.scope, self.scope.symbol_scope(symbol_id), fn_scope)
-                {
-                    info.reassigned_by_inner_fn = true;
-                }
+            if let Some(&fn_scope) = self.function_stack.last()
+                && is_captured_by_function(self.scope, self.scope.symbol_scope(symbol_id), fn_scope)
+            {
+                info.reassigned_by_inner_fn = true;
             }
         }
     }

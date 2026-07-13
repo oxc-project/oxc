@@ -115,15 +115,15 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
         active_scopes.retain(|&scope_id| env.scopes[scope_id].range.end > starting_id);
 
         // Check if we've reached a fallthrough block
-        if let Some(top) = active_block_fallthrough_ranges.last().cloned() {
-            if top.fallthrough == block_id {
-                active_block_fallthrough_ranges.pop();
-                // All active scopes overlap this block-fallthrough range;
-                // extend their start to include the range start.
-                for &scope_id in &active_scopes {
-                    let scope = &mut env.scopes[scope_id];
-                    scope.range.start = min(scope.range.start, top.range.start);
-                }
+        if let Some(top) = active_block_fallthrough_ranges.last().cloned()
+            && top.fallthrough == block_id
+        {
+            active_block_fallthrough_ranges.pop();
+            // All active scopes overlap this block-fallthrough range;
+            // extend their start to include the range start.
+            for &scope_id in &active_scopes {
+                let scope = &mut env.scopes[scope_id];
+                scope.range.start = min(scope.range.start, top.range.start);
             }
         }
 
@@ -210,19 +210,19 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
             } else {
                 Some(active_block_fallthrough_ranges.len() - 1)
             };
-            if let Some(pos) = start_pos {
-                if top_idx != Some(pos) {
-                    let start_range = active_block_fallthrough_ranges[pos].clone();
-                    let first_id = block_first_id(func, start_range.fallthrough);
+            if let Some(pos) = start_pos
+                && top_idx != Some(pos)
+            {
+                let start_range = active_block_fallthrough_ranges[pos].clone();
+                let first_id = block_first_id(func, start_range.fallthrough);
 
-                    for &scope_id in &active_scopes {
-                        let scope = &mut env.scopes[scope_id];
-                        if scope.range.end <= terminal_eval_order {
-                            continue;
-                        }
-                        scope.range.start = min(start_range.range.start, scope.range.start);
-                        scope.range.end = max(first_id, scope.range.end);
+                for &scope_id in &active_scopes {
+                    let scope = &mut env.scopes[scope_id];
+                    if scope.range.end <= terminal_eval_order {
+                        continue;
                     }
+                    scope.range.start = min(start_range.range.start, scope.range.start);
+                    scope.range.end = max(first_id, scope.range.end);
                 }
             }
         }
@@ -240,14 +240,14 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HirFunction, env: &m
             } else if node.is_none() || is_ternary_logical_optional {
                 // Create a new node when transitioning non-value -> value,
                 // or for ternary/logical/optional terminals.
-                let value_range = if node.is_none() {
+                let value_range = if let Some(node) = &node {
+                    // Value -> value transition (ternary/logical/optional): reuse range
+                    node.value_range.clone()
+                } else {
                     // Transition from block -> value block
                     let ft = fallthrough.expect("Expected a fallthrough for value block");
                     let next_id = block_first_id(func, ft);
                     env.new_mutable_range(terminal_eval_order, next_id)
-                } else {
-                    // Value -> value transition (ternary/logical/optional): reuse range
-                    node.as_ref().unwrap().value_range.clone()
                 };
 
                 value_block_nodes.insert(successor, ValueBlockNode { value_range });

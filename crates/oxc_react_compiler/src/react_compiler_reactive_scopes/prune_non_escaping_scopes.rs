@@ -867,18 +867,18 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                         }
                     }
                 }
-            } else if let InstructionValue::MethodCall { property, args, .. } = instr_value {
-                if env.get_hook_kind_for_id(property.identifier).ok().flatten().is_some() {
-                    let no_alias = env.has_no_alias_signature(property.identifier);
-                    if !no_alias {
-                        for arg in args {
-                            let place = match arg {
-                                PlaceOrSpread::Spread(spread) => &spread.place,
-                                PlaceOrSpread::Place(place) => place,
-                            };
-                            let decl = env.identifiers[place.identifier].declaration_id;
-                            state.escaping_values.insert(decl);
-                        }
+            } else if let InstructionValue::MethodCall { property, args, .. } = instr_value
+                && env.get_hook_kind_for_id(property.identifier).ok().flatten().is_some()
+            {
+                let no_alias = env.has_no_alias_signature(property.identifier);
+                if !no_alias {
+                    for arg in args {
+                        let place = match arg {
+                            PlaceOrSpread::Spread(spread) => &spread.place,
+                            PlaceOrSpread::Place(place) => place,
+                        };
+                        let decl = env.identifiers[place.identifier].declaration_id;
+                        state.escaping_values.insert(decl);
                     }
                 }
             }
@@ -1125,12 +1125,13 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneScopesTransform<'a, 'e> {
                     .as_ref()
                     .map(|lv| self.env.identifiers[lv.identifier].scope.is_none())
                     .unwrap_or(false);
-                if has_scope && lvalue_no_scope {
-                    if let Some(lv) = &instruction.lvalue {
-                        let decl_id = self.env.identifiers[lv.identifier].declaration_id;
-                        let ids = self.reassignments.entry(decl_id).or_default();
-                        ids.insert(place.identifier);
-                    }
+                if has_scope
+                    && lvalue_no_scope
+                    && let Some(lv) = &instruction.lvalue
+                {
+                    let decl_id = self.env.identifiers[lv.identifier].declaration_id;
+                    let ids = self.reassignments.entry(decl_id).or_default();
+                    ids.insert(place.identifier);
                 }
             }
             ReactiveValue::Instruction(InstructionValue::FinishMemoize {
@@ -1155,10 +1156,10 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for PruneScopesTransform<'a, 'e> {
                     }
                 } else {
                     let scope = self.env.identifiers[decl.identifier].scope;
-                    if let Some(scope_id) = scope {
-                        if self.pruned_scopes.contains(&scope_id) {
-                            *pruned = true;
-                        }
+                    if let Some(scope_id) = scope
+                        && self.pruned_scopes.contains(&scope_id)
+                    {
+                        *pruned = true;
                     }
                 }
             }

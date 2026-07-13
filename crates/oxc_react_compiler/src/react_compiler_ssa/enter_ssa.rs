@@ -142,10 +142,10 @@ impl SSABuilder {
         block_id: BlockId,
         env: &mut Environment,
     ) -> IdentifierId {
-        if let Some(state) = self.states.get(&block_id) {
-            if let Some(&new_id) = state.defs.get(&old_place.identifier) {
-                return new_id;
-            }
+        if let Some(state) = self.states.get(&block_id)
+            && let Some(&new_id) = state.defs.get(&old_place.identifier)
+        {
+            return new_id;
         }
 
         let preds = self.block_preds.get(&block_id).cloned().unwrap_or_default();

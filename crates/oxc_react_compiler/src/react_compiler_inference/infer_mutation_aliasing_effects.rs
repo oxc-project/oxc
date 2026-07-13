@@ -937,14 +937,8 @@ fn infer_block(
         }
 
         // Apply signature
-        let effects = apply_signature(
-            context,
-            state,
-            *instr_idx,
-            &func.instructions[instr_index],
-            env,
-            func,
-        )?;
+        let effects =
+            apply_signature(context, state, *instr_idx, &func.instructions[instr_index], env)?;
         func.instructions[instr_index].effects = effects;
     }
 
@@ -975,38 +969,35 @@ fn infer_block(
             context.catch_handlers.insert(handler, binding);
         }
         TerminalAction::MaybeThrow { handler_id } => {
-            if let Some(handler_param) = context.catch_handlers.get(&handler_id).cloned() {
-                if state.is_defined(handler_param.identifier) {
-                    let mut terminal_effects: Vec<AliasingEffect> = Vec::new();
-                    for instr_idx in &instr_ids {
-                        let instr = &func.instructions[*instr_idx as usize];
-                        match &instr.value {
-                            InstructionValue::CallExpression { .. }
-                            | InstructionValue::MethodCall { .. } => {
-                                state.append_alias(
-                                    handler_param.identifier,
-                                    instr.lvalue.identifier,
-                                );
-                                let kind = state.kind(instr.lvalue.identifier).kind;
-                                if kind == ValueKind::Mutable || kind == ValueKind::Context {
-                                    terminal_effects.push(context.intern_effect(
-                                        AliasingEffect::Alias {
-                                            from: instr.lvalue.clone(),
-                                            into: handler_param.clone(),
-                                        },
-                                    ));
-                                }
+            if let Some(handler_param) = context.catch_handlers.get(&handler_id).cloned()
+                && state.is_defined(handler_param.identifier)
+            {
+                let mut terminal_effects: Vec<AliasingEffect> = Vec::new();
+                for instr_idx in &instr_ids {
+                    let instr = &func.instructions[*instr_idx as usize];
+                    match &instr.value {
+                        InstructionValue::CallExpression { .. }
+                        | InstructionValue::MethodCall { .. } => {
+                            state.append_alias(handler_param.identifier, instr.lvalue.identifier);
+                            let kind = state.kind(instr.lvalue.identifier).kind;
+                            if kind == ValueKind::Mutable || kind == ValueKind::Context {
+                                terminal_effects.push(context.intern_effect(
+                                    AliasingEffect::Alias {
+                                        from: instr.lvalue.clone(),
+                                        into: handler_param.clone(),
+                                    },
+                                ));
                             }
-                            _ => {}
                         }
+                        _ => {}
                     }
-                    let block_mut = func.body.blocks.get_mut(&block_id).unwrap();
-                    if let Terminal::MaybeThrow { effects: ref mut term_effects, .. } =
-                        block_mut.terminal
-                    {
-                        *term_effects =
-                            if terminal_effects.is_empty() { None } else { Some(terminal_effects) };
-                    }
+                }
+                let block_mut = func.body.blocks.get_mut(&block_id).unwrap();
+                if let Terminal::MaybeThrow { effects: ref mut term_effects, .. } =
+                    block_mut.terminal
+                {
+                    *term_effects =
+                        if terminal_effects.is_empty() { None } else { Some(terminal_effects) };
                 }
             }
         }
@@ -1038,7 +1029,6 @@ fn apply_signature(
     instr_idx: u32,
     instr: &Instruction,
     env: &mut Environment,
-    func: &HirFunction,
 ) -> Result<Option<Vec<AliasingEffect>>, OxcDiagnostic> {
     let mut effects: Vec<AliasingEffect> = Vec::new();
 
@@ -1099,7 +1089,7 @@ fn apply_signature(
     let sig_effects: Vec<AliasingEffect> = sig.effects.clone();
 
     for effect in &sig_effects {
-        apply_effect(context, state, effect.clone(), &mut initialized, &mut effects, env, func)?;
+        apply_effect(context, state, effect.clone(), &mut initialized, &mut effects, env)?;
     }
 
     // If lvalue is not yet defined, initialize it with a default value.
@@ -1163,7 +1153,6 @@ fn freeze_function_captures_transitive(
 // applyEffect
 // =============================================================================
 
-#[allow(clippy::only_used_in_recursion)]
 fn apply_effect(
     context: &mut Context,
     state: &mut InferenceState,
@@ -1171,7 +1160,6 @@ fn apply_effect(
     initialized: &mut FxHashSet<IdentifierId>,
     effects: &mut Vec<AliasingEffect>,
     env: &mut Environment,
-    func: &HirFunction,
 ) -> Result<(), OxcDiagnostic> {
     let effect = context.intern_effect(effect);
     match effect {
@@ -1253,7 +1241,6 @@ fn apply_effect(
                         initialized,
                         effects,
                         env,
-                        func,
                     )?;
                 }
                 _ => {
@@ -1345,7 +1332,6 @@ fn apply_effect(
                     initialized,
                     effects,
                     env,
-                    func,
                 )?;
             }
         }
@@ -1384,7 +1370,6 @@ fn apply_effect(
                     initialized,
                     effects,
                     env,
-                    func,
                 )?;
             } else if (source_type == Some("mutable") && destination_type == Some("mutable"))
                 || is_maybe_alias
@@ -1400,7 +1385,6 @@ fn apply_effect(
                     initialized,
                     effects,
                     env,
-                    func,
                 )?;
             }
         }
@@ -1420,7 +1404,6 @@ fn apply_effect(
                         initialized,
                         effects,
                         env,
-                        func,
                     )?;
                     let cache_key = format!(
                         "Assign_frozen:{}:{}",
@@ -1505,18 +1488,9 @@ fn apply_effect(
                                     initialized,
                                     effects,
                                     env,
-                                    func,
                                 )?;
                                 for se in sig_effs {
-                                    apply_effect(
-                                        context,
-                                        state,
-                                        se,
-                                        initialized,
-                                        effects,
-                                        env,
-                                        func,
-                                    )?;
+                                    apply_effect(context, state, se, initialized, effects, env)?;
                                 }
                                 return Ok(());
                             }
@@ -1526,9 +1500,10 @@ fn apply_effect(
             }
             if let Some(sig) = signature {
                 // Check known_incompatible (TS line 2351-2370)
-                if let Some(ref incompatible_msg) = sig.known_incompatible {
-                    if env.enable_validations() {
-                        let diagnostic = ErrorCategory::IncompatibleLibrary
+                if let Some(ref incompatible_msg) = sig.known_incompatible
+                    && env.enable_validations()
+                {
+                    let diagnostic = ErrorCategory::IncompatibleLibrary
                             .diagnostic("Use of incompatible library")
                             .with_help(
                                 "This API returns functions which cannot be memoized without leading to stale UI. \
@@ -1539,9 +1514,8 @@ fn apply_effect(
                             .with_labels(
                                 receiver.span.map(|s| s.label(incompatible_msg.clone())),
                             );
-                        // TS throws here, aborting compilation for this function
-                        return Err(diagnostic);
-                    }
+                    // TS throws here, aborting compilation for this function
+                    return Err(diagnostic);
                 }
 
                 if let Some(ref aliasing) = sig.aliasing {
@@ -1557,7 +1531,7 @@ fn apply_effect(
                     )?;
                     if let Some(sig_effs) = sig_effects {
                         for se in sig_effs {
-                            apply_effect(context, state, se, initialized, effects, env, func)?;
+                            apply_effect(context, state, se, initialized, effects, env)?;
                         }
                         return Ok(());
                     }
@@ -1581,7 +1555,7 @@ fn apply_effect(
                     return Err(err_detail);
                 }
                 for le in legacy_effects {
-                    apply_effect(context, state, le, initialized, effects, env, func)?;
+                    apply_effect(context, state, le, initialized, effects, env)?;
                 }
             } else {
                 // No signature: default behavior
@@ -1596,7 +1570,6 @@ fn apply_effect(
                     initialized,
                     effects,
                     env,
-                    func,
                 )?;
 
                 let all_operands = build_apply_operands(receiver, function, args);
@@ -1616,22 +1589,13 @@ fn apply_effect(
                             initialized,
                             effects,
                             env,
-                            func,
                         )?;
                     }
 
                     if *is_spread {
                         let ty = &env.types[env.identifiers[operand.identifier].type_];
                         if let Some(mutate_iter) = conditionally_mutate_iterator(operand, ty) {
-                            apply_effect(
-                                context,
-                                state,
-                                mutate_iter,
-                                initialized,
-                                effects,
-                                env,
-                                func,
-                            )?;
+                            apply_effect(context, state, mutate_iter, initialized, effects, env)?;
                         }
                     }
 
@@ -1642,7 +1606,6 @@ fn apply_effect(
                         initialized,
                         effects,
                         env,
-                        func,
                     )?;
 
                     // In TS, `other === arg` compares the Place extracted from
@@ -1663,7 +1626,6 @@ fn apply_effect(
                             initialized,
                             effects,
                             env,
-                            func,
                         )?;
                     }
                 }
@@ -1715,15 +1677,15 @@ fn apply_effect(
                             "{} is accessed before it is declared, which prevents the earlier access from updating when this value changes over time",
                             variable.as_deref().unwrap_or("This variable")
                         ));
-                    if let Some(ref access) = hoisted_access {
-                        if access.span != value.span {
-                            diagnostic.labels.extend(access.span.map(|s| {
-                                s.label(format!(
-                                    "{} accessed before it is declared",
-                                    variable.as_deref().unwrap_or("variable")
-                                ))
-                            }));
-                        }
+                    if let Some(ref access) = hoisted_access
+                        && access.span != value.span
+                    {
+                        diagnostic.labels.extend(access.span.map(|s| {
+                            s.label(format!(
+                                "{} accessed before it is declared",
+                                variable.as_deref().unwrap_or("variable")
+                            ))
+                        }));
                     }
                     diagnostic.labels.extend(value.span.map(|s| {
                         s.label(format!(
@@ -1738,7 +1700,6 @@ fn apply_effect(
                         initialized,
                         effects,
                         env,
-                        func,
                     )?;
                 } else {
                     let reason_str = get_write_error_reason(&abstract_value);
@@ -1760,7 +1721,7 @@ fn apply_effect(
                     } else {
                         AliasingEffect::MutateGlobal { place: value.clone(), error: diagnostic }
                     };
-                    apply_effect(context, state, error_kind, initialized, effects, env, func)?;
+                    apply_effect(context, state, error_kind, initialized, effects, env)?;
                 }
             }
         }
@@ -1915,7 +1876,7 @@ fn compute_signature_for_instruction(
             let mutation_reason: Option<MutationReason> = {
                 let obj_ty = &env.types[env.identifiers[object.identifier].type_];
                 if let PropertyLiteral::String(prop_name) = property {
-                    if prop_name == "current" && matches!(obj_ty, Type::TypeVar { .. }) {
+                    if prop_name == "current" && matches!(obj_ty, Type::Var { .. }) {
                         Some(MutationReason::AssignCurrentProperty)
                     } else {
                         None
@@ -2017,10 +1978,10 @@ fn compute_signature_for_instruction(
             for prop in props {
                 if let JsxAttribute::Attribute { place: prop_place, .. } = prop {
                     let prop_ty = &env.types[env.identifiers[prop_place.identifier].type_];
-                    if let Type::Function { return_type, .. } = prop_ty {
-                        if is_jsx_type(return_type) || is_phi_with_jsx(return_type) {
-                            effects.push(AliasingEffect::Render { place: prop_place.clone() });
-                        }
+                    if let Type::Function { return_type, .. } = prop_ty
+                        && (is_jsx_type(return_type) || is_phi_with_jsx(return_type))
+                    {
+                        effects.push(AliasingEffect::Render { place: prop_place.clone() });
                     }
                 }
             }
@@ -2638,19 +2599,19 @@ fn compute_effects_for_aliasing_signature_config(
                                 apply_args.push(PlaceOrSpreadOrHole::Hole);
                             }
                             ApplyArgConfig::Place(name) => {
-                                if let Some(places) = substitutions.get(name) {
-                                    if let Some(p) = places.first() {
-                                        apply_args.push(PlaceOrSpreadOrHole::Place(p.clone()));
-                                    }
+                                if let Some(places) = substitutions.get(name)
+                                    && let Some(p) = places.first()
+                                {
+                                    apply_args.push(PlaceOrSpreadOrHole::Place(p.clone()));
                                 }
                             }
                             ApplyArgConfig::Spread { place: name, .. } => {
-                                if let Some(places) = substitutions.get(name) {
-                                    if let Some(p) = places.first() {
-                                        apply_args.push(PlaceOrSpreadOrHole::Spread(
-                                            SpreadPattern { place: p.clone() },
-                                        ));
-                                    }
+                                if let Some(places) = substitutions.get(name)
+                                    && let Some(p) = places.first()
+                                {
+                                    apply_args.push(PlaceOrSpreadOrHole::Spread(SpreadPattern {
+                                        place: p.clone(),
+                                    }));
                                 }
                             }
                         }
@@ -2898,19 +2859,19 @@ fn compute_effects_for_aliasing_signature(
                         match arg {
                             PlaceOrSpreadOrHole::Hole => apply_args.push(PlaceOrSpreadOrHole::Hole),
                             PlaceOrSpreadOrHole::Place(p) => {
-                                if let Some(places) = substitutions.get(&p.identifier) {
-                                    if let Some(place) = places.first() {
-                                        apply_args.push(PlaceOrSpreadOrHole::Place(place.clone()));
-                                    }
+                                if let Some(places) = substitutions.get(&p.identifier)
+                                    && let Some(place) = places.first()
+                                {
+                                    apply_args.push(PlaceOrSpreadOrHole::Place(place.clone()));
                                 }
                             }
                             PlaceOrSpreadOrHole::Spread(sp) => {
-                                if let Some(places) = substitutions.get(&sp.place.identifier) {
-                                    if let Some(place) = places.first() {
-                                        apply_args.push(PlaceOrSpreadOrHole::Spread(
-                                            SpreadPattern { place: place.clone() },
-                                        ));
-                                    }
+                                if let Some(places) = substitutions.get(&sp.place.identifier)
+                                    && let Some(place) = places.first()
+                                {
+                                    apply_args.push(PlaceOrSpreadOrHole::Spread(SpreadPattern {
+                                        place: place.clone(),
+                                    }));
                                 }
                             }
                         }
@@ -3043,7 +3004,7 @@ fn format_type_for_print<'t>(ty: &'t Type) -> Cow<'t, str> {
         Type::Poly => Cow::Borrowed(":TPoly"),
         Type::Phi { .. } => Cow::Borrowed(":TPhi"),
         Type::Property { .. } => Cow::Borrowed(":TProperty"),
-        Type::TypeVar { .. } => Cow::Borrowed(""),
+        Type::Var { .. } => Cow::Borrowed(""),
         Type::ObjectMethod => Cow::Borrowed(":TObjectMethod"),
     }
 }

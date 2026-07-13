@@ -453,23 +453,21 @@ fn evaluate_instruction<'a>(
             let object_value = read(constants, object);
             if let Some(Constant::Primitive { value: PrimitiveValue::String(ref s), .. }) =
                 object_value
+                && let PropertyLiteral::String(prop_name) = property
+                && prop_name == "length"
             {
-                if let PropertyLiteral::String(prop_name) = property {
-                    if prop_name == "length" {
-                        // Use UTF-16 code unit count to match JS .length semantics
-                        let len = s.as_str().encode_utf16().count() as f64;
-                        let span = *span;
-                        let result = Constant::Primitive {
-                            value: PrimitiveValue::Number(FloatValue::new(len)),
-                            span,
-                        };
-                        func.instructions[instr_id.index()].value = InstructionValue::Primitive {
-                            value: PrimitiveValue::Number(FloatValue::new(len)),
-                            span,
-                        };
-                        return Some(result);
-                    }
-                }
+                // Use UTF-16 code unit count to match JS .length semantics
+                let len = s.as_str().encode_utf16().count() as f64;
+                let span = *span;
+                let result = Constant::Primitive {
+                    value: PrimitiveValue::Number(FloatValue::new(len)),
+                    span,
+                };
+                func.instructions[instr_id.index()].value = InstructionValue::Primitive {
+                    value: PrimitiveValue::Number(FloatValue::new(len)),
+                    span,
+                };
+                return Some(result);
             }
             None
         }
@@ -577,12 +575,10 @@ fn evaluate_instruction<'a>(
                 for idx in const_dep_indices {
                     if let InstructionValue::StartMemoize { deps: Some(ref mut deps), .. } =
                         func.instructions[instr_id.index()].value
-                    {
-                        if let ManualMemoDependencyRoot::NamedLocal { constant, .. } =
+                        && let ManualMemoDependencyRoot::NamedLocal { constant, .. } =
                             &mut deps[idx].root
-                        {
-                            *constant = true;
-                        }
+                    {
+                        *constant = true;
                     }
                 }
             }

@@ -17,7 +17,7 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     Effect, FunctionId, HirFunction, Identifier, IdentifierId, IdentifierName, InstructionValue,
-    Place, Type, TypeId,
+    Place,
 };
 
 /// Validates that local variables cannot be reassigned after render.
@@ -30,7 +30,6 @@ pub fn validate_locals_not_reassigned_after_render(func: &HirFunction, env: &mut
     let reassignment = get_context_reassignment(
         func,
         &env.identifiers,
-        &env.types,
         &env.functions,
         env,
         &mut context_variables,
@@ -79,11 +78,10 @@ fn format_variable_name(
 /// context variable. Returns the reassigned place if found, or None.
 ///
 /// Side effects: accumulates async-function reassignment diagnostics into `diagnostics`.
-#[allow(clippy::only_used_in_recursion, clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments)]
 fn get_context_reassignment(
     func: &HirFunction,
     identifiers: &IndexSlice<IdentifierId, [Identifier]>,
-    types: &IndexSlice<TypeId, [Type]>,
     functions: &IndexSlice<FunctionId, [HirFunction]>,
     env: &Environment,
     context_variables: &mut FxHashSet<IdentifierId>,
@@ -108,7 +106,6 @@ fn get_context_reassignment(
                     let mut reassignment = get_context_reassignment(
                         inner_function,
                         identifiers,
-                        types,
                         functions,
                         env,
                         context_variables,

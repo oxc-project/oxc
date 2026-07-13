@@ -817,23 +817,23 @@ fn validate_no_ref_access_in_render_impl(
                                             }
                                             _ => (None, "none"),
                                         };
-                                        if let Some(place) = place {
-                                            if validation != "none" {
-                                                let key = format!(
-                                                    "{}:{}",
-                                                    place.identifier.index(),
-                                                    validation
-                                                );
-                                                if visited_effects.insert(key) {
-                                                    if validation == "direct-ref" {
-                                                        validate_no_direct_ref_value_access(
-                                                            errors, place, ref_env,
-                                                        );
-                                                    } else {
-                                                        validate_no_ref_passed_to_function(
-                                                            errors, ref_env, place, place.span,
-                                                        );
-                                                    }
+                                        if let Some(place) = place
+                                            && validation != "none"
+                                        {
+                                            let key = format!(
+                                                "{}:{}",
+                                                place.identifier.index(),
+                                                validation
+                                            );
+                                            if visited_effects.insert(key) {
+                                                if validation == "direct-ref" {
+                                                    validate_no_direct_ref_value_access(
+                                                        errors, place, ref_env,
+                                                    );
+                                                } else {
+                                                    validate_no_ref_passed_to_function(
+                                                        errors, ref_env, place, place.span,
+                                                    );
                                                 }
                                             }
                                         }
@@ -902,14 +902,12 @@ fn validate_no_ref_access_in_render_impl(
                     | InstructionValue::ComputedStore { object, .. } => {
                         let target = ref_env.get(object.identifier).cloned();
                         let mut found_safe = false;
-                        if matches!(&instr.value, InstructionValue::PropertyStore { .. }) {
-                            if let Some(RefAccessType::Ref { ref_id }) = &target {
-                                if let Some(pos) = safe_blocks.iter().position(|(_, r)| r == ref_id)
-                                {
-                                    safe_blocks.remove(pos);
-                                    found_safe = true;
-                                }
-                            }
+                        if matches!(&instr.value, InstructionValue::PropertyStore { .. })
+                            && let Some(RefAccessType::Ref { ref_id }) = &target
+                            && let Some(pos) = safe_blocks.iter().position(|(_, r)| r == ref_id)
+                        {
+                            safe_blocks.remove(pos);
+                            found_safe = true;
                         }
                         if !found_safe {
                             validate_no_ref_update(errors, ref_env, object, instr.span);
@@ -1064,12 +1062,11 @@ fn validate_no_ref_access_in_render_impl(
             }
 
             // Check if terminal is an `if` — push safe block for guard
-            if let Terminal::If { test, fallthrough, .. } = &block.terminal {
-                if let Some(RefAccessType::Guard { ref_id }) = ref_env.get(test.identifier) {
-                    if !safe_blocks.iter().any(|(_, r)| r == ref_id) {
-                        safe_blocks.push((*fallthrough, *ref_id));
-                    }
-                }
+            if let Terminal::If { test, fallthrough, .. } = &block.terminal
+                && let Some(RefAccessType::Guard { ref_id }) = ref_env.get(test.identifier)
+                && !safe_blocks.iter().any(|(_, r)| r == ref_id)
+            {
+                safe_blocks.push((*fallthrough, *ref_id));
             }
 
             // Process terminal operands

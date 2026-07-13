@@ -355,12 +355,12 @@ fn lower_block_statement_inner<'a>(
             // declaration statement, the declaration site itself counts as a
             // reference (Babel's binding references include the declaration).
             let decl_counts_as_ref = matches!(kind, AstBindingKind::Hoisted) && !is_function_decl;
-            if decl_counts_as_ref {
-                if let Some(decl_span) = builder.identifier_spans().declaration_span(*binding_id) {
-                    if decl_span.start >= stmt_start && decl_span.start < stmt_end {
-                        refs_in_stmt.push(decl_span);
-                    }
-                }
+            if decl_counts_as_ref
+                && let Some(decl_span) = builder.identifier_spans().declaration_span(*binding_id)
+                && decl_span.start >= stmt_start
+                && decl_span.start < stmt_end
+            {
+                refs_in_stmt.push(decl_span);
             }
 
             if refs_in_stmt.is_empty() {
@@ -480,10 +480,10 @@ fn lower_block_statement_inner<'a>(
         // This must cover all statement types that can introduce bindings.
         match body_stmt {
             oxc::Statement::FunctionDeclaration(func) => {
-                if let Some(id) = &func.id {
-                    if let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str()) {
-                        declared.insert(symbol_id);
-                    }
+                if let Some(id) = &func.id
+                    && let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str())
+                {
+                    declared.insert(symbol_id);
                 }
             }
             oxc::Statement::VariableDeclaration(var_decl) => {
@@ -492,10 +492,10 @@ fn lower_block_statement_inner<'a>(
                 }
             }
             oxc::Statement::ClassDeclaration(cls) => {
-                if let Some(id) = &cls.id {
-                    if let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str()) {
-                        declared.insert(symbol_id);
-                    }
+                if let Some(id) = &cls.id
+                    && let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str())
+                {
+                    declared.insert(symbol_id);
                 }
             }
             _ => {
@@ -664,21 +664,17 @@ fn lower_inner<'a>(
                 param_span,
                 builder.scope().resolve_binding_identifier(ident),
             )?;
-            if !matches!(binding, VariableBinding::Identifier { .. }) {
-                if let Some(symbol_id) = builder
+            if !matches!(binding, VariableBinding::Identifier { .. })
+                && let Some(symbol_id) = builder
                     .scope()
                     .find_binding_in_descendants(ident.name.as_str(), builder.function_scope())
-                {
-                    let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
-                        &builder.scope().binding_kind(symbol_id),
-                    );
-                    let identifier = builder.resolve_binding_with_span(
-                        ident.name,
-                        symbol_id,
-                        Some(param_span),
-                    )?;
-                    binding = VariableBinding::Identifier { identifier, binding_kind };
-                }
+            {
+                let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
+                    &builder.scope().binding_kind(symbol_id),
+                );
+                let identifier =
+                    builder.resolve_binding_with_span(ident.name, symbol_id, Some(param_span))?;
+                binding = VariableBinding::Identifier { identifier, binding_kind };
             }
             match binding {
                 VariableBinding::Identifier { identifier, .. } => {
@@ -842,15 +838,15 @@ fn lower_identifier<'a>(
             Ok(Place { identifier, effect: Effect::Unknown, reactive: false, span: Some(span) })
         }
         _ => {
-            if let VariableBinding::Global { name } = binding {
-                if name == "eval" {
-                    builder.record_error(
+            if let VariableBinding::Global { name } = binding
+                && name == "eval"
+            {
+                builder.record_error(
                         ErrorCategory::UnsupportedSyntax
                             .diagnostic("The 'eval' function is not supported")
                             .with_help("Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler")
                             .with_label(span),
                     )?;
-                }
             }
             let non_local_binding = match binding {
                 VariableBinding::Global { name } => NonLocalBinding::Global { name },
@@ -1194,17 +1190,16 @@ fn lower_identifier_for_assignment<'a>(
     symbol: Option<SymbolId>,
 ) -> Result<Option<IdentifierForAssignment<'a>>, OxcDiagnostic> {
     let mut binding = builder.resolve_identifier(name, ident_span, symbol)?;
-    if !matches!(binding, VariableBinding::Identifier { .. }) && kind != InstructionKind::Reassign {
-        if let Some(symbol_id) =
+    if !matches!(binding, VariableBinding::Identifier { .. })
+        && kind != InstructionKind::Reassign
+        && let Some(symbol_id) =
             builder.scope().find_binding_in_descendants(name.as_str(), builder.function_scope())
-        {
-            let bk = crate::react_compiler_lowering::convert_binding_kind(
-                &builder.scope().binding_kind(symbol_id),
-            );
-            let identifier =
-                builder.resolve_binding_with_span(name, symbol_id, Some(ident_span))?;
-            binding = VariableBinding::Identifier { identifier, binding_kind: bk };
-        }
+    {
+        let bk = crate::react_compiler_lowering::convert_binding_kind(
+            &builder.scope().binding_kind(symbol_id),
+        );
+        let identifier = builder.resolve_binding_with_span(name, symbol_id, Some(ident_span))?;
+        binding = VariableBinding::Identifier { identifier, binding_kind: bk };
     }
     match binding {
         VariableBinding::Identifier { identifier, binding_kind, .. } => {
@@ -3116,97 +3111,95 @@ fn lower_function_declaration<'a>(
     // todo-repro-named-function-with-shadowed-local-same-name). Fall back to
     // node-based resolution when the scope walk fails (degraded scope info,
     // e.g. synthetic scopes, or backends that split function-body scopes).
-    if let Some(name) = func_name {
-        if let Some(id_node) = &func_decl.id {
-            let ident_span = id_node.span;
-            let scope_binding =
-                builder.get_function_declaration_binding(function_scope, name.as_str());
-            let mut is_context = false;
-            let binding = match scope_binding {
-                Some(symbol_id) => {
-                    is_context = builder.is_context_binding(symbol_id);
-                    let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
-                        &builder.scope().binding_kind(symbol_id),
-                    );
-                    let identifier =
-                        builder.resolve_binding_with_span(name, symbol_id, Some(ident_span))?;
-                    VariableBinding::Identifier { identifier, binding_kind }
-                }
-                None => {
-                    let mut binding = builder.resolve_identifier(
-                        name,
-                        ident_span,
-                        builder.scope().resolve_binding_identifier(id_node),
-                    )?;
-                    if matches!(&binding, VariableBinding::Global { .. }) {
-                        // For function redeclarations (e.g., `function x() {} function x() {}`),
-                        // the redeclaration's identifier does not resolve as a declaration
-                        // site (only the first declaration does). Retry with the binding
-                        // found on the scope chain, resolving through its first declaration.
-                        let fallback = {
-                            let scope = builder.scope();
-                            let scope_id =
-                                func_decl.scope_id.get().unwrap_or_else(|| scope.program_scope());
-                            scope.find_binding(scope_id, name.as_str())
-                        };
-                        if let Some(symbol_id) = fallback {
-                            let symbol =
-                                builder.scope().declaration_ident(symbol_id).map(|_| symbol_id);
-                            binding = builder.resolve_identifier(name, ident_span, symbol)?;
-                        }
-                    }
-                    if matches!(&binding, VariableBinding::Identifier { .. }) {
-                        is_context = builder.is_context_identifier(
-                            builder.scope().resolve_binding_identifier(id_node),
-                        );
-                    }
-                    binding
-                }
-            };
-            match binding {
-                VariableBinding::Identifier { identifier, .. } => {
-                    // Don't override the identifier's declaration span here.
+    if let Some(name) = func_name
+        && let Some(id_node) = &func_decl.id
+    {
+        let ident_span = id_node.span;
+        let scope_binding = builder.get_function_declaration_binding(function_scope, name.as_str());
+        let mut is_context = false;
+        let binding = match scope_binding {
+            Some(symbol_id) => {
+                is_context = builder.is_context_binding(symbol_id);
+                let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
+                    &builder.scope().binding_kind(symbol_id),
+                );
+                let identifier =
+                    builder.resolve_binding_with_span(name, symbol_id, Some(ident_span))?;
+                VariableBinding::Identifier { identifier, binding_kind }
+            }
+            None => {
+                let mut binding = builder.resolve_identifier(
+                    name,
+                    ident_span,
+                    builder.scope().resolve_binding_identifier(id_node),
+                )?;
+                if matches!(&binding, VariableBinding::Global { .. }) {
                     // For function redeclarations (e.g., `function x() {} function x() {}`),
-                    // the identifier's span should remain the first declaration's span,
-                    // which was already set during define_binding.
-                    // Use the full function declaration span for the Place,
-                    // matching the TS behavior where lowerAssignment uses stmt.node.span
-                    let place = Place {
-                        identifier,
-                        reactive: false,
-                        effect: Effect::Unknown,
-                        span: Some(span),
+                    // the redeclaration's identifier does not resolve as a declaration
+                    // site (only the first declaration does). Retry with the binding
+                    // found on the scope chain, resolving through its first declaration.
+                    let fallback = {
+                        let scope = builder.scope();
+                        let scope_id =
+                            func_decl.scope_id.get().unwrap_or_else(|| scope.program_scope());
+                        scope.find_binding(scope_id, name.as_str())
                     };
-                    if is_context {
-                        lower_value_to_temporary(
-                            builder,
-                            InstructionValue::StoreContext {
-                                lvalue: LValue { kind: InstructionKind::Function, place },
-                                value: fn_place,
-                                span: Some(span),
-                            },
-                        )?;
-                    } else {
-                        lower_value_to_temporary(
-                            builder,
-                            InstructionValue::StoreLocal {
-                                lvalue: LValue { kind: InstructionKind::Function, place },
-                                value: fn_place,
-                                span: Some(span),
-                            },
-                        )?;
+                    if let Some(symbol_id) = fallback {
+                        let symbol =
+                            builder.scope().declaration_ident(symbol_id).map(|_| symbol_id);
+                        binding = builder.resolve_identifier(name, ident_span, symbol)?;
                     }
                 }
-                _ => {
-                    builder.record_error(
-                        ErrorCategory::Invariant
-                            .diagnostic(format!(
-                                "Could not find binding for function declaration `{}`",
-                                name
-                            ))
-                            .with_label(span),
+                if matches!(&binding, VariableBinding::Identifier { .. }) {
+                    is_context = builder
+                        .is_context_identifier(builder.scope().resolve_binding_identifier(id_node));
+                }
+                binding
+            }
+        };
+        match binding {
+            VariableBinding::Identifier { identifier, .. } => {
+                // Don't override the identifier's declaration span here.
+                // For function redeclarations (e.g., `function x() {} function x() {}`),
+                // the identifier's span should remain the first declaration's span,
+                // which was already set during define_binding.
+                // Use the full function declaration span for the Place,
+                // matching the TS behavior where lowerAssignment uses stmt.node.span
+                let place = Place {
+                    identifier,
+                    reactive: false,
+                    effect: Effect::Unknown,
+                    span: Some(span),
+                };
+                if is_context {
+                    lower_value_to_temporary(
+                        builder,
+                        InstructionValue::StoreContext {
+                            lvalue: LValue { kind: InstructionKind::Function, place },
+                            value: fn_place,
+                            span: Some(span),
+                        },
+                    )?;
+                } else {
+                    lower_value_to_temporary(
+                        builder,
+                        InstructionValue::StoreLocal {
+                            lvalue: LValue { kind: InstructionKind::Function, place },
+                            value: fn_place,
+                            span: Some(span),
+                        },
                     )?;
                 }
+            }
+            _ => {
+                builder.record_error(
+                    ErrorCategory::Invariant
+                        .diagnostic(format!(
+                            "Could not find binding for function declaration `{}`",
+                            name
+                        ))
+                        .with_label(span),
+                )?;
             }
         }
     }
@@ -4897,15 +4890,15 @@ fn collect_fbt_sub_tags_from_element(
     plural_spans: &mut Vec<Option<Span>>,
     pronoun_spans: &mut Vec<Option<Span>>,
 ) {
-    if let oxc::JSXElementName::NamespacedName(ns) = &el.opening_element.name {
-        if ns.namespace.name == tag_name {
-            let span = Some(ns.span);
-            match ns.name.name.as_str() {
-                "enum" => enum_spans.push(span),
-                "plural" => plural_spans.push(span),
-                "pronoun" => pronoun_spans.push(span),
-                _ => {}
-            }
+    if let oxc::JSXElementName::NamespacedName(ns) = &el.opening_element.name
+        && ns.namespace.name == tag_name
+    {
+        let span = Some(ns.span);
+        match ns.name.name.as_str() {
+            "enum" => enum_spans.push(span),
+            "plural" => plural_spans.push(span),
+            "pronoun" => pronoun_spans.push(span),
+            _ => {}
         }
     }
     collect_fbt_sub_tags(builder, &el.children, tag_name, enum_spans, plural_spans, pronoun_spans);

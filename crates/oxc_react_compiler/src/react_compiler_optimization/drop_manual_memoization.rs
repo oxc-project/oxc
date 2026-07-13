@@ -305,25 +305,22 @@ fn collect_temporaries<'a>(
             }
         }
         InstructionValue::PropertyLoad { object, property, .. } => {
-            if sidemap.react.contains(&object.identifier) {
-                if let PropertyLiteral::String(prop_name) = property {
-                    if prop_name == "useMemo" {
-                        sidemap.manual_memos.insert(
-                            lvalue_id,
-                            ManualMemoCallee {
-                                kind: ManualMemoKind::UseMemo,
-                                load_instr_id: instr_id,
-                            },
-                        );
-                    } else if prop_name == "useCallback" {
-                        sidemap.manual_memos.insert(
-                            lvalue_id,
-                            ManualMemoCallee {
-                                kind: ManualMemoKind::UseCallback,
-                                load_instr_id: instr_id,
-                            },
-                        );
-                    }
+            if sidemap.react.contains(&object.identifier)
+                && let PropertyLiteral::String(prop_name) = property
+            {
+                if prop_name == "useMemo" {
+                    sidemap.manual_memos.insert(
+                        lvalue_id,
+                        ManualMemoCallee { kind: ManualMemoKind::UseMemo, load_instr_id: instr_id },
+                    );
+                } else if prop_name == "useCallback" {
+                    sidemap.manual_memos.insert(
+                        lvalue_id,
+                        ManualMemoCallee {
+                            kind: ManualMemoKind::UseCallback,
+                            load_instr_id: instr_id,
+                        },
+                    );
                 }
             }
         }

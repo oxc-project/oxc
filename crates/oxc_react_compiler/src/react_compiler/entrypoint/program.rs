@@ -393,10 +393,10 @@ fn calls_hooks_or_creates_jsx_in_stmt(stmt: &Statement) -> bool {
         }
         Statement::VariableDeclaration(var_decl) => {
             for decl in &var_decl.declarations {
-                if let Some(ref init) = decl.init {
-                    if calls_hooks_or_creates_jsx_in_expr(init) {
-                        return true;
-                    }
+                if let Some(ref init) = decl.init
+                    && calls_hooks_or_creates_jsx_in_expr(init)
+                {
+                    return true;
                 }
             }
             false
@@ -415,33 +415,33 @@ fn calls_hooks_or_creates_jsx_in_stmt(stmt: &Statement) -> bool {
                 match init {
                     ForStatementInit::VariableDeclaration(var_decl) => {
                         for decl in &var_decl.declarations {
-                            if let Some(ref init) = decl.init {
-                                if calls_hooks_or_creates_jsx_in_expr(init) {
-                                    return true;
-                                }
+                            if let Some(ref init) = decl.init
+                                && calls_hooks_or_creates_jsx_in_expr(init)
+                            {
+                                return true;
                             }
                         }
                     }
                     // An expression `ForStatementInit` is an `Expression` (the
                     // enum inherits the Expression variants).
                     expr => {
-                        if let Some(expr) = expr.as_expression() {
-                            if calls_hooks_or_creates_jsx_in_expr(expr) {
-                                return true;
-                            }
+                        if let Some(expr) = expr.as_expression()
+                            && calls_hooks_or_creates_jsx_in_expr(expr)
+                        {
+                            return true;
                         }
                     }
                 }
             }
-            if let Some(ref test) = for_stmt.test {
-                if calls_hooks_or_creates_jsx_in_expr(test) {
-                    return true;
-                }
+            if let Some(ref test) = for_stmt.test
+                && calls_hooks_or_creates_jsx_in_expr(test)
+            {
+                return true;
             }
-            if let Some(ref update) = for_stmt.update {
-                if calls_hooks_or_creates_jsx_in_expr(update) {
-                    return true;
-                }
+            if let Some(ref update) = for_stmt.update
+                && calls_hooks_or_creates_jsx_in_expr(update)
+            {
+                return true;
             }
             calls_hooks_or_creates_jsx_in_stmt(&for_stmt.body)
         }
@@ -466,10 +466,10 @@ fn calls_hooks_or_creates_jsx_in_stmt(stmt: &Statement) -> bool {
                 return true;
             }
             for case in &switch.cases {
-                if let Some(ref test) = case.test {
-                    if calls_hooks_or_creates_jsx_in_expr(test) {
-                        return true;
-                    }
+                if let Some(ref test) = case.test
+                    && calls_hooks_or_creates_jsx_in_expr(test)
+                {
+                    return true;
                 }
                 if calls_hooks_or_creates_jsx_in_stmts(&case.consequent) {
                     return true;
@@ -482,15 +482,15 @@ fn calls_hooks_or_creates_jsx_in_stmt(stmt: &Statement) -> bool {
             if calls_hooks_or_creates_jsx_in_stmts(&try_stmt.block.body) {
                 return true;
             }
-            if let Some(ref handler) = try_stmt.handler {
-                if calls_hooks_or_creates_jsx_in_stmts(&handler.body.body) {
-                    return true;
-                }
+            if let Some(ref handler) = try_stmt.handler
+                && calls_hooks_or_creates_jsx_in_stmts(&handler.body.body)
+            {
+                return true;
             }
-            if let Some(ref finalizer) = try_stmt.finalizer {
-                if calls_hooks_or_creates_jsx_in_stmts(&finalizer.body) {
-                    return true;
-                }
+            if let Some(ref finalizer) = try_stmt.finalizer
+                && calls_hooks_or_creates_jsx_in_stmts(&finalizer.body)
+            {
+                return true;
             }
             false
         }
@@ -537,10 +537,10 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &Expression) -> bool {
                     if calls_hooks_or_creates_jsx_in_expr(arg) {
                         return true;
                     }
-                } else if let Argument::SpreadElement(s) = arg {
-                    if calls_hooks_or_creates_jsx_in_expr(&s.argument) {
-                        return true;
-                    }
+                } else if let Argument::SpreadElement(s) = arg
+                    && calls_hooks_or_creates_jsx_in_expr(&s.argument)
+                {
+                    return true;
                 }
             }
             false
@@ -618,10 +618,10 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &Expression) -> bool {
             // properties traverse their value (nested functions are skipped).
             ObjectPropertyKind::ObjectProperty(p) => {
                 if p.method || matches!(p.kind, PropertyKind::Get | PropertyKind::Set) {
-                    if let Expression::FunctionExpression(func) = &p.value {
-                        if let Some(body) = &func.body {
-                            return calls_hooks_or_creates_jsx_in_stmts(&body.statements);
-                        }
+                    if let Expression::FunctionExpression(func) = &p.value
+                        && let Some(body) = &func.body
+                    {
+                        return calls_hooks_or_creates_jsx_in_stmts(&body.statements);
                     }
                     false
                 } else {
@@ -734,19 +734,19 @@ fn calls_hooks_or_creates_jsx(params: &FormalParameters, body: &FnBody) -> bool 
 /// nested defaults.
 fn calls_hooks_or_creates_jsx_in_params(params: &FormalParameters) -> bool {
     for param in &params.items {
-        if let Some(init) = &param.initializer {
-            if calls_hooks_or_creates_jsx_in_expr(init) {
-                return true;
-            }
+        if let Some(init) = &param.initializer
+            && calls_hooks_or_creates_jsx_in_expr(init)
+        {
+            return true;
         }
         if calls_hooks_or_creates_jsx_in_binding(&param.pattern) {
             return true;
         }
     }
-    if let Some(rest) = &params.rest {
-        if calls_hooks_or_creates_jsx_in_binding(&rest.rest.argument) {
-            return true;
-        }
+    if let Some(rest) = &params.rest
+        && calls_hooks_or_creates_jsx_in_binding(&rest.rest.argument)
+    {
+        return true;
     }
     false
 }
@@ -947,14 +947,14 @@ fn get_component_or_hook_like(
     }
 
     // For unnamed functions, check if they are forwardRef/memo callbacks
-    if let Some(callee_name) = parent_callee_name {
-        if callee_name == "forwardRef" || callee_name == "memo" {
-            return if calls_hooks_or_creates_jsx(params, body) {
-                Some(ReactFunctionType::Component)
-            } else {
-                None
-            };
-        }
+    if let Some(callee_name) = parent_callee_name
+        && (callee_name == "forwardRef" || callee_name == "memo")
+    {
+        return if calls_hooks_or_creates_jsx(params, body) {
+            Some(ReactFunctionType::Component)
+        } else {
+            None
+        };
     }
 
     None
@@ -972,12 +972,11 @@ fn get_callee_name_if_react_api<'ast>(callee: &Expression<'ast>) -> Option<&'ast
             }
         }
         Expression::StaticMemberExpression(member) => {
-            if let Expression::Identifier(obj) = &member.object {
-                if obj.name == "React"
-                    && (member.property.name == "forwardRef" || member.property.name == "memo")
-                {
-                    return Some(member.property.name.as_str());
-                }
+            if let Expression::Identifier(obj) = &member.object
+                && obj.name == "React"
+                && (member.property.name == "forwardRef" || member.property.name == "memo")
+            {
+                return Some(member.property.name.as_str());
             }
             None
         }
@@ -1896,12 +1895,12 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
     // callee *names*, not bindings, so unresolved references count too.
     const WRAPPER_NAMES: [&str; 3] = ["memo", "forwardRef", "React"];
     for name in WRAPPER_NAMES {
-        if let Some(reference_ids) = scoping.root_unresolved_references().get(name) {
-            if reference_ids.iter().any(|reference_id| {
+        if let Some(reference_ids) = scoping.root_unresolved_references().get(name)
+            && reference_ids.iter().any(|reference_id| {
                 is_wrapper_callee(nodes, scoping.get_reference(*reference_id).node_id())
-            }) {
-                return true;
-            }
+            })
+        {
+            return true;
         }
     }
 
@@ -2220,12 +2219,12 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceFnVisitor<'a, 'b> {
         if self.remaining == 0 {
             return;
         }
-        if let Some(scope_id) = func.scope_id.get() {
-            if let Some(&codegen) = self.replacements.get(&scope_id) {
-                self.replace_function(func, codegen);
-                self.remaining -= 1;
-                return;
-            }
+        if let Some(scope_id) = func.scope_id.get()
+            && let Some(&codegen) = self.replacements.get(&scope_id)
+        {
+            self.replace_function(func, codegen);
+            self.remaining -= 1;
+            return;
         }
         oxc_ast_visit::walk_mut::walk_function(self, func, flags);
     }
@@ -2234,12 +2233,12 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceFnVisitor<'a, 'b> {
         if self.remaining == 0 {
             return;
         }
-        if let Some(scope_id) = arrow.scope_id.get() {
-            if let Some(&codegen) = self.replacements.get(&scope_id) {
-                self.replace_arrow(arrow, codegen);
-                self.remaining -= 1;
-                return;
-            }
+        if let Some(scope_id) = arrow.scope_id.get()
+            && let Some(&codegen) = self.replacements.get(&scope_id)
+        {
+            self.replace_arrow(arrow, codegen);
+            self.remaining -= 1;
+            return;
         }
         oxc_ast_visit::walk_mut::walk_arrow_function_expression(self, arrow);
     }
@@ -2325,28 +2324,26 @@ impl<'a, 'b> oxc_ast_visit::VisitMut<'a> for OxcReplaceWithGatedVisitor<'a, 'b> 
                 break;
             }
             // ExportDefaultDeclaration with FunctionDeclaration
-            if let Statement::ExportDefaultDeclaration(e) = &stmts[i] {
-                if let ExportDefaultDeclarationKind::FunctionDeclaration(f) = &e.declaration {
-                    if f.scope_id.get() == Some(self.scope_id) {
-                        if let Some(id) = f.id.as_ref().map(|id| id.name) {
-                            stmts[i] = self.build_const_decl(id.as_str());
-                            self.export_default_name = Some(id);
-                        } else {
-                            stmts[i] = Statement::ExportDefaultDeclaration(
-                                ExportDefaultDeclaration::boxed(
-                                    SPAN,
-                                    ExportDefaultDeclarationKind::from(
-                                        self.gating_expression
-                                            .clone_in_with_semantic_ids(self.ast.allocator()),
-                                    ),
-                                    self.ast,
-                                ),
-                            );
-                        }
-                        self.done = true;
-                        break;
-                    }
+            if let Statement::ExportDefaultDeclaration(e) = &stmts[i]
+                && let ExportDefaultDeclarationKind::FunctionDeclaration(f) = &e.declaration
+                && f.scope_id.get() == Some(self.scope_id)
+            {
+                if let Some(id) = f.id.as_ref().map(|id| id.name) {
+                    stmts[i] = self.build_const_decl(id.as_str());
+                    self.export_default_name = Some(id);
+                } else {
+                    stmts[i] =
+                        Statement::ExportDefaultDeclaration(ExportDefaultDeclaration::boxed(
+                            SPAN,
+                            ExportDefaultDeclarationKind::from(
+                                self.gating_expression
+                                    .clone_in_with_semantic_ids(self.ast.allocator()),
+                            ),
+                            self.ast,
+                        ));
                 }
+                self.done = true;
+                break;
             }
             self.visit_statement(&mut stmts[i]);
             i += 1;
@@ -2643,10 +2640,10 @@ fn ox_add_imports_to_program<'a>(
     // Existing non-namespaced value imports, by module name.
     let mut existing_import_indices: FxHashMap<&str, usize> = FxHashMap::default();
     for (idx, stmt) in program.body.iter().enumerate() {
-        if let Statement::ImportDeclaration(import) = stmt {
-            if ox_is_non_namespaced_import(import) {
-                existing_import_indices.entry(import.source.value.as_str()).or_insert(idx);
-            }
+        if let Statement::ImportDeclaration(import) = stmt
+            && ox_is_non_namespaced_import(import)
+        {
+            existing_import_indices.entry(import.source.value.as_str()).or_insert(idx);
         }
     }
 
@@ -2957,7 +2954,10 @@ pub fn compile_program<'a>(
     // gating imports, so (matching TS `addImportsToProgram`) they're added only
     // when there are replacements.
     let diagnostics = std::mem::take(&mut context.diagnostics);
-    let output =
-        if replacements.is_empty() { None } else { Some(CompileOutput { replacements, context }) };
+    let output = if replacements.is_empty() {
+        None
+    } else {
+        Some(Box::new(CompileOutput { replacements, context }))
+    };
     CompileResult::Success { output, diagnostics }
 }

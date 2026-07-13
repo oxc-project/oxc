@@ -264,7 +264,7 @@ impl<'a> Environment<'a> {
     /// Allocate a new Type in the arena, returns its TypeId.
     pub fn next_type_id(&mut self) -> TypeId {
         let id = self.types.next_idx();
-        self.types.push(Type::TypeVar { id });
+        self.types.push(Type::Var { id });
         id
     }
 
@@ -371,23 +371,22 @@ impl<'a> Environment<'a> {
                 let module_type = self.resolve_module_type(module);
 
                 // Check for module type validation errors (hook-name vs hook-type mismatches)
-                if let Some(errors) = self.module_type_errors.remove(module.as_str()) {
-                    if let Some(first_error) = errors.into_iter().next() {
-                        self.record_error(
-                            ErrorCategory::Config
-                                .diagnostic("Invalid type configuration for module")
-                                .with_help(first_error)
-                                .with_labels(span),
-                        )?;
-                    }
+                if let Some(errors) = self.module_type_errors.remove(module.as_str())
+                    && let Some(first_error) = errors.into_iter().next()
+                {
+                    self.record_error(
+                        ErrorCategory::Config
+                            .diagnostic("Invalid type configuration for module")
+                            .with_help(first_error)
+                            .with_labels(span),
+                    )?;
                 }
 
-                if let Some(module_type) = module_type {
-                    if let Some(imported_type) =
+                if let Some(module_type) = module_type
+                    && let Some(imported_type) =
                         Self::get_property_type_from_shapes(&self.shapes, &module_type, imported)
-                    {
-                        return Ok(Some(imported_type));
-                    }
+                {
+                    return Ok(Some(imported_type));
                 }
 
                 if is_hook_name(imported) || is_hook_name(name) {
@@ -413,15 +412,15 @@ impl<'a> Environment<'a> {
                 let module_type = self.resolve_module_type(module);
 
                 // Check for module type validation errors (hook-name vs hook-type mismatches)
-                if let Some(errors) = self.module_type_errors.remove(module.as_str()) {
-                    if let Some(first_error) = errors.into_iter().next() {
-                        self.record_error(
-                            ErrorCategory::Config
-                                .diagnostic("Invalid type configuration for module")
-                                .with_help(first_error)
-                                .with_labels(span),
-                        )?;
-                    }
+                if let Some(errors) = self.module_type_errors.remove(module.as_str())
+                    && let Some(first_error) = errors.into_iter().next()
+                {
+                    self.record_error(
+                        ErrorCategory::Config
+                            .diagnostic("Invalid type configuration for module")
+                            .with_help(first_error)
+                            .with_labels(span),
+                    )?;
                 }
 
                 if let Some(module_type) = module_type {

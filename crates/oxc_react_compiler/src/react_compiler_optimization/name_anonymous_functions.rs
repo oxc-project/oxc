@@ -43,10 +43,11 @@ pub fn name_anonymous_functions<'a>(func: &mut HirFunction<'a>, env: &mut Enviro
         updates: &mut Vec<(FunctionId, Ident<'a>)>,
         allocator: &'a Allocator,
     ) {
-        if node.generated_name.is_some() && node.existing_name_hint.is_none() {
+        if let Some(generated_name) = &node.generated_name
+            && node.existing_name_hint.is_none()
+        {
             // Only add the prefix to anonymous functions regardless of nesting depth
-            let name =
-                format_ident!(allocator, "{}{}]", prefix, node.generated_name.as_ref().unwrap());
+            let name = format_ident!(allocator, "{}{}]", prefix, generated_name);
             updates.push((node.function_id, name));
         }
         // Whether or not we generated a name for the function at this node,
@@ -96,10 +97,9 @@ fn apply_name_hints_to_instructions<'a>(
     for instr in instructions.iter_mut() {
         if let InstructionValue::FunctionExpression { lowered_func, name_hint, .. } =
             &mut instr.value
+            && let Some(new_name) = update_map.get(&lowered_func.func)
         {
-            if let Some(new_name) = update_map.get(&lowered_func.func) {
-                *name_hint = Some(*new_name);
-            }
+            *name_hint = Some(*new_name);
         }
     }
 }
@@ -175,11 +175,11 @@ fn name_anonymous_functions_impl<'a>(
                     if let Some(&node_idx) = functions.get(&value.identifier) {
                         let node = &mut nodes[node_idx];
                         let var_ident = &env.identifiers[store_lvalue.place.identifier];
-                        if node.generated_name.is_none() {
-                            if let Some(IdentifierName::Named(var_name)) = var_ident.name {
-                                node.generated_name = Some(var_name);
-                                functions.remove(&value.identifier);
-                            }
+                        if node.generated_name.is_none()
+                            && let Some(IdentifierName::Named(var_name)) = var_ident.name
+                        {
+                            node.generated_name = Some(var_name);
+                            functions.remove(&value.identifier);
                         }
                     }
                 }

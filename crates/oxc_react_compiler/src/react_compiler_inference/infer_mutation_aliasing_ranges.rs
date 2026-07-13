@@ -251,10 +251,10 @@ impl AliasingState {
         while let Some(entry) = queue.pop() {
             let current = entry.place;
             let previous_kind = seen.get(&current).copied();
-            if let Some(prev) = previous_kind {
-                if prev >= entry.kind {
-                    continue;
-                }
+            if let Some(prev) = previous_kind
+                && prev >= entry.kind
+            {
+                continue;
             }
             seen.insert(current, entry.kind);
 
@@ -273,12 +273,12 @@ impl AliasingState {
                 ident.mutable_range.end = ident.mutable_range.end.max(end_val);
             }
 
-            if let NodeValue::Function { function_id } = &node.value {
-                if node.transitive.is_none() && node.local.is_none() {
-                    if should_record_errors {
-                        append_function_errors(env, *function_id);
-                    }
-                }
+            if let NodeValue::Function { function_id } = &node.value
+                && node.transitive.is_none()
+                && node.local.is_none()
+                && should_record_errors
+            {
+                append_function_errors(env, *function_id);
             }
 
             if entry.transitive {
@@ -696,17 +696,17 @@ pub fn infer_mutation_aliasing_ranges(
             ParamPattern::Place(p) => p,
             ParamPattern::Spread(s) => &s.place,
         };
-        if let Some(node) = state.nodes.get(&place.identifier) {
-            if node.local.is_some() || node.transitive.is_some() {
-                captured_params.insert(place.identifier);
-            }
+        if let Some(node) = state.nodes.get(&place.identifier)
+            && (node.local.is_some() || node.transitive.is_some())
+        {
+            captured_params.insert(place.identifier);
         }
     }
     for ctx in &func.context {
-        if let Some(node) = state.nodes.get(&ctx.identifier) {
-            if node.local.is_some() || node.transitive.is_some() {
-                captured_params.insert(ctx.identifier);
-            }
+        if let Some(node) = state.nodes.get(&ctx.identifier)
+            && (node.local.is_some() || node.transitive.is_some())
+        {
+            captured_params.insert(ctx.identifier);
         }
     }
 

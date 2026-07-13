@@ -173,36 +173,36 @@ fn check_operand_for_freeze_violation(
     identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     diagnostics: &mut Vec<OxcDiagnostic>,
 ) {
-    if operand.effect == Effect::Freeze {
-        if let Some(mutation_info) = context_mutation_effects.get(&operand.identifier) {
-            let identifier = &identifiers[mutation_info.value_identifier];
-            let variable_name = match &identifier.name {
-                Some(IdentifierName::Named(name)) => format!("`{}`", name),
-                _ => "a local variable".to_string(),
-            };
+    if operand.effect == Effect::Freeze
+        && let Some(mutation_info) = context_mutation_effects.get(&operand.identifier)
+    {
+        let identifier = &identifiers[mutation_info.value_identifier];
+        let variable_name = match &identifier.name {
+            Some(IdentifierName::Named(name)) => format!("`{}`", name),
+            _ => "a local variable".to_string(),
+        };
 
-            diagnostics.push(
-                ErrorCategory::Immutability
-                    .diagnostic("Cannot modify local variables after render completes")
-                    .with_help(format!(
-                        "This argument is a function which may reassign or mutate {} after render, \
+        diagnostics.push(
+            ErrorCategory::Immutability
+                .diagnostic("Cannot modify local variables after render completes")
+                .with_help(format!(
+                    "This argument is a function which may reassign or mutate {} after render, \
                          which can cause inconsistent behavior on subsequent renders. \
                          Consider using state instead",
+                    variable_name
+                ))
+                .with_labels(operand.span.map(|s| {
+                    s.label(format!(
+                        "This function may (indirectly) reassign or modify {} after render",
                         variable_name
                     ))
-                    .with_labels(operand.span.map(|s| {
-                        s.label(format!(
-                            "This function may (indirectly) reassign or modify {} after render",
-                            variable_name
-                        ))
-                    }))
-                    .and_labels(
-                        mutation_info
-                            .value_span
-                            .map(|s| s.label(format!("This modifies {}", variable_name))),
-                    ),
-            );
-        }
+                }))
+                .and_labels(
+                    mutation_info
+                        .value_span
+                        .map(|s| s.label(format!("This modifies {}", variable_name))),
+                ),
+        );
     }
 }
 

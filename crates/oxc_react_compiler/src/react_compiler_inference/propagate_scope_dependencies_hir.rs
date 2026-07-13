@@ -50,14 +50,12 @@ pub fn propagate_scope_dependencies_hir<'a>(func: &mut HirFunction<'a>, env: &mu
         // Convert to scope-keyed map with full dependency paths
         let mut keyed: FxHashMap<ScopeId, Vec<ReactiveScopeDependency>> = FxHashMap::default();
         for (_block_id, block) in &func.body.blocks {
-            if let Terminal::Scope { scope, block: inner_block, .. } = &block.terminal {
-                if let Some(node_indices) = working.get(inner_block) {
-                    let deps: Vec<ReactiveScopeDependency> = node_indices
-                        .iter()
-                        .map(|&idx| registry.nodes[idx].full_path.clone())
-                        .collect();
-                    keyed.insert(*scope, deps);
-                }
+            if let Terminal::Scope { scope, block: inner_block, .. } = &block.terminal
+                && let Some(node_indices) = working.get(inner_block)
+            {
+                let deps: Vec<ReactiveScopeDependency> =
+                    node_indices.iter().map(|&idx| registry.nodes[idx].full_path.clone()).collect();
+                keyed.insert(*scope, deps);
             }
         }
         keyed
@@ -133,12 +131,11 @@ fn find_temporaries_used_outside_declaring_scope(
                         used_outside: &mut FxHashSet<DeclarationId>,
                         env: &Environment| {
         let decl_id = env.identifiers[place_id].declaration_id;
-        if let Some(&declaring_scope) = declarations.get(&decl_id) {
-            if !traversal.is_scope_active(declaring_scope)
-                && !pruned_scopes.contains(&declaring_scope)
-            {
-                used_outside.insert(decl_id);
-            }
+        if let Some(&declaring_scope) = declarations.get(&decl_id)
+            && !traversal.is_scope_active(declaring_scope)
+            && !pruned_scopes.contains(&declaring_scope)
+        {
+            used_outside.insert(decl_id);
         }
     };
 
@@ -170,17 +167,17 @@ fn find_temporaries_used_outside_declaring_scope(
             }
             // Handle instruction (track declarations)
             let current_scope = traversal.current_scope();
-            if let Some(scope) = current_scope {
-                if !pruned_scopes.contains(&scope) {
-                    match &instr.value {
-                        InstructionValue::LoadLocal { .. }
-                        | InstructionValue::LoadContext { .. }
-                        | InstructionValue::PropertyLoad { .. } => {
-                            let decl_id = env.identifiers[instr.lvalue.identifier].declaration_id;
-                            declarations.insert(decl_id, scope);
-                        }
-                        _ => {}
+            if let Some(scope) = current_scope
+                && !pruned_scopes.contains(&scope)
+            {
+                match &instr.value {
+                    InstructionValue::LoadLocal { .. }
+                    | InstructionValue::LoadContext { .. }
+                    | InstructionValue::PropertyLoad { .. } => {
+                        let decl_id = env.identifiers[instr.lvalue.identifier].declaration_id;
+                        declarations.insert(decl_id, scope);
                     }
+                    _ => {}
                 }
             }
         }
@@ -232,11 +229,11 @@ fn is_load_context_mutable(
     id: EvaluationOrder,
     env: &Environment,
 ) -> bool {
-    if let InstructionValue::LoadContext { place, .. } = value {
-        if let Some(scope_id) = env.identifiers[place.identifier].scope {
-            let scope_range = &env.scopes[scope_id].range;
-            return id >= scope_range.end;
-        }
+    if let InstructionValue::LoadContext { place, .. } = value
+        && let Some(scope_id) = env.identifiers[place.identifier].scope
+    {
+        let scope_range = &env.scopes[scope_id].range;
+        return id >= scope_range.end;
     }
     false
 }
@@ -424,10 +421,10 @@ fn traverse_function_optional<'a>(
                 _ => {}
             }
         }
-        if let Terminal::Optional { .. } = &block.terminal {
-            if !ctx.seen_optionals.contains(&block.id) {
-                traverse_optional_block(block, func, ctx, None);
-            }
+        if let Terminal::Optional { .. } = &block.terminal
+            && !ctx.seen_optionals.contains(&block.id)
+        {
+            traverse_optional_block(block, func, ctx, None);
         }
     }
 }
@@ -976,10 +973,10 @@ fn get_assumed_invoked_functions_impl(
                     } else if maybe_hook.is_some() {
                         // Assume arguments to all hooks are safe to invoke
                         for arg in args {
-                            if let PlaceOrSpread::Place(p) = arg {
-                                if let Some(entry) = temporaries.get(&p.identifier) {
-                                    hoistable.insert(entry.0);
-                                }
+                            if let PlaceOrSpread::Place(p) = arg
+                                && let Some(entry) = temporaries.get(&p.identifier)
+                            {
+                                hoistable.insert(entry.0);
                             }
                         }
                     }
@@ -987,10 +984,10 @@ fn get_assumed_invoked_functions_impl(
                 InstructionValue::JsxExpression { props, children, .. } => {
                     // Assume JSX attributes and children are safe to invoke
                     for prop in props {
-                        if let JsxAttribute::Attribute { place, .. } = prop {
-                            if let Some(entry) = temporaries.get(&place.identifier) {
-                                hoistable.insert(entry.0);
-                            }
+                        if let JsxAttribute::Attribute { place, .. } = prop
+                            && let Some(entry) = temporaries.get(&place.identifier)
+                        {
+                            hoistable.insert(entry.0);
                         }
                     }
                     if let Some(children) = children {
@@ -1025,10 +1022,10 @@ fn get_assumed_invoked_functions_impl(
         }
 
         // Assume directly returned functions are safe to call
-        if let Terminal::Return { value, .. } = &block.terminal {
-            if let Some(entry) = temporaries.get(&value.identifier) {
-                hoistable.insert(entry.0);
-            }
+        if let Terminal::Return { value, .. } = &block.terminal
+            && let Some(entry) = temporaries.get(&value.identifier)
+        {
+            hoistable.insert(entry.0);
         }
     }
 
@@ -1067,11 +1064,12 @@ fn collect_non_nulls_in_blocks<'a>(
 ) -> FxHashMap<BlockId, BlockInfo> {
     // Known non-null identifiers (e.g. component props)
     let mut known_non_null: BTreeSet<usize> = BTreeSet::new();
-    if func.fn_type == ReactFunctionType::Component && !func.params.is_empty() {
-        if let ParamPattern::Place(place) = &func.params[0] {
-            let node_idx = registry.get_or_create_identifier(place.identifier, true, place.span);
-            known_non_null.insert(node_idx);
-        }
+    if func.fn_type == ReactFunctionType::Component
+        && !func.params.is_empty()
+        && let ParamPattern::Place(place) = &func.params[0]
+    {
+        let node_idx = registry.get_or_create_identifier(place.identifier, true, place.span);
+        known_non_null.insert(node_idx);
     }
 
     let mut nodes: FxHashMap<BlockId, BlockInfo> = FxHashMap::default();
@@ -1096,68 +1094,67 @@ fn collect_non_nulls_in_blocks<'a>(
             }
 
             // Handle StartMemoize deps for enablePreserveExistingMemoizationGuarantees
-            if env.enable_preserve_existing_memoization_guarantees {
-                if let InstructionValue::StartMemoize { deps: Some(deps), .. } = &instr.value {
-                    for dep in deps {
-                        if let ManualMemoDependencyRoot::NamedLocal { value: val, .. } = &dep.root {
-                            if !is_immutable_at_instr(val.identifier, instr.id, env, ctx) {
-                                continue;
+            if env.enable_preserve_existing_memoization_guarantees
+                && let InstructionValue::StartMemoize { deps: Some(deps), .. } = &instr.value
+            {
+                for dep in deps {
+                    if let ManualMemoDependencyRoot::NamedLocal { value: val, .. } = &dep.root {
+                        if !is_immutable_at_instr(val.identifier, instr.id, env, ctx) {
+                            continue;
+                        }
+                        for i in 0..dep.path.len() {
+                            if dep.path[i].optional {
+                                break;
                             }
-                            for i in 0..dep.path.len() {
-                                if dep.path[i].optional {
-                                    break;
-                                }
-                                let sub_dep = ReactiveScopeDependency {
-                                    identifier: val.identifier,
-                                    reactive: val.reactive,
-                                    path: dep.path[..i].to_vec(),
-                                    span: dep.span,
-                                };
-                                let node_idx = registry.get_or_create_property(&sub_dep);
-                                assumed.insert(node_idx);
-                            }
+                            let sub_dep = ReactiveScopeDependency {
+                                identifier: val.identifier,
+                                reactive: val.reactive,
+                                path: dep.path[..i].to_vec(),
+                                span: dep.span,
+                            };
+                            let node_idx = registry.get_or_create_property(&sub_dep);
+                            assumed.insert(node_idx);
                         }
                     }
                 }
             }
 
             // Handle assumed-invoked inner functions
-            if let InstructionValue::FunctionExpression { lowered_func, .. } = &instr.value {
-                if ctx.assumed_invoked_fns.contains(&lowered_func.func) {
-                    let inner_func = &env.functions[lowered_func.func];
-                    // Build nested fn immutable context
-                    let nested_fn_immutable_context: FxHashSet<IdentifierId> =
-                        if ctx.nested_fn_immutable_context.is_some() {
-                            // Already in a nested fn context, use existing
-                            ctx.nested_fn_immutable_context.unwrap().clone()
-                        } else {
-                            inner_func
-                                .context
-                                .iter()
-                                .filter(|place| {
-                                    is_immutable_at_instr(place.identifier, instr.id, env, ctx)
-                                })
-                                .map(|place| place.identifier)
-                                .collect()
-                        };
-                    let inner_assumed = get_assumed_invoked_functions(inner_func, env);
-                    let inner_ctx = CollectHoistableContext {
-                        temporaries: ctx.temporaries,
-                        known_immutable_identifiers: &FxHashSet::default(),
-                        hoistable_from_optionals: ctx.hoistable_from_optionals,
-                        nested_fn_immutable_context: Some(&nested_fn_immutable_context),
-                        assumed_invoked_fns: &inner_assumed,
-                    };
-                    let inner_nodes =
-                        collect_non_nulls_in_blocks(inner_func, env, &inner_ctx, registry);
-                    // Propagate non-null from inner function
-                    let inner_working = propagate_non_null(inner_func, &inner_nodes, registry);
-                    // Get hoistables from inner function's entry block (after propagation)
-                    let inner_entry = inner_func.body.entry;
-                    if let Some(inner_set) = inner_working.get(&inner_entry) {
-                        for &node_idx in inner_set {
-                            assumed.insert(node_idx);
-                        }
+            if let InstructionValue::FunctionExpression { lowered_func, .. } = &instr.value
+                && ctx.assumed_invoked_fns.contains(&lowered_func.func)
+            {
+                let inner_func = &env.functions[lowered_func.func];
+                // Build nested fn immutable context
+                let nested_fn_immutable_context: FxHashSet<IdentifierId> = if let Some(existing) =
+                    ctx.nested_fn_immutable_context
+                {
+                    // Already in a nested fn context, use existing
+                    existing.clone()
+                } else {
+                    inner_func
+                        .context
+                        .iter()
+                        .filter(|place| is_immutable_at_instr(place.identifier, instr.id, env, ctx))
+                        .map(|place| place.identifier)
+                        .collect()
+                };
+                let inner_assumed = get_assumed_invoked_functions(inner_func, env);
+                let inner_ctx = CollectHoistableContext {
+                    temporaries: ctx.temporaries,
+                    known_immutable_identifiers: &FxHashSet::default(),
+                    hoistable_from_optionals: ctx.hoistable_from_optionals,
+                    nested_fn_immutable_context: Some(&nested_fn_immutable_context),
+                    assumed_invoked_fns: &inner_assumed,
+                };
+                let inner_nodes =
+                    collect_non_nulls_in_blocks(inner_func, env, &inner_ctx, registry);
+                // Propagate non-null from inner function
+                let inner_working = propagate_non_null(inner_func, &inner_nodes, registry);
+                // Get hoistables from inner function's entry block (after propagation)
+                let inner_entry = inner_func.body.entry;
+                if let Some(inner_set) = inner_working.get(&inner_entry) {
+                    for &node_idx in inner_set {
+                        assumed.insert(node_idx);
                     }
                 }
             }
@@ -1615,10 +1612,10 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
 
         // Propagate dependencies upward
         for dep in &scoped_deps {
-            if self.check_valid_dependency(dep, env) {
-                if let Some(top) = self.dep_stack.last_mut() {
-                    top.push(dep.clone());
-                }
+            if self.check_valid_dependency(dep, env)
+                && let Some(top) = self.dep_stack.last_mut()
+            {
+                top.push(dep.clone());
             }
         }
 
@@ -1662,11 +1659,11 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
             .get(&dep.identifier)
             .or_else(|| self.declarations.get(&ident.declaration_id));
 
-        if let Some(current_scope) = self.current_scope() {
-            if let Some(decl) = current_declaration {
-                let scope_range_start = env.scopes[current_scope].range.start;
-                return decl.id < scope_range_start;
-            }
+        if let Some(current_scope) = self.current_scope()
+            && let Some(decl) = current_declaration
+        {
+            let scope_range_start = env.scopes[current_scope].range.start;
+            return decl.id < scope_range_start;
         }
         false
     }
@@ -1700,25 +1697,25 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
         let decl_id = ident.declaration_id;
 
         // Record scope declarations for values used outside their declaring scope
-        if let Some(original_decl) = self.declarations.get(&decl_id) {
-            if !original_decl.scope_stack.is_empty() {
-                let orig_scope_stack = original_decl.scope_stack.clone();
-                for &scope_id in &orig_scope_stack {
-                    if !self.scope_stack.contains(&scope_id) {
-                        // Check if already declared in this scope
-                        let scope = &env.scopes[scope_id];
-                        let already_declared = scope
-                            .declarations
-                            .iter()
-                            .any(|(_, d)| env.identifiers[d.identifier].declaration_id == decl_id);
-                        if !already_declared {
-                            let orig_scope_id = *orig_scope_stack.last().unwrap();
-                            let new_decl = ReactiveScopeDeclaration {
-                                identifier: dep.identifier,
-                                scope: orig_scope_id,
-                            };
-                            env.scopes[scope_id].declarations.push((dep.identifier, new_decl));
-                        }
+        if let Some(original_decl) = self.declarations.get(&decl_id)
+            && !original_decl.scope_stack.is_empty()
+        {
+            let orig_scope_stack = original_decl.scope_stack.clone();
+            for &scope_id in &orig_scope_stack {
+                if !self.scope_stack.contains(&scope_id) {
+                    // Check if already declared in this scope
+                    let scope = &env.scopes[scope_id];
+                    let already_declared = scope
+                        .declarations
+                        .iter()
+                        .any(|(_, d)| env.identifiers[d.identifier].declaration_id == decl_id);
+                    if !already_declared {
+                        let orig_scope_id = *orig_scope_stack.last().unwrap();
+                        let new_decl = ReactiveScopeDeclaration {
+                            identifier: dep.identifier,
+                            scope: orig_scope_id,
+                        };
+                        env.scopes[scope_id].declarations.push((dep.identifier, new_decl));
                     }
                 }
             }
@@ -1738,10 +1735,10 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
             dep
         };
 
-        if self.check_valid_dependency(&dep, env) {
-            if let Some(top) = self.dep_stack.last_mut() {
-                top.push(dep);
-            }
+        if self.check_valid_dependency(&dep, env)
+            && let Some(top) = self.dep_stack.last_mut()
+        {
+            top.push(dep);
         }
     }
 

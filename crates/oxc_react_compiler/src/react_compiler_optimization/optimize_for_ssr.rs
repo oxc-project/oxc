@@ -52,15 +52,13 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::Destructure { value, lvalue, .. } => {
-                    if inlined_state.contains_key(&env.identifiers[value.identifier].id) {
-                        if let Pattern::Array(arr) = &lvalue.pattern {
-                            if !arr.items.is_empty() {
-                                if let ArrayPatternElement::Place(_) = &arr.items[0] {
-                                    // Allow destructuring of inlined states
-                                    continue;
-                                }
-                            }
-                        }
+                    if inlined_state.contains_key(&env.identifiers[value.identifier].id)
+                        && let Pattern::Array(arr) = &lvalue.pattern
+                        && !arr.items.is_empty()
+                        && let ArrayPatternElement::Place(_) = &arr.items[0]
+                    {
+                        // Allow destructuring of inlined states
+                        continue;
                     }
                 }
                 InstructionValue::MethodCall { property, args, .. }
@@ -83,24 +81,23 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                                         },
                                     );
                                 }
-                            } else if args.len() == 3 {
-                                if let (
+                            } else if args.len() == 3
+                                && let (
                                     PlaceOrSpread::Place(_),
                                     PlaceOrSpread::Place(arg),
                                     PlaceOrSpread::Place(initializer),
                                 ) = (&args[0], &args[1], &args[2])
-                                {
-                                    let lvalue_id = env.identifiers[instr.lvalue.identifier].id;
-                                    let call_span = instr.value.span().copied();
-                                    inlined_state.insert(
-                                        lvalue_id,
-                                        InlinedStateReplacement::CallExpression {
-                                            callee: initializer.clone(),
-                                            arg: arg.clone(),
-                                            span: call_span,
-                                        },
-                                    );
-                                }
+                            {
+                                let lvalue_id = env.identifiers[instr.lvalue.identifier].id;
+                                let call_span = instr.value.span().copied();
+                                inlined_state.insert(
+                                    lvalue_id,
+                                    InlinedStateReplacement::CallExpression {
+                                        callee: initializer.clone(),
+                                        arg: arg.clone(),
+                                        span: call_span,
+                                    },
+                                );
                             }
                         }
                         Some(HookKind::UseState) if args.len() == 1 => {
@@ -183,19 +180,18 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                     let value_id = env.identifiers[value.identifier].id;
                     if inlined_state.contains_key(&value_id) {
                         // Invariant: destructuring pattern must be ArrayPattern with at least one Identifier item
-                        if let Pattern::Array(arr) = &lvalue.pattern {
-                            if !arr.items.is_empty() {
-                                if let ArrayPatternElement::Place(first_place) = &arr.items[0] {
-                                    let span = *span;
-                                    let kind = lvalue.kind;
-                                    let store = InstructionValue::StoreLocal {
-                                        lvalue: LValue { place: first_place.clone(), kind },
-                                        value: value.clone(),
-                                        span,
-                                    };
-                                    instr.value = store;
-                                }
-                            }
+                        if let Pattern::Array(arr) = &lvalue.pattern
+                            && !arr.items.is_empty()
+                            && let ArrayPatternElement::Place(first_place) = &arr.items[0]
+                        {
+                            let span = *span;
+                            let kind = lvalue.kind;
+                            let store = InstructionValue::StoreLocal {
+                                lvalue: LValue { place: first_place.clone(), kind },
+                                value: value.clone(),
+                                span,
+                            };
+                            instr.value = store;
                         }
                     }
                 }
@@ -205,12 +201,12 @@ pub fn optimize_for_ssr(func: &mut HirFunction, env: &Environment) {
                     let hook_kind = get_hook_kind(env, callee_id);
                     match hook_kind {
                         Some(HookKind::UseEffectEvent) => {
-                            if args.len() == 1 {
-                                if let PlaceOrSpread::Place(arg) = &args[0] {
-                                    let span = *span;
-                                    instr.value =
-                                        InstructionValue::LoadLocal { place: arg.clone(), span };
-                                }
+                            if args.len() == 1
+                                && let PlaceOrSpread::Place(arg) = &args[0]
+                            {
+                                let span = *span;
+                                instr.value =
+                                    InstructionValue::LoadLocal { place: arg.clone(), span };
                             }
                         }
                         Some(

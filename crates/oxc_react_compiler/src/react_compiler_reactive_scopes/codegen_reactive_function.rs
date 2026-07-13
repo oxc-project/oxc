@@ -473,10 +473,10 @@ fn ox_codegen_reactive_function<'a>(
     );
 
     // Remove trailing `return undefined`
-    if let Some(oxc::Statement::ReturnStatement(ret)) = statements.last() {
-        if ret.argument.is_none() {
-            statements.pop();
-        }
+    if let Some(oxc::Statement::ReturnStatement(ret)) = statements.last()
+        && ret.argument.is_none()
+    {
+        statements.pop();
     }
 
     let (memo_blocks, memo_values, pruned_memo_blocks, pruned_memo_values) =
@@ -927,12 +927,12 @@ fn ox_codegen_terminal<'a>(
         }
         ReactiveTerminal::Return { value, .. } => {
             let expr = ox_codegen_place_to_expression(cx, value)?;
-            if let oxc::Expression::Identifier(ref ident) = expr {
-                if ident.name == "undefined" {
-                    return Ok(Some(oxc_ast::ast::Statement::new_return_statement(
-                        SPAN, None, &cx.ast,
-                    )));
-                }
+            if let oxc::Expression::Identifier(ref ident) = expr
+                && ident.name == "undefined"
+            {
+                return Ok(Some(oxc_ast::ast::Statement::new_return_statement(
+                    SPAN, None, &cx.ast,
+                )));
             }
             Ok(Some(oxc_ast::ast::Statement::new_return_statement(SPAN, Some(expr), &cx.ast)))
         }
@@ -1227,33 +1227,24 @@ fn ox_codegen_for_init<'a>(
         let mut kind = oxc::VariableDeclarationKind::Const;
         for stmt in body {
             // Fold `name = init` assignment into the last declarator when possible.
-            if let oxc::Statement::ExpressionStatement(ref expr_stmt) = stmt {
-                if let oxc::Expression::AssignmentExpression(ref assign) = expr_stmt.expression {
-                    if matches!(assign.operator, oxc::AssignmentOperator::Assign) {
-                        if let oxc::AssignmentTarget::AssignmentTargetIdentifier(ref left_ident) =
-                            assign.left
-                        {
-                            if let Some(top) = declarators.last_mut() {
-                                if let oxc::BindingPattern::BindingIdentifier(ref top_ident) =
-                                    top.id
-                                {
-                                    if top_ident.name == left_ident.name && top.init.is_none() {
-                                        // Move the assignment's right-hand side into the declarator.
-                                        if let oxc::Statement::ExpressionStatement(expr_stmt) = stmt
-                                        {
-                                            if let oxc::Expression::AssignmentExpression(assign) =
-                                                expr_stmt.unbox().expression
-                                            {
-                                                top.init = Some(assign.unbox().right);
-                                            }
-                                        }
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                    }
+            if let oxc::Statement::ExpressionStatement(ref expr_stmt) = stmt
+                && let oxc::Expression::AssignmentExpression(ref assign) = expr_stmt.expression
+                && matches!(assign.operator, oxc::AssignmentOperator::Assign)
+                && let oxc::AssignmentTarget::AssignmentTargetIdentifier(ref left_ident) =
+                    assign.left
+                && let Some(top) = declarators.last_mut()
+                && let oxc::BindingPattern::BindingIdentifier(ref top_ident) = top.id
+                && top_ident.name == left_ident.name
+                && top.init.is_none()
+            {
+                // Move the assignment's right-hand side into the declarator.
+                if let oxc::Statement::ExpressionStatement(expr_stmt) = stmt
+                    && let oxc::Expression::AssignmentExpression(assign) =
+                        expr_stmt.unbox().expression
+                {
+                    top.init = Some(assign.unbox().right);
                 }
+                continue;
             }
 
             if let oxc::Statement::VariableDeclaration(var_decl) = stmt {

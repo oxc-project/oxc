@@ -138,25 +138,25 @@ fn visit_scope<'h>(scope_block: &ReactiveScopeBlock<'h>, state: &mut VisitorStat
     visit_block(&scope_block.instructions, state);
 
     // After traversing, validate scope dependencies against manual memo deps
-    if let Some(ref memo_state) = state.manual_memo_state {
-        if let Some(ref deps_from_source) = memo_state.deps_from_source {
-            let scope = &state.env.scopes[scope_block.scope];
-            let deps = scope.dependencies.clone();
-            let memo_span = memo_state.span;
-            let decls = memo_state.decls.clone();
-            let deps_from_source = deps_from_source.clone();
-            let temporaries = state.temporaries.clone();
-            for dep in &deps {
-                validate_inferred_dep(
-                    dep.identifier,
-                    &dep.path,
-                    &temporaries,
-                    &decls,
-                    &deps_from_source,
-                    state.env,
-                    memo_span,
-                );
-            }
+    if let Some(ref memo_state) = state.manual_memo_state
+        && let Some(ref deps_from_source) = memo_state.deps_from_source
+    {
+        let scope = &state.env.scopes[scope_block.scope];
+        let deps = scope.dependencies.clone();
+        let memo_span = memo_state.span;
+        let decls = memo_state.decls.clone();
+        let deps_from_source = deps_from_source.clone();
+        let temporaries = state.temporaries.clone();
+        for dep in &deps {
+            validate_inferred_dep(
+                dep.identifier,
+                &dep.path,
+                &temporaries,
+                &decls,
+                &deps_from_source,
+                state.env,
+                memo_span,
+            );
         }
     }
 
@@ -210,10 +210,11 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
             let operand_places = start_memoize_operands(deps);
             for place in &operand_places {
                 let ident = &state.env.identifiers[place.identifier];
-                if let Some(scope_id) = ident.scope {
-                    if !state.scopes.contains(&scope_id) && !state.pruned_scopes.contains(&scope_id)
-                    {
-                        let diag = ErrorCategory::PreserveManualMemo
+                if let Some(scope_id) = ident.scope
+                    && !state.scopes.contains(&scope_id)
+                    && !state.pruned_scopes.contains(&scope_id)
+                {
+                    let diag = ErrorCategory::PreserveManualMemo
                             .diagnostic("Existing memoization could not be preserved")
                             .with_help(
                                 "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. \
@@ -224,8 +225,7 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
                                     .span
                                     .map(|s| s.label("This dependency may be modified later")),
                             );
-                        state.env.record_diagnostic(diag);
-                    }
+                    state.env.record_diagnostic(diag);
                 }
             }
         }
@@ -317,16 +317,18 @@ fn record_unmemoized_error(span: Option<Span>, env: &mut Environment) {
 fn record_temporaries<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorState<'_, 'h>) {
     let lvalue = &instr.lvalue;
     let lv_id = lvalue.as_ref().map(|lv| lv.identifier);
-    if let Some(id) = lv_id {
-        if state.temporaries.contains_key(&id) {
-            return;
-        }
+    if let Some(id) = lv_id
+        && state.temporaries.contains_key(&id)
+    {
+        return;
     }
 
     if let Some(ref lvalue) = instr.lvalue {
         let lv_ident = &state.env.identifiers[lvalue.identifier];
-        if is_named(lv_ident) && state.manual_memo_state.is_some() {
-            state.manual_memo_state.as_mut().unwrap().decls.insert(lv_ident.declaration_id);
+        if is_named(lv_ident)
+            && let Some(manual_memo_state) = state.manual_memo_state.as_mut()
+        {
+            manual_memo_state.decls.insert(lv_ident.declaration_id);
         }
     }
 

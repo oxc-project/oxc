@@ -372,10 +372,10 @@ fn is_reactive_controlled_block(
                     return true;
                 }
                 for case in cases {
-                    if let Some(ref case_test) = case.test {
-                        if reactive_map.is_reactive(case_test.identifier) {
-                            return true;
-                        }
+                    if let Some(ref case_test) = case.test
+                        && reactive_map.is_reactive(case_test.identifier)
+                    {
+                        return true;
                     }
                 }
             }
@@ -550,10 +550,9 @@ fn apply_reactive_flags_replay(
 
             for (op_idx, (_pred, operand)) in phi.operands.iter_mut().enumerate() {
                 if let Some(&is_reactive) = phi_operand_reactive.get(&(*block_id, phi_idx, op_idx))
+                    && is_reactive
                 {
-                    if is_reactive {
-                        operand.reactive = true;
-                    }
+                    operand.reactive = true;
                 }
             }
         }

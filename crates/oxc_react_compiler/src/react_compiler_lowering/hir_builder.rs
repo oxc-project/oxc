@@ -229,7 +229,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// so that TypeIds are consistent with identifier type slots.
     pub fn make_type(&mut self) -> Type<'a> {
         let type_id = self.env.make_type();
-        Type::TypeVar { id: type_id }
+        Type::Var { id: type_id }
     }
 
     /// Access the scope resolver.
@@ -857,12 +857,12 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         while let Some(id) = current {
             let mut found =
                 self.scope.bindings_in(id).find(|&sid| resolved_name_matches(sid) == Some(true));
-            if found.is_none() {
-                if let Some(sid) = self.scope.get_binding(id, name) {
-                    // Skip bindings that were renamed away from `name`.
-                    if resolved_name_matches(sid) != Some(false) {
-                        found = Some(sid);
-                    }
+            if found.is_none()
+                && let Some(sid) = self.scope.get_binding(id, name)
+            {
+                // Skip bindings that were renamed away from `name`.
+                if resolved_name_matches(sid) != Some(false) {
+                    found = Some(sid);
                 }
             }
             if let Some(sid) = found {
@@ -977,12 +977,11 @@ pub fn get_reverse_postordered_blocks(hir: &HIR) -> FxIndexMap<BlockId, BasicBlo
 pub fn remove_unreachable_for_updates(hir: &mut HIR) {
     let block_ids: FxIndexSet<BlockId> = hir.blocks.keys().copied().collect();
     for block in hir.blocks.values_mut() {
-        if let Terminal::For { update, .. } = &mut block.terminal {
-            if let Some(update_id) = *update {
-                if !block_ids.contains(&update_id) {
-                    *update = None;
-                }
-            }
+        if let Terminal::For { update, .. } = &mut block.terminal
+            && let Some(update_id) = *update
+            && !block_ids.contains(&update_id)
+        {
+            *update = None;
         }
     }
 }
@@ -997,14 +996,14 @@ pub fn remove_dead_do_while_statements(hir: &mut HIR) {
         } else {
             false
         };
-        if should_replace {
-            if let Terminal::DoWhile { loop_block, id, span, .. } = std::mem::replace(
+        if should_replace
+            && let Terminal::DoWhile { loop_block, id, span, .. } = std::mem::replace(
                 &mut block.terminal,
                 Terminal::Unreachable { id: EvaluationOrder::UNSET, span: None },
-            ) {
-                block.terminal =
-                    Terminal::Goto { block: loop_block, variant: GotoVariant::Break, id, span };
-            }
+            )
+        {
+            block.terminal =
+                Terminal::Goto { block: loop_block, variant: GotoVariant::Break, id, span };
         }
     }
 }
@@ -1024,10 +1023,9 @@ pub fn remove_unnecessary_try_catch(hir: &mut HIR) {
         .filter_map(|(&block_id, block)| {
             if let Terminal::Try { block: try_block, handler, fallthrough, span, .. } =
                 &block.terminal
+                && !block_ids.contains(handler)
             {
-                if !block_ids.contains(handler) {
-                    return Some((block_id, *try_block, *handler, *fallthrough, *span));
-                }
+                return Some((block_id, *try_block, *handler, *fallthrough, *span));
             }
             None
         })

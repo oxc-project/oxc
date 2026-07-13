@@ -202,10 +202,8 @@ impl<'a, 'h> Context<'a, 'h> {
                 // (ownsBlock is boolean, so `!== null` is always true)
                 self.scheduled.remove(block);
                 self.scheduled.remove(continue_block);
-                if *owns_loop {
-                    if let Some(lb) = loop_block {
-                        self.scheduled.remove(lb);
-                    }
+                if *owns_loop && let Some(lb) = loop_block {
+                    self.scheduled.remove(lb);
                 }
             }
             _ => {
@@ -258,17 +256,16 @@ impl<'a, 'h> Context<'a, 'h> {
         for i in (0..self.control_flow_stack.len()).rev() {
             let target = &self.control_flow_stack[i];
             if let ControlFlowTarget::Loop { block: fallthrough_block, continue_block, .. } = target
+                && *continue_block == block
             {
-                if *continue_block == block {
-                    let kind = if has_preceding_loop {
-                        ReactiveTerminalTargetKind::Labeled
-                    } else if i == self.control_flow_stack.len() - 1 {
-                        ReactiveTerminalTargetKind::Implicit
-                    } else {
-                        ReactiveTerminalTargetKind::Unlabeled
-                    };
-                    return Some((*fallthrough_block, kind));
-                }
+                let kind = if has_preceding_loop {
+                    ReactiveTerminalTargetKind::Labeled
+                } else if i == self.control_flow_stack.len() - 1 {
+                    ReactiveTerminalTargetKind::Implicit
+                } else {
+                    ReactiveTerminalTargetKind::Unlabeled
+                };
+                return Some((*fallthrough_block, kind));
             }
             has_preceding_loop = has_preceding_loop || target.is_loop();
         }
@@ -369,15 +366,18 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::If {
-                            test: test.clone(),
-                            consequent: consequent_block,
-                            alternate: alternate_block,
-                            id: *id,
+                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                        ReactiveTerminalStatement {
+                            terminal: ReactiveTerminal::If {
+                                test: test.clone(),
+                                consequent: consequent_block,
+                                alternate: alternate_block,
+                                id: *id,
+                            },
+                            label: fallthrough_id
+                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
-                    }));
+                    )));
 
                     next_block = fallthrough_id;
                 }
@@ -421,14 +421,17 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     reactive_cases.reverse();
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::Switch {
-                            test: test.clone(),
-                            cases: reactive_cases,
-                            id: *id,
+                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                        ReactiveTerminalStatement {
+                            terminal: ReactiveTerminal::Switch {
+                                test: test.clone(),
+                                cases: reactive_cases,
+                                id: *id,
+                            },
+                            label: fallthrough_id
+                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
-                    }));
+                    )));
 
                     next_block = fallthrough_id;
                 }
@@ -459,14 +462,17 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let test_result = self.visit_value_block(*test, *span, None)?;
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::DoWhile {
-                            loop_block: loop_body,
-                            test: test_result.value,
-                            id: *id,
+                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                        ReactiveTerminalStatement {
+                            terminal: ReactiveTerminal::DoWhile {
+                                loop_block: loop_body,
+                                test: test_result.value,
+                                id: *id,
+                            },
+                            label: fallthrough_id
+                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
-                    }));
+                    )));
 
                     next_block = fallthrough_id;
                 }
@@ -502,14 +508,17 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::While {
-                            test: test_result.value,
-                            loop_block: loop_body,
-                            id: *id,
+                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                        ReactiveTerminalStatement {
+                            terminal: ReactiveTerminal::While {
+                                test: test_result.value,
+                                loop_block: loop_body,
+                                id: *id,
+                            },
+                            label: fallthrough_id
+                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
-                    }));
+                    )));
 
                     next_block = fallthrough_id;
                 }
@@ -551,16 +560,19 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::For {
-                            init: init_value,
-                            test: test_result.value,
-                            update: update_result.map(|r| r.value),
-                            loop_block: loop_body,
-                            id: *id,
+                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                        ReactiveTerminalStatement {
+                            terminal: ReactiveTerminal::For {
+                                init: init_value,
+                                test: test_result.value,
+                                update: update_result.map(|r| r.value),
+                                loop_block: loop_body,
+                                id: *id,
+                            },
+                            label: fallthrough_id
+                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
-                    }));
+                    )));
 
                     next_block = fallthrough_id;
                 }
@@ -598,16 +610,19 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::ForOf {
-                            init: init_value,
-                            test: test_value,
-                            loop_block: loop_body,
-                            id: *id,
-                            span: *span,
+                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                        ReactiveTerminalStatement {
+                            terminal: ReactiveTerminal::ForOf {
+                                init: init_value,
+                                test: test_value,
+                                loop_block: loop_body,
+                                id: *id,
+                                span: *span,
+                            },
+                            label: fallthrough_id
+                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
-                    }));
+                    )));
 
                     next_block = fallthrough_id;
                 }
@@ -641,15 +656,18 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::ForIn {
-                            init: init_value,
-                            loop_block: loop_body,
-                            id: *id,
-                            span: *span,
+                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                        ReactiveTerminalStatement {
+                            terminal: ReactiveTerminal::ForIn {
+                                init: init_value,
+                                loop_block: loop_body,
+                                id: *id,
+                                span: *span,
+                            },
+                            label: fallthrough_id
+                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
-                    }));
+                    )));
 
                     next_block = fallthrough_id;
                 }
@@ -674,10 +692,13 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let label_body = self.traverse_block(*label_block)?;
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::Label { block: label_body, id: *id },
-                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
-                    }));
+                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                        ReactiveTerminalStatement {
+                            terminal: ReactiveTerminal::Label { block: label_body, id: *id },
+                            label: fallthrough_id
+                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                        },
+                    )));
 
                     next_block = fallthrough_id;
                 }
@@ -757,15 +778,18 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let handler_body = self.traverse_block(*handler)?;
 
                     self.cx.unschedule_all(&schedule_ids)?;
-                    block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::Try {
-                            block: try_body,
-                            handler_binding: handler_binding.clone(),
-                            handler: handler_body,
-                            id: *id,
+                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                        ReactiveTerminalStatement {
+                            terminal: ReactiveTerminal::Try {
+                                block: try_body,
+                                handler_binding: handler_binding.clone(),
+                                handler: handler_body,
+                                id: *id,
+                            },
+                            label: fallthrough_id
+                                .map(|ft| ReactiveLabel { id: ft, implicit: false }),
                         },
-                        label: fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
-                    }));
+                    )));
 
                     next_block = fallthrough_id;
                 }
@@ -819,17 +843,21 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 }
 
                 Terminal::Return { value, id, .. } => {
-                    block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::Return { value: value.clone(), id: *id },
-                        label: None,
-                    }));
+                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                        ReactiveTerminalStatement {
+                            terminal: ReactiveTerminal::Return { value: value.clone(), id: *id },
+                            label: None,
+                        },
+                    )));
                 }
 
                 Terminal::Throw { value, id, .. } => {
-                    block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::Throw { value: value.clone(), id: *id },
-                        label: None,
-                    }));
+                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                        ReactiveTerminalStatement {
+                            terminal: ReactiveTerminal::Throw { value: value.clone(), id: *id },
+                            label: None,
+                        },
+                    )));
                 }
 
                 Terminal::Unreachable { .. } => {
@@ -854,15 +882,17 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
                     let alternate_block = self.traverse_block(*alternate)?;
 
-                    block_value.push(ReactiveStatement::Terminal(ReactiveTerminalStatement {
-                        terminal: ReactiveTerminal::If {
-                            test: test.clone(),
-                            consequent: consequent_block,
-                            alternate: Some(alternate_block),
-                            id: *id,
+                    block_value.push(ReactiveStatement::Terminal(Box::new(
+                        ReactiveTerminalStatement {
+                            terminal: ReactiveTerminal::If {
+                                test: test.clone(),
+                                consequent: consequent_block,
+                                alternate: Some(alternate_block),
+                                id: *id,
+                            },
+                            label: None,
                         },
-                        label: None,
-                    }));
+                    )));
                 }
             }
             match next_block {
@@ -888,13 +918,13 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         let instructions: Vec<_> = block.instructions.clone();
 
         // If we've reached the fallthrough, stop
-        if let Some(ft) = fallthrough {
-            if block_id == ft {
-                return Err(ErrorCategory::Invariant.diagnostic(format!(
-                    "Did not expect to reach the fallthrough of a value block (bb{})",
-                    block_id.index()
-                )));
-            }
+        if let Some(ft) = fallthrough
+            && block_id == ft
+        {
+            return Err(ErrorCategory::Invariant.diagnostic(format!(
+                "Did not expect to reach the fallthrough of a value block (bb{})",
+                block_id.index()
+            )));
         }
 
         match &terminal {
@@ -1265,10 +1295,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             }
             return Ok(None);
         }
-        Ok(Some(ReactiveStatement::Terminal(ReactiveTerminalStatement {
+        Ok(Some(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
             terminal: ReactiveTerminal::Break { target: target_block, id, target_kind },
             label: None,
-        })))
+        }))))
     }
 
     fn visit_continue(
@@ -1286,10 +1316,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             }
         };
 
-        Ok(ReactiveStatement::Terminal(ReactiveTerminalStatement {
+        Ok(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
             terminal: ReactiveTerminal::Continue { target: target_block, id, target_kind },
             label: None,
-        }))
+        })))
     }
 }
 

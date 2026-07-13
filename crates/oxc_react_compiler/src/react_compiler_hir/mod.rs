@@ -1146,8 +1146,7 @@ pub enum Type<'a> {
     Object {
         shape_id: Option<Ident<'a>>,
     },
-    #[allow(clippy::enum_variant_names)]
-    TypeVar {
+    Var {
         id: TypeId,
     },
     Poly,
@@ -1237,7 +1236,6 @@ pub enum MutationReason {
 /// Describes the aliasing/mutation/data-flow effects of an instruction or terminal.
 /// Ported from TS `AliasingEffect` in `AliasingEffects.ts`.
 #[derive(Debug, Clone)]
-#[allow(clippy::large_enum_variant)]
 pub enum AliasingEffect {
     /// Marks the given value and its direct aliases as frozen.
     Freeze { value: Place, reason: ValueReason },

@@ -81,10 +81,9 @@ pub fn validate_exhaustive_dependencies(
         for instr in func.instructions.iter_mut() {
             if let InstructionValue::StartMemoize { manual_memo_id, has_invalid_deps, .. } =
                 &mut instr.value
+                && callbacks.invalid_memo_ids.contains(manual_memo_id)
             {
-                if callbacks.invalid_memo_ids.contains(manual_memo_id) {
-                    *has_invalid_deps = true;
-                }
+                *has_invalid_deps = true;
             }
         }
     }
@@ -334,10 +333,9 @@ fn find_optional_places(func: &HirFunction) -> FxHashMap<IdentifierId, bool> {
                                 let last_instr = &func.instructions[last_id.index()];
                                 if let InstructionValue::StoreLocal { value, .. } =
                                     &last_instr.value
+                                    && let Some(opt) = is_optional
                                 {
-                                    if let Some(opt) = is_optional {
-                                        optionals.insert(value.identifier, opt);
-                                    }
+                                    optionals.insert(value.identifier, opt);
                                 }
                             }
                             break 'outer;
@@ -836,89 +834,84 @@ fn collect_dependencies<'a>(
                         let callee_ty = get_identifier_type(callee.identifier, identifiers, types);
                         if is_effect_hook(callee_ty)
                             && !matches!(cb.validate_effect, ExhaustiveEffectDepsMode::Off)
+                            && args.len() >= 2
                         {
-                            if args.len() >= 2 {
-                                let fn_arg = match &args[0] {
-                                    PlaceOrSpread::Place(p) => Some(p),
-                                    _ => None,
-                                };
-                                let deps_arg = match &args[1] {
-                                    PlaceOrSpread::Place(p) => Some(p),
-                                    _ => None,
-                                };
-                                if let (Some(fn_place), Some(deps_place)) = (fn_arg, deps_arg) {
-                                    let fn_deps = temporaries.get(&fn_place.identifier).cloned();
-                                    let manual_deps =
-                                        temporaries.get(&deps_place.identifier).cloned();
-                                    if let (
-                                        Some(Temporary::Aggregate {
-                                            dependencies: fn_dep_list,
-                                            ..
-                                        }),
-                                        Some(Temporary::Aggregate {
-                                            dependencies: manual_dep_list,
-                                            span: manual_span,
-                                        }),
-                                    ) = (fn_deps, manual_deps)
-                                    {
-                                        let effect_report_mode = match &cb.validate_effect {
-                                            ExhaustiveEffectDepsMode::All => "all",
-                                            ExhaustiveEffectDepsMode::MissingOnly => "missing-only",
-                                            ExhaustiveEffectDepsMode::ExtraOnly => "extra-only",
-                                            ExhaustiveEffectDepsMode::Off => unreachable!(),
-                                        };
-                                        // Convert manual deps to ManualMemoDependency format
-                                        let manual_memo_deps: Vec<ManualMemoDependency> =
-                                            manual_dep_list
-                                                .iter()
-                                                .map(|dep| match dep {
-                                                    InferredDependency::Local {
-                                                        identifier,
-                                                        path,
-                                                        span,
-                                                        ..
-                                                    } => ManualMemoDependency {
-                                                        root:
-                                                            ManualMemoDependencyRoot::NamedLocal {
-                                                                value: Place {
-                                                                    identifier: *identifier,
-                                                                    effect: Effect::Read,
-                                                                    reactive: cb
-                                                                        .reactive
-                                                                        .contains(identifier),
-                                                                    span: *span,
-                                                                },
-                                                                constant: false,
-                                                            },
-                                                        path: path.clone(),
-                                                        span: *span,
+                            let fn_arg = match &args[0] {
+                                PlaceOrSpread::Place(p) => Some(p),
+                                _ => None,
+                            };
+                            let deps_arg = match &args[1] {
+                                PlaceOrSpread::Place(p) => Some(p),
+                                _ => None,
+                            };
+                            if let (Some(fn_place), Some(deps_place)) = (fn_arg, deps_arg) {
+                                let fn_deps = temporaries.get(&fn_place.identifier).cloned();
+                                let manual_deps = temporaries.get(&deps_place.identifier).cloned();
+                                if let (
+                                    Some(Temporary::Aggregate {
+                                        dependencies: fn_dep_list, ..
+                                    }),
+                                    Some(Temporary::Aggregate {
+                                        dependencies: manual_dep_list,
+                                        span: manual_span,
+                                    }),
+                                ) = (fn_deps, manual_deps)
+                                {
+                                    let effect_report_mode = match &cb.validate_effect {
+                                        ExhaustiveEffectDepsMode::All => "all",
+                                        ExhaustiveEffectDepsMode::MissingOnly => "missing-only",
+                                        ExhaustiveEffectDepsMode::ExtraOnly => "extra-only",
+                                        ExhaustiveEffectDepsMode::Off => unreachable!(),
+                                    };
+                                    // Convert manual deps to ManualMemoDependency format
+                                    let manual_memo_deps: Vec<ManualMemoDependency> =
+                                        manual_dep_list
+                                            .iter()
+                                            .map(|dep| match dep {
+                                                InferredDependency::Local {
+                                                    identifier,
+                                                    path,
+                                                    span,
+                                                    ..
+                                                } => ManualMemoDependency {
+                                                    root: ManualMemoDependencyRoot::NamedLocal {
+                                                        value: Place {
+                                                            identifier: *identifier,
+                                                            effect: Effect::Read,
+                                                            reactive: cb
+                                                                .reactive
+                                                                .contains(identifier),
+                                                            span: *span,
+                                                        },
+                                                        constant: false,
                                                     },
-                                                    InferredDependency::Global { binding } => {
-                                                        ManualMemoDependency {
-                                                            root:
-                                                                ManualMemoDependencyRoot::Global {
-                                                                    identifier_name: binding.name(),
-                                                                },
-                                                            path: Vec::new(),
-                                                            span: None,
-                                                        }
+                                                    path: path.clone(),
+                                                    span: *span,
+                                                },
+                                                InferredDependency::Global { binding } => {
+                                                    ManualMemoDependency {
+                                                        root: ManualMemoDependencyRoot::Global {
+                                                            identifier_name: binding.name(),
+                                                        },
+                                                        path: Vec::new(),
+                                                        span: None,
                                                     }
-                                                })
-                                                .collect();
+                                                }
+                                            })
+                                            .collect();
 
-                                        let diagnostic = validate_dependencies(
-                                            fn_dep_list,
-                                            &manual_memo_deps,
-                                            cb.reactive,
-                                            manual_span,
-                                            ErrorCategory::EffectExhaustiveDependencies,
-                                            effect_report_mode,
-                                            identifiers,
-                                            types,
-                                        )?;
-                                        if let Some(diag) = diagnostic {
-                                            cb.diagnostics.push(diag);
-                                        }
+                                    let diagnostic = validate_dependencies(
+                                        fn_dep_list,
+                                        &manual_memo_deps,
+                                        cb.reactive,
+                                        manual_span,
+                                        ErrorCategory::EffectExhaustiveDependencies,
+                                        effect_report_mode,
+                                        identifiers,
+                                        types,
+                                    )?;
+                                    if let Some(diag) = diagnostic {
+                                        cb.diagnostics.push(diag);
                                     }
                                 }
                             }
@@ -944,88 +937,83 @@ fn collect_dependencies<'a>(
                         let prop_ty = get_identifier_type(property.identifier, identifiers, types);
                         if is_effect_hook(prop_ty)
                             && !matches!(cb.validate_effect, ExhaustiveEffectDepsMode::Off)
+                            && args.len() >= 2
                         {
-                            if args.len() >= 2 {
-                                let fn_arg = match &args[0] {
-                                    PlaceOrSpread::Place(p) => Some(p),
-                                    _ => None,
-                                };
-                                let deps_arg = match &args[1] {
-                                    PlaceOrSpread::Place(p) => Some(p),
-                                    _ => None,
-                                };
-                                if let (Some(fn_place), Some(deps_place)) = (fn_arg, deps_arg) {
-                                    let fn_deps = temporaries.get(&fn_place.identifier).cloned();
-                                    let manual_deps =
-                                        temporaries.get(&deps_place.identifier).cloned();
-                                    if let (
-                                        Some(Temporary::Aggregate {
-                                            dependencies: fn_dep_list,
-                                            ..
-                                        }),
-                                        Some(Temporary::Aggregate {
-                                            dependencies: manual_dep_list,
-                                            span: manual_span,
-                                        }),
-                                    ) = (fn_deps, manual_deps)
-                                    {
-                                        let effect_report_mode = match &cb.validate_effect {
-                                            ExhaustiveEffectDepsMode::All => "all",
-                                            ExhaustiveEffectDepsMode::MissingOnly => "missing-only",
-                                            ExhaustiveEffectDepsMode::ExtraOnly => "extra-only",
-                                            ExhaustiveEffectDepsMode::Off => unreachable!(),
-                                        };
-                                        let manual_memo_deps: Vec<ManualMemoDependency> =
-                                            manual_dep_list
-                                                .iter()
-                                                .map(|dep| match dep {
-                                                    InferredDependency::Local {
-                                                        identifier,
-                                                        path,
-                                                        span,
-                                                        ..
-                                                    } => ManualMemoDependency {
-                                                        root:
-                                                            ManualMemoDependencyRoot::NamedLocal {
-                                                                value: Place {
-                                                                    identifier: *identifier,
-                                                                    effect: Effect::Read,
-                                                                    reactive: cb
-                                                                        .reactive
-                                                                        .contains(identifier),
-                                                                    span: *span,
-                                                                },
-                                                                constant: false,
-                                                            },
-                                                        path: path.clone(),
-                                                        span: *span,
+                            let fn_arg = match &args[0] {
+                                PlaceOrSpread::Place(p) => Some(p),
+                                _ => None,
+                            };
+                            let deps_arg = match &args[1] {
+                                PlaceOrSpread::Place(p) => Some(p),
+                                _ => None,
+                            };
+                            if let (Some(fn_place), Some(deps_place)) = (fn_arg, deps_arg) {
+                                let fn_deps = temporaries.get(&fn_place.identifier).cloned();
+                                let manual_deps = temporaries.get(&deps_place.identifier).cloned();
+                                if let (
+                                    Some(Temporary::Aggregate {
+                                        dependencies: fn_dep_list, ..
+                                    }),
+                                    Some(Temporary::Aggregate {
+                                        dependencies: manual_dep_list,
+                                        span: manual_span,
+                                    }),
+                                ) = (fn_deps, manual_deps)
+                                {
+                                    let effect_report_mode = match &cb.validate_effect {
+                                        ExhaustiveEffectDepsMode::All => "all",
+                                        ExhaustiveEffectDepsMode::MissingOnly => "missing-only",
+                                        ExhaustiveEffectDepsMode::ExtraOnly => "extra-only",
+                                        ExhaustiveEffectDepsMode::Off => unreachable!(),
+                                    };
+                                    let manual_memo_deps: Vec<ManualMemoDependency> =
+                                        manual_dep_list
+                                            .iter()
+                                            .map(|dep| match dep {
+                                                InferredDependency::Local {
+                                                    identifier,
+                                                    path,
+                                                    span,
+                                                    ..
+                                                } => ManualMemoDependency {
+                                                    root: ManualMemoDependencyRoot::NamedLocal {
+                                                        value: Place {
+                                                            identifier: *identifier,
+                                                            effect: Effect::Read,
+                                                            reactive: cb
+                                                                .reactive
+                                                                .contains(identifier),
+                                                            span: *span,
+                                                        },
+                                                        constant: false,
                                                     },
-                                                    InferredDependency::Global { binding } => {
-                                                        ManualMemoDependency {
-                                                            root:
-                                                                ManualMemoDependencyRoot::Global {
-                                                                    identifier_name: binding.name(),
-                                                                },
-                                                            path: Vec::new(),
-                                                            span: None,
-                                                        }
+                                                    path: path.clone(),
+                                                    span: *span,
+                                                },
+                                                InferredDependency::Global { binding } => {
+                                                    ManualMemoDependency {
+                                                        root: ManualMemoDependencyRoot::Global {
+                                                            identifier_name: binding.name(),
+                                                        },
+                                                        path: Vec::new(),
+                                                        span: None,
                                                     }
-                                                })
-                                                .collect();
+                                                }
+                                            })
+                                            .collect();
 
-                                        let diagnostic = validate_dependencies(
-                                            fn_dep_list,
-                                            &manual_memo_deps,
-                                            cb.reactive,
-                                            manual_span,
-                                            ErrorCategory::EffectExhaustiveDependencies,
-                                            effect_report_mode,
-                                            identifiers,
-                                            types,
-                                        )?;
-                                        if let Some(diag) = diagnostic {
-                                            cb.diagnostics.push(diag);
-                                        }
+                                    let diagnostic = validate_dependencies(
+                                        fn_dep_list,
+                                        &manual_memo_deps,
+                                        cb.reactive,
+                                        manual_span,
+                                        ErrorCategory::EffectExhaustiveDependencies,
+                                        effect_report_mode,
+                                        identifiers,
+                                        types,
+                                    )?;
+                                    if let Some(diag) = diagnostic {
+                                        cb.diagnostics.push(diag);
                                     }
                                 }
                             }
@@ -1227,11 +1215,11 @@ fn validate_dependencies(
         match inferred_dep {
             InferredDependency::Global { binding } => {
                 for (i, manual_dep) in manual_dependencies.iter().enumerate() {
-                    if let ManualMemoDependencyRoot::Global { identifier_name } = &manual_dep.root {
-                        if *identifier_name == binding.name() {
-                            matched.insert(i);
-                            extra.push(manual_dep);
-                        }
+                    if let ManualMemoDependencyRoot::Global { identifier_name } = &manual_dep.root
+                        && *identifier_name == binding.name()
+                    {
+                        matched.insert(i);
+                        extra.push(manual_dep);
                     }
                 }
                 continue;
@@ -1245,14 +1233,13 @@ fn validate_dependencies(
 
                 let mut has_matching = false;
                 for (i, manual_dep) in manual_dependencies.iter().enumerate() {
-                    if let ManualMemoDependencyRoot::NamedLocal { value, .. } = &manual_dep.root {
-                        if value.identifier == *identifier
-                            && (are_equal_paths(&manual_dep.path, path)
-                                || is_sub_path_ignoring_optionals(&manual_dep.path, path))
-                        {
-                            has_matching = true;
-                            matched.insert(i);
-                        }
+                    if let ManualMemoDependencyRoot::NamedLocal { value, .. } = &manual_dep.root
+                        && value.identifier == *identifier
+                        && (are_equal_paths(&manual_dep.path, path)
+                            || is_sub_path_ignoring_optionals(&manual_dep.path, path))
+                    {
+                        has_matching = true;
+                        matched.insert(i);
                     }
                 }
 
@@ -1271,13 +1258,13 @@ fn validate_dependencies(
         if matched.contains(&i) {
             continue;
         }
-        if let ManualMemoDependencyRoot::NamedLocal { constant, value, .. } = &dep.root {
-            if *constant {
-                let dep_ty = get_identifier_type(value.identifier, identifiers, types);
-                // Constant-folded primitives: skip
-                if !value.reactive && is_primitive_type(dep_ty) {
-                    continue;
-                }
+        if let ManualMemoDependencyRoot::NamedLocal { constant, value, .. } = &dep.root
+            && *constant
+        {
+            let dep_ty = get_identifier_type(value.identifier, identifiers, types);
+            // Constant-folded primitives: skip
+            if !value.reactive && is_primitive_type(dep_ty) {
+                continue;
             }
         }
         extra.push(dep);

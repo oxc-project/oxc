@@ -61,16 +61,11 @@ convert_case = { workspace = true }
 oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 
 # The `src/` conversion modules are vendored close to upstream `react_compiler_oxc`
-# (kept near byte-for-byte to ease re-syncing), so relax the handful of lints they
-# trip here rather than editing the code. Defining `[lints.clippy]` means this crate
-# does not inherit `[lints] workspace = true`, which keeps the in-house restriction
-# lints (`todo!`/`unimplemented!`/...) off the vendored code while clippy's default
-# correctness and perf checks still apply.
+# (kept near byte-for-byte to ease re-syncing). Defining `[lints.clippy]` means this
+# crate does not inherit `[lints] workspace = true`, which keeps the in-house
+# restriction lints (`todo!`/`unimplemented!`/...) off the vendored code while clippy's
+# default correctness and perf checks still apply.
 [lints.clippy]
-disallowed_types = "allow" # `react_compiler_ast`'s `ScopeInfo`/`ScopeData` fields are std `HashMap`
-collapsible_if = "allow"
-needless_return = "allow"
-unnecessary_unwrap = "allow"
 result_large_err = "allow" # `Result<T, OxcDiagnostic>` everywhere; same trade-off as the workspace allow
 
 # The vendored modules' doc comments reference types like `Vec<PatternLike>`

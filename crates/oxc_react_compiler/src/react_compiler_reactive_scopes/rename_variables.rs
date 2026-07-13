@@ -229,10 +229,10 @@ fn rename_variables_with_parent<'a>(
 
     // Phase 2: Apply the computed renames to all identifiers in env.
     for identifier in env.identifiers.iter_mut() {
-        if let Some(mapped_name) = scopes.seen.get(&identifier.declaration_id) {
-            if identifier.name.is_some() {
-                identifier.name = Some(*mapped_name);
-            }
+        if let Some(mapped_name) = scopes.seen.get(&identifier.declaration_id)
+            && identifier.name.is_some()
+        {
+            identifier.name = Some(*mapped_name);
         }
     }
 

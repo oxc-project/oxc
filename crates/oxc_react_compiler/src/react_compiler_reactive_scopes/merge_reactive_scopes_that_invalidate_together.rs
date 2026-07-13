@@ -107,11 +107,11 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
         *state = parent_state;
 
         // If parent has deps and they match, flatten the inner scope
-        if let Some(parent_deps) = state.as_ref() {
-            if are_equal_dependencies(parent_deps, &scope_deps, self.env) {
-                let instructions = take(&mut scope.instructions);
-                return Ok(Transformed::ReplaceMany(instructions));
-            }
+        if let Some(parent_deps) = state.as_ref()
+            && are_equal_dependencies(parent_deps, &scope_deps, self.env)
+        {
+            let instructions = take(&mut scope.instructions);
+            return Ok(Transformed::ReplaceMany(instructions));
         }
         Ok(Transformed::Keep)
     }
@@ -151,18 +151,18 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
             match statement {
                 ReactiveStatement::Terminal(_) => {
                     // Don't merge across terminals
-                    if let Some(c) = current.take() {
-                        if c.to > c.from + 1 {
-                            merged.push(c);
-                        }
+                    if let Some(c) = current.take()
+                        && c.to > c.from + 1
+                    {
+                        merged.push(c);
                     }
                 }
                 ReactiveStatement::PrunedScope(_) => {
                     // Don't merge across pruned scopes
-                    if let Some(c) = current.take() {
-                        if c.to > c.from + 1 {
-                            merged.push(c);
-                        }
+                    if let Some(c) = current.take()
+                        && c.to > c.from + 1
+                    {
+                        merged.push(c);
                     }
                 }
                 ReactiveStatement::Instruction(instr) => {
@@ -178,17 +178,16 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                                 | InstructionValue::PropertyLoad { .. }
                                 | InstructionValue::TemplateLiteral { .. }
                                 | InstructionValue::UnaryExpression { .. } => {
-                                    if let Some(ref mut c) = current {
-                                        if let Some(lvalue) = &instr.lvalue {
-                                            let decl_id = self.env.identifiers[lvalue.identifier]
+                                    if let Some(ref mut c) = current
+                                        && let Some(lvalue) = &instr.lvalue
+                                    {
+                                        let decl_id =
+                                            self.env.identifiers[lvalue.identifier].declaration_id;
+                                        c.lvalues.insert(decl_id);
+                                        if let InstructionValue::LoadLocal { place, .. } = iv {
+                                            let src_decl = self.env.identifiers[place.identifier]
                                                 .declaration_id;
-                                            c.lvalues.insert(decl_id);
-                                            if let InstructionValue::LoadLocal { place, .. } = iv {
-                                                let src_decl = self.env.identifiers
-                                                    [place.identifier]
-                                                    .declaration_id;
-                                                self.temporaries.insert(decl_id, src_decl);
-                                            }
+                                            self.temporaries.insert(decl_id, src_decl);
                                         }
                                     }
                                 }
@@ -227,20 +226,20 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                                 }
                                 _ => {
                                     // Other instructions prevent merging
-                                    if let Some(c) = current.take() {
-                                        if c.to > c.from + 1 {
-                                            merged.push(c);
-                                        }
+                                    if let Some(c) = current.take()
+                                        && c.to > c.from + 1
+                                    {
+                                        merged.push(c);
                                     }
                                 }
                             }
                         }
                         _ => {
                             // Non-Instruction reactive values prevent merging
-                            if let Some(c) = current.take() {
-                                if c.to > c.from + 1 {
-                                    merged.push(c);
-                                }
+                            if let Some(c) = current.take()
+                                && c.to > c.from + 1
+                            {
+                                merged.push(c);
                             }
                         }
                     }
@@ -323,10 +322,10 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
             }
         }
         // Flush remaining
-        if let Some(c) = current.take() {
-            if c.to > c.from + 1 {
-                merged.push(c);
-            }
+        if let Some(c) = current.take()
+            && c.to > c.from + 1
+        {
+            merged.push(c);
         }
 
         // Pass 3: apply merges
@@ -409,10 +408,10 @@ fn are_lvalues_last_used_by_scope<'a>(
 ) -> bool {
     let range_end = env.scopes[scope_id].range.end;
     for lvalue in lvalues {
-        if let Some(&last_used_at) = last_usage.get(lvalue) {
-            if last_used_at >= range_end {
-                return false;
-            }
+        if let Some(&last_used_at) = last_usage.get(lvalue)
+            && last_used_at >= range_end
+        {
+            return false;
         }
     }
     true

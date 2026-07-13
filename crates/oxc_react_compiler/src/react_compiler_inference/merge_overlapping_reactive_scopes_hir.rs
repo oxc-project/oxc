@@ -232,16 +232,16 @@ fn visit_place(
     // If an instruction mutates an outer scope, flatten all scopes from top
     // of the stack to the mutated outer scope
     let place_scope = get_place_scope(env, id, identifier_id);
-    if let Some(scope_id) = place_scope {
-        if is_mutable(env, id, identifier_id) {
-            let place_scope_idx = state.active_scopes.iter().position(|s| *s == scope_id);
-            if let Some(idx) = place_scope_idx {
-                if idx != state.active_scopes.len() - 1 {
-                    let mut to_union: Vec<ScopeId> = vec![scope_id];
-                    to_union.extend_from_slice(&state.active_scopes[idx + 1..]);
-                    state.joined.union(&to_union);
-                }
-            }
+    if let Some(scope_id) = place_scope
+        && is_mutable(env, id, identifier_id)
+    {
+        let place_scope_idx = state.active_scopes.iter().position(|s| *s == scope_id);
+        if let Some(idx) = place_scope_idx
+            && idx != state.active_scopes.len() - 1
+        {
+            let mut to_union: Vec<ScopeId> = vec![scope_id];
+            to_union.extend_from_slice(&state.active_scopes[idx + 1..]);
+            state.joined.union(&to_union);
         }
     }
 }
