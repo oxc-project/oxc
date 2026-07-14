@@ -93,9 +93,9 @@ pub(super) fn write_top_level_value<'a>(
     ctx: ValueContext<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let (elements, is_comma) = match value {
-        ComponentValue::SassList(list) => (&list.elements, list.comma_spans.is_some()),
-        ComponentValue::LessList(list) => (&list.elements, list.comma_spans.is_some()),
+    let (elements, comma_spans) = match value {
+        ComponentValue::SassList(list) => (&list.elements, list.comma_spans.as_ref()),
+        ComponentValue::LessList(list) => (&list.elements, list.comma_spans.as_ref()),
         _ => {
             value::write_component_value(value, ctx, f);
             return;
@@ -104,17 +104,22 @@ pub(super) fn write_top_level_value<'a>(
     // `paren_break` only applies to a paren group that IS the whole value,
     // not to parens nested inside lists.
     let ctx = ValueContext { paren_break: false, ..ctx };
-    if is_comma {
-        let groups: Vec<&[ComponentValue<'a>]> = elements
+    if let Some(comma_spans) = comma_spans {
+        // Each element paired with the comma that follows it (see `write_value_groups`)
+        let groups: Vec<(&[ComponentValue<'a>], Option<u32>)> = elements
             .iter()
-            .map(|el| match el {
-                ComponentValue::SassList(inner) if inner.comma_spans.is_none() => {
-                    &inner.elements[..]
-                }
-                ComponentValue::LessList(inner) if inner.comma_spans.is_none() => {
-                    &inner.elements[..]
-                }
-                other => std::slice::from_ref(other),
+            .enumerate()
+            .map(|(i, el)| {
+                let group = match el {
+                    ComponentValue::SassList(inner) if inner.comma_spans.is_none() => {
+                        &inner.elements[..]
+                    }
+                    ComponentValue::LessList(inner) if inner.comma_spans.is_none() => {
+                        &inner.elements[..]
+                    }
+                    other => std::slice::from_ref(other),
+                };
+                (group, comma_spans.get(i).map(|sp| to_span(sp).start))
             })
             .collect();
         let value_span = to_span(value.span());
@@ -124,7 +129,10 @@ pub(super) fn write_top_level_value<'a>(
             .iter_before(value_span.end)
             .any(|c| c.span.start >= value_span.start);
         let force_hard_line = !ctx.decl_prop.is_some_and(|p| p.starts_with("--"))
-            && (groups.iter().enumerate().any(|(i, g)| value::comma_group_is_multi(g, i == 0))
+            && (groups
+                .iter()
+                .enumerate()
+                .any(|(i, (g, _))| value::comma_group_is_multi(g, i == 0))
                 || has_comments);
         value::write_value_groups(&groups, ctx, force_hard_line, true, f);
     } else {

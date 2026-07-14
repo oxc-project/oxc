@@ -60,8 +60,7 @@ Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `
 ### Comments
 
 `oxc-css-parser` does not attach comments to the AST;
-they are collected via `ParserBuilder::comments()` into a positional cursor over `CssComment { span, inline }`
-(`inline` = `//`).
+they are collected via `ParserBuilder::comments()` into a positional cursor over `CssComment { span, inline }` (`inline` = `//`).
 
 - Statement-level comments: flushed before each statement
   (`flush_leading_comments`); consecutive same-line comments stay glued
@@ -71,6 +70,29 @@ they are collected via `ParserBuilder::comments()` into a positional cursor over
 - Trailing (`value /* c */;`): flushed by `write_declaration` with the source gap before `;` preserved
 - After each statement, the sequence DISCARDS unclaimed comments inside the
   statement span (cursor must never point before a printed position)
+
+#### Placement invariants
+
+The placement rules follow `crates/oxc_formatter/AGENTS.md` "Comment placement invariants"
+(the invariant / compat-table two-layer split, and the terminator vs separator ownership rule);
+
+this section records their CSS translation:
+
+- A comment never crosses user content (other values, other comments):
+  - it stays on its source side of every value/argument
+- `,` is a list SEPARATOR: a comment between an element and its comma stays BEFORE the comma
+  - `a /* c */, b`; comments after it lead the next element
+  - Declaration value lists (`write_value_groups`) and function arguments (`write_function`) route every comma through `write_group_comma` with the comma offset paired to its group
+  - `split_comma_groups` returns `(group, Option<comma_start>)`; SCSS/Less lists pair `comma_spans`
+  - A new comma site must take the pair, the shape makes taking the groups without the commas a visible choice, not an accident
+    - TODO: not every comma writer has adopted this yet
+- `;` is a declaration TERMINATOR, but unlike JS statements Prettier does NOT move comments behind it:
+  - `value /* c */;` keeps the comment before `;` (measured behavior, not principle, may change in the future)
+- The positional cursor makes ownership a bounds discipline, not an attachment one:
+  - a flush's upper bound must never extend past the next piece of user content,
+  - and a declaration's `tail_bound` may only be consumed by the LAST comma group (`write_value_groups` clears it for every other group)
+- Never let a comment cross a line boundary
+  - `//` comments force a hardline after; own-line comments stay own-line, and never move a suppression comment off its target
 
 ### Line endings
 
