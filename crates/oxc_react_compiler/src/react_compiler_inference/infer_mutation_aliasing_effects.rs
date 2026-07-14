@@ -62,8 +62,8 @@ use crate::react_compiler_hir::type_config::ApplyArgConfig;
 use crate::react_compiler_hir::type_config::ValueKind;
 use crate::react_compiler_hir::type_config::ValueReason;
 use crate::react_compiler_hir::visitors;
-use crate::react_compiler_utils::FxIndexSet;
 use oxc_span::Span;
+use smallvec::SmallVec;
 use std::cell::Cell;
 use std::rc::Rc;
 
@@ -89,17 +89,20 @@ pub fn infer_mutation_aliasing_effects(
         let value_id = ValueId::new();
         initial_state.initialize(
             value_id,
-            AbstractValue { kind: ValueKind::Context, reason: hashset_of(ValueReason::Other) },
+            AbstractValue {
+                kind: ValueKind::Context,
+                reason: ReasonSet::single(ValueReason::Other),
+            },
         );
         initial_state.define(ctx_place.identifier, value_id);
     }
 
     let param_kind: AbstractValue = if is_function_expression {
-        AbstractValue { kind: ValueKind::Mutable, reason: hashset_of(ValueReason::Other) }
+        AbstractValue { kind: ValueKind::Mutable, reason: ReasonSet::single(ValueReason::Other) }
     } else {
         AbstractValue {
             kind: ValueKind::Frozen,
-            reason: hashset_of(ValueReason::ReactiveFunctionArgument),
+            reason: ReasonSet::single(ValueReason::ReactiveFunctionArgument),
         }
     };
 
@@ -117,7 +120,10 @@ pub fn infer_mutation_aliasing_effects(
             let value_id = ValueId::new();
             initial_state.initialize(
                 value_id,
-                AbstractValue { kind: ValueKind::Mutable, reason: hashset_of(ValueReason::Other) },
+                AbstractValue {
+                    kind: ValueKind::Mutable,
+                    reason: ReasonSet::single(ValueReason::Other),
+                },
             );
             initial_state.define(ref_place.identifier, value_id);
         }
@@ -290,13 +296,38 @@ impl ValueId {
 #[derive(Debug, Clone)]
 struct AbstractValue {
     kind: ValueKind,
-    reason: FxIndexSet<ValueReason>,
+    reason: ReasonSet,
 }
 
-fn hashset_of(r: ValueReason) -> FxIndexSet<ValueReason> {
-    let mut s = FxIndexSet::default();
-    s.insert(r);
-    s
+/// A small, insertion-ordered set of [`ValueReason`]s.
+///
+/// `AbstractValue`s are cloned constantly during the inference fixpoint — once per
+/// entry on every `InferenceState` clone — so `reason` must clone without
+/// allocating. The sets are tiny (usually a single element, never more than one
+/// per `ValueReason` variant), so an inline `SmallVec` avoids the per-clone heap
+/// allocation the previous `IndexSet` required. Insertion order is preserved to
+/// keep [`primary_reason`] (which returns the first non-`Other` reason) unchanged.
+#[derive(Debug, Clone, Default)]
+struct ReasonSet(SmallVec<[ValueReason; 4]>);
+
+impl ReasonSet {
+    fn single(reason: ValueReason) -> Self {
+        Self(smallvec::smallvec![reason])
+    }
+
+    fn insert(&mut self, reason: ValueReason) {
+        if !self.0.contains(&reason) {
+            self.0.push(reason);
+        }
+    }
+
+    fn contains(&self, reason: &ValueReason) -> bool {
+        self.0.contains(reason)
+    }
+
+    fn iter(&self) -> impl Iterator<Item = ValueReason> + '_ {
+        self.0.iter().copied()
+    }
 }
 
 // =============================================================================
@@ -347,7 +378,7 @@ impl InferenceState {
                 }
                 return AbstractValue {
                     kind: ValueKind::Mutable,
-                    reason: hashset_of(ValueReason::Other),
+                    reason: ReasonSet::single(ValueReason::Other),
                 };
             }
         };
@@ -364,7 +395,7 @@ impl InferenceState {
         }
         merged_kind.unwrap_or_else(|| AbstractValue {
             kind: ValueKind::Mutable,
-            reason: hashset_of(ValueReason::Other),
+            reason: ReasonSet::single(ValueReason::Other),
         })
     }
 
@@ -389,7 +420,7 @@ impl InferenceState {
                 set.insert(vid);
                 self.values.entry(vid).or_insert_with(|| AbstractValue {
                     kind: ValueKind::Mutable,
-                    reason: hashset_of(ValueReason::Other),
+                    reason: ReasonSet::single(ValueReason::Other),
                 });
                 Rc::new(set)
             }
@@ -449,7 +480,7 @@ impl InferenceState {
     fn freeze_value(&mut self, value_id: ValueId, reason: ValueReason) {
         self.values.insert(
             value_id,
-            AbstractValue { kind: ValueKind::Frozen, reason: hashset_of(reason) },
+            AbstractValue { kind: ValueKind::Frozen, reason: ReasonSet::single(reason) },
         );
         // Note: In TS, this also transitively freezes FunctionExpression captures
         // if enableTransitivelyFreezeFunctionExpressions is set. We skip that here
@@ -609,8 +640,8 @@ impl InferenceState {
     }
 }
 
-fn is_superset(a: &FxIndexSet<ValueReason>, b: &FxIndexSet<ValueReason>) -> bool {
-    b.iter().all(|x| a.contains(x))
+fn is_superset(a: &ReasonSet, b: &ReasonSet) -> bool {
+    b.iter().all(|x| a.contains(&x))
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -765,8 +796,8 @@ fn merge_abstract_values(a: &AbstractValue, b: &AbstractValue) -> AbstractValue 
         return a.clone();
     }
     let mut reason = a.reason.clone();
-    for r in &b.reason {
-        reason.insert(*r);
+    for r in b.reason.iter() {
+        reason.insert(r);
     }
     AbstractValue { kind, reason }
 }
@@ -1179,7 +1210,10 @@ fn apply_signature(
         let vid = ValueId::from_identifier(instr.lvalue.identifier);
         state.initialize(
             vid,
-            AbstractValue { kind: ValueKind::Mutable, reason: hashset_of(ValueReason::Other) },
+            AbstractValue {
+                kind: ValueKind::Mutable,
+                reason: ReasonSet::single(ValueReason::Other),
+            },
         );
         state.define(instr.lvalue.identifier, vid);
     }
@@ -1270,7 +1304,7 @@ fn apply_effect(
             );
             initialized.insert(into.identifier);
             let value_id = context.get_or_create_value_id(&effect);
-            state.initialize(value_id, AbstractValue { kind, reason: hashset_of(reason) });
+            state.initialize(value_id, AbstractValue { kind, reason: ReasonSet::single(reason) });
             state.define(into.identifier, value_id);
             effects.push(effect.clone());
         }
@@ -1399,7 +1433,7 @@ fn apply_effect(
                 value_id,
                 AbstractValue {
                     kind: if is_mutable { ValueKind::Mutable } else { ValueKind::Frozen },
-                    reason: FxIndexSet::default(),
+                    reason: ReasonSet::default(),
                 },
             );
             state.define(into.identifier, value_id);
@@ -2988,8 +3022,8 @@ fn compute_effects_for_aliasing_signature(
 /// since the primary reason is always inserted first, this effectively
 /// picks the most specific non-Other reason. We replicate this by
 /// preferring any non-Other reason over Other.
-fn primary_reason(reasons: &FxIndexSet<ValueReason>) -> ValueReason {
-    for &r in reasons {
+fn primary_reason(reasons: &ReasonSet) -> ValueReason {
+    for r in reasons.iter() {
         if r != ValueReason::Other {
             return r;
         }

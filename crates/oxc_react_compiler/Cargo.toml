@@ -44,6 +44,7 @@ oxc_syntax = { workspace = true, features = ["to_js_string"] }
 indexmap = { workspace = true }
 rustc-hash = { workspace = true }
 cow-utils = { workspace = true }
+smallvec = { workspace = true }
 
 [dev-dependencies]
 # The example and integration tests parse source and print the compiled program; the
