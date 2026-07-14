@@ -57,10 +57,32 @@
 //!
 //! ## Rule 2 applied: observability the reference count cannot express
 //!
-//! Non-candidate declarations cannot be removed BY THE ANALYSIS, but their
-//! observability can exceed what references express (an export-wrapped
-//! function is observed by importers). Such declarations force-root their
-//! symbols at the hook.
+//! Non-candidate declarations cannot be removed BY THE ANALYSIS, but the
+//! count-based removal arm still consults their reference counts — and
+//! removing a dead function cycle discards the references that cycle held,
+//! driving an observable binding's count to zero. Pins mark the bindings
+//! whose observability the count cannot express — in a module, exactly
+//! these (each row prevents a reviewed wrong-code repro):
+//!
+//! | gate | what it prevents |
+//! |---|---|
+//! | export-wrapped declarations | `export var f;` carries no reference, yet importers observe the binding — a removable sibling site would strip the initializer |
+//! | for-in/of head and `using` declarators | no removal site handles them; their survival must not depend on counts |
+//!
+//! (Sloppy sources add script-globals and Annex B block-function aliases
+//! to this table; that is why they are not analyzed yet.)
+//!
+//! Every gate in this table PINS (`pin_live_root`), which is strictly
+//! stronger than force-rooting, and the difference is load-bearing. Rooting
+//! only keeps a symbol out of `dead_symbols` — but the removal sites ask
+//! `symbol_is_unused || symbol_is_dead`, and removing a dead cycle DISCARDS
+//! the references that cycle held. So a symbol whose surviving references all
+//! sat in the cycle we just deleted drops to ZERO references, and the count
+//! arm removes the very declaration the gate exists to protect: `export var f;`
+//! silently loses its initializer. Reference counting alone can never reach
+//! that state — which is exactly why main needs none of these gates, and why
+//! rooting looked sufficient until it wasn't. A pin closes both arms
+//! (`MinifierState::pinned_symbols`).
 //!
 //! ## Rule 3 applied: cadence and the force-root log
 //!
@@ -117,6 +139,7 @@
 
 use oxc_allocator::{Allocator, BitSet, GetAllocator, Vec as ArenaVec};
 use oxc_ast::ast::*;
+use oxc_ecmascript::BoundNames;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
 use oxc_syntax::symbol::{SymbolFlags, SymbolId};
@@ -231,6 +254,10 @@ pub struct LivenessCollect<'a> {
     /// `MinifierState::dead_symbols` at flush.
     dead_next: BitSet<'a>,
     /// Scratch for the next PINNED set; swapped with
+    /// `MinifierState::pinned_symbols` at flush. A pin is a force-root that
+    /// also survives the reference-COUNT removal arm (the module doc's
+    /// Rule 2 explains why rooting alone is not enough).
+    pinned_next: BitSet<'a>,
     /// Symbols this pass's collection may have under-observed, force-rooted
     /// at the flush. One producer: a bound reference minted behind the
     /// traversal cursor (each minting pass logs at its call site —
@@ -255,6 +282,7 @@ impl<'a> LivenessCollect<'a> {
             frames: ArenaVec::new_in(&allocator),
             current_candidate: None,
             dead_next: BitSet::new_in(0, allocator),
+            pinned_next: BitSet::new_in(0, allocator),
             force_root_log: ArenaVec::new_in(&allocator),
         }
     }
@@ -276,7 +304,9 @@ impl<'a> LivenessCollect<'a> {
         // Symbols minted mid-pass are past these capacities and read as
         // live everywhere (the `PassDirty::dead_refs` convention); their
         // declarations enter the analysis next pass.
-        for bits in [&mut self.candidates, &mut self.live, &mut self.dead_next] {
+        for bits in
+            [&mut self.candidates, &mut self.live, &mut self.dead_next, &mut self.pinned_next]
+        {
             if bits.capacity() == symbols_len {
                 bits.clear();
             } else {
@@ -302,6 +332,17 @@ impl<'a> LivenessCollect<'a> {
         if index < self.live.capacity() && !self.live.has_bit(index) {
             self.live.set_bit(index);
             self.roots.push(symbol_id);
+        }
+    }
+
+    /// Force-root a symbol AND pin it against the reference-count removal
+    /// arm; see the module doc's Rule 2 for why rooting alone is not
+    /// enough, and `MinifierState::pinned_symbols` for the consumer side.
+    fn pin_live_root(&mut self, symbol_id: SymbolId) {
+        self.mark_live_root(symbol_id);
+        let index = symbol_id.index();
+        if index < self.pinned_next.capacity() {
+            self.pinned_next.set_bit(index);
         }
     }
 
@@ -381,7 +422,7 @@ pub fn collect_enter_function<'a>(func: &Function<'a>, ctx: &mut TraverseCtx<'a>
         && let Some(symbol_id) = func.id.as_ref().and_then(|id| id.symbol_id.get())
     {
         if parent_is_export(ctx.parent()) {
-            ctx.state.liveness.mark_live_root(symbol_id);
+            ctx.state.liveness.pin_live_root(symbol_id);
         } else if ctx.state.liveness.admit_candidate(symbol_id) {
             candidate = Some(symbol_id);
         }
@@ -393,8 +434,57 @@ pub fn collect_enter_function<'a>(func: &Function<'a>, ctx: &mut TraverseCtx<'a>
     }
 }
 
+/// `Traverse::enter_class` body. Classes are never candidates (see the
+/// module doc), but an export-wrapped class still PINS: importers observe
+/// the binding while removing a dead function cycle can zero its
+/// reference count.
+pub fn collect_enter_class<'a>(class: &Class<'a>, ctx: &mut TraverseCtx<'a>) {
+    if !ctx.state.liveness.active {
+        return;
+    }
+    if class.is_declaration()
+        && let Some(symbol_id) = class.id.as_ref().and_then(|id| id.symbol_id.get())
+        && parent_is_export(ctx.parent())
+    {
+        ctx.state.liveness.pin_live_root(symbol_id);
+    }
+}
+
+/// `Traverse::enter_variable_declarator` body. Declarators are never
+/// candidates (see the module doc), but bindings whose observability the
+/// reference count cannot express still pin, because removing a dead
+/// function cycle can zero their counts: an export-wrapped declaration
+/// (importers observe the binding through a sibling `export var f;`), and
+/// for-in/of heads and `using` declarators (no removal site handles them;
+/// their survival must not depend on counts). All of these are STABLE
+/// properties of the declaration — no rewrite can grant or revoke them
+/// mid-pass.
+pub fn collect_enter_variable_declarator<'a>(
+    decl: &VariableDeclarator<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    if !ctx.state.liveness.active {
+        return;
+    }
+    let grandparent = ctx.ancestor(1);
+    let stable_position_fail = decl.kind.is_using()
+        || grandparent.is_parent_of_for_statement_left()
+        || matches!(grandparent, Ancestor::ExportNamedDeclarationDeclaration(_));
+    if stable_position_fail {
+        // Stable-position site: PIN every symbol it binds (see the module
+        // doc), destructuring included.
+        let lv = &mut ctx.state.liveness;
+        decl.id.bound_names(&mut |ident| {
+            if let Some(symbol_id) = ident.symbol_id.get() {
+                lv.pin_live_root(symbol_id);
+            }
+        });
+    }
+}
+
 /// `Traverse::exit_function` body: close the region frame the enter hook
-/// opened. Functions are the only region-openers.
+/// opened. Functions are the only region-openers — classes and declarators
+/// only pin, so they need no exit hook.
 pub fn collect_exit_function(ctx: &mut TraverseCtx<'_>) {
     let lv = &mut ctx.state.liveness;
     if lv.active {
@@ -416,7 +506,7 @@ pub fn collect_exit_function(ctx: &mut TraverseCtx<'_>) {
 /// post-flush fresh.
 pub fn propagate_collected(ctx: &mut TraverseCtx<'_>) -> bool {
     let TraverseCtx { state, .. } = ctx;
-    let crate::state::MinifierState { liveness, dead_symbols, .. } = state;
+    let crate::state::MinifierState { liveness, dead_symbols, pinned_symbols, .. } = state;
     let lv = liveness;
     if !lv.active {
         return false;
@@ -436,6 +526,7 @@ pub fn propagate_collected(ctx: &mut TraverseCtx<'_>) -> bool {
     // runs so a stale dead set from the previous pass clears.
     if lv.candidates.is_empty() {
         std::mem::swap(dead_symbols, &mut lv.dead_next);
+        std::mem::swap(pinned_symbols, &mut lv.pinned_next);
         return false;
     }
 
@@ -463,5 +554,13 @@ pub fn propagate_collected(ctx: &mut TraverseCtx<'_>) -> bool {
         !lv.dead_next.is_empty() && lv.dead_next.ones().any(|bit| !dead_symbols.contains(bit));
 
     std::mem::swap(dead_symbols, &mut lv.dead_next);
+    std::mem::swap(pinned_symbols, &mut lv.pinned_next);
+    // A released pin never strands a waiting removal here: v1 pins sit on
+    // export wrappers (never removed) or on for-in/of heads and `using`
+    // declarators, whose bindings can only disappear WITH their whole
+    // statement (unreachable-code removal) — declaration and references
+    // die together, so no consult is left waiting on the stale pin. Sloppy
+    // sources will need a release-driven extra pass (Annex B blockers);
+    // that arrives with them.
     found_new_dead
 }

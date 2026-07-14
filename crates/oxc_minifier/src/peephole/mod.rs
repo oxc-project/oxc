@@ -501,6 +501,18 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         symbol_liveness::collect_exit_function(ctx);
     }
 
+    fn enter_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        symbol_liveness::collect_enter_class(node, ctx);
+    }
+
+    fn enter_variable_declarator(
+        &mut self,
+        node: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        symbol_liveness::collect_enter_variable_declarator(node, ctx);
+    }
+
     fn enter_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.body_unsafe_stack.push((ctx.current_scope_id(), false));
     }

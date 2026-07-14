@@ -119,6 +119,25 @@ pub struct MinifierState<'a> {
     /// minted after the last refresh are beyond capacity and read as live.
     pub(crate) dead_symbols: BitSet<'a>,
 
+    /// Symbols the analysis PINNED this pass — bindings whose observability
+    /// no reference count can express. Exactly three producers today, all in
+    /// `symbol_liveness`: export-wrapped declarations (importers observe the
+    /// binding), for-in/of heads, and `using` declarators (no removal site
+    /// handles either). Enabling sloppy sources will add script-globals and
+    /// Annex B alias blockers.
+    ///
+    /// Pinning is strictly stronger than force-rooting, and both are needed:
+    /// force-rooting keeps the symbol out of `dead_symbols`, but the removal
+    /// sites consult `symbol_is_unused` TOO — and this analysis is exactly
+    /// what drives a reference count to zero, by deleting the dead cycle that
+    /// held the last reference. Without the pin, the count arm then removes
+    /// the very declaration the force-root exists to protect (`export var f;`
+    /// silently loses its initializer).
+    ///
+    /// Refreshed at every flush alongside `dead_symbols` and read only through
+    /// [`MinifierState::symbol_is_pinned`]. Bits are `SymbolId::index()`.
+    pub(crate) pinned_symbols: BitSet<'a>,
+
     /// In-traversal liveness collection for the CURRENT peephole pass; see
     /// `symbol_liveness` for the architecture. Reset at `enter_program`,
     /// consumed by `symbol_liveness::propagate_collected` at flush.
@@ -149,6 +168,7 @@ impl<'a> MinifierState<'a> {
             mutated: false,
             dirty: PassDirty::new(scoping.references_len(), allocator),
             dead_symbols: BitSet::new_in(0, allocator),
+            pinned_symbols: BitSet::new_in(0, allocator),
             liveness: LivenessCollect::new(allocator),
             concat_scratch: String::new(),
         }

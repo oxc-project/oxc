@@ -86,6 +86,18 @@ impl<'a> Traverse<'a> for Normalize {
         symbol_liveness::collect_exit_function(ctx);
     }
 
+    fn enter_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        symbol_liveness::collect_enter_class(node, ctx);
+    }
+
+    fn enter_variable_declarator(
+        &mut self,
+        node: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        symbol_liveness::collect_enter_variable_declarator(node, ctx);
+    }
+
     fn exit_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
