@@ -1,10 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{
-        ArrowFunctionExpression, FormalParameters, Function, FunctionType,
-        TSTypeParameterDeclaration, VariableDeclarator,
-    },
-};
+use oxc_ast::{AstKind, ast::FunctionType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -148,9 +142,9 @@ impl Rule for FunctionComponentDefinition {
         }
 
         let diagnostic = function_component_definition_diagnostic(node.span(), expected);
-        if can_fix(node, ctx, expected) {
+        if fix::can_fix(node, ctx, expected) {
             ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
-                let (span, replacement) = replacement(node, ctx, expected, named);
+                let (span, replacement) = fix::replacement(node, ctx, expected, named);
                 fixer.replace(span, replacement)
             });
         } else {
@@ -236,244 +230,268 @@ fn is_named(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
         || matches!(ctx.nodes().parent_kind(node.id()), AstKind::VariableDeclarator(_))
 }
 
-fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, expected: FunctionStyle) -> bool {
-    match node.kind() {
-        AstKind::Function(function) => {
-            if function.r#type == FunctionType::FunctionDeclaration
-                && matches!(
-                    ctx.nodes().parent_kind(node.id()),
-                    AstKind::ExportDefaultDeclaration(_)
-                )
-            {
-                return false;
-            }
-            if function.r#type == FunctionType::FunctionExpression && function.id.is_some() {
-                return false;
-            }
-            if expected == FunctionStyle::Declaration
-                && variable_declarator(node, ctx)
-                    .is_some_and(|declaration| declaration.type_annotation.is_some())
-            {
-                return false;
-            }
-            if expected == FunctionStyle::Arrow
-                && (function.generator
-                    || has_one_unconstrained_type_parameter(function.type_parameters.as_deref()))
-            {
-                return false;
-            }
-        }
-        AstKind::ArrowFunctionExpression(arrow) => {
-            if expected == FunctionStyle::Declaration
-                && variable_declarator(node, ctx)
-                    .is_some_and(|declaration| declaration.type_annotation.is_some())
-            {
-                return false;
-            }
-            if expected == FunctionStyle::Arrow
-                && has_one_unconstrained_type_parameter(arrow.type_parameters.as_deref())
-            {
-                return false;
-            }
-        }
-        _ => return false,
-    }
-    true
-}
-
-fn has_one_unconstrained_type_parameter(
-    parameters: Option<&TSTypeParameterDeclaration<'_>>,
-) -> bool {
-    parameters.is_some_and(|parameters| {
-        parameters.params.len() == 1 && parameters.params[0].constraint.is_none()
-    })
-}
-
-fn variable_declarator<'a, 'c>(
-    node: &AstNode<'a>,
-    ctx: &'c LintContext<'a>,
-) -> Option<&'c VariableDeclarator<'a>> {
-    match ctx.nodes().parent_kind(node.id()) {
-        AstKind::VariableDeclarator(declaration) => Some(declaration),
-        _ => None,
-    }
-}
-
-fn replacement<'a>(
-    node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
-    expected: FunctionStyle,
-    named: bool,
-) -> (Span, String) {
-    let parts = FunctionParts::new(node, ctx);
-    let body = if parts.expression_body {
-        format!("{{\n return {}\n}}", parts.body)
-    } else {
-        parts.body.clone()
+mod fix {
+    use oxc_ast::{
+        AstKind,
+        ast::{
+            ArrowFunctionExpression, FormalParameters, Function, FunctionType,
+            TSTypeParameterDeclaration, VariableDeclarator,
+        },
     };
-    let function = match (expected, named) {
-        (FunctionStyle::Declaration, true) => format!(
-            "{}function{} {}{}{}{} {}",
-            parts.async_prefix,
-            parts.generator_marker,
-            parts.name,
-            parts.type_parameters,
-            parts.params,
-            parts.return_type,
-            body
-        ),
-        (FunctionStyle::Expression, true) => format!(
-            "{} {}{} = {}function{}{}{}{} {}",
-            parts.variable_kind,
-            parts.name,
-            parts.type_annotation,
-            parts.async_prefix,
-            parts.generator_marker,
-            parts.type_parameters,
-            parts.params,
-            parts.return_type,
-            body
-        ),
-        (FunctionStyle::Arrow, true) => format!(
-            "{} {}{} = {}{}{}{} => {}",
-            parts.variable_kind,
-            parts.name,
-            parts.type_annotation,
-            parts.async_prefix,
-            parts.type_parameters,
-            parts.params,
-            parts.return_type,
-            body
-        ),
-        (FunctionStyle::Expression, false) => format!(
-            "{}function{}{}{}{} {}",
-            parts.async_prefix,
-            parts.generator_marker,
-            parts.type_parameters,
-            parts.params,
-            parts.return_type,
-            body
-        ),
-        (FunctionStyle::Arrow, false) => format!(
-            "{}{}{}{} => {}",
-            parts.async_prefix, parts.type_parameters, parts.params, parts.return_type, body
-        ),
-        (FunctionStyle::Declaration, false) => unreachable!(),
-    };
-    (parts.replace_span, function)
-}
+    use oxc_span::{GetSpan, Span};
 
-struct FunctionParts<'a> {
-    replace_span: Span,
-    name: String,
-    variable_kind: &'static str,
-    type_annotation: &'a str,
-    async_prefix: &'static str,
-    generator_marker: &'static str,
-    type_parameters: String,
-    params: String,
-    return_type: String,
-    body: String,
-    expression_body: bool,
-}
+    use super::FunctionStyle;
+    use crate::{AstNode, context::LintContext};
 
-impl<'a> FunctionParts<'a> {
-    fn new(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Self {
-        match node.kind() {
-            AstKind::Function(function) => Self::from_function(function, node, ctx),
-            AstKind::ArrowFunctionExpression(arrow) => Self::from_arrow(arrow, node, ctx),
-            _ => unreachable!(),
-        }
-    }
-
-    fn from_function(function: &Function<'a>, node: &AstNode<'a>, ctx: &LintContext<'a>) -> Self {
-        let declaration = variable_declarator(node, ctx);
-        let (replace_span, variable_kind) = variable_context(node, ctx);
-        Self {
-            replace_span,
-            name: function.id.as_ref().map_or_else(
-                || variable_name(declaration),
-                |identifier| identifier.name.to_string(),
-            ),
-            variable_kind,
-            type_annotation: type_annotation(declaration, ctx),
-            async_prefix: if function.r#async { "async " } else { "" },
-            generator_marker: if function.generator { "*" } else { "" },
-            type_parameters: function
-                .type_parameters
-                .as_ref()
-                .map_or_else(String::new, |item| ctx.source_range(item.span).to_string()),
-            params: parenthesized_params(&function.params, ctx),
-            return_type: function
-                .return_type
-                .as_ref()
-                .map_or_else(String::new, |item| ctx.source_range(item.span).to_string()),
-            body: function
-                .body
-                .as_ref()
-                .map_or_else(String::new, |body| ctx.source_range(body.span).to_string()),
-            expression_body: false,
-        }
-    }
-
-    fn from_arrow(
-        arrow: &ArrowFunctionExpression<'a>,
+    pub(super) fn can_fix<'a>(
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
-    ) -> Self {
-        let declaration = variable_declarator(node, ctx);
-        let (replace_span, variable_kind) = variable_context(node, ctx);
-        Self {
-            replace_span,
-            name: variable_name(declaration),
-            variable_kind,
-            type_annotation: type_annotation(declaration, ctx),
-            async_prefix: if arrow.r#async { "async " } else { "" },
-            generator_marker: "",
-            type_parameters: arrow
-                .type_parameters
-                .as_ref()
-                .map_or_else(String::new, |item| ctx.source_range(item.span).to_string()),
-            params: parenthesized_params(&arrow.params, ctx),
-            return_type: arrow
-                .return_type
-                .as_ref()
-                .map_or_else(String::new, |item| ctx.source_range(item.span).to_string()),
-            body: ctx.source_range(arrow.body.span).to_string(),
-            expression_body: arrow.expression,
+        expected: FunctionStyle,
+    ) -> bool {
+        match node.kind() {
+            AstKind::Function(function) => {
+                if function.r#type == FunctionType::FunctionDeclaration
+                    && matches!(
+                        ctx.nodes().parent_kind(node.id()),
+                        AstKind::ExportDefaultDeclaration(_)
+                    )
+                {
+                    return false;
+                }
+                if function.r#type == FunctionType::FunctionExpression && function.id.is_some() {
+                    return false;
+                }
+                if expected == FunctionStyle::Declaration
+                    && variable_declarator(node, ctx)
+                        .is_some_and(|declaration| declaration.type_annotation.is_some())
+                {
+                    return false;
+                }
+                if expected == FunctionStyle::Arrow
+                    && (function.generator
+                        || has_one_unconstrained_type_parameter(
+                            function.type_parameters.as_deref(),
+                        ))
+                {
+                    return false;
+                }
+            }
+            AstKind::ArrowFunctionExpression(arrow) => {
+                if expected == FunctionStyle::Declaration
+                    && variable_declarator(node, ctx)
+                        .is_some_and(|declaration| declaration.type_annotation.is_some())
+                {
+                    return false;
+                }
+                if expected == FunctionStyle::Arrow
+                    && has_one_unconstrained_type_parameter(arrow.type_parameters.as_deref())
+                {
+                    return false;
+                }
+            }
+            _ => return false,
+        }
+        true
+    }
+
+    fn has_one_unconstrained_type_parameter(
+        parameters: Option<&TSTypeParameterDeclaration<'_>>,
+    ) -> bool {
+        parameters.is_some_and(|parameters| {
+            parameters.params.len() == 1 && parameters.params[0].constraint.is_none()
+        })
+    }
+
+    fn variable_declarator<'a, 'c>(
+        node: &AstNode<'a>,
+        ctx: &'c LintContext<'a>,
+    ) -> Option<&'c VariableDeclarator<'a>> {
+        match ctx.nodes().parent_kind(node.id()) {
+            AstKind::VariableDeclarator(declaration) => Some(declaration),
+            _ => None,
         }
     }
-}
 
-fn variable_context<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> (Span, &'static str) {
-    if variable_declarator(node, ctx).is_some() {
-        let declaration_node = ctx.nodes().parent_node(node.id());
-        let variable_node = ctx.nodes().parent_node(declaration_node.id());
-        if let AstKind::VariableDeclaration(variable) = variable_node.kind() {
-            return (variable.span, variable.kind.as_str());
+    pub(super) fn replacement<'a>(
+        node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+        expected: FunctionStyle,
+        named: bool,
+    ) -> (Span, String) {
+        let parts = FunctionParts::new(node, ctx);
+        let body = if parts.expression_body {
+            format!("{{\n return {}\n}}", parts.body)
+        } else {
+            parts.body.clone()
+        };
+        let function = match (expected, named) {
+            (FunctionStyle::Declaration, true) => format!(
+                "{}function{} {}{}{}{} {}",
+                parts.async_prefix,
+                parts.generator_marker,
+                parts.name,
+                parts.type_parameters,
+                parts.params,
+                parts.return_type,
+                body
+            ),
+            (FunctionStyle::Expression, true) => format!(
+                "{} {}{} = {}function{}{}{}{} {}",
+                parts.variable_kind,
+                parts.name,
+                parts.type_annotation,
+                parts.async_prefix,
+                parts.generator_marker,
+                parts.type_parameters,
+                parts.params,
+                parts.return_type,
+                body
+            ),
+            (FunctionStyle::Arrow, true) => format!(
+                "{} {}{} = {}{}{}{} => {}",
+                parts.variable_kind,
+                parts.name,
+                parts.type_annotation,
+                parts.async_prefix,
+                parts.type_parameters,
+                parts.params,
+                parts.return_type,
+                body
+            ),
+            (FunctionStyle::Expression, false) => format!(
+                "{}function{}{}{}{} {}",
+                parts.async_prefix,
+                parts.generator_marker,
+                parts.type_parameters,
+                parts.params,
+                parts.return_type,
+                body
+            ),
+            (FunctionStyle::Arrow, false) => format!(
+                "{}{}{}{} => {}",
+                parts.async_prefix, parts.type_parameters, parts.params, parts.return_type, body
+            ),
+            (FunctionStyle::Declaration, false) => unreachable!(),
+        };
+        (parts.replace_span, function)
+    }
+
+    struct FunctionParts<'a> {
+        replace_span: Span,
+        name: String,
+        variable_kind: &'static str,
+        type_annotation: &'a str,
+        async_prefix: &'static str,
+        generator_marker: &'static str,
+        type_parameters: String,
+        params: String,
+        return_type: String,
+        body: String,
+        expression_body: bool,
+    }
+
+    impl<'a> FunctionParts<'a> {
+        fn new(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Self {
+            match node.kind() {
+                AstKind::Function(function) => Self::from_function(function, node, ctx),
+                AstKind::ArrowFunctionExpression(arrow) => Self::from_arrow(arrow, node, ctx),
+                _ => unreachable!(),
+            }
+        }
+
+        fn from_function(
+            function: &Function<'a>,
+            node: &AstNode<'a>,
+            ctx: &LintContext<'a>,
+        ) -> Self {
+            let declaration = variable_declarator(node, ctx);
+            let (replace_span, variable_kind) = variable_context(node, ctx);
+            Self {
+                replace_span,
+                name: function.id.as_ref().map_or_else(
+                    || variable_name(declaration),
+                    |identifier| identifier.name.to_string(),
+                ),
+                variable_kind,
+                type_annotation: type_annotation(declaration, ctx),
+                async_prefix: if function.r#async { "async " } else { "" },
+                generator_marker: if function.generator { "*" } else { "" },
+                type_parameters: function
+                    .type_parameters
+                    .as_ref()
+                    .map_or_else(String::new, |item| ctx.source_range(item.span).to_string()),
+                params: parenthesized_params(&function.params, ctx),
+                return_type: function
+                    .return_type
+                    .as_ref()
+                    .map_or_else(String::new, |item| ctx.source_range(item.span).to_string()),
+                body: function
+                    .body
+                    .as_ref()
+                    .map_or_else(String::new, |body| ctx.source_range(body.span).to_string()),
+                expression_body: false,
+            }
+        }
+
+        fn from_arrow(
+            arrow: &ArrowFunctionExpression<'a>,
+            node: &AstNode<'a>,
+            ctx: &LintContext<'a>,
+        ) -> Self {
+            let declaration = variable_declarator(node, ctx);
+            let (replace_span, variable_kind) = variable_context(node, ctx);
+            Self {
+                replace_span,
+                name: variable_name(declaration),
+                variable_kind,
+                type_annotation: type_annotation(declaration, ctx),
+                async_prefix: if arrow.r#async { "async " } else { "" },
+                generator_marker: "",
+                type_parameters: arrow
+                    .type_parameters
+                    .as_ref()
+                    .map_or_else(String::new, |item| ctx.source_range(item.span).to_string()),
+                params: parenthesized_params(&arrow.params, ctx),
+                return_type: arrow
+                    .return_type
+                    .as_ref()
+                    .map_or_else(String::new, |item| ctx.source_range(item.span).to_string()),
+                body: ctx.source_range(arrow.body.span).to_string(),
+                expression_body: arrow.expression,
+            }
         }
     }
-    (node.span(), "const")
-}
 
-fn variable_name(declaration: Option<&VariableDeclarator<'_>>) -> String {
-    declaration
-        .and_then(|declaration| declaration.id.get_identifier_name())
-        .map_or_else(String::new, |name| name.to_string())
-}
+    fn variable_context<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> (Span, &'static str) {
+        if variable_declarator(node, ctx).is_some() {
+            let declaration_node = ctx.nodes().parent_node(node.id());
+            let variable_node = ctx.nodes().parent_node(declaration_node.id());
+            if let AstKind::VariableDeclaration(variable) = variable_node.kind() {
+                return (variable.span, variable.kind.as_str());
+            }
+        }
+        (node.span(), "const")
+    }
 
-fn type_annotation<'a>(
-    declaration: Option<&VariableDeclarator<'_>>,
-    ctx: &LintContext<'a>,
-) -> &'a str {
-    declaration
-        .and_then(|declaration| declaration.type_annotation.as_ref())
-        .map_or("", |annotation| ctx.source_range(annotation.span))
-}
+    fn variable_name(declaration: Option<&VariableDeclarator<'_>>) -> String {
+        declaration
+            .and_then(|declaration| declaration.id.get_identifier_name())
+            .map_or_else(String::new, |name| name.to_string())
+    }
 
-fn parenthesized_params(params: &FormalParameters<'_>, ctx: &LintContext<'_>) -> String {
-    let source = ctx.source_range(params.span);
-    if source.starts_with('(') { source.to_string() } else { format!("({source})") }
+    fn type_annotation<'a>(
+        declaration: Option<&VariableDeclarator<'_>>,
+        ctx: &LintContext<'a>,
+    ) -> &'a str {
+        declaration
+            .and_then(|declaration| declaration.type_annotation.as_ref())
+            .map_or("", |annotation| ctx.source_range(annotation.span))
+    }
+
+    fn parenthesized_params(params: &FormalParameters<'_>, ctx: &LintContext<'_>) -> String {
+        let source = ctx.source_range(params.span);
+        if source.starts_with('(') { source.to_string() } else { format!("({source})") }
+    }
 }
 
 #[test]
